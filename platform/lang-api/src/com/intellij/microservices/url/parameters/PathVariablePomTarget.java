@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.microservices.url.parameters;
 
 import com.intellij.ide.presentation.Presentation;
@@ -57,7 +57,7 @@ public final class PathVariablePomTarget extends SimpleNamePomTarget {
   //TODO: not sure if it really should be a method of this class
   @NotNull
   @ApiStatus.Internal
-  Iterable<PsiElement> findSemDefinitionPsiElement() {
+  public Iterable<PsiElement> findSemDefinitionPsiElement() {
     return mySemDefinitionProvider.findSemDefiningElements(this);
   }
 }

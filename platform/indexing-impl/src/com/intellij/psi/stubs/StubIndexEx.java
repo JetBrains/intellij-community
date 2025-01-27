@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -67,7 +67,7 @@ public abstract class StubIndexEx extends StubIndex {
   private final StubProcessingHelper myStubProcessingHelper = new StubProcessingHelper();
 
   @ApiStatus.Internal
-  abstract void initializeStubIndexes();
+  public abstract void initializeStubIndexes();
 
   @ApiStatus.Internal
   public abstract void initializationFailed(@NotNull Throwable error);
@@ -424,10 +424,10 @@ public abstract class StubIndexEx extends StubIndex {
   }
 
   @ApiStatus.Internal
-  void setDataBufferingEnabled(boolean enabled) { }
+  public void setDataBufferingEnabled(boolean enabled) { }
 
   @ApiStatus.Internal
-  void cleanupMemoryStorage() { }
+  public void cleanupMemoryStorage() { }
 
   @ApiStatus.Internal
   public static @NotNull <K> FileBasedIndexExtension<K, Void> wrapStubIndexExtension(StubIndexExtension<K, ?> extension) {

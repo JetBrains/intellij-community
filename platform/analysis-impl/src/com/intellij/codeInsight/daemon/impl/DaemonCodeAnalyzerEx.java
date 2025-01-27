@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -108,7 +108,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
    * Instead, generate file-level infos in your inspection/annotator, and they will be removed automatically when outdated
    */
   @ApiStatus.Internal
-  abstract void removeFileLevelHighlight(@NotNull PsiFile psiFile, @NotNull HighlightInfo info);
+  public abstract void removeFileLevelHighlight(@NotNull PsiFile psiFile, @NotNull HighlightInfo info);
 
   public void markDocumentDirty(@NotNull Document document, @NotNull Object reason) {
     getFileStatusMap().markWholeFileScopeDirty(document, reason);
@@ -119,11 +119,15 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
            && getInstanceEx(project).getFileStatusMap().allDirtyScopesAreNull(textEditor.getEditor().getDocument());
   }
 
-  abstract boolean cutOperationJustHappened();
+  @ApiStatus.Internal
+  public abstract boolean cutOperationJustHappened();
 
-  abstract boolean isEscapeJustPressed();
+  @ApiStatus.Internal
+  public abstract boolean isEscapeJustPressed();
 
   protected abstract void progressIsAdvanced(@NotNull HighlightingSession session, Editor editor, double progress);
-  static final int ANY_GROUP = -409423948;
-  static final int FILE_LEVEL_FAKE_LAYER = -4094; // the layer the (fake) RangeHighlighter is created for file-level HighlightInfo in
+  @ApiStatus.Internal
+  public static final int ANY_GROUP = -409423948;
+  @ApiStatus.Internal
+  public static final int FILE_LEVEL_FAKE_LAYER = -4094; // the layer the (fake) RangeHighlighter is created for file-level HighlightInfo in
 }

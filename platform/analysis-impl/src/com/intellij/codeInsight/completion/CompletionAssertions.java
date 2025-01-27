@@ -89,7 +89,8 @@ public final class CompletionAssertions {
     }
   }
 
-  static boolean isEditorValid(Editor editor) {
+  @ApiStatus.Internal
+  public static boolean isEditorValid(Editor editor) {
     return !(editor instanceof EditorWindow) || ((EditorWindow)editor).isValid();
   }
 
@@ -180,6 +181,11 @@ public final class CompletionAssertions {
       super(offsetMap, completionChar, items.toArray(LookupElement.EMPTY_ARRAY),
             file, editor,
             shouldAddCompletionChar(completionChar));
+    }
+
+    @ApiStatus.Internal
+    public Throwable getInvalidateTrace() {
+      return invalidateTrace;
     }
 
     @Override

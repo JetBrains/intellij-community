@@ -95,7 +95,7 @@ public final class TargetElementUtilBase {
   }
 
   @ApiStatus.Internal
-  static PsiElement getNamedElement(@Nullable PsiElement element) {
+  public static PsiElement getNamedElement(@Nullable PsiElement element) {
     if (element == null) return null;
 
     TargetElementEvaluatorEx2 evaluator = getElementEvaluatorsEx2(element.getLanguage());

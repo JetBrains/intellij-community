@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -27,6 +27,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringOperation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -36,7 +37,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-class DocumentWindowImpl extends UserDataHolderBase implements Disposable, DocumentWindow, DocumentEx {
+@ApiStatus.Internal
+public final class DocumentWindowImpl extends UserDataHolderBase implements Disposable, DocumentWindow, DocumentEx {
   private static final Logger LOG = Logger.getInstance(DocumentWindowImpl.class);
   private final DocumentEx myDelegate;
   private final boolean myOneLine;
@@ -58,7 +60,8 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Nullable("null means we were unable to calculate")
-  LogicalPosition hostToInjectedInVirtualSpace(@NotNull LogicalPosition hPos) {
+  @ApiStatus.Internal
+  public LogicalPosition hostToInjectedInVirtualSpace(@NotNull LogicalPosition hPos) {
     // beware the virtual space
     int hLineStartOffset = hPos.line >= myDelegate.getLineCount() ? myDelegate.getTextLength() : myDelegate.getLineStartOffset(hPos.line);
     int iLineStartOffset = hostToInjected(hLineStartOffset);

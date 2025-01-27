@@ -49,7 +49,8 @@ public class ProcessStreamsSynchronizer {
   private long myLastFlushedChunkCreatedNanoTime = 0;
   private int myReschedules = 0;
 
-  ProcessStreamsSynchronizer(@NotNull Disposable parentDisposable) {
+  @ApiStatus.Internal
+  public ProcessStreamsSynchronizer(@NotNull Disposable parentDisposable) {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
     Disposer.register(parentDisposable, new Disposable() {
       @Override

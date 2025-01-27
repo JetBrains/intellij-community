@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
@@ -87,9 +87,11 @@ public final class UpdateHighlightersUtil {
            && info.getGutterIconRenderer() == null;
   }
 
-  static final class HighlightInfoPostFilters {
+  @ApiStatus.Internal
+  public static final class HighlightInfoPostFilters {
     private static final ExtensionPointName<HighlightInfoPostFilter> EP_NAME = new ExtensionPointName<>("com.intellij.highlightInfoPostFilter");
-    static boolean accept(@NotNull Project project, @NotNull HighlightInfo info) {
+
+    public static boolean accept(@NotNull Project project, @NotNull HighlightInfo info) {
       for (HighlightInfoPostFilter filter : EP_NAME.getExtensionList(project)) {
         if (!filter.accept(info))
           return false;
@@ -387,9 +389,12 @@ public final class UpdateHighlightersUtil {
   }
 
   private static final Key<Boolean> TYPING_INSIDE_HIGHLIGHTER_OCCURRED = Key.create("TYPING_INSIDE_HIGHLIGHTER_OCCURRED");
-  static boolean isWhitespaceOptimizationAllowed(@NotNull Document document) {
+
+  @ApiStatus.Internal
+  public static boolean isWhitespaceOptimizationAllowed(@NotNull Document document) {
     return document.getUserData(TYPING_INSIDE_HIGHLIGHTER_OCCURRED) == null;
   }
+
   private static void disableWhiteSpaceOptimization(@NotNull Document document) {
     document.putUserData(TYPING_INSIDE_HIGHLIGHTER_OCCURRED, Boolean.TRUE);
   }
@@ -397,7 +402,8 @@ public final class UpdateHighlightersUtil {
     document.putUserData(TYPING_INSIDE_HIGHLIGHTER_OCCURRED, null);
   }
 
-  static void updateHighlightersByTyping(@NotNull Project project, @NotNull DocumentEvent e) {
+  @ApiStatus.Internal
+  public static void updateHighlightersByTyping(@NotNull Project project, @NotNull DocumentEvent e) {
     ThreadingAssertions.assertEventDispatchThread();
 
     Document document = e.getDocument();
@@ -440,7 +446,8 @@ public final class UpdateHighlightersUtil {
   }
 
   @RequiresEdt
-  static void disposeWithFileLevelIgnoreErrorsInEDT(@NotNull RangeHighlighter highlighter,
+  @ApiStatus.Internal
+  public static void disposeWithFileLevelIgnoreErrorsInEDT(@NotNull RangeHighlighter highlighter,
                                                     @NotNull Project project,
                                                     @NotNull HighlightInfo info) {
     if (info.isFileLevelAnnotation()) {

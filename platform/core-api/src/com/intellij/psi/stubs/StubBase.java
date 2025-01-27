@@ -80,7 +80,8 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     myPsi = psi;
   }
 
-  final @Nullable T getCachedPsi() {
+  @ApiStatus.Internal
+  public final @Nullable T getCachedPsi() {
     return myPsi;
   }
 

@@ -1,20 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Collection;
 import java.util.Set;
 
-abstract class UpdateTask<Type> {
+@ApiStatus.Internal
+public abstract class UpdateTask<Type> {
   private final Semaphore myUpdateSemaphore = new Semaphore();
   private final Set<Type> myItemsBeingIndexed = ConcurrentCollectionFactory.createConcurrentSet();
   private static final boolean DEBUG = false;
 
-  final boolean processAll(Collection<? extends Type> itemsToProcess, Project project) {
+  public final boolean processAll(Collection<? extends Type> itemsToProcess, Project project) {
     if (DEBUG) trace("enter processAll");
     try {
       boolean hasMoreToProcess;
@@ -69,7 +71,8 @@ abstract class UpdateTask<Type> {
     return false;
   }
 
-  abstract void doProcess(Type item, Project project);
+  @ApiStatus.Internal
+  protected abstract void doProcess(Type item, Project project);
 
   protected static void trace(String s) {
     System.out.println(Thread.currentThread() + " " + s);

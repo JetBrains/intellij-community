@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -22,16 +22,18 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Supplier;
 
-class HighlightVisitorRunner {
+@ApiStatus.Internal
+public final class HighlightVisitorRunner {
   private final @NotNull Supplier<? extends @NotNull HighlightVisitor @NotNull []> myHighlightVisitorProducer;
 
-  HighlightVisitorRunner(@NotNull PsiFile psiFile, @Nullable TextAttributesScheme scheme, boolean runVisitors, boolean highlightErrorElements) {
+  public HighlightVisitorRunner(@NotNull PsiFile psiFile, @Nullable TextAttributesScheme scheme, boolean runVisitors, boolean highlightErrorElements) {
     // "do not run visitors" here means "reduce the set of visitors down to DefaultHighlightVisitor", because it reports error elements
     myHighlightVisitorProducer = runVisitors ?
                                  () -> cloneAndFilterHighlightVisitors(psiFile, scheme) :
@@ -76,7 +78,8 @@ class HighlightVisitorRunner {
     return ArrayUtil.realloc(clones, o, HighlightVisitor.ARRAY_FACTORY);
   }
 
-  void createHighlightVisitorsFor(@NotNull Consumer<? super HighlightVisitor[]> consumer) {
+  @ApiStatus.Internal
+  public void createHighlightVisitorsFor(@NotNull Consumer<? super HighlightVisitor[]> consumer) {
     // first ever queried HighlightVisitor can be used as is, but all further HighlightVisitors queried while the previous HighlightVisitor haven't finished, should be cloned to avoid reentrancy issues
     HighlightVisitor[] filtered = myHighlightVisitorProducer.get();
     consumer.consume(filtered);
@@ -85,7 +88,9 @@ class HighlightVisitorRunner {
   private record VisitorInfo(@NotNull HighlightVisitor visitor,
                              @NotNull Set<PsiElement> skipParentsSet,
                              @NotNull HighlightInfoHolder holder) {}
-  boolean runVisitors(@NotNull PsiFile psiFile,
+
+  @ApiStatus.Internal
+  public boolean runVisitors(@NotNull PsiFile psiFile,
                       @NotNull TextRange myRestrictRange,
                       @NotNull List<? extends PsiElement> elements1,
                       @NotNull LongList ranges1,

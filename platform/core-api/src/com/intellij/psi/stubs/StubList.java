@@ -135,7 +135,8 @@ public abstract class StubList extends AbstractList<StubBase<?>> {
     myTempState.prepareForChildren(parentId, childrenCount);
   }
 
-  abstract @Nullable StubBase<?> getCachedStub(int index);
+  @ApiStatus.Internal
+  public abstract @Nullable StubBase<?> getCachedStub(int index);
 
   List<StubBase<?>> getChildrenStubs(int id) {
     int count = getChildrenCount(id);
@@ -379,7 +380,8 @@ final class MaterialStubList extends StubList {
 
   @Nullable
   @Override
-  StubBase<?> getCachedStub(int index) {
+  @ApiStatus.Internal
+  public StubBase<?> getCachedStub(int index) {
     return get(index);
   }
 }

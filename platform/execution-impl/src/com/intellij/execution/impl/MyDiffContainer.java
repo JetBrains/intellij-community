@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.openapi.Disposable;
@@ -22,7 +22,7 @@ public final class MyDiffContainer extends JBLayeredPane implements Disposable {
   private final JComponent myLoadingPanel;
   private final JLabel myJLabel;
 
-  MyDiffContainer(@NotNull JComponent content, @NotNull @Nls String text) {
+  public MyDiffContainer(@NotNull JComponent content, @NotNull @Nls String text) {
     setLayout(new MyOverlayLayout());
     myContent = content;
     myLoadingPanel = new JPanel(new MyPanelLayout());
@@ -43,12 +43,14 @@ public final class MyDiffContainer extends JBLayeredPane implements Disposable {
     myIcon.dispose();
   }
 
-  void startUpdating() {
+  @ApiStatus.Internal
+  public void startUpdating() {
     myLoadingPanel.setVisible(true);
     myIcon.resume();
   }
 
-  void finishUpdating() {
+  @ApiStatus.Internal
+  public void finishUpdating() {
     myIcon.suspend();
     myLoadingPanel.setVisible(false);
   }

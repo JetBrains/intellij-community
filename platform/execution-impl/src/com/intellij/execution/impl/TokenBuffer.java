@@ -23,7 +23,7 @@ import java.util.*;
 public final class TokenBuffer {
   // special token which means that the deferred text starts with "\r" so it shouldn't be appended to the document end.
   // Instead, the last line of the document should be removed
-  static final TokenInfo CR_TOKEN = new TokenInfo(ConsoleViewContentType.SYSTEM_OUTPUT, "\r", null);
+  public static final TokenInfo CR_TOKEN = new TokenInfo(ConsoleViewContentType.SYSTEM_OUTPUT, "\r", null);
   private final int maxCapacity;  // if size becomes > maxCapacity we should trim tokens from the beginning
   private final Deque<TokenInfo> tokens = new ArrayDeque<>(10); // each call to print() is stored here
   private int size; // total lengths of all tokens
@@ -35,7 +35,7 @@ public final class TokenBuffer {
     if (maxCapacity <= 0) throw new IllegalArgumentException(String.valueOf(maxCapacity));
   }
 
-  void print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
+  public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
     int start = 0;
     while (start < text.length()) {
       if (hasTrailingCR()) {
@@ -125,7 +125,8 @@ public final class TokenBuffer {
     //assert tokens.toList().stream().mapToInt(TokenInfo::length).sum() == size;
   }
 
-  int length() {
+  @ApiStatus.Internal
+  public int length() {
     return size - startIndex;
   }
 
@@ -136,7 +137,8 @@ public final class TokenBuffer {
     size = 0;
   }
 
-  static @NotNull CharSequence getRawText(@NotNull List<? extends TokenInfo> tokens) {
+  @ApiStatus.Internal
+  public static @NotNull CharSequence getRawText(@NotNull List<? extends TokenInfo> tokens) {
     int size = 0;
     for (TokenInfo token : tokens) {
       size += token.getText().length();
@@ -151,7 +153,7 @@ public final class TokenBuffer {
   // the first token may be CR_TOKEN meaning that instead of appending it we should delete the last line of the document
   // all the remaining text is guaranteed not to contain CR_TOKEN - they can be appended safely to the document end
   @NotNull
-  List<TokenInfo> drain() {
+  public List<TokenInfo> drain() {
     if (hasTrailingCR()) {
       removeLastLine();
     }
@@ -174,7 +176,7 @@ public final class TokenBuffer {
     return list;
   }
 
-  int getCycleBufferSize() {
+  public int getCycleBufferSize() {
     return maxCapacity;
   }
 
@@ -192,7 +194,8 @@ public final class TokenBuffer {
       this.text = text;
     }
 
-    int length() {
+    @ApiStatus.Internal
+    public int length() {
       return text.length();
     }
 

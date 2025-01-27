@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.PluginException;
@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.AbstractStringEnumerator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,12 +21,12 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 
 final class LazyStubList extends StubList {
   private final AtomicReferenceArray<StubBase<?>> myStubs;
-  private final ObjectStubSerializer myRootSerializer;
+  private final ObjectStubSerializer<?, ?> myRootSerializer;
   private int mySize;
   private final AtomicInteger myInstantiated = new AtomicInteger(1);
   private volatile LazyStubData myData;
 
-  LazyStubList(int size, StubBase<?> root, ObjectStubSerializer rootSerializer) {
+  LazyStubList(int size, StubBase<?> root, ObjectStubSerializer<?, ?> rootSerializer) {
     super(size);
     myStubs = new AtomicReferenceArray<>(size);
     myRootSerializer = rootSerializer;
@@ -35,7 +36,7 @@ final class LazyStubList extends StubList {
 
   @Override
   void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IElementType type) {
-    // stub is lazily created, so we already know all structure, so do nothing
+    // stub is lazily created, so we already know all structures, so do nothing
   }
 
   void addLazyStub(IElementType type, int childIndex, int parentIndex) {
@@ -72,7 +73,8 @@ final class LazyStubList extends StubList {
 
   @Nullable
   @Override
-  StubBase<?> getCachedStub(int index) {
+  @ApiStatus.Internal
+  public StubBase<?> getCachedStub(int index) {
     return myStubs.get(index);
   }
 

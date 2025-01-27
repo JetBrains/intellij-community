@@ -429,7 +429,8 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     PsiDocumentManagerBase.checkConsistency(psiFile, frozenWindow);
   }
 
-  void addToResults(@NotNull InjectionResult result) {
+  @ApiStatus.Internal
+  public void addToResults(@NotNull InjectionResult result) {
     if (result.files != null) {
       for (PsiFile file : result.files) {
         addFileToResults(file);
@@ -758,8 +759,8 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     }
   }
 
-
-  static boolean intersect(DocumentWindowImpl doc1, DocumentWindowImpl doc2) {
+  @ApiStatus.Internal
+  public static boolean intersect(DocumentWindowImpl doc1, DocumentWindowImpl doc2) {
     Segment[] hostRanges1 = doc1.getHostRanges();
     Segment[] hostRanges2 = doc2.getHostRanges();
     // DocumentWindowImpl.getHostRanges() may theoretically return non-sorted ranges

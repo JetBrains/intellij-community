@@ -2159,12 +2159,12 @@ c:com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 - <init>():V
 - p:addWeighersBefore(com.intellij.codeInsight.completion.impl.CompletionSorterImpl):com.intellij.codeInsight.completion.impl.CompletionSorterImpl
 - sf:assertPhase(java.lang.Class[]):V
-- p:createResultSet(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.util.Consumer,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionResultSet
+- createResultSet(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.util.Consumer,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionResultSet
 - sf:getCompletionPhase():com.intellij.codeInsight.completion.CompletionPhase
 - sf:getCompletionService():com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 - getCurrentCompletion():com.intellij.codeInsight.completion.CompletionProcess
 - sf:getCurrentCompletionProgressIndicator():com.intellij.codeInsight.completion.CompletionProgressIndicator
-- p:getVariantsFromContributor(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.codeInsight.completion.CompletionResultSet):V
+- getVariantsFromContributor(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.codeInsight.completion.CompletionResultSet):V
 - sf:isPhase(java.lang.Class[]):Z
 - performCompletion(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.util.Consumer):V
 - p:processStatsWeigher(com.intellij.codeInsight.completion.impl.CompletionSorterImpl,com.intellij.psi.Weigher,com.intellij.codeInsight.completion.CompletionLocation):com.intellij.codeInsight.completion.impl.CompletionSorterImpl
@@ -15738,14 +15738,14 @@ a:com.intellij.refactoring.changeSignature.ChangeSignatureProcessorBase
 - s:collectConflictsFromExtensions(com.intellij.openapi.util.Ref,com.intellij.util.containers.MultiMap,com.intellij.refactoring.changeSignature.ChangeInfo):V
 - s:doChangeSignature(com.intellij.refactoring.changeSignature.ChangeInfo,com.intellij.usageView.UsageInfo[]):V
 - ps:filterUsages(java.util.List):java.util.List
-- p:findUsages():com.intellij.usageView.UsageInfo[]
+- findUsages():com.intellij.usageView.UsageInfo[]
 - s:findUsages(com.intellij.refactoring.changeSignature.ChangeInfo):com.intellij.usageView.UsageInfo[]
 - p:getAfterData(com.intellij.usageView.UsageInfo[]):com.intellij.refactoring.listeners.RefactoringEventData
 - p:getBeforeData():com.intellij.refactoring.listeners.RefactoringEventData
 - getChangeInfo():com.intellij.refactoring.changeSignature.ChangeInfo
 - p:getCommandName():java.lang.String
 - p:getRefactoringId():java.lang.String
-- p:isPreviewUsages(com.intellij.usageView.UsageInfo[]):Z
+- isPreviewUsages(com.intellij.usageView.UsageInfo[]):Z
 - p:performRefactoring(com.intellij.usageView.UsageInfo[]):V
 f:com.intellij.refactoring.changeSignature.DefaultValueChooser
 - com.intellij.openapi.ui.DialogWrapper
@@ -16319,6 +16319,7 @@ a:com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDele
 f:com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectProcessor
 - com.intellij.refactoring.util.FixableUsagesRefactoringProcessor
 - <init>(com.intellij.psi.PsiNamedElement,com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor,java.util.List,Z):V
+- preprocessUsages(com.intellij.openapi.util.Ref):Z
 f:com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectProcessor$ChangeSignatureUsageWrapper
 - com.intellij.refactoring.util.FixableUsageInfo
 - <init>(com.intellij.usageView.UsageInfo):V
@@ -16348,6 +16349,8 @@ f:com.intellij.refactoring.invertBoolean.InvertBooleanHandler
 f:com.intellij.refactoring.invertBoolean.InvertBooleanProcessor
 - com.intellij.refactoring.BaseRefactoringProcessor
 - <init>(com.intellij.psi.PsiElement,java.lang.String):V
+- findUsages():com.intellij.usageView.UsageInfo[]
+- preprocessUsages(com.intellij.openapi.util.Ref):Z
 c:com.intellij.refactoring.lang.ExtractIncludeDialog
 - com.intellij.openapi.ui.DialogWrapper
 - pf:myExtension:java.lang.String
@@ -16446,14 +16449,14 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - com.intellij.refactoring.BaseRefactoringProcessor
 - <init>(com.intellij.psi.PsiElement,java.util.List,com.intellij.refactoring.util.DocCommentPolicy):V
 - p:createUsageViewDescriptor(com.intellij.usageView.UsageInfo[]):com.intellij.usageView.UsageViewDescriptor
-- p:findUsages():com.intellij.usageView.UsageInfo[]
+- findUsages():com.intellij.usageView.UsageInfo[]
 - p:getAfterData(com.intellij.usageView.UsageInfo[]):com.intellij.refactoring.listeners.RefactoringEventData
 - p:getBeforeData():com.intellij.refactoring.listeners.RefactoringEventData
 - p:getCommandName():java.lang.String
 - p:getElementsToWrite(com.intellij.usageView.UsageViewDescriptor):java.util.Collection
 - p:getRefactoringId():java.lang.String
 - p:performRefactoring(com.intellij.usageView.UsageInfo[]):V
-- p:preprocessUsages(com.intellij.openapi.util.Ref):Z
+- preprocessUsages(com.intellij.openapi.util.Ref):Z
 - pushDownToClasses(com.intellij.usageView.UsageInfo[]):V
 - p:refreshElements(com.intellij.psi.PsiElement[]):V
 f:com.intellij.refactoring.memberPushDown.PushDownUsageViewDescriptor
@@ -16554,7 +16557,7 @@ c:com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesPr
 - p:getTargetName():java.lang.String
 - p:performPsiSpoilingRefactoring():V
 - performRefactoring(com.intellij.usageView.UsageInfo[]):V
-- p:preprocessUsages(com.intellij.openapi.util.Ref):Z
+- preprocessUsages(com.intellij.openapi.util.Ref):Z
 f:com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesProcessor$TargetDirectoryWrapper
 - <init>(com.intellij.psi.PsiDirectory):V
 - <init>(com.intellij.psi.PsiDirectory,java.lang.String):V
@@ -16611,14 +16614,14 @@ c:com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesPro
 - p:createUsageViewDescriptor(com.intellij.usageView.UsageInfo[]):com.intellij.usageView.UsageViewDescriptor
 - p:doMoveDirectory(com.intellij.psi.PsiDirectory,com.intellij.psi.PsiDirectory):V
 - p:doMoveFile(com.intellij.psi.PsiFile,com.intellij.psi.PsiDirectory):V
-- p:findUsages():com.intellij.usageView.UsageInfo[]
+- findUsages():com.intellij.usageView.UsageInfo[]
 - p:getAfterData(com.intellij.usageView.UsageInfo[]):com.intellij.refactoring.listeners.RefactoringEventData
 - p:getBeforeData():com.intellij.refactoring.listeners.RefactoringEventData
 - p:getCommandName():java.lang.String
 - p:getRefactoringId():java.lang.String
 - p:performPsiSpoilingRefactoring():V
 - p:performRefactoring(com.intellij.usageView.UsageInfo[]):V
-- p:preprocessUsages(com.intellij.openapi.util.Ref):Z
+- preprocessUsages(com.intellij.openapi.util.Ref):Z
 - p:refreshElements(com.intellij.psi.PsiElement[]):V
 - p:retargetUsages(com.intellij.usageView.UsageInfo[],java.util.Map):V
 - p:shouldDisableAccessChecks():Z
@@ -16775,7 +16778,7 @@ c:com.intellij.refactoring.rename.RenameProcessor
 - getNewNames():java.util.Collection
 - p:getRefactoringId():java.lang.String
 - hasNonCodeUsages():Z
-- p:isPreviewUsages(com.intellij.usageView.UsageInfo[]):Z
+- isPreviewUsages(com.intellij.usageView.UsageInfo[]):Z
 - isSearchInComments():Z
 - isSearchTextOccurrences():Z
 - p:performPsiSpoilingRefactoring():V
@@ -17052,11 +17055,14 @@ f:com.intellij.refactoring.safeDelete.SafeDeleteProcessor
 - s:createInstance(com.intellij.openapi.project.Project,java.lang.Runnable,com.intellij.psi.PsiElement[],Z,Z,Z):com.intellij.refactoring.safeDelete.SafeDeleteProcessor
 - s:findGenericElementUsages(com.intellij.psi.PsiElement,java.util.List,com.intellij.psi.PsiElement[]):V
 - s:findGenericElementUsages(com.intellij.psi.PsiElement,java.util.List,com.intellij.psi.PsiElement[],com.intellij.psi.search.SearchScope):V
+- findUsages():com.intellij.usageView.UsageInfo[]
 - s:getDefaultInsideDeletedCondition(com.intellij.psi.PsiElement[]):com.intellij.openapi.util.Condition
 - getElements():com.intellij.psi.PsiElement[]
 - s:isInside(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- isPreviewUsages(com.intellij.usageView.UsageInfo[]):Z
 - isSearchInCommentsAndStrings():Z
 - isSearchNonJava():Z
+- preprocessUsages(com.intellij.openapi.util.Ref):Z
 - setAfterRefactoringCallback(java.lang.Runnable):V
 - setSearchInCommentsAndStrings(Z):V
 - setSearchNonJava(Z):V
@@ -17359,7 +17365,7 @@ a:com.intellij.refactoring.util.FixableUsagesRefactoringProcessor
 - com.intellij.refactoring.BaseRefactoringProcessor
 - p:<init>(com.intellij.openapi.project.Project):V
 - ps:checkConflicts(com.intellij.openapi.util.Ref,com.intellij.util.containers.MultiMap):V
-- pf:findUsages():com.intellij.usageView.UsageInfo[]
+- f:findUsages():com.intellij.usageView.UsageInfo[]
 - pa:findUsages(java.util.List):V
 - p:performRefactoring(com.intellij.usageView.UsageInfo[]):V
 f:com.intellij.refactoring.util.RadioUpDownListener

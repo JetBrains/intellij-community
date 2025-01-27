@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -117,7 +117,7 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
                                  newName != null ? newName : method.getName(),
                                  newType, genParams.genParams(method), genExceptions.genExceptions(method)) {
       @Override
-      protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+      public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
         try {
           return super.preprocessUsages(refUsages);
         }

@@ -317,7 +317,8 @@ public final class FileTypeAssocTable<T> {
   }
 
   @NotNull
-  Map<String, T> getInternalRawHashBangPatterns() {
+  @ApiStatus.Internal
+  public Map<String, T> getInternalRawHashBangPatterns() {
     return CollectionFactory.createSmallMemoryFootprintMap(myHashBangMap);
   }
 

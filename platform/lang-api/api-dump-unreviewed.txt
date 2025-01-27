@@ -1356,7 +1356,7 @@ c:com.intellij.codeInspection.ui.InspectionOptionsPanel
 - s:getMinimumListSize():java.awt.Dimension
 - s:getMinimumLongListSize():java.awt.Dimension
 - s:singleCheckBox(com.intellij.codeInspection.InspectionProfileEntry,java.lang.String,java.lang.String):com.intellij.codeInspection.ui.InspectionOptionsPanel
-c:com.intellij.codeInspection.ui.ListEditForm
+f:com.intellij.codeInspection.ui.ListEditForm
 - <init>(java.lang.String,java.lang.String,java.util.List):V
 - <init>(java.lang.String,java.lang.String,java.util.List,java.lang.String):V
 - <init>(java.lang.String,java.lang.String,java.util.List,java.lang.String,java.util.function.Function):V
@@ -5739,7 +5739,7 @@ a:com.intellij.refactoring.util.RelatedUsageInfo
 - getRelatedElement():com.intellij.psi.PsiElement
 a:com.intellij.semantic.SemContributor
 - <init>():V
-- p:isAvailable(com.intellij.openapi.project.Project):Z
+- F:isAvailable(com.intellij.openapi.project.Project):Z
 - a:registerSemProviders(com.intellij.semantic.SemRegistrar,com.intellij.openapi.project.Project):V
 f:com.intellij.semantic.SemContributorEP
 - implementation:java.lang.String

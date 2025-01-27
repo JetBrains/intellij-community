@@ -657,7 +657,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Nullable
-  DumbModeAccessType getCurrentDumbModeAccessType_NoDumbChecks() {
+  @ApiStatus.Internal
+  public DumbModeAccessType getCurrentDumbModeAccessType_NoDumbChecks() {
     Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
     if (dumbModeAccessTypeStack.isEmpty()) {
       if (!Registry.is("ide.dumb.mode.check.awareness")) {

@@ -68,7 +68,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
-    protected UsageInfo @NotNull [] findUsages() {
+    public UsageInfo @NotNull [] findUsages() {
         int usageCount = myOtherExpressions.size() + 1;
 
         final List<PsiElement> callsToUpdate;

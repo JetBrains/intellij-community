@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move.moduleMembers;
 
 import com.google.common.collect.Sets;
@@ -67,7 +67,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected UsageInfo @NotNull [] findUsages() {
+  public UsageInfo @NotNull [] findUsages() {
     return StreamEx.of(myElements)
       .map(SmartPsiElementPointer::getElement)
       .nonNull()

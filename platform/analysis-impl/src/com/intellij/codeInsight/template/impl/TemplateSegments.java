@@ -18,7 +18,7 @@ public class TemplateSegments {
     myDocument = document;
   }
 
-  int getSegmentStart(int i) {
+  public int getSegmentStart(int i) {
     RangeMarker rangeMarker = mySegments.get(i);
     return rangeMarker.getStartOffset();
   }

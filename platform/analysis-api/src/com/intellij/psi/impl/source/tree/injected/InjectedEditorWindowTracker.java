@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -9,16 +9,16 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-abstract class InjectedEditorWindowTracker {
+public abstract class InjectedEditorWindowTracker {
   static InjectedEditorWindowTracker getInstance() {
     return ApplicationManager.getApplication().getService(InjectedEditorWindowTracker.class);
   }
 
-  abstract void disposeInvalidEditors();
+  protected abstract void disposeInvalidEditors();
 
-  abstract void disposeEditorFor(@NotNull DocumentWindow documentWindow);
+  protected abstract void disposeEditorFor(@NotNull DocumentWindow documentWindow);
 
-  abstract @NotNull Editor createEditor(@NotNull DocumentWindow documentRange,
+  protected abstract @NotNull Editor createEditor(@NotNull DocumentWindow documentRange,
                                         @NotNull Editor editor,
                                         @NotNull PsiFile injectedFile);
 }

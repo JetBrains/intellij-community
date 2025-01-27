@@ -60,7 +60,8 @@ public class HighlightInfo implements Segment {
    * Short name of the {@link com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection} tool, which needs to be treated differently from other inspections:
    * it doesn't have "disable" or "suppress" quickfixes
    */
-  static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
+  @ApiStatus.Internal
+  public static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
   // optimization: if tooltip contains this marker object, then it replaced with description field in getTooltip()
   private static final String DESCRIPTION_PLACEHOLDER = "\u0000";
 
@@ -112,7 +113,8 @@ public class HighlightInfo implements Segment {
    */
   private volatile byte myFlags;
 
-  final int navigationShift;
+  @ApiStatus.Internal
+  public final int navigationShift;
 
   private @Nullable Object fileLevelComponentsStorage;
 
@@ -120,14 +122,15 @@ public class HighlightInfo implements Segment {
   /**
    * in case this HighlightInfo is created to highlight unresolved reference, store this reference here to be able to call {@link UnresolvedReferenceQuickFixProvider} later
    */
-  final PsiReference unresolvedReference;
+  @ApiStatus.Internal
+  public final PsiReference unresolvedReference;
 
   /**
    * @deprecated Do not create manually, use {@link #newHighlightInfo(HighlightInfoType)} instead
    */
   @Deprecated
   @ApiStatus.Internal
-  protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
+  public HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
                           @Nullable TextAttributesKey forcedTextAttributesKey,
                           @NotNull HighlightInfoType type,
                           int startOffset,
@@ -168,6 +171,16 @@ public class HighlightInfo implements Segment {
     this.unresolvedReference = unresolvedReference;
   }
 
+  @ApiStatus.Internal
+  public void setToolId(Object toolId) {
+    this.toolId = toolId;
+  }
+
+  @ApiStatus.Internal
+  public Object getToolId() {
+    return toolId;
+  }
+
   /**
    * Find the quickfix (among ones added by {@link #registerFixes}) selected by returning non-null value from the {@code predicate}
    * and return that value, or null if the quickfix was not found.
@@ -197,15 +210,18 @@ public class HighlightInfo implements Segment {
   }
 
   @NotNull
-  TextRange getFixTextRange() {
+  @ApiStatus.Internal
+  public TextRange getFixTextRange() {
     return TextRangeScalarUtil.create(fixRange);
   }
 
-  void markFromInjection() {
+  @ApiStatus.Internal
+  public void markFromInjection() {
     setFlag(FROM_INJECTION_MASK, true);
   }
 
-  void addFileLevelComponent(@NotNull FileEditor fileEditor, @NotNull JComponent component) {
+  @ApiStatus.Internal
+  public void addFileLevelComponent(@NotNull FileEditor fileEditor, @NotNull JComponent component) {
     if (fileLevelComponentsStorage == null) {
       fileLevelComponentsStorage = new Pair<>(fileEditor, component);
     }
@@ -226,7 +242,8 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  void removeFileLeverComponent(@NotNull FileEditor fileEditor) {
+  @ApiStatus.Internal
+  public void removeFileLeverComponent(@NotNull FileEditor fileEditor) {
     if (fileLevelComponentsStorage instanceof Pair) {
       //noinspection unchecked
       Pair<FileEditor, JComponent> pair = (Pair<FileEditor, JComponent>)fileLevelComponentsStorage;
@@ -240,7 +257,8 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  @Nullable JComponent getFileLevelComponent(@NotNull FileEditor fileEditor) {
+  @ApiStatus.Internal
+  public @Nullable JComponent getFileLevelComponent(@NotNull FileEditor fileEditor) {
     if (fileLevelComponentsStorage == null) {
       return null;
     }
@@ -321,7 +339,8 @@ public class HighlightInfo implements Segment {
     myFlags = BitUtil.set(myFlags, mask, value);
   }
 
-  boolean isFileLevelAnnotation() {
+  @ApiStatus.Internal
+  public boolean isFileLevelAnnotation() {
     return isFlagSet(FILE_LEVEL_ANNOTATION_MASK);
   }
 
@@ -449,7 +468,8 @@ public class HighlightInfo implements Segment {
     return equalsByActualOffset(info);
   }
 
-  protected boolean equalsByActualOffset(@NotNull HighlightInfo info) {
+  @ApiStatus.Internal
+  public boolean equalsByActualOffset(@NotNull HighlightInfo info) {
     if (info == this) return true;
 
     return info.getActualStartOffset() == getActualStartOffset() &&
@@ -457,7 +477,8 @@ public class HighlightInfo implements Segment {
            attributesEqual(info);
   }
 
-  boolean attributesEqual(@NotNull HighlightInfo info) {
+  @ApiStatus.Internal
+  public boolean attributesEqual(@NotNull HighlightInfo info) {
     return info.getSeverity() == getSeverity() &&
            Comparing.equal(info.type, type) &&
            Comparing.equal(info.gutterIconRenderer, gutterIconRenderer) &&
@@ -524,7 +545,8 @@ public class HighlightInfo implements Segment {
     return new HighlightInfoB(type);
   }
 
-  void setGroup(int group) {
+  @ApiStatus.Internal
+  public void setGroup(int group) {
     this.group = group;
   }
 
@@ -646,7 +668,7 @@ public class HighlightInfo implements Segment {
       annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), annotatorClass, annotation.getGutterIconRenderer(), HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP,
       annotation.getUnresolvedReference());
 
-    List<? extends Annotation.QuickFixInfo> fixes = batchMode ? annotation.getBatchFixes() : annotation.getQuickFixes();
+    List<Annotation.QuickFixInfo> fixes = batchMode ? annotation.getBatchFixes() : annotation.getQuickFixes();
     if (fixes != null) {
       List<IntentionActionDescriptor> qfrs = ContainerUtil.map(fixes, af -> {
         TextRange range = af.textRange;
@@ -704,7 +726,8 @@ public class HighlightInfo implements Segment {
     return isFlagSet(HAS_HINT_MASK);
   }
 
-  void setHint(boolean hasHint) {
+  @ApiStatus.Internal
+  public void setHint(boolean hasHint) {
     setFlag(HAS_HINT_MASK, hasHint);
   }
 
@@ -766,7 +789,8 @@ public class HighlightInfo implements Segment {
     }
 
     @Nullable
-    IntentionActionDescriptor withEmptyAction() {
+    @ApiStatus.Internal
+    public IntentionActionDescriptor withEmptyAction() {
       if (myKey == null || myKey.getID().equals(ANNOTATOR_INSPECTION_SHORT_NAME)) {
         // No need to show "Inspection 'Annotator' options" quick fix, it wouldn't be actionable.
         return null;
@@ -778,7 +802,8 @@ public class HighlightInfo implements Segment {
                                            myKey, myProblemGroup, mySeverity, myFixRange);
     }
     @NotNull
-    IntentionActionDescriptor withFixRange(@NotNull TextRange fixRange) {
+    @ApiStatus.Internal
+    public IntentionActionDescriptor withFixRange(@NotNull TextRange fixRange) {
       return new IntentionActionDescriptor(myAction, myOptions, myDisplayName, myIcon, myKey, myProblemGroup, mySeverity, fixRange);
     }
 
@@ -786,11 +811,13 @@ public class HighlightInfo implements Segment {
       return myAction;
     }
 
-    boolean isError() {
+    @ApiStatus.Internal
+    public boolean isError() {
       return mySeverity == null || mySeverity.compareTo(HighlightSeverity.ERROR) >= 0;
     }
 
-    boolean isInformation() {
+    @ApiStatus.Internal
+    public boolean isInformation() {
       return HighlightSeverity.INFORMATION.equals(mySeverity);
     }
 
@@ -943,11 +970,13 @@ public class HighlightInfo implements Segment {
     return getActualEndOffset();
   }
 
-  int getGroup() {
+  @ApiStatus.Internal
+  public int getGroup() {
     return group;
   }
 
-  boolean isFromInjection() {
+  @ApiStatus.Internal
+  public boolean isFromInjection() {
     return isFlagSet(FROM_INJECTION_MASK);
   }
 
@@ -977,8 +1006,9 @@ public class HighlightInfo implements Segment {
     registerFixes(List.of(new IntentionActionDescriptor(action, options, displayName, null, key, myProblemGroup, getSeverity(), fixRange)));
   }
 
+  @ApiStatus.Internal
   synchronized // synchronized to avoid concurrent access to quickFix* fields; TODO rework to lock-free
-  void registerFixes(@NotNull List<? extends @NotNull IntentionActionDescriptor> fixes) {
+  public void registerFixes(@NotNull List<? extends @NotNull IntentionActionDescriptor> fixes) {
     if (fixes.isEmpty()) {
       return;
     }
@@ -1050,8 +1080,8 @@ public class HighlightInfo implements Segment {
     return null;
   }
 
-
-  boolean containsOffset(int offset, boolean includeFixRange) {
+  @ApiStatus.Internal
+  public boolean containsOffset(int offset, boolean includeFixRange) {
     RangeHighlighterEx highlighter = getHighlighter();
     if (highlighter == null || !highlighter.isValid()) return false;
     int startOffset = highlighter.getStartOffset();
@@ -1096,26 +1126,32 @@ public class HighlightInfo implements Segment {
   }
 
   @ApiStatus.Internal
-  boolean isUnresolvedReference() {
+  public boolean isUnresolvedReference() {
     return unresolvedReference != null || type.getAttributesKey().equals(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
   }
 
-  boolean isUnresolvedReferenceQuickFixesComputed() {
+  @ApiStatus.Internal
+  public boolean isUnresolvedReferenceQuickFixesComputed() {
     return isFlagSet(UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK);
   }
-  void setUnresolvedReferenceQuickFixesComputed() {
+
+  @ApiStatus.Internal
+  public void setUnresolvedReferenceQuickFixesComputed() {
     setFlag(UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK, true);
   }
+
   @ApiStatus.Internal
-  boolean isFromAnnotator() {
+  public boolean isFromAnnotator() {
     return HighlightInfoUpdaterImpl.isAnnotatorToolId(toolId);
   }
+
   @ApiStatus.Internal
-  boolean isFromInspection() {
+  public boolean isFromInspection() {
     return HighlightInfoUpdaterImpl.isInspectionToolId(toolId);
   }
+
   @ApiStatus.Internal
-  boolean isFromHighlightVisitor() {
+  public boolean isFromHighlightVisitor() {
     return HighlightInfoUpdaterImpl.isHighlightVisitorToolId(toolId);
   }
   @ApiStatus.Internal
@@ -1129,7 +1165,8 @@ public class HighlightInfo implements Segment {
     return unresolvedReference;
   }
 
-  static @NotNull HighlightInfo createComposite(@NotNull List<? extends HighlightInfo> infos) {
+  @ApiStatus.Internal
+  public static @NotNull HighlightInfo createComposite(@NotNull List<? extends HighlightInfo> infos) {
     // derive composite's offsets from an info with tooltip, if present
     HighlightInfo anchorInfo = ContainerUtil.find(infos, info -> info.getToolTip() != null);
     if (anchorInfo == null) anchorInfo = infos.get(0);

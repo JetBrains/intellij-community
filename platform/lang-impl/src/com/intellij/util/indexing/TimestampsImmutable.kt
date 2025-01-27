@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
@@ -38,7 +38,7 @@ class TimestampsImmutable {
     private val IS_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode()
 
     @JvmField
-    val EMPTY = TimestampsImmutable(0, IntLists.emptyList(), IntLists.emptyList())
+    val EMPTY: TimestampsImmutable = TimestampsImmutable(0, IntLists.emptyList(), IntLists.emptyList())
 
     @JvmStatic
     @Throws(IOException::class)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -28,13 +28,15 @@ import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-class B implements AnnotationBuilder {
+@ApiStatus.Internal
+public final class B implements AnnotationBuilder {
   private final @NotNull AnnotationHolderImpl myHolder;
   private final @Nls String message;
   private final @NotNull PsiElement myCurrentElement;
@@ -178,7 +180,8 @@ class B implements AnnotationBuilder {
     return new FixB(QuickFixWrapper.wrap(problemDescriptor, fix));
   }
 
-  void unresolvedReference(@NotNull PsiReference reference) {
+  @ApiStatus.Internal
+  public void unresolvedReference(@NotNull PsiReference reference) {
     assertNotSet(this.unresolvedReference, "unresolvedReference");
     this.unresolvedReference = reference;
   }

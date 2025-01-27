@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.google.common.util.concurrent.Futures;
@@ -15,7 +15,6 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.StubFileElementType;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
@@ -230,7 +229,8 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   @Override
-  void initializeStubIndexes() {
+  @ApiStatus.Internal
+  public void initializeStubIndexes() {
     assert !myInitialized;
 
     myPerFileElementTypeStubModificationTracker.undispose();
@@ -273,7 +273,8 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   @Override
-  void setDataBufferingEnabled(final boolean enabled) {
+  @ApiStatus.Internal
+  public void setDataBufferingEnabled(final boolean enabled) {
     AsyncState state = ProgressManager.getInstance().computeInNonCancelableSection(this::getAsyncState);
     for (UpdatableIndex<?, ?, ?, ?> index : state.myIndices.values()) {
       index.setBufferingEnabled(enabled);
@@ -281,7 +282,7 @@ public final class StubIndexImpl extends StubIndexEx {
   }
 
   @Override
-  void cleanupMemoryStorage() {
+  public void cleanupMemoryStorage() {
     //'eventually consistent'
     for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
       index.cleanupMemoryStorage();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,14 +10,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-final class ProjectFilesCondition {
+public final class ProjectFilesCondition {
   private static final int MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT = 2;
   private final VirtualFile myRestrictedTo;
   private final GlobalSearchScope myFilter;
   private int myFilesFromOtherProjects;
   private final IdFilter myIndexableFilesFilter;
 
-  ProjectFilesCondition(IdFilter indexableFilesFilter,
+  public ProjectFilesCondition(IdFilter indexableFilesFilter,
                         GlobalSearchScope filter,
                         VirtualFile restrictedTo,
                         boolean includeFilesFromOtherProjects) {

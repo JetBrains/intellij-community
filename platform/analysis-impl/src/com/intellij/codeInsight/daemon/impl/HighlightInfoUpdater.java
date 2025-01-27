@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -7,13 +7,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
 
-abstract class HighlightInfoUpdater {
-  static HighlightInfoUpdater getInstance(Project project) {
+@ApiStatus.Internal
+public abstract class HighlightInfoUpdater {
+  public static HighlightInfoUpdater getInstance(Project project) {
     return project.getService(HighlightInfoUpdater.class);
   }
 
@@ -27,7 +29,7 @@ abstract class HighlightInfoUpdater {
    *               {@code Class<? extends HighlightVisitor>}: the tool is a {@link HighlightVisitor} of the corresponding class
    *               {@code Object: Injection background and syntax from InjectedGeneralHighlightingPass#INJECTION_BACKGROUND_ID }
    */
-  abstract void psiElementVisited(@NotNull Object toolId,
+  public abstract void psiElementVisited(@NotNull Object toolId,
                                   @NotNull PsiElement visitedPsiElement,
                                   @NotNull List<? extends HighlightInfo> newInfos,
                                   @NotNull Document hostDocument,
@@ -36,7 +38,8 @@ abstract class HighlightInfoUpdater {
                                   @NotNull HighlightingSession session,
                                   @NotNull ManagedHighlighterRecycler invalidElementRecycler);
 
-  abstract void removeInfosForInjectedFilesOtherThan(@NotNull PsiFile hostPsiFile,
+  @ApiStatus.Internal
+  public abstract void removeInfosForInjectedFilesOtherThan(@NotNull PsiFile hostPsiFile,
                                                      @NotNull TextRange restrictRange,
                                                      @NotNull HighlightingSession highlightingSession,
                                                      @NotNull Collection<? extends PsiFile> liveInjectedFiles);
@@ -44,16 +47,17 @@ abstract class HighlightInfoUpdater {
   /**
    * {@link HighlightInfoUpdater} which doesn't update markup model. Useful for obtaining highlighting without showing anything
     */
-  static final @NotNull HighlightInfoUpdater EMPTY = new HighlightInfoUpdater(){
+  @ApiStatus.Internal
+  public static final @NotNull HighlightInfoUpdater EMPTY = new HighlightInfoUpdater(){
     @Override
-    void removeInfosForInjectedFilesOtherThan(@NotNull PsiFile hostPsiFile,
+    public void removeInfosForInjectedFilesOtherThan(@NotNull PsiFile hostPsiFile,
                                               @NotNull TextRange restrictRange,
                                               @NotNull HighlightingSession highlightingSession,
                                               @NotNull Collection<? extends PsiFile> liveInjectedFiles) {
     }
 
     @Override
-    void psiElementVisited(@NotNull Object toolId,
+    public void psiElementVisited(@NotNull Object toolId,
                            @NotNull PsiElement visitedPsiElement,
                            @NotNull List<? extends HighlightInfo> newInfos,
                            @NotNull Document hostDocument,

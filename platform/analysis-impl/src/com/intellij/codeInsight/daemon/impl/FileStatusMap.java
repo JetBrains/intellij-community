@@ -45,7 +45,8 @@ public final class FileStatusMap implements Disposable {
   private final /*non-static*/Key<RangeMarker> COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY = Key.create("COMPOSITE_DOCUMENT_CHANGE_KEY");
   private volatile boolean myAllowDirt = true;
 
-  FileStatusMap(@NotNull Project project) {
+  @ApiStatus.Internal
+  public FileStatusMap(@NotNull Project project) {
     myProject = project;
   }
 
@@ -84,7 +85,8 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
-  boolean wasErrorFound(@NotNull Document document) {
+  @ApiStatus.Internal
+  public boolean wasErrorFound(@NotNull Document document) {
     synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       return status != null && status.errorFound;
@@ -206,7 +208,8 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
-  TextRange getFileDirtyScopeForAllPassesCombined(@NotNull Document document) {
+  @ApiStatus.Internal
+  public TextRange getFileDirtyScopeForAllPassesCombined(@NotNull Document document) {
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) {
@@ -260,7 +263,8 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
-  void markFileScopeDirtyDefensively(@NotNull Document document, @NotNull @NonNls Object reason) {
+  @ApiStatus.Internal
+  public void markFileScopeDirtyDefensively(@NotNull Document document, @NotNull @NonNls Object reason) {
     assertAllowModifications();
     log("Mark dirty file defensively: ",document,reason);
     // mark the whole file dirty in case no subsequent PSI events will come, but file requires re-highlighting nevertheless
@@ -272,10 +276,13 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
-  void markWholeFileScopeDirty(@NotNull Document document, @NotNull @NonNls Object reason) {
+  @ApiStatus.Internal
+  public void markWholeFileScopeDirty(@NotNull Document document, @NotNull @NonNls Object reason) {
     combineDirtyScopes(document, FileStatus.WHOLE_FILE_TEXT_RANGE, reason);
   }
-  void markScopeDirty(@NotNull Document document, @NotNull TextRange scope, @NotNull @NonNls Object reason) {
+
+  @ApiStatus.Internal
+  public void markScopeDirty(@NotNull Document document, @NotNull TextRange scope, @NotNull @NonNls Object reason) {
     ApplicationManager.getApplication().assertIsNonDispatchThread(); // assert dirty scope updates happen in BGT only, see IJPL-163033
     ApplicationManager.getApplication().assertReadAccessAllowed();
     combineDirtyScopes(document, scope, reason);
@@ -318,7 +325,8 @@ public final class FileStatusMap implements Disposable {
    * Runs {@code runnable} while (Dis)Allowing file modifications during highlighting testing. Might be useful to catch unexpected modification requests.
    */
   @TestOnly
-  <E extends Exception> void runAllowingDirt(boolean allowDirt, @NotNull ThrowableRunnable<E> runnable) throws E {
+  @ApiStatus.Internal
+  public <E extends Exception> void runAllowingDirt(boolean allowDirt, @NotNull ThrowableRunnable<E> runnable) throws E {
     boolean old = myAllowDirt;
     try {
       myAllowDirt = allowDirt;
@@ -410,7 +418,8 @@ public final class FileStatusMap implements Disposable {
   }
 
   // store any Document change and combine it with every previous one to form one big dirty change
-  void addDocumentDirtyRange(@NotNull DocumentEvent event) {
+  @ApiStatus.Internal
+  public void addDocumentDirtyRange(@NotNull DocumentEvent event) {
     Document document = event.getDocument();
     RangeMarker oldRange = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
     if (oldRange != WHOLE_FILE_DIRTY_MARKER && oldRange != null && oldRange.isValid() && oldRange.getTextRange().containsRange(event.getOffset(), event.getOffset()+event.getNewLength())) {
@@ -430,7 +439,8 @@ public final class FileStatusMap implements Disposable {
 
   // get one big dirty region united from all small document changes before highlighting finished
   @NotNull
-  TextRange getCompositeDocumentDirtyRange(@NotNull Document document) {
+  @ApiStatus.Internal
+  public TextRange getCompositeDocumentDirtyRange(@NotNull Document document) {
     RangeMarker change = document.getUserData(COMPOSITE_DOCUMENT_DIRTY_RANGE_KEY);
     return change == WHOLE_FILE_DIRTY_MARKER ? new TextRange(0, document.getTextLength()) :
            change == null || !change.isValid() ? TextRange.EMPTY_RANGE :

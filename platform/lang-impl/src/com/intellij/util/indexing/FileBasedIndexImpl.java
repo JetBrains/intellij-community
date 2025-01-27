@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.google.common.collect.Iterators;
@@ -1763,7 +1763,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final class VirtualFileUpdateTask extends UpdateTask<FileIndexingRequest> {
     @Override
-    void doProcess(FileIndexingRequest item, Project project) {
+    public void doProcess(FileIndexingRequest item, Project project) {
       // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
       IndexingRequestToken indexingRequest = project.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
       var stamp = indexingRequest.getFileIndexingStamp(item.getFile());

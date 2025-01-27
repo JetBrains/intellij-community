@@ -33,7 +33,7 @@ import java.util.List;
 
 /**
  * Processor for member-based refactorings. It moves members from one place to another using {@link MembersManager}.
- * Inheritors only need to implement {@link UsageViewDescriptor} methods (while this interface is also implemented by this class)
+ * Inheritors only need to implement {@link UsageViewDescriptor} methods (while this class also implements this interface)
  *
  * @author Ilya.Kazakevich
  */
@@ -70,10 +70,10 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
   }
 
   /**
-   * @return destinations (so user would be able to choose if she wants to move member to certain place or not)
+   * @return destinations (so user would be able to choose if she wants to move member to a certain place or not)
    */
   @Override
-  protected final PyUsageInfo @NotNull [] findUsages() {
+  public final PyUsageInfo @NotNull [] findUsages() {
     final List<PyUsageInfo> result = new ArrayList<>(myTo.length);
     for (final PyClass pyDestinationClass : myTo) {
       result.add(new PyUsageInfo(pyDestinationClass));

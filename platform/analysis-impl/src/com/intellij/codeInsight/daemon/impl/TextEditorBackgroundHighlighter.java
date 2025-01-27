@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -98,7 +98,8 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
     return passes.isEmpty() ? TextEditorHighlightingPass.EMPTY_ARRAY : passes.toArray(TextEditorHighlightingPass.EMPTY_ARRAY);
   }
 
-  static PsiFile renewFile(@NotNull Project project, @NotNull Document document)  {
+  @ApiStatus.Internal
+  public static PsiFile renewFile(@NotNull Project project, @NotNull Document document)  {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile instanceof PsiCompiledFile compiled) {
       psiFile = compiled.getDecompiledPsiFile();

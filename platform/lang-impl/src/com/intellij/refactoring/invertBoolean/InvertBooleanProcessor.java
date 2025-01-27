@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,7 +63,7 @@ public final class InvertBooleanProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+  public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     final UsageInfo[] usageInfos = refUsages.get();
     myDelegate.findConflicts(usageInfos, conflicts);
@@ -80,7 +80,7 @@ public final class InvertBooleanProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected UsageInfo @NotNull [] findUsages() {
+  public UsageInfo @NotNull [] findUsages() {
     final List<SmartPsiElementPointer> toInvert = new ArrayList<>();
 
     final LinkedHashSet<PsiElement> elementsToInvert = new LinkedHashSet<>();

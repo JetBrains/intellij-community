@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
@@ -81,9 +81,11 @@ internal class ModuleManagerComponentBridgeInitializer : BridgeInitializer {
 
 @Suppress("OVERRIDE_DEPRECATION")
 @ApiStatus.Internal
-abstract class ModuleManagerBridgeImpl(private val project: Project,
-                                       private val coroutineScope: CoroutineScope,
-                                       moduleRootListenerBridge: ModuleRootListenerBridge) : ModuleManagerEx(), Disposable {
+abstract class ModuleManagerBridgeImpl(
+  private val project: Project,
+  private val coroutineScope: CoroutineScope,
+  moduleRootListenerBridge: ModuleRootListenerBridge,
+) : ModuleManagerEx(), Disposable {
   private val moduleNameToUnloadedModuleDescription: MutableMap<String, UnloadedModuleDescription> = ConcurrentHashMap()
 
   private val moduleNamesQuery = entities<ModuleEntity>().map { it.name }
@@ -163,7 +165,8 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
     modules().forEach(Disposer::dispose)
   }
 
-  protected fun modules(): Sequence<ModuleBridge> {
+  @ApiStatus.Internal
+  fun modules(): Sequence<ModuleBridge> {
     return modules(entityStore.current)
   }
 
@@ -183,10 +186,12 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
 
   val entityStore: VersionedEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage
 
-  suspend fun loadModules(loadedEntities: List<ModuleEntity>,
-                          unloadedEntities: List<ModuleEntity>,
-                          targetBuilder: MutableEntityStorage?,
-                          initializeFacets: Boolean): Unit = loadAllModulesTimeMs.addMeasuredTime {
+  suspend fun loadModules(
+    loadedEntities: List<ModuleEntity>,
+    unloadedEntities: List<ModuleEntity>,
+    targetBuilder: MutableEntityStorage?,
+    initializeFacets: Boolean,
+  ): Unit = loadAllModulesTimeMs.addMeasuredTime {
     val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
     val corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID }
 
@@ -415,10 +420,12 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  private fun addAndRemoveModules(builder: MutableEntityStorage,
-                                  entitiesToAdd: List<ModuleEntity>,
-                                  entitiesToRemove: List<ModuleEntity>,
-                                  storageContainingEntitiesToAdd: EntityStorage) {
+  private fun addAndRemoveModules(
+    builder: MutableEntityStorage,
+    entitiesToAdd: List<ModuleEntity>,
+    entitiesToRemove: List<ModuleEntity>,
+    storageContainingEntitiesToAdd: EntityStorage,
+  ) {
     for (entity in entitiesToRemove) {
       builder.removeEntity(entity)
     }

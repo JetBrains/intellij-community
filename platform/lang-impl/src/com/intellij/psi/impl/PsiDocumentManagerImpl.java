@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -175,12 +175,12 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
 
   @NotNull
   @Override
-  List<BooleanRunnable> reparseChangedInjectedFragments(@NotNull Document hostDocument,
-                                                        @NotNull PsiFile hostPsiFile,
-                                                        @NotNull TextRange hostChangedRange,
-                                                        @NotNull ProgressIndicator indicator,
-                                                        @NotNull ASTNode oldRoot,
-                                                        @NotNull ASTNode newRoot) {
+  protected List<BooleanRunnable> reparseChangedInjectedFragments(@NotNull Document hostDocument,
+                                                                  @NotNull PsiFile hostPsiFile,
+                                                                  @NotNull TextRange hostChangedRange,
+                                                                  @NotNull ProgressIndicator indicator,
+                                                                  @NotNull ASTNode oldRoot,
+                                                                  @NotNull ASTNode newRoot) {
     List<DocumentWindow> changedInjected = InjectedLanguageManager.getInstance(myProject).getCachedInjectedDocumentsInRange(hostPsiFile, hostChangedRange);
     if (changedInjected.isEmpty()) return Collections.emptyList();
     FileViewProvider hostViewProvider = hostPsiFile.getViewProvider();

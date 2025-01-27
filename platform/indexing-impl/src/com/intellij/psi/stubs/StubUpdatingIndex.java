@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.Language;
@@ -52,7 +52,7 @@ import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.AFTE
 public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<SerializedStubTree>
   implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree> {
   @ApiStatus.Internal
-  static final Logger LOG = Logger.getInstance(StubUpdatingIndex.class);
+  public static final Logger LOG = Logger.getInstance(StubUpdatingIndex.class);
   private static final boolean DEBUG_PREBUILT_INDICES = SystemProperties.getBooleanProperty("debug.prebuilt.indices", false);
 
   public static final boolean USE_SNAPSHOT_MAPPINGS = false; //TODO
@@ -394,7 +394,8 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     ((StubIndexEx)StubIndex.getInstance()).initializationFailed(e);
   }
 
-  static @NotNull IndexingStampInfo calculateIndexingStamp(@NotNull FileContent content) {
+  @ApiStatus.Internal
+  public static @NotNull IndexingStampInfo calculateIndexingStamp(@NotNull FileContent content) {
     VirtualFile file = content.getFile();
     boolean isBinary = file.getFileType().isBinary();
     int contentLength = isBinary ? -1 : content.getPsiFile().getTextLength();

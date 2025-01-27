@@ -265,7 +265,6 @@ f:com.intellij.codeInsight.completion.CompletionResult
 - s:wrap(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.codeInsight.completion.CompletionSorter):com.intellij.codeInsight.completion.CompletionResult
 a:com.intellij.codeInsight.completion.CompletionResultSet
 - com.intellij.util.Consumer
-- pf:contributor:com.intellij.codeInsight.completion.CompletionContributor
 - pf:myCompletionService:com.intellij.codeInsight.completion.CompletionService
 - p:<init>(com.intellij.codeInsight.completion.PrefixMatcher,java.util.function.Consumer,com.intellij.codeInsight.completion.CompletionContributor):V
 - addAllElements(java.lang.Iterable):V
@@ -274,7 +273,6 @@ a:com.intellij.codeInsight.completion.CompletionResultSet
 - a:caseInsensitive():com.intellij.codeInsight.completion.CompletionResultSet
 - consume(com.intellij.codeInsight.lookup.LookupElement):V
 - endBatch():V
-- p:getConsumer():java.util.function.Consumer
 - getPrefixMatcher():com.intellij.codeInsight.completion.PrefixMatcher
 - isStopped():Z
 - passResult(com.intellij.codeInsight.completion.CompletionResult):V
@@ -296,12 +294,10 @@ a:com.intellij.codeInsight.completion.CompletionService
 - sf:STATISTICS_KEY:com.intellij.openapi.util.Key
 - <init>():V
 - pa:createMatcher(java.lang.String,Z):com.intellij.codeInsight.completion.PrefixMatcher
-- pa:createResultSet(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.util.Consumer,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionResultSet
 - a:defaultSorter(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionSorter
 - a:emptySorter():com.intellij.codeInsight.completion.CompletionSorter
 - s:getCompletionService():com.intellij.codeInsight.completion.CompletionService
 - a:getCurrentCompletion():com.intellij.codeInsight.completion.CompletionProcess
-- p:getVariantsFromContributor(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.codeInsight.completion.CompletionResultSet):V
 - p:getVariantsFromContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.util.Consumer):V
 - p:getVariantsFromContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.util.Consumer,com.intellij.codeInsight.completion.CompletionSorter):V
 - getVariantsFromContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.util.Consumer):V
@@ -1611,7 +1607,6 @@ a:com.intellij.codeInspection.ex.InspectionElementsMerger
 - getSuppressIds():java.lang.String[]
 a:com.intellij.codeInspection.ex.InspectionToolWrapper
 - sf:EMPTY_ARRAY:com.intellij.codeInspection.ex.InspectionToolWrapper[]
-- pf:myEP:com.intellij.codeInspection.InspectionEP
 - p:myTool:com.intellij.codeInspection.InspectionProfileEntry
 - p:<init>(com.intellij.codeInspection.InspectionEP):V
 - p:<init>(com.intellij.codeInspection.InspectionProfileEntry):V

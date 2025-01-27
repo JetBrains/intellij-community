@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -30,7 +30,8 @@ public class QuickFixActionRegistrarImpl implements QuickFixActionRegistrar {
     doRegister(action, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
   }
 
-  void doRegister(@NotNull IntentionAction action,
+  @ApiStatus.Internal
+  public void doRegister(@NotNull IntentionAction action,
                   @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String displayName,
                   @Nullable TextRange fixRange,
                   @Nullable HighlightDisplayKey key) {

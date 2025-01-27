@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -19,7 +19,7 @@ final class InjectedEditorWindowTrackerImpl extends InjectedEditorWindowTracker 
 
   @NotNull
   @Override
-  Editor createEditor(final @NotNull DocumentWindow documentRange,
+  protected Editor createEditor(final @NotNull DocumentWindow documentRange,
                       final @NotNull Editor editor,
                       final @NotNull PsiFile injectedFile) {
     if (!(editor instanceof EditorImpl editorImpl)) return editor;
@@ -47,7 +47,7 @@ final class InjectedEditorWindowTrackerImpl extends InjectedEditorWindowTracker 
   }
 
   @Override
-  void disposeInvalidEditors() {
+  protected void disposeInvalidEditors() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     synchronized (allEditors) {
       Iterator<EditorWindowImpl> iterator = allEditors.iterator();
@@ -62,7 +62,7 @@ final class InjectedEditorWindowTrackerImpl extends InjectedEditorWindowTracker 
   }
 
   @Override
-  void disposeEditorFor(@NotNull DocumentWindow documentWindow) {
+  protected void disposeEditorFor(@NotNull DocumentWindow documentWindow) {
     synchronized (allEditors) {
       for (Iterator<EditorWindowImpl> iterator = allEditors.iterator(); iterator.hasNext(); ) {
         EditorWindowImpl editor = iterator.next();

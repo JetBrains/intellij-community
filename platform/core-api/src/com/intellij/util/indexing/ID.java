@@ -39,7 +39,8 @@ public class ID<K, V> extends IndexId<K,V> {
   private static final Object lock = new Object();
   private static volatile Map<@NotNull ID<?, ?>, @NotNull PluginId> idToPluginId = Java11Shim.INSTANCE.mapOf();
   private static volatile Map<@NotNull ID<?, ?>, @NotNull Throwable> idToRegistrationStackTrace = Java11Shim.INSTANCE.mapOf();
-  static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
+  @ApiStatus.Internal
+  public static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   private volatile int uniqueId;
 

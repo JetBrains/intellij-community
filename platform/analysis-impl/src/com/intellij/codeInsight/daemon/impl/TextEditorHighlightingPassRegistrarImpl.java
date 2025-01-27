@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
@@ -23,7 +23,10 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,7 +92,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   }
 
   @ApiStatus.Internal
-  void serializeCodeInsightPasses(boolean flag) {
+  public void serializeCodeInsightPasses(boolean flag) {
     serializeCodeInsightPasses = flag;
     reRegisterFactories();
   }
@@ -154,7 +157,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     }
   }
 
-  int getNextAvailableId() {
+  @ApiStatus.Internal
+  public int getNextAvailableId() {
     return nextAvailableId.incrementAndGet();
   }
 

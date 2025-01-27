@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.util.Pair;
@@ -19,7 +19,7 @@ final class InspectionProfilerDataHolder {
    * after inspections completed, save their latencies (from corresponding {@link InspectionRunner.InspectionContext#holder})
    * to use later in {@link #sortByLatencies(PsiFile, List, HighlightInfoUpdaterImpl)}
    */
-  static void saveStats(@NotNull PsiFile psiFile, @NotNull List<? extends InspectionRunner.InspectionContext> contexts,
+  static void saveStats(@NotNull PsiFile psiFile, @NotNull List<InspectionRunner.InspectionContext> contexts,
                         @NotNull HighlightInfoUpdaterImpl highlightInfoUpdater) {
     if (!psiFile.getViewProvider().isPhysical()) {
       // ignore editor text fields/consoles etc

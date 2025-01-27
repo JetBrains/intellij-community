@@ -49,7 +49,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   permits NasueousGeneralHighlightingPass {
   static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
-  static final Predicate<? super PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> {
+  public static final Predicate<? super PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> {
     HighlightingLevelManager manager = HighlightingLevelManager.getInstance(file.getProject());
     return manager != null && manager.shouldHighlight(file);
   };
@@ -66,7 +66,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   private final HighlightInfoUpdater myHighlightInfoUpdater;
   private final HighlightVisitorRunner myHighlightVisitorRunner;
 
-  GeneralHighlightingPass(@NotNull PsiFile psiFile,
+  public GeneralHighlightingPass(@NotNull PsiFile psiFile,
                           @NotNull Document document,
                           int startOffset,
                           int endOffset,
@@ -93,11 +93,14 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     myHighlightVisitorRunner = new HighlightVisitorRunner(psiFile, globalScheme, runVisitors, highlightErrorElements);
   }
 
+  public boolean hasErrorElement() {
+    return myHasErrorElement;
+  }
+
   private @NotNull PsiFile getFile() {
     return myFile;
   }
 
-  @ApiStatus.Internal
   public static void assertHighlightingPassNotRunning() {
     HighlightVisitorRunner.assertHighlightingPassNotRunning();
   }
@@ -259,7 +262,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   private static final AtomicInteger RESTART_REQUESTS = new AtomicInteger();
 
   @TestOnly
-  static boolean isRestartPending() {
+  public static boolean isRestartPending() {
     return RESTART_REQUESTS.get() > 0;
   }
 
@@ -322,7 +325,8 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     return holder;
   }
 
-  static void setupAnnotationSession(@NotNull AnnotationSession annotationSession,
+  @ApiStatus.Internal
+  public static void setupAnnotationSession(@NotNull AnnotationSession annotationSession,
                                      @NotNull TextRange priorityRange,
                                      @NotNull TextRange highlightRange,
                                      @Nullable HighlightSeverity minimumSeverity) {

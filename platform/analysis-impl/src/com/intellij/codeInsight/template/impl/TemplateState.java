@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.*;
@@ -87,7 +87,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
   public static final Key<Boolean> FORCE_TEMPLATE_RUNNING = Key.create("TemplateState.forTemplateRunning");
 
-  TemplateState(@NotNull Project project, final @Nullable Editor editor, @NotNull Document document,
+  @ApiStatus.Internal
+  public TemplateState(@NotNull Project project, final @Nullable Editor editor, @NotNull Document document,
                 @NotNull TemplateStateProcessor processor) {
     super(editor, document);
     myProject = project;
@@ -296,7 +297,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     }
   }
 
-  void start(@NotNull TemplateImpl template,
+  @ApiStatus.Internal
+  public void start(@NotNull TemplateImpl template,
              @Nullable PairProcessor<? super String, ? super String> processor,
              @Nullable Map<String, String> predefinedVarValues) {
     start(template, processor, predefinedVarValues, getEditor().getCaretModel().getOffset());
@@ -420,7 +422,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     performWrite(action);
   }
 
-  void performWrite(Runnable action) {
+  @ApiStatus.Internal
+  public void performWrite(Runnable action) {
     if (requiresWriteAction()) {
       ApplicationManager.getApplication().runWriteAction(action);
     } else {
@@ -553,11 +556,13 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   }
 
   @Nullable
-  PsiFile getPsiFile() {
+  @ApiStatus.Internal
+  public PsiFile getPsiFile() {
     return !isDisposed() ? PsiDocumentManager.getInstance(myProject).getPsiFile(getDocument()) : null;
   }
 
-  boolean requiresWriteAction() {
+  @ApiStatus.Internal
+  public boolean requiresWriteAction() {
     PsiFile file = getPsiFile();
     return file == null || file.isPhysical() || FORCE_TEMPLATE_RUNNING.isIn(file);
   }
@@ -596,7 +601,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   }
 
   // Hours spent fixing code : 3.5
-  void calcResults(final boolean isQuick) {
+  @ApiStatus.Internal
+  public void calcResults(final boolean isQuick) {
     if (getSegments().isInvalid()) {
       gotoEnd(true);
     }
@@ -1017,7 +1023,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   }
 
   @ApiStatus.Internal
-  void cancelTemplate() {
+  public void cancelTemplate() {
     if (isDisposed()) return;
     try {
       fireTemplateCancelled();

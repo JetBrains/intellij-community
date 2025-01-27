@@ -44,17 +44,20 @@ public final class VfsEventsMerger {
     }
   }
 
-  void recordFileEvent(@NotNull VirtualFile file, boolean contentChange) {
+  @ApiStatus.Internal
+  public void recordFileEvent(@NotNull VirtualFile file, boolean contentChange) {
     tryLog(contentChange ? "FILE_CONTENT_CHANGED" : "FILE_ADDED", file);
     updateChange(file, contentChange ? FILE_CONTENT_CHANGED : FILE_ADDED);
   }
 
-  void recordFileRemovedEvent(@NotNull VirtualFile file) {
+  @ApiStatus.Internal
+  public void recordFileRemovedEvent(@NotNull VirtualFile file) {
     tryLog("FILE_REMOVED", file);
     updateChange(file, FILE_REMOVED);
   }
 
-  void recordTransientStateChangeEvent(@NotNull VirtualFile file) {
+  @ApiStatus.Internal
+  public void recordTransientStateChangeEvent(@NotNull VirtualFile file) {
     tryLog("FILE_TRANSIENT_STATE_CHANGED", file);
     updateChange(file, FILE_TRANSIENT_STATE_CHANGED);
   }
@@ -140,7 +143,8 @@ public final class VfsEventsMerger {
     return true;
   }
 
-  boolean hasChanges() {
+  @ApiStatus.Internal
+  public boolean hasChanges() {
     return !myChangeInfos.isEmpty();
   }
 

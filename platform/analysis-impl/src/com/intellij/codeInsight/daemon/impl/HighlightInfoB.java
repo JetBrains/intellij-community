@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -18,6 +18,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-final class HighlightInfoB implements HighlightInfo.Builder {
+@ApiStatus.Internal
+public final class HighlightInfoB implements HighlightInfo.Builder {
   private static final Logger LOG = Logger.getInstance(HighlightInfoB.class);
   private Boolean myNeedsUpdateOnTyping;
   private TextAttributes forcedTextAttributes;
@@ -224,7 +226,8 @@ final class HighlightInfoB implements HighlightInfo.Builder {
     return this;
   }
 
-  void setUnresolvedReference(@NotNull PsiReference ref) {
+  @ApiStatus.Internal
+  public void setUnresolvedReference(@NotNull PsiReference ref) {
     unresolvedReference = ref;
   }
 

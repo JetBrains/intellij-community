@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
@@ -56,7 +56,8 @@ public final class InspectionVisitorOptimizer {
     myTargetPsiClasses = getTargetPsiClasses(elements);
   }
 
-  static @NotNull @Unmodifiable List<? extends Class<?>> getAcceptingPsiTypes(@NotNull PsiElementVisitor visitor) {
+  @ApiStatus.Internal
+  public static @NotNull @Unmodifiable List<? extends Class<?>> getAcceptingPsiTypes(@NotNull PsiElementVisitor visitor) {
     if (!useOptimizedVisitors) return ALL_ELEMENTS_VISIT_LIST;
 
     List<? extends Class<?>> acceptingPsiTypes;
@@ -195,7 +196,8 @@ public final class InspectionVisitorOptimizer {
     acceptElements(elements, acceptingPsiTypes, element -> element.accept(elementVisitor));
   }
 
-  void acceptElements(@NotNull List<? extends PsiElement> elements,
+  @ApiStatus.Internal
+  public void acceptElements(@NotNull List<? extends PsiElement> elements,
                       @NotNull List<? extends Class<?>> acceptingPsiTypes,
                       @NotNull Consumer<? super PsiElement> consumer) {
     if (acceptingPsiTypes == ALL_ELEMENTS_VISIT_LIST) {

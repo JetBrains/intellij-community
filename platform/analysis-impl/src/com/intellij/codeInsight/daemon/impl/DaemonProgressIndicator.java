@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -22,7 +22,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class DaemonProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator {
   private static final Logger LOG = Logger.getInstance(DaemonProgressIndicator.class);
-  static final String CANCEL_WAS_CALLED_REASON = "cancel() was called";
+  @ApiStatus.Internal
+  public static final String CANCEL_WAS_CALLED_REASON = "cancel() was called";
   private static final AtomicInteger debug = new AtomicInteger(); // if >0 then it's in the debug mode
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(debug.get()>0);
   private volatile Throwable myCancellationCause;
@@ -118,7 +119,8 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   }
 
   @Override
-  protected @Nullable Throwable getCancellationTrace() {
+  @ApiStatus.Internal
+  public @Nullable Throwable getCancellationTrace() {
     Throwable cause = myCancellationCause;
     return cause != null ? cause : super.getCancellationTrace();
   }
@@ -141,7 +143,8 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
     DaemonProgressIndicator.debug.set(debug ? 1 : 0);
   }
   @TestOnly
-  static <E extends Throwable> void runInDebugMode(@NotNull ThrowableRunnable<E> runnable) throws E {
+  @ApiStatus.Internal
+  public static <E extends Throwable> void runInDebugMode(@NotNull ThrowableRunnable<E> runnable) throws E {
     try {
       DaemonProgressIndicator.debug.incrementAndGet();
       runnable.run();

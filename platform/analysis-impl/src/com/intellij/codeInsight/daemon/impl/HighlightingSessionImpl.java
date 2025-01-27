@@ -98,11 +98,13 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     return myCanChangeFileSilently.canIReally(myInContent, extensionsAllowToChangeFileSilently);
   }
 
-  void setMinimumSeverity(@Nullable HighlightSeverity minimumSeverity) {
+  @ApiStatus.Internal
+  public void setMinimumSeverity(@Nullable HighlightSeverity minimumSeverity) {
     myMinimumSeverity = minimumSeverity;
   }
 
-  HighlightSeverity getMinimumSeverity() {
+  @ApiStatus.Internal
+  public HighlightSeverity getMinimumSeverity() {
     return myMinimumSeverity;
   }
 
@@ -124,7 +126,8 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     return ContainerUtil.getLastItem(sessions);
   }
 
-  static void getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
+  @ApiStatus.Internal
+  public static void getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
                                              @NotNull DaemonProgressIndicator progressIndicator,
                                              @NotNull ProperTextRange visibleRange,
                                              @NotNull TextRange compositeDocumentDirtyRange) {
@@ -135,7 +138,8 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     }
   }
 
-  static @NotNull HighlightingSessionImpl createHighlightingSession(@NotNull PsiFile psiFile,
+  @ApiStatus.Internal
+  public static @NotNull HighlightingSessionImpl createHighlightingSession(@NotNull PsiFile psiFile,
                                                                     @Nullable Editor editor,
                                                                     @Nullable EditorColorsScheme editorColorsScheme,
                                                                     @NotNull DaemonProgressIndicator progressIndicator,
@@ -209,7 +213,8 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     }
   }
 
-  static void waitForAllSessionsHighlightInfosApplied(@NotNull DaemonProgressIndicator progressIndicator) {
+  @ApiStatus.Internal
+  public static void waitForAllSessionsHighlightInfosApplied(@NotNull DaemonProgressIndicator progressIndicator) {
     Map<PsiFile, List<HighlightingSession>> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
     if (map != null) {
       for (List<HighlightingSession> sessions : map.values()) {
@@ -246,7 +251,8 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     return myEditorColorsScheme;
   }
 
-  void applyFileLevelHighlightsRequests() {
+  @ApiStatus.Internal
+  public void applyFileLevelHighlightsRequests() {
     ThreadingAssertions.assertEventDispatchThread();
     List<RunnableFuture<?>> requests = new ArrayList<>(pendingFileLevelHighlightRequests);
     for (RunnableFuture<?> request : requests) {
@@ -255,7 +261,8 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     pendingFileLevelHighlightRequests.removeAll(requests);
   }
 
-  static void clearAllHighlightingSessions(@NotNull DaemonProgressIndicator indicator) {
+  @ApiStatus.Internal
+  public static void clearAllHighlightingSessions(@NotNull DaemonProgressIndicator indicator) {
     indicator.putUserData(HIGHLIGHTING_SESSION, null);
     if (LOG.isTraceEnabled()) {
       LOG.trace("HighlightingSessionImpl.clearAllHighlightingSessions");
@@ -299,7 +306,8 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   // compute additional stuff in background thread
-  void additionalSetupFromBackground(@NotNull PsiFile psiFile) {
+  @ApiStatus.Internal
+  public void additionalSetupFromBackground(@NotNull PsiFile psiFile) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ReadAction.run(() -> {
       VirtualFile virtualFile = psiFile.getVirtualFile();

@@ -244,7 +244,6 @@ c:com.intellij.codeInsight.completion.BaseCompletionService
 - <init>():V
 - p:addWeighersBefore(com.intellij.codeInsight.completion.impl.CompletionSorterImpl):com.intellij.codeInsight.completion.impl.CompletionSorterImpl
 - p:createMatcher(java.lang.String,Z):com.intellij.codeInsight.completion.PrefixMatcher
-- p:createResultSet(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.util.Consumer,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionResultSet
 - defaultSorter(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher):com.intellij.codeInsight.completion.CompletionSorter
 - emptySorter():com.intellij.codeInsight.completion.impl.CompletionSorterImpl
 - getCurrentCompletion():com.intellij.codeInsight.completion.CompletionProcess
@@ -564,7 +563,6 @@ c:com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 - f:cancel(java.lang.Throwable,java.lang.String):V
 - f:checkCanceled():V
 - f:equals(java.lang.Object):Z
-- p:getCancellationTrace():java.lang.Throwable
 - f:hashCode():I
 - f:isCanceled():Z
 - isIndeterminate():Z
@@ -772,7 +770,7 @@ a:com.intellij.codeInsight.daemon.impl.ProgressableTextEditorHighlightingPass
 - f:doCollectInformation(com.intellij.openapi.progress.ProgressIndicator):V
 - p:getEditor():com.intellij.openapi.editor.Editor
 - p:getHighlightingSession():com.intellij.codeInsight.daemon.impl.HighlightingSession
-- p:getPresentableName():java.lang.String
+- getPresentableName():java.lang.String
 - getProgress():D
 - isFinished():Z
 - p:isValid():Z
@@ -3022,7 +3020,7 @@ c:com.intellij.find.findUsages.FindUsagesHandlerBase
 - f:getPsiElement():com.intellij.psi.PsiElement
 - getSecondaryElements():com.intellij.psi.PsiElement[]
 - p:getStringsToSearch(com.intellij.psi.PsiElement):java.util.Collection
-- p:isSearchForTextOccurrencesAvailable(com.intellij.psi.PsiElement,Z):Z
+- isSearchForTextOccurrencesAvailable(com.intellij.psi.PsiElement,Z):Z
 - processElementUsages(com.intellij.psi.PsiElement,com.intellij.util.Processor,com.intellij.find.findUsages.FindUsagesOptions):Z
 - processUsagesInText(com.intellij.psi.PsiElement,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope):Z
 f:com.intellij.find.findUsages.FindUsagesHelper

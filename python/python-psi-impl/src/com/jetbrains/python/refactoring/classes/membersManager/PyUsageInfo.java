@@ -17,6 +17,7 @@ package com.jetbrains.python.refactoring.classes.membersManager;
 
 import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.psi.PyClass;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,7 +26,8 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Ilya.Kazakevich
  */
-class PyUsageInfo extends UsageInfo {
+@ApiStatus.Internal
+public final class PyUsageInfo extends UsageInfo {
   private final @NotNull PyClass myTo;
 
   PyUsageInfo(final @NotNull PyClass to) {
