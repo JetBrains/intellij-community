@@ -128,7 +128,19 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       }
     }
   }
-  
+
+  @Override
+  public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
+    super.visitBreakStatement(statement);
+    if (!hasErrorResults()) myStatementChecker.checkBreakTarget(statement);
+  }
+
+  @Override
+  public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
+    super.visitContinueStatement(statement);
+    if (!hasErrorResults()) myStatementChecker.checkContinueTarget(statement);
+  }
+
   @Override
   public void visitParameter(@NotNull PsiParameter parameter) {
     super.visitParameter(parameter);

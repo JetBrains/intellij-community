@@ -66,8 +66,8 @@ class SwitchExpressions {
       }
       System.out.println(switch (new Random().nextInt()) {
         case -1: <error descr="Return outside of enclosing switch expression">return;</error>
-        case -2: <error descr="Continue outside of enclosing switch expression">continue lab;</error>
-        case -3: <error descr="Continue outside of enclosing switch expression">continue;</error>
+        case -2: <error descr="Continue out of switch expression is not allowed">continue lab;</error>
+        case -3: <error descr="Continue out of switch expression is not allowed">continue;</error>
         default: <error descr="Break out of switch expression is not allowed">break lab;</error>
       });
     }

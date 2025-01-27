@@ -619,6 +619,16 @@ public final class JavaErrorKinds {
   public static final Simple<PsiLabeledStatement> LABEL_DUPLICATE = error(PsiLabeledStatement.class, "label.duplicate")
     .withAnchor(label -> label.getLabelIdentifier())
     .withRawDescription(statement -> message("label.duplicate", statement.getLabelIdentifier().getText()));
+  public static final Simple<PsiIdentifier> LABEL_UNRESOLVED = error(PsiIdentifier.class, "label.unresolved")
+    .withRawDescription(label -> message("label.unresolved", label.getText()));
+  public static final Parameterized<PsiContinueStatement, PsiIdentifier> LABEL_MUST_BE_LOOP = 
+    parameterized(PsiContinueStatement.class, PsiIdentifier.class, "label.must.be.loop")
+      .withRawDescription((statement, label) -> message("label.must.be.loop", label.getText()));
+  
+  public static final Simple<PsiBreakStatement> BREAK_OUTSIDE_SWITCH_OR_LOOP = error("break.outside.switch.or.loop");
+  public static final Simple<PsiBreakStatement> BREAK_OUT_OF_SWITCH_EXPRESSION = error("break.out.of.switch.expression");
+  public static final Simple<PsiContinueStatement> CONTINUE_OUTSIDE_LOOP = error("continue.outside.loop");
+  public static final Simple<PsiContinueStatement> CONTINUE_OUT_OF_SWITCH_EXPRESSION = error("continue.out.of.switch.expression");
 
   public static final Parameterized<PsiExpression, PsiType> ARRAY_ILLEGAL_INITIALIZER =
     parameterized(PsiExpression.class, PsiType.class, "array.illegal.initializer")

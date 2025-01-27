@@ -384,12 +384,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
-    super.visitBreakStatement(statement);
-    if (!hasErrorResults()) add(HighlightUtil.checkBreakTarget(statement, myLanguageLevel));
-  }
-
-  @Override
   public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
     super.visitYieldStatement(statement);
     if (!hasErrorResults()) add(HighlightUtil.checkYieldOutsideSwitchExpression(statement));
@@ -431,12 +425,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitClassObjectAccessExpression(@NotNull PsiClassObjectAccessExpression expression) {
     super.visitClassObjectAccessExpression(expression);
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkClassObjectAccessExpression(expression));
-  }
-
-  @Override
-  public void visitContinueStatement(@NotNull PsiContinueStatement statement) {
-    super.visitContinueStatement(statement);
-    if (!hasErrorResults()) add(HighlightUtil.checkContinueTarget(statement, myLanguageLevel));
   }
 
   @Override

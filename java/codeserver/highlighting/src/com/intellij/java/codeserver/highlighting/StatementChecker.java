@@ -203,6 +203,50 @@ final class StatementChecker {
     myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
       resource, new JavaIncompatibleTypeErrorContext(autoCloseable, type)));
   }
+  
+  void checkBreakTarget(@NotNull PsiBreakStatement statement) {
+    PsiIdentifier label = statement.getLabelIdentifier();
+    PsiStatement target = statement.findExitedStatement();
+    if (target == null) {
+      if (label != null) {
+        myVisitor.report(JavaErrorKinds.LABEL_UNRESOLVED.create(label));
+      } else {
+        myVisitor.report(JavaErrorKinds.BREAK_OUTSIDE_SWITCH_OR_LOOP.create(statement));
+      }
+      return;
+    }
+
+    if (myVisitor.isApplicable(JavaFeature.ENHANCED_SWITCH)) {
+      PsiSwitchExpression expression = PsiImplUtil.findEnclosingSwitchExpression(statement);
+      if (expression != null && PsiTreeUtil.isAncestor(target, expression, true)) {
+        myVisitor.report(JavaErrorKinds.BREAK_OUT_OF_SWITCH_EXPRESSION.create(statement));
+      }
+    }
+  }
+  
+  void checkContinueTarget(@NotNull PsiContinueStatement statement) {
+    PsiIdentifier label = statement.getLabelIdentifier();
+    PsiStatement target = statement.findContinuedStatement();
+    if (target == null) {
+      if (label != null) {
+        myVisitor.report(JavaErrorKinds.LABEL_UNRESOLVED.create(label));
+      } else {
+        myVisitor.report(JavaErrorKinds.CONTINUE_OUTSIDE_LOOP.create(statement));
+      }
+      return;
+    }
+    if (label != null && !(target instanceof PsiLoopStatement)) {
+      myVisitor.report(JavaErrorKinds.LABEL_MUST_BE_LOOP.create(statement, label));
+      return;
+    }
+
+    if (myVisitor.isApplicable(JavaFeature.ENHANCED_SWITCH)) {
+      PsiSwitchExpression expression = PsiImplUtil.findEnclosingSwitchExpression(statement);
+      if (expression != null && PsiTreeUtil.isAncestor(target, expression, true)) {
+        myVisitor.report(JavaErrorKinds.CONTINUE_OUT_OF_SWITCH_EXPRESSION.create(statement));
+      }
+    }
+  }
 
   private static boolean checkMultipleTypes(@NotNull PsiClass catchClass, @NotNull List<? extends PsiType> upperCatchTypes) {
     for (int i = upperCatchTypes.size() - 1; i >= 0; i--) {

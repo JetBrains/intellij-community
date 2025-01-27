@@ -34,7 +34,6 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.scope.PatternResolveState;
@@ -55,7 +54,10 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.*;
@@ -568,12 +570,6 @@ public final class HighlightUtil {
     return PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
   }
 
-  static HighlightInfo.Builder checkBreakTarget(@NotNull PsiBreakStatement statement, @NotNull LanguageLevel languageLevel) {
-    return checkBreakOrContinueTarget(statement, statement.getLabelIdentifier(), statement.findExitedStatement(), languageLevel,
-                                      "break.outside.switch.or.loop",
-                                      "break.outside.switch.expr");
-  }
-
   static HighlightInfo.Builder checkYieldOutsideSwitchExpression(@NotNull PsiYieldStatement statement) {
     if (statement.findEnclosingExpression() == null) {
       String message = JavaErrorBundle.message("yield.unexpected");
@@ -586,47 +582,6 @@ public final class HighlightUtil {
     if (PsiTypes.voidType().equals(expression.getType())) {
       String message = JavaErrorBundle.message("yield.void");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-    }
-
-    return null;
-  }
-
-  static HighlightInfo.Builder checkContinueTarget(@NotNull PsiContinueStatement statement, @NotNull LanguageLevel languageLevel) {
-    PsiStatement continuedStatement = statement.findContinuedStatement();
-    PsiIdentifier label = statement.getLabelIdentifier();
-
-    if (label != null && continuedStatement != null && !(continuedStatement instanceof PsiLoopStatement)) {
-      String message = JavaErrorBundle.message("not.loop.label", label.getText());
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message);
-    }
-
-    return checkBreakOrContinueTarget(statement, label, continuedStatement, languageLevel,
-                                      "continue.outside.loop",
-                                      "continue.outside.switch.expr");
-  }
-
-  private static HighlightInfo.Builder checkBreakOrContinueTarget(@NotNull PsiStatement statement,
-                                                          @Nullable PsiIdentifier label,
-                                                          @Nullable PsiStatement target,
-                                                          @NotNull LanguageLevel level,
-                                                          @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String misplacedKey,
-                                                          @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String crossingKey) {
-    if (target == null && label != null) {
-      String message = JavaErrorBundle.message("unresolved.label", label.getText());
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(label).descriptionAndTooltip(message);
-    }
-
-    if (JavaFeature.ENHANCED_SWITCH.isSufficient(level)) {
-      PsiSwitchExpression expression = PsiImplUtil.findEnclosingSwitchExpression(statement);
-      if (expression != null && (target == null || PsiTreeUtil.isAncestor(target, expression, true))) {
-        String message = JavaErrorBundle.message(crossingKey);
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message);
-      }
-    }
-
-    if (target == null) {
-      String message = JavaErrorBundle.message(misplacedKey);
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message);
     }
 
     return null;
