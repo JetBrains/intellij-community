@@ -31,6 +31,7 @@ import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -110,6 +111,7 @@ final class JavaErrorFixProvider {
     createMethodFixes();
     createExpressionFixes();
     createVariableFixes();
+    createStatementFixes();
     createExceptionFixes();
     createGenericFixes();
     createRecordFixes();
@@ -117,6 +119,34 @@ final class JavaErrorFixProvider {
     createAccessFixes();
     createAnnotationFixes();
     createReceiverParameterFixes();
+  }
+
+  private void createStatementFixes() {
+    fix(RETURN_OUTSIDE_SWITCH_EXPRESSION, error -> error.psi().getReturnValue() != null ? new ReplaceWithYieldFix(error.psi()) : null);
+    fixes(RETURN_VALUE_MISSING, (error, sink) -> {
+      PsiMethod method = error.context();
+      sink.accept(myFactory.createMethodReturnFix(method, PsiTypes.voidType(), true));
+      PsiType expectedType = HighlightMethodUtil.determineReturnType(method);
+      if (expectedType != null && !PsiTypes.voidType().equals(expectedType)) {
+        sink.accept(myFactory.createMethodReturnFix(method, expectedType, true, true));
+      }
+    });
+    JavaFixesPusher<PsiReturnStatement, PsiMethod> fixReturnFromVoid = (error, sink) -> {
+      PsiMethod method = error.context();
+      if (method != null && method.getBody() != null) {
+        PsiType valueType = RefactoringChangeUtil.getTypeByExpression(requireNonNull(error.psi().getReturnValue()));
+        if (valueType != null) {
+          sink.accept(myFactory.createDeleteReturnFix(method, error.psi()));
+          sink.accept(myFactory.createMethodReturnFix(method, valueType, true));
+        }
+        PsiType expectedType = HighlightMethodUtil.determineReturnType(method);
+        if (expectedType != null && !PsiTypes.voidType().equals(expectedType) && !expectedType.equals(valueType)) {
+          sink.accept(myFactory.createMethodReturnFix(method, expectedType, true, true));
+        }
+      }
+    };
+    fixes(RETURN_FROM_CONSTRUCTOR, fixReturnFromVoid);
+    fixes(RETURN_FROM_VOID_METHOD, fixReturnFromVoid);
   }
 
   private void createMethodFixes() {
@@ -176,6 +206,17 @@ final class JavaErrorFixProvider {
       }
     });
     fix(VARARG_CSTYLE_DECLARATION, error -> new NormalizeBracketsFix(error.psi()));
+    fixes(METHOD_MISSING_RETURN_TYPE, (error, sink) -> {
+      String className = error.context();
+      PsiMethod method = error.psi();
+      if (className != null) {
+        sink.accept(myFactory.createRenameElementFix(method, className));
+      }
+      PsiType expectedType = HighlightMethodUtil.determineReturnType(method);
+      if (expectedType != null) {
+        sink.accept(myFactory.createMethodReturnFix(method, expectedType, true, true));
+      }
+    });
   }
 
   private void createExceptionFixes() {
@@ -424,9 +465,13 @@ final class JavaErrorFixProvider {
           PsiType sameType = JavaHighlightUtil.sameType(initializerList.getInitializers());
           sink.accept(sameType == null ? null : VariableArrayTypeFix.createFix(initializerList, sameType));
         }
-        else if (parent instanceof PsiReturnStatement && rType != null) {
-          if (PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiMethod containingMethod) {
-            sink.accept(myFactory.createMethodReturnFix(containingMethod, rType, true, true));
+        else if (parent instanceof PsiReturnStatement && rType != null && !PsiTypes.voidType().equals(rType)) {
+          if (PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiMethod method) {
+            sink.accept(myFactory.createMethodReturnFix(method, rType, true, true));
+            PsiType expectedType = HighlightMethodUtil.determineReturnType(method);
+            if (expectedType != null && !PsiTypes.voidType().equals(expectedType) && !expectedType.equals(rType)) {
+              sink.accept(myFactory.createMethodReturnFix(method, expectedType, true, true));
+            }
           }
         }
         else if (parent instanceof PsiLocalVariable var && rType != null) {
@@ -445,6 +490,7 @@ final class JavaErrorFixProvider {
       if (anchor instanceof PsiParameter parameter && parent instanceof PsiForeachStatement forEach) {
         HighlightFixUtil.registerChangeVariableTypeFixes(parameter, rType, forEach.getIteratedValue(), sink);
       }
+      HighlightFixUtil.registerChangeParameterClassFix(lType, rType, sink);
     });
     fixes(CALL_TYPE_INFERENCE_ERROR, (error, sink) -> {
       if (error.psi() instanceof PsiMethodCallExpression callExpression) {

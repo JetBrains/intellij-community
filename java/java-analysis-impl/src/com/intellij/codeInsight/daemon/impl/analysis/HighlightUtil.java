@@ -47,7 +47,6 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
 import com.intellij.util.ArrayUtilRt;
@@ -411,81 +410,6 @@ public final class HighlightUtil {
     return fix -> highlightInfo.registerFix(fix.asIntention(), null, null, null, null);
   }
 
-  static HighlightInfo.Builder checkReturnFromSwitchExpr(@NotNull PsiReturnStatement statement) {
-    if (PsiImplUtil.findEnclosingSwitchExpression(statement) != null) {
-      String message = JavaErrorBundle.message("return.outside.switch.expr");
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message);
-      if (statement.getReturnValue() != null) {
-        var action = new ReplaceWithYieldFix(statement);
-        info.registerFix(action, null, null, null, null);
-      }
-      return info;
-    }
-
-    return null;
-  }
-
-  static HighlightInfo.Builder checkReturnStatementType(@NotNull PsiReturnStatement statement, @NotNull PsiElement parent) {
-    if (parent instanceof PsiCodeFragment || parent instanceof PsiLambdaExpression) {
-      return null;
-    }
-    PsiMethod method = tryCast(parent, PsiMethod.class);
-    String description;
-    HighlightInfo.Builder errorResult;
-    if (method == null && !(parent instanceof ServerPageFile)) {
-      description = JavaErrorBundle.message("return.outside.method");
-      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description);
-    }
-    else {
-      PsiType returnType = method != null ? method.getReturnType() : null/*JSP page returns void*/;
-      boolean isMethodVoid = returnType == null || PsiTypes.voidType().equals(returnType);
-      PsiExpression returnValue = statement.getReturnValue();
-      if (returnValue != null) {
-        PsiType valueType = RefactoringChangeUtil.getTypeByExpression(returnValue);
-        if (isMethodVoid) {
-          boolean constructor = method != null && method.isConstructor();
-          if (constructor) {
-            PsiClass containingClass = method.getContainingClass();
-            if (containingClass != null && !method.getName().equals(containingClass.getName())) {
-              return null;
-            }
-          }
-          description = JavaErrorBundle.message(constructor ? "return.from.constructor" : "return.from.void.method");
-          errorResult =
-            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description);
-          if (method != null && valueType != null && method.getBody() != null) {
-            IntentionAction action1 = getFixFactory().createDeleteReturnFix(method, statement);
-            errorResult.registerFix(action1, null, null, null, null);
-            IntentionAction action = getFixFactory().createMethodReturnFix(method, valueType, true);
-            errorResult.registerFix(action, null, null, null, null);
-          }
-        }
-        else {
-          TextRange textRange = statement.getTextRange();
-          errorResult = checkAssignability(returnType, valueType, returnValue, textRange, returnValue.getStartOffsetInParent());
-          if (errorResult != null && valueType != null) {
-            if (!PsiTypes.voidType().equals(valueType)) {
-              IntentionAction action = getFixFactory().createMethodReturnFix(method, valueType, true);
-              errorResult.registerFix(action, null, null, null, null);
-            }
-            HighlightFixUtil.registerChangeParameterClassFix(returnType, valueType, asConsumer(errorResult));
-          }
-        }
-      }
-      else if (!isMethodVoid && !PsiTreeUtil.hasErrorElements(statement)) {
-        description = JavaErrorBundle.message("missing.return.value");
-        errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description)
-          .navigationShift(PsiKeyword.RETURN.length());
-        IntentionAction action = getFixFactory().createMethodReturnFix(method, PsiTypes.voidType(), true);
-        errorResult.registerFix(action, null, null, null, null);
-      }
-      else {
-        errorResult = null;
-      }
-    }
-    return errorResult;
-  }
-
   static void registerReturnTypeFixes(@NotNull HighlightInfo.Builder info, @NotNull PsiMethod method, @NotNull PsiType expectedReturnType) {
     IntentionAction action = getFixFactory().createMethodReturnFix(method, expectedReturnType, true, true);
     info.registerFix(action, null, null, null, null);
@@ -823,8 +747,8 @@ public final class HighlightUtil {
       boolean allowedError = false;
       if (statement instanceof PsiExpressionStatement) {
         PsiElement[] children = statement.getChildren();
-        if (children[0] instanceof PsiExpression && children[1] instanceof PsiErrorElement &&
-            ((PsiErrorElement)children[1]).getErrorDescription().equals(JavaPsiBundle.message("expected.semicolon"))) {
+        if (children[0] instanceof PsiExpression && children[1] instanceof PsiErrorElement errorElement &&
+            errorElement.getErrorDescription().equals(JavaPsiBundle.message("expected.semicolon"))) {
           allowedError = true;
           anchor = children[0];
         }

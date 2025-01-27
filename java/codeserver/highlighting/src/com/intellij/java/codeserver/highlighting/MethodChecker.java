@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
@@ -397,6 +398,16 @@ final class MethodChecker {
     TextRange range = getCStyleDeclarationRange(parameter);
     if (range != null) {
       myVisitor.report(JavaErrorKinds.VARARG_CSTYLE_DECLARATION.create(parameter, range));
+    }
+  }
+
+  void checkConstructorName(PsiMethod method) {
+    PsiClass aClass = method.getContainingClass();
+    if (aClass != null) {
+      String className = aClass instanceof PsiAnonymousClass ? null : aClass.getName();
+      if (className == null || !Comparing.strEqual(method.getName(), className)) {
+        myVisitor.report(JavaErrorKinds.METHOD_MISSING_RETURN_TYPE.create(method, className));
+      }
     }
   }
 

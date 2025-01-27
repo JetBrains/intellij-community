@@ -557,25 +557,6 @@ public final class HighlightMethodUtil {
     return errorResult;
   }
 
-  static HighlightInfo.Builder checkConstructorName(@NotNull PsiMethod method) {
-    PsiClass aClass = method.getContainingClass();
-    if (aClass != null) {
-      String className = aClass instanceof PsiAnonymousClass ? null : aClass.getName();
-      if (className == null || !Comparing.strEqual(method.getName(), className)) {
-        PsiElement element = ObjectUtils.notNull(method.getNameIdentifier(), method);
-        String description = JavaErrorBundle.message("missing.return.type");
-        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
-        if (className != null) {
-          IntentionAction action = QuickFixFactory.getInstance().createRenameElementFix(method, className);
-          info.registerFix(action, null, null, null, null);
-        }
-        return info;
-      }
-    }
-
-    return null;
-  }
-
   static HighlightInfo.Builder checkConstructorHandleSuperClassExceptions(@NotNull PsiMethod method) {
     if (!method.isConstructor()) {
       return null;
@@ -621,17 +602,19 @@ public final class HighlightMethodUtil {
     return builder.toString();
   }
 
-  static PsiType determineReturnType(@NotNull PsiMethod method) {
-    PsiManager manager = method.getManager();
-    PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(method);
-    if (returnStatements.length == 0) return PsiTypes.voidType();
-    PsiType expectedType = null;
-    for (PsiReturnStatement returnStatement : returnStatements) {
-      ReturnModel returnModel = ReturnModel.create(returnStatement);
-      if (returnModel == null) return null;
-      expectedType = lub(expectedType, returnModel.myLeastType, returnModel.myType, method, manager);
-    }
-    return expectedType;
+  static @Nullable PsiType determineReturnType(@NotNull PsiMethod method) {
+    return CachedValuesManager.getCachedValue(method, () -> {
+      PsiManager manager = method.getManager();
+      PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(method);
+      if (returnStatements.length == 0) return CachedValueProvider.Result.create(PsiTypes.voidType(), method);
+      PsiType expectedType = null;
+      for (PsiReturnStatement returnStatement : returnStatements) {
+        ReturnModel returnModel = ReturnModel.create(returnStatement);
+        if (returnModel == null) return CachedValueProvider.Result.create(null, method);
+        expectedType = lub(expectedType, returnModel.myLeastType, returnModel.myType, method, manager);
+      }
+      return CachedValueProvider.Result.create(expectedType, method);
+    });
   }
 
   private static @NotNull PsiType lub(@Nullable PsiType currentType,

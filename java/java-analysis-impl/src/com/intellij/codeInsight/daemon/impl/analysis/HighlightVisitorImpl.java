@@ -33,7 +33,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.pom.java.JavaFeature;
@@ -49,7 +48,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
-import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -92,14 +90,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   // map codeBlock->List of PsiReferenceExpression of extra initialization of final variable
   private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new HashMap<>();
 
-  private final Map<String, Pair<PsiImportStaticReferenceElement, PsiClass>> mySingleImportedClasses = new HashMap<>();
-  private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new HashMap<>();
   private final @NotNull Consumer<? super HighlightInfo.Builder> myErrorSink = builder -> add(builder);
 
   private final Set<PsiClass> myOverrideEquivalentMethodsVisitedClasses = new HashSet<>();
   // stored "clashing signatures" errors for the method (if the key is a PsiModifierList of the method), or the class (if the key is a PsiModifierList of the class)
   private final Map<PsiMember, HighlightInfo.Builder> myOverrideEquivalentMethodsErrors = new HashMap<>();
-  private final Map<PsiMethod, PsiType> myExpectedReturnTypes = new HashMap<>();
   private final Function<? super PsiElement, ? extends PsiMethod> mySurroundingConstructor = entry -> findSurroundingConstructor(entry);
   private final Map<PsiElement, PsiMethod> myInsideConstructorOfClassCache = new HashMap<>(); // null value means "cached but no corresponding ctr found"
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
@@ -193,8 +188,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     finally {
       myUninitializedVarProblems.clear();
       myFinalVarProblems.clear();
-      mySingleImportedClasses.clear();
-      mySingleImportedFields.clear();
       myJavaModule = null;
       myFile = null;
       myHolder = null;
@@ -202,7 +195,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myPreviewFeatureVisitor = null;
       myOverrideEquivalentMethodsVisitedClasses.clear();
       myOverrideEquivalentMethodsErrors.clear();
-      myExpectedReturnTypes.clear();
       myInsideConstructorOfClassCache.clear();
     }
 
@@ -576,16 +568,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
     else if (parent instanceof PsiMethod method) {
-      if (method.isConstructor()) {
-        HighlightInfo.Builder info = HighlightMethodUtil.checkConstructorName(method);
-        if (info != null) {
-          PsiType expectedType = myExpectedReturnTypes.computeIfAbsent(method, HighlightMethodUtil::determineReturnType);
-          if (expectedType != null) {
-            HighlightUtil.registerReturnTypeFixes(info, method, expectedType);
-          }
-        }
-        add(info);
-      }
       PsiClass aClass = method.getContainingClass();
       if (aClass != null) {
         add(GenericsHighlightUtil.checkDefaultMethodOverridesMemberOfJavaLangObject(myLanguageLevel, aClass, method, identifier));
@@ -597,6 +579,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitImportStatement(@NotNull PsiImportStatement statement) {
+    super.visitImportStatement(statement);
     if (!hasErrorResults()) {
       PreviewFeatureUtil.checkPreviewFeature(statement, myPreviewFeatureVisitor);
     }
@@ -687,7 +670,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitNewExpression(@NotNull PsiNewExpression expression) {
-    PsiType type = expression.getType();
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkTypeParameterInstantiation(expression));
 
     if (!hasErrorResults()) visitExpression(expression);
@@ -1144,58 +1126,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitReferenceParameterList(@NotNull PsiReferenceParameterList list) {
+    super.visitReferenceParameterList(list);
     if (list.getTextLength() == 0) return;
 
-    add(checkFeature(list, JavaFeature.GENERICS));
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkParametersAllowed(list));
     if (!hasErrorResults()) add(GenericsHighlightUtil.checkParametersOnRaw(list, myLanguageLevel));
-    if (!hasErrorResults()) {
-      for (PsiTypeElement typeElement : list.getTypeParameterElements()) {
-        if (typeElement.getType() instanceof PsiDiamondType) {
-          add(checkFeature(list, JavaFeature.DIAMOND_TYPES));
-        }
-      }
-    }
-  }
-
-  @Override
-  public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
-    super.visitStatement(statement);
-    if (!hasErrorResults() && PsiUtil.isAvailable(JavaFeature.ENHANCED_SWITCH, myFile)) {
-      add(HighlightUtil.checkReturnFromSwitchExpr(statement));
-    }
-    if (!hasErrorResults()) {
-      try {
-        PsiElement parent = PsiTreeUtil.getParentOfType(statement, PsiFile.class, PsiClassInitializer.class,
-                                                        PsiLambdaExpression.class, PsiMethod.class);
-        if (parent instanceof PsiMethod method ) {
-          if (JavaPsiRecordUtil.isCompactConstructor(method)) {
-            add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement)
-                  .descriptionAndTooltip(JavaErrorBundle.message("record.compact.constructor.return")));
-          }
-          else if (method.isConstructor()) {
-            PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
-            if (constructorCall != null && statement.getTextOffset() < constructorCall.getTextOffset()) {
-              add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement)
-                    .descriptionAndTooltip(JavaErrorBundle.message("return.statement.not.allowed.before.explicit.constructor.call",
-                                                                   constructorCall.getMethodExpression().getText() + "()")));
-            }
-          }
-        }
-        if (!hasErrorResults() && parent != null) {
-          HighlightInfo.Builder info = HighlightUtil.checkReturnStatementType(statement, parent);
-          if (info != null && parent instanceof PsiMethod method) {
-            PsiType expectedType = myExpectedReturnTypes.computeIfAbsent(method, HighlightMethodUtil::determineReturnType);
-            if (expectedType != null && !PsiTypes.voidType().equals(expectedType)) {
-              HighlightUtil.registerReturnTypeFixes(info, method, expectedType);
-            }
-          }
-          add(info);
-        }
-      }
-      catch (IndexNotReadyException ignore) {
-      }
-    }
   }
 
   @Override

@@ -383,6 +383,26 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
+    super.visitReturnStatement(statement);
+    if (!hasErrorResults()) myStatementChecker.checkReturnStatement(statement);
+  }
+
+  @Override
+  public void visitReferenceParameterList(@NotNull PsiReferenceParameterList list) {
+    super.visitReferenceParameterList(list);
+    if (list.getTextLength() == 0) return;
+    checkFeature(list, JavaFeature.GENERICS);
+    if (!hasErrorResults()) {
+      for (PsiTypeElement typeElement : list.getTypeParameterElements()) {
+        if (typeElement.getType() instanceof PsiDiamondType) {
+          checkFeature(list, JavaFeature.DIAMOND_TYPES);
+        }
+      }
+    }
+  }
+
+  @Override
   public void visitIdentifier(@NotNull PsiIdentifier identifier) {
     PsiElement parent = identifier.getParent();
     if (parent instanceof PsiVariable variable) {
@@ -405,6 +425,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
     else if (parent instanceof PsiMethod method) {
       myClassChecker.checkImplicitClassMember(method);
+      if (method.isConstructor()) {
+        myMethodChecker.checkConstructorName(method);
+      }
     }
     myExpressionChecker.checkUnderscore(identifier);
   }

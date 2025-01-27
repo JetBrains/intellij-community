@@ -310,8 +310,9 @@ public final class HighlightFixUtil {
   }
 
   static void registerChangeParameterClassFix(@NotNull PsiType lType,
-                                              @NotNull PsiType rType,
+                                              @Nullable PsiType rType,
                                               @NotNull Consumer<? super CommonIntentionAction> info) {
+    if (rType == null) return;
     IntentionAction action = getChangeParameterClassFix(lType, rType);
     if (action != null) {
       info.accept(action);

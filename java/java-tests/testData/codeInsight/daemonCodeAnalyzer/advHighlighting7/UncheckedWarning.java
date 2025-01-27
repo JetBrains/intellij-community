@@ -7,6 +7,6 @@ class Test {
   }
 
   public List<String> transform(List<List<String>> result) {
-    <error descr="Incompatible types. Found: 'java.util.List<java.util.List<java.lang.String>>', required: 'java.util.List<java.lang.String>'">return result;</error>
+    return <error descr="Incompatible types. Found: 'java.util.List<java.util.List<java.lang.String>>', required: 'java.util.List<java.lang.String>'">result</error>;
   }
 }

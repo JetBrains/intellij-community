@@ -559,6 +559,9 @@ public final class JavaErrorKinds {
       .withRawDescription((cls, ctx) -> message("method.inheritance.clash.does.not.throw",
                                                 formatClashMethodMessage(ctx.method(), ctx.superMethod(), true),
                                                 formatType(ctx.exceptionType())));
+  public static final Parameterized<PsiMethod, String> METHOD_MISSING_RETURN_TYPE =
+    parameterized(PsiMethod.class, String.class, "method.missing.return.type")
+      .withAnchor((method, className) -> requireNonNullElse(method.getNameIdentifier(), method));
 
   public static final Parameterized<PsiMember, AmbiguousImplicitConstructorCallContext> CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL =
     parameterized(PsiMember.class, AmbiguousImplicitConstructorCallContext.class, "constructor.ambiguous.implicit.call")
@@ -914,6 +917,22 @@ public final class JavaErrorKinds {
   public static final Simple<PsiVariable> UNNAMED_VARIABLE_NOT_ALLOWED_IN_THIS_CONTEXT =
     error(PsiVariable.class, "unnamed.variable.not.allowed.in.this.context")
       .withRange(var -> TextRange.create(0, requireNonNull(var.getNameIdentifier()).getTextRangeInParent().getEndOffset()));
+  
+  public static final Simple<PsiReturnStatement> RETURN_OUTSIDE_SWITCH_EXPRESSION =
+    error(PsiReturnStatement.class, "return.outside.switch.expression");  
+  public static final Simple<PsiReturnStatement> RETURN_COMPACT_CONSTRUCTOR =
+    error(PsiReturnStatement.class, "return.compact.constructor");
+  public static final Simple<PsiReturnStatement> RETURN_OUTSIDE_METHOD =
+    error(PsiReturnStatement.class, "return.outside.method");
+  public static final Parameterized<PsiReturnStatement, PsiMethod> RETURN_VALUE_MISSING =
+    parameterized(PsiReturnStatement.class, PsiMethod.class, "return.value.missing");
+  public static final Parameterized<PsiReturnStatement, PsiMethod> RETURN_FROM_CONSTRUCTOR =
+    parameterized(PsiReturnStatement.class, PsiMethod.class, "return.from.constructor");
+  public static final Parameterized<PsiReturnStatement, PsiMethod> RETURN_FROM_VOID_METHOD =
+    parameterized(PsiReturnStatement.class, PsiMethod.class, "return.from.void.method");
+  public static final Parameterized<PsiReturnStatement, PsiMethodCallExpression> RETURN_BEFORE_EXPLICIT_CONSTRUCTOR_CALL =
+    parameterized(PsiReturnStatement.class, PsiMethodCallExpression.class, "return.before.explicit.constructor.call")
+      .withRawDescription((psi, call) -> message("return.before.explicit.constructor.call", call.getMethodExpression().getText() + "()"));
 
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(
     @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {

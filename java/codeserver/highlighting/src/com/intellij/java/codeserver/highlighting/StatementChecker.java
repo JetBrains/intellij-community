@@ -6,11 +6,12 @@ import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 final class StatementChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
@@ -197,5 +200,62 @@ final class StatementChecker {
   private static boolean checkSingleType(@NotNull PsiClass catchClass, @Nullable PsiType upperCatchType) {
     PsiClass upperCatchClass = PsiUtil.resolveClassInType(upperCatchType);
     return upperCatchClass != null && InheritanceUtil.isInheritorOrSelf(catchClass, upperCatchClass, true);
+  }
+
+  void checkReturnStatement(@NotNull PsiReturnStatement statement) {
+    if (myVisitor.isApplicable(JavaFeature.ENHANCED_SWITCH) && PsiImplUtil.findEnclosingSwitchExpression(statement) != null) {
+      myVisitor.report(JavaErrorKinds.RETURN_OUTSIDE_SWITCH_EXPRESSION.create(statement));
+      return;
+    }
+    PsiElement parent = PsiTreeUtil.getParentOfType(statement, PsiFile.class, PsiClassInitializer.class,
+                                                    PsiLambdaExpression.class, PsiMethod.class);
+    if (parent instanceof PsiMethod method) {
+      if (JavaPsiRecordUtil.isCompactConstructor(method)) {
+        myVisitor.report(JavaErrorKinds.RETURN_COMPACT_CONSTRUCTOR.create(statement));
+        return;
+      }
+      if (method.isConstructor()) {
+        PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+        if (constructorCall != null && statement.getTextOffset() < constructorCall.getTextOffset()) {
+          myVisitor.report(JavaErrorKinds.RETURN_BEFORE_EXPLICIT_CONSTRUCTOR_CALL.create(statement, constructorCall));
+          return;
+        }
+      }
+    }
+    if (parent != null) {
+      checkReturnStatementType(statement, parent);
+    }
+  }
+
+  void checkReturnStatementType(@NotNull PsiReturnStatement statement, @NotNull PsiElement parent) {
+    if (parent instanceof PsiCodeFragment || parent instanceof PsiLambdaExpression) return;
+    PsiMethod method = tryCast(parent, PsiMethod.class);
+    if (method == null && !(parent instanceof ServerPageFile)) {
+      myVisitor.report(JavaErrorKinds.RETURN_OUTSIDE_METHOD.create(statement));
+      return;
+    }
+    PsiType returnType = method != null ? method.getReturnType() : null/*JSP page returns void*/;
+    boolean isMethodVoid = returnType == null || PsiTypes.voidType().equals(returnType);
+    PsiExpression returnValue = statement.getReturnValue();
+    if (returnValue != null) {
+      PsiType valueType = RefactoringChangeUtil.getTypeByExpression(returnValue);
+      if (isMethodVoid) {
+        boolean constructor = method != null && method.isConstructor();
+        if (constructor) {
+          PsiClass containingClass = method.getContainingClass();
+          if (containingClass != null && !method.getName().equals(containingClass.getName())) {
+            return;
+          }
+        }
+        var kind = constructor ? JavaErrorKinds.RETURN_FROM_CONSTRUCTOR : JavaErrorKinds.RETURN_FROM_VOID_METHOD;
+        myVisitor.report(kind.create(statement, method));
+      }
+      else {
+        myVisitor.myExpressionChecker.checkAssignability(returnType, valueType, returnValue, returnValue);
+      }
+    }
+    else if (!isMethodVoid && !PsiTreeUtil.hasErrorElements(statement)) {
+      myVisitor.report(JavaErrorKinds.RETURN_VALUE_MISSING.create(statement, method));
+    }
   }
 }
