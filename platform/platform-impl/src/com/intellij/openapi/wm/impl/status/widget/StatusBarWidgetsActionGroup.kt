@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.keymap.KeymapExtension
@@ -137,7 +138,8 @@ private class HideCurrentWidgetAction : DumbAwareAction() {
 }
 
 @Service(Service.Level.APP)
-internal class StatusBarActionManager(coroutineScope: CoroutineScope) {
+@ApiStatus.Internal
+class StatusBarActionManager(coroutineScope: CoroutineScope) {
   companion object {
     fun getInstance(): StatusBarActionManager = service()
 
@@ -153,7 +155,14 @@ internal class StatusBarActionManager(coroutineScope: CoroutineScope) {
       override fun extensionAdded(widgetFactory: StatusBarWidgetFactory, pluginDescriptor: PluginDescriptor) {
         if (widgetFactory.isConfigurable) { // avoid creating actions in 'Settings | Keymap' for implementation-detail widgets
           val actionId = getToggleActionId(widgetFactory)
-          ActionManager.getInstance().registerAction(actionId, ToggleWidgetAction(widgetFactory))
+
+          val oldAction = ActionManager.getInstance().getAction(actionId)
+          if (oldAction == null) {
+            ActionManager.getInstance().registerAction(actionId, ToggleWidgetAction(widgetFactory))
+          }
+          else {
+            logger<StatusBarWidgetFactory>().debug("Skip $actionId - already registered as $oldAction");
+          }
         }
       }
 
