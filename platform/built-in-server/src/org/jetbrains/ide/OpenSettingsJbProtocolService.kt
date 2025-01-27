@@ -4,6 +4,7 @@ package org.jetbrains.ide
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.newEditor.SettingsDialog
 import com.intellij.openapi.options.newEditor.SettingsDialogFactory
 import com.intellij.openapi.project.ProjectManager
@@ -24,7 +25,9 @@ class OpenSettingsJbProtocolService : JBProtocolCommand("settings") {
       val project = RestService.getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
       val configurable = SearchConfigurableByNameHelper(name, project).searchByName() ?: return false
       ApplicationManager.getApplication().invokeLater(
-        Runnable { SettingsDialogFactory.getInstance().create(project, SettingsDialog.DIMENSION_KEY, configurable, false, false).show() },
+        Runnable {
+          ShowSettingsUtil.getInstance().showSettingsDialog(project, configurable)
+                 },
         project.disposed)
       return true
     }

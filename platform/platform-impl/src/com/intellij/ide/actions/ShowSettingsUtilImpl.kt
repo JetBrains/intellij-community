@@ -54,17 +54,17 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
 
     @JvmStatic
     fun showSettings(project: Project?, groups: List<ConfigurableGroup>, toSelect: Configurable?) {
-      showInternal(project) {
+      showInternal(project, toSelect) {
         createDialogWrapper(project, groups, toSelect) as SettingsDialog
       }
     }
 
-    private fun showInternal(project: Project?, settingsDialogInitializer: () -> SettingsDialog) {
+    private fun showInternal(project: Project?, toSelect: Configurable?, settingsDialogInitializer: () -> SettingsDialog) {
       val currentOrDefaultProject = currentOrDefaultProject(project)
       val isActualProject = currentOrDefaultProject != ProjectManager.getInstance().defaultProject
       if (AdvancedSettings.getBoolean("ide.ui.non.modal.settings.window") && isActualProject) {
         runWithModalProgressBlocking(currentOrDefaultProject, IdeBundle.message("settings.modal.opening.message")) {
-          val settingsFile = SettingsVirtualFileHolder.getInstance(currentOrDefaultProject).getOrCreate(settingsDialogInitializer);
+          val settingsFile = SettingsVirtualFileHolder.getInstance(currentOrDefaultProject).getOrCreate(toSelect, settingsDialogInitializer)
           val fileEditorManager = FileEditorManager.getInstance(currentOrDefaultProject) as FileEditorManagerEx;
           val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true)
           fileEditorManager.openFile(settingsFile, options);
@@ -117,7 +117,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
       val configurableToSelect = if (idToSelect == null) null else ConfigurableVisitor.findById(idToSelect, listOf(group))
 
       val currentOrDefaultProject = currentOrDefaultProject(project)
-      showInternal(currentOrDefaultProject) {
+      showInternal(currentOrDefaultProject, configurableToSelect) {
         SettingsDialog(currentOrDefaultProject,
                        listOf<ConfigurableGroup>(group!!),
                        configurableToSelect,

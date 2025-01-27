@@ -13,7 +13,11 @@ import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.OptionallyIncluded
 import com.intellij.openapi.fileTypes.ex.FakeFileType
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ex.SingleConfigurableEditor
 import com.intellij.openapi.options.newEditor.SettingsDialog
+import com.intellij.openapi.options.newEditor.SettingsEditor
+import com.intellij.openapi.options.newEditor.SingleSettingEditor
 import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder.SettingsVirtualFile
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -40,14 +44,18 @@ internal class SettingsVirtualFileHolder private constructor(private val project
 
   private val settingsFileRef = AtomicReference<SettingsVirtualFile?>(null)
 
-  suspend fun getOrCreate(initializer: () -> SettingsDialog): SettingsVirtualFile {
+  suspend fun getOrCreate(toSelect: Configurable?, initializer: () -> SettingsDialog): SettingsVirtualFile {
     return withContext(Dispatchers.EDT) {
       val settingsVirtualFile = settingsFileRef.get()
 
       if (settingsVirtualFile != null) {
+        val editor = settingsVirtualFile.dialog.editor
+        if (toSelect != null && editor is SettingsEditor) {
+          editor.select(toSelect)
+        }
         return@withContext settingsVirtualFile
       }
-      val settingsDialog = initializer.invoke()
+      val settingsDialog: SettingsDialog = initializer.invoke()
       val newVirtualFile = SettingsVirtualFile(settingsDialog, project)
       Disposer.register(settingsDialog.disposable, Disposable {
         val fileEditorManager = FileEditorManager.getInstance(newVirtualFile.project) as FileEditorManagerEx;
