@@ -2,17 +2,24 @@
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.core.Language
+import com.intellij.cce.execution.ExecutionMode
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 
 abstract class SetupSdkStep : ForegroundEvaluationStep {
   companion object {
     private val EP_NAME = ExtensionPointName.create<SetupSdkStep>("com.intellij.cce.setupSdkStep")
-
-    fun forLanguage(project: Project, language: Language): SetupSdkStep? {
-      return EP_NAME.getExtensionList(project).singleOrNull { it.isApplicable(language) }
+    fun forLanguage(project: Project, language: Language, executionMode: ExecutionMode): SetupSdkStep? {
+      return if (executionMode == ExecutionMode.DOCKER) {
+        EP_NAME.getExtensionList(project)
+          .singleOrNull { it.isApplicable(language) && it.isDockerBased }
+      }
+      else {
+        EP_NAME.getExtensionList(project)
+          .firstOrNull { it.isApplicable(language) }
+      }
     }
   }
-
+  open val isDockerBased = false
   abstract fun isApplicable(language: Language): Boolean
 }
