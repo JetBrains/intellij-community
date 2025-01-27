@@ -77,7 +77,7 @@ private class BackgroundHighlighterProjectActivity : ProjectActivity {
  */
 @Service
 internal class BackgroundHighlighter(coroutineScope: CoroutineScope) {
-  @JvmField val alarm = Alarm(coroutineScope = coroutineScope, threadToUse = Alarm.ThreadToUse.SWING_THREAD)
+  @JvmField val alarm = Alarm(coroutineScope, Alarm.ThreadToUse.SWING_THREAD)
 
   companion object {
     @TestOnly
@@ -87,18 +87,13 @@ internal class BackgroundHighlighter(coroutineScope: CoroutineScope) {
       Disposer.register(parentDisposable, Disposable {
         coroutineScope.cancel()
       })
-      registerListeners(project = project, parentDisposable = parentDisposable, alarm = service<BackgroundHighlighter>().alarm, coroutineScope = coroutineScope)
+      registerListeners(project, parentDisposable, service<BackgroundHighlighter>().alarm, coroutineScope)
     }
   }
 
   suspend fun runActivity(project: Project) {
     val perProjectDisposable = project.serviceAsync<BackgroundHighlighterPerProject>()
-    registerListeners(
-      project = project,
-      parentDisposable = perProjectDisposable,
-      alarm = alarm,
-      coroutineScope = perProjectDisposable.coroutineScope
-    )
+    registerListeners(project, perProjectDisposable, alarm, perProjectDisposable.coroutineScope)
   }
 }
 
@@ -123,18 +118,18 @@ private fun registerListeners(
   eventMulticaster.addCaretListener(object : CaretListener {
     override fun caretPositionChanged(e: CaretEvent) {
       if (e.caret === e.editor.caretModel.primaryCaret) {
-        onCaretUpdate(editor = e.editor, project = project, alarm = alarm, executor = executor)
+        onCaretUpdate(e.editor, project, alarm, executor)
       }
     }
 
     override fun caretAdded(e: CaretEvent) {
       if (e.caret === e.editor.caretModel.primaryCaret) {
-        onCaretUpdate(editor = e.editor, project = project, alarm = alarm, executor = executor)
+        onCaretUpdate(e.editor, project, alarm, executor)
       }
     }
 
     override fun caretRemoved(e: CaretEvent) {
-      onCaretUpdate(editor = e.editor, project = project, alarm = alarm, executor = executor)
+      onCaretUpdate(e.editor, project, alarm, executor)
     }
   }, parentDisposable)
 
@@ -157,7 +152,7 @@ private fun registerListeners(
         return
       }
 
-      updateHighlighted(project = project, editor = editor, alarm = alarm, executor = executor)
+      updateHighlighted(project, editor, alarm, executor)
     }
   }, parentDisposable)
 
@@ -165,7 +160,7 @@ private fun registerListeners(
     override fun documentChanged(e: DocumentEvent) {
       alarm.cancelAllRequests()
       editorFactory.editors(e.document, project).forEach {
-        updateHighlighted(project = project, editor = it, alarm = alarm, executor = executor)
+        updateHighlighted(project, it, alarm, executor)
         if (!highlightSelection(project, it, executor)) {
           removeSelectionHighlights(it)
         }
@@ -179,13 +174,13 @@ private fun registerListeners(
       alarm.cancelAllRequests()
       val oldEditor = e.oldEditor
       if (oldEditor is TextEditor) {
-        clearBraces(project = project, editor = oldEditor.editor, alarm = alarm)
+        clearBraces(project, oldEditor.editor, alarm)
       }
 
       val newEditor = e.newEditor
       if (newEditor is TextEditor) {
         val editor = newEditor.editor
-        updateHighlighted(project = project, editor = editor, alarm = alarm, executor = executor)
+        updateHighlighted(project, editor, alarm, executor)
         if (!highlightSelection(project, editor, executor)) {
           removeSelectionHighlights(editor)
         }
@@ -198,10 +193,10 @@ private fun registerListeners(
       return@TemplateManagerListener
     }
 
-    updateHighlighted(project = project, editor = state.editor, alarm = alarm, executor = executor)
+    updateHighlighted(project, state.editor, alarm, executor)
     state.addTemplateStateListener(object : TemplateEditingAdapter() {
       override fun templateFinished(template: Template, brokenOff: Boolean) {
-        updateHighlighted(project = project, editor = state.editor, alarm = alarm, executor = executor)
+        updateHighlighted(project, state.editor, alarm, executor)
       }
     })
   })
@@ -213,7 +208,7 @@ private fun onCaretUpdate(editor: Editor, project: Project, alarm: Alarm, execut
   
   // don't update braces in case of the active selection.
   if (!editor.selectionModel.hasSelection()) {
-    updateHighlighted(project = project, editor = editor, alarm = alarm, executor = executor)
+    updateHighlighted(project, editor, alarm, executor)
   }
 
   if (!highlightSelection(project, editor, executor)) {
@@ -347,17 +342,11 @@ private fun updateHighlighted(project: Project, editor: Editor, alarm: Alarm, ex
     project, editor,
     { newFile: PsiFile, newEditor: Editor ->
       val offsetBefore = editor.caretModel.offset
-      submitIdentifierHighlighterPass(
-        hostEditor = editor,
-        offsetBefore = offsetBefore,
-        newFile = newFile,
-        newEditor = newEditor,
-        executor = executor,
-      )
+      submitIdentifierHighlighterPass(editor, offsetBefore, newFile, newEditor, executor)
       HeavyBraceHighlighter.match(newFile, offsetBefore)
     },
     { newFile: PsiFile, newEditor: Editor, maybeMatch: Pair<TextRange, TextRange>? ->
-      val handler = BraceHighlightingHandler(project = project, editor = newEditor, alarm = alarm, psiFile = newFile)
+      val handler = BraceHighlightingHandler(project, newEditor, alarm, newFile)
       if (maybeMatch == null) {
         handler.updateBraces()
       }
@@ -366,13 +355,7 @@ private fun updateHighlighted(project: Project, editor: Editor, alarm: Alarm, ex
         if (BackgroundHighlightingUtil.needMatching(newEditor, codeInsightSettings)) {
           val fileType = PsiUtilBase.getPsiFileAtOffset(newFile, maybeMatch.first.startOffset).fileType
           handler.clearBraceHighlighters()
-          handler.highlightBraces(
-            lBrace = maybeMatch.first,
-            rBrace = maybeMatch.second,
-            matched = true,
-            scopeHighlighting = false,
-            fileType = fileType,
-          )
+          handler.highlightBraces(maybeMatch.first, maybeMatch.second, true, false, fileType)
         }
       }
     })

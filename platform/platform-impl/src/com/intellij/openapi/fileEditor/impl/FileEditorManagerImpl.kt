@@ -1485,6 +1485,7 @@ open class FileEditorManagerImpl(
     return result
   }
 
+  @RequiresEdt
   override fun getSelectedTextEditorWithRemotes(): Array<Editor> {
     val result = ArrayList<Editor>()
     for (e in selectedEditorWithRemotes) {
