@@ -3793,6 +3793,7 @@ c:com.intellij.refactoring.util.MoveRenameUsageInfo
 - <init>(com.intellij.psi.PsiElement,com.intellij.psi.PsiReference,com.intellij.psi.PsiElement):V
 - <init>(com.intellij.psi.PsiReference,com.intellij.psi.PsiElement):V
 - getReference():com.intellij.psi.PsiReference
+- p:getReferenceRangeToCheck(com.intellij.psi.PsiElement):com.intellij.openapi.util.Segment
 - getReferencedElement():com.intellij.psi.PsiElement
 - getUpToDateReferencedElement():com.intellij.psi.PsiElement
 f:com.intellij.refactoring.util.NonCodeUsageInfo
