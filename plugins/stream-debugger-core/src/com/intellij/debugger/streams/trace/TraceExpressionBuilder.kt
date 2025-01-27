@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NonNls
 interface TraceExpressionBuilder {
   fun createTraceExpression(chain: StreamChain): @NonNls String
 
-  //TODO(Korovin): Combine with the method above?
   fun createXExpression(chain: StreamChain, expressionText: String): XExpression {
     return XExpressionImpl.fromText(expressionText, EvaluationMode.CODE_FRAGMENT)
   }

@@ -1,165 +1,143 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.streams.action;
+package com.intellij.debugger.streams.action
 
-import com.intellij.debugger.streams.lib.LibrarySupportProvider;
-import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
-import com.intellij.lang.Language;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiInvalidElementAccessException;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.debugger.streams.lib.LibrarySupportProvider
+import com.intellij.debugger.streams.wrapper.StreamChain
+import com.intellij.lang.Language
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiInvalidElementAccessException
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Function
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicReference;
-
+enum class ChainStatus {
+  LANGUAGE_NOT_SUPPORTED,
+  COMPUTING,
+  FOUND,
+  NOT_FOUND
+}
 /**
- * Helps {@link TraceStreamAction} understand if there is a suitable chain under the debugger position or not.
+ * Helps [TraceStreamAction] understand if there is a suitable chain under the debugger position or not.
  */
-final class ChainResolver {
-  private static final Logger LOG = Logger.getInstance(ChainResolver.class);
+class ChainResolver {
+  private val mySearchResult: AtomicReference<ChainsSearchResult> = AtomicReference<ChainsSearchResult>(ChainsSearchResult(0, -1, null))
 
-  private final AtomicReference<ChainsSearchResult> mySearchResult = new AtomicReference<>(new ChainsSearchResult(0, -1, null));
-  private final ExecutorService myExecutor =
-    SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Stream debugger chains detector");
-
-  @NotNull ChainStatus tryFindChain(@NotNull PsiElement elementAtDebugger) {
-    ChainsSearchResult result = mySearchResult.get();
+  fun tryFindChain(elementAtDebugger: PsiElement): ChainStatus {
+    var result = mySearchResult.get()
     if (result.isSuitableFor(elementAtDebugger)) {
-      return result.chainsStatus;
+      return result.chainsStatus
     }
 
-    result = ChainsSearchResult.of(elementAtDebugger);
-    checkChainsExistenceInBackground(elementAtDebugger, result, myExecutor);
-    mySearchResult.set(result);
-    return result.chainsStatus;
+    result = ChainsSearchResult.Companion.of(elementAtDebugger)
+    checkChainsExistenceInBackground(elementAtDebugger, result)
+    mySearchResult.set(result)
+    return result.chainsStatus
   }
 
-  @NotNull List<StreamChainWithLibrary> getChains(@NotNull PsiElement elementAtDebugger) {
-    ChainsSearchResult result = mySearchResult.get();
-    if (!result.isSuitableFor(elementAtDebugger) || !result.chainsStatus.equals(ChainStatus.FOUND)) {
-      LOG.error("Cannot build chains: " + result.chainsStatus);
-      return Collections.emptyList();
+  internal fun getChains(elementAtDebugger: PsiElement): List<StreamChainWithLibrary> {
+    val result = mySearchResult.get()
+    if (!result.isSuitableFor(elementAtDebugger) || result.chainsStatus != ChainStatus.FOUND) {
+      LOG.error("Cannot build chains: " + result.chainsStatus)
+      return emptyList()
     }
 
-    // TODO: move to background
-    List<StreamChainWithLibrary> chains = new ArrayList<>();
-    String elementLanguageId = elementAtDebugger.getLanguage().getID();
-    LibrarySupportProvider.EP_NAME.forEachExtensionSafe(provider -> {
-      if (provider.getLanguageId().equals(elementLanguageId)) {
-        StreamChainBuilder chainBuilder = provider.getChainBuilder();
-        if (chainBuilder.isChainExists(elementAtDebugger)) {
-          for (StreamChain x : chainBuilder.build(elementAtDebugger)) {
-            chains.add(new StreamChainWithLibrary(x, provider));
-          }
-        }
+    val elementLanguageId = elementAtDebugger.getLanguage().id
+    val provider = LibrarySupportProvider.EP_NAME.findFirstSafe { it.getLanguageId() == elementLanguageId && it.getChainBuilder().isChainExists(elementAtDebugger) }
+    if (provider != null) {
+      val result = provider.chainBuilder.build(elementAtDebugger).map { StreamChainWithLibrary(it, provider) }.toList()
+      return result
+    }
+
+    return emptyList()
+  }
+
+  internal class StreamChainWithLibrary(@JvmField val chain: StreamChain, @JvmField val provider: LibrarySupportProvider)
+
+  private class ChainsSearchResult(val elementHash: Long, val offset: Long, containingFile: PsiFile?) {
+    val fileModificationStamp: Long
+
+    @Volatile
+    var chainsStatus: ChainStatus = ChainStatus.COMPUTING
+
+    init {
+      fileModificationStamp = getModificationStamp(containingFile)
+    }
+
+    fun updateStatus(found: Boolean) {
+      LOG.assertTrue(ChainStatus.COMPUTING == chainsStatus)
+      chainsStatus = if (found) ChainStatus.FOUND else ChainStatus.NOT_FOUND
+    }
+
+    fun markUnsupportedLanguage() {
+      LOG.assertTrue(ChainStatus.COMPUTING == chainsStatus)
+      chainsStatus = ChainStatus.LANGUAGE_NOT_SUPPORTED
+    }
+
+    fun isSuitableFor(element: PsiElement): Boolean {
+      return elementHash == element.hashCode().toLong() && offset == element.getTextOffset().toLong() && fileModificationStamp == getModificationStamp(
+        element.getContainingFile())
+    }
+
+    companion object {
+      private fun getModificationStamp(file: PsiFile?): Long {
+        return if (file == null) -1 else file.getModificationStamp()
       }
-    });
 
-    return chains;
+      fun of(element: PsiElement): ChainsSearchResult {
+        return ChainsSearchResult(element.hashCode().toLong(), element.getTextOffset().toLong(), element.getContainingFile())
+      }
+    }
   }
 
-  @RequiresBackgroundThread
-  private static void checkChainsExistenceInBackground(@NotNull PsiElement elementAtDebugger,
-                                                       @NotNull ChainsSearchResult searchResult,
-                                                       @NotNull ExecutorService executor) {
-    List<LibrarySupportProvider> extensions = forLanguage(elementAtDebugger.getLanguage());
-    if (extensions.isEmpty()) {
-      searchResult.markUnsupportedLanguage();
-    }
-    else {
-      ReadAction.nonBlocking(() -> {
-          boolean found = false;
-          for (LibrarySupportProvider provider : extensions) {
+  companion object {
+
+    private val LOG = Logger.getInstance(ChainResolver::class.java)
+
+    @RequiresBackgroundThread
+    private fun checkChainsExistenceInBackground(
+      elementAtDebugger: PsiElement,
+      searchResult: ChainsSearchResult
+    ) {
+      val extensions: List<LibrarySupportProvider> = forLanguage(elementAtDebugger.getLanguage())
+      if (extensions.isEmpty()) {
+        searchResult.markUnsupportedLanguage()
+      }
+      else {
+        ReadAction.nonBlocking(Runnable {
+          var found = false
+          for (provider in extensions) {
             try {
               if (provider.getChainBuilder().isChainExists(elementAtDebugger)) {
-                found = true;
-                break;
+                found = true
+                break
               }
             }
-            catch (ProcessCanceledException e) {
-              throw e;
+            catch (e: ProcessCanceledException) {
+              throw e
             }
-            catch (PsiInvalidElementAccessException ignored) {
+            catch (ignored: PsiInvalidElementAccessException) {
             }
-            catch (Throwable e) {
-              LOG.error(e);
+            catch (e: Throwable) {
+              LOG.error(e)
             }
           }
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Chains found:" + found);
+            LOG.debug("Chains found:" + found)
           }
-          searchResult.updateStatus(found);
+          searchResult.updateStatus(found)
         })
-        .inSmartMode(elementAtDebugger.getProject())
-        .executeSynchronously();
-    }
-  }
-
-  private static @NotNull List<LibrarySupportProvider> forLanguage(@NotNull Language language) {
-    return LibrarySupportProvider.EP_NAME.getByGroupingKey(language.getID(), ChainResolver.class, LibrarySupportProvider::getLanguageId);
-  }
-
-  enum ChainStatus {
-    LANGUAGE_NOT_SUPPORTED,
-    COMPUTING,
-    FOUND,
-    NOT_FOUND
-  }
-
-  static final class StreamChainWithLibrary {
-    final StreamChain chain;
-    final LibrarySupportProvider provider;
-
-    StreamChainWithLibrary(@NotNull StreamChain chain, @NotNull LibrarySupportProvider provider) {
-      this.chain = chain;
-      this.provider = provider;
-    }
-  }
-
-  private static final class ChainsSearchResult {
-    final long elementHash;
-    final long offset;
-    final long fileModificationStamp;
-    volatile @NotNull ChainStatus chainsStatus = ChainStatus.COMPUTING;
-
-    ChainsSearchResult(long elementHash, long offsetInFile, @Nullable PsiFile containingFile) {
-      this.elementHash = elementHash;
-      fileModificationStamp = getModificationStamp(containingFile);
-      offset = offsetInFile;
+          .inSmartMode(elementAtDebugger.getProject())
+          .executeSynchronously()
+      }
     }
 
-    void updateStatus(boolean found) {
-      LOG.assertTrue(ChainStatus.COMPUTING.equals(chainsStatus));
-      chainsStatus = found ? ChainStatus.FOUND : ChainStatus.NOT_FOUND;
-    }
-
-    void markUnsupportedLanguage() {
-      LOG.assertTrue(ChainStatus.COMPUTING.equals(chainsStatus));
-      chainsStatus = ChainStatus.LANGUAGE_NOT_SUPPORTED;
-    }
-
-    boolean isSuitableFor(@NotNull PsiElement element) {
-      return elementHash == element.hashCode()
-             && offset == element.getTextOffset()
-             && fileModificationStamp == getModificationStamp(element.getContainingFile());
-    }
-
-    private static long getModificationStamp(@Nullable PsiFile file) {
-      return file == null ? -1 : file.getModificationStamp();
-    }
-
-    static @NotNull ChainsSearchResult of(@NotNull PsiElement element) {
-      return new ChainsSearchResult(element.hashCode(), element.getTextOffset(), element.getContainingFile());
+    private fun forLanguage(language: Language): List<LibrarySupportProvider> {
+      return LibrarySupportProvider.EP_NAME.getByGroupingKey<String>(language.getID(), ChainResolver::class.java,
+                                                                     Function { obj: LibrarySupportProvider? -> obj!!.getLanguageId() })
     }
   }
 }
