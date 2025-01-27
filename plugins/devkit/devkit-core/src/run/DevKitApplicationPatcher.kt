@@ -110,6 +110,9 @@ private class DevKitApplicationPatcher : RunConfigurationExtension() {
     if (vmParametersAsList.none { it.startsWith("-Djava.util.zip.use.nio.for.zip.file.access") }) {
       vmParameters.add("-Djava.util.zip.use.nio.for.zip.file.access=true") // IJPL-149160
     }
+    if (vmParametersAsList.none { it.startsWith("-Djdk.nio.maxCachedBufferSize") }) {
+      vmParameters.add("-Djdk.nio.maxCachedBufferSize=2097152") // IJPL-164109
+    }
 
     enableIjentDefaultFsProvider(project, configuration, vmParameters)
 
