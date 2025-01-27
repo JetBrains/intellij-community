@@ -37,8 +37,7 @@ public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDe
                     @NotNull CompileContext context) {
     context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.resolving.repository.libraries.in.the.project")));
     try {
-      DependencyResolvingBuilder.resolveMissingDependencies(context, context.getProjectDescriptor().getProject().getModules(),
-                                                            BuildTargetChunk.forSingleTarget(target));
+      DependencyResolvingBuilder.resolveAllMissingDependenciesInProject(context, BuildTargetChunk.forSingleTarget(target));
     }
     catch (Exception e) {
       DependencyResolvingBuilder.reportError(context, "project", e);

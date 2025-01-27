@@ -38,6 +38,7 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.model.JpsGlobal;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryDescription;
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService;
@@ -167,10 +168,30 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     return ExitCode.ABORT;
   }
 
+  /**
+   * Downloads JARs from all Maven libraries configured in the project, including not only libraries added as dependencies to its modules,
+   * but also project-level libraries which aren't used in the modules.
+   */
+  static void resolveAllMissingDependenciesInProject(@NotNull CompileContext context, @NotNull BuildTargetChunk currentTargets)
+    throws Exception {
+    JpsProject project = context.getProjectDescriptor().getProject();
+    Set<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> allLibraries = collectRepositoryLibraries(project.getModules());
+    ContainerUtil.addAll(allLibraries, project.getLibraryCollection().getLibraries(JpsRepositoryLibraryType.INSTANCE));
+    resolveMissingDependencies(context, currentTargets, allLibraries);
+  }
+
+  /**
+   * Downloads JARs from Maven libraries which are added as dependency to any from the provided {@code modules}.
+   */
   @SuppressWarnings("RedundantThrows")
   static void resolveMissingDependencies(CompileContext context, Collection<? extends JpsModule> modules,
                                          BuildTargetChunk currentTargets) throws Exception {
-    Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> libs = getRepositoryLibraries(modules);
+    resolveMissingDependencies(context, currentTargets, collectRepositoryLibraries(modules));
+  }
+
+  private static void resolveMissingDependencies(CompileContext context,
+                                                 BuildTargetChunk currentTargets,
+                                                 Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> libs) throws Exception {
     if (!libs.isEmpty()) {
       JpsDependencyResolverConfiguration resolverConfiguration = JpsDependencyResolverConfigurationService
         .getInstance()
@@ -661,8 +682,8 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static @NotNull Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> getRepositoryLibraries(Collection<? extends JpsModule> modules) {
-    final Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> result = new SmartHashSet<>();
+  private static @NotNull Set<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> collectRepositoryLibraries(Collection<? extends JpsModule> modules) {
+    final Set<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> result = new SmartHashSet<>();
     for (JpsModule module : modules) {
       for (JpsDependencyElement dep : module.getDependenciesList().getDependencies()) {
         if (dep instanceof JpsLibraryDependency) {
