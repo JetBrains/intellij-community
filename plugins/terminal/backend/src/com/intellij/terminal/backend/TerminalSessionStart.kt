@@ -101,7 +101,7 @@ private fun createTerminalInputChannel(
           terminalStarter.sendBytes(event.bytes, false)
         }
         is TerminalResizeEvent -> {
-          terminalStarter.postResize(event.newSize, RequestOrigin.User)
+          terminalStarter.postResize(event.newSize.toTermSize(), RequestOrigin.User)
         }
         is TerminalCloseEvent -> {
           terminalStarter.close()

@@ -10,6 +10,7 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent
+import org.jetbrains.plugins.terminal.block.reworked.session.toDto
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
 
@@ -60,7 +61,7 @@ internal class TerminalInput(
   fun sendResize(newSize: TermSize) {
     val session = terminalSessionFuture.getNow(null) ?: return
     coroutineScope.launch(synchronousDispatcher) {
-      session.sendInputEvent(TerminalResizeEvent(newSize))
+      session.sendInputEvent(TerminalResizeEvent(newSize.toDto()))
     }
   }
 
