@@ -1351,6 +1351,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("intellij.remoterobot.remote.fixtures"),
     jetbrainsLibrary("intellij.remoterobot.robot.server.core"),
     jetbrainsLibrary("jetbrains.intellij.deps.rwmutex.idea"),
+    jetbrainsLibrary("jetbrains.kotlin.compose.compiler.plugin"),
     jetbrainsLibrary("jetbrains.llm.mlapi.catboost.shadow.need.slf4j"),
     jetbrainsLibrary("jetbrains.llm.mlapi.ml.api"),
     jetbrainsLibrary("jetbrains.llm.mlapi.ml.tools"),
