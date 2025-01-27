@@ -5,10 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
@@ -33,22 +31,18 @@ fun Job.cancelOnDispose(disposable: Disposable, disposeOnCompletion: Boolean = t
  */
 fun Disposable.attachAsChildTo(cs: CoroutineScope) {
   val disposableRef = AtomicReference<Disposable?>(this)
-  val job = cs.launch {
-    try {
-      awaitCancellation()
-    }
-    finally {
-      disposableRef.getAndSet(null)?.let {
-        Disposer.dispose(it)
-      }
+  val disposableHandle = cs.coroutineContext.job.invokeOnCompletion {
+    disposableRef.getAndSet(null)?.let {
+      Disposer.dispose(it)
     }
   }
+
   val registered = Disposer.tryRegister(this) {
     disposableRef.getAndSet(null)?.let {
-      job.cancel("disposed")
+      disposableHandle.dispose()
     }
   }
-  if (!registered) job.cancel("disposable is already disposed")
+  if (!registered) disposableHandle.dispose()
 }
 
 /**
