@@ -21,9 +21,6 @@
     <extensionPoint qualifiedName="com.intellij.externalSystem.modifiableModelsProvider"
                     interface="com.intellij.openapi.externalSystem.service.project.ModifiableModelsProviderExtension"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.externalSystem.moduleDataServiceExtension"
-                    interface="com.intellij.openapi.externalSystem.service.project.manage.ModuleDataServiceExtension"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalSystem.runConfigurationEx"
                     interface="com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtension"
                     dynamic="true"/>

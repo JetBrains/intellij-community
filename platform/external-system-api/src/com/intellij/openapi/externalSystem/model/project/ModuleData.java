@@ -19,7 +19,6 @@ import java.util.Map;
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
 
-@SuppressWarnings("JavadocReference")
 public class ModuleData extends AbstractNamedData implements Named, ExternalConfigPathAware, Identifiable {
   private final @NotNull Map<ExternalSystemSourceType, String> compileOutputPaths = new HashMap<>();
   private final @NotNull Map<ExternalSystemSourceType, String> externalCompilerOutputPaths = new HashMap<>();
@@ -33,14 +32,6 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   private @Nullable String description;
   private @NotNull List<File> artifacts;
   private String @Nullable [] ideModuleGroup;
-
-  private @Nullable String sourceCompatibility;
-  private @Nullable String targetCompatibility;
-  private @Nullable String sdkName;
-
-  private boolean isSetSourceCompatibility = false;
-  private boolean isSetTargetCompatibility = false;
-  private boolean isSetSdkName = false;
 
   private @Nullable String productionModuleId;
   private @NotNull String moduleName;
@@ -204,96 +195,6 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.ideModuleGroup = ideModuleGroup;
   }
 
-  /**
-   * @deprecated use {@link JavaModuleData#getLanguageLevel} instead
-   */
-  @Deprecated
-  public @Nullable String getSourceCompatibility() {
-    return sourceCompatibility;
-  }
-
-  /**
-   * @deprecated use {@link JavaModuleData#setLanguageLevel} instead
-   */
-  @Deprecated
-  public void setSourceCompatibility(@Nullable String sourceCompatibility) {
-    this.isSetSourceCompatibility = true;
-    this.sourceCompatibility = sourceCompatibility;
-  }
-
-  /**
-   * @deprecated use {@link JavaModuleData#getTargetBytecodeVersion} instead
-   */
-  @Deprecated(forRemoval = true)
-  public @Nullable String getTargetCompatibility() {
-    return targetCompatibility;
-  }
-
-  /**
-   * @deprecated use {@link JavaModuleData#setTargetBytecodeVersion} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void setTargetCompatibility(@Nullable String targetCompatibility) {
-    this.isSetTargetCompatibility = true;
-    this.targetCompatibility = targetCompatibility;
-  }
-
-  /**
-   * @deprecated use {@link ModuleSdkData#getSdkName} instead
-   */
-  @Deprecated(forRemoval = true)
-  public @Nullable String getSdkName() {
-    return sdkName;
-  }
-
-  /**
-   * @deprecated use {@link ModuleSdkData#setSdkName} instead
-   */
-  @Deprecated(forRemoval = true)
-  public void setSdkName(@Nullable String sdkName) {
-    this.isSetSdkName = true;
-    this.sdkName = sdkName;
-  }
-
-  // Remove it in version 2021.1
-  //<editor-fold desc="Backward compatibility preserving methods">
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
-  public void internalSetSourceCompatibility(@Nullable String sourceCompatibility) {
-    this.sourceCompatibility = sourceCompatibility;
-  }
-
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
-  public void internalSetTargetCompatibility(@Nullable String targetCompatibility) {
-    this.targetCompatibility = targetCompatibility;
-  }
-
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
-  public void internalSetSdkName(@Nullable String sdkName) {
-    this.sdkName = sdkName;
-  }
-
-  @Deprecated
-  @SuppressWarnings("MissingDeprecatedAnnotation")
-  public boolean isSetSourceCompatibility() {
-    return isSetSourceCompatibility;
-  }
-
-  @Deprecated
-  @SuppressWarnings("MissingDeprecatedAnnotation")
-  public boolean isSetTargetCompatibility() {
-    return isSetTargetCompatibility;
-  }
-
-  @Deprecated
-  @SuppressWarnings({"MissingDeprecatedAnnotation", "DeprecatedIsStillUsed"})
-  public boolean isSetSdkName() {
-    return isSetSdkName;
-  }
-  //</editor-fold>
-
   public @Nullable String getProperty(String key) {
     return properties != null ? properties.get(key) : null;
   }
@@ -346,7 +247,6 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     if (!moduleTypeId.equals(that.moduleTypeId)) return false;
     if (version != null ? !version.equals(that.version) : that.version != null) return false;
     if (description != null ? !description.equals(that.description) : that.description != null) return false;
-    if (sdkName != null ? !sdkName.equals(that.sdkName) : that.sdkName != null) return false;
 
     return true;
   }
@@ -360,7 +260,6 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     result = 31 * result + (group != null ? group.hashCode() : 0);
     result = 31 * result + (version != null ? version.hashCode() : 0);
     result = 31 * result + (description != null ? description.hashCode() : 0);
-    result = 31 * result + (sdkName != null ? sdkName.hashCode() : 0);
     return result;
   }
 

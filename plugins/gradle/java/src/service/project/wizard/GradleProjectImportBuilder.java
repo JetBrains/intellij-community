@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.project.ProjectSdkData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
@@ -198,10 +199,17 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
     if (javaProjectNode != null) {
       JavaProjectData data = javaProjectNode.getData();
       context.setCompilerOutputDirectory(data.getCompileOutputPath());
-      JavaSdkVersion version = data.getJdkVersion();
-      Sdk jdk = JavaSdkVersionUtil.findJdkByVersion(version);
-      if (jdk != null) {
-        context.setProjectJdk(jdk);
+    }
+
+    DataNode<ProjectSdkData> projectSdkNode = ExternalSystemApiUtil.find(node, ProjectSdkData.KEY);
+    if (projectSdkNode != null) {
+      ProjectSdkData data = projectSdkNode.getData();
+      String sdkName = data.getSdkName();
+      if (sdkName != null) {
+        Sdk sdk = ProjectJdkTable.getInstance().findJdk(sdkName);
+        if (sdk != null) {
+          context.setProjectJdk(sdk);
+        }
       }
     }
   }

@@ -13,7 +13,6 @@ import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDep
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
@@ -176,15 +175,12 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   }
 
   private void populateJavaProjectCompilerSettings(@NotNull IdeaProject ideaProject, @NotNull DataNode<ProjectData> projectNode) {
-    String compileOutputPath = getCompileOutputPath();
+    var compileOutputPath = getCompileOutputPath();
+    var languageLevel = getLanguageLevel(ideaProject);
+    var targetBytecodeVersion = getTargetBytecodeVersion(ideaProject);
+    var javaProjectData = new JavaProjectData(GradleConstants.SYSTEM_ID, compileOutputPath, languageLevel, targetBytecodeVersion);
 
-    LanguageLevel languageLevel = getLanguageLevel(ideaProject);
-    String targetBytecodeVersion = getTargetBytecodeVersion(ideaProject);
-
-    JavaSdkVersion jdkVersion = JavaProjectData.resolveSdkVersion(ideaProject.getJdkName());
-
-    JavaProjectData javaProjectData =
-      new JavaProjectData(GradleConstants.SYSTEM_ID, compileOutputPath, jdkVersion, languageLevel, targetBytecodeVersion);
+    javaProjectData.setJdkName(ideaProject.getJdkName());
 
     projectNode.createChild(JavaProjectData.KEY, javaProjectData);
   }

@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.serialization.PropertyMapping;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,16 +27,11 @@ public final class JavaProjectData extends AbstractExternalEntityData {
 
   private static final Pattern JDK_VERSION_PATTERN = Pattern.compile(".*1.(\\d+).*");
 
-  private boolean isSetJdkVersion = false;
-  private @NotNull JavaSdkVersion jdkVersion;
+  private @Nullable JavaSdkVersion jdkVersion;
 
   private @NotNull String compileOutputPath;
-  private @NotNull LanguageLevel languageLevel;
+  private @Nullable LanguageLevel languageLevel;
   private @Nullable String targetBytecodeVersion;
-
-  public JavaProjectData(@NotNull ProjectSystemId owner, @NotNull String compileOutputPath) {
-    this(owner, compileOutputPath, null, null);
-  }
 
   @PropertyMapping({"owner", "compileOutputPath", "languageLevel", "targetBytecodeVersion"})
   public JavaProjectData(
@@ -44,26 +40,10 @@ public final class JavaProjectData extends AbstractExternalEntityData {
     @Nullable LanguageLevel languageLevel,
     @Nullable String targetBytecodeVersion
   ) {
-    this(owner, compileOutputPath, null, languageLevel, targetBytecodeVersion);
-  }
-
-  /**
-   * @deprecated use {@link JavaProjectData#JavaProjectData(ProjectSystemId, String, LanguageLevel, String)} instead
-   */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public JavaProjectData(
-    @NotNull ProjectSystemId owner,
-    @NotNull String compileOutputPath,
-    @Nullable JavaSdkVersion jdkVersion,
-    @Nullable LanguageLevel languageLevel,
-    @Nullable String targetBytecodeVersion
-  ) {
     super(owner);
 
     this.compileOutputPath = compileOutputPath;
-    this.jdkVersion = jdkVersion != null ? jdkVersion : JavaSdkVersion.fromLanguageLevel(LanguageLevel.HIGHEST);
-    this.languageLevel = languageLevel != null ? languageLevel : LanguageLevel.HIGHEST;
+    this.languageLevel = languageLevel;
     this.targetBytecodeVersion = targetBytecodeVersion;
   }
 
@@ -78,21 +58,26 @@ public final class JavaProjectData extends AbstractExternalEntityData {
   /**
    * @deprecated use {@link ProjectSdkData#getSdkName()} instead
    */
-  @Deprecated(forRemoval = true)
+  @Deprecated(forRemoval = true) // used externally
   public @NotNull JavaSdkVersion getJdkVersion() {
-    return jdkVersion;
+    return ObjectUtils.notNull(jdkVersion, JavaSdkVersion.fromLanguageLevel(LanguageLevel.HIGHEST));
   }
 
+  /**
+   * @deprecated needed to support backward compatibility
+   */
   @ApiStatus.Internal
-  public boolean isSetJdkVersion() {
-    return isSetJdkVersion;
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public void setJdkName(@Nullable String jdk) {
+    jdkVersion = resolveSdkVersion(jdk);
   }
 
   /**
    * @deprecated needed to support backward compatibility
    */
   @Deprecated(forRemoval = true)
-  public static @Nullable JavaSdkVersion resolveSdkVersion(@Nullable String jdk) {
+  private static @Nullable JavaSdkVersion resolveSdkVersion(@Nullable String jdk) {
     if (jdk == null) {
       return null;
     }
@@ -121,6 +106,10 @@ public final class JavaProjectData extends AbstractExternalEntityData {
     return null;
   }
 
+  /**
+   * @deprecated needed to support backward compatibility
+   */
+  @Deprecated(forRemoval = true)
   private static @Nullable JavaSdkVersion resolveSdkVersion(int version) {
     if (version < 0 || version >= JavaSdkVersion.values().length) {
       LOG.warn(String.format(
@@ -138,7 +127,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
   }
 
   public @NotNull LanguageLevel getLanguageLevel() {
-    return languageLevel;
+    return ObjectUtils.notNull(languageLevel, LanguageLevel.HIGHEST);
   }
 
   public void setLanguageLevel(@NotNull LanguageLevel level) {
@@ -164,7 +153,7 @@ public final class JavaProjectData extends AbstractExternalEntityData {
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + Objects.hashCode(jdkVersion);
-    result = 31 * result + languageLevel.hashCode();
+    result = 31 * result + Objects.hashCode(languageLevel);
     result = 31 * result + Objects.hashCode(targetBytecodeVersion);
     result = 31 * result + compileOutputPath.hashCode();
     return result;
