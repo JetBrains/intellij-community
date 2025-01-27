@@ -183,7 +183,9 @@ class StatusBarActionManager(coroutineScope: CoroutineScope) {
   }
 
   fun getActionsFor(widgetFactories: Collection<StatusBarWidgetFactory>): List<AnAction> {
-    return widgetFactories.map { widgetFactory -> getActionFor(widgetFactory) }
+    return widgetFactories
+      .filter { it.isConfigurable }
+      .map { widgetFactory -> getActionFor(widgetFactory) }
   }
 
   fun getActionFor(widgetFactory: StatusBarWidgetFactory): AnAction {
