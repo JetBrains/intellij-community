@@ -48,8 +48,8 @@ abstract class ExtensionReferenceBase extends PsiReferenceBase<PsiElement> imple
     if (StringUtil.isEmptyOrSpaces(resolveId)) return null;
 
     final CommonProcessors.FindProcessor<Extension> resolveProcessor = new CommonProcessors.FindFirstProcessor<>();
-    ExtensionLocatorKt.processExtensionCandidates(myElement.getProject(), getExtensionPointFqn(), resolveProcessor,
-                                                  resolveId, extension -> getNameElement(extension));
+    ExtensionLocatorKt.findExtensionCandidate(myElement.getProject(), getExtensionPointFqn(), resolveProcessor,
+                                              resolveId, extension -> getNameElement(extension));
 
     final Extension value = resolveProcessor.getFoundValue();
     if (value == null) return null;
@@ -77,7 +77,6 @@ abstract class ExtensionReferenceBase extends PsiReferenceBase<PsiElement> imple
   }
 
   protected void processCandidates(Processor<? super Extension> processor) {
-    ExtensionLocatorKt.processExtensionCandidates(myElement.getProject(), getExtensionPointFqn(), processor,
-                                                  null, null);
+    ExtensionLocatorKt.processAllExtensionCandidates(myElement.getProject(), getExtensionPointFqn(), processor);
   }
 }

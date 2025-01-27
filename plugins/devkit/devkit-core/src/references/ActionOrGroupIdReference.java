@@ -64,51 +64,13 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
     collectDomResults(myId, domSearchScope, processor);
 
     if (myIsAction != ThreeState.NO && processor.getResults().isEmpty()) {
-      Ref<PsiElement> executor = Ref.create();
-      PairProcessor<String, PsiClass> pairProcessor = (id, psiClass) -> {
-        if (StringUtil.equals(id, myId)) {
-          executor.set(psiClass);
-          return false;
-        }
-        return true;
-      };
-      ActionOrGroupIdResolveUtil.processExecutors(project, pairProcessor);
-      if (!executor.isNull()) {
-        return PsiElementResolveResult.createResults(executor.get());
+      PsiElement executor = resolveExecutor(project);
+      if (executor != null) {
+        return PsiElementResolveResult.createResults(executor);
       }
 
       if (myId.startsWith(ACTIVATE_TOOLWINDOW_ACTION_PREFIX) && myId.endsWith(ACTIVATE_TOOLWINDOW_ACTION_SUFFIX)) {
-        String toolwindowId = StringUtil.substringBeforeLast(
-          Objects.requireNonNull(StringUtil.substringAfter(myId, ACTIVATE_TOOLWINDOW_ACTION_PREFIX)),
-          ACTIVATE_TOOLWINDOW_ACTION_SUFFIX);
-
-        // ToolWindow EPs - process all as we need to remove spaces from ID
-        Ref<Extension> toolwindowExtension = Ref.create();
-        ActionOrGroupIdResolveUtil.processActivateToolWindowActions(project, extension -> {
-          String idValue = ActionOrGroupIdResolveUtil.getToolWindowIdValue(extension);
-          if (Comparing.strEqual(toolwindowId, idValue)) {
-            toolwindowExtension.set(extension);
-            return false;
-          }
-          return true;
-        });
-        if (!toolwindowExtension.isNull()) {
-          return PsiElementResolveResult.createResults(getDomTargetPsi(toolwindowExtension.get()));
-        }
-
-        // known (programmatic) ToolWindow IDs
-        Ref<PsiField> knownToolWindowIdField = Ref.create();
-        ActionOrGroupIdResolveUtil.processToolWindowId(project, (s, field) -> {
-          if (Comparing.strEqual(s, toolwindowId)) {
-            knownToolWindowIdField.set(field);
-            return false;
-          }
-          return true;
-        });
-        if (!knownToolWindowIdField.isNull()) {
-          return PsiElementResolveResult.createResults(knownToolWindowIdField.get());
-        }
-        return ResolveResult.EMPTY_ARRAY;
+        return resolveToolWindow(project);
       }
     }
 
@@ -136,6 +98,53 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
     final List<PsiElement> psiElements =
       ContainerUtil.mapNotNull(processor.getResults(), actionOrGroup -> getDomTargetPsi(actionOrGroup));
     return PsiElementResolveResult.createResults(psiElements);
+  }
+
+  private @Nullable PsiElement resolveExecutor(Project project) {
+    Ref<PsiElement> executor = Ref.create();
+    PairProcessor<String, PsiClass> pairProcessor = (id, psiClass) -> {
+      if (StringUtil.equals(id, myId)) {
+        executor.set(psiClass);
+        return false;
+      }
+      return true;
+    };
+    ActionOrGroupIdResolveUtil.processExecutors(project, pairProcessor);
+    return executor.get();
+  }
+
+  private ResolveResult @NotNull [] resolveToolWindow(Project project) {
+    String toolwindowId = StringUtil.substringBeforeLast(
+      Objects.requireNonNull(StringUtil.substringAfter(myId, ACTIVATE_TOOLWINDOW_ACTION_PREFIX)),
+      ACTIVATE_TOOLWINDOW_ACTION_SUFFIX);
+
+    // ToolWindow EPs - process all as we need to remove spaces from ID
+    Ref<Extension> toolwindowExtension = Ref.create();
+    ActionOrGroupIdResolveUtil.processActivateToolWindowActions(project, extension -> {
+      String idValue = ActionOrGroupIdResolveUtil.getToolWindowIdValue(extension);
+      if (Comparing.strEqual(toolwindowId, idValue)) {
+        toolwindowExtension.set(extension);
+        return false;
+      }
+      return true;
+    });
+    if (!toolwindowExtension.isNull()) {
+      return PsiElementResolveResult.createResults(getDomTargetPsi(toolwindowExtension.get()));
+    }
+
+    // known (programmatic) ToolWindow IDs
+    Ref<PsiField> knownToolWindowIdField = Ref.create();
+    ActionOrGroupIdResolveUtil.processToolWindowId(project, (s, field) -> {
+      if (Comparing.strEqual(s, toolwindowId)) {
+        knownToolWindowIdField.set(field);
+        return false;
+      }
+      return true;
+    });
+    if (!knownToolWindowIdField.isNull()) {
+      return PsiElementResolveResult.createResults(knownToolWindowIdField.get());
+    }
+    return ResolveResult.EMPTY_ARRAY;
   }
 
   @Override

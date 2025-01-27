@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util
 
 import com.intellij.openapi.project.Project
@@ -44,11 +44,29 @@ fun locateExtensionsByExtensionPointAndId(
   return ExtensionByExtensionPointLocator(extensionPoint.xmlTag.project, extensionPoint, extensionId, extensionIdFunction)
 }
 
+fun processAllExtensionCandidates(
+  project: Project,
+  extensionPointFqn: String,
+  processor: Processor<in Extension>,
+) {
+  processExtensionCandidates(project, extensionPointFqn, processor, null, null)
+}
+
+fun findExtensionCandidate(
+  project: Project,
+  extensionPointFqn: String,
+  processor: Processor<in Extension>,
+  extensionPointId: String?,
+  nameElementFunction: Function<Extension, GenericAttributeValue<String>?>?,
+) {
+  processExtensionCandidates(project, extensionPointFqn, processor, extensionPointId, nameElementFunction)
+}
+
 /**
  * @param extensionPointId To locate a specific extension instance by ID or `null` to process all.
  * @param nameElementFunction Returns the DOM `id` element when [extensionPointId] is passed.
  */
-fun processExtensionCandidates(
+private fun processExtensionCandidates(
   project: Project,
   extensionPointFqn: String,
   processor: Processor<in Extension>,

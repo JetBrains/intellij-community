@@ -15,7 +15,7 @@ import com.intellij.util.Processor
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.util.PsiUtil
-import org.jetbrains.idea.devkit.util.processExtensionCandidates
+import org.jetbrains.idea.devkit.util.processAllExtensionCandidates
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UField
 import org.jetbrains.uast.evaluateString
@@ -54,7 +54,7 @@ internal object ActionOrGroupIdResolveUtil {
 
   @JvmStatic
   fun processActivateToolWindowActions(project: Project, processor: Processor<Extension>) {
-    processExtensionCandidates(project, "com.intellij.toolWindow", processor, null, null)
+    processAllExtensionCandidates(project, "com.intellij.toolWindow", processor)
   }
 
   @JvmStatic
