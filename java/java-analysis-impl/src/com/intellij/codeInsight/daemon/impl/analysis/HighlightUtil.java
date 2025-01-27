@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.*;
@@ -51,8 +51,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
@@ -69,8 +69,8 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -2764,7 +2764,6 @@ public final class HighlightUtil {
 
     PsiClass referencedClass;
     String resolvedName;
-    PsiType type;
     PsiElement parent = expression.getParent();
     if (expression instanceof PsiJavaCodeReferenceElement) {
       // redirected ctr
@@ -2774,16 +2773,14 @@ public final class HighlightUtil {
         return null;
       }
       PsiElement qualifier = ((PsiJavaCodeReferenceElement)expression).getQualifier();
-      type = qualifier instanceof PsiExpression ? ((PsiExpression)qualifier).getType() : null;
-      referencedClass = PsiUtil.resolveClassInType(type);
+      referencedClass = PsiUtil.resolveClassInType(qualifier instanceof PsiExpression psiExpression ? psiExpression.getType() : null);
 
       boolean isSuperCall = JavaPsiConstructorUtil.isSuperConstructorCall(parent);
       if (resolved == null && isSuperCall) {
-        if (qualifier instanceof PsiReferenceExpression) {
-          resolved = ((PsiReferenceExpression)qualifier).resolve();
+        if (qualifier instanceof PsiReferenceExpression referenceExpression) {
+          resolved = referenceExpression.resolve();
           expression = qualifier;
-          type = ((PsiReferenceExpression)qualifier).getType();
-          referencedClass = PsiUtil.resolveClassInType(type);
+          referencedClass = PsiUtil.resolveClassInType(referenceExpression.getType());
         }
         else if (qualifier == null) {
           resolved = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiMember.class);
@@ -2841,8 +2838,8 @@ public final class HighlightUtil {
           resolvedName = PsiKeyword.THIS;
         }
         else {
-          resolvedName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
-                                                                                  PsiFormatUtilBase.SHOW_NAME, 0);
+          resolvedName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
+                                                    PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, 0);
           if (referencedClass == null) referencedClass = method.getContainingClass();
         }
       }
@@ -2857,17 +2854,14 @@ public final class HighlightUtil {
         return null;
       }
     }
-    else if (expression instanceof PsiThisExpression thisExpression) {
-      type = thisExpression.getType();
-      referencedClass = PsiUtil.resolveClassInType(type);
-      if (thisExpression.getQualifier() != null) {
-        resolvedName = referencedClass == null
-                       ? null
-                       : PsiFormatUtil.formatClass(referencedClass, PsiFormatUtilBase.SHOW_NAME) + "." + PsiKeyword.THIS;
-      }
-      else {
-        resolvedName = PsiKeyword.THIS;
-      }
+    else if (expression instanceof PsiThisExpression  || expression instanceof PsiSuperExpression) {
+      PsiQualifiedExpression qualifiedExpression = (PsiQualifiedExpression)expression;
+      referencedClass = PsiUtil.resolveClassInType(qualifiedExpression.getType());
+      String keyword = expression instanceof PsiThisExpression ? PsiKeyword.THIS : PsiKeyword.SUPER;
+      PsiJavaCodeReferenceElement qualifier = qualifiedExpression.getQualifier();
+      resolvedName = qualifier != null && qualifier.resolve() instanceof PsiClass aClass
+                     ? PsiFormatUtil.formatClass(aClass, PsiFormatUtilBase.SHOW_NAME) + "." + keyword
+                     : keyword;
     }
     else {
       return null;
@@ -2901,9 +2895,7 @@ public final class HighlightUtil {
       }
     }
 
-    if (expression instanceof PsiThisExpression || expression instanceof PsiSuperExpression) {
-      if (referencedClass != parentClass) return null;
-    }
+    if (expression instanceof PsiThisExpression && referencedClass != parentClass) return null;
 
     if (expression instanceof PsiJavaCodeReferenceElement) {
       if (!parentClass.equals(PsiTreeUtil.getParentOfType(expression, PsiClass.class)) &&
