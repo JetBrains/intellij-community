@@ -211,6 +211,7 @@ a:com.intellij.execution.ExecutionTarget
 - <init>():V
 - canRun(com.intellij.execution.configurations.RunConfiguration):Z
 - equals(java.lang.Object):Z
+- getDescription():java.lang.String
 - a:getDisplayName():java.lang.String
 - getGroupName():java.lang.String
 - a:getIcon():javax.swing.Icon

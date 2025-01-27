@@ -52,6 +52,8 @@ class ExecutionTargetComboBoxAction : ComboBoxAction(), DumbAware, ActionRemoteB
     presentation.isEnabledAndVisible = true
     val name = StringUtil.trimMiddle(executionTarget.displayName, MAX_TARGET_DISPLAY_LENGTH)
     presentation.setText(name, false)
+    presentation.icon = executionTarget.icon
+    presentation.description = executionTarget.description
   }
 
   override fun createPopupActionGroup(button: JComponent, dataContext: DataContext): DefaultActionGroup {

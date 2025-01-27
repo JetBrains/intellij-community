@@ -40,6 +40,8 @@ public abstract class ExecutionTarget {
 
   public abstract @Nullable Icon getIcon();
 
+  public @Nullable @Nls String getDescription() { return null; }
+
   /**
    * Implementation-specific logic should decide whether to suggest this target for the given configuration.
    */
