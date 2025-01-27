@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.block.reworked.session
 
 import com.intellij.openapi.actionSystem.DataKey
 import kotlinx.coroutines.channels.SendChannel
+import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
@@ -39,6 +40,14 @@ internal class TerminalInput(
     withInputChannel { inputChannel ->
       inputChannel.trySend(TerminalClearBufferEvent)
     }
+  }
+
+  /**
+   * Note that resize events sent before the terminal session is initialized will be ignored.
+   */
+  fun sendResize(newSize: TermSize) {
+    val session = terminalSessionFuture.getNow(null) ?: return
+    session.inputChannel.trySend(TerminalResizeEvent(newSize))
   }
 
   private fun withInputChannel(block: ((SendChannel<TerminalInputEvent>) -> Unit)) {

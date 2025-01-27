@@ -35,7 +35,9 @@ import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMeth
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputFileType
-import org.jetbrains.plugins.terminal.block.reworked.session.*
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalInput
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
+import org.jetbrains.plugins.terminal.block.reworked.session.startTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
@@ -148,12 +150,10 @@ internal class ReworkedTerminalView(
   }
 
   override fun sendCommandToExecute(shellCommand: String) {
-    terminalSessionFuture.thenAccept {
-      val newLineBytes = encodingManager.getCode(KeyEvent.VK_ENTER, 0)!!
-      // TODO: should we always use UTF8?
-      val bytes = shellCommand.toByteArray(Charsets.UTF_8) + newLineBytes
-      it?.inputChannel?.trySend(TerminalWriteBytesEvent(bytes))
-    }
+    val newLineBytes = encodingManager.getCode(KeyEvent.VK_ENTER, 0)!!
+    // TODO: should we always use UTF8?
+    val bytes = shellCommand.toByteArray(Charsets.UTF_8) + newLineBytes
+    terminalInput.sendBytes(bytes)
   }
 
   override fun getTerminalSize(): TermSize? {
@@ -183,9 +183,8 @@ internal class ReworkedTerminalView(
   private fun listenPanelSizeChanges() {
     component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent) {
-        val inputChannel = terminalSessionFuture.getNow(null)?.inputChannel ?: return
         val newSize = getTerminalSize() ?: return
-        inputChannel.trySend(TerminalResizeEvent(newSize))
+        terminalInput.sendResize(newSize)
       }
     })
   }
