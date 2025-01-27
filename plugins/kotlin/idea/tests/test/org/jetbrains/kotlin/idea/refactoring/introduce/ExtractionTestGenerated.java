@@ -2987,6 +2987,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/parameters/extractThis/implicitThisWithSmartCast.kt");
                 }
 
+                @TestMetadata("importedCall.kt")
+                public void testImportedCall() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/extractThis/importedCall.kt");
+                }
+
                 @TestMetadata("javaSyntheticProperty.kt")
                 public void testJavaSyntheticProperty() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/extractThis/javaSyntheticProperty.kt");

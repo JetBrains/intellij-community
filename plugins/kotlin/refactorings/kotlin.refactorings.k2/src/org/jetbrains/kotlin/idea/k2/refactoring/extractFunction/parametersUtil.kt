@@ -223,7 +223,7 @@ private fun ExtractionData.registerParameter(
     }
 
     val thisSymbol = (receiverSymbol as? KaReceiverParameterSymbol)?.owningCallableSymbol ?: receiverSymbol
-    val hasThisReceiver = thisSymbol != null
+    val hasThisReceiver = thisSymbol != null && (extensionReceiver != null || thisSymbol.psi?.containingFile == commonParent.containingFile)
     val thisExpr = refInfo.refExpr.parent as? KtThisExpression
 
     val referencedClassifierSymbol: KaClassifierSymbol? =
