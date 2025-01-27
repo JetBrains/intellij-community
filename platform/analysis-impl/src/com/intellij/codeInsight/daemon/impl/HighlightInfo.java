@@ -767,8 +767,7 @@ public class HighlightInfo implements Segment {
     return isFlagSet(HAS_HINT_MASK);
   }
 
-  @ApiStatus.Internal
-  public void setHint(boolean hasHint) {
+  private void setHint(boolean hasHint) {
     setFlag(HAS_HINT_MASK, hasHint);
   }
 

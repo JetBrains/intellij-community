@@ -1,10 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.ide.IdeBundle;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -56,7 +56,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
                                   @NotNull ProperTextRange priorityRange,
                                   @Nullable Editor editor,
                                   boolean runAnnotators, boolean runVisitors, boolean highlightErrorElements, @NotNull HighlightInfoUpdater highlightInfoUpdater) {
-    super(psiFile.getProject(), document, IdeBundle.message("highlighting.pass.injected.presentable.name"), psiFile, editor, TextRange.create(startOffset, endOffset), true, HighlightInfoProcessor.getEmpty());
+    super(psiFile.getProject(), document, AnalysisBundle.message("highlighting.pass.injected.presentable.name"), psiFile, editor, TextRange.create(startOffset, endOffset), true, HighlightInfoProcessor.getEmpty());
     myReducedRanges = reducedRanges;
     myUpdateAll = updateAll;
     myPriorityRange = priorityRange;
@@ -238,7 +238,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
       }
       HighlightInfo info = builder.createUnconditionally();
       info.markFromInjection();
-      info.setToolId(InjectedLanguageManagerImpl.INJECTION_BACKGROUND_TOOL_ID);
+      info.toolId =(InjectedLanguageManagerImpl.INJECTION_BACKGROUND_TOOL_ID);
       info.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
       result.add(info);
     }
@@ -271,8 +271,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
       HighlightInfo patched = new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
                           hostRange.getStartOffset(), hostRange.getEndOffset(),
                           info.getDescription(), info.getToolTip(), info.getSeverity(), isAfterEndOfLine, null,
-                          false, 0, info.getProblemGroup(), info.getToolId(), info.getGutterIconRenderer(), info.getGroup(),
-                          info.hasHint(), info.getLazyQuickFixes());
+                          false, 0, info.getProblemGroup(), info.getToolId(), info.getGutterIconRenderer(), info.getGroup(), info.hasHint(), info.getLazyQuickFixes());
 
       info.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {
         List<TextRange> editableQF = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, quickfixTextRange);

@@ -98,8 +98,7 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
     return passes.isEmpty() ? TextEditorHighlightingPass.EMPTY_ARRAY : passes.toArray(TextEditorHighlightingPass.EMPTY_ARRAY);
   }
 
-  @ApiStatus.Internal
-  public static PsiFile renewFile(@NotNull Project project, @NotNull Document document)  {
+  static PsiFile renewFile(@NotNull Project project, @NotNull Document document)  {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile instanceof PsiCompiledFile compiled) {
       psiFile = compiled.getDecompiledPsiFile();

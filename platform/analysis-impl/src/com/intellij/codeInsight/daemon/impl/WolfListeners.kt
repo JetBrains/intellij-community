@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -36,7 +36,7 @@ internal class WolfListeners(
     coroutineScope.launch {
       invalidateFileRequests
         .collect { file ->
-          if (file is Runnable) {
+          if (file is kotlinx.coroutines.Runnable) {
             file.run()
             return@collect
           }
@@ -74,7 +74,7 @@ internal class WolfListeners(
       }
 
       override fun childrenChanged(event: PsiTreeChangeEvent) {
-        this@WolfListeners.wolfTheProblemSolver.clearSyntaxErrorFlag(event)
+        wolfTheProblemSolver.clearSyntaxErrorFlag(event)
       }
     }, wolfTheProblemSolver)
     val busConnection = project.messageBus.connect(coroutineScope)
@@ -97,7 +97,7 @@ internal class WolfListeners(
           clearInvalidFiles()
         }
         for (file in toRemove) {
-          this@WolfListeners.wolfTheProblemSolver.doRemove(file!!)
+          wolfTheProblemSolver.doRemove(file!!)
         }
       }
     })
@@ -111,14 +111,14 @@ internal class WolfListeners(
       }
     })
 
-    busConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+    busConnection.subscribe(DynamicPluginListener.Companion.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         // Ensure we don't have any leftover problems referring to classes from plugin being unloaded
         val allFiles = HashSet<VirtualFile>()
         wolfTheProblemSolver.consumeProblemFiles(allFiles::add)
         wolfTheProblemSolver.consumeProblemFilesFromExternalSources(allFiles::add)
         for (file in allFiles) {
-          this@WolfListeners.wolfTheProblemSolver.doRemove(file)
+          wolfTheProblemSolver.doRemove(file)
         }
       }
     })
@@ -133,12 +133,12 @@ internal class WolfListeners(
   @TestOnly
   fun waitForFilesQueuedForInvalidationAreProcessed() {
     @Suppress("SSBasedInspection")
-    runBlocking {
+    (runBlocking {
       withTimeout(1.minutes) {
         val job = CompletableDeferred<Unit>()
         invalidateFileRequests.emit(Runnable { job.complete(Unit) })
         job.join()
       }
-    }
+    })
   }
 }
