@@ -511,6 +511,10 @@ a:com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 - com.intellij.psi.codeStyle.CodeStyleSettingsProvider
 - *:getAccessor(java.lang.Object,java.lang.reflect.Field):com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor
 - *f:getPropertyMapper(com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper
+a:com.intellij.psi.stubs.NamedStubBase
+- com.intellij.psi.stubs.StubBase
+- com.intellij.psi.stubs.NamedStub
+- *p:<init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.tree.IElementType,com.intellij.util.io.StringRef):V
 *f:com.intellij.psi.util.PartiallyKnownString
 - *sf:Companion:com.intellij.psi.util.PartiallyKnownString$Companion
 - <init>(com.intellij.psi.util.StringEntry):V

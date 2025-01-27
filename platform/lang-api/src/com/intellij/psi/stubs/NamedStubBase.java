@@ -3,7 +3,9 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +14,12 @@ public abstract class NamedStubBase<T extends PsiNamedElement> extends StubBase<
   private final @Nullable StringRef myName;
 
   protected NamedStubBase(StubElement parent, @NotNull IStubElementType elementType, @Nullable StringRef name) {
+    super(parent, elementType);
+    myName = name;
+  }
+
+  @ApiStatus.Experimental
+  protected NamedStubBase(StubElement parent, @NotNull IElementType elementType, @Nullable StringRef name) {
     super(parent, elementType);
     myName = name;
   }
