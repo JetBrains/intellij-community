@@ -76,7 +76,7 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
   private val mainMenuButton = MainMenuButton(coroutineScope)
 
   init {
-    val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope, frame)
+    val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope, frame) {UISettings.shadowInstance.mainMenuDisplayMode != MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR}
     mainMenuButton.expandableMenu = expandableMenu
     mainMenuButton.rootPane = frame.rootPane
   }

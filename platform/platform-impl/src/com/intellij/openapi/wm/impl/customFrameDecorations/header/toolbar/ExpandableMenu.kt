@@ -31,7 +31,7 @@ internal class ExpandableMenu(
   private val headerContent: JComponent,
   coroutineScope: CoroutineScope,
   frame: JFrame,
-  private val shouldBeColored: (() -> Boolean)? = null
+  private val shouldBeColored: (() -> Boolean)
 ) {
   val ideMenu: IdeJMenuBar = RootPaneUtil.createMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = null)
   private val ideMenuHelper = IdeMenuHelper(menu = ideMenu, coroutineScope = null)
