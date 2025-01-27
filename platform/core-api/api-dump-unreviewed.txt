@@ -888,9 +888,6 @@ com.intellij.lexer.MergeFunction
 com.intellij.lexer.RestartableLexer
 - a:getStartState():I
 com.intellij.model.search.SearchRequest
-- getInjectionSearchScope():com.intellij.psi.search.SearchScope
-- getSearchScope():com.intellij.psi.search.SearchScope
-- a:getSearchString():java.lang.String
 - s:of(java.lang.String):com.intellij.model.search.SearchRequest
 - s:of(java.lang.String,com.intellij.psi.search.SearchScope):com.intellij.model.search.SearchRequest
 - s:of(java.lang.String,com.intellij.psi.search.SearchScope,com.intellij.psi.search.SearchScope):com.intellij.model.search.SearchRequest
