@@ -60,14 +60,14 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val remoteCommunicator = RemoteCommunicatorHolder.getRemoteCommunicator() ?: run {
       Messages.showErrorDialog(e.project,
-                               "No remote communicator available",
-                               SettingsSyncBundle.message("troubleshooting.dialog.title"))
+                               SettingsSyncJbaBundle.message("troubleshooting.dialog.error.download.file.failed"),
+                               SettingsSyncJbaBundle.message("troubleshooting.dialog.title"))
       return
     }
     if (remoteCommunicator !is CloudConfigServerCommunicator) {
       Messages.showErrorDialog(e.project,
-                               SettingsSyncBundle.message("troubleshooting.dialog.error.wrong.configuration", remoteCommunicator::class),
-                               SettingsSyncBundle.message("troubleshooting.dialog.title"))
+                               SettingsSyncJbaBundle.message("troubleshooting.dialog.error.wrong.configuration", remoteCommunicator::class),
+                               SettingsSyncJbaBundle.message("troubleshooting.dialog.title"))
       return
     }
 
@@ -75,14 +75,14 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
       val fileStructure =
         ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
           collectFileStructure(remoteCommunicator)
-        }, SettingsSyncBundle.message("troubleshooting.loading.info.progress.dialog.title"), false, e.project)
+        }, SettingsSyncJbaBundle.message("troubleshooting.loading.info.progress.dialog.title"), false, e.project)
       TroubleshootingDialog(e.project, remoteCommunicator, fileStructure).show()
     }
     catch (ex: Exception) {
       LOG.error(ex)
       if (Messages.OK == Messages.showOkCancelDialog(e.project,
-                                                     SettingsSyncBundle.message("troubleshooting.dialog.error.check.log.file.for.errors"),
-                                                     SettingsSyncBundle.message("troubleshooting.dialog.error.loading.info.failed"),
+                                                     SettingsSyncJbaBundle.message("troubleshooting.dialog.error.check.log.file.for.errors"),
+                                                     SettingsSyncJbaBundle.message("troubleshooting.dialog.error.loading.info.failed"),
                                                      ShowLogAction.getActionName(), CommonBundle.getCancelButtonText(), null)) {
         ShowLogAction.showLog()
       }
@@ -150,7 +150,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
     val userData = RemoteCommunicatorHolder.getCurrentUserData()
 
     init {
-      title = SettingsSyncBundle.message("troubleshooting.dialog.title")
+      title = SettingsSyncJbaBundle.message("troubleshooting.dialog.title")
       init()
     }
 
@@ -168,7 +168,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
         emailRow(userData)
         appInfoRow()
 
-        row(SettingsSyncBundle.message("troubleshooting.dialog.files")) {}
+        row(SettingsSyncJbaBundle.message("troubleshooting.dialog.files")) {}
         generateFileSubTree(this, rootNode)
       }
     }
@@ -194,45 +194,45 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
 
     private fun Panel.statusRow() =
       row {
-        label(SettingsSyncBundle.message("troubleshooting.dialog.local.status.label"))
+        label(SettingsSyncJbaBundle.message("troubleshooting.dialog.local.status.label"))
         label(if (SettingsSyncSettings.Companion.getInstance().syncEnabled) IdeBundle.message("plugins.configurable.enabled")
               else IdeBundle.message("plugins.configurable.disabled"))
       }.layout(RowLayout.PARENT_GRID)
 
     private fun Panel.serverUrlRow() =
       row {
-        label(SettingsSyncBundle.message("troubleshooting.dialog.server.url.label"))
+        label(SettingsSyncJbaBundle.message("troubleshooting.dialog.server.url.label"))
         copyableLabel(CloudConfigServerCommunicator.defaultUrl)
       }.layout(RowLayout.PARENT_GRID)
 
     private fun Panel.loginNameRow(userData: SettingsSyncUserData?) =
       row {
-        label(SettingsSyncBundle.message("troubleshooting.dialog.login.label"))
+        label(SettingsSyncJbaBundle.message("troubleshooting.dialog.login.label"))
         copyableLabel(userData?.name)
       }.layout(RowLayout.PARENT_GRID)
 
     private fun Panel.emailRow(userData: SettingsSyncUserData?) =
       row {
-        label(SettingsSyncBundle.message("troubleshooting.dialog.email.label"))
+        label(SettingsSyncJbaBundle.message("troubleshooting.dialog.email.label"))
         copyableLabel(userData?.email)
       }.layout(RowLayout.PARENT_GRID)
 
     private fun Panel.appInfoRow() {
       val appInfo = getLocalApplicationInfo()
       row {
-        label(SettingsSyncBundle.message("troubleshooting.dialog.applicationId.label"))
+        label(SettingsSyncJbaBundle.message("troubleshooting.dialog.applicationId.label"))
         copyableLabel(appInfo.applicationId)
       }.layout(RowLayout.PARENT_GRID)
       row {
-        label(SettingsSyncBundle.message("troubleshooting.dialog.username.label"))
+        label(SettingsSyncJbaBundle.message("troubleshooting.dialog.username.label"))
         copyableLabel(appInfo.userName)
       }.layout(RowLayout.PARENT_GRID)
       row {
-        label(SettingsSyncBundle.message("troubleshooting.dialog.hostname.label"))
+        label(SettingsSyncJbaBundle.message("troubleshooting.dialog.hostname.label"))
         copyableLabel(appInfo.hostName)
       }.layout(RowLayout.PARENT_GRID)
       row {
-        label(SettingsSyncBundle.message("troubleshooting.dialog.configFolder.label"))
+        label(SettingsSyncJbaBundle.message("troubleshooting.dialog.configFolder.label"))
         copyableLabel(appInfo.configFolder)
       }.layout(RowLayout.PARENT_GRID)
     }
@@ -251,7 +251,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
 
       val snapshot = version.snapshot
       if (snapshot != null) {
-        label(SettingsSyncBundle.message("troubleshooting.dialog.machineInfo.label"))
+        label(SettingsSyncJbaBundle.message("troubleshooting.dialog.machineInfo.label"))
         val appInfo = snapshot.metaInfo.appInfo
         val text = if (appInfo != null) {
           val appId = appInfo.applicationId
@@ -279,7 +279,7 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
       }
 
       if (showDeleteButton) {
-        button(SettingsSyncBundle.message("troubleshooting.dialog.delete.button")) {
+        button(SettingsSyncJbaBundle.message("troubleshooting.dialog.delete.button")) {
           deleteFile(project, remoteCommunicator, version.filePath)
         }
       }
@@ -288,15 +288,15 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
     private fun downloadVersion(version: Version, project: Project?) {
       val file = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<File?, Exception> {
         downloadToFile(version.filePath, version.fileVersion, remoteCommunicator)
-      }, SettingsSyncBundle.message("troubleshooting.dialog.downloading.settings.from.server.progress.title"), false, project)
+      }, SettingsSyncJbaBundle.message("troubleshooting.dialog.downloading.settings.from.server.progress.title"), false, project)
 
       if (file != null) {
-        showFileDownloadedMessage(file, SettingsSyncBundle.message("troubleshooting.dialog.successfully.downloaded.message"))
+        showFileDownloadedMessage(file, SettingsSyncJbaBundle.message("troubleshooting.dialog.successfully.downloaded.message"))
       }
       else {
         if (Messages.OK == Messages.showOkCancelDialog(contentPane,
-                                                       SettingsSyncBundle.message("troubleshooting.dialog.error.check.log.file.for.errors"),
-                                                       SettingsSyncBundle.message("troubleshooting.dialog.error.download.file.failed"),
+                                                       SettingsSyncJbaBundle.message("troubleshooting.dialog.error.check.log.file.for.errors"),
+                                                       SettingsSyncJbaBundle.message("troubleshooting.dialog.error.download.file.failed"),
                                                        ShowLogAction.getActionName(), CommonBundle.getCancelButtonText(), null)) {
           ShowLogAction.showLog()
         }
@@ -323,17 +323,17 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
           else null
           Version(filePath, version, snapshot)
         }
-      }, SettingsSyncBundle.message("troubleshooting.fetching.history.progress.title"), false, project)
+      }, SettingsSyncJbaBundle.message("troubleshooting.fetching.history.progress.title"), false, project)
 
       val dialogBuilder = DialogBuilder(contentPane)
-        .title(SettingsSyncBundle.message("troubleshooting.settings.history.dialog.title", filePath))
+        .title(SettingsSyncJbaBundle.message("troubleshooting.settings.history.dialog.title", filePath))
       val historyPanel = panel {
         for (version in history) {
           versionRow(version, showHistoryButton = false, showDeleteButton = false).layout(RowLayout.PARENT_GRID)
         }
       }.withBorder(JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP))
 
-      val button = JButton(SettingsSyncBundle.message("troubleshooting.dialog.download.full.history.button"))
+      val button = JButton(SettingsSyncJbaBundle.message("troubleshooting.dialog.download.full.history.button"))
       button.addActionListener {
         downloadFullHistory(project, remoteCommunicator, history, loginName)
       }
@@ -374,26 +374,26 @@ internal class SettingsSyncTroubleshootingAction : DumbAwareAction() {
           }
         }
         zipFile
-      }, SettingsSyncBundle.message("troubleshooting.fetching.history.progress.title"), true, project)
+      }, SettingsSyncJbaBundle.message("troubleshooting.fetching.history.progress.title"), true, project)
 
-      showFileDownloadedMessage(compoundZip, SettingsSyncBundle.message("troubleshooting.dialog.download.full.history.success.message"))
+      showFileDownloadedMessage(compoundZip, SettingsSyncJbaBundle.message("troubleshooting.dialog.download.full.history.success.message"))
     }
 
     private fun deleteFile(project: Project?, remoteCommunicator: CloudConfigServerCommunicator, filePath: String) {
       val choice = Messages.showOkCancelDialog(contentPane,
-                                               SettingsSyncBundle.message("troubleshooting.dialog.delete.confirmation.message"),
-                                               SettingsSyncBundle.message("troubleshooting.dialog.delete.confirmation.title"),
+                                               SettingsSyncJbaBundle.message("troubleshooting.dialog.delete.confirmation.message"),
+                                               SettingsSyncJbaBundle.message("troubleshooting.dialog.delete.confirmation.title"),
                                                IdeBundle.message("button.delete"), CommonBundle.getCancelButtonText(), null)
       if (choice == Messages.OK) {
         try {
           ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
             SettingsSyncSettings.Companion.getInstance().syncEnabled = false
             remoteCommunicator.deleteFile(filePath)
-          }, SettingsSyncBundle.message("troubleshooting.delete.file.from.server.progress.title"), false, project)
+          }, SettingsSyncJbaBundle.message("troubleshooting.delete.file.from.server.progress.title"), false, project)
         }
         catch (e: Exception) {
           LOG.warn("Couldn't delete $filePath from server", e)
-          Messages.showErrorDialog(contentPane, e.message, SettingsSyncBundle.message("troubleshooting.dialog.delete.confirmation.title"))
+          Messages.showErrorDialog(contentPane, e.message, SettingsSyncJbaBundle.message("troubleshooting.dialog.delete.confirmation.title"))
         }
       }
     }

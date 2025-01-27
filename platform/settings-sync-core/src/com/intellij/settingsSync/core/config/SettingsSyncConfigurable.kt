@@ -325,6 +325,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     }
   }
 
+  @Suppress("HardCodedStringLiteral")
   private fun updateSyncOptionText() {
     val message = if (enableSyncOption.get() == InitSyncType.GET_FROM_SERVER) {
       message("enable.dialog.get.settings.from.account.text")
