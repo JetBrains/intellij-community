@@ -25,7 +25,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -818,14 +821,15 @@ class LineStatusTrackerManager(
       if (documentsInDefaultChangeList.contains(document)) return
 
       val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
+      if (!virtualFile.isInLocalFileSystem) return
       if (getLineStatusTracker(document) != null) return
-
-      val provider = getTrackerProvider(virtualFile, document)
-      if (provider != ChangelistsLocalStatusTrackerProvider) return
 
       val changeList = ChangeListManager.getInstance(project).getChangeList(virtualFile)
       val inAnotherChangelist = changeList != null && !ActiveChangeListTracker.getInstance(project).isActiveChangeList(changeList)
       if (inAnotherChangelist) {
+        val provider = getTrackerProvider(virtualFile, document)
+        if (provider != ChangelistsLocalStatusTrackerProvider) return
+
         log("Tracker install from DocumentListener: ", virtualFile)
 
         val tracker = synchronized(LOCK) {
