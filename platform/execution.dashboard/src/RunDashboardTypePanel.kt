@@ -26,6 +26,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import javax.swing.JCheckBox
+import javax.swing.JEditorPane
 import javax.swing.JTree
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
@@ -38,11 +39,13 @@ internal class RunDashboardTypePanel(private val project: Project) : NonOpaquePa
 
       if (value != null) {
         checkBox.isSelected = !(RunDashboardManager.getInstance(project) as RunDashboardManagerImpl).isNewExcluded(value.id)
+        applyLink.isEnabled = hasTypeWithOppositeExclusion(value.id)
       }
       updateTree(value)
     }
   private var nodeStateChanging = false
   private lateinit var checkBox: JCheckBox
+  private lateinit var applyLink: JEditorPane
   private var hasFolders = false
 
   private val root = CheckedTreeNode("TypeRoot")
@@ -130,6 +133,7 @@ internal class RunDashboardTypePanel(private val project: Project) : NonOpaquePa
             val type = type
             if (type != null) {
               (RunDashboardManager.getInstance(project) as RunDashboardManagerImpl).setNewExcluded(type.id, !isSelected)
+              applyLink.isEnabled = hasTypeWithOppositeExclusion(type.id)
             }
           }
         }
@@ -139,6 +143,13 @@ internal class RunDashboardTypePanel(private val project: Project) : NonOpaquePa
             for (typeId in manager.types) {
               (RunDashboardManager.getInstance(project) as RunDashboardManagerImpl).setNewExcluded(typeId, !isChecked)
             }
+            val type = type
+            if (type != null) {
+              applyLink.isEnabled = hasTypeWithOppositeExclusion(type.id)
+            }
+          }
+          .also {
+            applyLink = it.comment!!
           }
       }
     }
@@ -189,6 +200,15 @@ internal class RunDashboardTypePanel(private val project: Project) : NonOpaquePa
     hasFolders = folderNodes.isNotEmpty()
     for (folderNode in folderNodes) {
       tree.expandPath(TreePath(folderNode.path))
+    }
+  }
+
+  private fun hasTypeWithOppositeExclusion(selectedTypeId: String): Boolean {
+    val runDashboardManager = RunDashboardManager.getInstance(project) as RunDashboardManagerImpl
+    val newExcluded = runDashboardManager.isNewExcluded(selectedTypeId)
+
+    return runDashboardManager.types.any { typeId ->
+      typeId != selectedTypeId && runDashboardManager.isNewExcluded(typeId) != newExcluded
     }
   }
 
