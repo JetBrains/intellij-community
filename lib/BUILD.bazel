@@ -2561,6 +2561,13 @@ kt_jvm_import(
   visibility = ["//visibility:public"]
 )
 
+kt_jvm_import(
+  name = "jetbrains-kotlin-compose-compiler-plugin",
+  jar = "@kotlin-compose-compiler-plugin-2_1_0_http//file",
+  srcjar = "@kotlin-compose-compiler-plugin-2_1_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 java_library(
   name = "jetbrains-kotlinx-lincheck-jvm",
   exports = [

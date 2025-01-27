@@ -10,6 +10,8 @@ java_library(
     "@lib//:rhizomedb-compiler-plugin",
     "@lib//:rpc-compiler-plugin",
     "@lib//:poko-compiler-plugin",
-  ]
+    "@lib//:jetbrains-kotlin-compose-compiler-plugin",
+  ],
+  plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build fleet.compiler.plugins` end

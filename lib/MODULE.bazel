@@ -3500,6 +3500,20 @@ http_file(
 )
 
 http_file(
+  name = "kotlin-compose-compiler-plugin-2_1_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.0/kotlin-compose-compiler-plugin-2.1.0.jar",
+  sha256 = "5545c33ddbc331ce4f2700b15c7d8b8603d219c434f3370298af45e99f1930b9",
+  downloaded_file_path = "kotlin-compose-compiler-plugin-2.1.0.jar"
+)
+
+http_file(
+  name = "kotlin-compose-compiler-plugin-2_1_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.0/kotlin-compose-compiler-plugin-2.1.0-sources.jar",
+  sha256 = "f984032d119b9ed4e811398ec43f52e83e73b14860817da70016812848eaa900",
+  downloaded_file_path = "kotlin-compose-compiler-plugin-2.1.0-sources.jar"
+)
+
+http_file(
   name = "lincheck-jvm-2_33_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/lincheck-jvm/2.33/lincheck-jvm-2.33.jar",
   sha256 = "2dd9c390e2de0acbdd2fce1aabadd378fa75a9cf73ee723dd8cecbe5c8480457",
