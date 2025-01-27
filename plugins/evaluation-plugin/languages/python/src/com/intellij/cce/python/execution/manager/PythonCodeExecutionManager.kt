@@ -122,6 +122,6 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     return ProcessExecutionLog(output, error, exitCode)
   }
 
-  override fun setupTarget() {}
+  override fun setupTarget(project: Project, sdk: Sdk) {}
   override fun removeTarget() {}
 }

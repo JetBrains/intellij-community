@@ -16,7 +16,13 @@ import java.io.File
 abstract class CodeExecutionManager {
   companion object {
     val EP_NAME: ExtensionPointName<CodeExecutionManager> = ExtensionPointName.create("com.intellij.cce.codeExecutionManager")
-    fun getForLanguage(language: Language, inDocker: ExecutionMode): CodeExecutionManager? = EP_NAME.findFirstSafe { it.language == language && it.executionMode == inDocker }
+    fun getForLanguage(language: Language, inDocker: Boolean): CodeExecutionManager? =
+      EP_NAME.findFirstSafe {
+        it.language == language
+        && it.executionMode == if (inDocker)
+          ExecutionMode.DOCKER
+        else ExecutionMode.LOCAL
+      }
   }
 
   abstract val language: Language
@@ -31,7 +37,7 @@ abstract class CodeExecutionManager {
 
   protected val collectedInfo: MutableMap<String, Any> = mutableMapOf()
 
-  abstract fun setupTarget()
+  abstract fun setupTarget(project: Project, sdk: Sdk)
   abstract fun removeTarget()
 
 
