@@ -59,7 +59,9 @@ class EliminateWhenSubjectIntention : KotlinApplicableModCommandAction<KtWhenExp
                     )
                     val guardExpression = entry.guard?.getExpression()
                     if (guardExpression != null) {
-                        appendFixedText("&&")
+                        if (entry.elseKeyword == null) {
+                            appendFixedText("&&")
+                        }
                         appendExpression(guardExpression)
                     }
                 }
