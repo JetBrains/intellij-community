@@ -20,7 +20,7 @@ class TryWithResources {
 
   void testType() throws Exception {
     String s = "";
-    try (<error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.AutoCloseable'">s</error>;
+    try (<error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.AutoCloseable'">s;</error>
          <error descr="Incompatible types. Found: 'TryWithResources', required: 'java.lang.AutoCloseable'">this</error>) { }
   }
 

@@ -147,6 +147,17 @@ final class JavaErrorFixProvider {
     };
     fixes(RETURN_FROM_CONSTRUCTOR, fixReturnFromVoid);
     fixes(RETURN_FROM_VOID_METHOD, fixReturnFromVoid);
+    fixes(STATEMENT_BAD_EXPRESSION, (error, sink) -> {
+      if (error.psi() instanceof PsiExpressionStatement expressionStatement) {
+        HighlightFixUtil.registerFixesForExpressionStatement(expressionStatement, sink);
+        PsiElement parent = expressionStatement.getParent();
+        if (parent instanceof PsiCodeBlock ||
+            parent instanceof PsiIfStatement ||
+            parent instanceof PsiLoopStatement loop && loop.getBody() == expressionStatement) {
+          sink.accept(PriorityIntentionActionWrapper.lowPriority(myFactory.createDeleteSideEffectAwareFix(expressionStatement)));
+        }
+      }
+    });
   }
 
   private void createMethodFixes() {

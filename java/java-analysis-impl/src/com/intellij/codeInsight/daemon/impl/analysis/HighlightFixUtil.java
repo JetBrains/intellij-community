@@ -388,7 +388,7 @@ public final class HighlightFixUtil {
     }
   }
 
-  public static void registerFixesForExpressionStatement(@NotNull PsiElement statement, @NotNull List<? super IntentionAction> registrar) {
+  public static void registerFixesForExpressionStatement(@NotNull PsiElement statement, @NotNull Consumer<? super CommonIntentionAction> info) {
     if (!(statement instanceof PsiExpressionStatement)) return;
     PsiCodeBlock block = ObjectUtils.tryCast(statement.getParent(), PsiCodeBlock.class);
     if (block == null) return;
@@ -397,14 +397,14 @@ public final class HighlightFixUtil {
     PsiType type = expression.getType();
     if (type == null) return;
     if (!type.equals(PsiTypes.voidType())) {
-      registrar.add(PriorityIntentionActionWrapper.highPriority(QuickFixFactory.getInstance().createIterateFix(expression)));
+      info.accept(PriorityIntentionActionWrapper.highPriority(QuickFixFactory.getInstance().createIterateFix(expression)));
       if (PsiTreeUtil.skipWhitespacesAndCommentsForward(statement) == block.getRBrace() && block.getParent() instanceof PsiMethod method) {
         PsiType returnType = method.getReturnType();
         if (returnType != null && isPossibleReturnValue(expression, type, returnType)) {
-          registrar.add(QuickFixFactory.getInstance().createInsertReturnFix(expression));
+          info.accept(QuickFixFactory.getInstance().createInsertReturnFix(expression));
         }
       }
-      registrar.add(QuickFixFactory.getInstance().createIntroduceVariableAction(expression));
+      info.accept(QuickFixFactory.getInstance().createIntroduceVariableAction(expression));
     }
   }
 

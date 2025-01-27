@@ -1133,12 +1133,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitStatement(@NotNull PsiStatement statement) {
-    super.visitStatement(statement);
-    if (!hasErrorResults()) add(HighlightUtil.checkNotAStatement(statement));
-  }
-
-  @Override
   public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
     super.visitSwitchStatement(statement);
     checkSwitchBlock(statement);

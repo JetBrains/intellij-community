@@ -13,10 +13,8 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
-import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -632,47 +630,6 @@ public final class HighlightUtil {
     }
 
     return null;
-  }
-
-  static HighlightInfo.Builder checkNotAStatement(@NotNull PsiStatement statement) {
-    if (PsiUtil.isStatement(statement)) {
-      return null;
-    }
-    PsiElement anchor = statement;
-    if (PsiUtilCore.hasErrorElementChild(statement)) {
-      boolean allowedError = false;
-      if (statement instanceof PsiExpressionStatement) {
-        PsiElement[] children = statement.getChildren();
-        if (children[0] instanceof PsiExpression && children[1] instanceof PsiErrorElement errorElement &&
-            errorElement.getErrorDescription().equals(JavaPsiBundle.message("expected.semicolon"))) {
-          allowedError = true;
-          anchor = children[0];
-        }
-      }
-      if (!allowedError) return null;
-    }
-    boolean isDeclarationNotAllowed = false;
-    if (statement instanceof PsiDeclarationStatement) {
-      PsiElement parent = statement.getParent();
-      isDeclarationNotAllowed = parent instanceof PsiIfStatement || parent instanceof PsiLoopStatement;
-    }
-    String description = JavaErrorBundle.message(isDeclarationNotAllowed ? "declaration.not.allowed" : "not.a.statement");
-    HighlightInfo.Builder error =
-      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(anchor).descriptionAndTooltip(description);
-    if (statement instanceof PsiExpressionStatement expressionStatement) {
-      List<IntentionAction> registrar = new ArrayList<>();
-      HighlightFixUtil.registerFixesForExpressionStatement(statement, registrar);
-      QuickFixAction.registerQuickFixActions(error, null, registrar);
-      PsiElement parent = expressionStatement.getParent();
-      if (parent instanceof PsiCodeBlock ||
-          parent instanceof PsiIfStatement ||
-          parent instanceof PsiLoopStatement loop && loop.getBody() == expressionStatement) {
-        IntentionAction action = PriorityIntentionActionWrapper
-          .lowPriority(getFixFactory().createDeleteSideEffectAwareFix(expressionStatement));
-        error.registerFix(action, null, null, null, null);
-      }
-    }
-    return error;
   }
 
   static void checkSwitchExpressionReturnTypeCompatible(@NotNull PsiSwitchExpression switchExpression,

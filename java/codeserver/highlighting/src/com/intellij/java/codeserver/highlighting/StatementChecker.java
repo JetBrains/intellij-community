@@ -2,6 +2,7 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.pom.java.JavaFeature;
@@ -270,5 +271,27 @@ final class StatementChecker {
     else if (!isMethodVoid && !PsiTreeUtil.hasErrorElements(statement)) {
       myVisitor.report(JavaErrorKinds.RETURN_VALUE_MISSING.create(statement, method));
     }
+  }
+
+  void checkNotAStatement(@NotNull PsiStatement statement) {
+    if (PsiUtil.isStatement(statement)) return;
+    if (PsiUtilCore.hasErrorElementChild(statement)) {
+      boolean allowedError = false;
+      if (statement instanceof PsiExpressionStatement) {
+        PsiElement[] children = statement.getChildren();
+        if (children[0] instanceof PsiExpression && children[1] instanceof PsiErrorElement errorElement &&
+            errorElement.getErrorDescription().equals(JavaPsiBundle.message("expected.semicolon"))) {
+          allowedError = true;
+        }
+      }
+      if (!allowedError) return;
+    }
+    boolean isDeclarationNotAllowed = false;
+    if (statement instanceof PsiDeclarationStatement) {
+      PsiElement parent = statement.getParent();
+      isDeclarationNotAllowed = parent instanceof PsiIfStatement || parent instanceof PsiLoopStatement;
+    }
+    var kind = isDeclarationNotAllowed ? JavaErrorKinds.STATEMENT_DECLARATION_NOT_ALLOWED : JavaErrorKinds.STATEMENT_BAD_EXPRESSION;
+    myVisitor.report(kind.create(statement));
   }
 }

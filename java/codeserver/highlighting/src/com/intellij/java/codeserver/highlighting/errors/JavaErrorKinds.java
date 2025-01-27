@@ -765,6 +765,8 @@ public final class JavaErrorKinds {
   
   public static final Simple<PsiSwitchLabelStatementBase> STATEMENT_CASE_OUTSIDE_SWITCH = error("statement.case.outside.switch");
   public static final Simple<PsiStatement> STATEMENT_INVALID = error("statement.invalid");
+  public static final Simple<PsiStatement> STATEMENT_BAD_EXPRESSION = error("statement.bad.expression");
+  public static final Simple<PsiStatement> STATEMENT_DECLARATION_NOT_ALLOWED = error("statement.declaration.not.allowed");
   
   public static final Simple<PsiExpression> GUARD_MISPLACED = error("guard.misplaced");
   public static final Simple<PsiExpression> GUARD_EVALUATED_TO_FALSE = error("guard.evaluated.to.false");

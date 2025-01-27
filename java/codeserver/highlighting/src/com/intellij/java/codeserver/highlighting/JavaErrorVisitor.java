@@ -111,6 +111,12 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitStatement(@NotNull PsiStatement statement) {
+    super.visitStatement(statement);
+    if (!hasErrorResults()) myStatementChecker.checkNotAStatement(statement);
+  }
+
+  @Override
   public void visitTryStatement(@NotNull PsiTryStatement statement) {
     super.visitTryStatement(statement);
     if (!hasErrorResults()) {

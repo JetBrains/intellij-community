@@ -56,7 +56,7 @@ class Test {
     mode = 0;
   }
 
-  void testNested(Object o, Integer in) {
+  void testNested(Object o, Integer in, AutoCloseable in1) {
     switch (o) {
       case Integer mode when (<error descr="Cannot assign a value to variable 'mode', because it is declared outside the guard">mode</error> = 42) > 9:
         switch (o) {
@@ -97,9 +97,9 @@ class Test {
       <error descr="Variable used in lambda expression should be final or effectively final">in</error> = 1;
     };
     // try-with-resources
-    try (<error descr="Variable used as a try-with-resources resource should be final or effectively final">in</error>) {
+    try (<error descr="Variable used as a try-with-resources resource should be final or effectively final">in1</error>) {
       switch (o) {
-        case AutoCloseable ii when (<error descr="Cannot assign a value to variable 'in', because it is declared outside the guard">in</error> = 1) != null: break;
+        case AutoCloseable ii when (<error descr="Cannot assign a value to variable 'in1', because it is declared outside the guard">in1</error> = ii) != null: break;
         default: break;
       }
     } catch (Exception e) {
