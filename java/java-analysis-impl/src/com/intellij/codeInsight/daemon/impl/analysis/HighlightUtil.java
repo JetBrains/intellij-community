@@ -573,32 +573,6 @@ public final class HighlightUtil {
     return PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
   }
 
-  static HighlightInfo.Builder checkUnhandledCloserExceptions(@NotNull PsiResourceListElement resource) {
-    List<PsiClassType> unhandled = ExceptionUtil.getUnhandledCloserExceptions(resource, null);
-    if (unhandled.isEmpty()) return null;
-
-    HighlightInfoType highlightType = getUnhandledExceptionHighlightType(resource);
-    if (highlightType == null) return null;
-
-    String description = JavaErrorBundle.message("unhandled.close.exceptions", formatTypes(unhandled), unhandled.size(),
-                              JavaErrorBundle.message("auto.closeable.resource"));
-    HighlightInfo.Builder highlight = HighlightInfo.newHighlightInfo(highlightType).range(resource).descriptionAndTooltip(description);
-    HighlightFixUtil.registerUnhandledExceptionFixes(resource, asConsumer(highlight));
-    return highlight;
-  }
-
-  private static @Nullable HighlightInfoType getUnhandledExceptionHighlightType(@NotNull PsiElement element) {
-    // JSP top-level errors are handled by UnhandledExceptionInJSP inspection
-    if (FileTypeUtils.isInServerPageFile(element)) {
-      PsiMethod targetMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class, true, PsiLambdaExpression.class);
-      if (targetMethod instanceof SyntheticElement) {
-        return null;
-      }
-    }
-
-    return HighlightInfoType.UNHANDLED_EXCEPTION;
-  }
-
   static HighlightInfo.Builder checkBreakTarget(@NotNull PsiBreakStatement statement, @NotNull LanguageLevel languageLevel) {
     return checkBreakOrContinueTarget(statement, statement.getLabelIdentifier(), statement.findExitedStatement(), languageLevel,
                                       "break.outside.switch.or.loop",
@@ -959,18 +933,6 @@ public final class HighlightUtil {
       return checkMustBeThrowable(type, parameter, true);
     }
     return null;
-  }
-
-  static HighlightInfo.Builder checkTryResourceIsAutoCloseable(@NotNull PsiResourceListElement resource) {
-    PsiType type = resource.getType();
-    if (type == null) return null;
-
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(resource.getProject());
-    PsiClassType autoCloseable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, resource.getResolveScope());
-    if (TypeConversionUtil.isAssignable(autoCloseable, type)) return null;
-    if (IncompleteModelUtil.isIncompleteModel(resource) && IncompleteModelUtil.isPotentiallyConvertible(autoCloseable, type, resource)) return null;
-
-    return createIncompatibleTypeHighlightInfo(autoCloseable, type, resource.getTextRange(), 0);
   }
 
   static HighlightInfo.Builder checkResourceVariableIsFinal(@NotNull PsiResourceExpression resource) {

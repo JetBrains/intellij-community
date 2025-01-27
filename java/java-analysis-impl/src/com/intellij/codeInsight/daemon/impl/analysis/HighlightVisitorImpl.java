@@ -1185,25 +1185,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitResourceList(@NotNull PsiResourceList resourceList) {
-    super.visitResourceList(resourceList);
-    if (!hasErrorResults()) add(checkFeature(resourceList, JavaFeature.TRY_WITH_RESOURCES));
-  }
-
-  @Override
-  public void visitResourceVariable(@NotNull PsiResourceVariable resource) {
-    super.visitResourceVariable(resource);
-    if (!hasErrorResults()) add(HighlightUtil.checkTryResourceIsAutoCloseable(resource));
-    if (!hasErrorResults()) add(HighlightUtil.checkUnhandledCloserExceptions(resource));
-  }
-
-  @Override
   public void visitResourceExpression(@NotNull PsiResourceExpression resource) {
     super.visitResourceExpression(resource);
-    if (!hasErrorResults()) add(checkFeature(resource, JavaFeature.REFS_AS_RESOURCE));
     if (!hasErrorResults()) add(HighlightUtil.checkResourceVariableIsFinal(resource));
-    if (!hasErrorResults()) add(HighlightUtil.checkTryResourceIsAutoCloseable(resource));
-    if (!hasErrorResults()) add(HighlightUtil.checkUnhandledCloserExceptions(resource));
   }
 
   @Override

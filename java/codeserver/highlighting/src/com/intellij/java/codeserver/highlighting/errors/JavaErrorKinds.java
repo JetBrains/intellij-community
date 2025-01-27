@@ -575,8 +575,14 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiElement, Collection<PsiClassType>> EXCEPTION_UNHANDLED =
     error(PsiElement.class, "exception.unhandled")
       .withRange(JavaErrorFormatUtil::getRange)
+      .withHighlightType(e -> JavaErrorHighlightType.UNHANDLED_EXCEPTION)
       .<Collection<PsiClassType>>parameterized()
       .withRawDescription((psi, unhandled) -> message("exception.unhandled", formatTypes(unhandled), unhandled.size()));
+  public static final Parameterized<PsiResourceListElement, Collection<PsiClassType>> EXCEPTION_UNHANDLED_CLOSE =
+    error(PsiResourceListElement.class, "exception.unhandled")
+      .withHighlightType(e -> JavaErrorHighlightType.UNHANDLED_EXCEPTION)
+      .<Collection<PsiClassType>>parameterized()
+      .withRawDescription((psi, unhandled) -> message("exception.unhandled.close", formatTypes(unhandled), unhandled.size()));
   public static final Parameterized<PsiTypeElement, SuperclassSubclassContext> EXCEPTION_MUST_BE_DISJOINT =
     parameterized(PsiTypeElement.class, SuperclassSubclassContext.class, "exception.must.be.disjoint")
       .withRawDescription((te, ctx) -> message(

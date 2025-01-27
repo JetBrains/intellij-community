@@ -126,7 +126,7 @@ final class JavaErrorFixProvider {
     fixes(RETURN_VALUE_MISSING, (error, sink) -> {
       PsiMethod method = error.context();
       sink.accept(myFactory.createMethodReturnFix(method, PsiTypes.voidType(), true));
-      PsiType expectedType = HighlightMethodUtil.determineReturnType(method);
+      PsiType expectedType = HighlightFixUtil.determineReturnType(method);
       if (expectedType != null && !PsiTypes.voidType().equals(expectedType)) {
         sink.accept(myFactory.createMethodReturnFix(method, expectedType, true, true));
       }
@@ -139,7 +139,7 @@ final class JavaErrorFixProvider {
           sink.accept(myFactory.createDeleteReturnFix(method, error.psi()));
           sink.accept(myFactory.createMethodReturnFix(method, valueType, true));
         }
-        PsiType expectedType = HighlightMethodUtil.determineReturnType(method);
+        PsiType expectedType = HighlightFixUtil.determineReturnType(method);
         if (expectedType != null && !PsiTypes.voidType().equals(expectedType) && !expectedType.equals(valueType)) {
           sink.accept(myFactory.createMethodReturnFix(method, expectedType, true, true));
         }
@@ -212,7 +212,7 @@ final class JavaErrorFixProvider {
       if (className != null) {
         sink.accept(myFactory.createRenameElementFix(method, className));
       }
-      PsiType expectedType = HighlightMethodUtil.determineReturnType(method);
+      PsiType expectedType = HighlightFixUtil.determineReturnType(method);
       if (expectedType != null) {
         sink.accept(myFactory.createMethodReturnFix(method, expectedType, true, true));
       }
@@ -232,6 +232,22 @@ final class JavaErrorFixProvider {
       sink.accept(myFactory.createMoveCatchUpFix(catchSection, upperCatchSection));
     });
     fix(EXCEPTION_NEVER_THROWN_TRY, error -> myFactory.createDeleteCatchFix(error.psi()));
+    fixes(EXCEPTION_UNHANDLED, (error, sink) -> {
+      PsiElement element = error.psi();
+      HighlightFixUtil.registerUnhandledExceptionFixes(element, sink);
+      if (element instanceof PsiMethod method) {
+        sink.accept(myFactory.createAddExceptionToThrowsFix(method, error.context()));
+        PsiClass aClass = method.getContainingClass();
+        if (aClass != null) {
+          sink.accept(myFactory.createCreateConstructorMatchingSuperFix(aClass));
+        }
+      }
+      else if (element instanceof PsiClass cls) {
+        sink.accept(myFactory.createCreateConstructorMatchingSuperFix(cls));
+      }
+      ErrorFixExtensionPoint.registerFixes(sink, element, "unhandled.exceptions");
+    });
+    fixes(EXCEPTION_UNHANDLED_CLOSE, (error, sink) -> HighlightFixUtil.registerUnhandledExceptionFixes(error.psi(), sink));
   }
 
   private void createConstructorFixes() {
@@ -249,21 +265,6 @@ final class JavaErrorFixProvider {
     fix(CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL, error -> myFactory.createAddDefaultConstructorFix(
       requireNonNull(error.context().psiClass().getSuperClass())));
     fix(CONSTRUCTOR_NO_DEFAULT, error -> myFactory.createAddDefaultConstructorFix(error.context()));
-    fixes(EXCEPTION_UNHANDLED, (error, sink) -> {
-      PsiElement element = error.psi();
-      HighlightFixUtil.registerUnhandledExceptionFixes(element, sink);
-      if (element instanceof PsiMethod method) {
-        sink.accept(myFactory.createAddExceptionToThrowsFix(method, error.context()));
-        PsiClass aClass = method.getContainingClass();
-        if (aClass != null) {
-          sink.accept(myFactory.createCreateConstructorMatchingSuperFix(aClass));
-        }
-      }
-      else if (element instanceof PsiClass cls) {
-        sink.accept(myFactory.createCreateConstructorMatchingSuperFix(cls));
-      }
-      ErrorFixExtensionPoint.registerFixes(sink, element, "unhandled.exceptions");
-    });
   }
 
   private void createModifierFixes() {
@@ -468,7 +469,7 @@ final class JavaErrorFixProvider {
         else if (parent instanceof PsiReturnStatement && rType != null && !PsiTypes.voidType().equals(rType)) {
           if (PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiMethod method) {
             sink.accept(myFactory.createMethodReturnFix(method, rType, true, true));
-            PsiType expectedType = HighlightMethodUtil.determineReturnType(method);
+            PsiType expectedType = HighlightFixUtil.determineReturnType(method);
             if (expectedType != null && !PsiTypes.voidType().equals(expectedType) && !expectedType.equals(rType)) {
               sink.accept(myFactory.createMethodReturnFix(method, expectedType, true, true));
             }

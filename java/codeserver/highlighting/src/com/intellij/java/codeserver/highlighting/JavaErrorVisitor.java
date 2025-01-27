@@ -465,6 +465,28 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitResourceList(@NotNull PsiResourceList resourceList) {
+    super.visitResourceList(resourceList);
+    if (!hasErrorResults()) checkFeature(resourceList, JavaFeature.TRY_WITH_RESOURCES);
+  }
+
+  @Override
+  public void visitResourceVariable(@NotNull PsiResourceVariable resource) {
+    super.visitResourceVariable(resource);
+    if (!hasErrorResults()) myStatementChecker.checkTryResourceIsAutoCloseable(resource);
+    if (!hasErrorResults()) myExpressionChecker.checkUnhandledCloserExceptions(resource);
+  }
+
+  @Override
+  public void visitResourceExpression(@NotNull PsiResourceExpression resource) {
+    super.visitResourceExpression(resource);
+    if (!hasErrorResults()) checkFeature(resource, JavaFeature.REFS_AS_RESOURCE);
+    if (!hasErrorResults()) myStatementChecker.checkTryResourceIsAutoCloseable(resource);
+    if (!hasErrorResults()) myExpressionChecker.checkUnhandledCloserExceptions(resource);
+  }
+
+
+  @Override
   public void visitImportStaticStatement(@NotNull PsiImportStaticStatement statement) {
     visitElement(statement);
     checkFeature(statement, JavaFeature.STATIC_IMPORTS);

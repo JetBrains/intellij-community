@@ -6,6 +6,7 @@ import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
@@ -189,6 +190,18 @@ final class StatementChecker {
     myVisitor.report(JavaErrorKinds.STATEMENT_INVALID.create(init));
   }
 
+  void checkTryResourceIsAutoCloseable(@NotNull PsiResourceListElement resource) {
+    PsiType type = resource.getType();
+    if (type == null) return;
+
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(resource.getProject());
+    PsiClassType autoCloseable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, resource.getResolveScope());
+    if (TypeConversionUtil.isAssignable(autoCloseable, type)) return;
+    if (IncompleteModelUtil.isIncompleteModel(resource) && IncompleteModelUtil.isPotentiallyConvertible(autoCloseable, type, resource)) return;
+
+    myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
+      resource, new JavaIncompatibleTypeErrorContext(autoCloseable, type)));
+  }
 
   private static boolean checkMultipleTypes(@NotNull PsiClass catchClass, @NotNull List<? extends PsiType> upperCatchTypes) {
     for (int i = upperCatchTypes.size() - 1; i >= 0; i--) {

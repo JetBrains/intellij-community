@@ -25,6 +25,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -33,11 +34,14 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
+
+import static java.util.Objects.*;
 
 public final class HighlightFixUtil {
   private static final Logger LOG = Logger.getInstance(HighlightFixUtil.class);
@@ -760,6 +764,93 @@ public final class HighlightFixUtil {
         PsiType suggestedType = factory.createType(aClass, substitutor);
         registerChangeVariableTypeFixes(variable, suggestedType, variable.getInitializer(), info);
       }
+    }
+  }
+
+  static @Nullable PsiType determineReturnType(@NotNull PsiMethod method) {
+    return CachedValuesManager.getCachedValue(method, () -> {
+      PsiManager manager = method.getManager();
+      PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(method);
+      if (returnStatements.length == 0) return CachedValueProvider.Result.create(PsiTypes.voidType(), method);
+      PsiType expectedType = null;
+      for (PsiReturnStatement returnStatement : returnStatements) {
+        ReturnModel returnModel = ReturnModel.create(returnStatement);
+        if (returnModel == null) return CachedValueProvider.Result.create(null, method);
+        expectedType = lub(expectedType, returnModel.myLeastType, returnModel.myType, method, manager);
+      }
+      return CachedValueProvider.Result.create(expectedType, method);
+    });
+  }
+
+  private static @NotNull PsiType lub(@Nullable PsiType currentType,
+                                      @NotNull PsiType leastValueType,
+                                      @NotNull PsiType valueType,
+                                      @NotNull PsiMethod method,
+                                      @NotNull PsiManager manager) {
+    if (currentType == null || PsiTypes.voidType().equals(currentType)) return valueType;
+    if (currentType == valueType) return currentType;
+
+    if (TypeConversionUtil.isPrimitiveAndNotNull(valueType)) {
+      if (TypeConversionUtil.isPrimitiveAndNotNull(currentType)) {
+        int r1 = TypeConversionUtil.getTypeRank(currentType);
+        int r2 = TypeConversionUtil.getTypeRank(leastValueType);
+        return r1 >= r2 ? currentType : valueType;
+      }
+      PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(currentType);
+      if (valueType.equals(unboxedType)) return currentType;
+      PsiClassType boxedType = ((PsiPrimitiveType)valueType).getBoxedType(method);
+      if (boxedType == null) return valueType;
+      valueType = boxedType;
+    }
+
+    if (TypeConversionUtil.isPrimitiveAndNotNull(currentType)) {
+      currentType = ((PsiPrimitiveType)currentType).getBoxedType(method);
+    }
+
+    return requireNonNullElse(GenericsUtil.getLeastUpperBound(currentType, valueType, manager), requireNonNullElse(currentType, valueType));
+  }
+
+  private static final class ReturnModel {
+    final PsiReturnStatement myStatement;
+    final PsiType myType;
+    final PsiType myLeastType;
+
+    @Contract(pure = true)
+    private ReturnModel(@NotNull PsiReturnStatement statement, @NotNull PsiType type) {
+      myStatement = statement;
+      myType = myLeastType = type;
+    }
+
+    @Contract(pure = true)
+    private ReturnModel(@NotNull PsiReturnStatement statement, @NotNull PsiType type, @NotNull PsiType leastType) {
+      myStatement = statement;
+      myType = type;
+      myLeastType = leastType;
+    }
+
+    private static @Nullable ReturnModel create(@NotNull PsiReturnStatement statement) {
+      PsiExpression value = statement.getReturnValue();
+      if (value == null) return new ReturnModel(statement, PsiTypes.voidType());
+      if (ExpressionUtils.nonStructuralChildren(value).anyMatch(c -> c instanceof PsiFunctionalExpression)) return null;
+      PsiType type = RefactoringChangeUtil.getTypeByExpression(value);
+      if (type == null || type instanceof PsiClassType classType && classType.resolve() == null) return null;
+      return new ReturnModel(statement, type, getLeastValueType(value, type));
+    }
+
+    private static @NotNull PsiType getLeastValueType(@NotNull PsiExpression returnValue, @NotNull PsiType type) {
+      if (type instanceof PsiPrimitiveType) {
+        int rank = TypeConversionUtil.getTypeRank(type);
+        if (rank < TypeConversionUtil.BYTE_RANK || rank > TypeConversionUtil.INT_RANK) return type;
+        PsiConstantEvaluationHelper evaluator = JavaPsiFacade.getInstance(returnValue.getProject()).getConstantEvaluationHelper();
+        Object res = evaluator.computeConstantExpression(returnValue);
+        if (res instanceof Number number) {
+          long value = number.longValue();
+          if (-128 <= value && value <= 127) return PsiTypes.byteType();
+          if (-32768 <= value && value <= 32767) return PsiTypes.shortType();
+          if (0 <= value && value <= 0xFFFF) return PsiTypes.charType();
+        }
+      }
+      return type;
     }
   }
 }

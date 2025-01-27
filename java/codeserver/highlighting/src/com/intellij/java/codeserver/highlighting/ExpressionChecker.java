@@ -746,6 +746,14 @@ final class ExpressionChecker {
     }
   }
 
+  void checkUnhandledCloserExceptions(@NotNull PsiResourceListElement resource) {
+    List<PsiClassType> unhandled = ExceptionUtil.getUnhandledCloserExceptions(resource, null);
+    if (unhandled.isEmpty()) return;
+
+    if (!shouldHighlightUnhandledException(resource)) return;
+    myVisitor.report(JavaErrorKinds.EXCEPTION_UNHANDLED_CLOSE.create(resource, unhandled));
+  }
+
   private static boolean isArrayDeclaration(@NotNull PsiVariable variable) {
     // Java-style 'var' arrays are prohibited by the parser; for C-style ones, looking for a bracket is enough
     return ContainerUtil.or(variable.getChildren(), e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET));
