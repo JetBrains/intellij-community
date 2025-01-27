@@ -718,5 +718,10 @@ public final class PluginNode implements IdeaPluginDescriptor {
     public boolean isOptional() {
       return myOptional;
     }
+
+    @Override
+    public String toString() {
+      return "PluginNodeDependency{pluginId=" + myPluginId + ", optional=" + myOptional + '}';
+    }
   }
 }
