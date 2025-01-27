@@ -2,6 +2,7 @@
   <dependencies>
     <plugin id="com.intellij.platform.experimental.backend"/>
     <module name="intellij.platform.searchEverywhere"/>
+    <module name="intellij.platform.rpc.backend"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
