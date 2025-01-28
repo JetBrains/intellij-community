@@ -32,7 +32,6 @@ directives_type_checking.py
 directives_version_platform.py
 exceptions_context_managers.py
 generics_base_class.py
-generics_basic.py
 generics_defaults.py
 generics_defaults_referential.py
 generics_defaults_specialization.py
