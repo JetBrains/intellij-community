@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.python
 
 import kotlinx.collections.immutable.PersistentList
@@ -15,6 +15,7 @@ object PythonCommunityPluginModules {
     "intellij.python.community.communityOnly",
     "intellij.python.community.core.impl",
     "intellij.python.community.impl",
+    "intellij.python.community.impl.poetry",
     "intellij.python.community.impl.huggingFace",
     "intellij.python.community.plugin.impl",
     "intellij.python.community.plugin.java",
