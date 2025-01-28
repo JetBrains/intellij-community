@@ -1291,7 +1291,7 @@ public final class HighlightUtil {
         String description = staticContextProblemDescription(resolved);
         HighlightInfo.Builder info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description);
-        HighlightFixUtil.registerStaticProblemQuickFixAction(info, resolved, ref);
+        HighlightFixUtil.registerStaticProblemQuickFixAction(asConsumer(info), resolved, ref);
         if (ref instanceof PsiReferenceExpression expression) {
           IntentionAction action = getFixFactory().createRenameWrongRefFix(expression);
           info.registerFix(action, null, null, null, null);

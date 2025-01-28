@@ -481,33 +481,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitExpressionList(@NotNull PsiExpressionList list) {
-    super.visitExpressionList(list);
-    PsiElement parent = list.getParent();
-    if (parent instanceof PsiMethodCallExpression expression && expression.getArgumentList() == list) {
-      PsiReferenceExpression referenceExpression = expression.getMethodExpression();
-      JavaResolveResult[] results = resolveOptimised(referenceExpression);
-      if (results == null) return;
-      JavaResolveResult result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
-
-      if ((!result.isAccessible() || !result.isStaticsScopeCorrect()) &&
-          !HighlightMethodUtil.isDummyConstructorCall(expression, getResolveHelper(), list, referenceExpression) &&
-          // this check is for fake expression from JspMethodCallImpl
-          referenceExpression.getParent() == expression) {
-        try {
-          if (PsiTreeUtil.findChildrenOfType(expression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
-            PsiElement resolved = result.getElement();
-            add(HighlightMethodUtil.checkAmbiguousMethodCallArguments(referenceExpression, results, list, resolved, result, expression,
-                                                                      list));
-          }
-        }
-        catch (IndexNotReadyException ignored) {
-        }
-      }
-    }
-  }
-
-  @Override
   public void visitField(@NotNull PsiField field) {
     super.visitField(field);
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkFinalFieldInitialized(field));
@@ -853,14 +826,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         try {
           add(HighlightMethodUtil.checkAmbiguousMethodCallIdentifier(
             expression, results, list, resolved, result, methodCallExpression, myLanguageLevel, myFile));
-
-          if (!PsiTreeUtil.findChildrenOfType(methodCallExpression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
-            PsiElement nameElement = expression.getReferenceNameElement();
-            if (nameElement != null) {
-              add(HighlightMethodUtil.checkAmbiguousMethodCallArguments(
-                expression, results, list, resolved, result, methodCallExpression, nameElement));
-            }
-          }
         }
         catch (IndexNotReadyException ignored) {
         }

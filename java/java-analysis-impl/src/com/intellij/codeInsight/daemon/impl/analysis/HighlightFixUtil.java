@@ -164,28 +164,23 @@ public final class HighlightFixUtil {
     info.accept(quickFixFactory.createSurroundWithTryCatchFix(element));
   }
 
-  static void registerStaticProblemQuickFixAction(@Nullable HighlightInfo.Builder info, @NotNull PsiElement refElement, @NotNull PsiJavaCodeReferenceElement place) {
+  static void registerStaticProblemQuickFixAction(@NotNull Consumer<? super CommonIntentionAction> info, @NotNull PsiElement refElement, 
+                                                  @NotNull PsiJavaCodeReferenceElement place) {
     if (place instanceof PsiReferenceExpression && place.getParent() instanceof PsiMethodCallExpression) {
       ReplaceGetClassWithClassLiteralFix.registerFix((PsiMethodCallExpression)place.getParent(), info);
     }
     if (refElement instanceof PsiJvmModifiersOwner) {
       List<IntentionAction> fixes =
         JvmElementActionFactories.createModifierActions((PsiJvmModifiersOwner)refElement, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, true));
-      QuickFixAction.registerQuickFixActions(info, null, fixes);
+      fixes.forEach(info);
     }
     // make context non-static
     PsiModifierListOwner staticParent = PsiUtil.getEnclosingStaticElement(place, null);
     if (staticParent != null && isInstanceReference(place)) {
-      IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(staticParent, PsiModifier.STATIC, false, false);
-      if (info != null) {
-        info.registerFix(action, null, null, null, null);
-      }
+      info.accept(QuickFixFactory.getInstance().createModifierListFix(staticParent, PsiModifier.STATIC, false, false));
     }
     if (place instanceof PsiReferenceExpression && refElement instanceof PsiField) {
-      IntentionAction action = QuickFixFactory.getInstance().createCreateFieldFromUsageFix((PsiReferenceExpression)place);
-      if (info != null) {
-        info.registerFix(action, null, null, null, null);
-      }
+      info.accept(QuickFixFactory.getInstance().createCreateFieldFromUsageFix((PsiReferenceExpression)place));
     }
   }
 
@@ -633,12 +628,11 @@ public final class HighlightFixUtil {
   }
 
   static MethodCandidateInfo @NotNull [] toMethodCandidates(JavaResolveResult @NotNull [] resolveResults) {
-    List<MethodCandidateInfo> candidateList = new ArrayList<>(resolveResults.length);
-    for (JavaResolveResult result : resolveResults) {
-      if (!(result instanceof MethodCandidateInfo candidate)) continue;
-      if (candidate.isAccessible()) candidateList.add(candidate);
-    }
-    return candidateList.toArray(new MethodCandidateInfo[0]);
+    return Arrays.stream(resolveResults)
+      .filter(result -> result instanceof MethodCandidateInfo)
+      .map(result -> (MethodCandidateInfo)result)
+      .filter(CandidateInfo::isAccessible)
+      .toArray(MethodCandidateInfo[]::new);
   }
 
   static void registerFixesOnInvalidConstructorCall(@NotNull Consumer<? super CommonIntentionAction> info,
@@ -807,6 +801,19 @@ public final class HighlightFixUtil {
     }
 
     return requireNonNullElse(GenericsUtil.getLeastUpperBound(currentType, valueType, manager), requireNonNullElse(currentType, valueType));
+  }
+
+  static void registerAmbiguousCallFixes(@NotNull Consumer<? super @Nullable CommonIntentionAction> sink,
+                                         @NotNull PsiMethodCallExpression methodCall,
+                                         @NotNull JavaResolveResult @NotNull [] resolveResults) {
+    PsiExpressionList list = methodCall.getArgumentList();
+    MethodCandidateInfo[] candidates = toMethodCandidates(resolveResults);
+    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, methodCall, sink);
+    WrapWithAdapterMethodCallFix.registerCastActions(candidates, methodCall, sink);
+    WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, methodCall, sink);
+    WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), sink);
+    PermuteArgumentsFix.registerFix(sink, methodCall, candidates);
+    registerChangeParameterClassFix(methodCall, list, sink);
   }
 
   private static final class ReturnModel {

@@ -3,10 +3,7 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
-import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
-import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
-import com.intellij.java.codeserver.highlighting.errors.JavaMismatchedCallContext;
+import com.intellij.java.codeserver.highlighting.errors.*;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.JavaFeature;
@@ -947,9 +944,8 @@ final class ExpressionChecker {
   }
 
   boolean isDummyConstructorCall(@NotNull PsiMethodCallExpression methodCall,
-                                        @NotNull PsiExpressionList list,
-                                        @NotNull PsiReferenceExpression referenceToMethod) {
-    boolean isDummy = false;
+                                 @NotNull PsiExpressionList list,
+                                 @NotNull PsiReferenceExpression referenceToMethod) {
     boolean isThisOrSuper = referenceToMethod.getReferenceNameElement() instanceof PsiKeyword;
     if (isThisOrSuper) {
       // super(..) or this(..)
@@ -957,11 +953,11 @@ final class ExpressionChecker {
         CandidateInfo[] candidates = PsiResolveHelper.getInstance(myVisitor.project())
           .getReferencedMethodCandidates(methodCall, true);
         if (candidates.length == 1 && !candidates[0].getElement().isPhysical()) {
-          isDummy = true;// dummy constructor
+          return true; // dummy constructor
         }
       }
     }
-    return isDummy;
+    return false;
   }
 
   void checkConstructorCall(@NotNull PsiClassType.ClassResolveResult typeResolveResult,
@@ -1078,6 +1074,54 @@ final class ExpressionChecker {
           && !JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, constructorClass)) {
         return true;
       }
+    }
+  }
+
+  private static @NotNull Pair<MethodCandidateInfo, MethodCandidateInfo> findCandidates(JavaResolveResult @NotNull [] resolveResults) {
+    MethodCandidateInfo methodCandidate1 = null;
+    MethodCandidateInfo methodCandidate2 = null;
+    for (JavaResolveResult result : resolveResults) {
+      if (!(result instanceof MethodCandidateInfo candidate)) continue;
+      if (candidate.isApplicable() && !candidate.getElement().isConstructor()) {
+        if (methodCandidate1 == null) {
+          methodCandidate1 = candidate;
+        }
+        else {
+          methodCandidate2 = candidate;
+          break;
+        }
+      }
+    }
+    return Pair.pair(methodCandidate1, methodCandidate2);
+  }
+
+  void checkAmbiguousMethodCallArguments(JavaResolveResult @NotNull [] resolveResults,
+                                         @NotNull JavaResolveResult resolveResult,
+                                         @NotNull PsiMethodCallExpression methodCall) {
+    PsiExpressionList list = methodCall.getArgumentList();
+    Pair<MethodCandidateInfo, MethodCandidateInfo> pair = findCandidates(resolveResults);
+    MethodCandidateInfo methodCandidate1 = pair.first;
+    MethodCandidateInfo methodCandidate2 = pair.second;
+
+    PsiExpression[] expressions = list.getExpressions();
+    if (PsiTreeUtil.hasErrorElements(list)) return;
+    if (methodCandidate2 != null) {
+      if (IncompleteModelUtil.isIncompleteModel(list) &&
+          ContainerUtil.exists(expressions, e -> IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(e))) {
+        return;
+      }
+      myVisitor.report(JavaErrorKinds.CALL_AMBIGUOUS.create(
+        methodCall, new JavaAmbiguousCallContext(resolveResults, methodCandidate1, methodCandidate2)));
+    }
+    else {
+      if (resolveResult.getElement() != null && (!resolveResult.isAccessible() || !resolveResult.isStaticsScopeCorrect())) return;
+      if (!ContainerUtil.exists(resolveResults, result -> result instanceof MethodCandidateInfo && result.isAccessible())) return;
+      if (IncompleteModelUtil.isIncompleteModel(list) &&
+          ContainerUtil.exists(expressions, IncompleteModelUtil::mayHaveUnknownTypeDueToPendingReference)) {
+        return;
+      }
+      if (ContainerUtil.exists(expressions, e -> e.getType() == null)) return;
+      myVisitor.report(JavaErrorKinds.CALL_UNRESOLVED.create(methodCall, resolveResults));
     }
   }
 }

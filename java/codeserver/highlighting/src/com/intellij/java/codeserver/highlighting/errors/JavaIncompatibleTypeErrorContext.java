@@ -16,6 +16,14 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.util.text.HtmlChunk.*;
 
+/**
+ * Incompatible type context
+ * 
+ * @param lType left type (left-side of assignment, return type of the method if return value is incompatible, etc.)
+ * @param rType right type (right-side of assignment, type of incompatible method return value, etc.; might be null)
+ * @param reasonForIncompatibleTypes textual reason for incompatible type (probably inference error)
+ * @see JavaErrorKinds#TYPE_INCOMPATIBLE
+ */
 public record JavaIncompatibleTypeErrorContext(@NotNull PsiType lType, @Nullable PsiType rType, 
                                                @Nullable @Nls String reasonForIncompatibleTypes) {
   private static final @NlsSafe String ANONYMOUS = "anonymous ";

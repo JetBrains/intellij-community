@@ -870,6 +870,18 @@ public final class JavaErrorKinds {
     parameterized(PsiElement.class, JavaMismatchedCallContext.class, "call.wrong.arguments")
       .withTooltip((psi, ctx) -> ctx.createTooltip())
       .withDescription((psi, ctx) -> ctx.createDescription());
+  public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_UNRESOLVED =
+    parameterized(PsiMethodCallExpression.class, JavaResolveResult[].class, "call.unresolved")
+      .withAnchor((call, results) -> requireNonNullElse(call.getMethodExpression().getReferenceNameElement(), call))
+      .withRawDescription((call, results) -> message(
+        "call.unresolved", call.getMethodExpression().getReferenceName() + formatArgumentTypes(call.getArgumentList(), true)));
+  public static final Parameterized<PsiMethodCallExpression, JavaAmbiguousCallContext> CALL_AMBIGUOUS =
+    parameterized(PsiMethodCallExpression.class, JavaAmbiguousCallContext.class, "call.ambiguous")
+      .withAnchor((call, ctx) -> call.getArgumentList())
+      .withRawDescription((call, ctx) -> ctx.description())
+      .withTooltip((call, ctx) -> ctx.tooltip());
+    
+    
   public static final Parameterized<PsiMethodCallExpression, PsiMethod> CALL_DIRECT_ABSTRACT_METHOD_ACCESS =
     parameterized(PsiMethodCallExpression.class, PsiMethod.class, "call.direct.abstract.method.access")
       .withRawDescription((call, method) -> message("call.direct.abstract.method.access", formatMethod(method)));

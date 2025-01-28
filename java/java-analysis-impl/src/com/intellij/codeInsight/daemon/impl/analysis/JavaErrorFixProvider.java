@@ -405,6 +405,23 @@ final class JavaErrorFixProvider {
         }
       }
     });
+    fixes(CALL_AMBIGUOUS, (error, sink) -> {
+      PsiMethodCallExpression methodCall = error.psi();
+      JavaResolveResult[] resolveResults = error.context().results();
+      HighlightFixUtil.registerAmbiguousCallFixes(sink, methodCall, resolveResults);
+    });
+    fixes(CALL_UNRESOLVED, (error, sink) -> {
+      PsiMethodCallExpression methodCall = error.psi();
+      HighlightFixUtil.registerMethodCallIntentions(sink, methodCall, methodCall.getArgumentList());
+      JavaResolveResult[] resolveResults = error.context();
+      if (resolveResults.length == 1) {
+        PsiElement element = resolveResults[0].getElement();
+        if (element != null && !resolveResults[0].isStaticsScopeCorrect()) {
+          HighlightFixUtil.registerStaticProblemQuickFixAction(sink, element, methodCall.getMethodExpression());
+        }
+      }
+      HighlightFixUtil.registerAmbiguousCallFixes(sink, methodCall, resolveResults);
+    });
     fix(CALL_DIRECT_ABSTRACT_METHOD_ACCESS, error -> {
       PsiMethod method = error.context();
       int options = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS;

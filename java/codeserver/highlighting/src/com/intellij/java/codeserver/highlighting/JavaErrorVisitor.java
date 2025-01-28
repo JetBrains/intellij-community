@@ -17,10 +17,7 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
@@ -569,6 +566,19 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     PsiElement resolved = result.getElement();
     PsiElement parent = expression.getParent();
     PsiExpression qualifierExpression = expression.getQualifierExpression();
+    if (parent instanceof PsiMethodCallExpression methodCallExpression &&
+        methodCallExpression.getMethodExpression() == expression &&
+        (!result.isAccessible() || !result.isStaticsScopeCorrect())) {
+      PsiExpressionList list = methodCallExpression.getArgumentList();
+      if (!myExpressionChecker.isDummyConstructorCall(methodCallExpression, list, expression)) {
+        if (!PsiTreeUtil.findChildrenOfType(methodCallExpression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
+          PsiElement nameElement = expression.getReferenceNameElement();
+          if (nameElement != null) {
+            myExpressionChecker.checkAmbiguousMethodCallArguments(results, result, methodCallExpression);
+          }
+        }
+      }
+    }
     if (!hasErrorResults() && myJavaModule == null && qualifierExpression != null) {
       if (parent instanceof PsiMethodCallExpression) {
         PsiClass psiClass = RefactoringChangeUtil.getQualifierClass(expression);
@@ -773,6 +783,26 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       myTypeChecker.checkMustBeThrowable(expression, expression.getType());
     }
     if (!hasErrorResults()) myStatementChecker.checkForeachExpressionTypeIsIterable(expression);
+  }
+
+  @Override
+  public void visitExpressionList(@NotNull PsiExpressionList list) {
+    super.visitExpressionList(list);
+    PsiElement parent = list.getParent();
+    if (parent instanceof PsiMethodCallExpression expression && expression.getArgumentList() == list) {
+      PsiReferenceExpression referenceExpression = expression.getMethodExpression();
+      JavaResolveResult[] results = resolveOptimised(referenceExpression);
+      if (results == null) return;
+      JavaResolveResult result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
+
+      if ((!result.isAccessible() || !result.isStaticsScopeCorrect()) &&
+          !myExpressionChecker.isDummyConstructorCall(expression, list, referenceExpression) &&
+          // this check is for fake expression from JspMethodCallImpl
+          referenceExpression.getParent() == expression &&
+          PsiTreeUtil.findChildrenOfType(expression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
+        myExpressionChecker.checkAmbiguousMethodCallArguments(results, result, expression);
+      }
+    }
   }
 
   @Override
