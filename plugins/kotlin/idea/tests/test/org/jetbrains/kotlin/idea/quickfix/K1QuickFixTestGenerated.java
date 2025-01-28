@@ -7170,6 +7170,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createVariable/primaryParameter/destructuring.kt");
                 }
 
+                @TestMetadata("insideInterface.kt")
+                public void testInsideInterface() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/primaryParameter/insideInterface.kt");
+                }
+
                 @TestMetadata("localValNoReceiver.kt")
                 public void testLocalValNoReceiver() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/primaryParameter/localValNoReceiver.kt");

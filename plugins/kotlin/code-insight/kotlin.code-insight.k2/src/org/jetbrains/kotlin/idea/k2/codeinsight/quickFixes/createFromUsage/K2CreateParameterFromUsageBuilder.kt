@@ -64,6 +64,7 @@ object K2CreateParameterFromUsageBuilder {
         } ?: return null
 
         if (!container.manager.isInProject(container)) return null
+        if (container.isInterface()) return null
         val valVar = if (qualifiedElement.getAssignmentByLHS() != null) CreateParameterUtil.ValVar.VAR else CreateParameterUtil.ValVar.VAL
         return listOf(CreateParameterFromUsageAction(qualifiedElement, refExpr.getReferencedName(), valVar, container))
     }
