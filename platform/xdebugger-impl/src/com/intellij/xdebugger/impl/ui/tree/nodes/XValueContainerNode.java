@@ -13,10 +13,7 @@ import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
@@ -302,6 +299,12 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
       }
     }
     return myCachedAllChildren;
+  }
+
+  @ApiStatus.Internal
+  public List<TreeNode> getCachedChildren() {
+    if (myCachedAllChildren == null) return Collections.emptyList();
+    return ContainerUtil.copyList(myCachedAllChildren);
   }
 
   public @NotNull ValueContainer getValueContainer() {

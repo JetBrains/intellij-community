@@ -140,9 +140,14 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return getView(getFramesContentId(), XFramesView.class);
   }
 
+  @ApiStatus.Internal
+  public @Nullable XVariablesViewBase getVariablesView() {
+    return getView(DebuggerContentInfo.VARIABLES_CONTENT, XVariablesViewBase.class);
+  }
+
   protected void initFocusingVariablesFromFramesView() {
     XFramesView framesView = getView(DebuggerContentInfo.FRAME_CONTENT, XFramesView.class);
-    XVariablesViewBase variablesView = getView(DebuggerContentInfo.VARIABLES_CONTENT, XVariablesViewBase.class);
+    XVariablesViewBase variablesView = getVariablesView();
     if (framesView == null || variablesView == null) return;
 
     framesView.onFrameSelectionKeyPressed(frame -> {
