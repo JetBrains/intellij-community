@@ -29,7 +29,9 @@ final class ShShellcheckTestUtil {
     Path directory = getShellcheckTestDir();
     NioFiles.createDirectories(directory);
 
-    Path shellcheck = directory.resolve(SHELLCHECK_BIN);
+    final var localEel = EelProviderUtil.getLocalEel();
+
+    Path shellcheck = directory.resolve(spellcheckBin(localEel.getPlatform()));
     if (Files.exists(shellcheck)) {
       String path = ShSettings.getShellcheckPath(project);
       String shellcheckPath = shellcheck.toString();
@@ -42,7 +44,7 @@ final class ShShellcheckTestUtil {
       return;
     }
 
-    String link = getShellcheckDistributionLink(EelProviderUtil.getLocalEel().getPlatform());
+    String link = getShellcheckDistributionLink(localEel.getPlatform());
     HttpRequest request = HttpRequest.newBuilder().uri(URI.create(link)).build();
     HttpResponse<Path> response = HttpClient.newBuilder()
       .followRedirects(HttpClient.Redirect.NORMAL)
@@ -51,7 +53,7 @@ final class ShShellcheckTestUtil {
       .send(request, HttpResponse.BodyHandlers.ofFile(directory.resolve("shellcheck.tgz")));
     LOG.info("Getting " + link + ", status code: " + response.statusCode());
     Path archive = response.body();
-    String path = decompressShellcheck(archive.toFile(), directory.toFile());
+    String path = decompressShellcheck(archive.toFile(), directory.toFile(), localEel.getPlatform());
     if (!path.isEmpty()) {
       NioFiles.setExecutable(Path.of(path));
       ShSettings.setShellcheckPath(project, path);

@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.EelPlatform;
@@ -57,7 +56,6 @@ public final class ShShellcheckUtil {
 
   private static final Key<Boolean> UPDATE_NOTIFICATION_SHOWN = Key.create("SHELLCHECK_UPDATE");
           static final @NlsSafe String SHELLCHECK = "shellcheck";
-          static final @NlsSafe String SHELLCHECK_BIN = SystemInfo.isWindows ? SHELLCHECK + ".exe" : SHELLCHECK;
   private static final String SHELLCHECK_VERSION = "0.10.0";
   private static final String SHELLCHECK_ARTIFACT_VERSION = SHELLCHECK_VERSION + "-1";
   private static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
@@ -66,6 +64,10 @@ public final class ShShellcheckUtil {
 
   public static void download(@NotNull Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
     download(project, onSuccess, onFailure, false);
+  }
+
+  static @NotNull String spellcheckBin(@NotNull EelPlatform platform) {
+    return isWindows(platform) ? SHELLCHECK + ".exe" : SHELLCHECK;
   }
 
   private static void download(@NotNull Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure, boolean withReplace) {
@@ -85,8 +87,8 @@ public final class ShShellcheckUtil {
             //
           }
         }
-        final var shellcheck = downloadPath.resolve(SHELLCHECK_BIN);
-        final var oldShellcheck = downloadPath.resolve("old_" + SHELLCHECK_BIN);
+        final var shellcheck = downloadPath.resolve(spellcheckBin(eel.getPlatform()));
+        final var oldShellcheck = downloadPath.resolve("old_" + spellcheckBin(eel.getPlatform()));
 
         if (Files.exists(shellcheck)) {
           if (withReplace) {
@@ -115,7 +117,7 @@ public final class ShShellcheckUtil {
           final var first = ContainerUtil.getFirstItem(pairs);
           final var file = first != null ? first.first : null;
           if (file != null) {
-            String path = decompressShellcheck(file, downloadPath.toFile());
+            String path = decompressShellcheck(file, downloadPath.toFile(), eel.getPlatform());
             if (StringUtil.isNotEmpty(path)) {
               FileUtil.setExecutable(new File(path));
               ShSettings.setShellcheckPath(project, path);
@@ -291,12 +293,12 @@ public final class ShShellcheckUtil {
     return null;
   }
 
-  static @NotNull String decompressShellcheck(File tarPath, File directory) throws IOException {
+  static @NotNull String decompressShellcheck(File tarPath, File directory, @NotNull EelPlatform eelPlatform) throws IOException {
     new Decompressor.Tar(tarPath).extract(directory);
 
     FileUtil.delete(tarPath);  // cleaning up
 
-    File shellcheck = new File(directory, SHELLCHECK_BIN);
+    File shellcheck = new File(directory, spellcheckBin(eelPlatform));
     return shellcheck.exists() ? shellcheck.getPath() : "";
   }
 

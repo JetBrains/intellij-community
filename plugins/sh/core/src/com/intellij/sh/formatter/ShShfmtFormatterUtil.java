@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.eel.EelPlatform;
@@ -74,6 +73,7 @@ public final class ShShfmtFormatterUtil {
       public void run(@NotNull ProgressIndicator indicator) {
         final var eelDescriptor = getEelDescriptor(project);
         final var eel = upgradeBlocking(eelDescriptor);
+        final var eelPlatform = eel.getPlatform();
 
         final var downloadPath = computeDownloadPath(eel);
 
@@ -86,8 +86,8 @@ public final class ShShfmtFormatterUtil {
           }
         }
 
-        final var formatter = downloadPath.resolve(SHFMT + (SystemInfo.isWindows ? WINDOWS_EXTENSION : ""));
-        final var oldFormatter = downloadPath.resolve(OLD_SHFMT + (SystemInfo.isWindows ? WINDOWS_EXTENSION : ""));
+        final var formatter = downloadPath.resolve(SHFMT + (isWindows(eelPlatform) ? WINDOWS_EXTENSION : ""));
+        final var oldFormatter = downloadPath.resolve(OLD_SHFMT + (isWindows(eelPlatform) ? WINDOWS_EXTENSION : ""));
 
         if (Files.exists(formatter)) {
           if (withReplace) {
@@ -100,7 +100,7 @@ public final class ShShfmtFormatterUtil {
           }
         }
 
-        final var downloadName = SHFMT + (SystemInfo.isWindows ? WINDOWS_EXTENSION : "");
+        final var downloadName = SHFMT + (isWindows(eelPlatform) ? WINDOWS_EXTENSION : "");
         final var service = DownloadableFileService.getInstance();
         final var description = service.createFileDescription(getShfmtDistributionLink(eel.getPlatform()), downloadName);
         final var downloader = service.createDownloader(Collections.singletonList(description), downloadName);
