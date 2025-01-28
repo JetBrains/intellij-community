@@ -13,8 +13,13 @@
             use-shortcut-of="$Copy">
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Frontend" anchor="after" relative-to-action="MarkObjectAction.Frontend"/>
     </action>
-    <action id="XDebugger.CopyName.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXCopyNameAction">
+    <action id="XDebugger.CompareValueWithClipboard.Frontend"
+            class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXCompareWithClipboardAction">
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Frontend" anchor="after" relative-to-action="XDebugger.CopyValue.Frontend"/>
+    </action>
+    <action id="XDebugger.CopyName.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXCopyNameAction">
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Frontend" anchor="after"
+                    relative-to-action="XDebugger.CompareValueWithClipboard.Frontend"/>
     </action>
 
     <action id="XDebugger.Hotswap.Modified.Files" class="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapModifiedFilesAction">
