@@ -66,7 +66,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
         runWithModalProgressBlocking(currentOrDefaultProject, IdeBundle.message("settings.modal.opening.message")) {
           val settingsFile = SettingsVirtualFileHolder.getInstance(currentOrDefaultProject).getOrCreate(toSelect, settingsDialogInitializer)
           val fileEditorManager = FileEditorManager.getInstance(currentOrDefaultProject) as FileEditorManagerEx;
-          val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true)
+          val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true, requestFocus = true)
           fileEditorManager.openFile(settingsFile, options);
         }
       }

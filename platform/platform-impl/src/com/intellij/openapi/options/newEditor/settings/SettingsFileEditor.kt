@@ -1,18 +1,26 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor.settings
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.options.newEditor.SettingsEditor
 import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder.SettingsVirtualFile
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.TabTitle
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.beans.PropertyChangeListener
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -37,7 +45,7 @@ internal class SettingsFileEditor(private val settingsFile: SettingsVirtualFile)
   }
 
   override fun getPreferredFocusedComponent(): JComponent? {
-    return null
+    return (settingsFile.dialog.editor as? SettingsEditor)?.treeView?.tree
   }
 
   override fun getName(): @TabTitle String = com.intellij.CommonBundle.settingsTitle()
