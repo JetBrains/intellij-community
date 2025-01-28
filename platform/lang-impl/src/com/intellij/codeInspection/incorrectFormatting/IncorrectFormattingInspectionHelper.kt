@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nls
 import kotlin.math.abs
 
 
-internal class IncorrectFormattingInspectionHelper(
+class IncorrectFormattingInspectionHelper(
   private val formattingChanges: FormattingChanges,
   val file: PsiFile,
   val document: Document,
