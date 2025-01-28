@@ -1,4 +1,6 @@
-# Python 2 compatible requirements to install `tox` on CI so we can execute debugger tests
+pip==20.3.4
+tox==3.28.0
+
 appdirs==1.4.3
 configparser==4.0.2
 contextlib2==0.6.0.post1
@@ -15,7 +17,6 @@ scandir==1.10.0
 singledispatch==3.4.0.3
 six==1.14.0
 toml==0.10.2
-tox==3.28.0
 typing==3.7.4.1
 virtualenv==20.0.18
 zipp==1.2.0
