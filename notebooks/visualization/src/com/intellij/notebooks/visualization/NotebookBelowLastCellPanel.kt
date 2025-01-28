@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.ui.JBColor
 import java.awt.Graphics2D
 import org.intellij.lang.annotations.Language
 import java.awt.FlowLayout
@@ -51,7 +50,7 @@ class NotebookBelowLastCellPanel(
       super.paintBorder(c, g, x, y, width, height)
       if (isHighlighted) {
         val g2d = g as Graphics2D
-        g2d.color = JBColor.BLUE
+        g2d.color = editor.notebookAppearance.cellStripeSelectedColor.get()
         val lineY = y + borderHeight / 2
         g2d.fillRect(x, lineY - 1, width, 2)
       }

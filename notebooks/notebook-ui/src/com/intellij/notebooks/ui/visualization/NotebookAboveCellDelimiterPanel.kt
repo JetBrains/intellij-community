@@ -83,7 +83,7 @@ class NotebookAboveCellDelimiterPanel(
         super.paintComponent(g)
         if (isHighlighted) {
           val g2d = g as Graphics2D
-          g2d.color = JBColor.BLUE
+          g2d.color = editor.notebookAppearance.cellStripeSelectedColor.get()
           val y = height / 2
           g2d.fillRect(0, y - 1, width, 2)
         }

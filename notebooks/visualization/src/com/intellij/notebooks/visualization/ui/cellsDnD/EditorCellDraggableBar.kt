@@ -11,6 +11,7 @@ import com.intellij.notebooks.visualization.ui.EditorCellInput
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.Nls
@@ -177,21 +178,21 @@ class EditorCellDraggableBar(
       currentlyHighlightedCell = targetCell
 
       when (targetCell) {
-        is CellDropTarget.TargetCell -> targetCell.cell.view?.highlightAbovePanel()
+        is CellDropTarget.TargetCell -> targetCell.cell.view?.addDropHighlightIfApplicable()
         CellDropTarget.BelowLastCell -> addHighlightAfterLastCell()
         else -> { }
       }
     }
 
     private fun deleteDropIndicator() = when(currentlyHighlightedCell) {
-      is CellDropTarget.TargetCell -> (currentlyHighlightedCell as CellDropTarget.TargetCell).cell.view?.removeHighlightAbovePanel()
+      is CellDropTarget.TargetCell -> (currentlyHighlightedCell as CellDropTarget.TargetCell).cell.view?.removeDropHighlightIfPresent()
       CellDropTarget.BelowLastCell -> removeHighlightAfterLastCell()
       else -> { }
     }
 
     @Nls
     private fun getPlaceholderText(): String {
-      val firstNotEmptyString = cellInput.cell.source.get().lines().firstOrNull { it.trim().isNotEmpty() }
+      @NlsSafe val firstNotEmptyString = cellInput.cell.source.get ().lines().firstOrNull { it.trim().isNotEmpty() }
       return StringUtil.shortenTextWithEllipsis(firstNotEmptyString ?: "\u2026", 20, 0)
     }
 

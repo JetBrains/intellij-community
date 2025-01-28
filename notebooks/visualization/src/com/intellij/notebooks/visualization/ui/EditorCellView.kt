@@ -411,10 +411,10 @@ class EditorCellView(
     input.runCellButton?.updateGutterAction(progressStatus)
   }
 
-  fun highlightAbovePanel(): Unit? =
+  fun addDropHighlightIfApplicable(): Unit? =
     _controllers.filterIsInstance<DropHighlightableCellPanel>().firstOrNull()?.addDropHighlight()
 
-  fun removeHighlightAbovePanel(): Unit? =
+  fun removeDropHighlightIfPresent(): Unit? =
     _controllers.filterIsInstance<DropHighlightableCellPanel>().firstOrNull()?.removeDropHighlight()
 
   internal data class NotebookCellDataProvider(
