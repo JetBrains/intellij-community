@@ -479,7 +479,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   protected void printAsyncStackTrace() {
-    printContext(getDebugProcess().getDebuggerContext());
+    if (!myLogAllCommands) {
+      printContext(getDebugProcess().getDebuggerContext());
+    }
     List<XStackFrame> frames = collectFrames(getDebuggerSession().getXDebugSession());
     systemPrintln("vvv stack trace vvv");
     frames.forEach(f -> {
@@ -618,6 +620,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     session.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionPaused() {
+        if (myLogAllCommands) {
+          printContext("Stopped at ", getDebugProcess().getDebuggerContext());
+        }
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           try {
             runnable.run();
@@ -626,8 +631,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
             addException(e);
           }
           finally {
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(session::resume);
+            SwingUtilities.invokeLater(() -> {
+              if (myLogAllCommands) {
+                printContext("Resuming ", getDebugProcess().getDebuggerContext());
+              }
+              session.resume();
+            });
           }
         });
       }
