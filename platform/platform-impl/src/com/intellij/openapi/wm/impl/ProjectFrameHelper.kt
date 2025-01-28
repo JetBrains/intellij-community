@@ -381,13 +381,13 @@ abstract class ProjectFrameHelper internal constructor(
 
     withContext(Dispatchers.EDT) {
       applyInitBounds()
+      statusBar?.initialize()
     }
     frameDecorator?.setProject()
   }
 
   internal open suspend fun setProject(project: Project) {
     frameHeaderHelper.setProject(project)
-    statusBar?.initialize()
     statusBar?.let {
       project.messageBus.simpleConnect().subscribe(StatusBar.Info.TOPIC, it)
     }
