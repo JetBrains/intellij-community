@@ -94,7 +94,6 @@ internal object ITNProxy {
     val pluginName: String?,
     val pluginVersion: String?,
     val lastActionId: String?,
-    val previousException: Int
   )
 
   fun getBrowseUrl(threadId: Int): String? =
@@ -178,9 +177,6 @@ internal object ITNProxy {
     append(builder, "plugin.name", error.pluginName)
     append(builder, "plugin.version", error.pluginVersion)
     append(builder, "last.action", error.lastActionId)
-    if (error.previousException > 0) {
-      append(builder, "previous.exception", error.previousException.toString())
-    }
 
     append(builder, "error.message", error.event.message?.trim { it <= ' ' } ?: "")
     append(builder, "error.stacktrace", error.event.throwableText)

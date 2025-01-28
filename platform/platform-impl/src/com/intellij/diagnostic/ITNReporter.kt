@@ -41,10 +41,6 @@ open class ITNReporter internal constructor(private val postUrl: String) : Error
   @ApiStatus.Internal
   constructor() : this("https://ea-report.jetbrains.com/trackerRpc/idea/createScr")
 
-  private val INTERVAL = 10 * 60 * 1000L  // an interval between exceptions to form a chain, ms
-
-  @Volatile private var previousReport: Pair<Long, Int>? = null  // (timestamp, threadID) of last reported exception
-
   override fun getReportActionText(): String = DiagnosticBundle.message("error.report.to.jetbrains.action")
 
   override fun getPrivacyNoticeText(): String =
@@ -67,7 +63,6 @@ open class ITNReporter internal constructor(private val postUrl: String) : Error
     return service<ITNProxyCoroutineScopeHolder>().coroutineScope.async {
       try {
         val reportId = ITNProxy.sendError(errorBean, postUrl)
-        updatePreviousReport(event, reportId)
         SubmittedReportInfo(ITNProxy.getBrowseUrl(reportId), reportId.toString(), SubmittedReportInfo.SubmissionStatus.NEW_ISSUE)
       }
       catch (_: Exception) {
@@ -84,18 +79,8 @@ open class ITNReporter internal constructor(private val postUrl: String) : Error
   @ApiStatus.Internal
   fun hostId(): String = ITNProxy.DEVICE_ID
 
-  private fun createReportBean(event: IdeaLoggingEvent, comment: String?): ErrorBean {
-    val lastActionId = IdeaLogger.ourLastActionId
-    val prevReport = previousReport
-    val eventDate = (event.data as? AbstractMessage)?.date
-    val prevReportId = if (prevReport != null && eventDate != null && eventDate.time - prevReport.first in 0..INTERVAL) prevReport.second else -1
-    return ErrorBean(event, comment, event.plugin?.pluginId?.idString, event.plugin?.name, event.plugin?.version, lastActionId, prevReportId)
-  }
-
-  private fun updatePreviousReport(event: IdeaLoggingEvent, reportId: Int) {
-    val eventDate = (event.data as? AbstractMessage)?.date
-    previousReport = if (eventDate != null) eventDate.time to reportId else null
-  }
+  private fun createReportBean(event: IdeaLoggingEvent, comment: String?): ErrorBean =
+    ErrorBean(event, comment, event.plugin?.pluginId?.idString, event.plugin?.name, event.plugin?.version, IdeaLogger.ourLastActionId)
 
   private fun submit(
     project: Project?,
@@ -113,7 +98,6 @@ open class ITNReporter internal constructor(private val postUrl: String) : Error
         else {
           ITNProxy.sendError(errorBean, postUrl)
         }
-        updatePreviousReport(errorBean.event, reportId)
         onSuccess(project, reportId, callback)
       }
       catch (e: Exception) {
