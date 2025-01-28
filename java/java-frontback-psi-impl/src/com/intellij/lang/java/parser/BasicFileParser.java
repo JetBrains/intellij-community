@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.AbstractBundle;
@@ -104,7 +104,7 @@ public class BasicFileParser {
 
   private boolean stopImportListParsing(PsiBuilder b) {
     IElementType type = b.getTokenType();
-    if (IMPORT_LIST_STOPPER_SET.contains(type) || myParser.getDeclarationParser().isRecordToken(b, type)) return true;
+    if (IMPORT_LIST_STOPPER_SET.contains(type) || BasicDeclarationParser.isRecordToken(b, type)) return true;
     if (type == JavaTokenType.IDENTIFIER) {
       String text = b.getTokenText();
       if (PsiKeyword.OPEN.equals(text) || PsiKeyword.MODULE.equals(text)) return true;
