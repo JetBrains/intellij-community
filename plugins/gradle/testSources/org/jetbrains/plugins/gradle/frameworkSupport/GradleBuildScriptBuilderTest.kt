@@ -383,4 +383,41 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
       }
     }
   }
+
+  @Test
+  fun `test tasks configuration`() {
+    assertBuildScript(groovyScript = """
+      |test {
+      |    myConfiguration()
+      |}
+    """.trimMargin(), kotlinScript = """
+      |tasks.test {
+      |    myConfiguration()
+      |}
+    """.trimMargin()) {
+      configureTask("test", "Test") {
+        call("myConfiguration")
+      }
+    }
+
+    assertBuildScript(groovyScript = """
+      |tasks.named('myTask', MyTask) {
+      |    myConfiguration()
+      |}
+    """.trimMargin(), kotlinScript = """
+      |tasks.named<MyTask>("myTask") {
+      |    myConfiguration()
+      |}
+    """.trimMargin()) {
+      configureTask("myTask", "MyTask") {
+        call("myConfiguration")
+      }
+    }
+
+    assertBuildScript(groovyScript = "", kotlinScript = "") {
+      configureTask("myTask", "MyTask") {
+        // no configuration
+      }
+    }
+  }
 }
