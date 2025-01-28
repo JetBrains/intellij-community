@@ -21,7 +21,7 @@ class TerminalSessionModelImpl(private val settings: JBTerminalSystemSettingsPro
   private fun getInitialState(): TerminalState {
     return TerminalState(
       isCursorVisible = true,
-      cursorShape = settings.cursorShape,
+      cursorShape = null,
       mouseMode = MouseMode.MOUSE_REPORTING_NONE,
       mouseFormat = MouseFormat.MOUSE_FORMAT_XTERM,
       isAlternateScreenBuffer = false,

@@ -12,13 +12,13 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.JBUI
 import com.jediterm.terminal.CursorShape
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
@@ -27,7 +27,6 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
-import java.awt.Rectangle
 import java.awt.geom.Rectangle2D
 
 internal class TerminalCursorPainter private constructor(
@@ -42,7 +41,7 @@ internal class TerminalCursorPainter private constructor(
     offset = outputModel.cursorOffsetState.value,
     isFocused = editor.contentComponent.hasFocus(),
     isCursorVisible = sessionModel.terminalState.value.isCursorVisible,
-    cursorShape = sessionModel.terminalState.value.cursorShape
+    cursorShape = sessionModel.terminalState.value.cursorShape,
   )
 
   init {
@@ -119,8 +118,9 @@ internal class TerminalCursorPainter private constructor(
       return
     }
 
-    val shouldBlink = state.isFocused && state.cursorShape.isBlinking
-    val renderer = when (state.cursorShape) {
+    val cursorShape = state.cursorShape ?: getDefaultCursorShape()
+    val shouldBlink = state.isFocused && cursorShape.isBlinking
+    val renderer = when (cursorShape) {
       CursorShape.BLINK_BLOCK, CursorShape.STEADY_BLOCK ->
         if (state.isFocused) {
           BlockCursorRenderer(editor)
@@ -174,11 +174,25 @@ internal class TerminalCursorPainter private constructor(
     }
   }
 
+  private fun getDefaultCursorShape(): CursorShape {
+    val editorSettings = editor.settings
+    val shapeFromSettings = TerminalUiSettingsManager.getInstance().cursorShape
+    when (shapeFromSettings) {
+      TerminalUiSettingsManager.CursorShape.BLOCK -> {
+        return if (editorSettings.isBlinkCaret) CursorShape.BLINK_BLOCK else CursorShape.STEADY_BLOCK
+      }
+      TerminalUiSettingsManager.CursorShape.UNDERLINE -> {
+        return if (editorSettings.isBlinkCaret) CursorShape.BLINK_UNDERLINE else CursorShape.STEADY_UNDERLINE
+      }
+      else -> return if (editorSettings.isBlinkCaret) CursorShape.BLINK_VERTICAL_BAR else CursorShape.STEADY_VERTICAL_BAR
+    }
+  }
+
   private data class CursorState(
     val offset: Int,
     val isFocused: Boolean,
     val isCursorVisible: Boolean,
-    val cursorShape: CursorShape,
+    val cursorShape: CursorShape?,
   )
 
   private sealed interface CursorRenderer {

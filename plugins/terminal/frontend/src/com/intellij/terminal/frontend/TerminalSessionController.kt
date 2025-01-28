@@ -13,7 +13,6 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.session.*
-import org.jetbrains.plugins.terminal.block.reworked.toTerminalState
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -67,7 +66,7 @@ internal class TerminalSessionController(
         }
       }
       is TerminalStateChangedEvent -> {
-        val state = event.state.toTerminalState(settings.cursorShape)
+        val state = event.state.toTerminalState()
         sessionModel.updateTerminalState(state)
       }
       is TerminalBeepEvent -> {

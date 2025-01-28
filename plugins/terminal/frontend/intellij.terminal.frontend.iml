@@ -46,5 +46,6 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.kernel" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
   </component>
 </module>

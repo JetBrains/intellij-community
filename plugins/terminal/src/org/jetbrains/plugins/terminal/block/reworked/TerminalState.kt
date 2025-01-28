@@ -5,12 +5,12 @@ import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalStateDto
 
 @ApiStatus.Internal
 data class TerminalState(
   val isCursorVisible: Boolean,
-  val cursorShape: CursorShape,
+  /** Null means default */
+  val cursorShape: CursorShape?,
   val mouseMode: MouseMode,
   val mouseFormat: MouseFormat,
   val isAlternateScreenBuffer: Boolean,
@@ -21,20 +21,3 @@ data class TerminalState(
   val isBracketedPasteMode: Boolean,
   val windowTitle: String,
 )
-
-@ApiStatus.Internal
-fun TerminalStateDto.toTerminalState(defaultCursorShape: CursorShape): TerminalState {
-  return TerminalState(
-    isCursorVisible = isCursorVisible,
-    cursorShape = cursorShape ?: defaultCursorShape,
-    mouseMode = mouseMode,
-    mouseFormat = mouseFormat,
-    isAlternateScreenBuffer = isAlternateScreenBuffer,
-    isApplicationArrowKeys = isApplicationArrowKeys,
-    isApplicationKeypad = isApplicationKeypad,
-    isAutoNewLine = isAutoNewLine,
-    isAltSendsEscape = isAltSendsEscape,
-    isBracketedPasteMode = isBracketedPasteMode,
-    windowTitle = windowTitle
-  )
-}
