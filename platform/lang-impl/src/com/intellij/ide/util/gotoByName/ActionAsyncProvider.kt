@@ -109,28 +109,29 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
 
     awaitJob?.join() //wait until all items from previous step are processed
     LOG.debug { "Process matched actions for \"$pattern\"" }
-    list.forEachConcurrentOrdered { matchedActionOrStub, awaitMyTurn ->
+    list.forEachConcurrentOrdered ({ matchedActionOrStub ->
       val action = matchedActionOrStub.action
       val matchedAction = if (action is ActionStubBase) loadAction(action.id)?.let { MatchedAction(it, matchedActionOrStub.mode, matchedActionOrStub.weight) } else matchedActionOrStub
-      if (matchedAction == null) return@forEachConcurrentOrdered
+      if (matchedAction == null) return@forEachConcurrentOrdered null
       val matchedValue = matchItem(
         item = wrapAnAction(action = matchedAction.action, presentationProvider = presentationProvider, matchMode = matchedAction.mode),
         matcher = weightMatcher,
         pattern = pattern,
         matchType = MatchedValueType.ACTION,
       )
-      awaitMyTurn()
+
+        return@forEachConcurrentOrdered matchedValue
+    }, { matchedValue ->
       if (!consumer(matchedValue)) cancel()
-    }
+    })
   }
 
-  private suspend fun <T> Collection<T>.forEachConcurrentOrdered(action: suspend (T, suspend () -> Unit) -> Unit) {
-    suspend fun runConcurrent(item: T, jobToAwait: Job?): Job = coroutineScope {
-      launch { action(item) { jobToAwait?.join() } }
+  private suspend fun <TIn, TOut : Any> Collection<TIn>.forEachConcurrentOrdered(concurrentAction: suspend (TIn) -> TOut?, orderedAction: suspend (TOut) -> Unit) {
+    coroutineScope {
+      this@forEachConcurrentOrdered.mapNotNull { async { concurrentAction(it) } }.forEach {
+        orderedAction(it.await() ?: return@forEach)
+      }
     }
-
-    var prevItemJob: Job? = null
-    forEach { prevItemJob = runConcurrent(it, prevItemJob) }
   }
 
   private suspend fun collectMatchedActions(pattern: String, allIds: Collection<String>, weightMatcher: MinusculeMatcher, unmatchedIdsChannel: SendChannel<String>): List<MatchedAction> = coroutineScope {
