@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion
 
 import com.github.benmanes.caffeine.cache.Cache
@@ -15,6 +15,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.terminal.completion.ShellCommandSpecsManager
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.util.containers.MultiMap
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
@@ -52,7 +53,7 @@ import java.time.Duration
  * So, to get the full version of this spec, [getFullCommandSpec] method should be used.
  */
 @Service
-internal class ShellCommandSpecsManagerImpl : ShellCommandSpecsManager {
+internal class ShellCommandSpecsManagerImpl(coroutineScope: CoroutineScope) : ShellCommandSpecsManager {
 
   val tracer = TelemetryManager.getTracer(TerminalCompletionScope)
 
@@ -79,7 +80,7 @@ internal class ShellCommandSpecsManagerImpl : ShellCommandSpecsManager {
     .build()
 
   init {
-    ShellCommandSpecsProvider.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<ShellCommandSpecsProvider> {
+    ShellCommandSpecsProvider.EP_NAME.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<ShellCommandSpecsProvider> {
       override fun extensionAdded(extension: ShellCommandSpecsProvider, pluginDescriptor: PluginDescriptor) {
         clearCaches()
       }
