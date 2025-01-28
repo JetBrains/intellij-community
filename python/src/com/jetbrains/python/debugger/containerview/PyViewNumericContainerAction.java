@@ -65,6 +65,7 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
 
     String nodeType = debugValue.getType();
     if ("ndarray".equals(nodeType) ||
+        "recarray".equals(nodeType) ||
         "EagerTensor".equals(nodeType) ||
         "ResourceVariable".equals(nodeType) ||
         "SparseTensor".equals(nodeType) ||

@@ -31,6 +31,8 @@ def get_type(table):
 
 def get_shape(table):
     # type: (np.ndarray) -> str
+    if table.dtype.names is not None:
+        return str((table.shape[0], len(table.dtype.names)))
     if table.ndim == 1:
         return str((table.shape[0], 1))
     else:
@@ -39,6 +41,9 @@ def get_shape(table):
 
 def get_head(table):
     # type: (np.ndarray) -> str
+    column_names = table.dtype.names
+    if column_names:
+        return TABLE_TYPE_NEXT_VALUE_SEPARATOR.join([str(column_names[i]) for i in range(len(column_names))])
     return "None"
 
 
@@ -172,7 +177,8 @@ class _NpTable:
             return ['<th>0</th>\n']
 
         if self.type == WITH_TYPES:
-            return ['<th>{}</th>\n'.format(name) for name in self.array.dtype.names]
+            columns_names = self.array.dtype.names
+            return ['<th>{}</th>\n'.format(str(columns_names[i])) for i in range(len(columns_names))]
 
         return ['<th>{}</th>\n'.format(i) for i in range(len(self.array[0]))]
 

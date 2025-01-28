@@ -33,18 +33,19 @@ public class PyDebugValue extends XNamedValue {
   private static final String ARRAY = "Array";
   private static final String DATA_FRAME = "DataFrame";
   private static final String SERIES = "Series";
-  private static final Map<String, String> EVALUATOR_POSTFIXES = ImmutableMap.of(
-    "ndarray", ARRAY,
-    "EagerTensor", ARRAY,
-    "ResourceVariable", ARRAY,
-    "SparseTensor", ARRAY,
-    "Tensor", ARRAY,
-    DATA_FRAME, DATA_FRAME,
-    SERIES, SERIES,
-    "GeoDataFrame", DATA_FRAME,
-    "GeoSeries", SERIES,
-    "Dataset", DATA_FRAME
-  );
+  private static final Map<String, String> EVALUATOR_POSTFIXES = ImmutableMap.<String, String>builder()
+    .put("ndarray", ARRAY)
+    .put("recarray", ARRAY)
+    .put("EagerTensor", ARRAY)
+    .put("ResourceVariable", ARRAY)
+    .put("SparseTensor", ARRAY)
+    .put("Tensor", ARRAY)
+    .put(DATA_FRAME, DATA_FRAME)
+    .put(SERIES, SERIES)
+    .put("GeoDataFrame", DATA_FRAME)
+    .put("GeoSeries", SERIES)
+    .put("Dataset", DATA_FRAME)
+    .build();
   private static final int MAX_ITEMS_TO_HANDLE = 100;
   public static final int MAX_VALUE = 256;
   public static final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();

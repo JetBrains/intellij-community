@@ -89,7 +89,7 @@ def __get_table_provider(output):
             import _pydevd_bundle.tables.pydevd_numpy_based as table_provider
         else:
             import _pydevd_bundle.tables.pydevd_numpy as table_provider
-    elif type_qualified_name == 'numpy.ndarray':
+    elif type_qualified_name == 'numpy.ndarray' or type_qualified_name == 'numpy.rec.recarray':
         import _pydevd_bundle.tables.pydevd_numpy as table_provider
     elif type_qualified_name in numpy_based_type_qualified_names:
         import _pydevd_bundle.tables.pydevd_numpy_based as table_provider

@@ -19,6 +19,7 @@ public abstract class DataViewStrategy {
   private static class StrategyHolder {
     private static final Set<DataViewStrategy> STRATEGIES = ImmutableSet.of(
       ArrayViewStrategy.createInstanceForNumpyArray(),
+      ArrayViewStrategy.createInstanceForNumpyRecarray(),
       ArrayViewStrategy.createInstanceForEagerTensor(),
       ArrayViewStrategy.createInstanceForResourceVariable(),
       ArrayViewStrategy.createInstanceForSparseTensor(),
