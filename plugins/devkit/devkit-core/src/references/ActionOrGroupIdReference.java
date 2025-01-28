@@ -43,15 +43,16 @@ import static org.jetbrains.idea.devkit.references.ActionOrGroupIdResolveUtil.AC
 import static org.jetbrains.idea.devkit.references.ActionOrGroupIdResolveUtil.ACTIVATE_TOOLWINDOW_ACTION_SUFFIX;
 
 public final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElement> implements PluginConfigReference {
+  @Nullable
   private final String myId;
 
   private final ThreeState myIsAction;
 
-  public ActionOrGroupIdReference(@NotNull PsiElement element, TextRange range, String id, ThreeState isAction) {
+  public ActionOrGroupIdReference(@NotNull PsiElement element, TextRange range, @Nullable String id, ThreeState isAction) {
     this(element, range, id, isAction, false);
   }
 
-  public ActionOrGroupIdReference(@NotNull PsiElement element, TextRange range, String id, ThreeState isAction, boolean soft) {
+  public ActionOrGroupIdReference(@NotNull PsiElement element, TextRange range, @Nullable String id, ThreeState isAction, boolean soft) {
     super(element, range, soft);
     myIsAction = isAction;
     myId = id;
@@ -59,6 +60,8 @@ public final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<
 
   @Override
   public @NotNull ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+    if (StringUtil.isEmpty(myId)) return ResolveResult.EMPTY_ARRAY;
+
     Project project = getElement().getProject();
 
     // for references from code with missing dependencies on XML -> must process all
@@ -129,7 +132,7 @@ public final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<
 
   private ResolveResult @NotNull [] resolveToolWindow(Project project) {
     String toolwindowId = StringUtil.substringBeforeLast(
-      Objects.requireNonNull(StringUtil.substringAfter(myId, ACTIVATE_TOOLWINDOW_ACTION_PREFIX)),
+      Objects.requireNonNull(StringUtil.substringAfter(Objects.requireNonNull(myId), ACTIVATE_TOOLWINDOW_ACTION_PREFIX)),
       ACTIVATE_TOOLWINDOW_ACTION_SUFFIX);
 
     // ToolWindow EPs - process all as we need to remove spaces from ID
