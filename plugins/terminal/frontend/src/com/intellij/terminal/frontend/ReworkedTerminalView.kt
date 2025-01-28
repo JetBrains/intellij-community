@@ -37,7 +37,6 @@ import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputFileType
-import org.jetbrains.plugins.terminal.block.reworked.session.startTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
@@ -52,10 +51,10 @@ import kotlin.math.min
 
 internal class ReworkedTerminalView(
   private val project: Project,
-  private val settings: JBTerminalSystemSettingsProviderBase,
+  settings: JBTerminalSystemSettingsProviderBase,
+  sessionFuture: CompletableFuture<TerminalSession>,
 ) : TerminalContentView {
   private val coroutineScope = terminalProjectScope(project).childScope("ReworkedTerminalView")
-  private val terminalSessionFuture = CompletableFuture<TerminalSession>()
 
   private val sessionModel: TerminalSessionModel
   private val encodingManager: TerminalKeyEncodingManager
@@ -76,16 +75,13 @@ internal class ReworkedTerminalView(
 
   init {
     Disposer.register(this) {
-      // Complete to avoid memory leaks with hanging callbacks. If already completed, nothing will change.
-      terminalSessionFuture.complete(null)
-
       coroutineScope.cancel()
     }
 
     sessionModel = TerminalSessionModelImpl(settings)
     encodingManager = TerminalKeyEncodingManager(sessionModel, coroutineScope.childScope("TerminalKeyEncodingManager"))
 
-    terminalInput = TerminalInput(terminalSessionFuture, sessionModel, coroutineScope.childScope("TerminalInput"))
+    terminalInput = TerminalInput(sessionFuture, sessionModel, coroutineScope.childScope("TerminalInput"))
 
     outputEditor = createOutputEditor(settings, parentDisposable = this)
     val outputModel = createOutputModel(
@@ -129,6 +125,10 @@ internal class ReworkedTerminalView(
       coroutineScope.childScope("TerminalSessionController")
     )
 
+    sessionFuture.thenAccept { session ->
+      controller.handleEvents(session)
+    }
+
     terminalPanel = TerminalPanel(initialContent = outputEditor)
 
     listenSearchController()
@@ -136,13 +136,6 @@ internal class ReworkedTerminalView(
     listenAlternateBufferSwitch()
 
     TerminalVfsSynchronizer.install(controller, ::addFocusListener, this)
-  }
-
-  override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
-    val session = startTerminalSession(ttyConnector, initialTermSize, settings, coroutineScope.childScope("TerminalSession"))
-    terminalSessionFuture.complete(session)
-
-    controller.handleEvents(session)
   }
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
@@ -336,6 +329,10 @@ internal class ReworkedTerminalView(
   }
 
   override fun dispose() {}
+
+  override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
+    error("connectToTty is not supported in ReworkedTerminalView")
+  }
 
   private fun addFocusListener(parentDisposable: Disposable, listener: FocusListener) {
     terminalPanel.addFocusListener(parentDisposable, listener)

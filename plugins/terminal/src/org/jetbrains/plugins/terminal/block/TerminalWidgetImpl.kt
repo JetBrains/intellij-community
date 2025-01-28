@@ -15,7 +15,6 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.block.reworked.ReworkedTerminalView
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
@@ -33,7 +32,6 @@ import javax.swing.JPanel
 internal class TerminalWidgetImpl(
   private val project: Project,
   private val settings: JBTerminalSystemSettingsProvider,
-  private val isGenOne: Boolean,
   parent: Disposable,
 ) : TerminalWidget {
   private val wrapper: Wrapper = Wrapper()
@@ -56,13 +54,6 @@ internal class TerminalWidgetImpl(
     Disposer.register(this, view)
   }
 
-  override val session: TerminalSession?
-    get() = TODO()
-
-  override fun connectToSession(session: TerminalSession) {
-    TODO("Not yet implemented")
-  }
-
   @RequiresEdt(generateAssertion = false)
   override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
     view.connectToTty(ttyConnector, initialTermSize)
@@ -73,13 +64,10 @@ internal class TerminalWidgetImpl(
   fun initialize(options: ShellStartupOptions): CompletableFuture<TermSize> {
     val oldView = view
 
-    view = when {
-      // Gen1 setting takes precedence over Gen2. If Gen1 setting is enabled, its view will be used regardless of Gen2 setting.
-      // It is implied that if Gen1 setting is disabled, then Gen2 is enabled.
-      !isGenOne -> ReworkedTerminalView(project, settings)
-      options.shellIntegration?.commandBlockIntegration != null -> createBlockTerminalView(options)
-      else -> OldPlainTerminalView(project, settings, terminalTitle)
+    view = if (options.shellIntegration?.commandBlockIntegration != null) {
+      createBlockTerminalView(options)
     }
+    else OldPlainTerminalView(project, settings, terminalTitle)
 
     if (oldView is TerminalPlaceholder) {
       oldView.moveTerminationCallbacksTo(view)
@@ -144,6 +132,13 @@ internal class TerminalWidgetImpl(
   override fun getComponent(): JComponent = wrapper
 
   override fun getPreferredFocusableComponent(): JComponent = view.preferredFocusableComponent
+
+  override val session: TerminalSession?
+    get() = null
+
+  override fun connectToSession(session: TerminalSession) {
+    error("connectToSession is not supported in TerminalWidgetImpl, use connectToTty instead")
+  }
 
   private class TerminalPlaceholder : TerminalContentView {
 

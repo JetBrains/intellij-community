@@ -31,8 +31,8 @@ open class LocalBlockTerminalRunner(project: Project) : LocalTerminalDirectRunne
   }
 
   override fun createShellTerminalWidget(parent: Disposable, startupOptions: ShellStartupOptions): TerminalWidget {
-    if (isGenOneTerminalEnabled || isGenTwoTerminalEnabled) {
-      return TerminalWidgetImpl(myProject, settingsProvider, isGenOneTerminalEnabled, parent)
+    if (isGenOneTerminalEnabled) {
+      return TerminalWidgetImpl(myProject, settingsProvider, parent)
     }
     return super.createShellTerminalWidget(parent, startupOptions)
   }
