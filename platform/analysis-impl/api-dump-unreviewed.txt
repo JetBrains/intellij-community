@@ -3020,7 +3020,7 @@ c:com.intellij.find.findUsages.FindUsagesHandlerBase
 - f:getPsiElement():com.intellij.psi.PsiElement
 - getSecondaryElements():com.intellij.psi.PsiElement[]
 - p:getStringsToSearch(com.intellij.psi.PsiElement):java.util.Collection
-- isSearchForTextOccurrencesAvailable(com.intellij.psi.PsiElement,Z):Z
+- p:isSearchForTextOccurrencesAvailable(com.intellij.psi.PsiElement,Z):Z
 - processElementUsages(com.intellij.psi.PsiElement,com.intellij.util.Processor,com.intellij.find.findUsages.FindUsagesOptions):Z
 - processUsagesInText(com.intellij.psi.PsiElement,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope):Z
 f:com.intellij.find.findUsages.FindUsagesHelper

@@ -108,7 +108,7 @@ public class FindUsagesHandlerBase {
     return Collections.singleton(element.getText());
   }
 
-  public boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
+  protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
     return false;
   }
 

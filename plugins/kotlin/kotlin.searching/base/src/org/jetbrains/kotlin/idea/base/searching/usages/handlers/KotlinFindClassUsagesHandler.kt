@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.searching.usages.handlers
 
@@ -17,7 +17,6 @@ import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinClassFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindClassUsagesDialog
@@ -32,6 +31,7 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.buildProcessDelegationCallK
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.psi.psiUtil.effectiveDeclarations
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 
 class KotlinFindClassUsagesHandler(
     ktClass: KtClassOrObject,
@@ -180,7 +180,7 @@ class KotlinFindClassUsagesHandler(
         } ?: emptyList()
     }
 
-    override fun isSearchForTextOccurrencesAvailable(psiElement: PsiElement, isSingleFile: Boolean): Boolean {
+    protected override fun isSearchForTextOccurrencesAvailable(psiElement: PsiElement, isSingleFile: Boolean): Boolean {
         return !isSingleFile
     }
 
