@@ -7,9 +7,11 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.RemoveReturnLabelFix
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.quickfix.RemoveReturnLabelFix
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.returnExpressionVisitor
 
 internal class RedundantReturnLabelInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = returnExpressionVisitor(
@@ -23,9 +25,9 @@ internal class RedundantReturnLabelInspection : AbstractKotlinInspection() {
 
             val labelName = label.getReferencedName()
             holder.registerProblem(
-                label,
-                KotlinBundle.message("redundant.0", labelName),
-                IntentionWrapper(RemoveReturnLabelFix(returnExpression, labelName)),
+              label,
+              KotlinBundle.message("redundant.0", labelName),
+              IntentionWrapper(RemoveReturnLabelFix(returnExpression).asIntention()),
             )
         },
     )
