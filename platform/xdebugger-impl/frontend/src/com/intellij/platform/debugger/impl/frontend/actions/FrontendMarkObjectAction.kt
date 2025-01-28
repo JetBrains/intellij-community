@@ -25,6 +25,9 @@ private class FrontendMarkObjectAction : AnAction(), ActionRemoteBehaviorSpecifi
       event.presentation.isEnabledAndVisible = false
       return
     }
+    event.presentation.text = ActionsBundle.message("action.Debugger.MarkObject.text")
+    event.presentation.description = ActionsBundle.message("action.Debugger.MarkObject.description")
+
     val markers = getMarkers(event) ?: run {
       event.presentation.isEnabledAndVisible = false
       return
