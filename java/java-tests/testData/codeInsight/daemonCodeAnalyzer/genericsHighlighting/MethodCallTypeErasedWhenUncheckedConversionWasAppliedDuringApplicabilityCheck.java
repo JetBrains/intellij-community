@@ -15,7 +15,7 @@ class Main {
 
   public static void main(String[] args) {
     List x = null;
-    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">String s = foo(x).get(0);</error>
+    String s = foo(x).<error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">get</error>(0);
     foo(x).iterator().next().<error descr="Cannot resolve method 'toLowerCase' in 'Object'">toLowerCase</error>();
   }
 }

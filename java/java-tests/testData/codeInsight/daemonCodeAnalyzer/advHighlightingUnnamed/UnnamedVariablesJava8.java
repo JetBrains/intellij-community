@@ -6,7 +6,7 @@ public class UnnamedVariables {
   }
   
   int _ = 123;
-  <error descr="Incompatible types. Found: 'int', required: 'java.lang.String'">String s = _;</error>
+  String s = <error descr="Incompatible types. Found: 'int', required: 'java.lang.String'">_</error>;
   
   void testLambda() {
     Consumer<String> consumer = <error descr="Use of '_' as a lambda parameter name is not allowed">_</error> -> System.out.println("Hello");

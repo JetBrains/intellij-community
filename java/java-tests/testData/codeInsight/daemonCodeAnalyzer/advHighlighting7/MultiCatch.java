@@ -53,15 +53,15 @@ abstract class C {
     try { f(); } catch (E e) { } catch (<error descr="Exception 'C.E1' has already been caught">E1</error> | <error descr="Exception 'C.E3' has already been caught">E3</error> e) { }
     try { f(); } catch (E1 | E2 e) { } catch (<error descr="Exception 'C.E2' has already been caught">E2</error> e) { }
 
-    try { f(); } catch (E1 | E2 e) { <error descr="Incompatible types. Found: 'C.E1 | C.E2', required: 'C.E2'">E2 ee = e;</error> }
+    try { f(); } catch (E1 | E2 e) { E2 ee = <error descr="Incompatible types. Found: 'C.E1 | C.E2', required: 'C.E2'">e</error>; }
     try { f(); } catch (E1 | E2 e) { <error descr="Cannot assign a value to final variable 'e'">e</error> = new E1(); }
     try { f(); } catch (E1 | E2 e) { <error descr="Incompatible types. Found: 'C.E', required: 'C.E1 | C.E2'">e = new E()</error>; }
 
     try { g(); }
     catch (IE1 | IE2 e) {
       Class<? extends E> clazz1 = e.getClass();
-      <error descr="Incompatible types. Found: 'java.lang.Class<capture<? extends C.E>>', required: 'java.lang.Class<? extends C.IE1>'">Class<? extends IE1> clazz2 = e.getClass();</error>
-      <error descr="Incompatible types. Found: 'java.lang.Class<capture<? extends C.E>>', required: 'java.lang.Class<? extends C.I>'">Class<? extends I> clazz3 = e.getClass();</error>
+      Class<? extends IE1> clazz2 = e.<error descr="Incompatible types. Found: 'java.lang.Class<capture<? extends C.E>>', required: 'java.lang.Class<? extends C.IE1>'">getClass</error>();
+      Class<? extends I> clazz3 = e.<error descr="Incompatible types. Found: 'java.lang.Class<capture<? extends C.E>>', required: 'java.lang.Class<? extends C.I>'">getClass</error>();
     }
 
     try { f(); }

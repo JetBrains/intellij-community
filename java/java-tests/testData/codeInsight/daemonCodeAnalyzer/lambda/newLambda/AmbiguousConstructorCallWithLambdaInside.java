@@ -5,7 +5,7 @@ class OverloadCast {
 
     public void runMe() {
         new OverloadCast<error descr="Cannot resolve constructor 'OverloadCast(<method reference>, <lambda expression>)'">(WhitespaceTokenizer::<error descr="Cannot resolve constructor 'WhitespaceTokenizer'">new</error>, src -> new LowerCaseFilter<error descr="'LowerCaseFilter(OverloadCast.TokenStream)' in 'OverloadCast.LowerCaseFilter' cannot be applied to '(<lambda parameter>)'">(src)</error>)</error>;
-        <error descr="Ambiguous method call: both 'OverloadCast.overloadCast(Supplier<Tokenizer>, Function<TokenStream, TokenFilter>)' and 'OverloadCast.overloadCast(Function<TokenStream, TokenFilter>, Function<String, String>)' match">overloadCast</error>(WhitespaceTokenizer::<error descr="Cannot resolve constructor 'WhitespaceTokenizer'">new</error>, src -> new LowerCaseFilter<error descr="'LowerCaseFilter(OverloadCast.TokenStream)' in 'OverloadCast.LowerCaseFilter' cannot be applied to '(<lambda parameter>)'">(src)</error>);
+        overloadCast<error descr="Ambiguous method call: both 'OverloadCast.overloadCast(Supplier<Tokenizer>, Function<TokenStream, TokenFilter>)' and 'OverloadCast.overloadCast(Function<TokenStream, TokenFilter>, Function<String, String>)' match">(WhitespaceTokenizer::<error descr="Cannot resolve constructor 'WhitespaceTokenizer'">new</error>, src -> new LowerCaseFilter<error descr="'LowerCaseFilter(OverloadCast.TokenStream)' in 'OverloadCast.LowerCaseFilter' cannot be applied to '(<lambda parameter>)'">(src)</error>)</error>;
     }
 
     private OverloadCast(Supplier<Tokenizer> tokenizerFactory, Function<TokenStream, TokenFilter> filterCreator) {

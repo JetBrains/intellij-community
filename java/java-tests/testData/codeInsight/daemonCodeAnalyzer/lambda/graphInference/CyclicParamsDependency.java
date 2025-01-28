@@ -2,13 +2,13 @@ import java.util.List;
 
 class Sample {
   <T extends List<K>, K extends List<T>> T foo(){
-    <error descr="Incompatible types. Found: 'K', required: 'T'">T t = foo().get(0);</error>
-    <error descr="Incompatible types. Found: 'K', required: 'K'">K k = foo().get(0);</error>
+    T t = foo().<error descr="Incompatible types. Found: 'K', required: 'T'">get</error>(0);
+    K k = foo().<error descr="Incompatible types. Found: 'K', required: 'K'">get</error>(0);
 
-    <error descr="Incompatible types. Found: 'T', required: 'T'">T t1 = foo().get(0).get(0);</error>
+    T t1 = foo().get(0).<error descr="Incompatible types. Found: 'T', required: 'T'">get</error>(0);
 
     String s  = foo();
-    <error descr="Incompatible types. Found: 'K', required: 'java.lang.String'">String s1 = foo().get(0);</error>
+    String s1 = foo().<error descr="Incompatible types. Found: 'K', required: 'java.lang.String'">get</error>(0);
     return null;
   }
 
