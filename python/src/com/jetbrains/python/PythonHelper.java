@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.jetbrains.python.PythonHelpersLocator.*;
+import static com.jetbrains.python.VenvHelperKt.VIRTUALENV_ZIPAPP_NAME;
 
 public enum PythonHelper implements HelperPackage {
   GENERATOR3("generator3/__main__.py"),
@@ -24,7 +25,7 @@ public enum PythonHelper implements HelperPackage {
 
   // Packaging tools
   PACKAGING_TOOL("packaging_tool.py"),
-  VIRTUALENV_ZIPAPP("virtualenv-20.24.5.pyz"),
+  VIRTUALENV_ZIPAPP(VIRTUALENV_ZIPAPP_NAME),
   LEGACY_VIRTUALENV_ZIPAPP("virtualenv-20.13.0.pyz"), // virtualenv used to create virtual environments for python 2.7 & 3.6
 
   COVERAGEPY_OLD("coveragepy_old", ""),

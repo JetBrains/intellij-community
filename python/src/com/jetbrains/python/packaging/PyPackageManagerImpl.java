@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static com.jetbrains.python.VenvHelperKt.VIRTUALENV_ZIPAPP_NAME;
 import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
 
 /**
@@ -37,7 +38,6 @@ import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
  */
 @Deprecated(forRemoval = true)
 public class PyPackageManagerImpl extends PyPackageManagerImplBase {
-  private static final String VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.24.5.pyz";
   private static final String LEGACY_VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.13.0.pyz"; // virtualenv used to create virtual environments for python 2.7 & 3.6
 
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
