@@ -761,14 +761,6 @@ public final class HighlightUtil {
     return container == null ? "?" : HighlightMessageUtil.getSymbolName(container, substitutor);
   }
 
-  static HighlightInfo.Builder checkCatchParameterIsThrowable(@NotNull PsiParameter parameter) {
-    if (parameter.getDeclarationScope() instanceof PsiCatchSection) {
-      PsiType type = parameter.getType();
-      return checkMustBeThrowable(type, parameter, true);
-    }
-    return null;
-  }
-
   static HighlightInfo.Builder checkResourceVariableIsFinal(@NotNull PsiResourceExpression resource) {
     PsiExpression expression = resource.getExpression();
 
@@ -1354,30 +1346,6 @@ public final class HighlightUtil {
                   ? NewUI.isEnabled() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : UIUtil.getToolTipForeground()
                   : NamedColorUtil.getErrorForeground();
     return HtmlChunk.tag("font").attr("color", ColorUtil.toHtmlColor(color)).addText(typeText);
-  }
-
-
-  static HighlightInfo.Builder checkMustBeThrowable(@NotNull PsiType type, @NotNull PsiElement context, boolean addCastIntention) {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
-    PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, context.getResolveScope());
-    if (!TypeConversionUtil.isAssignable(throwable, type)) {
-      if (IncompleteModelUtil.isIncompleteModel(context) && IncompleteModelUtil.isPotentiallyConvertible(throwable, type, context)) return null;
-      HighlightInfo.Builder highlightInfo = createIncompatibleTypeHighlightInfo(throwable, type, context.getTextRange(), 0);
-      if (addCastIntention && TypeConversionUtil.areTypesConvertible(type, throwable)) {
-        if (context instanceof PsiExpression) {
-          IntentionAction action = getFixFactory().createAddTypeCastFix(throwable, (PsiExpression)context);
-          highlightInfo.registerFix(action, null, null, null, null);
-        }
-      }
-
-      PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
-      if (aClass != null) {
-        IntentionAction action = getFixFactory().createExtendsListFix(aClass, throwable, true);
-        highlightInfo.registerFix(action, null, null, null, null);
-      }
-      return highlightInfo;
-    }
-    return null;
   }
 
 

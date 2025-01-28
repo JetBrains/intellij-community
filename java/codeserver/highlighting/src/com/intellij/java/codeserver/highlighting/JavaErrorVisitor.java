@@ -40,6 +40,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull Consumer<JavaCompilationError<?, ?>> myErrorConsumer;
   private final @NotNull Project myProject;
   private final @NotNull PsiFile myFile;
+  private final @NotNull PsiElementFactory myFactory;
   private final @NotNull LanguageLevel myLanguageLevel;
   private final @NotNull AnnotationChecker myAnnotationChecker = new AnnotationChecker(this);
   final @NotNull ClassChecker myClassChecker = new ClassChecker(this);
@@ -64,6 +65,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     myJavaModule = module;
     myJavaSdkVersion = ObjectUtils
       .notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
+    myFactory = JavaPsiFacade.getElementFactory(myProject);
   }
 
   void report(@NotNull JavaCompilationError<?, ?> error) {
@@ -82,6 +84,10 @@ final class JavaErrorVisitor extends JavaElementVisitor {
 
   @NotNull Project project() {
     return myProject;
+  }
+  
+  @NotNull PsiElementFactory factory() {
+    return myFactory;
   }
 
   @NotNull LanguageLevel languageLevel() {
@@ -154,7 +160,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       if (!hasErrorResults() && parameter.getType() instanceof PsiDisjunctionType) {
         checkFeature(parameter, JavaFeature.MULTI_CATCH);
       }
+      if (!hasErrorResults()) myStatementChecker.checkMustBeThrowable(parameter, parameter.getType());
       if (!hasErrorResults()) myStatementChecker.checkCatchTypeIsDisjoint(parameter);
+      if (!hasErrorResults()) myGenericsChecker.checkCatchParameterIsClass(parameter);
     }
     else if (parent instanceof PsiForeachStatement forEach) {
       checkFeature(forEach, JavaFeature.FOR_EACH);
@@ -194,8 +202,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkEnumWithAbstractMethods(enumConstant);
     if (!hasErrorResults()) myExpressionChecker.checkUnhandledExceptions(enumConstant);
     if (!hasErrorResults()) {
-      PsiClass containingClass = requireNonNull(enumConstant.getContainingClass());
-      PsiClassType type = JavaPsiFacade.getElementFactory(myProject).createType(containingClass);
+      PsiClassType type = factory().createType(requireNonNull(enumConstant.getContainingClass()));
       myExpressionChecker.checkConstructorCall(type.resolveGenerics(), enumConstant, type, null);
     }
   }
@@ -738,6 +745,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   @Override
   public void visitExpression(@NotNull PsiExpression expression) {
     super.visitExpression(expression);
+    PsiElement parent = expression.getParent();
+    // Method expression of the call should not be especially processed
+    if (parent instanceof PsiMethodCallExpression) return;
     if (!hasErrorResults()) myAnnotationChecker.checkConstantExpression(expression);
     if (!hasErrorResults()) myExpressionChecker.checkMustBeBoolean(expression);
     if (!hasErrorResults()) myExpressionChecker.checkAssertOperatorTypes(expression);
@@ -748,6 +758,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults() && expression instanceof PsiArrayAccessExpression accessExpression) {
       myExpressionChecker.checkValidArrayAccessExpression(accessExpression);
     }
+    if (!hasErrorResults()) myStatementChecker.checkThrowExceptionType(expression);
   }
 
   @Override

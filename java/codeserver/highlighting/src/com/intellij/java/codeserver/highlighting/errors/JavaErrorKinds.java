@@ -629,6 +629,8 @@ public final class JavaErrorKinds {
   public static final Simple<PsiBreakStatement> BREAK_OUT_OF_SWITCH_EXPRESSION = error("break.out.of.switch.expression");
   public static final Simple<PsiContinueStatement> CONTINUE_OUTSIDE_LOOP = error("continue.outside.loop");
   public static final Simple<PsiContinueStatement> CONTINUE_OUT_OF_SWITCH_EXPRESSION = error("continue.out.of.switch.expression");
+  
+  public static final Simple<PsiTypeElement> CATCH_TYPE_PARAMETER = error("catch.type.parameter");
 
   public static final Parameterized<PsiExpression, PsiType> ARRAY_ILLEGAL_INITIALIZER =
     parameterized(PsiExpression.class, PsiType.class, "array.illegal.initializer")

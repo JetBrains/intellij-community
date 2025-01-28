@@ -478,12 +478,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkCannotWriteToFinal(expression, myFile));
     if (!hasErrorResults()) add(HighlightUtil.checkVariableExpected(expression));
     if (!hasErrorResults()) add(HighlightUtil.checkConditionalExpressionBranchTypesMatch(expression, type));
-    if (!hasErrorResults() &&
-        parent instanceof PsiThrowStatement statement &&
-        statement.getException() == expression &&
-        type != null) {
-      add(HighlightUtil.checkMustBeThrowable(type, expression, true));
-    }
     if (!hasErrorResults() && shouldReportForeachNotApplicable(expression)) {
       add(GenericsHighlightUtil.checkForeachExpressionTypeIsIterable(expression));
     }
@@ -678,17 +672,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitRecordComponent(@NotNull PsiRecordComponent recordComponent) {
     super.visitRecordComponent(recordComponent);
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkRecordComponentInitialized(recordComponent));
-  }
-
-  @Override
-  public void visitParameter(@NotNull PsiParameter parameter) {
-    super.visitParameter(parameter);
-
-    PsiElement parent = parameter.getParent();
-    if (parent instanceof PsiCatchSection) {
-      if (!hasErrorResults()) add(HighlightUtil.checkCatchParameterIsThrowable(parameter));
-      if (!hasErrorResults()) GenericsHighlightUtil.checkCatchParameterIsClass(parameter, myErrorSink);
-    }
   }
 
   @Override

@@ -195,7 +195,7 @@ final class StatementChecker {
     PsiType type = resource.getType();
     if (type == null) return;
 
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(resource.getProject());
+    PsiElementFactory factory = myVisitor.factory();
     PsiClassType autoCloseable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, resource.getResolveScope());
     if (TypeConversionUtil.isAssignable(autoCloseable, type)) return;
     if (IncompleteModelUtil.isIncompleteModel(resource) && IncompleteModelUtil.isPotentiallyConvertible(autoCloseable, type, resource)) return;
@@ -337,5 +337,23 @@ final class StatementChecker {
     }
     var kind = isDeclarationNotAllowed ? JavaErrorKinds.STATEMENT_DECLARATION_NOT_ALLOWED : JavaErrorKinds.STATEMENT_BAD_EXPRESSION;
     myVisitor.report(kind.create(statement));
+  }
+
+  void checkThrowExceptionType(@NotNull PsiExpression expression) {
+    if (expression.getParent() instanceof PsiThrowStatement statement && statement.getException() == expression) {
+      PsiType type = expression.getType();
+      checkMustBeThrowable(expression, type);
+    }
+  }
+
+  void checkMustBeThrowable(@NotNull PsiElement context, PsiType type) {
+    if (type != null && !InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE)) {
+      PsiElementFactory factory = myVisitor.factory();
+      PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, context.getResolveScope());
+      if (!(IncompleteModelUtil.isIncompleteModel(context) &&
+            IncompleteModelUtil.isPotentiallyConvertible(throwable, type, context))) {
+        myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(context, new JavaIncompatibleTypeErrorContext(throwable, type)));
+      }
+    }
   }
 }

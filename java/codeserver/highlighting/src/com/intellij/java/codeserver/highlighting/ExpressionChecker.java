@@ -433,7 +433,7 @@ final class ExpressionChecker {
     PsiType type = processor.getType();
     if (type == null) return;
 
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(processor.getProject());
+    PsiElementFactory factory = myVisitor.factory();
     PsiClassType processorType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR, processor.getResolveScope());
     if (!TypeConversionUtil.isAssignable(processorType, type)) {
       if (IncompleteModelUtil.isIncompleteModel(templateExpression) && IncompleteModelUtil.isPotentiallyConvertible(processorType, processor)) {

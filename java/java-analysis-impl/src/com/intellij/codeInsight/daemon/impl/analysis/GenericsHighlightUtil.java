@@ -778,19 +778,6 @@ public final class GenericsHighlightUtil {
     return enumClass != null && enumClass.isEnum() ? enumClass : null;
   }
 
-  static void checkCatchParameterIsClass(@NotNull PsiParameter parameter, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    if (!(parameter.getDeclarationScope() instanceof PsiCatchSection)) return;
-
-    List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
-    for (PsiTypeElement typeElement : typeElements) {
-      PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(typeElement.getType());
-      if (aClass instanceof PsiTypeParameter) {
-        String message = JavaErrorBundle.message("generics.cannot.catch.type.parameters");
-        errorSink.accept(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message));
-      }
-    }
-  }
-
   static HighlightInfo.Builder checkInstanceOfGenericType(@NotNull LanguageLevel languageLevel, @NotNull PsiInstanceOfExpression expression) {
     PsiTypeElement checkTypeElement = InstanceOfUtils.findCheckTypeElement(expression);
     if (checkTypeElement == null) return null;

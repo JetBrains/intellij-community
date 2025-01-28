@@ -740,7 +740,7 @@ final class ClassChecker {
       if (isRealInnerClass(targetClass)) {
         PsiClass outerClass = targetClass.getContainingClass();
         if (outerClass != null) {
-          PsiClassType outerType = JavaPsiFacade.getElementFactory(myVisitor.project()).createType(outerClass);
+          PsiClassType outerType = myVisitor.factory().createType(outerClass);
           myVisitor.myExpressionChecker.checkAssignability(outerType, null, qualifier, qualifier);
         }
       } else {

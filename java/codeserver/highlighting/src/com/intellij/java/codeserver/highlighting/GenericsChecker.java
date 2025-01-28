@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static java.util.Objects.*;
+
 final class GenericsChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
 
@@ -146,11 +148,10 @@ final class GenericsChecker {
       PsiClass superClass = result.getElement();
       if (superClass == null || visited.contains(superClass)) continue;
       PsiSubstitutor superTypeSubstitutor = result.getSubstitutor();
-      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
       //JLS 4.8 The superclasses (respectively, superinterfaces) of a raw type are the erasures 
       // of the superclasses (superinterfaces) of any of the parameterizations of the generic type.
       superTypeSubstitutor = PsiUtil.isRawSubstitutor(aClass, derivedSubstitutor)
-                             ? elementFactory.createRawSubstitutor(superClass)
+                             ? myVisitor.factory().createRawSubstitutor(superClass)
                              : MethodSignatureUtil.combineSubstitutors(superTypeSubstitutor, derivedSubstitutor);
 
       PsiSubstitutor inheritedSubstitutor = inheritedClasses.get(superClass);
@@ -372,8 +373,19 @@ final class GenericsChecker {
     }
   }
 
+  void checkCatchParameterIsClass(@NotNull PsiParameter parameter) {
+    if (!(parameter.getDeclarationScope() instanceof PsiCatchSection)) return;
+
+    List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
+    for (PsiTypeElement typeElement : typeElements) {
+      if (PsiUtil.resolveClassInClassTypeOnly(typeElement.getType()) instanceof PsiTypeParameter) {
+        myVisitor.report(JavaErrorKinds.CATCH_TYPE_PARAMETER.create(typeElement));
+      }
+    }
+  }
+
   private static PsiType detectExpectedType(@NotNull PsiReferenceParameterList referenceParameterList) {
-    PsiNewExpression newExpression = Objects.requireNonNull(PsiTreeUtil.getParentOfType(referenceParameterList, PsiNewExpression.class));
+    PsiNewExpression newExpression = requireNonNull(PsiTreeUtil.getParentOfType(referenceParameterList, PsiNewExpression.class));
     PsiElement parent = newExpression.getParent();
     PsiType expectedType = null;
     if (parent instanceof PsiVariable psiVariable && newExpression.equals(psiVariable.getInitializer())) {
