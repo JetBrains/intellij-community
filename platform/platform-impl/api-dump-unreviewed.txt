@@ -1500,6 +1500,7 @@ com.intellij.ide.CommandLineInspectionProjectConfigurator
 - a:getName():java.lang.String
 - isApplicable(com.intellij.ide.CommandLineInspectionProjectConfigurator$ConfiguratorContext):Z
 - preConfigureProject(com.intellij.openapi.project.Project,com.intellij.ide.CommandLineInspectionProjectConfigurator$ConfiguratorContext):V
+- shouldBeInvokedAlongsideActivityTracking():Z
 com.intellij.ide.CommandLineInspectionProjectConfigurator$ConfiguratorContext
 - a:getFilesFilter():java.util.function.Predicate
 - a:getLogger():com.intellij.ide.CommandLineInspectionProgressReporter
