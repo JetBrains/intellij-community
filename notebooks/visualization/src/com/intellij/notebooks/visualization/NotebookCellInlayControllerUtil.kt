@@ -29,7 +29,7 @@ object NotebookCellInlayControllerUtil {
         null,
         startOffset,
         endOffset,
-        HighlighterLayer.FIRST - 100,
+        HighlighterLayer.FIRST,
         HighlighterTargetArea.LINES_IN_RANGE,
         false
       ) { o: RangeHighlighterEx ->
