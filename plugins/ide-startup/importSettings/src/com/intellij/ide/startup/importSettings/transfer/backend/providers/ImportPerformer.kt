@@ -116,8 +116,7 @@ private suspend fun doInstallPlugins(
   project: Project?,
   plugins: Collection<PluginDownloader>,
   pi: ProgressIndicator,
-  restartRequiringPlugins: AtomicInteger
-): Boolean = coroutineScope {
+  restartRequiringPlugins: AtomicInteger): Boolean = coroutineScope {
   val scope = this
 
   fun createInstaller(finished: CompletableDeferred<Boolean>) =
