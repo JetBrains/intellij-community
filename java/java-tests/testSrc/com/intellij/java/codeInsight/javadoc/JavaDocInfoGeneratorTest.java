@@ -112,6 +112,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testFieldInitializedWithLambda() { doTestField(); }
   public void testFieldInitializedWithArray() { doTestField(); }
   public void testFieldInitializedWithSizedArray() { doTestField(); }
+  public void testFieldInitializedWithPartlySizedArray() { doTestField(); }
   public void testDoubleLt() { doTestClass(); }
   public void testNoSpaceAfterTagName() { doTestClass(); }
   public void testRecordParameters() { doTestClass(); } //j.l.Record is unresolved as there is no mock jdk 14 yet

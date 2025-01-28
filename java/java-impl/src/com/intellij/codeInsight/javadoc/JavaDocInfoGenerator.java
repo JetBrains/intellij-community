@@ -3285,23 +3285,37 @@ public class JavaDocInfoGenerator {
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
       appendStyledSpan(myBuffer, getHighlightingManager().getKeywordAttributes(), "new ");
       PsiType type = expression.getType();
-      if (type != null) {
-        generateType(myBuffer, type, expression);
-      }
-      PsiExpression[] dimensions = expression.getArrayDimensions();
-      if (dimensions.length > 0) {
-        int closeBracketIndex = myBuffer.length() - 1;
-        while (closeBracketIndex > 0 && myBuffer.charAt(closeBracketIndex) != ']') closeBracketIndex--;
-        LOG.assertTrue(myBuffer.charAt(closeBracketIndex) == ']');
-        myBuffer.setLength(closeBracketIndex);
-        for (int i = 0; i < dimensions.length; i++) {
-          PsiExpression dimension = dimensions[i];
-          dimension.accept(this);
-          if (i + 1 != dimensions.length) appendStyledSpan(myBuffer, getHighlightingManager().getCommaAttributes(), ", ");
+      if (type instanceof PsiArrayType arrayType) {
+        // array dimensions can be a mix of type information and dimension expressions
+        // so we need to reconstruct it here by interleaving them
+        // 1. it starts with the deep component at the beginning
+        generateType(myBuffer, arrayType.getDeepComponentType(), expression);
+        int i = 0;
+        // 2. then, from outer to inner types (excluding the deep component type), we
+        // need to mix potential dimension expressions, type annotations, and dimensions
+        // without expressions
+        PsiExpression[] dimensions = expression.getArrayDimensions();
+        TextAttributes attributes = getHighlightingManager().getBracketsAttributes();
+        while (type instanceof PsiArrayType dimensionType) {
+          generateTypeAnnotations(myBuffer, dimensionType, expression, true, true);
+          if (dimensions.length > i) {
+            appendStyledSpan(myBuffer, attributes, "[");
+            dimensions[i].accept(this);
+            appendStyledSpan(myBuffer, attributes, "]");
+          }
+          else {
+            appendStyledSpan(myBuffer, attributes, "[]");
+          }
+          type = dimensionType.getComponentType();
+          i++;
         }
-        appendStyledSpan(myBuffer, getHighlightingManager().getBracketsAttributes(), "]");
+        PsiArrayInitializerExpression initializer = expression.getArrayInitializer();
+        if (initializer != null) {
+          initializer.accept(this);
+        }
       }
-      else {
+      else if (type != null) {
+        generateType(myBuffer, type, expression);
         expression.acceptChildren(this);
       }
     }
