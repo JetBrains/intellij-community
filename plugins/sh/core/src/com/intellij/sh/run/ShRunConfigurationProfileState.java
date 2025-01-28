@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.path.EelPath;
 import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShStringUtil;
@@ -47,16 +48,25 @@ final class ShRunConfigurationProfileState implements RunProfileState {
 
   @Override
   public @Nullable ExecutionResult execute(Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
+    final EelDescriptor eelDescriptor;
+
+    if (!myRunConfiguration.getScriptWorkingDirectory().isEmpty()) {
+     eelDescriptor = getEelDescriptor(Path.of(myRunConfiguration.getScriptWorkingDirectory()));
+    }
+    else {
+      eelDescriptor = getEelDescriptor(myProject);
+    }
+
     if (EelPathUtils.isProjectLocal(myProject) && // fixme!!!: remove this check after terminal will be migrated to eel
         myRunConfiguration.isExecuteInTerminal() && !isRunBeforeConfig()) {
       ShRunner shRunner = ApplicationManager.getApplication().getService(ShRunner.class);
       if (shRunner != null && shRunner.isAvailable(myProject)) {
-        shRunner.run(myProject, buildCommand(), myRunConfiguration.getScriptWorkingDirectory(), myRunConfiguration.getName(),
+        shRunner.run(myProject, buildCommand(eelDescriptor), myRunConfiguration.getScriptWorkingDirectory(), myRunConfiguration.getName(),
                      isActivateToolWindow());
         return null;
       }
     }
-    return buildExecutionResult();
+    return buildExecutionResult(eelDescriptor);
   }
 
   private boolean isActivateToolWindow() {
@@ -64,10 +74,10 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     return settings == null || settings.isActivateToolWindowBeforeRun() || settings.isFocusToolWindowBeforeRun();
   }
 
-  private ExecutionResult buildExecutionResult() throws ExecutionException {
+  private ExecutionResult buildExecutionResult(@NotNull EelDescriptor eelDescriptor) throws ExecutionException {
     GeneralCommandLine commandLine;
     if (myRunConfiguration.isExecuteScriptFile()) {
-      commandLine = createCommandLineForFile();
+      commandLine = createCommandLineForFile(eelDescriptor);
     }
     else {
       commandLine = createCommandLineForScript();
@@ -100,7 +110,7 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     return commandLine;
   }
 
-  private @NotNull GeneralCommandLine createCommandLineForFile() throws ExecutionException {
+  private @NotNull GeneralCommandLine createCommandLineForFile(@NotNull EelDescriptor eelDescriptor) throws ExecutionException {
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(myRunConfiguration.getScriptPath());
     if (virtualFile == null || virtualFile.getParent() == null) {
       throw new ExecutionException(ShBundle.message("error.message.cannot.determine.shell.script.parent.directory"));
@@ -113,11 +123,11 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     commandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
     commandLine.withWorkingDirectory(Path.of(myRunConfiguration.getScriptWorkingDirectory()));
 
-    commandLine.setExePath(convertPathUsingEel(myRunConfiguration.getInterpreterPath()));
+    commandLine.setExePath(convertPathUsingEel(myRunConfiguration.getInterpreterPath(), eelDescriptor));
     if (StringUtil.isNotEmpty(myRunConfiguration.getInterpreterOptions())) {
       commandLine.addParameters(ParametersListUtil.parse(myRunConfiguration.getInterpreterOptions()));
     }
-    commandLine.addParameter(convertPathUsingEel(myRunConfiguration.getScriptPath()));
+    commandLine.addParameter(convertPathUsingEel(myRunConfiguration.getScriptPath(), eelDescriptor));
     if (StringUtil.isNotEmpty(myRunConfiguration.getScriptOptions())) {
       commandLine.addParameters(ParametersListUtil.parse(myRunConfiguration.getScriptOptions()));
     }
@@ -133,10 +143,8 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     return isRunBeforeConfig;
   }
 
-  private @NotNull String buildCommand() {
+  private @NotNull String buildCommand(@NotNull EelDescriptor eelDescriptor) {
     if (myRunConfiguration.isExecuteScriptFile()) {
-      final var eelDescriptor = getEelDescriptor(Path.of(myRunConfiguration.getScriptWorkingDirectory()));
-
       final List<String> commandLine = new ArrayList<>();
       addIfPresent(commandLine, myRunConfiguration.getEnvData().getEnvs());
       addIfPresent(commandLine, adaptPathForExecution(myRunConfiguration.getInterpreterPath(), eelDescriptor));
@@ -188,15 +196,16 @@ final class ShRunConfigurationProfileState implements RunProfileState {
 
   private static String adaptPathForExecution(@NotNull String systemDependentPath,
                                               @NotNull EelDescriptor eelDescriptor) {
-    systemDependentPath = convertPathUsingEel(systemDependentPath);
+    systemDependentPath = convertPathUsingEel(systemDependentPath, eelDescriptor);
 
     if (eelDescriptor.getOperatingSystem() != EelPath.OS.WINDOWS) return ShStringUtil.quote(systemDependentPath);
     String escapedPath = StringUtil.escapeQuotes(systemDependentPath);
     return StringUtil.containsWhitespaces(systemDependentPath) ? StringUtil.QUOTER.apply(escapedPath) : escapedPath;
   }
 
-  private static String convertPathUsingEel(@NotNull String path) {
+  private static String convertPathUsingEel(@NotNull String path, @NotNull EelDescriptor eelDescriptor) {
     if (path.isEmpty()) return path;
+    if (eelDescriptor == LocalEelDescriptor.INSTANCE) return path;
     return EelNioBridgeServiceKt.asEelPath(Path.of(path)).toString();
   }
 }
