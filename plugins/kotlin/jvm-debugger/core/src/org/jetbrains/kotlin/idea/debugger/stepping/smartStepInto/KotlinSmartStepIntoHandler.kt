@@ -10,9 +10,9 @@ import com.intellij.debugger.actions.SmartStepTarget
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.MethodFilter
-import com.intellij.debugger.engine.invokeCommandAsCompletableFuture
+import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
 import com.intellij.debugger.impl.DebuggerSession
-import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.debugger.statistics.DebuggerStatistics
 import com.intellij.debugger.statistics.Engine
@@ -27,11 +27,15 @@ import com.intellij.util.Range
 import com.intellij.util.containers.OrderedSet
 import com.sun.jdi.Location
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.asPromise
+import org.jetbrains.concurrency.compute
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
-import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
+import org.jetbrains.kotlin.idea.debugger.base.util.dumbAction
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.DexBytecodeInspector
 import org.jetbrains.kotlin.idea.debugger.getContainingBlockOrMethod
 import org.jetbrains.kotlin.psi.KtElement
@@ -50,10 +54,19 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
             super.findStepIntoTargets(position, session)
         }
 
-    override fun findSmartStepTargetsAsync(position: SourcePosition, session: DebuggerSession): Promise<List<SmartStepTarget>> =
-        invokeCommandAsCompletableFuture(session.process.managerThread, PrioritizedTask.Priority.NORMAL) {
-            findSmartStepTargetsInternal(position, session)
-        }.asPromise()
+    override fun findSmartStepTargetsAsync(position: SourcePosition, session: DebuggerSession): Promise<List<SmartStepTarget>> {
+        val promise = AsyncPromise<List<SmartStepTarget>>()
+        session.process.managerThread.schedule(object : DebuggerContextCommandImpl(session.contextManager.context) {
+            override suspend fun threadActionSuspend(suspendContext: SuspendContextImpl) {
+                promise.compute { findSmartStepTargetsInternal(position, session) }
+            }
+
+            override fun commandCancelled() {
+                promise.setError("Cancelled")
+            }
+        })
+        return promise
+    }
 
     override fun findSmartStepTargets(position: SourcePosition) = findSmartStepTargetsSync(position, null)
 
@@ -69,7 +82,7 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
             else -> runReadAction { super.createMethodFilter(stepTarget) }
         }
 
-    internal suspend fun findSmartStepTargetsInternal(position: SourcePosition, session: DebuggerSession?): List<SmartStepTarget> =
+    private suspend fun findSmartStepTargetsInternal(position: SourcePosition, session: DebuggerSession?): List<SmartStepTarget> =
         try {
             findSmartStepTargets(position, session)
         } catch (e: Exception) {
