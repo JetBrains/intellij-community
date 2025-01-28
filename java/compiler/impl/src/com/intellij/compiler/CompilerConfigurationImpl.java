@@ -420,6 +420,31 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   }
 
   @Override
+  public @NotNull List<String> getAdditionalOptions() {
+    JpsJavaCompilerOptions settings = getJavaCompilerSettings();
+    if (settings != null) {
+      String options = settings.ADDITIONAL_OPTIONS_STRING;
+      if (!StringUtil.isEmptyOrSpaces(options)) {
+        return ParametersListUtil.parse(options);
+      }
+    }
+    return Collections.emptyList();
+  }
+
+  @Override
+  public void setAdditionalOptions(@NotNull List<String> options) {
+    JpsJavaCompilerOptions settings = getJavaCompilerSettings();
+    if (settings != null) {
+      String previous = settings.ADDITIONAL_OPTIONS_STRING;
+      String newValue = ParametersListUtil.join(options);
+      if (!newValue.equals(previous)) {
+        settings.ADDITIONAL_OPTIONS_STRING = newValue;
+        clearBuildManagerState(myProject);
+      }
+    }
+  }
+
+  @Override
   public @NotNull List<String> getAdditionalOptions(@NotNull Module module) {
     JpsJavaCompilerOptions settings = getJavaCompilerSettings();
     if (settings != null) {
@@ -445,6 +470,17 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     if (!newValue.equals(previous)) {
       settings.ADDITIONAL_OPTIONS_OVERRIDE.put(module.getName(), newValue);
       clearBuildManagerState(myProject);
+    }
+  }
+
+  @Override
+  public void removeAdditionalOptions(@NotNull Module module) {
+    JpsJavaCompilerOptions settings = getJavaCompilerSettings();
+    if (settings != null) {
+      String previous = settings.ADDITIONAL_OPTIONS_OVERRIDE.remove(module.getName());
+      if (previous != null) {
+        clearBuildManagerState(myProject);
+      }
     }
   }
 

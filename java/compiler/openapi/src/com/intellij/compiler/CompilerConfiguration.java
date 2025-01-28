@@ -49,10 +49,33 @@ public abstract class CompilerConfiguration {
   public abstract void setBytecodeTargetLevel(Module module, String level);
 
   /**
-   * Returns additional compiler options applicable to the given module, if any.
+   * Returns the project default additional compiler options.
+   * These options are used if no additional compiler options are defined that are applicable to a module.
+   */
+  public abstract @NotNull List<String> getAdditionalOptions();
+
+  /**
+   * Sets the project default additional compiler options.
+   * These options are used if no additional compiler options are defined that are applicable to a module.
+   */
+  public abstract void setAdditionalOptions(@NotNull List<String> options);
+
+  /**
+   * Returns additional compiler options applicable to the given module.
+   * Otherwise, it returns the project default additional compiler option.
    */
   public abstract @NotNull List<String> getAdditionalOptions(@NotNull Module module);
+
+  /**
+   * Sets additional compiler options applicable to the given module.
+   */
   public abstract void setAdditionalOptions(@NotNull Module module, @NotNull List<String> options);
+
+  /**
+   * Removes additional compiler options applicable to the given module.
+   * It means that the project default additional compiler options will be used for the given module.
+   */
+  public abstract void removeAdditionalOptions(@NotNull Module module);
 
   public abstract @NotNull AnnotationProcessingConfiguration getAnnotationProcessingConfiguration(Module module);
 
