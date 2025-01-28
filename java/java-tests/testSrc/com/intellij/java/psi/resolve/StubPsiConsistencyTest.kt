@@ -4,9 +4,11 @@ package com.intellij.java.psi.resolve
 import com.intellij.find.ngrams.TrigramIndex
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -18,6 +20,7 @@ import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StubTreeLoader
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -26,13 +29,16 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.utils.editor.commitToPsi
+import com.intellij.testFramework.utils.editor.reloadFromDisk
 import com.intellij.testFramework.utils.io.createFile
+import com.intellij.util.application
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.impl.InputData
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.write
 import kotlinx.coroutines.suspendCancellableCoroutine
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -48,6 +54,10 @@ internal class StubPsiConsistencyTest {
   private val projectFixture = projectFixture(openAfterCreation = true)
   private val moduleFixture = projectFixture.moduleFixture("src")
   private val sourceRootFixture = moduleFixture.sourceRootFixture()
+
+  private val projectFixture2 = projectFixture(openAfterCreation = true)
+  private val moduleFixture2 = projectFixture2.moduleFixture("src")
+
   private val psiFile1Fixture = sourceRootFixture.psiFileFixture("Test.java", originalText1)
   private val psiFile2Fixture = sourceRootFixture.psiFileFixture("F2Test.java", originalText2)
 
@@ -117,6 +127,70 @@ internal class StubPsiConsistencyTest {
       val elements = StubIndex.getElements(JavaStubIndexKeys.CLASS_SHORT_NAMES, "Test", project, scopeEverything, PsiClass::class.java)
       assertEquals(1, elements.size)
       assertEquals("Test", elements.first().name)
+    }
+  }
+
+  //@Test IJPL-176174
+  fun testStubInconsistencyWhenFileWithUncommittedPsiSharedBetweenProjects() = timeoutRunBlocking(timeout = 1.minutes) {
+    val project1 = projectFixture.get()
+    val project2 = projectFixture2.get()
+
+    val virtualFile1 = psiFile1Fixture.get().virtualFile
+
+    writeAction { // add source root from project1 to project2 source roots
+      val srcRoot1 = sourceRootFixture.get().virtualFile
+      val modmodmod2 = ModuleRootManager.getInstance(moduleFixture2.get()).modifiableModel
+      try {
+        val ce2 = modmodmod2.addContentEntry(srcRoot1)
+        ce2.addSourceFolder(srcRoot1, false)
+      }
+      finally {
+        modmodmod2.commit()
+      }
+    }
+
+    val documentManager = FileDocumentManager.getInstance()
+
+    IndexingTestUtil.suspendUntilIndexesAreReady(project1)
+
+    assertTrue(documentManager.unsavedDocuments.isEmpty())
+    readAction {
+      val psiFile = PsiManagerEx.getInstanceEx(project1).getFileManager().findFile(virtualFile1) as PsiFileImpl
+      assertEquals(originalText1.length, psiFile.textLength)
+    }
+
+    writeAction {
+      val doc1 = documentManager.getDocument(virtualFile1)!!
+      val psiFile = PsiManagerEx.getInstanceEx(project1).getFileManager().findFile(virtualFile1)!!
+      assertEquals(originalText1, (psiFile as PsiFileImpl).text)
+      doc1.setText("")
+      doc1.commitToPsi(project1)
+      doc1.reloadFromDisk()
+
+      // saved document and uncommitted PSI for the document
+      assertTrue(documentManager.unsavedDocuments.isEmpty())
+      assertTrue(PsiDocumentManager.getInstance(project1).hasUncommitedDocuments())
+      assertEquals("", psiFile.text)
+      assertEquals(0, psiFile.textLength)
+    }
+
+    application.runReadAction { // non-cancellable: "document commit thread" will try to commit the document in background thread in WA!
+      assertTrue(PsiDocumentManager.getInstance(project1).hasUncommitedDocuments())
+      val psiFile1 = PsiManagerEx.getInstanceEx(project1).getFileManager().findFile(virtualFile1) as PsiFileImpl
+      assertEquals(0, psiFile1.textLength)
+
+      // this will index refreshed file, and uncommitted psi in project1
+      val stub1 = application.service<StubTreeLoader>().readFromVFile(project1, virtualFile1)
+      assertNotNull(stub1)
+
+      val psiFile2 = PsiManagerEx.getInstanceEx(project2).getFileManager().findFile(virtualFile1) as PsiFileImpl
+      assertEquals(0, psiFile1.textLength)
+      assertEquals(originalText1.length, psiFile2.textLength)
+
+      // this will load stub from in-memory index, and trigger stub inconsistency exception,
+      // because in the memory we have a valid stub for psiFile1, but not for psiFile2
+      val stub2 = application.service<StubTreeLoader>().readFromVFile(project2, virtualFile1)
+      assertNotNull(stub2)
     }
   }
 
