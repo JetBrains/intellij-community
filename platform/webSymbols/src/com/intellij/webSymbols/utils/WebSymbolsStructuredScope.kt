@@ -72,6 +72,9 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
     fun currentScope(): WebSymbolsScope =
       scopes.peek()
 
+    fun previousScope(): WebSymbolsScope =
+      scopes[scopes.size - 2]
+
     fun popScope() {
       scopes.pop()
     }
@@ -80,20 +83,38 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
       scopePsiElement: PsiElement,
       properties: Map<String, Any> = emptyMap(),
       exclusiveSymbolKinds: Set<WebSymbolQualifiedKind> = emptySet(),
+      updater: (ScopeModifier.() -> Unit)? = null,
     ) {
-      scopes.push(WebSymbolsPsiScopeImpl(scopePsiElement, properties,
+      val scope = WebSymbolsPsiScopeImpl(scopePsiElement, properties,
                                          currentScope() as WebSymbolsPsiScopeImpl,
-                                         providedSymbolKinds, exclusiveSymbolKinds))
+                                         providedSymbolKinds, exclusiveSymbolKinds)
+      scopes.push(scope)
+      if (updater != null) ScopeModifierImpl(scope).updater()
     }
 
-    fun addSymbol(symbol: WebSymbol) {
-      if (symbol.qualifiedKind !in providedSymbolKinds)
-        throw IllegalStateException("WebSymbol of kind ${symbol.qualifiedKind} should not be provided by ${this::class.java.name}")
-      (currentScope() as WebSymbolsPsiScopeImpl).add(symbol)
+    fun currentScope(updater: ScopeModifier.() -> Unit) {
+      ScopeModifierImpl(currentScope() as WebSymbolsPsiScopeImpl).updater()
     }
 
-    fun addSymbols(symbol: List<WebSymbol>) {
-      symbol.forEach { addSymbol(it) }
+    fun previousScope(updater: ScopeModifier.() -> Unit) {
+      ScopeModifierImpl(previousScope() as WebSymbolsPsiScopeImpl).updater()
+    }
+
+    interface ScopeModifier {
+      fun addSymbol(symbol: WebSymbol)
+      fun addSymbols(symbol: List<WebSymbol>)
+    }
+
+    private inner class ScopeModifierImpl(private val scope: WebSymbolsPsiScopeImpl) : ScopeModifier {
+      override fun addSymbol(symbol: WebSymbol) {
+        if (symbol.qualifiedKind !in providedSymbolKinds)
+          throw IllegalStateException("WebSymbol of kind ${symbol.qualifiedKind} should not be provided by ${this::class.java.name}")
+        scope.add(symbol)
+      }
+
+      override fun addSymbols(symbol: List<WebSymbol>) {
+        symbol.forEach { addSymbol(it) }
+      }
     }
   }
 
@@ -101,6 +122,8 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
     val source: PsiElement
     val parent: WebSymbolsPsiScope?
     val properties: Map<String, Any>
+    val children: List<WebSymbolsPsiScope>
+    val symbols: List<WebSymbol>
   }
 
   private class WebSymbolsPsiScopeImpl(
@@ -110,8 +133,10 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
     private val providedSymbolKinds: Set<WebSymbolQualifiedKind>,
     private val exclusiveSymbolKinds: Set<WebSymbolQualifiedKind>,
   ) : WebSymbolsPsiScope {
-    private val children = ArrayList<WebSymbolsPsiScopeImpl>()
-    private val symbols = SmartList<WebSymbol>()
+
+    override val children = ArrayList<WebSymbolsPsiScopeImpl>()
+    override val symbols = SmartList<WebSymbol>()
+
     private val textRange: TextRange get() = source.textRange
     private val scopesInHierarchy get() = generateSequence(this) { it.parent }
 
