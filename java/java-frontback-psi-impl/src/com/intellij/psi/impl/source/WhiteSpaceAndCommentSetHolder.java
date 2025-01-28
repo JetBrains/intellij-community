@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -65,6 +66,15 @@ public class WhiteSpaceAndCommentSetHolder {
       if (tokens.isEmpty()) return 0;
 
       // 1. bind doc comment
+      // now there are markdown comments.
+      // To preserve previous orders, let's try to find the first non-markdown comment (and skip markdown comments).
+      // If there is no non-markdown, take the first markdown
+      for (int idx = tokens.size() - 1; idx >= 0; idx--) {
+        if (BasicJavaAstTreeUtil.is(tokens.get(idx), BASIC_DOC_COMMENT) && !isDocMarkdownComment(idx, getter)) {
+          return idx;
+        }
+      }
+
       for (int idx = tokens.size() - 1; idx >= 0; idx--) {
         if (BasicJavaAstTreeUtil.is(tokens.get(idx), BASIC_DOC_COMMENT)) return idx;
       }
@@ -89,6 +99,11 @@ public class WhiteSpaceAndCommentSetHolder {
       }
 
       return result;
+    }
+
+    private static boolean isDocMarkdownComment(int idx, @NotNull TokenTextGetter getter) {
+      CharSequence sequence = getter.get(idx);
+      return sequence.length() >= 3 && "///".equals(sequence.subSequence(0, 3).toString());
     }
   }
 
