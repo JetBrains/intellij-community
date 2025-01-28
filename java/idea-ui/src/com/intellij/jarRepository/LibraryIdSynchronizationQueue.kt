@@ -1,18 +1,22 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
+import com.intellij.openapi.util.Computable
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import kotlin.coroutines.coroutineContext
 
@@ -110,4 +114,11 @@ class LibraryIdSynchronizationQueue(private val project: Project, private val sc
   companion object {
     fun getInstance(project: Project): LibraryIdSynchronizationQueue = project.service()
   }
+}
+
+internal fun LibraryEx.needToReload(): Boolean {
+  val props = properties as? RepositoryLibraryProperties ?: return false
+  val isValid = ApplicationManager.getApplication().runReadAction(Computable { LibraryTableImplUtil.isValidLibrary(this) })
+  val needToReload = isLibraryNeedToBeReloaded(library = this, properties = props)
+  return isValid && needToReload
 }

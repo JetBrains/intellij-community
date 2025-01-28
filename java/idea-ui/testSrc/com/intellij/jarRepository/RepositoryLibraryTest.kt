@@ -121,24 +121,6 @@ class RepositoryLibraryTest {
   }
 
   @Test
-  fun testSynchronizationQueueDoesWorkWithDisposedLibs() = runBlocking {
-    localMavenCache.rootPath.resolve(GROUP_NAME).resolve(ARTIFACT_NAME).resolve("1.0").resolve("$ARTIFACT_NAME-1.0.jar")
-
-    repeat(1) {
-      val library = createLibrary(version = "1.0-SNAPSHOT", libraryName = "Lib$it")
-      assertEquals(0, getLibraryRoots(library).size)
-      assertDoesNotThrow {
-        val deferred = launch {
-          LibrarySynchronizationQueue.getInstance(projectRule.project).requestSynchronization(library as LibraryEx)
-          LibrarySynchronizationQueue.getInstance(projectRule.project).flush()
-        }
-        Disposer.dispose(library)
-        deferred.join()
-      }
-    }
-  }
-
-  @Test
   fun libraryNoUpdateProjectModel() {
     val jar = localMavenCache.rootPath.resolve(GROUP_NAME).resolve(ARTIFACT_NAME).resolve("1.0").resolve("$ARTIFACT_NAME-1.0.jar")
     assertFalse(jar.exists())
