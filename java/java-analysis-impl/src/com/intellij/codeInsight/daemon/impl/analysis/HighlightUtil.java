@@ -247,55 +247,6 @@ public final class HighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkVariableInitializerType(@NotNull PsiVariable variable) {
-    PsiExpression initializer = variable.getInitializer();
-    // array initializer checked in checkArrayInitializerApplicable
-    if (initializer == null || initializer instanceof PsiArrayInitializerExpression) return null;
-    PsiType lType = variable.getType();
-    PsiType rType = initializer.getType();
-    PsiTypeElement typeElement = variable.getTypeElement();
-    int start = typeElement != null ? typeElement.getTextRange().getStartOffset() : variable.getTextRange().getStartOffset();
-    int end = variable.getTextRange().getEndOffset();
-    HighlightInfo.Builder highlightInfo = checkAssignability(lType, rType, initializer, new TextRange(start, end), 0);
-    if (highlightInfo != null) {
-      HighlightFixUtil.registerChangeVariableTypeFixes(variable, rType, variable.getInitializer(), highlightInfo);
-      HighlightFixUtil.registerChangeVariableTypeFixes(initializer, lType, null, asConsumer(highlightInfo));
-    }
-    return highlightInfo;
-  }
-
-  static HighlightInfo.Builder checkRestrictedIdentifierReference(@NotNull PsiJavaCodeReferenceElement ref,
-                                                          @NotNull PsiClass resolved,
-                                                          @NotNull LanguageLevel languageLevel) {
-    String name = resolved.getName();
-    if (PsiTypesUtil.isRestrictedIdentifier(name, languageLevel)) {
-      String message = JavaErrorBundle.message("restricted.identifier.reference", name);
-      PsiElement range = ObjectUtils.notNull(ref.getReferenceNameElement(), ref);
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(range);
-    }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkVarTypeSelfReferencing(@NotNull PsiLocalVariable resolved, @NotNull PsiReferenceExpression ref) {
-    if (PsiTreeUtil.isAncestor(resolved.getInitializer(), ref, false) && resolved.getTypeElement().isInferredType()) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .descriptionAndTooltip(JavaErrorBundle.message("lvti.selfReferenced", resolved.getName()))
-        .range(ref);
-    }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkVarTypeApplicability(@NotNull PsiVariable variable) {
-    if (variable instanceof PsiLocalVariable && variable.getTypeElement().isInferredType()) {
-      PsiElement parent = variable.getParent();
-      if (parent instanceof PsiDeclarationStatement statement && statement.getDeclaredElements().length > 1) {
-        String message = JavaErrorBundle.message("lvti.compound");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(variable);
-      }
-    }
-    return null;
-  }
-
   static HighlightInfo.Builder checkAssignability(@Nullable PsiType lType,
                                           @Nullable PsiType rType,
                                           @Nullable PsiExpression expression,
@@ -571,10 +522,10 @@ public final class HighlightUtil {
       }
     }
     else if (parent instanceof PsiLocalVariable localVariable) {
-      HighlightFixUtil.registerChangeVariableTypeFixes(localVariable, expectedType, null, info);
+      HighlightFixUtil.registerChangeVariableTypeFixes(localVariable, expectedType, info);
     }
     else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
-      HighlightFixUtil.registerChangeVariableTypeFixes(assignmentExpression.getLExpression(), expectedType, null, asConsumer(info));
+      HighlightFixUtil.registerChangeVariableTypeFixes(assignmentExpression.getLExpression(), expectedType, asConsumer(info));
     }
   }
 

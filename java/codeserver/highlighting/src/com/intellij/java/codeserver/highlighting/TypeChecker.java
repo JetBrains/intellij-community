@@ -80,6 +80,24 @@ final class TypeChecker {
     }
   }
 
+  void checkVariableInitializerType(@NotNull PsiVariable variable) {
+    PsiExpression initializer = variable.getInitializer();
+    // array initializer checked in checkArrayInitializerApplicable
+    if (initializer == null || initializer instanceof PsiArrayInitializerExpression) return;
+    PsiType lType = variable.getType();
+    PsiType rType = initializer.getType();
+    myVisitor.myExpressionChecker.checkAssignability(lType, rType, initializer, initializer);
+  }
+
+  void checkVarTypeApplicability(@NotNull PsiVariable variable) {
+    if (variable instanceof PsiLocalVariable local && variable.getTypeElement().isInferredType()) {
+      PsiElement parent = variable.getParent();
+      if (parent instanceof PsiDeclarationStatement statement && statement.getDeclaredElements().length > 1) {
+        myVisitor.report(JavaErrorKinds.LVTI_COMPOUND.create(local));
+      }
+    }
+  }
+
   private static boolean allChildrenAreNullLiterals(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) return false;

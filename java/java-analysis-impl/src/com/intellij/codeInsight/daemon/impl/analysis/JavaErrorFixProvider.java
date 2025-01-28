@@ -482,9 +482,6 @@ final class JavaErrorFixProvider {
       if (anchor instanceof PsiExpression expression) {
         AddTypeArgumentsConditionalFix.register(sink, expression, lType);
         AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(sink, expression, lType, rType);
-        if (!(expression.getParent() instanceof PsiConditionalExpression && PsiTypes.voidType().equals(lType))) {
-          sink.accept(HighlightFixUtil.createChangeReturnTypeFix(expression, lType));
-        }
         sink.accept(ChangeNewOperatorTypeFix.createFix(expression, lType));
         if (PsiTypes.booleanType().equals(lType) && expression instanceof PsiAssignmentExpression assignment &&
             assignment.getOperationTokenType() == JavaTokenType.EQ) {
@@ -506,21 +503,33 @@ final class JavaErrorFixProvider {
             }
           }
         }
-        else if (parent instanceof PsiLocalVariable var && rType != null) {
-          HighlightFixUtil.registerChangeVariableTypeFixes(var, rType, var.getInitializer(), sink);
+        else if (parent instanceof PsiVariable var && 
+                 PsiUtil.skipParenthesizedExprDown(var.getInitializer()) == expression && rType != null) {
+          HighlightFixUtil.registerChangeVariableTypeFixes(var, rType, sink);
         }
-        else if (parent instanceof PsiAssignmentExpression assignment && assignment.getRExpression() == expression) {
+        else if (parent instanceof PsiAssignmentExpression assignment && 
+                 PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()) == expression) {
           PsiExpression lExpr = assignment.getLExpression();
 
           sink.accept(myFactory.createChangeToAppendFix(assignment.getOperationTokenType(), lType, assignment));
           if (rType != null) {
-            HighlightFixUtil.registerChangeVariableTypeFixes(lExpr, rType, expression, sink);
-            HighlightFixUtil.registerChangeVariableTypeFixes(expression, lType, lExpr, sink);
+            HighlightFixUtil.registerChangeVariableTypeFixes(lExpr, rType, sink);
+            if (expression instanceof PsiMethodCallExpression call && assignment.getParent() instanceof PsiStatement &&
+                PsiTypes.voidType().equals(rType)) {
+              sink.accept(new ReplaceAssignmentFromVoidWithStatementIntentionAction(assignment, call));
+            }
           }
         }
       }
       if (anchor instanceof PsiParameter parameter && parent instanceof PsiForeachStatement forEach) {
-        HighlightFixUtil.registerChangeVariableTypeFixes(parameter, rType, forEach.getIteratedValue(), sink);
+        HighlightFixUtil.registerChangeVariableTypeFixes(parameter, lType, sink);
+        PsiExpression iteratedValue = forEach.getIteratedValue();
+        if (iteratedValue != null && rType != null) {
+          PsiType type = iteratedValue.getType();
+          if (type instanceof PsiArrayType) {
+            AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(sink, iteratedValue, rType.createArrayType(), type);
+          }
+        }
       }
       HighlightFixUtil.registerChangeParameterClassFix(lType, rType, sink);
     });

@@ -553,6 +553,23 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitVariable(@NotNull PsiVariable variable) {
+    super.visitVariable(variable);
+    if (variable instanceof PsiPatternVariable patternVariable) {
+      PsiElement context = PsiTreeUtil.getParentOfType(
+        variable, PsiInstanceOfExpression.class, PsiCaseLabelElementList.class, PsiForeachPatternStatement.class);
+      if (!(context instanceof PsiForeachPatternStatement)) {
+        JavaFeature feature = context instanceof PsiInstanceOfExpression ?
+                              JavaFeature.PATTERNS :
+                              JavaFeature.PATTERNS_IN_SWITCH;
+        checkFeature(patternVariable.getNameIdentifier(), feature);
+      }
+    }
+    if (!hasErrorResults()) myTypeChecker.checkVarTypeApplicability(variable);
+    if (!hasErrorResults()) myTypeChecker.checkVariableInitializerType(variable);
+  }
+  
+  @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     JavaResolveResult resultForIncompleteCode = doVisitReferenceElement(expression);
     if (!hasErrorResults()) {
@@ -566,6 +583,11 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     PsiElement resolved = result.getElement();
     PsiElement parent = expression.getParent();
     PsiExpression qualifierExpression = expression.getQualifierExpression();
+    if (resolved instanceof PsiVariable && resolved.getContainingFile() == expression.getContainingFile()) {
+      if (!hasErrorResults() && resolved instanceof PsiLocalVariable localVariable) {
+        myExpressionChecker.checkVarTypeSelfReferencing(localVariable, expression);
+      }
+    }
     if (parent instanceof PsiMethodCallExpression methodCallExpression &&
         methodCallExpression.getMethodExpression() == expression &&
         (!result.isAccessible() || !result.isStaticsScopeCorrect())) {
@@ -656,6 +678,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkClassExtendsForeignInnerClass(ref, resolved);
     if (!hasErrorResults() && parent instanceof PsiNewExpression newExpression) myGenericsChecker.checkDiamondTypeNotAllowed(newExpression);
     if (!hasErrorResults()) myGenericsChecker.checkSelectStaticClassFromParameterizedType(resolved, ref);
+    if (!hasErrorResults() && resolved instanceof PsiClass psiClass) myExpressionChecker.checkRestrictedIdentifierReference(ref, psiClass);
     return result;
   }
 

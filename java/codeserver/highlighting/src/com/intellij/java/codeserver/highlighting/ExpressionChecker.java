@@ -701,6 +701,12 @@ final class ExpressionChecker {
     myVisitor.report(JavaErrorKinds.EXCEPTION_UNHANDLED_CLOSE.create(resource, unhandled));
   }
 
+  void checkVarTypeSelfReferencing(@NotNull PsiLocalVariable variable, @NotNull PsiReferenceExpression ref) {
+    if (PsiTreeUtil.isAncestor(variable.getInitializer(), ref, false) && variable.getTypeElement().isInferredType()) {
+      myVisitor.report(JavaErrorKinds.LVTI_SELF_REFERENCED.create(ref, variable));
+    }
+  }
+
   static boolean isArrayDeclaration(@NotNull PsiVariable variable) {
     // Java-style 'var' arrays are prohibited by the parser; for C-style ones, looking for a bracket is enough
     return ContainerUtil.or(variable.getChildren(), e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET));
@@ -1122,6 +1128,13 @@ final class ExpressionChecker {
       }
       if (ContainerUtil.exists(expressions, e -> e.getType() == null)) return;
       myVisitor.report(JavaErrorKinds.CALL_UNRESOLVED.create(methodCall, resolveResults));
+    }
+  }
+
+  void checkRestrictedIdentifierReference(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiClass resolved) {
+    String name = resolved.getName();
+    if (PsiTypesUtil.isRestrictedIdentifier(name, myVisitor.languageLevel())) {
+      myVisitor.report(JavaErrorKinds.TYPE_RESTRICTED_IDENTIFIER.create(ref));
     }
   }
 }

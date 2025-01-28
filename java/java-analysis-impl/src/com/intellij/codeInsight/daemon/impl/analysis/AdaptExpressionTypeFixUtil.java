@@ -233,6 +233,10 @@ final class AdaptExpressionTypeFixUtil {
                                         @Nullable PsiType expectedType,
                                         @Nullable PsiType actualType) {
     if (actualType == null || expectedType == null) return;
+    HighlightFixUtil.registerChangeVariableTypeFixes(expression, expectedType, info);
+    if (!(expression.getParent() instanceof PsiConditionalExpression && PsiTypes.voidType().equals(expectedType))) {
+      info.accept(HighlightFixUtil.createChangeReturnTypeFix(expression, expectedType));
+    }
     boolean mentionsTypeArgument = mentionsTypeArgument(expression, actualType);
     expectedType = GenericsUtil.getVariableTypeByExpressionType(expectedType);
     String role = wholeRange ? null : getRole(expression);

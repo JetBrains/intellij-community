@@ -137,22 +137,11 @@ public final class HighlightFixUtil {
 
   static void registerChangeVariableTypeFixes(@NotNull PsiExpression expression,
                                               @NotNull PsiType type,
-                                              @Nullable PsiExpression lExpr,
                                               @NotNull Consumer<? super CommonIntentionAction> info) {
     if (!(expression instanceof PsiReferenceExpression ref)) return;
     if (!(ref.resolve() instanceof PsiVariable variable)) return;
 
-    registerChangeVariableTypeFixes(variable, type, lExpr, info);
-
-    PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(lExpr);
-    if (stripped instanceof PsiMethodCallExpression call && lExpr.getParent() instanceof PsiAssignmentExpression assignment) {
-      if (assignment.getParent() instanceof PsiStatement) {
-        PsiMethod method = call.resolveMethod();
-        if (method != null && PsiTypes.voidType().equals(method.getReturnType())) {
-          info.accept(new ReplaceAssignmentFromVoidWithStatementIntentionAction(assignment, stripped));
-        }
-      }
-    }
+    registerChangeVariableTypeFixes(variable, type, info);
   }
 
   static void registerUnhandledExceptionFixes(@NotNull PsiElement element, @NotNull Consumer<? super CommonIntentionAction> info) {
@@ -197,27 +186,21 @@ public final class HighlightFixUtil {
 
   static void registerChangeVariableTypeFixes(@NotNull PsiVariable parameter,
                                               @Nullable PsiType itemType,
-                                              @Nullable PsiExpression expr,
                                               @Nullable HighlightInfo.Builder highlightInfo) {
-    registerChangeVariableTypeFixes(parameter, itemType, expr, HighlightUtil.asConsumer(highlightInfo));
+    registerChangeVariableTypeFixes(parameter, itemType, HighlightUtil.asConsumer(highlightInfo));
   }
 
   static void registerChangeVariableTypeFixes(@NotNull PsiVariable parameter,
                                               @Nullable PsiType itemType,
-                                              @Nullable PsiExpression expr,
                                               @NotNull Consumer<? super CommonIntentionAction> info) {
     for (IntentionAction action : getChangeVariableTypeFixes(parameter, itemType)) {
       info.accept(action);
     }
-    IntentionAction fix = createChangeReturnTypeFix(expr, parameter.getType());
-    if (fix != null) {
-      info.accept(fix);
-    }
   }
 
   static @Nullable IntentionAction createChangeReturnTypeFix(@Nullable PsiExpression expr, @NotNull PsiType toType) {
-    if (expr instanceof PsiMethodCallExpression) {
-      PsiMethod method = ((PsiMethodCallExpression)expr).resolveMethod();
+    if (expr instanceof PsiMethodCallExpression call) {
+      PsiMethod method = call.resolveMethod();
       if (method != null) {
         return PriorityIntentionActionWrapper
           .lowPriority(QuickFixFactory.getInstance().createMethodReturnFix(method, toType, true));
@@ -680,7 +663,7 @@ public final class HighlightFixUtil {
         PsiType expectedTypeByApplicabilityConstraints = resolveResult.getSubstitutor(false).substitute(resolved.getReturnType());
         if (expectedTypeByApplicabilityConstraints != null && !variable.getType().isAssignableFrom(expectedTypeByApplicabilityConstraints) &&
             PsiTypesUtil.allTypeParametersResolved(variable, expectedTypeByApplicabilityConstraints)) {
-          registerChangeVariableTypeFixes(variable, expectedTypeByApplicabilityConstraints, methodCall, info);
+          registerChangeVariableTypeFixes(variable, expectedTypeByApplicabilityConstraints, info);
         }
       }
     }
@@ -755,7 +738,7 @@ public final class HighlightFixUtil {
         }
         PsiSubstitutor substitutor = factory.createSubstitutor(map);
         PsiType suggestedType = factory.createType(aClass, substitutor);
-        registerChangeVariableTypeFixes(variable, suggestedType, variable.getInitializer(), info);
+        registerChangeVariableTypeFixes(variable, suggestedType, info);
       }
     }
   }

@@ -200,7 +200,7 @@ public final class HighlightMethodUtil {
           HighlightUtil.registerReturnTypeFixes(builder, containingMethod, actualType);
         }
       } else if (parent instanceof PsiLocalVariable var) {
-        HighlightFixUtil.registerChangeVariableTypeFixes(var, actualType, var.getInitializer(), builder);
+        HighlightFixUtil.registerChangeVariableTypeFixes(var, actualType, builder);
       }
     }
     else {

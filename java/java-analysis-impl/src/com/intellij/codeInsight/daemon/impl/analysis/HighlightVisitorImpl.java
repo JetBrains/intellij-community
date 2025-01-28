@@ -744,9 +744,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) {
       add(HighlightUtil.checkPackageAndClassConflict(ref, myFile));
     }
-    if (!hasErrorResults() && resolved instanceof PsiClass) {
-      add(HighlightUtil.checkRestrictedIdentifierReference(ref, (PsiClass)resolved, myLanguageLevel));
-    }
     if (!hasErrorResults()) {
       add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(ref, resolved, mySurroundingConstructor));
     }
@@ -810,9 +807,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
         catch (IndexNotReadyException ignored) {
         }
-      }
-      if (!hasErrorResults() && resolved instanceof PsiLocalVariable localVariable) {
-        add(HighlightUtil.checkVarTypeSelfReferencing(localVariable, expression));
       }
     }
 
@@ -1111,30 +1105,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     try {
       if (!hasErrorResults()) add(HighlightUtil.checkIntersectionInTypeCast(typeCast, myLanguageLevel, myFile));
       if (!hasErrorResults()) add(HighlightUtil.checkInconvertibleTypeCast(typeCast));
-    }
-    catch (IndexNotReadyException ignored) {
-    }
-  }
-
-  @Override
-  public void visitVariable(@NotNull PsiVariable variable) {
-    super.visitVariable(variable);
-    if (variable instanceof PsiPatternVariable patternVariable) {
-      PsiElement context = PsiTreeUtil.getParentOfType(variable,
-                                                       PsiInstanceOfExpression.class,
-                                                       PsiCaseLabelElementList.class,
-                                                       PsiForeachPatternStatement.class);
-      if (!(context instanceof PsiForeachPatternStatement)) {
-        JavaFeature feature = context instanceof PsiInstanceOfExpression ?
-                              JavaFeature.PATTERNS :
-                              JavaFeature.PATTERNS_IN_SWITCH;
-        PsiIdentifier varIdentifier = patternVariable.getNameIdentifier();
-        add(checkFeature(varIdentifier, feature));
-      }
-    }
-    try {
-      if (!hasErrorResults()) add(HighlightUtil.checkVarTypeApplicability(variable));
-      if (!hasErrorResults()) add(HighlightUtil.checkVariableInitializerType(variable));
     }
     catch (IndexNotReadyException ignored) {
     }

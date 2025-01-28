@@ -622,12 +622,20 @@ public final class JavaErrorKinds {
   public static final Simple<PsiTypeElement> TYPE_WILDCARD_CANNOT_BE_INSTANTIATED = 
     error(PsiTypeElement.class, "type.wildcard.cannot.be.instantiated")
       .withRawDescription(type -> message("type.wildcard.cannot.be.instantiated", formatType(type.getType())));
+  public static final Simple<PsiJavaCodeReferenceElement> TYPE_RESTRICTED_IDENTIFIER =
+    error(PsiJavaCodeReferenceElement.class, "type.restricted.identifier")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription(ref -> message("type.restricted.identifier", ref.getReferenceName()));
   
   public static final Simple<PsiExpression> FOREACH_NOT_APPLICABLE = error(PsiExpression.class, "foreach.not.applicable")
     .withRawDescription(expression -> message("foreach.not.applicable", formatType(expression.getType())));
 
   public static final Simple<PsiLocalVariable> LVTI_NO_INITIALIZER = error(PsiLocalVariable.class, "lvti.no.initializer")
     .withAnchor(var -> var.getTypeElement());
+  public static final Parameterized<PsiReferenceExpression, PsiLocalVariable> LVTI_SELF_REFERENCED = 
+    parameterized(PsiReferenceExpression.class, PsiLocalVariable.class, "lvti.self.referenced")
+      .withRawDescription((ref, var) -> message("lvti.self.referenced", var.getName()));
+  public static final Simple<PsiLocalVariable> LVTI_COMPOUND = error(PsiLocalVariable.class, "lvti.compound");
   public static final Simple<PsiLocalVariable> LVTI_VOID = error(PsiLocalVariable.class, "lvti.void")
     .withAnchor(var -> var.getTypeElement());
   public static final Simple<PsiLocalVariable> LVTI_NULL = error(PsiLocalVariable.class, "lvti.null")
@@ -872,7 +880,7 @@ public final class JavaErrorKinds {
       .withDescription((psi, ctx) -> ctx.createDescription());
   public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_UNRESOLVED =
     parameterized(PsiMethodCallExpression.class, JavaResolveResult[].class, "call.unresolved")
-      .withAnchor((call, results) -> requireNonNullElse(call.getMethodExpression().getReferenceNameElement(), call))
+      .withAnchor((call, results) -> call.getArgumentList())
       .withRawDescription((call, results) -> message(
         "call.unresolved", call.getMethodExpression().getReferenceName() + formatArgumentTypes(call.getArgumentList(), true)));
   public static final Parameterized<PsiMethodCallExpression, JavaAmbiguousCallContext> CALL_AMBIGUOUS =
