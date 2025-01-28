@@ -9,6 +9,7 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Window
 import com.intellij.driver.sdk.ui.ui
+import com.intellij.driver.sdk.ui.xQuery
 import java.awt.Frame
 import javax.swing.JFrame
 
@@ -31,8 +32,7 @@ fun Driver.projectIdeFrame(projectName: String, action: IdeaFrameUI.() -> Unit) 
 }
 
 open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
-  private val projectViewTreeClass = if (isRemoteIdeMode) "ThinClientProjectViewTree" else "ProjectViewTree"
-  val projectViewTree = tree("//div[@class='${projectViewTreeClass}']")
+  val projectViewTree = tree(xQuery { byType("com.intellij.ide.projectView.impl.ProjectViewTree") })
 
   private val ideaFrameComponent by lazy { driver.cast(component, IdeFrameImpl::class) }
 

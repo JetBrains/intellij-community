@@ -79,29 +79,7 @@ public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
 
   @Override
   protected @NotNull ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
-    return new ProjectViewTree(treeModel) {
-      @Override
-      public String toString() {
-        return getTitle() + " " + super.toString();
-      }
-
-      @Override
-      public void setFont(Font font) {
-        if (AdvancedSettings.getBoolean("bigger.font.in.project.view")) {
-          font = font.deriveFont(font.getSize() + 1.0f);
-        }
-        super.setFont(font);
-      }
-
-      @Override
-      public AccessibleContext getAccessibleContext() {
-        if (accessibleContext == null) {
-          accessibleContext = super.getAccessibleContext();
-          accessibleContext.setAccessibleName(IdeBundle.message("project.structure.tree.accessible.name"));
-        }
-        return accessibleContext;
-      }
-    };
+    return new MyProjectViewTree(treeModel, getTitle());
   }
 
   public @NotNull String getComponentName() {
@@ -209,5 +187,36 @@ public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
   @Override
   public boolean supportsShowScratchesAndConsoles() {
     return true;
+  }
+
+  private static class MyProjectViewTree extends ProjectViewTree {
+    private final @NotNull String myTitle;
+
+    MyProjectViewTree(@NotNull DefaultTreeModel treeModel, @NotNull String title) {
+      super(treeModel);
+      myTitle = title;
+    }
+
+    @Override
+    public String toString() {
+      return myTitle + " " + super.toString();
+    }
+
+    @Override
+    public void setFont(Font font) {
+      if (AdvancedSettings.getBoolean("bigger.font.in.project.view")) {
+        font = font.deriveFont(font.getSize() + 1.0f);
+      }
+      super.setFont(font);
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = super.getAccessibleContext();
+        accessibleContext.setAccessibleName(IdeBundle.message("project.structure.tree.accessible.name"));
+      }
+      return accessibleContext;
+    }
   }
 }
