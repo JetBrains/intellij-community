@@ -5,6 +5,7 @@ package com.intellij.tools.ide.metrics.collector.telemetry
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.Metric
 import java.nio.file.Path
+import kotlin.math.min
 
 const val TOTAL_TEST_TIMER_NAME: String = "test"
 const val DEFAULT_SPAN_NAME: String = "performance_test"
@@ -40,9 +41,10 @@ fun getMetricsBasedOnDiffBetweenSpans(name: String, file: Path, fromSpanName: St
   }
   val metrics = mutableListOf<MetricWithAttributes>()
   val sortedFromSpans = fromSpanMetrics.sortedByDescending { info -> info.startTimestamp }
-  val spanIds = sortedFromSpans.map { it.spanId }.toSet()
+  val spanIds = sortedFromSpans.map { it.spanId to it.parentSpanId }.flatMap { listOf(it.first, it.second) }.toSet()
   val sortedToSpans = toSpanMetrics.sortedByDescending { info -> info.startTimestamp }.filter { spanIds.contains(it.parentSpanId) }
-  for (i in fromSpanMetrics.indices) {
+  val minSize = min(fromSpanMetrics.size, sortedToSpans.size)
+  for (i in 0.. minSize - 1) {
     val currentToSpan = sortedToSpans[i]
     val currentFromSpan = sortedFromSpans[i]
     if (currentFromSpan.spanId != currentToSpan.parentSpanId) {
