@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// IS_APPLICABLE: false
+// PROBLEM: none
 fun foo(s: String?) {
     val t: String = s.toString()<caret>
 }

@@ -1,4 +1,4 @@
-// IS_APPLICABLE: false
+// PROBLEM: none
 
 fun Boolean.toInt() = if (this) 1 else 0
 

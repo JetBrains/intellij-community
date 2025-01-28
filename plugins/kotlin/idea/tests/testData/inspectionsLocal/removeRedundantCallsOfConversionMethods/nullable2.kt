@@ -1,4 +1,4 @@
-// IS_APPLICABLE: false
+// PROBLEM: none
 // WITH_STDLIB
 data class Foo(val name: String)
 

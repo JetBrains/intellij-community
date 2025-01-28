@@ -1,3 +1,3 @@
 // WITH_STDLIB
-// IS_APPLICABLE: false
+// PROBLEM: none
 val foo = 1.toLong()<caret>

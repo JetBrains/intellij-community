@@ -83,6 +83,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/addOperatorModifier")
             model("${idea}/inspectionsLocal/kotlinUnreachableCode")
             model("${idea}/inspectionsLocal/removeRedundantLabel")
+            model("${idea}/inspectionsLocal/removeRedundantCallsOfConversionMethods")
         }
         /**
          * `unusedSymbol` tests require [com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass] to run,

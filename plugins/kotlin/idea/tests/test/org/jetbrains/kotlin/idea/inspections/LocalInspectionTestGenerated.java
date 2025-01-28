@@ -11829,6 +11829,120 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods")
+    public static class RemoveRedundantCallsOfConversionMethods extends AbstractLocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("booleanToInt.kt")
+        public void testBooleanToInt() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/booleanToInt.kt");
+        }
+
+        @TestMetadata("byte.kt")
+        public void testByte() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/byte.kt");
+        }
+
+        @TestMetadata("char.kt")
+        public void testChar() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/char.kt");
+        }
+
+        @TestMetadata("double.kt")
+        public void testDouble() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/double.kt");
+        }
+
+        @TestMetadata("float.kt")
+        public void testFloat() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/float.kt");
+        }
+
+        @TestMetadata("int.kt")
+        public void testInt() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/int.kt");
+        }
+
+        @TestMetadata("long.kt")
+        public void testLong() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/long.kt");
+        }
+
+        @TestMetadata("nullable.kt")
+        public void testNullable() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/nullable.kt");
+        }
+
+        @TestMetadata("nullable2.kt")
+        public void testNullable2() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/nullable2.kt");
+        }
+
+        @TestMetadata("safeString.kt")
+        public void testSafeString() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/safeString.kt");
+        }
+
+        @TestMetadata("safeString2.kt")
+        public void testSafeString2() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/safeString2.kt");
+        }
+
+        @TestMetadata("short.kt")
+        public void testShort() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/short.kt");
+        }
+
+        @TestMetadata("string.kt")
+        public void testString() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/string.kt");
+        }
+
+        @TestMetadata("toOtherType.kt")
+        public void testToOtherType() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/toOtherType.kt");
+        }
+
+        @TestMetadata("typealias.kt")
+        public void testTypealias() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/typealias.kt");
+        }
+
+        @TestMetadata("uByte.kt")
+        public void testUByte() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/uByte.kt");
+        }
+
+        @TestMetadata("uInt.kt")
+        public void testUInt() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/uInt.kt");
+        }
+
+        @TestMetadata("uLong.kt")
+        public void testULong() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/uLong.kt");
+        }
+
+        @TestMetadata("uShort.kt")
+        public void testUShort() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/uShort.kt");
+        }
+
+        @TestMetadata("variable.kt")
+        public void testVariable() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantCallsOfConversionMethods/variable.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/removeRedundantQualifierName")
     public static class RemoveRedundantQualifierName extends AbstractLocalInspectionTest {
         @java.lang.Override
