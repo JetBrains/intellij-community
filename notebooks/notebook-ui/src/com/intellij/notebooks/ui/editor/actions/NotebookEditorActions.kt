@@ -8,4 +8,6 @@ import com.intellij.openapi.project.DumbAware
  *
  * May be used e.g. by [ActionPromoter].
  */
-interface JupyterEditorAction : DumbAware
+interface JupyterEditorAction : DumbAware {
+  val availableInReadOnly: Boolean get() = false
+}

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.visualization.ui
 
+import com.intellij.notebooks.ui.observables.distinct
 import com.intellij.notebooks.visualization.EditorNotebookExtension
 import com.intellij.notebooks.visualization.NotebookIntervalPointer
 import com.intellij.notebooks.visualization.ui.EditorCellEventListener.CellCreated
@@ -8,6 +9,9 @@ import com.intellij.notebooks.visualization.ui.EditorCellEventListener.CellRemov
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.state.ObservableStateListener
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Disposer.register
 import com.intellij.openapi.util.Key
@@ -20,12 +24,25 @@ class EditorNotebook(private val editor: EditorImpl) : Disposable {
 
   val cells: List<EditorCell> get() = _cells.toList()
 
+  private val _readOnly = AtomicBooleanProperty(false)
+    .distinct()
+
+  val readOnly: ObservableProperty<Boolean>
+    get() = _readOnly
+
   private val cellEventListeners = EventDispatcher.create(EditorCellEventListener::class.java)
 
   private val extensions = mutableMapOf<KClass<*>, EditorNotebookExtension>()
 
   init {
     EDITOR_NOTEBOOK_KEY.set(editor, this)
+    editor.state.addPropertyChangeListener(object : ObservableStateListener {
+      override fun propertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
+        if (event.propertyName == "isViewer") {
+          _readOnly.set((event.newValue as Boolean))
+        }
+      }
+    }, this)
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -91,8 +108,9 @@ class EditorNotebook(private val editor: EditorImpl) : Disposable {
   private fun getNextVisibleCellInDirection(ordinal: Int, direction: Int): EditorCell? {
     val range = if (direction > 0) {
       ordinal + direction until _cells.size
-    } else {
-      (0 .. ordinal + direction).reversed()
+    }
+    else {
+      (0..ordinal + direction).reversed()
     }
     for (i in range) {
       val cell = _cells[i]
@@ -108,7 +126,7 @@ inline fun <reified T : EditorNotebookExtension> EditorNotebook.getExtension(): 
   return getExtension(T::class)
 }
 
-private val EDITOR_NOTEBOOK_KEY = Key<EditorNotebook>("UPDATE_MANAGER_KEY")
+private val EDITOR_NOTEBOOK_KEY = Key<EditorNotebook>("EDITOR_NOTEBOOK_KEY")
 
 val Editor.notebook: EditorNotebook?
   get() = EDITOR_NOTEBOOK_KEY.get(this)

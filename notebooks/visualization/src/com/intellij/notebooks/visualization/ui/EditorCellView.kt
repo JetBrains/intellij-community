@@ -118,6 +118,9 @@ class EditorCellView(
     editor.notebookAppearance.codeCellBackgroundColor.afterChange(this) { backgroundColor ->
       updateCellHighlight(force = true)
     }
+    editor.notebook?.readOnly?.afterChange(this) {
+      updateRunButtonVisibility()
+    }
     recreateControllers()
     updateSelection(false)
     updateOutputs()
@@ -369,7 +372,8 @@ class EditorCellView(
 
   private fun updateRunButtonVisibility() {
     input.runCellButton ?: return
-    val shouldBeVisible = !disableActions && (mouseOver || selected)
+    val isReadOnlyNotebook = editor.notebook?.readOnly?.get() ?: false
+    val shouldBeVisible = !isReadOnlyNotebook && !disableActions && (mouseOver || selected)
     if (input.runCellButton.lastRunButtonVisibility == shouldBeVisible) return
 
     input.runCellButton.visible = shouldBeVisible
