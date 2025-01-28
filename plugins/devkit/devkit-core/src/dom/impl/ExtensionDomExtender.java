@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.google.common.base.CaseFormat;
@@ -38,7 +38,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
   private static final PsiClassConverter CLASS_CONVERTER = new PluginPsiClassConverter();
   private static final LanguageResolvingConverter LANGUAGE_CONVERTER = new LanguageResolvingConverter();
-  private static final ActionOrGroupResolveConverter ACTION_CONVERTER = new ActionOrGroupResolveConverter.OnlyActions();
+  private static final Converter<String> ACTION_CONVERTER = new ActionOrGroupReferencingConverter.OnlyActions();
 
   @Override
   public void registerExtensions(final @NotNull Extension extension, final @NotNull DomExtensionsRegistrar registrar) {

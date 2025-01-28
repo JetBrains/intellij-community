@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupResolveConverter;
+import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupReferencingConverter;
 
 import java.util.List;
 import java.util.function.Function;
@@ -44,8 +44,8 @@ public interface ActionOrGroup extends DomElement {
   GenericAttributeValue<String> getDescription();
 
   @NotNull
-  @Convert(ActionOrGroupResolveConverter.OnlyActions.class)
-  GenericAttributeValue<ActionOrGroup> getUseShortcutOf();
+  @Referencing(ActionOrGroupReferencingConverter.OnlyActions.class)
+  GenericAttributeValue<String> getUseShortcutOf();
 
   @NotNull
   List<OverrideText> getOverrideTexts();

@@ -3,35 +3,33 @@ package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.execution.Executor;
 import com.intellij.ide.actions.QualifiedNameProviderUtil;
-import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ProjectIconsAccessor;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.PairProcessor;
-import com.intellij.util.SmartList;
-import com.intellij.util.ThreeState;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.dom.ActionOrGroup;
-import org.jetbrains.idea.devkit.dom.Extension;
-import org.jetbrains.idea.devkit.dom.OverrideText;
-import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupResolveConverter;
+import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
+import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils;
 import org.jetbrains.uast.UExpression;
@@ -40,16 +38,21 @@ import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 import static org.jetbrains.idea.devkit.references.ActionOrGroupIdResolveUtil.ACTIVATE_TOOLWINDOW_ACTION_PREFIX;
 import static org.jetbrains.idea.devkit.references.ActionOrGroupIdResolveUtil.ACTIVATE_TOOLWINDOW_ACTION_SUFFIX;
 
-final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElement> implements PluginConfigReference {
+public final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElement> implements PluginConfigReference {
   private final String myId;
 
   private final ThreeState myIsAction;
 
-  ActionOrGroupIdReference(@NotNull PsiElement element, TextRange range, String id, ThreeState isAction) {
-    super(element, range);
+  public ActionOrGroupIdReference(@NotNull PsiElement element, TextRange range, String id, ThreeState isAction) {
+    this(element, range, id, isAction, false);
+  }
+
+  public ActionOrGroupIdReference(@NotNull PsiElement element, TextRange range, String id, ThreeState isAction, boolean soft) {
+    super(element, range, soft);
     myIsAction = isAction;
     myId = id;
   }
@@ -58,10 +61,10 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
   public @NotNull ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     Project project = getElement().getProject();
 
-    final GlobalSearchScope domSearchScope = PluginRelatedLocatorsUtils.getCandidatesScope(project);
-
+    // for references from code with missing dependencies on XML -> must process all
+    GlobalSearchScope domSearchScope = PluginRelatedLocatorsUtils.getCandidatesScope(project);
     CommonProcessors.CollectUniquesProcessor<ActionOrGroup> processor = new CommonProcessors.CollectUniquesProcessor<>();
-    collectDomResults(myId, domSearchScope, processor);
+    resolveDomActionOrGroup(project, myId, domSearchScope, processor);
 
     if (myIsAction != ThreeState.NO && processor.getResults().isEmpty()) {
       PsiElement executor = resolveExecutor(project);
@@ -80,8 +83,7 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
       if (StringUtil.isEmpty(place)) return ResolveResult.EMPTY_ARRAY;
 
       String idWithoutPlaceSuffix = StringUtil.substringBeforeLast(myId, ".");
-
-      collectDomResults(idWithoutPlaceSuffix, domSearchScope, processor);
+      resolveDomActionOrGroup(project, idWithoutPlaceSuffix, domSearchScope, processor);
 
       for (ActionOrGroup result : processor.getResults()) {
         for (OverrideText overrideText : result.getOverrideTexts()) {
@@ -98,6 +100,18 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
     final List<PsiElement> psiElements =
       ContainerUtil.mapNotNull(processor.getResults(), actionOrGroup -> getDomTargetPsi(actionOrGroup));
     return PsiElementResolveResult.createResults(psiElements);
+  }
+
+  private void resolveDomActionOrGroup(Project project,
+                                       String id,
+                                       GlobalSearchScope scope,
+                                       CommonProcessors.CollectUniquesProcessor<ActionOrGroup> processor) {
+    if (myIsAction != ThreeState.NO) {
+      if (!IdeaPluginRegistrationIndex.processAction(project, id, scope, processor)) return;
+    }
+    if (myIsAction != ThreeState.YES) {
+      IdeaPluginRegistrationIndex.processGroup(project, id, scope, processor);
+    }
   }
 
   private @Nullable PsiElement resolveExecutor(Project project) {
@@ -149,20 +163,22 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
 
   @Override
   public Object @NotNull [] getVariants() {
-    ActionOrGroupResolveConverter converter;
-    if (myIsAction == ThreeState.YES) {
-      converter = new ActionOrGroupResolveConverter.OnlyActions();
-    }
-    else if (myIsAction == ThreeState.NO) {
-      converter = new ActionOrGroupResolveConverter.OnlyGroups();
-    }
-    else {
-      converter = new ActionOrGroupResolveConverter();
-    }
-
     Project project = getElement().getProject();
-    List<ActionOrGroup> domVariants = converter.getVariants(project, ModuleUtilCore.findModuleForPsiElement(getElement()));
-    List<LookupElement> domLookupElements = ContainerUtil.map(domVariants, actionOrGroup -> converter.createLookupElement(actionOrGroup));
+
+    List<LookupElement> domLookupElements = new SmartList<>();
+    final GlobalSearchScope domSearchScope = PluginRelatedLocatorsUtils.getCandidatesScope(project);
+    IdeaPluginRegistrationIndex.processAllActionOrGroup(project, domSearchScope, actionOrGroup -> {
+      if (isRelevantForVariant(actionOrGroup)) {
+        PsiElement psiElement = getDomTargetPsi(actionOrGroup);
+        String name = StringUtil.notNullize(actionOrGroup.getId().getStringValue(),
+                                            DevKitBundle.message("plugin.xml.convert.action.or.group.invalid.name"));
+        LookupElementBuilder builder = LookupElementBuilder.create(psiElement, name)
+          .withRenderer(ActionOrGroupLookupRenderer.INSTANCE);
+        builder.putUserData(ActionOrGroupLookupRenderer.ACTION_OR_GROUP_KEY, actionOrGroup);
+        domLookupElements.add(builder);
+      }
+      return true;
+    });
     if (myIsAction == ThreeState.NO) {
       return domLookupElements.toArray();
     }
@@ -210,20 +226,20 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
 
   @Override
   public @NotNull String getUnresolvedMessagePattern() {
-    return myIsAction == ThreeState.NO ? DevKitBundle.message("plugin.xml.action.group.cannot.resolve", myId) :
-           DevKitBundle.message("plugin.xml.action.cannot.resolve", myId);
+    String resultTypes = switch (myIsAction) {
+      case YES -> DevKitBundle.message("plugin.xml.convert.action.or.group.type.action");
+      case NO -> DevKitBundle.message("plugin.xml.convert.action.or.group.type.group");
+      default -> DevKitBundle.message("plugin.xml.convert.action.or.group.type.action.or.group");
+    };
+    return DevKitBundle.message("plugin.xml.convert.action.or.group.cannot.resolve", resultTypes, myId);
   }
 
-  private void collectDomResults(String id,
-                                 GlobalSearchScope scope,
-                                 CommonProcessors.CollectUniquesProcessor<ActionOrGroup> processor) {
-    Project project = getElement().getProject();
-    if (myIsAction != ThreeState.NO) {
-      IdeaPluginRegistrationIndex.processAction(project, id, scope, processor);
-    }
-    if (myIsAction != ThreeState.YES) {
-      IdeaPluginRegistrationIndex.processGroup(project, id, scope, processor);
-    }
+  private boolean isRelevantForVariant(ActionOrGroup group) {
+    return switch (myIsAction) {
+      case YES -> group instanceof Action;
+      case NO -> group instanceof Group;
+      case UNSURE -> true;
+    };
   }
 
   private static PsiElement getDomTargetPsi(DomElement domElement) {
@@ -256,5 +272,51 @@ final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElem
       }
     }
     return null;
+  }
+
+
+  private static class ActionOrGroupLookupRenderer extends LookupElementRenderer<LookupElement> {
+
+    private static final ActionOrGroupLookupRenderer INSTANCE = new ActionOrGroupLookupRenderer();
+
+    private static final Key<ActionOrGroup> ACTION_OR_GROUP_KEY = Key.create("ACTION_OR_GROUP_KEY");
+
+    @Override
+    public void renderElement(LookupElement element, LookupElementPresentation presentation) {
+      presentation.setItemText(element.getLookupString());
+
+      ActionOrGroup actionOrGroup = element.getUserData(ACTION_OR_GROUP_KEY);
+      assert actionOrGroup != null;
+
+      presentation.setItemTextUnderlined(actionOrGroup.getPopup().getValue() == Boolean.TRUE);
+      presentation.setIcon(ElementPresentationManager.getIcon(actionOrGroup));
+
+      NullableLazyValue<PropertiesFile> propertiesFile =
+        lazyNullable(() -> DescriptorI18nUtil.findBundlePropertiesFile(actionOrGroup));
+
+      final String text = getLocalizedText(actionOrGroup, ActionOrGroup.TextType.TEXT, propertiesFile);
+      if (StringUtil.isNotEmpty(text)) {
+        String withoutMnemonic = StringUtil.replace(text, "_", "");
+        presentation.setTailText(" \"" + withoutMnemonic + "\"", true);
+      }
+
+      final String description = getLocalizedText(actionOrGroup, ActionOrGroup.TextType.DESCRIPTION, propertiesFile);
+      if (StringUtil.isNotEmpty(description)) {
+        presentation.setTypeText(description);
+      }
+    }
+
+    private static @Nullable String getLocalizedText(ActionOrGroup actionOrGroup,
+                                                     ActionOrGroup.TextType text,
+                                                     NullableLazyValue<PropertiesFile> propertiesFile) {
+      final String plain = text.getDomValue(actionOrGroup).getStringValue();
+      if (StringUtil.isNotEmpty(plain)) return plain;
+
+      final PropertiesFile bundleFile = propertiesFile.getValue();
+      if (bundleFile == null) return null;
+
+      final Property property = ObjectUtils.tryCast(bundleFile.findPropertyByKey(text.getMessageKey(actionOrGroup)), Property.class);
+      return property != null ? property.getValue() : null;
+    }
   }
 }
