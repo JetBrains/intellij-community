@@ -6,7 +6,6 @@ import com.intellij.xdebugger.XMixedModeProcessHandler
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.evaluation.XMixedModeDebuggersEditorProvider
-import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.*
@@ -54,8 +53,8 @@ class XDebugSessionMixedModeExtension(
     }
   }
 
-  fun stepInto(suspendContext: XMixedModeSuspendContext, stepStackFrame: XStackFrame) {
-    val isLowLevelStep = low.belongsToMe(stepStackFrame)
+  fun stepInto(suspendContext: XMixedModeSuspendContext) {
+    val isLowLevelStep = !high.stoppedInManagedContext(suspendContext)
     if (isLowLevelStep) {
       stateMachine.set(LowLevelStepRequested(suspendContext, StepType.Into))
     }
@@ -73,16 +72,16 @@ class XDebugSessionMixedModeExtension(
     }
   }
 
-  fun stepOver(suspendContext: XMixedModeSuspendContext, stepStackFrame: XStackFrame) {
-    val isLowLevelStep = low.belongsToMe(stepStackFrame)
+  fun stepOver(suspendContext: XMixedModeSuspendContext) {
+    val isLowLevelStep = !high.stoppedInManagedContext(suspendContext)
 
     val stepType = StepType.Over
     val newState = if (isLowLevelStep) LowLevelStepRequested(suspendContext, stepType) else HighLevelDebuggerStepRequested(suspendContext.highLevelDebugSuspendContext, stepType)
     this.stateMachine.set(newState)
   }
 
-  fun stepOut(suspendContext: XMixedModeSuspendContext, stepStackFrame: XStackFrame) {
-    val isLowLevelStep = low.belongsToMe(stepStackFrame)
+  fun stepOut(suspendContext: XMixedModeSuspendContext) {
+    val isLowLevelStep = !high.stoppedInManagedContext(suspendContext)
 
     val stepType = StepType.Out
     val newState = if (isLowLevelStep) LowLevelStepRequested(suspendContext, stepType) else HighLevelDebuggerStepRequested(suspendContext.highLevelDebugSuspendContext, stepType)

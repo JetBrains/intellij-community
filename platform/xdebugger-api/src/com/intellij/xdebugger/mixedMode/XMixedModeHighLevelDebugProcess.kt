@@ -13,4 +13,6 @@ interface XMixedModeHighLevelDebugProcess : XMixedModeDebugProcess {
   suspend fun canStopHere(lowSuspendContext: XSuspendContext): Boolean
 
   suspend fun refreshSuspendContextOnLowLevelStepFinish(suspendContext: XSuspendContext) : XSuspendContext?
+
+  fun stoppedInManagedContext(suspendContext: XSuspendContext): Boolean
 }
