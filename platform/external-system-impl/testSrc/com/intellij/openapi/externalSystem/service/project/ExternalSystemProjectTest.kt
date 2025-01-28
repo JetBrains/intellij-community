@@ -391,13 +391,14 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
         javaProject(
           compileOutputPath = "$projectPath/out",
           languageLevel = LanguageLevel.JDK_1_7,
-          targetBytecodeVersion = "1.5"
+          targetBytecodeVersion = "1.5",
+          compilerArguments = listOf("--parameter1")
         )
         module("module") {
           javaModule(
             languageLevel = LanguageLevel.JDK_1_8,
             targetBytecodeVersion = "1.6",
-            compilerArguments = listOf("--parameter")
+            compilerArguments = listOf("--parameter2")
           )
         }
       }
@@ -411,7 +412,8 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
     val compilerConfiguration = CompilerConfiguration.getInstance(project)
     assertEquals("1.5", compilerConfiguration.projectBytecodeTarget)
     assertEquals("1.6", compilerConfiguration.getBytecodeTargetLevel(module))
-    assertEquals(listOf("--parameter"), compilerConfiguration.getAdditionalOptions(module))
+    assertEquals(listOf("--parameter1"), compilerConfiguration.getAdditionalOptions())
+    assertEquals(listOf("--parameter2"), compilerConfiguration.getAdditionalOptions(module))
   }
 
   private fun getModule(moduleName: String): com.intellij.openapi.module.Module {

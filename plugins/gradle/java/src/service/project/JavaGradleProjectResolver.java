@@ -179,7 +179,9 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     var compileOutputPath = getCompileOutputPath();
     var languageLevel = getLanguageLevel(ideaProject);
     var targetBytecodeVersion = getTargetBytecodeVersion(ideaProject);
-    var javaProjectData = new JavaProjectData(GradleConstants.SYSTEM_ID, compileOutputPath, languageLevel, targetBytecodeVersion);
+    var compilerArguments = getCompilerArguments(ideaProject);
+    var javaProjectData = new JavaProjectData(
+      GradleConstants.SYSTEM_ID, compileOutputPath, languageLevel, targetBytecodeVersion, compilerArguments);
 
     javaProjectData.setJdkName(ideaProject.getJdkName());
 
@@ -255,7 +257,7 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
       .orElse(null);
     if (languageLevel != null) return languageLevel;
     IdeaJavaLanguageSettings javaLanguageSettings = ideaProject.getJavaLanguageSettings();
-    return getLanguageLevel(javaLanguageSettings, false);
+    return getLanguageLevel(javaLanguageSettings, isPreview(ideaProject));
   }
 
   private static @Nullable LanguageLevel getLanguageLevel(@NotNull IdeaModule ideaModule, @NotNull ExternalProject externalProject) {
@@ -339,12 +341,23 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     return targetByteCodeVersion.toString();
   }
 
+  private boolean isPreview(@NotNull IdeaProject ideaProject) {
+    return getCompilerArguments(ideaProject).contains(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
+  }
+
   private static boolean isPreview(@NotNull ExternalProject externalProject) {
     return getCompilerArguments(externalProject).contains(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
   }
 
   private static boolean isPreview(@NotNull ExternalSourceSet sourceSet) {
     return getCompilerArguments(sourceSet).contains(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
+  }
+
+  private @NotNull List<String> getCompilerArguments(@NotNull IdeaProject ideaProject) {
+    return getExternalModules(ideaProject).stream()
+      .map(it -> getCompilerArguments(it.getSecond()))
+      .min(Comparator.comparing(it -> it.size()))
+      .orElse(Collections.emptyList());
   }
 
   private static @NotNull List<String> getCompilerArguments(@NotNull ExternalProject externalProject) {

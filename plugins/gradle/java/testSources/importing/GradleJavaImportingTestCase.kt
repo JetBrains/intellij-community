@@ -106,6 +106,11 @@ abstract class GradleJavaImportingTestCase : GradleImportingTestCase() {
     assertEquals(version, targetBytecodeVersion)
   }
 
+  fun assertProjectCompilerArgumentsVersion(vararg expectedCompilerArguments: String) {
+    val actualCompilerArguments = CompilerConfiguration.getInstance(myProject).getAdditionalOptions()
+    CollectionAssertions.assertEqualsOrdered(expectedCompilerArguments.asList(), actualCompilerArguments)
+  }
+
   fun assertModuleCompilerArgumentsVersion(moduleName: String, vararg expectedCompilerArguments: String) {
     val module = getModule(moduleName)
     val actualCompilerArguments = CompilerConfiguration.getInstance(myProject).getAdditionalOptions(module)

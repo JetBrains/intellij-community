@@ -170,6 +170,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     ));
     importProject();
     assertModules("project", "project.main", "project.test");
+    assertProjectCompilerArgumentsVersion();
     assertModuleCompilerArgumentsVersion("project");
     assertModuleCompilerArgumentsVersion("project.main");
     assertModuleCompilerArgumentsVersion("project.test", "-param1", "-param2");
@@ -185,6 +186,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     ));
     importProject();
     assertModules("project", "project.main", "project.test");
+    assertProjectCompilerArgumentsVersion("-param");
     assertModuleCompilerArgumentsVersion("project", "-param");
     assertModuleCompilerArgumentsVersion("project.main", "-param");
     assertModuleCompilerArgumentsVersion("project.test", "-param");

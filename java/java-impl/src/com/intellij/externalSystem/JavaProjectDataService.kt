@@ -33,6 +33,7 @@ internal class JavaProjectDataService : AbstractProjectDataService<JavaProjectDa
     ExternalSystemApiUtil.executeProjectChangeAction(project) {
       importLanguageLevel(project, javaProjectData)
       importTargetBytecodeVersion(project, javaProjectData)
+      importCompilerArguments(project, javaProjectData)
     }
   }
 
@@ -52,6 +53,12 @@ internal class JavaProjectDataService : AbstractProjectDataService<JavaProjectDa
     val compilerConfiguration = CompilerConfiguration.getInstance(project)
     val targetBytecodeVersion = javaProjectData.targetBytecodeVersion
     compilerConfiguration.projectBytecodeTarget = targetBytecodeVersion
+  }
+
+  private fun importCompilerArguments(project: Project, javaProjectData: JavaProjectData) {
+    val compilerConfiguration = CompilerConfiguration.getInstance(project)
+    val compilerArguments = javaProjectData.compilerArguments
+    compilerConfiguration.additionalOptions = compilerArguments
   }
 }
 
