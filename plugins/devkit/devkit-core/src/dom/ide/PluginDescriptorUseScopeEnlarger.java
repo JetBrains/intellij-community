@@ -8,6 +8,7 @@ import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
 import com.intellij.psi.util.CachedValueProvider;
@@ -31,34 +32,47 @@ final class PluginDescriptorUseScopeEnlarger extends UseScopeEnlarger {
 
   @Override
   public SearchScope getAdditionalUseScope(@NotNull PsiElement element) {
+    Project project = element.getProject();
+
     if (element instanceof PomTargetPsiElement) {
       PomTarget target = ((PomTargetPsiElement)element).getTarget();
       if (target instanceof DomTarget) {
         DomElement domElement = ((DomTarget)target).getDomElement();
         if (domElement instanceof ExtensionPoint ||
-            domElement instanceof Extension ||
-            domElement instanceof ActionOrGroup) {
-          return getAllPluginDescriptorFilesSearchScope(element);
+            domElement instanceof Extension) {
+          return getAllPluginDescriptorFilesSearchScope(project);
+        }
+
+        if (domElement instanceof ActionOrGroup) {
+
+          // IJ Project: missing deps for ActionOrGroupIdReference in code
+          if (IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
+            return GlobalSearchScopesCore.projectProductionScope(project)
+              .uniteWith(GlobalSearchScopesCore.projectTestScope(project))
+              .uniteWith(getAllPluginDescriptorFilesSearchScope(project));
+          }
+          
+          return getAllPluginDescriptorFilesSearchScope(project);
         }
       }
+      return null;
     }
 
-    if (IntelliJProjectUtil.isIntelliJPlatformProject(element.getProject())) {
+    if (IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
       // we use UAST to properly handle both Java and Kotlin classes
       var uClass = UastContextKt.toUElement(element, UClass.class);
 
       if (uClass != null &&
           (uClass.getVisibility() == UastVisibility.PUBLIC ||
            uClass.getVisibility() == UastVisibility.PACKAGE_LOCAL)) {
-        return getAllPluginDescriptorFilesSearchScope(element);
+        return getAllPluginDescriptorFilesSearchScope(project);
       }
     }
 
     return null;
   }
 
-  private static @NotNull SearchScope getAllPluginDescriptorFilesSearchScope(PsiElement element) {
-    Project project = element.getProject();
+  private static @NotNull GlobalSearchScope getAllPluginDescriptorFilesSearchScope(Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       Collection<VirtualFile> pluginXmlFiles =
         DomService.getInstance().getDomFileCandidates(IdeaPlugin.class,
