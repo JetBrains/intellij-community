@@ -29,8 +29,15 @@ class UvSdkAdditionalData : PythonSdkAdditionalData {
   override fun save(element: Element) {
     super.save(element)
     element.setAttribute(IS_UV, "true")
-    element.setAttribute(UV_WORKING_DIR, uvWorkingDirectory?.pathString ?: "")
-    element.setAttribute(USE_PIP, usePip.toString())
+
+    // keep backward compatibility with old data
+    if (uvWorkingDirectory?.pathString?.isNotBlank() == true) {
+      element.setAttribute(UV_WORKING_DIR, uvWorkingDirectory.pathString)
+    }
+
+    if (usePip) {
+      element.setAttribute(USE_PIP, usePip.toString())
+    }
   }
 
   companion object {
