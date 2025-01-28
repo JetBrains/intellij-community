@@ -66,7 +66,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   private static final Logger LOG = Logger.getInstance(ExternalProjectsDataStorage.class);
 
   // exposed for tests
-  public static final int STORAGE_VERSION = 10;
+  public static final int STORAGE_VERSION = 11;
 
   private final @NotNull Project myProject;
   private final @NotNull ConcurrentMap<Pair<ProjectSystemId, File>, InternalExternalProjectInfo> myExternalRootProjects =
