@@ -79,6 +79,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
   private int myLastTopLeftCornerOffset;
 
   private VisibleAreaWidthProvider       myWidthProvider;
+  private boolean mySoftWrapsUnderScrollBar;
   private IncrementalCacheUpdateEvent    myEventBeingProcessed;
   private boolean                        myCustomIndentUsedLastTime;
   private int                            myCustomIndentValueUsedLastTime;
@@ -104,6 +105,11 @@ public final class SoftWrapApplianceManager implements Dumpable {
       updateAvailableArea();
       updateLastTopLeftCornerOffset();
     }));
+  }
+
+  @ApiStatus.Internal
+  public void setSoftWrapsUnderScrollBar(boolean softWrapsUnderScrollBar) {
+    mySoftWrapsUnderScrollBar = softWrapsUnderScrollBar;
   }
 
   @ApiStatus.Internal
@@ -512,17 +518,25 @@ public final class SoftWrapApplianceManager implements Dumpable {
     public int getVisibleAreaWidth() {
       Insets insets = myEditor.getContentComponent().getInsets();
       int horizontalInsets = insets.left + insets.right;
-      // We don't want soft-wrapped text to go under the scroll bar even if that feature is enabled,
-      // because in this case the scrollbar sometimes prevents the user from placing the caret by
-      // clicking inside wrapped text. Even if the scroll bar is invisible, some of its marks can get
-      // in the way too (errors/warnings, VCS changes, etc.). It's best to soft-wrap earlier.
-      // Example: IDEA-305944 (Code goes under the scrollbar with Soft-Wrap).
+      // Guesswork: it isn't easy to figure out whether insets already include the scrollbar width,
+      // as the underlying logic is very complicated. But we can reasonably assume that if they
+      // do NOT include it, they will be very small (most likely zero).
       final var vsbWidth = getVerticalScrollBarWidth();
-      if (horizontalInsets < vsbWidth) {
-        // Guesswork: it isn't easy to figure out whether insets already include the scrollbar width,
-        // as the underlying logic is very complicated. But we can reasonably assume that if they
-        // do NOT include it, they will be very small (most likely zero).
-        horizontalInsets += vsbWidth;
+      boolean insetsIncludeScrollbar = horizontalInsets >= vsbWidth;
+      if (mySoftWrapsUnderScrollBar) {
+        if (insetsIncludeScrollbar) {
+          horizontalInsets -= vsbWidth;
+        }
+      }
+      else {
+        // We don't want soft-wrapped text to go under the scroll bar even if that feature is enabled,
+        // because in this case the scrollbar sometimes prevents the user from placing the caret by
+        // clicking inside wrapped text. Even if the scroll bar is invisible, some of its marks can get
+        // in the way too (errors/warnings, VCS changes, etc.). It's best to soft-wrap earlier.
+        // Example: IDEA-305944 (Code goes under the scrollbar with Soft-Wrap).
+        if (!insetsIncludeScrollbar) {
+          horizontalInsets += vsbWidth;
+        }
       }
       int width = Math.max(0, myEditor.getScrollingModel().getVisibleArea().width - horizontalInsets);
       if (myEditor.isInDistractionFreeMode()) {

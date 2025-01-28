@@ -305,6 +305,7 @@ internal class ReworkedTerminalView(
   ): EditorImpl {
     val result = TerminalUiUtils.createOutputEditor(document, project, settings, installContextMenu = false)
     result.contextMenuGroupId = "Terminal.ReworkedTerminalContextMenu"
+    result.softWrapModel.applianceManager.setSoftWrapsUnderScrollBar(true)
     return result
   }
 
