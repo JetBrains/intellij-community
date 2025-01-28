@@ -2,6 +2,7 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
@@ -79,6 +80,26 @@ final class StatementChecker {
       }
       element = element.getParent();
     }
+  }
+
+  void checkForeachExpressionTypeIsIterable(@NotNull PsiExpression expression) {
+    if (!shouldReportForeachNotApplicable(expression)) return;
+    if (expression.getType() == null) return;
+    PsiType itemType = JavaGenericsUtil.getCollectionItemType(expression);
+    if (itemType == null) {
+      myVisitor.report(JavaErrorKinds.FOREACH_NOT_APPLICABLE.create(expression));
+    }
+  }
+
+  private static boolean shouldReportForeachNotApplicable(@NotNull PsiExpression expression) {
+    if (!(expression.getParent() instanceof PsiForeachStatementBase parentForEach)) return false;
+
+    PsiExpression iteratedValue = parentForEach.getIteratedValue();
+    if (iteratedValue != expression) return false;
+
+    // Ignore if the type of the value which is being iterated over is not resolved yet
+    PsiType iteratedValueType = iteratedValue.getType();
+    return iteratedValueType == null || !PsiTypesUtil.hasUnresolvedComponents(iteratedValueType);
   }
 
   void checkCatchTypeIsDisjoint(@NotNull PsiParameter parameter) {
@@ -339,20 +360,27 @@ final class StatementChecker {
     myVisitor.report(kind.create(statement));
   }
 
-  void checkThrowExceptionType(@NotNull PsiExpression expression) {
-    if (expression.getParent() instanceof PsiThrowStatement statement && statement.getException() == expression) {
-      PsiType type = expression.getType();
-      checkMustBeThrowable(expression, type);
+  void checkAssertStatementTypes(@NotNull PsiExpression expression) {
+    if (!(expression.getParent() instanceof PsiAssertStatement assertStatement)) return;
+    PsiType type = expression.getType();
+    if (type == null) return;
+    if (expression == assertStatement.getAssertCondition() && !TypeConversionUtil.isBooleanType(type)) {
+      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
+        expression, new JavaIncompatibleTypeErrorContext(PsiTypes.booleanType(), type)));
+    }
+    else if (expression == assertStatement.getAssertDescription() && TypeConversionUtil.isVoidType(type)) {
+      myVisitor.report(JavaErrorKinds.TYPE_VOID_NOT_ALLOWED.create(expression));
     }
   }
 
-  void checkMustBeThrowable(@NotNull PsiElement context, PsiType type) {
-    if (type != null && !InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE)) {
-      PsiElementFactory factory = myVisitor.factory();
-      PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, context.getResolveScope());
-      if (!(IncompleteModelUtil.isIncompleteModel(context) &&
-            IncompleteModelUtil.isPotentiallyConvertible(throwable, type, context))) {
-        myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(context, new JavaIncompatibleTypeErrorContext(throwable, type)));
+  void checkSynchronizedStatementType(@NotNull PsiExpression expression) {
+    if (expression.getParent() instanceof PsiSynchronizedStatement synchronizedStatement &&
+        expression == synchronizedStatement.getLockExpression()) {
+      PsiType type = expression.getType();
+      if (type == null) return;
+      if (type instanceof PsiPrimitiveType || TypeConversionUtil.isNullType(type)) {
+        PsiClassType objectType = PsiType.getJavaLangObject(myVisitor.file().getManager(), expression.getResolveScope());
+        myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(expression, new JavaIncompatibleTypeErrorContext(objectType, type)));
       }
     }
   }

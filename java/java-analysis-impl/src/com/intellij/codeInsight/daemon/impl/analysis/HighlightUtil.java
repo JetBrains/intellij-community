@@ -51,7 +51,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Contract;
@@ -295,61 +294,6 @@ public final class HighlightUtil {
       }
     }
     return null;
-  }
-
-  static HighlightInfo.Builder checkVarTypeApplicability(@NotNull PsiTypeElement typeElement) {
-    if (!typeElement.isInferredType()) {
-      return null;
-    }
-    PsiElement parent = typeElement.getParent();
-    PsiVariable variable = tryCast(parent, PsiVariable.class);
-    if (variable instanceof PsiLocalVariable localVariable) {
-      PsiExpression initializer = variable.getInitializer();
-      if (initializer == null) {
-        if (PsiUtilCore.hasErrorElementChild(variable)) return null;
-        String message = JavaErrorBundle.message("lvti.no.initializer");
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement);
-        HighlightFixUtil.registerSpecifyVarTypeFix(localVariable, info);
-        return info;
-      }
-      PsiExpression deparen = PsiUtil.skipParenthesizedExprDown(initializer);
-      if (deparen instanceof PsiFunctionalExpression) {
-        boolean lambda = deparen instanceof PsiLambdaExpression;
-        String message = JavaErrorBundle.message(lambda ? "lvti.lambda" : "lvti.method.ref");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement);
-      }
-
-      if (isArrayDeclaration(variable)) {
-        String message = JavaErrorBundle.message("lvti.array");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement);
-      }
-
-      PsiType lType = variable.getType();
-      if (PsiTypes.nullType().equals(lType) &&
-          ExpressionUtils.nonStructuralChildren(initializer).allMatch(ExpressionUtils::isNullLiteral)) {
-        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .descriptionAndTooltip(JavaErrorBundle.message("lvti.null"))
-            .range(typeElement);
-        HighlightFixUtil.registerSpecifyVarTypeFix(localVariable, info);
-        return info;
-      }
-      if (PsiTypes.voidType().equals(lType)) {
-        String message = JavaErrorBundle.message("lvti.void");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement);
-      }
-    }
-    else if (variable instanceof PsiParameter && variable.getParent() instanceof PsiParameterList && isArrayDeclaration(variable)) {
-      String message = JavaErrorBundle.message("lvti.array");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement);
-    }
-
-    return null;
-  }
-
-  private static boolean isArrayDeclaration(@NotNull PsiVariable variable) {
-    // Java-style 'var' arrays are prohibited by the parser; for C-style ones, looking for a bracket is enough
-    return ContainerUtil.or(variable.getChildren(), e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET));
   }
 
   static HighlightInfo.Builder checkAssignability(@Nullable PsiType lType,
@@ -870,41 +814,6 @@ public final class HighlightUtil {
   }
 
 
-  static HighlightInfo.Builder checkIllegalType(@NotNull PsiTypeElement typeElement, @NotNull PsiFile containingFile) {
-    PsiElement parent = typeElement.getParent();
-    if (parent instanceof PsiTypeElement) return null;
-
-    if (PsiUtil.isInsideJavadocComment(typeElement)) return null;
-
-    PsiType type = typeElement.getType();
-    PsiType componentType = type.getDeepComponentType();
-    if (componentType instanceof PsiClassType) {
-      PsiClass aClass = PsiUtil.resolveClassInType(componentType);
-      if (aClass == null) {
-        if (typeElement.isInferredType() && parent instanceof PsiLocalVariable localVariable) {
-          PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(localVariable.getInitializer());
-          if (initializer instanceof PsiNewExpression) {
-            // The problem is already reported on the initializer
-            return null;
-          }
-        }
-        if (IncompleteModelUtil.isIncompleteModel(containingFile)) {
-          return null;
-        }
-        String canonicalText = componentType.getCanonicalText();
-        String description = JavaErrorBundle.message("unknown.class", canonicalText);
-        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description);
-        PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
-        if (referenceElement != null) {
-          UnresolvedReferenceQuickFixUpdater.getInstance(containingFile.getProject()).registerQuickFixesLater(referenceElement, info);
-        }
-        return info;
-      }
-    }
-
-    return null;
-  }
-
   static HighlightInfo.Builder checkMemberReferencedBeforeConstructorCalled(@NotNull PsiElement expression,
                                                                             @Nullable PsiElement resolved,
                                                                             @NotNull Function<? super PsiElement, ? extends PsiMethod> surroundingConstructor) {
@@ -1189,21 +1098,6 @@ public final class HighlightUtil {
       .description(description)
       .escapedToolTip(toolTip)
       .navigationShift(navigationShift);
-  }
-
-  public static HighlightInfo.Builder checkArrayType(PsiTypeElement type) {
-    int dimensions = 0;
-    for (PsiElement child = type.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
-        dimensions++;
-      }
-    }
-    if (dimensions > 255) {
-      // JVM Specification, 4.3.2: no more than 255 dimensions allowed
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(type.getTextRange())
-        .description(JavaErrorBundle.message("too.many.array.dimensions"));
-    }
-    return null;
   }
 
   static HighlightInfo.Builder checkExtraSemicolonBetweenImportStatements(@NotNull PsiJavaToken token,

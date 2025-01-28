@@ -158,6 +158,7 @@ final class JavaErrorFixProvider {
         }
       }
     });
+    fix(FOREACH_NOT_APPLICABLE, error -> myFactory.createNotIterableForEachLoopFix(error.psi()));
   }
 
   private void createMethodFixes() {
@@ -302,6 +303,8 @@ final class JavaErrorFixProvider {
   private void createVariableFixes() {
     fix(UNNAMED_VARIABLE_BRACKETS, error -> new NormalizeBracketsFix(error.psi()));
     fix(UNNAMED_VARIABLE_WITHOUT_INITIALIZER, error -> myFactory.createAddVariableInitializerFix(error.psi()));
+    fixes(LVTI_NO_INITIALIZER, (error, sink) -> HighlightFixUtil.registerSpecifyVarTypeFix(error.psi(), sink));
+    fixes(LVTI_NULL, (error, sink) -> HighlightFixUtil.registerSpecifyVarTypeFix(error.psi(), sink));
   }
 
   private void createExpressionFixes() {
@@ -544,6 +547,18 @@ final class JavaErrorFixProvider {
         HighlightFixUtil.registerFixesOnInvalidConstructorCall(sink, constructorCall, aClass, methodCandidates);
         HighlightFixUtil.registerMethodReturnFixAction(sink, candidate, constructorCall);
       }
+    });
+    fix(TYPE_ARGUMENT_PRIMITIVE, error -> {
+      PsiTypeElement typeElement = error.psi();
+      PsiType type = typeElement.getType();
+      PsiPrimitiveType toConvert =
+        (PsiPrimitiveType)(type instanceof PsiWildcardType wildcardType ? requireNonNull(wildcardType.getBound()) : type);
+      PsiClassType boxedType = toConvert.getBoxedType(typeElement);
+      if (boxedType != null) {
+        return QuickFixFactory.getInstance().createReplacePrimitiveWithBoxedTypeAction(
+          typeElement, toConvert.getPresentableText(), boxedType.getCanonicalText());
+      }
+      return null;
     });
   }
 

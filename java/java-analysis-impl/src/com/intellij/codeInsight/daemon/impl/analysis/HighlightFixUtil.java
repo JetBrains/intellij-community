@@ -417,7 +417,7 @@ public final class HighlightFixUtil {
     return copyType != null && returnType.isAssignableFrom(copyType);
   }
 
-  static void registerSpecifyVarTypeFix(@NotNull PsiLocalVariable variable, @NotNull HighlightInfo.Builder info) {
+  static void registerSpecifyVarTypeFix(@NotNull PsiLocalVariable variable, @NotNull Consumer<? super CommonIntentionAction> info) {
     PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
     if (block == null) return;
     PsiTreeUtil.processElements(block, PsiReferenceExpression.class, ref -> {
@@ -435,8 +435,7 @@ public final class HighlightFixUtil {
               if (type != null) {
                 type = GenericsUtil.getVariableTypeByExpressionType(type);
                 if (PsiTypesUtil.isDenotableType(type, variable) && !PsiTypes.voidType().equals(type)) {
-                  IntentionAction fix = QuickFixFactory.getInstance().createSetVariableTypeFix(variable, type);
-                  info.registerFix(fix, null, null, null, null);
+                  info.accept(QuickFixFactory.getInstance().createSetVariableTypeFix(variable, type));
                 }
                 return false;
               }

@@ -384,6 +384,42 @@ final class GenericsChecker {
     }
   }
 
+  void checkReferenceTypeUsedAsTypeArgument(@NotNull PsiTypeElement typeElement) {
+    PsiType type = typeElement.getType();
+    PsiType wildCardBind = type instanceof PsiWildcardType wildcardType ? wildcardType.getBound() : null;
+    if (type != PsiTypes.nullType() && type instanceof PsiPrimitiveType || wildCardBind instanceof PsiPrimitiveType) {
+      if (!(typeElement.getParent() instanceof PsiReferenceParameterList list)) return;
+      PsiElement parent = list.getParent();
+      if (!(parent instanceof PsiJavaCodeReferenceElement) && !(parent instanceof PsiNewExpression)) return;
+      myVisitor.report(JavaErrorKinds.TYPE_ARGUMENT_PRIMITIVE.create(typeElement));
+    }
+  }
+
+  void checkWildcardUsage(@NotNull PsiTypeElement typeElement) {
+    PsiType type = typeElement.getType();
+    if (type instanceof PsiWildcardType) {
+      if (typeElement.getParent() instanceof PsiReferenceParameterList) {
+        PsiElement parent = typeElement.getParent().getParent();
+        PsiElement refParent = parent.getParent();
+        if (refParent instanceof PsiAnonymousClass) refParent = refParent.getParent();
+        if (refParent instanceof PsiNewExpression newExpression) {
+          if (!(newExpression.getType() instanceof PsiArrayType)) {
+            myVisitor.report(JavaErrorKinds.TYPE_WILDCARD_CANNOT_BE_INSTANTIATED.create(typeElement));
+          }
+        }
+        else if (refParent instanceof PsiReferenceList) {
+          PsiElement refPParent = refParent.getParent();
+          if (!(refPParent instanceof PsiTypeParameter typeParameter) || refParent != typeParameter.getExtendsList()) {
+            myVisitor.report(JavaErrorKinds.TYPE_WILDCARD_NOT_EXPECTED.create(typeElement));
+          }
+        }
+      }
+      else if (!typeElement.isInferredType()){
+        myVisitor.report(JavaErrorKinds.TYPE_WILDCARD_MAY_BE_USED_ONLY_AS_REFERENCE_PARAMETERS.create(typeElement));
+      }
+    }
+  }
+
   private static PsiType detectExpectedType(@NotNull PsiReferenceParameterList referenceParameterList) {
     PsiNewExpression newExpression = requireNonNull(PsiTreeUtil.getParentOfType(referenceParameterList, PsiNewExpression.class));
     PsiElement parent = newExpression.getParent();

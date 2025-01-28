@@ -27,10 +27,10 @@ class D<T extends C> {
 }
 
 class Primitives<T> {
-  Object a = new Primitives<<error descr="Type argument cannot be of primitive type">? extends int</error>>();
-  Object o = new Primitives<<error descr="Type argument cannot be of primitive type">int</error>>();
-  void f(Primitives<<error descr="Type argument cannot be of primitive type">boolean</error>> param) {
-    if (this instanceof Primitives<<error descr="Type argument cannot be of primitive type">double</error>>) {
+  Object a = new Primitives<<error descr="Type argument cannot be of a primitive type">? extends int</error>>();
+  Object o = new Primitives<<error descr="Type argument cannot be of a primitive type">int</error>>();
+  void f(Primitives<<error descr="Type argument cannot be of a primitive type">boolean</error>> param) {
+    if (this instanceof Primitives<<error descr="Type argument cannot be of a primitive type">double</error>>) {
       return;
     }
   }

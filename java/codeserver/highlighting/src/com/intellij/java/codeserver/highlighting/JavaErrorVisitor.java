@@ -47,6 +47,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull RecordChecker myRecordChecker = new RecordChecker(this);
   private final @NotNull ImportChecker myImportChecker = new ImportChecker(this);
   final @NotNull GenericsChecker myGenericsChecker = new GenericsChecker(this);
+  final @NotNull TypeChecker myTypeChecker = new TypeChecker(this);
   final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
   final @NotNull ModifierChecker myModifierChecker = new ModifierChecker(this);
@@ -148,6 +149,16 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitTypeElement(@NotNull PsiTypeElement type) {
+    super.visitTypeElement(type);
+    if (!hasErrorResults()) myTypeChecker.checkIllegalType(type);
+    if (!hasErrorResults()) myTypeChecker.checkVarTypeApplicability(type);
+    if (!hasErrorResults()) myTypeChecker.checkArrayType(type);
+    if (!hasErrorResults()) myGenericsChecker.checkReferenceTypeUsedAsTypeArgument(type);
+    if (!hasErrorResults()) myGenericsChecker.checkWildcardUsage(type);
+  }
+
+  @Override
   public void visitParameter(@NotNull PsiParameter parameter) {
     super.visitParameter(parameter);
 
@@ -160,7 +171,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       if (!hasErrorResults() && parameter.getType() instanceof PsiDisjunctionType) {
         checkFeature(parameter, JavaFeature.MULTI_CATCH);
       }
-      if (!hasErrorResults()) myStatementChecker.checkMustBeThrowable(parameter, parameter.getType());
+      if (!hasErrorResults()) myTypeChecker.checkMustBeThrowable(parameter, parameter.getType());
       if (!hasErrorResults()) myStatementChecker.checkCatchTypeIsDisjoint(parameter);
       if (!hasErrorResults()) myGenericsChecker.checkCatchParameterIsClass(parameter);
     }
@@ -461,7 +472,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitKeyword(@NotNull PsiKeyword keyword) {
     super.visitKeyword(keyword);
     if (!hasErrorResults()) myClassChecker.checkStaticDeclarationInInnerClass(keyword);
-    if (!hasErrorResults()) myExpressionChecker.checkIllegalVoidType(keyword);
+    if (!hasErrorResults()) myTypeChecker.checkIllegalVoidType(keyword);
     PsiElement parent = keyword.getParent();
     if (parent instanceof PsiModifierList psiModifierList) {
       if (!hasErrorResults()) myModifierChecker.checkNotAllowedModifier(keyword, psiModifierList);
@@ -750,15 +761,18 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (parent instanceof PsiMethodCallExpression) return;
     if (!hasErrorResults()) myAnnotationChecker.checkConstantExpression(expression);
     if (!hasErrorResults()) myExpressionChecker.checkMustBeBoolean(expression);
-    if (!hasErrorResults()) myExpressionChecker.checkAssertOperatorTypes(expression);
-    if (!hasErrorResults()) myExpressionChecker.checkSynchronizedExpressionType(expression);
+    if (!hasErrorResults()) myStatementChecker.checkAssertStatementTypes(expression);
+    if (!hasErrorResults()) myStatementChecker.checkSynchronizedStatementType(expression);
     if (expression.getParent() instanceof PsiArrayInitializerExpression arrayInitializer) {
       if (!hasErrorResults()) myExpressionChecker.checkArrayInitializer(expression, arrayInitializer);
     }
     if (!hasErrorResults() && expression instanceof PsiArrayAccessExpression accessExpression) {
       myExpressionChecker.checkValidArrayAccessExpression(accessExpression);
     }
-    if (!hasErrorResults()) myStatementChecker.checkThrowExceptionType(expression);
+    if (!hasErrorResults() && expression.getParent() instanceof PsiThrowStatement statement && statement.getException() == expression) {
+      myTypeChecker.checkMustBeThrowable(expression, expression.getType());
+    }
+    if (!hasErrorResults()) myStatementChecker.checkForeachExpressionTypeIsIterable(expression);
   }
 
   @Override

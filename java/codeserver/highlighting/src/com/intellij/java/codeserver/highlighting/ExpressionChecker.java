@@ -155,31 +155,6 @@ final class ExpressionChecker {
     }
   }
 
-  void checkIllegalVoidType(@NotNull PsiKeyword type) {
-    if (!PsiKeyword.VOID.equals(type.getText())) return;
-
-    PsiElement parent = type.getParent();
-    if (parent instanceof PsiErrorElement) return;
-    if (parent instanceof PsiTypeElement) {
-      PsiElement typeOwner = parent.getParent();
-      if (typeOwner != null) {
-        // do not highlight incomplete declarations
-        if (PsiUtilCore.hasErrorElementChild(typeOwner)) return;
-      }
-
-      if (typeOwner instanceof PsiMethod method) {
-        if (method.getReturnTypeElement() == parent && PsiTypes.voidType().equals(method.getReturnType())) return;
-      }
-      else if (typeOwner instanceof PsiClassObjectAccessExpression classAccess) {
-        if (TypeConversionUtil.isVoidType(classAccess.getOperand().getType())) return;
-      }
-      else if (typeOwner instanceof JavaCodeFragment) {
-        if (typeOwner.getUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT) != null) return;
-      }
-    }
-    myVisitor.report(JavaErrorKinds.TYPE_VOID_ILLEGAL.create(type));
-  }
-
   void checkMustBeBoolean(@NotNull PsiExpression expr) {
     PsiElement parent = expr.getParent();
     if (parent instanceof PsiIfStatement ||
@@ -195,31 +170,6 @@ final class ExpressionChecker {
           return;
         }
         myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(expr, new JavaIncompatibleTypeErrorContext(PsiTypes.booleanType(), type)));
-      }
-    }
-  }
-
-  void checkAssertOperatorTypes(@NotNull PsiExpression expression) {
-    if (!(expression.getParent() instanceof PsiAssertStatement assertStatement)) return;
-    PsiType type = expression.getType();
-    if (type == null) return;
-    if (expression == assertStatement.getAssertCondition() && !TypeConversionUtil.isBooleanType(type)) {
-      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
-        expression, new JavaIncompatibleTypeErrorContext(PsiTypes.booleanType(), type)));
-    }
-    else if (expression == assertStatement.getAssertDescription() && TypeConversionUtil.isVoidType(type)) {
-      myVisitor.report(JavaErrorKinds.TYPE_VOID_NOT_ALLOWED.create(expression));
-    }
-  }
-
-  void checkSynchronizedExpressionType(@NotNull PsiExpression expression) {
-    if (expression.getParent() instanceof PsiSynchronizedStatement synchronizedStatement &&
-        expression == synchronizedStatement.getLockExpression()) {
-      PsiType type = expression.getType();
-      if (type == null) return;
-      if (type instanceof PsiPrimitiveType || TypeConversionUtil.isNullType(type)) {
-        PsiClassType objectType = PsiType.getJavaLangObject(myVisitor.file().getManager(), expression.getResolveScope());
-        myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(expression, new JavaIncompatibleTypeErrorContext(objectType, type)));
       }
     }
   }
@@ -754,7 +704,7 @@ final class ExpressionChecker {
     myVisitor.report(JavaErrorKinds.EXCEPTION_UNHANDLED_CLOSE.create(resource, unhandled));
   }
 
-  private static boolean isArrayDeclaration(@NotNull PsiVariable variable) {
+  static boolean isArrayDeclaration(@NotNull PsiVariable variable) {
     // Java-style 'var' arrays are prohibited by the parser; for C-style ones, looking for a bracket is enough
     return ContainerUtil.or(variable.getChildren(), e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET));
   }

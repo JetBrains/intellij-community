@@ -64,6 +64,7 @@ import java.util.function.Function;
 
 import static com.intellij.psi.PsiModifier.SEALED;
 import static com.intellij.util.ObjectUtils.tryCast;
+import static java.util.Objects.*;
 
 // java highlighting: problems in java code like unresolved/incompatible symbols/methods etc.
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
@@ -250,10 +251,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       info.range(anchor);
     }
     errorFixProvider.processFixes(error, fix -> info.registerFix(fix.asIntention(), null, null, null, null));
-    if (error.kind() == JavaErrorKinds.EXPRESSION_EXPECTED || error.kind() == JavaErrorKinds.REFERENCE_UNRESOLVED ||
-        error.kind() == JavaErrorKinds.REFERENCE_AMBIGUOUS) {
-      UnresolvedReferenceQuickFixUpdater.getInstance(getProject()).registerQuickFixesLater((PsiReference)error.psi(), info);
-    }
+    error.psiForKind(JavaErrorKinds.EXPRESSION_EXPECTED, JavaErrorKinds.REFERENCE_UNRESOLVED, JavaErrorKinds.REFERENCE_AMBIGUOUS)
+      .or(() -> error.psiForKind(JavaErrorKinds.TYPE_UNKNOWN_CLASS).map(PsiTypeElement::getInnermostComponentReferenceElement))
+      .ifPresent(ref -> UnresolvedReferenceQuickFixUpdater.getInstance(getProject()).registerQuickFixesLater(ref, info));
     add(info);
   }
 
@@ -478,20 +478,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkCannotWriteToFinal(expression, myFile));
     if (!hasErrorResults()) add(HighlightUtil.checkVariableExpected(expression));
     if (!hasErrorResults()) add(HighlightUtil.checkConditionalExpressionBranchTypesMatch(expression, type));
-    if (!hasErrorResults() && shouldReportForeachNotApplicable(expression)) {
-      add(GenericsHighlightUtil.checkForeachExpressionTypeIsIterable(expression));
-    }
-  }
-
-  private static boolean shouldReportForeachNotApplicable(@NotNull PsiExpression expression) {
-    if (!(expression.getParent() instanceof PsiForeachStatementBase parentForEach)) return false;
-
-    PsiExpression iteratedValue = parentForEach.getIteratedValue();
-    if (iteratedValue != expression) return false;
-
-    // Ignore if the type of the value which is being iterated over is not resolved yet
-    PsiType iteratedValueType = iteratedValue.getType();
-    return iteratedValueType == null || !PsiTypesUtil.hasUnresolvedComponents(iteratedValueType);
   }
 
   @Override
@@ -1024,8 +1010,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                 IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType)) {
               return;
             }
-            String t1 = HighlightUtil.format(Objects.requireNonNull(results[0].getElement()));
-            String t2 = HighlightUtil.format(Objects.requireNonNull(results[1].getElement()));
+            String t1 = HighlightUtil.format(requireNonNull(results[0].getElement()));
+            String t2 = HighlightUtil.format(requireNonNull(results[1].getElement()));
             description = JavaErrorBundle.message("ambiguous.reference", expression.getReferenceName(), t1, t2);
           }
           else {
@@ -1148,11 +1134,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitTypeElement(@NotNull PsiTypeElement type) {
-    if (!hasErrorResults()) add(HighlightUtil.checkIllegalType(type, myFile));
-    if (!hasErrorResults()) add(HighlightUtil.checkVarTypeApplicability(type));
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkReferenceTypeUsedAsTypeArgument(type));
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkWildcardUsage(type));
-    if (!hasErrorResults()) add(HighlightUtil.checkArrayType(type));
+    super.visitTypeElement(type);
     if (!hasErrorResults()) {
       PreviewFeatureUtil.checkPreviewFeature(type, myPreviewFeatureVisitor);
     }
