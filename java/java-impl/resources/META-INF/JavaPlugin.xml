@@ -415,6 +415,7 @@
     <projectService serviceImplementation="com.intellij.jarRepository.RemoteRepositoriesConfiguration"/>
     <projectService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
     <projectService serviceImplementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
+    <optionController implementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings$Provider"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.JavaIdeCodeInsightSettings"/>
     <projectService serviceInterface="com.intellij.testIntegration.TestFailedLineManager"
                     serviceImplementation="com.intellij.execution.codeInspection.TestFailedLineManagerImpl"/>
@@ -2395,7 +2396,6 @@
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.imports</categoryKey>
     </intentionAction>
-    <optionController implementation="com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportToAutoImportAction$AutoStaticImportTableProvider"/>
     <intentionAction>
       <language>JAVA</language>
       <className>com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction</className>
