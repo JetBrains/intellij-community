@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
+import com.intellij.java.JavaBundle
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -51,13 +54,24 @@ class AddJdkService(private val coroutineScope: CoroutineScope) {
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
 class ConfigureJdkService(val project: Project, private val coroutineScope: CoroutineScope) {
-  fun setProjectJdkIfNull(sdk: Sdk) {
+  fun setProjectJdkIfNull(sdk: Sdk, notify: Boolean = false) {
     if (project.isDisposed) return
     val rootsManager = ProjectRootManager.getInstance(project)
     if (rootsManager.projectSdk == null) {
       coroutineScope.launch {
         writeAction {
           rootsManager.projectSdk = sdk
+        }
+
+        if (notify) {
+          NotificationGroupManager.getInstance()
+            .getNotificationGroup("Setup JDK")
+            .createNotification(
+              JavaBundle.message("sdk.configured.notification.title"),
+              JavaBundle.message("sdk.configured", sdk.name),
+              NotificationType.INFORMATION
+            )
+            .notify(project)
         }
       }
     }
