@@ -52,7 +52,10 @@ object K2DirectiveBasedActionUtils {
         val actual =
             allowAnalysisOnEdt {
                 analyze(file) {
-                    val diagnostics = file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                    val diagnostics =
+                        // filter level has to be consistent with
+                        // [org.jetbrains.kotlin.idea.highlighting.visitor.KotlinDiagnosticHighlightVisitor#analyzeFile]
+                        file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
                     diagnostics
                         .filter { it.severity == severity }
                         .map { "$directive ${it.defaultMessage.replace("\n", "<br>")}" }
