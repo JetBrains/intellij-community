@@ -276,8 +276,7 @@ public final class TryFinallyCanBeTryWithResourcesInspection extends BaseInspect
       myCatchSectionsToAdd = catchSectionsToAdd;
     }
 
-    static @Nullable
-    Context from(@NotNull PsiTryStatement tryStatement) {
+    static @Nullable Context from(@NotNull PsiTryStatement tryStatement) {
       PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
       if (finallyBlock == null) return null;
       PsiCodeBlock tryBlock = tryStatement.getTryBlock();
