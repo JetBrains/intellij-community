@@ -55,6 +55,7 @@ import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JComponent
 import kotlin.Result
 import kotlin.concurrent.withLock
+import kotlin.getOrThrow
 
 private enum class NotificationKind { PLATFORM, PLUGINS, EXTERNAL }
 
@@ -177,7 +178,13 @@ object UpdateChecker {
       }
     }
     catch (e: Exception) {
-      LOG.info("failed to load update data (${e.javaClass.name}: ${e.message})", if (e !is IOException || LOG.isDebugEnabled) e else null)
+      val attachTrace = when {
+        LOG.isDebugEnabled -> true
+        e is IOException -> false
+        e is CancellationException -> false
+        else -> true
+      }
+      LOG.info("failed to load update data (${e.javaClass.name}: ${e.message})", if (attachTrace) e else null)
       return PlatformUpdates.ConnectionError(e)
     }
   }
