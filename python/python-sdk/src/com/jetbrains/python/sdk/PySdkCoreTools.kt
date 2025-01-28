@@ -1,8 +1,11 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Each [Sdk] has [PythonSdkAdditionalData]. Use this method to get it.
@@ -38,4 +41,15 @@ fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
     }
   }
   return newData
+}
+
+@Internal
+/**
+ * Saves SDK to the project table if there is no sdk with same name
+ */
+suspend fun Sdk.persist(): Unit = writeAction {
+  if (ProjectJdkTable.getInstance().findJdk(name) == null) { // Saving 2 SDKs with same name is an error
+    getOrCreateAdditionalData() // additional data is always required
+    ProjectJdkTable.getInstance().addJdk(this)
+  }
 }
