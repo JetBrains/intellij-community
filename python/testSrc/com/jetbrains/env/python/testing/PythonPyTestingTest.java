@@ -295,7 +295,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                                               "[root](-)\n" +
                                                               ".test_pytest_parametrized(-)\n" +
                                                               "..test_eval(-)\n" +
-                                                              "...(three plus file-8)(-)\n" +
+                                                              "...(three_plus file-8)(-)\n" +
                                                               ((runner.getCurrentRerunStep() == 0) ? "...((2)+(4)-6)(+)\n" : "") +
                                                               "...( six times nine_-42)(-)\n", runner.getFormattedTestTree());
         }
@@ -326,7 +326,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
               else {
                 configuration.setAdditionalArguments("--debug");
               }
-              configuration.setMetaInfo("test_eval[three plus file-8]");
+              configuration.setMetaInfo("test_eval[three.plus file-8]");
             }
           };
         }
@@ -342,7 +342,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
             [root](-)
             .test_pytest_parametrized(-)
             ..test_eval(-)
-            ...(three plus file-8)(-)
+            ...(three_plus file-8)(-)
             """, runner.getFormattedTestTree());
         }
       });
