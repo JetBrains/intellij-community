@@ -107,6 +107,7 @@
     </action>
     <action id="Terminal.Find" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Find"/>
     <action id="Terminal.SelectAll" class="org.jetbrains.plugins.terminal.action.TerminalSelectAllAction">
+      <override-text place="GoToAction"/>
       <keyboard-shortcut first-keystroke="meta A" keymap="Mac OS X"/>
       <keyboard-shortcut first-keystroke="meta A" keymap="Mac OS X 10.5+"/>
     </action>
@@ -188,17 +189,23 @@
     <action id="Terminal.EnableNewUi" class="org.jetbrains.plugins.terminal.action.EnableBlockTerminalUiAction"/>
 
     <action id="Terminal.LineUp" class="org.jetbrains.plugins.terminal.action.TerminalLineUpAction">
+      <override-text place="GoToAction"/>
       <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta UP" keymap="Mac OS X"/>
       <keyboard-shortcut first-keystroke="meta UP" keymap="Mac OS X 10.5+"/>
     </action>
     <action id="Terminal.LineDown" class="org.jetbrains.plugins.terminal.action.TerminalLineDownAction">
+      <override-text place="GoToAction"/>
       <keyboard-shortcut first-keystroke="control DOWN" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta DOWN" keymap="Mac OS X"/>
       <keyboard-shortcut first-keystroke="meta DOWN" keymap="Mac OS X 10.5+"/>
     </action>
-    <action id="Terminal.PageUp" class="org.jetbrains.plugins.terminal.action.TerminalPageUpAction" use-shortcut-of="EditorPageUp"/>
-    <action id="Terminal.PageDown" class="org.jetbrains.plugins.terminal.action.TerminalPageDownAction" use-shortcut-of="EditorPageDown"/>
+    <action id="Terminal.PageUp" class="org.jetbrains.plugins.terminal.action.TerminalPageUpAction" use-shortcut-of="EditorPageUp">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="Terminal.PageDown" class="org.jetbrains.plugins.terminal.action.TerminalPageDownAction" use-shortcut-of="EditorPageDown">
+      <override-text place="GoToAction"/>
+    </action>
 
     <group id="Terminal.ToolWindowActions">
       <reference ref="Terminal.EnableNewUi"/>
