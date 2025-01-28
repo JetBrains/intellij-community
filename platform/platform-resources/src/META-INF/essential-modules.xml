@@ -24,10 +24,6 @@
     <module name="intellij.platform.editor.backend"/>
     <module name="intellij.platform.editor.frontend"/>
 
-    <module name="intellij.platform.vcs.impl.backend"/>
-    <module name="intellij.platform.vcs.impl.frontend"/>
-    <module name="intellij.platform.vcs.impl.shared"/>
-
     <module name="intellij.platform.debugger.impl.frontend"/>
     <module name="intellij.platform.debugger.impl.backend"/>
 
