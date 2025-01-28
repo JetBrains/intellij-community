@@ -21,10 +21,8 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.block.reworked.session.output.ObservableJediTerminal
-import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalDisplayImpl
-import org.jetbrains.plugins.terminal.block.reworked.session.output.createTerminalOutputFlow
-import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
+import org.jetbrains.plugins.terminal.block.reworked.session.*
+import org.jetbrains.plugins.terminal.block.ui.withLock
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
 
