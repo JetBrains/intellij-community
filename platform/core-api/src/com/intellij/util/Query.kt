@@ -1,77 +1,70 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util;
+package com.intellij.util
 
-import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncUtil;
-import org.jetbrains.annotations.ApiStatus.Experimental;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import com.intellij.concurrency.AsyncFuture
+import com.intellij.concurrency.AsyncUtil
+import com.intellij.util.containers.toArray
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.Unmodifiable
+import java.util.*
+import java.util.function.Consumer
+import java.util.function.Function
+import java.util.function.Predicate
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Spliterator;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+interface Query<Result> : Iterable<Result> {
 
-public interface Query<Result> extends Iterable<Result> {
   /**
-   * Get all the results in the {@link Collection}
+   * Get all the results in the [Collection]
    *
    * @return results in a collection or empty collection if no results found.
    */
-  @NotNull
-  @Unmodifiable
-  Collection<Result> findAll();
+  fun findAll(): @Unmodifiable Collection<Result>
 
   /**
-   * Get the first result or {@code null} if no results have been found.
+   * Get the first result or `null` if no results have been found.
    *
-   * @return first result of the search or {@code null} if no results.
+   * @return first result of the search or `null` if no results.
    */
-  @Nullable
-  Result findFirst();
+  fun findFirst(): Result?
 
   /**
-   * Process search results one-by-one. All the results will be subsequently fed to a {@code consumer} passed.
+   * Process search results one-by-one. All the results will be subsequently fed to a `consumer` passed.
    * The consumer might be called on different threads, but by default these calls are mutually exclusive, so no additional
-   * synchronization inside consumer is necessary. If you need to process results in parallel, run {@code forEach()} on
-   * the result of {@link #allowParallelProcessing()}.
+   * synchronization inside consumer is necessary. If you need to process results in parallel, run `forEach()` on
+   * the result of [allowParallelProcessing].
    *
    * @param consumer - a processor search results should be fed to.
-   * @return {@code true} if the search was completed normally,
-   * {@code false} if the occurrence processing was cancelled by the processor.
+   * @return `true` if the search was completed normally,
+   * `false` if the occurrence processing was cancelled by the processor.
    */
-  boolean forEach(@NotNull Processor<? super Result> consumer);
+  fun forEach(consumer: Processor<in Result>): Boolean
 
-  /**
-   * @deprecated use {@link #forEach(Processor)} instead
-   */
-  @Deprecated
-  default @NotNull AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super Result> consumer) {
-    return AsyncUtil.wrapBoolean(forEach(consumer));
+  @Deprecated("use {@link #forEach(Processor)} instead")
+  fun forEachAsync(consumer: Processor<in Result>): @Suppress("DEPRECATION") AsyncFuture<Boolean> {
+    @Suppress("DEPRECATION")
+    return AsyncUtil.wrapBoolean(forEach(consumer))
   }
 
-  default Result @NotNull [] toArray(Result @NotNull [] a) {
-    return findAll().toArray(a);
+  fun toArray(a: Array<@UnsafeVariance Result>): Array<@UnsafeVariance Result> {
+    return findAll().toArray(a)
   }
 
   /**
    * Checks whether predicate is satisfied for every result of this query.
    * This operation short-circuits once predicate returns false.
-   * Technically it's equivalent to {@link #forEach(Processor)}, but has better name.
+   * Technically it's equivalent to [forEach], but has better name.
    * Use this method only if your predicate is stateless and side-effect free.
    *
    * @param predicate predicate to test on query results
    * @return true if given predicate is satisfied for all query results.
    */
   @Contract(pure = true)
-  default boolean allMatch(@NotNull Predicate<? super Result> predicate) {
-    return forEach(predicate::test);
+  fun allMatch(predicate: Predicate<in Result>): Boolean {
+    return forEach(Processor { t ->
+      predicate.test(t)
+    })
   }
 
   /**
@@ -83,116 +76,131 @@ public interface Query<Result> extends Iterable<Result> {
    * @return true if given predicate is satisfied for at least one query result.
    */
   @Contract(pure = true)
-  default boolean anyMatch(@NotNull Predicate<? super Result> predicate) {
-    return !forEach(t -> !predicate.test(t));
+  fun anyMatch(predicate: Predicate<in Result>): Boolean {
+    return !forEach(Processor { t: Result ->
+      !predicate.test(t)
+    })
   }
 
   /**
    * @param transformation pure function
    */
   @Experimental
-  default <R> @NotNull Query<R> transforming(@NotNull Function<? super Result, ? extends Collection<? extends R>> transformation) {
-    return Queries.getInstance().transforming(this, transformation);
+  fun <R> transforming(transformation: Function<in Result, out Collection<R>>): Query<R> {
+    return Queries.getInstance().transforming(this, transformation)
   }
 
   /**
    * @param mapper pure function
    */
   @Experimental
-  default @NotNull <R> Query<R> mapping(@NotNull Function<? super Result, ? extends R> mapper) {
-    return transforming(value -> Collections.singletonList(mapper.apply(value)));
+  fun <R> mapping(mapper: Function<in Result, out R>): Query<R> {
+    return transforming { value: Result ->
+      listOf(mapper.apply(value))
+    }
   }
 
   /**
    * @param predicate pure function
    */
   @Experimental
-  default @NotNull Query<Result> filtering(@NotNull Predicate<? super Result> predicate) {
-    return transforming(value -> predicate.test(value) ? Collections.singletonList(value) : Collections.emptyList());
+  fun filtering(predicate: Predicate<in Result>): Query<Result> {
+    return transforming { value ->
+      if (predicate.test(value)) {
+        listOf(value)
+      }
+      else {
+        emptyList()
+      }
+    }
   }
 
   /**
    * @param mapper pure function
    */
   @Experimental
-  default @NotNull <R> Query<R> flatMapping(@NotNull Function<? super Result, ? extends Query<? extends R>> mapper) {
-    return Queries.getInstance().flatMapping(this, mapper);
+  fun <R> flatMapping(mapper: Function<in Result, out Query<out R>>): Query<R> {
+    return Queries.getInstance().flatMapping(this, mapper)
   }
 
   /**
-   * @return an equivalent query whose {@link #forEach} accepts thread-safe consumers, so it may call the consumer in parallel.
+   * @return an equivalent query whose [forEach] accepts thread-safe consumers, so it may call the consumer in parallel.
    */
   @Contract(pure = true)
-  default @NotNull Query<Result> allowParallelProcessing() {
-    return this;
+  fun allowParallelProcessing(): Query<Result> {
+    return this
+  }
+
+  @Deprecated(
+    "Don't use Query as Iterable. Call {@link #findAll} explicitly, but first,\n" +
+    "consider whether it's necessary to find all results at once, e.g., use {@link #anyMatch} or {@link #allMatch}",
+    ReplaceWith("findAll()"),
+  )
+  fun asIterable(): Iterable<Result> {
+    return findAll()
   }
 
   /**
-   * @deprecated don't use Query as Iterable. Call {@link #findAll} explicitly, but first,
-   * consider whether it's necessary to find all results at once, e.g., use {@link #anyMatch} or {@link #allMatch}
-   */
-  @Deprecated
-  default Iterable<Result> asIterable() {
-    return findAll();
-  }
-
-  /**
-   * @see Iterable#iterator
-   * @deprecated don't use Query as Iterable, the results are computed eagerly, which defeats the purpose
+   * @see Iterable.iterator
    */
   @ScheduledForRemoval
-  @Deprecated
-  @Override
-  default @NotNull Iterator<Result> iterator() {
-    return asIterable().iterator();
+  @Deprecated(
+    "Don't use Query as Iterable, the results are computed eagerly, which defeats the purpose",
+    ReplaceWith("asIterable().iterator()"),
+  )
+  override fun iterator(): Iterator<Result> {
+    @Suppress("DEPRECATION")
+    return asIterable().iterator()
   }
 
   /**
    * @see Iterable#forEach
-   * @deprecated don't use Query as Iterable, the results are computed eagerly, which defeats the purpose
    */
   @ScheduledForRemoval
-  @Deprecated
-  @Override
-  default void forEach(Consumer<? super Result> action) {
-    asIterable().forEach(action);
+  @Deprecated(
+    "Don't use Query as Iterable, the results are computed eagerly, which defeats the purpose",
+    ReplaceWith("asIterable().forEach(action)"),
+  )
+  override fun forEach(action: Consumer<in Result>) {
+    @Suppress("DEPRECATION")
+    asIterable().forEach(action)
   }
 
   /**
    * @see Iterable#spliterator
-   * @deprecated don't use Query as Iterable, the results are computed eagerly, which defeats the purpose
+   * @deprecated
    */
   @ScheduledForRemoval
-  @Deprecated
-  @Override
-  default Spliterator<Result> spliterator() {
-    return asIterable().spliterator();
+  @Deprecated(
+    "Don't use Query as Iterable, the results are computed eagerly, which defeats the purpose",
+    ReplaceWith("asIterable().spliterator()"),
+  )
+  override fun spliterator(): Spliterator<Result> {
+    @Suppress("DEPRECATION")
+    return asIterable().spliterator()
   }
 
   @Experimental
-  default @NotNull Query<Result> interceptWith(@NotNull QueryExecutionInterceptor interceptor) {
-    Query<Result> query = this;
-    return new AbstractQuery<Result>() {
-      @Override
-      protected boolean processResults(@NotNull Processor<? super Result> consumer) {
-        return interceptor.intercept(() -> delegateProcessResults(query, consumer));
+  fun interceptWith(interceptor: QueryExecutionInterceptor): Query<Result> {
+    val query = this
+    return object : AbstractQuery<@UnsafeVariance Result>() {
+      override fun processResults(consumer: Processor<in Result>): Boolean {
+        return interceptor.intercept {
+          delegateProcessResults(query, consumer)
+        }
       }
-    };
+    }
   }
 
-  /**
-   * @deprecated use {@link #interceptWith}
-   */
   @ScheduledForRemoval
-  @Deprecated
   @Experimental
-  default @NotNull Query<Result> wrap(@NotNull QueryWrapper<Result> wrapper) {
-    Query<Result> query = this;
-    return new AbstractQuery<Result>() {
-      @Override
-      protected boolean processResults(@NotNull Processor<? super Result> consumer) {
-        return wrapper.wrapExecution(c -> AbstractQuery.delegateProcessResults(query, c), consumer);
+  @Deprecated("use {@link #interceptWith}")
+  fun wrap(wrapper: @Suppress("DEPRECATION") QueryWrapper<Result>): Query<Result> {
+    val query: Query<Result> = this
+    return object : AbstractQuery<Result>() {
+      override fun processResults(consumer: Processor<in Result>): Boolean {
+        return wrapper.wrapExecution(Processor { c -> delegateProcessResults(query, c) }, consumer)
       }
-    };
+    }
   }
 }

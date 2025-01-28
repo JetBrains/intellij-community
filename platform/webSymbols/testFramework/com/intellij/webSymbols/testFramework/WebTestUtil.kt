@@ -494,7 +494,7 @@ fun CodeInsightTestFixture.assertUnresolvedReference(signature: String, okWithNo
   }
 }
 
-fun CodeInsightTestFixture.findUsages(target: SearchTarget): MutableCollection<out Usage> {
+fun CodeInsightTestFixture.findUsages(target: SearchTarget): Collection<Usage> {
   val project = project
 
   val searchScope = coalesce<SearchScope>(target.maximalSearchScope, GlobalSearchScope.allScope(project))

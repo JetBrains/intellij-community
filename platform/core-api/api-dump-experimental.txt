@@ -487,6 +487,7 @@ f:com.intellij.util.ExecutorsQuery
 - f:assertDoesNotAffectHighlighting():V
 com.intellij.util.Query
 - java.lang.Iterable
+- kotlin.jvm.internal.markers.KMappedMarker
 - *:filtering(java.util.function.Predicate):com.intellij.util.Query
 - *:flatMapping(java.util.function.Function):com.intellij.util.Query
 - *:interceptWith(com.intellij.util.QueryExecutionInterceptor):com.intellij.util.Query

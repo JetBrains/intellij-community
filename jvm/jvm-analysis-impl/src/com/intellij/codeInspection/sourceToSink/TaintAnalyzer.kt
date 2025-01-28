@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink
 
 import com.intellij.codeInspection.dataFlow.HardcodedContracts
@@ -1028,7 +1028,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
               .mapping { it.element.parent as? PsiMethodCallExpression }
               .mapping { it?.argumentList?.expressions }, PsiModificationTracker.MODIFICATION_COUNT)
         }).filtering { args -> args != null && args.size > paramIdx }
-        .mapping { args -> args[paramIdx].toUElement() as? UExpression }
+        .mapping { args -> args!![paramIdx].toUElement() as? UExpression }
         .findAll()
     }
 

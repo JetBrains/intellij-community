@@ -5713,9 +5713,11 @@ f:com.intellij.util.PsiIconUtil
 - sf:getIconFromProviders(com.intellij.psi.PsiElement,I):javax.swing.Icon
 - sf:getProvidersIcon(com.intellij.psi.PsiElement,I):javax.swing.Icon
 f:com.intellij.util.QueriesKt
+- sf:filteringNotNull(com.intellij.util.Query):com.intellij.util.Query
 - sf:mappingNotNull(com.intellij.util.Query,kotlin.jvm.functions.Function1):com.intellij.util.Query
 com.intellij.util.Query
 - java.lang.Iterable
+- kotlin.jvm.internal.markers.KMappedMarker
 - allMatch(java.util.function.Predicate):Z
 - allowParallelProcessing():com.intellij.util.Query
 - anyMatch(java.util.function.Predicate):Z
