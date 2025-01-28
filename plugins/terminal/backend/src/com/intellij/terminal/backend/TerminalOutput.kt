@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.block.reworked.TerminalState
 import org.jetbrains.plugins.terminal.block.reworked.session.*
 import org.jetbrains.plugins.terminal.block.ui.withLock
 
@@ -81,7 +82,7 @@ internal fun createTerminalOutputFlow(
     }
   })
 
-  var curState = TerminalStateDto(
+  var curState = TerminalState(
     isCursorVisible = terminalDisplay.isCursorVisible,
     cursorShape = terminalDisplay.cursorShape,
     mouseMode = terminalDisplay.mouseMode,
@@ -99,28 +100,28 @@ internal fun createTerminalOutputFlow(
     override fun arrowKeysModeChanged(isApplication: Boolean) {
       textBuffer.withLock {
         curState = curState.copy(isApplicationArrowKeys = isApplication)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState))
+        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun keypadModeChanged(isApplication: Boolean) {
       textBuffer.withLock {
         curState = curState.copy(isApplicationKeypad = isApplication)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState))
+        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun autoNewLineChanged(isEnabled: Boolean) {
       textBuffer.withLock {
         curState = curState.copy(isAutoNewLine = isEnabled)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState))
+        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun altSendsEscapeChanged(isEnabled: Boolean) {
       textBuffer.withLock {
         curState = curState.copy(isAltSendsEscape = isEnabled)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState))
+        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
@@ -132,7 +133,7 @@ internal fun createTerminalOutputFlow(
     override fun beforeAlternateScreenBufferChanged(isEnabled: Boolean) {
       textBuffer.withLock {
         curState = curState.copy(isAlternateScreenBuffer = isEnabled)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState))
+        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
   })
@@ -141,42 +142,42 @@ internal fun createTerminalOutputFlow(
     override fun cursorVisibilityChanged(isVisible: Boolean) {
       textBuffer.withLock {
         curState = curState.copy(isCursorVisible = isVisible)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState))
+        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun cursorShapeChanged(cursorShape: CursorShape?) {
       textBuffer.withLock {
         curState = curState.copy(cursorShape = cursorShape)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState))
+        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun mouseModeChanged(mode: MouseMode) {
       textBuffer.withLock {
         curState = curState.copy(mouseMode = mode)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState))
+        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun mouseFormatChanged(format: MouseFormat) {
       textBuffer.withLock {
         curState = curState.copy(mouseFormat = format)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState))
+        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun bracketedPasteModeChanged(isEnabled: Boolean) {
       textBuffer.withLock {
         curState = curState.copy(isBracketedPasteMode = isEnabled)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState))
+        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
     override fun windowTitleChanged(title: String) {
       textBuffer.withLock {
         curState = curState.copy(windowTitle = title)
-        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState))
+        collectAndSendEvents(contentUpdateEvent = null, otherEvent = TerminalStateChangedEvent(curState.toDto()))
       }
     }
 
