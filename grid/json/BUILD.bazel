@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.grid.impl.json` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "grid-impl-json_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "grid-impl-json",
+  module_name = "intellij.grid.impl.json",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@community//platform/core-api:core",
+    "//dbe/grid/impl",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//json",
+  ],
+  runtime_deps = [":grid-impl-json_resources"]
+)
+### auto-generated section `build intellij.grid.impl.json` end

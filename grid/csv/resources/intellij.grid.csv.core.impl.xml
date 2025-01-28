@@ -1,0 +1,10 @@
+<idea-plugin>
+  <dependencies>
+     <module name="intellij.grid.types"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.database.settings.CsvSettings"/>
+    <fileType name="CSV/TSV" implementationClass="com.intellij.database.csv.CsvFileType" fieldName="INSTANCE" extensions="csv;tsv"/>
+  </extensions>
+</idea-plugin>

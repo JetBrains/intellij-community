@@ -403,6 +403,12 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/grazie/src/test/intellij.grazie.tests.iml" filepath="$PROJECT_DIR$/plugins/grazie/src/test/intellij.grazie.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/grazie/xml/intellij.grazie.xml.iml" filepath="$PROJECT_DIR$/plugins/grazie/xml/intellij.grazie.xml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/grazie/yaml/intellij.grazie.yaml.iml" filepath="$PROJECT_DIR$/plugins/grazie/yaml/intellij.grazie.yaml.iml" />
+      <module fileurl="file://$PROJECT_DIR$/grid/api/intellij.grid.iml" filepath="$PROJECT_DIR$/grid/api/intellij.grid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/grid/core-impl/intellij.grid.core.impl.iml" filepath="$PROJECT_DIR$/grid/core-impl/intellij.grid.core.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/grid/csv/intellij.grid.csv.core.impl.iml" filepath="$PROJECT_DIR$/grid/csv/intellij.grid.csv.core.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/grid/impl/intellij.grid.impl.iml" filepath="$PROJECT_DIR$/grid/impl/intellij.grid.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/grid/json/intellij.grid.impl.json.iml" filepath="$PROJECT_DIR$/grid/json/intellij.grid.impl.json.iml" />
+      <module fileurl="file://$PROJECT_DIR$/grid/types/intellij.grid.types.iml" filepath="$PROJECT_DIR$/grid/types/intellij.grid.types.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/intellij.groovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/intellij.groovy.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/rt-constants/intellij.groovy.constants.rt.iml" filepath="$PROJECT_DIR$/plugins/groovy/rt-constants/intellij.groovy.constants.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/dev/intellij.groovy.dev/intellij.groovy.dev.iml" filepath="$PROJECT_DIR$/plugins/dev/intellij.groovy.dev/intellij.groovy.dev.iml" />

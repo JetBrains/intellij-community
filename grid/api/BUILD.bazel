@@ -1,0 +1,79 @@
+### auto-generated section `build intellij.grid` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "grid",
+  module_name = "intellij.grid",
+  visibility = ["//visibility:public"],
+  srcs = glob(["api/src/**/*.kt", "api/src/**/*.java"], allow_empty = True),
+  deps = [
+    "@community//platform/util",
+    "@community//platform/core-api:core",
+  ]
+)
+### auto-generated section `build intellij.grid` end
+
+### auto-generated section `build intellij.grid.core.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "grid-core-impl_resources",
+  files = glob(["core-impl/resources/**/*"]),
+  strip_prefix = "core-impl/resources"
+)
+
+jvm_library(
+  name = "grid-core-impl",
+  module_name = "intellij.grid.core.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["core-impl/src/**/*.kt", "core-impl/src/**/*.java", "core-impl/gen/**/*.kt", "core-impl/gen/**/*.java"], allow_empty = True),
+  deps = [
+    "//dbe/grid:grid-types",
+    "//dbe/grid/csv:csv-core-impl",
+    "//dbe/grid",
+    "@community//platform/util",
+    "@community//platform/util/coroutines",
+    "@community//platform/util/jdom",
+    "@community//platform/core-api:core",
+    "@community//platform/core-ui",
+    "@community//platform/util/concurrency",
+    "@lib//:kotlin-stdlib",
+    "@community//platform/ide-core",
+    "@community//platform/ide-core-impl",
+    "@community//platform/core-impl",
+    "@community//platform/editor-ui-api:editor",
+    "@community//platform/projectModel-api:projectModel",
+    "@community//platform/analysis-api:analysis",
+    "@lib//:fastutil-min",
+  ],
+  exports = [
+    "//dbe/grid:grid-types",
+    "//dbe/grid/csv:csv-core-impl",
+    "//dbe/grid",
+  ],
+  runtime_deps = [":grid-core-impl_resources"]
+)
+### auto-generated section `build intellij.grid.core.impl` end
+
+### auto-generated section `build intellij.grid.types` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "grid-types_resources",
+  files = glob(["types/resources/**/*"]),
+  strip_prefix = "types/resources"
+)
+
+jvm_library(
+  name = "grid-types",
+  module_name = "intellij.grid.types",
+  visibility = ["//visibility:public"],
+  srcs = glob(["types/src/**/*.kt", "types/src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@community//platform/util-rt",
+    "@lib//:jetbrains-annotations",
+  ],
+  runtime_deps = [":grid-types_resources"]
+)
+### auto-generated section `build intellij.grid.types` end
