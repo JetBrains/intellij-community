@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.actions.EditorActionUtil
 import org.jetbrains.plugins.terminal.block.TerminalPromotedEditorAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 
 internal class TerminalLineUpAction : TerminalPromotedEditorAction(LineUpHandler())
 
@@ -18,15 +17,15 @@ internal class TerminalPageUpAction : TerminalPromotedEditorAction(PageUpHandler
 
 internal class TerminalPageDownAction : TerminalPromotedEditorAction(PageDownHandler())
 
-private class PageUpHandler : Handler(Unit.PAGE, -1)
+private class PageUpHandler : ScrollingHandler(Unit.PAGE, -1)
 
-private class PageDownHandler : Handler(Unit.PAGE, +1)
+private class PageDownHandler : ScrollingHandler(Unit.PAGE, +1)
 
-private class LineUpHandler : Handler(Unit.LINE, -1)
+private class LineUpHandler : ScrollingHandler(Unit.LINE, -1)
 
-private class LineDownHandler : Handler(Unit.LINE, +1)
+private class LineDownHandler : ScrollingHandler(Unit.LINE, +1)
 
-private abstract class Handler(private val unit: Unit, private val direction: Int) : EditorActionHandler() {
+private abstract class ScrollingHandler(private val unit: Unit, private val direction: Int) : EditorActionHandler() {
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
     return editor.isOutputModelEditor
   }
