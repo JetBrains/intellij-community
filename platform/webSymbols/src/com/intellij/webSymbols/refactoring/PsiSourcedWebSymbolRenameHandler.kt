@@ -1,5 +1,6 @@
 package com.intellij.webSymbols.refactoring
 
+import com.intellij.model.Symbol
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
@@ -31,8 +32,9 @@ class PsiSourcedWebSymbolRenameHandler : RenameHandler {
 
   override fun isAvailableOnDataContext(dataContext: DataContext): Boolean =
     dataContext.getData(CommonDataKeys.SYMBOLS)
-      ?.filterIsInstance<PsiSourcedWebSymbol>()
-      ?.mapNotNull { it.source }
-      ?.count { it is PsiNamedElement && it !is SyntheticElement } == 1
+      ?.count { acceptSymbolForPsiSourcedWebSymbolRenameHandler(it) } == 1
 
 }
+
+internal fun acceptSymbolForPsiSourcedWebSymbolRenameHandler(symbol: Symbol): Boolean =
+  symbol is PsiSourcedWebSymbol && symbol.source is PsiNamedElement && symbol.source !is SyntheticElement
