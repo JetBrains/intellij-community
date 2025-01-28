@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.TerminalTitle
+import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.terminal.ui.TtyConnectorAccessor
 import com.intellij.ui.components.panels.Wrapper
@@ -53,6 +54,13 @@ internal class TerminalWidgetImpl(
     wrapper.setContent(view.component)
     Disposer.register(parent, this)
     Disposer.register(this, view)
+  }
+
+  override val session: TerminalSession?
+    get() = TODO()
+
+  override fun connectToSession(session: TerminalSession) {
+    TODO("Not yet implemented")
   }
 
   @RequiresEdt(generateAssertion = false)

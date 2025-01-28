@@ -6,9 +6,11 @@ import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.TerminalTitle
+import com.intellij.terminal.session.TerminalSession
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
@@ -33,6 +35,12 @@ interface TerminalWidget : ComponentContainer {
 
   val ttyConnector: TtyConnector?
     get() = ttyConnectorAccessor.ttyConnector
+
+  @get:ApiStatus.Internal
+  val session: TerminalSession?
+
+  @ApiStatus.Internal
+  fun connectToSession(session: TerminalSession)
 
   fun writePlainMessage(message: @Nls String)
 
