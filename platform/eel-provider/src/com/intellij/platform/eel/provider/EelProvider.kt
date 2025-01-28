@@ -78,6 +78,7 @@ val localEel: LocalEelApi by lazy {
 }
 
 fun EelDescriptor.upgradeBlocking(): EelApi {
+  if (this === LocalEelDescriptor) return localEel
   return runBlockingMaybeCancellable { upgrade() }
 }
 
