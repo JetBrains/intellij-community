@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelPlatform.*
@@ -28,10 +28,21 @@ sealed interface EelPlatform {
 
   sealed interface Posix : EelPlatform
 
-  class Linux(override val arch: Arch) : Posix
-  class Darwin(override val arch: Arch) : Posix
-  class Windows(override val arch: Arch) : EelPlatform
-  class FreeBSD(override val arch: Arch) : Posix
+  class Linux(override val arch: Arch) : Posix {
+    override fun toString(): String = "${javaClass.simpleName} $arch"
+  }
+
+  class Darwin(override val arch: Arch) : Posix {
+    override fun toString(): String = "${javaClass.simpleName} $arch"
+  }
+
+  class Windows(override val arch: Arch) : EelPlatform {
+    override fun toString(): String = "${javaClass.simpleName} $arch"
+  }
+
+  class FreeBSD(override val arch: Arch) : Posix {
+    override fun toString(): String = "${javaClass.simpleName} $arch"
+  }
 
   companion object {
     fun getFor(os: String, arch: String): EelPlatform? =
