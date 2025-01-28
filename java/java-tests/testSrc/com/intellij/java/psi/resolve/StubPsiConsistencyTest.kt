@@ -1,12 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.resolve
 
+import com.intellij.find.ngrams.TrigramIndex
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.PsiManagerEx
@@ -22,17 +26,21 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.utils.editor.commitToPsi
+import com.intellij.testFramework.utils.io.createFile
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.indexing.impl.InputData
+import com.intellij.util.io.createDirectories
 import com.intellij.util.io.write
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.minutes
 
 const val originalText1 = "class Test {}"
-const val originalText2 = "class F2Test {}"
+const val originalText2 = "class F2Test { int foo = 0; void bar() {} }"
 const val newText = "package x; import java.lang.Object; import java.lang.Integer; class Test {}"
 
 @TestApplication
@@ -109,6 +117,78 @@ internal class StubPsiConsistencyTest {
       val elements = StubIndex.getElements(JavaStubIndexKeys.CLASS_SHORT_NAMES, "Test", project, scopeEverything, PsiClass::class.java)
       assertEquals(1, elements.size)
       assertEquals("Test", elements.first().name)
+    }
+  }
+
+  //@Test IJPL-176118
+  fun testDiskUpdateAfterMemUpdate() = timeoutRunBlocking(timeout = 1.minutes) {
+    val project = projectFixture.get()
+
+    val filesDir = psiFile1Fixture.get().virtualFile.toNioPathOrNull()!!.parent
+    val testFilesDir = filesDir.resolve("testfiles")
+    testFilesDir.createDirectories()
+
+    val fbi = FileBasedIndex.getInstance() as FileBasedIndexImpl
+    val trigramIndex = fbi.getIndex(TrigramIndex.INDEX_ID)
+
+    val mem = testFilesDir.createFile("mem-1")
+    val disk = testFilesDir.createFile("disk-1")
+
+    val memFile = VfsUtil.findFile(mem, true)!!
+    val diskFile = VfsUtil.findFile(disk, true)!!
+    memFile as VirtualFileWithId
+    diskFile as VirtualFileWithId
+
+    IndexingTestUtil.suspendUntilIndexesAreReady(project)
+    val scopeEverything = readAction { GlobalSearchScope.everythingScope(project) }
+    readAction {
+      assertTrue(scopeEverything.contains(memFile))
+      assertTrue(scopeEverything.contains(diskFile))
+    }
+
+    val memUpdate = trigramIndex.prepareUpdate(memFile.id, InputData(mapOf(42 to null)))
+    val diskUpdate = trigramIndex.prepareUpdate(diskFile.id, InputData(mapOf(43 to null)))
+
+    ProgressManager.getInstance().computeInNonCancelableSection<Boolean, Exception> { // only because we have an assert
+      fbi.runUpdate(true, memUpdate)
+      fbi.runUpdate(false, diskUpdate)
+    }
+
+    readAction {
+      val filesWith42 = ArrayList<VirtualFile>()
+      fbi.getFilesWithKey(TrigramIndex.INDEX_ID, setOf(42), filesWith42::add, scopeEverything)
+      assertTrue(filesWith42.contains(memFile), filesWith42.toString())
+
+      val filesWith43 = ArrayList<VirtualFile>()
+      fbi.getFilesWithKey(TrigramIndex.INDEX_ID, setOf(43), filesWith43::add, scopeEverything)
+      assertTrue(filesWith43.contains(diskFile), filesWith43.toString())
+
+      val memData = fbi.getFileData(TrigramIndex.INDEX_ID, memFile, project)
+      assertEquals(1, memData.size)
+      assertEquals(42, memData.keys.first())
+
+      val diskData = fbi.getFileData(TrigramIndex.INDEX_ID, diskFile, project)
+      assertEquals(1, diskData.size)
+      assertEquals(43, diskData.keys.first())
+    }
+
+    fbi.cleanupMemoryStorage(false)
+
+    readAction {
+      val filesWith42 = ArrayList<VirtualFile>()
+      fbi.getFilesWithKey(TrigramIndex.INDEX_ID, setOf(42), filesWith42::add, scopeEverything)
+      assertFalse(filesWith42.contains(memFile), filesWith42.toString())
+
+      val filesWith43 = ArrayList<VirtualFile>()
+      fbi.getFilesWithKey(TrigramIndex.INDEX_ID, setOf(43), filesWith43::add, scopeEverything)
+      assertTrue(filesWith43.contains(diskFile), filesWith43.toString())
+
+      val memData = fbi.getFileData(TrigramIndex.INDEX_ID, memFile, project)
+      assertEquals(0, memData.size)
+
+      val diskData = fbi.getFileData(TrigramIndex.INDEX_ID, diskFile, project)
+      assertEquals(1, diskData.size)
+      assertEquals(43, diskData.keys.first())
     }
   }
 

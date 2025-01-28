@@ -259,7 +259,7 @@ public abstract class StubIndexEx extends StubIndex {
 
         for (VirtualFile file : filesWithProblems) {
           int fileId = FileBasedIndex.getFileId(file);
-          index.mapInputAndPrepareUpdate(fileId, null).update();
+          index.mapInputAndPrepareUpdate(fileId, null).update(); // update what? In-memory or persistent?
         }
 
         for (VirtualFile file : filesWithProblems) {

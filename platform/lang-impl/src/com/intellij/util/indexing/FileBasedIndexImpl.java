@@ -1239,6 +1239,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   };
 
+  @TestOnly
+  public boolean runUpdate(boolean inMemory, StorageUpdate update) {
+    return myStorageBufferingHandler.runUpdate(inMemory, update);
+  }
+
   @Internal
   @Override
   public void runCleanupAction(@NotNull Runnable cleanupAction) {
@@ -1608,7 +1613,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Internal
-  @Nullable("null in case index update is not needed") <FileIndexMetaData> SingleIndexValueApplier<FileIndexMetaData> createSingleIndexValueApplier(
+  @Nullable("null in case index update is not needed")
+  <FileIndexMetaData> SingleIndexValueApplier<FileIndexMetaData> createSingleIndexValueApplier(
     @NotNull ID<?, ?> indexId,
     @NotNull VirtualFile file,
     int inputId,
