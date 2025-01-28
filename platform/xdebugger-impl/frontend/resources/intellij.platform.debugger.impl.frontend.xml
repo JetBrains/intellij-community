@@ -9,9 +9,13 @@
             use-shortcut-of="ToggleBookmark">
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Frontend"/>
     </action>
+    <action id="XDebugger.SetValue.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXSetValueAction">
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Frontend" anchor="after"
+                    relative-to-action="MarkObjectAction.Frontend"/>
+    </action>
     <action id="XDebugger.CopyValue.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXCopyValueAction"
             use-shortcut-of="$Copy">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Frontend" anchor="after" relative-to-action="MarkObjectAction.Frontend"/>
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Frontend" anchor="after" relative-to-action="XDebugger.SetValue.Frontend"/>
     </action>
     <action id="XDebugger.CompareValueWithClipboard.Frontend"
             class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXCompareWithClipboardAction">
