@@ -16559,6 +16559,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/supertypeInitialization/someParametersAlreadyExist.kt");
         }
 
+        @TestMetadata("someParametersAlreadyExistNoTypeConflicts.kt")
+        public void testSomeParametersAlreadyExistNoTypeConflicts() throws Exception {
+            runTest("testData/quickfix/supertypeInitialization/someParametersAlreadyExistNoTypeConflicts.kt");
+        }
+
         @TestMetadata("value.kt")
         public void testValue() throws Exception {
             runTest("testData/quickfix/supertypeInitialization/value.kt");
@@ -16582,6 +16587,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("vararg4.kt")
         public void testVararg4() throws Exception {
             runTest("testData/quickfix/supertypeInitialization/vararg4.kt");
+        }
+
+        @TestMetadata("vararg5.kt")
+        public void testVararg5() throws Exception {
+            runTest("testData/quickfix/supertypeInitialization/vararg5.kt");
         }
     }
 

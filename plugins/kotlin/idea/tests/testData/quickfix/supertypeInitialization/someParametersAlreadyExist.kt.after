@@ -9,4 +9,3 @@ class C(p: Int, p2: Int, p3: String, p4: Any, p5: String, val p6: Int, p1: Int, 
     Base<String>(p1, p2, p3, p4, p5, p6)
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SuperClassNotInitialized$AddParametersFix
-// IGNORE_K2

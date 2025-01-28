@@ -6083,6 +6083,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/supertypeInitialization/someParametersAlreadyExist.kt");
         }
 
+        @TestMetadata("someParametersAlreadyExistNoTypeConflicts.kt")
+        public void testSomeParametersAlreadyExistNoTypeConflicts() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/supertypeInitialization/someParametersAlreadyExistNoTypeConflicts.kt");
+        }
+
         @TestMetadata("value.kt")
         public void testValue() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/supertypeInitialization/value.kt");
@@ -6106,6 +6111,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("vararg4.kt")
         public void testVararg4() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/supertypeInitialization/vararg4.kt");
+        }
+
+        @TestMetadata("vararg5.kt")
+        public void testVararg5() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/supertypeInitialization/vararg5.kt");
         }
     }
 

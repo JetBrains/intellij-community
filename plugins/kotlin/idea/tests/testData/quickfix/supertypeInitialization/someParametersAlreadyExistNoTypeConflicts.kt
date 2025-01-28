@@ -1,6 +1,7 @@
-// "Add constructor parameters from Base(Int, Int)" "true"
-open class Base(p1: Int, val p2: Int)
+// "Add constructor parameters from Base(Int, Int, String, List<String>)" "true"
+open class Base<T>(p1: Int, private val p2: Int, p3: T, private val p4: List<T>)
 
-class C private constructor(p1: Int, p2: Int) : Base<caret>(p1, p2)
+class C(p1: Int, p3: String) : Base<String><caret>
+
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SuperClassNotInitialized$AddParametersFix
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SuperClassNotInitializedFactories$AddParametersFix
