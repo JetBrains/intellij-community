@@ -13415,11 +13415,6 @@ a:com.intellij.openapi.roots.libraries.LibraryDetectionManager
 - a:processProperties(java.util.List,com.intellij.openapi.roots.libraries.LibraryDetectionManager$LibraryPropertiesProcessor):Z
 com.intellij.openapi.roots.libraries.LibraryDetectionManager$LibraryPropertiesProcessor
 - a:processProperties(com.intellij.openapi.roots.libraries.LibraryKind,com.intellij.openapi.roots.libraries.LibraryProperties):Z
-f:com.intellij.openapi.roots.libraries.LibraryNavigatable
-- com.intellij.pom.Navigatable
-- <init>(com.intellij.openapi.roots.libraries.Library,com.intellij.openapi.module.Module):V
-- canNavigate():Z
-- navigate(Z):V
 a:com.intellij.openapi.roots.libraries.LibraryPresentationProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - p:<init>(com.intellij.openapi.roots.libraries.LibraryKind):V
