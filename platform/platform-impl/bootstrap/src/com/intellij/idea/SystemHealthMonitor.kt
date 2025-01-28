@@ -1,12 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
-import com.intellij.CommonBundle
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.wsl.WslIjentAvailabilityService
 import com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsToggler
-import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.EditCustomVmOptionsAction
@@ -17,6 +15,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.notification.impl.NotificationFullContent
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
@@ -420,17 +419,20 @@ private suspend fun MultiRoutingFileSystemVmOptionsSetter.onApplicationActivated
     }
 
     else -> withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-      val doThat = Messages.OK == Messages.showOkCancelDialog(
-        null,
-        IdeBundle.message("ijent.wsl.fs.dialog.message"),
-        IdeBundle.message("ijent.wsl.fs.dialog.title"),
-        IdeBundle.message(if (ApplicationManager.getApplication().isRestartCapable) "ide.restart.action" else "ide.shutdown.action"),
-        CommonBundle.getCancelButtonText(),
-        AllIcons.General.Warning,
+      showNotification(
+        key = "ijent.wsl.fs.dialog.message",
+        suppressable = false,
+        action = object : NotificationAction(
+          if (ApplicationManager.getApplication().isRestartCapable)
+            IdeBundle.message("ijent.wsl.fs.dialog.restart.button")
+          else
+            IdeBundle.message("ijent.wsl.fs.dialog.shutdown.button")
+        ) {
+          override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+            ApplicationManagerEx.getApplicationEx().restart(true)
+          }
+        }
       )
-      if (doThat) {
-        ApplicationManagerEx.getApplicationEx().restart(true)
-      }
     }
   }
 }
