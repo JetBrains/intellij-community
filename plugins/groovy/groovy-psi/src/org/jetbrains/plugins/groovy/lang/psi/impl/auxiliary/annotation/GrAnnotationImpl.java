@@ -13,6 +13,7 @@ import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -161,7 +162,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
         return new TargetType[]{TargetType.CONSTRUCTOR};
       }
       else {
-        return new TargetType[]{TargetType.METHOD};
+        return addTypeUseIfApplicable(owner, TargetType.METHOD);
       }
     }
     if (owner instanceof GrVariableDeclaration) {
@@ -170,14 +171,14 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
         return TargetType.EMPTY_ARRAY;
       }
       if (variables[0] instanceof GrField || ResolveUtil.isScriptField(variables[0])) {
-        return new TargetType[]{TargetType.FIELD};
+        return addTypeUseIfApplicable(owner, TargetType.FIELD);
       }
       else {
-        return new TargetType[]{TargetType.LOCAL_VARIABLE};
+        return addTypeUseIfApplicable(owner, TargetType.LOCAL_VARIABLE);
       }
     }
     if (owner instanceof GrParameter) {
-      return new TargetType[]{TargetType.PARAMETER};
+      return addTypeUseIfApplicable(owner, TargetType.PARAMETER);
     }
     if (owner instanceof GrPackageDefinition) {
       return new TargetType[]{TargetType.PACKAGE};
@@ -191,6 +192,14 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
 
 
     return TargetType.EMPTY_ARRAY;
+  }
+
+  private static TargetType[] addTypeUseIfApplicable(@NotNull PsiElement element, @NotNull TargetType baseTargetType) {
+    if (GroovyConfigUtils.isAtLeastGroovy40(element)) {
+      return new TargetType[]{baseTargetType, TargetType.TYPE_USE};
+    } else {
+      return new TargetType[]{baseTargetType};
+    }
   }
 
   public static boolean isAnnotationApplicableTo(GrAnnotation annotation, TargetType @NotNull ... elementTypeFields) {
