@@ -104,7 +104,9 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
 
   private suspend fun downloadUpdates(downloaders: List<PluginDownloader>): List<PluginDownloader> {
     val downloadedList = mutableListOf<PluginDownloader>()
-    val enabledModules = PluginManagerCore.getPluginSet().moduleGraph.nodes.flatMap { listOf(it.pluginId) + it.pluginAliases }.toSet()
+    val enabledPluginsAndModules: Set<String> = PluginManagerCore.getPluginSet().getEnabledModules().flatMap {
+      listOf(it.moduleName ?: it.pluginId.idString) + it.pluginAliases.map { id -> id.idString }
+    }.toSet()
     val downloaders = downloaders.filter { downloader ->
       val existingUpdateState = updatesState[downloader.id]
       if (PluginManagerCore.getPlugin(downloader.id) == null) {
@@ -117,7 +119,7 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
       }
       val unsatisfiedDependencies = findUnsatisfiedDependencies(
         updateDescriptor = downloader.toPluginNode().dependencies,
-        enabledModules = enabledModules,
+        enabledPluginsAndModulesIds = enabledPluginsAndModules,
       )
       if (unsatisfiedDependencies.isNotEmpty()) {
         LOG.debug {
@@ -232,13 +234,13 @@ private val LOG
 @ApiStatus.Internal
 fun findUnsatisfiedDependencies(
   updateDescriptor: Collection<IdeaPluginDependency>,
-  enabledModules: Collection<PluginId>,
+  enabledPluginsAndModulesIds: Collection<String>,
 ): List<IdeaPluginDependency> {
   return updateDescriptor.filter { dep ->
     if (dep.isOptional) {
       return@filter false
     }
-    val dependencySatisfied = enabledModules.any { it == dep.pluginId }
+    val dependencySatisfied = enabledPluginsAndModulesIds.any { it == dep.pluginId.idString }
     !dependencySatisfied
   }
 }
