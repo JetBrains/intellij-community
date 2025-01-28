@@ -676,21 +676,16 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
 
     fun decouple(): Pair<String?, Throwable> {
       val detailsText = detailsText!!
-      if (detailsText == detailsText()) {
-        return first.message to first.throwable
-      }
-      else {
-        val className = first.throwable.javaClass.name
-        val p = detailsText.indexOf(className)
-        val (message, stacktrace) = when {
-          p == 0 -> null to detailsText
-          p > 0 && detailsText[p - 1] == '\n' -> {
-            detailsText.substring(0, p).trim { it <= ' ' } to detailsText.substring(p)
-          }
-          else -> "*** exception class was changed or removed" to detailsText
+      val p = detailsText.indexOf(first.throwable.javaClass.name)
+      val (message, stacktrace) = when {
+        p == 0 -> null to detailsText
+        p > 0 && detailsText[p - 1] == '\n' -> {
+          detailsText.substring(0, p).trim { it <= ' ' } to detailsText.substring(p)
         }
-        return message to RecoveredThrowable.fromString(stacktrace)
+        else -> "*** exception class was changed or removed" to detailsText
       }
+      val throwable = if (stacktrace == first.throwableText) first.throwable else RecoveredThrowable.fromString(stacktrace)
+      return message to throwable
     }
   }
 
