@@ -299,7 +299,11 @@ public final class HighlightUtil {
     if (highlightInfo == null) {
       return fix -> {};
     }
-    return fix -> highlightInfo.registerFix(fix.asIntention(), null, null, null, null);
+    return fix -> {
+      if (fix != null) {
+        highlightInfo.registerFix(fix.asIntention(), null, null, null, null);
+      }
+    };
   }
 
   static void registerReturnTypeFixes(@NotNull HighlightInfo.Builder info, @NotNull PsiMethod method, @NotNull PsiType expectedReturnType) {
