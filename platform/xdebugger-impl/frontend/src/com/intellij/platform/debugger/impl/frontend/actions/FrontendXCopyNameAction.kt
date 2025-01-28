@@ -1,0 +1,21 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.debugger.impl.frontend.actions
+
+import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.xdebugger.impl.actions.areFrontendDebuggerActionsEnabled
+import com.intellij.xdebugger.impl.ui.tree.actions.XCopyNameAction
+
+private class FrontendXCopyNameAction : XCopyNameAction(), ActionRemoteBehaviorSpecification.Frontend {
+  override fun update(e: AnActionEvent) {
+    if (!areFrontendDebuggerActionsEnabled()) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    e.presentation.text = ActionsBundle.message("action.XDebugger.CopyName.text")
+    e.presentation.description = ActionsBundle.message("action.XDebugger.CopyName.description")
+
+    super.update(e)
+  }
+}
