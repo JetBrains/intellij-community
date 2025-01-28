@@ -25,7 +25,7 @@ public final class TemplateManagerUtilBase {
   }
 
   @ApiStatus.Internal
-  public static void setTemplateState(UserDataHolder stateHolder, @Nullable TemplateStateBase value) {
+  public static void setTemplateState(@NotNull UserDataHolder stateHolder, @Nullable TemplateStateBase value) {
     stateHolder.putUserData(TEMPLATE_STATE_KEY, value);
   }
 
