@@ -42,6 +42,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCompatibleDataProvider {
   private static final Logger LOG = Logger.getInstance(JBTerminalWidget.class);
@@ -409,6 +410,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
     @Override
     public void setShellCommand(@Nullable List<String> command) {
       widget().setShellCommand(command);
+    }
+
+    @Override
+    public @NotNull CompletableFuture<@NotNull TermSize> getTerminalSizeInitializedFuture() {
+      throw new IllegalStateException("getTerminalSizeInitializedFuture is not supported in TerminalWidgetBridge");
     }
   }
 }

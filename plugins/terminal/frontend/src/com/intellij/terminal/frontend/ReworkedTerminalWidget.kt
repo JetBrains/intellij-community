@@ -47,6 +47,10 @@ internal class ReworkedTerminalWidget(
     sessionFuture.complete(session)
   }
 
+  override fun getTerminalSizeInitializedFuture(): CompletableFuture<TermSize> {
+    return view.getTerminalSizeInitializedFuture().thenApply { termSize }
+  }
+
   override fun getComponent(): JComponent {
     return view.component
   }

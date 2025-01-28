@@ -12,6 +12,7 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
 interface TerminalWidget : ComponentContainer {
@@ -22,6 +23,12 @@ interface TerminalWidget : ComponentContainer {
    * null, if unavailable, e.g. the component is not shown or not laid out yet
    */
   val termSize: TermSize?
+
+  /**
+   * Returns the future that will be completed once the widget's component is added to the UI hierarchy and resized.
+   */
+  @ApiStatus.Experimental
+  fun getTerminalSizeInitializedFuture(): CompletableFuture<TermSize>
 
   /**
    * Command used to run the session related to this widget

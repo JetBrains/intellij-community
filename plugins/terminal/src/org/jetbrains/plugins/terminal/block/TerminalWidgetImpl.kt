@@ -140,6 +140,10 @@ internal class TerminalWidgetImpl(
     error("connectToSession is not supported in TerminalWidgetImpl, use connectToTty instead")
   }
 
+  override fun getTerminalSizeInitializedFuture(): CompletableFuture<TermSize> {
+    error("getTerminalSizeInitializedFuture is not supported in TerminalWidgetImpl")
+  }
+
   private class TerminalPlaceholder : TerminalContentView {
 
     private val postponedTerminationCallbackInfos: MutableList<Pair<Runnable, Disposable>> = CopyOnWriteArrayList()
