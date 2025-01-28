@@ -5466,6 +5466,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnClassNoClassObject2.kt");
                     }
 
+                    @TestMetadata("extensionFunOnGenericType.kt")
+                    public void testExtensionFunOnGenericType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnGenericType.kt");
+                    }
+
                     @TestMetadata("extensionFunOnInterface.kt")
                     public void testExtensionFunOnInterface() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/extension/extensionFunOnInterface.kt");

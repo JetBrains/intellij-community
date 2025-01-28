@@ -62,18 +62,20 @@ object CreateKotlinCallableActionTextBuilder {
         analyze(request.call) {
             val receiverSymbol: KaSymbol?
             val receiverTypeText: String
+
+            val renderer = if (request.isExtension) RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT else RAW_RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT
             if (request.receiverExpression == null) {
                 if (request.receiverType == null) return "" to ""
                 receiverSymbol = null
-                receiverTypeText = request.receiverType.render(RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT, Variance.INVARIANT)
+                receiverTypeText = request.receiverType.render(renderer, Variance.INVARIANT)
             } else {
                 receiverSymbol = request.receiverExpression.resolveExpression()
                 val receiverType = request.receiverType ?: request.receiverExpression.expressionType
                 val recPackageFqName = request.receiverExpression.expressionType?.convertToClass()?.classIdIfNonLocal?.packageFqName
                 val addedPackage = if (recPackageFqName == container.containingKtFile.packageFqName || recPackageFqName == null || recPackageFqName.asString().startsWith("kotlin")) "" else recPackageFqName.asString()+"."
                 // Since receiverExpression.getKtType() returns `kotlin/Unit` for a companion object, we first try the symbol resolution and its type rendering.
-                val renderedReceiver = receiverSymbol?.renderAsReceiver(request.isAbstractClassOrInterface, receiverType)
-                    ?: receiverType?.render(RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT, Variance.INVARIANT)
+                val renderedReceiver = receiverSymbol?.renderAsReceiver(request.isAbstractClassOrInterface, receiverType, renderer)
+                    ?: receiverType?.render(renderer, Variance.INVARIANT)
                     ?: request.receiverExpression.text
                 receiverTypeText = addedPackage + renderedReceiver
             }
@@ -88,10 +90,10 @@ object CreateKotlinCallableActionTextBuilder {
 
     context (KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun KaSymbol.renderAsReceiver(isAbstract: Boolean, ktType: KaType?): String? {
+    private fun KaSymbol.renderAsReceiver(isAbstract: Boolean, ktType: KaType?, renderer: KaTypeRenderer): String? {
         return when (this) {
             is KaCallableSymbol -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract)
-                ?.render(RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT, Variance.INVARIANT)
+                ?.render(renderer, Variance.INVARIANT)
 
             is KaClassLikeSymbol -> classId?.shortClassName?.asString() ?: render(KaDeclarationRendererForSource.WITH_SHORT_NAMES)
             else -> null
@@ -106,19 +108,33 @@ object CreateKotlinCallableActionTextBuilder {
 
     // We must use short names of types for create-from-usage quick-fix (or IntentionAction) text.
     @KaExperimentalApi
+    private val RAW_RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT: KaTypeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
+        classIdRenderer = createClassIdRenderer(true)
+    }
+
+    @KaExperimentalApi
     private val RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT: KaTypeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
-        classIdRenderer = object : KaClassTypeQualifierRenderer {
-            override fun renderClassTypeQualifier(
-                analysisSession: KaSession,
-                type: KaType,
-                qualifiers: List<KaClassTypeQualifier>,
-                typeRenderer: KaTypeRenderer,
-                printer: PrettyPrinter
-            ) {
-                printer.append(qualifiers.joinToString(separator = ".") { it.name.asString() })
+        classIdRenderer = createClassIdRenderer(false)
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    private fun createClassIdRenderer(asRaw: Boolean): KaClassTypeQualifierRenderer = object : KaClassTypeQualifierRenderer {
+        override fun renderClassTypeQualifier(
+            analysisSession: KaSession,
+            type: KaType,
+            qualifiers: List<KaClassTypeQualifier>,
+            typeRenderer: KaTypeRenderer,
+            printer: PrettyPrinter
+        ) {
+            printer.append(qualifiers.joinToString(separator = ".") { it.name.asString() })
+            if (!asRaw && type is KaClassType) {
+                printer.printCollectionIfNotEmpty(type.typeArguments, prefix = "<", postfix = ">", separator = ", ", renderItem = {
+                    typeRenderer.typeProjectionRenderer.renderTypeProjection(analysisSession, it, typeRenderer, this)
+                })
             }
         }
     }
+
 
     context (KaSession)
     fun renderCandidatesOfReturnType(request: CreateMethodRequest, container: KtElement): List<String> {
