@@ -105,19 +105,17 @@ public final class JBCefApp {
     }
 
     if (RegistryManager.getInstance().is(REGISTRY_REMOTE_KEY)) {
-      boolean isTemporaryDisabled = false;
-      if (!Boolean.getBoolean("force_enable_out_of_process_jcef")) {
-        isTemporaryDisabled = true;
+      final String PROPERTY_NAME = "jcef.remote.enabled";
+      final String isRemoteEnabledSystemProp = System.getProperty(PROPERTY_NAME);
+      if (isRemoteEnabledSystemProp != null) {
+        final boolean val = isRemoteEnabledSystemProp.trim().compareToIgnoreCase("true") == 0;
+        LOG.info(String.format("Force %s out-of-process jcef mode.", val ? "enabled" : "disabled"));
+      } else {
         if (SystemInfo.isWayland)
           LOG.debug("Out-of-process jcef mode is temporarily disabled in Wayland"); // TODO: fix https://youtrack.jetbrains.com/issue/IJPL-161273
-        else if (SystemInfo.isWindows)
-          LOG.debug("Out-of-process jcef mode is temporarily disabled in Windows");
         else
-          isTemporaryDisabled = false;
+          System.setProperty(PROPERTY_NAME, "true");
       }
-
-      if (!isTemporaryDisabled)
-        System.setProperty("jcef.remote.enabled", "true");
     }
 
     Boolean result = null;
