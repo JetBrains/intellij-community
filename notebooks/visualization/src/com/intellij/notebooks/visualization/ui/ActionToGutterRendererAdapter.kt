@@ -17,6 +17,8 @@ class ActionToGutterRendererAdapter(private val action: AnAction) : GutterIconRe
     return icon.hashCode()
   }
 
+  override fun getAlignment(): Alignment = Alignment.RIGHT
+
   override fun getIcon(): Icon = icon
 
   override fun getClickAction(): AnAction {
