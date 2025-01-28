@@ -6,4 +6,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <actionPromoter implementation="com.intellij.terminal.frontend.action.SendShortcutToTerminalActionPromoter"/>
   </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <terminalWidgetProvider implementation="com.intellij.terminal.frontend.ReworkedTerminalWidgetProvider"/>
+  </extensions>
 </idea-plugin>

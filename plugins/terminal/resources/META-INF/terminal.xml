@@ -135,6 +135,8 @@
                     interface="org.jetbrains.plugins.terminal.block.output.highlighting.TerminalCommandBlockHighlighterProvider" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.escapeHandler"
                     interface="org.jetbrains.plugins.terminal.action.TerminalEscapeHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalWidgetProvider" dynamic="true"
+                    interface="org.jetbrains.plugins.terminal.TerminalWidgetProvider"/>
   </extensionPoints>
 
   <projectListeners>

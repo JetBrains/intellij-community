@@ -63,6 +63,7 @@ import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
 import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.block.BlockTerminalPromotionService;
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionStartHelper;
 import org.jetbrains.plugins.terminal.ui.TerminalContainer;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
@@ -75,6 +76,9 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+
+import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY;
+import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY;
 
 @Service(Service.Level.PROJECT)
 public final class TerminalToolWindowManager implements Disposable {
@@ -315,7 +319,7 @@ public final class TerminalToolWindowManager implements Disposable {
         .commandHistoryFileProvider(() -> commandHistoryFileLazyValue.getValue())
         .startupMoment(startupMoment)
         .build();
-      widget = terminalRunner.startShellTerminalWidget(content, startupOptions, deferSessionStartUntilUiShown);
+      widget = startShellTerminalWidget(content, terminalRunner, startupOptions, deferSessionStartUntilUiShown);
       widget.getTerminalTitle().change(state -> {
         if (state.getDefaultTitle() == null) {
           state.setDefaultTitle(terminalRunner.getDefaultTabTitle());
@@ -514,7 +518,7 @@ public final class TerminalToolWindowManager implements Disposable {
     if (container != null) {
       String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget);
       ShellStartupOptions startupOptions = ShellStartupOptionsKt.shellStartupOptions(workingDirectory);
-      TerminalWidget newWidget = myTerminalRunner.startShellTerminalWidget(container.getContent(), startupOptions, true);
+      TerminalWidget newWidget = startShellTerminalWidget(container.getContent(), myTerminalRunner, startupOptions, true);
       setupTerminalWidget(myToolWindow, myTerminalRunner, newWidget, container.getContent());
       container.split(!vertically, newWidget);
     }
@@ -594,6 +598,27 @@ public final class TerminalToolWindowManager implements Disposable {
       state.myWorkingDirectory = parentDirectory.getPath();
     }
     createNewSession(myTerminalRunner, state);
+  }
+
+  private @NotNull TerminalWidget startShellTerminalWidget(@NotNull Disposable parentDisposable,
+                                                           @NotNull AbstractTerminalRunner<?> terminalRunner,
+                                                           @NotNull ShellStartupOptions startupOptions,
+                                                           boolean deferSessionStartUntilUiShown) {
+    TerminalWidget widget;
+
+    TerminalWidgetProvider provider = TerminalWidgetProvider.getProvider();
+    if (provider != null &&
+        Registry.is(BLOCK_TERMINAL_REGISTRY) &&
+        Registry.is(REWORKED_BLOCK_TERMINAL_REGISTRY) &&
+        terminalRunner == myTerminalRunner) {
+      widget = provider.createTerminalWidget(myProject, parentDisposable);
+      TerminalSessionStartHelper.startTerminalSessionForWidget(myProject, widget, startupOptions, deferSessionStartUntilUiShown);
+    }
+    else {
+      widget = terminalRunner.startShellTerminalWidget(parentDisposable, startupOptions, deferSessionStartUntilUiShown);
+    }
+
+    return widget;
   }
 
   public static @Nullable JBTerminalWidget getWidgetByContent(@NotNull Content content) {
