@@ -23,9 +23,8 @@ import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.cache.GradleLocalCacheHelper
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloader
+import org.jetbrains.plugins.gradle.util.GradleLibraryDownloader
 import org.jetbrains.plugins.gradle.util.isValidJar
-import java.io.File
 import java.nio.file.Path
 import java.util.*
 
@@ -65,26 +64,26 @@ object GradleLibrarySourcesDownloader {
     val sourceArtifactNotation = libraryOrderEntry.getArtifactCoordinates()?.let { "$it:sources" } ?: return null
     val cachedSourcesPath = lookupSourcesPathFromCache(libraryOrderEntry, sourceArtifactNotation, project, externalProjectPath)
     if (cachedSourcesPath != null && isValidJar(cachedSourcesPath)) {
-      attachSources(cachedSourcesPath.toFile(), orderEntries)
+      attachSources(cachedSourcesPath, orderEntries)
       return cachedSourcesPath
     }
-    val path = GradleDependencySourceDownloader.downloadSources(
+    val path = GradleLibraryDownloader.downloadLibrary(
       project,
       GradleBundle.message("gradle.action.download.sources"),
       sourceArtifactNotation,
       externalProjectPath
     ).await()
     attachSources(path, orderEntries)
-    return path.toPath()
+    return path
   }
 
-  private suspend fun attachSources(sourcesJar: File, orderEntries: List<LibraryOrderEntry>) {
+  private suspend fun attachSources(sourcesJar: Path, orderEntries: List<LibraryOrderEntry>) {
     writeAction {
       val libraries = HashSet<Library>()
       orderEntries.forEach {
         ContainerUtil.addIfNotNull(libraries, it.library)
       }
-      attachSourceJar(sourcesJar, libraries)
+      attachSourceJar(sourcesJar.toFile(), libraries)
     }
   }
 

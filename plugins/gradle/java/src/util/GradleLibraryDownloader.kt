@@ -17,72 +17,75 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.io.toNioPathOrNull
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.gradle.service.execution.loadDownloadSourcesInitScript
-import org.jetbrains.plugins.gradle.service.execution.loadLegacyDownloadSourcesInitScript
+import org.jetbrains.plugins.gradle.service.execution.loadDownloadArtifactInitScript
+import org.jetbrains.plugins.gradle.service.execution.loadLegacyDownloadArtifactInitScript
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.service.task.LazyVersionSpecificInitScript
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import kotlin.io.path.createTempFile
+import kotlin.io.path.readText
 
-object GradleDependencySourceDownloader {
+object GradleLibraryDownloader {
 
-  private val LOG = Logger.getInstance(GradleDependencySourceDownloader::class.java)
+  private val LOG = Logger.getInstance(GradleLibraryDownloader::class.java)
   private val GRADLE_5_6 = GradleVersion.version("5.6")
-  private const val INIT_SCRIPT_FILE_PREFIX = "ijDownloadSources"
+  private const val INIT_SCRIPT_FILE_PREFIX = "ijDownloadLibrary"
 
+  /**
+   * Download a Jar file with specified artifact coordinates by using the Gradle task executed on a specific Gradle module.
+   * @param project associated project.
+   * @param executionName execution name.
+   * @param artifactNotation artifact coordinates in standard artifact format like `group:artifactId:version:classifier:anything:else`.
+   * @param externalProjectPath path to the directory with the Gradle module that should be used to execute the task.
+   */
   @JvmStatic
-  fun downloadSources(project: Project, executionName: @Nls String, sourceArtifactNotation: String, externalProjectPath: String)
-    : CompletableFuture<File> {
-    val sourcesLocationFile: File
-    try {
-      sourcesLocationFile = File(FileUtil.createTempDirectory("sources", "loc"), "path.tmp")
-      Runtime.getRuntime().addShutdownHook(Thread({ FileUtil.delete(sourcesLocationFile) }, "GradleAttachSourcesProvider cleanup"))
-    }
-    catch (e: IOException) {
-      LOG.warn(e)
-      return CompletableFuture.failedFuture(e)
-    }
-    val taskName = "ijDownloadSources" + UUID.randomUUID().toString().substring(0, 12)
+  fun downloadLibrary(
+    project: Project,
+    executionName: @Nls String,
+    artifactNotation: String,
+    externalProjectPath: String,
+  ): CompletableFuture<Path> {
+    val taskName = "ijDownloadLibrary" + UUID.randomUUID().toString().substring(0, 12)
     val settings = ExternalSystemTaskExecutionSettings().also {
       it.executionName = executionName
       it.externalProjectPath = externalProjectPath
       it.taskNames = listOf(taskName)
-      it.vmOptions = GradleSettings.getInstance(project).getGradleVmOptions()
+      it.vmOptions = GradleSettings.getInstance(project).gradleVmOptions
       it.externalSystemIdString = GradleConstants.SYSTEM_ID.id
     }
-    val userData = prepareUserData(sourceArtifactNotation, taskName, sourcesLocationFile.toPath(), externalProjectPath)
-    val resultWrapper = CompletableFuture<File>()
+    val taskOutputFile = createTempFile("gradleDownloadLibrary")
+    val userData = prepareUserData(artifactNotation, taskName, taskOutputFile, externalProjectPath)
+    val resultWrapper = CompletableFuture<Path>()
     val listener = object : ExternalSystemTaskNotificationListener {
-      override fun onSuccess(proojecPath: String, id: ExternalSystemTaskId) {
-        val sourceJar: File
+      override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
         try {
-          val downloadedArtifactPath = Path.of(FileUtil.loadFile(sourcesLocationFile))
+          val downloadedArtifactPath = Path.of(taskOutputFile.readText())
           if (!isValidJar(downloadedArtifactPath)) {
             GradleLog.LOG.warn("Incorrect file header: $downloadedArtifactPath. Unable to process downloaded file as a JAR file")
-            FileUtil.delete(sourcesLocationFile)
+            FileUtil.delete(taskOutputFile)
             resultWrapper.completeExceptionally(IllegalStateException("Incorrect file header: $downloadedArtifactPath."))
             return
           }
-          sourceJar = downloadedArtifactPath.toFile()
-          FileUtil.delete(sourcesLocationFile)
+          resultWrapper.complete(downloadedArtifactPath)
+          FileUtil.delete(taskOutputFile)
         }
         catch (e: IOException) {
           GradleLog.LOG.warn(e)
           resultWrapper.completeExceptionally(e)
           return
         }
-        resultWrapper.complete(sourceJar)
       }
 
-      override fun onFailure(proojecPath: String, id: ExternalSystemTaskId, exception: Exception) {
-        resultWrapper.completeExceptionally(IllegalStateException("Unable to download sources."))
+      override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
+        FileUtil.delete(taskOutputFile)
+        resultWrapper.completeExceptionally(IllegalStateException("Unable to download artifact."))
         GradleDependencySourceDownloaderErrorHandler.handle(project = project,
                                                             externalProjectPath = externalProjectPath,
-                                                            artifact = sourceArtifactNotation,
+                                                            artifact = artifactNotation,
                                                             exception = exception
         )
       }
@@ -98,16 +101,16 @@ object GradleDependencySourceDownloader {
     return resultWrapper
   }
 
-  private fun prepareUserData(sourceArtifactNotation: String, taskName: String, sourcesLocationFilePath: Path, externalProjectPath: String)
+  private fun prepareUserData(artifactNotation: String, taskName: String, taskOutputPath: Path, externalProjectPath: String)
     : UserDataHolderBase {
     val projectPath = externalProjectPath.asSystemDependentGradleProjectPath()
     val legacyInitScript = LazyVersionSpecificInitScript(
-      scriptSupplier = { loadLegacyDownloadSourcesInitScript(sourceArtifactNotation, taskName, sourcesLocationFilePath, projectPath) },
+      scriptSupplier = { loadLegacyDownloadArtifactInitScript(artifactNotation, taskName, taskOutputPath, projectPath) },
       filePrefix = INIT_SCRIPT_FILE_PREFIX,
       isApplicable = { GRADLE_5_6 > it }
     )
     val initScript = LazyVersionSpecificInitScript(
-      scriptSupplier = { loadDownloadSourcesInitScript(sourceArtifactNotation, taskName, sourcesLocationFilePath, projectPath) },
+      scriptSupplier = { loadDownloadArtifactInitScript(artifactNotation, taskName, taskOutputPath, projectPath) },
       filePrefix = INIT_SCRIPT_FILE_PREFIX,
       isApplicable = { GRADLE_5_6 <= it }
     )

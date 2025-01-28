@@ -212,7 +212,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
       }
     }
     assertThat(tracker.output)
-      .filteredOn { it.startsWith("Sources were downloaded to") }
+      .filteredOn { it.startsWith("Artifact was downloaded to") }
       .hasSize(1)
       .allSatisfy(Consumer { assertThat(it).endsWith(dependencySourcesJar) })
 

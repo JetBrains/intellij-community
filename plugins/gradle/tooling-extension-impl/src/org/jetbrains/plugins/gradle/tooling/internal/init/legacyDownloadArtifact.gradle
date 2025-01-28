@@ -28,10 +28,10 @@ private static void configureProject(Project project) {
       doLast {
         def configuration
         def repository = project.repositories.toList().find {
-          logger.lifecycle('Attempt to download sources from ' + it.name)
+          logger.lifecycle('Attempt to download artifact from ' + it.name)
           project.repositories.clear()
           project.repositories.add(it)
-          configuration = project.configurations.create('downloadSourcesFrom_' + UUID.randomUUID())
+          configuration = project.configurations.create('downloadArtifactFrom_' + UUID.randomUUID())
           configuration.transitive = false
           project.dependencies.add(configuration.name, Properties.dependencyNotation)
           def files = null
@@ -43,18 +43,18 @@ private static void configureProject(Project project) {
           return files && !files.isEmpty()
         }
         if (!repository) {
-          configuration = project.configurations.create('downloadSources_' + UUID.randomUUID())
+          configuration = project.configurations.create('downloadArtifact_' + UUID.randomUUID())
           configuration.transitive = false
           project.dependencies.add(configuration.name, Properties.dependencyNotation)
           configuration.resolve()
         }
-        def sourcesPath = configuration?.singleFile?.path
-        if (sourcesPath) {
-          logger.lifecycle('Sources were downloaded to ' + sourcesPath)
-          new File(Properties.targetPath).write sourcesPath
+        def artifactPath = configuration?.singleFile?.path
+        if (artifactPath) {
+          logger.lifecycle('Artifact was downloaded to ' + artifactPath)
+          new File(Properties.targetPath).write artifactPath
         }
         else {
-          throw new RuntimeException('Sources download failed')
+          throw new RuntimeException('Artifact download failed')
         }
       }
     }

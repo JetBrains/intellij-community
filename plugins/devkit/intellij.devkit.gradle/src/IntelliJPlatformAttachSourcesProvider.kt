@@ -16,7 +16,7 @@ import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
 import org.jetbrains.idea.devkit.run.ProductInfo
 import org.jetbrains.idea.devkit.run.loadProductInfo
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
-import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloader
+import org.jetbrains.plugins.gradle.util.GradleLibraryDownloader
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -188,14 +188,14 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         val project = psiFile.project
         val sourceArtifactNotation = "$productCoordinates:$version:sources"
 
-        GradleDependencySourceDownloader
-          .downloadSources(project, name, sourceArtifactNotation, externalProjectPath)
+        GradleLibraryDownloader
+          .downloadLibrary(project, name, sourceArtifactNotation, externalProjectPath)
           .whenComplete { path, error ->
             if (error != null) {
               executionResult.setRejected()
             }
             else {
-              attachSources(path, orderEntries) {
+              attachSources(path.toFile(), orderEntries) {
                 executionResult.setDone()
               }
             }
