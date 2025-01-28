@@ -1,3 +1,4 @@
+// PROBLEM: none
 // IS_APPLICABLE: false
 fun foo() {
     bar<caret><(Int) -> Int>({ baz(it) })
