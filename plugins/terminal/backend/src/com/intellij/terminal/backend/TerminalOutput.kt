@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.backend
 
+import com.intellij.terminal.session.*
+import com.intellij.terminal.session.dto.toDto
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
@@ -13,8 +15,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.terminal.block.reworked.TerminalState
-import org.jetbrains.plugins.terminal.block.reworked.session.*
 import org.jetbrains.plugins.terminal.block.ui.withLock
 
 internal fun createTerminalOutputFlow(

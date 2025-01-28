@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.reworked
 
 import com.intellij.openapi.application.EDT
+import com.intellij.terminal.session.StyleRange
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jediterm.terminal.TextStyle
 import kotlinx.coroutines.Dispatchers
@@ -10,7 +11,6 @@ import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
-import org.jetbrains.plugins.terminal.block.session.StyleRange
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil
 import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil.update

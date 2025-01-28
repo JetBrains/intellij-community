@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.reworked
 
 import com.google.common.base.Ascii
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.session.TerminalSession
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.ProjectRule
@@ -22,7 +23,6 @@ import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCommandStar
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalOutputEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalPromptFinishedEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalPromptStartedEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalShellIntegrationEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalShellIntegrationInitializedEvent
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalWriteBytesEvent

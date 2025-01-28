@@ -5,13 +5,13 @@ import com.google.common.base.Ascii
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.session.TerminalState
 import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.jetbrains.plugins.terminal.block.output.TerminalEventsHandler
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalState
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent

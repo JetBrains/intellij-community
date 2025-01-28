@@ -1,9 +1,9 @@
 package com.intellij.terminal.frontend
 
+import com.intellij.terminal.session.TerminalInputEvent
+import com.intellij.terminal.session.TerminalOutputEvent
+import com.intellij.terminal.session.TerminalSession
 import kotlinx.coroutines.flow.Flow
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalInputEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalOutputEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionApi
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 

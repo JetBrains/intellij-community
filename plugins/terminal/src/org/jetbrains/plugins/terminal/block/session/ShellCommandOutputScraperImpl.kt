@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal.block.session
 
 import com.intellij.openapi.Disposable
-import com.jediterm.terminal.TextStyle
+import com.intellij.terminal.session.StyleRange
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalUtil
@@ -97,9 +97,6 @@ internal class ShellCommandOutputScraperImpl(
 
 @ApiStatus.Internal
 data class StyledCommandOutput(val text: String, val commandEndMarkerFound: Boolean, val styleRanges: List<StyleRange>)
-
-@ApiStatus.Internal
-data class StyleRange(val startOffset: Int, val endOffset: Int, val style: TextStyle)
 
 internal interface ShellCommandOutputListener {
   fun commandOutputChanged(output: StyledCommandOutput) {}

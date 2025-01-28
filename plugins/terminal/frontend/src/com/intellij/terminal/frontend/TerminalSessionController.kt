@@ -4,6 +4,9 @@ package com.intellij.terminal.frontend
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.session.*
+import com.intellij.terminal.session.dto.toStyleRange
+import com.intellij.terminal.session.dto.toTerminalState
 import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +15,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.block.reworked.session.*
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
 

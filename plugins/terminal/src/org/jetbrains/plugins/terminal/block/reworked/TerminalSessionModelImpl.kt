@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.session.TerminalState
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import kotlinx.coroutines.flow.MutableStateFlow

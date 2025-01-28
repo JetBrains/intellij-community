@@ -1,10 +1,10 @@
 package com.intellij.terminal.backend
 
+import com.intellij.terminal.session.TerminalInputEvent
+import com.intellij.terminal.session.TerminalOutputEvent
+import com.intellij.terminal.session.TerminalSession
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalInputEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalOutputEvent
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
 
 class BackendTerminalSession(
   private val inputChannel: SendChannel<TerminalInputEvent>,

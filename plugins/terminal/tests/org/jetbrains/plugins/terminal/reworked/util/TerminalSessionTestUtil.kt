@@ -7,6 +7,8 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.terminal.session.StyleRange
+import com.intellij.terminal.session.TerminalSession
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.asDisposable
 import com.jediterm.core.util.TermSize
@@ -15,9 +17,7 @@ import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.startTerminalSession
-import org.jetbrains.plugins.terminal.block.session.StyleRange
 import java.nio.file.Files
 import java.nio.file.Path
 

@@ -2,13 +2,13 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.openapi.application.EDT
+import com.intellij.terminal.session.TerminalState
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.TerminalKeyEncoder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalState
 
 /**
  * Actually a wrapper around [com.jediterm.terminal.TerminalKeyEncoder].
