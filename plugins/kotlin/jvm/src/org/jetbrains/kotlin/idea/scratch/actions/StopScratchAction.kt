@@ -20,6 +20,6 @@ class StopScratchAction : ScratchAction(
 
         val scratchFile = e.currentScratchFile ?: return
 
-        e.presentation.isEnabledAndVisible = ScratchCompilationSupport.isInProgress(scratchFile)
+        e.presentation.isEnabledAndVisible = ScratchCompilationSupport.isInProgress(scratchFile) && !scratchFile.options.isInteractiveMode
     }
 }

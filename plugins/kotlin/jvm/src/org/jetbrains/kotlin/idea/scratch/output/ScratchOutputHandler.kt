@@ -2,12 +2,15 @@
 
 package org.jetbrains.kotlin.idea.scratch.output
 
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
+import org.jetbrains.kotlin.idea.scratch.actions.RunScratchAction
 
 interface ScratchOutputHandler {
     fun onStart(file: ScratchFile)
     fun handle(file: ScratchFile, expression: ScratchExpression, output: ScratchOutput)
+    fun handle(file: ScratchFile, infos: List<RunScratchAction.ExplainInfo>, scope: CoroutineScope) {}
     fun error(file: ScratchFile, message: String)
     fun onFinish(file: ScratchFile)
     fun clear(file: ScratchFile)

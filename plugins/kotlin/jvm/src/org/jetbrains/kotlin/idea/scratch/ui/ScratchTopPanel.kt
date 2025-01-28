@@ -5,13 +5,85 @@ package org.jetbrains.kotlin.idea.scratch.ui
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.util.application
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunnerK2
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunner
+import org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunnerK1
 import org.jetbrains.kotlin.idea.scratch.actions.ClearScratchAction
 import org.jetbrains.kotlin.idea.scratch.actions.RunScratchAction
 import org.jetbrains.kotlin.idea.scratch.actions.StopScratchAction
 import org.jetbrains.kotlin.idea.scratch.output.ScratchOutputHandlerAdapter
+
+class ScratchTopPanelK2(val scratchFile: ScratchFile) {
+    val actionsToolbar: ActionToolbar
+
+    init {
+        setupTopPanelUpdateHandlers()
+
+        val toolbarGroup = DefaultActionGroup().apply {
+            add(RunScratchAction())
+            addSeparator()
+            add(ClearScratchAction())
+            addSeparator()
+            add(IsInteractiveCheckboxAction())
+        }
+
+        actionsToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, toolbarGroup, true)
+    }
+
+    private inner class IsInteractiveCheckboxAction : SmallBorderCheckboxAction(
+        text = KotlinJvmBundle.message("scratch.is.interactive.checkbox"),
+        description = KotlinJvmBundle.message("scratch.is.interactive.checkbox.description", ScratchFileAutoRunner.AUTO_RUN_DELAY_MS / 1000)
+    ) {
+        override fun isSelected(e: AnActionEvent): Boolean {
+            return scratchFile.options.isInteractiveMode
+        }
+
+        override fun setSelected(e: AnActionEvent, isInteractiveMode: Boolean) {
+            if (isInteractiveMode) {
+                val runAction = actionsToolbar.actions.firstOrNull { it is RunScratchAction }
+                runAction?.update(e)
+                val project = e.project
+                if (project != null) {
+                    application.invokeLater {
+                        runWithModalProgressBlocking(project, "run scratch") {
+                            (ScratchFileAutoRunner.getInstance(project) as? ScratchFileAutoRunnerK2)?.submitRun(scratchFile)
+                        }
+                    }
+                }
+            }
+            scratchFile.saveOptions { copy(isInteractiveMode = isInteractiveMode) }
+        }
+
+        override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    }
+
+    private fun setupTopPanelUpdateHandlers() {
+        val toolbarHandler = createUpdateToolbarHandler()
+        scratchFile.k2ScratchExecutor?.addOutputHandler(toolbarHandler)
+    }
+
+    private fun createUpdateToolbarHandler(): ScratchOutputHandlerAdapter {
+        return object : ScratchOutputHandlerAdapter() {
+            override fun onStart(file: ScratchFile) {
+                updateToolbar()
+            }
+
+            override fun onFinish(file: ScratchFile) {
+                updateToolbar()
+            }
+        }
+    }
+
+    private fun updateToolbar() {
+        ApplicationManager.getApplication().invokeLater {
+            actionsToolbar.updateActionsImmediately()
+        }
+    }
+}
 
 class ScratchTopPanel(val scratchFile: ScratchFile) {
     private val moduleChooserAction: ModulesComboBoxAction = ModulesComboBoxAction(scratchFile)
@@ -85,7 +157,7 @@ class ScratchTopPanel(val scratchFile: ScratchFile) {
 
     private inner class IsInteractiveCheckboxAction : SmallBorderCheckboxAction(
         text = KotlinJvmBundle.message("scratch.is.interactive.checkbox"),
-        description = KotlinJvmBundle.message("scratch.is.interactive.checkbox.description", ScratchFileAutoRunner.AUTO_RUN_DELAY_IN_SECONDS)
+        description = KotlinJvmBundle.message("scratch.is.interactive.checkbox.description", ScratchFileAutoRunner.AUTO_RUN_DELAY_MS / 1000)
     ) {
         override fun isSelected(e: AnActionEvent): Boolean {
             return scratchFile.options.isInteractiveMode

@@ -10,18 +10,21 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.scratch.actions.ScratchCompilationSupport
 import org.jetbrains.kotlin.idea.scratch.output.ScratchOutputHandlerAdapter
 
 abstract class ScratchFileLanguageProvider {
-    fun newScratchFile(project: Project, file: VirtualFile): ScratchFile? {
+    fun newScratchFile(project: Project, file: VirtualFile, scope: CoroutineScope): ScratchFile? {
         val scratchFile = createFile(project, file) ?: return null
 
         scratchFile.replScratchExecutor = createReplExecutor(scratchFile)
         scratchFile.compilingScratchExecutor = createCompilingExecutor(scratchFile)
+        scratchFile.k2ScratchExecutor = K2ScratchExecutor(scratchFile, project, scope)
 
         scratchFile.replScratchExecutor?.addOutputHandlers()
         scratchFile.compilingScratchExecutor?.addOutputHandlers()
+        scratchFile.k2ScratchExecutor?.addOutputHandlers()
 
         scratchFile.project.syncPublisherWithDisposeCheck(ScratchFileListener.TOPIC).fileCreated(scratchFile)
 

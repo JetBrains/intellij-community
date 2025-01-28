@@ -24,7 +24,7 @@
         <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinBuildProcessParametersProvider"/>
 
         <projectService serviceInterface="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunner"
-                        serviceImplementation="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunner"/>
+                        serviceImplementation="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunnerK1"/>
 
         <framework.type implementation="org.jetbrains.kotlin.idea.framework.JavaFrameworkType"/>
 

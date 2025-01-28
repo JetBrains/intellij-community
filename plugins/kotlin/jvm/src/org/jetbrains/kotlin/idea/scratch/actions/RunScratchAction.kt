@@ -2,6 +2,13 @@
 
 package org.jetbrains.kotlin.idea.scratch.actions
 
+import com.intellij.execution.Executor
+import com.intellij.execution.Location
+import com.intellij.execution.PsiLocation
+import com.intellij.execution.RunManagerEx
+import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.execution.actions.RunConfigurationProducer
+import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.keymap.KeymapManager
@@ -10,19 +17,20 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.task.ProjectTaskManager
 import com.intellij.task.impl.ProjectTaskManagerImpl
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
+import org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.scratch.SequentialScratchExecutor
 import org.jetbrains.kotlin.idea.scratch.printDebugMessage
 import org.jetbrains.kotlin.utils.addToStdlib.cast
+import org.jetbrains.kotlin.utils.exceptions.rethrowExceptionWithDetails
 import org.jetbrains.kotlin.idea.scratch.LOG as log
 
 class RunScratchAction : ScratchAction(
-    KotlinJvmBundle.message("scratch.run.button"),
-    AllIcons.Actions.Execute
+    KotlinJvmBundle.message("scratch.run.button"), AllIcons.Actions.Execute
 ) {
-
     init {
         KeymapManager.getInstance().activeKeymap.getShortcuts("Kotlin.RunScratch").firstOrNull()?.let {
             templatePresentation.text += " (${KeymapUtil.getShortcutText(it)})"
@@ -32,7 +40,38 @@ class RunScratchAction : ScratchAction(
     override fun actionPerformed(e: AnActionEvent) {
         val scratchFile = e.currentScratchFile ?: return
 
-        Handler.doAction(scratchFile, false)
+        if (isK2Mode()) {
+            val instance = RunConfigurationProducer.getInstance(KotlinStandaloneScriptRunConfigurationProducer::class.java)
+            val context = ConfigurationContext.getFromEvent(e)
+            val configuration = instance.findOrCreateConfigurationFromContext(context)?.configurationSettings ?: return
+
+            (context.runManager as RunManagerEx).setTemporaryConfiguration(configuration)
+            ExecutionUtil.runConfiguration(configuration, Executor.EXECUTOR_EXTENSION_NAME.extensionList.first())
+
+        } else {
+            Handler.doAction(scratchFile, false)
+        }
+    }
+
+    class ExplainInfo(
+        val variableName: String, val offsets: Pair<Int, Int>, val variableValue: Any?, val line: Int?
+    ) {
+        override fun toString(): String {
+            return "ExplainInfo(variableName='$variableName', offsets=$offsets, variableValue=$variableValue, line=$line)"
+        }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as ExplainInfo
+
+            return line == other.line
+        }
+
+        override fun hashCode(): Int {
+            return line ?: 0
+        }
     }
 
     object Handler {
@@ -88,7 +127,9 @@ class RunScratchAction : ScratchAction(
     override fun update(e: AnActionEvent) {
         super.update(e)
 
-        e.presentation.isEnabled = !ScratchCompilationSupport.isAnyInProgress()
+        val scratchFile = e.currentScratchFile ?: return
+
+        e.presentation.isEnabled = !(ScratchCompilationSupport.isAnyInProgress() || scratchFile.options.isInteractiveMode)
 
         if (e.presentation.isEnabled) {
             e.presentation.text = templatePresentation.text
@@ -96,8 +137,7 @@ class RunScratchAction : ScratchAction(
             e.presentation.text = KotlinJvmBundle.message("other.scratch.file.execution.is.in.progress")
         }
 
-        val scratchFile = e.currentScratchFile ?: return
 
-        e.presentation.isVisible = !ScratchCompilationSupport.isInProgress(scratchFile)
+        e.presentation.isVisible = !(ScratchCompilationSupport.isAnyInProgress() || scratchFile.options.isInteractiveMode)
     }
 }
