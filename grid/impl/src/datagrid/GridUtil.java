@@ -552,7 +552,7 @@ public class GridUtil extends GridUtilCore {
         }
         ApplicationManager.getApplication().invokeLater(() -> {
           try {
-            new PluginsAdvertiserDialog(project, List.of(PluginDownloader.createDownloader(descriptor))).show();
+            new PluginsAdvertiserDialog(project, List.of(PluginDownloader.createDownloader(descriptor)), List.of(descriptor)).show();
           }
           catch (IOException e) {
             LOG.error(e);
