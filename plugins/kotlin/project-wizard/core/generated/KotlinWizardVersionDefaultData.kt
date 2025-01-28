@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.tools.projectWizard.compatibility;
 
@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersio
  * DO NOT EDIT IT BY HAND, run "Generate Kotlin Wizard Default Data" configuration instead
  */
 internal val DEFAULT_KOTLIN_WIZARD_VERSIONS = KotlinWizardVersionState(
-    kotlinPluginVersion = "2.1.0",
+    kotlinPluginVersion = "2.1.10",
     kotlinForComposeVersion = "1.7.20",
     composeCompilerExtension = "1.4.3",
     minGradleFoojayVersion = "7.6",
