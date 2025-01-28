@@ -22,7 +22,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.lang.management.ManagementFactory
-import java.util.concurrent.atomic.AtomicBoolean
 
 object MultiRoutingFileSystemVmOptionsSetter {
   @VisibleForTesting
@@ -141,7 +140,7 @@ object MultiRoutingFileSystemVmOptionsSetter {
         logger<MultiRoutingFileSystemVmOptionsSetter>().warn(
           changedOptions.joinToString(
             prefix = "This message is seen only in Dev Mode/Run from sources.\n" +
-                     "The value of the registry flag `$IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY` for IJent FS " +
+                     "The value of the registry flag for IJent FS " +
                      "doesn't match the VM options.\n" +
                      "Add the following VM options to the Run Configuration:\n",
             separator = "\n",
