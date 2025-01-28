@@ -18,6 +18,7 @@ object NotebookCellInlayControllerUtil {
     frameColor: Color,
     position: NotebookMarkdownCellCornerGutterLineMarkerRenderer.Position
   ): RangeHighlighterEx? {
+    if (inlay.isValid.not()) return highlighter
     val editor = inlay.editor as EditorEx
 
     highlighter?.let { editor.markupModel.removeHighlighter(it) }
