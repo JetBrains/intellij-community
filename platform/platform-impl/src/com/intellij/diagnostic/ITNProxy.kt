@@ -18,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.buildData.productInfo.CustomPropertyNames
 import com.intellij.platform.ide.productInfo.IdeProductInfo
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import kotlinx.coroutines.*
@@ -167,6 +168,9 @@ internal object ITNProxy {
 
     append(builder, "user.login", DEFAULT_USER)
     append(builder, "user.password", DEFAULT_PASS)
+    JBAccountInfoService.getInstance()?.userData?.email?.takeIf { it.endsWith("@jetbrains.com", ignoreCase = true) }?.let {
+      append(builder, "user.email", it)
+    }
 
     val updateSettings = UpdateSettings.getInstance()
     append(builder, "update.channel.status", updateSettings.selectedChannelStatus.code)
