@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad
 
+import andel.editor.RangeMarkerId
+import andel.intervals.Interval
 import andel.operation.Operation
 import andel.operation.captureOperation
 import andel.operation.rebase
@@ -37,8 +39,42 @@ internal class AdDocument(
     }
   }
 
+  internal fun queryRangeMarkers(startOffset: Long, endOffset: Long): Sequence<Interval<UID, Unit>> {
+    return documentRead {
+      entity.anchorStorage.intervals.query(startOffset, endOffset)
+    }
+  }
 
-  //region TEXT
+  internal fun addRangeMarkers(rangeIds: List<RangeMarkerId>, ranges: List<andel.text.TextRange>) {
+    documentChange {
+      entity[AdDocumentEntity.AnchorStorageAttr] = entity.anchorStorage.batchUpdate(
+        emptyList(),
+        LongArray(0),
+        rangeIds,
+        ranges, // TODO: greedy
+      )
+    }
+  }
+
+  internal fun addRangeMarker(rangeId: RangeMarkerId, startOffset: Long, endOffset: Long) {
+    documentChange {
+      entity[AdDocumentEntity.AnchorStorageAttr] = entity.anchorStorage.addRangeMarker(
+        rangeId,
+        startOffset,
+        endOffset,
+        false, // TODO: greedy
+        false,
+      )
+    }
+  }
+
+  internal fun removeRangeMarker(rangeId: RangeMarkerId) {
+    documentChange {
+      entity[AdDocumentEntity.AnchorStorageAttr] = entity.anchorStorage.removeRangeMarker(rangeId)
+    }
+  }
+
+  // region TEXT
 
   override fun getText(range: TextRange): String {
     return textView().string(range.startOffset, range.endOffset)
@@ -336,7 +372,8 @@ internal class AdDocument(
 
     ThreadingAssertions.assertBackgroundThread() // DB always exists w/i EDT
 
-    return asOf(ThreadLocalRhizomeDB.lastKnownOrPendingDb()) {
+    // TODO: lastKnownOrPendingDb
+    return asOf(ThreadLocalRhizomeDB.lastKnownDb()) {
       block()
     }
   }

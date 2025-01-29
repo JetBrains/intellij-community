@@ -476,10 +476,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, myFocusModeModel);
 
     myEditorModel = new EditorModelImpl(this);
-    myAdEditorModel = AdTheManager.getInstance().createEditorModel(this);
-    if (myAdEditorModel != null) {
-      Disposer.register(myDisposable, myAdEditorModel);
-    }
+    myAdEditorModel = project == null ? null : AdTheManager.getInstance(project).createEditorModel(this);
 
     myView = new EditorView(this, myEditorModel);
     myAdView = myAdEditorModel == null ? null : new EditorView(this, myAdEditorModel);
@@ -1747,7 +1744,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myGutterComponent.isShowing();
   }
 
-  private void repaintToScreenBottom(int startLine) {
+  @ApiStatus.Internal
+  public void repaintToScreenBottom(int startLine) {
     int yStartLine = logicalLineToY(startLine);
     repaintToScreenBottomStartingFrom(yStartLine);
   }

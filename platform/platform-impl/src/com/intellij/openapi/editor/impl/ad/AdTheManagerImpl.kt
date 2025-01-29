@@ -1,60 +1,112 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.ad
 
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.editor.*
-import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.*
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FocusModeModel
+import com.intellij.openapi.util.Disposer
+import com.intellij.platform.kernel.withKernel
 import com.intellij.util.concurrency.ThreadingAssertions
-import kotlinx.coroutines.*
+import com.jetbrains.rhizomedb.ChangeScope
+import fleet.kernel.change
+import fleet.kernel.shared
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 
-@Service(Level.APP)
+@Service(Level.PROJECT)
 internal class AdTheManagerImpl(private val coroutineScope: CoroutineScope) : AdTheManager {
 
   override fun createEditorModel(editor: EditorEx): EditorModel? {
     ThreadingAssertions.assertEventDispatchThread()
-    val document = editor.document
-    if (isRhizomeAdEnabled && isDocumentGuardedByLock(document)) {
-      val docEntity = ThreadLocalRhizomeDB.sharedChange {
-        register(AdDocumentEntity)
-        AdDocumentEntity.fromString(
-          document.immutableCharSequence.toString(),
-          document.modificationStamp,
-        )
+    if (isRhizomeAdEnabled && editor is EditorImpl && isDocumentGuardedByLock(editor.document)) {
+      val modStampBefore = editor.document.modificationStamp
+      @Suppress("RAW_RUN_BLOCKING")
+      val editorModel = runBlocking {
+        withKernel {
+          change {
+            shared {
+              createEditorModelImpl(editor)
+            }
+          }
+        }
       }
-      val adDocument = AdDocument(debugName(document), docEntity)
-      val docListener = DocumentSynchronizer(adDocument, coroutineScope)
-      document.addDocumentListener(docListener)
-      return object : EditorModel {
-        override fun getDocument(): DocumentEx = adDocument
-        override fun getEditorMarkupModel(): MarkupModelEx = editor.markupModel
-        override fun getDocumentMarkupModel(): MarkupModelEx = editor.filteredDocumentMarkupModel
-        override fun getHighlighter(): EditorHighlighter = editor.highlighter
-        override fun getInlayModel(): InlayModel = editor.inlayModel
-        override fun getFoldingModel(): FoldingModelEx = editor.foldingModel
-        override fun getSoftWrapModel(): SoftWrapModelEx = editor.softWrapModel
-        override fun getCaretModel(): CaretModel = editor.caretModel
-        override fun getSelectionModel(): SelectionModel = editor.selectionModel
-        override fun getScrollingModel(): ScrollingModel = editor.scrollingModel
-        override fun getFocusModel(): FocusModeModel = (editor as EditorImpl).focusModeModel
-        override fun isAd(): Boolean = true
-        override fun dispose() {
-          document.removeDocumentListener(docListener)
-          ThreadLocalRhizomeDB.sharedChange {
-            docEntity.delete()
+
+      ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
+
+      val documentSynchronizer = AdDocumentSynchronizer(editorModel.document as AdDocument, coroutineScope) { repaintEditor(editor) }
+      editor.document.addDocumentListener(documentSynchronizer, documentSynchronizer)
+
+      Disposer.register(editorModel, documentSynchronizer)
+      Disposer.register(editorModel, editorModel.editorMarkupModel as Disposable)
+      Disposer.register(editorModel, editorModel.documentMarkupModel as Disposable)
+      Disposer.register(editor.disposable, editorModel)
+
+      assert(editor.document.modificationStamp == modStampBefore)
+
+      return editorModel
+    }
+    return null
+  }
+
+  private fun ChangeScope.createEditorModelImpl(editor: EditorImpl): EditorModel {
+    register(AdDocumentEntity)
+    val document = editor.document
+    val entity = AdDocumentEntity.fromString(
+      document.immutableCharSequence.toString(),
+      document.modificationStamp,
+    )
+    val adDocument = AdDocument(debugName(document), entity)
+
+    fun createMarkup(markupModel: MarkupModelEx) = AdMarkupModel.fromMarkup(
+      markupModel,
+      adDocument,
+      coroutineScope
+    ) { repaintEditor(editor) }
+
+    val editorMarkup = createMarkup(editor.markupModel)
+    val documentMarkup = createMarkup(editor.filteredDocumentMarkupModel)
+
+    return object : EditorModel {
+      override fun getDocument(): DocumentEx = adDocument
+      override fun getEditorMarkupModel(): MarkupModelEx = editorMarkup
+      override fun getDocumentMarkupModel(): MarkupModelEx = documentMarkup
+      override fun getHighlighter(): EditorHighlighter = editor.highlighter
+      override fun getInlayModel(): InlayModel = editor.inlayModel
+      override fun getFoldingModel(): FoldingModelEx = editor.foldingModel
+      override fun getSoftWrapModel(): SoftWrapModelEx = editor.softWrapModel
+      override fun getCaretModel(): CaretModel = editor.caretModel
+      override fun getSelectionModel(): SelectionModel = editor.selectionModel
+      override fun getScrollingModel(): ScrollingModel = editor.scrollingModel
+      override fun getFocusModel(): FocusModeModel = editor.focusModeModel
+      override fun isAd(): Boolean = true
+      override fun dispose() {
+        coroutineScope.launch {
+          withKernel {
+            change {
+              shared {
+                entity.delete()
+              }
+            }
           }
         }
       }
     }
-    return null
+  }
+
+  private fun repaintEditor(editor: EditorImpl) {
+    ThreadingAssertions.assertEventDispatchThread()
+    if (!(editor.isDisposed)) {
+      editor.repaintToScreenBottom(0) // TODO repaint partially
+    }
   }
 
   private fun isDocumentGuardedByLock(document: Document): Boolean {
@@ -64,38 +116,5 @@ internal class AdTheManagerImpl(private val coroutineScope: CoroutineScope) : Ad
   private fun debugName(document: Document): String {
     val hash = Integer.toHexString(System.identityHashCode(document))
     return document.toString().replace("DocumentImpl", "AdDocument@$hash")
-  }
-}
-
-private class DocumentSynchronizer(
-  private val adDocument: AdDocument,
-  private val coroutineScope: CoroutineScope,
-  private val debugMode: Boolean = false,
-) : PrioritizedDocumentListener {
-
-  override fun getPriority(): Int = Integer.MIN_VALUE + 1
-
-  override fun documentChanged(event: DocumentEvent) {
-    if (debugMode) {
-      coroutineScope.launch {
-        delay(1_000)
-        withContext(Dispatchers.EDT) {
-          syncDoc(adDocument, event)
-        }
-      }
-    } else {
-      syncDoc(adDocument, event)
-    }
-  }
-
-  private fun syncDoc(adDocument: AdDocument, event: DocumentEvent) {
-    ThreadLocalRhizomeDB.sharedChange {
-      adDocument.replaceString(
-        startOffset = event.offset,
-        endOffset = event.offset + event.oldLength,
-        chars = event.newFragment,
-        modStamp = event.document.modificationStamp,
-      )
-    }
   }
 }

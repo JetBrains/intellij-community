@@ -1209,8 +1209,7 @@ private fun setImplicitThreadLocalRhizomeIfEnabled() {
     // It is a workaround on tricky `updateDbInTheEventDispatchThread()` where
     // the thread local DB is reset by `fleet.kernel.DbSource.ContextElement.restoreThreadContext`
     try {
-      val db = ThreadLocalRhizomeDB.lastKnownOrPendingDb()
-      ThreadLocalRhizomeDB.setThreadLocalDb(db)
+      ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
     }
     catch (e: Exception) {
       Logs.LOG.error(e)
