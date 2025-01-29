@@ -231,8 +231,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
     if (!isRecentEnabled) return
 
     val manager = SearchEverywhereManager.getInstance(myProject)
-    if ((!manager.isShown || SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == manager.selectedTabID)
-        /*&& !SePopupProvider.getInstance().isShown*/) return
+    if (!manager.isShown || SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == manager.selectedTabID) return
 
     val actionIDs: Set<String> = ActionHistoryManager.getInstance().state.ids
     provider.processActions(scope, presentationProvider, pattern, actionIDs) { element: MatchedValue ->

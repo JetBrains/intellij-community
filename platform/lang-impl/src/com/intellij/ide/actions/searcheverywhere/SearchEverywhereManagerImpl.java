@@ -77,11 +77,6 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
   @Override
   public void show(@NotNull String tabID, @Nullable String searchText, @NotNull AnActionEvent initEvent) {
-    //if (SeFrontendService.Companion.isEnabled()) {
-    //  SeFrontendService.getInstance(myProject).showPopup(searchText);
-    //  return;
-    //}
-
     if (isShown()) {
       throw new IllegalStateException("Method should cannot be called when popup is shown");
     }
