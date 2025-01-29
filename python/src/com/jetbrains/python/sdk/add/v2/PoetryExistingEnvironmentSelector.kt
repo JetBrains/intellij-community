@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.module.Module
@@ -14,8 +14,8 @@ import com.jetbrains.python.sdk.poetry.pyProjectToml
 import com.jetbrains.python.sdk.poetry.setupPoetrySdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.statistics.version
-import com.jetbrains.python.util.PyError
-import com.jetbrains.python.util.asPythonResult
+import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.asPythonResult
 import java.nio.file.Path
 import kotlin.io.path.pathString
 

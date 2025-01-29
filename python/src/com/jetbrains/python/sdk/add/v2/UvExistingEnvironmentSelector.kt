@@ -14,9 +14,9 @@ import com.jetbrains.python.sdk.uv.pyProjectToml
 import com.jetbrains.python.sdk.uv.setupUvSdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.statistics.version
-import com.jetbrains.python.util.PyError
-import com.jetbrains.python.util.asPythonResult
-import com.jetbrains.python.util.failure
+import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.asPythonResult
+import com.jetbrains.python.errorProcessing.failure
 import java.nio.file.Path
 import kotlin.io.path.pathString
 

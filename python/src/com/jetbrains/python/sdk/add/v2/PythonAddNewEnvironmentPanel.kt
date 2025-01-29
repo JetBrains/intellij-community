@@ -33,10 +33,10 @@ import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.util.ErrorSink
-import com.jetbrains.python.util.PyError
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.util.ShowingMessageErrorSync
-import com.jetbrains.python.util.asPythonResult
+import com.jetbrains.python.errorProcessing.asPythonResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch

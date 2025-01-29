@@ -19,7 +19,7 @@ import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.poetry.*
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.util.ErrorSink
+import com.jetbrains.python.errorProcessing.ErrorSink
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
