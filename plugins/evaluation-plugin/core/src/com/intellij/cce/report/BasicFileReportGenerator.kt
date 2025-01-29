@@ -107,7 +107,7 @@ open class BasicFileReportGenerator(
 
         val textToInsert = textToInsert(session)
         val center = textToInsert.length / sessions.size
-        val promptText = session.properties.additionalProperty(PROMPT_PROPERTY).orEmpty()
+        val promptText = " <<<++++<<< " + session.properties.additionalProperty(PROMPT_PROPERTY).orEmpty()
         var shift = 0
         for (j in 0 until sessionGroup.lastIndex) {
           val subToken = if (center == 0) textToInsert else textToInsert.substring(shift, shift + center)
