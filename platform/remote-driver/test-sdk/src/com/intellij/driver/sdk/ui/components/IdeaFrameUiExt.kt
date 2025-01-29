@@ -45,3 +45,5 @@ fun IdeaFrameUI.invokeOpenFileAction(file: Path) {
   driver.invokeAction("OpenFile", now = false)
   fileChooser({ byTitle("Open File or Project") }).openPath(file)
 }
+
+fun IdeaFrameUI.requireProject() = checkNotNull(project) { "no project" }
