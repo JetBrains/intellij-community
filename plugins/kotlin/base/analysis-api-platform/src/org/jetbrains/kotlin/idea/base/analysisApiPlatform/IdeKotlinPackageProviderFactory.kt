@@ -50,9 +50,6 @@ private class IdeKotlinPackageProvider(
         return cache.getOrPut(packageFqName) { KotlinPackageIndexUtils.packageExists(packageFqName, searchScope) }
     }
 
-    override fun getKotlinOnlySubPackagesFqNames(packageFqName: FqName, nameFilter: (Name) -> Boolean): Set<Name> =
-        KotlinPackageIndexUtils
-            .getSubpackages(packageFqName, searchScope, nameFilter)
-            .mapTo(mutableSetOf()) { it.shortName() }
-
+    override fun getKotlinOnlySubpackageNames(packageFqName: FqName): Set<Name> =
+        KotlinPackageIndexUtils.getSubpackageNames(packageFqName, searchScope)
 }
