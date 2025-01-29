@@ -13,7 +13,7 @@ interface CollectionTreeBuilder {
   /**
    * Is called under `com.intellij.debugger.streams.trace.EvaluationContextWrapper.launchDebuggerCommand`
    */
-  suspend fun getKey(container: XValueContainer, nullMarker: Any): Any
+  fun getKey(container: XValueContainer, nullMarker: Any): Any
 
   fun getKey(traceElement: TraceElement, nullMarker: Any): Any
 
