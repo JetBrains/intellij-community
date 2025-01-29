@@ -326,7 +326,6 @@ internal class ToolbarFrameHeader(
       Disposer.register(selfDisposable, newToolbarDisposable)
       toolbarDisposable = newToolbarDisposable
       newToolbar.addComponentListener(resizeListener)
-      newToolbar.addComponentListener(resizeListener)
       newToolbar.addComponentListener(contentResizeListener)
       this@ToolbarFrameHeader.toolbar = newToolbar
       toolbarHeaderTitle.updateBorders(0)
@@ -337,8 +336,11 @@ internal class ToolbarFrameHeader(
         toolbarPlaceholder.add(newToolbar, BorderLayout.CENTER)
       }
 
+      newToolbar.revalidate()
+      newToolbar.repaint()
       toolbarPlaceholder.revalidate()
       toolbarPlaceholder.repaint()
+      resizeListener.componentResized(null)
     }
   }
 
