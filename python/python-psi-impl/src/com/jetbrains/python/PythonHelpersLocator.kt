@@ -99,7 +99,7 @@ interface PythonHelpersLocator {
     @RequiresBackgroundThread
     fun findPathStringInHelpers(@NonNls resourceName: String): String = findPathInHelpers(resourceName)?.absolutePathString() ?: ""
 
-    @Deprecated("Use {@link PythonHelpersLocator#findPathInHelpers}.", ReplaceWith("findPathInHelpers(resourceName)"))
+    @Deprecated("Use {@link PythonHelpersLocator#findPathInHelpers}.", ReplaceWith("findPathInHelpers(resourceName)"), DeprecationLevel.ERROR)
     @JvmStatic
     fun getHelperPath(@NonNls resourceName: String): String = findPathStringInHelpers(resourceName)
   }
