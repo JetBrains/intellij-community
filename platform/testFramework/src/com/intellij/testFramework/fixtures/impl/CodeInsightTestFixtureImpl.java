@@ -696,7 +696,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public @NotNull PsiReference getReferenceAtCaretPositionWithAssertion(String @NotNull ... filePaths) {
     PsiReference reference = getReferenceAtCaretPosition(filePaths);
-    assertNotNull("no reference found at " + editor.getCaretModel().getLogicalPosition(), reference);
+    assertNotNull("no reference found in "+getFile()+
+                  " at " + editor.getCaretModel().getLogicalPosition()+
+                  ", there's just "+ReadAction.compute(() -> getFile().findElementAt(editor.getCaretModel().getOffset())), reference);
     return reference;
   }
 
