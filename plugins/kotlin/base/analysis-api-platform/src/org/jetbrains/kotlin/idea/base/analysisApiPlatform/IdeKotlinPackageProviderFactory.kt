@@ -2,15 +2,11 @@
 package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
-import org.jetbrains.kotlin.analysis.api.platform.modification.createProjectWideOutOfBlockModificationTracker
-import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinCompositePackageProvider
-import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProvider
-import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderBase
-import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderFactory
-import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderMerger
+import org.jetbrains.kotlin.analysis.api.platform.packages.*
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
 import org.jetbrains.kotlin.caches.project.CachedValue
 import org.jetbrains.kotlin.caches.project.getValue
@@ -39,10 +35,14 @@ private class IdeKotlinPackageProvider(
     project: Project,
     searchScope: GlobalSearchScope
 ) : KotlinPackageProviderBase(project, searchScope) {
+    /**
+     * We don't need to invalidate the cache because [KotlinPackageProvider]'s lifetime is already constrained by modification. The cached
+     * value is still useful to keep the cache behind a soft reference.
+     */
     private val cache by CachedValue(project) {
         CachedValueProvider.Result(
             ConcurrentHashMap<FqName, Boolean>(),
-            project.createProjectWideOutOfBlockModificationTracker()
+            ModificationTracker.NEVER_CHANGED,
         )
     }
 
