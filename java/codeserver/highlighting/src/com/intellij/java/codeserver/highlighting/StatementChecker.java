@@ -384,4 +384,16 @@ final class StatementChecker {
       }
     }
   }
+
+  void checkYieldOutsideSwitchExpression(@NotNull PsiYieldStatement statement) {
+    if (statement.findEnclosingExpression() == null) {
+      myVisitor.report(JavaErrorKinds.YIELD_UNEXPECTED.create(statement));
+    }
+  }
+
+  void checkYieldExpressionType(@NotNull PsiExpression expression) {
+    if (PsiTypes.voidType().equals(expression.getType())) {
+      myVisitor.report(JavaErrorKinds.YIELD_VOID.create(expression));
+    }
+  }
 }

@@ -147,7 +147,7 @@ public class UnnecessaryParenthesesInspection
   }
 
   public java.util.function.IntFunction context() {
-    return <error descr="Incompatible types. Found: 'int', required: '<lambda expression>'">(a -> a)=1</error>;
+    return <error descr="Variable expected">(a -> a)</error>=1;
   }
 
   void conditionals(boolean prevConnect, boolean nextConnect) {

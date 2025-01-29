@@ -4,6 +4,7 @@ package com.intellij.java.codeserver.highlighting;
 import com.intellij.codeInsight.UnhandledExceptions;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -14,6 +15,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -137,6 +139,30 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
     super.visitBreakStatement(statement);
     if (!hasErrorResults()) myStatementChecker.checkBreakTarget(statement);
+  }
+
+  @Override
+  public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
+    super.visitYieldStatement(statement);
+    if (!hasErrorResults()) myStatementChecker.checkYieldOutsideSwitchExpression(statement);
+    if (!hasErrorResults()) {
+      PsiExpression expression = statement.getExpression();
+      if (expression != null) {
+        myStatementChecker.checkYieldExpressionType(expression);
+      }
+    }
+  }
+
+  @Override
+  public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
+    super.visitExpressionStatement(statement);
+    PsiElement parent = statement.getParent();
+    if (parent instanceof PsiSwitchLabeledRuleStatement ruleStatement) {
+      PsiSwitchBlock switchBlock = ruleStatement.getEnclosingSwitchBlock();
+      if (switchBlock instanceof PsiSwitchExpression expr && !PsiPolyExpressionUtil.isPolyExpression(expr)) {
+        myStatementChecker.checkYieldExpressionType(statement.getExpression());
+      }
+    }
   }
 
   @Override
@@ -788,6 +814,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
 
   @Override
   public void visitExpression(@NotNull PsiExpression expression) {
+    ProgressManager.checkCanceled(); // visitLiteralExpression is invoked very often in array initializers
     super.visitExpression(expression);
     PsiElement parent = expression.getParent();
     // Method expression of the call should not be especially processed
@@ -805,7 +832,12 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults() && expression.getParent() instanceof PsiThrowStatement statement && statement.getException() == expression) {
       myTypeChecker.checkMustBeThrowable(expression, expression.getType());
     }
+    if (!hasErrorResults() && parent instanceof PsiNewExpression newExpression &&
+        newExpression.getQualifier() != expression && newExpression.getArrayInitializer() != expression) {
+      myExpressionChecker.checkAssignability(PsiTypes.intType(), expression.getType(), expression, expression); // like in 'new String["s"]'
+    }
     if (!hasErrorResults()) myStatementChecker.checkForeachExpressionTypeIsIterable(expression);
+    if (!hasErrorResults()) myExpressionChecker.checkVariableExpected(expression);
   }
 
   @Override

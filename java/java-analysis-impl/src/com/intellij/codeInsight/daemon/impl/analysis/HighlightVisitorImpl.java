@@ -384,30 +384,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
-    super.visitYieldStatement(statement);
-    if (!hasErrorResults()) add(HighlightUtil.checkYieldOutsideSwitchExpression(statement));
-    if (!hasErrorResults()) {
-      PsiExpression expression = statement.getExpression();
-      if (expression != null) {
-        add(HighlightUtil.checkYieldExpressionType(expression));
-      }
-    }
-  }
-
-  @Override
-  public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
-    super.visitExpressionStatement(statement);
-    PsiElement parent = statement.getParent();
-    if (parent instanceof PsiSwitchLabeledRuleStatement ruleStatement) {
-      PsiSwitchBlock switchBlock = ruleStatement.getEnclosingSwitchBlock();
-      if (switchBlock instanceof PsiSwitchExpression expr && !PsiPolyExpressionUtil.isPolyExpression(expr)) {
-        add(HighlightUtil.checkYieldExpressionType(statement.getExpression()));
-      }
-    }
-  }
-
-  @Override
   public void visitClass(@NotNull PsiClass aClass) {
     super.visitClass(aClass);
     if (aClass instanceof PsiSyntheticClass) return;
@@ -463,7 +439,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitExpression(@NotNull PsiExpression expression) {
-    ProgressManager.checkCanceled(); // visitLiteralExpression is invoked very often in array initializers
     super.visitExpression(expression);
 
     PsiElement parent = expression.getParent();
@@ -471,12 +446,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (parent instanceof PsiMethodCallExpression) return;
     PsiType type = expression.getType();
 
-    if (!hasErrorResults() && parent instanceof PsiNewExpression newExpression &&
-        newExpression.getQualifier() != expression && newExpression.getArrayInitializer() != expression) {
-      add(HighlightUtil.checkAssignability(PsiTypes.intType(), expression.getType(), expression, expression));  // like in 'new String["s"]'
-    }
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkCannotWriteToFinal(expression, myFile));
-    if (!hasErrorResults()) add(HighlightUtil.checkVariableExpected(expression));
     if (!hasErrorResults()) add(HighlightUtil.checkConditionalExpressionBranchTypesMatch(expression, type));
   }
 

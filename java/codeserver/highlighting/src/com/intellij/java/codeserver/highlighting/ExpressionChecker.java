@@ -707,6 +707,25 @@ final class ExpressionChecker {
     }
   }
 
+  void checkVariableExpected(@NotNull PsiExpression expression) {
+    PsiExpression lValue;
+    if (expression instanceof PsiAssignmentExpression assignment) {
+      lValue = assignment.getLExpression();
+    }
+    else if (PsiUtil.isIncrementDecrementOperation(expression)) {
+      lValue = ((PsiUnaryExpression)expression).getOperand();
+    }
+    else {
+      lValue = null;
+    }
+    if (lValue != null && !TypeConversionUtil.isLValue(lValue) && !PsiTreeUtil.hasErrorElements(expression) &&
+        !(IncompleteModelUtil.isIncompleteModel(expression) &&
+          PsiUtil.skipParenthesizedExprDown(lValue) instanceof PsiReferenceExpression ref &&
+          IncompleteModelUtil.canBePendingReference(ref))) {
+      myVisitor.report(JavaErrorKinds.LVALUE_VARIABLE_EXPECTED.create(lValue));
+    }
+  }
+
   static boolean isArrayDeclaration(@NotNull PsiVariable variable) {
     // Java-style 'var' arrays are prohibited by the parser; for C-style ones, looking for a bracket is enough
     return ContainerUtil.or(variable.getChildren(), e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET));

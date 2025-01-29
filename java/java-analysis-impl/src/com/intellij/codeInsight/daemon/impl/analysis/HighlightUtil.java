@@ -226,27 +226,6 @@ public final class HighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkVariableExpected(@NotNull PsiExpression expression) {
-    PsiExpression lValue;
-    if (expression instanceof PsiAssignmentExpression assignment) {
-      lValue = assignment.getLExpression();
-    }
-    else if (PsiUtil.isIncrementDecrementOperation(expression)) {
-      lValue = ((PsiUnaryExpression)expression).getOperand();
-    }
-    else {
-      lValue = null;
-    }
-    if (lValue != null && !TypeConversionUtil.isLValue(lValue) && !PsiTreeUtil.hasErrorElements(expression) &&
-        !(IncompleteModelUtil.isIncompleteModel(expression) &&
-          PsiUtil.skipParenthesizedExprDown(lValue) instanceof PsiReferenceExpression ref &&
-          IncompleteModelUtil.canBePendingReference(ref))) {
-      String description = JavaErrorBundle.message("variable.expected");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(lValue).descriptionAndTooltip(description);
-    }
-    return null;
-  }
-
   static HighlightInfo.Builder checkAssignability(@Nullable PsiType lType,
                                           @Nullable PsiType rType,
                                           @Nullable PsiExpression expression,
@@ -467,23 +446,6 @@ public final class HighlightUtil {
 
   private static @NotNull String formatField(@NotNull PsiField field) {
     return PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
-  }
-
-  static HighlightInfo.Builder checkYieldOutsideSwitchExpression(@NotNull PsiYieldStatement statement) {
-    if (statement.findEnclosingExpression() == null) {
-      String message = JavaErrorBundle.message("yield.unexpected");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message);
-    }
-    return null;
-  }
-
-  static HighlightInfo.Builder checkYieldExpressionType(@NotNull PsiExpression expression) {
-    if (PsiTypes.voidType().equals(expression.getType())) {
-      String message = JavaErrorBundle.message("yield.void");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-    }
-
-    return null;
   }
 
   static void checkSwitchExpressionReturnTypeCompatible(@NotNull PsiSwitchExpression switchExpression,

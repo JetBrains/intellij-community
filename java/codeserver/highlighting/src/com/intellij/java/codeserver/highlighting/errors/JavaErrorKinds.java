@@ -662,6 +662,8 @@ public final class JavaErrorKinds {
   public static final Simple<PsiBreakStatement> BREAK_OUT_OF_SWITCH_EXPRESSION = error("break.out.of.switch.expression");
   public static final Simple<PsiContinueStatement> CONTINUE_OUTSIDE_LOOP = error("continue.outside.loop");
   public static final Simple<PsiContinueStatement> CONTINUE_OUT_OF_SWITCH_EXPRESSION = error("continue.out.of.switch.expression");
+  public static final Simple<PsiYieldStatement> YIELD_UNEXPECTED = error("yield.unexpected");
+  public static final Simple<PsiExpression> YIELD_VOID = error("yield.void");
   
   public static final Simple<PsiTypeElement> CATCH_TYPE_PARAMETER = error("catch.type.parameter");
 
@@ -708,6 +710,7 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiExpression, PsiVariable> ASSIGNMENT_DECLARED_OUTSIDE_GUARD =
     parameterized(PsiExpression.class, PsiVariable.class, "assignment.declared.outside.guard")
       .withRawDescription((expr, variable) -> message("assignment.declared.outside.guard", variable.getName()));
+  public static final Simple<PsiExpression> LVALUE_VARIABLE_EXPECTED = error("lvalue.variable.expected"); 
   
   public static final Parameterized<PsiJavaToken, JavaIncompatibleTypeErrorContext> BINARY_OPERATOR_NOT_APPLICABLE =
     parameterized(PsiJavaToken.class, JavaIncompatibleTypeErrorContext.class, "binary.operator.not.applicable")
