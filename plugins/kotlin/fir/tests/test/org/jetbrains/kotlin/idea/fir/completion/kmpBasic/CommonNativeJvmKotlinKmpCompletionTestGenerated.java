@@ -3628,6 +3628,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/KTIJ-30306.kt");
         }
 
+        @TestMetadata("KTIJ-31854.kt")
+        public void testKTIJ_31854() throws Exception {
+            runTest("../../completion/testData/basic/common/KTIJ-31854.kt");
+        }
+
         @TestMetadata("KeywordsAreLowInParameterTypeCompletion1.kt")
         public void testKeywordsAreLowInParameterTypeCompletion1() throws Exception {
             runTest("../../completion/testData/basic/common/KeywordsAreLowInParameterTypeCompletion1.kt");
