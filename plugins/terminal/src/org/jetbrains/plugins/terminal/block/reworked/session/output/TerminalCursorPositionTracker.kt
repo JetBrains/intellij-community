@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.block.reworked.session.output
 
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.util.CharUtils
+import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
 import org.jetbrains.plugins.terminal.block.ui.getLengthWithoutDwc
 
 internal class TerminalCursorPositionTracker(
@@ -17,16 +18,21 @@ internal class TerminalCursorPositionTracker(
   init {
     terminalDisplay.addListener(object : TerminalDisplayListener {
       override fun cursorPositionChanged(x: Int, y: Int) {
-        cursorX = x
-        cursorY = y
-        cursorPositionChanged = true
+        textBuffer.withLock {
+          cursorX = x
+          cursorY = y
+          cursorPositionChanged = true
 
-        // Make sure that line with cursor is created in the text buffer.
-        textBuffer.getLine(y)
+          // Make sure that line with cursor is created in the text buffer.
+          textBuffer.getLine(y)
+        }
       }
     })
   }
 
+  /**
+   * Should be executed under [TerminalTextBuffer.lock]
+   */
   fun getCursorPositionUpdate(): TerminalCursorPositionChangedEvent? {
     return if (cursorPositionChanged) {
       doGetCursorPositionUpdate()

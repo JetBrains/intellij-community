@@ -1,15 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked.session.output
 
-import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.EventDispatcher
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.TerminalDisplay
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.TerminalSelection
+import com.jediterm.terminal.ui.settings.DefaultSettingsProvider
 
-internal class TerminalDisplayImpl(private val settings: JBTerminalSystemSettingsProviderBase) : TerminalDisplay {
+internal class TerminalDisplayImpl(private val settings: DefaultSettingsProvider) : TerminalDisplay {
   private var cursorX: Int = 0
   private var cursorY: Int = 0
 
