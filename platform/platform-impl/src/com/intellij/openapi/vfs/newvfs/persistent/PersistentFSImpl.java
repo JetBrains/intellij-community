@@ -253,7 +253,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public void dispose() {
-    disconnect();
+    try {
+      disconnect();
+    }
+    catch (ProcessCanceledException e) {
+      // Application may be closed before `LocalFileSystem` gets initialized()
+      //noinspection IncorrectCancellationExceptionHandling
+      LOG.warn("Detected cancellation during dispose of PersistentFS. Application was likely closed before VFS got completely initialized",
+               e);
+    }
   }
 
   @Override
