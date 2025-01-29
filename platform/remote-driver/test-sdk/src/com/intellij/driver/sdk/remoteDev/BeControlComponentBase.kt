@@ -119,7 +119,7 @@ open class BeControlComponentBase(
   override fun getRefPluginId() = ""
 }
 
-fun getFrontendRef(element: Element) = Ref(
+internal fun getFrontendRef(element: Element) = Ref(
   element.getAttribute("frontend_refId"),
   element.getAttribute("frontend_javaclass"),
   element.getAttribute("frontend_hashCode").toInt(),
@@ -127,7 +127,7 @@ fun getFrontendRef(element: Element) = Ref(
   RdTarget.FRONTEND
 )
 
-fun getBackendRef(element: Element) = Ref(
+internal fun getBackendRef(element: Element) = Ref(
   element.getAttribute("backend_refId"),
   element.getAttribute("backend_javaclass"),
   element.getAttribute("backend_hashCode").toInt(),
@@ -135,7 +135,7 @@ fun getBackendRef(element: Element) = Ref(
   RdTarget.BACKEND
 )
 
-fun validateBeControlElement(element: Element): Boolean {
+internal fun validateBeControlElement(element: Element): Boolean {
   val attrNames = listOf("refId", "javaclass", "hashCode", "asString")
   val necessaryAttributes = attrNames.map { "frontend_$it" } + attrNames.map { "backend_$it" }
   return necessaryAttributes.all { element.hasAttribute(it) }
