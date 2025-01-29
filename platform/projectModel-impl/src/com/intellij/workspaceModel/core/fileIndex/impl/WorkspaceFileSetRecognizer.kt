@@ -47,13 +47,7 @@ object WorkspaceFileSetRecognizer {
   }
 
   fun getSdkId(fileSet: WorkspaceFileSet): SdkId? {
-    val fileSetImpl = fileSet.asSafely<WorkspaceFileSetImpl>()
-    if (fileSetImpl == null) return null
-
-    val sdkRootFileSetData = fileSetImpl.data as? SdkRootFileSetData
-    if (sdkRootFileSetData == null) return null
-
-    return sdkRootFileSetData.sdkId
+    return fileSet.asSafely<WorkspaceFileSetImpl>()?.data?.asSafely<SdkRootFileSetData>()?.sdkId
   }
 
   fun isFromAdditionalLibraryRootsProvider(fileSet: WorkspaceFileSet): Boolean {
