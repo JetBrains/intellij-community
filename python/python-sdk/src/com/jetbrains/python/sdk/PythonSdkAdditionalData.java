@@ -60,7 +60,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
    * @deprecated Use constructor with data. This ctor only supports flavours with empty data
    */
   @SuppressWarnings({"rawtypes", "unchecked"})
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PythonSdkAdditionalData(@Nullable PythonSdkFlavor<?> flavor) {
     this(flavor == null
          ? PyFlavorAndData.getUNKNOWN_FLAVOR_DATA()

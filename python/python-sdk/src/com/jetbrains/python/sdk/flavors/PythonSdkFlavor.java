@@ -104,7 +104,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * @deprecated use {@link #suggestLocalHomePaths(Module, UserDataHolder)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Collection<String> suggestHomePaths(final @Nullable Module module, final @Nullable UserDataHolder context) {
     return Collections.emptyList();
   }
@@ -264,7 +264,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * if you do not have sdk yet, and you want to guess the flavor, use {@link #tryDetectFlavorByLocalPath(Path)}
    */
   //No warning yet as there are usages: to be fixed
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @RequiresBackgroundThread(generateAssertion = false)
   public static @Nullable PythonSdkFlavor<?> getFlavor(@Nullable String sdkPath) {
     if (sdkPath == null || PythonSdkUtil.isCustomPythonSdkHomePath(sdkPath)) return null;
@@ -289,7 +289,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   /**
    * @deprecated SDK path is not enough to get flavor, use {@link #getFlavor(Sdk)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable PythonSdkFlavor<?> getPlatformIndependentFlavor(final @Nullable String sdkPath) {
     if (sdkPath == null) {
       return null;
