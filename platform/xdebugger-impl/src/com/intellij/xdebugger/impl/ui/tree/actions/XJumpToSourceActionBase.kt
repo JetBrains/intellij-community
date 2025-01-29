@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.ui.tree.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -14,9 +13,7 @@ import com.intellij.xdebugger.frame.XNavigatable
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -24,21 +21,41 @@ abstract class XJumpToSourceActionBase : XDebuggerTreeActionBase() {
   override fun perform(node: XValueNodeImpl, nodeName: String, e: AnActionEvent) {
     val value = node.valueContainer
     val dialog = e.getData<XDebuggerEvaluationDialog?>(XDebuggerEvaluationDialog.KEY)
-    val navigatable = XNavigatable { sourcePosition: XSourcePosition? ->
-      if (sourcePosition != null) {
-        val project = node.tree.project
-        project.service<XDebuggerJumpToSourceCoroutineScope>().cs.launch(Dispatchers.EDT) {
-          sourcePosition.createNavigatable(project).navigate(true)
-          if (dialog != null && `is`("debugger.close.dialog.on.navigate")) {
-            dialog.close(DialogWrapper.CANCEL_EXIT_CODE)
-          }
-        }
+    val project = node.tree.project
+
+    project.service<XDebuggerJumpToSourceCoroutineScope>().cs.launch(Dispatchers.EDT) {
+      val navigated = navigateToSource(project, value)
+      if (navigated && dialog != null && `is`("debugger.close.dialog.on.navigate")) {
+        dialog.close(DialogWrapper.CANCEL_EXIT_CODE)
       }
     }
-    startComputingSourcePosition(value, navigatable)
   }
 
-  protected abstract fun startComputingSourcePosition(value: XValue, navigatable: XNavigatable)
+  /**
+   * @return true if the source position is computed and a navigation request is sent, otherwise false
+   */
+  protected abstract suspend fun navigateToSource(project: Project, value: XValue): Boolean
+
+  companion object {
+    /**
+     * Starts computing [XSourcePosition] by [navigationRequest], when it is calculated, navigates to it.
+     * [XSourcePosition] has to be returned to the [XNavigatable] callback, otherwise the suspend function will be stuck.
+     */
+    @ApiStatus.Internal
+    suspend fun navigateByNavigatable(project: Project, navigationRequest: (XNavigatable) -> Unit): Boolean {
+      val xSourceDeferred = CompletableDeferred<XSourcePosition?>()
+      val navigatable = XNavigatable { sourcePosition ->
+        xSourceDeferred.complete(sourcePosition)
+      }
+      navigationRequest(navigatable)
+
+      val sourcePosition = xSourceDeferred.await() ?: return false
+      withContext(Dispatchers.EDT) {
+        sourcePosition.createNavigatable(project).navigate(true)
+      }
+      return true
+    }
+  }
 }
 
 @Service(Service.Level.PROJECT)

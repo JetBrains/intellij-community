@@ -3,18 +3,19 @@ package com.intellij.xdebugger.impl.ui.tree.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.xdebugger.frame.XNavigatable
+import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
-import org.jetbrains.annotations.ApiStatus
 
 private class XJumpToSourceAction : XJumpToSourceActionBase() {
-  override fun startComputingSourcePosition(value: XValue, navigatable: XNavigatable) {
-    value.computeSourcePosition(navigatable)
+  override suspend fun navigateToSource(project: Project, value: XValue): Boolean {
+    return navigateByNavigatable(project) { navigatable ->
+      value.computeSourcePosition(navigatable)
+    }
   }
 
   override fun isEnabled(node: XValueNodeImpl, e: AnActionEvent): Boolean {
-    return super.isEnabled(node, e) && node.getValueContainer().canNavigateToSource()
+    return super.isEnabled(node, e) && node.valueContainer.canNavigateToSource()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

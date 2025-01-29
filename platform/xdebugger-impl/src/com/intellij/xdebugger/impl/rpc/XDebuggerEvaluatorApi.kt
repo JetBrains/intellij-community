@@ -101,6 +101,8 @@ data class XValueId(val uid: UID)
 @Serializable
 data class XValueDto(
   val id: XValueId,
+  val canNavigateToSource: Boolean,
+  @Serializable(with = DeferredSerializer::class) val canNavigateToTypeSource: Deferred<Boolean>,
   @Serializable(with = DeferredSerializer::class) val canBeModified: Deferred<Boolean>,
   val valueMark: RpcFlow<XValueMarkerDto?>,
 )
