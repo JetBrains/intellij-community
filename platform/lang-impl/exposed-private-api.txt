@@ -27,6 +27,4 @@ com/intellij/packageDependencies/DependencyAnalysisResult
 com/intellij/platform/backend/navigation/impl/RawNavigationRequest
 com/intellij/psi/search/impl/VirtualFileEnumeration
 com/intellij/slicer/SliceManager$StoredSettingsBean
-com/intellij/util/indexing/IndexableFileSet
 com/intellij/util/indexing/dependencies/AppIndexingDependenciesToken
-com/intellij/util/indexing/projectFilter/ProjectIndexableFilesFilterHolder
