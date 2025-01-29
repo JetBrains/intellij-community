@@ -48,9 +48,9 @@ def get_shape(table):
         pass
 
     if len(shape) == 1:
-        return str((shape[0], 1))
+        return str((int(shape[0]), 1))
     else:
-        return str((shape[0], shape[1]))
+        return str((int(shape[0]), int(shape[1])))
 
 
 def get_head(table):
