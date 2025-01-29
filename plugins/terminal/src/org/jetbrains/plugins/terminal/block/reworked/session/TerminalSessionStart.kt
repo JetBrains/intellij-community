@@ -112,11 +112,19 @@ private fun createTerminalInputChannel(
         is TerminalClearBufferEvent -> {
           textBuffer.withLock {
             textBuffer.clearHistory()
+            // We need to clear the screen and keep the last line.
+            // For some reason, it's necessary even if there's just one line,
+            // otherwise the model ends up in a peculiar state
+            // (the cursor jumps to the bottom-left corner of the empty screen).
+            // But we can only keep the current line if the cursor position is valid to begin with.
+            // The cursor is 1-based, the lines are 0-based (sic!),
+            // so y > 0 means the cursor is valid, y - 1 stands for the line where the cursor is,
+            // and in the end cursor should be on the first line, so y = 1.
             if (controller.y > 0) {
               val lastLine = textBuffer.getLine(controller.y - 1)
               textBuffer.clearScreenBuffer()
-              controller.y = 0
               textBuffer.addLine(lastLine)
+              controller.y = 1
             }
           }
         }
