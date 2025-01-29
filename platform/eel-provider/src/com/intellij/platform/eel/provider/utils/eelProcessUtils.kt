@@ -1,27 +1,28 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.eel.impl.utils
+package com.intellij.platform.eel.provider.utils
 
-import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.ResultErrImpl
 import com.intellij.platform.eel.provider.ResultOkImpl
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.utils.asEelChannel
-import com.intellij.platform.eel.provider.utils.copy
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.ByteArrayOutputStream
 import java.nio.file.Path
 import kotlin.io.path.pathString
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
+
+val EelProcessExecutionResult.stdoutString: String get() = String(stdout)
+val EelProcessExecutionResult.stderrString: String get() = String(stderr)
+
+class EelProcessExecutionResult(val exitCode: Int, val stdout: ByteArray, val stderr: ByteArray)
 
 /**
  * Function that awaits the completion of an [EelProcess] and retrieves its execution result,
@@ -32,15 +33,14 @@ import kotlin.time.Duration.Companion.days
  * val process = eelApi.exec.executeProcess("ls", "-la").getOrThrow()
  * val result = process.awaitProcessResult()
  * println("Exit code: ${result.exitCode}")
- * println("Standard Output: ${result.stdout}")
- * println("Standard Error: ${result.stderr}")
+ * println("Standard Output: ${String(result.stdout)}")
+ * println("Standard Error: ${String(result.stderr)}")
  * ```
  *
  * @see EelProcess
- * @see ProcessOutput
  */
 @OptIn(DelicateCoroutinesApi::class)
-suspend fun EelProcess.awaitProcessResult(): ProcessOutput {
+suspend fun EelProcess.awaitProcessResult(): EelProcessExecutionResult {
   return computeDetached {
     ByteArrayOutputStream().use { out ->
       ByteArrayOutputStream().use { err ->
@@ -54,14 +54,14 @@ suspend fun EelProcess.awaitProcessResult(): ProcessOutput {
           }
         }
 
-        ProcessOutput(String(out.toByteArray()), String(err.toByteArray()), exitCode.await(), false, false)
+        EelProcessExecutionResult(exitCode.await(), out.toByteArray(), err.toByteArray())
       }
     }
   }
 }
 
 fun EelApi.whereBlocking(exe: String): EelPath? {
-  return runBlockingMaybeCancellable { where(exe) }
+  return runBlockingMaybeCancellable { exec.where(exe) }
 }
 
 /**
@@ -85,7 +85,7 @@ fun EelApi.whereBlocking(exe: String): EelPath? {
  * }
  * ```
  */
-suspend fun EelApi.where(exe: String): EelPath? {
+suspend fun EelExecApi.where(exe: String): EelPath? {
   val tool = when (this) {
     is EelPosixApi -> "which"
     is EelWindowsApi -> "where.exe"
@@ -99,7 +99,7 @@ suspend fun EelApi.where(exe: String): EelPath? {
     return null
   }
   else {
-    return EelPath.parse(result.stdout.trim(), descriptor)
+    return EelPath.parse(result.stdoutString.trim(), descriptor)
   }
 }
 
@@ -111,9 +111,9 @@ suspend fun EelApi.where(exe: String): EelPath? {
  * withTimeout(10.seconds) {python.exec("-v")}.getOr{return it}
  * ```
  */
-@Internal
+@ApiStatus.Internal
 @ApiStatus.Experimental
-suspend fun Path.exec(vararg args: String, timeout: Duration = Int.MAX_VALUE.days): EelResult<ProcessOutput, EelExecApi.ExecuteProcessError?> {
+suspend fun Path.exec(vararg args: String, timeout: Duration = Int.MAX_VALUE.days): EelResult<EelProcessExecutionResult, EelExecApi.ExecuteProcessError?> {
 
   val process = getEelDescriptor().upgrade().exec.executeProcess(pathString, *args).getOr { return it }
   val output = withTimeoutOrNull(timeout) {

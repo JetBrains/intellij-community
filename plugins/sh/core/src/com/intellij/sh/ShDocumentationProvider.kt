@@ -12,11 +12,11 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.impl.utils.where
 import com.intellij.platform.eel.path.EelPath.Companion.parse
 import com.intellij.platform.eel.path.pathSeparator
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.utils.where
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -110,7 +110,7 @@ internal class ShDocumentationProvider(private val scope: CoroutineScope) : Docu
           }
         }
 
-        eel.where("man")?.toString()
+        eel.exec.where("man")?.toString()
       }
     }
 

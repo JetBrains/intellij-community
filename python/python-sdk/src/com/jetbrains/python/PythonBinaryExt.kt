@@ -2,7 +2,9 @@ package com.jetbrains.python
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.getOr
-import com.intellij.platform.eel.impl.utils.exec
+import com.intellij.platform.eel.provider.utils.exec
+import com.intellij.platform.eel.provider.utils.stderrString
+import com.intellij.platform.eel.provider.utils.stdoutString
 import com.jetbrains.python.PySdkBundle.message
 import com.jetbrains.python.Result.Companion.failure
 import com.jetbrains.python.psi.LanguageLevel
@@ -47,9 +49,9 @@ suspend fun PythonBinary.executeWithResult(vararg args: String): Result<@NlsSafe
     return failure(text)
   }
   return if (output.exitCode != 0) {
-    failure(message("python.get.version.error", pathString, "code ${output.exitCode}, {output.stderr}"))
+    failure(message("python.get.version.error", pathString, "code ${output.exitCode}, ${output.stderrString}"))
   }
   else {
-    Result.success(output.stdout)
+    Result.success(output.stdoutString)
   }
 }

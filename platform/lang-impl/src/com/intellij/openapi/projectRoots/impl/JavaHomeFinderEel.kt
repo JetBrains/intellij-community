@@ -9,9 +9,10 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.impl.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.upgradeBlocking
+import com.intellij.platform.eel.provider.utils.awaitProcessResult
+import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.util.suspendingLazy
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
@@ -96,7 +97,7 @@ internal fun javaHomeFinderEel(descriptor: EelDescriptor): JavaHomeFinderBasic {
             if (result.exitCode != 0) {
               return@runBlockingMaybeCancellable ""
             }
-            result.stdout
+            result.stdoutString
           }
         }
       )

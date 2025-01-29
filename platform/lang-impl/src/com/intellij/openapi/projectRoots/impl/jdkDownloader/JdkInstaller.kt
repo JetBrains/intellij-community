@@ -26,12 +26,14 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.impl.utils.awaitProcessResult
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.upgradeBlocking
+import com.intellij.platform.eel.provider.utils.awaitProcessResult
+import com.intellij.platform.eel.provider.utils.stderrString
+import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.delete
@@ -139,7 +141,7 @@ class JdkInstaller : JdkInstallerBase() {
       val process = eel.exec.execute(builder).getOrThrow()
       try {
         withTimeout(timeout.milliseconds) {
-          process.awaitProcessResult()
+          process.awaitProcessResult().let { ProcessOutput(it.stdoutString, it.stderrString, it.exitCode, false, false) }
         }
       }
       catch (_: TimeoutCancellationException) {

@@ -29,11 +29,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
-import com.intellij.platform.eel.impl.utils.where
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.asNioPathOrNull
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
+import com.intellij.platform.eel.provider.utils.where
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.withProgressText
@@ -141,7 +141,7 @@ object MavenEelUtil  {
       result.add(MavenInSpecificPath(home))
     }
 
-    val path = runBlockingMaybeCancellable { where("mvn") }?.asNioPathOrNull()?.parent?.parent
+    val path = runBlockingMaybeCancellable { exec.where("mvn") }?.asNioPathOrNull()?.parent?.parent
     if (path != null && isValidMavenHome(path)) {
       result.add(MavenInSpecificPath(path))
     }
