@@ -1,7 +1,5 @@
 <idea-plugin>
   <dependencies>
-    <plugin id="intellij.grid.core.plugin"/>
-    <plugin id="com.intellij.platform.images"/>
     <module name="intellij.grid.core.impl"/>
     <module name="intellij.grid.csv.core.impl"/>
     <module name="intellij.platform.navbar.frontend"/>
@@ -10,6 +8,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.database.datagrid.valueEditorTab" interface="com.intellij.database.run.ui.ValueEditorTab" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.database.datagrid.cellViewerFactory" interface="com.intellij.database.run.ui.CellViewerFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.database.minimizedFormatDetector" interface="com.intellij.database.run.ui.MinimizedFormatDetector" dynamic="true"/>
   </extensionPoints>
 

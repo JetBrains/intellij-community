@@ -1,10 +1,15 @@
-package com.intellij.database.run.ui
+package com.intellij.grid.images.impl
 
 import com.intellij.database.datagrid.DataGrid
 import com.intellij.database.datagrid.GridColumn
 import com.intellij.database.datagrid.GridRow
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.extractors.ImageInfo
+import com.intellij.database.run.ui.CellViewer
+import com.intellij.database.run.ui.CellViewerFactory
+import com.intellij.database.run.ui.DataAccessType
+import com.intellij.database.run.ui.Suitability
+import com.intellij.database.run.ui.UpdateEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.CheckedDisposable
@@ -28,8 +33,10 @@ class ImageCellViewer(private val grid: DataGrid) : CellViewer, CheckedDisposabl
 
   override fun update(event: UpdateEvent?) {
     if (event is UpdateEvent.ValueChanged) {
-      if (event.value is ImageInfo) update(event.value)
-      else clearContent()
+      when(val eventValue = event.value) {
+        is ImageInfo -> update(eventValue)
+        else -> clearContent()
+      }
       return
     }
 
@@ -82,7 +89,7 @@ class ImageCellViewer(private val grid: DataGrid) : CellViewer, CheckedDisposabl
   override fun dispose() { }
 }
 
-object ImageCellViewerFactory : CellViewerFactory {
+class ImageCellViewerFactory : CellViewerFactory {
   override fun getSuitability(grid: DataGrid, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>): Suitability {
     if (!row.isValid(grid) || !column.isValid(grid)) return Suitability.NONE
     val value = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getValueAt(row, column)

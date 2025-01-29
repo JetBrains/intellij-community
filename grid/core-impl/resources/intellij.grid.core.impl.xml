@@ -1,5 +1,6 @@
 <idea-plugin>
   <dependencies>
+    <module name="intellij.grid"/>
     <module name="intellij.grid.types"/>
     <module name="intellij.grid.csv.core.impl"/>
   </dependencies>

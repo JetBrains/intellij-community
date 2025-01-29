@@ -5,6 +5,7 @@ import com.intellij.database.datagrid.GridColumn
 import com.intellij.database.datagrid.GridRow
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Key
 import javax.swing.JComponent
 
@@ -27,6 +28,11 @@ interface CellViewer : Disposable {
 interface CellViewerFactory {
   fun getSuitability(grid: DataGrid, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>): Suitability
   fun createViewer(grid: DataGrid): CellViewer
+
+  companion object {
+    private val EP_NAME = ExtensionPointName<CellViewerFactory>("com.intellij.database.datagrid.cellViewerFactory")
+    fun getExternalFactories(): List<CellViewerFactory> = EP_NAME.extensionList
+  }
 }
 
 sealed interface UpdateEvent {
