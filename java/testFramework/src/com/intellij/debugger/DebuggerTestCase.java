@@ -613,8 +613,15 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       renderer.setEnabled(state);
     }
   }
+  protected void doWhenXSessionPaused(ThrowableRunnable runnable) {
+    doWhenXSessionPaused(runnable, false);
+  }
 
   protected void doWhenXSessionPausedThenResume(ThrowableRunnable runnable) {
+    doWhenXSessionPaused(runnable, true);
+  }
+
+  private void doWhenXSessionPaused(ThrowableRunnable runnable, boolean thenResume) {
     XDebugSession session = getDebuggerSession().getXDebugSession();
     assertNotNull(session);
     session.addSessionListener(new XDebugSessionListener() {
@@ -631,15 +638,23 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
             addException(e);
           }
           finally {
-            SwingUtilities.invokeLater(() -> {
-              if (myLogAllCommands) {
-                printContext("Resuming ", getDebugProcess().getDebuggerContext());
-              }
-              session.resume();
-            });
+            if (thenResume) {
+              resume();
+            }
           }
         });
       }
+    });
+  }
+
+  protected void resume() {
+    SwingUtilities.invokeLater(() -> {
+      if (myLogAllCommands) {
+        printContext("Resuming ", getDebugProcess().getDebuggerContext());
+      }
+      XDebugSession session = getDebuggerSession().getXDebugSession();
+      assertNotNull(session);
+      session.resume();
     });
   }
 
