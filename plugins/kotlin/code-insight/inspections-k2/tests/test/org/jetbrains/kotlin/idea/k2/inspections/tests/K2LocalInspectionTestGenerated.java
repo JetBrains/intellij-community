@@ -7616,6 +7616,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         public void testNoBackingFieldRef() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousVarProperty/noBackingFieldRef.kt");
         }
+
+        @TestMetadata("overridesVal.kt")
+        public void testOverridesVal() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousVarProperty/overridesVal.kt");
+        }
+
+        @TestMetadata("overridesVar.kt")
+        public void testOverridesVar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousVarProperty/overridesVar.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

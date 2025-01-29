@@ -16662,6 +16662,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testNoBackingFieldRef() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousVarProperty/noBackingFieldRef.kt");
         }
+
+        @TestMetadata("overridesVal.kt")
+        public void testOverridesVal() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousVarProperty/overridesVal.kt");
+        }
+
+        @TestMetadata("overridesVar.kt")
+        public void testOverridesVar() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousVarProperty/overridesVar.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
