@@ -103,6 +103,7 @@ internal object TerminalUiUtils {
       isAdditionalPageAtBottom = false
       isBlockCursor = true
       isWhitespacesShown = false
+      characterGridWidth = editor.getCharSize().width.toFloat()
     }
 
     if (installContextMenu) {
@@ -278,7 +279,10 @@ internal fun Editor.getCharSize(): Dimension2D {
                                   AntialiasingType.getKeyForCurrentScope(true),
                                   UISettings.editorFractionalMetricsHint)
   val fontMetrics = FontInfo.getFontMetrics(colorsScheme.getFont(EditorFontType.PLAIN), context)
-  val width = FontLayoutService.getInstance().charWidth2D(fontMetrics, ' '.code)
+  // Using the '%' to calculate the size as it's usually one of the widest non-double-width characters.
+  // For monospaced fonts this shouldn't really matter, but let's stay on the safe side.
+  // Otherwise, we may end up with some characters falsely displayed as double-width ones.
+  val width = FontLayoutService.getInstance().charWidth2D(fontMetrics, '%'.code)
   return Dimension2DDouble(width.toDouble(), lineHeight.toDouble())
 }
 
