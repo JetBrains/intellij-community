@@ -18,7 +18,6 @@ import com.intellij.xdebugger.frame.XValueModifier
 import com.intellij.xdebugger.frame.XValueNode
 import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
-import com.intellij.xdebugger.impl.evaluate.quick.HintXValue
 import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorApi
 import com.intellij.xdebugger.impl.rpc.XValueAdvancedPresentationPart
@@ -28,6 +27,9 @@ import com.intellij.xdebugger.impl.rpc.XValuePresentationEvent
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.asCompletableFuture
+import org.jetbrains.concurrency.asPromise
 
 internal class FrontendXValue(
   private val project: Project,
@@ -47,6 +49,9 @@ internal class FrontendXValue(
   private var modifier: XValueModifier? = null
 
   var markerDto: XValueMarkerDto? = null
+
+  @Volatile
+  private var canNavigateToTypeSource = false
 
   init {
     cs.launch {
@@ -75,6 +80,22 @@ internal class FrontendXValue(
         }
       }
     }
+
+    cs.launch {
+      canNavigateToTypeSource = xValueDto.canNavigateToTypeSource.await()
+    }
+  }
+
+  override fun canNavigateToSource(): Boolean {
+    return xValueDto.canNavigateToSource
+  }
+
+  override fun canNavigateToTypeSource(): Boolean {
+    return canNavigateToTypeSource
+  }
+
+  override fun canNavigateToTypeSourceAsync(): Promise<Boolean?>? {
+    return canNavigateToTypeSourceAsync()?.asCompletableFuture()?.asPromise()
   }
 
   override fun computePresentation(node: XValueNode, place: XValuePlace) {

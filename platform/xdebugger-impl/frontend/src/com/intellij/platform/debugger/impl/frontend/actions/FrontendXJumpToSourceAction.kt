@@ -10,6 +10,7 @@ import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.actions.areFrontendDebuggerActionsEnabled
 import com.intellij.xdebugger.impl.rpc.XDebuggerNavigationApi
 import com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceActionBase
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 
 private class FrontendXJumpToSourceAction : XJumpToSourceActionBase(), ActionRemoteBehaviorSpecification.Frontend {
   override fun update(e: AnActionEvent) {
@@ -19,6 +20,10 @@ private class FrontendXJumpToSourceAction : XJumpToSourceActionBase(), ActionRem
     }
 
     super.update(e)
+  }
+
+  override fun isEnabled(node: XValueNodeImpl, e: AnActionEvent): Boolean {
+    return super.isEnabled(node, e) && node.valueContainer.canNavigateToSource()
   }
 
   override suspend fun navigateToSource(project: Project, value: XValue): Boolean {
