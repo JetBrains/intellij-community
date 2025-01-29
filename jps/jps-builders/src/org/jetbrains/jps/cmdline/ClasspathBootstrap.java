@@ -80,7 +80,7 @@ public final class ClasspathBootstrap {
   };
 
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
-  private static final String NETTY_JPS_VERSION = "4.1.115.Final";
+  private static final String NETTY_JPS_VERSION = "4.1.117.Final";
   private static final String NETTY_JPS_DISTRIBUTION_JAR_NAME = "netty-jps.jar";
   private static final String[] NETTY_ARTIFACT_NAMES = {
     "netty-buffer", "netty-codec-http", "netty-codec-http2", "netty-codec", "netty-common", "netty-handler", "netty-resolver", "netty-transport"
