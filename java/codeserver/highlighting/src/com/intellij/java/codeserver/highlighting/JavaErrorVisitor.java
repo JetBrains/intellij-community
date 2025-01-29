@@ -49,6 +49,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   final @NotNull TypeChecker myTypeChecker = new TypeChecker(this);
   final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
+  private final @NotNull PatternChecker myPatternChecker = new PatternChecker(this);
   final @NotNull ModifierChecker myModifierChecker = new ModifierChecker(this);
   final @NotNull ExpressionChecker myExpressionChecker = new ExpressionChecker(this);
   private final @NotNull StatementChecker myStatementChecker = new StatementChecker(this);
@@ -637,7 +638,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       }
     }
     if (!hasErrorResults() && resultForIncompleteCode != null && isApplicable(JavaFeature.PATTERNS_IN_SWITCH)) {
-      myExpressionChecker.checkPatternVariableRequired(expression, resultForIncompleteCode);
+      myPatternChecker.checkPatternVariableRequired(expression, resultForIncompleteCode);
     }
     if (!hasErrorResults() && resultForIncompleteCode != null) {
       myExpressionChecker.checkExpressionRequired(expression, resultForIncompleteCode);
@@ -659,7 +660,19 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
   }
 
-    @Override
+  @Override
+  public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
+    super.visitPatternVariable(variable);
+    myPatternChecker.checkDeconstructionVariable(variable);
+  }
+
+  @Override
+  public void visitDeconstructionPattern(@NotNull PsiDeconstructionPattern deconstructionPattern) {
+    super.visitDeconstructionPattern(deconstructionPattern);
+    myPatternChecker.checkDeconstructionPattern(deconstructionPattern);
+  }
+
+  @Override
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
     JavaResolveResult result = ref instanceof PsiExpression ? resolveOptimised(ref, myFile) : doVisitReferenceElement(ref);
     if (result != null) {

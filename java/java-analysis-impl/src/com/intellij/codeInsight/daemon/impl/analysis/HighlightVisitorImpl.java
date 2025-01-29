@@ -62,7 +62,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
-import static com.intellij.psi.PsiModifier.SEALED;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Objects.*;
 
@@ -1154,52 +1153,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitProvidesStatement(statement);
     if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
       if (!hasErrorResults()) ModuleHighlightUtil.checkServiceImplementations(statement, myFile, myErrorSink);
-    }
-  }
-
-  @Override
-  public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
-    super.visitPatternVariable(variable);
-    if (variable.getPattern() instanceof PsiDeconstructionPattern) {
-      String message = JavaErrorBundle.message("identifier.is.not.allowed.here");
-      add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(variable).descriptionAndTooltip(message));
-    }
-  }
-
-  @Override
-  public void visitDeconstructionPattern(@NotNull PsiDeconstructionPattern deconstructionPattern) {
-    super.visitDeconstructionPattern(deconstructionPattern);
-    PsiTreeUtil.processElements(deconstructionPattern.getTypeElement(), PsiAnnotation.class, annotation -> {
-      add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .range(annotation)
-            .descriptionAndTooltip(JavaErrorBundle.message("deconstruction.pattern.type.contain.annotation")));
-      return true;
-    });
-    PsiElement parent = deconstructionPattern.getParent();
-    if (parent instanceof PsiForeachPatternStatement forEach) {
-      add(checkFeature(deconstructionPattern, JavaFeature.RECORD_PATTERNS_IN_FOR_EACH));
-      if (hasErrorResults()) return;
-      PsiTypeElement typeElement = JavaPsiPatternUtil.getPatternTypeElement(deconstructionPattern);
-      if (typeElement == null) return;
-      PsiType patternType = typeElement.getType();
-      PsiExpression iteratedValue = forEach.getIteratedValue();
-      PsiType itemType = iteratedValue == null ? null : JavaGenericsUtil.getCollectionItemType(iteratedValue);
-      if (itemType == null) return;
-      PatternHighlightingModel.checkForEachPatternApplicable(deconstructionPattern, patternType, itemType, myErrorSink);
-      if (hasErrorResults()) return;
-      PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(itemType));
-      if (selectorClass != null && (selectorClass.hasModifierProperty(SEALED) || selectorClass.isRecord())) {
-        if (!PatternHighlightingModel.checkRecordExhaustiveness(Collections.singletonList(deconstructionPattern), patternType, forEach)
-          .isExhaustive()) {
-          add(PatternHighlightingModel.createPatternIsNotExhaustiveError(deconstructionPattern, patternType, itemType));
-        }
-      }
-      else {
-        add(PatternHighlightingModel.createPatternIsNotExhaustiveError(deconstructionPattern, patternType, itemType));
-      }
-    }
-    else {
-      add(checkFeature(deconstructionPattern, JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS));
     }
   }
 

@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Objects.*;
 
 final class ExpressionChecker {
@@ -193,13 +192,6 @@ final class ExpressionChecker {
       PsiExpression expression = initializer instanceof PsiArrayInitializerExpression ? null : initializer;
       checkAssignability(componentType, initializerType, expression, initializer);
     }
-  }
-
-  void checkPatternVariableRequired(@NotNull PsiReferenceExpression expression, @NotNull JavaResolveResult resultForIncompleteCode) {
-    if (!(expression.getParent() instanceof PsiCaseLabelElementList)) return;
-    PsiClass resolved = tryCast(resultForIncompleteCode.getElement(), PsiClass.class);
-    if (resolved == null) return;
-    myVisitor.report(JavaErrorKinds.PATTERN_TYPE_PATTERN_EXPECTED.create(expression, resolved));
   }
 
   void checkExpressionRequired(@NotNull PsiReferenceExpression expression, @NotNull JavaResolveResult resultForIncompleteCode) {

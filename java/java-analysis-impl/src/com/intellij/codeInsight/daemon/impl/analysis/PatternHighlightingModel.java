@@ -398,33 +398,6 @@ final class PatternHighlightingModel {
     return reducedToTypeTest;
   }
 
-  static @NotNull HighlightInfo.Builder createPatternIsNotExhaustiveError(@NotNull PsiDeconstructionPattern pattern,
-                                                                          @NotNull PsiType patternType,
-                                                                          @NotNull PsiType itemType) {
-    String description = JavaErrorBundle.message("pattern.is.not.exhaustive", JavaHighlightUtil.formatType(patternType),
-                                                 JavaHighlightUtil.formatType(itemType));
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern).descriptionAndTooltip(description);
-  }
-
-  static void checkForEachPatternApplicable(@NotNull PsiDeconstructionPattern pattern,
-                                            @NotNull PsiType patternType,
-                                            @NotNull PsiType itemType,
-                                            @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    if (!TypeConversionUtil.areTypesConvertible(itemType, patternType) &&
-        (!IncompleteModelUtil.isIncompleteModel(pattern) ||
-         !IncompleteModelUtil.isPotentiallyConvertible(patternType, itemType, pattern))) {
-      errorSink.accept(HighlightUtil.createIncompatibleTypeHighlightInfo(itemType, patternType, pattern.getTextRange(), 0));
-      return;
-    }
-    HighlightInfo.Builder error = getUncheckedPatternConversionError(pattern);
-    if (error != null) {
-      errorSink.accept(error);
-    }
-    else {
-      createDeconstructionErrors(pattern, errorSink);
-    }
-  }
-
 
   private static final class ReduceResultCacheContext {
     private final @NotNull PsiType mySelectorType;
@@ -539,7 +512,7 @@ final class PatternHighlightingModel {
           PatternDescription baseDescription = patternDescriptions.get(i);
           if (!(baseDescription instanceof PatternTypeTestDescription baseTypeDescription)) continue;
           if (baseTypeDescription.myPsiClass == null) continue;
-          if (!PatternsInSwitchBlockHighlightingModel.isAbstractSealed(baseTypeDescription.myPsiClass)) continue;
+          if (!JavaPsiSealedUtil.isAbstractSealed(baseTypeDescription.myPsiClass)) continue;
           for (PatternDeconstructionDescription comparedPattern : deconstructionExistedPatternWithTheSameType) {
             if (comparedPattern == basePattern) continue;
             if (!comparedPattern.type().equals(basePattern.type())) continue;
@@ -577,7 +550,7 @@ final class PatternHighlightingModel {
     }
     if (!visited.add(from)) return false;
     if (from.getManager().areElementsEquivalent(from, to)) {
-      boolean result = PatternsInSwitchBlockHighlightingModel.isAbstractSealed(to);
+      boolean result = JavaPsiSealedUtil.isAbstractSealed(to);
       addToSealedCache(from, to, cache, result);
       return result;
     }
@@ -587,7 +560,7 @@ final class PatternHighlightingModel {
       return result;
     }
     boolean result = ContainerUtil.exists(from.getSupers(),
-                                          superClass -> PatternsInSwitchBlockHighlightingModel.isAbstractSealed(superClass) &&
+                                          superClass -> JavaPsiSealedUtil.isAbstractSealed(superClass) &&
                                                         isDirectSealedPath(superClass, to, cache, visited));
     addToSealedCache(from, to, cache, result);
     return result;
@@ -714,7 +687,7 @@ final class PatternHighlightingModel {
           for (int i = 0; i < recordComponentTypes.size(); i++) {
             PsiType recordComponentType = recordComponentTypes.get(i);
             PsiType descriptionComponentType = descriptionTypes.get(i);
-            if (!PatternsInSwitchBlockHighlightingModel.cover(context, descriptionComponentType, recordComponentType)) {
+            if (!JavaPsiPatternUtil.covers(context, descriptionComponentType, recordComponentType)) {
               allCovered = false;
               break;
             }
@@ -813,12 +786,12 @@ final class PatternHighlightingModel {
     for (PsiClass covered : visitedCovered) {
       PsiClassType classType = TypeUtils.getType(covered);
       if (!existedTypes.contains(classType)) {
-        if (PatternsInSwitchBlockHighlightingModel.cover(context, selectorType, classType)) {
+        if (JavaPsiPatternUtil.covers(context, selectorType, classType)) {
           toAdd.add(new PatternTypeTestDescription(classType));
           changed = true;
         }
         //find something upper. let's change to selectorType
-        if (PatternsInSwitchBlockHighlightingModel.cover(context, classType, selectorType)) {
+        if (JavaPsiPatternUtil.covers(context, classType, selectorType)) {
           toAdd.add(new PatternTypeTestDescription(selectorType));
           changed = true;
           break;
@@ -1002,7 +975,7 @@ final class PatternHighlightingModel {
       return false;
     }
     for (int i = 0; i < whoType.list().size(); i++) {
-      if (!PatternsInSwitchBlockHighlightingModel.cover(context, whoType.list().get(i).type(), overWhom.list().get(i).type())) {
+      if (!JavaPsiPatternUtil.covers(context, whoType.list().get(i).type(), overWhom.list().get(i).type())) {
         return false;
       }
     }
@@ -1014,32 +987,11 @@ final class PatternHighlightingModel {
                                            @NotNull PsiType selectorType) {
     for (PatternDescription pattern : patterns) {
       if (pattern instanceof PatternTypeTestDescription &&
-          PatternsInSwitchBlockHighlightingModel.cover(context, pattern.type(), selectorType)) {
+          JavaPsiPatternUtil.covers(context, pattern.type(), selectorType)) {
         return true;
       }
     }
     return false;
-  }
-
-  static List<PsiType> getAllTypes(@NotNull PsiType selectorType) {
-    List<PsiType> selectorTypes = new ArrayList<>();
-    PsiClass resolvedClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
-    //T is an intersection type T1& ... &Tn and P covers Ti, for one of the types Ti (1≤i≤n)
-    if (resolvedClass instanceof PsiTypeParameter typeParameter) {
-      PsiClassType[] types = typeParameter.getExtendsListTypes();
-      Arrays.stream(types)
-        .filter(t -> t != null)
-        .forEach(t -> selectorTypes.add(t));
-    }
-    if (selectorType instanceof PsiIntersectionType psiIntersectionType) {
-      for (PsiType conjunct : psiIntersectionType.getConjuncts()) {
-        selectorTypes.addAll(getAllTypes(conjunct));
-      }
-    }
-    if (selectorTypes.isEmpty()) {
-      selectorTypes.add(selectorType);
-    }
-    return selectorTypes;
   }
 
   sealed interface PatternDescription {

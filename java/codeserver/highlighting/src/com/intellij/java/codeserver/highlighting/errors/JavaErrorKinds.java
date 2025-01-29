@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 20castTypeJetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting.errors;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -683,6 +683,38 @@ public final class JavaErrorKinds {
 
   public static final Parameterized<PsiReferenceExpression, PsiClass> PATTERN_TYPE_PATTERN_EXPECTED =
     parameterized("pattern.type.pattern.expected");
+  public static final Simple<PsiPatternVariable> PATTERN_DECONSTRUCTION_VARIABLE = error("pattern.deconstruction.variable");
+  public static final Simple<PsiAnnotation> PATTERN_DECONSTRUCTION_ANNOTATION = error("pattern.deconstruction.annotation");
+  public static final Parameterized<PsiPattern, PatternTypeContext> PATTERN_UNSAFE_CAST = 
+    parameterized(PsiPattern.class, PatternTypeContext.class, "pattern.unsafe.cast")
+    .withRawDescription((psi, ctx) -> message("pattern.unsafe.cast", ctx.contextType().getPresentableText(),
+                                              ctx.patternType().getPresentableText()));
+  public static final Parameterized<PsiDeconstructionPattern, PatternTypeContext> PATTERN_NOT_EXHAUSTIVE = 
+    parameterized(PsiDeconstructionPattern.class, PatternTypeContext.class, "pattern.not.exhaustive")
+    .withRawDescription((psi, ctx) -> message("pattern.not.exhaustive", formatType(ctx.patternType()), formatType(ctx.contextType())));
+  public static final Simple<PsiTypeElement> PATTERN_DECONSTRUCTION_REQUIRES_RECORD =
+    error(PsiTypeElement.class, "pattern.deconstruction.requires.record")
+      .withRawDescription(type -> message("pattern.deconstruction.requires.record", formatType(type.getType())));
+  public static final Parameterized<PsiTypeElement, @Nls String> PATTERN_CANNOT_INFER_TYPE =
+    parameterized(PsiTypeElement.class, String.class, "pattern.cannot.infer.type")
+      .withRawDescription((te, inferenceError) -> message("pattern.cannot.infer.type", inferenceError));
+  public static final Parameterized<PsiDeconstructionList, DeconstructionCountMismatchContext> PATTERN_DECONSTRUCTION_COUNT_MISMATCH =
+    parameterized(PsiDeconstructionList.class, DeconstructionCountMismatchContext.class, "pattern.deconstruction.count.mismatch")
+      .withRange((list, ctx) -> {
+        if (ctx.recordComponents().length < ctx.patternComponents().length && !ctx.hasMismatch()) {
+          PsiPattern[] deconstructionComponents = list.getDeconstructionComponents();
+          int endOffset = list.getTextLength();
+          int startOffset = deconstructionComponents[ctx.recordComponents().length].getStartOffsetInParent();
+          return TextRange.create(startOffset, endOffset);
+        }
+        return null;
+      })
+      .withRawDescription((list, ctx) -> message("pattern.deconstruction.count.mismatch", 
+                                                 ctx.recordComponents().length, ctx.patternComponents().length));
+  
+  public static final Parameterized<PsiElement, JavaIncompatibleTypeErrorContext> CAST_INCONVERTIBLE =
+    parameterized(PsiElement.class, JavaIncompatibleTypeErrorContext.class, "cast.inconvertible")
+      .withRawDescription((psi, ctx) -> message("cast.inconvertible", formatType(ctx.lType()), formatType(ctx.rType())));
 
   public static final Simple<PsiReferenceExpression> EXPRESSION_EXPECTED = error("expression.expected");
   public static final Parameterized<PsiReferenceExpression, PsiSuperExpression> EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD = 
@@ -1135,6 +1167,11 @@ public final class JavaErrorKinds {
   }
   
   public record UnresolvedConstructorContext(@NotNull PsiClass psiClass, @NotNull JavaResolveResult @NotNull [] results) {
-    
   }
+  
+  public record PatternTypeContext(@NotNull PsiType contextType, @NotNull PsiType patternType) {}
+  
+  public record DeconstructionCountMismatchContext(@NotNull PsiPattern @NotNull [] patternComponents,
+                                                   @NotNull PsiRecordComponent @NotNull [] recordComponents,
+                                                   boolean hasMismatch) {}
 }

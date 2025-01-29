@@ -111,6 +111,7 @@ final class JavaErrorFixProvider {
     createMethodFixes();
     createExpressionFixes();
     createVariableFixes();
+    createPatternFixes();
     createStatementFixes();
     createExceptionFixes();
     createGenericFixes();
@@ -298,6 +299,28 @@ final class JavaErrorFixProvider {
     fix(MODIFIER_REPEATED, removeModifier);
     fix(MODIFIER_INCOMPATIBLE, removeModifier);
     fix(MODIFIER_NOT_ALLOWED_NON_SEALED, removeModifier);
+  }
+  
+  private void createPatternFixes() {
+    fixes(PATTERN_DECONSTRUCTION_COUNT_MISMATCH, (error, sink) -> {
+      if (error.context().hasMismatch()) return;
+      PsiRecordComponent[] recordComponents = error.context().recordComponents();
+      PsiPattern[] patternComponents = error.context().patternComponents();
+      PsiDeconstructionList list = error.psi();
+      if (patternComponents.length < recordComponents.length) {
+        PsiRecordComponent[] missingRecordComponents =
+          Arrays.copyOfRange(recordComponents, patternComponents.length, recordComponents.length);
+        List<AddMissingDeconstructionComponentsFix.Pattern> missingPatterns =
+          ContainerUtil.map(missingRecordComponents, component -> AddMissingDeconstructionComponentsFix.Pattern.create(component, list));
+        sink.accept(new AddMissingDeconstructionComponentsFix(list, missingPatterns));
+      }
+      else {
+        PsiPattern[] elementsToDelete = Arrays.copyOfRange(patternComponents, recordComponents.length, patternComponents.length);
+        int diff = patternComponents.length - recordComponents.length;
+        String text = QuickFixBundle.message("remove.redundant.nested.patterns.fix.text", diff);
+        sink.accept(QuickFixFactory.getInstance().createDeleteFix(elementsToDelete, text));
+      }
+    });
   }
   
   private void createVariableFixes() {
