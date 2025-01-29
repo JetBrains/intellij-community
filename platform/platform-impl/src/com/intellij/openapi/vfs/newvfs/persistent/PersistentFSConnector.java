@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
 
@@ -74,6 +75,10 @@ final class PersistentFSConnector {
           attemptsFailures,
           System.nanoTime() - initializationStartedNs
         );
+      }
+      catch (CancellationException e) {
+        LOG.info("VFS initialization was canceled. The application was likely disposed early.");
+        throw e;
       }
       catch (Exception e) {
         LOG.info("Init VFS attempt #" + attempt + " failed: " + e.getMessage());
