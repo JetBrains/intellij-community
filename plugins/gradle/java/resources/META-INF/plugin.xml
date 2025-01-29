@@ -149,4 +149,9 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleDeprecatedConfigurationInspection"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.plugins.gradle.service.editor.GradleDownloadSourceEditorListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
 </idea-plugin>
