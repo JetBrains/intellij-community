@@ -12,7 +12,7 @@ import kotlin.random.Random
 
 
 internal object PyCharmImportsRankingLogs : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("pycharm.quickfix.imports", 6, ML_RECORDER_ID)
+  private val GROUP = EventLogGroup("pycharm.quickfix.imports", 7, ML_RECORDER_ID)
   val mlLogger = withOneEvent(
     fusEventName = "pycharm_import_statements_ranking",
     fusEventRegister = IntelliJFusEventRegister(GROUP),
