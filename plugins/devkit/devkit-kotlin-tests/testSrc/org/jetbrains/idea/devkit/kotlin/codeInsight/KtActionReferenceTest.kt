@@ -146,7 +146,9 @@ class KtActionReferenceTest : JavaCodeInsightFixtureTestCase() {
 
     assertContainsElements(myFixture.getCompletionVariants("Caller.kt").orEmpty(),
                            "ActivateToolWindowIdToolWindow", "ActivateToolWindowIdWithSpacesToolWindow",
-                           "ActivateToolWindowIdFromConstantsToolWindow", "ActivateToolWindowIdFromConstants_DeprecatedToolWindow")
+                           "ActivateToolWindowIdFromConstantsToolWindow",
+                           "ActivateToolWindowIdFromConstantsWithSpacesToolWindow",
+                           "ActivateToolWindowIdFromConstants_DeprecatedToolWindow")
 
     val extension = getLookupElementPresentation("ActivateToolWindowIdToolWindow")
     assertTrue(extension.isItemTextBold)
@@ -163,6 +165,7 @@ class KtActionReferenceTest : JavaCodeInsightFixtureTestCase() {
         package com.intellij.openapi.wm;
         interface ToolWindowId {
           String FAVORITES = "ToolWindowIdFromConstants";
+          String WITH_SPACES = "Tool Window Id From Constants With Spaces";
           @Deprecated
           String DEPRECATED = "ToolWindowIdFromConstants_Deprecated";        
         }
