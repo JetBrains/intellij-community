@@ -5214,6 +5214,110 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow")
+    public static class UnusedFlow extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("collected.kt")
+        public void testCollected() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/collected.kt");
+        }
+
+        @TestMetadata("flowType.kt")
+        public void testFlowType() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/flowType.kt");
+        }
+
+        @TestMetadata("flowTypeProperty.kt")
+        public void testFlowTypeProperty() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/flowTypeProperty.kt");
+        }
+
+        @TestMetadata("ifUnused.kt")
+        public void testIfUnused() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/ifUnused.kt");
+        }
+
+        @TestMetadata("ifUsed.kt")
+        public void testIfUsed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/ifUsed.kt");
+        }
+
+        @TestMetadata("nestedUnused.kt")
+        public void testNestedUnused() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/nestedUnused.kt");
+        }
+
+        @TestMetadata("nestedUsed.kt")
+        public void testNestedUsed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/nestedUsed.kt");
+        }
+
+        @TestMetadata("passedToFunction.kt")
+        public void testPassedToFunction() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/passedToFunction.kt");
+        }
+
+        @TestMetadata("propertyInitializer.kt")
+        public void testPropertyInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/propertyInitializer.kt");
+        }
+
+        @TestMetadata("propertyUnused.kt")
+        public void testPropertyUnused() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/propertyUnused.kt");
+        }
+
+        @TestMetadata("propertyUnused2.kt")
+        public void testPropertyUnused2() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/propertyUnused2.kt");
+        }
+
+        @TestMetadata("propertyUsed.kt")
+        public void testPropertyUsed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/propertyUsed.kt");
+        }
+
+        @TestMetadata("returned.kt")
+        public void testReturned() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/returned.kt");
+        }
+
+        @TestMetadata("summed.kt")
+        public void testSummed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/summed.kt");
+        }
+
+        @TestMetadata("unusedExpression.kt")
+        public void testUnusedExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/unusedExpression.kt");
+        }
+
+        @TestMetadata("unusedInLambda.kt")
+        public void testUnusedInLambda() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/unusedInLambda.kt");
+        }
+
+        @TestMetadata("whenUnused.kt")
+        public void testWhenUnused() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/whenUnused.kt");
+        }
+
+        @TestMetadata("whenUsed.kt")
+        public void testWhenUsed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/whenUsed.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/joinDeclarationAndAssignment")
     public abstract static class JoinDeclarationAndAssignment extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
