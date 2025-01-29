@@ -38,15 +38,15 @@ object DirectKotlinOverridingCallableSearch {
         }
     }
 
-    fun search(ktFunction: KtCallableDeclaration): Query<PsiElement> {
+    fun search(ktFunction: KtCallableDeclaration): Query<out PsiElement> {
         return search(ktFunction, runReadAction { ktFunction.useScope })
     }
 
-    fun search(ktFunction: KtCallableDeclaration, searchScope: SearchScope): Query<PsiElement> {
+    fun search(ktFunction: KtCallableDeclaration, searchScope: SearchScope): Query<out PsiElement> {
         return search(SearchParameters(ktFunction, searchScope))
     }
 
-    fun search(parameters: SearchParameters): Query<PsiElement> {
+    fun search(parameters: SearchParameters): Query<out PsiElement> {
         return SearchService.getInstance().searchParameters(parameters)
     }
 

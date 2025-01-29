@@ -10,7 +10,7 @@ import com.intellij.util.Query
 
 internal class SearchServiceImpl : SearchService {
 
-  override fun <T> searchParameters(parameters: SearchParameters<T>): Query<T> = SearchParametersQuery(parameters)
+  override fun <T> searchParameters(parameters: SearchParameters<T>): Query<out T> = SearchParametersQuery(parameters)
 
   override fun searchWord(project: Project, word: String): SearchWordQueryBuilder = SearchWordQueryBuilderImpl(project, word)
 

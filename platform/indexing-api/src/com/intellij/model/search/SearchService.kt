@@ -5,17 +5,19 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.Query
+import org.jetbrains.annotations.ApiStatus.NonExtendable
 
 /**
  * Service for building search queries.
  */
+@NonExtendable
 interface SearchService {
 
   /**
    * Creates a query which doesn't perform any search on itw own,
    * and instead collects search requests from [searchers][Searcher].
    */
-  fun <T> searchParameters(parameters: SearchParameters<T>): Query<T>
+  fun <T> searchParameters(parameters: SearchParameters<T>): Query<out T>
 
   /**
    * Creates new builder of text occurrences query.
@@ -25,7 +27,7 @@ interface SearchService {
   /**
    * Merges a list of queries into a single query.
    */
-  fun <T> merge(queries: List<Query<out T>>): Query<out T>
+  fun <T> merge(queries: List<@JvmWildcard Query<out T>>): Query<out T>
 
   companion object {
 
