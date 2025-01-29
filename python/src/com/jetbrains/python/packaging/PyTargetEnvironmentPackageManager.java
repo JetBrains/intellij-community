@@ -35,7 +35,7 @@ import com.jetbrains.python.run.PythonScripts;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.sdk.VirtualEnvReader;
+import com.jetbrains.python.venvReader.VirtualEnvReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

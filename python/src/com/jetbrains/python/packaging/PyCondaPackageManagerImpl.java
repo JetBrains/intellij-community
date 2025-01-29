@@ -9,7 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import com.jetbrains.python.sdk.VirtualEnvReader;
+import com.jetbrains.python.venvReader.VirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

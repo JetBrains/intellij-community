@@ -26,6 +26,7 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.poetry.*
 import com.jetbrains.python.sdk.poetry.ui.PyAddNewPoetryFromFilePanel
 import com.jetbrains.python.util.runWithModalBlockingOrInBackground
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout

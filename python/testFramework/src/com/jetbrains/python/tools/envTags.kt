@@ -2,7 +2,7 @@
 package com.jetbrains.python.tools
 
 import com.intellij.openapi.diagnostic.fileLogger
-import com.jetbrains.python.sdk.Directory
+import com.jetbrains.python.venvReader.Directory
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.isDirectory

@@ -31,7 +31,7 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Compan
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.VirtualEnvReader
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.sdk.add.ExistingPySdkComboBoxItem
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync

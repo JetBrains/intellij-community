@@ -8,7 +8,7 @@ import com.intellij.util.io.delete
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.sdk.VirtualEnvReader
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.sdk.uv.UvCli
 import com.jetbrains.python.sdk.uv.UvLowLevel
 import java.nio.file.Path

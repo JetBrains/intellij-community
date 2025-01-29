@@ -15,7 +15,7 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.createVirtualenv
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.VirtualEnvReader
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.excludeInnerVirtualEnv

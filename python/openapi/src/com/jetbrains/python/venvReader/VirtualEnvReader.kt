@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.venvReader
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.toCanonicalPath
@@ -132,7 +132,7 @@ class VirtualEnvReader(
 
   companion object {
     @JvmStatic
-    val Instance = VirtualEnvReader()
+    val Instance: VirtualEnvReader = VirtualEnvReader()
 
 
     /**
@@ -141,7 +141,7 @@ class VirtualEnvReader(
      *
      * @see com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.getDefaultLocation
      */
-    const val DEFAULT_VIRTUALENVS_DIR = ".virtualenvs"
-    const val DEFAULT_VIRTUALENV_DIRNAME = ".venv"
+    const val DEFAULT_VIRTUALENVS_DIR: String = ".virtualenvs"
+    const val DEFAULT_VIRTUALENV_DIRNAME: String = ".venv"
   }
 }

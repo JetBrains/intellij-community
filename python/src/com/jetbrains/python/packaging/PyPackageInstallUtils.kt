@@ -126,7 +126,7 @@ fun getConfirmedPackages(packageNames: List<String>, project: Project): List<Str
     return packageNames
   }
 
-  val dialog = PyChooseRequirementsDialog(project, packageNames) { it }
+  val dialog = PyChooseRequirementsDialog(project, nonWellKnownPackages) { it }
 
   val isOk = dialog.showAndGet()
   if (!isOk) {

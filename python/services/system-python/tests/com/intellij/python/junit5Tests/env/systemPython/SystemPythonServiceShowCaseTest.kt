@@ -14,8 +14,7 @@ import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
 import com.intellij.python.junit5Tests.randomBinary
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.VirtualEnvReader
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.createVirtualenv
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import kotlinx.coroutines.async

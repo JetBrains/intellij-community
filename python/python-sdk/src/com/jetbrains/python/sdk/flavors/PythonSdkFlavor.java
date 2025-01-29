@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.CustomSdkHomePattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-import static com.jetbrains.python.sdk.PythonSdkUtilKtKt.tryResolvePath;
+import static com.jetbrains.python.venvReader.ResolveUtilKt.tryResolvePath;
 import static com.jetbrains.python.sdk.flavors.PySdkFlavorUtilKt.getFileExecutionError;
 import static com.jetbrains.python.sdk.flavors.PySdkFlavorUtilKt.getFileExecutionErrorOnEdt;
 
@@ -267,7 +268,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   @Deprecated(forRemoval = true)
   @RequiresBackgroundThread(generateAssertion = false)
   public static @Nullable PythonSdkFlavor<?> getFlavor(@Nullable String sdkPath) {
-    if (sdkPath == null || PythonSdkUtil.isCustomPythonSdkHomePath(sdkPath)) return null;
+    if (sdkPath == null || CustomSdkHomePattern.isCustomPythonSdkHomePath(sdkPath)) return null;
     return tryDetectFlavorByLocalPath(sdkPath);
   }
 
