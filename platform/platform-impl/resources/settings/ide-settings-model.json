@@ -1281,7 +1281,7 @@
     {
       "name": "CsvSettings",
       "scope": "app",
-      "pluginId": "intellij.grid.core.plugin",
+      "pluginId": "com.intellij",
       "classFqn": "com.intellij.database.settings.CsvSettings",
       "storage": "csvSettings.xml",
       "properties": [
@@ -1300,7 +1300,7 @@
     {
       "name": "DataGridAppearanceSettingsImpl",
       "scope": "app",
-      "pluginId": "intellij.grid.core.plugin",
+      "pluginId": "com.intellij",
       "classFqn": "com.intellij.database.settings.DataGridAppearanceSettingsImpl",
       "storage": "dataViewsSettings.xml",
       "properties": [

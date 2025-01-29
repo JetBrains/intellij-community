@@ -19,6 +19,11 @@
     <module name="intellij.platform.jewel.markdown.core"/>
     <module name="intellij.platform.diagnostic.freezeAnalyzer"/>
     <module name="intellij.platform.diagnostic.freezes"/>
+    <module name="intellij.grid"/>
+    <module name="intellij.grid.types"/>
+    <module name="intellij.grid.csv.core.impl"/>
+    <module name="intellij.grid.core.impl"/>
+    <module name="intellij.grid.impl"/>
   </content>
 
   <xi:include href="/META-INF/vcs-modules.xml"/>
