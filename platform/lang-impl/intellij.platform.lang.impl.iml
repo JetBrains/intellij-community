@@ -115,6 +115,5 @@
     <orderEntry type="module" module-name="intellij.platform.eel.impl" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.foldings" exported="" />
-    <orderEntry type="module" module-name="fleet.kernel" />
   </component>
 </module>
