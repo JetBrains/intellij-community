@@ -56,8 +56,6 @@
                          id="terminalUp" order="first"/>
     <editorActionHandler action="EditorDown" implementationClass="org.jetbrains.plugins.terminal.block.history.TerminalCaretDownHandler"
                          id="terminalDown" order="first"/>
-    <editorActionHandler action="Find" implementationClass="org.jetbrains.plugins.terminal.block.output.TerminalFindHandler"
-                         id="terminalFind" order="first"/>
     <editorActionHandler action="FindNext" implementationClass="org.jetbrains.plugins.terminal.block.output.TerminalFindNextHandler"
                          id="terminalFindNext" order="first"/>
     <editorActionHandler action="FindPrevious" implementationClass="org.jetbrains.plugins.terminal.block.output.TerminalFindPreviousHandler"

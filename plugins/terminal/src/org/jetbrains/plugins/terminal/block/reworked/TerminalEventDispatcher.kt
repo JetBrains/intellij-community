@@ -188,6 +188,7 @@ internal abstract class TerminalEventDispatcher(
       "Terminal.MoveToolWindowTabLeft",
       "Terminal.MoveToolWindowTabRight",
       "Terminal.ClearBuffer",
+      "Terminal.Find",
     )
 
     fun getActionsToSkip(): List<AnAction> {

@@ -105,7 +105,9 @@
       <keyboard-shortcut first-keystroke="control V" keymap="$default"/>
       <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
     </action>
-    <action id="Terminal.Find" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Find"/>
+    <action id="Terminal.Find" class="org.jetbrains.plugins.terminal.action.TerminalFindAction" use-shortcut-of="Find">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Terminal.SelectAll" class="org.jetbrains.plugins.terminal.action.TerminalSelectAllAction">
       <override-text place="GoToAction"/>
       <keyboard-shortcut first-keystroke="meta A" keymap="Mac OS X"/>

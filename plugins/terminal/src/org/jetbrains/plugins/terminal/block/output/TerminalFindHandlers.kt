@@ -10,11 +10,12 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalSearchController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.blockTerminalController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSearchController
 
-internal abstract class TerminalSearchActionHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
+internal abstract class TerminalSearchActionHandler(private val originalHandler: EditorActionHandler?) : EditorActionHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     val blockController = dataContext.blockTerminalController
     val reworkedController = dataContext.terminalSearchController
@@ -24,7 +25,7 @@ internal abstract class TerminalSearchActionHandler(private val originalHandler:
     else if (reworkedController != null) {
       doWithReworkedController(reworkedController)
     }
-    else originalHandler.execute(editor, caret, dataContext)
+    else originalHandler?.execute(editor, caret, dataContext)
   }
 
   abstract fun doWithBlockController(blockController: BlockTerminalController)
@@ -34,11 +35,12 @@ internal abstract class TerminalSearchActionHandler(private val originalHandler:
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
     return editor.isPromptEditor
            || editor.isOutputEditor
-           || originalHandler.isEnabled(editor, caret, dataContext)
+           || editor.isOutputModelEditor
+           || originalHandler?.isEnabled(editor, caret, dataContext) == true
   }
 }
 
-internal class TerminalFindHandler(originalHandler: EditorActionHandler) : TerminalSearchActionHandler(originalHandler) {
+internal class TerminalFindHandler() : TerminalSearchActionHandler(originalHandler = null) {
   override fun doWithBlockController(blockController: BlockTerminalController) {
     if (blockController.searchSession != null) {
       blockController.activateSearchSession()
