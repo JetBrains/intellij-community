@@ -9,6 +9,7 @@ import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.concurrent.thread
 import kotlin.io.path.invariantSeparatorsPathString
 
 /**
@@ -24,6 +25,10 @@ internal class JpsModuleToBazel {
       val jarRepositories = loadJarRepositories(projectDir)
 
       val urlCache = UrlCache(cacheFile = projectDir.resolve("build/lib-lock.json"))
+      Runtime.getRuntime().addShutdownHook(thread(start = false, name = "Save URL cache") {
+        println("Saving url cache to ${urlCache.cacheFile}")
+        urlCache.save()
+      })
 
       val generator = BazelBuildFileGenerator(projectDir = projectDir, project = project, urlCache = urlCache)
       val moduleList = generator.computeModuleList()
