@@ -1,440 +1,464 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage
 
-import com.intellij.openapi.util.io.CanonicalPathPrefixTree
-import com.intellij.util.containers.prefix.map.asMutableMap
-import com.intellij.util.containers.prefix.set.asMutableSet
-import org.junit.jupiter.api.Assertions
+import com.intellij.util.containers.prefix.map.emptyPrefixTreeMap
+import com.intellij.util.containers.prefix.map.mutablePrefixTreeMapOf
+import com.intellij.util.containers.prefix.map.prefixTreeMapOf
+import com.intellij.util.containers.prefix.set.emptyPrefixTreeSet
+import com.intellij.util.containers.prefix.set.prefixTreeSetOf
+import org.assertj.core.api.Assertions.entry
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 
 class PrefixTreeTest {
 
   @Test
-  fun `test map filling`() {
-    val tree = CanonicalPathPrefixTree.asMutableMap(
-      "/a/b/c/3" to 30,
-      "/a/b/c/4" to 10,
-      "/a/b/1" to 11,
-      "/a/b/2" to 21,
-      "/a/b/c" to 43,
-      "/a" to 13
-    )
-    Assertions.assertEquals(6, tree.size)
-    Assertions.assertEquals(tree["/a/b/c/1"], null)
-    Assertions.assertEquals(tree["/a/b/c/2"], null)
-    Assertions.assertEquals(tree["/a/b/c/3"], 30)
-    Assertions.assertEquals(tree["/a/b/c/4"], 10)
-    Assertions.assertEquals(tree["/a/b/1"], 11)
-    Assertions.assertEquals(tree["/a/b/2"], 21)
-    Assertions.assertEquals(tree["/a/b/3"], null)
-    Assertions.assertEquals(tree["/a/b/4"], null)
-    Assertions.assertEquals(tree["/a/b/c"], 43)
-    Assertions.assertEquals(tree["/a"], 13)
-    Assertions.assertFalse("/a/b/c/1" in tree)
-    Assertions.assertFalse("/a/b/c/2" in tree)
-    Assertions.assertTrue("/a/b/c/3" in tree)
-    Assertions.assertTrue("/a/b/c/4" in tree)
-    Assertions.assertTrue("/a/b/1" in tree)
-    Assertions.assertTrue("/a/b/2" in tree)
-    Assertions.assertFalse("/a/b/3" in tree)
-    Assertions.assertFalse("/a/b/4" in tree)
-    Assertions.assertTrue("/a/b/c" in tree)
-    Assertions.assertTrue("/a" in tree)
-    tree["/a/b/c/1"] = 10
-    tree["/a/b/c/2"] = 20
-    tree["/a/b/3"] = 30
-    tree["/a/b/4"] = 11
-    Assertions.assertEquals(10, tree.size)
-    Assertions.assertEquals(tree["/a/b/c/1"], 10)
-    Assertions.assertEquals(tree["/a/b/c/2"], 20)
-    Assertions.assertEquals(tree["/a/b/c/3"], 30)
-    Assertions.assertEquals(tree["/a/b/c/4"], 10)
-    Assertions.assertEquals(tree["/a/b/1"], 11)
-    Assertions.assertEquals(tree["/a/b/2"], 21)
-    Assertions.assertEquals(tree["/a/b/3"], 30)
-    Assertions.assertEquals(tree["/a/b/4"], 11)
-    Assertions.assertEquals(tree["/a/b/c"], 43)
-    Assertions.assertEquals(tree["/a"], 13)
-    Assertions.assertTrue("/a/b/c/1" in tree)
-    Assertions.assertTrue("/a/b/c/2" in tree)
-    Assertions.assertTrue("/a/b/c/3" in tree)
-    Assertions.assertTrue("/a/b/c/4" in tree)
-    Assertions.assertTrue("/a/b/1" in tree)
-    Assertions.assertTrue("/a/b/2" in tree)
-    Assertions.assertTrue("/a/b/3" in tree)
-    Assertions.assertTrue("/a/b/4" in tree)
-    Assertions.assertTrue("/a/b/c" in tree)
-    Assertions.assertTrue("/a" in tree)
-    Assertions.assertEquals(setOf(10, 20, 30, 10, 11, 21, 30, 11, 43, 13), tree.values.toSet())
-    Assertions.assertEquals(
-      setOf(
-        "/a/b/c/1",
-        "/a/b/c/2",
-        "/a/b/c/3",
-        "/a/b/c/4",
-        "/a/b/1",
-        "/a/b/2",
-        "/a/b/3",
-        "/a/b/4",
-        "/a/b/c",
-        "/a"
-      ),
-      tree.keys
+  fun `test PrefixTreeMap#size`() {
+    Assertions.assertThat(emptyPrefixTreeMap<String, Int>())
+      .hasSize(0)
+
+    Assertions.assertThat(
+      prefixTreeMapOf(
+        listOf("a", "b", "c", "3") to 30,
+        listOf("a", "b", "c", "4") to 10,
+        listOf("a", "b", "1") to 11,
+        listOf("a", "b", "2") to 21,
+        listOf("a", "b", "c") to 43,
+        listOf("a") to 13
+      )
+    ).hasSize(6)
+  }
+
+  @Test
+  fun `test PrefixTreeSet#size`() {
+    Assertions.assertThat(emptyPrefixTreeSet<String>())
+      .hasSize(0)
+
+    Assertions.assertThat(
+      prefixTreeSetOf(
+        listOf("a", "b", "c", "3"),
+        listOf("a", "b", "c", "4"),
+        listOf("a", "b", "1"),
+        listOf("a", "b", "2"),
+        listOf("a", "b", "c"),
+        listOf("a")
+      )
+    ).hasSize(6)
+  }
+
+  @Test
+  fun `test PrefixTreeMap#toMap`() {
+    Assertions.assertThat(emptyPrefixTreeMap<String, Int>().toMap())
+      .isEqualTo(emptyMap<List<String>, Int>())
+
+    Assertions.assertThat(
+      prefixTreeMapOf(
+        listOf("a", "b", "c", "3") to 30,
+        listOf("a", "b", "c", "4") to 10,
+        listOf("a", "b", "1") to 11,
+        listOf("a", "b", "2") to 21,
+        listOf("a", "b", "c") to 43,
+        listOf("a") to 13
+      ).toMap()
+    ).isEqualTo(
+      mapOf(
+        listOf("a", "b", "c", "3") to 30,
+        listOf("a", "b", "c", "4") to 10,
+        listOf("a", "b", "1") to 11,
+        listOf("a", "b", "2") to 21,
+        listOf("a", "b", "c") to 43,
+        listOf("a") to 13
+      )
     )
   }
 
   @Test
-  fun `test map removing`() {
-    val tree = CanonicalPathPrefixTree.asMutableMap(
-      "/a/b/c/1" to 10,
-      "/a/b/c/2" to 20,
-      "/a/b/c/3" to 30,
-      "/a/b/c/4" to 10,
-      "/a/b/1" to 11,
-      "/a/b/2" to 21,
-      "/a/b/3" to 30,
-      "/a/b/4" to 11,
-      "/a/b/c" to 43,
-      "/a" to 13
-    )
-    Assertions.assertEquals(10, tree.size)
-    Assertions.assertEquals(tree["/a/b/c/1"], 10)
-    Assertions.assertEquals(tree["/a/b/c/2"], 20)
-    Assertions.assertEquals(tree["/a/b/c/3"], 30)
-    Assertions.assertEquals(tree["/a/b/c/4"], 10)
-    Assertions.assertEquals(tree["/a/b/1"], 11)
-    Assertions.assertEquals(tree["/a/b/2"], 21)
-    Assertions.assertEquals(tree["/a/b/3"], 30)
-    Assertions.assertEquals(tree["/a/b/4"], 11)
-    Assertions.assertEquals(tree["/a/b/c"], 43)
-    Assertions.assertEquals(tree["/a"], 13)
-    Assertions.assertTrue("/a/b/c/1" in tree)
-    Assertions.assertTrue("/a/b/c/2" in tree)
-    Assertions.assertTrue("/a/b/c/3" in tree)
-    Assertions.assertTrue("/a/b/c/4" in tree)
-    Assertions.assertTrue("/a/b/1" in tree)
-    Assertions.assertTrue("/a/b/2" in tree)
-    Assertions.assertTrue("/a/b/3" in tree)
-    Assertions.assertTrue("/a/b/4" in tree)
-    Assertions.assertTrue("/a/b/c" in tree)
-    Assertions.assertTrue("/a" in tree)
-    tree.remove("/a/b/c/1")
-    tree.remove("/a/b/c/2")
-    tree.remove("/a/b/3")
-    tree.remove("/a/b/4")
-    Assertions.assertEquals(6, tree.size)
-    Assertions.assertEquals(tree["/a/b/c/1"], null)
-    Assertions.assertEquals(tree["/a/b/c/2"], null)
-    Assertions.assertEquals(tree["/a/b/c/3"], 30)
-    Assertions.assertEquals(tree["/a/b/c/4"], 10)
-    Assertions.assertEquals(tree["/a/b/1"], 11)
-    Assertions.assertEquals(tree["/a/b/2"], 21)
-    Assertions.assertEquals(tree["/a/b/3"], null)
-    Assertions.assertEquals(tree["/a/b/4"], null)
-    Assertions.assertEquals(tree["/a/b/c"], 43)
-    Assertions.assertEquals(tree["/a"], 13)
-    Assertions.assertFalse("/a/b/c/1" in tree)
-    Assertions.assertFalse("/a/b/c/2" in tree)
-    Assertions.assertTrue("/a/b/c/3" in tree)
-    Assertions.assertTrue("/a/b/c/4" in tree)
-    Assertions.assertTrue("/a/b/1" in tree)
-    Assertions.assertTrue("/a/b/2" in tree)
-    Assertions.assertFalse("/a/b/3" in tree)
-    Assertions.assertFalse("/a/b/4" in tree)
-    Assertions.assertTrue("/a/b/c" in tree)
-    Assertions.assertTrue("/a" in tree)
-    Assertions.assertEquals(
-      setOf(30, 10, 11, 21, 43, 13),
-      tree.values.toSet()
-    )
-    Assertions.assertEquals(
+  fun `test PrefixTreeSet#toSet`() {
+    Assertions.assertThat(emptyPrefixTreeSet<String>().toSet())
+      .isEqualTo(emptySet<List<String>>())
+
+    Assertions.assertThat(
+      prefixTreeSetOf(
+        listOf("a", "b", "c", "3"),
+        listOf("a", "b", "c", "4"),
+        listOf("a", "b", "1"),
+        listOf("a", "b", "2"),
+        listOf("a", "b", "c"),
+        listOf("a")
+      ).toSet()
+    ).isEqualTo(
       setOf(
-        "/a/b/c/3",
-        "/a/b/c/4",
-        "/a/b/1",
-        "/a/b/2",
-        "/a/b/c",
-        "/a"
-      ),
-      tree.keys
+        listOf("a", "b", "c", "3"),
+        listOf("a", "b", "c", "4"),
+        listOf("a", "b", "1"),
+        listOf("a", "b", "2"),
+        listOf("a", "b", "c"),
+        listOf("a")
+      )
     )
+  }
+
+  @Test
+  fun `test PrefixTreeMap#get`() {
+    val tree = prefixTreeMapOf(
+      listOf("a", "b", "c", "3") to 30,
+      listOf("a", "b", "c", "4") to 10,
+      listOf("a", "b", "1") to 11,
+      listOf("a", "b", "2") to 21,
+      listOf("a", "b", "c") to 43,
+      listOf("a") to 13
+    )
+    Assertions.assertThat<Int>(tree[listOf("a", "b", "c", "1")]).isEqualTo(null)
+    Assertions.assertThat<Int>(tree[listOf("a", "b", "c", "2")]).isEqualTo(null)
+    Assertions.assertThat<Int>(tree[listOf("a", "b", "c", "3")]).isEqualTo(30)
+    Assertions.assertThat<Int>(tree[listOf("a", "b", "c", "4")]).isEqualTo(10)
+    Assertions.assertThat<Int>(tree[listOf("a", "b", "1")]).isEqualTo(11)
+    Assertions.assertThat<Int>(tree[listOf("a", "b", "2")]).isEqualTo(21)
+    Assertions.assertThat<Int>(tree[listOf("a", "b", "3")]).isEqualTo(null)
+    Assertions.assertThat<Int>(tree[listOf("a", "b", "4")]).isEqualTo(null)
+    Assertions.assertThat<Int>(tree[listOf("a", "b", "c")]).isEqualTo(43)
+    Assertions.assertThat<Int>(tree[listOf("a")]).isEqualTo(13)
+  }
+
+  @Test
+  fun `test PrefixTreeMap#containKey`() {
+    val tree = prefixTreeMapOf(
+      listOf("a", "b", "c", "3") to 30,
+      listOf("a", "b", "c", "4") to 10,
+      listOf("a", "b", "1") to 11,
+      listOf("a", "b", "2") to 21,
+      listOf("a", "b", "c") to 43,
+      listOf("a") to 13
+    )
+    Assertions.assertThat(tree)
+      .doesNotContainKey(listOf("a", "b", "c", "1"))
+      .doesNotContainKey(listOf("a", "b", "c", "2"))
+      .containsKey(listOf("a", "b", "c", "3"))
+      .containsKey(listOf("a", "b", "c", "4"))
+      .containsKey(listOf("a", "b", "1"))
+      .containsKey(listOf("a", "b", "2"))
+      .doesNotContainKey(listOf("a", "b", "3"))
+      .doesNotContainKey(listOf("a", "b", "4"))
+      .containsKey(listOf("a", "b", "c"))
+      .containsKey(listOf("a"))
+  }
+
+  @Test
+  fun `test PrefixTreeMap#containValue`() {
+    val tree = prefixTreeMapOf(
+      listOf("a", "b", "c", "3") to 30,
+      listOf("a", "b", "c", "4") to 40,
+      listOf("a", "b", "1") to 11,
+      listOf("a", "b", "2") to 21,
+      listOf("a", "b", "c") to 43,
+      listOf("a") to 13
+    )
+    Assertions.assertThat(tree)
+      .containsValue(30)
+      .containsValue(40)
+      .containsValue(11)
+      .containsValue(21)
+      .containsValue(43)
+      .containsValue(13)
+      .doesNotContainValue(0)
+      .doesNotContainValue(10)
+  }
+
+  @Test
+  fun `test PrefixTreeMap#keys`() {
+    Assertions.assertThat(
+      prefixTreeMapOf(
+        listOf("a", "b", "c", "3") to 30,
+        listOf("a", "b", "c", "4") to 10,
+        listOf("a", "b", "1") to 11,
+        listOf("a", "b", "2") to 21,
+        listOf("a", "b", "c") to 43,
+        listOf("a") to 13
+      )
+    ).containsOnlyKeys(
+      listOf("a", "b", "c", "3"),
+      listOf("a", "b", "c", "4"),
+      listOf("a", "b", "1"),
+      listOf("a", "b", "2"),
+      listOf("a", "b", "c"),
+      listOf("a")
+    )
+  }
+
+  @Test
+  fun `test PrefixTreeMap#values`() {
+    val tree = prefixTreeMapOf(
+      listOf("a", "b", "c", "3") to 30,
+      listOf("a", "b", "c", "4") to 10,
+      listOf("a", "b", "1") to 11,
+      listOf("a", "b", "2") to 21,
+      listOf("a", "b", "c") to 43,
+      listOf("a") to 13
+    )
+    Assertions.assertThat(tree).values()
+      .containsExactlyInAnyOrder(30, 10, 11, 21, 43, 13)
+  }
+
+  @Test
+  fun `test PrefixTreeMap#put`() {
+    val tree = mutablePrefixTreeMapOf(
+      listOf("a", "b", "c", "3") to 30,
+      listOf("a", "b", "c", "4") to 10,
+      listOf("a", "b", "1") to 11,
+      listOf("a", "b", "2") to 21,
+      listOf("a", "b", "c") to 43,
+      listOf("a") to 13
+    )
+
+    tree[listOf("a", "b", "c", "1")] = 10
+    tree[listOf("a", "b", "c", "2")] = 20
+    tree[listOf("a", "b", "3")] = 30
+    tree[listOf("a", "b", "4")] = 11
+
+    Assertions.assertThat(tree)
+      .containsOnly(
+        entry(listOf("a", "b", "c", "1"), 10),
+        entry(listOf("a", "b", "c", "2"), 20),
+        entry(listOf("a", "b", "c", "3"), 30),
+        entry(listOf("a", "b", "c", "4"), 10),
+        entry(listOf("a", "b", "1"), 11),
+        entry(listOf("a", "b", "2"), 21),
+        entry(listOf("a", "b", "3"), 30),
+        entry(listOf("a", "b", "4"), 11),
+        entry(listOf("a", "b", "c"), 43),
+        entry(listOf("a"), 13)
+      )
+  }
+
+  @Test
+  fun `test PrefixTreeMap#remove`() {
+    val tree = mutablePrefixTreeMapOf(
+      listOf("a", "b", "c", "1") to 10,
+      listOf("a", "b", "c", "2") to 20,
+      listOf("a", "b", "c", "3") to 30,
+      listOf("a", "b", "c", "4") to 10,
+      listOf("a", "b", "1") to 11,
+      listOf("a", "b", "2") to 21,
+      listOf("a", "b", "3") to 30,
+      listOf("a", "b", "4") to 11,
+      listOf("a", "b", "c") to 43,
+      listOf("a") to 13
+    )
+
+    tree.remove(listOf("a", "b", "c", "1"))
+    tree.remove(listOf("a", "b", "c", "2"))
+    tree.remove(listOf("a", "b", "3"))
+    tree.remove(listOf("a", "b", "4"))
+
+    Assertions.assertThat(tree)
+      .containsOnly(
+        entry(listOf("a", "b", "c", "3"), 30),
+        entry(listOf("a", "b", "c", "4"), 10),
+        entry(listOf("a", "b", "1"), 11),
+        entry(listOf("a", "b", "2"), 21),
+        entry(listOf("a", "b", "c"), 43),
+        entry(listOf("a"), 13)
+      )
   }
 
   @Test
   fun `test map containing nullable values`() {
-    val tree = CanonicalPathPrefixTree.asMutableMap(
-      "/a/b/c/1" to null,
-      "/a/b/c/2" to 20,
-      "/a/b/c/3" to null,
-      "/a/b/c/4" to 10,
-      "/a/b/1" to null,
-      "/a/b/2" to 21,
-      "/a/b/3" to null,
-      "/a/b/4" to 11,
-      "/a/b/c" to 43,
-      "/a" to 13
+    val tree = mutablePrefixTreeMapOf(
+      listOf("a", "b", "c", "1") to null,
+      listOf("a", "b", "c", "2") to 20,
+      listOf("a", "b", "c", "3") to null,
+      listOf("a", "b", "c", "4") to 10,
+      listOf("a", "b", "1") to null,
+      listOf("a", "b", "2") to 21,
+      listOf("a", "b", "3") to null,
+      listOf("a", "b", "4") to 11,
+      listOf("a", "b", "c") to 43,
+      listOf("a") to 13
     )
-    Assertions.assertEquals(10, tree.size)
-    Assertions.assertEquals(tree["/a/b/c/1"], null)
-    Assertions.assertEquals(tree["/a/b/c/2"], 20)
-    Assertions.assertEquals(tree["/a/b/c/3"], null)
-    Assertions.assertEquals(tree["/a/b/c/4"], 10)
-    Assertions.assertEquals(tree["/a/b/1"], null)
-    Assertions.assertEquals(tree["/a/b/2"], 21)
-    Assertions.assertEquals(tree["/a/b/3"], null)
-    Assertions.assertEquals(tree["/a/b/4"], 11)
-    Assertions.assertEquals(tree["/a/b/c"], 43)
-    Assertions.assertEquals(tree["/a"], 13)
-    Assertions.assertTrue("/a/b/c/1" in tree)
-    Assertions.assertTrue("/a/b/c/2" in tree)
-    Assertions.assertTrue("/a/b/c/3" in tree)
-    Assertions.assertTrue("/a/b/c/4" in tree)
-    Assertions.assertTrue("/a/b/1" in tree)
-    Assertions.assertTrue("/a/b/2" in tree)
-    Assertions.assertTrue("/a/b/3" in tree)
-    Assertions.assertTrue("/a/b/4" in tree)
-    Assertions.assertTrue("/a/b/c" in tree)
-    Assertions.assertTrue("/a" in tree)
-    tree.remove("/a/b/c/1")
-    tree.remove("/a/b/c/2")
-    tree.remove("/a/b/3")
-    tree.remove("/a/b/4")
-    Assertions.assertEquals(6, tree.size)
-    Assertions.assertEquals(tree["/a/b/c/1"], null)
-    Assertions.assertEquals(tree["/a/b/c/2"], null)
-    Assertions.assertEquals(tree["/a/b/c/3"], null)
-    Assertions.assertEquals(tree["/a/b/c/4"], 10)
-    Assertions.assertEquals(tree["/a/b/1"], null)
-    Assertions.assertEquals(tree["/a/b/2"], 21)
-    Assertions.assertEquals(tree["/a/b/3"], null)
-    Assertions.assertEquals(tree["/a/b/4"], null)
-    Assertions.assertEquals(tree["/a/b/c"], 43)
-    Assertions.assertEquals(tree["/a"], 13)
-    Assertions.assertFalse("/a/b/c/1" in tree)
-    Assertions.assertFalse("/a/b/c/2" in tree)
-    Assertions.assertTrue("/a/b/c/3" in tree)
-    Assertions.assertTrue("/a/b/c/4" in tree)
-    Assertions.assertTrue("/a/b/1" in tree)
-    Assertions.assertTrue("/a/b/2" in tree)
-    Assertions.assertFalse("/a/b/3" in tree)
-    Assertions.assertFalse("/a/b/4" in tree)
-    Assertions.assertTrue("/a/b/c" in tree)
-    Assertions.assertTrue("/a" in tree)
-    Assertions.assertEquals(setOf(null, 10, null, 21, 43, 13), tree.values.toSet())
-    Assertions.assertEquals(setOf(
-      "/a/b/c/3",
-      "/a/b/c/4",
-      "/a/b/1",
-      "/a/b/2",
-      "/a/b/c",
-      "/a"
-    ), tree.keys)
+    Assertions.assertThat(tree)
+      .containsOnly(
+        entry(listOf("a", "b", "c", "1"), null),
+        entry(listOf("a", "b", "c", "2"), 20),
+        entry(listOf("a", "b", "c", "3"), null),
+        entry(listOf("a", "b", "c", "4"), 10),
+        entry(listOf("a", "b", "1"), null),
+        entry(listOf("a", "b", "2"), 21),
+        entry(listOf("a", "b", "3"), null),
+        entry(listOf("a", "b", "4"), 11),
+        entry(listOf("a", "b", "c"), 43),
+        entry(listOf("a"), 13)
+      )
+
+    tree.remove(listOf("a", "b", "c", "1"))
+    tree.remove(listOf("a", "b", "c", "2"))
+    tree.remove(listOf("a", "b", "3"))
+    tree.remove(listOf("a", "b", "4"))
+
+    Assertions.assertThat(tree)
+      .containsOnly(
+        entry(listOf("a", "b", "c", "3"), null),
+        entry(listOf("a", "b", "c", "4"), 10),
+        entry(listOf("a", "b", "1"), null),
+        entry(listOf("a", "b", "2"), 21),
+        entry(listOf("a", "b", "c"), 43),
+        entry(listOf("a"), 13)
+      )
   }
 
   @Test
-  fun `test finding descendants`() {
-    val tree = CanonicalPathPrefixTree.asMutableSet(
-      "/a/b/c/1",
-      "/a/b/c/2",
-      "/a/b/c/3",
-      "/a/b/c/4",
-      "/a/b/1",
-      "/a/b/2",
-      "/a/b/3",
-      "/a/b/4",
-      "/a/b/c",
-      "/a"
+  fun `test PrefixTreeSet#getDescendants`() {
+    val tree = prefixTreeSetOf(
+      listOf("a", "b", "c", "1"),
+      listOf("a", "b", "c", "2"),
+      listOf("a", "b", "c", "3"),
+      listOf("a", "b", "c", "4"),
+      listOf("a", "b", "1"),
+      listOf("a", "b", "2"),
+      listOf("a", "b", "3"),
+      listOf("a", "b", "4"),
+      listOf("a", "b", "c"),
+      listOf("a")
     )
-    Assertions.assertEquals(
-      setOf(
-        "/a/b/c/1",
-        "/a/b/c/2",
-        "/a/b/c/3",
-        "/a/b/c/4",
-        "/a/b/c"
-      ),
-      tree.getDescendants("/a/b/c")
-    )
-    Assertions.assertEquals(
-      setOf(
-        "/a/b/c/1",
-        "/a/b/c/2",
-        "/a/b/c/3",
-        "/a/b/c/4",
-        "/a/b/1",
-        "/a/b/2",
-        "/a/b/3",
-        "/a/b/4",
-        "/a/b/c"
-      ),
-      tree.getDescendants("/a/b")
-    )
-    Assertions.assertEquals(
-      setOf(
-        "/a/b/c/1",
-        "/a/b/c/2",
-        "/a/b/c/3",
-        "/a/b/c/4",
-        "/a/b/1",
-        "/a/b/2",
-        "/a/b/3",
-        "/a/b/4",
-        "/a/b/c",
-        "/a"
-      ),
-      tree.getDescendants("/a")
-    )
-    Assertions.assertEquals(
-      setOf(
-        "/a/b/c/1",
-        "/a/b/c/2",
-        "/a/b/c/3",
-        "/a/b/c/4",
-        "/a/b/1",
-        "/a/b/2",
-        "/a/b/3",
-        "/a/b/4",
-        "/a/b/c",
-        "/a"
-      ),
-      tree.getDescendants("/")
-    )
+    Assertions.assertThat(tree.getDescendants(listOf("a", "b", "c")))
+      .containsExactlyInAnyOrder(
+        listOf("a", "b", "c", "1"),
+        listOf("a", "b", "c", "2"),
+        listOf("a", "b", "c", "3"),
+        listOf("a", "b", "c", "4"),
+        listOf("a", "b", "c")
+      )
+    Assertions.assertThat(tree.getDescendants(listOf("a", "b")))
+      .containsExactlyInAnyOrder(
+        listOf("a", "b", "c", "1"),
+        listOf("a", "b", "c", "2"),
+        listOf("a", "b", "c", "3"),
+        listOf("a", "b", "c", "4"),
+        listOf("a", "b", "1"),
+        listOf("a", "b", "2"),
+        listOf("a", "b", "3"),
+        listOf("a", "b", "4"),
+        listOf("a", "b", "c")
+      )
+    Assertions.assertThat(tree.getDescendants(listOf("a")))
+      .containsExactlyInAnyOrder(
+        listOf("a", "b", "c", "1"),
+        listOf("a", "b", "c", "2"),
+        listOf("a", "b", "c", "3"),
+        listOf("a", "b", "c", "4"),
+        listOf("a", "b", "1"),
+        listOf("a", "b", "2"),
+        listOf("a", "b", "3"),
+        listOf("a", "b", "4"),
+        listOf("a", "b", "c"),
+        listOf("a")
+      )
+    Assertions.assertThat(tree.getDescendants(emptyList()))
+      .containsExactlyInAnyOrder(
+        listOf("a", "b", "c", "1"),
+        listOf("a", "b", "c", "2"),
+        listOf("a", "b", "c", "3"),
+        listOf("a", "b", "c", "4"),
+        listOf("a", "b", "1"),
+        listOf("a", "b", "2"),
+        listOf("a", "b", "3"),
+        listOf("a", "b", "4"),
+        listOf("a", "b", "c"),
+        listOf("a")
+      )
   }
 
   @Test
-  fun `test finding ancestors`() {
-    val tree = CanonicalPathPrefixTree.asMutableSet(
-      "/a/b/c/2",
-      "/a/b/c/1",
-      "/a/b/c/3",
-      "/a/b/c/4",
-      "/a/b/1",
-      "/a/b/2",
-      "/a/b/3",
-      "/a/b/4",
-      "/a/b/c",
-      "/a"
+  fun `test PrefixTreeSet#getAncestors`() {
+    val tree = prefixTreeSetOf(
+      listOf("a", "b", "c", "2"),
+      listOf("a", "b", "c", "1"),
+      listOf("a", "b", "c", "3"),
+      listOf("a", "b", "c", "4"),
+      listOf("a", "b", "1"),
+      listOf("a", "b", "2"),
+      listOf("a", "b", "3"),
+      listOf("a", "b", "4"),
+      listOf("a", "b", "c"),
+      listOf("a")
     )
-    Assertions.assertEquals(setOf("/a", "/a/b/c", "/a/b/c/1"), tree.getAncestors("/a/b/c/1/loc"))
-    Assertions.assertEquals(setOf("/a", "/a/b/c", "/a/b/c/1"), tree.getAncestors("/a/b/c/1"))
-    Assertions.assertEquals(setOf("/a", "/a/b/c"), tree.getAncestors("/a/b/c"))
-    Assertions.assertEquals(setOf("/a"), tree.getAncestors("/a/b"))
-    Assertions.assertEquals(setOf("/a"), tree.getAncestors("/a"))
-    Assertions.assertEquals(emptySet<String>(), tree.getAncestors("/"))
+    Assertions.assertThat(tree.getAncestors(listOf("a", "b", "c", "1", "loc")))
+      .containsExactlyInAnyOrder(
+        listOf("a"),
+        listOf("a", "b", "c"),
+        listOf("a", "b", "c", "1")
+      )
+    Assertions.assertThat(tree.getAncestors(listOf("a", "b", "c", "1")))
+      .containsExactlyInAnyOrder(
+        listOf("a"),
+        listOf("a", "b", "c"),
+        listOf("a", "b", "c", "1")
+      )
+    Assertions.assertThat(tree.getAncestors(listOf("a", "b", "c")))
+      .containsExactlyInAnyOrder(
+        listOf("a"),
+        listOf("a", "b", "c")
+      )
+    Assertions.assertThat(tree.getAncestors(listOf("a", "b")))
+      .containsExactlyInAnyOrder(
+        listOf("a")
+      )
+    Assertions.assertThat(tree.getAncestors(listOf("a")))
+      .containsExactlyInAnyOrder(
+        listOf("a")
+      )
+    Assertions.assertThat(tree.getAncestors(emptyList()))
+      .isEmpty()
   }
 
   @Test
-  fun `test finding roots`() {
-    val set = CanonicalPathPrefixTree.asMutableSet(
-      "/a/b/c",
-      "/a/b/c/d",
-      "/a/b/c/e",
-      "/a/f/g"
+  fun `test PrefixTreeSet#getRoots`() {
+    Assertions.assertThat(
+      prefixTreeSetOf(
+        listOf("a", "b", "c"),
+        listOf("a", "b", "c", "d"),
+        listOf("a", "b", "c", "e"),
+        listOf("a", "f", "g")
+      ).getRoots()
+    ).containsExactlyInAnyOrder(
+      listOf("a", "b", "c"),
+      listOf("a", "f", "g")
     )
-    Assertions.assertEquals(setOf("/a/b/c", "/a/f/g"), set.getRoots())
-    set.add("/a/b")
-    Assertions.assertEquals(setOf("/a/b", "/a/f/g"), set.getRoots())
-    set.add("/a")
-    Assertions.assertEquals(setOf("/a"), set.getRoots())
-    set.add("/")
-    Assertions.assertEquals(setOf("/"), set.getRoots())
-  }
-
-  @Test
-  fun `test trailing slash`() {
-    val tree = CanonicalPathPrefixTree.asMutableSet(
-      "/a/b/c/d/1",
-      "/a/b/c/d/2",
-      "/a/b/c/d/3/",
-      "/a/b/c/d/4/",
-      "/a/b/c/e/1",
-      "/a/b/c/e/2",
-      "/a/b/c/e/3/",
-      "/a/b/c/e/4/",
-      "/a/b/c",
-      "/a/b"
+    Assertions.assertThat(
+      prefixTreeSetOf(
+        listOf("a", "b"),
+        listOf("a", "b", "c"),
+        listOf("a", "b", "c", "d"),
+        listOf("a", "b", "c", "e"),
+        listOf("a", "f", "g")
+      ).getRoots()
+    ).containsExactlyInAnyOrder(
+      listOf("a", "b"),
+      listOf("a", "f", "g")
     )
-    Assertions.assertTrue("/a/b/c/d/1/" in tree)
-    Assertions.assertTrue("/a/b/c/d/2/" in tree)
-    Assertions.assertTrue("/a/b/c/d/3/" in tree)
-    Assertions.assertTrue("/a/b/c/d/4/" in tree)
-    tree.remove("/a/b/c/d/3/")
-    tree.remove("/a/b/c/d/4/")
-    Assertions.assertTrue("/a/b/c/d/1/" in tree)
-    Assertions.assertTrue("/a/b/c/d/2/" in tree)
-    Assertions.assertTrue("/a/b/c/d/3/" !in tree)
-    Assertions.assertTrue("/a/b/c/d/4/" !in tree)
-
-    Assertions.assertEquals(setOf("/a/b/c", "/a/b"), tree.getAncestors("/a/b/c/d/e/"))
-
-    Assertions.assertEquals(
-      setOf(
-        "/a/b/c/d/1",
-        "/a/b/c/d/2",
-        "/a/b/c/e/1",
-        "/a/b/c/e/2",
-        "/a/b/c/e/3/",
-        "/a/b/c/e/4/",
-        "/a/b/c",
-      ),
-      tree.getDescendants("/a/b/c/")
+    Assertions.assertThat(
+      prefixTreeSetOf(
+        listOf("a"),
+        listOf("a", "b"),
+        listOf("a", "b", "c"),
+        listOf("a", "b", "c", "d"),
+        listOf("a", "b", "c", "e"),
+        listOf("a", "f", "g")
+      ).getRoots()
+    ).containsExactlyInAnyOrder(
+      listOf("a")
     )
-
-    Assertions.assertEquals(setOf("/a/b"), tree.getRoots())
-  }
-
-  @Test
-  fun `test file protocol`() {
-    val tree = CanonicalPathPrefixTree.asMutableSet(
-      "rd://a/b",
-      "rd://a/b/c",
-      "rd://a/b/c/d",
-      "fsd://a/b",
-      "fsd://a/b/c",
-      "fsd://a/b/c/d",
-    )
-
-    Assertions.assertEquals(setOf("rd://a/b", "fsd://a/b"), tree.getRoots())
-
-    Assertions.assertEquals(
-      setOf(
-        "rd://a/b",
-        "rd://a/b/c",
-        "rd://a/b/c/d"
-      ),
-      tree.getDescendants("rd:")
-    )
-    Assertions.assertEquals(
-      setOf(
-        "rd://a/b",
-        "rd://a/b/c",
-        "rd://a/b/c/d"
-      ),
-      tree.getDescendants("rd:/")
-    )
-    Assertions.assertEquals(
-      setOf(
-        "rd://a/b",
-        "rd://a/b/c",
-        "rd://a/b/c/d"
-      ),
-      tree.getDescendants("rd://")
-    )
-
-    Assertions.assertEquals(
-      setOf(
-        "fsd://a/b",
-        "fsd://a/b/c",
-        "fsd://a/b/c/d"
-      ),
-      tree.getAncestors("fsd://a/b/c/d")
-    )
-    Assertions.assertEquals(
-      setOf(
-        "fsd://a/b",
-        "fsd://a/b/c"
-      ),
-      tree.getAncestors("fsd://a/b/c")
+    Assertions.assertThat(
+      prefixTreeSetOf(
+        emptyList(),
+        listOf("a"),
+        listOf("a", "b"),
+        listOf("a", "b", "c"),
+        listOf("a", "b", "c", "d"),
+        listOf("a", "b", "c", "e"),
+        listOf("a", "f", "g")
+      ).getRoots()
+    ).containsExactlyInAnyOrder(
+      emptyList()
     )
   }
 }
