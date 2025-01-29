@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.python.community.impl.poetry.poetryPath
 import com.intellij.util.SystemProperties
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackage
@@ -25,7 +26,6 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
-import com.jetbrains.python.poetry.poetryPath
 import com.jetbrains.python.sdk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

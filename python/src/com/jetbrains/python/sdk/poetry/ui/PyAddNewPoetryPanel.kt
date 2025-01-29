@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.python.community.impl.poetry.poetryPath
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
@@ -23,7 +24,6 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.poetry.poetryPath
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.PythonSdkCoroutineService
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel

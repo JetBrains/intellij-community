@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.installer
+package com.intellij.python.community.impl.installer
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.project.Project
@@ -9,12 +9,16 @@ import com.jetbrains.python.sdk.Product
 import com.jetbrains.python.sdk.Resource
 import com.jetbrains.python.sdk.ResourceType
 import com.jetbrains.python.sdk.SdksKeeper
+import com.jetbrains.python.sdk.installer.MakeShellScriptExecutableException
+import com.jetbrains.python.sdk.installer.installBinary
+import com.jetbrains.python.sdk.installer.selectInstallations
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
 object CondaInstallManager {
 
-  internal class WindowsInstaller(private val installPath: String) : ResourceTypeBinaryInstaller(ResourceType.MICROSOFT_WINDOWS_EXECUTABLE) {
+  internal class WindowsInstaller(private val installPath: String) : ResourceTypeBinaryInstaller(
+    ResourceType.MICROSOFT_WINDOWS_EXECUTABLE) {
     /**
      * Miniconda3-{version}-Windows-x86_64.exe {options}
      *

@@ -1,5 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://www.jetbrains.com/pycharm/"
-             package="com.jetbrains.python">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://www.jetbrains.com/pycharm/">
   <!--Python community support for Pycharm, DS and IC.-->
   <!--Include core Python functionality-->
 
@@ -526,7 +525,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.runAnything.PyRunAnythingCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.debugger.statistics.PyDataViewerCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.installer.BinaryInstallerUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.python.community.impl.installer.BinaryInstallerUsagesCollector"/>
 
     <!-- Code-insight IDE bridge -->
     <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService"

@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.poetry
+package com.intellij.python.community.impl.poetry
 
 import com.intellij.ide.util.PropertiesComponent
 import org.jetbrains.annotations.SystemDependent

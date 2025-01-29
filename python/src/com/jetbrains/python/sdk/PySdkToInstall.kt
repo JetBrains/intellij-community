@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
 import com.intellij.icons.AllIcons
@@ -14,14 +14,17 @@ import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.python.community.impl.installer.BinaryInstallerUsagesCollector
+import com.intellij.python.community.impl.installer.PySdkToInstallManager
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.installer.*
-import com.jetbrains.python.sdk.installer.PySdkToInstallManager
+import com.jetbrains.python.sdk.installer.BinaryInstallation
+import com.jetbrains.python.sdk.installer.installBinary
+import com.jetbrains.python.sdk.installer.toResourcePreview
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.CalledInAny
 

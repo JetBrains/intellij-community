@@ -9,12 +9,12 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.community.impl.installer.PySdkToInstallManager
 import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl.MyServiceState
 import com.intellij.python.community.services.systemPython.spi.SystemPythonProvider
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
-import com.jetbrains.python.sdk.installer.PySdkToInstallManager
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.installer.installBinary
 import kotlinx.coroutines.Dispatchers

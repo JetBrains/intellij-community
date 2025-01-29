@@ -8,8 +8,14 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.python.community.impl.installer.BinaryInstallerUsagesCollector
+import com.intellij.python.community.impl.installer.PyInstallerBundle
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.Binary
+import com.jetbrains.python.sdk.Release
+import com.jetbrains.python.sdk.Resource
+
+// Symbols in this class aren't public API, do not use them!
 
 internal val LOGGER: Logger = logger<BinaryInstaller>()
 

@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.installer
+package com.intellij.python.community.impl.installer
 
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
@@ -12,6 +12,7 @@ import com.intellij.util.io.HttpRequests
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.sdk.Binary
 import com.jetbrains.python.sdk.Resource
+import com.jetbrains.python.sdk.installer.*
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.fileSize
@@ -100,6 +101,6 @@ internal abstract class DownloadableBinaryInstaller : BinaryInstaller {
   }
 
   override fun getPreview(binary: Binary): ResourcePreview {
-    return ResourcePreview.of(getResourcesToDownload(binary).firstOrNull())
+    return ResourcePreview.Companion.of(getResourcesToDownload(binary).firstOrNull())
   }
 }

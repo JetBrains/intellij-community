@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.installer
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.impl.installer
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventField
@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.system.CpuArch
 import com.jetbrains.python.sdk.Product
 import com.jetbrains.python.sdk.Release
+import com.jetbrains.python.sdk.installer.*
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -62,7 +63,7 @@ object BinaryInstallerUsagesCollector : CounterUsagesCollector() {
     /**
      * regexp: non-empty value consists of digits-dots-dashes in various combinations (like 1, 1.2, 1.2.3-456)
      * Can't use EventFields.Version because of dashes
-     * @see com.intellij.internal.statistic.eventLog.events.EventFields.Version
+     * @see EventFields.Version
      */
     private val version = EventFields.StringValidatedByInlineRegexp("version", """^[\d\-.]+$""")
 

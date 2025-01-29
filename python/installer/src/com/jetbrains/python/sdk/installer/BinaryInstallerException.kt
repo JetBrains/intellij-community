@@ -7,6 +7,8 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import java.io.IOException
 import java.nio.file.Path
 
+// Symbols in this class aren't public API, do not use them!
+
 /**
  * Base Exception for the Software Release Installer.
  */
