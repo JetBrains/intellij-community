@@ -3,7 +3,7 @@
     <plugin id="com.intellij.platform.experimental.frontend"/>
     <module name="intellij.platform.frontend"/>
   </dependencies>
-  <actions>
+  <actions resource-bundle="messages.FrontendDebuggerImplBundle">
     <action id="QuickEvaluateExpression" class="com.intellij.platform.debugger.impl.frontend.actions.QuickEvaluateAction"/>
     <action id="MarkObjectAction.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendMarkObjectAction"
             use-shortcut-of="ToggleBookmark">
