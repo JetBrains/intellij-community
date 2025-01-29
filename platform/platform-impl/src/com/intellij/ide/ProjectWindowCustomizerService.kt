@@ -10,6 +10,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -326,6 +327,7 @@ class ProjectWindowCustomizerService : Disposable {
 
   fun isAvailable(): Boolean {
     return !DistractionFreeModeController.shouldMinimizeCustomHeader() &&
+           InternalUICustomization.getInstance().isProjectCustomDecorationActive &&
            (PlatformUtils.isRider () || Registry.`is`("ide.colorful.toolbar", true))
   }
 

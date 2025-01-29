@@ -29,6 +29,8 @@ open class InternalUICustomization {
 
   open val editorTabPainterAdapter: TabPainterAdapter = EditorTabPainterAdapter()
 
+  open val isProjectCustomDecorationActive: Boolean = true
+
   /**
    * TODO
    * in the case of singleStripe, it is necessary to remove or recycle all actions related to the statusbar.
@@ -50,8 +52,8 @@ open class InternalUICustomization {
 
   open fun getToolWindowsPaneThreeSplitterBackground(): Color = JBColor.GRAY
 
-  open fun getCustomDefaultButtonPaint(c: JComponent, r: Rectangle): Paint? {
-    return componentMarker.getCustomDefaultButtonPaint(c, r)
+  open fun getCustomDefaultFillPaint(c: JComponent, r: Rectangle): Paint? {
+    return componentMarker.getCustomDefaultFillPaint(c, r)
   }
 
   open fun getMainToolbarBackground(active: Boolean): Color {

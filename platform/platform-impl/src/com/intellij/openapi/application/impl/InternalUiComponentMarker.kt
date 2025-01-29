@@ -31,7 +31,9 @@ open class InternalUiComponentMarker {
 
   open fun unmarkAiContainerFor(c: JComponent): Unit = Unit
 
-  open fun getCustomDefaultButtonPaint(c: JComponent, r: Rectangle): Paint? = null
+  open fun getCustomDefaultFillPaint(c: JComponent, r: Rectangle): Paint? = null
+  open fun getCustomDefaultBorderPaint(c: JComponent, r: Rectangle): Paint? = null
+  open fun getCustomFocusPaint(c: JComponent, r: Rectangle): Paint? = null
+  open fun getCustomButtonFillPaint(c: JComponent, r: Rectangle): Paint? = null
   open fun getCustomButtonBorderPaint(c: JComponent, r: Rectangle): Paint? = null
-  open fun getCustomButtonFocusPaint(c: JComponent, r: Rectangle): Paint? = null
 }

@@ -206,7 +206,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   private Paint getDefaultButtonPaint(JComponent c, Rectangle r) {
-    Paint paint = InternalUICustomization.getInstance().getCustomDefaultButtonPaint(c, r);
+    Paint paint = InternalUICustomization.getInstance().getCustomDefaultFillPaint(c, r);
     return paint != null ? paint : UIUtil.getGradientPaint(0, 0, getDefaultButtonColorStart(), 0, r.height, getDefaultButtonColorEnd());
   }
 
