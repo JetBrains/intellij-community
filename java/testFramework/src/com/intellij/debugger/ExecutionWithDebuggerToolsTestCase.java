@@ -315,10 +315,15 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
         protected void commandCancelled() {
           pumpDebuggerThread(request);
         }
+
+        @Override
+        public @NotNull Priority getPriority() {
+          return Priority.LOWEST;
+        }
       });
     }
     else {
-      request.myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+      request.myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl(PrioritizedTask.Priority.LOWEST) {
         @Override
         protected void action() {
           pumpDebuggerThread(request);
