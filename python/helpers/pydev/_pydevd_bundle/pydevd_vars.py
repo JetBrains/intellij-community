@@ -666,13 +666,13 @@ def get_formatted_row_elements(row, iat, dim, cols, format, dtypes):
     for c in range(cols):
         val = iat[row, c] if dim > 1 else iat[row]
         col_formatter = get_column_formatter_by_type(format, dtypes[c])
-        if val != val:
-            yield "nan"
-        else:
-            try:
+        try:
+            if val != val:
+                yield "nan"
+            else:
                 yield ("%" + col_formatter) % (val,)
-            except TypeError:
-                yield ("%" + DEFAULT_DF_FORMAT) % (val,)
+        except TypeError:
+            yield ("%" + DEFAULT_DF_FORMAT) % (val,)
 
 
 def array_default_format(type):
