@@ -230,7 +230,12 @@ fun initMainDescriptorByRaw(
       }
       else {
         val subRaw = pathResolver.resolveModuleFile(context, dataLoader, subDescriptorFile, readInto = null)
-        module.descriptor = descriptor.createSub(subRaw, subDescriptorFile, context, module)
+        val subDescriptor = descriptor.createSub(subRaw, subDescriptorFile, context, module)
+        module.descriptor = subDescriptor
+        val customRoots = pathResolver.resolveCustomModuleClassesRoots(module.name)
+        if (customRoots.isNotEmpty()) {
+          subDescriptor.jarFiles = customRoots
+        }
       }
     }
     else {
@@ -993,7 +998,12 @@ private fun loadModuleDescriptors(
     }
 
     val raw = pathResolver.resolveModuleFile(readContext = context, dataLoader = dataLoader, path = subDescriptorFile, readInto = null)
-    module.descriptor = descriptor.createSub(raw = raw, descriptorPath = subDescriptorFile, context = context, module = module)
+    val subDescriptor = descriptor.createSub(raw = raw, descriptorPath = subDescriptorFile, context = context, module = module)
+    val customModuleClassesRoots = pathResolver.resolveCustomModuleClassesRoots(moduleName)
+    if (customModuleClassesRoots.isNotEmpty()) {
+      subDescriptor.jarFiles = customModuleClassesRoots
+    }
+    module.descriptor = subDescriptor
   }
 }
 
