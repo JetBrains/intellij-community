@@ -232,7 +232,7 @@ private fun <K, V> checkingMap(impl: MutableMap<K, V>, gold: MutableMap<K, V>): 
 internal fun <K, V> adaptiveMapOf(k: K, v: V): MutableMap<K, V> =
   adaptiveMapOf<K, V>().apply { put(k, v) }
 
-internal fun <K, V> adaptiveMapOf(): MutableMap<K, V> =
+internal fun <K, V> adaptiveMapOf(): AdaptiveMap<K, V> =
   //    checkingMap(AdaptiveMap(), hashMapOf())
   AdaptiveMap()
 //  hashMapOf()

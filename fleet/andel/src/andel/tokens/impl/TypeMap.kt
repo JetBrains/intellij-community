@@ -1,8 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package andel.tokens.impl
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import fleet.fastutil.ints.Int2ObjectOpenHashMap
 
 internal interface TypeMap<T> {
   operator fun get(typeId: Int): T
@@ -11,16 +10,16 @@ internal interface TypeMap<T> {
 
 internal class TypeMapBuilder<T>(
   var typeIdToType: Int2ObjectOpenHashMap<T>,
-  var typeToId: Object2IntOpenHashMap<T>,
+  var typeToId: HashMap<T, Int>,
   var nextId: Int,
 ) : TypeMap<T> {
 
   private var mappingCopied = false
 
   fun typeId(type: T): Int {
-    val i = typeToId.getInt(type)
+    val i = typeToId[type]
     return when {
-      i != 0 -> i
+      i != null -> i
       else -> {
         val mappingCopied = mappingCopied
 
@@ -39,7 +38,7 @@ internal class TypeMapBuilder<T>(
             typeToId
           }
           else {
-            Object2IntOpenHashMap(typeToId).also {
+            HashMap(typeToId).also {
               typeToId = it
             }
           }

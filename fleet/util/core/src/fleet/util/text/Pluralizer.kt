@@ -175,7 +175,7 @@ private object Pluralizer {
         }
       }
     }
-    return String(chars)
+    return chars.concatToString()
   }
 
   private fun sanitizeRule(rule: String): Regex {
