@@ -42,7 +42,7 @@ private class WhatsNewEnvironmentAccessorImpl : WhatsNewEnvironmentAccessor {
             // TODO: disable for UI tests since UI tests are not ready for What's new
             || Registry.`is`("expose.ui.hierarchy.url", false)
             // TODO this is done temporarily, see LLM-13591
-            || PlatformUtils.isIdeaCommunity() || PlatformUtils.isPyCharmCommunity()
+            || PlatformUtils.isIdeaCommunity()
 
   override suspend fun getWhatsNewContent() = WhatsNewContent.getWhatsNewContent()
   override fun findAction() = ActionManager.getInstance().getAction("WhatsNewAction") as? WhatsNewAction
