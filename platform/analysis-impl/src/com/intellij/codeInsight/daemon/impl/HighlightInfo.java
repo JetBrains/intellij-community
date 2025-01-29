@@ -117,7 +117,7 @@ public class HighlightInfo implements Segment {
   private @Unmodifiable @NotNull List<IntentionActionDescriptor> myIntentionActionDescriptors = List.of(); // guarded by this
   // list of (code fragment to be executed in BGT, and their execution result future)
   // future == null means the code was never executed, not-null means the execution has started, .isDone() means it's completed
-  @NotNull @Unmodifiable List<? extends LazyFixDescription> myLazyQuickFixes; // guarded by this
+  private @NotNull @Unmodifiable List<? extends LazyFixDescription> myLazyQuickFixes; // guarded by this
   private record LazyFixDescription(
     @NotNull Consumer<? super QuickFixActionRegistrar> fixesComputer,
     // null means the computation is not started yet
@@ -546,7 +546,7 @@ public class HighlightInfo implements Segment {
     }
     if (toolId != null) {
       s += isFqdn ? "; toolId: " + toolId + " (" + toolId.getClass() + ")" :
-           "; toolId: " + (toolId instanceof Class ? ((Class)toolId).getSimpleName() : "not specified");
+           "; toolId: " + (toolId instanceof Class ? ((Class<?>)toolId).getSimpleName() : "not specified");
     }
     if (group != HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP) {
       s += "; group: " + group;
@@ -711,12 +711,12 @@ public class HighlightInfo implements Segment {
 
     List<Annotation.QuickFixInfo> fixes = batchMode ? annotation.getBatchFixes() : annotation.getQuickFixes();
     if (fixes != null) {
-      List<IntentionActionDescriptor> qfrs = ContainerUtil.map(fixes, af -> {
+      List<IntentionActionDescriptor> descriptors = ContainerUtil.map(fixes, af -> {
         TextRange range = af.textRange;
         HighlightDisplayKey k = af.key != null ? af.key : HighlightDisplayKey.find(ANNOTATOR_INSPECTION_SHORT_NAME);
         return new IntentionActionDescriptor(af.quickFix, null, HighlightDisplayKey.getDisplayNameByKey(k), null, k, annotation.getProblemGroup(), info.getSeverity(), range);
       });
-      info.registerFixes(qfrs);
+      info.registerFixes(descriptors);
     }
 
     return info;
@@ -783,8 +783,8 @@ public class HighlightInfo implements Segment {
 
   public static class IntentionActionDescriptor {
     private final IntentionAction myAction;
-    volatile List<? extends IntentionAction> myOptions; // null means not initialized yet
-    final @Nullable HighlightDisplayKey myKey;
+    private volatile List<? extends IntentionAction> myOptions; // null means not initialized yet
+    private final @Nullable HighlightDisplayKey myKey;
     private final ProblemGroup myProblemGroup;
     private final HighlightSeverity mySeverity;
     private final @Nls String myDisplayName;
@@ -840,6 +840,10 @@ public class HighlightInfo implements Segment {
       if (displayName == null) return null;
       return new IntentionActionDescriptor(new EmptyIntentionAction(displayName), myOptions, myDisplayName, myIcon,
                                            myKey, myProblemGroup, mySeverity, myFixRange);
+    }
+    @NotNull
+    IntentionActionDescriptor withProblemGroupAndSeverity(@Nullable ProblemGroup problemGroup, @Nullable HighlightSeverity severity) {
+      return new IntentionActionDescriptor(myAction, myOptions, myDisplayName, myIcon, myKey, problemGroup, severity, myFixRange);
     }
     @NotNull
     @ApiStatus.Internal

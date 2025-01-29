@@ -72,8 +72,8 @@ public final class ManagedHighlighterRecycler {
     }
     return null;
   }
-  //
-  synchronized @NotNull @Unmodifiable Collection<? extends InvalidPsi> forAllInGarbageBin() {
+
+  synchronized @NotNull @Unmodifiable Collection<InvalidPsi> forAllInGarbageBin() {
     return ContainerUtil.flatten(incinerator.values());
   }
 
