@@ -11,7 +11,6 @@ import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceProvider
-import com.intellij.model.search.LeafOccurrenceMapper
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchRequest
 import com.intellij.model.search.SearchService
@@ -172,9 +171,9 @@ internal class TodoSearcher : UsageSearcher {
       .caseSensitive(false)
       .inContexts(SearchContext.inComments())
       .inScope(parameters.searchScope)
-      .buildQuery(LeafOccurrenceMapper {
+      .buildQuery {
         listOf(TextUsage(it.scope.containingFile, it.start.textRange))
-      })
+      }
   }
 }
 
