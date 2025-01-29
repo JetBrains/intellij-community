@@ -1,21 +1,21 @@
-[![official JetBrains project](http://jb.gg/badges/official.svg)](https://github.com/JetBrains/.github/blob/main/profile/README.md) [![Build status](https://github.com/JetBrains/intellij-community/workflows/IntelliJ%20IDEA/badge.svg)](https://github.com/JetBrains/intellij-community/actions/workflows/IntelliJ_IDEA.yml)
+[![Build status](https://github.com/JetBrains/intellij-community/workflows/IntelliJ%20IDEA/badge.svg)](https://github.com/JetBrains/intellij-community/actions/workflows/IntelliJ_IDEA.yml)
 
-# IntelliJ IDEA Community Edition 
+# Open IntelliJ 
 
-These instructions will help you build IntelliJ IDEA Community Edition from source code, which is the basis for IntelliJ Platform development.
+These instructions will help you build Open IntelliJ from source code, which is the basis for IntelliJ Platform development.
 The following conventions will be used to refer to directories on your machine:
 * `<USER_HOME>` is your home directory.
 * `<IDEA_HOME>` is the root directory for the IntelliJ source code.
 
-## Getting IntelliJ IDEA Community Edition Source Code
-IntelliJ IDEA Community Edition source code is available from `github.com/JetBrains/intellij-community` by either cloning or
+## Getting Open IntelliJ Source Code
+Open IntelliJ source code is available from `github.com/SoftOmni/open-intellij` by either cloning or
 downloading a zip file (based on a branch) into `<IDEA_HOME>`. The default is the *master* branch. 
 
 The master branch contains the source code which will be used to create the next major version of IntelliJ IDEA. The branch names
-and build numbers for older releases of IntelliJ IDEA can be found on the page of
+and build numbers for older releases of Open IntelliJ can be found on the page of
 [Build Number Ranges](https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html).
 
-These Git operations can also be done through the [IntelliJ IDEA user interface](https://www.jetbrains.com/help/idea/using-git-integration.html).
+These Git operations can also be done through the [Open IntelliJ user interface](https://www.jetbrains.com/help/idea/using-git-integration.html).
 
 _**Speed Tip:**_ If the complete repository history isn't needed, then using a shallow clone (`git clone --depth 1`) will save significant time.
 
@@ -24,17 +24,16 @@ _**On Windows:**_ Two git options are required to check out sources on Windows. 
 * `git config --global core.longpaths true`
 * `git config --global core.autocrlf input`
 
-IntelliJ IDEA Community Edition requires additional Android modules from separate Git repositories. To clone these repositories,
+Open IntelliJ requires additional Android modules from separate Git repositories. To clone these repositories,
 run one of the `getPlugins` scripts located in the `<IDEA_HOME>` directory. Use the `--shallow` argument if the complete repository history isn't needed. 
 These scripts clone their respective *master* branches. Make sure you are inside the `<IDEA_HOME>` directory when running those scripts, so the modules get cloned inside the `<IDEA_HOME>` directory.
 * `getPlugins.sh` for Linux or macOS.
 * `getPlugins.bat` for Windows.
 
-_**Note:**_ Always `git checkout` the `intellij-community` and `android` Git repositories to the same branches/tags. 
+_**Note:**_ Always `git checkout` the `open-intellij` and `android` Git repositories to the same branches/tags. 
 
-## Building IntelliJ Community Edition
-Version 2023.2 or newer of IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate Edition is required to build and develop
-for the IntelliJ Platform.
+## Building Open IntelliJ
+Version 2023.2 or newer of Open IntelliJ
 
 ### Opening the IntelliJ Source Code for Build
 Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory. 
@@ -43,7 +42,7 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
 
 ### IntelliJ Build Configuration
 1. It's recommended to use JetBrains Runtime 17 to compile the project. 
-   When you invoke **Build Project** for the first time, IntelliJ IDEA should suggest downloading it automatically.
+   When you invoke **Build Project** for the first time, Open IntelliJ should suggest downloading it automatically.
 2. If the _Maven_ plugin is disabled, [add the path variable](https://www.jetbrains.com/help/idea/absolute-path-variables.html)
    "**MAVEN_REPOSITORY**" pointing to `<USER_HOME>/.m2/repository` directory.
 3. Make sure you have at least 8GB of RAM on your computer. With the bare minimum of RAM, disable "Compile independent modules in parallel"
@@ -52,11 +51,11 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
 
 Note that it is important to use the variant of JetBrains Runtime **without JCEF**.
 So, if for some reason `jbr-17` SDK points to an installation of JetBrains Runtime with JCEF, you need to change it: 
-ensure that IntelliJ IDEA is running in internal mode (by adding `idea.is.internal=true` to `idea.properties` file), navigate to `jbr-17` 
+ensure that Open IntelliJ is running in internal mode (by adding `idea.is.internal=true` to `idea.properties` file), navigate to `jbr-17` 
 item in Project Structure | SDKs, click on 'Browse' button, choose 'Download...' item and select version 17 and vendor 'JetBrains Runtime'.
 
 ### Building the IntelliJ Application Source Code
-To build IntelliJ IDEA Community Edition from source, choose **Build | Build Project** from the main menu.
+To build Open IntelliJ from source, choose **Build | Build Project** from the main menu.
 
 To build installation packages, run the `installers.cmd` command in `<IDEA_HOME>` directory. `installers.cmd` will work on both Windows and Unix systems.
 
@@ -91,9 +90,9 @@ To run tests on the build, apply these setting to the **Run | Edit Configuration
 You can find other helpful information at [https://www.jetbrains.com/opensource/idea](https://www.jetbrains.com/opensource/idea).
 The "Contribute Code" section of that site describes how you can contribute to IntelliJ IDEA.
 
-## Running IntelliJ IDEA on CI/CD environment
+## Running Open IntelliJ on CI/CD environment
 
-To run tests outside of IntelliJ IDEA, run the `tests.cmd` command in `<IDEA_HOME>` directory. `tests.cmd` will work on both Windows and Unix systems.
+To run tests outside of Open IntelliJ, run the `tests.cmd` command in `<IDEA_HOME>` directory. `tests.cmd` will work on both Windows and Unix systems.
 
 Options to run tests are passed as system properties to `tests.cmd` command.
 You may find the list of available properties in [TestingOptions.kt](platform/build-scripts/src/org/jetbrains/intellij/build/TestingOptions.kt)
@@ -103,4 +102,4 @@ Examples (`./` should be added only for Linux/macOS):
 * Run a specific test: `./tests.cmd -Dintellij.build.test.patterns=com.intellij.util.ArrayUtilTest`
 
 `tests.cmd` is used just to run [CommunityRunTestsBuildTarget](build/src/CommunityRunTestsBuildTarget.kt) from the command line.
-You may call it directly from IDEA, see run configuration `tests in community` for an example.
+You may call it directly from Open IntelliJ, see run configuration `tests in community` for an example.
