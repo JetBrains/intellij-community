@@ -31,5 +31,5 @@ abstract class XJumpToSourceActionBase : XDebuggerTreeActionBase() {
     startComputingSourcePosition(value, navigatable)
   }
 
-  protected abstract fun startComputingSourcePosition(value: XValue?, navigatable: XNavigatable?)
+  protected abstract fun startComputingSourcePosition(value: XValue, navigatable: XNavigatable)
 }
