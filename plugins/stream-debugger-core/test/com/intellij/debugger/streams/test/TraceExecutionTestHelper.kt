@@ -10,9 +10,8 @@ import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl
 import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder
 import com.intellij.execution.process.ProcessOutputTypes
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Key
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.xdebugger.XDebugSession
@@ -53,8 +52,8 @@ abstract class TraceExecutionTestHelper(
     return librarySupportProvider.getExpressionBuilder(project)
   }
 
-  fun onPause(chainSelector: ChainSelector, resultMustBeNull: Boolean) {
-    val chain = ReadAction.compute<StreamChain, RuntimeException> {
+  suspend fun onPause(chainSelector: ChainSelector, resultMustBeNull: Boolean) {
+    val chain = readAction {
       val elementAtBreakpoint = debuggerPositionResolver.getNearestElementToBreakpoint(session)
       val chains = if (elementAtBreakpoint == null) null else createChainBuilder().build(elementAtBreakpoint)
       if (chains.isNullOrEmpty()) null else chainSelector.select(chains)
@@ -65,21 +64,16 @@ abstract class TraceExecutionTestHelper(
       return
     }
 
-    runBlockingCancellable {
-      EvaluateExpressionTracer(session, createExpressionBuilder(), createResultInterpreter(), createXValueInterpreter()).trace(chain, object : TracingCallback {
-        override fun evaluated(result: TracingResult, context: EvaluationContextWrapper) {
-          complete(chain, result, resultMustBeNull, null, null)
-        }
-
-        override fun evaluationFailed(traceExpression: String, message: String) {
-          complete(chain, null, resultMustBeNull, message, FailureReason.EVALUATION)
-        }
-
-        override fun compilationFailed(traceExpression: String, message: String) {
-          LOG.warn("[" + getTestName() + "] Compilation failed.")
-          complete(chain, null, resultMustBeNull, message, FailureReason.COMPILATION)
-        }
-      })
+    val tracer = EvaluateExpressionTracer(session, createExpressionBuilder(), createResultInterpreter(), createXValueInterpreter())
+    val trace = tracer.trace(chain)
+    when (trace) {
+      is StreamTracer.Result.Evaluated -> complete(chain, trace.result, resultMustBeNull, null, null)
+      is StreamTracer.Result.EvaluationFailed -> complete(chain, null, resultMustBeNull, trace.message, FailureReason.EVALUATION)
+      is StreamTracer.Result.CompilationFailed -> {
+        LOG.warn("[" + getTestName() + "] Compilation failed.")
+        complete(chain, null, resultMustBeNull, trace.message, FailureReason.COMPILATION)
+      }
+      StreamTracer.Result.Unknown -> TODO()
     }
   }
 

@@ -2,10 +2,17 @@
 package com.intellij.debugger.streams.trace
 
 import com.intellij.debugger.streams.wrapper.StreamChain
+import org.jetbrains.annotations.Nls
 
 /**
  * @author Vitaliy.Bibaev
  */
 interface StreamTracer {
-  suspend fun trace(chain: StreamChain, callback: TracingCallback)
+  sealed class Result {
+    data class Evaluated(val result: TracingResult, val context: EvaluationContextWrapper) : Result()
+    data class EvaluationFailed(val traceExpression: String, val message: @Nls String) : Result()
+    data class CompilationFailed(val traceExpression: String, val message: @Nls String) : Result()
+    object Unknown : Result()
+  }
+  suspend fun trace(chain: StreamChain) : Result
 }

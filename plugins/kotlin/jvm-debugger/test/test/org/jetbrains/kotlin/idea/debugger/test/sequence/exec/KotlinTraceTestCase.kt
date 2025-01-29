@@ -12,9 +12,10 @@ import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.util.Computable
 import com.intellij.xdebugger.XDebugSessionListener
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator
 import org.jetbrains.kotlin.idea.debugger.test.KotlinDescriptorTestCaseWithStepping
 import org.jetbrains.kotlin.idea.debugger.test.TestFiles
@@ -58,7 +59,11 @@ abstract class KotlinTraceTestCase : KotlinDescriptorTestCaseWithStepping() {
                     return
                 }
                 try {
-                    sessionPausedImpl()
+                    runInEdt {
+                        runBlocking {
+                            sessionPausedImpl()
+                        }
+                    }
                 } catch (t: Throwable) {
                     println("Exception caught: $t, ${t.message}", ProcessOutputTypes.SYSTEM)
                     t.printStackTrace()
@@ -68,7 +73,7 @@ abstract class KotlinTraceTestCase : KotlinDescriptorTestCaseWithStepping() {
 
             }
 
-            private fun sessionPausedImpl() {
+            private suspend fun sessionPausedImpl() {
                 printContext(debugProcess.debuggerContext)
                 val chain = ApplicationManager.getApplication().runReadAction(
                     Computable<StreamChain> {
@@ -82,20 +87,13 @@ abstract class KotlinTraceTestCase : KotlinDescriptorTestCaseWithStepping() {
                     return
                 }
 
-                runBlockingCancellable {
-                    EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter).trace(chain, object : TracingCallback {
-                        override fun evaluated(result: TracingResult, context: EvaluationContextWrapper) {
-                            complete(chain, result, null, null)
-                        }
-
-                        override fun evaluationFailed(traceExpression: String, message: String) {
-                            complete(chain, null, message, FailureReason.EVALUATION)
-                        }
-
-                        override fun compilationFailed(traceExpression: String, message: String) {
-                            complete(chain, null, message, FailureReason.COMPILATION)
-                        }
-                    })
+                val tracer = EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter)
+                val trace = tracer.trace(chain)
+                when (trace) {
+                    is StreamTracer.Result.Evaluated -> complete(chain, trace.result, null, null)
+                    is StreamTracer.Result.EvaluationFailed -> complete(chain, null, trace.message, FailureReason.EVALUATION)
+                    is StreamTracer.Result.CompilationFailed -> complete(chain, null, trace.message, FailureReason.COMPILATION)
+                    StreamTracer.Result.Unknown -> TODO()
                 }
             }
 

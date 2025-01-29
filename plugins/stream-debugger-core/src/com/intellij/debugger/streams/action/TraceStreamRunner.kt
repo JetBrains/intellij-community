@@ -7,7 +7,8 @@ import com.intellij.debugger.streams.diagnostic.ex.TraceEvaluationException
 import com.intellij.debugger.streams.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl
-import com.intellij.debugger.streams.trace.*
+import com.intellij.debugger.streams.trace.EvaluateExpressionTracer
+import com.intellij.debugger.streams.trace.StreamTracer
 import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl
 import com.intellij.debugger.streams.ui.ChooserOption
 import com.intellij.debugger.streams.ui.ElementChooser
@@ -15,7 +16,6 @@ import com.intellij.debugger.streams.ui.impl.ElementChooserImpl
 import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow
 import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -26,7 +26,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.util.application
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.*
@@ -130,35 +129,44 @@ class TraceStreamRunner(val cs: CoroutineScope) {
 
     private suspend fun runTrace(chain: StreamChain, provider: LibrarySupportProvider, session: XDebugSession) {
       val window = EvaluationAwareTraceWindow(session, chain)
-      application.invokeLater { window.show() }
+      suspend fun showError(message: @Nls String) {
+        withContext(Dispatchers.EDT) {
+          window.setFailMessage(message)
+        }
+      }
+      withContext(Dispatchers.EDT) {
+        yield()
+        window.show()
+      }
       withContext(Dispatchers.Default) {
         val project = session.getProject()
         val expressionBuilder = provider.getExpressionBuilder(project)
         val resultInterpreter = TraceResultInterpreterImpl(provider.getLibrarySupport().interpreterFactory)
         val xValueInterpreter = provider.getXValueInterpreter(project)
         val tracer: StreamTracer = EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter)
-        //TODO(Korovin): CompletableDeferred or suspend + return
-        tracer.trace(chain, object : TracingCallback {
-          override fun evaluated(result: TracingResult, context: EvaluationContextWrapper) {
-            val resolvedTrace = result.resolve(provider.getLibrarySupport().resolverFactory)
-            ApplicationManager.getApplication()
-              .invokeLater(Runnable { window.setTrace(resolvedTrace, context, provider.getCollectionTreeBuilder(context.project)) })
+        val result = tracer.trace(chain)
+        when (result) {
+          is StreamTracer.Result.Evaluated ->
+          {
+            val resolvedTrace = result.result.resolve(provider.getLibrarySupport().resolverFactory)
+            withContext(Dispatchers.EDT) {
+              window.setTrace(resolvedTrace, result.context, provider.getCollectionTreeBuilder(result.context.project))
+            }
           }
-
-          override fun evaluationFailed(traceExpression: String, message: String) {
-            notifyUI(message)
-            throw TraceEvaluationException(message, traceExpression)
+          is StreamTracer.Result.EvaluationFailed ->
+          {
+            showError(result.message)
+            throw TraceEvaluationException(result.message, result.traceExpression)
           }
-
-          override fun compilationFailed(traceExpression: String, message: String) {
-            notifyUI(message)
-            throw TraceCompilationException(message, traceExpression)
+          is StreamTracer.Result.CompilationFailed ->
+          {
+            showError(result.message)
+            throw TraceCompilationException(result.message, result.traceExpression)
           }
-
-          fun notifyUI(message: @Nls String) {
-            ApplicationManager.getApplication().invokeLater(Runnable { window.setFailMessage(message) })
+          StreamTracer.Result.Unknown -> {
+            LOG.error("Unknown result")
           }
-        })
+        }
       }
     }
   }
