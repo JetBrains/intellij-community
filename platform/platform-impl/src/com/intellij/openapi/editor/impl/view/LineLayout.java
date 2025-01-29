@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.bidi.BidiRegionsSeparator;
 import com.intellij.openapi.editor.bidi.LanguageBidiRegionsSeparator;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -26,8 +27,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.text.Bidi;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -286,6 +287,7 @@ abstract class LineLayout {
 
   private static void addFragments(EditorView view, BidiRun run, Chunk chunk, char[] text, int start, int end,
                                    @Nullable TabFragment tabFragment, boolean showSpecialChars, FontFallbackIterator it) {
+    var settings = view.getEditor().getSettings();
     assert start < end;
     int last = start;
     for (int i = start; i < end; i++) {
@@ -300,29 +302,29 @@ abstract class LineLayout {
         specialFragment = SpecialCharacterFragment.create(view, c, text, i);
       }
       if (specialFragment != null) {
-        addFragmentsNoTabs(run, chunk, text, last, i, it);
+        addFragmentsNoTabs(run, chunk, text, last, i, it, settings);
         chunk.fragments.add(specialFragment);
         last = i + 1;
       }
     }
-    addFragmentsNoTabs(run, chunk, text, last, end, it);
+    addFragmentsNoTabs(run, chunk, text, last, end, it, settings);
     assert !chunk.fragments.isEmpty();
   }
 
-  private static void addFragmentsNoTabs(BidiRun run, Chunk chunk, char[] text, int start, int end, FontFallbackIterator it) {
+  private static void addFragmentsNoTabs(BidiRun run, Chunk chunk, char[] text, int start, int end, FontFallbackIterator it, EditorSettings settings) {
     if (start < end) {
       it.start(text, start, end);
       while (!it.atEnd()) {
-        addTextFragmentIfNeeded(chunk, text, it.getStart(), it.getEnd(), it.getFontInfo(), run.isRtl());
+        addTextFragmentIfNeeded(chunk, text, it.getStart(), it.getEnd(), it.getFontInfo(), run.isRtl(), settings);
         it.advance();
       }
     }
   }
 
-  private static void addTextFragmentIfNeeded(Chunk chunk, char[] chars, int from, int to, FontInfo fontInfo, boolean isRtl) {
+  private static void addTextFragmentIfNeeded(Chunk chunk, char[] chars, int from, int to, FontInfo fontInfo, boolean isRtl, EditorSettings settings) {
     if (to > from) {
       assert fontInfo != null;
-      TextFragmentFactory.createTextFragments(chunk.fragments, chars, from, to, isRtl, fontInfo);
+      TextFragmentFactory.createTextFragments(chunk.fragments, chars, from, to, isRtl, fontInfo, settings);
     }
   }
 

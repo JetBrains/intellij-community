@@ -222,6 +222,11 @@ public interface EditorSettings {
   boolean areStickyLinesShown();
   int getStickyLinesLimit();
 
+  @ApiStatus.Internal
+  @Nullable Float getCharacterGridWidth();
+  @ApiStatus.Internal
+  void setCharacterGridWidth(@Nullable Float value);
+
   enum LineNumerationType {
     ABSOLUTE,
     RELATIVE,

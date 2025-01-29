@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.impl.FontInfo;
 
 import java.awt.*;
@@ -13,7 +14,8 @@ final class TextFragmentFactory {
                                   int start,
                                   int end,
                                   boolean isRtl,
-                                  FontInfo fontInfo) {
+                                  FontInfo fontInfo,
+                                  EditorSettings settings) {
     boolean needsLayout = isRtl || fontInfo.getFont().hasLayoutAttributes();
     boolean nonLatinText = false;
     if (!needsLayout && (containsSurrogatePairs(lineChars, start, end) || Font.textRequiresLayout(lineChars, start, end))) {
