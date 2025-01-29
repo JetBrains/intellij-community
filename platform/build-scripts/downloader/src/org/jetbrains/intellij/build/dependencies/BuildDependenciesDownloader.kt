@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
 import com.github.luben.zstd.ZstdInputStreamNoFinalizer
@@ -48,41 +48,34 @@ object BuildDependenciesDownloader {
   private const val DOWNLOAD_CODE_VERSION = 3
 
   /**
-   * Set tracer to get telemetry. e.g. it's set for build scripts to get opentelemetry events
+   * Sets a tracer to get telemetry. E.g., it is set for build scripts to get opentelemetry events.
    */
   @Volatile
   var TRACER: Tracer = TracerProvider.noop().get("noop-build-dependencies")
 
-  fun getDependencyProperties(communityRoot: BuildDependenciesCommunityRoot): DependenciesProperties {
-    return DependenciesProperties(communityRoot)
-  }
+  fun getDependencyProperties(communityRoot: BuildDependenciesCommunityRoot): DependenciesProperties = DependenciesProperties(communityRoot)
 
   @JvmStatic
-  fun getUriForMavenArtifact(mavenRepository: String, groupId: String, artifactId: String, version: String, packaging: String): URI {
-    return getUriForMavenArtifact(mavenRepository = mavenRepository,
-                                  groupId = groupId,
-                                  artifactId = artifactId,
-                                  version = version,
-                                  classifier = null,
-                                  packaging = packaging)
-  }
+  fun getUriForMavenArtifact(mavenRepository: String, groupId: String, artifactId: String, version: String, packaging: String): URI =
+    getUriForMavenArtifact(mavenRepository, groupId, artifactId, version, classifier = null, packaging)
 
   @JvmStatic
-  fun getUriForMavenArtifact(mavenRepository: String,
-                             groupId: String,
-                             artifactId: String,
-                             version: String,
-                             classifier: String?,
-                             packaging: String): URI {
+  fun getUriForMavenArtifact(
+    mavenRepository: String,
+    groupId: String,
+    artifactId: String,
+    version: String,
+    classifier: String?,
+    packaging: String,
+  ): URI {
     val base = mavenRepository.trim('/')
     val groupStr = groupId.replace('.', '/')
     val classifierStr = if (classifier != null) "-${classifier}" else ""
     return URI.create("${base}/${groupStr}/${artifactId}/${version}/${artifactId}-${version}${classifierStr}.${packaging}")
   }
 
-  private fun getProjectLocalDownloadCache(communityRoot: BuildDependenciesCommunityRoot): Path {
-    return Files.createDirectories(communityRoot.communityRoot.resolve("build/download"))
-  }
+  private fun getProjectLocalDownloadCache(communityRoot: BuildDependenciesCommunityRoot): Path =
+    Files.createDirectories(communityRoot.communityRoot.resolve("build/download"))
 
   private fun getDownloadCachePath(communityRoot: BuildDependenciesCommunityRoot): Path {
     val path: Path = if (TeamCityHelper.isUnderTeamCity) {
@@ -96,14 +89,12 @@ object BuildDependenciesDownloader {
   }
 
   @JvmStatic
-  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI): Path {
-    return downloadFileToCacheLocationSync(url = uri.toString(), communityRoot = communityRoot)
-  }
+  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI): Path =
+    downloadFileToCacheLocationSync(uri.toString(), communityRoot)
 
   @JvmStatic
-  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI, credentialsProvider: () -> Credentials): Path {
-    return downloadFileToCacheLocationSync(url = uri.toString(), communityRoot = communityRoot, credentialsProvider)
-  }
+  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI, credentialsProvider: () -> Credentials): Path =
+    downloadFileToCacheLocationSync(uri.toString(), communityRoot, credentialsProvider)
 
   fun getTargetFile(communityRoot: BuildDependenciesCommunityRoot, uriString: String): Path {
     val lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1)
@@ -112,9 +103,11 @@ object BuildDependenciesDownloader {
   }
 
   @Synchronized
-  fun extractFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot,
-                                 archiveFile: Path,
-                                 vararg options: BuildDependenciesExtractOptions): Path {
+  fun extractFileToCacheLocation(
+    communityRoot: BuildDependenciesCommunityRoot,
+    archiveFile: Path,
+    vararg options: BuildDependenciesExtractOptions,
+  ): Path {
     cleanUpIfRequired(communityRoot)
     val cachePath = getDownloadCachePath(communityRoot)
     val hash = hashString(archiveFile.toString() + getExtractOptionsShortString(options) + EXTRACT_CODE_VERSION).substring(0, 6)
@@ -125,13 +118,14 @@ object BuildDependenciesDownloader {
     return targetDirectory
   }
 
-  private fun hashString(s: String): String {
-    return BigInteger(1, Hashing.sha256().hashString(s, StandardCharsets.UTF_8).asBytes()).toString(36)
-  }
+  private fun hashString(s: String): String =
+    BigInteger(1, Hashing.sha256().hashString(s, StandardCharsets.UTF_8).asBytes()).toString(36)
 
-  private fun getExpectedFlagFileContent(archiveFile: Path,
-                                         targetDirectory: Path,
-                                         options: Array<out BuildDependenciesExtractOptions>): ByteArray {
+  private fun getExpectedFlagFileContent(
+    archiveFile: Path,
+    targetDirectory: Path,
+    options: Array<out BuildDependenciesExtractOptions>,
+  ): ByteArray {
     var fileCount = 0L
     var fileSizeSum = 0L
 
@@ -151,10 +145,12 @@ options:${getExtractOptionsShortString(options)}
 """.toByteArray(StandardCharsets.UTF_8)
   }
 
-  private fun checkFlagFile(archiveFile: Path,
-                            flagFile: Path,
-                            targetDirectory: Path,
-                            options: Array<out BuildDependenciesExtractOptions>): Boolean {
+  private fun checkFlagFile(
+    archiveFile: Path,
+    flagFile: Path,
+    targetDirectory: Path,
+    options: Array<out BuildDependenciesExtractOptions>,
+  ): Boolean {
     if (!Files.isRegularFile(flagFile) || !Files.isDirectory(targetDirectory)) {
       return false
     }
@@ -162,15 +158,17 @@ options:${getExtractOptionsShortString(options)}
     return existingContent.contentEquals(getExpectedFlagFileContent(archiveFile, targetDirectory, options))
   }
 
-  // assumes file at `archiveFile` is immutable
-  private fun extractFileWithFlagFileLocation(archiveFile: Path,
-                                              targetDirectory: Path,
-                                              flagFile: Path,
-                                              options: Array<out BuildDependenciesExtractOptions>) {
+  // assumes a file at `archiveFile` is immutable
+  private fun extractFileWithFlagFileLocation(
+    archiveFile: Path,
+    targetDirectory: Path,
+    flagFile: Path,
+    options: Array<out BuildDependenciesExtractOptions>,
+  ) {
     if (checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
       LOG.fine("Skipping extract to $targetDirectory since flag file $flagFile is correct")
 
-      // update file modification time to maintain FIFO caches, i.e., in persistent cache folder on TeamCity agent
+      // update file modification time to maintain FIFO caches, i.e., in a persistent cache dir on TeamCity agent
       val now = FileTime.from(Instant.now())
 
       try {
@@ -227,9 +225,11 @@ options:${getExtractOptionsShortString(options)}
       extractTarBz2(archiveFile, targetDirectory, stripRoot)
     }
     else {
-      throw IllegalStateException("Unknown archive format at ${archiveFile}." +
-                                  " Magic number (little endian hex): ${Integer.toHexString(magicNumber)}." +
-                                  " Currently only .tar.gz or .zip are supported")
+      throw IllegalStateException(
+        "Unknown archive format at ${archiveFile}." +
+        " Magic number (little endian hex): ${Integer.toHexString(magicNumber)}." +
+        " Currently only .tar.gz or .zip are supported"
+      )
     }
     Files.write(flagFile, getExpectedFlagFileContent(archiveFile, targetDirectory, options))
     check(checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
@@ -237,14 +237,16 @@ options:${getExtractOptionsShortString(options)}
     }
   }
 
-  fun extractFile(archiveFile: Path,
-                  target: Path,
-                  communityRoot: BuildDependenciesCommunityRoot,
-                  vararg options: BuildDependenciesExtractOptions) {
+  fun extractFile(
+    archiveFile: Path,
+    target: Path,
+    communityRoot: BuildDependenciesCommunityRoot,
+    vararg options: BuildDependenciesExtractOptions,
+  ) {
     cleanUpIfRequired(communityRoot)
     fileLocks.get(target).withLock {
-      // Extracting different archive files into the same target should overwrite target each time
-      // That's why flagFile should be dependent only on target location
+      // Extracting different archive files into the same target should overwrite the target each time.
+      // That's why `flagFile` should be dependent only on the target location.
       val hash = hashString(target.toString()).substring(0, 6)
       val flagFile = getProjectLocalDownloadCache(communityRoot).resolve("${hash}-${target.fileName}.flag.txt")
       extractFileWithFlagFileLocation(archiveFile, target, flagFile, options)
