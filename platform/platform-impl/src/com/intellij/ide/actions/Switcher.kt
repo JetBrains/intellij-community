@@ -343,7 +343,11 @@ object Switcher : BaseSwitcherAction(null) {
       }
       isFocusCycleRoot = true
       if (ScreenReader.isActive()) {
-        focusTraversalPolicy = ListFocusTraversalPolicy(listOf(files, toolWindows, cbShowOnlyEditedFiles))
+        val list = mutableListOf<Component>(files, toolWindows)
+        if (cbShowOnlyEditedFiles != null) {
+          list.add(cbShowOnlyEditedFiles)
+        }
+        focusTraversalPolicy = ListFocusTraversalPolicy(list)
       }
       else {
         focusTraversalPolicy = LayoutFocusTraversalPolicy()
