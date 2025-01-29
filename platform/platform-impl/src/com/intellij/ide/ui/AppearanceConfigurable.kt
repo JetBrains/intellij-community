@@ -463,11 +463,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               .label(message("main.menu.combobox.label"))
               .bindItem(settings::mainMenuDisplayMode.toNullableProperty())
               .apply {
-                if (!settings.mergeMainMenuWithWindowTitle) {
-                  enabled(false)
-                  comment(message("main.menu.combobox.disabled.description"))
-                }
-                else if (!SystemInfo.isWindows) {
+                if (!SystemInfo.isWindows) {
                   comment(message("ide.restart.required.comment"))
                 }
               }
