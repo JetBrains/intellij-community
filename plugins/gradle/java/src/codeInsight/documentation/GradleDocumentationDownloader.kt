@@ -7,9 +7,8 @@ import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import org.jetbrains.plugins.gradle.service.coroutine.GradleCoroutineScopeProvider
 import org.jetbrains.plugins.gradle.service.sources.GradleLibrarySourcesDownloader
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -29,18 +28,12 @@ class GradleDocumentationDownloader : DocumentationDownloader {
     return readAction { JavaEditorFileSwapper.findSourceFile(project, file) == null }
   }
 
-  override fun download(project: Project, file: VirtualFile): ActionCallback {
-    val result = ActionCallback()
-    GradleCoroutineScopeProvider.getInstance(project).cs
-      .launch {
-        val file = GradleLibrarySourcesDownloader.download(project, file)
-        if (file == null) {
-          result.setRejected()
-        }
-        else {
-          result.setDone()
-        }
-      }
-    return result
+  override suspend fun download(project: Project, file: VirtualFile): Boolean {
+    // operation should be executed in a different coroutine scope to prevent
+    // cancellation on the documentation popup close
+    val nonCancellableCoroutineScope = GradleCoroutineScopeProvider.getInstance(project).cs
+    return nonCancellableCoroutineScope.async {
+      return@async GradleLibrarySourcesDownloader.download(project, file) != null
+    }.await()
   }
 }

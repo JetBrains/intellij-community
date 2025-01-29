@@ -12,7 +12,7 @@ interface DocumentationDownloader {
 
   suspend fun canHandle(project: Project, file: VirtualFile): Boolean
 
-  fun download(project: Project, file: VirtualFile): ActionCallback
+  suspend fun download(project: Project, file: VirtualFile): Boolean
 
   companion object {
     val EP = ExtensionPointName.create<DocumentationDownloader>("com.intellij.documentation.documentationDownloader")
