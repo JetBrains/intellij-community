@@ -2133,6 +2133,11 @@ f:com.intellij.codeInsight.completion.addingPolicy.PassDirectlyPolicy
 - <init>():V
 - addAllElements(com.intellij.codeInsight.completion.CompletionResultSet,java.lang.Iterable):V
 - addElement(com.intellij.codeInsight.completion.CompletionResultSet,com.intellij.codeInsight.lookup.LookupElement):V
+f:com.intellij.codeInsight.completion.command.commands.PsiElementCommentCompletionCommand
+- com.intellij.codeInsight.completion.command.AbstractActionCompletionCommand
+- <init>():V
+- execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
+- isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 c:com.intellij.codeInsight.completion.impl.BetterPrefixMatcher
 - com.intellij.codeInsight.completion.PrefixMatcher
 - <init>(com.intellij.codeInsight.completion.PrefixMatcher,I):V

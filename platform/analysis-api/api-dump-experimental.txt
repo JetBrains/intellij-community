@@ -1,3 +1,62 @@
+*a:com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
+- com.intellij.codeInsight.completion.command.CompletionCommand
+- <init>():V
+- a:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- supportsReadOnly():Z
+*:com.intellij.codeInsight.completion.command.CommandCompletionFactory
+- commandProviders(com.intellij.openapi.project.Project,com.intellij.lang.Language):java.util.List
+- createFile(com.intellij.psi.PsiFile,java.lang.String):com.intellij.psi.PsiFile
+- filterSuffix():java.lang.Character
+- isApplicable(com.intellij.psi.PsiFile,I):Z
+- suffix():C
+*f:com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z):V
+- f:component1():com.intellij.openapi.project.Project
+- f:component2():com.intellij.openapi.editor.Editor
+- f:component3():I
+- f:component4():com.intellij.psi.PsiFile
+- f:component5():com.intellij.openapi.editor.Editor
+- f:component6():I
+- f:component7():com.intellij.psi.PsiFile
+- f:component8():Z
+- f:copy(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z):com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+- bs:copy$default(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,com.intellij.psi.PsiFile,Z,I,java.lang.Object):com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
+- equals(java.lang.Object):Z
+- f:getEditor():com.intellij.openapi.editor.Editor
+- f:getOffset():I
+- f:getOriginalEditor():com.intellij.openapi.editor.Editor
+- f:getOriginalOffset():I
+- f:getOriginalPsiFile():com.intellij.psi.PsiFile
+- f:getProject():com.intellij.openapi.project.Project
+- f:getPsiFile():com.intellij.psi.PsiFile
+- hashCode():I
+- f:isReadOnly():Z
+*:com.intellij.codeInsight.completion.command.CommandProvider
+- a:getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
+- getId():java.lang.String
+- supportsReadOnly():Z
+*a:com.intellij.codeInsight.completion.command.CompletionCommand
+- <init>():V
+- a:execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
+- getAdditionalInfo():java.lang.String
+- getContext(I,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
+- getHighlightInfo():com.intellij.codeInsight.completion.command.HighlightInfoLookup
+- a:getI18nName():java.lang.String
+- a:getIcon():javax.swing.Icon
+- a:getName():java.lang.String
+- getPriority():java.lang.Integer
+*f:com.intellij.codeInsight.completion.command.HighlightInfoLookup
+- <init>(com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.colors.TextAttributesKey,I):V
+- f:component1():com.intellij.openapi.util.TextRange
+- f:component2():com.intellij.openapi.editor.colors.TextAttributesKey
+- f:component3():I
+- f:copy(com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.colors.TextAttributesKey,I):com.intellij.codeInsight.completion.command.HighlightInfoLookup
+- bs:copy$default(com.intellij.codeInsight.completion.command.HighlightInfoLookup,com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.colors.TextAttributesKey,I,I,java.lang.Object):com.intellij.codeInsight.completion.command.HighlightInfoLookup
+- equals(java.lang.Object):Z
+- f:getAttributesKey():com.intellij.openapi.editor.colors.TextAttributesKey
+- f:getPriority():I
+- f:getRange():com.intellij.openapi.util.TextRange
+- hashCode():I
 *:com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 - s:wrap(com.intellij.codeInsight.lookup.LookupElement):com.intellij.codeInsight.lookup.LookupElement
 *:com.intellij.codeInsight.highlighting.PsiHighlightedReference
