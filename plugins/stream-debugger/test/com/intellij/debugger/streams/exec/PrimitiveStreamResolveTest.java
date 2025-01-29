@@ -27,6 +27,10 @@ public class PrimitiveStreamResolveTest extends TraceExecutionTestCase {
     doTest(false);
   }
 
+  public void testMapMultiPrimitive() {
+    doTest(false);
+  }
+
   public void testSortedPrimitive() {
     doTest(false);
   }
