@@ -4,6 +4,7 @@
 package org.jetbrains.idea.devkit.dom.keymap
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.presentation.Presentation
 import com.intellij.openapi.module.Module
 import com.intellij.psi.xml.XmlFile
 import com.intellij.util.xml.*
@@ -20,9 +21,11 @@ internal class KeymapDomFileDescription : DomFileDescription<KeymapXmlRootElemen
 }
 
 @DefinesXml
+@Presentation(icon = "AllIcons.General.Keyboard")
 interface KeymapXmlRootElement : DomElement {
 
-  @Required
+  @get:NameValue
+  @get:Required
   val name: GenericAttributeValue<String>
 
   @get:Attribute("parent")
@@ -39,7 +42,7 @@ interface KeymapXmlRootElement : DomElement {
 
 interface KeymapXmlAction : DomElement {
 
-  @Required
+  @get:Required
   @get:Referencing(ActionOrGroupReferencingConverter::class)
   val id: GenericAttributeValue<String>
 
