@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.render
 
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionEditorTextUtils.getBlocksForRealText
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Editor
@@ -12,14 +13,20 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.removeUserData
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 
+// TODO folding only if multiline
+
 /**
  * Accumulates all the text to be rendered at one offset and renders them.
+ *
+ * **Streaming**
+ *
  * To be able to render streaming text, all blocks are split line by line.
  *
  * When a new text part comes, the last line is changed, while the previous lines stay the same.
@@ -29,19 +36,44 @@ import java.awt.Rectangle
  * * Disposing of the whole text happens only when all the 'children' elements are disposed.
  *   It relies on the internal implementation of the inline completion: all elements are always disposed at once.
  * * Each 'child' element returns [Rectangle] that represents the whole text. It may be fixed at some point.
+ *
+ * **Folding**
+ *
+ * The problem situation. When we have a multiline completion and some symbols on the right to the caret, they are not shifted to the
+ * bottom with inlays. They must be, but it's not possible with inlays.
+ * So, we hide the symbols on the right using folding, and render the same symbols using inlays
+ * at correct positions. See [InlineCompletionFoldingManager].
+ *
+ * How does it work?
+ * Imagine, we have a first request to render a multiline at some `offset` in a line. Then:
+ * * We hide `[offset, lineEndOffset)`
+ * * We render the completion at the offset `lineEndOffset - 1`
+ * * The `offset` becomes `renderOffset`.
+ * * We render the hidden symbols with inlays in the same offset
+ * * If we have another request in the same line (no matter which offset), we re-direct this request to this manager with `renderOffset`.
+ *   For that, we pass an additional `initialOffset`, where the new request comes from. If `initialOffset == renderOffset`, then it works
+ *   as usual. If `initialOffset > renderOffset`, then we need to 'skip' some symbols from the folded ones. For that, we trim the folded
+ *   range and render the skipped symbols as real ones.
+ *
+ * Please see [Renderer.foldLineEndIfNotFolded], [Renderer.trimFoldedRangeIfNeeded], [Renderer.renderRealTextBlocks].
  */
 @ApiStatus.Experimental
 internal class InlineCompletionTextRenderManager private constructor(
   editor: Editor,
-  offset: Int,
+  renderOffset: Int,
   private val onDispose: () -> Unit
 ) {
 
-  private val renderer = Renderer(editor, offset)
+  private val renderer = Renderer(editor, renderOffset)
   private var elementsCounter = 0
   private var isActive = true
 
-  private fun append(text: String, attributes: TextAttributes, disposable: Disposable): RenderedInlineCompletionElementDescriptor {
+  private fun append(
+    text: String,
+    attributes: TextAttributes,
+    initialOffset: Int, // see documentation of the upper class
+    disposable: Disposable
+  ): RenderedInlineCompletionElementDescriptor {
     check(isActive) { "Cannot render an element since the renderer is already disposed." }
     elementsCounter++
     disposable.whenDisposed {
@@ -51,7 +83,7 @@ internal class InlineCompletionTextRenderManager private constructor(
         cleanUp()
       }
     }
-    return renderer.append(text, attributes)
+    return renderer.append(text, attributes, initialOffset)
   }
 
   private fun cleanUp() {
@@ -60,59 +92,75 @@ internal class InlineCompletionTextRenderManager private constructor(
     onDispose()
   }
 
-  private class Renderer(private val editor: Editor, private val offset: Int) : Disposable {
+  private class Renderer(
+    private val editor: Editor,
+    private val renderOffset: Int,
+  ) : Disposable {
 
-    private var suffixInlay: Inlay<out InlineCompletionLineRenderer>? = null
+    private var inlineInlay: Inlay<out InlineCompletionLineRenderer>? = null
     private val blockLineInlays = mutableListOf<Inlay<out InlineCompletionLineRenderer>>()
-    private var state = RenderState.RENDERING_SUFFIX
+    private var state = RenderState.RENDERING_INLINE
     private val inlayRenderers = InlineCompletionInlayRenderer.all()
-    private val descriptor = Descriptor()
+    private var foldedRange: TextRange? = null
 
-    fun append(text: String, attributes: TextAttributes): RenderedInlineCompletionElementDescriptor {
+    private val foldingManager = InlineCompletionFoldingManager.get(editor)
+
+    fun append(text: String, attributes: TextAttributes, initialOffset: Int): RenderedInlineCompletionElementDescriptor {
       val newLines = text.lines().map { InlineCompletionRenderTextBlock(it, attributes) }
       check(newLines.isNotEmpty())
-      render(newLines)
-      return descriptor
+      render(newLines, initialOffset)
+      return Descriptor(initialOffset)
     }
 
     override fun dispose() {
       editor.inlayModel.execute(true) {
-        suffixInlay?.let { Disposer.dispose(it) }
+        inlineInlay?.let { Disposer.dispose(it) }
         for (blockInlay in blockLineInlays) {
           Disposer.dispose(blockInlay)
         }
       }
-      suffixInlay = null
+      inlineInlay = null
       blockLineInlays.clear()
+      foldedRange = null
     }
 
-    private fun render(newLines: List<InlineCompletionRenderTextBlock>) {
+    private fun render(newLines: List<InlineCompletionRenderTextBlock>, initialOffset: Int) {
       editor.forceLeanLeft()
-      val newBlocksAfterSuffix = renderSuffix(newLines)
-      renderMultiline(newBlocksAfterSuffix)
+
+      removeFoldedBlocksEverywhere()
+      trimFoldedRangeIfNeeded(initialOffset)
+      foldLineEndIfNotFolded()
+
+      val newBlocksAfterInline = renderInline(newLines)
+      renderMultiline(newBlocksAfterInline)
+      renderFoldedRange()
+      updateDirtyInlays()
     }
 
-    private fun renderSuffix(newLines: List<InlineCompletionRenderTextBlock>): List<InlineCompletionRenderTextBlock> {
-      if (state != RenderState.RENDERING_SUFFIX) {
+    private fun renderInline(newLines: List<InlineCompletionRenderTextBlock>): List<InlineCompletionRenderTextBlock> {
+      if (state != RenderState.RENDERING_INLINE) {
         return newLines
       }
 
-      val previousSuffix = suffixInlay?.renderer?.blocks ?: emptyList()
-      val suffixBlocks = previousSuffix + newLines[0]
+      val offset = foldingManager.firstNotFoldedOffset(renderOffset)
 
-      suffixInlay?.let { Disposer.dispose(it) }
-      suffixInlay = null
-
-      editor.inlayModel.execute(true) {
-        val element = renderInlineInlay(editor, offset, suffixBlocks)
-        element?.addActionAvailabilityHints(
-          IdeActions.ACTION_INSERT_INLINE_COMPLETION,
-          IdeActions.ACTION_INSERT_INLINE_COMPLETION_WORD,
-          IdeActions.ACTION_INSERT_INLINE_COMPLETION_LINE,
-          IdeActions.ACTION_NEXT_INLINE_COMPLETION_SUGGESTION,
-          IdeActions.ACTION_PREV_INLINE_COMPLETION_SUGGESTION
-        )
-        suffixInlay = element
+      val inlineInlay = this.inlineInlay
+      val newInlineBlock = newLines[0]
+      if (inlineInlay != null) {
+        inlineInlay.renderer.blocks = inlineInlay.renderer.blocks + newInlineBlock
+      }
+      else {
+        editor.inlayModel.execute(true) {
+          val element = renderInlineInlay(editor, offset, listOf(newInlineBlock))
+          element?.addActionAvailabilityHints(
+            IdeActions.ACTION_INSERT_INLINE_COMPLETION,
+            IdeActions.ACTION_INSERT_INLINE_COMPLETION_WORD,
+            IdeActions.ACTION_INSERT_INLINE_COMPLETION_LINE,
+            IdeActions.ACTION_NEXT_INLINE_COMPLETION_SUGGESTION,
+            IdeActions.ACTION_PREV_INLINE_COMPLETION_SUGGESTION
+          )
+          this.inlineInlay = element
+        }
       }
 
       return newLines.subList(1, newLines.size)
@@ -122,17 +170,16 @@ internal class InlineCompletionTextRenderManager private constructor(
       if (newLines.isEmpty()) {
         return
       }
-      if (state == RenderState.RENDERING_SUFFIX) {
+      if (state == RenderState.RENDERING_INLINE) {
         state = RenderState.RENDERING_BLOCK
       }
+
+      val offset = foldingManager.firstNotFoldedOffset(this.renderOffset)
 
       var linesToRender = newLines
       val lastInlay = blockLineInlays.lastOrNull()
       if (lastInlay != null) {
-        val lastLineBlocks = lastInlay.renderer.blocks + linesToRender[0]
-        Disposer.dispose(lastInlay)
-        val newInlay = renderBlockInlay(editor, offset, lastLineBlocks) ?: return
-        blockLineInlays[blockLineInlays.lastIndex] = newInlay
+        lastInlay.renderer.blocks = lastInlay.renderer.blocks + linesToRender[0]
         linesToRender = linesToRender.subList(1, linesToRender.size)
       }
 
@@ -157,11 +204,75 @@ internal class InlineCompletionTextRenderManager private constructor(
       return inlayRenderers.firstNotNullOfOrNull { it.renderInlineInlay(editor, offset, blocks) }
     }
 
+    private fun trimFoldedRangeIfNeeded(initialOffset: Int) {
+      val foldedRange = this.foldedRange ?: return
+      check(initialOffset >= foldedRange.startOffset)
+      val trimRange = TextRange(foldedRange.startOffset, initialOffset)
+      this.foldedRange = TextRange(initialOffset, foldedRange.endOffset)
+      renderRealTextBlocks(trimRange, areFolded = false)
+    }
+
+    private fun renderFoldedRange() {
+      val foldedRange = this.foldedRange ?: return
+      renderRealTextBlocks(foldedRange, areFolded = true)
+    }
+
+    private fun renderRealTextBlocks(rangeInEditor: TextRange, areFolded: Boolean) {
+      if (rangeInEditor.isEmpty) {
+        return
+      }
+      val blocks = getBlocksForRealText(editor, rangeInEditor, state == RenderState.RENDERING_INLINE)
+      if (areFolded) {
+        blocks.forEach { block -> block.data.putUserData(FOLDED_BLOCK_KEY, Unit) }
+      }
+      when (state) {
+        RenderState.RENDERING_INLINE -> {
+          for (block in blocks) {
+            renderInline(listOf(block))
+          }
+        }
+        RenderState.RENDERING_BLOCK -> {
+          val lastBlock = blockLineInlays.last()
+          lastBlock.renderer.blocks = lastBlock.renderer.blocks + blocks
+        }
+      }
+    }
+
     private fun Editor.forceLeanLeft() {
       val visualPosition = caretModel.visualPosition
       if (visualPosition.leansRight) {
         val leftLeaningPosition = VisualPosition(visualPosition.line, visualPosition.column, false)
         caretModel.moveToVisualPosition(leftLeaningPosition)
+      }
+    }
+
+    private fun foldLineEndIfNotFolded() {
+      if (foldedRange != null) {
+        return
+      }
+      val range = foldingManager.foldLineEnd(renderOffset, this) ?: return
+      foldedRange = range
+      check(!editor.document.getText(range).contains('\n'))
+    }
+
+    private fun updateDirtyInlays() {
+      inlineInlay?.updateIfNeeded()
+      blockLineInlays.forEach { it.updateIfNeeded() }
+    }
+
+    private fun Inlay<out InlineCompletionLineRenderer>.updateIfNeeded() {
+      renderer.updateIfNeeded(this@updateIfNeeded)
+    }
+
+    private fun removeFoldedBlocksEverywhere() {
+      inlineInlay?.removeFoldedBlocks()
+      blockLineInlays.forEach { it.removeFoldedBlocks() }
+    }
+
+    private fun Inlay<out InlineCompletionLineRenderer>.removeFoldedBlocks() {
+      val blocks = renderer.blocks.filter { it.data.getUserData(FOLDED_BLOCK_KEY) == null }
+      if (blocks.size != renderer.blocks.size) {
+        renderer.blocks = blocks
       }
     }
 
@@ -175,13 +286,13 @@ internal class InlineCompletionTextRenderManager private constructor(
       }
     }
 
-    private inner class Descriptor : RenderedInlineCompletionElementDescriptor {
-      override fun getStartOffset(): Int? = suffixInlay?.offset
+    private inner class Descriptor(private val offset: Int) : RenderedInlineCompletionElementDescriptor {
+      override fun getStartOffset(): Int? = offset
 
-      override fun getEndOffset(): Int? = suffixInlay?.offset
+      override fun getEndOffset(): Int? = offset
 
       override fun getRectangle(): Rectangle? {
-        return blockLineInlays.fold(suffixInlay?.bounds) { result, inlay ->
+        return blockLineInlays.fold(inlineInlay?.bounds) { result, inlay ->
           val newBounds = inlay.bounds ?: return@fold result
           if (result == null) newBounds else result.union(newBounds)
         }
@@ -189,7 +300,7 @@ internal class InlineCompletionTextRenderManager private constructor(
     }
 
     private enum class RenderState {
-      RENDERING_SUFFIX,
+      RENDERING_INLINE,
       RENDERING_BLOCK
     }
   }
@@ -197,6 +308,7 @@ internal class InlineCompletionTextRenderManager private constructor(
   companion object {
 
     private val STORAGE_KEY = Key.create<Storage<Int, InlineCompletionTextRenderManager>>("inline.completion.text.render")
+    private val FOLDED_BLOCK_KEY = Key.create<Unit>("inline.completion.folded.block.marker")
 
     @ApiStatus.Experimental
     @RequiresEdt
@@ -209,18 +321,20 @@ internal class InlineCompletionTextRenderManager private constructor(
     ): RenderedInlineCompletionElementDescriptor {
       ThreadingAssertions.assertEventDispatchThread()
 
+      val actualOffset = InlineCompletionFoldingManager.get(editor).offsetOfFoldStart(offset)
+
       val storage = editor.getUserData(STORAGE_KEY) ?: Storage()
       editor.putUserData(STORAGE_KEY, storage)
 
-      val renderer = storage.getOrInitialize(offset) {
-        InlineCompletionTextRenderManager(editor, offset) {
-          storage.remove(offset)
+      val renderer = storage.getOrInitialize(actualOffset) {
+        InlineCompletionTextRenderManager(editor, renderOffset = actualOffset) {
+          storage.remove(actualOffset)
           if (storage.isEmpty()) {
             editor.removeUserData(STORAGE_KEY)
           }
         }
       }
-      return renderer.append(text, attributes, disposable)
+      return renderer.append(text, attributes, offset, disposable)
     }
 
     private class Storage<K : Any, V : Any> {
