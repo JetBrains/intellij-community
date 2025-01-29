@@ -74,7 +74,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
   public EncodingProjectManagerImpl(@NotNull Project project) {
     myProject = project;
-    myIdeEncodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
+    myIdeEncodingManager = (EncodingManagerImpl)getInstance();
   }
 
   @Override
@@ -251,8 +251,8 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     result.add(StandardCharsets.UTF_16);
     result.add(StandardCharsets.ISO_8859_1);
     result.add(StandardCharsets.US_ASCII);
-    result.add(EncodingManager.getInstance().getDefaultCharset());
-    result.add(EncodingManager.getInstance().getDefaultCharsetForPropertiesFiles(null));
+    result.add(getInstance().getDefaultCharset());
+    result.add(getInstance().getDefaultCharsetForPropertiesFiles(null));
     result.remove(null);
     return result;
   }

@@ -70,11 +70,11 @@ class c {
     byte bbbbbb=ccons;
     // too big char to fit in short
     final char bigchar='\uffff';
-    <error descr="Incompatible types. Found: 'char', required: 'short'">short sbig = bigchar;</error>
+    short sbig = <error descr="Incompatible types. Found: 'char', required: 'short'">bigchar</error>;
   }
 
   void g(boolean f, byte b) {
       byte c = '\n';
-      <error descr="Incompatible types. Found: 'int', required: 'byte'">byte next = f ? b : '\n';</error>
+      byte next = <error descr="Incompatible types. Found: 'int', required: 'byte'">f ? b : '\n';</error>
   }
 }

@@ -7,6 +7,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.util.function.Consumer
 
 @ApiStatus.NonExtendable
 interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
@@ -15,6 +16,8 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
   fun addGroup(group: String): Self
   fun addVersion(version: String): Self
 
+  fun configureTask(name: String, type: String, configure: Consumer<ScriptTreeBuilder>): Self = configureTask(name, type) { configure.accept(this) }
+  fun configureTask(name: String, type: String, configure: ScriptTreeBuilder.() -> Unit): Self
   fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit): Self
 
   fun addDependency(scope: String, dependency: String): Self = addDependency(scope, dependency, null)

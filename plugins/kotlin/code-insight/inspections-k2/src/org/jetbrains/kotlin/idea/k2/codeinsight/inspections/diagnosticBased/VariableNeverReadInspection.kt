@@ -36,10 +36,10 @@ internal class VariableNeverReadInspection : KotlinKtDiagnosticBasedInspectionBa
     override fun getProblemHighlightType(element: KtNamedDeclaration, context: Unit): ProblemHighlightType =
         ProblemHighlightType.LIKE_UNUSED_SYMBOL
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtNamedDeclaration,
         context: Unit,
-    ): KotlinModCommandQuickFix<KtNamedDeclaration>? = null // KTIJ-29530
+    ): Array<KotlinModCommandQuickFix<KtNamedDeclaration>> = emptyArray() // KTIJ-29530
 
     override fun buildVisitor(
         holder: ProblemsHolder,

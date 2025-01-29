@@ -441,6 +441,7 @@ f:com.intellij.util.CoroutinesKt
 - *bs:awaitCancellationAndInvoke$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):V
 f:com.intellij.util.ExecutorsQuery
 - com.intellij.util.AbstractQuery
+- *:interceptWith(com.intellij.util.QueryExecutionInterceptor):com.intellij.util.Query
 - *:wrap(com.intellij.util.QueryWrapper):com.intellij.util.Query
 *a:com.intellij.util.PerformanceAssertions
 - *sf:Companion:com.intellij.util.PerformanceAssertions$Companion
@@ -453,9 +454,12 @@ com.intellij.util.Query
 - java.lang.Iterable
 - *:filtering(java.util.function.Predicate):com.intellij.util.Query
 - *:flatMapping(java.util.function.Function):com.intellij.util.Query
+- *:interceptWith(com.intellij.util.QueryExecutionInterceptor):com.intellij.util.Query
 - *:mapping(java.util.function.Function):com.intellij.util.Query
 - *:transforming(java.util.function.Function):com.intellij.util.Query
 - *:wrap(com.intellij.util.QueryWrapper):com.intellij.util.Query
+*:com.intellij.util.QueryExecutionInterceptor
+- a:intercept(kotlin.jvm.functions.Function0):Z
 com.intellij.util.QueryExecutor
 - *:wrap(com.intellij.util.QueryWrapper):com.intellij.util.QueryExecutor
 *:com.intellij.util.QueryWrapper

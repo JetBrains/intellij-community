@@ -407,6 +407,7 @@
       <module fileurl="file://$PROJECT_DIR$/grid/api/intellij.grid.iml" filepath="$PROJECT_DIR$/grid/api/intellij.grid.iml" />
       <module fileurl="file://$PROJECT_DIR$/grid/core-impl/intellij.grid.core.impl.iml" filepath="$PROJECT_DIR$/grid/core-impl/intellij.grid.core.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/grid/csv/intellij.grid.csv.core.impl.iml" filepath="$PROJECT_DIR$/grid/csv/intellij.grid.csv.core.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/grid/images/intellij.grid.images.impl.iml" filepath="$PROJECT_DIR$/grid/images/intellij.grid.images.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/grid/impl/intellij.grid.impl.iml" filepath="$PROJECT_DIR$/grid/impl/intellij.grid.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/grid/json/intellij.grid.impl.json.iml" filepath="$PROJECT_DIR$/grid/json/intellij.grid.impl.json.iml" />
       <module fileurl="file://$PROJECT_DIR$/grid/types/intellij.grid.types.iml" filepath="$PROJECT_DIR$/grid/types/intellij.grid.types.iml" />
@@ -757,6 +758,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/markdown/ide-laf-bridge-styling/intellij.platform.jewel.markdown.ideLafBridgeStyling.iml" filepath="$PROJECT_DIR$/platform/jewel/markdown/ide-laf-bridge-styling/intellij.platform.jewel.markdown.ideLafBridgeStyling.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/markdown/int-ui-standalone-styling/intellij.platform.jewel.markdown.intUiStandaloneStyling.iml" filepath="$PROJECT_DIR$/platform/jewel/markdown/int-ui-standalone-styling/intellij.platform.jewel.markdown.intUiStandaloneStyling.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/samples/ide-plugin/intellij.platform.jewel.samples.idePlugin.iml" filepath="$PROJECT_DIR$/platform/jewel/samples/ide-plugin/intellij.platform.jewel.samples.idePlugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/jewel/samples/showcase/intellij.platform.jewel.samples.showcase.iml" filepath="$PROJECT_DIR$/platform/jewel/samples/showcase/intellij.platform.jewel.samples.showcase.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/samples/standalone/intellij.platform.jewel.samples.standalone.iml" filepath="$PROJECT_DIR$/platform/jewel/samples/standalone/intellij.platform.jewel.samples.standalone.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/ui/intellij.platform.jewel.ui.iml" filepath="$PROJECT_DIR$/platform/jewel/ui/intellij.platform.jewel.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/ui-tests/intellij.platform.jewel.uiTests.iml" filepath="$PROJECT_DIR$/platform/jewel/ui-tests/intellij.platform.jewel.uiTests.iml" />
@@ -937,6 +939,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-core-impl/intellij.python.community.core.impl.iml" filepath="$PROJECT_DIR$/python/python-core-impl/intellij.python.community.core.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.impl.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/huggingFace/intellij.python.community.impl.huggingFace.iml" filepath="$PROJECT_DIR$/python/huggingFace/intellij.python.community.impl.huggingFace.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/installer/intellij.python.community.impl.installer.iml" filepath="$PROJECT_DIR$/python/installer/intellij.python.community.impl.installer.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/poetry/intellij.python.community.impl.poetry.iml" filepath="$PROJECT_DIR$/python/poetry/intellij.python.community.impl.poetry.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/junit5Tests-framework/intellij.python.community.junit5Tests.framework.iml" filepath="$PROJECT_DIR$/python/junit5Tests-framework/intellij.python.community.junit5Tests.framework.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/pluginCore/intellij.python.community.plugin.iml" filepath="$PROJECT_DIR$/python/pluginCore/intellij.python.community.plugin.iml" />

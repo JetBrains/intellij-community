@@ -48,10 +48,10 @@ internal class RemoveRedundantCallsOfConversionMethodsInspection :
         context: Unit
     ): @InspectionMessage String = KotlinBundle.message("redundant.call.of.the.conversion.method")
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtQualifiedExpression,
         context: Unit
-    ): KotlinModCommandQuickFix<KtQualifiedExpression> = object : KotlinModCommandQuickFix<KtQualifiedExpression>() {
+    ): Array<KotlinModCommandQuickFix<KtQualifiedExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtQualifiedExpression>() {
 
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.redundant.calls.of.the.conversion.method")
 
@@ -62,5 +62,5 @@ internal class RemoveRedundantCallsOfConversionMethodsInspection :
         ) {
             element.replace(element.receiverExpression)
         }
-    }
+    })
 }

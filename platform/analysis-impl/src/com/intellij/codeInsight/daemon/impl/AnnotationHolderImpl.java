@@ -206,7 +206,7 @@ public final class AnnotationHolderImpl extends SmartList<@NotNull Annotation> i
     return createBuilder(severity, null);
   }
 
-  private @NotNull B createBuilder(@NotNull HighlightSeverity severity, @Nls String message) {
+  private @NotNull AnnotationBuilder createBuilder(@NotNull HighlightSeverity severity, @Nls String message) {
     return new B(this, severity, message, myCurrentElement.get(), myAnnotator);
   }
 

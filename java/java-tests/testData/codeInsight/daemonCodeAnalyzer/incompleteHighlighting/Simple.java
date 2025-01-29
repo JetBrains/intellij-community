@@ -37,7 +37,7 @@ public class Simple {
   
   void testMethodRef() {
     Runnable r1 = <info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>::new;
-    <error descr="Incompatible types. Found: '<method reference>', required: 'java.lang.Runnable'">Runnable r2 = <info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>[]::new;</error>
+    Runnable r2 = <info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>[]::<error descr="Incompatible types. Found: '<method reference>', required: 'java.lang.Runnable'">new</error>;
     IntFunction<<info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>[]> r3 = <info descr="Not resolved until the project is fully loaded">UsedInMethodRef</info>[]::new;
     Runnable r4 = String::<error descr="Cannot resolve method 'blahblah'">blahblah</error>;
     Runnable r5 = <error descr="Non-static method cannot be referenced from a static context">String::getBytes</error>;
@@ -52,14 +52,14 @@ public class Simple {
   }
 
   void assign(<info descr="Not resolved until the project is fully loaded">Unknown</info> u) {
-    <error descr="Incompatible types. Found: 'Unknown', required: 'java.lang.String'">String s = u;</error>
+    String s = <error descr="Incompatible types. Found: 'Unknown', required: 'java.lang.String'">u</error>;
     Number n = u;
     <info descr="Not resolved until the project is fully loaded">Unknown2</info> u2 = u;
-    <error descr="Incompatible types. Found: 'java.lang.String', required: 'Unknown2'"><info descr="Not resolved until the project is fully loaded">Unknown2</info> u3 = s;</error>
+    <info descr="Not resolved until the project is fully loaded">Unknown2</info> u3 = <error descr="Incompatible types. Found: 'java.lang.String', required: 'Unknown2'">s</error>;
   }
   
   void knownTypes(String s) {
-    <error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.Boolean'">Boolean b = s;</error>
+    Boolean b = <error descr="Incompatible types. Found: 'java.lang.String', required: 'java.lang.Boolean'">s</error>;
     
   }
   
@@ -121,7 +121,7 @@ public class Simple {
     <info descr="null">var</info> z = y.getSomethingCompletelyDifferent();
     z.getFromZ();
     
-    <info descr="null">var</info> t = <error descr="Variable 't' might not have been initialized">t</error>;
+    <info descr="null">var</info> t = <error descr="Cannot infer type for 't', it is used in its own variable initializer">t</error>;
   }
   
   void overloaded(int x) {}

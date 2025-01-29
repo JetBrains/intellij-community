@@ -11,7 +11,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -519,7 +519,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           }
         }
       }
-      UnresolvedReferenceQuickFixUpdater.getInstance(value.getProject()).registerQuickFixesLater(reference, builder);
+      UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(reference, builder);
       add(builder.create());
     }
   }

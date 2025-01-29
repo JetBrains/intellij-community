@@ -16,8 +16,8 @@ class UnsupportedFeatures {
 
     <error descr="For-each loops are not supported at language level '1.4'">for (Object s : list) {}</error>
     Arrays.asList<error descr="'asList(java.lang.String...)' in 'java.util.Arrays' cannot be applied to '(java.lang.String)'">("")</error>;
-    <error descr="Incompatible types. Found: 'boolean', required: 'java.lang.Boolean'">Boolean b = true;</error>
-    <error descr="Incompatible types. Found: 'java.lang.Boolean', required: 'boolean'">boolean b1 = Boolean.TRUE;</error>
+    Boolean b = <error descr="Incompatible types. Found: 'boolean', required: 'java.lang.Boolean'">true;</error>
+    boolean b1 = Boolean.<error descr="Incompatible types. Found: 'java.lang.Boolean', required: 'boolean'">TRUE</error>;
 
     java.lang.annotation.ElementType t = null;
     switch (<error descr="Incompatible types. Found: 'java.lang.annotation.ElementType', required: 'byte, char, short or int'">t</error>) { }

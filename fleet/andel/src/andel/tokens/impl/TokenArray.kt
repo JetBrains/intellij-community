@@ -3,6 +3,7 @@ package andel.tokens.impl
 
 import andel.util.chunked
 import andel.util.replace
+import kotlin.jvm.JvmInline
 
 // every token is encoded as two ints [end, [type, restartable, edited]]
 

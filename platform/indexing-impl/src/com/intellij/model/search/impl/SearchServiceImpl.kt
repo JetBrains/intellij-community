@@ -8,13 +8,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.EmptyQuery
 import com.intellij.util.Query
 
-class SearchServiceImpl : SearchService {
+internal class SearchServiceImpl : SearchService {
 
-  override fun <T> searchParameters(parameters: SearchParameters<T>): Query<T> = SearchParametersQuery(parameters)
+  override fun <T> searchParameters(parameters: SearchParameters<T>): Query<out T> = SearchParametersQuery(parameters)
 
   override fun searchWord(project: Project, word: String): SearchWordQueryBuilder = SearchWordQueryBuilderImpl(project, word)
 
-  override fun <T : Any?> merge(queries: List<Query<out T>>): Query<out T> {
+  override fun <T> merge(queries: List<Query<out T>>): Query<out T> {
     return when (queries.size) {
       0 -> EmptyQuery.getEmptyQuery()
       1 -> queries[0]

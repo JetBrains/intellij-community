@@ -1468,7 +1468,16 @@ public final class BuildManager implements Disposable {
     }
 
     if (ProjectUtilCore.isExternalStorageEnabled(project)) {
-      cmdLine.addPathParameter("-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + '=', ProjectUtil.getExternalConfigurationDir(project));
+      Path externalProjectConfig = ProjectUtil.getExternalConfigurationDir(project);
+      String pathToExternalStorage;
+      if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+        pathToExternalStorage = cmdLine.copyPathToHostIfRequired(externalProjectConfig);
+        cmdLine.addParameter("-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + '=' + pathToExternalStorage);
+      }
+      else {
+        pathToExternalStorage = externalProjectConfig.toString();
+        cmdLine.addPathParameter("-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + '=', pathToExternalStorage);
+      }
     }
 
     cmdLine.addParameter("-D" + GlobalOptions.COMPILE_PARALLEL_OPTION + '=' + projectConfig.isParallelCompilationEnabled());

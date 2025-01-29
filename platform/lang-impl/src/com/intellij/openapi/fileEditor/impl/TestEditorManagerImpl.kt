@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.IncorrectOperationException
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jdom.Element
@@ -394,6 +395,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     return IntentionPreviewUtils.getPreviewEditor() ?: getEditor(activeFile ?: return null)
   }
 
+  @RequiresEdt
   override fun getSelectedTextEditorWithRemotes(): Array<Editor> {
     val result = ArrayList<Editor>()
     for (e in selectedEditorWithRemotes) {

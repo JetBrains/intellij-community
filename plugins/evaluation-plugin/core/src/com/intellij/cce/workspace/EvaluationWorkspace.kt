@@ -7,7 +7,6 @@ import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.fus.FusLogsSaver
 import com.intellij.cce.workspace.storages.*
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.createDirectories
 import java.io.FileWriter
 import java.nio.file.Files
 import java.nio.file.Path
@@ -47,6 +46,8 @@ class EvaluationWorkspace private constructor(private val basePath: Path,
   private val _reports: MutableMap<String, MutableMap<String, Path>> = mutableMapOf()
 
   val sessionsStorage: CompositeSessionsStorage = CompositeSessionsStorage(sessionsDir.toString())
+
+  val individualScoresStorage: CompositeIndividualScoresStorage = CompositeIndividualScoresStorage(sessionsDir.toString())
 
   val errorsStorage: FileErrorsStorage = FileErrorsStorage(errorsDir.toString())
 

@@ -77,7 +77,7 @@ private class BackgroundHighlighterProjectActivity : ProjectActivity {
  */
 @Service
 internal class BackgroundHighlighter(coroutineScope: CoroutineScope) {
-  @JvmField val alarm = Alarm(coroutineScope = coroutineScope, threadToUse = Alarm.ThreadToUse.SWING_THREAD)
+  @JvmField val alarm = Alarm(coroutineScope, Alarm.ThreadToUse.SWING_THREAD)
 
   companion object {
     @TestOnly
@@ -87,139 +87,178 @@ internal class BackgroundHighlighter(coroutineScope: CoroutineScope) {
       Disposer.register(parentDisposable, Disposable {
         coroutineScope.cancel()
       })
-      registerListeners(project = project, parentDisposable = parentDisposable, alarm = service<BackgroundHighlighter>().alarm, coroutineScope = coroutineScope)
+      service<BackgroundHighlighter>().registerListeners(project, parentDisposable, coroutineScope)
     }
   }
 
   suspend fun runActivity(project: Project) {
     val perProjectDisposable = project.serviceAsync<BackgroundHighlighterPerProject>()
-    registerListeners(
-      project = project,
-      parentDisposable = perProjectDisposable,
-      alarm = alarm,
-      coroutineScope = perProjectDisposable.coroutineScope
+    registerListeners(project, perProjectDisposable, perProjectDisposable.coroutineScope)
+  }
+
+  private fun registerListeners(
+    project: Project,
+    parentDisposable: Disposable,
+    coroutineScope: CoroutineScope,
+  ) {
+    val editorFactory = EditorFactory.getInstance()
+    val eventMulticaster = editorFactory.eventMulticaster
+
+    val executor = Executor { task ->
+      coroutineScope.launch {
+        task.run()
+      }
+    }
+
+    eventMulticaster.addCaretListener(object : CaretListener {
+      override fun caretPositionChanged(e: CaretEvent) {
+        if (e.caret === e.editor.caretModel.primaryCaret) {
+          onCaretUpdate(e.editor, project, executor)
+        }
+      }
+
+      override fun caretAdded(e: CaretEvent) {
+        if (e.caret === e.editor.caretModel.primaryCaret) {
+          onCaretUpdate(e.editor, project, executor)
+        }
+      }
+
+      override fun caretRemoved(e: CaretEvent) {
+        onCaretUpdate(e.editor, project, executor)
+      }
+    }, parentDisposable)
+
+    eventMulticaster.addSelectionListener(object : SelectionListener {
+      override fun selectionChanged(e: SelectionEvent) {
+        alarm.cancelAllRequests()
+        val editor = e.editor
+        if (editor.project !== project) {
+          return
+        }
+
+        if (!highlightSelection(project, editor, executor)) {
+          removeSelectionHighlights(editor)
+        }
+
+        val oldRange = e.oldRange
+        val newRange = e.newRange
+        if (oldRange != null && newRange != null && oldRange.isEmpty == newRange.isEmpty) {
+          // don't update braces in case of active/absent selection.
+          return
+        }
+
+        updateHighlighted(project, editor, executor)
+      }
+    }, parentDisposable)
+
+    eventMulticaster.addDocumentListener(object : DocumentListener {
+      override fun documentChanged(e: DocumentEvent) {
+        alarm.cancelAllRequests()
+        editorFactory.editors(e.document, project).forEach {
+          updateHighlighted(project, it, executor)
+          if (!highlightSelection(project, it, executor)) {
+            removeSelectionHighlights(it)
+          }
+        }
+      }
+    }, parentDisposable)
+
+    val connection = project.messageBus.connect(coroutineScope)
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun selectionChanged(e: FileEditorManagerEvent) {
+        alarm.cancelAllRequests()
+        val oldEditor = e.oldEditor
+        if (oldEditor is TextEditor) {
+          clearBraces(project, oldEditor.editor)
+        }
+
+        val newEditor = e.newEditor
+        if (newEditor is TextEditor) {
+          val editor = newEditor.editor
+          updateHighlighted(project, editor, executor)
+          if (!highlightSelection(project, editor, executor)) {
+            removeSelectionHighlights(editor)
+          }
+        }
+      }
+    })
+
+    connection.subscribe<TemplateManagerListener>(TemplateManager.TEMPLATE_STARTED_TOPIC, TemplateManagerListener { state ->
+      if (state.isFinished) {
+        return@TemplateManagerListener
+      }
+
+      updateHighlighted(project, state.editor, executor)
+      state.addTemplateStateListener(object : TemplateEditingAdapter() {
+        override fun templateFinished(template: Template, brokenOff: Boolean) {
+          updateHighlighted(project, state.editor, executor)
+        }
+      })
+    })
+  }
+  private fun onCaretUpdate(editor: Editor, project: Project, executor: Executor) {
+    alarm.cancelAllRequests()
+    if (editor.project !== project) return
+
+    // don't update braces in case of the active selection.
+    if (!editor.selectionModel.hasSelection()) {
+      updateHighlighted(project, editor, executor)
+    }
+
+    if (!highlightSelection(project, editor, executor)) {
+      removeSelectionHighlights(editor)
+    }
+  }
+
+  @RequiresEdt
+  private fun updateHighlighted(project: Project, editor: Editor, executor: Executor) {
+    if (editor.document.isInBulkUpdate || !BackgroundHighlightingUtil.isValidEditor(editor)) {
+      return
+    }
+
+    BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(
+      project, editor,
+      { newFile: PsiFile, newEditor: Editor ->
+        val offsetBefore = editor.caretModel.offset
+        submitIdentifierHighlighterPass(editor, offsetBefore, newFile, newEditor, executor)
+        HeavyBraceHighlighter.match(newFile, offsetBefore)
+      },
+      { newFile: PsiFile, newEditor: Editor, maybeMatch: Pair<TextRange, TextRange>? ->
+        val handler = BraceHighlightingHandler(project, newEditor, alarm, newFile)
+        if (maybeMatch == null) {
+          alarm.cancelAllRequests()
+          handler.updateBraces()
+        }
+        else {
+          val codeInsightSettings = CodeInsightSettings.getInstance()
+          if (BackgroundHighlightingUtil.needMatching(newEditor, codeInsightSettings)) {
+            val fileType = PsiUtilBase.getPsiFileAtOffset(newFile, maybeMatch.first.startOffset).fileType
+            handler.clearBraceHighlighters()
+            handler.highlightBraces(maybeMatch.first, maybeMatch.second, true, false, fileType)
+          }
+        }
+      })
+  }
+
+  private fun clearBraces(project: Project, editor: Editor) {
+    BackgroundHighlightingUtil.lookForInjectedFileInOtherThread<Any?>(
+      project,
+      editor,
+      { _: PsiFile?, _: Editor? -> null },
+      { foundFile: PsiFile, newEditor: Editor, _: Any? ->
+        val handler = BraceHighlightingHandler(
+          project,
+          newEditor, alarm,
+          foundFile,
+        )
+        handler.clearBraceHighlighters()
+      },
     )
   }
 }
 
 @Service(Service.Level.PROJECT)
 private class BackgroundHighlighterPerProject(@JvmField val coroutineScope: CoroutineScope): Disposable.Default
-
-private fun registerListeners(
-  project: Project,
-  parentDisposable: Disposable,
-  alarm: Alarm,
-  coroutineScope: CoroutineScope,
-) {
-  val editorFactory = EditorFactory.getInstance()
-  val eventMulticaster = editorFactory.eventMulticaster
-
-  val executor = Executor { task ->
-    coroutineScope.launch {
-      task.run()
-    }
-  }
-
-  eventMulticaster.addCaretListener(object : CaretListener {
-    override fun caretPositionChanged(e: CaretEvent) {
-      if (e.caret === e.editor.caretModel.primaryCaret) {
-        onCaretUpdate(editor = e.editor, project = project, alarm = alarm, executor = executor)
-      }
-    }
-
-    override fun caretAdded(e: CaretEvent) {
-      if (e.caret === e.editor.caretModel.primaryCaret) {
-        onCaretUpdate(editor = e.editor, project = project, alarm = alarm, executor = executor)
-      }
-    }
-
-    override fun caretRemoved(e: CaretEvent) {
-      onCaretUpdate(editor = e.editor, project = project, alarm = alarm, executor = executor)
-    }
-  }, parentDisposable)
-
-  eventMulticaster.addSelectionListener(object : SelectionListener {
-    override fun selectionChanged(e: SelectionEvent) {
-      alarm.cancelAllRequests()
-      val editor = e.editor
-      if (editor.project !== project) {
-        return
-      }
-
-      if (!highlightSelection(project, editor, executor)) {
-        removeSelectionHighlights(editor)
-      }
-
-      val oldRange = e.oldRange
-      val newRange = e.newRange
-      if (oldRange != null && newRange != null && oldRange.isEmpty == newRange.isEmpty) {
-        // don't update braces in case of active/absent selection.
-        return
-      }
-
-      updateHighlighted(project = project, editor = editor, alarm = alarm, executor = executor)
-    }
-  }, parentDisposable)
-
-  eventMulticaster.addDocumentListener(object : DocumentListener {
-    override fun documentChanged(e: DocumentEvent) {
-      alarm.cancelAllRequests()
-      editorFactory.editors(e.document, project).forEach {
-        updateHighlighted(project = project, editor = it, alarm = alarm, executor = executor)
-        if (!highlightSelection(project, it, executor)) {
-          removeSelectionHighlights(it)
-        }
-      }
-    }
-  }, parentDisposable)
-
-  val connection = project.messageBus.connect(coroutineScope)
-  connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-    override fun selectionChanged(e: FileEditorManagerEvent) {
-      alarm.cancelAllRequests()
-      val oldEditor = e.oldEditor
-      if (oldEditor is TextEditor) {
-        clearBraces(project = project, editor = oldEditor.editor, alarm = alarm)
-      }
-
-      val newEditor = e.newEditor
-      if (newEditor is TextEditor) {
-        val editor = newEditor.editor
-        updateHighlighted(project = project, editor = editor, alarm = alarm, executor = executor)
-        if (!highlightSelection(project, editor, executor)) {
-          removeSelectionHighlights(editor)
-        }
-      }
-    }
-  })
-
-  connection.subscribe<TemplateManagerListener>(TemplateManager.TEMPLATE_STARTED_TOPIC, TemplateManagerListener { state ->
-    if (state.isFinished) {
-      return@TemplateManagerListener
-    }
-
-    updateHighlighted(project = project, editor = state.editor, alarm = alarm, executor = executor)
-    state.addTemplateStateListener(object : TemplateEditingAdapter() {
-      override fun templateFinished(template: Template, brokenOff: Boolean) {
-        updateHighlighted(project = project, editor = state.editor, alarm = alarm, executor = executor)
-      }
-    })
-  })
-}
-
-private fun onCaretUpdate(editor: Editor, project: Project, alarm: Alarm, executor: Executor) {
-  alarm.cancelAllRequests()
-  if (editor.project !== project) return
-  
-  // don't update braces in case of the active selection.
-  if (!editor.selectionModel.hasSelection()) {
-    updateHighlighted(project = project, editor = editor, alarm = alarm, executor = executor)
-  }
-
-  if (!highlightSelection(project, editor, executor)) {
-    removeSelectionHighlights(editor)
-  }
-}
 
 @RequiresEdt
 private fun highlightSelection(project: Project, editor: Editor, executor: Executor): Boolean {
@@ -312,22 +351,6 @@ private fun highlightSelection(project: Project, editor: Editor, executor: Execu
   return true
 }
 
-private fun clearBraces(project: Project, editor: Editor, alarm: Alarm) {
-  BackgroundHighlightingUtil.lookForInjectedFileInOtherThread<Any?>(
-    project,
-    editor,
-    { _: PsiFile?, _: Editor? -> null },
-    { foundFile: PsiFile, newEditor: Editor, _: Any? ->
-      val handler = BraceHighlightingHandler(
-        project,
-        newEditor, alarm,
-        foundFile,
-      )
-      handler.clearBraceHighlighters()
-    },
-  )
-}
-
 private fun removeSelectionHighlights(editor: Editor) {
   val highlighters = editor.getUserData(SELECTION_HIGHLIGHTS)?.highlighters ?: return
   editor.putUserData(SELECTION_HIGHLIGHTS, null)
@@ -335,47 +358,6 @@ private fun removeSelectionHighlights(editor: Editor) {
   for (highlighter in highlighters) {
     markupModel.removeHighlighter(highlighter)
   }
-}
-
-@RequiresEdt
-private fun updateHighlighted(project: Project, editor: Editor, alarm: Alarm, executor: Executor) {
-  if (editor.document.isInBulkUpdate || !BackgroundHighlightingUtil.isValidEditor(editor)) {
-    return
-  }
-
-  BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(
-    project, editor,
-    { newFile: PsiFile, newEditor: Editor ->
-      val offsetBefore = editor.caretModel.offset
-      submitIdentifierHighlighterPass(
-        hostEditor = editor,
-        offsetBefore = offsetBefore,
-        newFile = newFile,
-        newEditor = newEditor,
-        executor = executor,
-      )
-      HeavyBraceHighlighter.match(newFile, offsetBefore)
-    },
-    { newFile: PsiFile, newEditor: Editor, maybeMatch: Pair<TextRange, TextRange>? ->
-      val handler = BraceHighlightingHandler(project = project, editor = newEditor, alarm = alarm, psiFile = newFile)
-      if (maybeMatch == null) {
-        handler.updateBraces()
-      }
-      else {
-        val codeInsightSettings = CodeInsightSettings.getInstance()
-        if (BackgroundHighlightingUtil.needMatching(newEditor, codeInsightSettings)) {
-          val fileType = PsiUtilBase.getPsiFileAtOffset(newFile, maybeMatch.first.startOffset).fileType
-          handler.clearBraceHighlighters()
-          handler.highlightBraces(
-            lBrace = maybeMatch.first,
-            rBrace = maybeMatch.second,
-            matched = true,
-            scopeHighlighting = false,
-            fileType = fileType,
-          )
-        }
-      }
-    })
 }
 
 private fun submitIdentifierHighlighterPass(

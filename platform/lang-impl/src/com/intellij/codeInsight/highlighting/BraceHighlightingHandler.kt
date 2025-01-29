@@ -99,18 +99,15 @@ class BraceHighlightingHandler internal constructor(
     }
 
     @JvmStatic
+    @RequiresEdt
     fun showScopeHint(
       editor: Editor,
       psiFile: PsiFile,
       leftBraceStart: Int,
       leftBraceEnd: Int,
     ) {
-      BraceHighlightingHandler(
-        project = psiFile.project,
-        editor = editor,
-        alarm = service<BackgroundHighlighter>().alarm,
-        psiFile = psiFile,
-      ).showScopeHint(leftBraceStart = leftBraceStart, leftBraceEnd = leftBraceEnd, startComputation = null)
+      BraceHighlightingHandler(psiFile.project, editor, service<BackgroundHighlighter>().alarm, psiFile)
+        .showScopeHint(leftBraceStart, leftBraceEnd, null)
     }
 
     /**
@@ -118,6 +115,7 @@ class BraceHighlightingHandler internal constructor(
      * `endLine`
      */
     @JvmStatic
+    @RequiresEdt
     fun lineMarkFragment(editor: EditorEx, document: Document, startLine: Int, endLine: Int, matched: Boolean) {
       removeLineMarkers(editor)
 
@@ -161,8 +159,6 @@ class BraceHighlightingHandler internal constructor(
     var offset = editor.caretModel.offset
     val chars = editor.document.charsSequence
 
-    alarm.cancelAllRequests()
-
     var context = SlowOperations.knownIssue("IJPL-162400").use {
       BraceMatchingUtil.computeHighlightingAndNavigationContext(editor, psiFile)
     }
@@ -186,7 +182,7 @@ class BraceHighlightingHandler internal constructor(
           BraceMatchingUtil.computeHighlightingAndNavigationContext(editor, psiFile, backwardNonSpaceEndOffset)
         }
         if (context != null) {
-          doHighlight(offset = context.currentBraceOffset, isAdjustedPosition = true)
+          doHighlight(context.currentBraceOffset, true)
           offset = context.currentBraceOffset
           searchForward = false
         }
@@ -198,7 +194,7 @@ class BraceHighlightingHandler internal constructor(
         if (nextNonSpaceCharOffset > offset) {
           context = BraceMatchingUtil.computeHighlightingAndNavigationContext(editor, psiFile, nextNonSpaceCharOffset)
           if (context != null) {
-            doHighlight(offset = context.currentBraceOffset, isAdjustedPosition = true)
+            doHighlight(context.currentBraceOffset, true)
             offset = context.currentBraceOffset
           }
         }
@@ -219,6 +215,7 @@ class BraceHighlightingHandler internal constructor(
   private val editorHighlighter: EditorHighlighter
     get() = getLazyParsableHighlighterIfAny(project, editor, psiFile)
 
+  @RequiresEdt
   private fun highlightScope(offset: Int) {
     if (!psiFile.isValid) {
       return
@@ -240,7 +237,7 @@ class BraceHighlightingHandler internal constructor(
            BraceMatchingUtil.isLBraceToken(iterator, chars, fileType))) &&
         BraceMatchingUtil.findStructuralLeftBrace(fileType, iterator, chars)
     ) {
-      highlightLeftBrace(iterator = iterator, scopeHighlighting = true, fileType = fileType)
+      highlightLeftBrace(iterator, true, fileType)
     }
   }
 
@@ -249,6 +246,7 @@ class BraceHighlightingHandler internal constructor(
    *
    * @param isAdjustedPosition true mean s that `offset` been adjusted, e.g. spaces been skipped before or after caret position
    */
+  @RequiresEdt
   private fun doHighlight(offset: Int, isAdjustedPosition: Boolean) {
     if (editor.foldingModel.isOffsetCollapsed(offset)) {
       return
@@ -258,7 +256,7 @@ class BraceHighlightingHandler internal constructor(
     val chars = document.charsSequence
     val fileType = getFileTypeByOffset(offset)
     if (BraceMatchingUtil.isLBraceToken(iterator, chars, fileType)) {
-      highlightLeftBrace(iterator = iterator, scopeHighlighting = false, fileType = fileType)
+      highlightLeftBrace(iterator, false, fileType)
 
       if (offset > 0 && !isAdjustedPosition && !editor.settings.isBlockCursor) {
         iterator = editorHighlighter.createIterator(offset - 1)
@@ -272,21 +270,24 @@ class BraceHighlightingHandler internal constructor(
     }
   }
 
+  @RequiresEdt
   private fun highlightRightBrace(iterator: HighlighterIterator, fileType: FileType) {
     val brace1 = TextRange.create(iterator.start, iterator.end)
     val matched = BraceMatchingUtil.matchBrace(document.charsSequence, fileType, iterator, false)
     val brace2 = if (iterator.atEnd()) null else TextRange.create(iterator.start, iterator.end)
-    highlightBraces(lBrace = brace2, rBrace = brace1, matched = matched, scopeHighlighting = false, fileType = fileType)
+    highlightBraces(brace2, brace1, matched, false, fileType)
   }
 
+  @RequiresEdt
   private fun highlightLeftBrace(iterator: HighlighterIterator, scopeHighlighting: Boolean, fileType: FileType) {
     val brace1Start = TextRange.create(iterator.start, iterator.end)
     val matched = BraceMatchingUtil.matchBrace(document.charsSequence, fileType, iterator, true)
 
     val brace2End = if (iterator.atEnd()) null else TextRange.create(iterator.start, iterator.end)
-    highlightBraces(lBrace = brace1Start, rBrace = brace2End, matched = matched, scopeHighlighting = scopeHighlighting, fileType = fileType)
+    highlightBraces(brace1Start, brace2End, matched, scopeHighlighting, fileType)
   }
 
+  @RequiresEdt
   fun highlightBraces(lBrace: TextRange?, rBrace: TextRange?, matched: Boolean, scopeHighlighting: Boolean, fileType: FileType) {
     if (!matched && fileType === FileTypes.PLAIN_TEXT) {
       return
@@ -310,15 +311,16 @@ class BraceHighlightingHandler internal constructor(
       val startLine = editor.offsetToLogicalPosition(lBrace.startOffset).line
       val endLine = editor.offsetToLogicalPosition(rBrace.endOffset).line
       if (endLine - startLine > 0 && editor is EditorEx) {
-        lineMarkFragment(editor = editor, document = document, startLine = startLine, endLine = endLine, matched = matched)
+        lineMarkFragment(editor, document, startLine, endLine, matched)
       }
 
       if (!scopeHighlighting) {
-        showScopeHint(lbraceStart = lBrace.startOffset, lbraceEnd = lBrace.endOffset)
+        showScopeHint(lBrace.startOffset, lBrace.endOffset)
       }
     }
   }
 
+  @RequiresEdt
   private fun highlightBrace(braceRange: TextRange, matched: Boolean) {
     val attributesKey = if (matched) CodeInsightColors.MATCHED_BRACE_ATTRIBUTES else CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES
     val rbraceHighlighter = editor.markupModel
@@ -343,16 +345,19 @@ class BraceHighlightingHandler internal constructor(
     return highlighters
   }
 
+  @RequiresEdt
   private fun showScopeHint(lbraceStart: Int, lbraceEnd: Int) {
-    showScopeHint(leftBraceStart = lbraceStart, leftBraceEnd = lbraceEnd, startComputation = startComputation@ { offset ->
+    showScopeHint(lbraceStart, lbraceEnd) { offset ->
       if (psiFile !is PsiPlainTextFile && psiFile.isValid) {
-        return@startComputation BraceMatchingUtil.getBraceMatcher(
+        BraceMatchingUtil.getBraceMatcher(
           getFileTypeByOffset(offset),
           PsiUtilCore.getLanguageAtOffset(psiFile, offset),
         ).getCodeConstructStart(psiFile, offset)
       }
-      offset
-    })
+      else {
+        offset
+      }
+    }
   }
 
   /**
@@ -360,6 +365,7 @@ class BraceHighlightingHandler internal constructor(
    *
    * @param startComputation optional adjuster for the brace start offset
    */
+  @RequiresEdt
   private fun showScopeHint(leftBraceStart: Int, leftBraceEnd: Int, startComputation: IntUnaryOperator?) {
     val editor = editor
     val project = editor.project ?: return
@@ -404,6 +410,7 @@ class BraceHighlightingHandler internal constructor(
     }
   }
 
+  @RequiresEdt
   fun clearBraceHighlighters() {
     val highlighters = getHighlightersList()
     for (highlighter in highlighters) {

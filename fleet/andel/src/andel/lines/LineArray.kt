@@ -4,6 +4,7 @@ package andel.lines
 import andel.rope.Metric
 import andel.util.chunked
 import andel.util.replace
+import kotlin.jvm.JvmInline
 import kotlin.math.max
 
 @JvmInline

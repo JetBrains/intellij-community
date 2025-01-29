@@ -27,25 +27,13 @@ internal class JavaProjectDataService : AbstractProjectDataService<JavaProjectDa
     modelsProvider: IdeModifiableModelsProvider
   ) {
     if (toImport.isEmpty() || projectData == null) return
-    require(toImport.size == 1) { String.format("Expected to get a single project but got %d: %s", toImport.size, toImport) }
     if (!ExternalSystemApiUtil.isOneToOneMapping(project, projectData, modelsProvider.modules)) return
-    val javaProjectData = toImport.first().data
 
+    val javaProjectData = toImport.single().data
     ExternalSystemApiUtil.executeProjectChangeAction(project) {
-      importProjectSdk(project, javaProjectData)
       importLanguageLevel(project, javaProjectData)
       importTargetBytecodeVersion(project, javaProjectData)
-    }
-  }
-
-  private fun importProjectSdk(project: Project, javaProjectData: JavaProjectData) {
-    if (!javaProjectData.isSetJdkVersion) return
-    val jdkVersion = javaProjectData.jdkVersion
-    val sdk = JavaSdkVersionUtil.findJdkByVersion(jdkVersion)
-    val projectRootManager = ProjectRootManager.getInstance(project)
-    val projectSdk = projectRootManager.projectSdk
-    if (projectSdk == null) {
-      projectRootManager.projectSdk = sdk
+      importCompilerArguments(project, javaProjectData)
     }
   }
 
@@ -67,6 +55,11 @@ internal class JavaProjectDataService : AbstractProjectDataService<JavaProjectDa
     compilerConfiguration.projectBytecodeTarget = targetBytecodeVersion
   }
 
+  private fun importCompilerArguments(project: Project, javaProjectData: JavaProjectData) {
+    val compilerConfiguration = CompilerConfiguration.getInstance(project)
+    val compilerArguments = javaProjectData.compilerArguments
+    compilerConfiguration.additionalOptions = compilerArguments
+  }
 }
 
 internal object JavaProjectDataServiceUtil {

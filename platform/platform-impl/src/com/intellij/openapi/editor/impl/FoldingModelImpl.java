@@ -205,6 +205,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
     onFoldProcessingStart();
     myEditor.myView.invalidateFoldRegionLayout(region);
+    if (myEditor.myAdView != null) myEditor.myAdView.invalidateFoldRegionLayout(region);
     onFoldRegionStateChange(region);
   }
 
@@ -580,7 +581,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     return myFoldTree.getFoldedLinesCountBefore(offset);
   }
 
-  int getTotalNumberOfFoldedLines() {
+  @ApiStatus.Internal
+  public int getTotalNumberOfFoldedLines() {
     if (!myDocumentChangeProcessed && myEditor.getDocument().isInEventsHandling()) {
       // There is a possible case that this method is called on document update before fold regions are recalculated.
       // We return zero in such situations then.

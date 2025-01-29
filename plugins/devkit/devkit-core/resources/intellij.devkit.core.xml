@@ -62,15 +62,31 @@
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex"/>
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.ExtensionPointClassIndex"/>
 
-    <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.productModules.ProductModulesDomFileDescription"
-                      rootTagName="product-modules"/>
-    <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.templates.TemplateSetDescription" rootTagName="templateSet"/>
-
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorEditorTabTitleProvider"/>
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorUseScopeEnlarger"/>
     <searchScopesProvider
       order="last"
       implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorDomFileSearchScopeProvider"/>
+
+    <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.productModules.ProductModulesDomFileDescription"
+                      rootTagName="product-modules"/>
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="ERROR"
+                     isInternal="true"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ProductModulesXmlDomInspection"
+                     key="inspection.product.modules.xml.display.name"/>
+
+    <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.templates.TemplateSetDescription" rootTagName="templateSet"/>
+
+    <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.keymap.KeymapDomFileDescription" rootTagName="keymap"/>
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.KeymapXmlDomInspection"
+                     key="inspection.keymap.xml.inspection.name"/>
 
     <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.inspections.RegistryImplicitPropertyUsageProvider"/>
 
@@ -132,13 +148,6 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlExtensionRegistrationInspection"
                      key="inspection.plugin.xml.extension.registration.display.name"/>
-    <localInspection language="XML" applyToDialects="false"
-                     projectType="INTELLIJ_PLUGIN"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
-                     enabledByDefault="true" level="ERROR"
-                     isInternal="true"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.ProductModulesXmlDomInspection"
-                     key="inspection.product.modules.xml.display.name"/>
 
     <localInspection language="JVM" shortName="ComponentNotRegistered"
                      projectType="INTELLIJ_PLUGIN"

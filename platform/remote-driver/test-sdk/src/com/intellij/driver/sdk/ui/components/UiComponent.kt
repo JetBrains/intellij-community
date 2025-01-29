@@ -457,8 +457,8 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     return ImageIO.read(File(screenshotPath))
   }
 
-  fun getColor(point: Point?): Color {
-    moveMouse(point)
+  fun getColor(point: Point?, moveMouse: Boolean = true): Color {
+    if (moveMouse) moveMouse(point)
     return withComponent {
       Color(robot.getColor(it, point).getRGB())
     }

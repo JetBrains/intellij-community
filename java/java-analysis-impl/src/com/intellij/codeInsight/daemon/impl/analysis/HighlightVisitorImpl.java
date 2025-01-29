@@ -10,7 +10,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AdjustFunctionContextFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
@@ -64,6 +64,7 @@ import java.util.function.Function;
 
 import static com.intellij.psi.PsiModifier.SEALED;
 import static com.intellij.util.ObjectUtils.tryCast;
+import static java.util.Objects.*;
 
 // java highlighting: problems in java code like unresolved/incompatible symbols/methods etc.
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
@@ -250,10 +251,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       info.range(anchor);
     }
     errorFixProvider.processFixes(error, fix -> info.registerFix(fix.asIntention(), null, null, null, null));
-    if (error.kind() == JavaErrorKinds.EXPRESSION_EXPECTED || error.kind() == JavaErrorKinds.REFERENCE_UNRESOLVED ||
-        error.kind() == JavaErrorKinds.REFERENCE_AMBIGUOUS) {
-      UnresolvedReferenceQuickFixUpdater.getInstance(getProject()).registerQuickFixesLater((PsiReference)error.psi(), info);
-    }
+    error.psiForKind(JavaErrorKinds.EXPRESSION_EXPECTED, JavaErrorKinds.REFERENCE_UNRESOLVED, JavaErrorKinds.REFERENCE_AMBIGUOUS)
+      .or(() -> error.psiForKind(JavaErrorKinds.TYPE_UNKNOWN_CLASS).map(PsiTypeElement::getInnermostComponentReferenceElement))
+      .ifPresent(ref -> UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, info));
     add(info);
   }
 
@@ -478,53 +478,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkCannotWriteToFinal(expression, myFile));
     if (!hasErrorResults()) add(HighlightUtil.checkVariableExpected(expression));
     if (!hasErrorResults()) add(HighlightUtil.checkConditionalExpressionBranchTypesMatch(expression, type));
-    if (!hasErrorResults() &&
-        parent instanceof PsiThrowStatement statement &&
-        statement.getException() == expression &&
-        type != null) {
-      add(HighlightUtil.checkMustBeThrowable(type, expression, true));
-    }
-    if (!hasErrorResults() && shouldReportForeachNotApplicable(expression)) {
-      add(GenericsHighlightUtil.checkForeachExpressionTypeIsIterable(expression));
-    }
-  }
-
-  private static boolean shouldReportForeachNotApplicable(@NotNull PsiExpression expression) {
-    if (!(expression.getParent() instanceof PsiForeachStatementBase parentForEach)) return false;
-
-    PsiExpression iteratedValue = parentForEach.getIteratedValue();
-    if (iteratedValue != expression) return false;
-
-    // Ignore if the type of the value which is being iterated over is not resolved yet
-    PsiType iteratedValueType = iteratedValue.getType();
-    return iteratedValueType == null || !PsiTypesUtil.hasUnresolvedComponents(iteratedValueType);
-  }
-
-  @Override
-  public void visitExpressionList(@NotNull PsiExpressionList list) {
-    super.visitExpressionList(list);
-    PsiElement parent = list.getParent();
-    if (parent instanceof PsiMethodCallExpression expression && expression.getArgumentList() == list) {
-      PsiReferenceExpression referenceExpression = expression.getMethodExpression();
-      JavaResolveResult[] results = resolveOptimised(referenceExpression);
-      if (results == null) return;
-      JavaResolveResult result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
-
-      if ((!result.isAccessible() || !result.isStaticsScopeCorrect()) &&
-          !HighlightMethodUtil.isDummyConstructorCall(expression, getResolveHelper(), list, referenceExpression) &&
-          // this check is for fake expression from JspMethodCallImpl
-          referenceExpression.getParent() == expression) {
-        try {
-          if (PsiTreeUtil.findChildrenOfType(expression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
-            PsiElement resolved = result.getElement();
-            add(HighlightMethodUtil.checkAmbiguousMethodCallArguments(referenceExpression, results, list, resolved, result, expression,
-                                                                      list));
-          }
-        }
-        catch (IndexNotReadyException ignored) {
-        }
-      }
-    }
   }
 
   @Override
@@ -681,17 +634,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitParameter(@NotNull PsiParameter parameter) {
-    super.visitParameter(parameter);
-
-    PsiElement parent = parameter.getParent();
-    if (parent instanceof PsiCatchSection) {
-      if (!hasErrorResults()) add(HighlightUtil.checkCatchParameterIsThrowable(parameter));
-      if (!hasErrorResults()) GenericsHighlightUtil.checkCatchParameterIsClass(parameter, myErrorSink);
-    }
-  }
-
-  @Override
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
     super.visitReferenceElement(ref);
     JavaResolveResult result = ref instanceof PsiExpression ? resolveOptimised(ref, myFile) : doVisitReferenceElement(ref);
@@ -802,9 +744,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) {
       add(HighlightUtil.checkPackageAndClassConflict(ref, myFile));
     }
-    if (!hasErrorResults() && resolved instanceof PsiClass) {
-      add(HighlightUtil.checkRestrictedIdentifierReference(ref, (PsiClass)resolved, myLanguageLevel));
-    }
     if (!hasErrorResults()) {
       add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(ref, resolved, mySurroundingConstructor));
     }
@@ -869,9 +808,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         catch (IndexNotReadyException ignored) {
         }
       }
-      if (!hasErrorResults() && resolved instanceof PsiLocalVariable localVariable) {
-        add(HighlightUtil.checkVarTypeSelfReferencing(localVariable, expression));
-      }
     }
 
     PsiElement parent = expression.getParent();
@@ -884,14 +820,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         try {
           add(HighlightMethodUtil.checkAmbiguousMethodCallIdentifier(
             expression, results, list, resolved, result, methodCallExpression, myLanguageLevel, myFile));
-
-          if (!PsiTreeUtil.findChildrenOfType(methodCallExpression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
-            PsiElement nameElement = expression.getReferenceNameElement();
-            if (nameElement != null) {
-              add(HighlightMethodUtil.checkAmbiguousMethodCallArguments(
-                expression, results, list, resolved, result, methodCallExpression, nameElement));
-            }
-          }
         }
         catch (IndexNotReadyException ignored) {
         }
@@ -1041,8 +969,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                 IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType)) {
               return;
             }
-            String t1 = HighlightUtil.format(Objects.requireNonNull(results[0].getElement()));
-            String t2 = HighlightUtil.format(Objects.requireNonNull(results[1].getElement()));
+            String t1 = HighlightUtil.format(requireNonNull(results[0].getElement()));
+            String t2 = HighlightUtil.format(requireNonNull(results[1].getElement()));
             description = JavaErrorBundle.message("ambiguous.reference", expression.getReferenceName(), t1, t2);
           }
           else {
@@ -1165,11 +1093,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitTypeElement(@NotNull PsiTypeElement type) {
-    if (!hasErrorResults()) add(HighlightUtil.checkIllegalType(type, myFile));
-    if (!hasErrorResults()) add(HighlightUtil.checkVarTypeApplicability(type));
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkReferenceTypeUsedAsTypeArgument(type));
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkWildcardUsage(type));
-    if (!hasErrorResults()) add(HighlightUtil.checkArrayType(type));
+    super.visitTypeElement(type);
     if (!hasErrorResults()) {
       PreviewFeatureUtil.checkPreviewFeature(type, myPreviewFeatureVisitor);
     }
@@ -1181,30 +1105,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     try {
       if (!hasErrorResults()) add(HighlightUtil.checkIntersectionInTypeCast(typeCast, myLanguageLevel, myFile));
       if (!hasErrorResults()) add(HighlightUtil.checkInconvertibleTypeCast(typeCast));
-    }
-    catch (IndexNotReadyException ignored) {
-    }
-  }
-
-  @Override
-  public void visitVariable(@NotNull PsiVariable variable) {
-    super.visitVariable(variable);
-    if (variable instanceof PsiPatternVariable patternVariable) {
-      PsiElement context = PsiTreeUtil.getParentOfType(variable,
-                                                       PsiInstanceOfExpression.class,
-                                                       PsiCaseLabelElementList.class,
-                                                       PsiForeachPatternStatement.class);
-      if (!(context instanceof PsiForeachPatternStatement)) {
-        JavaFeature feature = context instanceof PsiInstanceOfExpression ?
-                              JavaFeature.PATTERNS :
-                              JavaFeature.PATTERNS_IN_SWITCH;
-        PsiIdentifier varIdentifier = patternVariable.getNameIdentifier();
-        add(checkFeature(varIdentifier, feature));
-      }
-    }
-    try {
-      if (!hasErrorResults()) add(HighlightUtil.checkVarTypeApplicability(variable));
-      if (!hasErrorResults()) add(HighlightUtil.checkVariableInitializerType(variable));
     }
     catch (IndexNotReadyException ignored) {
     }

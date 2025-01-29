@@ -19,8 +19,12 @@ class EditorValueEditorTab : ValueEditorTab {
 class ValueTabInfoProvider(private val grid: DataGrid) : TabInfoProvider(DataGridBundle.message("EditMaximized.ValueEditor.text"),
                                                                          ActionManager.getInstance().getAction("Console.TableResult.EditMaximized.Value.Group") as? ActionGroup) {
   private var currentViewerFactory: CellViewerFactory
-  private val viewerFactories = listOf(EditorCellViewerFactory, ReadonlyEditorCellViewerFactory, EmptyCellViewerFactory,
-                                       ImageCellViewerFactory)
+  private val viewerFactories = buildList {
+    add(EditorCellViewerFactory)
+    add(ReadonlyEditorCellViewerFactory)
+    add(EmptyCellViewerFactory)
+    addAll(CellViewerFactory.getExternalFactories())
+  }
   private var viewer: CellViewer
 
   init {

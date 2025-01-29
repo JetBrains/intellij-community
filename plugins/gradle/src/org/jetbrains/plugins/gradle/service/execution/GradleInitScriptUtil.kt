@@ -79,13 +79,13 @@ fun createIdeaPluginConfiguratorInitScript(): Path {
   return createInitScript(IDEA_PLUGIN_CONFIGURATOR_SCRIPT_NAME, initScript)
 }
 
-fun loadDownloadSourcesInitScript(
+fun loadDownloadArtifactInitScript(
   dependencyNotation: String,
   taskName: String,
   downloadTarget: Path,
   externalProjectPath: String,
 ): String {
-  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/downloadSources.gradle", mapOf(
+  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/downloadArtifact.gradle", mapOf(
     "DEPENDENCY_NOTATION" to dependencyNotation.toGroovyStringLiteral(),
     "TARGET_PATH" to downloadTarget.toCanonicalPath().toGroovyStringLiteral(),
     "GRADLE_TASK_NAME" to taskName.toGroovyStringLiteral(),
@@ -93,13 +93,13 @@ fun loadDownloadSourcesInitScript(
   ))
 }
 
-fun loadLegacyDownloadSourcesInitScript(
+fun loadLegacyDownloadArtifactInitScript(
   dependencyNotation: String,
   taskName: String,
   downloadTarget: Path,
   externalProjectPath: String,
 ): String {
-  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/legacyDownloadSources.gradle", mapOf(
+  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/legacyDownloadArtifact.gradle", mapOf(
     "DEPENDENCY_NOTATION" to dependencyNotation.toGroovyStringLiteral(),
     "TARGET_PATH" to downloadTarget.toCanonicalPath().toGroovyStringLiteral(),
     "GRADLE_TASK_NAME" to taskName.toGroovyStringLiteral(),

@@ -3161,6 +3161,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     runTest("testData/intentions/branched/ifWhen/whenToIf/variableSubject.kt");
                 }
 
+                @TestMetadata("whenGuardsUnsupported.kt")
+                public void testWhenGuardsUnsupported() throws Exception {
+                    runTest("testData/intentions/branched/ifWhen/whenToIf/whenGuardsUnsupported.kt");
+                }
+
                 @TestMetadata("whenTrueOrFalse.kt")
                 public void testWhenTrueOrFalse() throws Exception {
                     runTest("testData/intentions/branched/ifWhen/whenToIf/whenTrueOrFalse.kt");
@@ -18674,9 +18679,9 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/toRawStringLiteral/dollar2.kt");
         }
 
-        @TestMetadata("KTIJ-30275.kt")
-        public void testKTIJ_30275() throws Exception {
-            runTest("testData/intentions/toRawStringLiteral/KTIJ-30275.kt");
+        @TestMetadata("multiDollarPrefix.kt")
+        public void testMultiDollarPrefix() throws Exception {
+            runTest("testData/intentions/toRawStringLiteral/multiDollarPrefix.kt");
         }
 
         @TestMetadata("quotesAndSlashes.kt")

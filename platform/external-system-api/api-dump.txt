@@ -632,18 +632,9 @@ c:com.intellij.openapi.externalSystem.model.project.ModuleData
 - getProductionModuleId():java.lang.String
 - getProperty(java.lang.String):java.lang.String
 - getPublication():com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
-- getSdkName():java.lang.String
-- getSourceCompatibility():java.lang.String
-- getTargetCompatibility():java.lang.String
 - getVersion():java.lang.String
 - hashCode():I
-- internalSetSdkName(java.lang.String):V
-- internalSetSourceCompatibility(java.lang.String):V
-- internalSetTargetCompatibility(java.lang.String):V
 - isInheritProjectCompileOutputPath():Z
-- isSetSdkName():Z
-- isSetSourceCompatibility():Z
-- isSetTargetCompatibility():Z
 - setArtifacts(java.util.List):V
 - setCompileOutputPath(com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType,java.lang.String):V
 - setDescription(java.lang.String):V
@@ -655,9 +646,6 @@ c:com.intellij.openapi.externalSystem.model.project.ModuleData
 - setProductionModuleId(java.lang.String):V
 - setProperty(java.lang.String,java.lang.String):V
 - setPublication(com.intellij.openapi.externalSystem.model.project.ProjectCoordinate):V
-- setSdkName(java.lang.String):V
-- setSourceCompatibility(java.lang.String):V
-- setTargetCompatibility(java.lang.String):V
 - setVersion(java.lang.String):V
 - useExternalCompilerOutput(Z):V
 f:com.intellij.openapi.externalSystem.model.project.ModuleDependencyData

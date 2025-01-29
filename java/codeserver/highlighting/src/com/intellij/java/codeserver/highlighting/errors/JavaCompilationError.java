@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
+
 /**
  * A concrete instance of a Java compilation error. Note that the instance is bound to a PSI element, so it should not
  * outlive the read-action. Otherwise it may become invalid.
@@ -75,4 +77,23 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
   public @NotNull HtmlChunk tooltip() {
     return kind.tooltip(psi, context);
   }
+
+  /**
+   * A helper method to match wanted error message and extract PSI without doing unchecked casts in client code.
+   * 
+   * @param kinds wanted error kinds
+   * @return an optional containing typed {@link #psi()} if the current error is one of supplied kinds;
+   * empty optional otherwise
+   * @param <WantedPsi> the common PSI type of wanted kinds
+   */
+  @SafeVarargs
+  public final <WantedPsi extends PsiElement> @NotNull Optional<WantedPsi> psiForKind(JavaErrorKind<? extends WantedPsi, ?>... kinds) {
+    for (JavaErrorKind<? extends WantedPsi, ?> errorKind : kinds) {
+      if (errorKind.equals(kind)) {
+        //noinspection unchecked
+        return Optional.of((WantedPsi)psi);
+      }
+    }
+    return Optional.empty();
+  } 
 }

@@ -93,30 +93,39 @@ internal class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLe
     }
   }
 
-  override suspend fun installPackage(name: PythonPackageSpecification, options: List<String>, usePip: Boolean): Result<Unit> {
-    val version = if (name.versionSpecs.isNullOrBlank()) name.name else "${name.name}${name.versionSpecs}"
-    val command = if (usePip) listOf("pip", "install") else listOf("add")
-    uvCli.runUv(cwd, *command.toTypedArray(), version, *options.toTypedArray()).getOrElse {
+  override suspend fun installPackage(name: PythonPackageSpecification, options: List<String>): Result<Unit> {
+    uvCli.runUv(cwd, "pip", "install", formatPackageName(name), *options.toTypedArray()).getOrElse {
       return Result.failure(it)
     }
 
     return Result.success(Unit)
   }
 
-  override suspend fun uninstallPackage(name: PythonPackage, usePip: Boolean): Result<Unit> {
-    // TODO: check if package is in dependencies
-    val command = if (usePip) listOf("pip", "uninstall") else listOf("remove")
-    val result = uvCli.runUv(cwd, *command.toTypedArray(), name.name)
-    if (result.isFailure && !usePip) {
-      // try just to uninstall
-      uvCli.runUv(cwd, "pip", "uninstall", name.name).onFailure {
-        return Result.failure(it)
-      }
-      return Result.success(Unit)
+  override suspend fun uninstallPackage(name: PythonPackage): Result<Unit> {
+    // TODO: check if package is in dependencies and reject it
+    uvCli.runUv(cwd, "pip", "uninstall", name.name)
+      .onFailure { return Result.failure(it) }
+
+    return Result.success(Unit)
+  }
+
+  override suspend fun addDependency(name: PythonPackageSpecification, options: List<String>): Result<Unit> {
+    uvCli.runUv(cwd, "add", formatPackageName(name), *options.toTypedArray()).getOrElse {
+      return Result.failure(it)
     }
 
-    result.onFailure { return Result.failure(it) }
     return Result.success(Unit)
+  }
+
+  override suspend fun removeDependency(name: PythonPackage): Result<Unit> {
+    uvCli.runUv(cwd, "remove", name.name)
+      .onFailure { return Result.failure(it) }
+
+    return Result.success(Unit)
+  }
+
+  fun formatPackageName(name: PythonPackageSpecification): String {
+    return if (name.versionSpecs.isNullOrBlank()) name.name else "${name.name}${name.versionSpecs}"
   }
 }
 

@@ -171,10 +171,13 @@ com.intellij.model.search.SearchParameters
 - a:areValid():Z
 - a:getProject():com.intellij.openapi.project.Project
 com.intellij.model.search.SearchService
+- sf:Companion:com.intellij.model.search.SearchService$Companion
 - s:getInstance():com.intellij.model.search.SearchService
 - a:merge(java.util.List):com.intellij.util.Query
 - a:searchParameters(com.intellij.model.search.SearchParameters):com.intellij.util.Query
 - a:searchWord(com.intellij.openapi.project.Project,java.lang.String):com.intellij.model.search.SearchWordQueryBuilder
+f:com.intellij.model.search.SearchService$Companion
+- f:getInstance():com.intellij.model.search.SearchService
 com.intellij.model.search.SearchWordQueryBuilder
 - a:buildLeafOccurrenceQuery():com.intellij.util.Query
 - a:buildOccurrenceQuery():com.intellij.util.Query

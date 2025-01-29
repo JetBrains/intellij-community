@@ -3,10 +3,10 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.ColorUtil
-import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -97,7 +97,7 @@ internal class LinuxFrameButton(action: Action, private val type: Type) : JButto
   override fun updateUI() {
     setUI(BasicButtonUI())
     border = null
-    darkHeader = ColorUtil.isDark(JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true))
+    darkHeader = ColorUtil.isDark(InternalUICustomization.getInstance().getMainToolbarBackground(true))
     updateStyle()
   }
 

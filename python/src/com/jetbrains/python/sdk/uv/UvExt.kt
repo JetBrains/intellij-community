@@ -22,6 +22,12 @@ import kotlin.io.path.pathString
 internal val Sdk.isUv: Boolean
   get() = sdkAdditionalData is UvSdkAdditionalData
 
+internal val Sdk.uvUsePackageManagement: Boolean
+  get() {
+    val data = sdkAdditionalData as? UvSdkAdditionalData ?: return false
+    return data.usePip
+  }
+
 internal suspend fun pyProjectToml(module: Module): VirtualFile? {
   return withContext(Dispatchers.IO) {
     findAmongRoots(module, PY_PROJECT_TOML)

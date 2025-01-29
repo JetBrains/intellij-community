@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.convertInfixCallToOrdinary
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.binaryExpressionVisitor
 
 internal class InfixCallToOrdinaryInspection : KotlinApplicableInspectionBase.Simple<KtBinaryExpression, Unit>() {
 
@@ -20,10 +21,10 @@ internal class InfixCallToOrdinaryInspection : KotlinApplicableInspectionBase.Si
         context: Unit,
     ) = KotlinBundle.message("replace.infix.call.with.ordinary.call")
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtBinaryExpression,
         context: Unit,
-    ) = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    ): Array<KotlinModCommandQuickFix<KtBinaryExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtBinaryExpression>() {
 
         override fun applyFix(
             project: Project,
@@ -35,7 +36,7 @@ internal class InfixCallToOrdinaryInspection : KotlinApplicableInspectionBase.Si
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.infix.call.with.ordinary.call")
-    }
+    })
 
     override fun buildVisitor(
         holder: ProblemsHolder,

@@ -48,6 +48,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.concurrency.asDeferred
 import java.awt.Font
 import javax.swing.Icon
 
@@ -440,6 +441,8 @@ private suspend fun XValueEntity.toXValueDto(): XValueDto {
 
   return XValueDto(
     xValueId,
+    canNavigateToSource = xValue.canNavigateToSource(),
+    canNavigateToTypeSource = xValue.canNavigateToTypeSourceAsync().asDeferred(),
     canBeModified = xValue.modifierAsync.thenApply { modifier -> modifier != null }.asDeferred(),
     valueMarkupFlow
   )

@@ -6,15 +6,18 @@ import com.intellij.cce.core.Session
 import com.intellij.cce.evaluable.AIA_RESPONSE
 import com.intellij.cce.evaluable.AIA_USER_PROMPT
 import com.intellij.cce.evaluable.REFERENCE_PROPERTY
+import com.intellij.cce.evaluable.LLM_JUDGE_RESPONSE
 import com.intellij.cce.metric.util.Bootstrap
 import com.intellij.cce.metric.util.LLMJudge
 import com.intellij.cce.metric.util.computeBleuScore
+import com.intellij.cce.workspace.info.SessionIndividualScore
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.text.similarity.LevenshteinDistance
 import kotlin.math.max
 import kotlin.math.min
 
 abstract class SimilarityMetric(override val showByDefault: Boolean) : Metric {
+  override val supportsIndividualScores: Boolean = true
   private var totalMatched: Double = 0.0
   private var totalExpected: Double = 0.0
   private var sample: MutableList<Pair<Double, Double>> = mutableListOf()
@@ -25,6 +28,40 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Metric {
 
   override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { values ->
     values.sumOf { it.first } / values.sumOf { it.second }
+  }
+
+  override fun evaluateWithIndividualScores(sessions: List<Session>): MetricEvaluationResult {
+    val sessionIndividualScores = mutableMapOf<String, SessionIndividualScore>()
+
+    var matched = 0.0
+    var expected = 0.0
+    for (session in sessions) {
+      val metricScores = mutableMapOf<String, MutableList<Double>>()
+      val additionalInfo = mutableMapOf<String, MutableList<Any>>()
+
+      for (lookup in session.lookups) {
+        val expectedText = computeExpectedText(session, lookup)
+        val currentExpected = computeExpected(lookup, expectedText)
+        expected += currentExpected
+        val similarity = computeSimilarity(lookup, expectedText) ?: 0.0
+        metricScores.computeIfAbsent(name) { mutableListOf() }.add(similarity)
+        postCompute(lookup, similarity, additionalInfo)
+        matched += similarity
+        sample.add(Pair(similarity, currentExpected))
+      }
+
+      sessionIndividualScores[session.id] = SessionIndividualScore(
+        sessionId = session.id,
+        metricScores = metricScores,
+        additionalInfo = additionalInfo
+      )
+    }
+    totalMatched += matched
+    totalExpected += expected
+    return MetricEvaluationResult(
+      overallScore = matched / expected,
+      sessionIndividualScores = sessionIndividualScores
+    )
   }
 
   override fun evaluate(sessions: List<Session>): Double {
@@ -45,11 +82,13 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Metric {
     return matched / expected
   }
 
-  open fun computeExpectedText(session: Session, lookup: Lookup) = session.expectedText.substring(lookup.offset)
-
   abstract fun computeSimilarity(lookup: Lookup, expectedText: String): Double?
 
+  open fun computeExpectedText(session: Session, lookup: Lookup): String = session.expectedText.substring(lookup.offset)
+
   open fun computeExpected(lookup: Lookup, expectedText: String): Double = expectedText.length.toDouble()
+
+  protected open fun postCompute(lookup: Lookup, similarity: Double, additionalInfo: MutableMap<String, MutableList<Any>>) {}
 }
 
 class MatchedRatio(showByDefault: Boolean = false) : SimilarityMetric(showByDefault) {
@@ -64,7 +103,7 @@ class MatchedRatio(showByDefault: Boolean = false) : SimilarityMetric(showByDefa
   }
 }
 
-class MatchedRatioAt(showByDefault: Boolean = false, val n: Int) : SimilarityMetric(showByDefault) {
+class MatchedRatioAt(val n: Int, showByDefault: Boolean = false) : SimilarityMetric(showByDefault) {
   override val name = "Matched Ratio At $n"
   override val description: String = "Length of the longest matching proposal among top-$n normalized by expected text (avg by invocations)"
 
@@ -81,7 +120,7 @@ class MatchedRatioAt(showByDefault: Boolean = false, val n: Int) : SimilarityMet
   }
 }
 
-class MatchedRatioWithRelevanceModel(showByDefault: Boolean = false, private val relevance: String) : SimilarityMetric(showByDefault) {
+class MatchedRatioWithRelevanceModel(private val relevance: String, showByDefault: Boolean = false) : SimilarityMetric(showByDefault) {
   override val name = "Matched Ratio With ${relevance.capitalize()} Model"
   override val description: String = "Length of selected proposal normalized by expected text (avg by invocations) " +
                                      "taking $relevance model into account"
@@ -131,17 +170,33 @@ class BleuScore(showByDefault: Boolean = true) : SimilarityMetric(showByDefault)
   override fun computeExpected(lookup: Lookup, expectedText: String): Double = 1.0
 }
 
-class LLMJudgeScore(showByDefault: Boolean = true,  private val llmJudge: LLMJudge) : SimilarityMetric(showByDefault) {
-  override val name = "LLM Judge Score"
+class LLMJudgeScore(showByDefault: Boolean = true, private val llmJudge: LLMJudge) : SimilarityMetric(showByDefault) {
+  override val name: String
+    get() = NAME
   override val description: String = "Calculates the LLM-as-a-Judge Score score for the AIA response compared to the reference text."
+
+  private var rawResponse: String? = null
 
   override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
     val aiaResponse = lookup.additionalInfo[AIA_RESPONSE] as? String ?: return null
     val reference = lookup.additionalInfo[REFERENCE_PROPERTY] as? String ?: return null
     val question = lookup.additionalInfo[AIA_USER_PROMPT] as? String ?: return null
 
-    return llmJudge.computeLLMJudgeScoreSync(question, aiaResponse, reference)
+    val (score, response) = llmJudge.computeLLMJudgeScoreSync(question, aiaResponse, reference)
+    rawResponse = response
+    return score
+  }
+
+  override fun postCompute(lookup: Lookup, similarity: Double, additionalInfo: MutableMap<String, MutableList<Any>>) {
+    if (!rawResponse.isNullOrEmpty()) {
+      additionalInfo.computeIfAbsent(LLM_JUDGE_RESPONSE) { mutableListOf() }.add(rawResponse!!)
+      rawResponse = null
+    }
   }
 
   override fun computeExpected(lookup: Lookup, expectedText: String): Double = 1.0
+
+  companion object {
+    const val NAME: String = "LLM Judge Score"
+  }
 }

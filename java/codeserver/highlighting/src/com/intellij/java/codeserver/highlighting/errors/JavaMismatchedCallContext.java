@@ -20,6 +20,13 @@ import java.util.List;
 
 import static com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext.*;
 
+/**
+ * Context for mismatched call error
+ * @param list expression list of mismatched call
+ * @param candidate call candidate
+ * @param mismatchedExpressions list of arguments having mismatched types
+ * @see JavaErrorKinds#CALL_WRONG_ARGUMENTS
+ */
 public record JavaMismatchedCallContext(@NotNull PsiExpressionList list,
                                         @NotNull MethodCandidateInfo candidate,
                                         @NotNull List<PsiExpression> mismatchedExpressions) {

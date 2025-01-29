@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Queryable
@@ -277,9 +278,15 @@ class InternalDecoratorImpl internal constructor(
     when (mode) {
       Mode.SINGLE, Mode.CELL -> {
         layout = BorderLayout()
-        add(dividerAndHeader, BorderLayout.NORTH)
-        add(myDecoratorChild, BorderLayout.CENTER)
-        border = InnerPanelBorder(toolWindow)
+
+        InternalUICustomization.getInstance().internalCustomizer.decorateAndReturnHolder(dividerAndHeader, myDecoratorChild)?.let {
+          add(it, BorderLayout.CENTER)
+        } ?: run {
+          add(dividerAndHeader, BorderLayout.NORTH)
+          add(myDecoratorChild, BorderLayout.CENTER)
+          border = InnerPanelBorder(toolWindow)
+        }
+
         firstDecorator?.let {
           Disposer.dispose(it.contentManager)
         }

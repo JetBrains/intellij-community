@@ -405,6 +405,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 .bindSelected({ MacCustomAppIcon.isCustom() }, { MacCustomAppIcon.setCustom(it, true) })
             }
           }
+          yield { checkBox(cdKeepPopupsForToggles) }
         }
         val rightColumnControls = sequence<Row.() -> Unit> {
           if (ExperimentalUI.isNewUI()) {
@@ -418,7 +419,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           yield { checkBox(cdEnableControlsMnemonics) }
           yield { checkBox(cdEnableMenuMnemonics) }
           yield { checkBox(cdShowMenuIcons) }
-          yield { checkBox(cdKeepPopupsForToggles) }
         }
 
         // Since some of the columns have variable number of items, enumerate them in a loop, while moving orphaned items from the right
@@ -459,7 +459,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
         if (!SystemInfo.isMac && ExperimentalUI.isNewUI()) {
           row  {
-            comboBox(model = CollectionComboBoxModel<MainMenuDisplayMode>(MainMenuDisplayMode.entries), SimpleListCellRenderer<MainMenuDisplayMode>.create { label, value, _ -> label.text = value.description  }  )
+            comboBox(model = CollectionComboBoxModel<MainMenuDisplayMode>(MainMenuDisplayMode.entries)/* SimpleListCellRenderer<MainMenuDisplayMode>.create { label, value, _ -> label.text = value.description  }*/  )
               .label(message("main.menu.combobox.label"))
               .bindItem(settings::mainMenuDisplayMode.toNullableProperty())
               .apply {
@@ -471,7 +471,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                   comment(message("ide.restart.required.comment"))
                 }
               }
-          }
+          }.topGap(TopGap.SMALL).bottomGap(BottomGap.SMALL)
         }
         val backgroundImageAction = ActionManager.getInstance().getAction("Images.SetBackgroundImage")
         if (backgroundImageAction != null) {
@@ -494,7 +494,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       groupRowsRange(message("group.window.options")) {
         twoColumnsRow(
-          { checkBox(cdShowToolWindowBars) },
+          { checkBox(cdShowToolWindowBars).apply {
+            enabled(!NotRoamableUiSettings.getInstance().xNextStripe)
+            if(NotRoamableUiSettings.getInstance().xNextStripe) {
+              comment(message("xnext.comment.unavailable"))
+            }
+          } },
           { checkBox(cdLeftToolWindowLayout) },
         )
         if (ExperimentalUI.isNewUI()) {
@@ -509,7 +514,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             )
             twoColumnsRow(
               {
-                checkBox(cdWidescreenToolWindowLayout)
+                checkBox(cdWidescreenToolWindowLayout).apply {
+                  enabled(!NotRoamableUiSettings.getInstance().xNextStripe)
+                  if(NotRoamableUiSettings.getInstance().xNextStripe) {
+                    comment(message("xnext.comment.unavailable"))
+                  }
+                }
                   .gap(RightGap.SMALL)
                 contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
               },

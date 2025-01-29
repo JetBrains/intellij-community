@@ -272,9 +272,11 @@ f:com.intellij.ide.ui.NotRoamableUiOptions
 - f:overrideLafFonts:Z
 - f:overrideLafFontsWasMigrated:Z
 - f:presentationModeIdeScale:F
+- f:xNextStripe:Z
 - <init>():V
 - f:component1():com.intellij.ide.ui.AntialiasingType
 - f:component10():Z
+- f:component11():Z
 - f:component2():com.intellij.ide.ui.AntialiasingType
 - f:component3():java.lang.String
 - f:component4():F
@@ -283,8 +285,8 @@ f:com.intellij.ide.ui.NotRoamableUiOptions
 - f:component7():F
 - f:component8():Z
 - f:component9():Z
-- f:copy(com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z):com.intellij.ide.ui.NotRoamableUiOptions
-- bs:copy$default(com.intellij.ide.ui.NotRoamableUiOptions,com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z,I,java.lang.Object):com.intellij.ide.ui.NotRoamableUiOptions
+- f:copy(com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z,Z):com.intellij.ide.ui.NotRoamableUiOptions
+- bs:copy$default(com.intellij.ide.ui.NotRoamableUiOptions,com.intellij.ide.ui.AntialiasingType,com.intellij.ide.ui.AntialiasingType,java.lang.String,F,F,F,F,Z,Z,Z,Z,I,java.lang.Object):com.intellij.ide.ui.NotRoamableUiOptions
 - equals(java.lang.Object):Z
 - hashCode():I
 f:com.intellij.ide.ui.NotRoamableUiSettings

@@ -3,6 +3,8 @@ package com.intellij.idea
 
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.wsl.WslIjentAvailabilityService
+import com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsToggler
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.EditCustomVmOptionsAction
@@ -13,10 +15,8 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.notification.impl.NotificationFullContent
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -394,3 +394,45 @@ private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore,
 private fun storeName(store: FileStore): String =
   if (store.name().isBlank()) store.toString().trim().trimStart('(').trimEnd(')')
   else store.toString()
+
+private suspend fun MultiRoutingFileSystemVmOptionsSetter.onApplicationActivated() {
+  if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) return
+
+  val changedOptions = ensureInVmOptions()
+  when {
+    changedOptions.isEmpty() -> {
+      IjentWslNioFsToggler.instanceAsync().enableForAllWslDistributions()
+    }
+
+    PluginManagerCore.isRunningFromSources() || AppMode.isDevServer() -> {
+      logger<MultiRoutingFileSystemVmOptionsSetter>().warn(
+        changedOptions.joinToString(
+          prefix = "This message is seen only in Dev Mode/Run from sources.\n" +
+                   "The value of the registry flag for IJent FS " +
+                   "doesn't match the VM options.\n" +
+                   "Add the following VM options to the Run Configuration:\n",
+          separator = "\n",
+        ) { (k, v) ->
+          "  $k${v.orEmpty()}"
+        }
+      )
+    }
+
+    else -> withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+      showNotification(
+        key = "ijent.wsl.fs.dialog.message",
+        suppressable = false,
+        action = object : NotificationAction(
+          if (ApplicationManager.getApplication().isRestartCapable)
+            IdeBundle.message("ijent.wsl.fs.dialog.restart.button")
+          else
+            IdeBundle.message("ijent.wsl.fs.dialog.shutdown.button")
+        ) {
+          override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+            ApplicationManagerEx.getApplicationEx().restart(true)
+          }
+        }
+      )
+    }
+  }
+}

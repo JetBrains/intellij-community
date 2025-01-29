@@ -7,7 +7,7 @@ class Foo {
     int j = k;
   };
   I ii1 = (final int k) -> {
-    <error descr="Incompatible types. Found: 'int', required: 'java.lang.String'">String s = k;</error>
+    String s = <error descr="Incompatible types. Found: 'int', required: 'java.lang.String'">k</error>;
   };
 
   void bazz() {

@@ -15,7 +15,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean) : ToolWindowButtonManager {
+internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean) : ToolWindowButtonManager {
 
   constructor(paneId: String) : this(paneId, true)
 
@@ -161,8 +161,17 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
     }
 
   override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager {
+    val manager = createStripeButton(toolWindow)
+
+    findToolbar(anchor = toolWindow.anchor, isSplit = toolWindow.isSplitMode)
+      .getStripeFor(toolWindow.windowInfo.anchor)
+      .addButton(manager)
+    return manager
+  }
+
+  protected fun createStripeButton(toolWindow: ToolWindowImpl): StripeButtonManager {
     val squareStripeButton = SquareStripeButton(toolWindow)
-    val manager = object : StripeButtonManager {
+    return object : StripeButtonManager {
       override val id: String = toolWindow.id
       override val toolWindow: ToolWindowImpl = toolWindow
 
@@ -189,11 +198,6 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
 
       override fun toString() = "SquareStripeButtonManager(windowInfo=${toolWindow.windowInfo})"
     }
-
-    findToolbar(anchor = toolWindow.anchor, isSplit = toolWindow.isSplitMode)
-      .getStripeFor(toolWindow.windowInfo.anchor)
-      .addButton(manager)
-    return manager
   }
 
   override fun hasButtons(): Boolean = left.hasButtons() || right.hasButtons()

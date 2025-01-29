@@ -27,10 +27,10 @@ class D<T extends C> {
 }
 
 class Primitives<T> {
-  Object a = new Primitives<<error descr="Type argument cannot be of primitive type">? extends int</error>>();
-  Object o = new Primitives<<error descr="Type argument cannot be of primitive type">int</error>>();
-  void f(Primitives<<error descr="Type argument cannot be of primitive type">boolean</error>> param) {
-    if (this instanceof Primitives<<error descr="Type argument cannot be of primitive type">double</error>>) {
+  Object a = new Primitives<<error descr="Type argument cannot be of a primitive type">? extends int</error>>();
+  Object o = new Primitives<<error descr="Type argument cannot be of a primitive type">int</error>>();
+  void f(Primitives<<error descr="Type argument cannot be of a primitive type">boolean</error>> param) {
+    if (this instanceof Primitives<<error descr="Type argument cannot be of a primitive type">double</error>>) {
       return;
     }
   }
@@ -51,7 +51,7 @@ class Bound extends Generic<String>{
 class Generic2<T1,T2> {
   class A {}
   class B {}
-  private <error descr="Incompatible types. Found: 'Generic2<java.lang.String,Generic2.B>', required: 'Generic2<java.lang.String,Generic2.A>'">Generic2<String, A> map = new Generic2<String,B>();</error>
+  private Generic2<String, A> map = new <error descr="Incompatible types. Found: 'Generic2<java.lang.String,Generic2.B>', required: 'Generic2<java.lang.String,Generic2.A>'">Generic2<String,B></error>();
   {
     <error descr="Incompatible types. Found: 'Generic2<java.lang.String,java.lang.String>', required: 'Generic2<java.lang.String,Generic2.A>'">map = new Generic2<String,String>()</error>;
     map = new Generic2<String,A>();
@@ -99,7 +99,7 @@ class testDup<T, <error descr="Duplicate type parameter: 'T'">T</error>> { // CA
 
 class aaaa {
     {
-        <error descr="Incompatible types. Found: 'java.lang.Class<java.lang.String>', required: 'java.lang.Class<? super java.lang.Object>'">Class<? super Object> c = String.class;</error>
+        Class<? super Object> c = <error descr="Incompatible types. Found: 'java.lang.Class<java.lang.String>', required: 'java.lang.Class<? super java.lang.Object>'">String.class;</error>
     }
 }
 

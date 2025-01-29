@@ -117,7 +117,7 @@ class MetricsEvaluatorTest {
 
   @Test
   fun `test MatchedRatio@1 metric`() {
-    val metric = MatchedRatioAt(false, 1)
+    val metric = MatchedRatioAt(1, false)
     Assertions.assertEquals(0.5, metric.evaluate(listOf(sessionTop1Custom)))
     Assertions.assertEquals(0.25, metric.evaluate(listOf(sessionTop1Custom, sessionNoTop1Custom)))
     Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionNoTop1Custom)))

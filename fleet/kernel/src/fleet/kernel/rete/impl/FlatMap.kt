@@ -20,7 +20,7 @@ private val assertionsEnabled = FleetFromSourcesPaths.isRunningFromSources || is
 
 internal fun <T, U> SubscriptionScope.flatMap(producer: Producer<T>, f: (Match<T>) -> Set<U>): Producer<U> {
   data class MatchInfo(
-    val matches: MutableMap<U, Match<U>>,
+    val matches: AdaptiveMap<U, Match<U>>,
     val subscription: Subscription,
   )
 

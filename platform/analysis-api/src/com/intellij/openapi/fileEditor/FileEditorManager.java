@@ -101,6 +101,7 @@ public abstract class FileEditorManager {
    * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    */
   @ApiStatus.Experimental
+  @RequiresEdt
   public Editor @NotNull [] getSelectedTextEditorWithRemotes() {
     Editor editor = getSelectedTextEditor();
     return editor != null ? new Editor[]{editor} : Editor.EMPTY_ARRAY;

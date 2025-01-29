@@ -137,22 +137,11 @@ public final class HighlightFixUtil {
 
   static void registerChangeVariableTypeFixes(@NotNull PsiExpression expression,
                                               @NotNull PsiType type,
-                                              @Nullable PsiExpression lExpr,
                                               @NotNull Consumer<? super CommonIntentionAction> info) {
     if (!(expression instanceof PsiReferenceExpression ref)) return;
     if (!(ref.resolve() instanceof PsiVariable variable)) return;
 
-    registerChangeVariableTypeFixes(variable, type, lExpr, info);
-
-    PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(lExpr);
-    if (stripped instanceof PsiMethodCallExpression call && lExpr.getParent() instanceof PsiAssignmentExpression assignment) {
-      if (assignment.getParent() instanceof PsiStatement) {
-        PsiMethod method = call.resolveMethod();
-        if (method != null && PsiTypes.voidType().equals(method.getReturnType())) {
-          info.accept(new ReplaceAssignmentFromVoidWithStatementIntentionAction(assignment, stripped));
-        }
-      }
-    }
+    registerChangeVariableTypeFixes(variable, type, info);
   }
 
   static void registerUnhandledExceptionFixes(@NotNull PsiElement element, @NotNull Consumer<? super CommonIntentionAction> info) {
@@ -164,28 +153,23 @@ public final class HighlightFixUtil {
     info.accept(quickFixFactory.createSurroundWithTryCatchFix(element));
   }
 
-  static void registerStaticProblemQuickFixAction(@Nullable HighlightInfo.Builder info, @NotNull PsiElement refElement, @NotNull PsiJavaCodeReferenceElement place) {
+  static void registerStaticProblemQuickFixAction(@NotNull Consumer<? super CommonIntentionAction> info, @NotNull PsiElement refElement, 
+                                                  @NotNull PsiJavaCodeReferenceElement place) {
     if (place instanceof PsiReferenceExpression && place.getParent() instanceof PsiMethodCallExpression) {
       ReplaceGetClassWithClassLiteralFix.registerFix((PsiMethodCallExpression)place.getParent(), info);
     }
     if (refElement instanceof PsiJvmModifiersOwner) {
       List<IntentionAction> fixes =
         JvmElementActionFactories.createModifierActions((PsiJvmModifiersOwner)refElement, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, true));
-      QuickFixAction.registerQuickFixActions(info, null, fixes);
+      fixes.forEach(info);
     }
     // make context non-static
     PsiModifierListOwner staticParent = PsiUtil.getEnclosingStaticElement(place, null);
     if (staticParent != null && isInstanceReference(place)) {
-      IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(staticParent, PsiModifier.STATIC, false, false);
-      if (info != null) {
-        info.registerFix(action, null, null, null, null);
-      }
+      info.accept(QuickFixFactory.getInstance().createModifierListFix(staticParent, PsiModifier.STATIC, false, false));
     }
     if (place instanceof PsiReferenceExpression && refElement instanceof PsiField) {
-      IntentionAction action = QuickFixFactory.getInstance().createCreateFieldFromUsageFix((PsiReferenceExpression)place);
-      if (info != null) {
-        info.registerFix(action, null, null, null, null);
-      }
+      info.accept(QuickFixFactory.getInstance().createCreateFieldFromUsageFix((PsiReferenceExpression)place));
     }
   }
 
@@ -202,27 +186,21 @@ public final class HighlightFixUtil {
 
   static void registerChangeVariableTypeFixes(@NotNull PsiVariable parameter,
                                               @Nullable PsiType itemType,
-                                              @Nullable PsiExpression expr,
                                               @Nullable HighlightInfo.Builder highlightInfo) {
-    registerChangeVariableTypeFixes(parameter, itemType, expr, HighlightUtil.asConsumer(highlightInfo));
+    registerChangeVariableTypeFixes(parameter, itemType, HighlightUtil.asConsumer(highlightInfo));
   }
 
   static void registerChangeVariableTypeFixes(@NotNull PsiVariable parameter,
                                               @Nullable PsiType itemType,
-                                              @Nullable PsiExpression expr,
                                               @NotNull Consumer<? super CommonIntentionAction> info) {
     for (IntentionAction action : getChangeVariableTypeFixes(parameter, itemType)) {
       info.accept(action);
     }
-    IntentionAction fix = createChangeReturnTypeFix(expr, parameter.getType());
-    if (fix != null) {
-      info.accept(fix);
-    }
   }
 
   static @Nullable IntentionAction createChangeReturnTypeFix(@Nullable PsiExpression expr, @NotNull PsiType toType) {
-    if (expr instanceof PsiMethodCallExpression) {
-      PsiMethod method = ((PsiMethodCallExpression)expr).resolveMethod();
+    if (expr instanceof PsiMethodCallExpression call) {
+      PsiMethod method = call.resolveMethod();
       if (method != null) {
         return PriorityIntentionActionWrapper
           .lowPriority(QuickFixFactory.getInstance().createMethodReturnFix(method, toType, true));
@@ -417,7 +395,7 @@ public final class HighlightFixUtil {
     return copyType != null && returnType.isAssignableFrom(copyType);
   }
 
-  static void registerSpecifyVarTypeFix(@NotNull PsiLocalVariable variable, @NotNull HighlightInfo.Builder info) {
+  static void registerSpecifyVarTypeFix(@NotNull PsiLocalVariable variable, @NotNull Consumer<? super CommonIntentionAction> info) {
     PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
     if (block == null) return;
     PsiTreeUtil.processElements(block, PsiReferenceExpression.class, ref -> {
@@ -435,8 +413,7 @@ public final class HighlightFixUtil {
               if (type != null) {
                 type = GenericsUtil.getVariableTypeByExpressionType(type);
                 if (PsiTypesUtil.isDenotableType(type, variable) && !PsiTypes.voidType().equals(type)) {
-                  IntentionAction fix = QuickFixFactory.getInstance().createSetVariableTypeFix(variable, type);
-                  info.registerFix(fix, null, null, null, null);
+                  info.accept(QuickFixFactory.getInstance().createSetVariableTypeFix(variable, type));
                 }
                 return false;
               }
@@ -634,12 +611,11 @@ public final class HighlightFixUtil {
   }
 
   static MethodCandidateInfo @NotNull [] toMethodCandidates(JavaResolveResult @NotNull [] resolveResults) {
-    List<MethodCandidateInfo> candidateList = new ArrayList<>(resolveResults.length);
-    for (JavaResolveResult result : resolveResults) {
-      if (!(result instanceof MethodCandidateInfo candidate)) continue;
-      if (candidate.isAccessible()) candidateList.add(candidate);
-    }
-    return candidateList.toArray(new MethodCandidateInfo[0]);
+    return Arrays.stream(resolveResults)
+      .filter(result -> result instanceof MethodCandidateInfo)
+      .map(result -> (MethodCandidateInfo)result)
+      .filter(CandidateInfo::isAccessible)
+      .toArray(MethodCandidateInfo[]::new);
   }
 
   static void registerFixesOnInvalidConstructorCall(@NotNull Consumer<? super CommonIntentionAction> info,
@@ -687,7 +663,7 @@ public final class HighlightFixUtil {
         PsiType expectedTypeByApplicabilityConstraints = resolveResult.getSubstitutor(false).substitute(resolved.getReturnType());
         if (expectedTypeByApplicabilityConstraints != null && !variable.getType().isAssignableFrom(expectedTypeByApplicabilityConstraints) &&
             PsiTypesUtil.allTypeParametersResolved(variable, expectedTypeByApplicabilityConstraints)) {
-          registerChangeVariableTypeFixes(variable, expectedTypeByApplicabilityConstraints, methodCall, info);
+          registerChangeVariableTypeFixes(variable, expectedTypeByApplicabilityConstraints, info);
         }
       }
     }
@@ -762,7 +738,7 @@ public final class HighlightFixUtil {
         }
         PsiSubstitutor substitutor = factory.createSubstitutor(map);
         PsiType suggestedType = factory.createType(aClass, substitutor);
-        registerChangeVariableTypeFixes(variable, suggestedType, variable.getInitializer(), info);
+        registerChangeVariableTypeFixes(variable, suggestedType, info);
       }
     }
   }
@@ -808,6 +784,19 @@ public final class HighlightFixUtil {
     }
 
     return requireNonNullElse(GenericsUtil.getLeastUpperBound(currentType, valueType, manager), requireNonNullElse(currentType, valueType));
+  }
+
+  static void registerAmbiguousCallFixes(@NotNull Consumer<? super @Nullable CommonIntentionAction> sink,
+                                         @NotNull PsiMethodCallExpression methodCall,
+                                         @NotNull JavaResolveResult @NotNull [] resolveResults) {
+    PsiExpressionList list = methodCall.getArgumentList();
+    MethodCandidateInfo[] candidates = toMethodCandidates(resolveResults);
+    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, methodCall, sink);
+    WrapWithAdapterMethodCallFix.registerCastActions(candidates, methodCall, sink);
+    WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, methodCall, sink);
+    WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), sink);
+    PermuteArgumentsFix.registerFix(sink, methodCall, candidates);
+    registerChangeParameterClassFix(methodCall, list, sink);
   }
 
   private static final class ReturnModel {

@@ -158,6 +158,7 @@ final class JavaErrorFixProvider {
         }
       }
     });
+    fix(FOREACH_NOT_APPLICABLE, error -> myFactory.createNotIterableForEachLoopFix(error.psi()));
   }
 
   private void createMethodFixes() {
@@ -302,6 +303,8 @@ final class JavaErrorFixProvider {
   private void createVariableFixes() {
     fix(UNNAMED_VARIABLE_BRACKETS, error -> new NormalizeBracketsFix(error.psi()));
     fix(UNNAMED_VARIABLE_WITHOUT_INITIALIZER, error -> myFactory.createAddVariableInitializerFix(error.psi()));
+    fixes(LVTI_NO_INITIALIZER, (error, sink) -> HighlightFixUtil.registerSpecifyVarTypeFix(error.psi(), sink));
+    fixes(LVTI_NULL, (error, sink) -> HighlightFixUtil.registerSpecifyVarTypeFix(error.psi(), sink));
   }
 
   private void createExpressionFixes() {
@@ -402,6 +405,23 @@ final class JavaErrorFixProvider {
         }
       }
     });
+    fixes(CALL_AMBIGUOUS, (error, sink) -> {
+      PsiMethodCallExpression methodCall = error.psi();
+      JavaResolveResult[] resolveResults = error.context().results();
+      HighlightFixUtil.registerAmbiguousCallFixes(sink, methodCall, resolveResults);
+    });
+    fixes(CALL_UNRESOLVED, (error, sink) -> {
+      PsiMethodCallExpression methodCall = error.psi();
+      HighlightFixUtil.registerMethodCallIntentions(sink, methodCall, methodCall.getArgumentList());
+      JavaResolveResult[] resolveResults = error.context();
+      if (resolveResults.length == 1) {
+        PsiElement element = resolveResults[0].getElement();
+        if (element != null && !resolveResults[0].isStaticsScopeCorrect()) {
+          HighlightFixUtil.registerStaticProblemQuickFixAction(sink, element, methodCall.getMethodExpression());
+        }
+      }
+      HighlightFixUtil.registerAmbiguousCallFixes(sink, methodCall, resolveResults);
+    });
     fix(CALL_DIRECT_ABSTRACT_METHOD_ACCESS, error -> {
       PsiMethod method = error.context();
       int options = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS;
@@ -462,9 +482,6 @@ final class JavaErrorFixProvider {
       if (anchor instanceof PsiExpression expression) {
         AddTypeArgumentsConditionalFix.register(sink, expression, lType);
         AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(sink, expression, lType, rType);
-        if (!(expression.getParent() instanceof PsiConditionalExpression && PsiTypes.voidType().equals(lType))) {
-          sink.accept(HighlightFixUtil.createChangeReturnTypeFix(expression, lType));
-        }
         sink.accept(ChangeNewOperatorTypeFix.createFix(expression, lType));
         if (PsiTypes.booleanType().equals(lType) && expression instanceof PsiAssignmentExpression assignment &&
             assignment.getOperationTokenType() == JavaTokenType.EQ) {
@@ -486,21 +503,33 @@ final class JavaErrorFixProvider {
             }
           }
         }
-        else if (parent instanceof PsiLocalVariable var && rType != null) {
-          HighlightFixUtil.registerChangeVariableTypeFixes(var, rType, var.getInitializer(), sink);
+        else if (parent instanceof PsiVariable var && 
+                 PsiUtil.skipParenthesizedExprDown(var.getInitializer()) == expression && rType != null) {
+          HighlightFixUtil.registerChangeVariableTypeFixes(var, rType, sink);
         }
-        else if (parent instanceof PsiAssignmentExpression assignment && assignment.getRExpression() == expression) {
+        else if (parent instanceof PsiAssignmentExpression assignment && 
+                 PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()) == expression) {
           PsiExpression lExpr = assignment.getLExpression();
 
           sink.accept(myFactory.createChangeToAppendFix(assignment.getOperationTokenType(), lType, assignment));
           if (rType != null) {
-            HighlightFixUtil.registerChangeVariableTypeFixes(lExpr, rType, expression, sink);
-            HighlightFixUtil.registerChangeVariableTypeFixes(expression, lType, lExpr, sink);
+            HighlightFixUtil.registerChangeVariableTypeFixes(lExpr, rType, sink);
+            if (expression instanceof PsiMethodCallExpression call && assignment.getParent() instanceof PsiStatement &&
+                PsiTypes.voidType().equals(rType)) {
+              sink.accept(new ReplaceAssignmentFromVoidWithStatementIntentionAction(assignment, call));
+            }
           }
         }
       }
       if (anchor instanceof PsiParameter parameter && parent instanceof PsiForeachStatement forEach) {
-        HighlightFixUtil.registerChangeVariableTypeFixes(parameter, rType, forEach.getIteratedValue(), sink);
+        HighlightFixUtil.registerChangeVariableTypeFixes(parameter, lType, sink);
+        PsiExpression iteratedValue = forEach.getIteratedValue();
+        if (iteratedValue != null && rType != null) {
+          PsiType type = iteratedValue.getType();
+          if (type instanceof PsiArrayType) {
+            AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(sink, iteratedValue, rType.createArrayType(), type);
+          }
+        }
       }
       HighlightFixUtil.registerChangeParameterClassFix(lType, rType, sink);
     });
@@ -544,6 +573,18 @@ final class JavaErrorFixProvider {
         HighlightFixUtil.registerFixesOnInvalidConstructorCall(sink, constructorCall, aClass, methodCandidates);
         HighlightFixUtil.registerMethodReturnFixAction(sink, candidate, constructorCall);
       }
+    });
+    fix(TYPE_ARGUMENT_PRIMITIVE, error -> {
+      PsiTypeElement typeElement = error.psi();
+      PsiType type = typeElement.getType();
+      PsiPrimitiveType toConvert =
+        (PsiPrimitiveType)(type instanceof PsiWildcardType wildcardType ? requireNonNull(wildcardType.getBound()) : type);
+      PsiClassType boxedType = toConvert.getBoxedType(typeElement);
+      if (boxedType != null) {
+        return QuickFixFactory.getInstance().createReplacePrimitiveWithBoxedTypeAction(
+          typeElement, toConvert.getPresentableText(), boxedType.getCanonicalText());
+      }
+      return null;
     });
   }
 

@@ -3,17 +3,16 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ContainerAdapter;
+import java.awt.event.ContainerEvent;
+import java.awt.event.ContainerListener;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 public final class ClientProperty {
   private ClientProperty() { }
@@ -65,6 +64,57 @@ public final class ClientProperty {
     JComponent holder = getPropertiesHolder(window);
     if (holder != null) holder.putClientProperty(key, value);
     return holder != null;
+  }
+
+  private static final Key<Map<Key<?>, ContainerListener>> RECURSIVE_LISTENERS = Key.create("ClientProperty.recursiveListeners");
+  /**
+   * Sets the value for the client property of the component and its children.
+   * If hierarchy is changed, it sets the property for new components
+   * @param component a Swing component that may hold a client property value
+   * @param key       a typed key corresponding to a client property
+   * @param value     new value for the client property
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public static <T> void putRecursive(@NotNull JComponent component, @NotNull Key<T> key, @Nullable T value) {
+    ContainerListener listener = new ContainerAdapter() {
+      @Override
+      public void componentAdded(ContainerEvent e) {
+        Container container = e.getContainer();
+        if (container instanceof JComponent) {
+          putRecursive((JComponent)container, key, value);
+        }
+      }
+    };
+
+    Queue<JComponent> toProcess = new LinkedList<>();
+    toProcess.add(component);
+    while (!toProcess.isEmpty()) {
+      JComponent current = toProcess.poll();
+
+      Map<Key<?>, ContainerListener> listeners = get(current, RECURSIVE_LISTENERS);
+      if (listeners == null) {
+        listeners = new HashMap<>();
+        put(current, RECURSIVE_LISTENERS, listeners);
+      }
+
+      ContainerListener existingListener = listeners.get(key);
+      if (existingListener != null) {
+        current.removeContainerListener(existingListener);
+      }
+
+      put(current, key, value);
+
+      listeners.put(key, listener);
+
+      current.addContainerListener(listener);
+
+      for (Component child : current.getComponents()) {
+        if (child instanceof JComponent) {
+          toProcess.add((JComponent)child);
+        }
+      }
+    }
   }
 
   @Contract("null -> null")

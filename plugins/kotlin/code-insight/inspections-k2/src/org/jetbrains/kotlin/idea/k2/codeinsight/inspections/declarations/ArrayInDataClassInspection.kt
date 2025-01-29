@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations
 
@@ -30,8 +30,8 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
         return KotlinBundle.message("array.property.in.data.class.it.s.recommended.to.override.equals.hashcode")
     }
 
-    override fun createQuickFix(element: KtParameter, context: Context): KotlinModCommandQuickFix<KtParameter> {
-        return object : KotlinModCommandQuickFix<KtParameter>() {
+    override fun createQuickFixes(element: KtParameter, context: Context): Array<KotlinModCommandQuickFix<KtParameter>> {
+        return arrayOf(object : KotlinModCommandQuickFix<KtParameter>() {
             override fun getFamilyName(): String =
                 KotlinBundle.message("generate.equals.and.hashcode.fix.text")
 
@@ -50,7 +50,7 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
                 val function = factory.createFunction(text)
                 shortenReferences(containingClass.addDeclaration(function))
             }
-        }
+        })
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> {

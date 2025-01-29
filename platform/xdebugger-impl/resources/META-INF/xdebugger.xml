@@ -149,6 +149,10 @@
 
     <platform.entityTypes implementation="com.intellij.xdebugger.impl.rhizome.XDebuggerEntityTypesProvider"/>
 
+    <registryKey defaultValue="false"
+                 description="Enables frontend based actions in evaluation trees. Please, enable it only on the frontend side."
+                 key="debugger.frontend.tree.actions"/>
+
     <intentionAction>
       <language>UAST</language>
       <className>com.intellij.xdebugger.impl.codeinsight.ControlExceptionBreakpointIntentionAction</className>
@@ -218,6 +222,12 @@
     </action>
 
     <group id="XDebugger.RunToCursorInlayExtraActions">
+    </group>
+
+    <group id="XDebugger.Inspect.Tree.Popup.Frontend">
+      <group id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend"/>
+      <separator/>
+      <group id="XDebugger.Inspect.Tree.Popup.Jump.To.Section.Frontend"/>
     </group>
   </actions>
 

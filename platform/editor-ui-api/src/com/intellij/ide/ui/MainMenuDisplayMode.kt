@@ -16,4 +16,6 @@ enum class MainMenuDisplayMode(@NlsActions.ActionText val description: String) {
   companion object {
     fun valueOf(name: String?): MainMenuDisplayMode = MainMenuDisplayMode.entries.find { it.name.equals(name, true)} ?: UNDER_HAMBURGER_BUTTON
   }
+
+  override fun toString(): String = description
 }

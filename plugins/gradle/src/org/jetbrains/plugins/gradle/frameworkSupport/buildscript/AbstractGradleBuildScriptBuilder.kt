@@ -27,6 +27,9 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
   override fun addVersion(version: String): Self =
     withPrefix { assign("version", version) }
 
+  override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit): Self =
+    configureTask("test", "Test", configure)
+
   override fun addDependency(scope: String, dependency: String, sourceSet: String?): Self =
     addDependency(scope, string(dependency), sourceSet)
 

@@ -77,8 +77,9 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
     installAndEnableTask.run(pi)
 
     if (installAndEnableTask.plugins.isEmpty()) return PluginInstallationState.NoPlugins
+    val cp = installAndEnableTask.customPlugins ?: return PluginInstallationState.NoPlugins
     val restartRequiringPlugins = AtomicInteger()
-    val installStatus = doInstallPlugins(project, installAndEnableTask.plugins, pi, restartRequiringPlugins)
+    val installStatus = doInstallPlugins(project, installAndEnableTask.plugins, cp, pi, restartRequiringPlugins)
 
     logger.info("Finished installing plugins, result: $installStatus")
     return if (restartRequiringPlugins.get() > 0) PluginInstallationState.RestartRequired else PluginInstallationState.Done
@@ -115,13 +116,13 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
 private suspend fun doInstallPlugins(
   project: Project?,
   plugins: Collection<PluginDownloader>,
+  customPlugins: List<PluginNode>,
   pi: ProgressIndicator,
-  restartRequiringPlugins: AtomicInteger
-): Boolean = coroutineScope {
+  restartRequiringPlugins: AtomicInteger): Boolean = coroutineScope {
   val scope = this
 
   fun createInstaller(finished: CompletableDeferred<Boolean>) =
-    object : PluginsAdvertiserDialogPluginInstaller(project, plugins, emptyList(), finished::complete) {
+    object : PluginsAdvertiserDialogPluginInstaller(project, plugins, customPlugins, finished::complete) {
       override fun downloadPlugins(plugins: MutableList<PluginNode>,
                                    customPlugins: MutableCollection<PluginNode>,
                                    onSuccess: Runnable?,

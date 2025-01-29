@@ -61,7 +61,6 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -227,15 +226,13 @@ public final class DaemonListeners implements Disposable {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         myActiveEditors.remove(event.getEditor());
-        // mem leak after closing last editor otherwise
-        if (myActiveEditors.isEmpty()) {
-          EdtInvocationManager.invokeLaterIfNeeded(() -> {
-            IntentionsUI intentionUI = myProject.getServiceIfCreated(IntentionsUI.class);
-            if (intentionUI != null) {
-              intentionUI.invalidateForEditor(event.getEditor());
-            }
-          });
-        }
+        // clear mem leak via IntentionsUIImpl.myLastIntentionHint
+        EdtInvocationManager.invokeLaterIfNeeded(() -> {
+          IntentionsUI intentionUI = myProject.isDisposed() ? null : myProject.getServiceIfCreated(IntentionsUI.class);
+          if (intentionUI != null) {
+            intentionUI.invalidateForEditor(event.getEditor());
+          }
+        });
       }
     }, this);
 

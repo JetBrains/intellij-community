@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -10,13 +10,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SimplifyWhenWithBooleanConstantConditionInspection.Context
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConstantConditionIfUtils.replaceWithBranch
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SimplifyWhenWithBooleanConstantConditionInspection.Context
 import org.jetbrains.kotlin.psi.*
 
 /**
@@ -51,8 +51,8 @@ internal class SimplifyWhenWithBooleanConstantConditionInspection : KotlinApplic
         return Context(element.isUsedAsExpression)
     }
 
-    override fun createQuickFix(element: KtWhenExpression, context: Context): KotlinModCommandQuickFix<KtWhenExpression> =
-        SimplifyFix(context)
+    override fun createQuickFixes(element: KtWhenExpression, context: Context): Array<KotlinModCommandQuickFix<KtWhenExpression>> =
+        arrayOf(SimplifyFix(context))
 }
 
 private class SimplifyFix(private val context: Context) : KotlinModCommandQuickFix<KtWhenExpression>() {

@@ -613,6 +613,39 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiElement, PsiClass> TYPE_INACCESSIBLE =
     parameterized(PsiElement.class, PsiClass.class, "type.inaccessible")
       .withRawDescription((psi, cls) -> message("type.inaccessible", formatClass(cls)));
+  public static final Simple<PsiTypeElement> TYPE_UNKNOWN_CLASS = error(PsiTypeElement.class, "type.unknown.class")
+    .withRawDescription(type -> message("type.unknown.class", type.getType().getDeepComponentType().getCanonicalText()));
+  public static final Simple<PsiTypeElement> TYPE_ARGUMENT_PRIMITIVE = error(PsiTypeElement.class, "type.argument.primitive");
+  public static final Simple<PsiTypeElement> TYPE_WILDCARD_NOT_EXPECTED = error(PsiTypeElement.class, "type.wildcard.not.expected");
+  public static final Simple<PsiTypeElement> TYPE_WILDCARD_MAY_BE_USED_ONLY_AS_REFERENCE_PARAMETERS = 
+    error(PsiTypeElement.class, "type.wildcard.may.be.used.only.as.reference.parameters");
+  public static final Simple<PsiTypeElement> TYPE_WILDCARD_CANNOT_BE_INSTANTIATED = 
+    error(PsiTypeElement.class, "type.wildcard.cannot.be.instantiated")
+      .withRawDescription(type -> message("type.wildcard.cannot.be.instantiated", formatType(type.getType())));
+  public static final Simple<PsiJavaCodeReferenceElement> TYPE_RESTRICTED_IDENTIFIER =
+    error(PsiJavaCodeReferenceElement.class, "type.restricted.identifier")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription(ref -> message("type.restricted.identifier", ref.getReferenceName()));
+  
+  public static final Simple<PsiExpression> FOREACH_NOT_APPLICABLE = error(PsiExpression.class, "foreach.not.applicable")
+    .withRawDescription(expression -> message("foreach.not.applicable", formatType(expression.getType())));
+
+  public static final Simple<PsiLocalVariable> LVTI_NO_INITIALIZER = error(PsiLocalVariable.class, "lvti.no.initializer")
+    .withAnchor(var -> var.getTypeElement());
+  public static final Parameterized<PsiReferenceExpression, PsiLocalVariable> LVTI_SELF_REFERENCED = 
+    parameterized(PsiReferenceExpression.class, PsiLocalVariable.class, "lvti.self.referenced")
+      .withRawDescription((ref, var) -> message("lvti.self.referenced", var.getName()));
+  public static final Simple<PsiLocalVariable> LVTI_COMPOUND = error(PsiLocalVariable.class, "lvti.compound");
+  public static final Simple<PsiLocalVariable> LVTI_VOID = error(PsiLocalVariable.class, "lvti.void")
+    .withAnchor(var -> var.getTypeElement());
+  public static final Simple<PsiLocalVariable> LVTI_NULL = error(PsiLocalVariable.class, "lvti.null")
+    .withAnchor(var -> var.getTypeElement());
+  public static final Simple<PsiLocalVariable> LVTI_LAMBDA = error(PsiLocalVariable.class, "lvti.lambda")
+    .withAnchor(var -> var.getTypeElement());
+  public static final Simple<PsiLocalVariable> LVTI_METHOD_REFERENCE = error(PsiLocalVariable.class, "lvti.method.reference")
+    .withAnchor(var -> var.getTypeElement());
+  public static final Simple<PsiVariable> LVTI_ARRAY = error(PsiVariable.class, "lvti.array")
+    .withAnchor(var -> var.getTypeElement());
 
   public static final Simple<PsiLabeledStatement> LABEL_WITHOUT_STATEMENT = error(PsiLabeledStatement.class, "label.without.statement")
     .withAnchor(label -> label.getLabelIdentifier());
@@ -629,6 +662,8 @@ public final class JavaErrorKinds {
   public static final Simple<PsiBreakStatement> BREAK_OUT_OF_SWITCH_EXPRESSION = error("break.out.of.switch.expression");
   public static final Simple<PsiContinueStatement> CONTINUE_OUTSIDE_LOOP = error("continue.outside.loop");
   public static final Simple<PsiContinueStatement> CONTINUE_OUT_OF_SWITCH_EXPRESSION = error("continue.out.of.switch.expression");
+  
+  public static final Simple<PsiTypeElement> CATCH_TYPE_PARAMETER = error("catch.type.parameter");
 
   public static final Parameterized<PsiExpression, PsiType> ARRAY_ILLEGAL_INITIALIZER =
     parameterized(PsiExpression.class, PsiType.class, "array.illegal.initializer")
@@ -640,6 +675,7 @@ public final class JavaErrorKinds {
   public static final Simple<PsiElement> ARRAY_GENERIC = error("array.generic");
   public static final Simple<PsiReferenceParameterList> ARRAY_EMPTY_DIAMOND = error("array.empty.diamond");
   public static final Simple<PsiReferenceParameterList> ARRAY_TYPE_ARGUMENTS = error("array.type.arguments");
+  public static final Simple<PsiTypeElement> ARRAY_TOO_MANY_DIMENSIONS = error("array.too.many.dimensions");
 
   public static final Parameterized<PsiReferenceExpression, PsiClass> PATTERN_TYPE_PATTERN_EXPECTED =
     parameterized("pattern.type.pattern.expected");
@@ -842,6 +878,18 @@ public final class JavaErrorKinds {
     parameterized(PsiElement.class, JavaMismatchedCallContext.class, "call.wrong.arguments")
       .withTooltip((psi, ctx) -> ctx.createTooltip())
       .withDescription((psi, ctx) -> ctx.createDescription());
+  public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_UNRESOLVED =
+    parameterized(PsiMethodCallExpression.class, JavaResolveResult[].class, "call.unresolved")
+      .withAnchor((call, results) -> call.getArgumentList())
+      .withRawDescription((call, results) -> message(
+        "call.unresolved", call.getMethodExpression().getReferenceName() + formatArgumentTypes(call.getArgumentList(), true)));
+  public static final Parameterized<PsiMethodCallExpression, JavaAmbiguousCallContext> CALL_AMBIGUOUS =
+    parameterized(PsiMethodCallExpression.class, JavaAmbiguousCallContext.class, "call.ambiguous")
+      .withAnchor((call, ctx) -> call.getArgumentList())
+      .withRawDescription((call, ctx) -> ctx.description())
+      .withTooltip((call, ctx) -> ctx.tooltip());
+    
+    
   public static final Parameterized<PsiMethodCallExpression, PsiMethod> CALL_DIRECT_ABSTRACT_METHOD_ACCESS =
     parameterized(PsiMethodCallExpression.class, PsiMethod.class, "call.direct.abstract.method.access")
       .withRawDescription((call, method) -> message("call.direct.abstract.method.access", formatMethod(method)));

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
@@ -6,8 +6,8 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -57,10 +57,10 @@ internal class FilterIsInstanceCallWithClassLiteralArgumentInspection : KotlinAp
             ?.asUnit
     }
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtCallExpression,
         context: Unit,
-    ) = object : KotlinModCommandQuickFix<KtCallExpression>() {
+    ): Array<KotlinModCommandQuickFix<KtCallExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtCallExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.filter.is.instance.call.with.class.literal.argument.quick.fix.text")
@@ -80,7 +80,7 @@ internal class FilterIsInstanceCallWithClassLiteralArgumentInspection : KotlinAp
             ShortenReferencesFacility.getInstance().shorten(newTypeArguments)
             element.valueArgumentList?.removeArgument(argument)
         }
-    }
+    })
 }
 
 private fun KtValueArgument.isClassLiteral(): Boolean =

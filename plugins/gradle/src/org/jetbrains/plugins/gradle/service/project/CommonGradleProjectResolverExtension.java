@@ -119,7 +119,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     final ModuleData mainModuleData = mainModuleNode.getData();
     final String mainModuleConfigPath = mainModuleData.getLinkedExternalProjectPath();
     final String mainModuleFileDirectoryPath = mainModuleData.getModuleFileDirectoryPath();
-    final String jdkName = getJdkName(gradleModule);
 
     String[] moduleGroup = null;
     if (!resolverCtx.isUseQualifiedModuleNames()) {
@@ -146,10 +145,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         }
         sourceSetData.setVersion(externalProject.getVersion());
         sourceSetData.setIdeModuleGroup(moduleGroup);
-
-        sourceSetData.internalSetSourceCompatibility(sourceSet.getSourceCompatibility());
-        sourceSetData.internalSetTargetCompatibility(sourceSet.getTargetCompatibility());
-        sourceSetData.internalSetSdkName(jdkName);
 
         final Set<File> artifacts = FileCollectionFactory.createCanonicalFileSet();
         if ("main".equals(sourceSet.getName())) {
@@ -178,24 +173,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
           projectDataNode.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS);
         assert sourceSetMap != null;
         sourceSetMap.put(moduleId, Pair.create(sourceSetDataNode, sourceSet));
-      }
-    }
-    else {
-      try {
-        IdeaJavaLanguageSettings languageSettings = gradleModule.getJavaLanguageSettings();
-        if (languageSettings != null) {
-          if (languageSettings.getLanguageLevel() != null) {
-            mainModuleData.internalSetSourceCompatibility(languageSettings.getLanguageLevel().toString());
-          }
-          if (languageSettings.getTargetBytecodeVersion() != null) {
-            mainModuleData.internalSetTargetCompatibility(languageSettings.getTargetBytecodeVersion().toString());
-          }
-        }
-        mainModuleData.internalSetSdkName(jdkName);
-      }
-      // todo[Vlad] the catch can be omitted when the support of the Gradle < 3.0 will be dropped
-      catch (UnsupportedMethodException ignore) {
-        // org.gradle.tooling.model.idea.IdeaModule.getJavaLanguageSettings method supported since Gradle 2.11
       }
     }
 
@@ -227,15 +204,6 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     }
     else {
       return (rootName + gradlePath).split(":");
-    }
-  }
-
-  private static @Nullable String getJdkName(@NotNull IdeaModule gradleModule) {
-    try {
-      return gradleModule.getJdkName();
-    }
-    catch (UnsupportedMethodException e) {
-      return null;
     }
   }
 

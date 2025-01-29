@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.application.writeAction
@@ -21,7 +21,7 @@ import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.excludeInnerVirtualEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.persist
-import com.jetbrains.python.util.PyError
+import com.jetbrains.python.errorProcessing.PyError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -46,13 +46,13 @@ suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pat
                      inheritSitePackages = state.inheritSitePackages.get())
   }
   catch (e: PyExecutionException) {
-    return com.jetbrains.python.util.failure(e)
+    return com.jetbrains.python.errorProcessing.failure(e)
   }
 
   if (targetEnvironmentConfiguration != null) error("Remote targets aren't supported")
   val venvPython = VirtualEnvReader.Instance.findPythonInPythonRoot(venvPath)
   if (venvPython == null) {
-    return com.jetbrains.python.util.failure(message("commandLine.directoryCantBeAccessed", venvPath))
+    return com.jetbrains.python.errorProcessing.failure(message("commandLine.directoryCantBeAccessed", venvPath))
   }
 
   val homeFile =
@@ -61,7 +61,7 @@ suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pat
       VfsUtil.findFile(venvPython, true)
     }
   if (homeFile == null) {
-    return com.jetbrains.python.util.failure(message("commandLine.directoryCantBeAccessed", venvPath))
+    return com.jetbrains.python.errorProcessing.failure(message("commandLine.directoryCantBeAccessed", venvPath))
   }
 
   val newSdk = createSdk(homeFile, projectPath, existingSdks.toTypedArray())

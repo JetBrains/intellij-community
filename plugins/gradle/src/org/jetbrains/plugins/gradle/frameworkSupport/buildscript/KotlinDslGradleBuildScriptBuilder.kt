@@ -5,6 +5,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.KotlinScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.tree
 import kotlin.apply as applyKt
 
 @ApiStatus.Internal
@@ -12,6 +13,21 @@ import kotlin.apply as applyKt
 abstract class KotlinDslGradleBuildScriptBuilder<Self : KotlinDslGradleBuildScriptBuilder<Self>>(
   gradleVersion: GradleVersion,
 ) : AbstractGradleBuildScriptBuilder<Self>(gradleVersion) {
+
+  private val PREDEFINED_TASKS = setOf("test", "compileJava", "compileTestJava")
+
+  override fun configureTask(name: String, type: String, configure: ScriptTreeBuilder.() -> Unit): Self =
+    withPostfix {
+      val block = tree(configure)
+      if (!block.isEmpty()) {
+        if (name in PREDEFINED_TASKS) {
+          call("tasks.$name", argument(block))
+        }
+        else {
+          call("tasks.named<$type>", argument(name), argument(block))
+        }
+      }
+    }
 
   override fun withKotlinJvmPlugin(version: String?): Self = apply {
     withMavenCentral()
@@ -31,11 +47,6 @@ abstract class KotlinDslGradleBuildScriptBuilder<Self : KotlinDslGradleBuildScri
       call("useJUnitPlatform")
     }
   }
-
-  override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit): Self =
-    withPostfix {
-      callIfNotEmpty("tasks.test", configure)
-    }
 
   override fun ScriptTreeBuilder.mavenRepository(url: String): ScriptTreeBuilder = applyKt {
     call("maven", "url" to url)

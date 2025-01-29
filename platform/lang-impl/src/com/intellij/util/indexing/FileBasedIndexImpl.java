@@ -110,6 +110,7 @@ import static java.util.Collections.emptySet;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+@Internal
 public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private static final ThreadLocal<VirtualFile> ourIndexedFile = new ThreadLocal<>();
   private static final ThreadLocal<IndexWritingFile> ourWritingIndexFile = new ThreadLocal<>();
@@ -1239,6 +1240,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   };
 
+  @TestOnly
+  public boolean runUpdate(boolean inMemory, StorageUpdate update) {
+    return myStorageBufferingHandler.runUpdate(inMemory, update);
+  }
+
   @Internal
   @Override
   public void runCleanupAction(@NotNull Runnable cleanupAction) {
@@ -1608,7 +1614,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Internal
-  @Nullable("null in case index update is not needed") <FileIndexMetaData> SingleIndexValueApplier<FileIndexMetaData> createSingleIndexValueApplier(
+  @Nullable("null in case index update is not needed")
+  <FileIndexMetaData> SingleIndexValueApplier<FileIndexMetaData> createSingleIndexValueApplier(
     @NotNull ID<?, ?> indexId,
     @NotNull VirtualFile file,
     int inputId,

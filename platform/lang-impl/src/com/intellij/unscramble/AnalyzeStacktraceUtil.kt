@@ -105,6 +105,7 @@ class AnalyzeStacktraceUtil private constructor(){
         EP_CONTENT_PROVIDER.getExtensions(project).forEach { provider ->
           runWithModalProgressBlocking(project, LangBundle.message("unscramble.progress.title.analyzing.stacktrace")) {
             provider.createRunTabDescriptor(project, text)?.let { contentDescriptor ->
+              Disposer.register(descriptor, contentDescriptor)
               withContext(Dispatchers.EDT) {
                 runContentManager.showRunContent(executor, contentDescriptor)
               }

@@ -85,6 +85,7 @@ class BuildScriptDataBuilder(
 
   override fun addGroup(group: String): BuildScriptDataBuilder = apply { backend.addGroup(group) }
   override fun addVersion(version: String): BuildScriptDataBuilder = apply { backend.addVersion(version) }
+  override fun configureTask(name: String, type: String, configure: ScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.configureTask(name, type, configure) }
   override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.configureTestTask(configure) }
   override fun addDependency(scope: String, dependency: String, sourceSet: String?): BuildScriptDataBuilder = apply { backend.addDependency(scope, dependency, sourceSet) }
   override fun addDependency(scope: String, dependency: Expression, sourceSet: String?): BuildScriptDataBuilder = apply { backend.addDependency(scope, dependency, sourceSet) }

@@ -126,8 +126,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     return ContainerUtil.getLastItem(sessions);
   }
 
-  @ApiStatus.Internal
-  public static void getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
+  static void getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
                                              @NotNull DaemonProgressIndicator progressIndicator,
                                              @NotNull ProperTextRange visibleRange,
                                              @NotNull TextRange compositeDocumentDirtyRange) {

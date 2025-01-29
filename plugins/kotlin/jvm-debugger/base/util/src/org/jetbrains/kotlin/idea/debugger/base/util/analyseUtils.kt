@@ -9,6 +9,7 @@ import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
+import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -54,7 +55,8 @@ suspend fun <T> dumbAnalyze(useSiteElement: KtElement, fallback: T, action: KaSe
 
 inline fun <T> runSmartReadActionIfUnderProgressElseDumb(project: Project, default: T, crossinline action: () -> T): T {
     val isCancellableSection = DebuggerManagerThreadImpl.hasNonDefaultProgressIndicator()
-    return if (isCancellableSection) {
+    // Cannot wait for smart mode in read action, it throws "Constraint inSmartMode cannot be satisfied"
+    return if (isCancellableSection && !application.isReadAccessAllowed) {
         ReadAction.nonBlocking<T> { action() }
             .inSmartMode(project)
             .executeSynchronously()

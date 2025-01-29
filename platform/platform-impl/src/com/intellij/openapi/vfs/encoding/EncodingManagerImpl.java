@@ -151,7 +151,7 @@ public final class EncodingManagerImpl extends EncodingManager implements Persis
     if (document == null) {
       return null;
     }
-    Charset cached = EncodingManager.getInstance().getCachedCharsetFromContent(document);
+    Charset cached = getInstance().getCachedCharsetFromContent(document);
     if (cached != null) {
       return cached;
     }

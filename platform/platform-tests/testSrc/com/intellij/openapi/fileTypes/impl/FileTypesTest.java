@@ -119,8 +119,11 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       myFileTypeManager.reDetectAsync(false);
       assertNull(myFileTypeManager.findFileTypeByName("x." + MyTestFileType.EXTENSION));
       assertNull(myFileTypeManager.getExtensionMap().findByExtension(MyTestFileType.EXTENSION));
+      myFileTypeManager.myDetectionService.drainReDetectQueue();
       Disposer.dispose(myFileTypeManager);
-      Element globalStateAfter = ((FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx()).getState();
+      FileTypeManagerImpl globalFileTypeManager = (FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx();
+      Element globalStateAfter = globalFileTypeManager.getState();
+      globalFileTypeManager.drainReDetectQueue();
       assertEquals(JDOMUtil.writeElement(myGlobalStateBefore), JDOMUtil.writeElement(globalStateAfter));
     }
     catch (Throwable e) {

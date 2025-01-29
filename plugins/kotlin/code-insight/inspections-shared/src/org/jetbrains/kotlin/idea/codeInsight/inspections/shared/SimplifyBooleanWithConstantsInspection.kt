@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -35,14 +35,14 @@ internal class SimplifyBooleanWithConstantsInspection : KotlinApplicableInspecti
         return SimplifyBooleanWithConstantsUtils.areThereExpressionsToBeSimplified(element.topBinary()).asUnit
     }
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtBinaryExpression,
         context: Unit,
-    ): KotlinModCommandQuickFix<KtBinaryExpression> = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    ): Array<KotlinModCommandQuickFix<KtBinaryExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtBinaryExpression>() {
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("simplify.boolean.expression")
 
         override fun applyFix(project: Project, element: KtBinaryExpression, updater: ModPsiUpdater) {
             performSimplification(element)
         }
-    }
+    })
 }

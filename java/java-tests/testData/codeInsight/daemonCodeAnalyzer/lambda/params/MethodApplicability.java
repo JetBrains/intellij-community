@@ -14,9 +14,9 @@ class Foo {
   void foo(K k){}
 
   void bar() {
-    <error descr="Ambiguous method call: both 'Foo.foo(I)' and 'Foo.foo(K)' match">foo</error>((p) -> {
+    foo<error descr="Ambiguous method call: both 'Foo.foo(I)' and 'Foo.foo(K)' match">((p) -> {
       System.out.println<error descr="Cannot resolve method 'println(<lambda parameter>)'">(p)</error>;
-    });
+    })</error>;
 
     foo((p, k) -> {
       System.out.println(p);

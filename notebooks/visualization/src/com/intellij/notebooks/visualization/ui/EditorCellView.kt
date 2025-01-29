@@ -29,8 +29,8 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.JBColor
 import com.intellij.util.asSafely
+import java.awt.Color
 import java.awt.Rectangle
 import java.time.ZonedDateTime
 import javax.swing.JComponent
@@ -74,10 +74,11 @@ class EditorCellView(
     private set
 
   private val myEditorCellFrameManager: EditorCellFrameManager? =
-    when (interval.type == NotebookCellLines.CellType.MARKDOWN && Registry.`is`("jupyter.markdown.cells.border")) {
-      true -> EditorCellFrameManager(editor, this)
-      else -> null
-    }
+    if (interval.type == NotebookCellLines.CellType.MARKDOWN && Registry.`is`("jupyter.markdown.cells.border")) {
+      EditorCellFrameManager(editor, this, NotebookCellLines.CellType.MARKDOWN)
+    } else if (interval.type == NotebookCellLines.CellType.CODE && Registry.`is`("jupyter.code.cells.border")) {
+      EditorCellFrameManager(editor, this, NotebookCellLines.CellType.CODE)
+    } else null
 
   var selected: Boolean = false
     set(value) {
@@ -86,7 +87,7 @@ class EditorCellView(
       updateRunButtonVisibility()
       updateCellHighlight()
       updateCellActionsToolbarVisibility()
-      myEditorCellFrameManager?.updateMarkdownCellShow(mouseOver || value)
+      myEditorCellFrameManager?.updateCellFrameShow(mouseOver || value)
     }
 
   private var mouseOver = false
@@ -266,7 +267,7 @@ class EditorCellView(
     mouseOver = false
     updateFolding()
     updateRunButtonVisibility()
-    myEditorCellFrameManager?.updateMarkdownCellShow(mouseOver || selected)
+    myEditorCellFrameManager?.updateCellFrameShow(mouseOver || selected)
     updateCellActionsToolbarVisibility()
   }
 
@@ -274,7 +275,7 @@ class EditorCellView(
     mouseOver = true
     updateFolding()
     updateRunButtonVisibility()
-    myEditorCellFrameManager?.updateMarkdownCellShow(mouseOver || selected)
+    myEditorCellFrameManager?.updateCellFrameShow(mouseOver || selected)
     updateCellActionsToolbarVisibility()
   }
 
@@ -356,7 +357,7 @@ class EditorCellView(
     selected = value
     updateFolding()
     updateCellHighlight()
-    myEditorCellFrameManager?.updateMarkdownCellShow(mouseOver || selected)
+    myEditorCellFrameManager?.updateCellFrameShow(mouseOver || selected)
   }
 
   private fun updateFolding() {
@@ -401,7 +402,7 @@ class EditorCellView(
     return Rectangle(0, inputBounds.y, editor.contentSize.width, height)
   }
 
-  fun updateFrameVisibility(selected: Boolean, color: JBColor): Unit = _controllers.forEach {
+  fun updateFrameVisibility(selected: Boolean, color: Color): Unit = _controllers.forEach {
     it.updateFrameVisibility(selected, interval, color)
   }
 

@@ -59,6 +59,7 @@ import org.jetbrains.jewel.ui.component.styling.TrackClickBehavior
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Arrays
 
 @Suppress("LargeClass")
 class ScrollingSynchronizerTest {
@@ -630,7 +631,7 @@ class ScrollingSynchronizerTest {
     private fun assertSameDistance(distance: Int, vararg elements: Int) {
         assertTrue(elements.size > 1)
         for (i in 0..<elements.lastIndex) {
-            assertEquals(distance, elements[i + 1] - elements[i])
+            assertEquals(Arrays.toString(elements), distance, elements[i + 1] - elements[i])
         }
     }
 

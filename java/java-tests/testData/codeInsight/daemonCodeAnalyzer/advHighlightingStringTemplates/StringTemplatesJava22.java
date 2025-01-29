@@ -19,12 +19,12 @@ class X {
   }
 
   void wrongType(String foo) {
-    <error descr="Incompatible types. Found: 'java.lang.StringTemplate', required: 'java.lang.String'">String s = StringTemplate.RAW."""
+    String s = <error descr="Incompatible types. Found: 'java.lang.StringTemplate', required: 'java.lang.String'">StringTemplate.RAW."""
       this: \{foo}
       """;</error>
 
     var x = (java.io.Serializable & StringTemplate.Processor<String, RuntimeException>)null;
-    <error descr="Incompatible types. Found: 'java.lang.String', required: 'java.util.ArrayList'">java.util.ArrayList v = x."asdf";</error>
+    java.util.ArrayList v = <error descr="Incompatible types. Found: 'java.lang.String', required: 'java.util.ArrayList'">x."asdf";</error>
     String t = x."reticulation";
   }
 

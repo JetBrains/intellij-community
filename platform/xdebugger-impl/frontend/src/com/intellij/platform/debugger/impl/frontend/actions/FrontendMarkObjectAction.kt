@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerManager
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
-import com.intellij.xdebugger.impl.actions.handlers.XMarkObjectActionHandler
+import com.intellij.xdebugger.impl.actions.areFrontendDebuggerActionsEnabled
 import com.intellij.xdebugger.impl.actions.handlers.XMarkObjectActionHandler.Companion.performMarkObject
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.rpc.XValueMarkerId
@@ -21,11 +21,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 private class FrontendMarkObjectAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun update(event: AnActionEvent) {
-    if (XMarkObjectActionHandler.isEnabled(event)) {
-      // action should work only when MarkObjectAction is disabled
+    if (!areFrontendDebuggerActionsEnabled()) {
       event.presentation.isEnabledAndVisible = false
       return
     }
+
     val markers = getMarkers(event) ?: run {
       event.presentation.isEnabledAndVisible = false
       return

@@ -88,6 +88,7 @@ public final class TerminalSettingsPanel {
 
   private JBCheckBox myShowSeparatorsBetweenBlocksCheckbox;
 
+  private JPanel myPromptStylePanel;
   private JPanel myPromptStyleButtonsPanel;
   private JBRadioButton mySingleLineButton;
   private JBRadioButton myDoubleLineButton;
@@ -122,6 +123,7 @@ public final class TerminalSettingsPanel {
 
     myShowSeparatorsBetweenBlocksCheckbox.setVisible(Registry.is(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY));
 
+    myPromptStylePanel.setVisible(!Registry.is(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY));
     myPromptStyleButtonsPanel.setBorder(JBUI.Borders.empty(4, 20, 0, 0));
     // UI Designer is unable to create a ContextHelpLabel, because it doesn't have a default constructor.
     // So, I have to create and add it manually.

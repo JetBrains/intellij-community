@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
@@ -97,12 +94,10 @@ internal class ReplaceIsEmptyWithIfEmptyInspection : KotlinApplicableInspectionB
         return KotlinBundle.message("replace.with.0", "${context.replacementFunctionName} {...}")
     }
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtIfExpression,
         context: Replacement
-    ): KotlinModCommandQuickFix<KtIfExpression> {
-        return ReplaceFix(context)
-    }
+    ): Array<KotlinModCommandQuickFix<KtIfExpression>> = arrayOf(ReplaceFix(context))
 
     context(KaSession)
     override fun prepareContext(ifExpression: KtIfExpression): Replacement? {

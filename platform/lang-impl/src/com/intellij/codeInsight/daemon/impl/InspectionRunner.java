@@ -95,12 +95,12 @@ class InspectionRunner {
   }
 
   @Unmodifiable
-  @NotNull List<InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
-                                           @Nullable HighlightSeverity minimumSeverity,
-                                           boolean addRedundantSuppressions,
-                                           @NotNull ApplyIncrementallyCallback applyIncrementallyCallback,
-                                           @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
-                                           @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
+  @NotNull List<? extends InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+                                                     @Nullable HighlightSeverity minimumSeverity,
+                                                     boolean addRedundantSuppressions,
+                                                     @NotNull ApplyIncrementallyCallback applyIncrementallyCallback,
+                                                     @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
+                                                     @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
     if (!shouldInspect(myPsiFile)) {
       return Collections.emptyList();
     }
@@ -230,7 +230,7 @@ class InspectionRunner {
     contextFinishedCallback.accept(context);
   }
 
-  private void reportIdsOfInspectionsReportedAnyProblemToFUS(@NotNull List<InspectionContext> init) {
+  private void reportIdsOfInspectionsReportedAnyProblemToFUS(@NotNull List<? extends InspectionContext> init) {
     if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return;
     Set<String> inspectionIdsReportedProblems = new HashSet<>();
     InspectionProblemHolder holder;
@@ -243,7 +243,7 @@ class InspectionRunner {
     InspectionUsageFUSStorage.getInstance(myPsiFile.getProject()).reportInspectionsWhichReportedProblems(inspectionIdsReportedProblems);
   }
 
-  private static @NotNull TextRange finalPriorityRange(@NotNull TextRange priorityRange, @NotNull List<Divider.DividedElements> allDivided) {
+  private static @NotNull TextRange finalPriorityRange(@NotNull TextRange priorityRange, @NotNull List<? extends Divider.DividedElements> allDivided) {
     long finalPriorityRange = allDivided.isEmpty() ? TextRangeScalarUtil.toScalarRange(priorityRange) : allDivided.get(0).priorityRange();
     for (int i = 1; i < allDivided.size(); i++) {
       Divider.DividedElements dividedElements = allDivided.get(i);
@@ -300,7 +300,7 @@ class InspectionRunner {
     }
   }
 
-  private void addRedundantSuppressions(@NotNull List<InspectionContext> init,
+  private void addRedundantSuppressions(@NotNull List<? extends InspectionContext> init,
                                         @NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                         @NotNull List<? super InspectionContext> result,
                                         @NotNull ApplyIncrementallyCallback applyIncrementallyCallback,
@@ -448,7 +448,7 @@ class InspectionRunner {
                                                            myInspectionProfileWrapper, mySuppressedElements);
     ApplyIncrementallyCallback applyInjectionsIncrementallyCallback = (descriptors, holder, visitingPsiElement, shortName) ->
       applyInjectedDescriptor(descriptors, holder, visitingPsiElement, shortName, host, addDescriptorIncrementallyCallback);
-    List<InspectionContext> injectedContexts = injectedRunner.inspect(
+    List<? extends InspectionContext> injectedContexts = injectedRunner.inspect(
       wrappers, session.getMinimumSeverity(), true, applyInjectionsIncrementallyCallback,
       contextFinishedCallback, enabledToolsPredicate);
     outInjectedContexts.addAll(injectedContexts);

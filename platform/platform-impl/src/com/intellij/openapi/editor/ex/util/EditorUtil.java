@@ -646,20 +646,23 @@ public final class EditorUtil {
   }
 
   public static int getNotFoldedLineStartOffset(@NotNull Editor editor, int startOffset, boolean stopAtInvisibleFoldRegions) {
-    return ReadAction.compute(() -> {
-      int offset = startOffset;
-      while (true) {
-        offset = DocumentUtil.getLineStartOffset(offset, editor.getDocument());
-        FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
-        if (foldRegion == null ||
-            stopAtInvisibleFoldRegions && foldRegion.getPlaceholderText().isEmpty() ||
-            foldRegion.getStartOffset() >= offset) {
-          break;
-        }
-        offset = foldRegion.getStartOffset();
+    return ReadAction.compute(() -> getNotFoldedLineStartOffset(editor.getDocument(), editor.getFoldingModel(), startOffset, stopAtInvisibleFoldRegions));
+  }
+
+  @ApiStatus.Internal
+  public static int getNotFoldedLineStartOffset(@NotNull Document document, @NotNull FoldingModel foldingModel, int startOffset, boolean stopAtInvisibleFoldRegions) {
+    int offset = startOffset;
+    while (true) {
+      offset = DocumentUtil.getLineStartOffset(offset, document);
+      FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(offset - 1);
+      if (foldRegion == null ||
+          stopAtInvisibleFoldRegions && foldRegion.getPlaceholderText().isEmpty() ||
+          foldRegion.getStartOffset() >= offset) {
+        break;
       }
-      return offset;
-    });
+      offset = foldRegion.getStartOffset();
+    }
+    return offset;
   }
 
   /**
@@ -670,20 +673,23 @@ public final class EditorUtil {
   }
 
   public static int getNotFoldedLineEndOffset(@NotNull Editor editor, int startOffset, boolean stopAtInvisibleFoldRegions) {
-    return ReadAction.compute(() -> {
-      int offset = startOffset;
-      while (true) {
-        offset = getLineEndOffset(offset, editor.getDocument());
-        FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset);
-        if (foldRegion == null ||
-            stopAtInvisibleFoldRegions && foldRegion.getPlaceholderText().isEmpty() ||
-            foldRegion.getEndOffset() <= offset) {
-          break;
-        }
-        offset = foldRegion.getEndOffset();
+    return ReadAction.compute(() -> getNotFoldedLineEndOffset(editor.getDocument(), editor.getFoldingModel(), startOffset, stopAtInvisibleFoldRegions));
+  }
+
+  @ApiStatus.Internal
+  public static int getNotFoldedLineEndOffset(@NotNull Document document, @NotNull FoldingModel foldingModel, int startOffset, boolean stopAtInvisibleFoldRegions) {
+    int offset = startOffset;
+    while (true) {
+      offset = getLineEndOffset(offset, document);
+      FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(offset);
+      if (foldRegion == null ||
+          stopAtInvisibleFoldRegions && foldRegion.getPlaceholderText().isEmpty() ||
+          foldRegion.getEndOffset() <= offset) {
+        break;
       }
-      return offset;
-    });
+      offset = foldRegion.getEndOffset();
+    }
+    return offset;
   }
 
   private static int getLineEndOffset(int offset, Document document) {
@@ -1075,7 +1081,12 @@ public final class EditorUtil {
   }
 
   public static int getInlaysHeight(@NotNull Editor editor, int visualLine, boolean above) {
-    return getTotalInlaysHeight(editor.getInlayModel().getBlockElementsForVisualLine(visualLine, above));
+    return getInlaysHeight(editor.getInlayModel(), visualLine, above);
+  }
+
+  @ApiStatus.Internal
+  public static int getInlaysHeight(@NotNull InlayModel inlayModel, int visualLine, boolean above) {
+    return getTotalInlaysHeight(inlayModel.getBlockElementsForVisualLine(visualLine, above));
   }
 
   /**

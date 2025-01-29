@@ -8,6 +8,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
@@ -197,11 +198,16 @@ public class DarculaButtonUI extends BasicButtonUI {
     Color backgroundColor = (Color)c.getClientProperty("JButton.backgroundColor");
 
     return backgroundColor != null ? backgroundColor :
-           isDefaultButton(c) ? UIUtil.getGradientPaint(0, 0, getDefaultButtonColorStart(), 0, r.height, getDefaultButtonColorEnd()) :
+           isDefaultButton(c) ? getDefaultButtonPaint(c, r) :
            isSmallVariant(c) ? JBColor.namedColor("ComboBoxButton.background",
                                                   JBColor.namedColor("Button.darcula.smallComboButtonBackground", UIUtil.getPanelBackground())) :
            isGotItButton(c) ? UIUtil.getGradientPaint(0, 0, getGotItButtonColorStart(c), 0, r.height, getGotItButtonColorEnd(c)) :
            UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd());
+  }
+
+  private Paint getDefaultButtonPaint(JComponent c, Rectangle r) {
+    Paint paint = InternalUICustomization.getInstance().getCustomDefaultFillPaint(c, r);
+    return paint != null ? paint : UIUtil.getGradientPaint(0, 0, getDefaultButtonColorStart(), 0, r.height, getDefaultButtonColorEnd());
   }
 
   @Override

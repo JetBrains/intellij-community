@@ -3,9 +3,9 @@ package andel.tokens
 
 import andel.rope.Rope
 import andel.tokens.impl.*
+import fleet.fastutil.ints.Int2ObjectOpenHashMap
 import fleet.util.CancellationToken
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import kotlin.jvm.JvmInline
 
 public class Tokens<T> internal constructor(
   internal val rope: Rope<TokenArray>,
@@ -22,7 +22,7 @@ public class Tokens<T> internal constructor(
     fun <T> fromTokens(tokens: Sequence<Token2<T>>): Tokens<T> {
       val typeMap = TypeMapBuilder<T>(
         typeIdToType = Int2ObjectOpenHashMap(),
-        typeToId = Object2IntOpenHashMap(),
+        typeToId = HashMap(),
         nextId = 1
       )
       val tokenArrays = tokens.chunked(DESIRED_LEAF_SIZE).map { tokenList ->
@@ -46,7 +46,7 @@ public class Tokens<T> internal constructor(
     fun <T : Any> fromOldTokens(tokens: Sequence<Token<T>>, emptyType: T?, cancellationToken: CancellationToken): Tokens<T> {
       val typeMap = TypeMapBuilder<T>(
         typeIdToType = Int2ObjectOpenHashMap(),
-        typeToId = Object2IntOpenHashMap(),
+        typeToId = HashMap(),
         nextId = 1
       )
       val tokenArrays = tokens.chunked(DESIRED_LEAF_SIZE).map { tokenList ->

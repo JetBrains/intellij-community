@@ -16,6 +16,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import java.nio.charset.Charset
 import java.nio.file.FileSystems
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
 class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCommandLineBuilder {
@@ -59,7 +60,15 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
   }
 
   override fun copyPathToTargetIfRequired(path: Path): Path {
-    return EelPathUtils.transferContentsIfNonLocal(eel, path, workingDirectory.resolve("build-cache").resolve(path.name))
+    if (path.getEelDescriptor() != LocalEelDescriptor) return path
+    val remotePath = workingDirectory.resolve("build-cache").resolve(path.name)
+    if (path.isDirectory()) {
+      EelPathUtils.transferContentsIfNonLocal(eel, path, remotePath)
+    }
+    else if (path.getEelDescriptor() == LocalEelDescriptor) {
+      EelPathUtils.transferLocalContentToRemotePathIfNeeded(path, remotePath)
+    }
+    return remotePath
   }
 
   override fun copyPathToHostIfRequired(path: Path): String {

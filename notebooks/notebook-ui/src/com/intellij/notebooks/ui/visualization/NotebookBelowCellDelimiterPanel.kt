@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBBox
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -21,6 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
 import java.time.ZonedDateTime
@@ -60,7 +60,7 @@ class NotebookBelowCellDelimiterPanel(
     updateExecutionStatus(initTooltipText, executionCount, initStatusIcon, initExecutionDurationText)
   }
 
-  fun setFrameVisible(isVisible: Boolean, frameColor: JBColor) {
+  fun setFrameVisible(isVisible: Boolean, frameColor: Color) {
     val frameBorder = when (isVisible) {
       true -> BorderFactory.createMatteBorder(0, 0, 1, 1, frameColor)
       else -> BorderFactory.createMatteBorder(0, 0, 1, 1, background)

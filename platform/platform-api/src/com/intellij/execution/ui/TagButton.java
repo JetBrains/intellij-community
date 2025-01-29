@@ -78,6 +78,7 @@ public class TagButton extends JBLayeredPane implements Disposable {
         }
       }
     });
+    myButton.getAccessibleContext().setAccessibleDescription(OptionsBundle.message("tag.button.accessible.description"));
     add(myButton, JLayeredPane.DEFAULT_LAYER);
     myCloseButton = new InplaceButton(new IconButton(null, AllIcons.Actions.Close, AllIcons.Actions.CloseDarkGrey),
                                       a -> remove(action, null));

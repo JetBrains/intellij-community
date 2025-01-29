@@ -7,18 +7,15 @@ import com.intellij.codeInsight.completion.commands.core.HighlightInfoLookup
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.daemon.impl.HighlightInfo.IntentionActionDescriptor
 import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection.runAnnotatorsInGeneralHighlighting
-import com.intellij.codeInsight.daemon.impl.QuickFixActionRegistrarImpl
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass.addAvailableFixesForGroups
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.jobToIndicator
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.Nls
@@ -57,10 +54,6 @@ class DirectErrorFixCompletionCommand(
             continue
           }
           val fixes: MutableList<IntentionActionDescriptor> = ArrayList()
-          val unresolvedReference = info.unresolvedReference
-          if (unresolvedReference != null) {
-            UnresolvedReferenceQuickFixProvider.registerReferenceFixes<PsiReference>(unresolvedReference, QuickFixActionRegistrarImpl(info))
-          }
           addAvailableFixesForGroups(info, topLevelEditor, topLevelPsiFile, fixes, -1, topLevelOffset, false)
           for (fix in fixes) {
             if (fix.action.text == name) {

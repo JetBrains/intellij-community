@@ -143,9 +143,6 @@ c:com.intellij.codeInsight.actions.VcsFacade
 *f:com.intellij.codeInsight.codeVision.CodeVisionProvider$Companion
 - sf:EP_NAME:java.lang.String
 - f:getProvidersExtensionPoint():com.intellij.openapi.extensions.ExtensionPointName
-*:com.intellij.codeInsight.daemon.impl.InjectedLanguageHighlightingRangeReducer
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:reduceRange(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):java.util.List
 *:com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider
 - a:calcFocusZones(com.intellij.psi.PsiFile):java.util.List
 *:com.intellij.codeInsight.editorActions.TypingActionsExtension

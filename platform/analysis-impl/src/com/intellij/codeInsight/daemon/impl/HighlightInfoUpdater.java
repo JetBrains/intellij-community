@@ -29,6 +29,7 @@ public abstract class HighlightInfoUpdater {
    *               {@code Class<? extends HighlightVisitor>}: the tool is a {@link HighlightVisitor} of the corresponding class
    *               {@code Object: Injection background and syntax from InjectedGeneralHighlightingPass#INJECTION_BACKGROUND_ID }
    */
+  @ApiStatus.Internal
   public abstract void psiElementVisited(@NotNull Object toolId,
                                   @NotNull PsiElement visitedPsiElement,
                                   @NotNull List<? extends HighlightInfo> newInfos,

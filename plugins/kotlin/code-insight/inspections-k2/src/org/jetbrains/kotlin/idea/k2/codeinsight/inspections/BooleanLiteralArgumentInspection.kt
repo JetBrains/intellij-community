@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -105,10 +105,10 @@ internal class BooleanLiteralArgumentInspection(
         }
     }
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtValueArgument,
         context: Context,
-    ): KotlinModCommandQuickFix<KtValueArgument> = object : KotlinModCommandQuickFix<KtValueArgument>() {
+    ): Array<KotlinModCommandQuickFix<KtValueArgument>> = arrayOf(object : KotlinModCommandQuickFix<KtValueArgument>() {
         override fun getFamilyName(): @IntentionFamilyName String = context.familyName
 
         override fun applyFix(
@@ -122,7 +122,7 @@ internal class BooleanLiteralArgumentInspection(
                 }
             )
         }
-    }
+    })
 }
 
 private fun KtExpression.isBooleanLiteral(): Boolean = this is KtConstantExpression && node.elementType == KtNodeTypes.BOOLEAN_CONSTANT

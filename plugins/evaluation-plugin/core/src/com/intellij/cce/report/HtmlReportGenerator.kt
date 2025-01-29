@@ -130,7 +130,7 @@ class HtmlReportGenerator(
     var rowId = 1
 
     val errorMetrics = globalMetrics.map {
-      MetricInfo(it.name, it.description, Double.NaN, null, it.evaluationType, it.valueType, it.showByDefault)
+      MetricInfo(it.name, it.description, Double.NaN, null, it.evaluationType, it.valueType, it.showByDefault, null)
     }
 
     fun getReportMetrics(repRef: ReferenceInfo) = globalMetrics.map { metric ->
@@ -142,7 +142,8 @@ class HtmlReportGenerator(
         refMetric?.confidenceInterval,
         metric.evaluationType,
         metric.valueType,
-        metric.showByDefault
+        metric.showByDefault,
+        metric.individualScores
       )
     }
 
@@ -150,7 +151,7 @@ class HtmlReportGenerator(
       if (withDiff) listOf(metrics, metrics
         .groupBy({ it.name }, { Triple(it.value, it.valueType, it.showByDefault) })
         .mapValues { with(it.value) { Triple(first().first - last().first, first().second, first().third) } }
-        .map { MetricInfo(it.key, "", it.value.first, null, diffColumnTitle, it.value.second, it.value.third) }).flatten()
+        .map { MetricInfo(it.key, "", it.value.first, null, diffColumnTitle, it.value.second, it.value.third, null) }).flatten()
       else metrics
                                                            ).joinToString(",") {
         "${it.name}${it.evaluationType}:'${

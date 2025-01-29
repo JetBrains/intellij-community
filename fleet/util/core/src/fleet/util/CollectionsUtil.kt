@@ -153,7 +153,7 @@ fun <T : Comparable<T>> Iterable<T>.toSortedSet(): SortedSet<T> {
   return SortedSet<T>(result.forked())
 }
 
-fun <K : Comparable<K>, V> Map<out K, V>.toSortedMap(): SortedMap<out K, V> {
+fun <K : Comparable<K>, V> Map<K, V>.toSortedMap(): SortedMap<K, V> {
   return SortedMap.from(this)
 }
 
@@ -168,6 +168,8 @@ fun <K : Comparable<K>, V> sortedMapOf(vararg pairs: Pair<K, V>): SortedMap<K, V
   pairs.forEach { (key, value) -> result.put(key, value) }
   return result.forked()
 }
+
+fun <K : Comparable<K>, V> sortedMapOf(comparator: Comparator<K>): SortedMap<K, V> = SortedMap<K, V>(comparator)
 
 inline fun <K, V, R, M : SortedMap<in K, in R>> Map<out K, V>.mapValuesTo(destination: M, transform: (Map.Entry<K, V>) -> R): M {
   return entries.associateByTo(destination, { it.key }, transform)

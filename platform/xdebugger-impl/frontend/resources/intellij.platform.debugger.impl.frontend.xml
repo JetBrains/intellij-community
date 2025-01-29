@@ -3,12 +3,41 @@
     <plugin id="com.intellij.platform.experimental.frontend"/>
     <module name="intellij.platform.frontend"/>
   </dependencies>
-  <actions>
+  <actions resource-bundle="messages.FrontendDebuggerImplBundle">
     <action id="QuickEvaluateExpression" class="com.intellij.platform.debugger.impl.frontend.actions.QuickEvaluateAction"/>
-    <action id="FrontendMarkObjectAction" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendMarkObjectAction"
+    <action id="MarkObjectAction.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendMarkObjectAction"
             use-shortcut-of="ToggleBookmark">
-      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="XDebugger.Inspect"/>
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend"/>
     </action>
+    <action id="XDebugger.SetValue.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXSetValueAction" use-shortcut-of="XDebugger.SetValue">
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
+                    relative-to-action="MarkObjectAction.Frontend"/>
+    </action>
+    <action id="XDebugger.CopyValue.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXCopyValueAction"
+            use-shortcut-of="XDebugger.CopyValue">
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
+                    relative-to-action="XDebugger.SetValue.Frontend"/>
+    </action>
+    <action id="XDebugger.CompareValueWithClipboard.Frontend"
+            class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXCompareWithClipboardAction">
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
+                    relative-to-action="XDebugger.CopyValue.Frontend"/>
+    </action>
+    <action id="XDebugger.CopyName.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXCopyNameAction">
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
+                    relative-to-action="XDebugger.CompareValueWithClipboard.Frontend"/>
+    </action>
+
+    <action id="XDebugger.JumpToSource.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXJumpToSourceAction"
+            use-shortcut-of="XDebugger.JumpToSource">
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Jump.To.Section.Frontend" anchor="first"/>
+    </action>
+
+    <action id="XDebugger.JumpToTypeSource.Frontend"
+            class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXJumpToTypeSourceAction">
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Jump.To.Section.Frontend" anchor="after" relative-to-action="XDebugger.JumpToSource.Frontend"/>
+    </action>
+
     <action id="XDebugger.Hotswap.Modified.Files" class="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapModifiedFilesAction">
       <add-to-group group-id="DebugReloadGroup" anchor="first"/>
       <add-to-group group-id="EditorPopupMenuDebugHotSwap" anchor="first"/>

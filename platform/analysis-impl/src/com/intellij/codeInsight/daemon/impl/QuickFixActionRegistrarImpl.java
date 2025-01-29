@@ -30,8 +30,7 @@ public class QuickFixActionRegistrarImpl implements QuickFixActionRegistrar {
     doRegister(action, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
   }
 
-  @ApiStatus.Internal
-  public void doRegister(@NotNull IntentionAction action,
+  private void doRegister(@NotNull IntentionAction action,
                   @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String displayName,
                   @Nullable TextRange fixRange,
                   @Nullable HighlightDisplayKey key) {

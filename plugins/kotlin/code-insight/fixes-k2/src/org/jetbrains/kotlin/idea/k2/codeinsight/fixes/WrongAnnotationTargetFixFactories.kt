@@ -5,6 +5,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.*
 import com.intellij.modcommand.ModCommand.chooseAction
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.config.AnnotationDefaultTargetMode
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.idea.quickfix.K2EnableUnsupportedFeatureFix
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 
 internal object WrongAnnotationTargetFixFactories {
+    private const val ANNOTATION_DEFAULT_TARGET_FLAG = "-Xannotation-default-target"
 
     val addAnnotationUseSiteTargetFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.WrongAnnotationTarget ->
         val applicableUseSiteTargets = diagnostic.psi.getApplicableUseSiteTargets().takeIf {
@@ -51,11 +53,11 @@ internal object WrongAnnotationTargetFixFactories {
             val annotationEntry = diagnostic.psi
             val module = annotationEntry.containingKtFile.module ?: return@IntentionBased emptyList()
             val feature = LanguageFeature.PropertyParamAnnotationDefaultTargetMode
-            val futureRuleTarget = "'${AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER.renderName}' + '${diagnostic.useSiteDescription}'"
+            val flagString = "$ANNOTATION_DEFAULT_TARGET_FLAG=${AnnotationDefaultTargetMode.PARAM_PROPERTY.description}"
             listOf(
                 K2EnableUnsupportedFeatureFix(
                     annotationEntry, module, feature,
-                    alternativeActionText = KotlinBundle.message("text.enable.annotation.target.feature", futureRuleTarget)
+                    alternativeActionText = KotlinBundle.message("text.enable.annotation.target.feature", flagString)
                 ),
             )
         }

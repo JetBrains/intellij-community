@@ -277,11 +277,13 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiHorizontalP
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiIconButtonStylingKt {
 	public static final fun dark (Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors;Lorg/jetbrains/jewel/ui/component/styling/IconButtonMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;
-	public static final fun dark-8v1krLo (Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors$Companion;JJJJJJJJJJJJJJJLandroidx/compose/runtime/Composer;III)Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors;
+	public static final fun dark-7HESe_I (Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors$Companion;JJJJJJJJJJJJJJJ)Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors;
+	public static synthetic fun dark-7HESe_I$default (Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors$Companion;JJJJJJJJJJJJJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors;
 	public static final fun defaults-ij7-PLE (Lorg/jetbrains/jewel/ui/component/styling/IconButtonMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;FLandroidx/compose/foundation/layout/PaddingValues;J)Lorg/jetbrains/jewel/ui/component/styling/IconButtonMetrics;
 	public static synthetic fun defaults-ij7-PLE$default (Lorg/jetbrains/jewel/ui/component/styling/IconButtonMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;FLandroidx/compose/foundation/layout/PaddingValues;JILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/IconButtonMetrics;
 	public static final fun light (Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors;Lorg/jetbrains/jewel/ui/component/styling/IconButtonMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;
-	public static final fun light-8v1krLo (Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors$Companion;JJJJJJJJJJJJJJJLandroidx/compose/runtime/Composer;III)Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors;
+	public static final fun light-7HESe_I (Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors$Companion;JJJJJJJJJJJJJJJ)Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors;
+	public static synthetic fun light-7HESe_I$default (Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors$Companion;JJJJJJJJJJJJJJJILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors;
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiInformationBannerColorFactory {
@@ -550,11 +552,11 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiTextAreaSty
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiTextFieldStylingKt {
-	public static final fun dark (Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/TextFieldColors;Lorg/jetbrains/jewel/ui/component/styling/TextFieldMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;
+	public static final fun dark (Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/TextFieldColors;Lorg/jetbrains/jewel/ui/component/styling/TextFieldMetrics;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;
 	public static final fun dark-a3tHFA8 (Lorg/jetbrains/jewel/ui/component/styling/TextFieldColors$Companion;JJJJJJJJJJJJJJJJJJJJJLandroidx/compose/runtime/Composer;IIII)Lorg/jetbrains/jewel/ui/component/styling/TextFieldColors;
 	public static final fun defaults-H1KY9o8 (Lorg/jetbrains/jewel/ui/component/styling/TextFieldMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;JF)Lorg/jetbrains/jewel/ui/component/styling/TextFieldMetrics;
 	public static synthetic fun defaults-H1KY9o8$default (Lorg/jetbrains/jewel/ui/component/styling/TextFieldMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;JFILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/TextFieldMetrics;
-	public static final fun light (Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/TextFieldColors;Lorg/jetbrains/jewel/ui/component/styling/TextFieldMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;
+	public static final fun light (Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle$Companion;Lorg/jetbrains/jewel/ui/component/styling/TextFieldColors;Lorg/jetbrains/jewel/ui/component/styling/TextFieldMetrics;Lorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;
 	public static final fun light-a3tHFA8 (Lorg/jetbrains/jewel/ui/component/styling/TextFieldColors$Companion;JJJJJJJJJJJJJJJJJJJJJLandroidx/compose/runtime/Composer;IIII)Lorg/jetbrains/jewel/ui/component/styling/TextFieldColors;
 }
 

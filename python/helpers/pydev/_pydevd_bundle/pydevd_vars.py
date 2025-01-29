@@ -836,6 +836,7 @@ def is_able_to_format_number(format):
 
 TYPE_TO_XML_CONVERTERS = {
     "ndarray": array_to_xml,
+    "recarray": array_to_xml,
     "DataFrame": dataframe_to_xml,
     "Series": dataframe_to_xml,
     "GeoDataFrame": dataframe_to_xml,

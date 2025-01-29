@@ -26,8 +26,8 @@ fun createBaseCompletionMetrics(showByDefault: Boolean): List<Metric> =
 fun createCompletionGolfMetrics(): List<Metric> =
   listOf(
     MatchedRatio(),
-    MatchedRatioAt(showByDefault = false, n = 1),
-    MatchedRatioAt(showByDefault = false, n = 3),
+    MatchedRatioAt(n = 1, showByDefault = false),
+    MatchedRatioAt(n = 3, showByDefault = false),
     PrefixSimilarity(),
     EditSimilarity(),
     SelectedAtMetric(false, n = 1),
@@ -43,8 +43,8 @@ fun createCompletionGolfMetrics(): List<Metric> =
 fun createBenchmarkMetrics(): List<Metric> =
   listOf(
     MatchedRatio(showByDefault = true),
-    MatchedRatioAt(showByDefault = false, n = 1),
-    MatchedRatioAt(showByDefault = false, n = 3),
+    MatchedRatioAt(n = 1, showByDefault = false),
+    MatchedRatioAt(n = 3, showByDefault = false),
     PrefixSimilarity(showByDefault = false),
     EditSimilarity(showByDefault = false),
     PerfectLine(showByDefault = true),
@@ -61,7 +61,7 @@ fun createCompletionRelevanceMetrics(showByDefault: Boolean, relevanceType: Stri
   listOf(
     PrecisionWithRelevanceMetric(showByDefault = showByDefault, relevanceType),
     RecallWithRelevanceMetric(showByDefault = showByDefault, relevanceType),
-    MatchedRatioWithRelevanceModel(showByDefault = showByDefault, relevanceType)
+    MatchedRatioWithRelevanceModel(relevance = relevanceType, showByDefault = showByDefault)
   )
 
 internal abstract class CompletionGolfMetric<T : Number> : Metric {

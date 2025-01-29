@@ -5,6 +5,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.tree
 import kotlin.apply as applyKt
 
 @ApiStatus.Internal
@@ -13,9 +14,19 @@ abstract class GroovyDslGradleBuildScriptBuilder<Self : GroovyDslGradleBuildScri
   gradleVersion: GradleVersion,
 ) : AbstractGradleBuildScriptBuilder<Self>(gradleVersion) {
 
-  override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit): Self =
+  private val PREDEFINED_TASKS = setOf("test", "compileJava", "compileTestJava")
+
+  override fun configureTask(name: String, type: String, configure: ScriptTreeBuilder.() -> Unit): Self =
     withPostfix {
-      callIfNotEmpty("test", configure)
+      val block = tree(configure)
+      if (!block.isEmpty()) {
+        if (name in PREDEFINED_TASKS) {
+          call(name, argument(block))
+        }
+        else {
+          call("tasks.named", argument(name), argument(code(type)), argument(block))
+        }
+      }
     }
 
   override fun withKotlinJvmPlugin(version: String?): Self = apply {

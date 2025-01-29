@@ -25,14 +25,13 @@ open class LocalBlockTerminalRunner(project: Project) : LocalTerminalDirectRunne
            && Registry.`is`(BLOCK_TERMINAL_REGISTRY, false)
   }
 
-  override fun isReworkedBlockTerminalEnabled(): Boolean {
-    return (ExperimentalUI.isNewUI() || ApplicationManager.getApplication().isUnitTestMode)
-           && Registry.`is`(REWORKED_BLOCK_TERMINAL_REGISTRY, false)
+  override fun isBlockTerminalReworked(): Boolean {
+    return Registry.`is`(REWORKED_BLOCK_TERMINAL_REGISTRY, false)
   }
 
   override fun createShellTerminalWidget(parent: Disposable, startupOptions: ShellStartupOptions): TerminalWidget {
-    if (isBlockTerminalEnabled || isReworkedBlockTerminalEnabled) {
-      return TerminalWidgetImpl(myProject, settingsProvider, isReworkedBlockTerminalEnabled, parent)
+    if (isBlockTerminalEnabled) {
+      return TerminalWidgetImpl(myProject, settingsProvider, isBlockTerminalReworked, parent)
     }
     return super.createShellTerminalWidget(parent, startupOptions)
   }

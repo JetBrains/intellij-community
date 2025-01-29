@@ -165,5 +165,6 @@
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
     <orderEntry type="library" name="ap-validation" level="project" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.installer" />
   </component>
 </module>

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
@@ -33,11 +33,11 @@ internal class KotlinBigDecimalEqualsInspection : KotlinApplicableInspectionBase
     ): @InspectionMessage String =
         KotlinBundle.message("big.decimal.equals.problem.descriptor")
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtExpression,
         context: Context
-    ): KotlinModCommandQuickFix<KtExpression> =
-        object : KotlinModCommandQuickFix<KtExpression>() {
+    ): Array<KotlinModCommandQuickFix<KtExpression>> =
+        arrayOf(object : KotlinModCommandQuickFix<KtExpression>() {
             override fun getFamilyName(): @IntentionFamilyName String =
                 KotlinBundle.message("big.decimal.equals")
 
@@ -54,6 +54,7 @@ internal class KotlinBigDecimalEqualsInspection : KotlinApplicableInspectionBase
                         val compareToExpression = psiFactory.createExpression(expressionString)
                         element.replace(compareToExpression)
                     }
+
                     is KtCallExpression -> {
                         val qualifiedExpression = element.parent as KtQualifiedExpression
                         val receiverExpression = qualifiedExpression.receiverExpression
@@ -63,6 +64,7 @@ internal class KotlinBigDecimalEqualsInspection : KotlinApplicableInspectionBase
                         val compareToExpression = psiFactory.createExpression("($expressionString)")
                         qualifiedExpression.replace(compareToExpression)
                     }
+
                     else -> return
                 }
             }
@@ -109,7 +111,7 @@ internal class KotlinBigDecimalEqualsInspection : KotlinApplicableInspectionBase
                     }
                 }
             }
-        }
+        })
 
     override fun isApplicableByPsi(element: KtExpression): Boolean =
         // BigDecimal(1.0) == BigDecimal(1) or BigDecimal(1.0) != BigDecimal(1)

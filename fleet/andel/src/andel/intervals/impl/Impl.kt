@@ -593,7 +593,7 @@ object Impl {
       if (parents[cid] != null) {
         while (cid != OPEN_ROOT_ID && cid != CLOSED_ROOT_ID) {
           val pid = parents[cid] ?: throw NoSuchElementException("id:$cid")
-          val sibs = subtree.getOrDefault(pid, HashSet())
+          val sibs = subtree.getOrElse(pid) { HashSet() }
           sibs.add(cid)
           subtree[pid] = sibs
           cid = pid

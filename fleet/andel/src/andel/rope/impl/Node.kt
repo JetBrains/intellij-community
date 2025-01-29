@@ -156,7 +156,7 @@ private fun <Data> splitChildren(ops: Monoid<Data>, node: Node): Node {
         }
       }
     }
-    return Node(newChildren.toArray(), newMetrics.build())
+    return Node(newChildren.toTypedArray(), newMetrics.build())
   }
   return node
 }
@@ -266,7 +266,7 @@ private fun <Data> mergeChildren(ops: Monoid<Data>, node: Node): Node {
       newChildren.add(leftData)
       newMetrics.add(leftMetrics)
     }
-    return Node(newChildren.toArray(), newMetrics.build())
+    return Node(newChildren.toTypedArray(), newMetrics.build())
   }
   return node
 }

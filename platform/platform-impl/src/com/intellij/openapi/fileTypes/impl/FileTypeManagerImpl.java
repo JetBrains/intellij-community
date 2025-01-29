@@ -203,7 +203,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     checkDuplicatedAlarm = singleAlarm(400, coroutineScope, this::checkUnique);
     EP_NAME.addExtensionPointListener(this, this);
-    FileTypeOverrider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+    FileTypeOverrider.EP_NAME.addExtensionPointListener(coroutineScope, new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(FileTypeOverrider extension, @NotNull PluginDescriptor pluginDescriptor) {
         fileTypeOverriderCache = null;

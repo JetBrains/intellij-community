@@ -161,6 +161,38 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   }
 
   @Test
+  public void testCompilerArguments() {
+    createProjectConfig(script(it -> it
+      .withJavaPlugin()
+      .configureTask("compileTestJava", "JavaCompile", task -> {
+        task.code("options.compilerArgs << '-param1' << '-param2'");
+      })
+    ));
+    importProject();
+    assertModules("project", "project.main", "project.test");
+    assertProjectCompilerArgumentsVersion();
+    assertModuleCompilerArgumentsVersion("project");
+    assertModuleCompilerArgumentsVersion("project.main");
+    assertModuleCompilerArgumentsVersion("project.test", "-param1", "-param2");
+
+    createProjectConfig(script(it -> it
+      .withJavaPlugin()
+      .configureTask("compileJava", "JavaCompile", task -> {
+        task.code("options.compilerArgs << '-param'");
+      })
+      .configureTask("compileTestJava", "JavaCompile", task -> {
+        task.code("options.compilerArgs << '-param'");
+      })
+    ));
+    importProject();
+    assertModules("project", "project.main", "project.test");
+    assertProjectCompilerArgumentsVersion("-param");
+    assertModuleCompilerArgumentsVersion("project", "-param");
+    assertModuleCompilerArgumentsVersion("project.main", "-param");
+    assertModuleCompilerArgumentsVersion("project.test", "-param");
+  }
+
+  @Test
   public void testJdkName() throws Exception {
     Sdk myJdk = IdeaTestUtil.getMockJdk17("MyJDK");
     edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(myJdk, myProject)));

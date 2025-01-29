@@ -1,23 +1,23 @@
 <component name="libraryTable">
   <library name="netty-buffer" type="repository">
-    <properties maven-id="io.netty:netty-buffer:4.2.0.RC1">
+    <properties maven-id="io.netty:netty-buffer:4.2.0.RC2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.RC1/netty-buffer-4.2.0.RC1.jar">
-          <sha256sum>58b26e710993588b3a3eb1cc8089e6dfc817dd67614324f388e11384d0805479</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.RC2/netty-buffer-4.2.0.RC2.jar">
+          <sha256sum>74d953cec00048b892112f9602fc7b1113ea55337dc1ede32e449efcb2b231c7</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.RC1/netty-common-4.2.0.RC1.jar">
-          <sha256sum>a68c14006d5835c660d751799004c4110b518a88c30b64d74e4209b93b056053</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.RC2/netty-common-4.2.0.RC2.jar">
+          <sha256sum>cc65afe17daf2f9380d3c64460f5b10ec279f98b9461fbf0ccf62b3cb3ee6c37</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.RC1/netty-buffer-4.2.0.RC1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.RC1/netty-common-4.2.0.RC1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.RC2/netty-buffer-4.2.0.RC2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.RC2/netty-common-4.2.0.RC2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.RC1/netty-buffer-4.2.0.RC1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.RC1/netty-common-4.2.0.RC1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.2.0.RC2/netty-buffer-4.2.0.RC2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.2.0.RC2/netty-common-4.2.0.RC2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

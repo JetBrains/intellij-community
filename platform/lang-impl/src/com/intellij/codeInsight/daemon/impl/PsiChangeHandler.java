@@ -119,7 +119,15 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
       }
     }
     Editor selectedEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-    PsiFile selectedFile = selectedEditor == null ? null : PsiDocumentManager.getInstance(myProject).getCachedPsiFile(selectedEditor.getDocument());
+    PsiFile selectedFile;
+    if (selectedEditor == null) {
+      selectedFile = null;
+    }
+    else {
+      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-173666")) {
+        selectedFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(selectedEditor.getDocument());
+      }
+    }
     if (selectedFile != null && !application.isUnitTestMode()) {
       application.invokeLater(() -> {
         if (!selectedEditor.isDisposed() &&

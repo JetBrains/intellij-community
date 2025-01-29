@@ -195,7 +195,7 @@ final class EditorWindowImpl extends UserDataHolderBase implements EditorWindow,
   }
 
   @Override
-  public TextDrawingCallback getTextDrawingCallback() {
+  public @NotNull TextDrawingCallback getTextDrawingCallback() {
     return myDelegate.getTextDrawingCallback();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -79,10 +79,10 @@ internal class NullableBooleanElvisInspection : KotlinApplicableInspectionBase.S
             ?.asUnit
     }
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtBinaryExpression,
         context: Unit,
-    ) = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    ): Array<KotlinModCommandQuickFix<KtBinaryExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtBinaryExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.nullable.boolean.elvis.action.name")
@@ -101,7 +101,7 @@ internal class NullableBooleanElvisInspection : KotlinApplicableInspectionBase.S
                 parentWithNegation.replaceElvisWithBooleanEqualityOperation(lhs, rhs, hasNegation = true)
             }
         }
-    }
+    })
 
     /**
      * To be a target of the nullable boolean elvis inspection,

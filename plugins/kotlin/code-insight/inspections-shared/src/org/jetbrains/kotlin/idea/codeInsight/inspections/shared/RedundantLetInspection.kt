@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -14,7 +14,10 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.utils.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.KOTLIN_LET_FQ_NAME
+import org.jetbrains.kotlin.idea.codeinsight.utils.isCalling
+import org.jetbrains.kotlin.idea.codeinsight.utils.isLetCallRedundant
+import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantLetCall
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
@@ -53,10 +56,10 @@ internal sealed class RedundantLetInspection :
         parameterName: String,
     ): Boolean
 
-    final override fun createQuickFix(
+    final override fun createQuickFixes(
         element: KtCallExpression,
         context: Unit,
-    ): KotlinModCommandQuickFix<KtCallExpression> = object : KotlinModCommandQuickFix<KtCallExpression>() {
+    ): Array<KotlinModCommandQuickFix<KtCallExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtCallExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.let.call")
@@ -70,7 +73,7 @@ internal sealed class RedundantLetInspection :
                 updater.moveCaretTo(it)
             }
         }
-    }
+    })
 
     final override fun buildVisitor(
         holder: ProblemsHolder,

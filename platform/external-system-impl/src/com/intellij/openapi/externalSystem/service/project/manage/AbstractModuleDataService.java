@@ -9,7 +9,6 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -25,8 +24,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
@@ -70,9 +67,6 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
   private static final Logger LOG = Logger.getInstance(AbstractModuleDataService.class);
 
-  private static final ExtensionPointName<ModuleDataServiceExtension> EP_NAME =
-    ExtensionPointName.create("com.intellij.externalSystem.moduleDataServiceExtension");
-
   @Override
   public void importData(final @NotNull Collection<? extends DataNode<E>> toImport,
                          @Nullable ProjectData projectData,
@@ -99,9 +93,6 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         setModuleOptions(module, node);
         ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
         syncPaths(module, modifiableRootModel, node.getData());
-
-        EP_NAME.forEachExtensionSafe(extension -> extension.importModule(modelsProvider, module, node.getData()));
-        importModuleSdk(modifiableRootModel, node.getData());
       }
     }
 
@@ -483,25 +474,5 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       LOG.trace(String.format("rearrange status (%s): %s", modifiableRootModel.getModule(), changed ? "modified" : "not modified"));
     }
     modifiableRootModel.rearrangeOrderEntries(newOrder);
-  }
-
-  @SuppressWarnings("deprecation")
-  private void importModuleSdk(@NotNull ModifiableRootModel modifiableRootModel, E data) {
-    if (!data.isSetSdkName()) return;
-    if (modifiableRootModel.getSdk() != null) return;
-    String skdName = data.getSdkName();
-    if (skdName == null) return;
-    ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
-    Sdk sdk = projectJdkTable.findJdk(skdName);
-    if (sdk == null) return;
-    Project project = modifiableRootModel.getProject();
-    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-    Sdk projectSdk = projectRootManager.getProjectSdk();
-    if (sdk.equals(projectSdk)) {
-      modifiableRootModel.inheritSdk();
-    }
-    else {
-      modifiableRootModel.setSdk(sdk);
-    }
   }
 }

@@ -35,6 +35,7 @@
       completion-ranking-python-with-full-line:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0/completion-ranking-python-with-full-line-0.jar
   - name: intellij.python.community.impl.poetry
+  - name: intellij.python.community.impl.installer
   - name: intellij.python.psi
   - name: intellij.python.psi.impl
   - name: intellij.python.pydev

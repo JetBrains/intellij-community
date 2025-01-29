@@ -12,6 +12,10 @@ com.intellij.codeInsight.daemon.ReferenceImporter
 - s:setHighlightersToEditor(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,I,I,java.util.Collection,I):V
 com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 - *:registerFix(com.intellij.modcommand.ModCommandAction,java.util.List,java.lang.String,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
+- *a:registerLazyFixes(java.util.function.Consumer):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
+*:com.intellij.codeInsight.daemon.impl.InjectedLanguageHighlightingRangeReducer
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:reduceRange(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):java.util.List
 *a:com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentModCommandFix
 - com.intellij.modcommand.PsiUpdateModCommandQuickFix
 - com.intellij.codeInspection.ContainerBasedSuppressQuickFix

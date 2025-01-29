@@ -13,6 +13,7 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
@@ -254,7 +255,7 @@ private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame,
         coroutineScope = coroutineScope,
         frame = frame,
         isOpaque = true,
-        background = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true),
+        background = InternalUICustomization.getInstance().getMainToolbarBackground(true),
         isFullScreen
       )
       toolbar.border = JBUI.Borders.emptyLeft(5)

@@ -68,7 +68,7 @@ public final class ShConfigurationType extends SimpleConfigurationType {
 
     if (shell != null) {
       final var shellPath = getNioPath(shell, eelDescriptor);
-      if (isExecutable(getNioPath(shell, eelDescriptor))) {
+      if (isExecutable(shellPath)) {
         return shellPath.toString();
       }
     }
@@ -79,6 +79,6 @@ public final class ShConfigurationType extends SimpleConfigurationType {
       }
       return getNioPath("/bin/sh", eelDescriptor).toString();
     }
-    return getNioPath("powershell.exe", eelDescriptor).toString();
+    return "powershell.exe"; // TODO
   }
 }

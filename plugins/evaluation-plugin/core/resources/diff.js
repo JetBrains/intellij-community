@@ -362,18 +362,24 @@ class HighlightResistantDiff extends Diff {
   }
 
   equals(left, right, options) {
-    let indexOf = -1;
     for (const highlighter of this.highlighters) {
-      indexOf = right.indexOf(highlighter);
+      const indexOf = left.indexOf(highlighter);
       if (indexOf >= 0) {
+        const endsWithNewline = left.endsWith("\n");
+        left = left.substring(0, indexOf) + (endsWithNewline ? "\n" : "");
         break;
       }
     }
 
-    if (indexOf >= 0) {
-      const endsWithNewline = right.endsWith("\n");
-      right = right.substring(0, indexOf) + (endsWithNewline ? "\n" : "");
+    for (const highlighter of this.highlighters) {
+      const indexOf = right.indexOf(highlighter);
+      if (indexOf >= 0) {
+        const endsWithNewline = right.endsWith("\n");
+        right = right.substring(0, indexOf) + (endsWithNewline ? "\n" : "");
+        break;
+      }
     }
+
     return super.equals(left, right, options);
   }
 }

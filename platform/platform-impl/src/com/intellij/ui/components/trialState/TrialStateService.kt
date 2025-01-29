@@ -43,10 +43,9 @@ internal class TrialStateService(private val scope: CoroutineScope) : Disposable
 
     fun getButtonText(): @NlsContexts.Button String {
       return when (trialState) {
-        TrialState.TRIAL_STARTED -> IdeBundle.message("trial.state.trial.started", trialLengthDays)
-        TrialState.ACTIVE,
-        TrialState.ALERT,
-          -> IdeBundle.message("trial.state.days.trial.left", remainedDays)
+        TrialState.TRIAL_STARTED,
+        TrialState.ACTIVE, -> IdeBundle.message("trial.state.trial.started")
+        TrialState.ALERT -> IdeBundle.message("trial.state.days.trial.left", remainedDays)
         TrialState.EXPIRING -> IdeBundle.message("trial.state.1.day.trial.left")
         TrialState.GRACE,
         TrialState.GRACE_ENDED,

@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
 import com.intellij.concurrency.AsyncUtil;
 import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,6 +128,22 @@ public interface Query<Result> extends Iterable<Result> {
     return findAll().iterator();
   }
 
+  @Experimental
+  default @NotNull Query<Result> interceptWith(@NotNull QueryExecutionInterceptor interceptor) {
+    Query<Result> query = this;
+    return new AbstractQuery<Result>() {
+      @Override
+      protected boolean processResults(@NotNull Processor<? super Result> consumer) {
+        return interceptor.intercept(() -> delegateProcessResults(query, consumer));
+      }
+    };
+  }
+
+  /**
+   * @deprecated use {@link #interceptWith}
+   */
+  @ScheduledForRemoval
+  @Deprecated
   @Experimental
   default @NotNull Query<Result> wrap(@NotNull QueryWrapper<Result> wrapper) {
     Query<Result> query = this;

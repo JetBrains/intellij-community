@@ -179,6 +179,14 @@
 
     <applicationService serviceInterface="com.intellij.codeInsight.actions.ReaderModeDefaultsOverride"
                         serviceImplementation="com.intellij.codeInsight.actions.ReaderModeDefaultsOverrideImpl" />
+
+    <projectService serviceInterface="com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManager"
+                        serviceImplementation="com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManagerImpl"/>
+
+    <!--XNext-->
+    <applicationService serviceImplementation="com.intellij.openapi.application.impl.InternalUICustomization"/>
+    <!---->
+
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->

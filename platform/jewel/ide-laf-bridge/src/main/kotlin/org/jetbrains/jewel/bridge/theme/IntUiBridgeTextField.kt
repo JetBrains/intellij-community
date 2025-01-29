@@ -11,6 +11,9 @@ import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.bridge.toDpSize
+import org.jetbrains.jewel.ui.component.styling.IconButtonColors
+import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
+import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldColors
 import org.jetbrains.jewel.ui.component.styling.TextFieldMetrics
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
@@ -57,5 +60,32 @@ internal fun readTextFieldStyle(): TextFieldStyle {
                 minSize = DpSize(144.dp, minimumSize.height),
                 borderWidth = DarculaUIUtil.LW.dp,
             ),
+        iconButtonStyle =
+            readIconButtonStyle()
+                .copy(
+                    colors =
+                        IconButtonColors(
+                            foregroundSelectedActivated =
+                                retrieveColorOrUnspecified("ToolWindow.Button.selectedForeground"),
+                            background = Color.Unspecified,
+                            backgroundDisabled = Color.Unspecified,
+                            backgroundSelected = Color.Unspecified,
+                            backgroundSelectedActivated = Color.Unspecified,
+                            backgroundFocused = Color.Unspecified,
+                            backgroundPressed = Color.Unspecified,
+                            backgroundHovered = Color.Unspecified,
+                            border = Color.Unspecified,
+                            borderDisabled = Color.Unspecified,
+                            borderSelected = retrieveColorOrUnspecified("ActionButton.pressedBackground"),
+                            borderSelectedActivated =
+                                retrieveColorOrUnspecified("ToolWindow.Button.selectedBackground"),
+                            borderFocused = Color.Unspecified,
+                            borderPressed = retrieveColorOrUnspecified("ActionButton.pressedBorderColor"),
+                            borderHovered = retrieveColorOrUnspecified("ActionButton.hoverBorderColor"),
+                        )
+                ),
     )
 }
+
+private fun IconButtonStyle.copy(metrics: IconButtonMetrics = this.metrics, colors: IconButtonColors = this.colors) =
+    IconButtonStyle(metrics = metrics, colors = colors)

@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=androidx.compose.ui.ExperimentalComposeUiApi -Xcontext-receivers -opt-in=androidx.compose.foundation.ExperimentalFoundationApi -opt-in=org.jetbrains.jewel.foundation.ExperimentalJewelApi -opt-in=org.jetbrains.jewel.foundation.InternalJewelApi -P plugin:poko-compiler-plugin:pokoAnnotation=org/jetbrains/jewel/foundation/GenerateDataFunctions plugin:poko:pokoAnnotation=org/jetbrains/jewel/foundation/GenerateDataFunctions" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=androidx.compose.ui.ExperimentalComposeUiApi -Xcontext-receivers -opt-in=androidx.compose.foundation.ExperimentalFoundationApi -opt-in=org.jetbrains.jewel.foundation.ExperimentalJewelApi -opt-in=org.jetbrains.jewel.foundation.InternalJewelApi -P plugin:poko-compiler-plugin:pokoAnnotation=org/jetbrains/jewel/foundation/GenerateDataFunctions plugin:poko:pokoAnnotation=org/jetbrains/jewel/foundation/GenerateDataFunctions -Xexplicit-api=strict" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -137,5 +137,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.samples.showcase" />
   </component>
 </module>

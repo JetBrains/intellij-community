@@ -10,10 +10,7 @@ import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.*
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
@@ -219,31 +216,34 @@ object EelPathUtils {
     }
   }
 
+  @JvmStatic
+  fun transferLocalContentToRemotePathIfNeeded(source: Path, remotePath: Path) {
+    val sourceDescriptor = source.getEelDescriptor()
+
+    check(sourceDescriptor is LocalEelDescriptor)
+
+    val sourceHash = calculateFileHash(source)
+
+    val remoteHash = if (Files.exists(remotePath)) {
+      calculateFileHash(remotePath)
+    }
+    else {
+      ""
+    }
+    if (sourceHash != remoteHash) {
+      if (remoteHash.isNotEmpty()) {
+        Files.delete(remotePath)
+      }
+      transferContentsIfNonLocal(remotePath.getEelDescriptor().upgradeBlocking(), source, remotePath)
+    }
+  }
+
   @Service
   private class TransferredContentHolder(private val scope: CoroutineScope) {
     // eel descriptor -> source path string ->> source hash -> transferred file
     private val cache = ConcurrentHashMap<Pair<EelDescriptor, String>, Deferred<Pair<String, Path>>>()
 
-    private fun calculateFileHash(path: Path): String {
-      val digest = MessageDigest.getInstance("SHA-256")
-      val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
-      val fileSize = attributes.size()
-      val lastModified = attributes.lastModifiedTime().toMillis()
 
-      digest.update(fileSize.toString().toByteArray())
-      digest.update(lastModified.toString().toByteArray())
-
-      FileChannel.open(path, StandardOpenOption.READ).use { channel ->
-        val buffer = java.nio.ByteBuffer.allocateDirect(1024 * 1024)
-        while (channel.read(buffer) > 0) {
-          buffer.flip()
-          digest.update(buffer)
-          buffer.clear()
-        }
-      }
-
-      return digest.digest().joinToString("") { "%02x".format(it) }
-    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun transferIfNeeded(eel: EelApi, source: Path): Path {
@@ -276,6 +276,27 @@ object EelPathUtils {
     else {
       fs.createTemporaryFile(CreateTemporaryEntryOptions.Builder().deleteOnExit(deleteOnExit).build()).getOrThrowFileSystemException().asNioPath()
     }
+  }
+
+  private fun calculateFileHash(path: Path): String {
+    val digest = MessageDigest.getInstance("SHA-256")
+    val attributes = Files.readAttributes(path, BasicFileAttributes::class.java)
+    val fileSize = attributes.size()
+    val lastModified = attributes.lastModifiedTime().toMillis()
+
+    digest.update(fileSize.toString().toByteArray())
+    digest.update(lastModified.toString().toByteArray())
+
+    FileChannel.open(path, StandardOpenOption.READ).use { channel ->
+      val buffer = java.nio.ByteBuffer.allocateDirect(1024 * 1024)
+      while (channel.read(buffer) > 0) {
+        buffer.flip()
+        digest.update(buffer)
+        buffer.clear()
+      }
+    }
+
+    return digest.digest().joinToString("") { "%02x".format(it) }
   }
 
   @JvmStatic

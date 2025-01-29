@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProjectWizard
 
 import com.intellij.facet.ui.ValidationResult
@@ -21,10 +21,8 @@ import com.jetbrains.python.newProjectWizard.impl.PyV3GeneratorPeer
 import com.jetbrains.python.newProjectWizard.impl.PyV3UIServicesProd
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
 import com.jetbrains.python.onFailure
-import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.statistics.version
-import com.jetbrains.python.util.PyError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

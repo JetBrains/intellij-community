@@ -20,6 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static java.util.Objects.*;
+
 final class GenericsChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
 
@@ -146,11 +148,10 @@ final class GenericsChecker {
       PsiClass superClass = result.getElement();
       if (superClass == null || visited.contains(superClass)) continue;
       PsiSubstitutor superTypeSubstitutor = result.getSubstitutor();
-      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
       //JLS 4.8 The superclasses (respectively, superinterfaces) of a raw type are the erasures 
       // of the superclasses (superinterfaces) of any of the parameterizations of the generic type.
       superTypeSubstitutor = PsiUtil.isRawSubstitutor(aClass, derivedSubstitutor)
-                             ? elementFactory.createRawSubstitutor(superClass)
+                             ? myVisitor.factory().createRawSubstitutor(superClass)
                              : MethodSignatureUtil.combineSubstitutors(superTypeSubstitutor, derivedSubstitutor);
 
       PsiSubstitutor inheritedSubstitutor = inheritedClasses.get(superClass);
@@ -372,8 +373,55 @@ final class GenericsChecker {
     }
   }
 
+  void checkCatchParameterIsClass(@NotNull PsiParameter parameter) {
+    if (!(parameter.getDeclarationScope() instanceof PsiCatchSection)) return;
+
+    List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
+    for (PsiTypeElement typeElement : typeElements) {
+      if (PsiUtil.resolveClassInClassTypeOnly(typeElement.getType()) instanceof PsiTypeParameter) {
+        myVisitor.report(JavaErrorKinds.CATCH_TYPE_PARAMETER.create(typeElement));
+      }
+    }
+  }
+
+  void checkReferenceTypeUsedAsTypeArgument(@NotNull PsiTypeElement typeElement) {
+    PsiType type = typeElement.getType();
+    PsiType wildCardBind = type instanceof PsiWildcardType wildcardType ? wildcardType.getBound() : null;
+    if (type != PsiTypes.nullType() && type instanceof PsiPrimitiveType || wildCardBind instanceof PsiPrimitiveType) {
+      if (!(typeElement.getParent() instanceof PsiReferenceParameterList list)) return;
+      PsiElement parent = list.getParent();
+      if (!(parent instanceof PsiJavaCodeReferenceElement) && !(parent instanceof PsiNewExpression)) return;
+      myVisitor.report(JavaErrorKinds.TYPE_ARGUMENT_PRIMITIVE.create(typeElement));
+    }
+  }
+
+  void checkWildcardUsage(@NotNull PsiTypeElement typeElement) {
+    PsiType type = typeElement.getType();
+    if (type instanceof PsiWildcardType) {
+      if (typeElement.getParent() instanceof PsiReferenceParameterList) {
+        PsiElement parent = typeElement.getParent().getParent();
+        PsiElement refParent = parent.getParent();
+        if (refParent instanceof PsiAnonymousClass) refParent = refParent.getParent();
+        if (refParent instanceof PsiNewExpression newExpression) {
+          if (!(newExpression.getType() instanceof PsiArrayType)) {
+            myVisitor.report(JavaErrorKinds.TYPE_WILDCARD_CANNOT_BE_INSTANTIATED.create(typeElement));
+          }
+        }
+        else if (refParent instanceof PsiReferenceList) {
+          PsiElement refPParent = refParent.getParent();
+          if (!(refPParent instanceof PsiTypeParameter typeParameter) || refParent != typeParameter.getExtendsList()) {
+            myVisitor.report(JavaErrorKinds.TYPE_WILDCARD_NOT_EXPECTED.create(typeElement));
+          }
+        }
+      }
+      else if (!typeElement.isInferredType()){
+        myVisitor.report(JavaErrorKinds.TYPE_WILDCARD_MAY_BE_USED_ONLY_AS_REFERENCE_PARAMETERS.create(typeElement));
+      }
+    }
+  }
+
   private static PsiType detectExpectedType(@NotNull PsiReferenceParameterList referenceParameterList) {
-    PsiNewExpression newExpression = Objects.requireNonNull(PsiTreeUtil.getParentOfType(referenceParameterList, PsiNewExpression.class));
+    PsiNewExpression newExpression = requireNonNull(PsiTreeUtil.getParentOfType(referenceParameterList, PsiNewExpression.class));
     PsiElement parent = newExpression.getParent();
     PsiType expectedType = null;
     if (parent instanceof PsiVariable psiVariable && newExpression.equals(psiVariable.getInitializer())) {

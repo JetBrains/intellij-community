@@ -9,7 +9,6 @@ import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
@@ -164,12 +163,8 @@ internal class DocumentationBrowser private constructor(
     if (file != null) {
       val handler = DocumentationDownloader.EP.extensionList.find { it.canHandle(project, file) }
       if (handler != null) {
-        blockingContext {
-          val callback = handler.download(project, file)
-          callback.doWhenProcessed {
-            logDownloadFinished(project, handler::class.java, callback.isDone)
-          }
-        }
+        val success = handler.download(project, file)
+        logDownloadFinished(project, handler::class.java, success)
       }
       closeTrigger?.invoke()
     }

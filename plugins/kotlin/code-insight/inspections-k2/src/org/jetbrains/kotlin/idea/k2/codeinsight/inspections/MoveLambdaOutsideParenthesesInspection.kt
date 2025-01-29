@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -50,10 +50,10 @@ internal class MoveLambdaOutsideParenthesesInspection : KotlinApplicableInspecti
         return if (!element.canMoveLambdaOutsideParentheses(skipComplexCalls = false)) null else Unit
     }
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtCallExpression,
         context: Unit,
-    ) = object : KotlinModCommandQuickFix<KtCallExpression>() {
+    ): Array<KotlinModCommandQuickFix<KtCallExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtCallExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("move.lambda.argument.out.of.parentheses")
@@ -65,7 +65,7 @@ internal class MoveLambdaOutsideParenthesesInspection : KotlinApplicableInspecti
         ) {
             element.moveFunctionLiteralOutsideParentheses(updater::moveCaretTo)
         }
-    }
+    })
 
     override fun getApplicableRanges(element: KtCallExpression): List<TextRange> {
         val textRange = element.getLastLambdaExpression()?.functionLiteral?.lBrace?.textRangeIn(element)

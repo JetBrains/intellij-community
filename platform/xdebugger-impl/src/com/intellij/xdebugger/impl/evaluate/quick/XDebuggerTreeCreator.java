@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.concurrency.ResultConsumer;
@@ -14,6 +14,8 @@ import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.xdebugger.impl.actions.FrontendDebuggerActionsKt.areFrontendDebuggerActionsEnabled;
 
 public class XDebuggerTreeCreator implements DebuggerTreeCreator<Pair<XValue,String>> {
   private final @NotNull Project myProject;
@@ -31,7 +33,11 @@ public class XDebuggerTreeCreator implements DebuggerTreeCreator<Pair<XValue,Str
 
   @Override
   public @NotNull Tree createTree(@NotNull Pair<XValue, String> descriptor) {
-    final XDebuggerTree tree = new XDebuggerTree(myProject, myProvider, myPosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, myMarkers);
+    String treePopupGroup = areFrontendDebuggerActionsEnabled()
+                            ? XDebuggerActions.INSPECT_TREE_POPUP_GROUP_FRONTEND
+                            : XDebuggerActions.INSPECT_TREE_POPUP_GROUP;
+
+    final XDebuggerTree tree = new XDebuggerTree(myProject, myProvider, myPosition, treePopupGroup, myMarkers);
     final XValueNodeImpl root = new XValueNodeImpl(tree, null, descriptor.getSecond(), descriptor.getFirst());
     tree.setRoot(root, true);
     tree.setSelectionRow(0);

@@ -14,6 +14,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -222,6 +223,7 @@ class EditorTabbedContainer internal constructor(
         if (UISettings.getInstance().showFileIconInTabs) {
           it.setIcon(icon)
         }
+        InternalUICustomization.getInstance().componentMarker.markAIComponent(it.component, selectedEditor)
       }
     )
     selectedEditor?.tabActions?.let {
@@ -634,7 +636,7 @@ private class EditorTabs(
     return closeTabAction?.getIcon(isHovered)
   }
 
-  override fun createTabPainterAdapter(): TabPainterAdapter = EditorTabPainterAdapter()
+  override fun createTabPainterAdapter(): TabPainterAdapter = InternalUICustomization.getInstance().editorTabPainterAdapter
 
   override fun createTabBorder(): JBTabsBorder = JBEditorTabsBorder(this)
 

@@ -3,10 +3,7 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
-import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
-import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
-import com.intellij.java.codeserver.highlighting.errors.JavaMismatchedCallContext;
+import com.intellij.java.codeserver.highlighting.errors.*;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.JavaFeature;
@@ -155,31 +152,6 @@ final class ExpressionChecker {
     }
   }
 
-  void checkIllegalVoidType(@NotNull PsiKeyword type) {
-    if (!PsiKeyword.VOID.equals(type.getText())) return;
-
-    PsiElement parent = type.getParent();
-    if (parent instanceof PsiErrorElement) return;
-    if (parent instanceof PsiTypeElement) {
-      PsiElement typeOwner = parent.getParent();
-      if (typeOwner != null) {
-        // do not highlight incomplete declarations
-        if (PsiUtilCore.hasErrorElementChild(typeOwner)) return;
-      }
-
-      if (typeOwner instanceof PsiMethod method) {
-        if (method.getReturnTypeElement() == parent && PsiTypes.voidType().equals(method.getReturnType())) return;
-      }
-      else if (typeOwner instanceof PsiClassObjectAccessExpression classAccess) {
-        if (TypeConversionUtil.isVoidType(classAccess.getOperand().getType())) return;
-      }
-      else if (typeOwner instanceof JavaCodeFragment) {
-        if (typeOwner.getUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT) != null) return;
-      }
-    }
-    myVisitor.report(JavaErrorKinds.TYPE_VOID_ILLEGAL.create(type));
-  }
-
   void checkMustBeBoolean(@NotNull PsiExpression expr) {
     PsiElement parent = expr.getParent();
     if (parent instanceof PsiIfStatement ||
@@ -195,31 +167,6 @@ final class ExpressionChecker {
           return;
         }
         myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(expr, new JavaIncompatibleTypeErrorContext(PsiTypes.booleanType(), type)));
-      }
-    }
-  }
-
-  void checkAssertOperatorTypes(@NotNull PsiExpression expression) {
-    if (!(expression.getParent() instanceof PsiAssertStatement assertStatement)) return;
-    PsiType type = expression.getType();
-    if (type == null) return;
-    if (expression == assertStatement.getAssertCondition() && !TypeConversionUtil.isBooleanType(type)) {
-      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
-        expression, new JavaIncompatibleTypeErrorContext(PsiTypes.booleanType(), type)));
-    }
-    else if (expression == assertStatement.getAssertDescription() && TypeConversionUtil.isVoidType(type)) {
-      myVisitor.report(JavaErrorKinds.TYPE_VOID_NOT_ALLOWED.create(expression));
-    }
-  }
-
-  void checkSynchronizedExpressionType(@NotNull PsiExpression expression) {
-    if (expression.getParent() instanceof PsiSynchronizedStatement synchronizedStatement &&
-        expression == synchronizedStatement.getLockExpression()) {
-      PsiType type = expression.getType();
-      if (type == null) return;
-      if (type instanceof PsiPrimitiveType || TypeConversionUtil.isNullType(type)) {
-        PsiClassType objectType = PsiType.getJavaLangObject(myVisitor.file().getManager(), expression.getResolveScope());
-        myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(expression, new JavaIncompatibleTypeErrorContext(objectType, type)));
       }
     }
   }
@@ -433,7 +380,7 @@ final class ExpressionChecker {
     PsiType type = processor.getType();
     if (type == null) return;
 
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(processor.getProject());
+    PsiElementFactory factory = myVisitor.factory();
     PsiClassType processorType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR, processor.getResolveScope());
     if (!TypeConversionUtil.isAssignable(processorType, type)) {
       if (IncompleteModelUtil.isIncompleteModel(templateExpression) && IncompleteModelUtil.isPotentiallyConvertible(processorType, processor)) {
@@ -754,7 +701,13 @@ final class ExpressionChecker {
     myVisitor.report(JavaErrorKinds.EXCEPTION_UNHANDLED_CLOSE.create(resource, unhandled));
   }
 
-  private static boolean isArrayDeclaration(@NotNull PsiVariable variable) {
+  void checkVarTypeSelfReferencing(@NotNull PsiLocalVariable variable, @NotNull PsiReferenceExpression ref) {
+    if (PsiTreeUtil.isAncestor(variable.getInitializer(), ref, false) && variable.getTypeElement().isInferredType()) {
+      myVisitor.report(JavaErrorKinds.LVTI_SELF_REFERENCED.create(ref, variable));
+    }
+  }
+
+  static boolean isArrayDeclaration(@NotNull PsiVariable variable) {
     // Java-style 'var' arrays are prohibited by the parser; for C-style ones, looking for a bracket is enough
     return ContainerUtil.or(variable.getChildren(), e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET));
   }
@@ -997,9 +950,8 @@ final class ExpressionChecker {
   }
 
   boolean isDummyConstructorCall(@NotNull PsiMethodCallExpression methodCall,
-                                        @NotNull PsiExpressionList list,
-                                        @NotNull PsiReferenceExpression referenceToMethod) {
-    boolean isDummy = false;
+                                 @NotNull PsiExpressionList list,
+                                 @NotNull PsiReferenceExpression referenceToMethod) {
     boolean isThisOrSuper = referenceToMethod.getReferenceNameElement() instanceof PsiKeyword;
     if (isThisOrSuper) {
       // super(..) or this(..)
@@ -1007,11 +959,11 @@ final class ExpressionChecker {
         CandidateInfo[] candidates = PsiResolveHelper.getInstance(myVisitor.project())
           .getReferencedMethodCandidates(methodCall, true);
         if (candidates.length == 1 && !candidates[0].getElement().isPhysical()) {
-          isDummy = true;// dummy constructor
+          return true; // dummy constructor
         }
       }
     }
-    return isDummy;
+    return false;
   }
 
   void checkConstructorCall(@NotNull PsiClassType.ClassResolveResult typeResolveResult,
@@ -1128,6 +1080,61 @@ final class ExpressionChecker {
           && !JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, constructorClass)) {
         return true;
       }
+    }
+  }
+
+  private static @NotNull Pair<MethodCandidateInfo, MethodCandidateInfo> findCandidates(JavaResolveResult @NotNull [] resolveResults) {
+    MethodCandidateInfo methodCandidate1 = null;
+    MethodCandidateInfo methodCandidate2 = null;
+    for (JavaResolveResult result : resolveResults) {
+      if (!(result instanceof MethodCandidateInfo candidate)) continue;
+      if (candidate.isApplicable() && !candidate.getElement().isConstructor()) {
+        if (methodCandidate1 == null) {
+          methodCandidate1 = candidate;
+        }
+        else {
+          methodCandidate2 = candidate;
+          break;
+        }
+      }
+    }
+    return Pair.pair(methodCandidate1, methodCandidate2);
+  }
+
+  void checkAmbiguousMethodCallArguments(JavaResolveResult @NotNull [] resolveResults,
+                                         @NotNull JavaResolveResult resolveResult,
+                                         @NotNull PsiMethodCallExpression methodCall) {
+    PsiExpressionList list = methodCall.getArgumentList();
+    Pair<MethodCandidateInfo, MethodCandidateInfo> pair = findCandidates(resolveResults);
+    MethodCandidateInfo methodCandidate1 = pair.first;
+    MethodCandidateInfo methodCandidate2 = pair.second;
+
+    PsiExpression[] expressions = list.getExpressions();
+    if (PsiTreeUtil.hasErrorElements(list)) return;
+    if (methodCandidate2 != null) {
+      if (IncompleteModelUtil.isIncompleteModel(list) &&
+          ContainerUtil.exists(expressions, e -> IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(e))) {
+        return;
+      }
+      myVisitor.report(JavaErrorKinds.CALL_AMBIGUOUS.create(
+        methodCall, new JavaAmbiguousCallContext(resolveResults, methodCandidate1, methodCandidate2)));
+    }
+    else {
+      if (resolveResult.getElement() != null && (!resolveResult.isAccessible() || !resolveResult.isStaticsScopeCorrect())) return;
+      if (!ContainerUtil.exists(resolveResults, result -> result instanceof MethodCandidateInfo && result.isAccessible())) return;
+      if (IncompleteModelUtil.isIncompleteModel(list) &&
+          ContainerUtil.exists(expressions, IncompleteModelUtil::mayHaveUnknownTypeDueToPendingReference)) {
+        return;
+      }
+      if (ContainerUtil.exists(expressions, e -> e.getType() == null)) return;
+      myVisitor.report(JavaErrorKinds.CALL_UNRESOLVED.create(methodCall, resolveResults));
+    }
+  }
+
+  void checkRestrictedIdentifierReference(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiClass resolved) {
+    String name = resolved.getName();
+    if (PsiTypesUtil.isRestrictedIdentifier(name, myVisitor.languageLevel())) {
+      myVisitor.report(JavaErrorKinds.TYPE_RESTRICTED_IDENTIFIER.create(ref));
     }
   }
 }

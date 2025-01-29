@@ -13,6 +13,6 @@ class C {
   }
 
   void f() {
-    <error descr="Incompatible types. Found: 'void', required: 'java.lang.Object'">Object o = f();</error>
+    Object o = <error descr="Incompatible types. Found: 'void', required: 'java.lang.Object'">f</error>();
   }
 }

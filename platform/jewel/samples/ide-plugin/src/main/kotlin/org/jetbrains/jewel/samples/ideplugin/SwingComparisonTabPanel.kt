@@ -63,6 +63,7 @@ import org.jetbrains.jewel.ui.theme.textAreaStyle
 internal class SwingComparisonTabPanel : BorderLayoutPanel() {
     private val mainContent =
         panel {
+                separator()
                 buttonsRow()
                 separator()
                 labelsRows()

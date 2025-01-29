@@ -17,6 +17,7 @@ import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeIntern
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.IndexingTestUtil
+import kotlinx.coroutines.GlobalScope
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.internal.daemon.DaemonState
@@ -202,7 +203,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
     val tracker = ExternalSystemExecutionTracer()
     tracker.traceExecution(ExternalSystemExecutionTracer.PrintOutputMode.ON_EXCEPTION) {
       waitUntilSourcesAttached(dependencyName) {
-        val attachSourcesProvider = GradleAttachSourcesProvider()
+        val attachSourcesProvider = GradleAttachSourcesProvider(GlobalScope)
         val attachSourcesActions = attachSourcesProvider.getActions(mutableListOf(library), psiFile)
         val attachSourcesAction = attachSourcesActions.single()
         val attachSourcesCallback = attachSourcesAction.perform(mutableListOf(library))
@@ -211,7 +212,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
       }
     }
     assertThat(tracker.output)
-      .filteredOn { it.startsWith("Sources were downloaded to") }
+      .filteredOn { it.startsWith("Artifact was downloaded to") }
       .hasSize(1)
       .allSatisfy(Consumer { assertThat(it).endsWith(dependencySourcesJar) })
 

@@ -2,10 +2,10 @@
 package com.intellij.cce.report
 
 import com.intellij.cce.core.Session
-import com.intellij.cce.evaluable.AIA_RESPONSE
-import com.intellij.cce.evaluable.AIA_USER_PROMPT
-import com.intellij.cce.evaluable.REFERENCE_PROPERTY
+import com.intellij.cce.evaluable.*
+import com.intellij.cce.metric.LLMJudgeScore
 import com.intellij.cce.workspace.info.FileEvaluationInfo
+import com.intellij.cce.workspace.info.SessionIndividualScore
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
@@ -18,41 +18,54 @@ class ChatQuestionAnsweringReportGenerator(
 ) : FileReportGenerator(featuresStorages, dirs, filterName, comparisonFilterName) {
 
   override fun getHtml(fileEvaluations: List<FileEvaluationInfo>, resourcePath: String, text: String): String {
-    val sessions = fileEvaluations.map { it.sessionsInfo.sessions }
     return createHTML().body {
-      textBlocks(sessions)
-      for (resource in scripts) {
-        script { src = resource.destinationPath }
+      for (fileEval in fileEvaluations) {
+        val sessions = fileEval.sessionsInfo.sessions
+        val sessionIndividualEvaluations = fileEval.metrics
+          .flatMap { it.individualScores?.entries ?: emptySet() }
+          .associate { it.key to it.value }
+        textBlocks(sessions, sessionIndividualEvaluations)
       }
     }
   }
   override val scripts: List<Resource> = listOf()
 
-  private fun BODY.textBlocks(sessions: List<List<Session>>) {
-    var sessionInfoIndex = 0
-
-    for (sessionList in sessions) {
-      for (session in sessionList) {
-        val firstLookup = session.lookups[0]
-
-        val prompt = firstLookup.additionalInfo[AIA_USER_PROMPT]?.toString() ?: "No Prompt Available"
-        val response = firstLookup.additionalInfo[AIA_RESPONSE]?.toString() ?: "No Response Available"
-        val reference = firstLookup.additionalInfo[REFERENCE_PROPERTY]?.toString() ?: "No Reference Available"
-
-        renderSessionInfo(sessionInfoIndex, prompt, reference, response)
-
-        sessionInfoIndex++
+  private fun BODY.textBlocks(
+    sessions: List<Session>,
+    sessionIndividualEvaluations: Map<String, SessionIndividualScore>
+  ) {
+    sessions.forEachIndexed { index, session ->
+      val firstLookup = session.lookups.firstOrNull() ?: run {
+        println("Session $index skipped due to missing lookup.")
+        return@forEachIndexed
       }
+      val prompt = firstLookup.additionalInfo[AIA_USER_PROMPT]?.toString() ?: "No Prompt Available"
+      val response = firstLookup.additionalInfo[AIA_RESPONSE]?.toString() ?: "No Response Available"
+      val reference = firstLookup.additionalInfo[REFERENCE_PROPERTY]?.toString() ?: "No Reference Available"
+      val llmJudgeResponse = sessionIndividualEvaluations[session.id]?.additionalInfo?.get(LLM_JUDGE_RESPONSE)?.firstOrNull()?.toString() ?: "No LLM-as-a-Judge response is available"
+      val llmJudgeScore = sessionIndividualEvaluations[session.id]?.metricScores?.get(LLMJudgeScore.NAME)?.firstOrNull()?.toString() ?: "No LLM-as-a-Judge score is available"
+
+      renderSessionInfo(index, prompt, reference, response, llmJudgeResponse, llmJudgeScore)
     }
   }
 
-  private fun BODY.renderSessionInfo(index: Int, prompt: String, reference: String, response: String) {
+  private fun BODY.renderSessionInfo(index: Int, prompt: String, reference: String, response: String, llmJudgeResponse: String, llmJudgeScore: String) {
     div {
       style = blockStyle()
 
       renderSection(this, "Prompt $index", prompt)
       renderSection(this, "Reference $index", reference)
       renderSection(this, "Response $index", response)
+      renderSection(this, "LLM-as-a-Judge Raw Response:", llmJudgeResponse)
+
+      renderInlineScore(this, "LLM-as-a-Judge Score:", llmJudgeScore)
+    }
+  }
+
+  private fun renderInlineScore(container: DIV, title: String, score: String) {
+    container.p {
+      style = "font-size: 1em; font-weight: bold; margin-top: 16px; margin-bottom: 16px;"
+      +"$title $score"
     }
   }
 

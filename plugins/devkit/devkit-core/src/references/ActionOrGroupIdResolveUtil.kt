@@ -69,9 +69,9 @@ internal object ActionOrGroupIdResolveUtil {
     if (toolWindowIdClass == null) return
 
     for (field in toolWindowIdClass.getFields()) {
-      val initializer = field.toUElement<UField>(UField::class.java)?.uastInitializer ?: continue
+      val initializer = field.toUElement(UField::class.java)?.uastInitializer ?: continue
       val value = initializer.evaluateString() ?: continue
-      if (!processor.process(value, field)) return
+      if (!processor.process(value.replace(" ", ""), field)) return
     }
   }
 

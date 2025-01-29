@@ -49,11 +49,11 @@ final class MethodChecker {
     return signatures;
   }
 
-  void checkMustBeThrowable(@NotNull PsiClass aClass, @NotNull PsiElement context) {
-    PsiClassType type = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
-    PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, context.getResolveScope());
-    if (!TypeConversionUtil.isAssignable(throwable, type)) {
+  void checkMustBeThrowable(@NotNull PsiClass aClass, @NotNull PsiJavaCodeReferenceElement context) {
+    if (!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_THROWABLE)) {
+      PsiElementFactory factory = myVisitor.factory();
+      PsiClassType type = factory.createType(aClass);
+      PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, context.getResolveScope());
       if (IncompleteModelUtil.isIncompleteModel(context) && IncompleteModelUtil.isPotentiallyConvertible(throwable, type, context)) return;
       myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(context, new JavaIncompatibleTypeErrorContext(throwable, type)));
     }

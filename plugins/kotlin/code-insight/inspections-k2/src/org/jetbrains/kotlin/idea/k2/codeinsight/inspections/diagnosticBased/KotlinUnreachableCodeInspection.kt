@@ -28,10 +28,10 @@ class KotlinUnreachableCodeInspection : KotlinKtDiagnosticBasedInspectionBase<Kt
         context: Unit
     ): @InspectionMessage String = KotlinBundle.message("unreachable.code")
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtElement,
         context: Unit
-    ): KotlinModCommandQuickFix<KtElement>? = null
+    ): Array<KotlinModCommandQuickFix<KtElement>> = emptyArray()
 
     override fun buildVisitor(
         holder: ProblemsHolder,

@@ -16,6 +16,15 @@ interface UvLowLevel {
   suspend fun listPackages(): Result<List<PythonPackage>>
   suspend fun listOutdatedPackages(): Result<List<PythonOutdatedPackage>>
 
-  suspend fun installPackage(name: PythonPackageSpecification, options: List<String>, usePip: Boolean = false): Result<Unit>
-  suspend fun uninstallPackage(name: PythonPackage, usePip: Boolean = false): Result<Unit>
+  /**
+  * Manage project dependencies by adding/removing them to the project along side installation
+  */
+  suspend fun addDependency(name: PythonPackageSpecification, options: List<String>): Result<Unit>
+  suspend fun removeDependency(name: PythonPackage): Result<Unit>
+
+  /**
+   * Managing environment packages directly w/o depending or changing the project
+   */
+  suspend fun installPackage(name: PythonPackageSpecification, options: List<String>): Result<Unit>
+  suspend fun uninstallPackage(name: PythonPackage): Result<Unit>
 }

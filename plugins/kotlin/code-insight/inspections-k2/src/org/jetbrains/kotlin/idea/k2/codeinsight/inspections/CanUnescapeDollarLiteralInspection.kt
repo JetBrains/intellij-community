@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
@@ -34,10 +34,10 @@ class CanUnescapeDollarLiteralInspection :
         return KotlinBundle.message("inspection.can.unescape.dollar.literal.inspection.problem.description")
     }
 
-    override fun createQuickFix(
+    override fun createQuickFixes(
         element: KtStringTemplateExpression,
         context: Context,
-    ): KotlinModCommandQuickFix<KtStringTemplateExpression> = object : KotlinModCommandQuickFix<KtStringTemplateExpression>() {
+    ): Array<KotlinModCommandQuickFix<KtStringTemplateExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtStringTemplateExpression>() {
         override fun getFamilyName(): @IntentionFamilyName String {
             return KotlinBundle.message("replace.with.dollar.literals")
         }
@@ -84,7 +84,7 @@ class CanUnescapeDollarLiteralInspection :
                 }
             }
         }
-    }
+    })
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean {
         return element.interpolationPrefix?.textLength?.let { it > 1 } != true

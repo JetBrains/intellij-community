@@ -13,7 +13,7 @@ class Main {
         var x = (<error descr="Cannot infer type for 'x', it is used in its own variable initializer">x</error> = 1) + 1;
         var y = new Object[] {<error descr="Cannot infer type for 'y', it is used in its own variable initializer">y</error> = null};
         var z = baz(<error descr="Cannot infer type for 'z', it is used in its own variable initializer">z</error> = 1);
-        var zz = <error descr="Variable 'zz' might not have been initialized">zz</error>;
+        var zz = <error descr="Cannot infer type for 'zz', it is used in its own variable initializer">zz</error>;
         zz.hashCode();
         System.out.println(zz.zz);
         var v =<error descr="Expression expected"> </error>;

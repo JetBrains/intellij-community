@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -46,6 +48,23 @@ public abstract class FileTypeRegistry {
     Disposer.register(parentDisposable, () -> {
       instance = oldInstance;
     });
+  }
+
+  public FileTypeRegistry() {
+    Application application = ApplicationManager.getApplication();
+    if (application != null) {
+      application.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        @Override
+        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          CharsetUtil.clearFileTypeCaches();
+        }
+
+        @Override
+        public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+          CharsetUtil.clearFileTypeCaches();
+        }
+      });
+    }
   }
 
   @ApiStatus.Internal
