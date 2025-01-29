@@ -36,6 +36,7 @@ class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
 
   override fun moveCaret(offset: Int) = onEdt {
     val editor = getEditorSafe(project)
+    editor.selectionModel.removeSelection()
     editor.caretModel.moveToOffset(offset)
     editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
   }
