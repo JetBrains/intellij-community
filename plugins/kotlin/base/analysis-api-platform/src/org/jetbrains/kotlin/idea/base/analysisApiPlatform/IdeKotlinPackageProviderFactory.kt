@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.search.GlobalSearchScope
@@ -39,17 +40,22 @@ private class IdeKotlinPackageProvider(
      * We don't need to invalidate the cache because [KotlinPackageProvider]'s lifetime is already constrained by modification. The cached
      * value is still useful to keep the cache behind a soft reference.
      */
-    private val cache by CachedValue(project) {
+    private val packageExistsCache by CachedValue(project) {
         CachedValueProvider.Result(
             ConcurrentHashMap<FqName, Boolean>(),
             ModificationTracker.NEVER_CHANGED,
         )
     }
 
+    private val subpackageNamesCache =
+        Caffeine.newBuilder()
+            .maximumSize(250)
+            .build<FqName, Set<Name>> { KotlinPackageIndexUtils.getSubpackageNames(it, searchScope) }
+
     override fun doesKotlinOnlyPackageExist(packageFqName: FqName): Boolean {
-        return cache.getOrPut(packageFqName) { KotlinPackageIndexUtils.packageExists(packageFqName, searchScope) }
+        return packageExistsCache.getOrPut(packageFqName) { KotlinPackageIndexUtils.packageExists(packageFqName, searchScope) }
     }
 
     override fun getKotlinOnlySubpackageNames(packageFqName: FqName): Set<Name> =
-        KotlinPackageIndexUtils.getSubpackageNames(packageFqName, searchScope)
+        subpackageNamesCache[packageFqName] ?: emptySet()
 }

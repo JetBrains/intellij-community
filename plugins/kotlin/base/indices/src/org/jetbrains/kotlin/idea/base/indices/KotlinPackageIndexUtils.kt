@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.TopPackageNamesProvider
+import org.jetbrains.kotlin.utils.ifEmpty
 
 object KotlinPackageIndexUtils {
     private val falseValueProcessor = FileBasedIndex.ValueProcessor<Name?> { _, _ -> false }
@@ -73,7 +74,7 @@ object KotlinPackageIndexUtils {
         forEachSubpackageName(fqName, scope, nameFilter) { name ->
             result.add(fqName.child(name))
         }
-        return result
+        return result.ifEmpty { emptySet() }
     }
 
     /**
@@ -90,7 +91,7 @@ object KotlinPackageIndexUtils {
         forEachSubpackageName(fqName, scope, nameFilter = { true }) { name ->
             result.add(name)
         }
-        return result
+        return result.ifEmpty { emptySet() }
     }
 
     inline fun forEachSubpackageName(
