@@ -11,8 +11,29 @@ import org.jetbrains.intellij.build.dev.getIdeSystemProperties
 import org.jetbrains.intellij.build.telemetry.withTracer
 import java.nio.file.Path
 
-@Suppress("unused", "IO_FILE_USAGE")
+data class BuildDevInfo(
+  val classPath: Collection<Path>,
+  val systemProperties: Map<String, String>,
+)
+
+@Suppress("unused")
 fun buildDevMain(): Collection<Path> {
+  val info = buildDevImpl()
+
+  @Suppress("SpellCheckingInspection")
+  val exceptions = setOf("jna.boot.library.path", "pty4j.preferred.native.folder", "jna.nosys", "jna.noclasspath", "jb.vmOptionsFile")
+  val systemProperties = System.getProperties()
+  for ((name, value) in info.systemProperties) {
+    if (exceptions.contains(name) || !systemProperties.containsKey(name)) {
+      systemProperties.setProperty(name, value)
+    }
+  }
+  System.setProperty(PathManager.PROPERTY_HOME_PATH, info.systemProperties.getValue(PathManager.PROPERTY_HOME_PATH))
+  return info.classPath
+}
+
+@Suppress("IO_FILE_USAGE")
+fun buildDevImpl(): BuildDevInfo {
   //TracerProviderManager.setOutput(Path.of(System.getProperty("user.home"), "trace.json"))
   @Suppress("TestOnlyProblems")
   val ideaProjectRoot = Path.of(PathManager.getHomePathFor(PathManager::class.java)!!)
@@ -20,6 +41,7 @@ fun buildDevMain(): Collection<Path> {
 
   var homePath: String? = null
   var newClassPath: Collection<Path>? = null
+  val environment = mutableMapOf<String, String>()
   withTracer(serviceName = "builder") {
     buildProductInProcess(
       BuildRequest(
@@ -30,15 +52,7 @@ fun buildDevMain(): Collection<Path> {
         platformClassPathConsumer = { classPath, runDir ->
           newClassPath = classPath
           homePath = runDir.toString().replace(java.io.File.separator, "/")
-
-          @Suppress("SpellCheckingInspection")
-          val exceptions = setOf("jna.boot.library.path", "pty4j.preferred.native.folder", "jna.nosys", "jna.noclasspath", "jb.vmOptionsFile")
-          val systemProperties = System.getProperties()
-          for ((name, value) in getIdeSystemProperties(runDir).map) {
-            if (exceptions.contains(name) || !systemProperties.containsKey(name)) {
-              systemProperties.setProperty(name, value)
-            }
-          }
+          environment.putAll(getIdeSystemProperties(runDir).map)
         },
         generateRuntimeModuleRepository = SystemProperties.getBooleanProperty("intellij.build.generate.runtime.module.repository", false),
         buildOptionsTemplate = BuildOptions(),
@@ -46,9 +60,12 @@ fun buildDevMain(): Collection<Path> {
     )
   }
   homePath?.let {
-    System.setProperty(PathManager.PROPERTY_HOME_PATH, it)
+    environment[PathManager.PROPERTY_HOME_PATH] = it
   }
-  return newClassPath!!
+  return BuildDevInfo(
+    classPath = newClassPath!!,
+    systemProperties = environment,
+  )
 }
 
 private fun getAdditionalPluginMainModules(): List<String> =

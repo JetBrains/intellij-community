@@ -49,7 +49,7 @@ data class BuildRequest(
   @JvmField val platformPrefix: String,
   @JvmField val additionalModules: List<String>,
   @JvmField val projectDir: Path,
-  @JvmField val devRootDir: Path = projectDir.resolve("out/dev-run"),
+  @JvmField val devRootDir: Path = System.getProperty("idea.dev.root.dir")?.let { Path.of(it).normalize().toAbsolutePath() } ?: projectDir.resolve("out/dev-run"),
   @JvmField val jarCacheDir: Path = devRootDir.resolve("jar-cache"),
   @JvmField val productionClassOutput: Path = System.getenv("CLASSES_DIR")?.let { Path.of(it).normalize().toAbsolutePath() } ?: projectDir.resolve("out/classes/production"),
   @JvmField val keepHttpClient: Boolean = true,
