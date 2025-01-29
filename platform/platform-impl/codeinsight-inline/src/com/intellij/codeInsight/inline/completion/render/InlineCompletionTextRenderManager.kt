@@ -20,8 +20,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 
-// TODO folding only if multiline
-
 /**
  * Accumulates all the text to be rendered at one offset and renders them.
  *
@@ -129,7 +127,6 @@ internal class InlineCompletionTextRenderManager private constructor(
 
       removeFoldedBlocksEverywhere()
       trimFoldedRangeIfNeeded(initialOffset)
-      foldLineEndIfNotFolded()
 
       val newBlocksAfterInline = renderInline(newLines)
       renderMultiline(newBlocksAfterInline)
@@ -172,6 +169,7 @@ internal class InlineCompletionTextRenderManager private constructor(
       }
       if (state == RenderState.RENDERING_INLINE) {
         state = RenderState.RENDERING_BLOCK
+        foldLineEndIfNotFolded()
       }
 
       val offset = foldingManager.firstNotFoldedOffset(this.renderOffset)
