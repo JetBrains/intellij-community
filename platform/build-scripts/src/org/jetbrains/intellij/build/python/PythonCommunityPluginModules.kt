@@ -18,6 +18,7 @@ object PythonCommunityPluginModules {
     "intellij.python.community.impl.poetry",
     "intellij.python.community.impl.installer",
     "intellij.python.community.impl.huggingFace",
+    "intellij.python.community.execService",
     "intellij.python.community.plugin.impl",
     "intellij.python.community.plugin.java",
     "intellij.python.community.plugin.minor",
