@@ -459,7 +459,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
         if (!SystemInfo.isMac && ExperimentalUI.isNewUI()) {
           row  {
-            comboBox(model = CollectionComboBoxModel<MainMenuDisplayMode>(MainMenuDisplayMode.entries), SimpleListCellRenderer<MainMenuDisplayMode>.create { label, value, _ -> label.text = value.description  }  )
+            comboBox(model = CollectionComboBoxModel<MainMenuDisplayMode>(MainMenuDisplayMode.entries)/* SimpleListCellRenderer<MainMenuDisplayMode>.create { label, value, _ -> label.text = value.description  }*/  )
               .label(message("main.menu.combobox.label"))
               .bindItem(settings::mainMenuDisplayMode.toNullableProperty())
               .apply {
