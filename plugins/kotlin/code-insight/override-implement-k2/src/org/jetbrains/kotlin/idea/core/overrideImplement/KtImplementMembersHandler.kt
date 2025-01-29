@@ -27,9 +27,9 @@ import org.jetbrains.kotlin.util.ImplementationStatus
 
 @ApiStatus.Internal
 open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
-    override fun getChooserTitle() = KotlinIdeaCoreBundle.message("implement.members.handler.title")
+    override fun getChooserTitle(): String = KotlinIdeaCoreBundle.message("implement.members.handler.title")
 
-    override fun getNoMembersFoundHint() = KotlinIdeaCoreBundle.message("implement.members.handler.no.members.hint")
+    override fun getNoMembersFoundHint(): String = KotlinIdeaCoreBundle.message("implement.members.handler.no.members.hint")
 
     override fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<KtClassMember> {
         return analyze(classOrObject) {
@@ -101,27 +101,27 @@ internal class KtImplementAsConstructorParameterQuickfix(private val members: Co
 
 object MemberNotImplementedQuickfixFactories {
 
-    val abstractMemberNotImplemented =
+    val abstractMemberNotImplemented: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.AbstractMemberNotImplemented> =
         KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.AbstractMemberNotImplemented ->
             getUnimplementedMemberFixes(diagnostic.psi)
         }
 
-    val abstractClassMemberNotImplemented =
+    val abstractClassMemberNotImplemented: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.AbstractClassMemberNotImplemented> =
         KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.AbstractClassMemberNotImplemented ->
             getUnimplementedMemberFixes(diagnostic.psi)
         }
 
-    val manyInterfacesMemberNotImplemented =
+    val manyInterfacesMemberNotImplemented: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.ManyInterfacesMemberNotImplemented> =
         KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ManyInterfacesMemberNotImplemented ->
             getUnimplementedMemberFixes(diagnostic.psi)
         }
 
-    val manyImplMemberNotImplemented =
+    val manyImplMemberNotImplemented: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.ManyImplMemberNotImplemented> =
         KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ManyImplMemberNotImplemented ->
             getUnimplementedMemberFixes(diagnostic.psi, false)
         }
 
-    val abstractMemberNotImplementedByEnumEntry =
+    val abstractMemberNotImplementedByEnumEntry: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.AbstractMemberNotImplementedByEnumEntry> =
         KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.AbstractMemberNotImplementedByEnumEntry ->
             val missingDeclarations = diagnostic.missingDeclarations
             if (missingDeclarations.isEmpty()) return@IntentionBased emptyList()
