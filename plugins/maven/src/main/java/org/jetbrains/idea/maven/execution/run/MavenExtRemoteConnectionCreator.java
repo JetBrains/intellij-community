@@ -11,7 +11,7 @@ import org.jetbrains.idea.maven.execution.MavenRemoteConnectionCreator;
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
 
 public class MavenExtRemoteConnectionCreator implements RemoteConnectionCreator {
-  private static final ExtensionPointName<MavenRemoteConnectionCreator> EP_NAME =
+  static final ExtensionPointName<MavenRemoteConnectionCreator> EP_NAME =
     ExtensionPointName.create("org.jetbrains.idea.maven.mavenRemoteConnectionCreator");
   private final JavaParameters myJavaParameters;
   private final MavenRunConfiguration myRunConfiguration;
@@ -31,6 +31,8 @@ public class MavenExtRemoteConnectionCreator implements RemoteConnectionCreator 
     }
     return null;
   }
+
+
 
   @Override
   public boolean isPollConnection() {
