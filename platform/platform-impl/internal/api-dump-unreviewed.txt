@@ -13,7 +13,7 @@ a:com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
 f:com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider$Companion
 f:com.intellij.internal.ml.catboost.CatBoostResourcesModelMetadataReader
 - <init>(java.lang.Class,java.lang.String,java.lang.String):V
-- f:loadModel():com.intellij.internal.ml.catboost.NaiveCatBoostModel
+- loadModel():com.intellij.internal.ml.catboost.NaiveCatBoostModel
 f:com.intellij.internal.ml.catboost.NaiveCatBoostModel
 - s:loadModel(java.io.InputStream):com.intellij.internal.ml.catboost.NaiveCatBoostModel
 - makePredict(D[]):D

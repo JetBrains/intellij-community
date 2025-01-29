@@ -56,7 +56,8 @@ class SearchEverywhereMlExperiment {
     ),
 
     SearchEverywhereTabWithMlRanking.ALL to Experiment(
-      2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
+      1 to ExperimentType.ESSENTIAL_CONTRIBUTOR_PREDICTION,
+    2 to ExperimentType.USE_EXPERIMENTAL_MODEL,
     )
   )
 
@@ -105,7 +106,7 @@ class SearchEverywhereMlExperiment {
   internal fun getTabExperiments(): Map<SearchEverywhereTabWithMlRanking, Experiment> = tabExperiments
 
   enum class ExperimentType {
-    NO_EXPERIMENT, NO_ML, USE_EXPERIMENTAL_MODEL, NO_ML_FEATURES, ENABLE_TYPOS, ENABLE_SEMANTIC_SEARCH,
+    NO_EXPERIMENT, NO_ML, USE_EXPERIMENTAL_MODEL, NO_ML_FEATURES, ENABLE_TYPOS, ENABLE_SEMANTIC_SEARCH, ESSENTIAL_CONTRIBUTOR_PREDICTION
   }
 
   @VisibleForTesting

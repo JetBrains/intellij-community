@@ -73,7 +73,7 @@ internal class SearchEverywhereMLSearchSession(
       SearchEverywhereMlSearchState(
         sessionStartTime, startTime, nextSearchIndex, searchReason,
         tabId, experimentGroup, orderByMl,
-        keysTyped, backspacesTyped, searchQuery, modelProviderWithCache, providersCache,
+        keysTyped, backspacesTyped, searchQuery, modelProviderWithCache, providersCache, mixedListInfo,
         project, searchScope, isSearchEverywhere
       )
     }
