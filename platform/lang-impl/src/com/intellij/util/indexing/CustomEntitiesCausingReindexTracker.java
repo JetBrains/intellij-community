@@ -75,7 +75,8 @@ final class CustomEntitiesCausingReindexTracker {
 
   private static boolean isEntityReindexingCustomised(Class<? extends WorkspaceEntity> entityClass) {
     return LibraryEntity.class.isAssignableFrom(entityClass) ||
-           LibraryPropertiesEntity.class.isAssignableFrom(entityClass);
+           LibraryPropertiesEntity.class.isAssignableFrom(entityClass) ||
+           SdkEntity.class.isAssignableFrom(entityClass);
   }
 
   /**
@@ -127,6 +128,8 @@ final class CustomEntitiesCausingReindexTracker {
         return isEntityToRescan(contentRoot);
       }
       return false;
+    } else if (entity instanceof SdkEntity) {
+      return hasDependencyOn((SdkEntity) entity, project);
     }
     return isEntityToRescan(entity);
   }
@@ -138,5 +141,9 @@ final class CustomEntitiesCausingReindexTracker {
 
   private static boolean hasDependencyOn(LibraryEntity library, Project project) {
     return ModuleDependencyIndex.getInstance(project).hasDependencyOn(library.getSymbolicId());
+  }
+
+  private static boolean hasDependencyOn(SdkEntity sdkEntity, Project project) {
+    return ModuleDependencyIndex.getInstance(project).hasDependencyOn(sdkEntity.getSymbolicId());
   }
 }

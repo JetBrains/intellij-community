@@ -141,7 +141,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
       final Sdk jdk = ProjectJdkTable.getInstance().createSdk("new-jdk", JavaSdk.getInstance());
       ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
-      myModuleRootListener.assertEventsCount(1);
+      myModuleRootListener.assertNoEvents();
 
       ModuleRootModificationUtil.setModuleSdk(a, jdk);
       myModuleRootListener.assertEventsCount(1);
@@ -164,7 +164,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
       final Sdk unused = ProjectJdkTable.getInstance().createSdk("unused", JavaSdk.getInstance());
       ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
       ProjectJdkTable.getInstance().addJdk(unused, getTestRootDisposable());
-      myModuleRootListener.assertEventsCount(2);
+      myModuleRootListener.assertNoEvents();
 
       final ModifiableRootModel rootModelA = ModuleRootManager.getInstance(moduleA).getModifiableModel();
       final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
@@ -182,7 +182,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
       final SdkModificator sdkModificator2 = unused.getSdkModificator();
       sdkModificator2.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
       sdkModificator2.commitChanges();
-      myModuleRootListener.assertEventsCount(1);
+      myModuleRootListener.assertNoEvents();
     });
   }
 
@@ -197,7 +197,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
 
       Sdk unusedJdk = ProjectJdkTable.getInstance().createSdk("unused-jdk", JavaSdk.getInstance());
       ProjectJdkTable.getInstance().addJdk(unusedJdk, getTestRootDisposable());
-      myModuleRootListener.assertEventsCount(1);
+      myModuleRootListener.assertNoEvents();
       
       Sdk jdk = ProjectJdkTable.getInstance().createSdk("new-jdk", JavaSdk.getInstance());
       ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
@@ -220,7 +220,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
       final Sdk jdkBBB;
       jdk = ProjectJdkTable.getInstance().createSdk("AAA", JavaSdk.getInstance());
       ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
-      myModuleRootListener.assertEventsCount(1);
+      myModuleRootListener.assertNoEvents();
 
       jdkBBB = ProjectJdkTable.getInstance().createSdk("BBB", JavaSdk.getInstance());
       ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
