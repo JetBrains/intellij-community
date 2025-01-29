@@ -450,6 +450,7 @@ internal class ToolbarFrameHeader(
   private fun updateMenuBar() {
     if (hideNativeLinuxTitle(UISettings.shadowInstance)) {
       ideMenuBar.border = null
+      toolbarMainMenu.border = null
     }
   }
 
