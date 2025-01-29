@@ -35,7 +35,7 @@ def get_bytes(arr):
         arr = arr.numpy()
 
         if not (np.issubdtype(arr.dtype, np.floating) or np.issubdtype(arr.dtype, np.integer)):
-            raise ValueError("Error: Only numeric array types are supported.")
+            raise ValueError("Only numeric array types are supported.")
 
         if arr.ndim == 1:
             arr = np.expand_dims(arr, axis=0)
