@@ -12,7 +12,7 @@ import com.intellij.util.Processor
 
 internal class SearchWordQuery<R : Any>(
   private val myParameters: SearchWordQueryBuilderImpl.Parameters,
-  private val mapper: LeafOccurrenceMapper<R>
+  private val mapper: LeafOccurrenceMapper<out R>
 ) : AbstractDecomposableQuery<R>() {
 
   override fun processResults(consumer: Processor<in R>): Boolean {

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Contract
  * @param T type of the query result
  */
 @OverrideOnly
-fun interface LeafOccurrenceMapper<out T : Any> {
+fun interface LeafOccurrenceMapper<T : Any> {
 
   /**
    * This method is called once per offset in `scope`,
@@ -37,7 +37,7 @@ fun interface LeafOccurrenceMapper<out T : Any> {
    */
   fun mapOccurrence(occurrence: LeafOccurrence): Collection<@JvmWildcard T>
 
-  fun interface Parameterized<in P : Any, out T : Any> {
+  fun interface Parameterized<P : Any, T : Any> {
 
     fun mapOccurrence(parameter: P, occurrence: LeafOccurrence): Collection<@JvmWildcard T>
   }
@@ -54,8 +54,8 @@ fun interface LeafOccurrenceMapper<out T : Any> {
     @Contract(pure = true)
     fun <P : Any, T : Any> withPointer(
       pointer: Pointer<out P>,
-      parameterizedMapper: Parameterized<@JvmWildcard P, @JvmWildcard T>,
-    ): LeafOccurrenceMapper<@JvmWildcard T> = LeafOccurrenceMapper { occurrence: LeafOccurrence ->
+      parameterizedMapper: Parameterized<in P, out T>,
+    ): LeafOccurrenceMapper<out T> = LeafOccurrenceMapper { occurrence: LeafOccurrence ->
       val value = pointer.dereference()
       if (value == null) {
         emptyList()
