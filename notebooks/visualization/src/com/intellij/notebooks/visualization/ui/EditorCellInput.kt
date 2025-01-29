@@ -32,7 +32,7 @@ class EditorCellInput(
       Disposer.register(this, it)
     }
 
-  val draggableBar: EditorCellDraggableBar = EditorCellDraggableBar(editor, this)
+  val draggableBar: EditorCellDraggableBar = EditorCellDraggableBar(editor, this, ::fold, ::unfold)
 
   val cellActionsToolbar: EditorCellActionsToolbarManager? =
     if (Registry.`is`("jupyter.per.cell.management.actions.toolbar") && editor.isOrdinaryNotebookEditor()) EditorCellActionsToolbarManager(editor, cell)
@@ -67,6 +67,16 @@ class EditorCellInput(
   private fun toggleFolding() = editor.updateManager.update { ctx ->
     folded = !folded
     (component as? InputComponent)?.updateFolding(ctx, folded)
+  }
+
+  private fun fold() = editor.updateManager.update { ctx ->
+    folded = true
+    (component as? InputComponent)?.updateFolding(ctx, true)
+  }
+
+  private fun unfold() = editor.updateManager.update { ctx ->
+    folded = false
+    (component as? InputComponent)?.updateFolding(ctx, false)
   }
 
   override fun dispose() {

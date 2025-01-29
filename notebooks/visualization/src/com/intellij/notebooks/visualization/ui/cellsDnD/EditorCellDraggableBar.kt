@@ -28,6 +28,8 @@ import javax.swing.SwingUtilities
 class EditorCellDraggableBar(
   private val editor: EditorImpl,
   private val cellInput: EditorCellInput,
+  private val foldInput: () -> Unit,
+  private val unfoldInput: () -> Unit,
 ) : Disposable {
   private var panel: JComponent? = null
 
@@ -90,6 +92,8 @@ class EditorCellDraggableBar(
     private var currentlyHighlightedCell: CellDropTarget = CellDropTarget.NoCell
     private var dragPreview: CellDragCellPreviewWindow? = null
 
+    private var inputFoldedState: Boolean = false
+    private var outputInitialStates: MutableMap<Int, Boolean> = mutableMapOf()
 
     init {
       cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
@@ -105,37 +109,28 @@ class EditorCellDraggableBar(
 
         override fun mouseReleased(e: MouseEvent) {
           if (!isDragging) return
+          clearDragState()
+          val targetCell = retrieveTargetCell(e)
 
-          dragPreview?.dispose()
-          dragPreview = null
-          isDragging = false
-
-          val dropLocation = e.locationOnScreen
-
-          val editorLocationOnScreen = editor.contentComponent.locationOnScreen
-          val x = dropLocation.x - editorLocationOnScreen.x
-          val y = dropLocation.y - editorLocationOnScreen.y
-          val editorPoint = Point(x, y)
-
-          val targetCell = getCellUnderCursor(editorPoint)
+          unfoldCellIfNeeded()
 
           ApplicationManager.getApplication().messageBus
             .syncPublisher(CellDropNotifier.CELL_DROP_TOPIC)
             .cellDropped(CellDropEvent(cellInput.cell, targetCell))
-
-          deleteDropIndicator()
         }
       })
 
       addMouseMotionListener(object : MouseMotionAdapter() {
         override fun mouseDragged(e: MouseEvent)  {
           if (!isDragging) return
+
           if (dragPreview == null) {
             dragPreview = CellDragCellPreviewWindow(getPlaceholderText(), editor)
             dragPreview?.isVisible = true
+            foldDraggedCell()
           }
-          dragPreview?.followCursor(e.locationOnScreen)
 
+          dragPreview?.followCursor(e.locationOnScreen)
           val currentLocation = e.locationOnScreen
           handleDrag(currentLocation)
         }
@@ -162,6 +157,42 @@ class EditorCellDraggableBar(
       val iconX = (width - dragIcon.iconWidth) / 2
       val iconY = (height - dragIcon.iconHeight) / 2
       dragIcon.paintIcon(this, g2d, iconX, iconY)
+    }
+
+    private fun retrieveTargetCell(e: MouseEvent): CellDropTarget {
+      val dropLocation = e.locationOnScreen
+      val editorLocationOnScreen = editor.contentComponent.locationOnScreen
+      val x = dropLocation.x - editorLocationOnScreen.x
+      val y = dropLocation.y - editorLocationOnScreen.y
+      val editorPoint = Point(x, y)
+
+      return getCellUnderCursor(editorPoint)
+    }
+
+    private fun foldDraggedCell() {
+      inputFoldedState = cellInput.folded
+      foldInput()
+
+      cellInput.cell.view?.outputs?.outputs?.forEachIndexed { index, output ->
+        outputInitialStates[index] = output.collapsed
+        output.collapsed = true
+      }
+    }
+
+    private fun unfoldCellIfNeeded() {
+      if (inputFoldedState == false) unfoldInput()
+
+      cellInput.cell.view?.outputs?.outputs?.forEachIndexed { index, output ->
+        output.collapsed = outputInitialStates[index] == true
+      }
+      outputInitialStates.clear()
+    }
+
+    private fun clearDragState() {
+      dragPreview?.dispose()
+      dragPreview = null
+      isDragging = false
+      deleteDropIndicator()
     }
 
     private fun handleDrag(currentLocationOnScreen: Point) {
