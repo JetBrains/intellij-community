@@ -32,6 +32,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 
 import static com.intellij.serviceContainer.ComponentManagerImplKt.handleComponentError;
 import static com.intellij.util.indexing.FileBasedIndexDataInitialization.FileBasedIndexDataInitializationResult;
@@ -149,7 +150,14 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
   private static class ShutdownTaskAsDisposable implements Disposable {
     @Override
     public void dispose() {
-      new FileBasedIndexImpl.ShutDownIndexesTask(/*byShutDownHook: */ false).run();
+      try {
+        new FileBasedIndexImpl.ShutDownIndexesTask(/*byShutDownHook: */ false).run();
+      }
+      catch (CancellationException e) {
+        LOG.warn(
+          "Dispose of indexes was canceled. It is likely that the Application was already closed by the moment when indexes started initialize",
+          new RuntimeException(e));
+      }
     }
   }
 
