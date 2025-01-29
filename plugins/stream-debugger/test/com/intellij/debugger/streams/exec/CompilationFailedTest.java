@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.exec;
 
+import com.intellij.debugger.streams.test.ExecutionTestCaseHelper;
 import com.intellij.debugger.streams.test.TraceExecutionTestHelper;
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder;
 import com.intellij.debugger.streams.trace.TracingResult;
@@ -9,6 +10,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vitaliy.Bibaev
@@ -20,7 +22,7 @@ public class CompilationFailedTest extends FailEvaluationTestCase {
 
   @Override
   protected @NotNull TraceExecutionTestHelper getHelper(XDebugSession session) {
-    return new JavaTraceExecutionTestHelper(session, getLibrarySupportProvider(), myPositionResolver, LOG) {
+    return new ExecutionTestCaseHelper(this, session, getLibrarySupportProvider(), myPositionResolver, LOG) {
       @Override
       protected @NotNull TraceExpressionBuilder createExpressionBuilder() {
         final TraceExpressionBuilder builder = super.createExpressionBuilder();
@@ -30,7 +32,7 @@ public class CompilationFailedTest extends FailEvaluationTestCase {
       @Override
       protected void handleSuccess(@NotNull StreamChain chain,
                                    @NotNull TracingResult result,
-                                   boolean resultMustBeNull) {
+                                   @Nullable Boolean resultMustBeNull) {
         fail();
       }
 

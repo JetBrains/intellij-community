@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Key
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.Producer
@@ -35,6 +34,7 @@ import kotlin.time.Duration.Companion.seconds
 abstract class TraceExecutionTestCase : DebuggerTestCase() {
   @JvmField
   protected val LOG: Logger = Logger.getInstance(javaClass)
+
   @JvmField
   protected val myPositionResolver: DebuggerPositionResolver = DebuggerPositionResolverImpl()
 
@@ -132,30 +132,7 @@ abstract class TraceExecutionTestCase : DebuggerTestCase() {
   }
 
   protected open fun getHelper(session: XDebugSession): TraceExecutionTestHelper {
-    return JavaTraceExecutionTestHelper(session, getLibrarySupportProvider(), myPositionResolver, LOG)
-  }
-
-  protected open inner class JavaTraceExecutionTestHelper(
-    private val mySession: XDebugSession,
-    myLibrarySupportProvider: LibrarySupportProvider,
-    myDebuggerPositionResolver: DebuggerPositionResolver,
-    logger: Logger
-  ) : TraceExecutionTestHelper(mySession, myLibrarySupportProvider, myDebuggerPositionResolver, logger) {
-    override fun getTestName(): String {
-      return this@TraceExecutionTestCase.getTestName(false)
-    }
-
-    override fun print(message: String, processOutputType: Key<*>) {
-      this@TraceExecutionTestCase.print(message, processOutputType)
-    }
-
-    override fun println(message: String, processOutputType: Key<*>) {
-      this@TraceExecutionTestCase.println(message, processOutputType)
-    }
-
-    override fun resume() {
-      ApplicationManager.getApplication().invokeLater(Runnable { mySession.resume() })
-    }
+    return ExecutionTestCaseHelper(this, session, getLibrarySupportProvider(), myPositionResolver, LOG)
   }
 
   protected open fun getLibrarySupportProvider(): LibrarySupportProvider {
@@ -166,3 +143,4 @@ abstract class TraceExecutionTestCase : DebuggerTestCase() {
     private val DEFAULT_CHAIN_SELECTOR = byIndex(0)
   }
 }
+

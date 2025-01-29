@@ -52,7 +52,7 @@ abstract class TraceExecutionTestHelper(
     return librarySupportProvider.getExpressionBuilder(project)
   }
 
-  suspend fun onPause(chainSelector: ChainSelector, resultMustBeNull: Boolean) {
+  suspend fun onPause(chainSelector: ChainSelector, resultMustBeNull: Boolean? = null) {
     val chain = readAction {
       val elementAtBreakpoint = debuggerPositionResolver.getNearestElementToBreakpoint(session)
       val chains = if (elementAtBreakpoint == null) null else createChainBuilder().build(elementAtBreakpoint)
@@ -80,7 +80,7 @@ abstract class TraceExecutionTestHelper(
   private fun complete(
     chain: StreamChain?,
     result: TracingResult?,
-    resultMustBeNull: Boolean,
+    resultMustBeNull: Boolean?,
     error: String?,
     errorReason: FailureReason?,
   ) {
@@ -107,7 +107,7 @@ abstract class TraceExecutionTestHelper(
     }
   }
 
-  abstract fun resume()
+  protected abstract fun resume()
 
   protected abstract fun getTestName(): String
 
@@ -131,7 +131,7 @@ abstract class TraceExecutionTestHelper(
   protected open fun handleSuccess(
     chain: StreamChain,
     result: TracingResult,
-    resultMustBeNull: Boolean,
+    resultMustBeNull: Boolean?,
   ) {
     TestCase.assertNotNull(chain)
     TestCase.assertNotNull(result)
@@ -139,7 +139,9 @@ abstract class TraceExecutionTestHelper(
     println(chain.text, ProcessOutputTypes.SYSTEM)
 
     val resultValue = result.result
-    handleResultValue(resultValue.value, resultMustBeNull)
+    if (resultMustBeNull != null) {
+      handleResultValue(resultValue.value, resultMustBeNull)
+    }
 
     val trace = result.trace
     handleTrace(trace)

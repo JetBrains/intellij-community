@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.exec;
 
+import com.intellij.debugger.streams.test.ExecutionTestCaseHelper;
 import com.intellij.debugger.streams.test.TraceExecutionTestCase;
 import com.intellij.debugger.streams.test.TraceExecutionTestHelper;
 import com.intellij.debugger.streams.trace.PrimitiveValue;
@@ -32,7 +33,7 @@ public class PrimitiveTerminalOperationTest extends TraceExecutionTestCase {
 
   @Override
   protected @NotNull TraceExecutionTestHelper getHelper(XDebugSession session) {
-    return new JavaTraceExecutionTestHelper(session, getLibrarySupportProvider(), myPositionResolver, LOG) {
+    return new ExecutionTestCaseHelper(this, session, getLibrarySupportProvider(), myPositionResolver, LOG) {
       @Override
       protected void handleResultValue(@Nullable Value result, boolean mustBeNull) {
         assertFalse(mustBeNull);
