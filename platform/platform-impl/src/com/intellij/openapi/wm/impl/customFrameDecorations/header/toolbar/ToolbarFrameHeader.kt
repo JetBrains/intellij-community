@@ -68,7 +68,7 @@ internal class ToolbarFrameHeader(
     isOpaque = false
   }
   private val menuBarContainer = createMenuBarContainer()
-  private val toolbarMainMenu = RootPaneUtil.createMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = null)
+  private val toolbarMainMenu = RootPaneUtil.createMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = null).apply { isOpaque = false }
   private val mainMenuButton = MainMenuButton(coroutineScope, getButtonIcon()) { if (mode == ShowMode.TOOLBAR_WITH_MENU) toolbarMainMenu.menuCount else 0 }
   private val mainMenuButtonComponent = mainMenuButton.button
   private var toolbar: MainToolbar? = null
@@ -471,7 +471,7 @@ internal class ToolbarFrameHeader(
     }
     val toolbarPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
-      add(toolbarMainMenu, gb.next().fillCellVertically())
+      add(toolbarMainMenu, gb.next().fillCellVertically().weighty(1.0))
       add(mainMenuButtonComponent, gb.next())
       add(toolbarPlaceholder, gb.next().weightx(1.0).fillCell())
     }
