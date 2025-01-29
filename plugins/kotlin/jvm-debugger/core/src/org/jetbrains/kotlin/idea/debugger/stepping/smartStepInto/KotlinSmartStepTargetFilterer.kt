@@ -45,8 +45,7 @@ class KotlinSmartStepTargetFilterer(
     suspend fun visitInlineFunction(function: KtNamedFunction) {
         val label = readAction {
             analyze(function) {
-                val symbol = function.symbol
-                KotlinMethodSmartStepTarget.calcLabel(symbol)
+                calcLabel(function.symbol)
             }
         }
         val currentCount = functionCounter.increment(label) - 1
@@ -132,8 +131,7 @@ class KotlinSmartStepTargetFilterer(
         return matchesBySignature(declaration, owner, signature, hasSimilarTargets)
     }
 
-    context(KaSession)
-    private fun primaryConstructorMatches(declaration: KtClass, owner: String, name: String, signature: String): Boolean {
+    private fun KaSession.primaryConstructorMatches(declaration: KtClass, owner: String, name: String, signature: String): Boolean {
         if (name != JVMNameUtil.CONSTRUCTOR_NAME || signature != "()V") return false
         val symbol = declaration.symbol as? KaClassSymbol ?: return false
         val internalClassName = symbol.getJvmInternalName()
@@ -149,12 +147,12 @@ class KotlinSmartStepTargetFilterer(
         readAction {
             analyze(declaration) {
                 val symbol = declaration.symbol as? KaCallableSymbol ?: return@analyze false
-                val declarationInternalName = symbol.getJvmInternalClassName()
+                val declarationInternalName = getJvmInternalClassName(symbol)
                 if (!owner.isSubClassOf(declarationInternalName)) return@analyze false
                 // Relaxing the check when there are no alternative candidates for the given target.
                 // This reduces the number of error reports.
                 if (!ApplicationManager.getApplication().isUnitTestMode && !hasSimilarTargets) return@analyze true
-                val declarationSignature = symbol.getJvmSignature()
+                val declarationSignature = getJvmSignature(symbol)
                 signature == declarationSignature
             }
         }
@@ -286,41 +284,39 @@ private fun String.isSubClassOf(baseInternalName: String?): Boolean {
     return baseInternalName == "java/lang/Object" || baseInternalName == "kotlin/Any"
 }
 
-context(KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun KaCallableSymbol.getJvmSignature(): String? {
-    val element = psi ?: return null
-    val contextReceivers = contextReceivers.mapNotNull { it.type.jvmName(element) }.joinToString("")
-    val receiver = receiverType?.jvmName(element) ?: ""
-    val isSuspend = this is KaFunctionSymbol && isSuspend()
-    val parameterTypes = if (this is KaFunctionSymbol) {
-        valueParameters.map {
-            val typeName = it.returnType.jvmName(element) ?: return null
+private fun KaSession.getJvmSignature(symbol: KaCallableSymbol): String? {
+    val element = symbol.psi ?: return null
+    val contextReceivers = symbol.contextReceivers.mapNotNull { jvmName(it.type, element) }.joinToString("")
+    val receiver = jvmName(symbol.receiverType, element) ?: ""
+    val isSuspend = symbol is KaFunctionSymbol && symbol.isSuspend()
+    val parameterTypes = if (symbol is KaFunctionSymbol) {
+        symbol.valueParameters.map {
+            val typeName = jvmName(it.returnType, element) ?: return null
             if (it.isVararg) "[$typeName" else typeName
         }.joinToString("")
     } else ""
     val returnType = when {
         isSuspend -> "Ljava/lang/Object;"
-        else -> returnType.jvmName(element) ?: return null
+        else -> jvmName(symbol.returnType, element) ?: return null
     }
     val continuationParameter = if (isSuspend) "Lkotlin/coroutines/Continuation;" else ""
     return "($contextReceivers$receiver$parameterTypes$continuationParameter)$returnType"
 }
 
-context(KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun KaType.jvmName(element: PsiElement): String? {
-    if (this is KaTypeParameterType) return "Ljava/lang/Object;"
-    if (this !is KaClassType) return null
-    val psiType = asPsiType(element, allowErrorTypes = false) ?: return null
-    if (symbol.isInlineClass()) {
+private fun KaSession.jvmName(type: KaType?, element: PsiElement): String? {
+    if (type is KaTypeParameterType) return "Ljava/lang/Object;"
+    if (type !is KaClassType) return null
+    val psiType = type.asPsiType(element, allowErrorTypes = false) ?: return null
+    if (isInlineClass(type.symbol)) {
         // handle wrapped types
         if (psiType.canonicalText == "java.lang.Object") return "Ljava/lang/Object;"
         if (psiType is PsiPrimitiveType) {
             return psiType.kind.binaryName
         }
     }
-    if (isPrimitive) {
+    if (type.isPrimitive) {
         return if (psiType is PsiPrimitiveType) psiType.kind.binaryName
         else psiType.canonicalText.fqnToInternalName().internalNameToReferenceTypeName()
     }
@@ -329,7 +325,7 @@ private fun KaType.jvmName(element: PsiElement): String? {
     if (psiTypeInternalName.startsWith("kotlin/jvm/") || psiTypeInternalName.startsWith("java/")) {
         return psiTypeInternalName.internalNameToReferenceTypeName()
     }
-    val ktTypeInternalName = JvmClassName.internalNameByClassId(classId)
+    val ktTypeInternalName = JvmClassName.internalNameByClassId(type.classId)
     return ktTypeInternalName.internalNameToReferenceTypeName()
 }
 

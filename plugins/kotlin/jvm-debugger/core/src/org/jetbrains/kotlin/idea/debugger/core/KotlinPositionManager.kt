@@ -417,7 +417,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     private fun KtCallExpression.getBytecodeMethodName(): String? = runDumbAnalyze(this, fallback = null) f@{
         val resolvedCall = resolveToCall()?.successfulFunctionCallOrNull() ?: return@f null
         val symbol = resolvedCall.partiallyAppliedSymbol.symbol as? KaNamedFunctionSymbol ?: return@f null
-        symbol.getByteCodeMethodName()
+        getByteCodeMethodName(symbol)
     }
 
     private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String, isLambda: Boolean): Boolean {

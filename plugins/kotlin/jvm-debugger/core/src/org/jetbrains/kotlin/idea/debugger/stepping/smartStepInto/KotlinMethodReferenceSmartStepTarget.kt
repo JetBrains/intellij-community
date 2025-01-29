@@ -28,6 +28,6 @@ class KotlinMethodReferenceSmartStepTarget(
     override fun getIcon(): Icon? = KotlinIcons.FUNCTION
     override fun getClassName(): String? {
         val declaration = declarationPtr.getElementInReadAction() ?: return null
-        return runDumbAnalyze(declaration, fallback = null) { declaration.getClassName() }
+        return runDumbAnalyze(declaration, fallback = null) { getClassName(declaration) }
     }
 }

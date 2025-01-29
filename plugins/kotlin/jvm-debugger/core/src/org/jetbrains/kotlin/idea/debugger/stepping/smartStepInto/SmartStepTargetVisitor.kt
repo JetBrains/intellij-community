@@ -67,7 +67,7 @@ class SmartStepTargetVisitor(
                     append(MethodSmartStepTarget(declaration, null, expression, true, lines))
                     return true
                 } else if (declaration is KtNamedFunction) {
-                    val label = KotlinMethodSmartStepTarget.calcLabel(symbol)
+                    val label = calcLabel(symbol)
                     append(
                         KotlinMethodReferenceSmartStepTarget(
                             lines,
@@ -84,9 +84,8 @@ class SmartStepTargetVisitor(
         }
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun recordProperty(expression: KtExpression, symbol: KaPropertySymbol): Boolean {
+    private fun KaSession.recordProperty(expression: KtExpression, symbol: KaPropertySymbol): Boolean {
         if (expression !is KtNameReferenceExpression && expression !is KtCallableReferenceExpression) return false
         val targetType = expression.computeTargetType()
         if (symbol is KaSyntheticJavaPropertySymbol) {
@@ -151,9 +150,9 @@ class SmartStepTargetVisitor(
             .singleOrNull()
     }
 
-    context(KaSession)
-    private fun propertyAccessLabel(symbol: KaPropertySymbol, propertyAccessSymbol: KaDeclarationSymbol) =
-        "${symbol.name}.${KotlinMethodSmartStepTarget.calcLabel(propertyAccessSymbol)}"
+    private fun KaSession.propertyAccessLabel(symbol: KaPropertySymbol, propertyAccessSymbol: KaDeclarationSymbol): String {
+        return "${symbol.name}.${calcLabel(propertyAccessSymbol)}"
+    }
 
     private fun KtExpression.computeTargetType(): KtNameReferenceExpressionUsage {
         val potentialLeftHandSide = parent as? KtQualifiedExpression ?: this
@@ -217,8 +216,7 @@ class SmartStepTargetVisitor(
         }
     }
 
-    context(KaSession)
-    private fun createJavaLambdaInfo(
+    private fun KaSession.createJavaLambdaInfo(
         declaration: PsiMethod,
         methodSymbol: KaFunctionSymbol,
         argumentSymbol: KaValueParameterSymbol,
@@ -227,8 +225,7 @@ class SmartStepTargetVisitor(
         return KotlinLambdaInfo(methodSymbol, argumentSymbol, callerMethodOrdinal, isNameMangledInBytecode = false)
     }
 
-    context(KaSession)
-    private fun createKotlinLambdaInfo(
+    private fun KaSession.createKotlinLambdaInfo(
         declaration: KtDeclaration,
         methodSymbol: KaFunctionSymbol,
         argumentSymbol: KaValueParameterSymbol,
@@ -243,12 +240,12 @@ class SmartStepTargetVisitor(
                 ?: return null
             KotlinLambdaInfo(
                 methodSymbol, argumentSymbol, callerMethodOrdinal,
-                isNameMangledInBytecode = funMethodSymbol.containsInlineClassInParameters(),
+                isNameMangledInBytecode = containsInlineClassInParameters(funMethodSymbol),
                 isSam = true, isSamSuspendMethod = funMethodSymbol.isSuspend, methodName = funMethodSymbol.name.asString()
             )
         } else {
             val isNameMangledInBytecode = (argumentSymbol.returnType as? KaFunctionType)?.parameterTypes
-                ?.any { it.expandedSymbol?.isInlineClass() == true } == true
+                ?.any { isInlineClass(it.expandedSymbol) } == true
             KotlinLambdaInfo(
                 methodSymbol, argumentSymbol, callerMethodOrdinal,
                 isNameMangledInBytecode = isNameMangledInBytecode
@@ -356,7 +353,7 @@ class SmartStepTargetVisitor(
             return
         }
 
-        val callLabel = KotlinMethodSmartStepTarget.calcLabel(symbol)
+        val callLabel = calcLabel(symbol)
         val label = if (symbol.isInvoke() && highlightExpression is KtSimpleNameExpression) {
             "${highlightExpression.text}.$callLabel"
         } else {
@@ -390,8 +387,7 @@ class SmartStepTargetVisitor(
         }
     }
 
-    context(KaSession)
-    private fun getFunctionDeclaration(symbol: KaFunctionSymbol): PsiElement? {
+    private fun KaSession.getFunctionDeclaration(symbol: KaFunctionSymbol): PsiElement? {
         if (symbol.isInvoke()) return null
         symbol.psi?.let { return it }
         // null is returned for implemented by delegation methods in K1

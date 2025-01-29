@@ -80,8 +80,7 @@ open class KotlinMethodFilter(
         }
     }
 
-    context(KaSession)
-    private fun declarationMatches(currentDeclaration: KtDeclaration): Boolean {
+    private fun KaSession.declarationMatches(currentDeclaration: KtDeclaration): Boolean {
         val currentSymbol = currentDeclaration.symbol
         // callable or constructor
         if (currentSymbol !is KaCallableSymbol && currentSymbol !is KaClassSymbol) return false

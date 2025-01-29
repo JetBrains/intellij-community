@@ -29,11 +29,10 @@ data class CallableMemberInfo(
     val isNameMangledInBytecode = isInlineClassMember || hasInlineClassInParameters
 }
 
-context(KaSession)
-internal fun CallableMemberInfo(
+internal fun KaSession.CallableMemberInfo(
     symbol: KaFunctionSymbol,
     ordinal: Int = 0,
-    name: String = symbol.methodName(),
+    name: String = methodName(symbol),
     isEqualsNullCall: Boolean = false,
 ): CallableMemberInfo {
     val isInvoke = symbol.isInvoke()
@@ -42,8 +41,8 @@ internal fun CallableMemberInfo(
     return CallableMemberInfo(
         isInvoke = isInvoke,
         isSuspend = isSuspend,
-        isInlineClassMember = symbol.isInsideInlineClass(),
-        hasInlineClassInParameters = symbol.containsInlineClassInParameters(),
+        isInlineClassMember = isInsideInlineClass(symbol),
+        hasInlineClassInParameters = containsInlineClassInParameters(symbol),
         isInternalMethod = symbol.visibility == KaSymbolVisibility.INTERNAL,
         isExtension = symbol.isExtension,
         isInline = symbol is KaNamedFunctionSymbol && symbol.isInline,
@@ -57,20 +56,18 @@ internal fun CallableMemberInfo(
 internal fun KaFunctionSymbol.isSuspend(): Boolean = this is KaNamedFunctionSymbol && this.isSuspend
 internal fun KaFunctionSymbol.isInvoke(): Boolean = this is KaNamedFunctionSymbol && this.isBuiltinFunctionInvoke
 
-context(KaSession)
 @OptIn(KaExperimentalApi::class)
-internal fun KaFunctionSymbol.containsInlineClassInParameters(): Boolean =
-    valueParameters.any { it.returnType.expandedSymbol?.isInlineClass() == true }
-            || receiverParameter?.returnType?.expandedSymbol?.isInlineClass() == true
-            || contextReceivers.any { it.type.expandedSymbol?.isInlineClass() == true }
+internal fun KaSession.containsInlineClassInParameters(symbol: KaFunctionSymbol): Boolean =
+    symbol.valueParameters.any { isInlineClass(it.returnType.expandedSymbol) }
+            || isInlineClass(symbol.receiverParameter?.returnType?.expandedSymbol)
+            || symbol.contextReceivers.any { isInlineClass(it.type.expandedSymbol) }
 
-context(KaSession)
-private fun KaFunctionSymbol.methodName() = when (this) {
-    is KaNamedFunctionSymbol -> getByteCodeMethodName()
+private fun KaSession.methodName(symbol: KaFunctionSymbol) = when (symbol) {
+    is KaNamedFunctionSymbol -> getByteCodeMethodName(symbol)
     is KaConstructorSymbol -> "<init>"
     else -> ""
 }
 
-context(KaSession)
-internal fun KaFunctionSymbol.isInsideInlineClass(): Boolean = getContainingClassOrObjectSymbol()?.isInlineClass() == true
+internal fun KaSession.isInsideInlineClass(symbol: KaFunctionSymbol): Boolean =
+    isInlineClass(getContainingClassOrObjectSymbol(symbol))
 

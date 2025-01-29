@@ -16,45 +16,41 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 
-context(KaSession)
 @ApiStatus.Internal
-fun KaNamedFunctionSymbol.getByteCodeMethodName(): String {
-    val localFunPrefix = if (isLocal) {
-        generateSequence(this) { if (it.isLocal) it.containingSymbol as? KaNamedFunctionSymbol else null }
+fun KaSession.getByteCodeMethodName(symbol: KaNamedFunctionSymbol): String {
+    val localFunPrefix = if (symbol.isLocal) {
+        generateSequence(symbol) { if (it.isLocal) it.containingSymbol as? KaNamedFunctionSymbol else null }
             .drop(1).toList().map { it.name.asString() }
             .reversed().joinToString("$", postfix = "$")
     } else ""
     // Containing function JvmName annotation does not affect a local function name
-    val jvmName = annotations
+    val jvmName = symbol.annotations
         .filter { it.classId?.asFqNameString() == "kotlin.jvm.JvmName" }
         .firstNotNullOfOrNull {
             it.arguments.singleOrNull { a -> a.name.asString() == "name" }
                 ?.expression?.asSafely<KaAnnotationValue.ConstantValue>()
                 ?.value?.asSafely<KaConstantValue.StringValue>()?.value
         }
-    val actualName = jvmName ?: name.asString()
+    val actualName = jvmName ?: symbol.name.asString()
     return "$localFunPrefix$actualName"
 }
 
-context(KaSession)
 @ApiStatus.Internal
-fun KaDeclarationSymbol.isInlineClass(): Boolean = this is KaNamedClassSymbol && this.isInline
+fun isInlineClass(symbol: KaDeclarationSymbol?): Boolean = symbol is KaNamedClassSymbol && symbol.isInline
 
-context(KaSession)
 @ApiStatus.Internal
-fun KtDeclaration.getClassName(): String? {
-    val symbol = symbol as? KaFunctionSymbol ?: return null
-    return symbol.getJvmInternalClassName()?.internalNameToFqn()
+fun KaSession.getClassName(declaration: KtDeclaration): String? {
+    val symbol = declaration.symbol as? KaFunctionSymbol ?: return null
+    return getJvmInternalClassName(symbol)?.internalNameToFqn()
 }
 
-context(KaSession)
 @ApiStatus.Internal
-fun KaCallableSymbol.getJvmInternalClassName(): String? {
-    val classOrObject = getContainingClassOrObjectSymbol()
+fun KaSession.getJvmInternalClassName(symbol: KaCallableSymbol): String? {
+    val classOrObject = getContainingClassOrObjectSymbol(symbol)
     if (classOrObject != null) {
         return classOrObject.getJvmInternalName()
     }
-    val fileSymbol = containingFile ?: return null
+    val fileSymbol = symbol.containingFile ?: return null
     val file = fileSymbol.psi as? KtFile ?: return null
     if (file is KtClsFile) {
         return file.javaFileFacadeFqName.asString().fqnToInternalName()
@@ -70,13 +66,12 @@ fun KaClassSymbol.getJvmInternalName(): String? {
     return internalName
 }
 
-context(KaSession)
 @ApiStatus.Internal
-fun KaCallableSymbol.getContainingClassOrObjectSymbol(): KaClassSymbol? {
-    var symbol = containingSymbol
-    while (symbol != null) {
-        if (symbol is KaClassSymbol) return symbol
-        symbol = symbol.containingDeclaration
+fun KaSession.getContainingClassOrObjectSymbol(symbol: KaCallableSymbol): KaClassSymbol? {
+    var containerSymbol = symbol.containingSymbol
+    while (containerSymbol != null) {
+        if (containerSymbol is KaClassSymbol) return containerSymbol
+        containerSymbol = containerSymbol.containingDeclaration
     }
     return null
 }
