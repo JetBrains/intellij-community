@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="netty-codec-compression" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.netty:netty-codec-compression:4.2.0.RC1">
+    <properties include-transitive-deps="false" maven-id="io.netty:netty-codec-compression:4.2.0.RC2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-compression/4.2.0.RC1/netty-codec-compression-4.2.0.RC1.jar">
-          <sha256sum>c05940fae6a5ada32405ffff0649588f25a49ca10497e1cee846b69a047e4e5d</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-compression/4.2.0.RC2/netty-codec-compression-4.2.0.RC2.jar">
+          <sha256sum>7251646a8ea8d56a2415311de6040159479ac0e35de36dab70b667ed899ac931</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-compression/4.2.0.RC1/netty-codec-compression-4.2.0.RC1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-compression/4.2.0.RC2/netty-codec-compression-4.2.0.RC2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-compression/4.2.0.RC1/netty-codec-compression-4.2.0.RC1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-compression/4.2.0.RC2/netty-codec-compression-4.2.0.RC2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
