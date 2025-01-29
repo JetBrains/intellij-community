@@ -50,7 +50,10 @@ def get_head(table):
 def get_column_types(table):
     # type: (np.ndarray) -> str
     table = __create_table(table[:1])
-    cols_types = [str(t) for t in table.dtypes] if is_pd else table.get_cols_types()
+    try:
+        cols_types = [str(t) for t in table.dtypes] if is_pd else table.get_cols_types()
+    except AttributeError:
+        cols_types = table.get_cols_types()
 
     return NP_ROWS_TYPE + TABLE_TYPE_NEXT_VALUE_SEPARATOR + \
         TABLE_TYPE_NEXT_VALUE_SEPARATOR.join(cols_types)
@@ -327,7 +330,12 @@ def __create_table(command, start_index=None, end_index=None, format=None):
         np_array = command
 
     if is_pd:
-        sorted_df = __sort_df(pd.DataFrame(np_array), sort_keys)
+        if isinstance(np_array, np.recarray):
+            sorted_df = pd.DataFrame()
+            for record in np_array:
+                sorted_df = pd.concat([sorted_df, pd.DataFrame(record.tolist())])
+        else:
+            sorted_df = __sort_df(pd.DataFrame(np_array), sort_keys)
         if start_index is not None and end_index is not None:
             sorted_df_slice = sorted_df.iloc[start_index:end_index]
             # to apply "format" we should not have None inside DFs
