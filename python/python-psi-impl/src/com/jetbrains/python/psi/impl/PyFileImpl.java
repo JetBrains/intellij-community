@@ -60,7 +60,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private final @NotNull PsiModificationTracker myModificationTracker;
 
   private final class ExportedNameCache {
-    private final List<String> myNameDefinerNegativeCache = new ArrayList<>();
+    private final Set<String> myNameDefinerNegativeCache = new HashSet<>();
     private long myNameDefinerOOCBModCount = -1;
     private final long myModificationStamp;
     private final Map<String, List<PsiNamedElement>> myNamedElements = Maps.newHashMap();
