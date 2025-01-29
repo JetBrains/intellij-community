@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.render
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.EditorColors
@@ -9,6 +10,8 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.TextRange
 
 internal object InlineCompletionEditorTextUtils {
+
+  private val LOG = thisLogger()
 
   /**
    * Returns a list of text attributes for [range] in [editor].
@@ -43,7 +46,9 @@ internal object InlineCompletionEditorTextUtils {
       blocks += InlineCompletionRenderTextBlock(rangeText, editor.getDefaultTextAttributes())
     }
     else {
-      check(processedText.toString() == rangeText)
+      if (processedText.toString() != rangeText) {
+        LOG.error("Highlighting for inline completion is incorrectly computed. Expected: $rangeText, actual: $processedText")
+      }
     }
 
     if (useCaretLineBackground(editor, range, isInline)) {

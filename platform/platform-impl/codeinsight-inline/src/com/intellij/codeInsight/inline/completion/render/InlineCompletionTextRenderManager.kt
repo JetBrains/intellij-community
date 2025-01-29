@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion.render
 import com.intellij.codeInsight.inline.completion.render.InlineCompletionEditorTextUtils.getBlocksForRealText
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.VisualPosition
@@ -204,7 +205,10 @@ internal class InlineCompletionTextRenderManager private constructor(
 
     private fun trimFoldedRangeIfNeeded(initialOffset: Int) {
       val foldedRange = this.foldedRange ?: return
-      check(initialOffset >= foldedRange.startOffset)
+      if (initialOffset < foldedRange.startOffset) {
+        LOG.error("Incorrect state of inline completion rendering. It is called in the wrong order.")
+        return
+      }
       val trimRange = TextRange(foldedRange.startOffset, initialOffset)
       this.foldedRange = TextRange(initialOffset, foldedRange.endOffset)
       renderRealTextBlocks(trimRange, areFolded = false)
@@ -250,7 +254,9 @@ internal class InlineCompletionTextRenderManager private constructor(
       }
       val range = foldingManager.foldLineEnd(renderOffset, this) ?: return
       foldedRange = range
-      check(!editor.document.getText(range).contains('\n'))
+      if (editor.document.getText(range).contains('\n')) {
+        LOG.error("Incorrect state of inline completion rendering. Folding mustn't contain a new line break.")
+      }
     }
 
     private fun updateDirtyInlays() {
@@ -307,6 +313,7 @@ internal class InlineCompletionTextRenderManager private constructor(
 
     private val STORAGE_KEY = Key.create<Storage<Int, InlineCompletionTextRenderManager>>("inline.completion.text.render")
     private val FOLDED_BLOCK_KEY = Key.create<Unit>("inline.completion.folded.block.marker")
+    private val LOG = thisLogger()
 
     @ApiStatus.Experimental
     @RequiresEdt

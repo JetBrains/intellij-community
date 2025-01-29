@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion.render
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
@@ -54,7 +55,10 @@ internal class InlineCompletionFoldingManager private constructor(private val ed
 
     verifyDocumentUnchanged()
 
-    check(lineNumber !in foldedLines)
+    if (lineNumber in foldedLines) {
+      LOG.error("Incorrect state of folding for inline completion. The same line $lineNumber is folded twice.")
+      return null
+    }
     foldingModel.runBatchFoldingOperation {
       val foldRegion = foldingModel.createFoldRegion(
         /* startOffset = */ startOffset,
@@ -120,12 +124,21 @@ internal class InlineCompletionFoldingManager private constructor(private val ed
   }
 
   override fun dispose() {
-    check(foldedLines.isEmpty())
-    check(lastModificationStamp == null)
+    if (foldedLines.isNotEmpty() || lastModificationStamp != null) {
+      LOG.error("Incorrect state of folding for inline completion. Some folded regions are not disposed.")
+      foldingModel.runBatchFoldingOperation {
+        foldedLines.forEach { (_, region) ->
+          foldingModel.removeFoldRegion(region)
+        }
+      }
+      foldedLines.clear()
+      lastModificationStamp = null
+    }
   }
 
   companion object {
     private val KEY = Key<InlineCompletionFoldingManager>("inline.completion.folding.manager")
+    private val LOG = thisLogger()
 
     private fun isFoldingSupported(editor: Editor): Boolean {
       val foldingModel = editor.foldingModel
