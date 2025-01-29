@@ -1,7 +1,7 @@
 <class 'numpy.ndarray'>
 __pydev_val__
-(2, 1)
+(2, 4)
 __pydev_val__
-None
+ci__pydev_table_column_type_val__cf__pydev_table_column_type_val__cs__pydev_table_column_type_val__cb
 __pydev_val__
 int64__pydev_table_column_type_val__int32__pydev_table_column_type_val__float32__pydev_table_column_type_val__object__pydev_table_column_type_val__bool
