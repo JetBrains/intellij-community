@@ -3,6 +3,10 @@ package com.intellij.xdebugger.impl.ui.tree.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.xdebugger.XSourcePosition
@@ -10,6 +14,9 @@ import com.intellij.xdebugger.frame.XNavigatable
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -20,12 +27,12 @@ abstract class XJumpToSourceActionBase : XDebuggerTreeActionBase() {
     val navigatable = XNavigatable { sourcePosition: XSourcePosition? ->
       if (sourcePosition != null) {
         val project = node.tree.project
-        AppUIExecutor.onUiThread().expireWith(project).submit(Runnable {
+        project.service<XDebuggerJumpToSourceCoroutineScope>().cs.launch(Dispatchers.EDT) {
           sourcePosition.createNavigatable(project).navigate(true)
           if (dialog != null && `is`("debugger.close.dialog.on.navigate")) {
             dialog.close(DialogWrapper.CANCEL_EXIT_CODE)
           }
-        })
+        }
       }
     }
     startComputingSourcePosition(value, navigatable)
@@ -33,3 +40,6 @@ abstract class XJumpToSourceActionBase : XDebuggerTreeActionBase() {
 
   protected abstract fun startComputingSourcePosition(value: XValue, navigatable: XNavigatable)
 }
+
+@Service(Service.Level.PROJECT)
+private class XDebuggerJumpToSourceCoroutineScope(project: Project, val cs: CoroutineScope)
