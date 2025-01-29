@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
+import org.jetbrains.kotlin.analysis.api.components.KaUseSiteVisibilityChecker
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 // Analogous to Call.resolveCandidates() in plugins/kotlin/core/src/org/jetbrains/kotlin/idea/core/Utils.kt
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 fun collectCallCandidates(callElement: KtElement): List<KaCallCandidateInfo> {
     val (candidates, explicitReceiver) = when (callElement) {
         is KtCallElement -> {
@@ -36,22 +38,23 @@ fun collectCallCandidates(callElement: KtElement): List<KaCallCandidateInfo> {
     }
 
     if (candidates.isEmpty()) return emptyList()
-    val fileSymbol = callElement.containingKtFile.symbol
 
-    return candidates.filter { filterCandidate(it, callElement, fileSymbol, explicitReceiver) }
+    val visibilityChecker = createUseSiteVisibilityChecker(callElement.containingKtFile.symbol, explicitReceiver, callElement)
+    return candidates.filter { filterCandidate(it, callElement, explicitReceiver, visibilityChecker) }
 }
 
 context(KaSession)
+@OptIn(KaExperimentalApi::class)
 private fun filterCandidate(
     candidateInfo: KaCallCandidateInfo,
     callElement: KtElement,
-    fileSymbol: KaFileSymbol,
-    explicitReceiver: KtExpression?
+    explicitReceiver: KtExpression?,
+    visibilityChecker: KaUseSiteVisibilityChecker,
 ): Boolean {
     val candidateCall = candidateInfo.candidate
     if (candidateCall !is KaFunctionCall<*>) return false
     val signature = candidateCall.partiallyAppliedSymbol.signature
-    return filterCandidateByReceiverTypeAndVisibility(signature, callElement, fileSymbol, explicitReceiver)
+    return filterCandidateByReceiverTypeAndVisibility(signature, callElement, explicitReceiver, visibilityChecker)
 }
 
 context(KaSession)
@@ -59,8 +62,8 @@ context(KaSession)
 fun filterCandidateByReceiverTypeAndVisibility(
     signature: KaFunctionSignature<KaFunctionSymbol>,
     callElement: KtElement,
-    fileSymbol: KaFileSymbol,
     explicitReceiver: KtExpression?,
+    visibilityChecker: KaUseSiteVisibilityChecker,
     subtypingErrorTypePolicy: KaSubtypingErrorTypePolicy = KaSubtypingErrorTypePolicy.STRICT,
 ): Boolean {
     val candidateSymbol = signature.symbol
@@ -91,7 +94,7 @@ fun filterCandidateByReceiverTypeAndVisibility(
     if (candidateReceiverType != null && receiverTypes.none { it.isSubtypeOf(candidateReceiverType, subtypingErrorTypePolicy) }) return false
 
     // Filter out candidates not visible from call site
-    if (!isVisible(candidateSymbol, fileSymbol, explicitReceiver, callElement)) return false
+    if (!visibilityChecker.isVisible(candidateSymbol)) return false
 
     return true
 }

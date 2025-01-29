@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion.checkers
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaUseSiteVisibilityChecker
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
@@ -25,6 +26,11 @@ import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 internal class CompletionVisibilityChecker(
     private val parameters: KotlinFirCompletionParameters, // should be the only parameter
 ) {
+
+    // There should be only a single KotlinRawPositionContext throughout the entire completion.
+    // However, since the completion API allows passing any of [KotlinRawPositionContext] around,
+    // we will cache all of them  just in case.
+    private val visibilityCheckerPerPositionContextCache = mutableMapOf<KotlinRawPositionContext, KaUseSiteVisibilityChecker>()
 
     fun canBeVisible(declaration: KtDeclaration): Boolean = forbidAnalysis("canBeVisible") {
         val originalFile = parameters.originalFile
@@ -83,11 +89,17 @@ internal class CompletionVisibilityChecker(
         val originalFile = parameters.originalFile
         if (originalFile is KtCodeFragment) return true
 
-        return isVisible(
-            candidateSymbol = symbol,
-            useSiteFile = originalFile.symbol,
-            receiverExpression = (positionContext as? KotlinSimpleNameReferencePositionContext)?.explicitReceiver,
-            position = positionContext.position,
-        )
+        return getCachedVisibilityChecker(positionContext).isVisible(symbol)
+    }
+
+    context(KaSession)
+    private fun getCachedVisibilityChecker(positionContext: KotlinRawPositionContext): KaUseSiteVisibilityChecker {
+        return visibilityCheckerPerPositionContextCache.getOrPut(positionContext) {
+            createUseSiteVisibilityChecker(
+                useSiteFile = parameters.originalFile.symbol,
+                receiverExpression = (positionContext as? KotlinSimpleNameReferencePositionContext)?.explicitReceiver,
+                position = positionContext.position,
+            )
+        }
     }
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.psi.PsiClass
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -36,6 +37,7 @@ internal open class ClassifierImportCandidatesProvider(
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     override fun collectCandidates(
         indexProvider: KtSymbolFromIndexProvider,
     ): List<ClassLikeImportCandidate> {
@@ -43,13 +45,14 @@ internal open class ClassifierImportCandidatesProvider(
 
         val unresolvedName = positionContext.name
         val fileSymbol = getFileSymbol()
+        val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, receiverExpression = null, positionContext.position)
 
         return buildList {
             addAll(indexProvider.getKotlinClassesByName(unresolvedName) { acceptsKotlinClass(it) })
             addAll(indexProvider.getJavaClassesByName(unresolvedName) { acceptsJavaClass(it) })
         }
             .map { ClassLikeImportCandidate(it) }
-            .filter { it.isVisible(fileSymbol) && it.classId != null && acceptsClassLikeSymbol(it.symbol) }
+            .filter { it.classId != null && it.isVisible(visibilityChecker) && acceptsClassLikeSymbol(it.symbol) }
     }
 }
 

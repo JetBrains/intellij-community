@@ -78,7 +78,7 @@ private fun PsiNamedElement.isVisibleTo(usage: KtElement): Boolean {
         if (this !is PsiMember) return false // get Java symbol through resolve because it is not possible through getSymbol
         usage.mainReference?.resolveToSymbol() as? KaDeclarationSymbol ?: return false
     }
-    return isVisible(symbol, file, position = usage)
+    return createUseSiteVisibilityChecker(file, receiverExpression = null, usage).isVisible(symbol)
 }
 
 private fun PsiNamedElement.lightIsVisibleTo(usage: PsiElement): Boolean {

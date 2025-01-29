@@ -209,7 +209,7 @@ abstract class AbstractKotlinUastTest : TestCase(),
 
             if (sourceFile.extension == KotlinParserDefinition.STD_SCRIPT_SUFFIX) {
                 put(CommonConfigurationKeys.ALLOW_ANY_SCRIPTS_IN_SOURCE_ROOTS, true)
-                loadScriptingPlugin(this)
+                loadScriptingPlugin(this, testRootDisposable)
             }
         }
     }
@@ -217,7 +217,7 @@ abstract class AbstractKotlinUastTest : TestCase(),
 
 val TEST_KOTLIN_MODEL_DIR = KotlinRoot.DIR.resolve("uast/uast-kotlin/tests/testData")
 
-private fun loadScriptingPlugin(configuration: CompilerConfiguration) {
+private fun loadScriptingPlugin(configuration: CompilerConfiguration, parentDisposable: Disposable) {
     val pluginClasspath = listOf(
         TestKotlinArtifacts.kotlinScriptingCompiler,
         TestKotlinArtifacts.kotlinScriptingCompilerImpl,
@@ -225,5 +225,5 @@ private fun loadScriptingPlugin(configuration: CompilerConfiguration) {
         TestKotlinArtifacts.kotlinScriptingJvm
     )
 
-    PluginCliParser.loadPluginsSafe(pluginClasspath.map { it.absolutePath }, emptyList(), emptyList(), configuration)
+    PluginCliParser.loadPluginsSafe(pluginClasspath.map { it.absolutePath }, emptyList(), emptyList(), configuration, parentDisposable)
 }

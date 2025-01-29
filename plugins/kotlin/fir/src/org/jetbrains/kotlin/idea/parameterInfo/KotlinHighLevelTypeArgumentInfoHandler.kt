@@ -10,7 +10,9 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.api.types.KaClassErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.filterCandidateByReceiverTypeAndVisibility
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -50,6 +52,7 @@ class KotlinHighLevelClassTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentI
  */
 class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentInfoHandlerBase() {
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KaDeclarationSymbol>? {
         val callElement = argumentList.parentOfType<KtCallElement>() ?: return null
         // A call element may not be syntactically complete (e.g., missing parentheses: `foo<>`). In that case, `callElement.resolveCallOld()`
@@ -57,6 +60,8 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
         val reference = callElement.calleeExpression?.references?.singleOrNull() as? KtSimpleNameReference ?: return null
         val explicitReceiver = callElement.getQualifiedExpressionForSelector()?.receiverExpression
         val fileSymbol = callElement.containingKtFile.symbol
+
+        val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, explicitReceiver, callElement)
         val symbols = callElement.resolveToCallCandidates()
             .mapNotNull { (it.candidate as? KaCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.signature }
             .filterIsInstance<KaFunctionSignature<*>>()
@@ -75,8 +80,8 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
                 filterCandidateByReceiverTypeAndVisibility(
                     candidate,
                     callElement,
-                    fileSymbol,
                     explicitReceiver,
+                    visibilityChecker,
                     KaSubtypingErrorTypePolicy.LENIENT,
                 )
             }
