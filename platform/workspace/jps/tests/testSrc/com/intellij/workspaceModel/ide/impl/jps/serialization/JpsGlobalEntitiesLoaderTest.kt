@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
- import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
- import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
- import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.SdkEntity
@@ -65,11 +65,12 @@ class JpsGlobalEntitiesLoaderTest {
     copyAndLoadGlobalEntities(originalFile = "sdk/loading", testDir = temporaryFolder.newFolder(),
                               parentDisposable = disposableRule.disposable) { _, _ ->
       data class SdkTestInfo(val name: String, val version: String, val type: String)
+
       val sdkInfos = listOf(SdkTestInfo("corretto-20", "Amazon Corretto version 20.0.2", "JavaSDK"),
                             SdkTestInfo("jbr-17", "java version \"17.0.7\"", "JavaSDK"))
       val sdkBridges = ProjectJdkTable.getInstance().allJdks
       Assert.assertEquals(sdkInfos.size, sdkBridges.size)
-      UsefulTestCase.assertSameElements(sdkInfos, sdkBridges.map { SdkTestInfo(it.name, it.versionString!!, it.sdkType.name)  })
+      UsefulTestCase.assertSameElements(sdkInfos, sdkBridges.map { SdkTestInfo(it.name, it.versionString!!, it.sdkType.name) })
 
       val workspaceModel = GlobalWorkspaceModel.getInstance()
       val sdkEntities = workspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList()
