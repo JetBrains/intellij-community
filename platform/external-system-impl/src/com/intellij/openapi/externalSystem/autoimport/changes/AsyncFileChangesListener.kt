@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
 import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
+import com.intellij.util.containers.prefix.set.toPrefixTreeSet
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
@@ -37,7 +38,7 @@ class AsyncFileChangesListener(
     val stamp = Stamp.nextStamp()
     val updatedFilesSnapshot = HashMap(updatedFiles)
     filesProvider.supply(parentDisposable) { filesToWatch ->
-      val index = CanonicalPathPrefixTreeFactory.createSet(filesToWatch)
+      val index = filesToWatch.toPrefixTreeSet(CanonicalPathPrefixTreeFactory)
       val updatedWatchedFiles = updatedFilesSnapshot.flatMap { (path, modificationData) ->
         index.getDescendants(path)
           .map { it to modificationData }

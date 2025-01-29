@@ -12,7 +12,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface MutablePrefixTreeMap<Key, Value> : PrefixTreeMap<Key, Value> {
 
-  operator fun set(key: Key, value: Value): Value?
+  fun put(key: Key, value: Value): Value?
 
   fun remove(key: Key): Value?
+
+  operator fun set(key: Key, value: Value): Value? =
+    put(key, value)
+
+  fun putAll(entries: Iterable<Pair<Key, Value>>): Unit =
+    entries.forEach { put(it.first, it.second) }
 }

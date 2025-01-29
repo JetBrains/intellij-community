@@ -10,4 +10,7 @@ interface MutablePrefixTreeSet<Key> : PrefixTreeSet<Key> {
   fun add(element: Key)
 
   fun remove(element: Key)
+
+  fun addAll(elements: Iterable<Key>): Unit =
+    elements.forEach { add(it) }
 }

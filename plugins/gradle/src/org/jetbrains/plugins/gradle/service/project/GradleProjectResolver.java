@@ -855,7 +855,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         var contentRootNodes = CanonicalPathPrefixTreeFactory.INSTANCE.<ContentRootData>createMap();
         for (var contentRootPath : contentRootPaths) {
           var contentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, contentRootPath);
-          contentRootNodes.set(contentRootPath, contentRootData);
+          contentRootNodes.put(contentRootPath, contentRootData);
         }
 
         for (var contentRootNode : findAll(sourceSetNode, ProjectKeys.CONTENT_ROOT)) {

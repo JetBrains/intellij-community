@@ -40,7 +40,7 @@ internal class PrefixTreeMapImpl<Key, KeyElement, Value>(
     return root.getValue(key.toList()).getOrDefault(defaultValue)
   }
 
-  override fun set(key: Key, value: Value): Value? {
+  override fun put(key: Key, value: Value): Value? {
     return root.setValue(key.toList(), key to value).getOrNull()
   }
 

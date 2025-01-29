@@ -2,23 +2,38 @@
 package com.intellij.util.containers.prefix.factory
 
 import com.intellij.util.containers.prefix.map.MutablePrefixTreeMap
+import com.intellij.util.containers.prefix.map.PrefixTreeMapImpl
 import com.intellij.util.containers.prefix.set.MutablePrefixTreeSet
+import com.intellij.util.containers.prefix.set.PrefixTreeSetImpl
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface PrefixTreeFactory<Key, KeyElement> {
+fun interface PrefixTreeFactory<Key, KeyElement> {
 
   fun convertToList(element: Key): List<KeyElement>
 
-  fun createSet(elements: Sequence<Key>): MutablePrefixTreeSet<Key>
+  fun createSet(): MutablePrefixTreeSet<Key> =
+    PrefixTreeSetImpl(this)
 
-  fun createSet(elements: Iterable<Key>): MutablePrefixTreeSet<Key>
+  fun <Value> createMap(): MutablePrefixTreeMap<Key, Value> =
+    PrefixTreeMapImpl(this)
 
-  fun createSet(vararg elements: Key): MutablePrefixTreeSet<Key>
+  companion object {
 
-  fun <Value> createMap(entries: Sequence<Pair<Key, Value>>): MutablePrefixTreeMap<Key, Value>
+    fun <K> list(): PrefixTreeFactory<List<K>, K> {
+      return object : PrefixTreeFactory<List<K>, K> {
+        override fun convertToList(element: List<K>): List<K> {
+          return element
+        }
+      }
+    }
 
-  fun <Value> createMap(entries: Iterable<Pair<Key, Value>>): MutablePrefixTreeMap<Key, Value>
-
-  fun <Value> createMap(vararg entries: Pair<Key, Value>): MutablePrefixTreeMap<Key, Value>
+    fun <K, E> create(convert: (K) -> List<E>): PrefixTreeFactory<K, E> {
+      return object : PrefixTreeFactory<K, E> {
+        override fun convertToList(element: K): List<E> {
+          return convert(element)
+        }
+      }
+    }
+  }
 }

@@ -3,7 +3,7 @@
 
 package com.intellij.openapi.util.io
 
-import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
+import com.intellij.util.containers.prefix.factory.PrefixTreeFactory
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.InvalidPathException
@@ -101,7 +101,7 @@ fun String.toNioPathOrNull(): Path? {
 }
 
 @ApiStatus.Internal
-object NioPathPrefixTreeFactory : AbstractPrefixTreeFactory<Path, String>() {
+object NioPathPrefixTreeFactory : PrefixTreeFactory<Path, String> {
 
   override fun convertToList(element: Path): List<String> {
     return element.map { it.pathString }
@@ -109,7 +109,7 @@ object NioPathPrefixTreeFactory : AbstractPrefixTreeFactory<Path, String>() {
 }
 
 @ApiStatus.Internal
-object CanonicalPathPrefixTreeFactory : AbstractPrefixTreeFactory<String, String>() {
+object CanonicalPathPrefixTreeFactory : PrefixTreeFactory<String, String> {
 
   override fun convertToList(element: String): List<String> {
     return element.removeSuffix("/").split("/")

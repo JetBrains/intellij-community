@@ -252,7 +252,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     MutablePrefixTreeMap<String, ContentRootData> contentRootIndex = CanonicalPathPrefixTreeFactory.INSTANCE.createMap();
     for (DataNode<ContentRootData> contentRootDataNode : ExternalSystemApiUtil.findAll(ideModule, ProjectKeys.CONTENT_ROOT)) {
       ContentRootData contentRootData = contentRootDataNode.getData();
-      contentRootIndex.set(contentRootData.getRootPath(), contentRootData);
+      contentRootIndex.put(contentRootData.getRootPath(), contentRootData);
     }
 
     DomainObjectSet<? extends IdeaContentRoot> contentRoots = gradleModule.getContentRoots();
@@ -273,7 +273,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
 
       if (!sameAsSourceSetContentRoot) {
         ContentRootData ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, contentRootPath);
-        contentRootIndex.set(contentRootPath, ideContentRoot);
+        contentRootIndex.put(contentRootPath, ideContentRoot);
 
         Set<File> excluded = gradleContentRoot.getExcludeDirectories();
         if (excluded != null) {
@@ -796,7 +796,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       List<String> contentRoots = new ArrayList<>(contentRootIndex.getAncestorKeys(path));
       if (contentRoots.isEmpty()) {
         ContentRootData contentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, path);
-        contentRootIndex.set(path, contentRootData);
+        contentRootIndex.put(path, contentRootData);
         contentRoots.add(path);
       }
       String contentRootPath = ContainerUtil.getLastItem(contentRoots);

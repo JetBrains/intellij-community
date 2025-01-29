@@ -7,6 +7,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.prefix.map.PrefixTreeMap
+import com.intellij.util.containers.prefix.map.toPrefixTreeMap
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -30,7 +31,7 @@ class TrustedPathsSettings : TrustedProjectsStateStorage<TrustedPathsSettings.St
   data class State(
     @JvmField
     @field:OptionTag("TRUSTED_PATHS")
-    val trustedPaths: List<String> = emptyList()
+    val trustedPaths: List<String> = emptyList(),
   ) : TrustedProjectsStateStorage.State {
 
 
@@ -39,9 +40,8 @@ class TrustedPathsSettings : TrustedProjectsStateStorage<TrustedPathsSettings.St
      */
     @delegate:Transient
     override val trustedState: PrefixTreeMap<Path, Boolean> by lazy {
-      NioPathPrefixTreeFactory.createMap(
-        trustedPaths.map { Path.of(it) to true }
-      )
+      trustedPaths.map { Path.of(it) to true }
+        .toPrefixTreeMap(NioPathPrefixTreeFactory)
     }
   }
 
