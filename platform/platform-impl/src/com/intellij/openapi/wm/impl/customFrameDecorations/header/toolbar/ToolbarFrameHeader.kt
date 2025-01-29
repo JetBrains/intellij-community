@@ -68,7 +68,10 @@ internal class ToolbarFrameHeader(
     isOpaque = false
   }
   private val menuBarContainer = createMenuBarContainer()
-  private val toolbarMainMenu = RootPaneUtil.createMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = null).apply { isOpaque = false }
+  private val toolbarMainMenu = RootPaneUtil.createMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = null).apply {
+    isOpaque = false
+    isVisible = false
+  }
   private val mainMenuButton = MainMenuButton(coroutineScope, getButtonIcon()) { if (mode == ShowMode.TOOLBAR_WITH_MENU) toolbarMainMenu.menuCount else 0 }
   private val mainMenuButtonComponent = mainMenuButton.button
   private var toolbar: MainToolbar? = null
