@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -157,8 +157,7 @@ internal object SuperClassNotInitializedFactories {
             val delegatorCall = psiFactory.createSuperTypeCallEntry("${element.text}($delegatorCallArgumentsText)")
 
             element.replace(delegatorCall)
-            val shortenReferencesFacility = ShortenReferencesFacility.getInstance()
-            shortenReferencesFacility.shorten(constructorParameterList)
+            shortenReferences(constructorParameterList)
         }
 
         override fun getFamilyName(): @IntentionFamilyName String {
@@ -179,12 +178,12 @@ internal object SuperClassNotInitializedFactories {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun createAddParametersFixes(superTypeEntry: KtSuperTypeEntry, superClassSymbol: KaNamedClassSymbol): List<AddParametersFix> {
-        val classOrObject = getContainingClass(superTypeEntry) ?: return emptyList()
-        val containingClassSymbol = classOrObject.classSymbol ?: return emptyList()
+        val containingClass = getContainingClass(superTypeEntry) ?: return emptyList()
+        val containingClassSymbol = containingClass.classSymbol ?: return emptyList()
         val inheritanceSubstitutor = createInheritanceTypeSubstitutor(containingClassSymbol, superClassSymbol)
             ?: return emptyList()
         val substitutedSuperConstructors = superClassSymbol.memberScope.constructors.filter { constructorSymbol ->
-            constructorSymbol.isVisible(classOrObject) && constructorSymbol.valueParameters.isNotEmpty()
+            constructorSymbol.isVisible(containingClass) && constructorSymbol.valueParameters.isNotEmpty()
         }.map { it.substitute(inheritanceSubstitutor) }
 
         return substitutedSuperConstructors.mapNotNull {
