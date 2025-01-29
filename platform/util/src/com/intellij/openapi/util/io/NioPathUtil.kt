@@ -101,7 +101,7 @@ fun String.toNioPathOrNull(): Path? {
 }
 
 @ApiStatus.Internal
-object NioPathPrefixTreeFactory : PrefixTreeFactory<Path, String> {
+object PathPrefixTree : PrefixTreeFactory<Path, String> {
 
   override fun convertToList(element: Path): List<String> {
     return element.map { it.pathString }
@@ -109,7 +109,7 @@ object NioPathPrefixTreeFactory : PrefixTreeFactory<Path, String> {
 }
 
 @ApiStatus.Internal
-object CanonicalPathPrefixTreeFactory : PrefixTreeFactory<String, String> {
+object CanonicalPathPrefixTree : PrefixTreeFactory<String, String> {
 
   override fun convertToList(element: String): List<String> {
     return element.removeSuffix("/").split("/")

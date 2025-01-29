@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage
 
-import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
+import com.intellij.openapi.util.io.CanonicalPathPrefixTree
 import com.intellij.util.containers.prefix.map.asMutableMap
 import com.intellij.util.containers.prefix.set.asMutableSet
 import org.junit.jupiter.api.Assertions
@@ -11,7 +11,7 @@ class PrefixTreeTest {
 
   @Test
   fun `test map filling`() {
-    val tree = CanonicalPathPrefixTreeFactory.asMutableMap(
+    val tree = CanonicalPathPrefixTree.asMutableMap(
       "/a/b/c/3" to 30,
       "/a/b/c/4" to 10,
       "/a/b/1" to 11,
@@ -85,7 +85,7 @@ class PrefixTreeTest {
 
   @Test
   fun `test map removing`() {
-    val tree = CanonicalPathPrefixTreeFactory.asMutableMap(
+    val tree = CanonicalPathPrefixTree.asMutableMap(
       "/a/b/c/1" to 10,
       "/a/b/c/2" to 20,
       "/a/b/c/3" to 30,
@@ -162,7 +162,7 @@ class PrefixTreeTest {
 
   @Test
   fun `test map containing nullable values`() {
-    val tree = CanonicalPathPrefixTreeFactory.asMutableMap(
+    val tree = CanonicalPathPrefixTree.asMutableMap(
       "/a/b/c/1" to null,
       "/a/b/c/2" to 20,
       "/a/b/c/3" to null,
@@ -233,7 +233,7 @@ class PrefixTreeTest {
 
   @Test
   fun `test finding descendants`() {
-    val tree = CanonicalPathPrefixTreeFactory.asMutableSet(
+    val tree = CanonicalPathPrefixTree.asMutableSet(
       "/a/b/c/1",
       "/a/b/c/2",
       "/a/b/c/3",
@@ -303,7 +303,7 @@ class PrefixTreeTest {
 
   @Test
   fun `test finding ancestors`() {
-    val tree = CanonicalPathPrefixTreeFactory.asMutableSet(
+    val tree = CanonicalPathPrefixTree.asMutableSet(
       "/a/b/c/2",
       "/a/b/c/1",
       "/a/b/c/3",
@@ -325,7 +325,7 @@ class PrefixTreeTest {
 
   @Test
   fun `test finding roots`() {
-    val set = CanonicalPathPrefixTreeFactory.asMutableSet(
+    val set = CanonicalPathPrefixTree.asMutableSet(
       "/a/b/c",
       "/a/b/c/d",
       "/a/b/c/e",
@@ -342,7 +342,7 @@ class PrefixTreeTest {
 
   @Test
   fun `test trailing slash`() {
-    val tree = CanonicalPathPrefixTreeFactory.asMutableSet(
+    val tree = CanonicalPathPrefixTree.asMutableSet(
       "/a/b/c/d/1",
       "/a/b/c/d/2",
       "/a/b/c/d/3/",
@@ -385,7 +385,7 @@ class PrefixTreeTest {
 
   @Test
   fun `test file protocol`() {
-    val tree = CanonicalPathPrefixTreeFactory.asMutableSet(
+    val tree = CanonicalPathPrefixTree.asMutableSet(
       "rd://a/b",
       "rd://a/b/c",
       "rd://a/b/c/d",

@@ -5,7 +5,7 @@ import com.intellij.util.containers.prefix.factory.PrefixTreeFactory
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object GradlePathPrefixTreeFactory : PrefixTreeFactory<String, String> {
+object GradlePathPrefixTree : PrefixTreeFactory<String, String> {
 
   override fun convertToList(element: String): List<String> {
     return element.split(":")

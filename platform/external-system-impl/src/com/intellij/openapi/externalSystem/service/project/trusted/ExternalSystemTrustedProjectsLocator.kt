@@ -4,12 +4,12 @@ package com.intellij.openapi.externalSystem.service.project.trusted
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
+import com.intellij.openapi.util.io.PathPrefixTree
 import java.nio.file.Path
 
 private class ExternalSystemTrustedProjectsLocator : TrustedProjectsLocator {
   override fun getProjectRoots(project: Project): List<Path> {
-    val projectRoots = NioPathPrefixTreeFactory.createSet()
+    val projectRoots = PathPrefixTree.createSet()
     ExternalSystemManager.EP_NAME.forEachExtensionSafe { manager ->
       val settings = manager.settingsProvider.`fun`(project)
       for (projectSettings in settings.linkedProjectsSettings) {

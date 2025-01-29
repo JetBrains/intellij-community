@@ -27,7 +27,7 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory;
+import com.intellij.openapi.util.io.CanonicalPathPrefixTree;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
@@ -249,7 +249,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
       sourceSetContentRoots = addExternalProjectContentRoots(gradleModule, ideModule, externalProject);
     }
 
-    MutablePrefixTreeMap<String, ContentRootData> contentRootIndex = CanonicalPathPrefixTreeFactory.INSTANCE.createMap();
+    MutablePrefixTreeMap<String, ContentRootData> contentRootIndex = CanonicalPathPrefixTree.INSTANCE.createMap();
     for (DataNode<ContentRootData> contentRootDataNode : ExternalSystemApiUtil.findAll(ideModule, ProjectKeys.CONTENT_ROOT)) {
       ContentRootData contentRootData = contentRootDataNode.getData();
       contentRootIndex.put(contentRootData.getRootPath(), contentRootData);

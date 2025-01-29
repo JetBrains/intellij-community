@@ -20,7 +20,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
+import com.intellij.openapi.util.io.CanonicalPathPrefixTree
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -58,7 +58,7 @@ class SourceFolderManagerImpl(
   private val moduleNamesToSourceFolderState: MultiMap<String, SourceFolderModelState> = MultiMap.create()
   private var isDisposed = false
   private val mutex = Any()
-  private var sourceFolders = CanonicalPathPrefixTreeFactory.createMap<SourceFolderModel>()
+  private var sourceFolders = CanonicalPathPrefixTree.createMap<SourceFolderModel>()
   private var sourceFoldersByModule = HashMap<String, ModuleModel>()
 
   private val operationsStates = ConcurrentLinkedQueue<Future<*>>()
@@ -279,7 +279,7 @@ class SourceFolderManagerImpl(
         return
       }
 
-      sourceFolders = CanonicalPathPrefixTreeFactory.createMap()
+      sourceFolders = CanonicalPathPrefixTree.createMap()
       sourceFoldersByModule = HashMap()
 
       if (state.sourceFolders.isEmpty()) {
