@@ -1,5 +1,4 @@
-<!--suppress PluginXmlValidity -->
-<idea-plugin package="com.intellij.java.debugger.impl.shared.fake">
+<idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.debugger.settings.DebuggerSettings"/>
     <applicationSettings service="com.intellij.debugger.settings.DebuggerSettings"/>

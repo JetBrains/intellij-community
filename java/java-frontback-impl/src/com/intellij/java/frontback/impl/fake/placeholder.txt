@@ -1,2 +1,0 @@
-This file is added as a temporary workaround to have fake root package in intellij.java.frontback.impl module.
-It can be removed when Java Frontend plugin is properly migrated to Plugin Model v2.

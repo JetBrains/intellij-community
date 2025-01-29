@@ -6,7 +6,6 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 
 object JavaPluginLayout {
   const val MAIN_MODULE_NAME = "intellij.java.plugin"
-  const val MAIN_FRONTEND_MODULE_NAME = "intellij.java.frontend"
 
   fun javaPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     return PluginLayout.plugin(mainModuleName = MAIN_MODULE_NAME, auto = true) { spec ->
@@ -105,21 +104,6 @@ object JavaPluginLayout {
       addition?.invoke(spec)
 
       spec.excludeProjectLibrary("jetbrains-annotations-java5")
-    }
-  }
-
-  /**
-   * A special plugin for JetBrains Client
-   */
-  fun javaFrontendPlugin(): PluginLayout {
-    return PluginLayout.plugin(MAIN_FRONTEND_MODULE_NAME) { spec ->
-      @Suppress("SpellCheckingInspection")
-      spec.withModules(listOf(
-        "intellij.java.frontback.impl",
-        "intellij.java.frontback.psi",
-        "intellij.java.frontback.psi.impl",
-        "intellij.java.debugger.impl.shared",
-      ))
     }
   }
 }
