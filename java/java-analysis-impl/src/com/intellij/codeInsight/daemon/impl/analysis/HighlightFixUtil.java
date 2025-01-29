@@ -510,6 +510,7 @@ public final class HighlightFixUtil {
     registerUsageFixes(methodCall, info);
 
     RemoveRedundantArgumentsFix.registerIntentions(methodCandidates, list, info);
+    info.accept(RemoveRepeatingCallFix.createFix(methodCall));
     registerChangeParameterClassFix(methodCall, list, info);
   }
 
@@ -797,6 +798,7 @@ public final class HighlightFixUtil {
     WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), sink);
     PermuteArgumentsFix.registerFix(sink, methodCall, candidates);
     registerChangeParameterClassFix(methodCall, list, sink);
+    registerMethodCallIntentions(sink, methodCall, list);
   }
 
   private static final class ReturnModel {

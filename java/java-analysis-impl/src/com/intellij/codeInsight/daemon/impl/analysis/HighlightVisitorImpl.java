@@ -16,7 +16,6 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorHighlightType;
-import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.jvm.JvmModifier;
@@ -62,6 +61,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
 import static com.intellij.psi.PsiModifier.SEALED;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Objects.*;
@@ -99,11 +99,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Map<PsiElement, PsiMethod> myInsideConstructorOfClassCache = new HashMap<>(); // null value means "cached but no corresponding ctr found"
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
-  @Contract(pure = true)
-  private @NotNull PsiResolveHelper getResolveHelper() {
-    return PsiResolveHelper.getInstance(getProject());
-  }
-
   protected HighlightVisitorImpl() {
   }
 
@@ -138,7 +133,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   /**
-   * @deprecated use {@link #HighlightVisitorImpl()} and {@link #getResolveHelper()}
+   * @deprecated use {@link #HighlightVisitorImpl()}
    */
   @Deprecated(forRemoval = true)
   protected HighlightVisitorImpl(@NotNull PsiResolveHelper psiResolveHelper) {
@@ -251,8 +246,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       info.range(anchor);
     }
     errorFixProvider.processFixes(error, fix -> info.registerFix(fix.asIntention(), null, null, null, null));
-    error.psiForKind(JavaErrorKinds.EXPRESSION_EXPECTED, JavaErrorKinds.REFERENCE_UNRESOLVED, JavaErrorKinds.REFERENCE_AMBIGUOUS)
-      .or(() -> error.psiForKind(JavaErrorKinds.TYPE_UNKNOWN_CLASS).map(PsiTypeElement::getInnermostComponentReferenceElement))
+    error.psiForKind(EXPRESSION_EXPECTED, REFERENCE_UNRESOLVED, REFERENCE_AMBIGUOUS)
+      .or(() -> error.psiForKind(TYPE_UNKNOWN_CLASS).map(PsiTypeElement::getInnermostComponentReferenceElement))
+      .or(() -> error.psiForKind(CALL_AMBIGUOUS_NO_MATCH, CALL_UNRESOLVED).map(PsiMethodCallExpression::getMethodExpression))
       .ifPresent(ref -> UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, info));
     add(info);
   }
@@ -752,7 +748,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-    JavaResolveResult resultForIncompleteCode = doVisitReferenceElement(expression);
+    doVisitReferenceElement(expression);
 
     if (!hasErrorResults()) {
       visitExpression(expression);
@@ -774,22 +770,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!hasErrorResults()) {
         try {
           add(HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, variable, myUninitializedVarProblems, myFile));
-        }
-        catch (IndexNotReadyException ignored) {
-        }
-      }
-    }
-
-    PsiElement parent = expression.getParent();
-    if (parent instanceof PsiMethodCallExpression methodCallExpression &&
-        methodCallExpression.getMethodExpression() == expression &&
-        (!result.isAccessible() || !result.isStaticsScopeCorrect())) {
-      PsiExpressionList list = methodCallExpression.getArgumentList();
-      PsiResolveHelper resolveHelper = getResolveHelper();
-      if (!HighlightMethodUtil.isDummyConstructorCall(methodCallExpression, resolveHelper, list, expression)) {
-        try {
-          add(HighlightMethodUtil.checkAmbiguousMethodCallIdentifier(
-            expression, results, list, resolved, result, methodCallExpression, myLanguageLevel, myFile));
         }
         catch (IndexNotReadyException ignored) {
         }
@@ -1175,17 +1155,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
       if (!hasErrorResults()) ModuleHighlightUtil.checkServiceImplementations(statement, myFile, myErrorSink);
     }
-  }
-
-  @Override
-  public void visitDefaultCaseLabelElement(@NotNull PsiDefaultCaseLabelElement element) {
-    super.visitDefaultCaseLabelElement(element);
-    // "case default:" will be highlighted as "The label for the default case must only use the 'default' keyword, without 'case'".
-    // see SwitchBlockHighlightingModel#checkSwitchLabelValues
-    // The "case default:" syntax was only allowed in outdated preview versions of Java (from Java 17 Preview to Java 19 Preview).
-    // And even if the "case default" syntax was allowed not only in outdated preview versions of Java, using "case default:"
-    // instead of "default:" looks weird. Therefore, for this case, we do not check the feature availability and do not
-    // suggest increasing the language level.
   }
 
   @Override

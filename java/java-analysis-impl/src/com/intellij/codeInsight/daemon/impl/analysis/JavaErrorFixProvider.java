@@ -405,14 +405,21 @@ final class JavaErrorFixProvider {
         }
       }
     });
-    fixes(CALL_AMBIGUOUS, (error, sink) -> {
-      PsiMethodCallExpression methodCall = error.psi();
-      JavaResolveResult[] resolveResults = error.context().results();
-      HighlightFixUtil.registerAmbiguousCallFixes(sink, methodCall, resolveResults);
+    fixes(CALL_UNRESOLVED_NAME,
+          (error, sink) -> HighlightFixUtil.registerMethodCallIntentions(sink, error.psi(), error.psi().getArgumentList()));
+    fix(CALL_QUALIFIER_PRIMITIVE, error -> myFactory.createRenameWrongRefFix(error.psi().getMethodExpression()));
+    fixes(CALL_QUALIFIER_PRIMITIVE,
+          (error, sink) -> HighlightFixUtil.registerMethodCallIntentions(sink, error.psi(), error.psi().getArgumentList()));
+    fixes(CALL_AMBIGUOUS, (error, sink) -> HighlightFixUtil.registerAmbiguousCallFixes(sink, error.psi(), error.context().results()));
+    fixes(CALL_AMBIGUOUS_NO_MATCH, (error, sink) -> HighlightFixUtil.registerAmbiguousCallFixes(sink, error.psi(), error.context()));
+    fixes(REFERENCE_NON_STATIC_FROM_STATIC_CONTEXT, (error, sink) -> {
+      HighlightFixUtil.registerStaticProblemQuickFixAction(sink, error.context(), error.psi());
+      if (error.psi().getParent() instanceof PsiMethodCallExpression methodCall) {
+        HighlightFixUtil.registerMethodCallIntentions(sink, methodCall, methodCall.getArgumentList());
+      }
     });
     fixes(CALL_UNRESOLVED, (error, sink) -> {
       PsiMethodCallExpression methodCall = error.psi();
-      HighlightFixUtil.registerMethodCallIntentions(sink, methodCall, methodCall.getArgumentList());
       JavaResolveResult[] resolveResults = error.context();
       if (resolveResults.length == 1) {
         PsiElement element = resolveResults[0].getElement();

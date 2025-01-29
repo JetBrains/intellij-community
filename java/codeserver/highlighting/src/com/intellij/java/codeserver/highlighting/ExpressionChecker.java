@@ -16,6 +16,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.searches.ImplicitClassSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
+import static java.util.Objects.*;
 
 final class ExpressionChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
@@ -1149,6 +1151,67 @@ final class ExpressionChecker {
       myVisitor.report(JavaErrorKinds.CALL_UNRESOLVED.create(methodCall, resolveResults));
     }
   }
+
+  void checkAmbiguousMethodCallIdentifier(JavaResolveResult @NotNull [] resolveResults,
+                                          @NotNull JavaResolveResult resolveResult,
+                                          @NotNull PsiMethodCallExpression methodCall) {
+    PsiReferenceExpression referenceToMethod = methodCall.getMethodExpression();
+    PsiElement element = resolveResult.getElement();
+    MethodCandidateInfo methodCandidate2 = findCandidates(resolveResults).second;
+    if (methodCandidate2 != null) return;
+
+    PsiElement anchor = requireNonNullElse(referenceToMethod.getReferenceNameElement(), referenceToMethod);
+    if (element instanceof PsiModifierListOwner owner && !resolveResult.isAccessible()) {
+      myVisitor.myModifierChecker.reportAccessProblem(referenceToMethod, owner, resolveResult);
+    }
+    else if (element != null && !resolveResult.isStaticsScopeCorrect()) {
+      if (element instanceof PsiMethod psiMethod && psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass containingClass = psiMethod.getContainingClass();
+        if (containingClass != null && containingClass.isInterface()) {
+          myVisitor.checkFeature(anchor, JavaFeature.STATIC_INTERFACE_CALLS);
+          if (myVisitor.hasErrorResults()) return;
+          checkStaticInterfaceCallQualifier(referenceToMethod, resolveResult, containingClass);
+          if (myVisitor.hasErrorResults()) return;
+        }
+      }
+      myVisitor.report(JavaErrorKinds.REFERENCE_NON_STATIC_FROM_STATIC_CONTEXT.create(referenceToMethod, element));
+    }
+    else if (!ContainerUtil.exists(resolveResults, result -> result instanceof MethodCandidateInfo && result.isAccessible())) {
+      PsiClass qualifierClass = RefactoringChangeUtil.getQualifierClass(referenceToMethod);
+      String className = qualifierClass != null ? qualifierClass.getName() : null;
+      PsiExpression qualifierExpression = referenceToMethod.getQualifierExpression();
+
+      if (className != null) {
+        if (IncompleteModelUtil.isIncompleteModel(myVisitor.file()) &&
+            IncompleteModelUtil.canBePendingReference(referenceToMethod)) {
+          myVisitor.report(JavaErrorKinds.REFERENCE_PENDING.create(anchor));
+          return;
+        }
+        myVisitor.report(JavaErrorKinds.CALL_AMBIGUOUS_NO_MATCH.create(methodCall, resolveResults));
+      }
+      else if (qualifierExpression != null &&
+               qualifierExpression.getType() instanceof PsiPrimitiveType primitiveType &&
+               !primitiveType.equals(PsiTypes.nullType())) {
+        if (PsiTypes.voidType().equals(primitiveType) &&
+            PsiUtil.deparenthesizeExpression(qualifierExpression) instanceof PsiReferenceExpression) {
+          return;
+        }
+        myVisitor.report(JavaErrorKinds.CALL_QUALIFIER_PRIMITIVE.create(methodCall, primitiveType));
+      }
+      else {
+        if (qualifierExpression != null) {
+          PsiType type = qualifierExpression.getType();
+          if (type instanceof PsiClassType t && t.resolve() == null || PsiTypes.nullType().equals(type)) return;
+        }
+        if (IncompleteModelUtil.isIncompleteModel(myVisitor.file()) && IncompleteModelUtil.canBePendingReference(referenceToMethod)) {
+          myVisitor.report(JavaErrorKinds.REFERENCE_PENDING.create(anchor));
+          return;
+        }
+        myVisitor.report(JavaErrorKinds.CALL_UNRESOLVED_NAME.create(methodCall, resolveResults));
+      }
+    }
+  }
+
 
   void checkRestrictedIdentifierReference(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiClass resolved) {
     String name = resolved.getName();

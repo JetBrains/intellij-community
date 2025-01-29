@@ -619,6 +619,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
         (!result.isAccessible() || !result.isStaticsScopeCorrect())) {
       PsiExpressionList list = methodCallExpression.getArgumentList();
       if (!myExpressionChecker.isDummyConstructorCall(methodCallExpression, list, expression)) {
+        myExpressionChecker.checkAmbiguousMethodCallIdentifier(results, result, methodCallExpression);
         if (!PsiTreeUtil.findChildrenOfType(methodCallExpression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
           PsiElement nameElement = expression.getReferenceNameElement();
           if (nameElement != null) {

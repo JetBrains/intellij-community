@@ -2,6 +2,7 @@
 package com.intellij.java.codeserver.highlighting.errors;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Parameterized;
@@ -13,6 +14,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -811,6 +813,15 @@ public final class JavaErrorKinds {
       .withRawDescription((ref, results) -> message("reference.ambiguous", ref.getReferenceName(),
                                                     format(requireNonNull(results.get(0).getElement())),
                                                     format(requireNonNull(results.get(1).getElement()))));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiElement> REFERENCE_NON_STATIC_FROM_STATIC_CONTEXT =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiElement.class, "reference.non.static.from.static.context")
+      .withHighlightType((ref, refElement) -> JavaErrorHighlightType.WRONG_REF)
+      .withAnchor((ref, refElement) -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription((ref, refElement) -> {
+        String type = JavaElementKind.fromElement(refElement).lessDescriptive().subject();
+        String name = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
+        return message("reference.non.static.from.static.context", type, name);
+      });
   
   public static final Simple<PsiSwitchLabelStatementBase> STATEMENT_CASE_OUTSIDE_SWITCH = error("statement.case.outside.switch");
   public static final Simple<PsiStatement> STATEMENT_INVALID = error("statement.invalid");
@@ -886,12 +897,27 @@ public final class JavaErrorKinds {
       .withAnchor((call, results) -> call.getArgumentList())
       .withRawDescription((call, results) -> message(
         "call.unresolved", call.getMethodExpression().getReferenceName() + formatArgumentTypes(call.getArgumentList(), true)));
+  public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_UNRESOLVED_NAME =
+    parameterized(PsiMethodCallExpression.class, JavaResolveResult[].class, "call.unresolved.name")
+      .withRange((call, cls) -> getRange(call))
+      .withRawDescription((call, results) -> message(
+        "call.unresolved.name", call.getMethodExpression().getReferenceName() + formatArgumentTypes(call.getArgumentList(), true)));
   public static final Parameterized<PsiMethodCallExpression, JavaAmbiguousCallContext> CALL_AMBIGUOUS =
     parameterized(PsiMethodCallExpression.class, JavaAmbiguousCallContext.class, "call.ambiguous")
       .withAnchor((call, ctx) -> call.getArgumentList())
       .withRawDescription((call, ctx) -> ctx.description())
       .withTooltip((call, ctx) -> ctx.tooltip());
-    
+  public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_AMBIGUOUS_NO_MATCH =
+    parameterized(PsiMethodCallExpression.class, JavaResolveResult[].class, "call.ambiguous.no.match")
+      .withRange((call, cls) -> getRange(call))
+      .withRawDescription(
+        (call, cls) -> message("call.ambiguous.no.match", call.getMethodExpression().getReferenceName(),
+                               requireNonNull(RefactoringChangeUtil.getQualifierClass(call.getMethodExpression())).getName()));
+  public static final Parameterized<PsiMethodCallExpression, PsiPrimitiveType> CALL_QUALIFIER_PRIMITIVE =
+    parameterized(PsiMethodCallExpression.class, PsiPrimitiveType.class, "call.qualifier.primitive")
+      .withHighlightType((ref, type) -> JavaErrorHighlightType.WRONG_REF)
+      .withRange((call, type) -> getRange(call))
+      .withRawDescription((call, type) -> message("call.qualifier.primitive", type.getPresentableText()));
     
   public static final Parameterized<PsiMethodCallExpression, PsiMethod> CALL_DIRECT_ABSTRACT_METHOD_ACCESS =
     parameterized(PsiMethodCallExpression.class, PsiMethod.class, "call.direct.abstract.method.access")
