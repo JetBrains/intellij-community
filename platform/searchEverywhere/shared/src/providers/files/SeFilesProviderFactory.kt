@@ -1,6 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.actions.searcheverywhere
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.searchEverywhere.providers.files
 
+import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributorFactory
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereAsyncContributor
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.readAction

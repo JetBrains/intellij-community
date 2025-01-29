@@ -28,13 +28,15 @@ import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.CollectConsumer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<ActionAsyncProvider>()
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal class ActionAsyncProvider(private val model: GotoActionModel) {
+@ApiStatus.Internal
+class ActionAsyncProvider(private val model: GotoActionModel) {
   private val actionManager: ActionManager = ActionManager.getInstance()
   private val intentions = ConcurrentHashMap<String, ApplyIntentionAction>()
   private val MATCHED_VALUE_COMPARATOR = Comparator<MatchedValue> { o1, o2 -> o1.compareWeights(o2) }

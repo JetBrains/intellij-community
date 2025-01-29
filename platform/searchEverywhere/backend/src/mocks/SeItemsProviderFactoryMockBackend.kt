@@ -4,7 +4,7 @@ package com.intellij.platform.searchEverywhere.backend.mocks
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.api.SeItemsProvider
 import com.intellij.platform.searchEverywhere.api.SeItemsProviderFactory
-import com.intellij.platform.searchEverywhere.mocks.SeItemsProviderMock
+import com.intellij.platform.searchEverywhere.providers.SeItemsProviderMock
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal

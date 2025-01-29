@@ -11,10 +11,11 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SeTabProviderMockAlphaLocal"/>
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SeTabProviderMockBetaLocal"/>
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SeTabProviderMockCharlieRemote"/>
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.SeTabProviderMockDeltaMixed"/>
-    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.mocks.files.SeFilesTabProvider"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.SeTabProviderMockAlphaLocal"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.SeTabProviderMockBetaLocal"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.SeTabProviderMockCharlieRemote"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.SeTabProviderMockDeltaMixed"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.files.SeFilesTabProvider"/>
+    <searchEverywhere.tabProvider implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsTabProvider"/>
   </extensions>
 </idea-plugin>

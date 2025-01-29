@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.actions.searcheverywhere
+package com.intellij.platform.searchEverywhere.providers.files
 
+import com.intellij.ide.actions.searcheverywhere.AsyncProcessor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.ItemWithPresentation
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereAsyncContributor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
@@ -11,7 +13,6 @@ import com.intellij.platform.searchEverywhere.SeTextItemPresentation
 import com.intellij.platform.searchEverywhere.SeTextSearchParams
 import com.intellij.platform.searchEverywhere.api.SeItem
 import com.intellij.platform.searchEverywhere.api.SeItemsProvider
-import com.intellij.platform.searchEverywhere.mocks.SeFilesFilterData
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal

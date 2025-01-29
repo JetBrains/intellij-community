@@ -34,7 +34,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.platform.searchEverywhere.frontend.ui.SePopupProvider
 import com.intellij.util.Processor
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -233,7 +232,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
 
     val manager = SearchEverywhereManager.getInstance(myProject)
     if ((!manager.isShown || SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == manager.selectedTabID)
-        && !SePopupProvider.getInstance().isShown) return
+        /*&& !SePopupProvider.getInstance().isShown*/) return
 
     val actionIDs: Set<String> = ActionHistoryManager.getInstance().state.ids
     provider.processActions(scope, presentationProvider, pattern, actionIDs) { element: MatchedValue ->

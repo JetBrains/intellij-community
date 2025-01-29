@@ -21,7 +21,6 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.platform.searchEverywhere.frontend.SeFrontendService;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.awt.RelativePoint;
@@ -78,10 +77,10 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
 
   @Override
   public void show(@NotNull String tabID, @Nullable String searchText, @NotNull AnActionEvent initEvent) {
-    if (SeFrontendService.Companion.isEnabled()) {
-      SeFrontendService.getInstance(myProject).showPopup(searchText);
-      return;
-    }
+    //if (SeFrontendService.Companion.isEnabled()) {
+    //  SeFrontendService.getInstance(myProject).showPopup(searchText);
+    //  return;
+    //}
 
     if (isShown()) {
       throw new IllegalStateException("Method should cannot be called when popup is shown");
