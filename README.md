@@ -1,7 +1,14 @@
 [![Build status](https://github.com/JetBrains/intellij-community/workflows/IntelliJ%20IDEA/badge.svg)](https://github.com/JetBrains/intellij-community/actions/workflows/IntelliJ_IDEA.yml)
 
-# Open IntelliJ 
+# Open IntelliJ
 
+
+## What is Open IntelliJ
+
+Open IntelliJ is an open source fork of the IntelliJ Platform which aims to offer first-class support 
+for many more technologies out of the box for free
+
+## Building Open IntelliJ
 These instructions will help you build Open IntelliJ from source code, which is the basis for IntelliJ Platform development.
 The following conventions will be used to refer to directories on your machine:
 * `<USER_HOME>` is your home directory.
