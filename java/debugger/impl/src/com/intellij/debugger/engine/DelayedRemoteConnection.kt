@@ -8,10 +8,18 @@ import org.jetbrains.annotations.ApiStatus
  * Provide instance of this class to RemoteState in order to perform deferred attaching to virtual machine.
  */
 @ApiStatus.Internal
-class DelayedRemoteConnection(useSockets: Boolean, hostName: String, address: String, serverMode: Boolean) :
-  RemoteConnection(useSockets, hostName, address, serverMode) {
+interface DelayedRemoteConnection {
   /**
    * Must be invoked on EDT.
    */
-  var attachRunnable: Runnable? = null
+  var attachRunnable: Runnable?
+}
+
+@ApiStatus.Internal
+class DelayedRemoteConnectionImpl(useSockets: Boolean, hostName: String, address: String, serverMode: Boolean) :
+  RemoteConnection(useSockets, hostName, address, serverMode), DelayedRemoteConnection {
+  /**
+   * Must be invoked on EDT.
+   */
+  override var attachRunnable: Runnable? = null
 }
