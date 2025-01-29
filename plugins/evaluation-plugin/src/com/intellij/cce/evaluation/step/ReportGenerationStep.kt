@@ -15,6 +15,7 @@ import com.intellij.cce.workspace.filter.CompareSessionsStorageImpl
 import com.intellij.cce.workspace.filter.SessionsFilter
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.info.FileSessionsInfo
+import com.intellij.cce.workspace.info.FileEvaluationDataInfo
 import com.intellij.cce.workspace.storages.FileErrorsStorage
 import com.intellij.cce.workspace.storages.SessionsStorage
 import com.intellij.openapi.application.ApplicationManager
@@ -86,7 +87,8 @@ class ReportGenerationStep<T : EvaluationStrategy>(
           sessionStorages,
           workspaces.map { it.errorsStorage },
           evaluationTitles,
-          comparisonStorage
+          comparisonStorage,
+          workspaces
         )
         for (report in reports) {
           workspace.addReport(report.type, filter.name, comparisonStorage.reportName, report.path)
@@ -120,10 +122,12 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     errorStorages: List<FileErrorsStorage>,
     evaluationTitles: List<String>,
     comparisonStorage: CompareSessionsStorage,
+    workspaces: List<EvaluationWorkspace>
   ): List<ReportInfo> {
     val title2evaluator = evaluationTitles.mapIndexed { index, title ->
       title to MetricsEvaluator.withMetrics(title, feature.getMetrics())
     }.toMap()
+
     for (sessionFile in sessionFiles.filter { it.value.size == sessionStorages.size }) {
       val fileEvaluations = mutableListOf<FileEvaluationInfo>()
       var sessionsInfo: FileSessionsInfo? = null
@@ -136,9 +140,30 @@ class ReportGenerationStep<T : EvaluationStrategy>(
         val sessionsEvaluation = sessionsInfo.copy(
           sessions = comparisonStorage.get(file.evaluationType)
         )
-        val metricsEvaluation = title2evaluator.getValue(file.evaluationType).evaluate(
-          sessionsEvaluation.sessions)
-        fileEvaluations.add(FileEvaluationInfo(sessionsEvaluation, metricsEvaluation, file.evaluationType))
+        val evaluator = title2evaluator.getValue(file.evaluationType)
+        val metricsEvaluation = evaluator.evaluate(sessionsEvaluation.sessions)
+
+        val sessionIndividualEvaluationMap = metricsEvaluation
+          .flatMap { it.individualScores?.entries ?: emptySet() }
+          .associate { it.key to it.value }
+
+        val workspace = workspaces[evaluationTitles.indexOf(file.evaluationType)]
+        val fileEvaluationData = FileEvaluationDataInfo(
+          projectName = sessionsEvaluation.projectName,
+          filePath = sessionsEvaluation.filePath,
+          sessionIndividualScores = sessionIndividualEvaluationMap.values.toList()
+        )
+
+        workspace.individualScoresStorage.saveIndividiualScores(fileEvaluationData)
+        workspace.individualScoresStorage.saveMetadata()
+
+        fileEvaluations.add(
+          FileEvaluationInfo(
+            sessionsInfo = sessionsEvaluation,
+            metrics = metricsEvaluation,
+            evaluationType = file.evaluationType
+          )
+        )
       }
       comparisonStorage.clear()
       reportGenerators.forEach { it.generateFileReport(fileEvaluations) }
@@ -146,11 +171,10 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     for (errorsStorage in errorStorages) {
       reportGenerators.forEach { it.generateErrorReports(errorsStorage.getErrors()) }
     }
-
-    val metrics = title2evaluator.values.map(MetricsEvaluator::result).flatten()
+    val globalMetricInfos = title2evaluator.values.flatMap(MetricsEvaluator::globalMetricInfos)
 
     return reportGenerators.map {
-      ReportInfo(it.type, it.generateGlobalReport(metrics))
+      ReportInfo(it.type, it.generateGlobalReport(globalMetricInfos))
     }
   }
 }
