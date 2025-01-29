@@ -52,7 +52,7 @@ public final class LocalShellIntegrationInjector {
   // todo: it would be great to extract block terminal configuration from here
   public static @NotNull ShellStartupOptions injectShellIntegration(@NotNull ShellStartupOptions options,
                                                                     boolean blockTerminalEnabled,
-                                                                    boolean reworkedBlockTerminalEnabled) {
+                                                                    boolean isBlockTerminalReworked) {
     List<String> shellCommand = options.getShellCommand();
     String shellExe = ContainerUtil.getFirstItem(shellCommand);
     if (shellCommand == null || shellExe == null) return options;
@@ -100,8 +100,8 @@ public final class LocalShellIntegrationInjector {
       }
     }
 
-    if ((blockTerminalEnabled || reworkedBlockTerminalEnabled) && integration != null && integration.getCommandBlockIntegration() != null) {
-      var commandBlocksOption = reworkedBlockTerminalEnabled
+    if (blockTerminalEnabled && integration != null && integration.getCommandBlockIntegration() != null) {
+      var commandBlocksOption = isBlockTerminalReworked
                                 ? "INTELLIJ_TERMINAL_COMMAND_BLOCKS_REWORKED"
                                 : "INTELLIJ_TERMINAL_COMMAND_BLOCKS";
       envs.put(commandBlocksOption, "1");

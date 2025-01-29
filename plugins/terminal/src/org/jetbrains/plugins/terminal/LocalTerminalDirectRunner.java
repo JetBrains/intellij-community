@@ -61,7 +61,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     if (enableShellIntegration()) {
       updatedOptions = LocalShellIntegrationInjector.injectShellIntegration(updatedOptions,
                                                                             isBlockTerminalEnabled(),
-                                                                            isReworkedBlockTerminalEnabled());
+                                                                            isBlockTerminalReworked());
     }
     return applyTerminalCustomizers(updatedOptions);
   }
@@ -95,8 +95,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     var shellIntegration = options.getShellIntegration();
-    boolean isBlockTerminal = isReworkedBlockTerminalEnabled() ||
-                              (isBlockTerminalEnabled() &&
+    boolean isBlockTerminal = isBlockTerminalEnabled() &&
+                              (isBlockTerminalReworked() ||
                                shellIntegration != null &&
                                shellIntegration.getCommandBlockIntegration() != null);
     TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command, isBlockTerminal);
@@ -221,8 +221,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return false;
   }
 
+  /**
+   * @return true if reworked block terminal (gen2) should be used instead of gen1 new terminal.
+   */
   @ApiStatus.Internal
-  protected boolean isReworkedBlockTerminalEnabled() {
+  protected boolean isBlockTerminalReworked() {
     return false;
   }
 
@@ -247,7 +250,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @NotNull ShellStartupOptions injectShellIntegration(@NotNull List<String> shellCommand,
                                                              @NotNull Map<String, String> envs) {
     ShellStartupOptions options = new ShellStartupOptions.Builder().shellCommand(shellCommand).envVariables(envs).build();
-    return LocalShellIntegrationInjector.injectShellIntegration(options, isBlockTerminalEnabled(), isReworkedBlockTerminalEnabled());
+    return LocalShellIntegrationInjector.injectShellIntegration(options, isBlockTerminalEnabled(), isBlockTerminalReworked());
   }
 
   /**

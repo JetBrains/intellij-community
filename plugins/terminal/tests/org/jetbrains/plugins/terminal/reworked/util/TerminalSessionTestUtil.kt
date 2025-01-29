@@ -28,6 +28,7 @@ internal object TerminalSessionTestUtil {
     coroutineScope: CoroutineScope,
     size: TermSize = TermSize(80, 24),
   ): TerminalSession {
+    Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, coroutineScope.asDisposable())
     Registry.get(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY).setValue(true, coroutineScope.asDisposable())
 
     val runner = LocalBlockTerminalRunner(project)
