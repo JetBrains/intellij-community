@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinStatementFact
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.KotlinTraceExpressionBuilder
 
 class StreamExLibrarySupportProvider : JvmLibrarySupportProvider() {
-    @Suppress("SpellCheckingInspection")
     private val streamChainBuilder =
         TerminatedChainBuilder(
             KotlinChainTransformerImpl(JavaStreamChainTypeExtractor()),
@@ -38,5 +37,4 @@ class StreamExLibrarySupportProvider : JvmLibrarySupportProvider() {
 
     override fun getExpressionBuilder(project: Project): TraceExpressionBuilder =
         KotlinTraceExpressionBuilder(dsl, support.createHandlerFactory(dsl))
-
 }

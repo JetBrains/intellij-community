@@ -34,4 +34,5 @@ class KotlinSequenceSupportProvider : JvmLibrarySupportProvider() {
 
     override fun getExpressionBuilder(project: Project): TraceExpressionBuilder =
         KotlinTraceExpressionBuilder(dsl, support.createHandlerFactory(dsl))
+
 }

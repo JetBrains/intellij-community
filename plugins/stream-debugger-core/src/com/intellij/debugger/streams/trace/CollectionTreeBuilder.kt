@@ -11,8 +11,7 @@ interface CollectionTreeBuilder {
   fun createXNamedValue(value: Value?, evaluationContext: EvaluationContextWrapper): XNamedValue
 
   /**
-   * Will be called on a debugger evaluation thread.
-   * Will become suspend function in the future
+   * Is called under `com.intellij.debugger.streams.trace.EvaluationContextWrapper.launchDebuggerCommand`
    */
   suspend fun getKey(container: XValueContainer, nullMarker: Any): Any
 

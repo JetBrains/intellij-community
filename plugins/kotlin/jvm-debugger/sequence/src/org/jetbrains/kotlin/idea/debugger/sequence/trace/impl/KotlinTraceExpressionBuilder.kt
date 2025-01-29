@@ -16,7 +16,6 @@ class KotlinTraceExpressionBuilder(dsl: Dsl, handlerFactory: HandlerFactory) : T
     override fun createTraceExpression(chain: StreamChain): String {
         val expression = super.createTraceExpression(chain)
         val resultDeclaration = dsl.declaration(dsl.variable(dsl.types.nullable { ANY }, resultVariableName), dsl.nullExpression, true)
-
         val result = "${resultDeclaration.toCode()}\n " +
                 "$expression\n" +
                 resultVariableName

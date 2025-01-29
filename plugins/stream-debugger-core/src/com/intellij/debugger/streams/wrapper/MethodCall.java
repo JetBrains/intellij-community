@@ -14,6 +14,11 @@ public interface MethodCall {
   @NotNull
   @NlsSafe String getName();
 
+  /**
+   * @return Returns a string, representing all generic arguments of a function in a chain surrounded by brackets. In C# there are calls, that look like
+   * collection.Cast&lt;int&gt;()`, so for this call this method should return `&lt;int&gt;`.  This string is necessary for a code generator to recreate
+   * a method call for evaluation.
+   */
   @NotNull
   @NlsSafe String getGenericArguments();
 

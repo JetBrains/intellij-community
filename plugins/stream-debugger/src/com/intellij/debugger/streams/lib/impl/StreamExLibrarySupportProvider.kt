@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project
 internal class StreamExLibrarySupportProvider : JvmLibrarySupportProvider() {
   private val librarySupport = StreamExLibrarySupport()
   private val javaDsl = DslImpl(JavaStatementFactory())
-
   override fun getLanguageId(): String = "JAVA"
 
   override fun getLibrarySupport(): LibrarySupport = librarySupport

@@ -31,7 +31,6 @@ internal class JBIterableSupportProvider : JvmLibrarySupportProvider() {
 
   private val librarySupport = JBIterableSupport()
   private val dsl = DslImpl(JBIterableJavaStatementFactory())
-
   override fun getLanguageId(): String = "JAVA"
 
   override fun getChainBuilder(): StreamChainBuilder {
