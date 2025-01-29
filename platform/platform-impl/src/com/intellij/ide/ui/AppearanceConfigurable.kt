@@ -405,6 +405,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 .bindSelected({ MacCustomAppIcon.isCustom() }, { MacCustomAppIcon.setCustom(it, true) })
             }
           }
+          yield { checkBox(cdKeepPopupsForToggles) }
         }
         val rightColumnControls = sequence<Row.() -> Unit> {
           if (ExperimentalUI.isNewUI()) {
@@ -418,7 +419,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           yield { checkBox(cdEnableControlsMnemonics) }
           yield { checkBox(cdEnableMenuMnemonics) }
           yield { checkBox(cdShowMenuIcons) }
-          yield { checkBox(cdKeepPopupsForToggles) }
         }
 
         // Since some of the columns have variable number of items, enumerate them in a loop, while moving orphaned items from the right
@@ -471,7 +471,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                   comment(message("ide.restart.required.comment"))
                 }
               }
-          }
+          }.topGap(TopGap.SMALL).bottomGap(BottomGap.SMALL)
         }
         val backgroundImageAction = ActionManager.getInstance().getAction("Images.SetBackgroundImage")
         if (backgroundImageAction != null) {
