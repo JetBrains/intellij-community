@@ -33,6 +33,11 @@
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Jump.To.Section.Frontend" anchor="first"/>
     </action>
 
+    <action id="XDebugger.JumpToTypeSource.Frontend"
+            class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXJumpToTypeSourceAction">
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Jump.To.Section.Frontend" anchor="after" relative-to-action="XDebugger.JumpToSource.Frontend"/>
+    </action>
+
     <action id="XDebugger.Hotswap.Modified.Files" class="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapModifiedFilesAction">
       <add-to-group group-id="DebugReloadGroup" anchor="first"/>
       <add-to-group group-id="EditorPopupMenuDebugHotSwap" anchor="first"/>
