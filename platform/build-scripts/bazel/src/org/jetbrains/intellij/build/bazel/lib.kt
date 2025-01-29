@@ -30,36 +30,49 @@ internal sealed interface LibOwner {
 @Suppress("unused")
 internal data class MavenLibrary(
   @JvmField val mavenCoordinates: String,
-  @JvmField val jars: List<Path>,
-  @JvmField val sourceJars: List<Path>,
-  @JvmField val javadocJars: List<Path>,
+  @JvmField val jars: List<MavenFileDescription>,
+  @JvmField val sourceJars: List<MavenFileDescription>,
+  @JvmField val javadocJars: List<MavenFileDescription>,
   override val lib: Library,
 ) : LibOwner
+
+internal data class MavenFileDescription(
+  @JvmField val path: Path,
+  @JvmField val sha256checksum: String?,
+)
 
 internal data class LocalLibrary(
   @JvmField val files: List<Path>,
   override val lib: Library,
 ) : LibOwner
 
-private fun getUrlAndSha256(jar: Path, jarRepositories: List<JarRepository>, m2Repo: Path, urlCache: UrlCache): CacheEntry {
-  val jarPath = jar.relativeTo(m2Repo).invariantSeparatorsPathString
+private fun getUrlAndSha256(jar: MavenFileDescription, jarRepositories: List<JarRepository>, m2Repo: Path, urlCache: UrlCache): CacheEntry {
+  val jarPath = jar.path.relativeTo(m2Repo).invariantSeparatorsPathString
   val entry = urlCache.getEntry(jarPath)
   if (entry == null) {
     println("Resolving: $jarPath")
     for (repo in jarRepositories) {
       val url = "${repo.url}/${jarPath}"
       if (urlCache.checkUrl(url, repo)) {
-        return urlCache.putUrl(jarPath = jarPath, url = url, repo = repo)
+        val hash = urlCache.calculateHash(url, repo)
+        check(jar.sha256checksum == null || hash == jar.sha256checksum) {
+          "Hash mismatch: got ${jar.sha256checksum} from .idea/libraries, but ${hash} from downloading $url for ${jar.path}"
+        }
+
+        return urlCache.putUrl(jarPath = jarPath, url = url, hash = hash)
       }
     }
     error("Cannot find $jar in $jarRepositories (jarPath=$jarPath)")
   }
+  check(jar.sha256checksum == null || entry.sha256 == jar.sha256checksum) {
+    "Hash mismatch: got ${jar.sha256checksum} from .idea/libraries, but ${entry.sha256} for ${jar.path} from url cache ${urlCache.cacheFile}"
+  }
   return entry
 }
 
-private fun isKotlinLib(jars: List<Path>): Boolean {
+private fun isKotlinLib(jars: List<MavenFileDescription>): Boolean {
   for (file in jars) {
-    ZipFile(file.toFile()).use { zipFile ->
+    ZipFile(file.path.toFile()).use { zipFile ->
       for (entry in zipFile.entries()) {
         if (entry.name.startsWith("META-INF/") && entry.name.endsWith("kotlin_module")) {
           return true
@@ -98,14 +111,14 @@ internal fun BuildFile.generateMavenLib(
       return
     }
 
-    val sourceJar = lib.sourceJars.singleOrNull { it.name == "${jar.nameWithoutExtension}-sources.jar" }
+    val sourceJar = lib.sourceJars.singleOrNull { it.path.name == "${jar.path.nameWithoutExtension}-sources.jar" }
 
     if (isJavaLib) {
       target("java_import") {
         option("name", targetName)
-        option("jars", arrayOf("@${fileToHttpRuleFile(jar)}"))
+        option("jars", arrayOf("@${fileToHttpRuleFile(jar.path)}"))
         if (sourceJar != null) {
-          option("srcjar", "@${fileToHttpRuleFile(sourceJar)}")
+          option("srcjar", "@${fileToHttpRuleFile(sourceJar.path)}")
         }
         libVisibility?.let {
           visibility(arrayOf(it))
@@ -115,9 +128,9 @@ internal fun BuildFile.generateMavenLib(
     else {
       target("kt_jvm_import") {
         option("name", targetName)
-        option("jar", "@${fileToHttpRuleFile(jar)}")
+        option("jar", "@${fileToHttpRuleFile(jar.path)}")
         if (sourceJar != null) {
-          option("srcjar", "@${fileToHttpRuleFile(sourceJar)}")
+          option("srcjar", "@${fileToHttpRuleFile(sourceJar.path)}")
         }
         if (targetName == "kotlinx-serialization-core") {
           exportedCompilerPlugins = listOf("@lib//:kotlin-serialization-plugin")
@@ -138,27 +151,27 @@ internal fun BuildFile.generateMavenLib(
     load("@rules_java//java:defs.bzl", "java_library")
     target("java_library") {
       option("name", targetName)
-      option("exports", lib.jars.map { ":${fileToHttpRuleRepoName(it)}_import" })
+      option("exports", lib.jars.map { ":${fileToHttpRuleRepoName(it.path)}_import" })
       libVisibility?.let {
         visibility(arrayOf(it))
       }
     }
 
     for (jar in lib.jars) {
-      val bazelLabel = fileToHttpRuleRepoName(jar)
+      val bazelLabel = fileToHttpRuleRepoName(jar.path)
       val label = "${bazelLabel}_import"
       if (!labelTracker.add(label)) {
         continue
       }
 
-      val sourceJar = lib.sourceJars.singleOrNull { it.name == "${jar.nameWithoutExtension}-sources.jar" }
+      val sourceJar = lib.sourceJars.singleOrNull { it.path.name == "${jar.path.nameWithoutExtension}-sources.jar" }
       if (isJavaLib) {
         load("@rules_java//java:defs.bzl", "java_import")
         target("java_import") {
           option("name", label)
           option("jars", arrayOf("@$bazelLabel//file"))
           if (sourceJar != null) {
-            option("srcjar", "@${fileToHttpRuleFile(sourceJar)}")
+            option("srcjar", "@${fileToHttpRuleFile(sourceJar.path)}")
           }
         }
       }
@@ -167,7 +180,7 @@ internal fun BuildFile.generateMavenLib(
           option("name", label)
           option("jar", "@$bazelLabel//file")
           if (sourceJar != null) {
-            option("srcjar", "@${fileToHttpRuleFile(sourceJar)}")
+            option("srcjar", "@${fileToHttpRuleFile(sourceJar.path)}")
           }
         }
       }
@@ -216,13 +229,17 @@ internal fun generateBazelModuleSectionsForLibs(
     updater
   }
 
-  val labelTracker = moduleFileToLabelTracker.computeIfAbsent(owner.moduleFile) { HashSet<String>() }
+  val labelTracker = moduleFileToLabelTracker.computeIfAbsent(owner.moduleFile) { HashSet() }
   buildFile(bazelFileUpdater, owner.sectionName) {
     for (lib in list) {
       for (jar in lib.jars) {
-        val label = fileToHttpRuleRepoName(jar)
+        val label = fileToHttpRuleRepoName(jar.path)
         if (!labelTracker.add(label)) {
           continue
+        }
+
+        check(!jar.sha256checksum.isNullOrBlank()) {
+          "COMPILE library root ${jar.path} must have a checksum"
         }
 
         val entry = getUrlAndSha256(jar = jar, jarRepositories = jarRepositories, m2Repo = m2Repo, urlCache = urlCache)
@@ -230,12 +247,12 @@ internal fun generateBazelModuleSectionsForLibs(
           option("name", label)
           option("url", entry.url)
           option("sha256", entry.sha256)
-          option("downloaded_file_path", jar.fileName.name)
+          option("downloaded_file_path", jar.path.fileName.name)
         }
       }
 
       for (jar in lib.sourceJars) {
-        val label = fileToHttpRuleRepoName(jar)
+        val label = fileToHttpRuleRepoName(jar.path)
         if (!labelTracker.add(label)) {
           continue
         }
@@ -245,7 +262,7 @@ internal fun generateBazelModuleSectionsForLibs(
           option("name", label)
           option("url", entry.url)
           option("sha256", entry.sha256)
-          option("downloaded_file_path", jar.fileName.name)
+          option("downloaded_file_path", jar.path.fileName.name)
         }
       }
     }
