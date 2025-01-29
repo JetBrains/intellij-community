@@ -17,8 +17,7 @@
 - s:values():com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint$AvailabilityCondition[]
 f:com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt
 - *sf:addActionAvailabilityHint(com.intellij.openapi.editor.Inlay,com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint[]):V
-- *sf:addActionAvailabilityHint(com.intellij.openapi.editor.RangeMarker,com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint[]):V
-- *sf:addActionAvailabilityHint(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint[]):V
+- *sf:addActionAvailabilityHint(com.intellij.openapi.editor.markup.RangeHighlighter,com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint[]):V
 - *sf:clearAvailabilityHints(com.intellij.openapi.editor.Inlay):V
 - *sf:clearAvailabilityHints(com.intellij.openapi.editor.markup.RangeHighlighter):V
 f:com.intellij.openapi.editor.impl.DocumentMarkupModel
