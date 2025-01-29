@@ -66,7 +66,7 @@ class TraverseUIStarter : ModernApplicationStarter() {
         options = LinkedHashMap(),
         outputPath = Path.of(args[1]).toAbsolutePath().normalize(),
       )
-      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true )
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true)
     }
     catch (e: Throwable) {
       try {
@@ -75,12 +75,12 @@ class TraverseUIStarter : ModernApplicationStarter() {
       }
       catch (_: Throwable) {
       }
-      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1)
     }
   }
 }
 
-private fun addOptions(
+private suspend fun addOptions(
   originalConfigurable: SearchableConfigurable,
   options: Map<SearchableConfigurable, Set<SearchableOptionEntry>>,
   roots: MutableMap<OptionSetId, MutableList<ConfigurableEntry>>,
@@ -269,14 +269,23 @@ private fun processTemplates(
   }
 }
 
-private fun processOptionsContainingConfigurable(configurable: OptionsContainingConfigurable, configurableElement: ConfigurableEntry) {
-  val optionPaths = configurable.processListOptions()
-  val result = TreeSet<SearchableOptionEntry>()
-  wordsToOptionDescriptors(optionPaths = optionPaths, path = null, result = result)
-  for ((path, optionPath) in configurable.processListOptionsWithPaths()) {
-    wordsToOptionDescriptors(optionPaths = optionPath, path = path, result = result)
+private suspend fun processOptionsContainingConfigurable(configurable: OptionsContainingConfigurable, configurableElement: ConfigurableEntry) {
+  withContext(Dispatchers.EDT) {
+    try {
+      val optionPaths = configurable.processListOptions()
+      val result = TreeSet<SearchableOptionEntry>()
+      wordsToOptionDescriptors(optionPaths = optionPaths, path = null, result = result)
+      for ((path, optionPath) in configurable.processListOptionsWithPaths()) {
+        wordsToOptionDescriptors(optionPaths = optionPath, path = path, result = result)
+      }
+      configurableElement.entries.addAll(result)
+    }
+    finally {
+      if (configurable is UnnamedConfigurable) {
+        configurable.disposeUIResources()
+      }
+    }
   }
-  configurableElement.entries.addAll(result)
 }
 
 private fun wordsToOptionDescriptors(optionPaths: Set<String>, path: String?, result: MutableSet<SearchableOptionEntry>) {
@@ -407,82 +416,91 @@ private fun processConfigurables(
   options: MutableMap<SearchableConfigurable, Set<SearchableOptionEntry>>,
 ) {
   for (configurable in configurables) {
-    if (configurable !is SearchableConfigurable) {
-      continue
-    }
-
-    val configurableOptions = TreeSet<SearchableOptionEntry>()
-    options.put(configurable, configurableOptions)
-
-    for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
-      extension.beforeConfigurable(configurable, configurableOptions)
-    }
-
-    if (configurable is MasterDetails) {
-      configurable.initUi()
-      collectSearchItemsForComponentWithLabel(
-        configurable = configurable,
-        configurableOptions = configurableOptions,
-        component = configurable.master,
-      )
-      collectSearchItemsForComponentWithLabel(
-        configurable = configurable,
-        configurableOptions = configurableOptions,
-        component = configurable.details.component,
-      )
-    }
-    else {
-      configurable.createComponent()?.let { component ->
-        processUiLabel(
-          title = configurable.displayName,
-          configurableOptions = null,
-          path = null,
-          i18n = false,
-          rawList = configurableOptions,
-        )
-        collectSearchItemsForComponent(
-          component = component,
-          configurableOptions = null,
-          path = null,
-          i18n = false,
-          rawList = configurableOptions,
-        )
+    try {
+      if (configurable !is SearchableConfigurable) {
+        continue
       }
 
-      val unwrapped = unwrapConfigurable(configurable)
-      if (unwrapped is CompositeConfigurable<*>) {
-        unwrapped.disposeUIResources()
-        val children = unwrapped.configurables
-        for (child in children) {
-          val childConfigurableOptions = TreeSet<SearchableOptionEntry>()
-          options.put(SearchableConfigurableAdapter(configurable, child), childConfigurableOptions)
+      val configurableOptions = TreeSet<SearchableOptionEntry>()
+      options.put(configurable, configurableOptions)
 
-          if (child is SearchableConfigurable) {
-            processUiLabel(
-              title = child.displayName,
-              configurableOptions = null,
-              path = null,
-              i18n = false,
-              rawList = childConfigurableOptions,
-            )
-          }
-          child.createComponent()?.let { component ->
-            collectSearchItemsForComponent(
-              component = component,
-              configurableOptions = null,
-              path = null,
-              i18n = false,
-              rawList = childConfigurableOptions,
-            )
-          }
+      for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
+        extension.beforeConfigurable(configurable, configurableOptions)
+      }
 
-          configurableOptions.removeAll(childConfigurableOptions)
+      if (configurable is MasterDetails) {
+        configurable.initUi()
+        collectSearchItemsForComponentWithLabel(
+          configurable = configurable,
+          configurableOptions = configurableOptions,
+          component = configurable.master,
+        )
+        collectSearchItemsForComponentWithLabel(
+          configurable = configurable,
+          configurableOptions = configurableOptions,
+          component = configurable.details.component,
+        )
+      }
+      else {
+        configurable.createComponent()?.let { component ->
+          processUiLabel(
+            title = configurable.displayName,
+            configurableOptions = null,
+            path = null,
+            i18n = false,
+            rawList = configurableOptions,
+          )
+          collectSearchItemsForComponent(
+            component = component,
+            configurableOptions = null,
+            path = null,
+            i18n = false,
+            rawList = configurableOptions,
+          )
+        }
+
+        val unwrapped = unwrapConfigurable(configurable)
+        if (unwrapped is CompositeConfigurable<*>) {
+          val children = unwrapped.configurables
+          for (child in children) {
+            try {
+              val childConfigurableOptions = TreeSet<SearchableOptionEntry>()
+              options.put(SearchableConfigurableAdapter(configurable, child), childConfigurableOptions)
+
+              if (child is SearchableConfigurable) {
+                processUiLabel(
+                  title = child.displayName,
+                  configurableOptions = null,
+                  path = null,
+                  i18n = false,
+                  rawList = childConfigurableOptions,
+                )
+              }
+              child.createComponent()?.let { component ->
+                collectSearchItemsForComponent(
+                  component = component,
+                  configurableOptions = null,
+                  path = null,
+                  i18n = false,
+                  rawList = childConfigurableOptions,
+                )
+              }
+
+              configurableOptions.removeAll(childConfigurableOptions)
+            }
+            finally {
+              child.disposeUIResources()
+            }
+          }
         }
       }
-    }
 
-    for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
-      extension.afterConfigurable(configurable, configurableOptions)
+      for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
+        extension.afterConfigurable(configurable, configurableOptions)
+      }
+    }
+    finally {
+      configurable.disposeUIResources()
     }
   }
 }

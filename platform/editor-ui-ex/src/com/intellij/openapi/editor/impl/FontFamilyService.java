@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.util.ui.FontInfo;
@@ -133,7 +134,8 @@ public class FontFamilyService {
   }
 
   private static @NotNull FontFamilyService getInstance() {
-    FontFamilyService instance = ApplicationManager.getApplication().getService(FontFamilyService.class);
+    Application application = ApplicationManager.getApplication();
+    FontFamilyService instance = application != null ? application.getService(FontFamilyService.class) : null;
     return instance == null ? new FontFamilyService() : instance;
   }
 
