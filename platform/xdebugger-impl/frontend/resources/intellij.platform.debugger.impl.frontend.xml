@@ -9,12 +9,12 @@
             use-shortcut-of="ToggleBookmark">
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend"/>
     </action>
-    <action id="XDebugger.SetValue.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXSetValueAction">
+    <action id="XDebugger.SetValue.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXSetValueAction" use-shortcut-of="XDebugger.SetValue">
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
                     relative-to-action="MarkObjectAction.Frontend"/>
     </action>
     <action id="XDebugger.CopyValue.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXCopyValueAction"
-            use-shortcut-of="$Copy">
+            use-shortcut-of="XDebugger.CopyValue">
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
                     relative-to-action="XDebugger.SetValue.Frontend"/>
     </action>
@@ -29,7 +29,7 @@
     </action>
 
     <action id="XDebugger.JumpToSource.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXJumpToSourceAction"
-            use-shortcut-of="EditSource">
+            use-shortcut-of="XDebugger.JumpToSource">
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Jump.To.Section.Frontend" anchor="first"/>
     </action>
 
