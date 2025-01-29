@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-compiler-fir">
+  <library name="kotlinc.kotlin-compiler-fir" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fir-for-ide:2.2.0-dev-2643">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.0-dev-2643/kotlin-compiler-fir-for-ide-2.2.0-dev-2643.jar">
+          <sha256sum>a47bacf8b211344af8ca91573acd8a3fefe084b51a4b1a927c1904a2cb1a7a6c</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.255-dev-255/kotlin-compiler-fir-for-ide-2.2.255-dev-255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.0-dev-2643/kotlin-compiler-fir-for-ide-2.2.0-dev-2643.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.255-dev-255/kotlin-compiler-fir-for-ide-2.2.255-dev-255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.2.0-dev-2643/kotlin-compiler-fir-for-ide-2.2.0-dev-2643-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
