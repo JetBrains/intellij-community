@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import org.jetbrains.plugins.terminal.action.TerminalEscapeHandler
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSearchController
 
 internal class CancelSelection : TerminalEscapeHandler {
   override val order: Int
@@ -17,6 +18,17 @@ internal class CancelSelection : TerminalEscapeHandler {
 
   override fun execute(e: AnActionEvent) {
     e.editor?.selectionModel?.removeSelection()
+  }
+}
+
+internal class CloseSearch : TerminalEscapeHandler {
+  override val order: Int
+    get() = 300
+
+  override fun isEnabled(e: AnActionEvent): Boolean = e.dataContext.terminalSearchController?.hasActiveSession() == true
+
+  override fun execute(e: AnActionEvent) {
+    e.dataContext.terminalSearchController?.finishSearchSession()
   }
 }
 

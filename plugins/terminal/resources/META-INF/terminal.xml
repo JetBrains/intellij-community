@@ -109,6 +109,7 @@
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.json.ShellDefaultCommandSpecsProvider"/>
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.specs.ShellCodeBasedCommandSpecsProvider"/>
     <escapeHandler implementation="org.jetbrains.plugins.terminal.action.reworked.CancelSelection" />
+    <escapeHandler implementation="org.jetbrains.plugins.terminal.action.reworked.CloseSearch" />
     <escapeHandler implementation="org.jetbrains.plugins.terminal.action.reworked.SelectEditor" />
   </extensions>
 

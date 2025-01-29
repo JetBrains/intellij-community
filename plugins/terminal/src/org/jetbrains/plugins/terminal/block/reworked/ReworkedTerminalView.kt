@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked
 
+import com.intellij.find.SearchReplaceComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
@@ -22,7 +23,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.LocalTimeCounter
 import com.intellij.util.asDisposable
 import com.jediterm.core.util.TermSize
@@ -39,6 +40,8 @@ import org.jetbrains.plugins.terminal.block.ui.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
+import java.awt.Component
+import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.KeyEvent
@@ -46,6 +49,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 import javax.swing.JScrollPane
+import kotlin.math.min
 
 internal class ReworkedTerminalView(
   private val project: Project,
@@ -61,6 +65,7 @@ internal class ReworkedTerminalView(
   private val controller: TerminalSessionController
 
   private val terminalInput: TerminalInput
+  private val terminalSearchController: TerminalSearchController
 
   private val outputEditor: EditorEx
   private val alternateBufferEditor: EditorEx
@@ -109,6 +114,8 @@ internal class ReworkedTerminalView(
       withTopAndBottomInsets = true
     )
 
+    terminalSearchController = TerminalSearchController(project, outputEditor)
+
     alternateBufferEditor = createAlternateBufferEditor(settings, parentDisposable = this)
     val alternateBufferModel = createOutputModel(
       editor = alternateBufferEditor,
@@ -136,6 +143,7 @@ internal class ReworkedTerminalView(
 
     terminalPanel = TerminalPanel(initialContent = outputEditor)
 
+    listenSearchController()
     listenPanelSizeChanges()
     listenAlternateBufferSwitch()
   }
@@ -172,6 +180,18 @@ internal class ReworkedTerminalView(
     return component.hasFocus()
   }
 
+  private fun listenSearchController() {
+    terminalSearchController.addListener(object : TerminalSearchControllerListener {
+      override fun searchSessionStarted(session: TerminalSearchSession) {
+        terminalPanel.installSearchComponent(session.component)
+      }
+
+      override fun searchSessionFinished(session: TerminalSearchSession) {
+        terminalPanel.removeSearchComponent(session.component)
+      }
+    })
+  }
+
   private fun listenPanelSizeChanges() {
     component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent) {
@@ -192,6 +212,9 @@ internal class ReworkedTerminalView(
           val editor = if (state.isAlternateScreenBuffer) alternateBufferEditor else outputEditor
           terminalPanel.setTerminalContent(editor)
           IdeFocusManager.getInstance(project).requestFocus(terminalPanel.preferredFocusableComponent, true)
+          if (state.isAlternateScreenBuffer) {
+            terminalSearchController.finishSearchSession()
+          }
         }
       }
     }
@@ -323,7 +346,7 @@ internal class ReworkedTerminalView(
 
   override fun dispose() {}
 
-  private inner class TerminalPanel(initialContent: Editor) : Wrapper(), UiDataProvider {
+  private inner class TerminalPanel(initialContent: Editor) : JBLayeredPane(), UiDataProvider {
     private var curEditor: Editor = initialContent
 
     init {
@@ -334,13 +357,52 @@ internal class ReworkedTerminalView(
       get() = curEditor.contentComponent
 
     fun setTerminalContent(editor: Editor) {
+      val prevEditor = curEditor
+      @Suppress("SENSELESS_COMPARISON") // called from init when curEditor == null
+      if (prevEditor != null) {
+        remove(curEditor.component)
+      }
       curEditor = editor
-      setContent(editor.component)
+      addToLayer(editor.component, DEFAULT_LAYER)
     }
 
     override fun uiDataSnapshot(sink: DataSink) {
       sink[CommonDataKeys.EDITOR] = curEditor
       sink[TerminalInput.KEY] = terminalInput
+      sink[TerminalSearchController.KEY] = terminalSearchController
+    }
+
+    fun installSearchComponent(component: SearchReplaceComponent) {
+      addToLayer(component, POPUP_LAYER)
+    }
+
+    fun removeSearchComponent(component: SearchReplaceComponent) {
+      remove(component)
+    }
+
+    override fun getPreferredSize(): Dimension {
+      return if (curEditor.document.textLength == 0) Dimension() else (curEditor as EditorImpl).preferredSize
+    }
+
+    override fun doLayout() {
+      for (component in components) {
+        when (component) {
+          curEditor.component -> layoutEditor(component)
+          is SearchReplaceComponent -> layoutSearchComponent(component)
+        }
+      }
+    }
+
+    private fun layoutEditor(component: Component) {
+      component.setBounds(0, 0, width, height)
+    }
+
+    private fun layoutSearchComponent(component: Component) {
+      val prefSize = component.preferredSize
+      val maxSize = component.maximumSize
+      val compWidth = minOf(width, prefSize.width, maxSize.width)
+      val compHeight = min(prefSize.height, maxSize.height)
+      component.setBounds(width - compWidth, 0, compWidth, compHeight)
     }
   }
 }

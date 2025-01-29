@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
+import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.DocumentUtil
@@ -61,6 +62,7 @@ import java.awt.event.KeyEvent
 import java.awt.font.FontRenderContext
 import java.awt.geom.Dimension2D
 import java.util.concurrent.CompletableFuture
+import javax.swing.JComponent
 import javax.swing.JScrollBar
 import javax.swing.JScrollPane
 import javax.swing.KeyStroke
@@ -440,4 +442,8 @@ internal fun TerminalLine.getLengthWithoutDwc(): Int {
     curCount + dwcInEntryCount
   }
   return length() - dwcCount
+}
+
+internal fun JBLayeredPane.addToLayer(component: JComponent, layer: Int) {
+  add(component, layer as Any) // Any is needed to resolve to the correct overload.
 }
