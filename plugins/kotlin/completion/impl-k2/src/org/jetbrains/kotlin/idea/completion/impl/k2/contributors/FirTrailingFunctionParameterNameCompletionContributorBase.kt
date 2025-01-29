@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameRefere
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleParameterPositionContext
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isFirstStatement
 import org.jetbrains.kotlin.resolve.DataClassResolver
@@ -287,6 +288,13 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
     private fun KaNamedClassSymbol.getComponents(
         receiverTypes: List<KaClassType>,
     ): Collection<KaNamedFunctionSymbol> {
+        if (receiverTypes.isEmpty()) return emptyList()
+
+        val listClassSymbol = findClass(StandardClassIds.List)
+        if (this == listClassSymbol
+            || listClassSymbol != null && isSubClassOf(listClassSymbol)
+        ) return emptyList()
+
         val nameFilter: (Name) -> Boolean = DataClassResolver::isComponentLike
         val candidateSymbols = memberScope.callables(nameFilter)
             .ifEmpty {
