@@ -1,4 +1,4 @@
-package com.intellij.grid.impl.json
+package com.intellij.grid.json.impl
 
 import com.intellij.database.run.ui.MinimizedFormat
 import com.intellij.database.run.ui.MinimizedFormatDetector
