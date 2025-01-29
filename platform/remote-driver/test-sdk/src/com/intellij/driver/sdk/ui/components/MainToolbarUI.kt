@@ -32,7 +32,7 @@ class MainToolbarUI(data: ComponentData) : UiComponent(data) {
   val cwmButton get() = x { byTooltip("Code With Me") }
 
   fun projectWidget(projectName: String): AbstractToolbarComboUi =
-    abstractToolbarCombo { and(byType("com.intellij.openapi.wm.impl.AbstractToolbarCombo"), byVisibleText(projectName)) }
+    abstractToolbarCombo { and(byType("com.intellij.openapi.wm.impl.AbstractToolbarCombo"), contains(byVisibleText(projectName))) }
 }
 
 val MainToolbarUI.rerunButton get() = x { contains(byAccessibleName("Rerun")) }
