@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.codeinsight.utils.singleReturnExpressionOrNull
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
@@ -380,7 +381,7 @@ private fun createExtensionCandidateChecker(
 
     val codeFragment = KtPsiFactory(functionLiteral.project)
         .createBlockCodeFragment(
-            text = "it",
+            text = StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.asString(),
             context = bodyExpression,
         )
 
