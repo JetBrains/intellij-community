@@ -15,12 +15,14 @@ class CompositePythonPackageManager(
 ) : PythonPackageManager(project, sdk) {
   @Volatile
   override var installedPackages: List<PythonPackage> = emptyList()
+
+  // TODO: composite one
   override var repositoryManager: PythonRepositoryManager = managers.first().repositoryManager
 
   private fun isInRepository(repositoryManager: PythonRepositoryManager, pkgName: String) =
     repositoryManager.allPackages().contains(pkgName)
 
-  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String> {
+  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
     val exceptionList = mutableListOf<Throwable>()
     for (manager in managers) {
       repositoryManager = manager.repositoryManager
@@ -28,17 +30,15 @@ class CompositePythonPackageManager(
 
       if (!isInRepository(repositoryManager, specification.name)) continue
       val executionResult = manager.installPackage(specification, options)
-      val executionOutcome = executionResult.getOrElse { exceptionList.add(it) }
-
-      if (executionResult.isSuccess) {
-        return Result.success(executionOutcome.toString())
-      }
+      executionResult
+        .onSuccess { return Result.success(Unit) }
+        .onFailure { exceptionList.add(it) }
     }
-    return Result.failure(exceptionList.last())
+
+    return Result.failure(exceptionList.lastOrNull() ?: RuntimeException("No package managers found for package $specification"))
   }
 
-
-  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String> {
+  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit> {
     val exceptionList = mutableListOf<Throwable>()
 
     for (manager in managers) {
@@ -47,33 +47,32 @@ class CompositePythonPackageManager(
 
       if (!isInRepository(repositoryManager, specification.name)) continue
       val executionResult = manager.updatePackage(specification)
-      val executionOutcome = executionResult.getOrElse { exceptionList.add(it) }
-
-      if (executionResult.isSuccess) {
-        return Result.success(executionOutcome.toString())
-      }
+      executionResult
+        .onSuccess { return Result.success(Unit) }
+        .onFailure { exceptionList.add(it) }
     }
 
-    return Result.failure(exceptionList.last())
+    return Result.failure(exceptionList.lastOrNull() ?: RuntimeException("No package managers found for package $specification"))
   }
 
-  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String> {
+  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit> {
     val exceptionList = mutableListOf<Throwable>()
 
     for (manager in managers) {
       repositoryManager = manager.repositoryManager
       installedPackages = manager.installedPackages
 
-      if (!isInRepository(repositoryManager, pkg.name)) continue
+      if (!isInRepository(repositoryManager, pkg.name)) {
+        continue
+      }
 
       val executionResult = manager.uninstallPackage(pkg)
-      val executionOutcome = executionResult.getOrElse { exceptionList.add(it) }
-      if (executionResult.isSuccess) {
-        return Result.success(executionOutcome.toString())
-      }
+      executionResult
+        .onSuccess { return Result.success(Unit) }
+        .onFailure { exceptionList.add(it) }
     }
 
-    return Result.failure(exceptionList.last())
+    return Result.failure(exceptionList.lastOrNull() ?: RuntimeException("No package managers found for package $pkg"))
   }
 
   override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
@@ -83,15 +82,11 @@ class CompositePythonPackageManager(
       repositoryManager = manager.repositoryManager
       installedPackages = manager.installedPackages
 
-      val executionResult = manager.reloadPackages()
-      val executionOutcome = executionResult.getOrElse {
-        exceptionList.add(it)
-        emptyList()
-      }
-      if (executionResult.isSuccess) {
-        return Result.success(executionOutcome)
-      }
+      manager.reloadPackages()
+        .onSuccess { return Result.success(it) }
+        .onFailure { exceptionList.add(it) }
     }
-    return Result.failure(exceptionList.last())
+
+    return Result.failure(exceptionList.lastOrNull() ?: RuntimeException("No package managers found"))
   }
 }

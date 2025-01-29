@@ -32,25 +32,28 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
   override var installedPackages: List<PythonPackage> = emptyList()
   override val repositoryManager = CondaRepositoryManger(project, sdk)
 
-  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String> =
+  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> =
     try {
-      Result.success(runConda("install", specification.buildInstallationString() + "-y" + options, message("conda.packaging.install.progress", specification.name)))
+      runConda("install", specification.buildInstallationString() + "-y" + options, message("conda.packaging.install.progress", specification.name))
+      Result.success(Unit)
     }
     catch (ex: ExecutionException) {
       Result.failure(ex)
     }
 
-  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String> =
+  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit> =
     try {
-      Result.success(runConda("update", listOf(specification.name, "-y"), message("conda.packaging.update.progress", specification.name)))
+      runConda("update", listOf(specification.name, "-y"), message("conda.packaging.update.progress", specification.name))
+      Result.success(Unit)
     }
     catch (ex: ExecutionException) {
       Result.failure(ex)
     }
 
-  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String> =
+  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit> =
     try {
-      Result.success(runConda("uninstall", listOf(pkg.name, "-y"), message("conda.packaging.uninstall.progress", pkg.name)))
+      runConda("uninstall", listOf(pkg.name, "-y"), message("conda.packaging.uninstall.progress", pkg.name))
+      Result.success(Unit)
     }
     catch (ex: ExecutionException) {
       Result.failure(ex)

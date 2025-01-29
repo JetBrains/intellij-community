@@ -18,13 +18,26 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
   @Volatile
   private var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
 
-  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String> =
+  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
     poetryInstallPackage(sdk, specification.getVersionForPoetry(), options)
+      .onFailure { return Result.failure(it) }
 
-  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String> =
+    return Result.success(Unit)
+  }
+
+  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit> {
     poetryInstallPackage(sdk, specification.getVersionForPoetry(), emptyList())
+      .onFailure { return Result.failure(it) }
 
-  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String> = poetryUninstallPackage(sdk, pkg.name)
+    return Result.success(Unit)
+  }
+
+  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit> {
+    poetryUninstallPackage(sdk, pkg.name)
+      .onFailure { return Result.failure(it) }
+
+    return Result.success(Unit)
+  }
 
   override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
     val (installed, _) = poetryListPackages(sdk).getOrElse {

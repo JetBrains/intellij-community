@@ -4,6 +4,8 @@ package com.jetbrains.python.packaging.management
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -19,4 +21,19 @@ interface PythonPackageManagerProvider {
   companion object {
     val EP_NAME = ExtensionPointName.create<PythonPackageManagerProvider>("Pythonid.pythonPackageManagerProvider")
   }
+}
+
+@ApiStatus.Experimental
+interface PythonPackageManagerService {
+  fun forSdk(project: Project, sdk: Sdk): PythonPackageManager
+
+  /**
+   * Provides an implementation bridge for Python package management operations
+   * specific to the given project and SDK. The bridge serves as a connection point
+   * to enable advanced management tasks, potentially extending or adapting functionalities
+   * provided by the [PythonPackageManager].
+   */
+  fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge
+
+  fun getServiceScope(): CoroutineScope
 }

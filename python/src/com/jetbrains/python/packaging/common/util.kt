@@ -1,79 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.common
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.PyPIPackageRanking
 import com.jetbrains.python.packaging.PyPackagesNotificationPanel
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
-import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
-
-
-interface PackageManagerHolder {
-  fun forSdk(project: Project, sdk: Sdk): PythonPackageManager
-
-  /**
-   * Provides an implementation bridge for Python package management operations
-   * specific to the given project and SDK. The bridge serves as a connection point
-   * to enable advanced management tasks, potentially extending or adapting functionalities
-   * provided by the [PythonPackageManager].
-   */
-  fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge
-
-  fun getServiceScope(): CoroutineScope
-}
-
-class PackageManagerHolderImpl(private val serviceScope: CoroutineScope) : PackageManagerHolder, Disposable {
-  private val cache = ConcurrentHashMap<UUID, PythonPackageManager>()
-
-  private val bridgeCache = ConcurrentHashMap<UUID, PythonPackageManagementServiceBridge>()
-
-  /**
-   * Requires Sdk to be Python Sdk and have PythonSdkAdditionalData.
-   */
-  override fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
-    val cacheKey = (sdk.getOrCreateAdditionalData()).uuid
-
-    return cache.computeIfAbsent(cacheKey) {
-      PythonPackageManagerProvider.EP_NAME.extensionList
-        .firstNotNullOf { it.createPackageManagerForSdk(project, sdk) }
-    }
-  }
-
-  override fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge {
-    val cacheKey = (sdk.sdkAdditionalData as PythonSdkAdditionalData).uuid
-    return bridgeCache.computeIfAbsent(cacheKey) {
-      val bridge = PythonPackageManagementServiceBridge(project, sdk)
-      Disposer.register(this@PackageManagerHolderImpl, bridge)
-      bridge
-    }
-  }
-
-  override fun getServiceScope(): CoroutineScope = serviceScope
-
-  override fun dispose() {
-    cache.clear()
-  }
-}
-
 
 @ApiStatus.Experimental
 interface PythonPackageManagementListener {

@@ -73,9 +73,9 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     return Result.success(packages)
   }
 
-  protected abstract suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String>
-  protected abstract suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String>
-  protected abstract suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String>
+  protected abstract suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit>
+  protected abstract suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit>
+  protected abstract suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit>
   protected abstract suspend fun reloadPackagesCommand(): Result<List<PythonPackage>>
 
   internal suspend fun refreshPaths() {
@@ -93,9 +93,9 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   companion object {
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
-      val packageManagerHolder = project.service<PackageManagerHolder>()
-      val manager = packageManagerHolder.forSdk(project, sdk)
-      packageManagerHolder.getServiceScope().launch(Dispatchers.IO) {
+      val pythonPackageManagerService = project.service<PythonPackageManagerService>()
+      val manager = pythonPackageManagerService.forSdk(project, sdk)
+      pythonPackageManagerService.getServiceScope().launch(Dispatchers.IO) {
         manager.repositoryManager.initCaches()
       }
       return manager
