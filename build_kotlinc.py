@@ -36,10 +36,11 @@ def main():
 
 # Builds Kotlinc (via Gradle).
 def build_kotlin_compiler(args):
-    clean_args = ['clean', '--no-daemon', '--no-build-cache'] if args.clean else []
+    clean_args = ['clean', '--no-build-cache'] if args.clean else []
     cmd = [
         str(args.gradlew),
         f'--project-dir={args.kotlinc_dir}',
+        '--no-daemon',
         *clean_args,
         'publishIdeArtifacts',
         ':prepare:ide-plugin-dependencies:kotlin-dist-for-ide:publish',
@@ -68,8 +69,8 @@ def update_ide_project_model(args):
     properties_file.write_text(properties, 'utf-8')
 
     # Run the updater.
-    clean_args = ['clean', '--no-daemon', '--no-build-cache'] if args.clean else []
-    cmd = [str(args.gradlew), f'--project-dir={updater_dir}', *clean_args, 'run']
+    clean_args = ['clean', '--no-build-cache'] if args.clean else []
+    cmd = [str(args.gradlew), f'--project-dir={updater_dir}', '--no-daemon', *clean_args, 'run']
     run_subprocess(cmd, args.cmd_env, 'Running project-model-updater')
 
 
