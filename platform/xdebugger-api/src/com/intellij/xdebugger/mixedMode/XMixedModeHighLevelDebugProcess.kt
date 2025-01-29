@@ -15,4 +15,6 @@ interface XMixedModeHighLevelDebugProcess : XMixedModeDebugProcess {
   suspend fun refreshSuspendContextOnLowLevelStepFinish(suspendContext: XSuspendContext) : XSuspendContext?
 
   fun stoppedInManagedContext(suspendContext: XSuspendContext): Boolean
+
+  suspend fun abortManagedStepping()
 }
