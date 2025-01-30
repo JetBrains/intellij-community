@@ -10,6 +10,7 @@ import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalTextBuffer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.util.addModelListener
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
@@ -19,7 +20,8 @@ import kotlin.math.min
  * Keeps the whole state of a single terminal session.
  * TODO rename to BlockTerminalSessionModel?
  */
-internal class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
+@ApiStatus.Internal
+class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
   val width: Int
     get() = textBuffer.width
   val height: Int

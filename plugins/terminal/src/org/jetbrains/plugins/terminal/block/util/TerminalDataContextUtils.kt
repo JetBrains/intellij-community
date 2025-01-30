@@ -49,42 +49,74 @@ object TerminalDataContextUtils {
 
   val DataContext.editor: Editor?
     get() = getData(CommonDataKeys.EDITOR)
-  internal val DataContext.outputController: TerminalOutputController?
+
+  @get:ApiStatus.Internal
+  val DataContext.outputController: TerminalOutputController?
     get() = getData(TerminalOutputController.KEY)
-  internal val DataContext.promptController: TerminalPromptController?
+
+  @get:ApiStatus.Internal
+  val DataContext.promptController: TerminalPromptController?
     get() = getData(TerminalPromptController.KEY)
-  internal val DataContext.simpleTerminalController: SimpleTerminalController?
+
+  @get:ApiStatus.Internal
+  val DataContext.simpleTerminalController: SimpleTerminalController?
     get() = getData(SimpleTerminalController.KEY)
-  internal val DataContext.blockTerminalController: BlockTerminalController?
+
+  @get:ApiStatus.Internal
+  val DataContext.blockTerminalController: BlockTerminalController?
     get() = getData(BlockTerminalController.KEY)
-  internal val DataContext.selectionController: TerminalSelectionController?
+
+  @get:ApiStatus.Internal
+  val DataContext.selectionController: TerminalSelectionController?
     get() = getData(TerminalSelectionController.KEY)
-  internal val DataContext.terminalFocusModel: TerminalFocusModel?
+
+  @get:ApiStatus.Internal
+  val DataContext.terminalFocusModel: TerminalFocusModel?
     get() = getData(TerminalFocusModel.KEY)
-  internal val DataContext.terminalSession: BlockTerminalSession?
+
+  @get:ApiStatus.Internal
+  val DataContext.terminalSession: BlockTerminalSession?
     get() = getData(BlockTerminalSession.DATA_KEY)
   internal val DataContext.terminalSearchController: TerminalSearchController?
     get() = getData(TerminalSearchController.KEY)
 
+
+
   val AnActionEvent.editor: Editor?
     get() = getData(CommonDataKeys.EDITOR)
-  internal val AnActionEvent.outputController: TerminalOutputController?
+
+  @get:ApiStatus.Internal
+  val AnActionEvent.outputController: TerminalOutputController?
     get() = getData(TerminalOutputController.KEY)
+
   val AnActionEvent.terminalOutputModel: TerminalOutputModel?
     get() = getData(TerminalOutputModel.KEY)
-  internal val AnActionEvent.promptController: TerminalPromptController?
+
+  @get:ApiStatus.Internal
+  val AnActionEvent.promptController: TerminalPromptController?
     get() = getData(TerminalPromptController.KEY)
-  internal val AnActionEvent.simpleTerminalController: SimpleTerminalController?
+
+  @get:ApiStatus.Internal
+  val AnActionEvent.simpleTerminalController: SimpleTerminalController?
     get() = getData(SimpleTerminalController.KEY)
-  internal val AnActionEvent.blockTerminalController: BlockTerminalController?
+
+  @get:ApiStatus.Internal
+  val AnActionEvent.blockTerminalController: BlockTerminalController?
     get() = getData(BlockTerminalController.KEY)
-  internal val AnActionEvent.selectionController: TerminalSelectionController?
+
+  @get:ApiStatus.Internal
+  val AnActionEvent.selectionController: TerminalSelectionController?
     get() = getData(TerminalSelectionController.KEY)
-  internal val AnActionEvent.terminalFocusModel: TerminalFocusModel?
+
+  @get:ApiStatus.Internal
+  val AnActionEvent.terminalFocusModel: TerminalFocusModel?
     get() = getData(TerminalFocusModel.KEY)
-  internal val AnActionEvent.terminalSession: BlockTerminalSession?
+
+  @get:ApiStatus.Internal
+  val AnActionEvent.terminalSession: BlockTerminalSession?
     get() = getData(BlockTerminalSession.DATA_KEY)
 
-  internal val AnActionEvent.terminalInput: TerminalInput?
+  @get:ApiStatus.Internal
+  val AnActionEvent.terminalInput: TerminalInput?
     get() = getData(TerminalInput.KEY)
 }
