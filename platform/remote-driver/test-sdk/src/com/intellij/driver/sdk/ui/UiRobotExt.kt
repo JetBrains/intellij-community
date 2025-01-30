@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.RemoteMouseButton
 import java.awt.Point
+import java.awt.datatransfer.DataFlavor
 import java.awt.event.KeyEvent
 
 fun UiRobot.pasteText(text: String) {
@@ -39,6 +40,7 @@ interface ToolkitRef {
 @Remote("java.awt.datatransfer.Clipboard")
 interface ClipboardRef {
   fun setContents(content: StringSelectionRef, ownerRef: ClipboardOwnerRef?)
+  fun getData(flavor: DataFlavor): Object
 }
 
 @Remote("com.intellij.openapi.util.SystemInfo")
