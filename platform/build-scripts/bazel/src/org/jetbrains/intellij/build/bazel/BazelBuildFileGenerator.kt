@@ -186,6 +186,10 @@ internal class BazelBuildFileGenerator(
     val community = ArrayList<ModuleDescriptor>()
     val ultimate = ArrayList<ModuleDescriptor>()
     for (module in project.model.project.modules) {
+      if (module.name == "fleet.compiler.plugins") {
+        continue
+      }
+
       val descriptor = getModuleDescriptor(module)
       if (descriptor.isCommunity) {
         community.add(descriptor)

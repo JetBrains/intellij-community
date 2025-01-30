@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -29,11 +29,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Bas Leijdekkers
- */
-public class PropertiesStructuralSearchProfile extends StructuralSearchProfile {
-
+final class PropertiesStructuralSearchProfile extends StructuralSearchProfile {
   private static final String TYPED_VAR_PREFIX = "__$_";
 
   @Override

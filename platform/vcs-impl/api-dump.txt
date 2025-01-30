@@ -566,13 +566,6 @@ a:com.intellij.openapi.vcs.actions.commit.AbstractCommitChangesAction
 - pa:getExecutor(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.CommitExecutor
 - p:isActionEnabled(com.intellij.openapi.vcs.changes.ChangeListManager,com.intellij.openapi.vcs.changes.Change):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.vcs.actions.commit.CheckinActionUtil
-- sf:INSTANCE:com.intellij.openapi.vcs.actions.commit.CheckinActionUtil
-- f:getInitiallySelectedChangeList(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.vcs.changes.LocalChangeList
-- f:getInitiallySelectedChangeListFor(com.intellij.openapi.project.Project,java.util.List):com.intellij.openapi.vcs.changes.LocalChangeList
-- f:performCheckInAfterUpdate(com.intellij.openapi.project.Project,java.util.List,java.util.List,com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List,com.intellij.openapi.vcs.changes.CommitExecutor,Z):V
-- f:performCommonCommitAction(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List,java.lang.String,com.intellij.openapi.vcs.changes.CommitExecutor,Z):V
-- f:updateCommonCommitAction(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.vcs.actions.commit.CommonCheckinProjectAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V

@@ -1,14 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks;
 
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Mikhail Golubev
- */
-public class CustomTaskState {
+public final class CustomTaskState {
   private String myId = "";
   private String myPresentableName = "";
   private boolean myPredefined;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.test
 
 import com.intellij.notification.Notification
@@ -49,14 +49,17 @@ fun assertNotification(type: NotificationType, title: String, content: String, a
   return actual
 }
 
-fun assertNotification(type: NotificationType, title: String, content: String, actual: Notification) =
-  assertNotification(type, title, content, null, actual)
+fun assertNotification(type: NotificationType, title: String, content: String, actual: Notification): Notification {
+  return assertNotification(type, title, content, null, actual)
+}
 
-fun assertSuccessfulNotification(title: String, content: String, actual: Notification) =
-  assertNotification(NotificationType.INFORMATION, title, content, actual)
+fun assertSuccessfulNotification(title: String, content: String, actual: Notification): Notification {
+  return assertNotification(NotificationType.INFORMATION, title, content, actual)
+}
 
-fun assertSuccessfulNotification(title: String, content: String, actions: List<String>, actual: Notification) =
-  assertNotification(NotificationType.INFORMATION, title, content, actions, actual)
+fun assertSuccessfulNotification(title: String, content: String, actions: List<String>, actual: Notification): Notification {
+  return assertNotification(NotificationType.INFORMATION, title, content, actions, actual)
+}
 
 fun cleanupForAssertion(content: String): String {
   val nobr = content.replace("<br/>", "\n").replace("<br>", "\n").replace("<hr/>", "\n")

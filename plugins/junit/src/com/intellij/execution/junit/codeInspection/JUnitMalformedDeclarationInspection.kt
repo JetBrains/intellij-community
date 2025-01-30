@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -47,7 +47,7 @@ import kotlin.streams.asSequence
 
 class JUnitMalformedDeclarationInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
-  val ignorableAnnotations = mutableListOf("mockit.Mocked", "org.junit.jupiter.api.io.TempDir")
+  val ignorableAnnotations: List<String> = listOf("mockit.Mocked", "org.junit.jupiter.api.io.TempDir")
 
   override fun getOptionsPane(): OptPane = pane(
     stringList(

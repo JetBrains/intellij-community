@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.xml;
 
 import com.intellij.lang.Language;
@@ -36,11 +35,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author Gregory.Shrago
- */
-public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
-
+public final class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSupport {
   public static final @NonNls String XML_SUPPORT_ID = "xml";
 
   private static boolean isMine(final PsiLanguageInjectionHost host) {

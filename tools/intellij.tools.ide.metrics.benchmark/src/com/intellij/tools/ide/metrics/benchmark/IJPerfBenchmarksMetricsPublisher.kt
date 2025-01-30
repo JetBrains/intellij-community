@@ -19,8 +19,6 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.io.path.Path
 import kotlin.io.path.writer
@@ -31,7 +29,7 @@ import kotlin.time.Duration.Companion.seconds
  * Metrics will be stored as TeamCity artifacts and later will be collected by IJ Perf collector (~ once/twice per hour).
  * Charts can be found at [IJ Perf Dashboard](https://ij-perf.labs.jb.gg/intellij/testsDev) - link is prone to change, though.
  */
-class IJPerfBenchmarksMetricsPublisher {
+internal class IJPerfBenchmarksMetricsPublisher {
 
   companion object {
 

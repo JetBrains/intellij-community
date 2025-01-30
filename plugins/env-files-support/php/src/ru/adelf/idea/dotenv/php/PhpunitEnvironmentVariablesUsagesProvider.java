@@ -15,7 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 
-public class PhpunitEnvironmentVariablesUsagesProvider implements EnvironmentVariablesUsagesProvider {
+final class PhpunitEnvironmentVariablesUsagesProvider implements EnvironmentVariablesUsagesProvider {
     @Override
     public boolean acceptFile(VirtualFile file) {
         return file.getFileType().equals(XmlFileType.INSTANCE) && file.getName().equals("phpunit.xml");

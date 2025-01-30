@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.inspection;
 
 import com.intellij.CommonBundle;
@@ -32,7 +32,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
+public final class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
   private final @NotNull SmartPsiElementPointer<PsiClass> myNewSuperClass;
   private final @NotNull SmartPsiElementPointer<PsiClass> myOldSuperClass;
   private final int myInheritorCount;

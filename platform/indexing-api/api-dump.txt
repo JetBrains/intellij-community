@@ -594,7 +594,7 @@ a:com.intellij.util.indexing.SingleEntryIndexer
 - p:<init>(Z):V
 - pa:computeValue(com.intellij.util.indexing.FileContent):java.lang.Object
 - f:map(com.intellij.util.indexing.FileContent):java.util.Map
-c:com.intellij.util.xml.XmlFileHeader
+f:com.intellij.util.xml.XmlFileHeader
 - sf:EMPTY:com.intellij.util.xml.XmlFileHeader
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
 - equals(java.lang.Object):Z

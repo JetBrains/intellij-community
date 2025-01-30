@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
@@ -173,10 +173,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.find.usages.impl.ImplKt.buildUsageViewQuery;
-import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
-import static com.intellij.testFramework.RunAll.runAll;
 import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
-import static com.intellij.util.ObjectUtils.coalesce;
 import static org.junit.Assert.*;
 
 /**
@@ -426,7 +423,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public @NotNull VirtualFile copyFileToProject(@NotNull String sourcePath, @NotNull String targetPath) {
     String testDataPath = getTestDataPath();
-    File sourceFile = new File(testDataPath, toSystemDependentName(sourcePath));
+    File sourceFile = new File(testDataPath, FileUtil.toSystemDependentName(sourcePath));
     if (!sourceFile.exists()) {
       File candidate = new File(sourcePath);
       if (candidate.isAbsolute()) {
@@ -1100,7 +1097,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public @NotNull String getUsageViewTreeTextRepresentation(@NotNull SearchTarget target) {
     Project project = getProject();
 
-    SearchScope searchScope = coalesce(target.getMaximalSearchScope(), GlobalSearchScope.allScope(project));
+    SearchScope searchScope = ObjectUtils.coalesce(target.getMaximalSearchScope(), GlobalSearchScope.allScope(project));
     AllSearchOptions allOptions = new AllSearchOptions(UsageOptions.createOptions(searchScope), true);
     List<UsageTarget> usageTargets = List.of(new SearchTarget2UsageTarget(project, target, allOptions));
     Collection<? extends Usage> usages = buildUsageViewQuery(getProject(), target, allOptions).findAll();
@@ -1407,7 +1404,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     AtomicReference<ProjectRootManagerComponent> projectRootManagerComponentRef = new AtomicReference<>();
-    runAll(
+    RunAll.runAll(
       () -> EdtTestUtil.runInEdtAndWait(() -> {
         if (ApplicationManager.getApplication() == null) {
           return;

@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.testGenerator.generator.methods
 
-import com.intellij.openapi.util.io.systemIndependentPath
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.testGenerator.generator.Code
@@ -23,7 +22,7 @@ data class TestCaseMethod(
     private val annotations: List<TAnnotation> = emptyList()
 ) : TestMethod {
     override val methodName = run {
-        "test" + when (val qualifier = File(localPath).parentFile?.systemIndependentPath ?: "") {
+        "test" + when (val qualifier = File(localPath).parentFile?.path?.replace(File.separatorChar, '/') ?: "") {
             "" -> methodNameBase
             else -> makeJavaIdentifier(qualifier).capitalize() + "_" + methodNameBase
         }
@@ -34,7 +33,7 @@ data class TestCaseMethod(
         return TestCaseMethod(
             methodNameBase,
             contentRootPath,
-            f.systemIndependentPath,
+            f.path.replace(File.separatorChar, '/'),
             isCompilerTestData,
             passTestDataPath,
             f,

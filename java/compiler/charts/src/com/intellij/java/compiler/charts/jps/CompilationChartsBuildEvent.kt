@@ -13,7 +13,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import javax.swing.Icon
 import javax.swing.JComponent
 
-class CompilationChartsBuildEvent(val view: BuildViewManager,
+internal class CompilationChartsBuildEvent(val view: BuildViewManager,
                                   val buildId: Any,
                                   val chart: CompilationCharts) :
   AbstractBuildEvent(Any(), buildId, System.currentTimeMillis(), CompilationChartsBundle.message("charts.tab.name")),

@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.bootstrap.eel.MultiRoutingFileSystemVmOptionsSetter
@@ -253,7 +254,7 @@ private suspend fun checkEnvironment() {
 
 private fun checkLauncher() {
   if (
-    (SystemInfo.isWindows || SystemInfo.isLinux) &&
+    (SystemInfoRt.isWindows || SystemInfoRt.isLinux) &&
     System.getProperty("ide.native.launcher") == null &&
     !ExternalUpdateManager.isCreatingDesktopEntries()
   ) {
@@ -300,7 +301,7 @@ private fun checkTempDirEnvVars() {
 }
 
 private fun checkAncientOs() {
-  if (SystemInfo.isWindows) {
+  if (SystemInfoRt.isWindows) {
     val buildNumber = SystemInfo.getWinBuildNumber()
     if (buildNumber != null && buildNumber < 10000) {  // 10 1507 = 10240, Server 2016 = 14393
       showNotification("unsupported.windows", suppressable = true, action = null)
@@ -391,9 +392,9 @@ private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore,
   }
 }
 
-private fun storeName(store: FileStore): String =
-  if (store.name().isBlank()) store.toString().trim().trimStart('(').trimEnd(')')
-  else store.toString()
+private fun storeName(store: FileStore): String {
+  return if (store.name().isBlank()) store.toString().trim().trimStart('(').trimEnd(')') else store.toString()
+}
 
 private suspend fun MultiRoutingFileSystemVmOptionsSetter.onApplicationActivated() {
   if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) return

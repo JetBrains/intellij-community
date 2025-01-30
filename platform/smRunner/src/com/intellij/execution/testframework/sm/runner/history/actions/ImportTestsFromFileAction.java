@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
 import com.intellij.execution.testframework.sm.SmRunnerBundle;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-public class ImportTestsFromFileAction extends AbstractImportTestsAction {
+public final class ImportTestsFromFileAction extends AbstractImportTestsAction {
   public ImportTestsFromFileAction() {
     super(SmRunnerBundle.message("sm.test.runner.import.test"),
           SmRunnerBundle.message("sm.test.runner.import.test.description"),

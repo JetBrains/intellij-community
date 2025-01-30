@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.commands.impl
 
 import com.intellij.analysis.AnalysisBundle.message
@@ -21,7 +21,7 @@ import kotlinx.coroutines.job
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-class DirectErrorFixCompletionCommand(
+internal class DirectErrorFixCompletionCommand(
   override val name: @Nls String,
   override val priority: Int?,
   override val icon: Icon?,

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.refactoring.inlineExpandConversion
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
@@ -50,18 +50,14 @@ internal fun getYamlCollectionUnderCaret(element: PsiElement?): SmartPsiElementP
 }
 
 
-open class YAMLExpandCollectionIntentionAction : PsiElementBaseIntentionAction() {
-  override fun startInWriteAction(): Boolean {
-    return false
-  }
+internal open class YAMLExpandCollectionIntentionAction : PsiElementBaseIntentionAction() {
+  override fun startInWriteAction(): Boolean = false
 
   override fun getText(): String {
     return YAMLBundle.message("yaml.intention.name.expand.collection")
   }
 
-  override fun getFamilyName(): String {
-    return text
-  }
+  override fun getFamilyName(): String = text
 
 
   override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
@@ -71,7 +67,7 @@ open class YAMLExpandCollectionIntentionAction : PsiElementBaseIntentionAction()
     runBlockingCancellable {
       launch {
             collectionPointer = readAction { getYamlCollectionUnderCaret(element) } ?: return@launch
-            val expanded: SmartPsiElementPointer<PsiElement> = processParentsVirtually(collectionPointer!!) ?: return@launch
+            val expanded: SmartPsiElementPointer<PsiElement> = processParentsVirtually(collectionPointer) ?: return@launch
             expandedElement = expanded.element
           }
     }
@@ -163,7 +159,7 @@ open class YAMLExpandCollectionIntentionAction : PsiElementBaseIntentionAction()
   }
 }
 
-class YAMLExpandAllCollectionsInsideIntentionAction : YAMLExpandCollectionIntentionAction() {
+private class YAMLExpandAllCollectionsInsideIntentionAction : YAMLExpandCollectionIntentionAction() {
   override fun startInWriteAction(): Boolean = false
 
   override fun getText(): String = YAMLBundle.message("yaml.intention.name.expand.all.collections.inside")
@@ -177,7 +173,7 @@ class YAMLExpandAllCollectionsInsideIntentionAction : YAMLExpandCollectionIntent
     runBlockingCancellable {
       launch {
         collectionPointer = readAction { getYamlCollectionUnderCaret(element) ?: return@readAction null } ?: return@launch
-        val processed = processChildrenVirtually(collectionPointer!!)
+        val processed = processChildrenVirtually(collectionPointer)
         expandedElement = processed.element
       }
     }
@@ -201,8 +197,9 @@ class YAMLExpandAllCollectionsInsideIntentionAction : YAMLExpandCollectionIntent
     }
   }
 
-  private suspend fun processChildrenVirtually(elementPointer: SmartPsiElementPointer<PsiElement>): SmartPsiElementPointer<PsiElement> =
-    readAction { expandElementRecursive(elementPointer.element!!.copy()) }
+  private suspend fun processChildrenVirtually(elementPointer: SmartPsiElementPointer<PsiElement>): SmartPsiElementPointer<PsiElement> {
+    return readAction { expandElementRecursive(elementPointer.element!!.copy()) }
+  }
 
   private fun expandElementRecursive(collection_: PsiElement): SmartPsiElementPointer<PsiElement> {
     var collection: PsiElement = collection_

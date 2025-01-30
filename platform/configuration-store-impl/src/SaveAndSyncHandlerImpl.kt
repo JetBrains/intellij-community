@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.codeWithMe.ClientId
@@ -41,7 +41,7 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope) : SaveAndSyncHandler() {
+private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope) : SaveAndSyncHandler() {
   private val LISTEN_DELAY = 15.milliseconds
 
   private val refreshRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ide.ui.laf
@@ -72,15 +72,12 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.UIResource
-import javax.swing.plaf.basic.BasicLookAndFeel
 
 // A constant from Mac OS X implementation. See CPlatformWindow.WINDOW_ALPHA
 private const val WINDOW_ALPHA = "Window.alpha"
@@ -356,7 +353,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       }
       else {
         QuickChangeLookAndFeel.switchLafAndUpdateUI(/* lafManager = */ this,
-                                                    /* lf = */ newTheme,
+                                                    /* laf = */ newTheme,
                                                     /* async = */ true,
                                                     /* force = */ true,
                                                     /* lockEditorScheme = */ true)
@@ -925,7 +922,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       val result = ArrayList<AnAction>()
       result.add(Separator.create(separatorText))
       lafs.mapTo(result) {
-        LafToggleAction(name = it.name, themeId = it.id, editorSchemeId = it.defaultSchemeName, isDark = isDark)
+        LafToggleAction(name = it.name, themeId = it.id, isDark = isDark)
       }
       return result
     }
@@ -1023,7 +1020,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   private inner class LafToggleAction(name: @Nls String?,
                                       private val themeId: String,
-                                      private val editorSchemeId: String,
                                       private val isDark: Boolean) : DumbAwareToggleAction(name) {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 

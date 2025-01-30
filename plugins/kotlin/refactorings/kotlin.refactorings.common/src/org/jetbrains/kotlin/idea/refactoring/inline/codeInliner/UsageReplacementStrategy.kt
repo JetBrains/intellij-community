@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.inline.codeInliner
 
 import com.intellij.codeInsight.FileModificationService
@@ -25,7 +25,7 @@ interface UsageReplacementStrategy {
     fun createReplacer(usage: KtReferenceExpression): (() -> KtElement?)?
 
     companion object {
-        val KEY = Key<Unit>("UsageReplacementStrategy.replaceUsages")
+        val KEY: Key<Unit> = Key<Unit>("UsageReplacementStrategy.replaceUsages")
     }
 }
 

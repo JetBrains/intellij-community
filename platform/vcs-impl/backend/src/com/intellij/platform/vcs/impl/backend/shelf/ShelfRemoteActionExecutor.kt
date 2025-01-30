@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.backend.shelf
 
 import com.intellij.openapi.ListSelection
@@ -11,21 +11,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor
 import com.intellij.openapi.vcs.changes.shelf.*
-import com.intellij.pom.NavigatableAdapter
-import com.intellij.util.OpenSourceUtil
 import com.intellij.platform.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListRpc
+import com.intellij.pom.NavigatableAdapter
+import com.intellij.util.OpenSourceUtil
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class ShelfRemoteActionExecutor(private val project: Project, private val cs: CoroutineScope) {
+internal class ShelfRemoteActionExecutor(private val project: Project, private val cs: CoroutineScope) {
   private val shelfTreeHolder = ShelfTreeHolder.getInstance(project)
   private val shelveChangesManager = ShelveChangesManager.getInstance(project)
 
@@ -136,7 +134,7 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
       .map { wrapper -> ShelvedChangeNavigatable(wrapper, project) }
       .toTypedArray()
     cs.launch(Dispatchers.EDT) {
-      OpenSourceUtil.navigate(focusEditor, *navigatables);
+      OpenSourceUtil.navigate(focusEditor, *navigatables)
     }
   }
 

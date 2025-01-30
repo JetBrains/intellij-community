@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.navbar.frontend
 
 import com.intellij.ide.navigationToolbar.NavBarLeftSideExtension
@@ -45,10 +45,7 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.ScrollPaneConstants
 
-/**
- * @author Konstantin Bulenkov
- */
-class NavBarRootPaneExtension : IdeRootPaneNorthExtension {
+internal class NavBarRootPaneExtension : IdeRootPaneNorthExtension {
   companion object {
     const val PANEL_KEY: String = "NavBarPanel"
   }

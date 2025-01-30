@@ -13,7 +13,8 @@ interface ApiCallExtractorProvider {
   val language: Language
 
   companion object {
-    val EP_NAME: ExtensionPointName<ApiCallExtractorProvider> = ExtensionPointName.create("com.intellij.cce.apiCallExtractor")
+    private val EP_NAME = ExtensionPointName<ApiCallExtractorProvider>("com.intellij.cce.apiCallExtractor")
+
     fun getForLanguage(language: Language): ApiCallExtractor? = EP_NAME.findFirstSafe { it.language == language }?.provide()
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.collaboration.async.cancelAndJoinSilently
@@ -31,6 +31,7 @@ import org.jetbrains.plugins.gitlab.authentication.LoginResult
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabSelectorErrorStatusPresenter.Companion.isAuthorizationException
 import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
+import org.jetbrains.plugins.gitlab.snippets.GitLabSnippetService.Companion.GL_SNIPPET_FILES_LIMIT
 import org.jetbrains.plugins.gitlab.snippets.PathHandlingMode.Companion.getFileNameExtractor
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics.SnippetAction.*
@@ -41,7 +42,7 @@ import java.awt.datatransfer.StringSelection
  * Service required to get a [CoroutineScope] when performing [GitLabCreateSnippetAction].
  */
 @Service(Service.Level.PROJECT)
-class GitLabSnippetService(private val project: Project, private val serviceScope: CoroutineScope) {
+internal class GitLabSnippetService(private val project: Project, private val serviceScope: CoroutineScope) {
   private companion object {
     const val GL_SNIPPET_FILES_LIMIT = 10
 

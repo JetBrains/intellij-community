@@ -27,23 +27,26 @@ final class PhpunitEnvCompletionContributor extends BaseEnvCompletionProvider im
     public static final List<String> TAGS = Arrays.asList("server", "env");
 
     PhpunitEnvCompletionContributor() {
-        extend(CompletionType.BASIC, PlatformPatterns.psiElement(XmlToken.class).withParent(XmlAttributeValue.class), new CompletionProvider<CompletionParameters>() {
-            @Override
-            protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
+        extend(CompletionType.BASIC, PlatformPatterns.psiElement(XmlToken.class).withParent(XmlAttributeValue.class),
+               new CompletionProvider<>() {
+                   @Override
+                   protected void addCompletions(@NotNull CompletionParameters completionParameters,
+                                                 @NotNull ProcessingContext processingContext,
+                                                 @NotNull CompletionResultSet completionResultSet) {
 
-                PsiElement psiElement = completionParameters.getOriginalPosition();
+                       PsiElement psiElement = completionParameters.getOriginalPosition();
 
-                if (psiElement == null || !DotEnvSettings.getInstance().completionEnabled) {
-                    return;
-                }
+                       if (psiElement == null || !DotEnvSettings.getInstance().completionEnabled) {
+                           return;
+                       }
 
-                if (getXmlAttributeValue(psiElement) == null) {
-                    return;
-                }
+                       if (getXmlAttributeValue(psiElement) == null) {
+                           return;
+                       }
 
-                fillCompletionResultSet(completionResultSet, psiElement.getProject());
-            }
-        });
+                       fillCompletionResultSet(completionResultSet, psiElement.getProject());
+                   }
+               });
     }
 
     @Override

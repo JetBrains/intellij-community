@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.compiler.util;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -40,7 +40,7 @@ import java.io.DataInput;
 import java.io.IOException;
 import java.util.*;
 
-public class InspectionValidatorWrapper implements Validator {
+public final class InspectionValidatorWrapper implements Validator {
   private final InspectionValidator myValidator;
   private final PsiManager myPsiManager;
   private final CompilerManager myCompilerManager;

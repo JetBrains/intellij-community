@@ -1,16 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.diff.comparison.TrimUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
@@ -26,16 +29,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static com.intellij.diff.comparison.TrimUtil.isPunctuation;
-import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.formatTextWithLinks;
-import static com.intellij.openapi.vcs.ui.FontUtil.getCommitMessageFont;
-import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 @ApiStatus.Internal
 public final class CommitPresentationUtil {
@@ -136,7 +134,7 @@ public final class CommitPresentationUtil {
   private static @NotNull Set<@NlsSafe String> findHashes(@NotNull Project project,
                                                           @NotNull @NlsSafe String message) {
     Set<String> unresolvedHashes = new HashSet<>();
-    formatTextWithLinks(project, message, (@NlsSafe var s) -> {
+    IssueLinkHtmlRenderer.formatTextWithLinks(project, message, (@NlsSafe var s) -> {
       unresolvedHashes.addAll(findHashes(s));
       return s;
     });
@@ -148,7 +146,7 @@ public final class CommitPresentationUtil {
                                                            @NotNull Set<@NlsSafe String> resolvedHashes) {
     fullMessage = VcsUtil.trimCommitMessageToSaneSize(fullMessage);
 
-    Font font = getCommitMessageFont();
+    Font font = FontUtil.getCommitMessageFont();
     Convertor<String, String> convertor = s -> replaceHashes(s, resolvedHashes);
 
     String subject = getSubject(fullMessage);
@@ -174,7 +172,7 @@ public final class CommitPresentationUtil {
 
         String tail = subject.substring(placeToCut);
         subject = subject.substring(0, placeToCut);
-        if (isPunctuation(subject.charAt(placeToCut - 1))) {
+        if (TrimUtil.isPunctuation(subject.charAt(placeToCut - 1))) {
           tail = StringUtil.trimStart(tail, " ");
         }
         else {
@@ -205,7 +203,7 @@ public final class CommitPresentationUtil {
                                             @NotNull Font font,
                                             int style,
                                             @NotNull Convertor<? super String, String> convertor) {
-    return FontUtil.getHtmlWithFonts(escapeMultipleSpaces(formatTextWithLinks(project, text, convertor)), style, font);
+    return FontUtil.getHtmlWithFonts(escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(project, text, convertor)), style, font);
   }
 
   private static @NotNull @Nls String getAuthorAndCommitterText(@NotNull VcsUser author, long authorTime,
@@ -393,13 +391,13 @@ public final class CommitPresentationUtil {
       if (!e.getDescription().startsWith(GO_TO_HASH)) return null;
       String hash = e.getDescription().substring(GO_TO_HASH.length());
       Collection<CommitId> ids = myResolvedHashes.get(hash);
-      if (ids.size() <= 1) return getFirstItem(ids);
+      if (ids.size() <= 1) return ContainerUtil.getFirstItem(ids);
       for (CommitId id : ids) {
         if (myRoot.equals(id.getRoot())) {
           return id;
         }
       }
-      return getFirstItem(ids);
+      return ContainerUtil.getFirstItem(ids);
     }
 
     public @NotNull CommitPresentation resolve(@NotNull MultiMap<String, CommitId> resolvedHashes) {

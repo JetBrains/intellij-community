@@ -65,7 +65,7 @@ class SeActionsProvider(project: Project? = null, contextComponent: Component? =
   }
 
   private fun CoroutineScope.processRecents(text: String, includeDisabled: Boolean, presentationProvider: suspend (AnAction) -> Presentation, processor: suspend (MatchedValue) -> Boolean) {
-    val actionIDs: Set<String> = ActionHistoryManager.getInstance().state.ids
+    val actionIDs: Set<String> = ActionHistoryManager.getInstance().getState().ids
     asyncProvider.processActions(this, presentationProvider, text, actionIDs) { matchedValue ->
       if (!includeDisabled) {
         val enabled = (matchedValue.value as? GotoActionModel.ActionWrapper)?.isAvailable != false

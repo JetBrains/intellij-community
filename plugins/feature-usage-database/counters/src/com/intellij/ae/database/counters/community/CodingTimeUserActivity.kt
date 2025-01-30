@@ -34,8 +34,10 @@ import java.util.*
  * Coding activity. Stores language of the file and file hash
  */
 object CodingTimeUserActivity : WritableDatabaseBackedTimeSpanUserActivity() {
-  override val canBeStale = true
-  override val id = "editor.changing"
+  override val canBeStale: Boolean
+    get() = true
+  override val id: String
+    get() = "editor.changing"
 
   suspend fun write(editorId: String, language: Language, file: VirtualFile) {
     val extra = mapOf("lang" to language.id, "fileHash" to md5(file.presentableUrl))

@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.ui.actions;
 
 import com.intellij.execution.actions.AbstractAddToTestsPatternAction;
@@ -14,8 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class TestNGAddToTestsPatternAction extends AbstractAddToTestsPatternAction<TestNGConfiguration> {
-
+final class TestNGAddToTestsPatternAction extends AbstractAddToTestsPatternAction<TestNGConfiguration> {
   @Override
   protected @NotNull AbstractTestNGPatternConfigurationProducer getPatternBasedProducer() {
     return RunConfigurationProducer.getInstance(TestNGPatternConfigurationProducer.class);

@@ -376,18 +376,16 @@ a:com.intellij.structuralsearch.impl.matcher.CompiledPattern
 - setScope(com.intellij.psi.search.SearchScope):V
 - setStrategy(com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy):V
 - setTargetNode(com.intellij.psi.PsiElement):V
-c:com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
+f:com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
 - com.intellij.dupLocator.AbstractMatchingVisitor
 - sf:UNMATCHED_ELEMENTS_KEY:com.intellij.openapi.util.Key
 - <init>():V
 - allowsAbsenceOfMatch(com.intellij.psi.PsiElement):Z
-- p:doMatchInAnyOrder(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator):Z
 - getElement():com.intellij.psi.PsiElement
 - getElement(java.lang.Class):com.intellij.psi.PsiElement
 - getMatchContext():com.intellij.structuralsearch.impl.matcher.MatchContext
-- p:getNodeFilter():com.intellij.dupLocator.util.NodeFilter
 - getResult():Z
-- f:handleTypedElement(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
+- handleTypedElement(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
 - isLeftLooseMatching():Z
 - isRightLooseMatching():Z
 - match(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z

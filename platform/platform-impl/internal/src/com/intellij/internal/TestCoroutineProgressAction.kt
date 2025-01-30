@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -31,8 +31,7 @@ import kotlinx.coroutines.*
 import java.lang.ref.WeakReference
 import javax.swing.JComponent
 
-internal class TestCoroutineProgressAction : AnAction() {
-
+private class TestCoroutineProgressAction : AnAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {

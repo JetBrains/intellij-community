@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
 import com.intellij.codeInsight.CodeInsightUtilCore
@@ -95,9 +95,9 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                 !module.name.contains("buildSrc")
     }
 
-    protected open fun getMinimumSupportedVersion() = "1.0.0"
+    protected open fun getMinimumSupportedVersion(): String = "1.0.0"
 
-    protected fun PsiFile.isKtDsl() = this is KtFile
+    protected fun PsiFile.isKtDsl(): Boolean = this is KtFile
 
     private fun isFileConfigured(buildScript: PsiFile): Boolean {
         val manipulator = GradleBuildScriptSupport.findManipulator(buildScript) ?: return false
@@ -518,7 +518,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         )
     }
 
-    protected open fun getStdlibArtifactName(sdk: Sdk?, version: IdeKotlinVersion) = getJvmStdlibArtifactId(sdk, version)
+    protected open fun getStdlibArtifactName(sdk: Sdk?, version: IdeKotlinVersion): String = getJvmStdlibArtifactId(sdk, version)
 
     protected open fun getJvmTarget(sdk: Sdk?, version: IdeKotlinVersion): String? = null
 
@@ -643,7 +643,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
     companion object {
         @NonNls
-        const val CLASSPATH = "classpath \"$GROUP_ID:$GRADLE_PLUGIN_ID:\$kotlin_version\""
+        const val CLASSPATH: String = "classpath \"$GROUP_ID:$GRADLE_PLUGIN_ID:\$kotlin_version\""
 
         private fun getAllConfigurableKotlinVersions(): List<IdeKotlinVersion> {
             return KotlinGradleCompatibilityStore.allKotlinVersions()
@@ -704,7 +704,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             return "$updatedScope \"org.jetbrains.kotlin:$artifactName$versionStr\""
         }
 
-        fun getGroovyApplyPluginDirective(pluginName: String) = "apply plugin: '$pluginName'"
+        fun getGroovyApplyPluginDirective(pluginName: String): String = "apply plugin: '$pluginName'"
 
         fun addKotlinLibraryToModule(module: Module, scope: DependencyScope, libraryDescriptor: ExternalLibraryDescriptor) {
             val buildScript = module.getBuildScriptPsiFile() ?: return
@@ -726,11 +726,11 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             feature: LanguageFeature,
             state: LanguageFeature.State,
             forTests: Boolean
-        ) = changeBuildGradle(module) {
+        ): PsiElement? = changeBuildGradle(module) {
             GradleBuildScriptSupport.getManipulator(it).changeLanguageFeatureConfiguration(feature, state, forTests)
         }
 
-        fun changeLanguageVersion(module: Module, languageVersion: String?, apiVersion: String?, forTests: Boolean) =
+        fun changeLanguageVersion(module: Module, languageVersion: String?, apiVersion: String?, forTests: Boolean): PsiElement? =
             changeBuildGradle(module) { buildScriptFile ->
                 val manipulator = GradleBuildScriptSupport.getManipulator(buildScriptFile)
                 var result: PsiElement? = null

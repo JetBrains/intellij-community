@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions
 
 import com.intellij.ide.lightEdit.LightEditCompatible
@@ -6,10 +6,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction.Companion.getTerminalWidget
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class TerminalResetFontSizeAction : DumbAwareAction(), LightEditCompatible {
+private class TerminalResetFontSizeAction : DumbAwareAction(), LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
     getTerminalWidget(e)?.resetFontSize()
   }

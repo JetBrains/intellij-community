@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.actions
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -25,8 +25,7 @@ import com.intellij.testFramework.LightVirtualFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class JsonJacksonReformatAction : AnAction(), LargeFileWriteRequestor {
-
+private class JsonJacksonReformatAction : AnAction(), LargeFileWriteRequestor {
   override fun update(e: AnActionEvent) {
     val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
     e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal

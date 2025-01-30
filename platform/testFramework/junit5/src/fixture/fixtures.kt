@@ -17,7 +17,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
@@ -110,7 +110,7 @@ fun TestFixture<Project>.moduleFixture(
     }
 
     writeAction {
-      module.rootManager.modifiableModel.apply {
+      ModuleRootManager.getInstance(module).modifiableModel.apply {
         addContentEntry(pathVfs).addSourceFolder(pathVfs, false)
         commit()
       }

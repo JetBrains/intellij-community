@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-
 public final class JavaUsageTypeProvider implements UsageTypeProviderEx {
   @Override
   public UsageType getUsageType(final @NotNull PsiElement element) {
@@ -35,10 +34,9 @@ public final class JavaUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   private static @Nullable UsageType getMethodUsageType(PsiElement element) {
-    if (element instanceof PsiReferenceExpression) {
+    if (element instanceof PsiReferenceExpression referenceExpression) {
       final PsiMethod containerMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       if (containerMethod != null) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
         final PsiExpression qualifier = referenceExpression.getQualifierExpression();
         final PsiElement p = referenceExpression.getParent();
         if (p instanceof PsiMethodCallExpression callExpression) {

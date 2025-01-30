@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.psi.*;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements CustomReferenceConverter<PsiType> {
+public final class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements CustomReferenceConverter<PsiType> {
 
   private static final BidirectionalMap<PsiType, Character> ourPrimitiveTypes = new BidirectionalMap<>();
 

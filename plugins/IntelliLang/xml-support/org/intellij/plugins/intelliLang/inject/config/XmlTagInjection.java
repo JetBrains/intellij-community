@@ -18,11 +18,10 @@ package org.intellij.plugins.intelliLang.inject.config;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
+import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.jetbrains.annotations.NotNull;
 
-import static org.intellij.plugins.intelliLang.inject.InjectorUtils.appendStringPattern;
-
-public class XmlTagInjection extends AbstractTagInjection {
+public final class XmlTagInjection extends AbstractTagInjection {
 
   public XmlTagInjection() {
     setTagName("<none>");
@@ -58,8 +57,8 @@ public class XmlTagInjection extends AbstractTagInjection {
     final String name = injection.getTagName();
     final String namespace = injection.getTagNamespace();
     final StringBuilder result = new StringBuilder("xmlTag()");
-    if (StringUtil.isNotEmpty(name)) appendStringPattern(result, ".withLocalName(", name, ")");
-    if (StringUtil.isNotEmpty(namespace)) appendStringPattern(result, ".withNamespace(", namespace, ")");
+    if (StringUtil.isNotEmpty(name)) InjectorUtils.appendStringPattern(result, ".withLocalName(", name, ")");
+    if (StringUtil.isNotEmpty(namespace)) InjectorUtils.appendStringPattern(result, ".withNamespace(", namespace, ")");
     return result.toString();
   }
 

@@ -228,7 +228,7 @@ public abstract class ScriptDataExtractor implements DataExtractor {
       }
     }
 
-    class DataStreamImpl extends DataStream<DataRowImpl> {
+    final class DataStreamImpl extends DataStream<DataRowImpl> {
       final AtomicReference<Iterator<DataRowImpl>> iterator = new AtomicReference<>(new Iterator<>() {
         @Override
         public boolean hasNext() {
@@ -254,7 +254,6 @@ public abstract class ScriptDataExtractor implements DataExtractor {
         stop(error);
       }
     }
-
 
     private final Queue<RowUpdate> myRowsQueue = new ArrayDeque<>();
     private boolean myRowsDequeued;
@@ -365,7 +364,7 @@ public abstract class ScriptDataExtractor implements DataExtractor {
       }
     }
 
-    static class RowUpdate {
+    static final class RowUpdate {
       final GridRow myRow;
       final List<? extends DataColumn> myAllColumnsUpdate;
 

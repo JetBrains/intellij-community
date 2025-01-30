@@ -10,7 +10,6 @@ f:com.intellij.collaboration.auth.credentials.SimpleCredentials
 - <init>(java.lang.String):V
 - getAccessToken():java.lang.String
 a:com.intellij.collaboration.auth.services.OAuthCallbackHandler
-- pf:LOG:com.intellij.openapi.diagnostic.Logger
 - <init>():V
 - execute(io.netty.handler.codec.http.QueryStringDecoder,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):java.lang.String
 - pf:getService():com.intellij.collaboration.auth.services.OAuthService

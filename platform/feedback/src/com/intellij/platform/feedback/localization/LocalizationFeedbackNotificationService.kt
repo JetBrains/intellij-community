@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.localization
 
 import com.intellij.notification.Notification
@@ -11,9 +11,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 
 @Service(Service.Level.APP)
-class LocalizationFeedbackNotificationService {
+internal class LocalizationFeedbackNotificationService {
   companion object {
-    fun getInstance() = service<LocalizationFeedbackNotificationService>()
+    fun getInstance(): LocalizationFeedbackNotificationService = service<LocalizationFeedbackNotificationService>()
   }
 
   private val notifications = mutableListOf<Notification>()
