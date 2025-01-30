@@ -2,6 +2,7 @@
 package com.intellij.debugger.streams.trace.impl
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.streams.trace.EvaluationContextWrapper
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
@@ -12,8 +13,10 @@ class JavaEvaluationContext(val context: EvaluationContextImpl) : EvaluationCont
     get() = context.project
 
   override fun launchDebuggerCommand(command: suspend CoroutineScope.() -> Unit) {
-    context.managerThread.coroutineScope.launch {
-      command()
+    context.suspendContext.coroutineScope.launch { // runs only while SuspendContext is not resumed
+      withDebugContext(context.suspendContext) { // switches to the debugger thread
+        command()
+      }
     }
   }
 }
