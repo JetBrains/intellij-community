@@ -112,10 +112,8 @@ class XDebugSessionMixedModeExtension(
       return
     }
 
-    coroutineScope.launch {
-      val event = if (isLowLevel) LowRun else HighRun
-      stateMachine.set(event)
-    }
+    val event = if (isLowLevel) LowRun else HighRun
+    stateMachine.set(event)
   }
 
   fun signalMixedModeHighProcessReady() {
