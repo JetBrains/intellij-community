@@ -17,6 +17,10 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         className = "DevKitIcons",
         packageName = "org.jetbrains.idea.devkit",
       )
+      "intellij.platform.ide.ui.inspector" -> IntellijIconClassGeneratorModuleConfig(
+        // inspection icons are loaded by com.intellij.internal.inspector.components.HierarchyTree.Icons
+        excludePackages = listOf("com.intellij.internal.inspector.icons"),
+      )
       // force generating "Groovy" inner class to preserve backward compatiblity
       "intellij.groovy.psi" -> IntellijIconClassGeneratorModuleConfig(className = "JetgroovyIcons", iconDirectory = "icons")
       "intellij.clouds.docker" -> IntellijIconClassGeneratorModuleConfig(className = "DockerIcons", packageName = "com.intellij.docker")
