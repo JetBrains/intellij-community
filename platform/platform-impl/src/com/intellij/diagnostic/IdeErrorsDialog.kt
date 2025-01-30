@@ -756,7 +756,7 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
     }
   }
 
-  private val gratitudeMessagesInternal: List<String> = listOf<String>(
+  private val gratitudeMessagesInternal: List<String> = listOf(
     "You are breathtaking!",
     "The world is a better place because of you!",
     "I couldn’t have done this without you. Thank you for being there!",
