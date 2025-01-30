@@ -4,6 +4,7 @@ package com.intellij.openapi.options.newEditor.settings
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.options.newEditor.SettingsEditor
 import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder.SettingsVirtualFile
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -21,8 +22,9 @@ class SettingsFileEditorProvider : FileEditorProvider, DumbAware {
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     val settingsFile = file as SettingsVirtualFile
-
-    return SettingsFileEditor(settingsFile)
+    val dialog = settingsFile.getOrCreateDialog()
+    val tree = (dialog.editor as? SettingsEditor)?.treeView?.tree
+    return SettingsFileEditor(settingsFile, dialog.editor.rootPane, tree, dialog.disposable)
   }
 
   override fun getEditorTypeId(): String {
