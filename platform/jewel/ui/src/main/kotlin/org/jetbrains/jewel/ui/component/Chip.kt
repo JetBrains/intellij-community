@@ -45,15 +45,15 @@ import org.jetbrains.jewel.ui.theme.chipStyle
 /**
  * A lightweight, button-like component used to represent actions, attributes, or filters.
  *
- * The `Chip` component is a compact, clickable element that provides visual feedback for various
- * interaction states (hover, focus, press, etc.). It is versatile and customizable, allowing developers
- * to define its style, behavior, and content.
+ * The `Chip` component is a compact, clickable element that provides visual feedback for various interaction states
+ * (hover, focus, press, etc.). It is versatile and customizable, allowing developers to define its style, behavior, and
+ * content.
  *
- * **Guidelines:**
- * Reference Compose Chips for usage suggestions:
+ * **Guidelines:** Reference Compose Chips for usage suggestions:
  * [Compose Chips Documentation](https://developer.android.com/develop/ui/compose/components/chip)
  *
  * **Usage example:**
+ *
  * ```kotlin
  * var clicks by remember { mutableStateOf(0) }
  * Chip(
@@ -112,10 +112,11 @@ public fun Chip(
 /**
  * A toggleable version of [Chip], representing a switchable on/off state.
  *
- * `ToggleableChip` provides a compact UI element that can toggle between two states: checked and unchecked.
- * This component is suitable for enabling/disabling an option or toggling a feature.
+ * `ToggleableChip` provides a compact UI element that can toggle between two states: checked and unchecked. This
+ * component is suitable for enabling/disabling an option or toggling a feature.
  *
  * **Usage example:**
+ *
  * ```kotlin
  * var isChecked by remember { mutableStateOf(false) }
  * ToggleableChip(
@@ -137,9 +138,8 @@ public fun Chip(
  * - To represent binary states that persist or control a feature.
  * - As a compact alternative to a checkbox.
  *
- * **State Management:**
- * The `checked` parameter controls the current state of the chip, while `onClick` defines
- * the behavior when the chip is toggled.
+ * **State Management:** The `checked` parameter controls the current state of the chip, while `onClick` defines the
+ * behavior when the chip is toggled.
  *
  * @param checked Indicates whether the chip is checked (true) or unchecked (false).
  * @param onClick Action to perform when the chip is toggled. The new toggle state is passed to this lambda.
@@ -180,10 +180,11 @@ public fun ToggleableChip(
 /**
  * A chip component designed for mutually exclusive selection within a group.
  *
- * `RadioButtonChip` provides a compact UI element for representing an option in a single-selection group.
- * When selected, it automatically deselects other chips in the group.
+ * `RadioButtonChip` provides a compact UI element for representing an option in a single-selection group. When
+ * selected, it automatically deselects other chips in the group.
  *
  * **Usage example:**
+ *
  * ```kotlin
  * var selectedOption by remember { mutableStateOf(0) }
  * Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -211,8 +212,8 @@ public fun ToggleableChip(
  * - To represent options in a single-selection choice group (e.g., forms, filters).
  * - For small, space-efficient alternatives to radio buttons.
  *
- * **State Management:**
- * The `selected` parameter controls whether the chip is active, while `onClick` handles selection actions.
+ * **State Management:** The `selected` parameter controls whether the chip is active, while `onClick` handles selection
+ * actions.
  *
  * @param selected Indicates whether the chip is selected in the group.
  * @param onClick Action to perform when the chip is selected.
