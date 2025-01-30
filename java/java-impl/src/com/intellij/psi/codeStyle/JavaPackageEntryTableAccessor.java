@@ -54,8 +54,11 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
           if (isModule) {
             entryTable.addEntry(PackageEntry.ALL_MODULE_IMPORTS);
           }
+          else if (isStatic) {
+            entryTable.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+          }
           else {
-            entryTable.addEntry(isStatic ? PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY : PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+            entryTable.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
           }
         }
         else {
