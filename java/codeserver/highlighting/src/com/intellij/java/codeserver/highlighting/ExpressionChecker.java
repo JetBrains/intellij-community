@@ -907,14 +907,9 @@ final class ExpressionChecker {
           if (qualifierExpression != null) {
             PsiType type = qualifierExpression.getType();
             if (type instanceof PsiPrimitiveType primitiveType && !primitiveType.equals(PsiTypes.nullType())) {
-              if (PsiTypes.voidType().equals(primitiveType) &&
-                  PsiUtil.deparenthesizeExpression(qualifierExpression) instanceof PsiReferenceExpression) {
-                return;
-              }
               myVisitor.report(JavaErrorKinds.REFERENCE_QUALIFIER_PRIMITIVE.create(ref, primitiveType));
               return;
             }
-            if (type instanceof PsiClassType t && t.resolve() == null || PsiTypes.nullType().equals(type)) return;
           }
         }
         else if (ImplicitClassSearch.search(ref.getQualifiedName(), ref.getProject(), ref.getResolveScope()).findFirst() != null) {
@@ -1266,17 +1261,9 @@ final class ExpressionChecker {
       else if (qualifierExpression != null &&
                qualifierExpression.getType() instanceof PsiPrimitiveType primitiveType &&
                !primitiveType.equals(PsiTypes.nullType())) {
-        if (PsiTypes.voidType().equals(primitiveType) &&
-            PsiUtil.deparenthesizeExpression(qualifierExpression) instanceof PsiReferenceExpression) {
-          return;
-        }
         myVisitor.report(JavaErrorKinds.CALL_QUALIFIER_PRIMITIVE.create(methodCall, primitiveType));
       }
       else {
-        if (qualifierExpression != null) {
-          PsiType type = qualifierExpression.getType();
-          if (type instanceof PsiClassType t && t.resolve() == null || PsiTypes.nullType().equals(type)) return;
-        }
         if (IncompleteModelUtil.isIncompleteModel(myVisitor.file()) && IncompleteModelUtil.canBePendingReference(referenceToMethod)) {
           myVisitor.report(JavaErrorKinds.REFERENCE_PENDING.create(anchor));
           return;

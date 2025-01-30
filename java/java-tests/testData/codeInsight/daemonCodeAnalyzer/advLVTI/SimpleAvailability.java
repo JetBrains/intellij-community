@@ -14,8 +14,8 @@ class Main {
         var y = new Object[] {<error descr="Cannot infer type for 'y', it is used in its own variable initializer">y</error> = null};
         var z = baz(<error descr="Cannot infer type for 'z', it is used in its own variable initializer">z</error> = 1);
         var zz = <error descr="Cannot infer type for 'zz', it is used in its own variable initializer">zz</error>;
-        zz.hashCode();
-        System.out.println(zz.zz);
+        zz.<error descr="Cannot resolve method 'hashCode()'">hashCode</error>();
+        System.out.println(zz.<error descr="Cannot resolve symbol 'zz'">zz</error>);
         var v =<error descr="Expression expected"> </error>;
         var w =<EOLError descr="Expression expected"></EOLError>
     }

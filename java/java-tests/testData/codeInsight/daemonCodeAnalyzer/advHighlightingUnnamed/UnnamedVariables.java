@@ -14,7 +14,7 @@ public class UnnamedVariables {
     Consumer<String> consumer3 = _ -> System.out.println(<error descr="Using '_' as a reference is not allowed">_</error>.trim());
     Consumer<String> consumer4 = _ -> {
       var v = <error descr="Using '_' as a reference is not allowed">_</error>;
-      System.out.println(v.trim());
+      System.out.println(v.<error descr="Cannot resolve method 'trim()'">trim</error>());
     };
     BiConsumer<String, String> consumer5 = (_,_) -> {};
   }

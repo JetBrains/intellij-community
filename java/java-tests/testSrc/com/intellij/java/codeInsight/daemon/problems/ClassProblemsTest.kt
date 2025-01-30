@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.problems
 
 import com.intellij.codeInsight.daemon.problems.Problem
@@ -292,7 +292,7 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
         method.identifyingElement?.replace(factory.createIdentifier("foo"))
       }
       myFixture.doHighlighting()
-      assertSize(1, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+      assertSize(2, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
 
       changeClass(targetClass) { psiClass, _ ->
         psiClass.identifyingElement?.replace(factory.createIdentifier("A"))
