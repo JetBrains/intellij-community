@@ -147,12 +147,9 @@ public class ProgramParametersConfigurator {
 
   private static DataContext createContext(@NotNull DataContext fallbackDataContext) {
     DataContext envContext = ExecutionManagerImpl.getEnvironmentDataContext();
-    return envContext == null ? fallbackDataContext : new DataContext() {
-      @Override
-      public @Nullable Object getData(@NotNull String dataId) {
-        Object data = envContext.getData(dataId);
-        return data != null ? data : fallbackDataContext.getData(dataId);
-      }
+    return envContext == null ? fallbackDataContext : dataId -> {
+      Object data = envContext.getData(dataId);
+      return data != null ? data : fallbackDataContext.getData(dataId);
     };
   }
 
