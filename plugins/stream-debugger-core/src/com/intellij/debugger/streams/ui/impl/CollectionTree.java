@@ -19,8 +19,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ui.tree.TreeUtil.collectSelectedPaths;
@@ -65,6 +65,9 @@ public abstract class CollectionTree extends XDebuggerTree implements TraceConta
 
       fireSelectionChanged(selectedItems);
     });
+
+    setSelectionRow(0);
+    expandNodesOnLoad(node -> node == getRoot());
   }
 
   public static CollectionTree create(@Nullable Value streamResult,

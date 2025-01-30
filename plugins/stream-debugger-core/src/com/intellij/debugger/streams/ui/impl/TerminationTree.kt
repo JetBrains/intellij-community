@@ -15,7 +15,6 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
-import one.util.streamex.StreamEx
 
 class TerminationTree(
   streamResult : Value,
@@ -32,8 +31,7 @@ class TerminationTree(
     setRoot(root, false)
     root.isLeaf = false
 
-    val key2TraceElements =
-      StreamEx.of(traceElements).groupingBy { element: TraceElement? -> myBuilder.getKey(element!!, NULL_MARKER) }
+    val key2TraceElements = traceElements.groupBy { myBuilder.getKey(it, NULL_MARKER) }
     val key2Index: MutableMap<Any, Int> = java.util.HashMap(key2TraceElements.size + 1)
 
     addTreeListener(object : XDebuggerTreeListener {
@@ -54,7 +52,8 @@ class TerminationTree(
                   key2Index[key] = nextIndex
                 }
                 if (myPath2Value.size == traceElements.size) {
-                  //TODO(Korovin): This will not be called if we have a big list of items and it's loaded partially
+                  //NOTE(Korovin): This will not be called if we have a big list of items and it's loaded partially
+                  //If missing repaints, we need to replace this logic to some flow/debounce coroutine and repaint after a batch of nodes
                   removeTreeListener(listener)
                   yield()
                   repaint()
@@ -75,10 +74,6 @@ class TerminationTree(
         }
       }
     })
-
-    //TODO(Korovin): Maybe these can be moved back to base class
-    setSelectionRow(0)
-    expandNodesOnLoad { node -> node === root }
   }
 
   private inner class MyValueRoot(private val myValue: Value, private val myEvaluationContext: EvaluationContextWrapper) : XValue() {
