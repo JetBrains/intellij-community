@@ -3904,16 +3904,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             public void testMixedNamedAndPositionalArgumentsSubtype() throws Exception {
                 runTest("testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsSubtype.kt");
             }
-
-            @TestMetadata("mixedNamedAndPositionalArgumentsUsedNamed.kt")
-            public void testMixedNamedAndPositionalArgumentsUsedNamed() throws Exception {
-                runTest("testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsUsedNamed.kt");
-            }
-
-            @TestMetadata("mixedNamedAndPositionalArgumentsUsedPositional.kt")
-            public void testMixedNamedAndPositionalArgumentsUsedPositional() throws Exception {
-                runTest("testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsUsedPositional.kt");
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

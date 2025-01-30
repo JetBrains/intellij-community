@@ -331,6 +331,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddExclExclCallFixFactories.unsafeInfixCallFactory)
         registerFactory(AddExclExclCallFixFactories.unsafeOperatorCallFactory)
         registerFactory(AddExclExclCallFixFactories.iteratorOnNullableFactory)
+        registerFactory(AddNameToArgumentFixFactory.addNameToArgumentFixFactory)
         registerFactory(TypeMismatchFactories.argumentTypeMismatchFactory)
         registerFactory(TypeMismatchFactories.returnTypeMismatchFactory)
         registerFactory(TypeMismatchFactories.assignmentTypeMismatch)

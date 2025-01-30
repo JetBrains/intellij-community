@@ -7821,6 +7821,45 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/checkArguments/addNameToArgument")
+    public static class AddNameToArgument extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("invokeOnString.kt")
+        public void testInvokeOnString() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/checkArguments/addNameToArgument/invokeOnString.kt");
+        }
+
+        @TestMetadata("mixedNamedAndPositionalArguments.kt")
+        public void testMixedNamedAndPositionalArguments() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArguments.kt");
+        }
+
+        @TestMetadata("mixedNamedAndPositionalArgumentsConstructor.kt")
+        public void testMixedNamedAndPositionalArgumentsConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsConstructor.kt");
+        }
+
+        @TestMetadata("mixedNamedAndPositionalArgumentsMultiple.kt")
+        public void testMixedNamedAndPositionalArgumentsMultiple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsMultiple.kt");
+        }
+
+        @TestMetadata("mixedNamedAndPositionalArgumentsSubtype.kt")
+        public void testMixedNamedAndPositionalArgumentsSubtype() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/checkArguments/addNameToArgument/mixedNamedAndPositionalArgumentsSubtype.kt");
+        }
+    }
+
 
 
     @RunWith(JUnit3RunnerWithInners.class)
