@@ -1357,7 +1357,6 @@ public class AllIcons {
 
   public static final class Toolwindows {
     /** 16x16 */ public static final @NotNull Icon Changes = load("expui/toolwindows/changes.svg", -848826910, 2);
-    /** 16x16 */ public static final @NotNull Icon DbmsOutput = load("expui/toolwindows/dbmsOutput.svg", 1214778565, 2);
     /** 16x16 */ public static final @NotNull Icon Dependencies = load("expui/toolwindows/dependencies.svg", -2145342262, 2);
     /** 13x13 */ public static final @NotNull Icon Documentation = load("expui/toolwindows/documentation.svg", "toolwindows/documentation.svg", -994176348, 2);
     /** 13x13 */ public static final @NotNull Icon ErrorEvents = load("toolwindows/errorEvents.svg", 544961938, 2);
