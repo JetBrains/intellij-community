@@ -1912,6 +1912,9 @@
 
     <listener topic="com.intellij.ide.RegionSettings$RegionSettingsListener"
               class="com.intellij.internal.statistic.StatisticsRegionSettingsListener"/>
+
+    <listener class="com.intellij.ui.tree.RecursiveExpandSettingListener"
+              topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener" />
   </applicationListeners>
 
   <projectListeners>
