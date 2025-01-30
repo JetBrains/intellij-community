@@ -187,3 +187,9 @@ naming:
     active: false
     ignoreAnnotated:
       - Composable
+jewel:
+  EqualityMembersRule:
+    active: true
+    annotated:
+      - GenerateDataFunctions
+

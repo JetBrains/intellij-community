@@ -747,6 +747,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/instanceContainer/intellij.platform.instanceContainer.tests.iml" filepath="$PROJECT_DIR$/platform/instanceContainer/intellij.platform.instanceContainer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jbr/intellij.platform.jbr.iml" filepath="$PROJECT_DIR$/platform/jbr/intellij.platform.jbr.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/decorated-window/intellij.platform.jewel.decoratedWindow.iml" filepath="$PROJECT_DIR$/platform/jewel/decorated-window/intellij.platform.jewel.decoratedWindow.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/jewel/detekt-plugin/intellij.platform.jewel.detektPlugin.iml" filepath="$PROJECT_DIR$/platform/jewel/detekt-plugin/intellij.platform.jewel.detektPlugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/foundation/intellij.platform.jewel.foundation.iml" filepath="$PROJECT_DIR$/platform/jewel/foundation/intellij.platform.jewel.foundation.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/ide-laf-bridge/intellij.platform.jewel.ideLafBridge.iml" filepath="$PROJECT_DIR$/platform/jewel/ide-laf-bridge/intellij.platform.jewel.ideLafBridge.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/int-ui/int-ui-decorated-window/intellij.platform.jewel.intUi.decoratedWindow.iml" filepath="$PROJECT_DIR$/platform/jewel/int-ui/int-ui-decorated-window/intellij.platform.jewel.intUi.decoratedWindow.iml" />
