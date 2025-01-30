@@ -26,7 +26,7 @@ public abstract class XSuspendContext {
     return executionStack != null ? new XExecutionStack[]{executionStack} : XExecutionStack.EMPTY_ARRAY;
   }
 
-  public void computeExecutionStacks(@NotNull XExecutionStackContainer container) {
+  public void computeExecutionStacks(XExecutionStackContainer container) {
     container.addExecutionStack(Arrays.asList(getExecutionStacks()), true);
   }
 
