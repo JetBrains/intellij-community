@@ -1037,4 +1037,10 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <pyDebugAsyncioCustomizer implementation="com.jetbrains.python.debugger.PyDebugAsyncioCustomizerDefault"/>
   </extensions>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.systemPythonProvider"
+                    dynamic="true"
+                    interface="com.jetbrains.python.systemPythonSpi.SystemPythonProvider"/>
+  </extensionPoints>
+
 </idea-plugin>

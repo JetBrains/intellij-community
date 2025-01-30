@@ -12,11 +12,11 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.installer.PySdkToInstallManager
 import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl.MyServiceState
-import com.intellij.python.community.services.systemPython.spi.SystemPythonProvider
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.installer.installBinary
+import com.jetbrains.python.systemPythonSpi.SystemPythonProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus

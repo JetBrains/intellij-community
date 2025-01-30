@@ -4,10 +4,5 @@
     <module name="intellij.python.community.services.internal.impl"/>
   </dependencies>
 
-    <extensionPoints>
-        <extensionPoint qualifiedName="Pythonid.systemPythonProvider"
-                        dynamic="true"
-                        interface="com.intellij.python.community.services.systemPython.spi.SystemPythonProvider"/>
-    </extensionPoints>
 
 </idea-plugin>
