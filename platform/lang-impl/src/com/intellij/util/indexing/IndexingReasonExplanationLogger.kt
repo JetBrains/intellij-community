@@ -3,6 +3,7 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -10,7 +11,10 @@ import java.util.concurrent.atomic.AtomicInteger
 @ApiStatus.Internal
 class IndexingReasonExplanationLogger {
   companion object {
-    private const val MAX_EXPLANATIONS_PER_TYPE: Int = 10
+    private val MAX_EXPLANATIONS_PER_TYPE: Int
+      get() {
+        return Registry.get("indexing.max.indexing.reason.explanations.per.type").asInteger().coerceAtLeast(10)
+      }
     val LOG: Logger = logger<IndexingReasonExplanationLogger>()
   }
 

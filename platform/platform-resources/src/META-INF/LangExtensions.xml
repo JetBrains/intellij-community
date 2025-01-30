@@ -119,6 +119,8 @@
                  description="Limits size of orphan dirty files queue."/>
     <registryKey defaultValue="true" key="indexing.over.fast.attributes" restartRequired="true"
                  description="Store indexing data (including IndexingStamps) in regular (false) or fast (true) attributes storage"/>
+    <registryKey defaultValue="10" key="indexing.max.indexing.reason.explanations.per.type" restartRequired="false"
+                 description="Configures the number of messages about indexing reason in logs"/>
     <registryKey defaultValue="true" key="vfs.refresh.should.pause.dumb.queue" restartRequired="true"
                  description="Pause dumb queue (including indexing) while bulk VFS update is in progress."/>
     <registryKey defaultValue="true" key="vfs.try.eel.for.content.loading"
