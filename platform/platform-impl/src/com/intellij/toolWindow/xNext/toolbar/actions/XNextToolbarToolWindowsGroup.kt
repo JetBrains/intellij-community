@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManager
 import com.intellij.ui.PopupHandler
+import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -125,7 +126,7 @@ private class XNextToolWindowAction(val toolWindowAction: ActivateToolWindowActi
     override fun update(e: AnActionEvent) {
       val project = e.project ?: return
       val mng = XNextToolbarManager.getInstance(project)
-      e.presentation.text = if (mng.isPinned(toolWindowId)) "Hide" else "Pin"
+      e.presentation.text = if (mng.isPinned(toolWindowId)) UIBundle.message("xnext.toolbar.context.unpin") else UIBundle.message("xnext.toolbar.context.pin")
     }
 
     override fun actionPerformed(e: AnActionEvent) {
