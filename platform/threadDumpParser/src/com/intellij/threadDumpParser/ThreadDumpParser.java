@@ -19,7 +19,7 @@ import static com.intellij.diagnostic.CoroutineDumperKt.isCoroutineDumpHeader;
 
 @ApiStatus.Internal
 public final class ThreadDumpParser {
-  private static final Pattern ourThreadStartPattern = Pattern.compile("^\"(.+)\".+(prio=\\d+ (?:os_prio=[^\\s]+ )?.*tid=[^\\s]+ nid=[^\\s]+|[Ii][Dd]=\\d+) ([^\\[]+)");
+  private static final Pattern ourThreadStartPattern = Pattern.compile("^\"(.+)\".+(prio=\\d+ (?:os_prio=[^\\s]+ )?.*tid=[^\\s]+(?: nid=[^\\s]+)?|[Ii][Dd]=\\d+) ([^\\[]+)");
   private static final Pattern ourForcedThreadStartPattern = Pattern.compile("^Thread (\\d+): \\(state = (.+)\\)");
   private static final Pattern ourYourkitThreadStartPattern = Pattern.compile("(.+) \\[([A-Z_, ]*)]");
   private static final Pattern ourYourkitThreadStartPattern2 = Pattern.compile("(.+) (?:State:)? (.+) CPU usage on sample: .+");
@@ -27,6 +27,7 @@ public final class ThreadDumpParser {
   private static final Pattern ourJcmdStackTraceElement = Pattern.compile("\\S+\\(.+\\)");
   private static final Pattern ourThreadStatePattern = Pattern.compile("java\\.lang\\.Thread\\.State: (.+) \\((.+)\\)");
   private static final Pattern ourThreadStatePattern2 = Pattern.compile("java\\.lang\\.Thread\\.State: (.+)");
+  private static final Pattern ourThreadStateCarryingVirtualPattern = Pattern.compile("Carrying virtual thread #(\\d+)");
   private static final Pattern ourWaitingForLockPattern = Pattern.compile("- waiting (on|to lock) <(.+)>");
   private static final Pattern ourParkingToWaitForLockPattern = Pattern.compile("- parking to wait for {2}<(.+)>");
   private static final @NonNls String PUMP_EVENT = "java.awt.EventDispatchThread.pumpOneEventForFilters";
@@ -241,7 +242,7 @@ public final class ThreadDumpParser {
     if (state.isSleeping()) {
       return -2;
     }
-    if (state.getOperation() == ThreadOperation.Socket) {
+    if (state.getOperation() == ThreadOperation.SOCKET) {
       return -1;
     }
     return state.getStackDepth();
@@ -258,18 +259,23 @@ public final class ThreadDumpParser {
   }
 
   public static void inferThreadStateDetail(final ThreadState threadState) {
+    final String javaThreadState = threadState.getJavaThreadState();
     @NonNls String stackTrace = threadState.getStackTrace();
     if (stackTrace.contains("java.net.PlainSocketImpl.socketAccept") ||
         stackTrace.contains("java.net.PlainDatagramSocketImpl.receive") ||
         stackTrace.contains("java.net.SocketInputStream.socketRead") ||
         stackTrace.contains("java.net.PlainSocketImpl.socketConnect")) {
-      threadState.setOperation(ThreadOperation.Socket);
+      threadState.setOperation(ThreadOperation.SOCKET);
     }
     else if (stackTrace.contains("java.io.FileInputStream.readBytes")) {
       threadState.setOperation(ThreadOperation.IO);
     }
+    else if (stackTrace.contains("jdk.internal.vm.Continuation.run")) {
+      if (Thread.State.WAITING.name().equals(javaThreadState)) {
+        threadState.setOperation(ThreadOperation.CARRYING_VTHREAD);
+      }
+    }
     else if (stackTrace.contains("java.lang.Thread.sleep")) {
-      final String javaThreadState = threadState.getJavaThreadState();
       if (!Thread.State.RUNNABLE.name().equals(javaThreadState)) {
         threadState.setThreadStateDetail("sleeping");   // JDK 1.6 sets this explicitly, but JDK 1.5 does not
       }
@@ -352,6 +358,11 @@ public final class ThreadDumpParser {
     m = ourThreadStatePattern2.matcher(line);
     if (m.find()) {
       threadState.setJavaThreadState(m.group(1));
+      return true;
+    }
+    m = ourThreadStateCarryingVirtualPattern.matcher(line);
+    if (m.find()) {
+      threadState.setOperation(ThreadOperation.CARRYING_VTHREAD);
       return true;
     }
     return false;

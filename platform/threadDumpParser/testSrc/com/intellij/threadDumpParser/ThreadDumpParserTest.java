@@ -686,6 +686,39 @@ public class ThreadDumpParserTest extends TestCase {
     assertEquals("0x00000000a7140250", threads.get(0).getOwnableSynchronizers());
   }
 
+  public void testCarryingVirtualThread() {
+    String text = """
+      "ForkJoinPool-1-worker-1" #24 [25347] daemon prio=5 os_prio=31 cpu=41.39ms elapsed=6.75s tid=0x000000011f00da00  [0x000000017003d000]
+         Carrying virtual thread #21
+      	at jdk.internal.vm.Continuation.run(java.base@21/Continuation.java:251)
+      	at java.lang.VirtualThread.runContinuation(java.base@21/VirtualThread.java:223)
+      	at java.lang.VirtualThread$$Lambda/0x00000070010532a8.run(java.base@21/Unknown Source)
+      	at java.util.concurrent.ForkJoinTask$RunnableExecuteAction.exec(java.base@21/ForkJoinTask.java:1423)
+      	at java.util.concurrent.ForkJoinTask.doExec(java.base@21/ForkJoinTask.java:387)
+      	at java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(java.base@21/ForkJoinPool.java:1312)
+      	at java.util.concurrent.ForkJoinPool.scan(java.base@21/ForkJoinPool.java:1843)
+      	at java.util.concurrent.ForkJoinPool.runWorker(java.base@21/ForkJoinPool.java:1808)
+      	at java.util.concurrent.ForkJoinWorkerThread.run(java.base@21/ForkJoinWorkerThread.java:188)
+
+      "ForkJoinPool-1-worker-2" #22 [25091] daemon prio=5 os_prio=31 cpu=8.12ms elapsed=6.75s tid=0x000000011f00d200 nid=25091 waiting on condition  [0x000000016fe32000]
+         java.lang.Thread.State: WAITING (parking)
+      	at jdk.internal.misc.Unsafe.park(java.base@21/Native Method)
+      	- parking to wait for  <0x000000061fe53b58> (a java.util.concurrent.ForkJoinPool)
+      	at java.util.concurrent.locks.LockSupport.park(java.base@21/LockSupport.java:371)
+      	at java.util.concurrent.ForkJoinPool.awaitWork(java.base@21/ForkJoinPool.java:1893)
+      	at java.util.concurrent.ForkJoinPool.runWorker(java.base@21/ForkJoinPool.java:1809)
+      	at java.util.concurrent.ForkJoinWorkerThread.run(java.base@21/ForkJoinWorkerThread.java:188)
+      """;
+    List<ThreadState> threads = ThreadDumpParser.parse(text);
+    assertEquals(2, threads.size());
+
+    assertEquals("ForkJoinPool-1-worker-1", threads.get(0).getName());
+    assertEquals(ThreadOperation.CARRYING_VTHREAD, threads.get(0).getOperation());
+
+    assertEquals("ForkJoinPool-1-worker-2", threads.get(1).getName());
+    assertEquals("WAITING", threads.get(1).getJavaThreadState());
+  }
+
   public void testVeryLongLineParsingPerformance() {
     final String spaces = " ".repeat(1_000_000);
     final String letters = "a".repeat(1_000_000);

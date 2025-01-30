@@ -213,10 +213,14 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     if (threadState.isSleeping()) {
       baseIcon = AllIcons.Actions.Pause;
     }
+    // Should be checked before checking isWaiting().
+    else if (threadState.getOperation() == ThreadOperation.CARRYING_VTHREAD) {
+      baseIcon = AllIcons.Debugger.ThreadGroup;
+    }
     else if (threadState.isWaiting()) {
       baseIcon = AllIcons.Debugger.MuteBreakpoints;
     }
-    else if (threadState.getOperation() == ThreadOperation.Socket) {
+    else if (threadState.getOperation() == ThreadOperation.SOCKET) {
       baseIcon = AllIcons.Debugger.ThreadStates.Socket;
     }
     else if (threadState.getOperation() == ThreadOperation.IO) {
@@ -249,7 +253,7 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   private static StateCode getThreadStateCode(ThreadState state) {
     if (state.isSleeping()) return StateCode.PAUSED;
     if (state.isWaiting()) return StateCode.LOCKED;
-    if (state.getOperation() == ThreadOperation.Socket) return StateCode.RUN_SOCKET;
+    if (state.getOperation() == ThreadOperation.SOCKET) return StateCode.RUN_SOCKET;
     if (state.getOperation() == ThreadOperation.IO) return StateCode.RUN_IO;
     if (state.isEDT()) {
       return "idle".equals(state.getThreadStateDetail()) ? StateCode.IDLE : StateCode.EDT;
