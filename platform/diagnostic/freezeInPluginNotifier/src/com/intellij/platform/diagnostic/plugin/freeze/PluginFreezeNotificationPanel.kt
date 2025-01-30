@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.PluginManagerCore.isVendorJetBrains
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
@@ -54,6 +55,7 @@ internal class PluginFreezeNotificationPanel : EditorNotificationProvider {
     val freezeReason = PluginFreezeWatcher.getInstance().getFreezeReason() ?: return null
     val frozenPlugin = freezeReason.pluginId
     val pluginDescriptor = PluginManagerCore.getPlugin(frozenPlugin) ?: return null
+    val ijProject = IntelliJProjectUtil.isIntelliJPlatformProject(project) || IntelliJProjectUtil.isIntelliJPluginProject(project)
 
     return Function {
       EditorNotificationPanel(EditorNotificationPanel.Status.Warning).apply {
@@ -65,8 +67,9 @@ internal class PluginFreezeNotificationPanel : EditorNotificationProvider {
         }
 
         createActionLabel(PluginFreezeBundle.message("action.report.text")) {
-          reportFreeze(project, pluginDescriptor, freezeReason)
+          reportFreeze(project, pluginDescriptor, freezeReason, ijProject)
         }
+
         createActionLabel(PluginFreezeBundle.message("action.ignore.plugin.text")) {
           PluginsFreezesService.getInstance().mutePlugin(frozenPlugin)
 
@@ -86,13 +89,13 @@ internal class PluginFreezeNotificationPanel : EditorNotificationProvider {
     }
   }
 
-  private fun reportFreeze(project: Project, pluginDescriptor: PluginDescriptor, freezeReason: FreezeReason) {
+  private fun reportFreeze(project: Project, pluginDescriptor: PluginDescriptor, freezeReason: FreezeReason, ijProject: Boolean) {
     if (reported.add(freezeReason)) {
       // must be added only once
       MessagePool.getInstance().addIdeFatalMessage(freezeReason.event)
     }
 
-    val dialog = object : IdeErrorsDialog(MessagePool.getInstance(), project, null) {
+    val dialog = object : IdeErrorsDialog(MessagePool.getInstance(), project, ijProject, freezeReason.event) {
       override fun updateOnSubmit() {
         super.updateOnSubmit()
 

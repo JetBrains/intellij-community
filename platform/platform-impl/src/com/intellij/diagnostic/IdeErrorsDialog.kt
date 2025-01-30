@@ -29,9 +29,7 @@ import com.intellij.openapi.diagnostic.SubmittedReportInfo
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectTypeService
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.LoadingDecorator
 import com.intellij.openapi.ui.OptionAction
@@ -73,6 +71,7 @@ import javax.swing.text.JTextComponent
 open class IdeErrorsDialog @ApiStatus.Internal constructor(
   private val myMessagePool: MessagePool,
   private val myProject: Project?,
+  private val ijProject: Boolean,
   defaultMessage: LogMessage?
 ) : DialogWrapper(myProject, true), MessagePoolListener, UiDataProvider {
   private val myAcceptedNotices: MutableSet<String>
@@ -311,14 +310,15 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
     }
   }
 
-  override fun createLeftSideActions(): Array<Action> =
-    ActionManager.getInstance().getAction("Unscramble")
-      ?.takeIf {
-        IntelliJProjectUtil.isIntelliJPlatformProject(myProject) ||
-        ProjectTypeService.getProjectTypes(myProject).any { it.id == "INTELLIJ_PLUGIN" }  // `DevKitProjectTypeProvider.IDE_PLUGIN_PROJECT`
+  override fun createLeftSideActions(): Array<Action> {
+    if (ijProject) {
+      val action = ActionManager.getInstance().getAction("Unscramble")
+      if (action != null) {
+        return arrayOf(AnalyzeAction(action))
       }
-      ?.let { arrayOf(AnalyzeAction(it)) }
-    ?: emptyArray()
+    }
+    return emptyArray()
+  }
 
   override fun getDimensionServiceKey(): String? = "IDE.errors.dialog"
 

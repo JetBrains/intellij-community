@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.codeWithMe.ClientId;
@@ -8,10 +8,10 @@ import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
-import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.LazyInitializer;
@@ -29,6 +28,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +36,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Internal API. See a note in {@link MessagePool}. */
 @ApiStatus.Internal
@@ -44,15 +45,16 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
 
   private static final String GROUP_ID = "IDE-errors";
 
-  private IdeErrorsIcon icon;
-  private final IdeFrame frame;
+  private final LazyValue<JPanel> component;
+  private final @Nullable IdeFrame frame;
+  private final @Nullable Project project;
   private final MessagePool messagePool;
+  private final AtomicBoolean ijProject = new AtomicBoolean(false);
 
+  private IdeErrorsIcon icon;
   private Balloon balloon;
   private IdeErrorsDialog dialog;
   private boolean isOpeningInProgress;
-
-  private final LazyValue<JPanel> component;
 
   private final IdeMessageAction action = new IdeMessageAction();
 
@@ -73,8 +75,15 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
     });
 
     this.frame = frame;
-
+    this.project = frame == null ? null : frame.getProject();
     this.messagePool = messagePool;
+
+    if (project != null) {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        ijProject.set(IntelliJProjectUtil.isIntelliJPlatformProject(project) || IntelliJProjectUtil.isIntelliJPluginProject(project));
+      });
+    }
+
     messagePool.addListener(this);
 
     updateIconAndNotify();
@@ -115,7 +124,7 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
       @Override
       public void run() {
         if (!isOtherModalWindowActive()) {
-          try (AccessToken ignored = ClientId.withClientId(ClientId.getLocalId())) {
+          try (var ignored = ClientId.withClientId(ClientId.getLocalId())) {
             // always show IDE errors to the host
             doOpenErrorsDialog(message);
           }
@@ -131,8 +140,7 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
   }
 
   private void doOpenErrorsDialog(@Nullable LogMessage message) {
-    Project project = frame == null ? null : frame.getProject();
-    dialog = new IdeErrorsDialog(messagePool, project, message) {
+    dialog = new IdeErrorsDialog(messagePool, project, ijProject.get(), message) {
       @Override
       protected void dispose() {
         super.dispose();
@@ -151,7 +159,7 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
 
   private void updateIcon(MessagePool.State state) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      IdeErrorsIcon icon = this.icon;
+      var icon = this.icon;
       if (icon == null) {
         icon = new IdeErrorsIcon(frame != null);
         icon.setVerticalAlignment(SwingConstants.CENTER);
@@ -183,58 +191,49 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
   }
 
   private boolean isOtherModalWindowActive() {
-    Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    return activeWindow instanceof JDialog &&
-           ((JDialog)activeWindow).isModal() &&
-           (dialog == null || dialog.getWindow() != activeWindow);
+    var activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    return activeWindow instanceof JDialog d && d.isModal() && (dialog == null || dialog.getWindow() != activeWindow);
   }
 
   private void updateIconAndNotify() {
-    MessagePool.State state = messagePool.getState();
+    var state = messagePool.getState();
     updateIcon(state);
 
-    if (state == MessagePool.State.NoErrors) {
-      if (balloon != null) {
-        Disposer.dispose(balloon);
-      }
+    if (state == MessagePool.State.NoErrors && balloon != null) {
+      Disposer.dispose(balloon);
     }
-    else if (state == MessagePool.State.UnreadErrors && balloon == null && isActive(frame)) {
-      Project project = frame.getProject();
-      if (project != null) {
-        ApplicationManager.getApplication().invokeLater(() -> showErrorNotification(project), project.getDisposed());
-      }
+    else if (state == MessagePool.State.UnreadErrors && balloon == null && isActive(frame) && project != null) {
+      ApplicationManager.getApplication().invokeLater(() -> showErrorNotification(project, frame), project.getDisposed());
     }
   }
 
+  @Contract("null -> false")
   private static boolean isActive(@Nullable IdeFrame frame) {
-    if (frame instanceof ProjectFrameHelper) {
-      frame = ((ProjectFrameHelper)frame).getFrame();
-    }
-    return frame instanceof Window && ((Window)frame).isActive();
+    return (frame instanceof ProjectFrameHelper pfh ? pfh.getFrame() : frame) instanceof Window w && w.isActive();
   }
 
   @RequiresEdt
-  private void showErrorNotification(@NotNull Project project) {
+  private void showErrorNotification(@NotNull Project project, @NotNull IdeFrame frame) {
     if (balloon != null) {
       return;
     }
 
-    NotificationDisplayType displayType = NotificationsConfiguration.getNotificationsConfiguration().getDisplayType(GROUP_ID);
+    var displayType = NotificationsConfiguration.getNotificationsConfiguration().getDisplayType(GROUP_ID);
     if (displayType == NotificationDisplayType.NONE) {
       return;
     }
 
-    BalloonLayout layout = frame.getBalloonLayout();
+    var layout = frame.getBalloonLayout();
     if (layout == null) {
       Logger.getInstance(IdeMessagePanel.class).error("frame=" + frame + " (" + frame.getClass() + ')');
       return;
     }
 
-    Notification notification = new Notification(GROUP_ID, DiagnosticBundle.message("error.new.notification.title"), NotificationType.ERROR)
+    var notification = new Notification(GROUP_ID, DiagnosticBundle.message("error.new.notification.title"), NotificationType.ERROR)
       .setIcon(AllIcons.Ide.FatalError)
       .addAction(NotificationAction.createSimpleExpiring(DiagnosticBundle.message("error.new.notification.link"), () -> openErrorsDialog(null)));
 
-    BalloonLayoutData layoutData = BalloonLayoutData.createEmpty();
+    var layoutData = BalloonLayoutData.createEmpty();
     layoutData.fadeoutTime = displayType == NotificationDisplayType.STICKY_BALLOON ? 300000 : 10000;
     layoutData.textColor = JBUI.CurrentTheme.Notification.Error.FOREGROUND;
     layoutData.fillColor = JBUI.CurrentTheme.Notification.Error.BACKGROUND;
@@ -248,7 +247,6 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
   }
 
   private final class IdeMessageAction extends AnAction implements DumbAware {
-
     private MessagePool.State state = MessagePool.State.NoErrors;
     private Icon icon;
 
