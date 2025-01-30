@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl.ad
 
 import andel.editor.RangeMarkerId
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -15,7 +14,6 @@ import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
-import com.intellij.platform.kernel.withKernel
 import com.intellij.util.Consumer
 import com.intellij.util.Processor
 import com.jetbrains.rhizomedb.ChangeScope
@@ -23,9 +21,7 @@ import fleet.kernel.change
 import fleet.kernel.shared
 import fleet.util.UID
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.util.concurrent.ConcurrentHashMap
@@ -38,7 +34,7 @@ internal class AdMarkupModel private constructor(
   private val mapper: HighlightMapper,
   markupModel: MarkupModelEx,
   private val coroutineScope: CoroutineScope,
-  private val repaintLambda: () -> Unit,
+  private val repaintLambda: suspend () -> Unit,
 ) : MarkupModelEx, Disposable {
 
   @Volatile
@@ -49,7 +45,7 @@ internal class AdMarkupModel private constructor(
       markupModel: MarkupModelEx,
       adDocument: AdDocument,
       coroutineScope: CoroutineScope,
-      repaintLambda: () -> Unit,
+      repaintLambda: suspend () -> Unit,
     ): AdMarkupModel {
       val mapper = addExistingHighlighters(markupModel, adDocument)
       val adMarkupModel = AdMarkupModel(adDocument, mapper, markupModel, coroutineScope, repaintLambda)
@@ -128,21 +124,15 @@ internal class AdMarkupModel private constructor(
   }
 
   private fun onHighlightUpdate(body: ChangeScope.() -> Unit) {
-    coroutineScope.launch {
-      withKernel {
-        change {
-          shared {
-            if (!isDisposed) {
-              body()
-            }
-          }
-        }
-        withContext(Dispatchers.EDT) {
+    coroutineScope.launch(LIMITED_DISPATCHER) {
+      change {
+        shared {
           if (!isDisposed) {
-            repaintLambda()
+            body()
           }
         }
       }
+      repaintLambda.invoke()
     }
   }
 

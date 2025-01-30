@@ -2,26 +2,22 @@
 package com.intellij.openapi.editor.impl.ad
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.kernel.withKernel
 import fleet.kernel.change
 import fleet.kernel.shared
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Experimental
-import java.util.concurrent.Executors
 
-private val DEBUG_DISPATCHER by lazy {
-  Executors.newFixedThreadPool(1).asCoroutineDispatcher()
-}
 
 @Experimental
 internal class AdDocumentSynchronizer(
   private val adDocument: AdDocument,
   private val coroutineScope: CoroutineScope,
-  private val repaintLambda: () -> Unit,
+  private val repaintLambda: suspend () -> Unit,
 ) : PrioritizedDocumentListener, Disposable.Default {
 
   override fun getPriority(): Int {
@@ -30,37 +26,33 @@ internal class AdDocumentSynchronizer(
 
   override fun documentChanged(event: DocumentEvent) {
     val realChars = event.document.immutableCharSequence
-    coroutineScope.launch(DEBUG_DISPATCHER) {
+    coroutineScope.launch(LIMITED_DISPATCHER) {
       if (isDebugMode()) {
         delay(500)
       }
-      withKernel {
-        change {
-          shared {
-            adDocument.replaceString(
-              startOffset = event.offset,
-              endOffset = event.offset + event.oldLength,
-              chars = event.newFragment,
-              modStamp = event.document.modificationStamp,
-            )
-          }
+      change {
+        shared {
+          adDocument.replaceString(
+            startOffset = event.offset,
+            endOffset = event.offset + event.oldLength,
+            chars = event.newFragment,
+            modStamp = event.document.modificationStamp,
+          )
         }
-        val adChars = adDocument.immutableCharSequence
-        if (realChars.hashCode() != adChars.hashCode()) {
-          assert(realChars.toString() == adChars.toString()) {
-            """
+      }
+      val adChars = adDocument.immutableCharSequence
+      if (realChars.hashCode() != adChars.hashCode()) {
+        assert(realChars.toString() == adChars.toString()) {
+          """
               AdDocument is out of sync, expected chars:
               $realChars
 
               but encountered:
               $adChars
             """.trimIndent()
-          }
-        }
-        withContext(Dispatchers.EDT) {
-          repaintLambda.invoke()
         }
       }
+      repaintLambda.invoke()
     }
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.ad
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
@@ -15,12 +16,23 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.kernel.withKernel
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.jetbrains.rhizomedb.ChangeScope
+import com.jetbrains.rhizomedb.asOf
 import fleet.kernel.change
+import fleet.kernel.lastKnownDb
 import fleet.kernel.shared
+import fleet.kernel.transactor
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import java.util.concurrent.Executors
 
+
+internal val LIMITED_DISPATCHER by lazy {
+  Executors.newFixedThreadPool(1).asCoroutineDispatcher()
+}
 
 @Service(Level.PROJECT)
 internal class AdTheManagerImpl(private val coroutineScope: CoroutineScope) : AdTheManager {
@@ -39,10 +51,11 @@ internal class AdTheManagerImpl(private val coroutineScope: CoroutineScope) : Ad
           }
         }
       }
-
       ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
 
-      val documentSynchronizer = AdDocumentSynchronizer(editorModel.document as AdDocument, coroutineScope) { repaintEditor(editor) }
+      val documentSynchronizer = AdDocumentSynchronizer(editorModel.document as AdDocument, coroutineScope) {
+        repaintEditor(editor)
+      }
       editor.document.addDocumentListener(documentSynchronizer, documentSynchronizer)
 
       Disposer.register(editorModel, documentSynchronizer)
@@ -89,12 +102,10 @@ internal class AdTheManagerImpl(private val coroutineScope: CoroutineScope) : Ad
       override fun getFocusModel(): FocusModeModel = editor.focusModeModel
       override fun isAd(): Boolean = true
       override fun dispose() {
-        coroutineScope.launch {
-          withKernel {
-            change {
-              shared {
-                entity.delete()
-              }
+        coroutineScope.launch(LIMITED_DISPATCHER) {
+          change {
+            shared {
+              entity.delete()
             }
           }
         }
@@ -102,10 +113,14 @@ internal class AdTheManagerImpl(private val coroutineScope: CoroutineScope) : Ad
     }
   }
 
-  private fun repaintEditor(editor: EditorImpl) {
-    ThreadingAssertions.assertEventDispatchThread()
-    if (!(editor.isDisposed)) {
-      editor.repaintToScreenBottom(0) // TODO repaint partially
+  private suspend fun repaintEditor(editor: EditorImpl) {
+    val lastKnownDb = transactor().lastKnownDb
+    withContext(Dispatchers.EDT) {
+      if (!editor.isDisposed) {
+        asOf(lastKnownDb) {
+          editor.repaintToScreenBottom(0) // TODO repaint partially
+        }
+      }
     }
   }
 
