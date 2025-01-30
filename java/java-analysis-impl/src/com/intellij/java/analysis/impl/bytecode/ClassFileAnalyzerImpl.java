@@ -154,8 +154,7 @@ final class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnaly
     return new DependencyMethodVisitor();
   }
 
-  private class DependencyMethodVisitor extends MethodVisitor {
-
+  private final class DependencyMethodVisitor extends MethodVisitor {
     private Label myFirstLabel = null;
 
     DependencyMethodVisitor() {
@@ -274,11 +273,9 @@ final class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnaly
       addDesc(desc);
       return myAnnotationVisitor;
     }
-
   }
 
-  private class DependencyFieldVisitor extends FieldVisitor {
-
+  private final class DependencyFieldVisitor extends FieldVisitor {
     DependencyFieldVisitor() {
       super(Opcodes.API_VERSION);
     }
@@ -296,8 +293,7 @@ final class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnaly
     }
   }
 
-  private class AnnotationDependencyVisitor extends AnnotationVisitor {
-
+  private final class AnnotationDependencyVisitor extends AnnotationVisitor {
     AnnotationDependencyVisitor() {
       super(Opcodes.API_VERSION);
     }
@@ -324,8 +320,7 @@ final class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnaly
     }
   }
 
-  private class DependencySignatureVisitor extends SignatureVisitor {
-
+  private final class DependencySignatureVisitor extends SignatureVisitor {
     DependencySignatureVisitor() {
       super(Opcodes.API_VERSION);
     }
