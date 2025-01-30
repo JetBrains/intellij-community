@@ -87,8 +87,10 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
 
   @ICRequest
   suspend fun typeChar(char: Char = '\n') {
-    coroutineToIndicator {
-      fixture.type(char)
+    withContext(Dispatchers.EDT) {
+      coroutineToIndicator {
+        fixture.type(char)
+      }
     }
   }
 
