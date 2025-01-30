@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.kmp.SourceModuleDependenc
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.closure
-
+import com.intellij.openapi.module.Module as OpenapiModule
 
 /**
  * A utility service for computing all types of dependencies for a [KaModule].
@@ -49,17 +49,50 @@ internal class KaSourceModuleDependenciesProvider(private val project: Project) 
     }
 
     fun getDirectFriendDependencies(from: KaSourceModuleBase): List<KaModule> {
-        return when (from.kind) {
-            KaSourceModuleKind.PRODUCTION -> from.module.cacheByClassInvalidatingOnRootModifications(
-                ProductionKeyForModulesWhoseInternalsAreVisible::class.java
-            ) {
-                from.module.additionalVisibleModules.mapNotNull { it.toKaSourceModuleForProduction() }
+        val openapiModule = from.module
+        val cacheKey = when (from.kind) {
+            KaSourceModuleKind.PRODUCTION -> when (from) {
+                is KaSourceModuleImpl -> ProductionKeyForModulesWhoseInternalsAreVisible.RegularSourceModule::class.java
+                is KaSourceModuleForOutsiderImpl -> ProductionKeyForModulesWhoseInternalsAreVisible.OutsiderSourceModule::class.java
+                else -> error("Unexpected ${KaSourceModuleBase::class}: $from")
+            }
+            KaSourceModuleKind.TEST ->  when (from) {
+                is KaSourceModuleImpl -> TestKeyForModulesWhoseInternalsAreVisible.RegularSourceModule::class.java
+                is KaSourceModuleForOutsiderImpl -> TestKeyForModulesWhoseInternalsAreVisible.OutsiderSourceModule::class.java
+                else -> error("Unexpected ${KaSourceModuleBase::class}: $from")
+            }
+        }
+        /**
+        [getDirectFriendDependencies] may have itself in the result, so we remove it.
+        For [KaSourceModuleForOutsiderImpl], it will be the original module
+         */
+        val extraModule = when (from) {
+            is KaSourceModuleImpl -> from
+            is KaSourceModuleForOutsiderImpl -> openapiModule.toKaSourceModule(from.sourceModuleKind)
+            else -> error("Unexpected ${KaSourceModuleBase::class}: $from")
+        }
+        return (getDirectFriendDependencies(openapiModule, from.kind, cacheKey) - listOfNotNull(extraModule)).toList()
+    }
+
+    /**
+     * may return self in a result
+     */
+    private fun getDirectFriendDependencies(
+        openapiModule: OpenapiModule,
+        kind: KaSourceModuleKind,
+        cacheKey: Class<*>,
+    ): Set<KaModule> {
+        return when (kind) {
+            KaSourceModuleKind.PRODUCTION -> openapiModule.cacheByClassInvalidatingOnRootModifications(cacheKey) {
+                openapiModule.additionalVisibleModules
+                    .mapNotNullTo(mutableSetOf()) { it.toKaSourceModuleForProduction() }
+                    .ifEmpty { emptySet() }
             }
 
-            KaSourceModuleKind.TEST -> from.module.cacheByClassInvalidatingOnRootModifications(TestKeyForModulesWhoseInternalsAreVisible::class.java) {
+            KaSourceModuleKind.TEST -> openapiModule.cacheByClassInvalidatingOnRootModifications(cacheKey) {
                 val result = linkedSetOf<KaModule>()
-                result.addIfNotNull(from.module.toKaSourceModuleForProduction())
-                TestModuleProperties.getInstance(from.module).productionModule?.let {
+                result.addIfNotNull(openapiModule.toKaSourceModuleForProduction())
+                TestModuleProperties.getInstance(openapiModule).productionModule?.let {
                     result.addIfNotNull(it.toKaSourceModuleForProduction())
                 }
                 result.addAll(result.closure { dependency ->
@@ -71,20 +104,19 @@ internal class KaSourceModuleDependenciesProvider(private val project: Project) 
                         emptyList()
                     }
                 })
-                for (additionalVisibleModule in from.module.additionalVisibleModules) {
+                for (additionalVisibleModule in openapiModule.additionalVisibleModules) {
                     val productionModule = additionalVisibleModule.toKaSourceModuleForProduction()
                     if (productionModule != null) {
                         result.add(productionModule)
                         continue
                     }
-                    val originalModuleHasTestRoot = from.module.toKaSourceModuleForTest() != null
+                    val originalModuleHasTestRoot = openapiModule.toKaSourceModuleForTest() != null
                     if (originalModuleHasTestRoot) {
                         // we should consider `testFixture` as an additional visible module for test sources
                         result.addIfNotNull(additionalVisibleModule.toKaSourceModuleForTest())
                     }
                 }
-                result.remove(from)
-                result.toList().ifEmpty { emptyList() }
+                result.ifEmpty { emptySet() }
             }
         }
     }
@@ -191,5 +223,11 @@ internal class KaSourceModuleDependenciesProvider(private val project: Project) 
 }
 
 
-private object ProductionKeyForModulesWhoseInternalsAreVisible
-private object TestKeyForModulesWhoseInternalsAreVisible
+private class ProductionKeyForModulesWhoseInternalsAreVisible {
+    class RegularSourceModule
+    class OutsiderSourceModule
+}
+private object TestKeyForModulesWhoseInternalsAreVisible {
+    class RegularSourceModule
+    class OutsiderSourceModule
+}
