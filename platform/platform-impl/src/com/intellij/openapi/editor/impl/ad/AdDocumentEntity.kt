@@ -22,7 +22,7 @@ internal class AdDocumentEntity(override val eid: EID) : Entity {
   val text: Text by TextAttr
   val modStamp: Long by ModStampAttr
   val editLog: EditLog by EditLogAttr
-  var anchorStorage: AnchorStorage by AnchorStorageAttr
+  val anchorStorage: AnchorStorage by AnchorStorageAttr
 
   companion object : DurableEntityType<AdDocumentEntity>(AdDocumentEntity::class, ::AdDocumentEntity) {
     val TextAttr: Att<Text> = requiredValue("text", Text.serializer())
