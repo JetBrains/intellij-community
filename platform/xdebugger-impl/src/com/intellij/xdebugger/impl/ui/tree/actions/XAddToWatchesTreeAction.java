@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * This action works only in the variables view
  * @see com.intellij.xdebugger.impl.actions.AddToWatchesAction
+ * @see com.intellij.platform.debugger.impl.frontend.actions.FrontendXAddToWatchesTreeAction
  */
 @ApiStatus.Internal
 public class XAddToWatchesTreeAction extends XDebuggerTreeActionBase {

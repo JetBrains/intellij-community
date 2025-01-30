@@ -23,7 +23,7 @@ import org.jetbrains.concurrency.asCompletableFuture
 import org.jetbrains.concurrency.asPromise
 
 internal class FrontendXValue(
-  private val project: Project,
+  val project: Project,
   evaluatorCoroutineScope: CoroutineScope,
   val xValueDto: XValueDto,
   val parentXValue: FrontendXValue?,

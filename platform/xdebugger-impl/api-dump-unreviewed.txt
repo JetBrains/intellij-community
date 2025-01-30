@@ -384,15 +384,6 @@ a:com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
 - pa:isEnabled(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):Z
 - perform(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):V
 - pa:perform(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):V
-c:com.intellij.xdebugger.impl.actions.handlers.XDebuggerEvaluateActionHandler
-- com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
-- <init>():V
-- s:getDisplayText(com.intellij.xdebugger.evaluation.ExpressionInfo,com.intellij.openapi.editor.Document):java.lang.String
-- s:getExpressionText(com.intellij.xdebugger.evaluation.ExpressionInfo,com.intellij.openapi.editor.Document):java.lang.String
-- s:getExpressionText(com.intellij.xdebugger.evaluation.XDebuggerEvaluator,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):org.jetbrains.concurrency.Promise
-- s:getSelectedTextAsync(com.intellij.xdebugger.evaluation.XDebuggerEvaluator,com.intellij.openapi.actionSystem.DataContext):org.jetbrains.concurrency.Promise
-- p:isEnabled(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):Z
-- p:perform(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):V
 c:com.intellij.xdebugger.impl.breakpoints.XBreakpointPanelProvider
 - com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider
 - <init>():V
