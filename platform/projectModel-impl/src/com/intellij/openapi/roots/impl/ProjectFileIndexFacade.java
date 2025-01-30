@@ -70,6 +70,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     return myFileIndex.isExcluded(file);
   }
   
+  @ApiStatus.Internal
   @Override
   public boolean isUnderSourceRootOfType(@NotNull VirtualFile file, @NotNull Set<?> rootTypes) {
     return myFileIndex.isUnderSourceRootOfType(file, (Set<? extends JpsModuleSourceRootType<?>>)rootTypes);
