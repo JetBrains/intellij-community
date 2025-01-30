@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLib
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source.KaSourceModuleBase
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source.KaSourceModuleForOutsiderImpl
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source.KaSourceModuleImpl
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.symbolicId
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaSourceModuleForOutsider
 import org.jetbrains.kotlin.library.KotlinLibrary
@@ -106,7 +107,6 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
             )
         }
 
-        is ModuleCandidate.Sdk -> listOf(getKaLibraryModule(data.sdk))
         is ModuleCandidate.FixedModule -> listOf(data.module)
     }
 
@@ -123,6 +123,14 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
             when (fileKind) {
                 WorkspaceFileKind.EXTERNAL_SOURCE -> libraryModules.mapNotNull { it.librarySources }
                 else -> libraryModules
+            }
+        }
+
+        is SdkEntity -> {
+            val module = KaLibrarySdkModuleImpl(project, entity.symbolicId)
+            when (fileKind) {
+                WorkspaceFileKind.EXTERNAL_SOURCE -> listOfNotNull(module.librarySources)
+                else -> listOf(module)
             }
         }
 
@@ -198,7 +206,7 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
     }
 
     override fun getKaLibraryModule(sdk: Sdk): KaLibraryModule {
-        return KaLibrarySdkModuleImpl(project, sdk)
+        return KaLibrarySdkModuleImpl(project, sdk.symbolicId)
     }
 
     override fun getKaLibraryModuleSymbolicId(libraryModule: KaLibraryModule): LibraryId {

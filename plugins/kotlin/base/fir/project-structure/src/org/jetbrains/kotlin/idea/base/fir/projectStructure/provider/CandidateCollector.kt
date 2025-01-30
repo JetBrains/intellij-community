@@ -91,10 +91,9 @@ internal object CandidateCollector {
       originalVirtualFileForOutsider: VirtualFile?,
       workspaceModel: WorkspaceModel
     ): ModuleCandidate? {
-        WorkspaceFileSetRecognizer.getSdk(fileSet)?.let { return ModuleCandidate.Sdk(it) }
-
+        val storage = workspaceModel.currentSnapshot
         val entityPointer: EntityPointer<*> = WorkspaceFileSetRecognizer.getEntityPointer(fileSet) ?: return null
-        val entity: WorkspaceEntity = entityPointer.resolve(workspaceModel.currentSnapshot) ?: return null
+        val entity: WorkspaceEntity = entityPointer.resolve(storage) ?: return null
 
         return when {
             originalVirtualFileForOutsider == null -> ModuleCandidate.Entity(entity, fileSet.kind)

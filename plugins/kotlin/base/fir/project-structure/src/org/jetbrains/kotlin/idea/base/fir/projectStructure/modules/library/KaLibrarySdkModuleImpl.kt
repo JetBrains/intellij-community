@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.librarySource.KaLibrarySdkSourceModuleImpl
-import org.jetbrains.kotlin.idea.base.fir.projectStructure.symbolicId
+import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -19,9 +19,12 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
 internal class KaLibrarySdkModuleImpl(
     override val project: Project,
-    val sdk: Sdk,
+    override val entityId: SdkId,
 ) : KaLibraryModuleBase<SdkEntity, SdkId>() {
-    override val entityId: SdkId get() = sdk.symbolicId
+
+    val sdk: Sdk
+        get() = entity.findSdkBridge(currentSnapshot)
+            ?: error("Could not find SDK $entityId")
 
     @KaExperimentalApi
     override val binaryVirtualFiles: Collection<VirtualFile> by lazy(LazyThreadSafetyMode.PUBLICATION) {

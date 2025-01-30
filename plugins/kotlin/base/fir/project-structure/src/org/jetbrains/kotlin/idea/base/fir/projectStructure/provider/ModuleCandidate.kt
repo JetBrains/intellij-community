@@ -19,10 +19,6 @@ internal sealed class ModuleCandidate {
       val originalVirtualFile: VirtualFile
     ) : ModuleCandidate()
 
-    data class Sdk(
-        val sdk: com.intellij.openapi.projectRoots.Sdk
-    ) : ModuleCandidate()
-
     data class FixedModule(
         val module: KaModule
     ) : ModuleCandidate()
