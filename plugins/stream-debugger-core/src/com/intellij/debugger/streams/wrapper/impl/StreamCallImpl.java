@@ -47,7 +47,6 @@ public abstract class StreamCallImpl implements StreamCall {
     return myGenericArgs;
   }
 
-  @NotNull
   @Override
   public @NotNull List<CallArgument> getArguments() {
     return myArgs;

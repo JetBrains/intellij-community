@@ -35,7 +35,6 @@ public class PeekCall implements IntermediateStreamCall {
     return "";
   }
 
-  @NotNull
   @Override
   public @NotNull List<CallArgument> getArguments() {
     return myLambda;
