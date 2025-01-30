@@ -634,21 +634,6 @@ object CommunityRepositoryModules {
     }
   }
 
-  fun aeDatabasePlugin(mainModuleName: String, extraModules: List<String> = emptyList()): PluginLayout {
-    return plugin(mainModuleName) { spec ->
-      spec.directoryName = "ae-database"
-      spec.mainJarName = "ae-database.jar"
-      spec.withModules(listOf(
-        "intellij.ae.database.core",
-        "intellij.ae.database.counters.community"
-      ))
-      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.ALL
-      if (extraModules.isNotEmpty()) {
-        spec.withModules(extraModules)
-      }
-    }
-  }
-
   fun githubPlugin(mainModuleName: String, productCode: String): PluginLayout {
     return plugin(mainModuleName) { spec ->
       spec.directoryName = "vcs-github-$productCode"
