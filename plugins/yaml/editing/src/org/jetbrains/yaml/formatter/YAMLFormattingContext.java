@@ -293,8 +293,7 @@ class YAMLFormattingContext {
   }
 
   private @Nullable Indent computeTemplateIndent(TextRange nodeTextRange) {
-    Document document = PsiDocumentManager.getInstance(myFile.getProject()).getDocument(myFile);
-    if (document == null) return null;
+    Document document = myFile.getFileDocument();
     int lineNumber = document.getLineNumber(nodeTextRange.getStartOffset());
     int lineStartOffset = document.getLineStartOffset(lineNumber);
 
