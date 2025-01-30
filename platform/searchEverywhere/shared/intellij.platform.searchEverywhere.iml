@@ -41,9 +41,9 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.project" />
     <orderEntry type="module" module-name="intellij.platform.kernel" />
-    <orderEntry type="library" exported="" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
-    <orderEntry type="module" module-name="intellij.platform.lang.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
