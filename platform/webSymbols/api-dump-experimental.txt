@@ -545,6 +545,7 @@
 - a:getDescriptionSections():java.util.Map
 - a:getDocUrl():java.lang.String
 - a:getFootnote():java.lang.String
+- a:getHeader():java.lang.String
 - a:getIcon():javax.swing.Icon
 - a:getLibrary():java.lang.String
 - a:getName():java.lang.String
@@ -560,6 +561,7 @@
 - a:withDescriptionSection(java.lang.String,java.lang.String):com.intellij.webSymbols.documentation.WebSymbolDocumentation
 - a:withDocUrl(java.lang.String):com.intellij.webSymbols.documentation.WebSymbolDocumentation
 - a:withFootnote(java.lang.String):com.intellij.webSymbols.documentation.WebSymbolDocumentation
+- a:withHeader(java.lang.String):com.intellij.webSymbols.documentation.WebSymbolDocumentation
 - a:withIcon(javax.swing.Icon):com.intellij.webSymbols.documentation.WebSymbolDocumentation
 - a:withLibrary(java.lang.String):com.intellij.webSymbols.documentation.WebSymbolDocumentation
 - a:withName(java.lang.String):com.intellij.webSymbols.documentation.WebSymbolDocumentation
