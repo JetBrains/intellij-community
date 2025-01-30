@@ -122,8 +122,11 @@ public class PackageEntryTable implements JDOMExternalizable, Cloneable {
           if (isModule) {
             entry = PackageEntry.ALL_MODULE_IMPORTS;
           }
+          else if (isStatic) {
+            entry = PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY;
+          }
           else {
-            entry = isStatic ? PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY : PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
+            entry = PackageEntry.ALL_OTHER_IMPORTS_ENTRY;
           }
         }
         else {
