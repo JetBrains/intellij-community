@@ -2679,6 +2679,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/override/overriddenJavaAccessor/notAGetterSignature.test");
             }
 
+            @TestMetadata("nothingToOverride.test")
+            public void testNothingToOverride() throws Exception {
+                runTest("testData/quickfix/override/overriddenJavaAccessor/nothingToOverride.test");
+            }
+
             @TestMetadata("simpleGetter.test")
             public void testSimpleGetter() throws Exception {
                 runTest("testData/quickfix/override/overriddenJavaAccessor/simpleGetter.test");

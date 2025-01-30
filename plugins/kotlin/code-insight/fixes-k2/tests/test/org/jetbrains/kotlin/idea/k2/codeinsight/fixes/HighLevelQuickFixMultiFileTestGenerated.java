@@ -1263,6 +1263,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../../../idea/tests/testData/quickfix/override/overriddenJavaAccessor/notAGetterSignature.test");
         }
 
+        @TestMetadata("nothingToOverride.test")
+        public void testNothingToOverride() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/overriddenJavaAccessor/nothingToOverride.test");
+        }
+
         @TestMetadata("simpleGetter.test")
         public void testSimpleGetter() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/override/overriddenJavaAccessor/simpleGetter.test");
