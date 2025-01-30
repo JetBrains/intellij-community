@@ -6,24 +6,16 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 internal class PrefixTreeSetImpl<Key, KeyElement>(
-  convertor: PrefixTreeFactory<Key, KeyElement>
-) : MutablePrefixTreeSet<Key> {
+  convertor: PrefixTreeFactory<Key, KeyElement>,
+) : AbstractSet<Key>(), MutablePrefixTreeSet<Key> {
 
   private val map = convertor.createMap<Nothing?>()
 
   override val size: Int
     get() = map.size
 
-  override fun isEmpty(): Boolean {
-    return map.isEmpty()
-  }
-
   override fun contains(element: Key): Boolean {
     return map.contains(element)
-  }
-
-  override fun containsAll(elements: Collection<Key>): Boolean {
-    return map.keys.containsAll(elements)
   }
 
   override fun getDescendants(element: Key): Set<Key> {

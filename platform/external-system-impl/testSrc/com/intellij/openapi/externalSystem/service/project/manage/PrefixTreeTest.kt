@@ -1,11 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage
 
-import com.intellij.util.containers.prefixTree.map.emptyPrefixTreeMap
-import com.intellij.util.containers.prefixTree.map.mutablePrefixTreeMapOf
-import com.intellij.util.containers.prefixTree.map.prefixTreeMapOf
-import com.intellij.util.containers.prefixTree.set.emptyPrefixTreeSet
-import com.intellij.util.containers.prefixTree.set.prefixTreeSetOf
+import com.intellij.util.containers.prefixTree.emptyPrefixTree
+import com.intellij.util.containers.prefixTree.mutablePrefixTreeOf
+import com.intellij.util.containers.prefixTree.prefixTreeOf
 import org.assertj.core.api.Assertions.entry
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
@@ -13,12 +11,12 @@ import org.junit.jupiter.api.Test
 class PrefixTreeTest {
 
   @Test
-  fun `test PrefixTreeMap#size`() {
-    Assertions.assertThat(emptyPrefixTreeMap<String, Int>())
+  fun `test PrefixTree#size`() {
+    Assertions.assertThat(emptyPrefixTree<String, Int>())
       .hasSize(0)
 
     Assertions.assertThat(
-      prefixTreeMapOf(
+      prefixTreeOf(
         listOf("a", "b", "c", "3") to 30,
         listOf("a", "b", "c", "4") to 10,
         listOf("a", "b", "1") to 11,
@@ -30,36 +28,19 @@ class PrefixTreeTest {
   }
 
   @Test
-  fun `test PrefixTreeSet#size`() {
-    Assertions.assertThat(emptyPrefixTreeSet<String>())
-      .hasSize(0)
-
-    Assertions.assertThat(
-      prefixTreeSetOf(
-        listOf("a", "b", "c", "3"),
-        listOf("a", "b", "c", "4"),
-        listOf("a", "b", "1"),
-        listOf("a", "b", "2"),
-        listOf("a", "b", "c"),
-        listOf("a")
-      )
-    ).hasSize(6)
-  }
-
-  @Test
-  fun `test PrefixTreeMap#toMap`() {
-    Assertions.assertThat(emptyPrefixTreeMap<String, Int>().toMap())
+  fun `test PrefixTree#equals`() {
+    Assertions.assertThat(emptyPrefixTree<String, Int>())
       .isEqualTo(emptyMap<List<String>, Int>())
 
     Assertions.assertThat(
-      prefixTreeMapOf(
+      prefixTreeOf(
         listOf("a", "b", "c", "3") to 30,
         listOf("a", "b", "c", "4") to 10,
         listOf("a", "b", "1") to 11,
         listOf("a", "b", "2") to 21,
         listOf("a", "b", "c") to 43,
         listOf("a") to 13
-      ).toMap()
+      )
     ).isEqualTo(
       mapOf(
         listOf("a", "b", "c", "3") to 30,
@@ -73,34 +54,8 @@ class PrefixTreeTest {
   }
 
   @Test
-  fun `test PrefixTreeSet#toSet`() {
-    Assertions.assertThat(emptyPrefixTreeSet<String>().toSet())
-      .isEqualTo(emptySet<List<String>>())
-
-    Assertions.assertThat(
-      prefixTreeSetOf(
-        listOf("a", "b", "c", "3"),
-        listOf("a", "b", "c", "4"),
-        listOf("a", "b", "1"),
-        listOf("a", "b", "2"),
-        listOf("a", "b", "c"),
-        listOf("a")
-      ).toSet()
-    ).isEqualTo(
-      setOf(
-        listOf("a", "b", "c", "3"),
-        listOf("a", "b", "c", "4"),
-        listOf("a", "b", "1"),
-        listOf("a", "b", "2"),
-        listOf("a", "b", "c"),
-        listOf("a")
-      )
-    )
-  }
-
-  @Test
-  fun `test PrefixTreeMap#get`() {
-    val tree = prefixTreeMapOf(
+  fun `test PrefixTree#get`() {
+    val tree = prefixTreeOf(
       listOf("a", "b", "c", "3") to 30,
       listOf("a", "b", "c", "4") to 10,
       listOf("a", "b", "1") to 11,
@@ -121,8 +76,8 @@ class PrefixTreeTest {
   }
 
   @Test
-  fun `test PrefixTreeMap#containKey`() {
-    val tree = prefixTreeMapOf(
+  fun `test PrefixTree#containKey`() {
+    val tree = prefixTreeOf(
       listOf("a", "b", "c", "3") to 30,
       listOf("a", "b", "c", "4") to 10,
       listOf("a", "b", "1") to 11,
@@ -144,8 +99,8 @@ class PrefixTreeTest {
   }
 
   @Test
-  fun `test PrefixTreeMap#containValue`() {
-    val tree = prefixTreeMapOf(
+  fun `test PrefixTree#containValue`() {
+    val tree = prefixTreeOf(
       listOf("a", "b", "c", "3") to 30,
       listOf("a", "b", "c", "4") to 40,
       listOf("a", "b", "1") to 11,
@@ -165,9 +120,9 @@ class PrefixTreeTest {
   }
 
   @Test
-  fun `test PrefixTreeMap#keys`() {
+  fun `test PrefixTree#keys`() {
     Assertions.assertThat(
-      prefixTreeMapOf(
+      prefixTreeOf(
         listOf("a", "b", "c", "3") to 30,
         listOf("a", "b", "c", "4") to 10,
         listOf("a", "b", "1") to 11,
@@ -186,8 +141,8 @@ class PrefixTreeTest {
   }
 
   @Test
-  fun `test PrefixTreeMap#values`() {
-    val tree = prefixTreeMapOf(
+  fun `test PrefixTree#values`() {
+    val tree = prefixTreeOf(
       listOf("a", "b", "c", "3") to 30,
       listOf("a", "b", "c", "4") to 10,
       listOf("a", "b", "1") to 11,
@@ -200,8 +155,8 @@ class PrefixTreeTest {
   }
 
   @Test
-  fun `test PrefixTreeMap#put`() {
-    val tree = mutablePrefixTreeMapOf(
+  fun `test PrefixTree#put`() {
+    val tree = mutablePrefixTreeOf(
       listOf("a", "b", "c", "3") to 30,
       listOf("a", "b", "c", "4") to 10,
       listOf("a", "b", "1") to 11,
@@ -231,8 +186,8 @@ class PrefixTreeTest {
   }
 
   @Test
-  fun `test PrefixTreeMap#remove`() {
-    val tree = mutablePrefixTreeMapOf(
+  fun `test PrefixTree#remove`() {
+    val tree = mutablePrefixTreeOf(
       listOf("a", "b", "c", "1") to 10,
       listOf("a", "b", "c", "2") to 20,
       listOf("a", "b", "c", "3") to 30,
@@ -263,7 +218,7 @@ class PrefixTreeTest {
 
   @Test
   fun `test map containing nullable values`() {
-    val tree = mutablePrefixTreeMapOf(
+    val tree = mutablePrefixTreeOf(
       listOf("a", "b", "c", "1") to null,
       listOf("a", "b", "c", "2") to 20,
       listOf("a", "b", "c", "3") to null,
@@ -306,159 +261,159 @@ class PrefixTreeTest {
   }
 
   @Test
-  fun `test PrefixTreeSet#getDescendants`() {
-    val tree = prefixTreeSetOf(
-      listOf("a", "b", "c", "1"),
-      listOf("a", "b", "c", "2"),
-      listOf("a", "b", "c", "3"),
-      listOf("a", "b", "c", "4"),
-      listOf("a", "b", "1"),
-      listOf("a", "b", "2"),
-      listOf("a", "b", "3"),
-      listOf("a", "b", "4"),
-      listOf("a", "b", "c"),
-      listOf("a")
+  fun `test PrefixTree#getDescendantEntries`() {
+    val tree = prefixTreeOf(
+      listOf("a", "b", "c", "1") to 1,
+      listOf("a", "b", "c", "2") to 2,
+      listOf("a", "b", "c", "3") to 3,
+      listOf("a", "b", "c", "4") to 4,
+      listOf("a", "b", "1") to 1,
+      listOf("a", "b", "2") to 2,
+      listOf("a", "b", "3") to 3,
+      listOf("a", "b", "4") to 4,
+      listOf("a", "b", "c") to 5,
+      listOf("a") to 1
     )
-    Assertions.assertThat(tree.getDescendants(listOf("a", "b", "c")))
+    Assertions.assertThat(tree.getDescendantEntries(listOf("a", "b", "c")))
       .containsExactlyInAnyOrder(
-        listOf("a", "b", "c", "1"),
-        listOf("a", "b", "c", "2"),
-        listOf("a", "b", "c", "3"),
-        listOf("a", "b", "c", "4"),
-        listOf("a", "b", "c")
+        entry(listOf("a", "b", "c", "1"), 1),
+        entry(listOf("a", "b", "c", "2"), 2),
+        entry(listOf("a", "b", "c", "3"), 3),
+        entry(listOf("a", "b", "c", "4"), 4),
+        entry(listOf("a", "b", "c"), 5)
       )
-    Assertions.assertThat(tree.getDescendants(listOf("a", "b")))
+    Assertions.assertThat(tree.getDescendantEntries(listOf("a", "b")))
       .containsExactlyInAnyOrder(
-        listOf("a", "b", "c", "1"),
-        listOf("a", "b", "c", "2"),
-        listOf("a", "b", "c", "3"),
-        listOf("a", "b", "c", "4"),
-        listOf("a", "b", "1"),
-        listOf("a", "b", "2"),
-        listOf("a", "b", "3"),
-        listOf("a", "b", "4"),
-        listOf("a", "b", "c")
+        entry(listOf("a", "b", "c", "1"), 1),
+        entry(listOf("a", "b", "c", "2"), 2),
+        entry(listOf("a", "b", "c", "3"), 3),
+        entry(listOf("a", "b", "c", "4"), 4),
+        entry(listOf("a", "b", "1"), 1),
+        entry(listOf("a", "b", "2"), 2),
+        entry(listOf("a", "b", "3"), 3),
+        entry(listOf("a", "b", "4"), 4),
+        entry(listOf("a", "b", "c"), 5)
       )
-    Assertions.assertThat(tree.getDescendants(listOf("a")))
+    Assertions.assertThat(tree.getDescendantEntries(listOf("a")))
       .containsExactlyInAnyOrder(
-        listOf("a", "b", "c", "1"),
-        listOf("a", "b", "c", "2"),
-        listOf("a", "b", "c", "3"),
-        listOf("a", "b", "c", "4"),
-        listOf("a", "b", "1"),
-        listOf("a", "b", "2"),
-        listOf("a", "b", "3"),
-        listOf("a", "b", "4"),
-        listOf("a", "b", "c"),
-        listOf("a")
+        entry(listOf("a", "b", "c", "1"), 1),
+        entry(listOf("a", "b", "c", "2"), 2),
+        entry(listOf("a", "b", "c", "3"), 3),
+        entry(listOf("a", "b", "c", "4"), 4),
+        entry(listOf("a", "b", "1"), 1),
+        entry(listOf("a", "b", "2"), 2),
+        entry(listOf("a", "b", "3"), 3),
+        entry(listOf("a", "b", "4"), 4),
+        entry(listOf("a", "b", "c"), 5),
+        entry(listOf("a"), 1)
       )
-    Assertions.assertThat(tree.getDescendants(emptyList()))
+    Assertions.assertThat(tree.getDescendantEntries(emptyList()))
       .containsExactlyInAnyOrder(
-        listOf("a", "b", "c", "1"),
-        listOf("a", "b", "c", "2"),
-        listOf("a", "b", "c", "3"),
-        listOf("a", "b", "c", "4"),
-        listOf("a", "b", "1"),
-        listOf("a", "b", "2"),
-        listOf("a", "b", "3"),
-        listOf("a", "b", "4"),
-        listOf("a", "b", "c"),
-        listOf("a")
+        entry(listOf("a", "b", "c", "1"), 1),
+        entry(listOf("a", "b", "c", "2"), 2),
+        entry(listOf("a", "b", "c", "3"), 3),
+        entry(listOf("a", "b", "c", "4"), 4),
+        entry(listOf("a", "b", "1"), 1),
+        entry(listOf("a", "b", "2"), 2),
+        entry(listOf("a", "b", "3"), 3),
+        entry(listOf("a", "b", "4"), 4),
+        entry(listOf("a", "b", "c"), 5),
+        entry(listOf("a"), 1)
       )
   }
 
   @Test
-  fun `test PrefixTreeSet#getAncestors`() {
-    val tree = prefixTreeSetOf(
-      listOf("a", "b", "c", "2"),
-      listOf("a", "b", "c", "1"),
-      listOf("a", "b", "c", "3"),
-      listOf("a", "b", "c", "4"),
-      listOf("a", "b", "1"),
-      listOf("a", "b", "2"),
-      listOf("a", "b", "3"),
-      listOf("a", "b", "4"),
-      listOf("a", "b", "c"),
-      listOf("a")
+  fun `test PrefixTree#getAncestorEntries`() {
+    val tree = prefixTreeOf(
+      listOf("a", "b", "c", "1") to 1,
+      listOf("a", "b", "c", "2") to 2,
+      listOf("a", "b", "c", "3") to 3,
+      listOf("a", "b", "c", "4") to 4,
+      listOf("a", "b", "1") to 1,
+      listOf("a", "b", "2") to 2,
+      listOf("a", "b", "3") to 3,
+      listOf("a", "b", "4") to 4,
+      listOf("a", "b", "c") to 5,
+      listOf("a") to 1
     )
-    Assertions.assertThat(tree.getAncestors(listOf("a", "b", "c", "1", "loc")))
+    Assertions.assertThat(tree.getAncestorEntries(listOf("a", "b", "c", "1", "loc")))
       .containsExactlyInAnyOrder(
-        listOf("a"),
-        listOf("a", "b", "c"),
-        listOf("a", "b", "c", "1")
+        entry(listOf("a"), 1),
+        entry(listOf("a", "b", "c"), 5),
+        entry(listOf("a", "b", "c", "1"), 1)
       )
-    Assertions.assertThat(tree.getAncestors(listOf("a", "b", "c", "1")))
+    Assertions.assertThat(tree.getAncestorEntries(listOf("a", "b", "c", "1")))
       .containsExactlyInAnyOrder(
-        listOf("a"),
-        listOf("a", "b", "c"),
-        listOf("a", "b", "c", "1")
+        entry(listOf("a"), 1),
+        entry(listOf("a", "b", "c"), 5),
+        entry(listOf("a", "b", "c", "1"), 1)
       )
-    Assertions.assertThat(tree.getAncestors(listOf("a", "b", "c")))
+    Assertions.assertThat(tree.getAncestorEntries(listOf("a", "b", "c")))
       .containsExactlyInAnyOrder(
-        listOf("a"),
-        listOf("a", "b", "c")
+        entry(listOf("a"), 1),
+        entry(listOf("a", "b", "c"), 5)
       )
-    Assertions.assertThat(tree.getAncestors(listOf("a", "b")))
+    Assertions.assertThat(tree.getAncestorEntries(listOf("a", "b")))
       .containsExactlyInAnyOrder(
-        listOf("a")
+        entry(listOf("a"), 1)
       )
-    Assertions.assertThat(tree.getAncestors(listOf("a")))
+    Assertions.assertThat(tree.getAncestorEntries(listOf("a")))
       .containsExactlyInAnyOrder(
-        listOf("a")
+        entry(listOf("a"), 1)
       )
-    Assertions.assertThat(tree.getAncestors(emptyList()))
+    Assertions.assertThat(tree.getAncestorEntries(emptyList()))
       .isEmpty()
   }
 
   @Test
-  fun `test PrefixTreeSet#getRoots`() {
+  fun `test PrefixTree#getRootEntries`() {
     Assertions.assertThat(
-      prefixTreeSetOf(
-        listOf("a", "b", "c"),
-        listOf("a", "b", "c", "d"),
-        listOf("a", "b", "c", "e"),
-        listOf("a", "f", "g")
-      ).getRoots()
+      prefixTreeOf(
+        listOf("a", "b", "c") to 1,
+        listOf("a", "b", "c", "d") to 1,
+        listOf("a", "b", "c", "e") to 2,
+        listOf("a", "f", "g") to 1
+      ).getRootEntries()
     ).containsExactlyInAnyOrder(
-      listOf("a", "b", "c"),
-      listOf("a", "f", "g")
+      entry(listOf("a", "b", "c"), 1),
+      entry(listOf("a", "f", "g"), 1)
     )
     Assertions.assertThat(
-      prefixTreeSetOf(
-        listOf("a", "b"),
-        listOf("a", "b", "c"),
-        listOf("a", "b", "c", "d"),
-        listOf("a", "b", "c", "e"),
-        listOf("a", "f", "g")
-      ).getRoots()
+      prefixTreeOf(
+        listOf("a", "b") to 1,
+        listOf("a", "b", "c") to 1,
+        listOf("a", "b", "c", "d") to 1,
+        listOf("a", "b", "c", "e") to 2,
+        listOf("a", "f", "g") to 1
+      ).getRootEntries()
     ).containsExactlyInAnyOrder(
-      listOf("a", "b"),
-      listOf("a", "f", "g")
+      entry(listOf("a", "b"), 1),
+      entry(listOf("a", "f", "g"), 1)
     )
     Assertions.assertThat(
-      prefixTreeSetOf(
-        listOf("a"),
-        listOf("a", "b"),
-        listOf("a", "b", "c"),
-        listOf("a", "b", "c", "d"),
-        listOf("a", "b", "c", "e"),
-        listOf("a", "f", "g")
-      ).getRoots()
+      prefixTreeOf(
+        listOf("a") to 1,
+        listOf("a", "b") to 1,
+        listOf("a", "b", "c") to 1,
+        listOf("a", "b", "c", "d") to 1,
+        listOf("a", "b", "c", "e") to 2,
+        listOf("a", "f", "g") to 1
+      ).getRootEntries()
     ).containsExactlyInAnyOrder(
-      listOf("a")
+      entry(listOf("a"), 1)
     )
     Assertions.assertThat(
-      prefixTreeSetOf(
-        emptyList(),
-        listOf("a"),
-        listOf("a", "b"),
-        listOf("a", "b", "c"),
-        listOf("a", "b", "c", "d"),
-        listOf("a", "b", "c", "e"),
-        listOf("a", "f", "g")
-      ).getRoots()
+      prefixTreeOf(
+        emptyList<String>() to 1,
+        listOf("a") to 1,
+        listOf("a", "b") to 1,
+        listOf("a", "b", "c") to 1,
+        listOf("a", "b", "c", "d") to 1,
+        listOf("a", "b", "c", "e") to 2,
+        listOf("a", "f", "g") to 1
+      ).getRootEntries()
     ).containsExactlyInAnyOrder(
-      emptyList()
+      entry(emptyList(), 1)
     )
   }
 }

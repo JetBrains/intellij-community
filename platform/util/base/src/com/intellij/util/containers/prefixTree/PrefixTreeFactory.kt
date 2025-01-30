@@ -20,14 +20,6 @@ fun interface PrefixTreeFactory<Key, KeyElement> {
 
   companion object {
 
-    fun <K> list(): PrefixTreeFactory<List<K>, K> {
-      return object : PrefixTreeFactory<List<K>, K> {
-        override fun convertToList(element: List<K>): List<K> {
-          return element
-        }
-      }
-    }
-
     fun <K, E> create(convert: (K) -> List<E>): PrefixTreeFactory<K, E> {
       return object : PrefixTreeFactory<K, E> {
         override fun convertToList(element: K): List<E> {

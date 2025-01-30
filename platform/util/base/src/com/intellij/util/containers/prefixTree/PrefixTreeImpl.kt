@@ -1,41 +1,61 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers.prefixTree
 
+import com.intellij.util.containers.FList
 import com.intellij.util.containers.OptionalKt
+import com.intellij.util.containers.OptionalKt.Companion.getOrDefault
+import com.intellij.util.containers.OptionalKt.Companion.getOrNull
+import com.intellij.util.containers.prefixTree.map.AbstractPrefixTreeMap
 import org.jetbrains.annotations.ApiStatus
-import java.util.LinkedHashMap
+import java.util.AbstractMap.SimpleEntry
 
 @ApiStatus.Internal
-internal class PrefixTreeImpl<Key, Value> {
+internal class PrefixTreeImpl<Key, Value> : AbstractPrefixTreeMap<List<Key>, Value>(), MutablePrefixTree<Key, Value> {
 
-  private var size: Int = 0
+  override var size: Int = 0
+    private set
 
   private var state: OptionalKt<Value> = OptionalKt.EMPTY
 
   private val children = LinkedHashMap<Key, PrefixTreeImpl<Key, Value>>()
 
-  fun isLeaf(): Boolean {
-    return children.isEmpty()
+  override val entries: Set<Map.Entry<List<Key>, Value>>
+    get() = getTreeEntries()
+
+  override fun containsKey(key: List<Key>): Boolean {
+    return getValue(key).isPresent()
   }
 
-  fun isEmpty(): Boolean {
-    return isLeaf() && state.isNotPresent()
+  override fun get(key: List<Key>): Value? {
+    return getValue(key).getOrNull()
   }
 
-  fun getSize(): Int {
-    return size
+  override fun getOrDefault(key: List<Key>, defaultValue: Value): Value {
+    return getValue(key).getOrDefault(defaultValue)
   }
 
-  fun getValue(key: List<Key>): OptionalKt<Value> {
+  override fun put(key: List<Key>, value: Value): Value? {
+    return setValue(0, key, value).getOrNull()
+  }
+
+  override fun remove(key: List<Key>): Value? {
+    return removeValue(0, key).getOrNull()
+  }
+
+  override fun getAncestorEntries(key: List<Key>): Set<Map.Entry<List<Key>, Value>> {
+    return getAncestorTreeEntries(key)
+  }
+
+  override fun getDescendantEntries(key: List<Key>): Set<Map.Entry<List<Key>, Value>> {
+    return getDescendantTreeEntries(key)
+  }
+
+  override fun getRootEntries(): Set<Map.Entry<List<Key>, Value>> {
+    return getRootTreeEntries()
+  }
+
+  private fun getValue(key: List<Key>): OptionalKt<Value> {
     return findNode(key)?.state ?: OptionalKt.EMPTY
-  }
-
-  fun setValue(key: List<Key>, value: Value): OptionalKt<Value> {
-    return setValue(0, key, value)
-  }
-
-  fun removeValue(key: List<Key>): OptionalKt<Value> {
-    return removeValue(0, key)
   }
 
   private fun setValue(index: Int, key: List<Key>, value: Value): OptionalKt<Value> {
@@ -77,48 +97,40 @@ internal class PrefixTreeImpl<Key, Value> {
     return previousState
   }
 
-  fun containsKey(key: List<Key>): Boolean {
-    val node = findNode(key) ?: return false
-    return node.state.isPresent()
-  }
-
-  fun getValues(): List<Value> {
-    val result = ArrayList<Value>()
-    traverseTree { state ->
-      if (state.isPresent()) {
-        result.add(state.get())
+  private fun getTreeEntries(): Set<TreeEntry<Key, Value>> {
+    val result = LinkedHashSet<TreeEntry<Key, Value>>()
+    traverseTree { node ->
+      if (node.state.isPresent()) {
+        result.add(TreeEntry(node.key, node.state.get()))
       }
       TraverseDecision.CONTINUE
     }
     return result
   }
 
-  fun getAncestorValues(key: List<Key>): List<Value> {
-    val result = ArrayList<Value>()
-    traverseNode(key) { state ->
-      if (state.isPresent()) {
-        result.add(state.get())
+  private fun getAncestorTreeEntries(key: List<Key>): Set<TreeEntry<Key, Value>> {
+    val result = LinkedHashSet<TreeEntry<Key, Value>>()
+    traverseNode(key) { node ->
+      if (node.state.isPresent()) {
+        result.add(TreeEntry(node.key, node.state.get()))
       }
     }
     return result
   }
 
-  fun getDescendantValues(key: List<Key>): List<Value> {
-    val node = findNode(key) ?: return emptyList()
-    val result = ArrayList<Value>()
-    for (value in node.getValues()) {
-      result.add(value)
-    }
-    return result
+  private fun getDescendantTreeEntries(key: List<Key>): Set<TreeEntry<Key, Value>> {
+    val node = findNode(key) ?: return emptySet()
+    return node.getTreeEntries()
+      .mapTo(LinkedHashSet()) { TreeEntry(key + it.key, it.value) }
   }
 
-  fun getRootValues(): List<Value> {
-    val result = ArrayList<Value>()
-    traverseTree { state ->
-      if (state.isPresent()) {
-        result.add(state.get())
+  private fun getRootTreeEntries(): Set<TreeEntry<Key, Value>> {
+    val result = LinkedHashSet<TreeEntry<Key, Value>>()
+    traverseTree { node ->
+      if (node.state.isPresent()) {
+        result.add(TreeEntry(node.key, node.state.get()))
       }
-      when (state.isPresent()) {
+      when (node.state.isPresent()) {
         true -> TraverseDecision.DO_NOT_GO_DEEPER
         else -> TraverseDecision.CONTINUE
       }
@@ -127,30 +139,33 @@ internal class PrefixTreeImpl<Key, Value> {
   }
 
   private fun findNode(key: List<Key>): PrefixTreeImpl<Key, Value>? {
-    return traverseNode(key) {}
-  }
-
-  private fun traverseNode(key: List<Key>, process: (OptionalKt<Value>) -> Unit): PrefixTreeImpl<Key, Value>? {
     var node = this
-    process(node.state)
     for (keyElement in key) {
       node = node.children[keyElement] ?: return null
-      process(node.state)
     }
     return node
   }
 
-  private fun traverseTree(process: (OptionalKt<Value>) -> TraverseDecision) {
-    val queue = ArrayDeque<PrefixTreeImpl<Key, Value>>()
-    queue.addLast(this)
+  private fun traverseNode(key: List<Key>, process: (TreeNode<Key, Value>) -> Unit) {
+    var node = this
+    process(TreeNode(emptyList(), node.state))
+    for ((i, keyElement) in key.withIndex()) {
+      node = node.children[keyElement] ?: return
+      process(TreeNode(key.subList(0, i + 1), node.state))
+    }
+  }
+
+  private fun traverseTree(process: (TreeNode<Key, Value>) -> TraverseDecision) {
+    val queue = ArrayDeque<Pair<FList<Key>, PrefixTreeImpl<Key, Value>>>()
+    queue.addLast(FList.emptyList<Key>() to this)
     while (queue.isNotEmpty()) {
-      val node = queue.removeFirst()
-      when (process(node.state)) {
+      val (key, node) = queue.removeFirst()
+      when (process(TreeNode(key.asReversed(), node.state))) {
         TraverseDecision.STOP -> break
         TraverseDecision.DO_NOT_GO_DEEPER -> continue
         TraverseDecision.CONTINUE -> {
-          for (child in node.children.values) {
-            queue.add(child)
+          for ((keyElement, child) in node.children) {
+            queue.add(key.prepend(keyElement) to child)
           }
         }
       }
@@ -158,4 +173,8 @@ internal class PrefixTreeImpl<Key, Value> {
   }
 
   private enum class TraverseDecision { CONTINUE, STOP, DO_NOT_GO_DEEPER }
+
+  private class TreeNode<Key, Value>(val key: List<Key>, val state: OptionalKt<Value>)
+
+  private class TreeEntry<Key, Value>(key: List<Key>, value: Value) : SimpleEntry<List<Key>, Value>(key, value)
 }
