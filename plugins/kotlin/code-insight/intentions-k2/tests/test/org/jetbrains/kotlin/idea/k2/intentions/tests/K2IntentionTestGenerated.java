@@ -12821,4 +12821,58 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/valToObject")
+    public static class ValToObject extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotations.kt")
+        public void testAnnotations() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/valToObject/annotations.kt");
+        }
+
+        @TestMetadata("callableReference.kt")
+        public void testCallableReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/valToObject/callableReference.kt");
+        }
+
+        @TestMetadata("expected.kt")
+        public void testExpected() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/valToObject/expected.kt");
+        }
+
+        @TestMetadata("getter.kt")
+        public void testGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/valToObject/getter.kt");
+        }
+
+        @TestMetadata("nonTopLevel.kt")
+        public void testNonTopLevel() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/valToObject/nonTopLevel.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/valToObject/simple.kt");
+        }
+
+        @TestMetadata("var.kt")
+        public void testVar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/valToObject/var.kt");
+        }
+
+        @TestMetadata("withJavaUsage.kt")
+        public void testWithJavaUsage() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/valToObject/withJavaUsage.kt");
+        }
+    }
 }
