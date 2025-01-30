@@ -217,6 +217,24 @@ public class JDParser {
       l.set(i, line);
     }
 
+    if (mySettings.JD_KEEP_EMPTY_LINES) {
+      // counting for the empty lines in the prefix and the suffix of the javadoc to restore them in the future
+      int prefixLineCount = 0;
+      int suffixLineCount = 0;
+
+      while (prefixLineCount < size && l.get(prefixLineCount).isEmpty()) prefixLineCount++;
+      if (prefixLineCount == size) {
+        comment.setPrefixEmptyLineCount(prefixLineCount);
+        comment.setSuffixEmptyLineCount(0);
+      }
+      else {
+        while (suffixLineCount < size && l.get(size - suffixLineCount - 1).isEmpty()) suffixLineCount++;
+
+        comment.setPrefixEmptyLineCount(prefixLineCount);
+        comment.setSuffixEmptyLineCount(suffixLineCount);
+      }
+    }
+
     StringBuilder sb = new StringBuilder();
     String tag = null;
     boolean isInsidePreTag = false;

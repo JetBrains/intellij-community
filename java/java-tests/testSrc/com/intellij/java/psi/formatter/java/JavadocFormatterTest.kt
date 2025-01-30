@@ -584,6 +584,7 @@ public int method(int parameter) {
     javaSettings.apply {
       ENABLE_JAVADOC_FORMATTING = true
       JD_PRESERVE_LINE_FEEDS = true
+      JD_KEEP_EMPTY_LINES = false
     }
 
     doClassTest(
@@ -1054,6 +1055,7 @@ String test(int aParameter, int bParameter) {
   }
 
   fun testJavadocWithTabs() {
+    javaSettings.JD_KEEP_EMPTY_LINES = false
     doClassTest(
       "\t/**\n" +
       "\t \t *\n" +
@@ -1854,6 +1856,62 @@ public class Test {
     """.trimIndent())
   }
 
+  fun testJavadocEmptyLines() {
+    javaSettings.JD_KEEP_EMPTY_LINES = true
+    doTextTest("""
+      /**
+       * 
+       * 
+       * 
+       *
+       */
+      public class Main {}
+    """.trimIndent(), """
+      /**
+       *
+       *
+       *
+       *
+       */
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownEmptyLines() {
+    doTextTest("""
+      ///
+      /// line
+      /// 
+      public class Main {}
+    """.trimIndent(), """
+      ///
+      /// line
+      ///
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testEmptyLinesOldJavadoc() {
+    doTextTest("""
+      /**
+       * ff
+       * ff
+       * ff
+       */
+      public class Main {}
+    """.trimIndent(), """
+      /**
+       * ff
+       * ff
+       * ff
+       */
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
   fun testMarkdownSpacing(){
     doTextTest("""
       ///I'm stuck to the leading slashes !
@@ -2003,6 +2061,7 @@ public class Test {
     }
 
     doTextTest("""
+    /// 
     ///         | Latin | Greek |
     ///         |-------|-------|
     ///         | a     | alpha |
@@ -2029,6 +2088,7 @@ public class Test {
     ///    * Another sub element
     /// ---
     ///  # Title, but I have a long text, so loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down for a game of Minecraft ?
+    ///
     """.trimIndent())
   }
 
