@@ -45,7 +45,7 @@ private fun appendToClassPath(execArgs: ParametersList, classPath: String) {
 
 internal class ExecRemoteConnectionCreator : MavenRemoteConnectionCreator() {
 
-  override fun createRemoteConnection(runConfiguration: MavenRunConfiguration): MavenRemoteConnection? {
+  override fun createRemoteConnectionForScript(runConfiguration: MavenRunConfiguration): MavenRemoteConnection {
     val parameters = JavaParameters()
     val connection = createConnection(runConfiguration.project, parameters)
     val parametersOfConnection = parameters.vmParametersList

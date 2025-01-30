@@ -629,7 +629,7 @@
       implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.MavenImportBadConfigEventParser"/>
     <log.spy.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.InvalidTargetReleaseQuickFix"/>
 
-    <mavenRemoteConnectionCreator implementation="org.jetbrains.idea.maven.execution.ExecRemoteConnectionCreator"/>
+    <mavenRemoteConnectionCreator implementation="org.jetbrains.idea.maven.execution.ExecRemoteConnectionCreator" order="last"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
     <provider implementation="org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory"/>

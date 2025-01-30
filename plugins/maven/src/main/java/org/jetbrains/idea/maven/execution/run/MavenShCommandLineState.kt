@@ -166,12 +166,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
   private fun getArgs(): List<String> {
     val args = ArrayList<String>()
-    if (isWindows()) {
-      args.add(getScriptPath(".cmd"))
-    }
-    else {
-      args.add(getScriptPath(""))
-    }
+    args.add(getScriptPath())
     addIdeaParameters(args)
     args.addAll(myConfiguration.runnerParameters.options)
     args.addAll(myConfiguration.runnerParameters.goals)
@@ -202,15 +197,16 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     return map
   }
 
-  private fun getScriptPath(extension: String): String {
+  private fun getScriptPath(): String {
+
     val type: MavenHomeType = MavenProjectsManager.getInstance(myConfiguration.project).getGeneralSettings().getMavenHomeType()
     if (type is MavenWrapper) {
-      return "mvnw$extension"
+      return if(isWindows()) "mvnw.cmd" else "./mvnw"
     }
 
     val distribution = MavenDistributionsCache.getInstance(myConfiguration.getProject())
       .getMavenDistribution(myConfiguration.runnerParameters.workingDirPath)
-    return distribution.mavenHome.resolve("bin").resolve("mvn$extension").toString()
+    return distribution.mavenHome.resolve("bin").resolve(if(isWindows()) "mvn.cmd" else "mvn").toString()
   }
 
   override fun getRemoteConnection(): RemoteConnection? {
@@ -222,7 +218,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
   private fun createRemoteConnection(): MavenRemoteConnection? {
     for (creator in MavenExtRemoteConnectionCreator.EP_NAME.extensionList) {
-      val connection = creator.createRemoteConnection(myConfiguration)
+      val connection = creator.createRemoteConnectionForScript(myConfiguration)
       if (connection != null) {
         myRemoteConnection = connection
         return connection
