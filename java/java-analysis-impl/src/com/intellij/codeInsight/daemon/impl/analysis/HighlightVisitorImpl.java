@@ -638,10 +638,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
 
-    if (!hasErrorResults() && (!(parent instanceof PsiNewExpression newExpression) || !newExpression.isArrayCreation())) {
-      add(GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, ref, result.getSubstitutor(), myJavaSdkVersion));
-    }
-
     if (resolved != null && parent instanceof PsiReferenceList referenceList && !hasErrorResults()) {
       add(HighlightUtil.checkElementInReferenceList(ref, referenceList, result));
     }
@@ -879,17 +875,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
 
-    if (method instanceof PsiMethod psiMethod && psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
-      if (!hasErrorResults() && psiMethod.hasTypeParameters()) {
-        add(GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(method, expression, result.getSubstitutor(), myJavaSdkVersion));
-      }
-
-      PsiClass containingClass = psiMethod.getContainingClass();
-      if (!hasErrorResults() && containingClass != null && containingClass.isInterface()) {
-        add(HighlightMethodUtil.checkStaticInterfaceCallQualifier(expression, result, expression, containingClass));
-      }
-    }
-
     if (!hasErrorResults()) {
       add(PsiMethodReferenceHighlightingUtil.checkRawConstructorReference(expression));
     }
@@ -986,15 +971,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!hasErrorResults()) HighlightClassUtil.checkPermitsList(list, myErrorSink);
       if (!hasErrorResults()) add(GenericsHighlightUtil.checkGenericCannotExtendException(list));
     }
-  }
-
-  @Override
-  public void visitReferenceParameterList(@NotNull PsiReferenceParameterList list) {
-    super.visitReferenceParameterList(list);
-    if (list.getTextLength() == 0) return;
-
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkParametersAllowed(list));
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkParametersOnRaw(list, myLanguageLevel));
   }
 
   @Override

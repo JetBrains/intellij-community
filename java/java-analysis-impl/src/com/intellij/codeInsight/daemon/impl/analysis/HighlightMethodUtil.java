@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -215,62 +214,6 @@ public final class HighlightMethodUtil {
     return (errorMessage.equals(JavaPsiBundle.message("error.incompatible.type.failed.to.resolve.argument")) ||
             errorMessage.equals(JavaPsiBundle.message("error.incompatible.type.declaration.for.the.method.reference.not.found"))) &&
            hasSurroundingInferenceError(methodCall);
-  }
-
-  static HighlightInfo.Builder checkStaticInterfaceCallQualifier(@NotNull PsiJavaCodeReferenceElement referenceToMethod,
-                                                                 @NotNull JavaResolveResult resolveResult,
-                                                                 @NotNull PsiElement elementToHighlight,
-                                                                 @NotNull PsiClass containingClass) {
-    String message = checkStaticInterfaceMethodCallQualifier(referenceToMethod, resolveResult.getCurrentFileResolveScope(), containingClass);
-    if (message != null) {
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message)
-        .range(getFixRange(elementToHighlight));
-      if (referenceToMethod instanceof PsiReferenceExpression referenceExpression) {
-        IntentionAction action =
-          QuickFixFactory.getInstance().createAccessStaticViaInstanceFix(referenceExpression, resolveResult);
-        builder.registerFix(action, null, null, null, null);
-      }
-      return builder;
-    }
-    return null;
-  }
-
-  /* see also PsiReferenceExpressionImpl.hasValidQualifier(), StaticImportResolveProcessor.checkStaticInterfaceMethodCallQualifier() */
-  private static @NlsContexts.DetailedDescription String checkStaticInterfaceMethodCallQualifier(@NotNull PsiJavaCodeReferenceElement ref,
-                                                                                                 @Nullable PsiElement scope,
-                                                                                                 @NotNull PsiClass containingClass) {
-    @Nullable PsiElement qualifierExpression = ref.getQualifier();
-    if (qualifierExpression == null && PsiTreeUtil.isAncestor(containingClass, ref, true)) {
-      return null;
-    }
-
-    PsiElement resolve = null;
-    if (qualifierExpression == null && scope instanceof PsiImportStaticStatement statement) {
-      resolve = statement.resolveTargetClass();
-    }
-    else if (qualifierExpression instanceof PsiJavaCodeReferenceElement element) {
-      resolve = element.resolve();
-    }
-
-    if (containingClass.getManager().areElementsEquivalent(resolve, containingClass)) {
-      return null;
-    }
-
-    if (resolve instanceof PsiTypeParameter typeParameter) {
-      Set<PsiClass> classes = new HashSet<>();
-      for (PsiClassType type : typeParameter.getExtendsListTypes()) {
-        PsiClass aClass = type.resolve();
-        if (aClass != null) {
-          classes.add(aClass);
-        }
-      }
-
-      if (classes.size() == 1 && classes.contains(containingClass)) {
-        return null;
-      }
-    }
-
-    return JavaErrorBundle.message("static.interface.method.call.qualifier");
   }
 
   static HighlightInfo.Builder checkAbstractMethodInConcreteClass(@NotNull PsiMethod method, @NotNull PsiElement elementToHighlight) {

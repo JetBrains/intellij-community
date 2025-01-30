@@ -5,9 +5,11 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -416,6 +418,68 @@ final class GenericsChecker {
       }
       else if (!typeElement.isInferredType()){
         myVisitor.report(JavaErrorKinds.TYPE_WILDCARD_MAY_BE_USED_ONLY_AS_REFERENCE_PARAMETERS.create(typeElement));
+      }
+    }
+  }
+
+  void checkParametersAllowed(@NotNull PsiReferenceParameterList refParamList) {
+    PsiElement parent = refParamList.getParent();
+    if (parent instanceof PsiReferenceExpression) {
+      PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiMethodCallExpression) && !(parent instanceof PsiMethodReferenceExpression)) {
+        myVisitor.report(JavaErrorKinds.TYPE_ARGUMENT_NOT_ALLOWED.create(refParamList));
+      }
+    }
+  }
+
+  void checkParametersOnRaw(@NotNull PsiReferenceParameterList refParamList) {
+    JavaResolveResult resolveResult = null;
+    PsiElement parent = refParamList.getParent();
+    PsiElement qualifier = null;
+    if (parent instanceof PsiJavaCodeReferenceElement referenceElement) {
+      resolveResult = referenceElement.advancedResolve(false);
+      qualifier = referenceElement.getQualifier();
+    }
+    else if (parent instanceof PsiCallExpression callExpression) {
+      resolveResult = callExpression.resolveMethodGenerics();
+      if (parent instanceof PsiMethodCallExpression methodCallExpression) {
+        PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+        qualifier = methodExpression.getQualifier();
+      }
+    }
+    if (resolveResult != null) {
+      PsiElement element = resolveResult.getElement();
+      if (!(element instanceof PsiTypeParameterListOwner owner)) return;
+      if (owner.hasModifierProperty(PsiModifier.STATIC)) return;
+      if (qualifier instanceof PsiJavaCodeReferenceElement referenceElement && referenceElement.resolve() instanceof PsiTypeParameter) return;
+      PsiClass containingClass = owner.getContainingClass();
+      if (containingClass != null && PsiUtil.isRawSubstitutor(containingClass, resolveResult.getSubstitutor())) {
+        if (element instanceof PsiMethod psiMethod) {
+          if (myVisitor.languageLevel().isAtLeast(LanguageLevel.JDK_1_7)) return;
+          if (psiMethod.findSuperMethods().length > 0) return;
+          if (qualifier instanceof PsiReferenceExpression expression) {
+            PsiType type = expression.getType();
+            boolean isJavac7 = JavaVersionService.getInstance().isAtLeast(containingClass, JavaSdkVersion.JDK_1_7);
+            if (type instanceof PsiClassType psiClassType && isJavac7 && psiClassType.isRaw()) return;
+            PsiClass typeParameter = PsiUtil.resolveClassInType(type);
+            if (typeParameter instanceof PsiTypeParameter) {
+              if (isJavac7) return;
+              for (PsiClassType classType : typeParameter.getExtendsListTypes()) {
+                PsiClass resolve = classType.resolve();
+                if (resolve != null) {
+                  PsiMethod[] superMethods = resolve.findMethodsBySignature(psiMethod, true);
+                  for (PsiMethod superMethod : superMethods) {
+                    if (!PsiUtil.isRawSubstitutor(superMethod, resolveResult.getSubstitutor())) {
+                      return;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        var kind = element instanceof PsiClass ? JavaErrorKinds.TYPE_ARGUMENT_ON_RAW_TYPE : JavaErrorKinds.TYPE_ARGUMENT_ON_RAW_METHOD;
+        myVisitor.report(kind.create(refParamList));
       }
     }
   }

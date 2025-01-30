@@ -618,6 +618,9 @@ public final class JavaErrorKinds {
   public static final Simple<PsiTypeElement> TYPE_UNKNOWN_CLASS = error(PsiTypeElement.class, "type.unknown.class")
     .withRawDescription(type -> message("type.unknown.class", type.getType().getDeepComponentType().getCanonicalText()));
   public static final Simple<PsiTypeElement> TYPE_ARGUMENT_PRIMITIVE = error(PsiTypeElement.class, "type.argument.primitive");
+  public static final Simple<PsiReferenceParameterList> TYPE_ARGUMENT_NOT_ALLOWED = error("type.argument.not.allowed");
+  public static final Simple<PsiReferenceParameterList> TYPE_ARGUMENT_ON_RAW_TYPE = error("type.argument.on.raw.type");
+  public static final Simple<PsiReferenceParameterList> TYPE_ARGUMENT_ON_RAW_METHOD = error("type.argument.on.raw.method");
   public static final Simple<PsiTypeElement> TYPE_WILDCARD_NOT_EXPECTED = error(PsiTypeElement.class, "type.wildcard.not.expected");
   public static final Simple<PsiTypeElement> TYPE_WILDCARD_MAY_BE_USED_ONLY_AS_REFERENCE_PARAMETERS = 
     error(PsiTypeElement.class, "type.wildcard.may.be.used.only.as.reference.parameters");

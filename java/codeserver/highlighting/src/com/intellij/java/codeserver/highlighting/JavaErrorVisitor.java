@@ -333,6 +333,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
 
     JavaResolveResult[] results = expression.multiResolve(true);
     JavaResolveResult result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
+    PsiElement method = result.getElement();
     if (!hasErrorResults()) {
       boolean resolvedButNonApplicable = results.length == 1 && results[0] instanceof MethodCandidateInfo methodInfo &&
                                          !methodInfo.isApplicable() &&
@@ -354,6 +355,15 @@ final class JavaErrorVisitor extends JavaElementVisitor {
         PsiType psiType = typeElement.getType();
         myGenericsChecker.checkGenericArrayCreation(qualifier, psiType);
         if (hasErrorResults()) return;
+      }
+    }
+    if (method instanceof PsiMethod psiMethod && psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+      if (!hasErrorResults() && psiMethod.hasTypeParameters()) {
+        myGenericsChecker.checkParameterizedReferenceTypeArguments(method, expression, result.getSubstitutor());
+      }
+      PsiClass containingClass = psiMethod.getContainingClass();
+      if (!hasErrorResults() && containingClass != null && containingClass.isInterface()) {
+        myExpressionChecker.checkStaticInterfaceCallQualifier(expression, result, containingClass);
       }
     }
   }
@@ -460,6 +470,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
         }
       }
     }
+    if (!hasErrorResults()) myGenericsChecker.checkParametersAllowed(list);
+    if (!hasErrorResults()) myGenericsChecker.checkParametersOnRaw(list);
   }
 
   @Override
@@ -712,6 +724,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
 
     if (resolved != null && parent instanceof PsiReferenceList referenceList && !hasErrorResults()) {
       checkElementInReferenceList(ref, referenceList, result);
+    }
+    if (!hasErrorResults() && (!(parent instanceof PsiNewExpression newExpression) || !newExpression.isArrayCreation())) {
+      myGenericsChecker.checkParameterizedReferenceTypeArguments(resolved, ref, result.getSubstitutor());
     }
     if (!hasErrorResults()) myClassChecker.checkAbstractInstantiation(ref);
     if (!hasErrorResults()) myClassChecker.checkExtendsDuplicate(ref, resolved);

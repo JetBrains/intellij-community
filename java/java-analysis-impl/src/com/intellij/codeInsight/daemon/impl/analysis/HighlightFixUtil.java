@@ -728,7 +728,7 @@ public final class HighlightFixUtil {
       if (aClass == null) {
         continue;
       }
-      if (GenericsHighlightUtil.checkReferenceTypeArgumentList(aClass, parameterList, PsiSubstitutor.EMPTY, false, version) == null) {
+      if (!GenericsHighlightUtil.hasReferenceTypeProblem(aClass, parameterList, version)) {
         PsiType[] actualTypeParameters = parameterList.getTypeArguments();
         PsiTypeParameter[] classTypeParameters = aClass.getTypeParameters();
         Map<PsiTypeParameter, PsiType> map = new HashMap<>();
