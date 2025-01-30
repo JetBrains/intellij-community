@@ -129,27 +129,33 @@ internal class InlineCompletionTextRenderManager private constructor(
       removeFoldedBlocksEverywhere()
       trimFoldedRangeIfNeeded(initialOffset)
 
-      val newBlocksAfterInline = renderInline(newLines)
-      renderMultiline(newBlocksAfterInline)
+      when (state) {
+        RenderState.RENDERING_INLINE -> {
+          renderInline(listOf(newLines[0]))
+          if (newLines.size > 1) {
+            state = RenderState.RENDERING_BLOCK
+            renderMultiline(newLines.subList(1, newLines.size))
+          }
+        }
+        RenderState.RENDERING_BLOCK -> {
+          renderMultiline(newLines)
+        }
+      }
+
       renderFoldedRange()
       updateDirtyInlays()
     }
 
-    private fun renderInline(newLines: List<InlineCompletionRenderTextBlock>): List<InlineCompletionRenderTextBlock> {
-      if (state != RenderState.RENDERING_INLINE) {
-        return newLines
-      }
-
+    private fun renderInline(newBlocks: List<InlineCompletionRenderTextBlock>) {
       val offset = foldingManager.firstNotFoldedOffset(renderOffset)
 
       val inlineInlay = this.inlineInlay
-      val newInlineBlock = newLines[0]
       if (inlineInlay != null) {
-        inlineInlay.renderer.blocks = inlineInlay.renderer.blocks + newInlineBlock
+        inlineInlay.renderer.blocks = inlineInlay.renderer.blocks + newBlocks
       }
       else {
         editor.inlayModel.execute(true) {
-          val element = renderInlineInlay(editor, offset, listOf(newInlineBlock))
+          val element = renderInlineInlay(editor, offset, newBlocks)
           element?.addActionAvailabilityHints(
             IdeActions.ACTION_INSERT_INLINE_COMPLETION,
             IdeActions.ACTION_INSERT_INLINE_COMPLETION_WORD,
@@ -160,18 +166,14 @@ internal class InlineCompletionTextRenderManager private constructor(
           this.inlineInlay = element
         }
       }
-
-      return newLines.subList(1, newLines.size)
     }
 
     private fun renderMultiline(newLines: List<InlineCompletionRenderTextBlock>) {
       if (newLines.isEmpty()) {
         return
       }
-      if (state == RenderState.RENDERING_INLINE) {
-        state = RenderState.RENDERING_BLOCK
-        foldLineEndIfNotFolded()
-      }
+
+      foldLineEndIfNotFolded()
 
       val offset = foldingManager.firstNotFoldedOffset(this.renderOffset)
 
@@ -229,9 +231,7 @@ internal class InlineCompletionTextRenderManager private constructor(
       }
       when (state) {
         RenderState.RENDERING_INLINE -> {
-          for (block in blocks) {
-            renderInline(listOf(block))
-          }
+          renderInline(blocks)
         }
         RenderState.RENDERING_BLOCK -> {
           val lastBlock = blockLineInlays.last()
@@ -256,6 +256,15 @@ internal class InlineCompletionTextRenderManager private constructor(
       foldedRange = range
       if (editor.document.getText(range).contains('\n')) {
         LOG.error("Incorrect state of inline completion rendering. Folding mustn't contain a new line break.")
+      }
+
+      // Now, the inline inlay is rendered at the wrong offset. Need to re-render.
+      val inlineInlay = this.inlineInlay
+      if (inlineInlay != null) {
+        val inlineBlocks = inlineInlay.renderer.blocks
+        Disposer.dispose(inlineInlay)
+        this.inlineInlay = null
+        renderInline(inlineBlocks)
       }
     }
 
