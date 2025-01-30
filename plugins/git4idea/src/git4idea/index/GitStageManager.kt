@@ -46,8 +46,6 @@ fun enableStagingArea(enabled: Boolean) {
   ApplicationManager.getApplication().messageBus.syncPublisher(CommitModeManager.SETTINGS).settingsChanged()
 }
 
-internal fun canEnableStagingArea() = CommitModeManager.isNonModalInSettings()
-
 internal fun isStagingAreaAvailable(project: Project): Boolean {
   val commitMode = CommitModeManager.getInstance(project).getCurrentCommitMode()
   return commitMode is CommitMode.ExternalCommitMode &&

@@ -220,32 +220,6 @@ object GitLessonsUtil {
     }
   }
 
-  fun LessonContext.showWarningIfModalCommitEnabled() {
-    task {
-      val step = stateCheck {
-        VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
-      }
-      val callbackId = LearningUiManager.addCallback {
-        CommitModeManager.setCommitFromLocalChanges(project, true)
-        step.complete(true)
-      }
-      showWarning(GitLessonsBundle.message("git.use.non.modal.commit.ui.warning",
-                                           action("ShowSettings"),
-                                           strong(VcsBundle.message("version.control.main.configurable.name")),
-                                           strong(VcsBundle.message("commit.dialog.configurable")),
-                                           strong(VcsBundle.message("settings.commit.without.dialog")))
-                  + " " + GitLessonsBundle.message("git.click.to.change.settings", callbackId)) {
-        !VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
-      }
-      test {
-        if (!VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES) {
-          Thread.sleep(1000)  // need to wait until LessonMessagePane become updated after restart and warning will be showed
-          clickLessonMessagePaneLink(" click ")
-        }
-      }
-    }
-  }
-
   fun LessonContext.showWarningIfStagingAreaEnabled() {
     task {
       val step = stateCheck {
@@ -267,12 +241,10 @@ object GitLessonsUtil {
   }
 
   fun LessonContext.restoreCommitWindowStateInformer() {
-    val enabledModalInterface = !VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
     val enabledStagingArea = GitVcsApplicationSettings.getInstance().isStagingAreaEnabled
-    if (!enabledModalInterface && !enabledStagingArea) return
+    if (!enabledStagingArea) return
     restoreChangedSettingsInformer {
-      if (enabledModalInterface) CommitModeManager.setCommitFromLocalChanges(null, false)
-      if (enabledStagingArea) enableStagingArea(true)
+      enableStagingArea(true)
     }
   }
 

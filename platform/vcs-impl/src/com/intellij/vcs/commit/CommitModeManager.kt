@@ -92,7 +92,7 @@ class CommitModeManager(private val project: Project, private val coroutineScope
       return CommitMode.ExternalCommitMode(singleVcs)
     }
 
-    if (isNonModalInSettings() && canSetNonModal()) {
+    if (canSetNonModal()) {
       return CommitMode.NonModalCommitMode(isToggleCommitUi)
     }
 
@@ -144,18 +144,6 @@ class CommitModeManager(private val project: Project, private val coroutineScope
 
     @JvmStatic
     fun getInstance(project: Project): CommitModeManager = project.service()
-
-    @JvmStatic
-    fun setCommitFromLocalChanges(project: Project?, value: Boolean) {
-      val oldValue = appSettings.COMMIT_FROM_LOCAL_CHANGES
-      if (oldValue == value) return
-
-      appSettings.COMMIT_FROM_LOCAL_CHANGES = value
-      VcsStatisticsCollector.logNonModalCommitStateChanged(project)
-      getApplication().messageBus.syncPublisher(SETTINGS).settingsChanged()
-    }
-
-    fun isNonModalInSettings(): Boolean = isForceNonModalCommit.asBoolean() || appSettings.COMMIT_FROM_LOCAL_CHANGES
   }
 
   interface SettingsListener : EventListener {
@@ -179,7 +167,7 @@ sealed class CommitMode {
   object PendingCommitMode : CommitMode() {
     override fun useCommitToolWindow(): Boolean {
       // Enable 'Commit' toolwindow before vcses are activated
-      return CommitModeManager.isNonModalInSettings()
+      return true
     }
 
     override fun disableDefaultCommitAction(): Boolean {

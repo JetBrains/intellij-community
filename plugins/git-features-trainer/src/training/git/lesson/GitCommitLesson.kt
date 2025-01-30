@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.VcsNotificationIdsHolder
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -43,7 +42,6 @@ import training.git.GitLessonsUtil.resetGitLogWindow
 import training.git.GitLessonsUtil.restoreCommitWindowStateInformer
 import training.git.GitLessonsUtil.showWarningIfCommitWindowClosed
 import training.git.GitLessonsUtil.showWarningIfGitWindowClosed
-import training.git.GitLessonsUtil.showWarningIfModalCommitEnabled
 import training.git.GitLessonsUtil.showWarningIfStagingAreaEnabled
 import training.git.GitLessonsUtil.triggerOnChangeCheckboxShown
 import training.git.GitLessonsUtil.triggerOnNotification
@@ -81,7 +79,6 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
       modifyFiles()
     }
 
-    showWarningIfModalCommitEnabled()
     showWarningIfStagingAreaEnabled()
 
     highlightToolWindowStripe(ToolWindowId.COMMIT)

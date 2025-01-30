@@ -4876,15 +4876,12 @@ f:com.intellij.vcs.commit.CommitModeManager
 - dispose():V
 - f:getCurrentCommitMode():com.intellij.vcs.commit.CommitMode
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.vcs.commit.CommitModeManager
-- sf:setCommitFromLocalChanges(com.intellij.openapi.project.Project,Z):V
 - sf:subscribeOnCommitModeChange(com.intellij.util.messages.SimpleMessageBusConnection,com.intellij.vcs.commit.CommitModeManager$CommitModeListener):V
 com.intellij.vcs.commit.CommitModeManager$CommitModeListener
 - java.util.EventListener
 - a:commitModeChanged():V
 f:com.intellij.vcs.commit.CommitModeManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.vcs.commit.CommitModeManager
-- f:isNonModalInSettings():Z
-- f:setCommitFromLocalChanges(com.intellij.openapi.project.Project,Z):V
 - f:subscribeOnCommitModeChange(com.intellij.util.messages.SimpleMessageBusConnection,com.intellij.vcs.commit.CommitModeManager$CommitModeListener):V
 com.intellij.vcs.commit.CommitModeManager$SettingsListener
 - java.util.EventListener

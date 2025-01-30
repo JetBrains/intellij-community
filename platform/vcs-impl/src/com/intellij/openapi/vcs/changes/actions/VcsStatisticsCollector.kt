@@ -79,10 +79,6 @@ object VcsStatisticsCollector : CounterUsagesCollector() {
     }
   }
 
-  fun logNonModalCommitStateChanged(project: Project?) {
-    NON_MODAL_COMMIT_STATE_CHANGED.log(project, VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES)
-  }
-
   private fun <T> computeDelta(before: Collection<T>, after: Collection<T>): Int {
     val beforeSet = before.toHashSet()
     val afterSet = after.toHashSet()

@@ -38,7 +38,6 @@ import training.git.GitLessonsUtil.openCommitWindow
 import training.git.GitLessonsUtil.restoreByUiAndBackgroundTask
 import training.git.GitLessonsUtil.restoreCommitWindowStateInformer
 import training.git.GitLessonsUtil.showWarningIfCommitWindowClosed
-import training.git.GitLessonsUtil.showWarningIfModalCommitEnabled
 import training.git.GitLessonsUtil.showWarningIfStagingAreaEnabled
 import training.git.GitLessonsUtil.triggerOnChangeCheckboxShown
 import training.git.GitLessonsUtil.triggerOnCheckout
@@ -68,7 +67,6 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
   override val lessonContent: LessonContext.() -> Unit = {
     val cloneActionText = GitBundle.message("action.Git.Clone.text")
 
-    showWarningIfModalCommitEnabled()
     showWarningIfStagingAreaEnabled()
 
     task {
