@@ -3,33 +3,41 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.invokeAction
-import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
-import com.intellij.driver.sdk.ui.should
 
-class ToolWindowLeftToolbarUi(data: ComponentData) : UiComponent(data) {
-  val projectButton = stripeButton { byAccessibleName("Project") }
-  val runButton = stripeButton { byAccessibleName("Run") }
-  val buildButton = stripeButton { byAccessibleName("Build") }
-  val gitButton = stripeButton { byAccessibleName("Git") }
-  val commitButton = stripeButton { byAccessibleName("Commit") }
-  val structureButton = stripeButton { byAccessibleName("Structure") }
-  val servicesButton = stripeButton { byAccessibleName("Services") }
-  val terminalButton = stripeButton { byAccessibleName("Terminal") }
-  val problemsButton = stripeButton { byAccessibleName("Problems") }
-  val jupyterButton = stripeButton { byAccessibleName("Jupyter") }
-  val moreButton = stripeButton { byAccessibleName("More") }
-  val debugButton = stripeButton { byAccessibleName("Debug") }
-  val findButton = stripeButton { byAccessibleName("Find") }
+open class ToolWindowToolbarUi(data: ComponentData) : UiComponent(data) {
+  fun stripeButton(locator: QueryBuilder.() -> String) = x(StripeButtonUi::class.java, locator)
+  fun stripeButton(accessibleName: String) = stripeButton { byAccessibleName(accessibleName) }
 }
 
-class ToolWindowRightToolbarUi(data: ComponentData) : UiComponent(data) {
-  val notificationsButton = stripeButton { byAccessibleName("Notifications") }
-  val gradleButton = stripeButton { byAccessibleName("Gradle") }
-  val mavenButton = stripeButton { byAccessibleName("Maven") }
-  val databaseButton = stripeButton { byAccessibleName("Database") }
-  val aiAssistantButton = stripeButton { byAccessibleName("AI Assistant") }
-  val mesonButton = stripeButton { byAccessibleName("Meson") }
+class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
+  val projectButton = stripeButton("Project")
+  val runButton = stripeButton("Run")
+  val buildButton = stripeButton("Build")
+  val gitButton = stripeButton("Git")
+  val commitButton = stripeButton("Commit")
+  val structureButton = stripeButton("Structure")
+  val servicesButton = stripeButton("Services")
+  val terminalButton = stripeButton("Terminal")
+  val problemsButton = stripeButton("Problems")
+  val jupyterButton = stripeButton("Jupyter")
+  val moreButton = stripeButton("More")
+  val debugButton = stripeButton("Debug")
+  val findButton = stripeButton("Find")
+
+  fun IdeaFrameUI.openMoreToolWindow(name: String) {
+    moreButton.click()
+    popup().accessibleList().clickItem(name, false)
+  }
+}
+
+class ToolWindowRightToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
+  val notificationsButton = stripeButton("Notifications")
+  val gradleButton = stripeButton("Gradle")
+  val mavenButton = stripeButton("Maven")
+  val databaseButton = stripeButton("Database")
+  val aiAssistantButton = stripeButton("AI Assistant")
+  val mesonButton = stripeButton("Meson")
 }
 
 class StripeButtonUi(data: ComponentData) : UiComponent(data) {
@@ -54,10 +62,8 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
   }
 
   fun close() {
-    val toolWindow = button.getToolWindow()
-    if (toolWindow.isVisible()) {
-      this.click()
-      should ("Tool window is still visible"){ !toolWindow.isVisible() }
+    driver.withContext(OnDispatcher.EDT) {
+      button.getToolWindow().hide()
     }
   }
 
@@ -73,6 +79,7 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
     fun isActive(): Boolean
     fun isVisible(): Boolean
     fun stretchWidth(value: Int)
+    fun hide()
   }
 
   @Remote("com.intellij.ide.actions.ActivateToolWindowAction\$Manager")
@@ -80,6 +87,3 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
     fun getActionIdForToolWindow(id: String): String
   }
 }
-
-private fun Finder.stripeButton(locator: String) = x(locator, StripeButtonUi::class.java)
-fun Finder.stripeButton(locator: QueryBuilder.() -> String) = x(StripeButtonUi::class.java) { locator() }
