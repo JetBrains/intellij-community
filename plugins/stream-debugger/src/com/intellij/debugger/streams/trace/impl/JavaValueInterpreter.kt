@@ -3,6 +3,7 @@ package com.intellij.debugger.streams.trace.impl
 
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.streams.StreamDebuggerBundle
 import com.intellij.debugger.streams.trace.XValueInterpreter
 import com.intellij.psi.CommonClassNames
 import com.intellij.xdebugger.XDebugSession
@@ -23,8 +24,10 @@ class JavaValueInterpreter : XValueInterpreter {
           }
           if (classType != null) {
             val exceptionMessage: String? = DebuggerUtils.tryExtractExceptionMessage(reference)
-            val description = ("Evaluation failed: " + type.name()) + " exception thrown"
-            val descriptionWithReason = if (exceptionMessage == null) description else "$description: $exceptionMessage"
+            val descriptionWithReason = if (exceptionMessage == null)
+              StreamDebuggerBundle.message("stream.debugger.evaluation.failed.with.exception", type.name())
+            else
+              StreamDebuggerBundle.message("stream.debugger.evaluation.failed.with.exception.and.message", type.name(), exceptionMessage)
             return XValueInterpreter.Result.Error(descriptionWithReason)
           }
         }

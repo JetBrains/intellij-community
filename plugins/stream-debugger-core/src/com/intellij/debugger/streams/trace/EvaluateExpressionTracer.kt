@@ -45,7 +45,7 @@ class EvaluateExpressionTracer(
             }
             catch (t: Throwable) {
               return StreamTracer.Result.EvaluationFailed(streamTraceExpression,
-                                        StreamDebuggerBundle.message("evaluation.failed.cannot.interpret.result", t.message!!))
+                                        StreamDebuggerBundle.message("stream.debugger.evaluation.failed.cannot.interpret.result", t.message!!))
             }
             return StreamTracer.Result.Evaluated(interpretedResult, result.evaluationContext)
           }
@@ -53,7 +53,7 @@ class EvaluateExpressionTracer(
             return StreamTracer.Result.EvaluationFailed(streamTraceExpression, result.message)
           }
           is XValueInterpreter.Result.Unknown -> {
-            return StreamTracer.Result.EvaluationFailed(streamTraceExpression, StreamDebuggerBundle.message("evaluation.failed.unknown.result.type"))
+            return StreamTracer.Result.EvaluationFailed(streamTraceExpression, StreamDebuggerBundle.message("stream.debugger.evaluation.failed", StreamDebuggerBundle.message("stream.debugger.evaluation.failed.unknown.type")))
           }
         }
       }

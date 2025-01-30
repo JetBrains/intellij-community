@@ -248,7 +248,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   private static class MyPlaceholder extends JPanel {
     MyPlaceholder() {
       super(new BorderLayout());
-      add(new JBLabel(StreamDebuggerBundle.message("evaluation.in.process"), SwingConstants.CENTER), BorderLayout.CENTER);
+      add(new JBLabel(StreamDebuggerBundle.message("evaluation.in.progress"), SwingConstants.CENTER), BorderLayout.CENTER);
     }
 
     void setContent(@NotNull JComponent view, String placement) {
