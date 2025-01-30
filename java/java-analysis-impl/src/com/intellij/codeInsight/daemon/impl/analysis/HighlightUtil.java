@@ -4,18 +4,17 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.JavaModuleSystemEx;
 import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsConditionalFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.ChangeNewOperatorTypeFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.QualifyWithThisFix;
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
-import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
-import com.intellij.ide.IdeBundle;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -34,7 +33,6 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
@@ -51,16 +49,15 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.InstanceOfUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -79,166 +76,11 @@ public final class HighlightUtil {
   }
 
 
-  static void checkInstanceOfApplicable(@NotNull PsiInstanceOfExpression expression, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    PsiExpression operand = expression.getOperand();
-    PsiTypeElement typeElement = InstanceOfUtils.findCheckTypeElement(expression);
-    if (typeElement == null) return;
-    PsiType checkType = typeElement.getType();
-    PsiType operandType = operand.getType();
-    if (operandType == null) return;
-    boolean operandIsPrimitive = TypeConversionUtil.isPrimitiveAndNotNull(operandType);
-    boolean checkIsPrimitive = TypeConversionUtil.isPrimitiveAndNotNull(checkType);
-    boolean convertible = TypeConversionUtil.areTypesConvertible(operandType, checkType);
-    boolean primitiveInPatternsEnabled = PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, expression);
-    if (((operandIsPrimitive || checkIsPrimitive) && !primitiveInPatternsEnabled) || !convertible) {
-      if (!convertible && IncompleteModelUtil.isIncompleteModel(expression) &&
-          IncompleteModelUtil.isPotentiallyConvertible(checkType, operand)) {
-        return;
-      }
-      String message = JavaErrorBundle.message("inconvertible.type.cast", JavaHighlightUtil.formatType(operandType), JavaHighlightUtil
-        .formatType(checkType));
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-      if (((operandIsPrimitive || checkIsPrimitive) && !primitiveInPatternsEnabled) && convertible) {
-        HighlightInfo.Builder infoFeature =
-          checkFeature(expression, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS,
-                       PsiUtil.getLanguageLevel(expression), expression.getContainingFile());
-        if (infoFeature != null) {
-          info = infoFeature;
-        }
-      }
-      if (checkIsPrimitive) {
-        IntentionAction action = getFixFactory().createReplacePrimitiveWithBoxedTypeAction(operandType, typeElement);
-        if (action != null) {
-          info.registerFix(action, null, null, null, null);
-        }
-      }
-
-      errorSink.accept(info);
-      return;
-    }
-    PsiPrimaryPattern pattern = expression.getPattern();
-    if (pattern instanceof PsiDeconstructionPattern deconstruction) {
-      PatternHighlightingModel.createDeconstructionErrors(deconstruction, errorSink);
-    }
-  }
-
-
-  /**
-   * 15.16 Cast Expressions
-   * ( ReferenceType {AdditionalBound} ) expression, where AdditionalBound: & InterfaceType then all must be true
-   * - ReferenceType must denote a class or interface type.
-   * - The erasures of all the listed types must be pairwise different.
-   * - No two listed types may be subtypes of different parameterization of the same generic interface.
-   */
-  static HighlightInfo.Builder checkIntersectionInTypeCast(@NotNull PsiTypeCastExpression expression,
-                                                   @NotNull LanguageLevel languageLevel,
-                                                   @NotNull PsiFile file) {
-    PsiTypeElement castTypeElement = expression.getCastType();
-    if (castTypeElement == null || !isIntersection(castTypeElement, castTypeElement.getType())) {
-      return null;
-    }
-    HighlightInfo.Builder info = checkFeature(expression, JavaFeature.INTERSECTION_CASTS, languageLevel, file);
-    if (info != null) return info;
-
-    PsiTypeElement[] conjuncts = PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class);
-    if (conjuncts != null) {
-      Set<PsiType> erasures = new HashSet<>(conjuncts.length);
-      erasures.add(TypeConversionUtil.erasure(conjuncts[0].getType()));
-      List<PsiTypeElement> conjList = new ArrayList<>(Arrays.asList(conjuncts));
-      for (int i = 1; i < conjuncts.length; i++) {
-        PsiTypeElement conjunct = conjuncts[i];
-        PsiType conjType = conjunct.getType();
-        if (conjType instanceof PsiClassType classType) {
-          PsiClass aClass = classType.resolve();
-          if (aClass != null && !aClass.isInterface()) {
-            HighlightInfo.Builder errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-              .range(conjunct)
-              .descriptionAndTooltip(JavaErrorBundle.message("interface.expected"));
-            var action = new FlipIntersectionSidesFix(aClass.getName(), conjunct, castTypeElement);
-            errorResult.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(null), null, null);
-            return errorResult;
-          }
-        }
-        else {
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .range(conjunct)
-            .descriptionAndTooltip(JavaErrorBundle.message("unexpected.type.class.expected"));
-        }
-        if (!erasures.add(TypeConversionUtil.erasure(conjType))) {
-          HighlightInfo.Builder highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .range(conjunct)
-            .descriptionAndTooltip(JavaErrorBundle.message("repeated.interface"));
-          var action = new DeleteRepeatedInterfaceFix(conjunct);
-          highlightInfo.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(null), null, null);
-          return highlightInfo;
-        }
-      }
-
-      List<PsiType> typeList = ContainerUtil.map(conjList, PsiTypeElement::getType);
-      Ref<@Nls String> differentArgumentsMessage = new Ref<>();
-      PsiClass sameGenericParameterization =
-        InferenceSession.findParameterizationOfTheSameGenericClass(typeList, pair -> {
-          if (!TypesDistinctProver.provablyDistinct(pair.first, pair.second)) {
-            return true;
-          }
-          differentArgumentsMessage.set(IdeBundle.message("x.and.y", pair.first.getPresentableText(),
-                                                          pair.second.getPresentableText()));
-          return false;
-        });
-      if (sameGenericParameterization != null) {
-        String message = JavaErrorBundle
-          .message("class.cannot.be.inherited.with.different.arguments", formatClass(sameGenericParameterization),
-                   differentArgumentsMessage.get());
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .range(expression)
-          .descriptionAndTooltip(message);
-      }
-    }
-
-    return null;
-  }
-
-  private static boolean isIntersection(@NotNull PsiTypeElement castTypeElement, @NotNull PsiType castType) {
-    if (castType instanceof PsiIntersectionType) return true;
-    return castType instanceof PsiClassType && PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class) != null;
-  }
-
-  static HighlightInfo.Builder checkInconvertibleTypeCast(@NotNull PsiTypeCastExpression expression) {
-    PsiTypeElement castTypeElement = expression.getCastType();
-    if (castTypeElement == null) return null;
-    PsiType castType = castTypeElement.getType();
-
-    PsiExpression operand = expression.getOperand();
-    if (operand == null) return null;
-    PsiType operandType = operand.getType();
-
-    if (operandType != null &&
-        !TypeConversionUtil.areTypesConvertible(operandType, castType, PsiUtil.getLanguageLevel(expression)) &&
-        !RedundantCastUtil.isInPolymorphicCall(expression)) {
-      if (IncompleteModelUtil.isIncompleteModel(expression) && IncompleteModelUtil.isPotentiallyConvertible(castType, operand)) {
-        return null;
-      }
-      String message = JavaErrorBundle.message("inconvertible.type.cast", JavaHighlightUtil.formatType(operandType), JavaHighlightUtil
-        .formatType(castType));
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-    }
-    return null;
-  }
-
   static HighlightInfo.Builder checkAssignability(@Nullable PsiType lType,
                                           @Nullable PsiType rType,
                                           @Nullable PsiExpression expression,
                                           @NotNull PsiElement elementToHighlight) {
     TextRange textRange = elementToHighlight.getTextRange();
-    return checkAssignability(lType, rType, expression, textRange, 0);
-  }
-
-  private static HighlightInfo.Builder checkAssignability(@Nullable PsiType lType,
-                                                          @Nullable PsiType rType,
-                                                          @Nullable PsiExpression expression,
-                                                          @NotNull TextRange textRange,
-                                                          int navigationShift) {
     if (lType == rType) return null;
     if (expression == null) {
       if (rType == null || lType == null || TypeConversionUtil.isAssignable(lType, rType)) return null;
@@ -256,7 +98,7 @@ public final class HighlightUtil {
         IncompleteModelUtil.isPotentiallyConvertible(lType, expression)) {
       return null;
     }
-    HighlightInfo.Builder highlightInfo = createIncompatibleTypeHighlightInfo(lType, rType, textRange, navigationShift);
+    HighlightInfo.Builder highlightInfo = createIncompatibleTypeHighlightInfo(lType, rType, textRange, 0);
     AddTypeArgumentsConditionalFix.register(asConsumer(highlightInfo), expression, lType);
     if (expression != null) {
       AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(asConsumer(highlightInfo), expression, lType, rType);
@@ -493,32 +335,6 @@ public final class HighlightUtil {
     else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
       HighlightFixUtil.registerChangeVariableTypeFixes(assignmentExpression.getLExpression(), expectedType, asConsumer(info));
     }
-  }
-
-  static HighlightInfo.Builder checkInstanceOfPatternSupertype(@NotNull PsiInstanceOfExpression expression) {
-    @Nullable PsiPattern expressionPattern = expression.getPattern();
-    PsiTypeTestPattern pattern = tryCast(expressionPattern, PsiTypeTestPattern.class);
-    if (pattern == null) return null;
-    PsiPatternVariable variable = pattern.getPatternVariable();
-    if (variable == null) return null;
-    PsiTypeElement typeElement = pattern.getCheckType();
-    if (typeElement == null) return null;
-    PsiType checkType = typeElement.getType();
-    PsiType expressionType = expression.getOperand().getType();
-    if (expressionType != null && checkType.isAssignableFrom(expressionType)) {
-      String description =
-        checkType.equals(expressionType) ?
-        JavaErrorBundle.message("instanceof.pattern.equals", checkType.getPresentableText()) :
-        JavaErrorBundle.message("instanceof.pattern.supertype", checkType.getPresentableText(), expressionType.getPresentableText());
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description);
-      if (!VariableAccessUtils.variableIsUsed(variable, variable.getDeclarationScope())) {
-        var action = new RedundantInstanceofFix(expression);
-        info.registerFix(action, null, null, null, null);
-      }
-      return info;
-    }
-    return null;
   }
 
   static @NotNull @NlsContexts.DetailedDescription String staticContextProblemDescription(@NotNull PsiElement refElement) {

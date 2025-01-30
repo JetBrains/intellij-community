@@ -49,7 +49,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   final @NotNull TypeChecker myTypeChecker = new TypeChecker(this);
   final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
-  private final @NotNull PatternChecker myPatternChecker = new PatternChecker(this);
+  final @NotNull PatternChecker myPatternChecker = new PatternChecker(this);
   final @NotNull ModifierChecker myModifierChecker = new ModifierChecker(this);
   final @NotNull ExpressionChecker myExpressionChecker = new ExpressionChecker(this);
   private final @NotNull StatementChecker myStatementChecker = new StatementChecker(this);
@@ -682,6 +682,33 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitDeconstructionPattern(@NotNull PsiDeconstructionPattern deconstructionPattern) {
     super.visitDeconstructionPattern(deconstructionPattern);
     myPatternChecker.checkDeconstructionPattern(deconstructionPattern);
+  }
+
+  @Override
+  public void visitDeconstructionList(@NotNull PsiDeconstructionList deconstructionList) {
+    super.visitDeconstructionList(deconstructionList);
+    if (deconstructionList.getParent() instanceof PsiDeconstructionPattern pattern) {
+      myPatternChecker.checkMalformedDeconstructionPatternInCase(pattern);
+    }
+  }
+
+  @Override
+  public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
+    super.visitInstanceOfExpression(expression);
+    if (!hasErrorResults()) myExpressionChecker.checkInstanceOfApplicable(expression);
+    if (!hasErrorResults()) myGenericsChecker.checkInstanceOfGenericType(expression);
+    if (!hasErrorResults() && isApplicable(JavaFeature.PATTERNS) &&
+        // 5.20.2 Removed restriction on pattern instanceof for unconditional patterns (JEP 432, 440)
+        !isApplicable(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS)) {
+      myPatternChecker.checkInstanceOfPatternSupertype(expression);
+    }
+  }
+
+  @Override
+  public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
+    super.visitTypeCastExpression(expression);
+    if (!hasErrorResults()) myExpressionChecker.checkIntersectionInTypeCast(expression);
+    if (!hasErrorResults()) myExpressionChecker.checkInconvertibleTypeCast(expression);
   }
 
   @Override

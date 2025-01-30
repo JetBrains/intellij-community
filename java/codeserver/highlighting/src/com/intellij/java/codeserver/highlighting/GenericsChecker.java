@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
@@ -481,6 +482,46 @@ final class GenericsChecker {
         var kind = element instanceof PsiClass ? JavaErrorKinds.TYPE_ARGUMENT_ON_RAW_TYPE : JavaErrorKinds.TYPE_ARGUMENT_ON_RAW_METHOD;
         myVisitor.report(kind.create(refParamList));
       }
+    }
+  }
+
+  void checkInstanceOfGenericType(@NotNull PsiInstanceOfExpression expression) {
+    PsiTypeElement typeElement = expression.getCheckType();
+    if (typeElement == null) {
+      typeElement = JavaPsiPatternUtil.getPatternTypeElement(expression.getPattern());
+    }
+    if (typeElement == null) return;
+    PsiType checkType = typeElement.getType();
+    if (myVisitor.isApplicable(JavaFeature.PATTERNS)) {
+      PsiPrimaryPattern pattern = expression.getPattern();
+      if (pattern != null) {
+        myVisitor.myPatternChecker.checkUncheckedPatternConversion(pattern);
+      } else {
+        checkUnsafeCastInInstanceOf(typeElement, checkType, expression.getOperand().getType());
+      }
+    } else {
+      checkIllegalForInstanceOf(checkType, typeElement);
+    }
+  }
+
+  private void checkUnsafeCastInInstanceOf(@NotNull PsiTypeElement checkTypeElement, @NotNull PsiType checkType, @Nullable PsiType expressionType) {
+    if (expressionType != null && JavaGenericsUtil.isUncheckedCast(checkType, expressionType)) {
+      myVisitor.report(JavaErrorKinds.INSTANCEOF_UNSAFE_CAST.create(
+        checkTypeElement, new JavaIncompatibleTypeErrorContext(expressionType, checkType)));
+    }
+  }
+
+  /**
+   * 15.20.2 Type Comparison Operator instanceof
+   * ReferenceType mentioned after the instanceof operator is reifiable
+   */
+  private void checkIllegalForInstanceOf(@Nullable PsiType type, @NotNull PsiTypeElement typeElement) {
+    PsiClass resolved = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (resolved instanceof PsiTypeParameter) {
+      myVisitor.report(JavaErrorKinds.INSTANCEOF_TYPE_PARAMETER.create(typeElement));
+    }
+    else if (!JavaGenericsUtil.isReifiableType(type)) {
+      myVisitor.report(JavaErrorKinds.INSTANCEOF_ILLEGAL_GENERIC_TYPE.create(typeElement));
     }
   }
 

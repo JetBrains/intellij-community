@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
+import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
@@ -34,7 +35,9 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.InstanceOfUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -321,6 +324,25 @@ final class JavaErrorFixProvider {
         sink.accept(QuickFixFactory.getInstance().createDeleteFix(elementsToDelete, text));
       }
     });
+    fix(CAST_INCONVERTIBLE, error -> {
+      if (error.psi() instanceof PsiInstanceOfExpression instanceOfExpression &&
+          TypeConversionUtil.isPrimitiveAndNotNull(error.context().rType())) {
+        return myFactory.createReplacePrimitiveWithBoxedTypeAction(
+          error.context().lType(), requireNonNull(InstanceOfUtils.findCheckTypeElement(instanceOfExpression)));
+      }
+      return null;
+    });
+    JavaFixProvider<PsiInstanceOfExpression, Object> redundantInstanceOfFix = error -> {
+      if (error.psi().getPattern() instanceof PsiTypeTestPattern pattern) {
+        PsiPatternVariable variable = pattern.getPatternVariable();
+        if (variable != null && !VariableAccessUtils.variableIsUsed(variable, variable.getDeclarationScope())) {
+          return new RedundantInstanceofFix(error.psi());
+        }
+      }
+      return null;
+    };
+    fix(PATTERN_INSTANCEOF_EQUALS, redundantInstanceOfFix);
+    fix(PATTERN_INSTANCEOF_SUPERTYPE, redundantInstanceOfFix);
   }
   
   private void createVariableFixes() {
@@ -480,6 +502,12 @@ final class JavaErrorFixProvider {
       HighlightUtil.isCallToStaticMember(newExpression) ? new RemoveNewKeywordFix(newExpression) : null);
     fix(REFERENCE_QUALIFIER_PRIMITIVE,
         error -> error.psi() instanceof PsiReferenceExpression ref ? myFactory.createRenameWrongRefFix(ref) : null);
+    fix(CAST_INTERSECTION_NOT_INTERFACE, error -> {
+      PsiTypeElement conjunct = error.psi();
+      return new FlipIntersectionSidesFix(((PsiClassType)conjunct.getType()).getClassName(), conjunct, 
+                                          PsiTreeUtil.getParentOfType(conjunct, PsiTypeElement.class, true));
+    });
+    fix(CAST_INTERSECTION_REPEATED_INTERFACE, error -> new DeleteRepeatedInterfaceFix(error.psi()));
   }
 
   private void createAccessFixes() {

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -1053,7 +1052,7 @@ public final class RedundantCastUtil {
     PsiExpression operand = typeCast.getOperand();
     if (operand == null) return false;
 
-    if (isInPolymorphicCall(typeCast)) return true;
+    if (PsiUtil.isInSignaturePolymorphicCall(typeCast)) return true;
 
     PsiType opType = operand.getType();
     PsiTypeElement typeElement = typeCast.getCastType();
@@ -1134,28 +1133,6 @@ public final class RedundantCastUtil {
       // side effect regardless of whether we end up doing a primitive or reference comparison.
       return TypeConversionUtil.isPrimitiveAndNotNull(operand.getType()) != TypeConversionUtil.isPrimitiveAndNotNull(toCast.getType());
     }
-  }
-
-  // see http://download.java.net/jdk7/docs/api/java/lang/invoke/MethodHandle.html#sigpoly
-  public static boolean isInPolymorphicCall(PsiTypeCastExpression typeCast) {
-    if (!PsiUtil.isLanguageLevel7OrHigher(typeCast)) return false;
-
-    // return type
-    final PsiExpression operand = typeCast.getOperand();
-    if (operand instanceof PsiMethodCallExpression methodCallExpression && isPolymorphicMethod(methodCallExpression)) {
-      return true;
-    }
-
-    // argument type
-    final PsiElement exprList = PsiUtil.skipParenthesizedExprUp(typeCast.getParent());
-    return exprList instanceof PsiExpressionList &&
-           exprList.getParent() instanceof PsiMethodCallExpression methodCallExpression &&
-           isPolymorphicMethod(methodCallExpression);
-  }
-
-  private static boolean isPolymorphicMethod(PsiMethodCallExpression expression) {
-    return expression.getMethodExpression().resolve() instanceof PsiMethod method &&
-           AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0);
   }
 
   private static boolean areNullabilityCompatible(PsiMethod oldTargetMethod, PsiMethod newTargetMethod) {

@@ -47,7 +47,6 @@ import com.intellij.psi.util.*;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
@@ -496,19 +495,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     JavaResolveResult[] results = ref.multiResolve(false);
     if (!hasErrorResults() && results.length == 1) {
       add(HighlightUtil.checkReference(ref, results[0], myFile, myLanguageLevel));
-    }
-  }
-
-  @Override
-  public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
-    super.visitInstanceOfExpression(expression);
-    if (!hasErrorResults()) HighlightUtil.checkInstanceOfApplicable(expression, myErrorSink);
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkInstanceOfGenericType(myLanguageLevel, expression));
-    if (!hasErrorResults() &&
-        JavaFeature.PATTERNS.isSufficient(myLanguageLevel) &&
-        // 5.20.2 Removed restriction on pattern instanceof for unconditional patterns (JEP 432, 440)
-        !JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isSufficient(myLanguageLevel)) {
-      add(HighlightUtil.checkInstanceOfPatternSupertype(expression));
     }
   }
 
@@ -1025,17 +1011,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitTypeCastExpression(@NotNull PsiTypeCastExpression typeCast) {
-    super.visitTypeCastExpression(typeCast);
-    try {
-      if (!hasErrorResults()) add(HighlightUtil.checkIntersectionInTypeCast(typeCast, myLanguageLevel, myFile));
-      if (!hasErrorResults()) add(HighlightUtil.checkInconvertibleTypeCast(typeCast));
-    }
-    catch (IndexNotReadyException ignored) {
-    }
-  }
-
-  @Override
   public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
     super.visitConditionalExpression(expression);
     if (!myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) || !PsiPolyExpressionUtil.isPolyExpression(expression)) return;
@@ -1129,37 +1104,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitProvidesStatement(statement);
     if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
       if (!hasErrorResults()) ModuleHighlightUtil.checkServiceImplementations(statement, myFile, myErrorSink);
-    }
-  }
-
-  @Override
-  public void visitDeconstructionList(@NotNull PsiDeconstructionList deconstructionList) {
-    super.visitDeconstructionList(deconstructionList);
-    // We are checking the case when the pattern looks similar to method call in switch and want to show user-friendly message that here
-    // only constant expressions are expected.
-    // it is required to do it in deconstruction list because unresolved reference won't let any parents show any highlighting,
-    // so we need element which is not parent
-    PsiElement parent = deconstructionList.getParent();
-    PsiDeconstructionPattern pattern = tryCast(parent, PsiDeconstructionPattern.class);
-    if (pattern == null) return;
-    PsiElement grandParent = parent.getParent();
-    if (!(grandParent instanceof PsiCaseLabelElementList)) return;
-    PsiTypeElement typeElement = pattern.getTypeElement();
-    PsiJavaCodeReferenceElement ref = PsiTreeUtil.getChildOfType(typeElement, PsiJavaCodeReferenceElement.class);
-    if (ref == null) return;
-    if (ref.multiResolve(true).length == 0) {
-      PsiElementFactory elementFactory = PsiElementFactory.getInstance(myFile.getProject());
-      if (pattern.getPatternVariable() == null && pattern.getDeconstructionList().getDeconstructionComponents().length == 0) {
-        PsiClassType type = tryCast(pattern.getTypeElement().getType(), PsiClassType.class);
-        if (type != null && ContainerUtil.exists(type.getParameters(), PsiWildcardType.class::isInstance)) return;
-        PsiExpression expression = elementFactory.createExpressionFromText(pattern.getText(), grandParent);
-        PsiMethodCallExpression call = tryCast(expression, PsiMethodCallExpression.class);
-        if (call == null) return;
-        if (call.getMethodExpression().resolve() != null) {
-          add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern.getTextRange())
-                .descriptionAndTooltip(JavaErrorBundle.message("switch.constant.expression.required")));
-        }
-      }
     }
   }
 

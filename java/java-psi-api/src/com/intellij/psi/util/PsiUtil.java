@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -414,6 +415,34 @@ public final class PsiUtil extends PsiUtilCore {
     for (PsiYieldStatement statement : yields) {
       ContainerUtil.addIfNotNull(result, statement.getExpression());
     }
+  }
+
+  /**
+   * @param typeCast cast to check
+   * @return true if the supplied cast is necessary to fulfill the signature polymorphic method contract
+   * @see <a href="https://docs.oracle.com/en/java/javase/21/docs//api/java.base/java/lang/invoke/MethodHandle.html#sigpoly">Signature polymorphism</a> in Java API reference
+   */
+  // see http://download.java.net/jdk7/docs/api/java/lang/invoke/MethodHandle.html#sigpoly
+  public static boolean isInSignaturePolymorphicCall(@NotNull PsiTypeCastExpression typeCast) {
+    if (!isLanguageLevel7OrHigher(typeCast)) return false;
+
+    // return type
+    final PsiExpression operand = typeCast.getOperand();
+    if (operand instanceof PsiMethodCallExpression && isPolymorphicMethod((PsiMethodCallExpression)operand)) {
+      return true;
+    }
+
+    // argument type
+    final PsiElement exprList = skipParenthesizedExprUp(typeCast.getParent());
+    return exprList instanceof PsiExpressionList &&
+           exprList.getParent() instanceof PsiMethodCallExpression &&
+           isPolymorphicMethod((PsiMethodCallExpression)exprList.getParent());
+  }
+
+  private static boolean isPolymorphicMethod(PsiMethodCallExpression expression) {
+    PsiElement target = expression.getMethodExpression().resolve();
+    return target instanceof PsiMethod &&
+           AnnotationUtil.isAnnotated((PsiMethod)target, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0);
   }
 
   @MagicConstant(intValues = {ACCESS_LEVEL_PUBLIC, ACCESS_LEVEL_PROTECTED, ACCESS_LEVEL_PACKAGE_LOCAL, ACCESS_LEVEL_PRIVATE})

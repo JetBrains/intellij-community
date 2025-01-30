@@ -26,7 +26,6 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.InstanceOfUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -552,48 +551,6 @@ public final class GenericsHighlightUtil {
       enumClass = enumClass.getSuperClass();
     }
     return enumClass != null && enumClass.isEnum() ? enumClass : null;
-  }
-
-  static HighlightInfo.Builder checkInstanceOfGenericType(@NotNull LanguageLevel languageLevel, @NotNull PsiInstanceOfExpression expression) {
-    PsiTypeElement checkTypeElement = InstanceOfUtils.findCheckTypeElement(expression);
-    if (checkTypeElement == null) return null;
-    PsiType checkType = checkTypeElement.getType();
-    if (JavaFeature.PATTERNS.isSufficient(languageLevel)) {
-      PsiPrimaryPattern pattern = expression.getPattern();
-      if (pattern != null) {
-        return PatternHighlightingModel.getUncheckedPatternConversionError(pattern);
-      }
-      return isUnsafeCastInInstanceOf(checkTypeElement, checkType, expression.getOperand().getType());
-    }
-    return isIllegalForInstanceOf(checkType, checkTypeElement);
-  }
-
-  private static HighlightInfo.Builder isUnsafeCastInInstanceOf(@NotNull PsiTypeElement checkTypeElement, @NotNull PsiType checkType, @Nullable PsiType expressionType) {
-    if (expressionType != null && JavaGenericsUtil.isUncheckedCast(checkType, expressionType)) {
-      String description = JavaErrorBundle.message("unsafe.cast.in.instanceof",
-                                                   expressionType.getPresentableText(), checkType.getPresentableText());
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(checkTypeElement).descriptionAndTooltip(description);
-    }
-    return null;
-  }
-
-  /**
-   * 15.20.2 Type Comparison Operator instanceof
-   * ReferenceType mentioned after the instanceof operator is reifiable
-   */
-  private static HighlightInfo.Builder isIllegalForInstanceOf(@Nullable PsiType type, @NotNull PsiTypeElement typeElement) {
-    PsiClass resolved = PsiUtil.resolveClassInClassTypeOnly(type);
-    if (resolved instanceof PsiTypeParameter) {
-      String description = JavaErrorBundle.message("generics.cannot.instanceof.type.parameters");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description);
-    }
-
-    if (!JavaGenericsUtil.isReifiableType(type)) {
-      String description = JavaErrorBundle.message("illegal.generic.type.for.instanceof");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description);
-    }
-
-    return null;
   }
 
   static HighlightInfo.Builder checkClassObjectAccessExpression(@NotNull PsiClassObjectAccessExpression expression) {

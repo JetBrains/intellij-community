@@ -6,6 +6,7 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.*;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -720,6 +721,87 @@ final class ExpressionChecker {
     }
   }
 
+  void checkInconvertibleTypeCast(@NotNull PsiTypeCastExpression expression) {
+    PsiTypeElement castTypeElement = expression.getCastType();
+    if (castTypeElement == null) return;
+    PsiType castType = castTypeElement.getType();
+
+    PsiExpression operand = expression.getOperand();
+    if (operand == null) return;
+    PsiType operandType = operand.getType();
+
+    if (operandType != null &&
+        !TypeConversionUtil.areTypesConvertible(operandType, castType, PsiUtil.getLanguageLevel(expression)) &&
+        !PsiUtil.isInSignaturePolymorphicCall(expression)) {
+      if (IncompleteModelUtil.isIncompleteModel(expression) && IncompleteModelUtil.isPotentiallyConvertible(castType, operand)) {
+        return;
+      }
+      myVisitor.report(JavaErrorKinds.CAST_INCONVERTIBLE.create(
+        expression, new JavaIncompatibleTypeErrorContext(operandType, castType)));
+    }
+  }
+
+  /**
+   * 15.16 Cast Expressions
+   * ( ReferenceType {AdditionalBound} ) expression, where AdditionalBound: & InterfaceType then all must be true
+   * - ReferenceType must denote a class or interface type.
+   * - The erasures of all the listed types must be pairwise different.
+   * - No two listed types may be subtypes of different parameterization of the same generic interface.
+   */
+  void checkIntersectionInTypeCast(@NotNull PsiTypeCastExpression expression) {
+    PsiTypeElement castTypeElement = expression.getCastType();
+    if (castTypeElement == null || !isIntersection(castTypeElement, castTypeElement.getType())) return;
+    myVisitor.checkFeature(expression, JavaFeature.INTERSECTION_CASTS);
+    if (myVisitor.hasErrorResults()) return;
+
+    PsiTypeElement[] conjuncts = PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class);
+    if (conjuncts != null) {
+      Set<PsiType> erasures = new HashSet<>(conjuncts.length);
+      erasures.add(TypeConversionUtil.erasure(conjuncts[0].getType()));
+      List<PsiTypeElement> conjList = new ArrayList<>(Arrays.asList(conjuncts));
+      for (int i = 1; i < conjuncts.length; i++) {
+        PsiTypeElement conjunct = conjuncts[i];
+        PsiType conjType = conjunct.getType();
+        if (conjType instanceof PsiClassType classType) {
+          PsiClass aClass = classType.resolve();
+          if (aClass != null && !aClass.isInterface()) {
+            myVisitor.report(JavaErrorKinds.CAST_INTERSECTION_NOT_INTERFACE.create(conjunct));
+            continue;
+          }
+        }
+        else {
+          myVisitor.report(JavaErrorKinds.CAST_INTERSECTION_UNEXPECTED_TYPE.create(conjunct));
+          continue;
+        }
+        if (!erasures.add(TypeConversionUtil.erasure(conjType))) {
+          myVisitor.report(JavaErrorKinds.CAST_INTERSECTION_REPEATED_INTERFACE.create(conjunct));
+        }
+      }
+      if (myVisitor.hasErrorResults()) return;
+
+      List<PsiType> typeList = ContainerUtil.map(conjList, PsiTypeElement::getType);
+      Ref<Pair<PsiType, PsiType>> differentArguments = new Ref<>();
+      PsiClass sameGenericParameterization =
+        InferenceSession.findParameterizationOfTheSameGenericClass(typeList, pair -> {
+          if (!TypesDistinctProver.provablyDistinct(pair.first, pair.second)) {
+            return true;
+          }
+          differentArguments.set(pair);
+          return false;
+        });
+      if (differentArguments.get() != null && sameGenericParameterization != null) {
+        var context = new JavaErrorKinds.InheritTypeClashContext(
+          sameGenericParameterization, differentArguments.get().getFirst(), differentArguments.get().getSecond());
+        myVisitor.report(JavaErrorKinds.CAST_INTERSECTION_INHERITANCE_CLASH.create(expression, context));
+      }
+    }
+  }
+
+  private static boolean isIntersection(@NotNull PsiTypeElement castTypeElement, @NotNull PsiType castType) {
+    if (castType instanceof PsiIntersectionType) return true;
+    return castType instanceof PsiClassType && PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class) != null;
+  }
+
   static boolean isArrayDeclaration(@NotNull PsiVariable variable) {
     // Java-style 'var' arrays are prohibited by the parser; for C-style ones, looking for a bracket is enough
     return ContainerUtil.or(variable.getChildren(), e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET));
@@ -1209,6 +1291,38 @@ final class ExpressionChecker {
     String name = resolved.getName();
     if (PsiTypesUtil.isRestrictedIdentifier(name, myVisitor.languageLevel())) {
       myVisitor.report(JavaErrorKinds.TYPE_RESTRICTED_IDENTIFIER.create(ref));
+    }
+  }
+
+  void checkInstanceOfApplicable(@NotNull PsiInstanceOfExpression expression) {
+    PsiExpression operand = expression.getOperand();
+    PsiTypeElement typeElement = expression.getCheckType();
+    if (typeElement == null) {
+      typeElement = JavaPsiPatternUtil.getPatternTypeElement(expression.getPattern());
+    }
+    if (typeElement == null) return;
+    PsiType checkType = typeElement.getType();
+    PsiType operandType = operand.getType();
+    if (operandType == null) return;
+    boolean operandIsPrimitive = TypeConversionUtil.isPrimitiveAndNotNull(operandType);
+    boolean checkIsPrimitive = TypeConversionUtil.isPrimitiveAndNotNull(checkType);
+    boolean convertible = TypeConversionUtil.areTypesConvertible(operandType, checkType);
+    boolean primitiveInPatternsEnabled = PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, expression);
+    if (((operandIsPrimitive || checkIsPrimitive) && !primitiveInPatternsEnabled) || !convertible) {
+      if (!convertible && IncompleteModelUtil.isIncompleteModel(expression) &&
+          IncompleteModelUtil.isPotentiallyConvertible(checkType, operand)) {
+        return;
+      }
+      if (((operandIsPrimitive || checkIsPrimitive) && !primitiveInPatternsEnabled) && convertible) {
+        myVisitor.checkFeature(expression, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS);
+        if (myVisitor.hasErrorResults()) return;
+      }
+      myVisitor.report(JavaErrorKinds.CAST_INCONVERTIBLE.create(
+        expression, new JavaIncompatibleTypeErrorContext(operandType, checkType)));
+    }
+    PsiPrimaryPattern pattern = expression.getPattern();
+    if (pattern instanceof PsiDeconstructionPattern deconstruction) {
+      myVisitor.myPatternChecker.checkDeconstructionErrors(deconstruction);
     }
   }
 }

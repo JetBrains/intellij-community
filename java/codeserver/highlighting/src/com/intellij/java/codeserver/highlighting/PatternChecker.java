@@ -85,7 +85,7 @@ final class PatternChecker {
     }
   }
 
-  private boolean checkUncheckedPatternConversion(@NotNull PsiPattern pattern) {
+  boolean checkUncheckedPatternConversion(@NotNull PsiPattern pattern) {
     PsiType patternType = JavaPsiPatternUtil.getPatternType(pattern);
     if (patternType == null) return false;
     if (pattern instanceof PsiDeconstructionPattern subPattern) {
@@ -119,7 +119,7 @@ final class PatternChecker {
     checkDeconstructionErrors(pattern);
   }
 
-  private void checkDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern) {
+  void checkDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern) {
     if (deconstructionPattern == null) return;
     PsiTypeElement typeElement = deconstructionPattern.getTypeElement();
     PsiType recordType = typeElement.getType();
@@ -183,6 +183,52 @@ final class PatternChecker {
       myVisitor.report(JavaErrorKinds.PATTERN_DECONSTRUCTION_COUNT_MISMATCH.create(
         deconstructionPattern.getDeconstructionList(), 
         new JavaErrorKinds.DeconstructionCountMismatchContext(deconstructionComponents, recordComponents, hasMismatchedPattern)));
+    }
+  }
+
+  void checkMalformedDeconstructionPatternInCase(@NotNull PsiDeconstructionPattern pattern) {
+    // We are checking the case when the pattern looks similar to method call in switch and want to show user-friendly message that here
+    // only constant expressions are expected.
+    // it is required to do it in deconstruction list because unresolved reference won't let any parents show any highlighting,
+    // so we need element which is not parent
+    PsiElement grandParent = pattern.getParent();
+    if (!(grandParent instanceof PsiCaseLabelElementList)) return;
+    PsiTypeElement typeElement = pattern.getTypeElement();
+    PsiJavaCodeReferenceElement ref = PsiTreeUtil.getChildOfType(typeElement, PsiJavaCodeReferenceElement.class);
+    if (ref == null) return;
+    if (ref.multiResolve(true).length == 0) {
+      PsiElementFactory elementFactory = myVisitor.factory();
+      if (pattern.getPatternVariable() == null && pattern.getDeconstructionList().getDeconstructionComponents().length == 0) {
+        PsiClassType type = tryCast(pattern.getTypeElement().getType(), PsiClassType.class);
+        if (type != null && ContainerUtil.exists(type.getParameters(), PsiWildcardType.class::isInstance)) return;
+        PsiExpression expression = elementFactory.createExpressionFromText(pattern.getText(), grandParent);
+        PsiMethodCallExpression call = tryCast(expression, PsiMethodCallExpression.class);
+        if (call == null) return;
+        if (call.getMethodExpression().resolve() != null) {
+          myVisitor.report(JavaErrorKinds.CALL_PARSED_AS_DECONSTRUCTION_PATTERN.create(pattern));
+        }
+      }
+    }
+  }
+
+  void checkInstanceOfPatternSupertype(@NotNull PsiInstanceOfExpression expression) {
+    @Nullable PsiPattern expressionPattern = expression.getPattern();
+    PsiTypeTestPattern pattern = tryCast(expressionPattern, PsiTypeTestPattern.class);
+    if (pattern == null) return;
+    PsiPatternVariable variable = pattern.getPatternVariable();
+    if (variable == null) return;
+    PsiTypeElement typeElement = pattern.getCheckType();
+    if (typeElement == null) return;
+    PsiType checkType = typeElement.getType();
+    PsiType expressionType = expression.getOperand().getType();
+    if (expressionType != null && checkType.isAssignableFrom(expressionType)) {
+      if (checkType.equals(expressionType)) {
+        myVisitor.report(JavaErrorKinds.PATTERN_INSTANCEOF_EQUALS.create(expression, checkType));
+      }
+      else {
+        myVisitor.report(JavaErrorKinds.PATTERN_INSTANCEOF_SUPERTYPE.create(
+          expression, new JavaIncompatibleTypeErrorContext(checkType, expressionType)));
+      }
     }
   }
 

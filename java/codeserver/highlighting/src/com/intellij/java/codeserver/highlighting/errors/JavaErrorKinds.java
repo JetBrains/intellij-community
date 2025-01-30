@@ -714,10 +714,33 @@ public final class JavaErrorKinds {
       })
       .withRawDescription((list, ctx) -> message("pattern.deconstruction.count.mismatch", 
                                                  ctx.recordComponents().length, ctx.patternComponents().length));
+  public static final Parameterized<PsiInstanceOfExpression, JavaIncompatibleTypeErrorContext> PATTERN_INSTANCEOF_SUPERTYPE =
+    parameterized(PsiInstanceOfExpression.class, JavaIncompatibleTypeErrorContext.class, "pattern.instanceof.supertype")
+      .withAnchor((expr, context) -> expr.getCheckType())
+      .withRawDescription((expr, context) -> message(
+        "pattern.instanceof.supertype", context.lType().getPresentableText(), requireNonNull(context.rType()).getPresentableText()));
+  public static final Parameterized<PsiInstanceOfExpression, PsiType> PATTERN_INSTANCEOF_EQUALS =
+    parameterized(PsiInstanceOfExpression.class, PsiType.class, "pattern.instanceof.equals")
+      .withAnchor((expr, context) -> expr.getCheckType())
+      .withRawDescription((expr, context) -> message("pattern.instanceof.equals", context.getPresentableText()));
+  
+  public static final Simple<PsiTypeElement> INSTANCEOF_TYPE_PARAMETER = error("instanceof.type.parameter");
+  public static final Simple<PsiTypeElement> INSTANCEOF_ILLEGAL_GENERIC_TYPE = error("instanceof.illegal.generic.type");
+  public static final Parameterized<PsiTypeElement, JavaIncompatibleTypeErrorContext> INSTANCEOF_UNSAFE_CAST =
+    parameterized(PsiTypeElement.class, JavaIncompatibleTypeErrorContext.class, "instanceof.unsafe.cast")
+      .withRawDescription((expr, context) -> message(
+        "instanceof.unsafe.cast", context.lType().getPresentableText(), requireNonNull(context.rType()).getPresentableText()));
   
   public static final Parameterized<PsiElement, JavaIncompatibleTypeErrorContext> CAST_INCONVERTIBLE =
     parameterized(PsiElement.class, JavaIncompatibleTypeErrorContext.class, "cast.inconvertible")
       .withRawDescription((psi, ctx) -> message("cast.inconvertible", formatType(ctx.lType()), formatType(ctx.rType())));
+  public static final Simple<PsiTypeElement> CAST_INTERSECTION_NOT_INTERFACE = error("cast.intersection.not.interface");
+  public static final Simple<PsiTypeElement> CAST_INTERSECTION_UNEXPECTED_TYPE = error("cast.intersection.unexpected.type");
+  public static final Simple<PsiTypeElement> CAST_INTERSECTION_REPEATED_INTERFACE = error("cast.intersection.repeated.interface");
+  public static final Parameterized<PsiTypeCastExpression, InheritTypeClashContext> CAST_INTERSECTION_INHERITANCE_CLASH = 
+    parameterized(PsiTypeCastExpression.class, InheritTypeClashContext.class, "cast.intersection.inheritance.clash")
+      .withRawDescription((cast, ctx) -> message("cast.intersection.inheritance.clash", formatClass(ctx.superClass()),
+                                                 ctx.type1().getPresentableText(), ctx.type2().getPresentableText()));
 
   public static final Simple<PsiReferenceExpression> EXPRESSION_EXPECTED = error("expression.expected");
   public static final Parameterized<PsiReferenceExpression, PsiSuperExpression> EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD = 
@@ -912,6 +935,8 @@ public final class JavaErrorKinds {
     parameterized(PsiExpression.class, PsiClass.class, "call.super.qualifier.not.inner.class")
       .withRawDescription((psi, cls) -> message("call.super.qualifier.not.inner.class", formatClass(cls)));
   public static final Simple<PsiMethodCallExpression> CALL_EXPECTED = error("call.expected");
+  public static final Simple<PsiDeconstructionPattern> CALL_PARSED_AS_DECONSTRUCTION_PATTERN =
+    error("call.parsed.as.deconstruction.pattern");
   public static final Simple<PsiJavaCodeReferenceElement> CALL_STATIC_INTERFACE_METHOD_QUALIFIER =
     error(PsiJavaCodeReferenceElement.class, "call.static.interface.method.qualifier")
       .withRange(JavaErrorFormatUtil::getRange);
