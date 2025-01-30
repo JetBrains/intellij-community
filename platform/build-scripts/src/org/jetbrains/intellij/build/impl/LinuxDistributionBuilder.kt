@@ -112,7 +112,7 @@ class LinuxDistributionBuilder(
       ) { _ ->
         buildTarGz(arch, runtimeDir, osAndArchSpecificDistPath, suffix(arch))
       }
-      launch(Dispatchers.IO + CoroutineName("build Span package")) {
+      launch(Dispatchers.IO + CoroutineName("build Snap package")) {
         buildSnapPackage(runtimeDir, osAndArchSpecificDistPath, arch)
       }
 
