@@ -160,6 +160,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             //model("${idea}intentions/loopToCallChain/introduceIndex", pattern = pattern, isIgnored = true)
             //model("${idea}intentions/loopToCallChain/indexOf", pattern = pattern, isIgnored = true)
             model("${idea}intentions/moveMemberToTopLevel", pattern = pattern)
+            model("${idea}intentions/moveOutOfCompanion", pattern = pattern)
             model("${idea}intentions/anonymousFunctionToLambda", pattern = pattern)
             model("${idea}intentions/copyConcatenatedStringToClipboard", pattern = pattern, isIgnored = true)
             model("${idea}intentions/inlayHints", pattern = pattern, isIgnored = true)

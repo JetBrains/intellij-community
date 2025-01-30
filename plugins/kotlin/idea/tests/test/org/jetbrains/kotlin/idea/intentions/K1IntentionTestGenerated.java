@@ -15271,6 +15271,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/moveOutOfCompanion/companionAsImplicitReceiver.kt");
         }
 
+        @TestMetadata("companionAsImplicitReceiverK2.kt")
+        public void testCompanionAsImplicitReceiverK2() throws Exception {
+            runTest("testData/intentions/moveOutOfCompanion/companionAsImplicitReceiverK2.kt");
+        }
+
         @TestMetadata("hasJvmFieldInInterface.kt")
         public void testHasJvmFieldInInterface() throws Exception {
             runTest("testData/intentions/moveOutOfCompanion/hasJvmFieldInInterface.kt");
@@ -15314,6 +15319,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("redeclarationConflict.kt")
         public void testRedeclarationConflict() throws Exception {
             runTest("testData/intentions/moveOutOfCompanion/redeclarationConflict.kt");
+        }
+
+        @TestMetadata("redeclarationConflictK2.kt")
+        public void testRedeclarationConflictK2() throws Exception {
+            runTest("testData/intentions/moveOutOfCompanion/redeclarationConflictK2.kt");
         }
     }
 

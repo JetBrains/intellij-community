@@ -1,7 +1,7 @@
-// SHOULD_FAIL_WITH: Class 'Test' already contains function f1(Int)
+// SHOULD_FAIL_WITH: Following declarations would clash: to move function 'fun f1(n: Int)' and destination function 'fun f1(n: Int)' declared in scope class Test
 // AFTER-WARNING: Parameter 'n' is never used
 // AFTER-WARNING: Parameter 'n' is never used
-// IGNORE_K2
+// IGNORE_K1
 class Test {
     fun f1(n: Int){}
     companion object{

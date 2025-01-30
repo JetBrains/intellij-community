@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import java.util.*
 
-private fun PsiElement.getUsageContext(): PsiElement {
+internal fun PsiElement.getUsageContext(): PsiElement {
     return when (this) {
         is KtElement -> PsiTreeUtil.getParentOfType(
             this,
