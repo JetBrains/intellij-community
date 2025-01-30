@@ -282,8 +282,6 @@
     <lang.foldingBuilder language="XHTML" implementationClass="com.intellij.lang.xml.XmlFoldingBuilder"/>
 
     <codeInsight.parameterInfo language="XML" implementationClass="com.intellij.codeInsight.hint.api.impls.XmlParameterInfoHandler"/>
-    <codeInsight.parameterInfo language="HTML" implementationClass="com.intellij.codeInsight.hint.api.impls.XmlParameterInfoHandler"/>
-    <codeInsight.parameterInfo language="XHTML" implementationClass="com.intellij.codeInsight.hint.api.impls.XmlParameterInfoHandler"/>
 
     <codeInsight.wordCompletionFilter language="XML" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
     <codeInsight.wordCompletionFilter language="HTML" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
