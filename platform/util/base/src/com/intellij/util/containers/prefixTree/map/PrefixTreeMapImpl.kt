@@ -6,7 +6,7 @@ import com.intellij.util.containers.OptionalKt.Companion.getOrDefault
 import com.intellij.util.containers.OptionalKt.Companion.getOrNull
 import com.intellij.util.containers.OptionalKt.Companion.map
 import com.intellij.util.containers.prefixTree.PrefixTreeFactory
-import com.intellij.util.containers.prefixTree.PrefixTreeNode
+import com.intellij.util.containers.prefixTree.PrefixTreeImpl
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.BiConsumer
 
@@ -15,86 +15,86 @@ internal class PrefixTreeMapImpl<Key, KeyElement, Value>(
   private val convertor: PrefixTreeFactory<Key, KeyElement>
 ) : MutablePrefixTreeMap<Key, Value> {
 
-  private val root = PrefixTreeNode<KeyElement, Pair<Key, Value>>()
+  private val tree = PrefixTreeImpl<KeyElement, Pair<Key, Value>>()
 
   override val size: Int
-    get() = root.getSize()
+    get() = tree.getSize()
 
   override val keys: Set<Key>
-    get() = root.getValues().toKeySet()
+    get() = tree.getValues().toKeySet()
 
   override val values: Collection<Value>
-    get() = root.getValues().toValueList()
+    get() = tree.getValues().toValueList()
 
   override val entries: Set<Map.Entry<Key, Value>>
-    get() = root.getValues().toEntrySet()
+    get() = tree.getValues().toEntrySet()
 
   override fun isEmpty(): Boolean {
-    return root.isEmpty()
+    return tree.isEmpty()
   }
 
   override fun get(key: Key): Value? {
-    return root.getValue(key.toList()).getOrNull()
+    return tree.getValue(key.toList()).getOrNull()
   }
 
   override fun getOrDefault(key: Key, defaultValue: Value): Value {
-    return root.getValue(key.toList()).getOrDefault(defaultValue)
+    return tree.getValue(key.toList()).getOrDefault(defaultValue)
   }
 
   override fun put(key: Key, value: Value): Value? {
-    return root.setValue(key.toList(), key to value).getOrNull()
+    return tree.setValue(key.toList(), key to value).getOrNull()
   }
 
   override fun remove(key: Key): Value? {
-    return root.removeValue(key.toList()).getOrNull()
+    return tree.removeValue(key.toList()).getOrNull()
   }
 
   override fun containsKey(key: Key): Boolean {
-    return root.containsKey(key.toList())
+    return tree.containsKey(key.toList())
   }
 
   override fun containsValue(value: Value): Boolean {
-    return root.getValues().any { it.second == value }
+    return tree.getValues().any { it.second == value }
   }
 
   override fun forEach(action: BiConsumer<in Key, in Value>) {
-    root.getValues().forEach { action.accept(it.first, it.second) }
+    tree.getValues().forEach { action.accept(it.first, it.second) }
   }
 
   override fun getDescendantKeys(key: Key): Set<Key> {
-    return root.getDescendantValues(key.toList()).toKeySet()
+    return tree.getDescendantValues(key.toList()).toKeySet()
   }
 
   override fun getDescendantValues(key: Key): List<Value> {
-    return root.getDescendantValues(key.toList()).toValueList()
+    return tree.getDescendantValues(key.toList()).toValueList()
   }
 
   override fun getDescendantEntries(key: Key): Set<Map.Entry<Key, Value>> {
-    return root.getDescendantValues(key.toList()).toEntrySet()
+    return tree.getDescendantValues(key.toList()).toEntrySet()
   }
 
   override fun getAncestorKeys(key: Key): Set<Key> {
-    return root.getAncestorValues(key.toList()).toKeySet()
+    return tree.getAncestorValues(key.toList()).toKeySet()
   }
 
   override fun getAncestorValues(key: Key): List<Value> {
-    return root.getAncestorValues(key.toList()).toValueList()
+    return tree.getAncestorValues(key.toList()).toValueList()
   }
 
   override fun getAncestorEntries(key: Key): Set<Map.Entry<Key, Value>> {
-    return root.getAncestorValues(key.toList()).toEntrySet()
+    return tree.getAncestorValues(key.toList()).toEntrySet()
   }
 
   override fun getRootKeys(): Set<Key> {
-    return root.getRootValues().toKeySet()
+    return tree.getRootValues().toKeySet()
   }
 
   override fun getRootValues(): List<Value> {
-    return root.getRootValues().toValueList()
+    return tree.getRootValues().toValueList()
   }
 
   override fun getRootEntries(): Set<Map.Entry<Key, Value>> {
-    return root.getRootValues().toEntrySet()
+    return tree.getRootValues().toEntrySet()
   }
 
   private fun Key.toList(): List<KeyElement> {

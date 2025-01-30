@@ -6,13 +6,13 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.LinkedHashMap
 
 @ApiStatus.Internal
-internal class PrefixTreeNode<Key, Value> {
+internal class PrefixTreeImpl<Key, Value> {
 
   private var size: Int = 0
 
   private var state: OptionalKt<Value> = OptionalKt.EMPTY
 
-  private val children = LinkedHashMap<Key, PrefixTreeNode<Key, Value>>()
+  private val children = LinkedHashMap<Key, PrefixTreeImpl<Key, Value>>()
 
   fun isLeaf(): Boolean {
     return children.isEmpty()
@@ -48,7 +48,7 @@ internal class PrefixTreeNode<Key, Value> {
       }
       return previousState
     }
-    val childNode = children.getOrPut(key[index]) { PrefixTreeNode() }
+    val childNode = children.getOrPut(key[index]) { PrefixTreeImpl() }
     val previousState = childNode.setValue(index + 1, key, value)
     if (!previousState.isPresent()) {
       size += 1
@@ -126,11 +126,11 @@ internal class PrefixTreeNode<Key, Value> {
     return result
   }
 
-  private fun findNode(key: List<Key>): PrefixTreeNode<Key, Value>? {
+  private fun findNode(key: List<Key>): PrefixTreeImpl<Key, Value>? {
     return traverseNode(key) {}
   }
 
-  private fun traverseNode(key: List<Key>, process: (OptionalKt<Value>) -> Unit): PrefixTreeNode<Key, Value>? {
+  private fun traverseNode(key: List<Key>, process: (OptionalKt<Value>) -> Unit): PrefixTreeImpl<Key, Value>? {
     var node = this
     process(node.state)
     for (keyElement in key) {
@@ -141,7 +141,7 @@ internal class PrefixTreeNode<Key, Value> {
   }
 
   private fun traverseTree(process: (OptionalKt<Value>) -> TraverseDecision) {
-    val queue = ArrayDeque<PrefixTreeNode<Key, Value>>()
+    val queue = ArrayDeque<PrefixTreeImpl<Key, Value>>()
     queue.addLast(this)
     while (queue.isNotEmpty()) {
       val node = queue.removeFirst()
