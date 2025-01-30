@@ -10,6 +10,7 @@ import com.intellij.troubleshooting.GeneralTroubleInfoCollector;
 import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -62,6 +63,10 @@ final class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
     output += "Operating System: ";
     output += SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION;
     output += " (" + SystemInfo.OS_ARCH + (CpuArch.isEmulated() ? ", emulated" : "") + ')';
+    output += '\n';
+
+    output += "Toolkit: ";
+    output += Toolkit.getDefaultToolkit().getClass().getName();
     output += '\n';
 
     output += PathManager.PROPERTY_CONFIG_PATH + "=" + logPath(PathManager.getConfigPath()) + '\n';
