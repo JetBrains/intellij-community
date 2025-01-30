@@ -13,10 +13,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.ui.mac.MergeAllWindowsAction
+import com.intellij.ui.mac.WindowTabsComponent
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 open class CloseProjectWindowHelper {
   companion object {
@@ -33,16 +38,44 @@ open class CloseProjectWindowHelper {
   protected open val isShowWelcomeScreenFromSettings: Boolean
     get() = GeneralSettings.getInstance().isShowWelcomeScreen
 
+  @ApiStatus.Internal
+  protected open fun couldReturnToWelcomeScreen(projects: Array<Project>): Boolean {
+    return projects.any { project -> couldReturnToWelcomeScreen(project) }
+  }
+
+  @ApiStatus.Internal
+  protected open fun isMacOsTabbedProjectView(project: Project?): Boolean {
+    if (!SystemInfo.isMac) {
+      return false
+    }
+    val projectFrame = WindowManager.getInstance().getFrame(project) ?: return false
+    return MergeAllWindowsAction.isTabbedWindow(projectFrame)
+  }
+
+  @ApiStatus.Internal
+  protected open fun isCloseTab(project: Project?): Boolean {
+    project ?: return false
+
+    val frame = WindowManager.getInstance().getFrame(project) ?: return false
+    return frame.rootPane.getClientProperty(WindowTabsComponent.CLOSE_TAB_KEY) == true
+  }
+
   @RequiresEdt
   open fun windowClosing(project: Project?) {
     WriteIntentReadAction.run {
+
       val numberOfOpenedProjects = getNumberOfOpenedProjects()
+      val isMacOsTabbedProjectView = isMacOsTabbedProjectView(project)
+
       // Exit on Linux and Windows if the only opened project frame is closed.
-      // On macOS behaviour is different - to exit app, quit action should be used, otherwise welcome frame is shown.
-      // If welcome screen is disabled, behaviour on all OS is the same.
-      if (numberOfOpenedProjects > 1 ||
+      // On macOS behavior is different - to exit app, quit action should be used, otherwise welcome frame is shown.
+      // If the Welcome screen is disabled, behavior on all OS is the same.
+      if (!isMacOsTabbedProjectView && numberOfOpenedProjects > 1 ||
+          isMacOsTabbedProjectView && isCloseTab(project) ||
+          isMacOsTabbedProjectView && couldReturnToWelcomeScreen(projects = WindowManager.getInstance().allProjectFrames.mapNotNull { it.project }.toTypedArray()) ||
           serviceIfCreated<LightEditService>()?.project != null ||
-          (numberOfOpenedProjects == 1 && couldReturnToWelcomeScreen(project))) {
+          (numberOfOpenedProjects == 1 && couldReturnToWelcomeScreen(project))
+        ) {
         closeProjectAndShowWelcomeFrameIfNoProjectOpened(project)
       }
       else {
@@ -74,4 +107,5 @@ open class CloseProjectWindowHelper {
     return project?.let { SHOW_WELCOME_FRAME_FOR_PROJECT.get(project) }
            ?: (isShowWelcomeScreen && !PlatformUtils.isDataSpell() && !PlatformUtils.isDataGrip())
   }
+
 }
