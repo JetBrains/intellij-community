@@ -4,9 +4,8 @@ package com.intellij.terminal.backend
 import com.intellij.terminal.session.TerminalCursorPositionChangedEvent
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.util.CharUtils
-import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalCursorPositionChangedEvent
 import org.jetbrains.plugins.terminal.block.ui.getLengthWithoutDwc
+import org.jetbrains.plugins.terminal.block.ui.withLock
 
 internal class TerminalCursorPositionTracker(
   private val textBuffer: TerminalTextBuffer,
