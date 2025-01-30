@@ -7,8 +7,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModelImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil
-import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil.update
+import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil
+import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil.update
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -20,7 +20,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `initial block is replaced with a new one`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val outputModel = TerminalTestUtil.createOutputModel()
     val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
@@ -36,7 +36,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `command start offset is set correctly after prompt finish`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val outputModel = TerminalTestUtil.createOutputModel()
     val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
@@ -54,7 +54,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `block end offset is updated on command typing`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val outputModel = TerminalTestUtil.createOutputModel()
     val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
@@ -70,7 +70,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `output start offset is set correctly after command start`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val outputModel = TerminalTestUtil.createOutputModel()
     val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
@@ -89,7 +89,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `new block is created after next prompt start`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val outputModel = TerminalTestUtil.createOutputModel()
     val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
@@ -113,7 +113,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `initial block is left if there was some text`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val outputModel = TerminalTestUtil.createOutputModel()
     val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
@@ -135,7 +135,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `blocks are preserved after full text replace`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val outputModel = TerminalTestUtil.createOutputModel()
     val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     // Prepare
@@ -171,7 +171,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `single block is left after clear`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val outputModel = TerminalTestUtil.createOutputModel()
     val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     // Prepare
@@ -206,7 +206,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
    */
   @Test
   fun `single block is left after all text removed`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel()
+    val outputModel = TerminalTestUtil.createOutputModel()
     val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     // Prepare
@@ -232,7 +232,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `blocks positions are adjusted after output start trimmed`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel(maxLength = 30)
+    val outputModel = TerminalTestUtil.createOutputModel(maxLength = 30)
     val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")
@@ -259,7 +259,7 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
   @Test
   fun `blocks was removed after output start trimmed`() = runBlocking(Dispatchers.EDT) {
-    val outputModel = TerminalSessionTestUtil.createOutputModel(maxLength = 30)
+    val outputModel = TerminalTestUtil.createOutputModel(maxLength = 30)
     val blocksModel = TerminalBlocksModelImpl(outputModel.document)
 
     outputModel.update(0, "\n\n\n")

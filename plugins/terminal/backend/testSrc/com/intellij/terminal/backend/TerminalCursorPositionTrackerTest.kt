@@ -1,12 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.reworked
+package com.intellij.terminal.backend
 
+import com.intellij.terminal.backend.util.write
+import com.intellij.terminal.session.TerminalContentUpdatedEvent
+import com.intellij.terminal.session.TerminalCursorPositionChangedEvent
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.ui.settings.DefaultSettingsProvider
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.terminal.block.reworked.session.output.*
-import org.jetbrains.plugins.terminal.reworked.util.write
 import org.junit.Test
 
 internal class TerminalCursorPositionTrackerTest {

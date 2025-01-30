@@ -12,9 +12,9 @@ import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSn
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
-import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil
-import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil.update
-import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil.updateCursor
+import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil
+import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil.update
+import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil.updateCursor
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -25,7 +25,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
   @Test
   fun `update editor content`() = runBlocking(Dispatchers.EDT) {
-    val model = TerminalSessionTestUtil.createOutputModel()
+    val model = TerminalTestUtil.createOutputModel()
 
     val text = """
       123 sdfsdf sdfsdf
@@ -43,7 +43,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
   @Test
   fun `update editor content incrementally with styles`() = runBlocking(Dispatchers.EDT) {
-    val model = TerminalSessionTestUtil.createOutputModel()
+    val model = TerminalTestUtil.createOutputModel()
 
     val text1 = """
       first line
@@ -74,7 +74,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
   @Test
   fun `update editor content incrementally with overflow`() = runBlocking(Dispatchers.EDT) {
-    val model = TerminalSessionTestUtil.createOutputModel(maxLength = 16)
+    val model = TerminalTestUtil.createOutputModel(maxLength = 16)
 
     val text1 = """
       foofoo
@@ -105,7 +105,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
   @Test
   fun `update editor content after overflow`() = runBlocking(Dispatchers.EDT) {
-    val model = TerminalSessionTestUtil.createOutputModel(maxLength = 16)
+    val model = TerminalTestUtil.createOutputModel(maxLength = 16)
 
     val text1 = """
       foofoo
@@ -143,7 +143,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
   @Test
   fun `update exceeds maxCapacity`() = runBlocking(Dispatchers.EDT) {
-    val model = TerminalSessionTestUtil.createOutputModel(maxLength = 10)
+    val model = TerminalTestUtil.createOutputModel(maxLength = 10)
     val startOffsets = mutableListOf<Int>()
     model.addListener(testRootDisposable, object: TerminalOutputModelListener {
       override fun afterContentChanged(startOffset: Int) {
@@ -175,7 +175,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
   @Test
   fun `update editor content from the start when some lines were trimmed already (clear)`() = runBlocking(Dispatchers.EDT) {
-    val model = TerminalSessionTestUtil.createOutputModel(maxLength = 10)
+    val model = TerminalTestUtil.createOutputModel(maxLength = 10)
 
     // Prepare
     val fillerText = "12345"
@@ -196,7 +196,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
   @Test
   fun `check that spaces are added if cursor is out of line bounds (last line)`() = runBlocking(Dispatchers.EDT) {
-    val model = TerminalSessionTestUtil.createOutputModel()
+    val model = TerminalTestUtil.createOutputModel()
 
     // Prepare
     model.update(0, "abcde", listOf(styleRange(0, 3), styleRange(3, 5)))
@@ -214,7 +214,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
   @Test
   fun `check that spaces are added if cursor is out of line bounds (middle line)`() = runBlocking(Dispatchers.EDT) {
-    val model = TerminalSessionTestUtil.createOutputModel()
+    val model = TerminalTestUtil.createOutputModel()
 
     // Prepare
     model.update(0, "12345", listOf(styleRange(0, 5)))
