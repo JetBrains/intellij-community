@@ -24,21 +24,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
-import java.util.concurrent.ConcurrentHashMap
 import andel.text.TextRange as AndelTextRange
 
 
 @ApiStatus.Experimental
 internal class AdMarkupModel private constructor(
   private val adDocument: AdDocument,
-  private val mapper: HighlightMapper,
+  private val mapper: AdRangeMapper<RangeHighlighterEx>,
   markupModel: MarkupModelEx,
   private val coroutineScope: CoroutineScope,
   private val repaintLambda: suspend () -> Unit,
 ) : MarkupModelEx, Disposable {
-
-  @Volatile
-  private var isDisposed = false
 
   companion object {
     fun fromMarkup(
@@ -52,9 +48,9 @@ internal class AdMarkupModel private constructor(
       return adMarkupModel
     }
 
-    private fun addExistingHighlighters(markupModel: MarkupModelEx, adDocument: AdDocument): HighlightMapper {
+    private fun addExistingHighlighters(markupModel: MarkupModelEx, adDocument: AdDocument): AdRangeMapper<RangeHighlighterEx> {
       // TODO: there is a gap between allHighlighters and addMarkupModelListener, a highlighter may be missed
-      val mapper = HighlightMapper()
+      val mapper = AdRangeMapper<RangeHighlighterEx>()
       val rangesIds = mutableListOf<RangeMarkerId>()
       val ranges = mutableListOf<AndelTextRange>()
       for (highlighter in markupModel.allHighlighters) {
@@ -74,6 +70,7 @@ internal class AdMarkupModel private constructor(
     markupModel.addMarkupModelListener(this, object : MarkupModelListener {
       override fun afterAdded(highlighter: RangeHighlighterEx) {
         onHighlightUpdate {
+          // TODO: incorrect offset -> ui offset
           val rangeId = UID.random()
           adDocument.addRangeMarker(
             RangeMarkerId(rangeId),
@@ -100,7 +97,7 @@ internal class AdMarkupModel private constructor(
     processor: Processor<in RangeHighlighterEx>,
   ): Boolean {
     for (interval in adDocument.queryRangeMarkers(start.toLong(), end.toLong())) {
-      val rh = mapper.highlightWithId(interval.id)
+      val rh = mapper.resolveRange(interval.id)
       if (rh != null && rh.isValid) {
         val startOffset = interval.from.toInt()
         val endOffset = interval.to.toInt()
@@ -120,16 +117,13 @@ internal class AdMarkupModel private constructor(
   }
 
   override fun dispose() {
-    isDisposed = true
   }
 
   private fun onHighlightUpdate(body: ChangeScope.() -> Unit) {
-    coroutineScope.launch(LIMITED_DISPATCHER) {
+    coroutineScope.launch {
       change {
         shared {
-          if (!isDisposed) {
-            body()
-          }
+          body()
         }
       }
       repaintLambda.invoke()
@@ -231,28 +225,6 @@ internal class AdMarkupModel private constructor(
   }
 
   // endregion
-}
-
-private class HighlightMapper {
-  private val idToHighlighter = ConcurrentHashMap<UID, RangeHighlighterEx>()
-  private val highlighterToId = ConcurrentHashMap<RangeHighlighterEx, UID>()
-
-  fun highlightWithId(id: UID): RangeHighlighterEx? {
-    return idToHighlighter[id]
-  }
-
-  fun register(id: UID, highlighter: RangeHighlighterEx) {
-    idToHighlighter.put(id, highlighter)
-    highlighterToId.put(highlighter, id)
-  }
-
-  fun unregister(highlighter: RangeHighlighterEx): UID? {
-    val id = highlighterToId.remove(highlighter)
-    if (id != null) {
-      idToHighlighter.remove(id)
-    }
-    return id
-  }
 }
 
 private class AdRangeHighlighter(

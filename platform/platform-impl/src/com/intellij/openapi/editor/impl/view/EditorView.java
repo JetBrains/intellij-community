@@ -10,10 +10,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorModel;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.*;
@@ -589,8 +586,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return (FoldingModelImpl)myEditorModel.getFoldingModel();
   }
 
-  InlayModelImpl getInlayModel() {
-    return (InlayModelImpl)myEditorModel.getInlayModel();
+  InlayModelEx getInlayModel() {
+    return myEditorModel.getInlayModel();
   }
 
   SoftWrapModelImpl getSoftWrapModel() {

@@ -3,10 +3,10 @@ package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.InlayModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
-import com.intellij.openapi.editor.impl.InlayModelImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.util.DocumentUtil;
@@ -29,7 +29,7 @@ final class EditorCoordinateMapper {
   private final EditorView myView;
   private final Document myDocument;
   private final FoldingModelImpl myFoldingModel;
-  private final InlayModelImpl myInlayModel;
+  private final InlayModelEx myInlayModel;
   private final SoftWrapModelImpl mySoftWrapModel;
 
   EditorCoordinateMapper(EditorView view) {

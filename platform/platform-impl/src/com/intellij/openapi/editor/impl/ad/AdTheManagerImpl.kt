@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FocusModeModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.kernel.withKernel
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.jetbrains.rhizomedb.ChangeScope
 import com.jetbrains.rhizomedb.asOf
@@ -24,13 +25,15 @@ import fleet.kernel.transactor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
 
 
-internal val LIMITED_DISPATCHER by lazy {
+
+private val LIMITED_DISPATCHER by lazy {
   Executors.newFixedThreadPool(1).asCoroutineDispatcher()
 }
 
@@ -40,20 +43,21 @@ internal class AdTheManagerImpl(private val coroutineScope: CoroutineScope) : Ad
   override fun createEditorModel(editor: EditorEx): EditorModel? {
     ThreadingAssertions.assertEventDispatchThread()
     if (isRhizomeAdEnabled && editor is EditorImpl && isDocumentGuardedByLock(editor.document)) {
+      val editorScope = this.coroutineScope.childScope("CoroutineScope for $editor", LIMITED_DISPATCHER)
       val modStampBefore = editor.document.modificationStamp
       @Suppress("RAW_RUN_BLOCKING")
       val editorModel = runBlocking {
         withKernel {
           change {
             shared {
-              createEditorModelImpl(editor)
+              createEditorModelImpl(editor, editorScope)
             }
           }
         }
       }
       ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
 
-      val documentSynchronizer = AdDocumentSynchronizer(editorModel.document as AdDocument, coroutineScope) {
+      val documentSynchronizer = AdDocumentSynchronizer(editorModel.document as AdDocument, editorScope) {
         repaintEditor(editor)
       }
       editor.document.addDocumentListener(documentSynchronizer, documentSynchronizer)
@@ -61,6 +65,7 @@ internal class AdTheManagerImpl(private val coroutineScope: CoroutineScope) : Ad
       Disposer.register(editorModel, documentSynchronizer)
       Disposer.register(editorModel, editorModel.editorMarkupModel as Disposable)
       Disposer.register(editorModel, editorModel.documentMarkupModel as Disposable)
+      Disposer.register(editorModel, editorModel.inlayModel as Disposable)
       Disposer.register(editor.disposable, editorModel)
 
       assert(editor.document.modificationStamp == modStampBefore)
@@ -70,7 +75,7 @@ internal class AdTheManagerImpl(private val coroutineScope: CoroutineScope) : Ad
     return null
   }
 
-  private fun ChangeScope.createEditorModelImpl(editor: EditorImpl): EditorModel {
+  private fun ChangeScope.createEditorModelImpl(editor: EditorImpl, coroutineScope: CoroutineScope): EditorModel {
     register(AdDocumentEntity)
     val document = editor.document
     val entity = AdDocumentEntity.fromString(
@@ -88,12 +93,18 @@ internal class AdTheManagerImpl(private val coroutineScope: CoroutineScope) : Ad
     val editorMarkup = createMarkup(editor.markupModel)
     val documentMarkup = createMarkup(editor.filteredDocumentMarkupModel)
 
+    val inlayModel = AdInlayModel.fromInlays(
+      editor.inlayModel,
+      adDocument,
+      coroutineScope
+    ) { repaintEditor(editor) }
+
     return object : EditorModel {
       override fun getDocument(): DocumentEx = adDocument
       override fun getEditorMarkupModel(): MarkupModelEx = editorMarkup
       override fun getDocumentMarkupModel(): MarkupModelEx = documentMarkup
       override fun getHighlighter(): EditorHighlighter = editor.highlighter
-      override fun getInlayModel(): InlayModel = editor.inlayModel
+      override fun getInlayModel(): InlayModelEx = inlayModel
       override fun getFoldingModel(): FoldingModelEx = editor.foldingModel
       override fun getSoftWrapModel(): SoftWrapModelEx = editor.softWrapModel
       override fun getCaretModel(): CaretModel = editor.caretModel
@@ -102,7 +113,8 @@ internal class AdTheManagerImpl(private val coroutineScope: CoroutineScope) : Ad
       override fun getFocusModel(): FocusModeModel = editor.focusModeModel
       override fun isAd(): Boolean = true
       override fun dispose() {
-        coroutineScope.launch(LIMITED_DISPATCHER) {
+        coroutineScope.cancel()
+        this@AdTheManagerImpl.coroutineScope.launch {
           change {
             shared {
               entity.delete()

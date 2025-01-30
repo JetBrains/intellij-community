@@ -26,7 +26,7 @@ internal class AdDocumentSynchronizer(
 
   override fun documentChanged(event: DocumentEvent) {
     val realChars = event.document.immutableCharSequence
-    coroutineScope.launch(LIMITED_DISPATCHER) {
+    coroutineScope.launch {
       if (isDebugMode()) {
         delay(500)
       }

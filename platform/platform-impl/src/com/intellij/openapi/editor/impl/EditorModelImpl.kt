@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.CaretModel
-import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.ScrollingModel
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.editor.ex.*
@@ -15,7 +14,7 @@ internal class EditorModelImpl(private val editor: EditorImpl) : EditorModel {
   override fun getEditorMarkupModel(): MarkupModelEx = editor.markupModel
   override fun getDocumentMarkupModel(): MarkupModelEx = editor.filteredDocumentMarkupModel
   override fun getHighlighter(): EditorHighlighter = editor.highlighter
-  override fun getInlayModel(): InlayModel = editor.inlayModel
+  override fun getInlayModel(): InlayModelEx = editor.inlayModel
   override fun getFoldingModel(): FoldingModelEx = editor.foldingModel
   override fun getSoftWrapModel(): SoftWrapModelEx = editor.softWrapModel
   override fun getCaretModel(): CaretModel = editor.caretModel
