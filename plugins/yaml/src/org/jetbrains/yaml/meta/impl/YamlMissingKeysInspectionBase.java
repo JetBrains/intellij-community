@@ -62,14 +62,14 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
       if (!missingKeys.isEmpty()) {
         String msg = YAMLBundle.message("YamlMissingKeysInspectionBase.missing.keys", composeKeyList(missingKeys));
         PsiElement element = getElementToHighlight(mapping);
-        List<LocalQuickFix> quickFixes = collectQuickFixes(missingKeys, element);
+        List<LocalQuickFix> quickFixes = getQuickFixes(missingKeys, element);
         myProblemsHolder.registerProblem(
           element, msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY)
         );
       }
     }
 
-    protected @NotNull List<LocalQuickFix> collectQuickFixes(@NotNull Collection<String> missingKeys, @NotNull PsiElement element) {
+    protected @NotNull List<LocalQuickFix> getQuickFixes(@NotNull Collection<String> missingKeys, @NotNull PsiElement element) {
       return List.of(new AddMissingKeysQuickFix(missingKeys, element));
     }
   }
