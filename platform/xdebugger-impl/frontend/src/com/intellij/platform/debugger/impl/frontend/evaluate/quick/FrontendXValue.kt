@@ -11,19 +11,10 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.xdebugger.Obsolescent
-import com.intellij.xdebugger.frame.XCompositeNode
-import com.intellij.xdebugger.frame.XValue
-import com.intellij.xdebugger.frame.XValueChildrenList
-import com.intellij.xdebugger.frame.XValueModifier
-import com.intellij.xdebugger.frame.XValueNode
-import com.intellij.xdebugger.frame.XValuePlace
+import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
-import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorApi
-import com.intellij.xdebugger.impl.rpc.XValueAdvancedPresentationPart
-import com.intellij.xdebugger.impl.rpc.XValueComputeChildrenEvent
-import com.intellij.xdebugger.impl.rpc.XValueDto
-import com.intellij.xdebugger.impl.rpc.XValuePresentationEvent
+import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
@@ -100,7 +91,7 @@ internal class FrontendXValue(
 
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
     node.childCoroutineScope(parentScope = cs, "FrontendXValue#computePresentation").launch(Dispatchers.EDT) {
-      XDebuggerEvaluatorApi.getInstance().computePresentation(xValueDto.id, place)?.collect { presentationEvent ->
+      XValueApi.getInstance().computePresentation(xValueDto.id, place)?.collect { presentationEvent ->
         when (presentationEvent) {
           is XValuePresentationEvent.SetSimplePresentation -> {
             node.setPresentation(presentationEvent.icon?.icon(), presentationEvent.presentationType, presentationEvent.value, presentationEvent.hasChildren)
@@ -123,7 +114,7 @@ internal class FrontendXValue(
 
   override fun computeChildren(node: XCompositeNode) {
     node.childCoroutineScope(parentScope = cs, "FrontendXValue#computeChildren").launch(Dispatchers.EDT) {
-      XDebuggerEvaluatorApi.getInstance().computeChildren(xValueDto.id)?.collect { computeChildrenEvent ->
+      XValueApi.getInstance().computeChildren(xValueDto.id)?.collect { computeChildrenEvent ->
         when (computeChildrenEvent) {
           is XValueComputeChildrenEvent.AddChildren -> {
             val childrenList = XValueChildrenList()
@@ -243,7 +234,7 @@ internal fun Obsolescent.childCoroutineScope(parentScope: CoroutineScope, name: 
 private class FrontendXValueDisposer(project: Project, val cs: CoroutineScope) {
   fun dispose(xValueDto: XValueDto) {
     cs.launch(Dispatchers.IO) {
-      XDebuggerEvaluatorApi.getInstance().disposeXValue(xValueDto.id)
+      XValueApi.getInstance().disposeXValue(xValueDto.id)
     }
   }
 }

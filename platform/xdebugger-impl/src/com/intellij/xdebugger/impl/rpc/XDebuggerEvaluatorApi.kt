@@ -40,12 +40,6 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
 
   suspend fun evaluateFullValue(fullValueEvaluatorId: XFullValueEvaluatorId): Deferred<XFullValueEvaluatorResult>
 
-  suspend fun disposeXValue(xValueId: XValueId)
-
-  suspend fun computePresentation(xValueId: XValueId, xValuePlace: XValuePlace): Flow<XValuePresentationEvent>?
-
-  suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>?
-
   suspend fun showLuxEvaluateDialog(evaluatorId: XDebuggerEvaluatorId, editorId: EditorId?, fileId: VirtualFileId?, xValueId: XValueId?)
 
   companion object {
