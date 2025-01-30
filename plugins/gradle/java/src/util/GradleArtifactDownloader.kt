@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.util
 
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.wsl.WslPath.Companion.parseWindowsUncPath
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -29,11 +28,10 @@ import java.util.concurrent.CompletableFuture
 import kotlin.io.path.createTempFile
 import kotlin.io.path.readText
 
-object GradleLibraryDownloader {
+object GradleArtifactDownloader {
 
-  private val LOG = Logger.getInstance(GradleLibraryDownloader::class.java)
   private val GRADLE_5_6 = GradleVersion.version("5.6")
-  private const val INIT_SCRIPT_FILE_PREFIX = "ijDownloadLibrary"
+  private const val INIT_SCRIPT_FILE_PREFIX = "ijArtifactDownloader"
 
   /**
    * Download a Jar file with specified artifact coordinates by using the Gradle task executed on a specific Gradle module.
@@ -43,13 +41,13 @@ object GradleLibraryDownloader {
    * @param externalProjectPath path to the directory with the Gradle module that should be used to execute the task.
    */
   @JvmStatic
-  fun downloadLibrary(
+  fun downloadArtifact(
     project: Project,
     executionName: @Nls String,
     artifactNotation: String,
     externalProjectPath: String,
   ): CompletableFuture<Path> {
-    val taskName = "ijDownloadLibrary" + UUID.randomUUID().toString().substring(0, 12)
+    val taskName = "ijDownloadArtifact" + UUID.randomUUID().toString().substring(0, 12)
     val settings = ExternalSystemTaskExecutionSettings().also {
       it.executionName = executionName
       it.externalProjectPath = externalProjectPath
@@ -57,7 +55,7 @@ object GradleLibraryDownloader {
       it.vmOptions = GradleSettings.getInstance(project).gradleVmOptions
       it.externalSystemIdString = GradleConstants.SYSTEM_ID.id
     }
-    val taskOutputFile = createTempFile("gradleDownloadLibrary")
+    val taskOutputFile = createTempFile("ijDownloadArtifactOut")
     val userData = prepareUserData(artifactNotation, taskName, taskOutputFile, externalProjectPath)
     val resultWrapper = CompletableFuture<Path>()
     val listener = object : ExternalSystemTaskNotificationListener {
@@ -70,8 +68,8 @@ object GradleLibraryDownloader {
             resultWrapper.completeExceptionally(IllegalStateException("Incorrect file header: $downloadedArtifactPath."))
             return
           }
-          resultWrapper.complete(downloadedArtifactPath)
           FileUtil.delete(taskOutputFile)
+          resultWrapper.complete(downloadedArtifactPath)
         }
         catch (e: IOException) {
           GradleLog.LOG.warn(e)
@@ -82,12 +80,12 @@ object GradleLibraryDownloader {
 
       override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
         FileUtil.delete(taskOutputFile)
-        resultWrapper.completeExceptionally(IllegalStateException("Unable to download artifact."))
         GradleDependencySourceDownloaderErrorHandler.handle(project = project,
                                                             externalProjectPath = externalProjectPath,
                                                             artifact = artifactNotation,
                                                             exception = exception
         )
+        resultWrapper.completeExceptionally(IllegalStateException("Unable to download artifact."))
       }
     }
     val spec = TaskExecutionSpec.create(project, GradleConstants.SYSTEM_ID, DefaultRunExecutor.EXECUTOR_ID, settings)

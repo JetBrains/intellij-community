@@ -17,6 +17,7 @@ import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeIntern
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.GlobalScope
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
@@ -34,6 +35,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import kotlin.io.path.deleteIfExists
+import kotlin.time.Duration.Companion.minutes
 
 class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
 

@@ -23,7 +23,7 @@ import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.cache.GradleLocalCacheHelper
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.GradleLibraryDownloader
+import org.jetbrains.plugins.gradle.util.GradleArtifactDownloader
 import org.jetbrains.plugins.gradle.util.isValidJar
 import java.nio.file.Path
 import java.util.*
@@ -67,7 +67,7 @@ object GradleLibrarySourcesDownloader {
       attachSources(cachedSourcesPath, orderEntries)
       return cachedSourcesPath
     }
-    val path = GradleLibraryDownloader.downloadLibrary(
+    val path = GradleArtifactDownloader.downloadArtifact(
       project,
       GradleBundle.message("gradle.action.download.sources"),
       sourceArtifactNotation,
