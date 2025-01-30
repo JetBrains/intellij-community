@@ -151,15 +151,15 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
         return new TargetType[]{TargetType.ANNOTATION_TYPE, TargetType.TYPE};
       }
       else if (aClass instanceof GrTypeParameter) {
-        return new TargetType[]{TargetType.TYPE_PARAMETER};
+        return addTypeUseIfApplicable(owner, TargetType.TYPE_PARAMETER);
       }
       else {
-        return new TargetType[]{TargetType.TYPE};
+        return addTypeUseIfApplicable(owner, TargetType.TYPE);
       }
     }
     if (owner instanceof GrMethod) {
       if (((PsiMethod)owner).isConstructor()) {
-        return new TargetType[]{TargetType.CONSTRUCTOR};
+        return addTypeUseIfApplicable(owner,TargetType.CONSTRUCTOR);
       }
       else {
         return addTypeUseIfApplicable(owner, TargetType.METHOD);

@@ -21,19 +21,24 @@ abstract class GrTypeUseAnnotationHighlightingTestBase : GrHighlightingTestBase(
     override fun getProjectDescriptor(): LightProjectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
 
     fun testNoHighlightingForTypeUse() = doTestHighlighting("""
+    @<error descr="'@ExampleAnno' not applicable to type">ExampleAnno</error>
     class Main2 {
-    @<error descr="'@ExampleAnno' not applicable to field">ExampleAnno</error>
-    private String field = null;
-
-    static void main(String[] args) {
-        method("string")
+        @<error descr="'@ExampleAnno' not applicable to field">ExampleAnno</error>
+        private String field = null;
+        
+         @<error descr="'@ExampleAnno' not applicable to constructor">ExampleAnno</error>
+        Main2() {
+        }
+    
+        static void main(String[] args) {
+            method("string")
+        }
+    
+        @<error descr="'@ExampleAnno' not applicable to method">ExampleAnno</error>
+        static String method(@<error descr="'@ExampleAnno' not applicable to parameter">ExampleAnno</error> String s) {
+            @<error descr="'@ExampleAnno' not applicable to local variable">ExampleAnno</error> String t = "r";
+        }
     }
-
-    @<error descr="'@ExampleAnno' not applicable to method">ExampleAnno</error>
-    static String method(@<error descr="'@ExampleAnno' not applicable to parameter">ExampleAnno</error> String s) {
-        @<error descr="'@ExampleAnno' not applicable to local variable">ExampleAnno</error> String t = "r";
-    }
-  }
   """.trimIndent())
   }
 
@@ -41,9 +46,14 @@ abstract class GrTypeUseAnnotationHighlightingTestBase : GrHighlightingTestBase(
     override fun getProjectDescriptor(): LightProjectDescriptor = GroovyProjectDescriptors.GROOVY_4_0
 
     fun testNoHighlightingForTypeUse() = doTestHighlighting("""
+    @ExampleAnno
     class Main2 {
         @ExampleAnno
         private String field = null;
+        
+        @ExampleAnno
+        Main2() {
+        }
 
         static void main(String[] args) {
             method("string")
