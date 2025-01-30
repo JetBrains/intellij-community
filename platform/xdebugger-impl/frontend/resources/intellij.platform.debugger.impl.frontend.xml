@@ -28,6 +28,12 @@
                     relative-to-action="XDebugger.CompareValueWithClipboard.Frontend"/>
     </action>
 
+    <action id="EvaluateExpression.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendEvaluateAction"
+            icon="AllIcons.Debugger.EvaluateExpression">
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
+                    relative-to-action="XDebugger.CopyName.Frontend"/>
+    </action>
+
     <action id="XDebugger.JumpToSource.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXJumpToSourceAction"
             use-shortcut-of="XDebugger.JumpToSource">
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Jump.To.Section.Frontend" anchor="first"/>

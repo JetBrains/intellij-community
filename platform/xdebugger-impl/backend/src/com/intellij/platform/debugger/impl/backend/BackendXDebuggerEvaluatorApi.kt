@@ -4,17 +4,26 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.ide.rpc.DocumentId
 import com.intellij.ide.rpc.document
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.impl.EditorId
+import com.intellij.openapi.editor.impl.findEditorOrNull
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.kernel.backend.*
+import com.intellij.platform.project.findProject
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.psi.util.PsiEditorUtil
+import com.intellij.ui.AppUIUtil.invokeOnEdt
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.Obsolescent
 import com.intellij.xdebugger.XDebuggerBundle
+import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
 import com.intellij.xdebugger.frame.*
@@ -22,6 +31,7 @@ import com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCall
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.frame.presentation.XValuePresentation.XValueTextRenderer
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.actions.handlers.XDebuggerEvaluateActionHandler
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rhizome.XDebuggerEvaluatorEntity
@@ -49,7 +59,9 @@ import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.asDeferred
+import org.jetbrains.concurrency.await
 import java.awt.Font
+import java.util.function.Consumer
 import javax.swing.Icon
 
 internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
@@ -295,6 +307,33 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
 
       for (event in rawEvents) {
         send(event.convertToRpcEvent(xValueEntity))
+      }
+    }
+  }
+
+  override suspend fun showLuxEvaluateDialog(evaluatorId: XDebuggerEvaluatorId, editorId: EditorId?, fileId: VirtualFileId?, xValueId: XValueId?) {
+    val evaluatorEntity = entity(XDebuggerEvaluatorEntity.EvaluatorId, evaluatorId) ?: return
+    val sessionEntity = evaluatorEntity.sessionEntity
+    val session = sessionEntity.session
+    val project = sessionEntity.projectEntity.projectId.findProject()
+    val evaluator = evaluatorEntity.evaluator
+    val editor = editorId?.findEditorOrNull()
+
+    val editorVirtualFile = editor?.document?.let { FileDocumentManager.getInstance().getFile(it) }
+    val virtualFile = fileId?.virtualFile() ?: editorVirtualFile
+
+    val psiFile = editor?.let { PsiEditorUtil.getPsiFile(it) }
+
+    val selectedValue = xValueId?.let { entity(XValueEntity.XValueId, it)?.xValue }
+
+    val expressionPromise = XDebuggerEvaluateActionHandler.getSelectedExpressionAsync(project, evaluator, editor, psiFile, selectedValue)
+
+    EvaluationCoroutineScopeProvider.getInstance().cs.launch {
+      val expression = expressionPromise.await()
+      withContext(Dispatchers.EDT) {
+        val editorsProvider = session.debugProcess.editorsProvider
+        val stackFrame = session.currentStackFrame
+        XDebuggerEvaluateActionHandler.showDialog(session, virtualFile, editorsProvider, stackFrame, evaluator, expression)
       }
     }
   }
