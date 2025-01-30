@@ -24,8 +24,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.project.PROJECT_ID
-import com.intellij.platform.project.ProjectId
 import com.intellij.ui.navigation.Place
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -62,7 +60,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     private fun showInternal(project: Project?, toSelect: Configurable?, settingsDialogInitializer: () -> SettingsDialog) {
       val currentOrDefaultProject = currentOrDefaultProject(project)
       val isActualProject = currentOrDefaultProject != ProjectManager.getInstance().defaultProject
-      if (AdvancedSettings.getBoolean("ide.ui.non.modal.settings.window") && isActualProject) {
+      if (useNonModalSettingsWindow() && isActualProject) {
         runWithModalProgressBlocking(currentOrDefaultProject, IdeBundle.message("settings.modal.opening.message")) {
           val settingsFile = SettingsVirtualFileHolder.getInstance(currentOrDefaultProject).getOrCreate(toSelect, settingsDialogInitializer)
           val fileEditorManager = FileEditorManager.getInstance(currentOrDefaultProject) as FileEditorManagerEx;
@@ -255,6 +253,12 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
                             showApplyButton = isWorthToShowApplyButton(configurable))
   }
 }
+
+private fun useNonModalSettingsWindow(): Boolean {
+  return System.getProperty("ide.ui.non.modal.settings.window")?.toBoolean()
+         ?: AdvancedSettings.getBoolean("ide.ui.non.modal.settings.window")
+}
+
 
 private suspend fun SequenceScope<Configurable>.collect(configurables: Array<Configurable>) {
   for (configurable in configurables) {
