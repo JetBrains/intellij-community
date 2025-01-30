@@ -390,6 +390,6 @@ class MixedModeProcessTransitionStateMachine(
   }
 
   private fun throwTransitionIsNotImplemented(event: Event) {
-    TODO("Transition from ${state::class.simpleName} by event ${event::class.simpleName} is not implemented")
+    error("Transition from ${state::class.simpleName} by event ${event::class.simpleName} is not implemented")
   }
 }
