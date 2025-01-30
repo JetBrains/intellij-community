@@ -650,6 +650,9 @@
     <welcomeScreenCustomization id="defaultCustomization"
                                 implementation="com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenDefaultCustomization"/>
 
+    <startPagePromoter implementation="com.intellij.openapi.wm.impl.welcomeScreen.TechInsightsLabPromoter"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.wm.impl.welcomeScreen.TechInsightsLabCollector"/>
+
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.bootstrap.IdeStartupWizardCollector"/>
     <registryKey defaultValue="-1"
                  description="Defines the experiment group number. Negative value will be ignored."
