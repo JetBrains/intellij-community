@@ -21,14 +21,20 @@ import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDe
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
+import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.Objects
 
 internal class KaScriptModuleImpl(
     override val project: Project,
     private val scriptFile: VirtualFile,
-    private val scriptDefinition: ScriptDefinition,
 ) : KaScriptModule {
+
+    private val scriptDefinition: ScriptDefinition by lazy {
+        findScriptDefinition(project, KtFileScriptSource(file))
+    }
+
 
     override val file: KtFile
         get() = scriptFile.findPsiFile(project) as? KtFile

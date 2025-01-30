@@ -13,8 +13,6 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.K2KaModuleFactory
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
-import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 
 
 internal class K2ScriptingKaModuleFactory : K2KaModuleFactory {
@@ -24,8 +22,7 @@ internal class K2ScriptingKaModuleFactory : K2KaModuleFactory {
         if (ktFile.kotlinParserWillCreateKtScriptHere()) {
             val project = file.project
             val virtualFile = file.originalFile.virtualFile
-            val scriptDefinition = findScriptDefinition(project, KtFileScriptSource(ktFile))
-            return KaScriptModuleImpl(project, virtualFile, scriptDefinition)
+            return KaScriptModuleImpl(project, virtualFile)
         }
 
         return null
