@@ -81,7 +81,12 @@ object K2CreateFunctionFromUsageUtil {
     internal fun KtElement.getExpectedKotlinType(): ExpectedKotlinType? {
         var expectedType = expectedType
         if (expectedType == null) {
-            val parent = this.parent
+            var parent = this.parent
+            var current = this
+            if (parent is KtDotQualifiedExpression && parent.selectorExpression == this) {
+                current = parent
+                parent = parent.parent
+            }
             expectedType = when {
                 parent is KtPrefixExpression && parent.operationToken == KtTokens.EXCL -> builtinTypes.boolean
                 parent is KtStringTemplateEntryWithExpression -> builtinTypes.string
@@ -97,8 +102,11 @@ object K2CreateFunctionFromUsageUtil {
                         argument(ktType)
                     }
                 }
-                parent is KtNamedFunction && parent.nameIdentifier == null && parent.bodyExpression == this && parent.parent is KtValueArgument -> {
+                parent is KtNamedFunction && parent.nameIdentifier == null && parent.bodyExpression == current && parent.parent is KtValueArgument -> {
                     (parent.expectedType as? KaFunctionType)?.returnType
+                }
+                parent is KtBinaryExpression && parent.operationToken == KtTokens.EQ && parent.left == current -> {
+                    parent.right?.expressionType
                 }
                 else -> null
             }

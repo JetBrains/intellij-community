@@ -7279,6 +7279,60 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 }
 
                 @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/quickfix/createFromUsage/createVariable/property/extension")
+                public static class Extension extends AbstractK1QuickFixTest {
+                    @java.lang.Override
+                    @org.jetbrains.annotations.NotNull
+                    public final KotlinPluginMode getPluginMode() {
+                        return KotlinPluginMode.K1;
+                    }
+
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("extensionRefInImport.kt")
+                    public void testExtensionRefInImport() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/extension/extensionRefInImport.kt");
+                    }
+
+                    @TestMetadata("extensionValOnClassNoClassObject.kt")
+                    public void testExtensionValOnClassNoClassObject() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/extension/extensionValOnClassNoClassObject.kt");
+                    }
+
+                    @TestMetadata("extensionValOnClassNoClassObject2.kt")
+                    public void testExtensionValOnClassNoClassObject2() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/extension/extensionValOnClassNoClassObject2.kt");
+                    }
+
+                    @TestMetadata("extensionWithTypeParameterAsReceiver.kt")
+                    public void testExtensionWithTypeParameterAsReceiver() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/extension/extensionWithTypeParameterAsReceiver.kt");
+                    }
+
+                    @TestMetadata("nullableReceiver.kt")
+                    public void testNullableReceiver() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/extension/nullableReceiver.kt");
+                    }
+
+                    @TestMetadata("valOnLibObject.kt")
+                    public void testValOnLibObject() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/extension/valOnLibObject.kt");
+                    }
+
+                    @TestMetadata("valOnLibType.kt")
+                    public void testValOnLibType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/extension/valOnLibType.kt");
+                    }
+
+                    @TestMetadata("varOnLibType.kt")
+                    public void testVarOnLibType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/extension/varOnLibType.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/createFromUsage/createVariable/property")
                 public static class Uncategorized extends AbstractK1QuickFixTest {
                     @java.lang.Override
@@ -7299,26 +7353,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     @TestMetadata("callableRef.kt")
                     public void testCallableRef() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/callableRef.kt");
-                    }
-
-                    @TestMetadata("extensionRefInImport.kt")
-                    public void testExtensionRefInImport() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createVariable/property/extensionRefInImport.kt");
-                    }
-
-                    @TestMetadata("extensionValOnClassNoClassObject.kt")
-                    public void testExtensionValOnClassNoClassObject() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createVariable/property/extensionValOnClassNoClassObject.kt");
-                    }
-
-                    @TestMetadata("extensionValOnClassNoClassObject2.kt")
-                    public void testExtensionValOnClassNoClassObject2() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createVariable/property/extensionValOnClassNoClassObject2.kt");
-                    }
-
-                    @TestMetadata("extensionWithTypeParameterAsReceiver.kt")
-                    public void testExtensionWithTypeParameterAsReceiver() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createVariable/property/extensionWithTypeParameterAsReceiver.kt");
                     }
 
                     @TestMetadata("inBinaryOperation.kt")
@@ -7369,11 +7403,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     @TestMetadata("nonAbstractInInterface.kt")
                     public void testNonAbstractInInterface() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/nonAbstractInInterface.kt");
-                    }
-
-                    @TestMetadata("nullableReceiver.kt")
-                    public void testNullableReceiver() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createVariable/property/nullableReceiver.kt");
                     }
 
                     @TestMetadata("objectMemberValNoReceiver.kt")
@@ -7481,16 +7510,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/valOnClassObject.kt");
                     }
 
-                    @TestMetadata("valOnLibObject.kt")
-                    public void testValOnLibObject() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createVariable/property/valOnLibObject.kt");
-                    }
-
-                    @TestMetadata("valOnLibType.kt")
-                    public void testValOnLibType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createVariable/property/valOnLibType.kt");
-                    }
-
                     @TestMetadata("valOnUserObject.kt")
                     public void testValOnUserObject() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/valOnUserObject.kt");
@@ -7509,11 +7528,6 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     @TestMetadata("valWithNullableType.kt")
                     public void testValWithNullableType() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/valWithNullableType.kt");
-                    }
-
-                    @TestMetadata("varOnLibType.kt")
-                    public void testVarOnLibType() throws Exception {
-                        runTest("testData/quickfix/createFromUsage/createVariable/property/varOnLibType.kt");
                     }
 
                     @TestMetadata("varOnUserType.kt")

@@ -184,23 +184,27 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
     }
 
     override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
-        val targetContainer = targetClass.toKtClassOrFile() ?: return emptyList()
+        var targetContainer = targetClass.toKtClassOrFile() ?: return emptyList()
+
+        val ktRequest = request as? CreatePropertyFromKotlinUsageRequest
+        if (ktRequest?.isExtension == true) {
+            targetContainer = targetContainer.containingKtFile
+        }
 
         val writable = JvmModifier.FINAL !in request.modifiers && !request.isConstant
 
-        val action = K2CreatePropertyFromUsageBuilder.generatePropertyAction(
-            targetContainer = targetContainer, classOrFileName = targetClass.name, request = request, lateinit = false
-        )
-
         val actions = if (writable) {
             listOfNotNull(
-                action,
                 K2CreatePropertyFromUsageBuilder.generatePropertyAction(
                     targetContainer = targetContainer, classOrFileName = targetClass.name, request = request, lateinit = true
                 )
             )
         } else {
-            listOfNotNull(action)
+            listOfNotNull(
+                K2CreatePropertyFromUsageBuilder.generatePropertyAction(
+                    targetContainer = targetContainer, classOrFileName = targetClass.name, request = request, lateinit = false
+                )
+            )
         }
         return actions
     }

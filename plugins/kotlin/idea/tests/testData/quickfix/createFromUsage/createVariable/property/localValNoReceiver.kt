@@ -1,4 +1,5 @@
 // "Create property 'foo'" "false"
+// K2_ACTION: "Create property 'foo'" "true"
 // ERROR: Unresolved reference: foo
 
 fun test() {
@@ -6,3 +7,5 @@ fun test() {
         return <caret>foo
     }
 }
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreatePropertyFromUsageBuilder$CreatePropertyFromUsageAction

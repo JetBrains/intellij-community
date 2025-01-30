@@ -49,6 +49,7 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
     private val createVariableForExpressionExpectedPackageFound: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.ExpressionExpectedPackageFound> =
         KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ExpressionExpectedPackageFound ->
             listOfNotNull(K2CreateLocalVariableFromUsageBuilder.generateCreateLocalVariableAction(diagnostic.psi)) +
+                    K2CreatePropertyFromUsageBuilder.generateCreatePropertyActions(diagnostic.psi) +
                     (K2CreateParameterFromUsageBuilder.generateCreateParameterAction(diagnostic.psi) ?: emptyList())
         }
     private val createParameterForNamedParameterNotFound: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.NamedParameterNotFound> =

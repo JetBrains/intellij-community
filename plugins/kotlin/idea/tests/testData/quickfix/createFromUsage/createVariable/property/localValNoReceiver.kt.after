@@ -1,9 +1,13 @@
-// "Create property 'foo'" "true"
+// "Create property 'foo'" "false"
+// K2_ACTION: "Create property 'foo'" "true"
+// ERROR: Unresolved reference: foo
+
+val foo: Int
 
 fun test() {
-    val foo: Int
-
     fun nestedTest(): Int {
         return foo
     }
 }
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreatePropertyFromUsageBuilder$CreatePropertyFromUsageAction

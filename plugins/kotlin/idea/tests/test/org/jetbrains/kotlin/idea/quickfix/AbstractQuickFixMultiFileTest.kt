@@ -222,7 +222,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                 try {
                     val psiFile = file
 
-                    val actionHint = ActionHint.parse(psiFile, originalFileText)
+                    val actionHint = ActionHint.parse(psiFile, originalFileText, actionPrefix?.let { ".*//(?: $it)?" } ?: "//", true)
                     val text = actionHint.expectedText
 
                     val actionShouldBeAvailable = actionHint.shouldPresent()
@@ -297,6 +297,8 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
         }
 
     class TestFile internal constructor(val path: String, val content: String)
+
+    protected open val actionPrefix: String? = null
 
     companion object {
         private fun getActionsTexts(availableActions: List<IntentionAction>): List<String> =

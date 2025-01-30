@@ -48,4 +48,6 @@ abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
             super.getAfterFileName(beforeFileName)
         }
     }
+
+    override val actionPrefix: String? = "K2_ACTION:"
 }
