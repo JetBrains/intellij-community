@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.vm
 
+import com.intellij.ide.SearchTopHitProvider
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.intellij.platform.searchEverywhere.SeUsageEventsLogger
 import com.intellij.platform.searchEverywhere.api.SeTab
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.CoroutineScope
@@ -27,11 +29,13 @@ class SePopupVm(val coroutineScope: CoroutineScope,
   val currentTabFlow: Flow<SeTabVm>
   val searchResults: Flow<Flow<SeListItem>>
 
-  val searchPattern = MutableStateFlow(initialSearchPattern ?: "")
+  val searchPattern: MutableStateFlow<String> = MutableStateFlow(initialSearchPattern ?: "")
 
   val tabVms: List<SeTabVm> = tabs.map {
-    SeTabVm(coroutineScope, it, searchPattern)
+    SeTabVm(project, coroutineScope, it, searchPattern)
   }
+
+  val usageLogger: SeUsageEventsLogger = SeUsageEventsLogger()
 
   var shouldLoadMore: Boolean
     get() = currentTab.shouldLoadMore
@@ -53,13 +57,33 @@ class SePopupVm(val coroutineScope: CoroutineScope,
   }
 
   suspend fun itemSelected(item: SeItemData, modifiers: Int): Boolean {
+    logItemSelected()
     return currentTab.itemSelected(item, modifiers, searchPattern.value)
+  }
+
+  fun  selectNextTab() {
+    currentTabIndex.value = (currentTabIndex.value + 1).coerceIn(tabVms.indices)
+    usageLogger.tabSwitched()
+  }
+
+  fun selectPreviousTab() {
+    currentTabIndex.value = (currentTabIndex.value - 1).coerceIn(tabVms.indices)
+    usageLogger.tabSwitched()
   }
 
   fun dispose() {
     coroutineScope.launch {
       onClose()
     }
+  }
+
+  private fun logItemSelected() {
+    val searchText = searchPattern.value
+    if (searchText.startsWith(SearchTopHitProvider.getTopHitAccelerator()) && searchText.contains(" ")) {
+      usageLogger.commandUsed()
+    }
+
+    usageLogger.contributorItemSelected()
   }
 }
 
