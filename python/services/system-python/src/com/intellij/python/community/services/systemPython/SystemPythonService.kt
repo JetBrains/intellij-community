@@ -76,7 +76,7 @@ private class SystemPythonServiceImpl : SystemPythonService, SimplePersistentSta
 
     val pythonsFromExtensions = SystemPythonProvider.EP
       .extensionList
-      .flatMap { it.findSystemPythons(eelApi) }.filter { it.getEelDescriptor().upgrade() == eelApi }
+      .flatMap { it.findSystemPythons(eelApi).getOrNull() ?: emptyList() }.filter { it.getEelDescriptor().upgrade() == eelApi }
 
     val badPythons = mutableSetOf<PythonBinary>()
     val pythons = corePythons + pythonsFromExtensions + state.userProvidedPythons.filter { it.getEelDescriptor() == eelApi.descriptor }

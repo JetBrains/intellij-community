@@ -13,8 +13,7 @@ interface UvCli {
 interface UvLowLevel {
   suspend fun initializeEnvironment(init: Boolean, python: Path?): Result<Path>
 
-  suspend fun listPackages(): Result<List<PythonPackage>>
-  suspend fun listOutdatedPackages(): Result<List<PythonOutdatedPackage>>
+  suspend fun discoverUvInstalledPythons(): Result<Set<Path>>
 
   /**
   * Manage project dependencies by adding/removing them to the project along side installation
@@ -27,4 +26,7 @@ interface UvLowLevel {
    */
   suspend fun installPackage(name: PythonPackageSpecification, options: List<String>): Result<Unit>
   suspend fun uninstallPackage(name: PythonPackage): Result<Unit>
+
+  suspend fun listPackages(): Result<List<PythonPackage>>
+  suspend fun listOutdatedPackages(): Result<List<PythonOutdatedPackage>>
 }

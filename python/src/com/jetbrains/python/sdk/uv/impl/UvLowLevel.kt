@@ -8,14 +8,15 @@ import com.intellij.util.io.delete
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.sdk.uv.UvCli
 import com.jetbrains.python.sdk.uv.UvLowLevel
+import com.jetbrains.python.venvReader.VirtualEnvReader
+import com.jetbrains.python.venvReader.tryResolvePath
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
-internal class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLevel {
+private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLevel {
   override suspend fun initializeEnvironment(init: Boolean, python: Path?): Result<Path> {
     val addPythonArg: (MutableList<String>) -> Unit = { args ->
       python?.let {
@@ -32,16 +33,14 @@ internal class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLe
       initArgs.add("--vcs")
       initArgs.add("none")
 
-      uvCli.runUv(cwd, *initArgs.toTypedArray()).getOrElse {
-        return Result.failure(it)
-      }
+      uvCli.runUv(cwd, *initArgs.toTypedArray())
+        .onFailure { return Result.failure(it) }
     }
 
-    val venvArgs = mutableListOf("venv");
+    val venvArgs = mutableListOf("venv")
     addPythonArg(venvArgs)
-    uvCli.runUv(cwd, *venvArgs.toTypedArray()).getOrElse {
-      return Result.failure(it)
-    }
+    uvCli.runUv(cwd, *venvArgs.toTypedArray())
+      .onFailure { return Result.failure(it) }
 
     // TODO: ask for an uv option not to create
     val hello = cwd.resolve("hello.py").takeIf { it.exists() }
@@ -55,10 +54,26 @@ internal class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLe
     return Result.success(path)
   }
 
-  override suspend fun listPackages(): Result<List<PythonPackage>> {
-    val out = uvCli.runUv(cwd, "pip", "list", "--format", "json").getOrElse {
-      return Result.failure(it)
+  override suspend fun discoverUvInstalledPythons(): Result<Set<Path>> {
+    var out = uvCli.runUv(cwd, "python", "dir")
+      .getOrElse { return Result.failure(it) }
+
+    val uvDir = tryResolvePath(out)
+    if (uvDir == null) {
+      return Result.failure(RuntimeException("failed to detect uv python directory"))
     }
+
+    // TODO: ask for json output format
+    out = uvCli.runUv(cwd, "python", "list", "--only-installed")
+      .getOrElse { return Result.failure(it) }
+
+    val pythons = parseUvPythonList(uvDir, out)
+    return Result.success(pythons)
+  }
+
+  override suspend fun listPackages(): Result<List<PythonPackage>> {
+    val out = uvCli.runUv(cwd, "pip", "list", "--format", "json")
+      .getOrElse { return Result.failure(it) }
 
     data class PackageInfo(val name: String, val version: String)
 
@@ -73,9 +88,8 @@ internal class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLe
 
   override suspend fun listOutdatedPackages(): Result<List<PythonOutdatedPackage>> {
 
-    val out = uvCli.runUv(cwd, "pip", "list", "--outdated", "--format", "json").getOrElse {
-      return Result.failure(it)
-    }
+    val out = uvCli.runUv(cwd, "pip", "list", "--outdated", "--format", "json")
+      .getOrElse { return Result.failure(it) }
 
     data class OutdatedPackageInfo(val name: String, val version: String, val latest_version: String)
 
@@ -94,9 +108,8 @@ internal class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLe
   }
 
   override suspend fun installPackage(name: PythonPackageSpecification, options: List<String>): Result<Unit> {
-    uvCli.runUv(cwd, "pip", "install", formatPackageName(name), *options.toTypedArray()).getOrElse {
-      return Result.failure(it)
-    }
+    uvCli.runUv(cwd, "pip", "install", formatPackageName(name), *options.toTypedArray())
+      .onFailure { return Result.failure(it) }
 
     return Result.success(Unit)
   }
@@ -110,9 +123,8 @@ internal class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLe
   }
 
   override suspend fun addDependency(name: PythonPackageSpecification, options: List<String>): Result<Unit> {
-    uvCli.runUv(cwd, "add", formatPackageName(name), *options.toTypedArray()).getOrElse {
-      return Result.failure(it)
-    }
+    uvCli.runUv(cwd, "add", formatPackageName(name), *options.toTypedArray())
+      .onFailure { return Result.failure(it) }
 
     return Result.success(Unit)
   }
@@ -126,6 +138,24 @@ internal class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLe
 
   fun formatPackageName(name: PythonPackageSpecification): String {
     return if (name.versionSpecs.isNullOrBlank()) name.name else "${name.name}${name.versionSpecs}"
+  }
+
+  fun parseUvPythonList(uvDir: Path, out: String): Set<Path> {
+    val lines = out.lines()
+    val pythons = lines.mapNotNull { line ->
+      var arrow = line.indexOf("->").takeIf { it >= 0 } ?: line.length
+      val pythonAndPath = line.substring(0, arrow).trim().split(" ")
+      if (pythonAndPath.size != 2) {
+        return@mapNotNull null
+      }
+
+      val python = tryResolvePath(pythonAndPath[1])
+        ?.takeIf { it.exists() && it.startsWith(uvDir) }
+
+      python
+    }.toSet()
+
+    return pythons
   }
 }
 

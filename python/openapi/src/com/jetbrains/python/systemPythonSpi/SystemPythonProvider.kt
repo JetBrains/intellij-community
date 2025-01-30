@@ -14,5 +14,5 @@ interface SystemPythonProvider {
     val EP: ExtensionPointName<SystemPythonProvider> = ExtensionPointName<SystemPythonProvider>("Pythonid.systemPythonProvider")
   }
 
-  suspend fun findSystemPythons(eelApi: EelApi): Set<PythonBinary>
+  suspend fun findSystemPythons(eelApi: EelApi): Result<Set<PythonBinary>>
 }

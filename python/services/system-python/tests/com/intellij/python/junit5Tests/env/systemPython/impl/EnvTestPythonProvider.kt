@@ -15,16 +15,20 @@ import kotlinx.coroutines.flow.toSet
  * Register tests pythons as system pythons
  */
 internal class EnvTestPythonProvider : SystemPythonProvider {
-  override suspend fun findSystemPythons(eelApi: EelApi): Set<PythonBinary> {
-    if (eelApi != localEel) return emptySet()
-    return TypeVanillaPython3
-      .getTestEnvironments()
-      .map { (python, closeable) ->
-        Disposer.register(ApplicationManager.getApplication()) {
-          closeable.close()
-        }
-        python
-      }
-      .toSet()
+  override suspend fun findSystemPythons(eelApi: EelApi): Result<Set<PythonBinary>> {
+    var pythons = emptySet<PythonBinary>()
+    if (eelApi == localEel) {
+      pythons = TypeVanillaPython3
+        .getTestEnvironments()
+        .map { (python, closeable) ->
+          Disposer.register(ApplicationManager.getApplication()) {
+            closeable.close()
+          }
+
+          python
+        }.toSet()
+    }
+
+    return Result.success(pythons)
   }
 }

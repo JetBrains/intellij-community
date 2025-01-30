@@ -166,6 +166,8 @@
     <orderEntry type="library" name="ap-validation" level="project" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry" />
     <orderEntry type="module" module-name="intellij.python.community.impl.installer" />
+    <orderEntry type="module" module-name="intellij.platform.eel" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.python.community.impl.venv" />
     <orderEntry type="module" module-name="intellij.python.community.execService" />
   </component>

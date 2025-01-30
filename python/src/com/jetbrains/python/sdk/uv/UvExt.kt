@@ -13,11 +13,11 @@ import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.uv.impl.createUvCli
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import javax.swing.Icon
 import kotlin.io.path.pathString
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal val Sdk.isUv: Boolean
   get() = sdkAdditionalData is UvSdkAdditionalData
