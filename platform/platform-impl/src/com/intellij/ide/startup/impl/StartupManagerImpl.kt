@@ -215,9 +215,12 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
           && pluginId.idString != "com.intellij.clion.plugin"
           && pluginId.idString != "com.jetbrains.codeWithMe"
           && pluginId.idString != "intellij.rider.plugins.cwm"
-          && pluginId.idString != "org.jetbrains.plugins.clion.radler") {
-        LOG.error("Only bundled plugin can define ${extensionPoint.name}: ${adapter.pluginDescriptor}")
-        continue
+          && pluginId.idString != "org.jetbrains.plugins.clion.radler"
+        ) {
+        if (!(pluginId.idString == "com.intellij.ml.llm" && adapter.assignableToClassName.endsWith("XNextRootPaneCustomizer"))) {
+          LOG.error("Only bundled plugin can define ${extensionPoint.name}: ${adapter.pluginDescriptor}")
+          continue
+        }
       }
 
       val activity = adapter.createInstance<InitProjectActivity>(project) ?: continue

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.impl.EditorTabPainterAdapter
 import com.intellij.openapi.ui.Divider
@@ -49,6 +50,7 @@ open class InternalUICustomization {
 
   open fun createCustomDivider(isVertical: Boolean, splitter: Splittable): Divider? = null
 
+  open fun attachBackgroundGradient(component: JComponent, disposable: Disposable): Unit = Unit
 
   open fun getToolWindowsPaneThreeSplitterBackground(): Color = JBColor.GRAY
 
