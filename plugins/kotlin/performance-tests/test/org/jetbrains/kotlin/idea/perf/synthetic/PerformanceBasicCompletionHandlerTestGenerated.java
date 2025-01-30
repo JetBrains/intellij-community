@@ -618,6 +618,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/importAliases/KDoc.kt");
         }
 
+        @TestMetadata("OriginalTypeSubstitutedWithAlias.kt")
+        public void testOriginalTypeSubstitutedWithAlias() throws Exception {
+            runTest("../completion/testData/handlers/basic/importAliases/OriginalTypeSubstitutedWithAlias.kt");
+        }
+
         @TestMetadata("TopLevelFun.kt")
         public void testTopLevelFun() throws Exception {
             runTest("../completion/testData/handlers/basic/importAliases/TopLevelFun.kt");
