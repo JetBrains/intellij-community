@@ -86,13 +86,12 @@ fun EelApi.whereBlocking(exe: String): EelPath? {
  * ```
  */
 suspend fun EelExecApi.where(exe: String): EelPath? {
-  val tool = when (this) {
-    is EelPosixApi -> "which"
-    is EelWindowsApi -> "where.exe"
-    else -> throw IllegalArgumentException("Unsupported OS: $this")
+  val tool = when (descriptor.operatingSystem) {
+    EelPath.OS.UNIX -> "which"
+    EelPath.OS.WINDOWS -> "where.exe"
   }
 
-  val result = exec.executeProcess(tool, exe).getOrThrow().awaitProcessResult()
+  val result = executeProcess(tool, exe).getOrThrow().awaitProcessResult()
 
   if (result.exitCode != 0) {
     // TODO: log error?/throw Exception?
