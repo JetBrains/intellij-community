@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -167,7 +167,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ModifierFormForNonBuiltInSuspendFixFactories.addEmptyArgumentListFixFactory)
         registerFactory(ModifierFormForNonBuiltInSuspendFixFactories.wrapWithParenthesesFixFactory)
         registerFactory(ModifierFormForNonBuiltInSuspendFixFactories.wrapFunWithParenthesesFixFactory)
-        registerFactory(DeclarationCantBeInlinedFixFactories.removeOpenModifierFixFactory)
+        registerFactory(DeclarationCantBeInlinedFixFactories.fixFactory)
         registerFactory(WrongAnnotationTargetFixFactories.addAnnotationUseSiteTargetFixFactory)
         registerFactory(WrongAnnotationTargetFixFactories.addAnnotationUseSiteTargetForConstructorParameterFixFactory)
         registerFactory(WrongAnnotationTargetFixFactories.enableFutureAnnotationTargetModeFactory)
