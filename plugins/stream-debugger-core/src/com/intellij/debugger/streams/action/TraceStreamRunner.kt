@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.xdebugger.XDebugSession
@@ -127,8 +128,11 @@ class TraceStreamRunner(val cs: CoroutineScope) {
 
     private val CHAIN_RESOLVER = ChainResolver()
 
-    private suspend fun runTrace(chain: StreamChain, provider: LibrarySupportProvider, session: XDebugSession) {
+    private suspend fun runTrace(chain: StreamChain, provider: LibrarySupportProvider, session: XDebugSession) = coroutineScope {
       val window = EvaluationAwareTraceWindow(session, chain)
+      Disposer.register(window.disposable) {
+        cancel()
+      }
       suspend fun showError(message: @Nls String) {
         withContext(Dispatchers.EDT) {
           window.setFailMessage(message)
@@ -146,20 +150,17 @@ class TraceStreamRunner(val cs: CoroutineScope) {
         val tracer: StreamTracer = EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter)
         val result = tracer.trace(chain)
         when (result) {
-          is StreamTracer.Result.Evaluated ->
-          {
+          is StreamTracer.Result.Evaluated -> {
             val resolvedTrace = result.result.resolve(provider.getLibrarySupport().resolverFactory)
             withContext(Dispatchers.EDT) {
               window.setTrace(resolvedTrace, result.context, provider.getCollectionTreeBuilder(result.context.project))
             }
           }
-          is StreamTracer.Result.EvaluationFailed ->
-          {
+          is StreamTracer.Result.EvaluationFailed -> {
             showError(result.message)
             throw TraceEvaluationException(result.message, result.traceExpression)
           }
-          is StreamTracer.Result.CompilationFailed ->
-          {
+          is StreamTracer.Result.CompilationFailed -> {
             showError(result.message)
             throw TraceCompilationException(result.message, result.traceExpression)
           }
