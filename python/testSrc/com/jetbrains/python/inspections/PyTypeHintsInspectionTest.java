@@ -22,7 +22,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    from typing import List, TypeVar
 
                    T0 = TypeVar('T0')
-                   a: List[T0]
+                   a: List[<warning descr="Unbound type variable">T0</warning>]
                    b: List[<warning descr="A 'TypeVar()' expression must always directly be assigned to a variable">TypeVar('T1')</warning>]""");
   }
 
@@ -80,8 +80,8 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
                    T1 = TypeVar('T1', int, str)
 
-                   T2 = TypeVar('T2', int, <warning descr="Constraints cannot be parametrized by type variables">List[T1]</warning>)
-                   T3 = TypeVar('T3', bound=<warning descr="Constraints cannot be parametrized by type variables">List[T1]</warning>)
+                   T2 = TypeVar('T2', int, <warning descr="Constraints cannot be parametrized by type variables">List[<warning descr="Unbound type variable">T1</warning>]</warning>)
+                   T3 = TypeVar('T3', bound=<warning descr="Constraints cannot be parametrized by type variables">List[<warning descr="Unbound type variable">T1</warning>]</warning>)
 
                    T4 = TypeVar('T4', int, List[int])
                    T5 = TypeVar('T5', bound=List[int])
@@ -254,6 +254,39 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    
                    class MyClass1(Generic[T], metaclass=<warning descr="Metaclass cannot be generic">MyMetaClass[T]</warning>): ...
                    class MyClass2(metaclass=MyMetaClass[Any]): ...""");
+  }
+
+  // PY-76866
+  public void testUnboundTypeParameter() {
+    doTestByText(
+      """
+        from typing import Generic, TypeVar
+        
+        T = TypeVar('T')
+        S = TypeVar('S')
+        
+        v1: <warning descr="Unbound type variable">T</warning>
+        v2: list[<warning descr="Unbound type variable">T</warning>]
+        
+        list[<warning descr="Unbound type variable">T</warning>]()
+        
+        def f(x: T) -> None:
+            a1: T
+            a2: list[T] = []
+            a3: <warning descr="Unbound type variable">S</warning>
+            a4: list[<warning descr="Unbound type variable">S</warning>] = []
+        
+            list[T]()
+            list[<warning descr="Unbound type variable">S</warning>]()
+        
+        class Bar(Generic[T]):
+            attr1: T
+            attr2: list[T] = []
+            attr3: <warning descr="Unbound type variable">S</warning>
+            attr4: list[<warning descr="Unbound type variable">S</warning>] = []
+        
+            def do_something(self, x: S) -> S:
+                ...""");
   }
 
   // PY-28249

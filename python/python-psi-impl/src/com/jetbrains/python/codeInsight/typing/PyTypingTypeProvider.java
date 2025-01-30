@@ -1580,6 +1580,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
 
   // See https://peps.python.org/pep-0484/#scoping-rules-for-type-variables
   private static @Nullable PyQualifiedNameOwner getTypeParameterScope(@NotNull String name, @NotNull PyExpression typeHint, @NotNull Context context) {
+    if (!context.myComputeTypeParameterScope) return null;
+
     PsiElement typeHintContext = getStubRetainedTypeHintContext(typeHint);
     // TODO: type aliases
     List<PyQualifiedNameOwner> typeParamOwnerCandidates =
@@ -1589,16 +1591,27 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         .toList();
 
     PyQualifiedNameOwner closestOwner = ContainerUtil.getFirstItem(typeParamOwnerCandidates);
-    if (closestOwner instanceof PyClass) {
-      return closestOwner;
+    if (closestOwner instanceof PyFunction) {
+      Optional<PyTypeParameterType> typeParameterType = StreamEx.of(typeParamOwnerCandidates)
+        .skip(1)
+        .map(owner -> findSameTypeParameterInDefinition(owner, name, context))
+        .nonNull()
+        .findFirst();
+      if (typeParameterType.isPresent()) {
+        return typeParameterType.get().getScopeOwner();
+      }
     }
-    return StreamEx.of(typeParamOwnerCandidates)
-      .skip(1)
-      .map(owner -> findSameTypeParameterInDefinition(owner, name, context))
-      .nonNull()
-      .findFirst()
-      .map(PyTypeParameterType::getScopeOwner)
-      .orElse(closestOwner);
+    if (closestOwner == null) {
+      return null;
+    }
+    boolean prevComputeTypeParameterScope = context.myComputeTypeParameterScope;
+    context.myComputeTypeParameterScope = false;
+    try {
+      return findSameTypeParameterInDefinition(closestOwner, name, context) != null ? closestOwner : null;
+    }
+    finally {
+      context.myComputeTypeParameterScope = prevComputeTypeParameterScope;
+    }
   }
 
   private static @Nullable PyTypeParameterType findSameTypeParameterInDefinition(@NotNull PyQualifiedNameOwner owner,
@@ -2172,6 +2185,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   static class Context {
     private final @NotNull TypeEvalContext myContext;
     private final @NotNull Stack<PyQualifiedNameOwner> myTypeAliasStack = new Stack<>();
+    private boolean myComputeTypeParameterScope = true;
 
     private Context(@NotNull TypeEvalContext context) {
       myContext = context;
