@@ -13,6 +13,7 @@ import org.jetbrains.plugins.terminal.block.session.StyleRange
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil
 import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil.update
+import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil.updateCursor
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -154,6 +155,44 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
     val expectedText = "abcde"
     val expectedHighlightings = listOf(highlighting(0, 3), highlighting(3, 5))
+    val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.document, expectedHighlightings)
+
+    assertEquals(expectedText, model.document.text)
+    assertEquals(expectedHighlightingsSnapshot, model.getHighlightings())
+  }
+
+  @Test
+  fun `check that spaces are added if cursor is out of line bounds (last line)`() = runBlocking(Dispatchers.EDT) {
+    val model = TerminalSessionTestUtil.createOutputModel()
+
+    // Prepare
+    model.update(0, "abcde", listOf(styleRange(0, 3), styleRange(3, 5)))
+
+    // Test
+    model.updateCursor(0, 8)
+
+    val expectedText = "abcde   "
+    val expectedHighlightings = listOf(highlighting(0, 3), highlighting(3, 5))
+    val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.document, expectedHighlightings)
+
+    assertEquals(expectedText, model.document.text)
+    assertEquals(expectedHighlightingsSnapshot, model.getHighlightings())
+  }
+
+  @Test
+  fun `check that spaces are added if cursor is out of line bounds (middle line)`() = runBlocking(Dispatchers.EDT) {
+    val model = TerminalSessionTestUtil.createOutputModel()
+
+    // Prepare
+    model.update(0, "12345", listOf(styleRange(0, 5)))
+    model.update(1, "abcde", listOf(styleRange(0, 3), styleRange(3, 5)))
+    model.update(2, "67890", listOf(styleRange(0, 2), styleRange(2, 5)))
+
+    // Test
+    model.updateCursor(1, 8)
+
+    val expectedText = "12345\nabcde   \n67890"
+    val expectedHighlightings = listOf(highlighting(0, 5), highlighting(6, 9), highlighting(9, 11), highlighting(15, 17), highlighting(17, 20))
     val expectedHighlightingsSnapshot = TerminalOutputHighlightingsSnapshot(model.document, expectedHighlightings)
 
     assertEquals(expectedText, model.document.text)

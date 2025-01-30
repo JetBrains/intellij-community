@@ -32,17 +32,13 @@ internal class TerminalOutputModelImpl(
 
   private val dispatcher = EventDispatcher.create(TerminalOutputModelListener::class.java)
 
-  @Volatile
   private var trimmedLinesCount: Int = 0
   private var trimmedCharsCount: Int = 0
 
   private var contentUpdateInProgress: Boolean = false
 
   override fun updateContent(absoluteLineIndex: Int, text: String, styles: List<StyleRange>) {
-    dispatcher.multicaster.beforeContentChanged()
-
-    contentUpdateInProgress = true
-    val changeStartOffset = try {
+    changeDocumentContent {
       // If absolute line index is far in the past - in the already trimmed part of the output,
       // then it means that the terminal was cleared, and we should reset to the initial state.
       if (absoluteLineIndex < trimmedLinesCount) {
@@ -53,16 +49,25 @@ internal class TerminalOutputModelImpl(
       val documentLineIndex = absoluteLineIndex - trimmedLinesCount
       doUpdateContent(documentLineIndex, text, styles)
     }
-    finally {
-      contentUpdateInProgress = false
-    }
-
-    dispatcher.multicaster.afterContentChanged(changeStartOffset)
   }
 
   override fun updateCursorPosition(absoluteLineIndex: Int, columnIndex: Int) {
     val documentLineIndex = absoluteLineIndex - trimmedLinesCount
     val lineStartOffset = document.getLineStartOffset(documentLineIndex)
+    val lineEndOffset = document.getLineEndOffset(documentLineIndex)
+    val lineLength = lineEndOffset - lineStartOffset
+
+    // Add spaces to the line if the cursor position is out of line bounds
+    if (columnIndex > lineLength) {
+      val spacesToAdd = columnIndex - lineLength
+      val spaces = " ".repeat(spacesToAdd)
+      changeDocumentContent {
+        document.insertString(lineEndOffset, spaces)
+        highlightingsModel.insertEmptyHighlightings(lineEndOffset, spacesToAdd)
+        lineEndOffset
+      }
+    }
+
     mutableCursorOffsetState.value = lineStartOffset + columnIndex
   }
 
@@ -113,6 +118,24 @@ internal class TerminalOutputModelImpl(
     trimmedLinesCount += lineCountBefore - document.lineCount
 
     return removeUntilOffset
+  }
+
+  /**
+   * Document changes in this model are allowed only inside [block] of this function.
+   * [block] should return an offset from which document content was changed.
+   */
+  private inline fun changeDocumentContent(block: () -> Int) {
+    dispatcher.multicaster.beforeContentChanged()
+
+    contentUpdateInProgress = true
+    val changeStartOffset = try {
+      block()
+    }
+    finally {
+      contentUpdateInProgress = false
+    }
+
+    dispatcher.multicaster.afterContentChanged(changeStartOffset)
   }
 
   override fun getHighlightings(): TerminalOutputHighlightingsSnapshot {
@@ -169,6 +192,26 @@ internal class TerminalOutputModelImpl(
       highlightings.addAll(newHighlightings)
 
       highlightingsSnapshot = null
+    }
+
+    /**
+     * Moves all highlightings that start after [documentOffset] by [length].
+     * If [documentOffset] is inside some highlighting, this highlighting won't be changed.
+     */
+    fun insertEmptyHighlightings(documentOffset: Int, length: Int) {
+      val absoluteOffset = documentOffset + trimmedCharsCount
+
+      val highlightingIndex = highlightings.binarySearch { it.startOffset.compareTo(absoluteOffset) }
+      val updateFromIndex = if (highlightingIndex < 0) -highlightingIndex - 1 else highlightingIndex
+
+      if (updateFromIndex < highlightings.size) {
+        for (ind in (updateFromIndex until highlightings.size)) {
+          val cur = highlightings[ind]
+          highlightings[ind] = HighlightingInfo(cur.startOffset + length, cur.endOffset + length, cur.textAttributesProvider)
+        }
+
+        highlightingsSnapshot = null
+      }
     }
 
     fun removeAfter(documentOffset: Int) {

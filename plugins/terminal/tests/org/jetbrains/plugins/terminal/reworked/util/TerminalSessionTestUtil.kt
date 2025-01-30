@@ -71,4 +71,12 @@ internal object TerminalSessionTestUtil {
       }
     }
   }
+
+  suspend fun TerminalOutputModel.updateCursor(absoluteLineIndex: Int, column: Int) {
+    writeAction {
+      CommandProcessor.getInstance().runUndoTransparentAction {
+        updateCursorPosition(absoluteLineIndex, column)
+      }
+    }
+  }
 }
