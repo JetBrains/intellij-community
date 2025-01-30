@@ -37,7 +37,7 @@ internal class MergingIterator<T>(private var first: IntervalsIterator<T>,
       val firstNext = first.next()
       val secondNext = second!!.next()
       if (firstNext && secondNext) {
-        if (comparator.compare(first, second) > 0) {
+        if (comparator.compare(first, second!!) > 0) {
           val tmp = second
           second = first
           first = tmp!!
@@ -60,7 +60,7 @@ internal class MergingIterator<T>(private var first: IntervalsIterator<T>,
     else {
       if (first.next()) {
         if (second != null) {
-          if (comparator.compare(first, second) > 0) {
+          if (comparator.compare(first, second!!) > 0) {
             val tmp: IntervalsIterator<T> = second as IntervalsIterator<T>
             second = first
             first = tmp

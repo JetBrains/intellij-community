@@ -33,7 +33,7 @@ internal fun <T> Query<T>.tracing(trackingKey: QueryTracingKey?): Query<T> = let
       }
       val producer = query.producer()
       Producer { emit ->
-        val collectorId = System.identityHashCode(emit)
+        val collectorId = emit.hashCode()
         trackingKey.logger.info { "${trackingKey}: query $queryId is being collected by $collectorId" }
         onDispose {
           trackingKey.logger.info { "${trackingKey}: query $queryId has stopped being collected by $collectorId" }
