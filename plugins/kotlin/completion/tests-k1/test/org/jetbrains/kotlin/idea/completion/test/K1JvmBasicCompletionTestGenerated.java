@@ -2526,6 +2526,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/shadowing/InInitializer7.kt");
             }
 
+            @TestMetadata("InInitializer8.kt")
+            public void testInInitializer8() throws Exception {
+                runTest("../testData/basic/common/shadowing/InInitializer8.kt");
+            }
+
             @TestMetadata("InInitializerProperty.kt")
             public void testInInitializerProperty() throws Exception {
                 runTest("../testData/basic/common/shadowing/InInitializerProperty.kt");
