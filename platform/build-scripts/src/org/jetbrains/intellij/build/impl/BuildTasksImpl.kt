@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -427,6 +428,9 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
     layoutShared(context)
 
     val distDirs = buildOsSpecificDistributions(context)
+
+    lookForJunkFiles(context, listOf(context.paths.distAllDir) + distDirs.map { it.outDir })
+
     launch(Dispatchers.IO + CoroutineName("generate software bill of materials")) {
       context.executeStep(spanBuilder("generate software bill of materials"), SoftwareBillOfMaterials.STEP_ID) {
         SoftwareBillOfMaterialsImpl(context, distributions = distDirs, distributionFiles = contentReport.bundled().toList()).generate()
@@ -992,6 +996,29 @@ private fun crossPlatformZip(
         out.entry(MODULE_DESCRIPTORS_JAR_PATH, runtimeModuleRepositoryPath)
       }
     }
+  }
+}
+
+private suspend fun lookForJunkFiles(context: BuildContext, paths: List<Path>) {
+  val junk = CollectionFactory.createCaseInsensitiveStringSet(setOf("__MACOSX", ".DS_Store"))
+  val result = Collections.synchronizedSet(mutableSetOf<Path>())
+
+  withContext(Dispatchers.IO + CoroutineName("Looking for junk files")) {
+    paths.forEach {
+      launch {
+        Files.walk(it).use { stream ->
+          stream.forEach { path ->
+            if (path.fileName.toString() in junk) {
+              result.add(path)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (result.isNotEmpty()) {
+    context.messages.error(result.joinToString("\n", prefix = "Junk files:\n"))
   }
 }
 
