@@ -19,5 +19,5 @@ class XMixedModeProcessHandler(
     handler.startNotify()
   }
 
-  override fun detachIsDefault(): Boolean = (if (config.useHighLevelDebuggerDetachBehavior) high else low).detachIsDefault()
+  override fun detachIsDefault(): Boolean = (if (config.useLowDebugProcessDetachBehavior) low else high).detachIsDefault()
 }
