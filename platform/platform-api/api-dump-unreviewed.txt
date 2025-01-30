@@ -3395,6 +3395,7 @@ a:com.intellij.openapi.ui.DialogWrapper
 - p:<init>(com.intellij.openapi.project.Project):V
 - p:<init>(com.intellij.openapi.project.Project,java.awt.Component,Z,com.intellij.openapi.ui.DialogWrapper$IdeModalityType):V
 - p:<init>(com.intellij.openapi.project.Project,java.awt.Component,Z,com.intellij.openapi.ui.DialogWrapper$IdeModalityType,Z):V
+- p:<init>(com.intellij.openapi.project.Project,java.awt.Component,Z,com.intellij.openapi.ui.DialogWrapper$IdeModalityType,Z,Z):V
 - p:<init>(com.intellij.openapi.project.Project,Z):V
 - p:<init>(com.intellij.openapi.project.Project,Z,com.intellij.openapi.ui.DialogWrapper$IdeModalityType):V
 - p:<init>(com.intellij.openapi.project.Project,Z,Z):V

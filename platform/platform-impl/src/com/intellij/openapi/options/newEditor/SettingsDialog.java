@@ -67,13 +67,11 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     init(configurable, null);
   }
 
-  public SettingsDialog(@NotNull Project project, @NotNull List<? extends ConfigurableGroup> groups, @Nullable Configurable configurable, @Nullable String filter) {
-    super(project, true);
-    dimensionServiceKey = DIMENSION_KEY;
-    editor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory, this::spotlightPainterFactory);
-    isApplyButtonNeeded = true;
-    isResetButtonNeeded = false;
-    init(null, project);
+  public SettingsDialog(@NotNull Project project,
+                        @NotNull List<? extends ConfigurableGroup> groups,
+                        @Nullable Configurable configurable,
+                        @Nullable String filter) {
+    this(project, null, groups, configurable, filter);
   }
 
   public SettingsDialog(@NotNull Project project,
@@ -81,7 +79,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
                         @NotNull List<? extends ConfigurableGroup> groups,
                         @Nullable Configurable configurable,
                         @Nullable String filter) {
-    super(project, parentComponent, true, IdeModalityType.IDE);
+    super(project, parentComponent, true, IdeModalityType.IDE, true, false);
     dimensionServiceKey = DIMENSION_KEY;
     editor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory, this::spotlightPainterFactory);
     isApplyButtonNeeded = true;

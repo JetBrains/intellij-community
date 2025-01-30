@@ -236,6 +236,15 @@ public abstract class DialogWrapper {
                           boolean canBeParent,
                           @NotNull IdeModalityType ideModalityType,
                           boolean createSouth) {
+    this(project, parentComponent, canBeParent, ideModalityType, createSouth, true);
+  }
+
+  protected DialogWrapper(@Nullable Project project,
+                          @Nullable Component parentComponent,
+                          boolean canBeParent,
+                          @NotNull IdeModalityType ideModalityType,
+                          boolean createSouth,
+                          boolean createTitleBar) {
     ThreadingAssertions.assertEventDispatchThread();
     myPeer = parentComponent == null
              ? createPeer(project, canBeParent, project == null ? IdeModalityType.IDE : ideModalityType)
@@ -243,7 +252,7 @@ public abstract class DialogWrapper {
     myCreateSouthSection = createSouth;
     initResizeListener();
     createDefaultActions();
-    if (myPeer.getWindow() != null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
+    if (createTitleBar && myPeer.getWindow() != null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
       ToolbarService.Companion.getInstance().setTransparentTitleBar(myPeer.getWindow(), myPeer.getRootPane(),
                                                                     runnable -> {
                                                                       Disposer.register(myDisposable, () -> runnable.run());
