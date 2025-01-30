@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -52,13 +51,11 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
     val stamp = ModificationStampUtil.getModificationStamp(editor)
     if (stamp != null && cached?.modificationStamp == stamp) return CodeVisionState.Ready(cached.codeVisionEntries)
 
-    return InlayHintsUtils.computeCodeVisionUnderReadAction ra@{
+    return InlayHintsUtils.computeCodeVisionUnderReadAction(expectsIndicator = true) ra@{
       if (DumbService.isDumb(project)) {
         return@ra CodeVisionState.NotReady
       }
-      blockingContextToIndicator {
-        recomputeLenses(editor, project, stamp, cacheService)
-      }
+      recomputeLenses(editor, project, stamp, cacheService)
     }
   }
 
