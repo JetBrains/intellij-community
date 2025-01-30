@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.impl.FontInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -14,14 +16,30 @@ import java.util.function.Consumer;
 final class SimpleTextFragment extends TextFragment {
   private final char @NotNull [] myText;
   private final @NotNull Font myFont;
+  private float @Nullable [] myCharAlignment = null;
 
-  SimpleTextFragment(char @NotNull [] lineChars, int start, int end, @NotNull FontInfo fontInfo) {
+  SimpleTextFragment(char @NotNull [] lineChars, int start, int end, @NotNull FontInfo fontInfo, @Nullable EditorSettings settings) {
     super(end - start);
     myText = Arrays.copyOfRange(lineChars, start, end);
     myFont = fontInfo.getFont();
+    var gridWidth = settings != null ? settings.getCharacterGridWidth() : null;
     float x = 0;
     for (int i = 0; i < myText.length; i++) {
-      x += fontInfo.charWidth2D(myText[i]);
+      var charWidth = fontInfo.charWidth2D(myText[i]);
+      if (gridWidth != null) {
+        var slots = charWidth / gridWidth;
+        if (Math.abs(slots - Math.round(slots)) > 0.001) {
+          // allow for 10% overflow for potential unusual almost-single-width chars
+          var actualSlots = (float)Math.min(Math.max(1, Math.ceil(slots - 0.1)), 2);
+          var alignment = actualSlots * gridWidth - charWidth;
+          if (myCharAlignment == null) {
+            myCharAlignment = new float[myText.length];
+          }
+          myCharAlignment[i] = alignment;
+          charWidth += alignment;
+        }
+      }
+      x += charWidth;
       myCharPositions[i] = x;
     }
   }
@@ -42,13 +60,48 @@ final class SimpleTextFragment extends TextFragment {
       g.setFont(myFont);
       int xAsInt = (int)x;
       int yAsInt = (int)y;
-      if (x == xAsInt && y == yAsInt) { // avoid creating garbage if possible
+      if (myCharAlignment != null) {
+        drawAligned(g, myText, startColumn, endColumn - startColumn, x, y);
+      }
+      else if (x == xAsInt && y == yAsInt) { // avoid creating garbage if possible
         g.drawChars(myText, startColumn, endColumn - startColumn, xAsInt, yAsInt);
       }
       else {
         g.drawString(new String(myText, startColumn, endColumn - startColumn), x, y);
       }
     };
+  }
+
+  private void drawAligned(Graphics2D g, char[] text, int start, int length, float startX, float y) {
+    assert myCharAlignment != null;
+    if (length == 0) return;
+    int end = start + length;
+    int i = start;
+    int j = start;
+    float firstCharPosition = start == 0 ? 0.0f : myCharPositions[start - 1];
+    float x = startX;
+    while (i < end) {
+      while (j < end && myCharAlignment[j] == 0.0f) {
+        ++j;
+      }
+      // Postcondition: either j == end or j is the index of the first non-standard-width character.
+      // In the first case, we just draw the rest until j.
+      // In the second case, we also draw the rest until j, and then draw the non-standard-width character.
+      if (j > i) { // draw the normal part, if any
+        g.drawString(new String(text, i, j - i), x, y);
+        x = startX + (myCharPositions[j - 1] - firstCharPosition);
+        i = j;
+      }
+      // Postcondition: i == j == end or the next non-standard-width character.
+      if (i < end) { // draw the unusual character, if any
+        x += myCharAlignment[i] / 2.0f; // center the character within the grid
+        j = i + 1;
+        g.drawString(new String(text, i, j - i), x, y);
+        x = startX + (myCharPositions[j - 1] - firstCharPosition);
+        i = j;
+      }
+      // Postcondition: i == j == end or the next character to draw.
+    }
   }
 
   @Override

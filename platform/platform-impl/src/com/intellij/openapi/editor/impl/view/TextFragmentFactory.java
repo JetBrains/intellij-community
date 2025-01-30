@@ -48,7 +48,7 @@ final class TextFragmentFactory {
       fragments.add(new ComplexTextFragment(lineChars, lastOffset, end, isRtl, fontInfo));
     }
     else {
-      fragments.add(new SimpleTextFragment(lineChars, start, end, fontInfo));
+      fragments.add(new SimpleTextFragment(lineChars, start, end, fontInfo, settings));
     }
   }
 
