@@ -10,4 +10,19 @@
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <terminalWidgetProvider implementation="com.intellij.terminal.frontend.ReworkedTerminalWidgetProvider"/>
   </extensions>
+
+  <actions resource-bundle="messages.TerminalBundle">
+    <action id="Terminal.ClearBuffer" class="com.intellij.terminal.frontend.action.TerminalClearAction">
+      <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X"/>
+      <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X 10.5+"/>
+    </action>
+    <action id="Terminal.Paste" class="com.intellij.terminal.frontend.action.TerminalPasteAction" icon="AllIcons.Actions.MenuPaste">
+      <!-- use keyboard-shortcuts of $Paste with Ctrl+Shift+V on Linux  -->
+      <keyboard-shortcut first-keystroke="control shift V" keymap="Default for XWin"/>
+      <keyboard-shortcut first-keystroke="control V" keymap="Default for XWin"/>
+      <keyboard-shortcut first-keystroke="shift INSERT" keymap="Default for XWin"/>
+      <keyboard-shortcut first-keystroke="control V" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
+    </action>
+  </actions>
 </idea-plugin>

@@ -51,7 +51,7 @@ class BlockTerminalSession(
    * handled even if the terminal's output stream
    * isn't immediately available at the time of the request.
    */
-  internal val terminalOutputStream: TerminalOutputStream = FutureTerminalOutputStream(terminalStarterFuture)
+  val terminalOutputStream: TerminalOutputStream = FutureTerminalOutputStream(terminalStarterFuture)
 
   private val executorServiceManager: TerminalExecutorServiceManager = TerminalExecutorServiceManagerImpl()
 

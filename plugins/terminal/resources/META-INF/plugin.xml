@@ -99,14 +99,6 @@
       <keyboard-shortcut first-keystroke="control C" keymap="$default"/>
       <keyboard-shortcut first-keystroke="control INSERT" keymap="$default"/>
     </action>
-    <action id="Terminal.Paste" class="org.jetbrains.plugins.terminal.action.TerminalPasteAction" icon="AllIcons.Actions.MenuPaste">
-      <!-- use keyboard-shortcuts of $Paste with Ctrl+Shift+V on Linux  -->
-      <keyboard-shortcut first-keystroke="control shift V" keymap="Default for XWin"/>
-      <keyboard-shortcut first-keystroke="control V" keymap="Default for XWin"/>
-      <keyboard-shortcut first-keystroke="shift INSERT" keymap="Default for XWin"/>
-      <keyboard-shortcut first-keystroke="control V" keymap="$default"/>
-      <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
-    </action>
     <action id="Terminal.Find" class="org.jetbrains.plugins.terminal.action.TerminalFindAction" use-shortcut-of="Find">
       <override-text place="GoToAction"/>
     </action>
@@ -120,10 +112,6 @@
     </action>
     <action id="Terminal.SmartCommandExecution.Debug" class="com.intellij.openapi.actionSystem.EmptyAction">
       <keyboard-shortcut first-keystroke="control shift ENTER" keymap="$default"/>
-    </action>
-    <action id="Terminal.ClearBuffer" class="com.intellij.terminal.frontend.action.TerminalClearAction">
-      <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X"/>
-      <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X 10.5+"/>
     </action>
 
 

@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.action
+package com.intellij.terminal.frontend.action
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalInput
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
@@ -12,10 +12,9 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutp
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.outputController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalFocusModel
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalInput
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
 
-internal class TerminalClearAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+internal class TerminalClearAction : TerminalPromotedDumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     if (e.editor?.isOutputModelEditor == true) {
       e.terminalInput?.sendClearBuffer()

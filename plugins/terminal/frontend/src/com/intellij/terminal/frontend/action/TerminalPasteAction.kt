@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.action
+package com.intellij.terminal.frontend.action
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -9,9 +8,10 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.terminal.frontend.TerminalInput
+import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalInput
 import com.jediterm.terminal.TerminalOutputStream
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
-import org.jetbrains.plugins.terminal.block.reworked.session.TerminalInput
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferModelEditor
@@ -23,7 +23,6 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.prompt
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.selectionController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.simpleTerminalController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalFocusModel
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalInput
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
 import java.awt.datatransfer.DataFlavor
 
@@ -52,7 +51,7 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction(), ActionRe
     e.presentation.isEnabledAndVisible = editor != null && (
       editor.isPromptEditor || editor.isOutputEditor || editor.isAlternateBufferEditor || // gen1
       editor.isOutputModelEditor || editor.isAlternateBufferModelEditor // gen2
-    )
+                                                           )
   }
 
   private fun pasteIntoPrompt(e: AnActionEvent, dataContext: DataContext?) {
