@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ final class ComplexTextFragment extends TextFragment {
                                             // (null if each code point takes one char).
                                             // We expect no more than 1025 chars in a fragment, so 'short' should be enough.
 
-  ComplexTextFragment(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo) {
+  ComplexTextFragment(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo, @Nullable EditorSettings settings) {
     super(end - start);
     assert start >= 0              : assertMessage(lineChars, start, end, isRtl, fontInfo);
     assert end <= lineChars.length : assertMessage(lineChars, start, end, isRtl, fontInfo);
@@ -39,6 +40,41 @@ final class ComplexTextFragment extends TextFragment {
       end,
       isRtl
     );
+    var gridWidth = settings != null ? settings.getCharacterGridWidth() : null;
+    if (gridWidth != null) {
+      // This thing assumes that one glyph = one character.
+      // This seems to work "well enough" for the terminal
+      // (the only place where it's used at the moment of writing),
+      // but may need to be updated as unusual edge cases are discovered.
+      var prevX = myGlyphVector.getGlyphPosition(0).getX();
+      for (int i = 1; i <= myGlyphVector.getNumGlyphs(); i++) {
+        var nextPos = myGlyphVector.getGlyphPosition(i);
+        var nextX = nextPos.getX();
+        var width = nextX - prevX;
+        var slots = width / gridWidth;
+        if (Math.abs(slots - Math.round(slots)) > 0.001) {
+          // allow for 20% overflow for chars with unusual widths
+          var actualSlots = Math.min(Math.max(1, Math.ceil(slots - 0.2)), 2);
+          // To calculate the width above, we use non-modified values,
+          // but to calculate the new position, we need to use the modified one.
+          var prevPos = myGlyphVector.getGlyphPosition(i - 1);
+          var actualPrevX = prevPos.getX();
+          var actualWidth = actualSlots * gridWidth;
+          nextPos.setLocation(actualPrevX + actualWidth, nextPos.getY());
+          myGlyphVector.setGlyphPosition(i, nextPos);
+          // centering the previous character
+          if (actualWidth - width > 0.0) {
+            prevPos.setLocation(actualPrevX + (actualWidth - width) / 2.0, prevPos.getY());
+          }
+        }
+        else { // no width adjustments for this glyph, but we must account for the previous ones
+          var prevPos = myGlyphVector.getGlyphPosition(i - 1);
+          var actualPrevX = prevPos.getX();
+          nextPos.setLocation(nextX + (actualPrevX - prevX), nextPos.getY());
+        }
+        prevX = nextX; // important to have the non-modified value here to keep calculating non-modified widths correctly
+      }
+    }
     int numChars = end - start;
     int numGlyphs = myGlyphVector.getNumGlyphs();
     float totalWidth = (float)myGlyphVector.getGlyphPosition(numGlyphs).getX();
