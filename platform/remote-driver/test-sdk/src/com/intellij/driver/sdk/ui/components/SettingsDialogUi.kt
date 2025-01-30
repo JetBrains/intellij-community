@@ -8,7 +8,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @Internal
 fun Finder.settingsDialog(@Language("xpath") xpath: String? = null): SettingsDialogUiComponent {
-  return x(xpath ?: "//div[@class='EditorTabs' and @accessiblename='Settings']", SettingsDialogUiComponent::class.java)
+  return x(xpath ?: "//div[@class='MyDialog' and @accessiblename='Settings']", SettingsDialogUiComponent::class.java)
 }
 
 @Internal
