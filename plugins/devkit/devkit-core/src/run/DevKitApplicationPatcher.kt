@@ -97,10 +97,6 @@ private class DevKitApplicationPatcher : RunConfigurationExtension() {
     if (vmParametersAsList.none { it.startsWith("-Xmx") }) {
       vmParameters.add("-Xmx2g")
     }
-
-    if (vmParametersAsList.none { it.startsWith("-XX:MaxHeapFreeRatio=") }) {
-      vmParameters.add("-XX:MaxHeapFreeRatio=45")
-    }
     if (is17 && vmParametersAsList.none { it.startsWith("-XX:SoftRefLRUPolicyMSPerMB") }) {
       vmParameters.add("-XX:SoftRefLRUPolicyMSPerMB=50")
     }

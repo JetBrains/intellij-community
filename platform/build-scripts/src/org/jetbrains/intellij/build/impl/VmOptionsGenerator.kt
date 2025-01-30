@@ -14,7 +14,6 @@ object VmOptionsGenerator {
 
   @Suppress("SpellCheckingInspection")
   private val COMMON_VM_OPTIONS: List<String> = listOf(
-    "-XX:MaxHeapFreeRatio=45", // IJPL-175257
     "-XX:ReservedCodeCacheSize=512m",
     "-XX:+HeapDumpOnOutOfMemoryError",
     "-XX:-OmitStackTraceInFastThrow",
