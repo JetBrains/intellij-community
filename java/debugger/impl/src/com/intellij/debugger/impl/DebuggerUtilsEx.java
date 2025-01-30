@@ -49,6 +49,8 @@ import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
+import com.intellij.unscramble.DumpItem;
+import com.intellij.unscramble.JavaThreadDumpItem;
 import com.intellij.unscramble.ThreadDumpPanel;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
@@ -74,10 +76,7 @@ import com.sun.jdi.event.EventSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -327,13 +326,14 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   private static int myThreadDumpsCount = 0;
 
-  public static void addThreadDump(Project project, List<ThreadState> threads, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
+  @ApiStatus.Internal
+  public static void addDumpItems(Project project, List<DumpItem> dumpItems, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
     final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
     consoleBuilder.filters(ExceptionFilters.getFilters(searchScope));
     final ConsoleView consoleView = consoleBuilder.getConsole();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     consoleView.allowHeavyFilters();
-    final ThreadDumpPanel panel = new ThreadDumpPanel(project, consoleView, toolbarActions, threads);
+    final ThreadDumpPanel panel = ThreadDumpPanel.createFromDumpItems(project, consoleView, toolbarActions, dumpItems);
 
     String id = JavaDebuggerBundle.message("thread.dump.name", DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis()));
     final Content content = ui.createContent(id + " " + myThreadDumpsCount, panel, id, null, null);
@@ -346,9 +346,14 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     myThreadDumpsCount++;
     Disposer.register(content, consoleView);
     ui.selectAndFocus(content, true, false);
-    if (!threads.isEmpty()) {
+    if (!dumpItems.isEmpty()) {
       panel.selectStackFrame(0);
     }
+  }
+
+  public static void addThreadDump(Project project, List<ThreadState> threads, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
+    List<DumpItem> javaThreadDump = new ArrayList<>(ContainerUtil.map(threads, JavaThreadDumpItem::new));
+    addDumpItems(project, javaThreadDump, ui, searchScope);
   }
 
   public static void addCollectionHistoryTab(@NotNull XDebugSession session, @NotNull XValueNodeImpl node) {

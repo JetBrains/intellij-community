@@ -254,6 +254,7 @@ public final class ThreadDumpParser {
         stackTrace.contains("sun.awt.AWTAutoShutdown.run") ||
         stackTrace.contains("sun.java2d.Disposer.run") ||
         stackTrace.contains("sun.awt.windows.WToolkit.eventLoop") ||
+        stackTrace.contains("jdk.internal.ref.CleanerImpl.run") ||
         ourIdleTimerThreadPattern.matcher(stackTrace).find() ||
         ourIdleSwingTimerThreadPattern.matcher(stackTrace).find();
   }
