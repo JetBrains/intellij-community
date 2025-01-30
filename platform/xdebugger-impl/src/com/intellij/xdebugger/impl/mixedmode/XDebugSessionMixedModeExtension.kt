@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.mixedmode
 
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.application.EDT
 import com.intellij.xdebugger.XMixedModeProcessHandler
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
@@ -13,44 +13,55 @@ import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
 import com.intellij.xdebugger.mixedMode.asXDebugProcess
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.future.future
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.concurrent.CompletableFuture
-
-private val logger = logger<XDebugSessionMixedModeExtension>()
+import kotlinx.coroutines.withContext
+import java.util.function.BiConsumer
 
 class XDebugSessionMixedModeExtension(
   private val coroutineScope: CoroutineScope,
   private val high: XMixedModeHighLevelDebugProcess,
   private val low: XMixedModeLowLevelDebugProcess,
+  private val positionReachedFn: BiConsumer<XSuspendContext, Boolean>,
 ) {
   private val stateMachine = MixedModeProcessTransitionStateMachine(low, high, coroutineScope)
   private val session = (high.asXDebugProcess.session as XDebugSessionImpl)
   private var editorsProvider: XMixedModeDebuggersEditorProvider? = null
   private var processHandler: XMixedModeProcessHandler? = null
+  private var myAttract : Boolean = false // being accessed on EDT
+  private var highLevelDebugProcessReady : Boolean = false
 
-  fun pause() {
-    coroutineScope.launch {
-      stateMachine.set(PauseRequested)
-      stateMachine.waitFor(BothStopped::class)
+  init {
+    coroutineScope.launch(Dispatchers.Default) {
+      while (true) {
+        when(val newState = stateMachine.stateChannel.receive()) {
+          is BothStopped -> {
+            val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, low, coroutineScope)
+            withContext(Dispatchers.EDT) { positionReachedFn.accept(ctx, myAttract).also { myAttract = false } }
+          }
+          is BothRunning -> {
+            highLevelDebugProcessReady = true
+            withContext(Dispatchers.EDT) { session.sessionResumed() }
+          }
+          is Exited -> break
+        }
+      }
     }
   }
 
+  fun pause() {
+    stateMachine.set(PauseRequested)
+  }
+
   // On stop, low level debugger calls positionReached first and then the high level debugger does it
-  fun positionReached(suspendContext: XSuspendContext, attract: Boolean): CompletableFuture<Pair<XSuspendContext, Boolean>?> =
-    coroutineScope.future {
-      val context = stateMachine.onPositionReached(suspendContext)
-      if (context != null) {
-        return@future Pair(context, attract)
-      }
-      return@future null
-    }
+  fun positionReached(suspendContext: XSuspendContext, attract: Boolean) {
+    myAttract = myAttract || attract // if any of the processes requires attraction, we'll do it
+    val isHighSuspendContext = !low.isLowSuspendContext(suspendContext)
+    stateMachine.set(if (isHighSuspendContext) HighLevelPositionReached(suspendContext) else LowLevelPositionReached(suspendContext))
+  }
 
   fun resume() {
-    coroutineScope.launch {
-      stateMachine.set(ResumeRequested)
-      stateMachine.waitFor(BothRunning::class)
-    }
+    stateMachine.set(ResumeRequested)
   }
 
   fun stepInto(suspendContext: XMixedModeSuspendContext) {
@@ -102,10 +113,8 @@ class XDebugSessionMixedModeExtension(
     }
 
     coroutineScope.launch {
-      val handled = stateMachine.onSessionResumed(isLowLevel)
-      if (!handled) {
-        session.sessionResumed()
-      }
+      val event = if (isLowLevel) LowRun else HighRun
+      stateMachine.set(event)
     }
   }
 
@@ -113,7 +122,7 @@ class XDebugSessionMixedModeExtension(
     stateMachine.set(HighStarted)
   }
 
-  fun isMixedModeHighProcessReady(): Boolean = stateMachine.isMixedModeHighProcessReady()
+  fun isMixedModeHighProcessReady(): Boolean = highLevelDebugProcessReady
 
   fun getEditorsProvider(): XDebuggerEditorsProvider {
     return editorsProvider ?: XMixedModeDebuggersEditorProvider(session,

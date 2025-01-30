@@ -6,7 +6,6 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
-import com.intellij.execution.process.CompositeProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -53,7 +52,6 @@ import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
 import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -342,7 +340,8 @@ public final class XDebugSessionImpl implements XDebugSession {
     myMixedModeLowLevelDebugProcess = processes.getLowDebugProcess();
     myMixedModeExtension = new XDebugSessionMixedModeExtension(this.myCoroutineScope,
                                                                (XMixedModeHighLevelDebugProcess)processes.getHighDebugProcess(),
-                                                               (XMixedModeLowLevelDebugProcess)processes.getLowDebugProcess());
+                                                               (XMixedModeLowLevelDebugProcess)processes.getLowDebugProcess(),
+                                                               this::positionReachedInternal);
     mixedModeConfig = processes.getConfig();
     var highAlternativeSourceHandler = processes.getHighDebugProcess().getAlternativeSourceHandler();
     var lowAlternativeSourceHandler = processes.getLowDebugProcess().getAlternativeSourceHandler();
@@ -1054,20 +1053,14 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   private void positionReachedMixedModeAware(@NotNull XSuspendContext suspendContext, boolean attract) {
     if (isMixedMode() && isMixedModeHighProcessReady()) {
-      myMixedModeExtension.positionReached(suspendContext, attract)
-        .thenAccept(pair -> {
-                     if (pair != null) {
-                       DebuggerUIUtil.invokeLater(() -> positionReachedInternal2(pair.getFirst(), pair.getSecond()));
-                     }
-                   });
-
+      myMixedModeExtension.positionReached(suspendContext, attract);
       return;
     }
 
-    positionReachedInternal2(suspendContext, attract);
+    positionReachedInternal(suspendContext, attract);
   }
 
-  private void positionReachedInternal2(final @NotNull XSuspendContext suspendContext, boolean attract) {
+  private void positionReachedInternal(final @NotNull XSuspendContext suspendContext, boolean attract) {
     setBreakpointsDisabledTemporarily(false);
     mySuspendContext = suspendContext;
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();

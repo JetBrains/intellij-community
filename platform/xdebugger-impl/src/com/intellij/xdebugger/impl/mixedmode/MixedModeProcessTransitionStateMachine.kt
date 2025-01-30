@@ -6,12 +6,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
 import com.intellij.xdebugger.mixedMode.asXDebugProcess
 import kotlinx.coroutines.*
-import kotlin.reflect.KClass
+import kotlinx.coroutines.channels.Channel
 
 private val logger = logger<MixedModeProcessTransitionStateMachine>()
 
@@ -33,7 +33,6 @@ class MixedModeProcessTransitionStateMachine(
   class HighStoppedWaitingForLowProcessToStop(val highSuspendContext: XSuspendContext?) : State
   class OnlyHighStopped(val highSuspendContext: XSuspendContext?) : State
   class OnlyHighStoppedWaitingForLowStepToComplete(val highSuspendContext: XSuspendContext) : State
-  object OnlyLowStopped : State
   class BothStopped(val low: XSuspendContext, val high: XSuspendContext) : State
   class ManagedStepStarted(val low: XSuspendContext) : State
   class MixedStepIntoStartedWaitingForHighDebuggerToBeResumed() : State
@@ -55,9 +54,9 @@ class MixedModeProcessTransitionStateMachine(
   class LowLevelRunToAddress(val sourcePosition: XSourcePosition, val low: XSuspendContext) : Event
   class HighLevelRunToAddress(val sourcePosition: XSourcePosition, val high: XSuspendContext) : Event
   object Stop : Event
-
-  private val nullObjectHighLevelSuspendContext: XSuspendContext = object : XSuspendContext() {}
-
+  class HighLevelDebuggerStepRequested(val highSuspendContext: XSuspendContext, val stepType: StepType) : Event
+  class MixedStepRequested(val highSuspendContext: XSuspendContext, val stepType: MixedStepType) : Event
+  class LowLevelStepRequested(val mixedSuspendContext: XMixedModeSuspendContext, val stepType: StepType) : Event
   enum class StepType {
     Over, Into, Out
   }
@@ -66,66 +65,20 @@ class MixedModeProcessTransitionStateMachine(
     IntoLowFromHigh
   }
 
-  class HighLevelDebuggerStepRequested(val highSuspendContext: XSuspendContext, val stepType: StepType) : Event
-  class MixedStepRequested(val highSuspendContext: XSuspendContext, val stepType: MixedStepType) : Event
-  class LowLevelStepRequested(val mixedSuspendContext: XMixedModeSuspendContext, val stepType: StepType) : Event
-
+  private val nullObjectHighLevelSuspendContext: XSuspendContext = object : XSuspendContext() {}
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Mixed mode state machine", 1)
   private val stateMachineHelperScope = coroutineScope.childScope("Helper coroutine scope", Dispatchers.Default)
 
   // we assume that low debugger started before we created this class
   private var state: State = OnlyLowStarted
-
-  private fun isLowSuspendContext(suspendContext: XSuspendContext): Boolean {
-    return suspendContext.javaClass.name.contains("Cidr")
-  }
-
+  val stateChannel: Channel<State> = Channel<State>()
   private var suspendContextCoroutine: CoroutineScope = coroutineScope.childScope("suspendContextCoroutine", supervisor = true)
-  suspend fun onPositionReached(suspendContext: XSuspendContext): XSuspendContext? {
-    // TODO: we should read state only from executor thread
-    val currentState = state
-    val isHighSuspendContext = !isLowSuspendContext(suspendContext)
-    if (isHighSuspendContext) {
-      set(HighLevelPositionReached(suspendContext))
-    }
-    else {
-      set(LowLevelPositionReached(suspendContext))
-    }
-
-    val newState = waitForNotNull { newState ->
-      when (newState) {
-        currentState -> null
-        else -> newState
-      }
-    }
-
-    if (newState is BothStopped) {
-      return XMixedModeSuspendContext(high.asXDebugProcess.session, newState.low, newState.high, low, suspendContextCoroutine)
-    }
-    return null
-  }
-
-  suspend fun onSessionResumed(isLowLevel: Boolean): Boolean {
-    val event = if (isLowLevel) LowRun else HighRun
-    set(event)
-
-    val handled = waitForNotNull { newState ->
-      when (newState) {
-        is BothRunning -> false
-        OnlyLowStopped, OnlyLowStopped -> true
-        else -> null
-      }
-    }
-
-    return handled
-  }
 
   fun set(event: Event) {
-    coroutineScope.launch(executor.asCoroutineDispatcher()) {
-      setInternal(event)
-    }
+    executor.execute { setInternal(event) }
   }
 
+  // to be called from the executor
   private fun setInternal(event: Event) {
     logger.info("setInternal: state = ${state::class.simpleName}, event = ${event::class.simpleName}")
     val currentState = state
@@ -424,44 +377,19 @@ class MixedModeProcessTransitionStateMachine(
     }
     val oldState = state
     state = newState
-    logger.info("state change : (${oldState::class.simpleName} -> ${newState::class.simpleName})")
+
+    stateChannel.trySend(newState).also {
+      logger.info(if (it.isSuccess) "New state was successfully emitted into channel" else "Fail to emit state a new state")
+    }
+    runBlocking { stateChannel.send(newState) }
+    logger.info("state change (${oldState::class.simpleName} -> ${newState::class.simpleName})")
   }
 
   private fun createStoppedStateWhenHighCantStop(lowSuspendContext: XSuspendContext): BothStopped {
     return BothStopped(lowSuspendContext, nullObjectHighLevelSuspendContext)
   }
 
-  suspend fun waitFor(c: KClass<*>) {
-    waitFor { it::class == c }
-  }
-
-  suspend fun waitFor(stopIf: (State) -> Boolean) {
-    waitForNotNull { newState -> if (stopIf(newState)) true else null }
-  }
-
-  suspend fun <T> waitForNotNull(func: (State) -> T?): T {
-    return withContext(executor.asCoroutineDispatcher()) {
-      withTimeout(50_000) {
-        while (true) {
-          val result = func(state)
-          if (result != null) {
-            return@withTimeout result
-          }
-
-          /*TODO: merge stopper*/
-          delay(10)
-        }
-
-        error("unreachable")
-      }
-    }
-  }
-
-
-  fun throwTransitionIsNotImplemented(event: Event) {
+  private fun throwTransitionIsNotImplemented(event: Event) {
     TODO("Transition from ${state::class.simpleName} by event ${event::class.simpleName} is not implemented")
   }
-
-  // TODO race can be here since state is written only from the executor (the race should not cause anything serious)
-  fun isMixedModeHighProcessReady(): Boolean = state !is OnlyLowStarted
 }

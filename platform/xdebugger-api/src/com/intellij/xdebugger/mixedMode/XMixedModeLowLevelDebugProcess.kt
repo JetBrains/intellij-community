@@ -18,4 +18,5 @@ interface XMixedModeLowLevelDebugProcess : XMixedModeDebugProcess {
   fun lowToHighTransitionDuringLastStepHappened() : Boolean
 
   suspend fun beforeStep(mixedSuspendContext: XMixedModeSuspendContextBase)
+  fun isLowSuspendContext(context: XSuspendContext) : Boolean
 }
