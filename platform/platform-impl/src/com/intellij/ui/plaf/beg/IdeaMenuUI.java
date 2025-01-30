@@ -284,7 +284,7 @@ public class IdeaMenuUI extends BasicMenuUI {
   }
 
   private void fillBackground(Graphics g, JComponent comp, JMenu jMenu, ButtonModel buttonmodel, Icon allowedIcon) {
-    if (comp.isOpaque()) {
+    if (comp.isOpaque() && comp.getParent().isOpaque()) {
       g.setColor(jMenu.getBackground());
       g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
     }
