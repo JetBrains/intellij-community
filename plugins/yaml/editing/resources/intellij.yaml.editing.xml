@@ -1,1 +1,40 @@
-<idea-plugin package="org.jetbrains.yaml.editing"/>
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <langCodeStyleSettingsProvider implementation="org.jetbrains.yaml.settingsSync.YAMLLanguageCodeStyleSettingsProvider"/>
+
+    <colorSettingsPage implementation="org.jetbrains.yaml.YAMLColorsPage"/>
+    <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
+    <fileType name="YAML" implementationClass="org.jetbrains.yaml.YAMLFileType" fieldName="YML" language="yaml"
+              extensions="yaml;yml"/>
+    <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
+    <lang.elementManipulator forClass="org.jetbrains.yaml.psi.impl.YAMLScalarImpl"
+                             implementationClass="org.jetbrains.yaml.psi.impl.YAMLScalarElementManipulator"/>
+    <lang.elementManipulator forClass="org.jetbrains.yaml.psi.YAMLKeyValue"
+                             implementationClass="org.jetbrains.yaml.psi.impl.YAMLKeyValueKeyManipulator"/>
+    <elementDescriptionProvider implementation="org.jetbrains.yaml.psi.impl.YAMLElementDescriptionProvider"/>
+    <inspection.basicVisitor class="org.jetbrains.yaml.psi.YamlPsiElementVisitor"/>
+
+    <!--The following extensions must work only on the frontend side in remdev mode-->
+    <lang.syntaxHighlighterFactory language="yaml" implementationClass="org.jetbrains.yaml.YAMLSyntaxHighlighterFactory"/>
+    <lang.formatter language="yaml" implementationClass="org.jetbrains.yaml.formatter.YAMLFormattingModelBuilder"/>
+    <lang.commenter language="yaml" implementationClass="org.jetbrains.yaml.YAMLCommenter"/>
+    <lang.braceMatcher language="yaml" implementationClass="org.jetbrains.yaml.YAMLPairedBraceMatcher"/>
+    <lang.whiteSpaceFormattingStrategy language="yaml" implementationClass="org.jetbrains.yaml.formatter.YamlWhiteSpaceFormattingStrategy"/>
+    <stripTrailingSpacesFilterFactory implementation="org.jetbrains.yaml.formatter.YamlStripTrailingSpacesFilterFactory"/>
+    <enterHandlerDelegate implementation="org.jetbrains.yaml.smart.YAMLEnterAtIndentHandler" order="first"/>
+    <typedHandler implementation="org.jetbrains.yaml.formatter.YAMLHyphenTypedHandler"/>
+    <quoteHandler fileType="YAML" className="org.jetbrains.yaml.smart.YamlQuoteHandler"/>
+    <statementUpDownMover implementation="org.jetbrains.yaml.smart.YAMLStatementMover" id="yamlStatementMover" order="before line"/>
+    <lang.foldingBuilder language="yaml" id="YAMLFoldingBuilder" implementationClass="org.jetbrains.yaml.folding.YAMLFoldingBuilder"/>
+
+    <renameInputValidator implementation="org.jetbrains.yaml.refactoring.rename.YamlKeyValueRenameInputValidator" order="first"/>
+    <applicationService serviceImplementation="org.jetbrains.yaml.smart.YAMLEditorOptions"/>
+    <applicationSettings service="org.jetbrains.yaml.smart.YAMLEditorOptions"/>
+    <rdct.remoteSettingProvider implementation="org.jetbrains.yaml.smart.YAMLRemoteSettingInfoProvider"/>
+    <editorSmartKeysConfigurable instance="org.jetbrains.yaml.smart.YAMLSmartOptionsProvider"
+                                 id="editor.preferences.yamlOptions"
+                                 bundle="messages.YAMLBundle"
+                                 key="yaml.smartkeys.option.title"/>
+    <copyPastePreProcessor implementation="org.jetbrains.yaml.smart.YAMLCopyPasteProcessor"/>
+  </extensions>
+</idea-plugin>  

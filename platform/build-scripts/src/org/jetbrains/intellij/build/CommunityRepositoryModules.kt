@@ -29,9 +29,6 @@ object CommunityRepositoryModules {
     pluginAuto("intellij.json") { spec ->
       spec.withModule("intellij.json.split", "json-split.jar")
     },
-    pluginAuto("intellij.yaml") { spec ->
-      spec.withModule("intellij.yaml.editing", "yaml-editing.jar")
-    },
     plugin("intellij.ant") { spec ->
       spec.mainJarName = "antIntegration.jar"
       spec.withModule("intellij.ant.jps", "ant-jps.jar")
