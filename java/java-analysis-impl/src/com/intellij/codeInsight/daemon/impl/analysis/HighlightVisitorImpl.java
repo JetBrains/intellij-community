@@ -392,12 +392,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitClassObjectAccessExpression(@NotNull PsiClassObjectAccessExpression expression) {
-    super.visitClassObjectAccessExpression(expression);
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkClassObjectAccessExpression(expression));
-  }
-
-  @Override
   public void visitJavaToken(@NotNull PsiJavaToken token) {
     super.visitJavaToken(token);
 
@@ -465,16 +459,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     else if (parent instanceof PsiClass aClass) {
       if (!hasErrorResults() && JavaFeature.EXTENSION_METHODS.isSufficient(myLanguageLevel)) {
         add(GenericsHighlightUtil.checkUnrelatedDefaultMethods(aClass, identifier));
-      }
-
-      if (!hasErrorResults()) {
-        add(GenericsHighlightUtil.checkUnrelatedConcrete(aClass, identifier));
-      }
-    }
-    else if (parent instanceof PsiMethod method) {
-      PsiClass aClass = method.getContainingClass();
-      if (aClass != null) {
-        add(GenericsHighlightUtil.checkDefaultMethodOverridesMemberOfJavaLangObject(myLanguageLevel, aClass, method, identifier));
       }
     }
 
@@ -561,8 +545,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitNewExpression(@NotNull PsiNewExpression expression) {
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkTypeParameterInstantiation(expression));
-
     if (!hasErrorResults()) visitExpression(expression);
 
     if (!hasErrorResults()) {
@@ -631,7 +613,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (parent instanceof PsiAnonymousClass psiAnonymousClass && ref.equals(psiAnonymousClass.getBaseClassReference())) {
       GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(psiAnonymousClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
       myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(psiAnonymousClass));
-      if (!hasErrorResults()) add(GenericsHighlightUtil.checkGenericCannotExtendException(psiAnonymousClass));
     }
 
     if (parent instanceof PsiNewExpression newExpression &&
@@ -757,7 +738,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
 
-    if (!hasErrorResults()) add(GenericsHighlightUtil.checkAccessStaticFieldFromEnumConstructor(expression, result));
     if (!hasErrorResults()) add(HighlightUtil.checkClassReferenceAfterQualifier(expression, resolved));
     PsiExpression qualifierExpression = expression.getQualifierExpression();
     if (!hasErrorResults() && myJavaModule == null && qualifierExpression != null) {
@@ -955,7 +935,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiElement parent = list.getParent();
     if (!(parent instanceof PsiTypeParameter)) {
       if (!hasErrorResults()) HighlightClassUtil.checkPermitsList(list, myErrorSink);
-      if (!hasErrorResults()) add(GenericsHighlightUtil.checkGenericCannotExtendException(list));
     }
   }
 

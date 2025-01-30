@@ -17,6 +17,7 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -523,6 +524,151 @@ final class GenericsChecker {
     else if (!JavaGenericsUtil.isReifiableType(type)) {
       myVisitor.report(JavaErrorKinds.INSTANCEOF_ILLEGAL_GENERIC_TYPE.create(typeElement));
     }
+  }
+
+  void checkDefaultMethodOverridesMemberOfJavaLangObject(@NotNull PsiClass aClass, @NotNull PsiMethod method) {
+    if (!myVisitor.isApplicable(JavaFeature.EXTENSION_METHODS) || !aClass.isInterface() || 
+        !method.hasModifierProperty(PsiModifier.DEFAULT)) {
+      return;
+    }
+    if (doesMethodOverrideMemberOfJavaLangObject(method)) {
+      myVisitor.report(JavaErrorKinds.METHOD_DEFAULT_OVERRIDES_OBJECT_MEMBER.create(method));
+    }
+  }
+
+  void checkUnrelatedConcrete(@NotNull PsiClass psiClass) {
+    PsiClass superClass = psiClass.getSuperClass();
+    if (superClass != null && superClass.hasTypeParameters()) {
+      Collection<HierarchicalMethodSignature> visibleSignatures = superClass.getVisibleSignatures();
+      Map<MethodSignature, PsiMethod> overrideEquivalent = MethodSignatureUtil.createErasedMethodSignatureMap();
+      for (HierarchicalMethodSignature hms : visibleSignatures) {
+        PsiMethod method = hms.getMethod();
+        if (method.isConstructor()) continue;
+        if (method.hasModifierProperty(PsiModifier.ABSTRACT) ||
+            method.hasModifierProperty(PsiModifier.DEFAULT) ||
+            method.hasModifierProperty(PsiModifier.STATIC)) continue;
+        if (psiClass.findMethodsBySignature(method, false).length > 0) continue;
+        PsiClass containingClass = method.getContainingClass();
+        if (containingClass == null) continue;
+        PsiSubstitutor containingClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, psiClass, PsiSubstitutor.EMPTY);
+        PsiSubstitutor finalSubstitutor = PsiSuperMethodUtil
+          .obtainFinalSubstitutor(containingClass, containingClassSubstitutor, hms.getSubstitutor(), false);
+        MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, finalSubstitutor, false);
+        PsiMethod foundMethod = overrideEquivalent.get(signature);
+        if (foundMethod != null &&
+            !foundMethod.hasModifierProperty(PsiModifier.ABSTRACT) &&
+            !foundMethod.hasModifierProperty(PsiModifier.DEFAULT) &&
+            foundMethod.getContainingClass() != null) {
+          myVisitor.report(JavaErrorKinds.CLASS_INHERITANCE_METHOD_CLASH.create(
+            psiClass, new JavaErrorKinds.OverrideClashContext(method, foundMethod)));
+          return;
+        }
+        overrideEquivalent.put(signature, method);
+      }
+    }
+  }
+
+  void checkGenericCannotExtendException(@NotNull PsiReferenceList list) {
+    PsiElement parent = list.getParent();
+    if (parent instanceof PsiClass klass) {
+      if (hasGenericSignature(klass) && klass.getExtendsList() == list) {
+        PsiClass throwableClass = null;
+        for (PsiJavaCodeReferenceElement refElement : list.getReferenceElements()) {
+          PsiElement resolved = refElement.resolve();
+          if (!(resolved instanceof PsiClass psiClass)) continue;
+          if (throwableClass == null) {
+            throwableClass =
+              JavaPsiFacade.getInstance(klass.getProject()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, klass.getResolveScope());
+          }
+          if (InheritanceUtil.isInheritorOrSelf(psiClass, throwableClass, true)) {
+            myVisitor.report(JavaErrorKinds.CLASS_GENERIC_EXTENDS_EXCEPTION.create(refElement));
+          }
+        }
+      }
+    }
+    else if (parent instanceof PsiMethod method && method.getThrowsList() == list) {
+      for (PsiJavaCodeReferenceElement refElement : list.getReferenceElements()) {
+        PsiReferenceParameterList parameterList = refElement.getParameterList();
+        if (parameterList != null && parameterList.getTypeParameterElements().length != 0) {
+          myVisitor.report(JavaErrorKinds.CLASS_GENERIC_EXTENDS_EXCEPTION.create(refElement));
+        }
+      }
+    }
+  }
+  
+  void checkGenericCannotExtendException(@NotNull PsiAnonymousClass anonymousClass) {
+    if (hasGenericSignature(anonymousClass) &&
+        InheritanceUtil.isInheritor(anonymousClass, true, CommonClassNames.JAVA_LANG_THROWABLE)) {
+      myVisitor.report(JavaErrorKinds.CLASS_GENERIC_EXTENDS_EXCEPTION.create(anonymousClass.getBaseClassReference()));
+    }
+  }
+
+  void checkClassObjectAccessExpression(@NotNull PsiClassObjectAccessExpression expression) {
+    PsiType type = expression.getOperand().getType();
+    if (type instanceof PsiClassType classType) {
+      checkClassAccess(classType, expression.getOperand());
+    }
+    if (type instanceof PsiArrayType) {
+      PsiType arrayComponentType = type.getDeepComponentType();
+      if (arrayComponentType instanceof PsiClassType classType) {
+        checkClassAccess(classType, expression.getOperand());
+      }
+    }
+  }
+
+  private void checkClassAccess(@NotNull PsiClassType type, @NotNull PsiTypeElement operand) {
+    PsiClass aClass = type.resolve();
+    if (aClass instanceof PsiTypeParameter) {
+      myVisitor.report(JavaErrorKinds.EXPRESSION_CLASS_TYPE_PARAMETER.create(operand));
+      return;
+    }
+    if (type.getParameters().length > 0) {
+      myVisitor.report(JavaErrorKinds.EXPRESSION_CLASS_PARAMETERIZED_TYPE.create(operand));
+    }
+  }
+
+  void checkTypeParameterInstantiation(@NotNull PsiNewExpression expression) {
+    PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
+    if (classReference == null) return;
+    JavaResolveResult result = classReference.advancedResolve(false);
+    PsiElement element = result.getElement();
+    if (element instanceof PsiTypeParameter typeParameter) {
+      myVisitor.report(JavaErrorKinds.NEW_EXPRESSION_TYPE_PARAMETER.create(classReference, typeParameter));
+    }
+  }
+
+  //http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.9.2
+  void checkAccessStaticFieldFromEnumConstructor(@NotNull PsiReferenceExpression expr,
+                                                 @NotNull JavaResolveResult result) {
+    PsiField field = ObjectUtils.tryCast(result.getElement(), PsiField.class);
+    if (field == null) return;
+
+    PsiClass enumClass = JavaPsiEnumUtil.getEnumClassForExpressionInInitializer(expr);
+    if (enumClass == null || !JavaPsiEnumUtil.isRestrictedStaticEnumField(field, enumClass)) return;
+    myVisitor.report(JavaErrorKinds.ENUM_CONSTANT_ILLEGAL_ACCESS_IN_CONSTRUCTOR.create(expr, field));
+  }
+
+  private static boolean hasGenericSignature(@NotNull PsiClass klass) {
+    PsiClass containingClass = klass;
+    while (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) {
+      if (containingClass.hasTypeParameters()) return true;
+      containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
+    }
+    return containingClass != null && PsiUtil.typeParametersIterator(containingClass).hasNext();
+  }
+
+  private static boolean doesMethodOverrideMemberOfJavaLangObject(@NotNull PsiMethod method) {
+    for (HierarchicalMethodSignature methodSignature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
+      PsiMethod objectMethod = methodSignature.getMethod();
+      PsiClass containingClass = objectMethod.getContainingClass();
+      if (containingClass != null &&
+          CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
+          objectMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return true;
+      }
+      if (doesMethodOverrideMemberOfJavaLangObject(objectMethod)) return true;
+    }
+    return false;
   }
 
   private static PsiType detectExpectedType(@NotNull PsiReferenceParameterList referenceParameterList) {

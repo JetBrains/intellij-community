@@ -312,6 +312,15 @@ public final class JavaErrorKinds {
       .withRawDescription((cls, ctx) -> message("class.inheritance.raw.and.generic",
                                                 formatClass(ctx.superClass()),
                                                 formatType(ctx.type1() != null ? ctx.type1() : ctx.type2())));
+  public static final Parameterized<PsiClass, OverrideClashContext> CLASS_INHERITANCE_METHOD_CLASH =
+    parameterized(PsiClass.class, OverrideClashContext.class, "class.inheritance.method.clash")
+      .withAnchor((cls, ctx) -> cls.getNameIdentifier())
+      .withRawDescription((cls, ctx) -> message(
+        "class.inheritance.method.clash",
+        formatMethod(ctx.superMethod()), formatClass(requireNonNull(ctx.superMethod().getContainingClass())),
+        formatMethod(ctx.method()), formatClass(requireNonNull(ctx.method().getContainingClass()))));
+  public static final Simple<PsiJavaCodeReferenceElement> CLASS_GENERIC_EXTENDS_EXCEPTION =
+    error("class.generic.extends.exception");
   public static final Parameterized<PsiElement, PsiClass> CLASS_NOT_ACCESSIBLE =
     parameterized(PsiElement.class, PsiClass.class, "class.not.accessible")
       .withRange((psi, cls) -> psi instanceof PsiMember member ? getMemberDeclarationTextRange(member) : null)
@@ -384,6 +393,14 @@ public final class JavaErrorKinds {
     .withAnchor(PsiReferenceList::getFirstChild);
   public static final Simple<PsiReferenceList> ENUM_PERMITS = error(PsiReferenceList.class, "enum.permits")
     .withAnchor(PsiReferenceList::getFirstChild);
+  public static final Parameterized<PsiReferenceExpression, PsiField> ENUM_CONSTANT_ILLEGAL_ACCESS_IN_CONSTRUCTOR =
+    parameterized(PsiReferenceExpression.class, PsiField.class, "enum.constant.illegal.access.in.constructor")
+      .withRawDescription((expr, field) -> {
+        int fieldType = field instanceof PsiEnumConstant ? 2 : 1;
+        PsiMember initializer = PsiUtil.findEnclosingConstructorOrInitializer(expr);
+        int initializerType = initializer instanceof PsiMethod ? 1 : initializer instanceof PsiField ? 2 : 3;
+        return message("enum.constant.illegal.access.in.constructor", fieldType, initializerType);
+      });
 
   public static final Simple<PsiClassInitializer> INTERFACE_CLASS_INITIALIZER = error("interface.class.initializer");
   public static final Simple<PsiMethod> INTERFACE_CONSTRUCTOR = error("interface.constructor");
@@ -475,6 +492,9 @@ public final class JavaErrorKinds {
     error(PsiMethod.class, "method.default.should.have.body").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
   public static final Simple<PsiMethod> METHOD_DEFAULT_IN_CLASS =
     error(PsiMethod.class, "method.default.in.class").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
+  public static final Simple<PsiMethod> METHOD_DEFAULT_OVERRIDES_OBJECT_MEMBER =
+    error(PsiMethod.class, "method.default.overrides.object.member").withAnchor(PsiMethod::getNameIdentifier)
+      .withRawDescription(method -> message("method.default.overrides.object.member", method.getName()));
   public static final Simple<PsiMethod> METHOD_SHOULD_HAVE_BODY =
     error(PsiMethod.class, "method.should.have.body").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
   public static final Simple<PsiMethod> METHOD_SHOULD_HAVE_BODY_OR_ABSTRACT =
@@ -740,7 +760,8 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiTypeCastExpression, InheritTypeClashContext> CAST_INTERSECTION_INHERITANCE_CLASH = 
     parameterized(PsiTypeCastExpression.class, InheritTypeClashContext.class, "cast.intersection.inheritance.clash")
       .withRawDescription((cast, ctx) -> message("cast.intersection.inheritance.clash", formatClass(ctx.superClass()),
-                                                 ctx.type1().getPresentableText(), ctx.type2().getPresentableText()));
+                                                 requireNonNull(ctx.type1()).getPresentableText(),
+                                                 requireNonNull(ctx.type2()).getPresentableText()));
 
   public static final Simple<PsiReferenceExpression> EXPRESSION_EXPECTED = error("expression.expected");
   public static final Parameterized<PsiReferenceExpression, PsiSuperExpression> EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD = 
@@ -766,6 +787,8 @@ public final class JavaErrorKinds {
       .withRawDescription((expr, cls) -> message("expression.super.no.enclosing.instance", formatClass(cls)));
   public static final Simple<PsiJavaCodeReferenceElement> EXPRESSION_QUALIFIED_CLASS_EXPECTED = 
     error(PsiJavaCodeReferenceElement.class, "expression.qualified.class.expected");
+  public static final Simple<PsiTypeElement> EXPRESSION_CLASS_TYPE_PARAMETER = error("expression.class.type.parameter");
+  public static final Simple<PsiTypeElement> EXPRESSION_CLASS_PARAMETERIZED_TYPE = error("expression.class.parameterized.type");
   
   public static final Parameterized<PsiExpression, PsiVariable> ASSIGNMENT_DECLARED_OUTSIDE_GUARD =
     parameterized(PsiExpression.class, PsiVariable.class, "assignment.declared.outside.guard")
@@ -816,6 +839,9 @@ public final class JavaErrorKinds {
       .withAnchor((call, ctx) -> call.getArgumentList())
       .withRawDescription((call, ctx) -> message("new.expression.unresolved.constructor", 
                                           ctx.psiClass().getName() + formatArgumentTypes(call.getArgumentList(), true)));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiTypeParameter> NEW_EXPRESSION_TYPE_PARAMETER =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiTypeParameter.class, "new.expression.type.parameter")
+      .withRawDescription((ref, typeParameter) -> message("new.expression.type.parameter", formatClass(typeParameter)));
 
   public static final Parameterized<PsiMember, PsiClass> REFERENCE_MEMBER_BEFORE_CONSTRUCTOR =
     parameterized(PsiMember.class, PsiClass.class, "reference.member.before.constructor")

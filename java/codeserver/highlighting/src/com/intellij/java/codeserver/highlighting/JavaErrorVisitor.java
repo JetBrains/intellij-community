@@ -277,6 +277,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myExpressionChecker.checkQualifiedNew(expression, type, aClass);
     if (!hasErrorResults()) myExpressionChecker.checkUnhandledExceptions(expression);
     if (!hasErrorResults()) myExpressionChecker.checkNewExpression(expression, type);
+    if (!hasErrorResults()) myGenericsChecker.checkTypeParameterInstantiation(expression);
     if (!hasErrorResults()) myGenericsChecker.checkGenericArrayCreation(expression, type);
   }
 
@@ -494,11 +495,14 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       }
       if (!hasErrorResults()) myClassChecker.checkClassAlreadyImported(aClass);
       if (!hasErrorResults()) myClassChecker.checkClassRestrictedKeyword(identifier);
+      if (!hasErrorResults()) myGenericsChecker.checkUnrelatedConcrete(aClass);
     }
     else if (parent instanceof PsiMethod method) {
       myClassChecker.checkImplicitClassMember(method);
-      if (method.isConstructor()) {
-        myMethodChecker.checkConstructorName(method);
+      if (method.isConstructor()) myMethodChecker.checkConstructorName(method);
+      PsiClass aClass = method.getContainingClass();
+      if (aClass != null) {
+        myGenericsChecker.checkDefaultMethodOverridesMemberOfJavaLangObject(aClass, method);
       }
     }
     myExpressionChecker.checkUnderscore(identifier);
@@ -658,6 +662,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults() && resolved instanceof PsiField field) {
       myExpressionChecker.checkIllegalForwardReferenceToField(expression, field);
     }
+    if (!hasErrorResults()) myGenericsChecker.checkAccessStaticFieldFromEnumConstructor(expression, result);
     myExpressionChecker.checkUnqualifiedSuperInDefaultMethod(expression, qualifierExpression);
   }
   
@@ -754,6 +759,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
     if (!hasErrorResults() && (!(parent instanceof PsiNewExpression newExpression) || !newExpression.isArrayCreation())) {
       myGenericsChecker.checkParameterizedReferenceTypeArguments(resolved, ref, result.getSubstitutor());
+    }
+    if (parent instanceof PsiAnonymousClass psiAnonymousClass && ref.equals(psiAnonymousClass.getBaseClassReference())) {
+      if (!hasErrorResults()) myGenericsChecker.checkGenericCannotExtendException(psiAnonymousClass);
     }
     if (!hasErrorResults()) myClassChecker.checkAbstractInstantiation(ref);
     if (!hasErrorResults()) myClassChecker.checkExtendsDuplicate(ref, resolved);
@@ -865,7 +873,14 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       if (!hasErrorResults()) myClassChecker.checkImplementsAllowed(list);
       if (!hasErrorResults()) myClassChecker.checkClassExtendsOnlyOneClass(list);
       if (!hasErrorResults()) myClassChecker.checkPermitsList(list);
+      if (!hasErrorResults()) myGenericsChecker.checkGenericCannotExtendException(list);
     }
+  }
+
+  @Override
+  public void visitClassObjectAccessExpression(@NotNull PsiClassObjectAccessExpression expression) {
+    super.visitClassObjectAccessExpression(expression);
+    if (!hasErrorResults()) myGenericsChecker.checkClassObjectAccessExpression(expression);
   }
 
   @Override

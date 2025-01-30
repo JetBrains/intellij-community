@@ -508,6 +508,17 @@ final class JavaErrorFixProvider {
                                           PsiTreeUtil.getParentOfType(conjunct, PsiTypeElement.class, true));
     });
     fix(CAST_INTERSECTION_REPEATED_INTERFACE, error -> new DeleteRepeatedInterfaceFix(error.psi()));
+    fix(EXPRESSION_CLASS_PARAMETERIZED_TYPE, error -> {
+      PsiTypeElement operand = error.psi();
+      final PsiJavaCodeReferenceElement referenceElement = operand.getInnermostComponentReferenceElement();
+      if (referenceElement != null) {
+        final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+        if (parameterList != null) {
+          return myFactory.createDeleteFix(parameterList);
+        }
+      }
+      return null;
+    });
   }
 
   private void createAccessFixes() {
@@ -765,6 +776,15 @@ final class JavaErrorFixProvider {
     fix(CLASS_CANNOT_BE_REFERENCED_FROM_STATIC_CONTEXT, makeInnerStatic);
     fix(CLASS_CANNOT_BE_REFERENCED_FROM_STATIC_CONTEXT, 
         error -> removeModifierFix(requireNonNull(error.context().enclosingStaticElement()), PsiModifier.STATIC));
+    fix(CLASS_GENERIC_EXTENDS_EXCEPTION, error -> {
+      PsiJavaCodeReferenceElement ref = error.psi();
+      PsiMember owner = PsiTreeUtil.getParentOfType(ref, PsiClass.class, PsiMethod.class);
+      if (owner instanceof PsiClass klass && !(klass instanceof PsiAnonymousClass) && ref.resolve() instanceof PsiClass throwableClass) {
+        PsiClassType classType = JavaPsiFacade.getElementFactory(error.project()).createType(throwableClass);
+        return myFactory.createExtendsListFix(klass, classType, false);
+      }
+      return null;
+    });
   }
 
   private void createAnnotationFixes() {
