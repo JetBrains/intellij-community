@@ -43,14 +43,16 @@ import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -626,47 +628,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         info.registerFix(action, null, null, null, null);
       }
       add(info);
-    }
-
-    if (!hasErrorResults() && resolved instanceof PsiClass psiClass) {
-      PsiClass aClass = psiClass.getContainingClass();
-      if (aClass != null) {
-        PsiElement qualifier = ref.getQualifier();
-        PsiElement place;
-        if (qualifier instanceof PsiJavaCodeReferenceElement element) {
-          place = element.resolve();
-        }
-        else {
-          if (parent instanceof PsiNewExpression newExpression) {
-            PsiExpression newQualifier = newExpression.getQualifier();
-            place = newQualifier == null ? ref : PsiUtil.resolveClassInType(newQualifier.getType());
-          }
-          else {
-            place = ref;
-          }
-        }
-        if (place != null &&
-            PsiTreeUtil.isAncestor(aClass, place, false) &&
-            aClass.hasTypeParameters() &&
-            !PsiUtil.isInsideJavadocComment(place)) {
-          add(HighlightClassUtil.checkCreateInnerClassFromStaticContext(ref, place, psiClass));
-        }
-      }
-      else if (resolved instanceof PsiTypeParameter typeParameter) {
-        PsiTypeParameterListOwner owner = typeParameter.getOwner();
-        if (owner instanceof PsiClass outerClass) {
-          if (!InheritanceUtil.hasEnclosingInstanceInScope(outerClass, ref, false, false)) {
-            add(HighlightClassUtil.checkIllegalEnclosingUsage(ref, null, outerClass, ref));
-          }
-        }
-        else if (owner instanceof PsiMethod) {
-          PsiClass cls = ClassUtils.getContainingStaticClass(ref);
-          if (cls != null && PsiTreeUtil.isAncestor(owner, cls, true)) {
-            String description = JavaErrorBundle.message("cannot.be.referenced.from.static.context", ref.getReferenceName());
-            add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(description));
-          }
-        }
-      }
     }
 
     if (!hasErrorResults()) {

@@ -505,6 +505,24 @@ final class GenericsChecker {
     }
   }
 
+  void checkTypeParameterReference(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiTypeParameter typeParameter) {
+    PsiTypeParameterListOwner owner = typeParameter.getOwner();
+    if (owner instanceof PsiClass outerClass) {
+      if (!InheritanceUtil.hasEnclosingInstanceInScope(outerClass, ref, false, false)) {
+        myVisitor.myExpressionChecker.checkIllegalEnclosingUsage(ref, null, outerClass, ref);
+      }
+    }
+    else if (owner instanceof PsiMethod) {
+      PsiModifierListOwner staticElement = PsiUtil.getEnclosingStaticElement(ref, null);
+      if (staticElement != null && PsiTreeUtil.isAncestor(owner, staticElement, true)) {
+        PsiClass ownerContainingClass = owner.getContainingClass();
+        if (ownerContainingClass != null) {
+          myVisitor.report(JavaErrorKinds.REFERENCE_OUTER_TYPE_PARAMETER_FROM_STATIC_CONTEXT.create(ref, typeParameter));
+        }
+      }
+    }
+  }
+
   private void checkUnsafeCastInInstanceOf(@NotNull PsiTypeElement checkTypeElement, @NotNull PsiType checkType, @Nullable PsiType expressionType) {
     if (expressionType != null && JavaGenericsUtil.isUncheckedCast(checkType, expressionType)) {
       myVisitor.report(JavaErrorKinds.INSTANCEOF_UNSAFE_CAST.create(

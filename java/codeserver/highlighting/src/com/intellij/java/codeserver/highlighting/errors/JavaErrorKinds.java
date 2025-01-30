@@ -906,6 +906,10 @@ public final class JavaErrorKinds {
         String name = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
         return message("reference.non.static.from.static.context", type, name);
       });
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiTypeParameter> REFERENCE_OUTER_TYPE_PARAMETER_FROM_STATIC_CONTEXT =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiTypeParameter.class, "reference.outer.type.parameter.from.static.context")
+      .withHighlightType((ref, refElement) -> JavaErrorHighlightType.WRONG_REF)
+      .withRawDescription((ref, refElement) -> message("reference.outer.type.parameter.from.static.context", refElement.getName()));
   
   public static final Simple<PsiSwitchLabelStatementBase> STATEMENT_CASE_OUTSIDE_SWITCH = error("statement.case.outside.switch");
   public static final Simple<PsiStatement> STATEMENT_INVALID = error("statement.invalid");

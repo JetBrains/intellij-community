@@ -760,6 +760,34 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults() && (!(parent instanceof PsiNewExpression newExpression) || !newExpression.isArrayCreation())) {
       myGenericsChecker.checkParameterizedReferenceTypeArguments(resolved, ref, result.getSubstitutor());
     }
+    if (!hasErrorResults() && resolved instanceof PsiClass psiClass) {
+      PsiClass aClass = psiClass.getContainingClass();
+      if (aClass != null) {
+        PsiElement qualifier = ref.getQualifier();
+        PsiElement place;
+        if (qualifier instanceof PsiJavaCodeReferenceElement element) {
+          place = element.resolve();
+        }
+        else {
+          if (parent instanceof PsiNewExpression newExpression) {
+            PsiExpression newQualifier = newExpression.getQualifier();
+            place = newQualifier == null ? ref : PsiUtil.resolveClassInType(newQualifier.getType());
+          }
+          else {
+            place = ref;
+          }
+        }
+        if (place != null &&
+            PsiTreeUtil.isAncestor(aClass, place, false) &&
+            aClass.hasTypeParameters() &&
+            !PsiUtil.isInsideJavadocComment(place)) {
+          myExpressionChecker.checkCreateInnerClassFromStaticContext(ref, place, psiClass);
+        }
+      }
+      else if (resolved instanceof PsiTypeParameter typeParameter) {
+        myGenericsChecker.checkTypeParameterReference(ref, typeParameter);
+      }
+    }
     if (parent instanceof PsiAnonymousClass psiAnonymousClass && ref.equals(psiAnonymousClass.getBaseClassReference())) {
       if (!hasErrorResults()) myGenericsChecker.checkGenericCannotExtendException(psiAnonymousClass);
     }
