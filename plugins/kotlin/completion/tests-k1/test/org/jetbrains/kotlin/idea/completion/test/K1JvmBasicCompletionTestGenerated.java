@@ -3449,6 +3449,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/KTIJ-31854.kt");
             }
 
+            @TestMetadata("KTIJ-32862.kt")
+            public void testKTIJ_32862() throws Exception {
+                runTest("../testData/basic/common/KTIJ-32862.kt");
+            }
+
             @TestMetadata("KeywordsAreLowInParameterTypeCompletion1.kt")
             public void testKeywordsAreLowInParameterTypeCompletion1() throws Exception {
                 runTest("../testData/basic/common/KeywordsAreLowInParameterTypeCompletion1.kt");
