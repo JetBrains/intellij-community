@@ -8,6 +8,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.internal.ui.sandbox.items
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TreeUIHelper
@@ -18,9 +19,12 @@ import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selected
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
+import java.util.function.Consumer
 import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
@@ -40,7 +44,78 @@ internal class LcrListPanel : UISandboxPanel {
 
       indent {
         row {
-          jbList(listOf("Text", "With Icon", "Italic", "Commented"), listCellRenderer {
+          jbList(null, items(99), textListCellRenderer { it })
+          jbList("Icons", (1..99).toList(), listCellRenderer {
+            icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
+            text("Item $value")
+          })
+
+          val aligns = listOf(LcrInitParams.Align.LEFT, LcrInitParams.Align.CENTER, LcrInitParams.Align.RIGHT)
+          jbList("Align", (1..99).toList(), listCellRenderer {
+            val customAlign = aligns.getOrNull(index % (aligns.size + 1))
+            text("$value: $customAlign") {
+              align = customAlign
+            }
+          }).align(Align.FILL)
+        }
+
+        row {
+          val colors = listOf(UIUtil.getLabelForeground(),
+                              JBColor.GREEN,
+                              JBColor.MAGENTA)
+          val styles = listOf(SimpleTextAttributes.STYLE_PLAIN,
+                              SimpleTextAttributes.STYLE_BOLD,
+                              SimpleTextAttributes.STYLE_ITALIC)
+
+          jbList("Foreground", (1..99).toList(), listCellRenderer {
+            val i = index % colors.size
+            text("Item $value") {
+              if (i > 0) {
+                foreground = colors[i]
+              }
+            }
+          })
+
+          jbList("Attributes", (1..99).toList(), listCellRenderer {
+            val i = index % colors.size
+            text("Item $value") {
+              attributes = SimpleTextAttributes(styles[i], colors[i])
+            }
+          })
+
+          jbList("Background", (1..99).toList(), listCellRenderer {
+            val i = index % colors.size
+            if (i > 0) {
+              background = colors[i]
+            }
+            text("Item $value")
+          })
+        }
+
+        row {
+          @Suppress("UNCHECKED_CAST")
+          jbList("Speed search", (1..99).toList(), listCellRenderer {
+            text("Item $value") {
+              speedSearch { }
+              attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD or SimpleTextAttributes.STYLE_ITALIC, JBColor.BLUE)
+            }
+            text("Item $value") {
+              speedSearch { }
+              align = LcrInitParams.Align.LEFT
+            }
+            text("Not searchable text") {
+              foreground = greyForeground
+            }
+          }, patchList = {
+            TreeUIHelper.getInstance().installListSpeedSearch(it) { item ->
+              "Item $item"
+            }
+          }).applyToComponent {
+            minimumSize = JBDimension(100, 300)
+          }
+            .component.viewport.view as JBList<Int>
+
+          jbList("Mixed, tooltips", listOf("Text", "With Icon", "Italic", "Commented"), listCellRenderer {
             toolTipText = value
 
             when (index) {
@@ -61,90 +136,40 @@ internal class LcrListPanel : UISandboxPanel {
                 }
               }
             }
-          }).label("Mixed, tooltips", LabelPosition.TOP)
-
-          jbList(items(99), textListCellRenderer { it })
-          jbList((1..99).toList(), listCellRenderer {
+          })
+          jbList("FixedCellHeight", (1..99).toList(), listCellRenderer {
             icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
             text("Item $value")
-          }).label("Icons", LabelPosition.TOP)
-
-          val aligns = listOf(LcrInitParams.Align.LEFT, LcrInitParams.Align.CENTER, LcrInitParams.Align.RIGHT)
-          jbList((1..99).toList(), listCellRenderer {
-            val customAlign = aligns.getOrNull(index % (aligns.size + 1))
-            text("$value: $customAlign") {
-              align = customAlign
+          }, patchList = { it.fixedCellHeight = JBUIScale.scale(30) })
+          jbList("Big font", (1..99).toList(), listCellRenderer {
+            icon(if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear)
+            text("Item ($value)") {
+              font = JBFont.h1()
             }
-          }).label("Align", LabelPosition.TOP)
-            .align(Align.FILL)
-        }
-
-        row {
-          val colors = listOf(UIUtil.getLabelForeground(),
-                              JBColor.GREEN,
-                              JBColor.MAGENTA)
-          val styles = listOf(SimpleTextAttributes.STYLE_PLAIN,
-                              SimpleTextAttributes.STYLE_BOLD,
-                              SimpleTextAttributes.STYLE_ITALIC)
-
-          jbList((1..99).toList(), listCellRenderer {
-            val i = index % colors.size
-            text("Item $value") {
-              if (i > 0) {
-                foreground = colors[i]
-              }
-            }
-          }).label("Foreground", LabelPosition.TOP)
-
-          jbList((1..99).toList(), listCellRenderer {
-            val i = index % colors.size
-            text("Item $value") {
-              attributes = SimpleTextAttributes(styles[i], colors[i])
-            }
-          }).label("Attributes", LabelPosition.TOP)
-
-          jbList((1..99).toList(), listCellRenderer {
-            val i = index % colors.size
-            if (i > 0) {
-              background = colors[i]
-            }
-            text("Item $value")
-          }).label("Background", LabelPosition.TOP)
-        }
-
-        row {
-          @Suppress("UNCHECKED_CAST")
-          val list = jbList((1..99).toList(), listCellRenderer {
-            text("Item $value") {
-              speedSearch { }
-              attributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD or SimpleTextAttributes.STYLE_ITALIC, JBColor.BLUE)
-            }
-            text("Item $value") {
-              speedSearch { }
-              align = LcrInitParams.Align.LEFT
-            }
-            text("Not searchable text") {
+            text("small comment") {
+              font = JBFont.small()
               foreground = greyForeground
             }
-          }).label("Speed search:", LabelPosition.TOP)
-            .applyToComponent {
-              minimumSize = JBDimension(100, 300)
-            }
-            .component.viewport.view as JBList<Int>
-          TreeUIHelper.getInstance().installListSpeedSearch(list) {
-            "Item $it"
-          }
+          }, patchList = { it.fixedCellHeight = JBUIScale.scale(30) })
         }
       }.enabledIf(enabled.selected)
     }
   }
 }
 
-internal fun <T> Row.jbList(items: List<T>, renderer: ListCellRenderer<T>): Cell<JBScrollPane> {
+internal fun <T> Row.jbList(label: @NlsContexts.Label String?, items: List<T>, renderer: ListCellRenderer<T>,
+                            patchList: Consumer<JBList<T>>? = null): Cell<JBScrollPane> {
   val list = JBList(items)
   list.setCellRenderer(renderer)
+  patchList?.accept(list)
   val scroll = JBScrollPane(list)
   scroll.minimumSize = JBDimension(100, 200)
   scroll.isOverlappingScrollBar = true
-  return cell(scroll)
+
+  val result = cell(scroll)
+    .align(AlignY.TOP)
+  label?.let {
+    result.label(it, LabelPosition.TOP)
+  }
+  return result
 }
