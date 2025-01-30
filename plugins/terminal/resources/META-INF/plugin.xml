@@ -177,8 +177,6 @@
       <keyboard-shortcut first-keystroke="control R" keymap="Mac OS X 10.5+" replace-all="true"/>
     </action>
 
-    <action id="Terminal.EnableNewUi" class="org.jetbrains.plugins.terminal.action.EnableBlockTerminalUiAction"/>
-
     <action id="Terminal.LineUp" class="org.jetbrains.plugins.terminal.action.TerminalLineUpAction">
       <override-text place="GoToAction"/>
       <keyboard-shortcut first-keystroke="control UP" keymap="$default"/>
@@ -193,10 +191,6 @@
     <action id="Terminal.PageDown" class="org.jetbrains.plugins.terminal.action.TerminalPageDownAction" use-shortcut-of="EditorPageDown">
       <override-text place="GoToAction"/>
     </action>
-
-    <group id="Terminal.ToolWindowActions">
-      <reference ref="Terminal.EnableNewUi"/>
-    </group>
 
     <group id="Terminal.PromptStyle" popup="true">
       <action id="Terminal.UseSingleLinePrompt" class="org.jetbrains.plugins.terminal.block.prompt.TerminalUseSingleLinePromptAction"/>

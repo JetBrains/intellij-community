@@ -13,6 +13,7 @@ import com.intellij.platform.feedback.impl.OnDemandFeedbackResolver
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.block.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.fus.TerminalFeedbackEvent
@@ -24,7 +25,8 @@ import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 /** Used to indicate that we are trying to show the feedback notification after block terminal is disabled */
 private val BLOCK_TERMINAL_DISABLING: Key<Boolean> = Key.create("BlockTerminalDisabling")
 
-internal fun showBlockTerminalFeedbackNotification(project: Project) {
+@ApiStatus.Internal
+fun showBlockTerminalFeedbackNotification(project: Project) {
   // BLOCK_TERMINAL_DISABLING can be used in showFeedbackNotification and after exiting this method.
   // This key will be left in the project user data, and won't be cleared if the feedback notification is shown.
   project.putUserData(BLOCK_TERMINAL_DISABLING, true)

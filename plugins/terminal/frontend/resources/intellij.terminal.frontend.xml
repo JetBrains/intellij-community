@@ -25,6 +25,12 @@
       <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
     </action>
 
+    <action id="Terminal.EnableNewUi" class="com.intellij.terminal.frontend.action.EnableBlockTerminalUiAction"/>
+
+    <group id="Terminal.ToolWindowActions">
+      <reference ref="Terminal.EnableNewUi"/>
+    </group>
+
     <group id="Terminal.OutputContextMenu">
       <reference ref="Terminal.CopyBlock"/>
       <reference ref="Terminal.CopySelectedText"/>
