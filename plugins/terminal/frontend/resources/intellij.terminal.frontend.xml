@@ -24,5 +24,44 @@
       <keyboard-shortcut first-keystroke="control V" keymap="$default"/>
       <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
     </action>
+
+    <group id="Terminal.OutputContextMenu">
+      <reference ref="Terminal.CopyBlock"/>
+      <reference ref="Terminal.CopySelectedText"/>
+      <reference ref="Terminal.Paste"/>
+    </group>
+
+    <group id="Terminal.PromptContextMenu">
+      <!-- todo: replace editor actions with dedicated terminal actions -->
+      <reference ref="EditorCut"/>
+      <reference ref="Terminal.CopySelectedText"/>
+      <reference ref="Terminal.Paste"/>
+      <reference ref="Terminal.PromptStyle"/>
+    </group>
+
+    <group id="Terminal.ReworkedTerminalContextMenu">
+      <reference ref="Terminal.Find"/>
+      <reference ref="Terminal.NewTab"/>
+      <reference ref="Terminal.CloseTab"/>
+      <separator/>
+      <reference ref="Terminal.SplitVertically"/>
+      <reference ref="Terminal.SplitHorizontally"/>
+      <reference ref="PreviousTab"/>
+      <reference ref="NextTab"/>
+      <reference ref="Terminal.MoveToolWindowTabRight"/>
+      <reference ref="Terminal.MoveToolWindowTabLeft"/>
+      <reference ref="ShowContent"/>
+      <separator/>
+      <reference ref="Terminal.CopySelectedText"/>
+      <reference ref="Terminal.Paste"/>
+      <reference ref="Terminal.SelectAll"/>
+      <separator/>
+      <reference ref="Terminal.ClearBuffer"/>
+      <reference ref="Terminal.PageUp"/>
+      <reference ref="Terminal.PageDown"/>
+      <separator/>
+      <reference ref="Terminal.LineUp"/>
+      <reference ref="Terminal.LineDown"/>
+    </group>
   </actions>
 </idea-plugin>
