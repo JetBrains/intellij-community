@@ -24,6 +24,7 @@ import org.h2.mvstore.MVStore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
@@ -80,7 +81,8 @@ public final class ClasspathBootstrap {
   };
 
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
-  private static final String NETTY_JPS_VERSION = "4.1.117.Final";
+  @VisibleForTesting
+  public static final String NETTY_JPS_VERSION = "4.1.117.Final";
   private static final String NETTY_JPS_DISTRIBUTION_JAR_NAME = "netty-jps.jar";
   private static final String[] NETTY_ARTIFACT_NAMES = {
     "netty-buffer", "netty-codec-http", "netty-codec-http2", "netty-codec", "netty-common", "netty-handler", "netty-resolver", "netty-transport"
