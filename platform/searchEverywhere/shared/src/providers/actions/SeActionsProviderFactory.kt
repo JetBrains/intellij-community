@@ -20,7 +20,7 @@ class SeActionsProviderFactory: SeItemsProviderFactory {
       withContext(Dispatchers.EDT) {
         // TODO: Provide proper context
         SeActionsAdaptedProvider(project, ActionSearchEverywhereContributor(project,
-                                                                            WindowManagerEx.getInstanceEx().getFocusedComponent(project),
+                                                                            WindowManagerEx.getInstanceEx().getFrame(project)?.component,
                                                                             null))
       }
     }
