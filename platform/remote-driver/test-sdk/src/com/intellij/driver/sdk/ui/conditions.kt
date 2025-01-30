@@ -2,7 +2,7 @@ package com.intellij.driver.sdk.ui
 
 import com.intellij.driver.sdk.WaitForException
 import com.intellij.driver.sdk.ui.components.UiComponent
-import com.intellij.driver.sdk.ui.components.button
+import com.intellij.driver.sdk.ui.components.elements.button
 import com.intellij.driver.sdk.waitFor
 import kotlin.time.Duration
 
