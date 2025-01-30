@@ -2289,7 +2289,6 @@ a:com.intellij.openapi.roots.FileIndexFacade
 - a:isInSource(com.intellij.openapi.vfs.VirtualFile):Z
 - a:isInSourceContent(com.intellij.openapi.vfs.VirtualFile):Z
 - a:isUnderIgnored(com.intellij.openapi.vfs.VirtualFile):Z
-- a:isUnderSourceRootOfType(com.intellij.openapi.vfs.VirtualFile,java.util.Set):Z
 - a:isValidAncestor(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):Z
 a:com.intellij.openapi.roots.ProjectRootModificationTracker
 - com.intellij.openapi.util.ModificationTracker
