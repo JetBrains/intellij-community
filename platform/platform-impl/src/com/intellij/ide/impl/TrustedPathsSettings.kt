@@ -6,8 +6,8 @@ import com.intellij.ide.trustedProjects.TrustedProjectsStateStorage
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.io.PathPrefixTree
 import com.intellij.util.ThreeState
-import com.intellij.util.containers.prefix.map.PrefixTreeMap
-import com.intellij.util.containers.prefix.map.toPrefixTreeMap
+import com.intellij.util.containers.prefixTree.map.PrefixTreeMap
+import com.intellij.util.containers.prefixTree.map.toPrefixTreeMap
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path

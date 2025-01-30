@@ -20,7 +20,7 @@ import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.intellij.util.containers.prefix.factory.PrefixTreeFactory
+import com.intellij.util.containers.prefixTree.PrefixTreeFactory
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.SystemIndependent

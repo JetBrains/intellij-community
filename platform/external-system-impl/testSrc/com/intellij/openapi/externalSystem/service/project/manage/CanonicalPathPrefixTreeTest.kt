@@ -2,7 +2,7 @@
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.openapi.util.io.CanonicalPathPrefixTree
-import com.intellij.util.containers.prefix.set.asMutableSet
+import com.intellij.util.containers.prefixTree.set.asMutableSet
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 

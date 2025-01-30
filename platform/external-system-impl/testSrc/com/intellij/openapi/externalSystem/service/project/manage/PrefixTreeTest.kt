@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage
 
-import com.intellij.util.containers.prefix.map.emptyPrefixTreeMap
-import com.intellij.util.containers.prefix.map.mutablePrefixTreeMapOf
-import com.intellij.util.containers.prefix.map.prefixTreeMapOf
-import com.intellij.util.containers.prefix.set.emptyPrefixTreeSet
-import com.intellij.util.containers.prefix.set.prefixTreeSetOf
+import com.intellij.util.containers.prefixTree.map.emptyPrefixTreeMap
+import com.intellij.util.containers.prefixTree.map.mutablePrefixTreeMapOf
+import com.intellij.util.containers.prefixTree.map.prefixTreeMapOf
+import com.intellij.util.containers.prefixTree.set.emptyPrefixTreeSet
+import com.intellij.util.containers.prefixTree.set.prefixTreeSetOf
 import org.assertj.core.api.Assertions.entry
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test

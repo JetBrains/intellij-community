@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.containers.prefix.map
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.containers.prefixTree.map
 
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * @see com.intellij.util.containers.prefix.set.PrefixTreeSet
+ * @see com.intellij.util.containers.prefixTree.set.PrefixTreeSet
  */
 @ApiStatus.NonExtendable
 @ApiStatus.Internal

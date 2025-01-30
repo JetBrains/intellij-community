@@ -3,7 +3,7 @@
 
 package com.intellij.openapi.util.io
 
-import com.intellij.util.containers.prefix.factory.PrefixTreeFactory
+import com.intellij.util.containers.prefixTree.PrefixTreeFactory
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.InvalidPathException

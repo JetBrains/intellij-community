@@ -36,7 +36,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.prefix.map.MutablePrefixTreeMap;
+import com.intellij.util.containers.prefixTree.map.MutablePrefixTreeMap;
 import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleModuleVersion;

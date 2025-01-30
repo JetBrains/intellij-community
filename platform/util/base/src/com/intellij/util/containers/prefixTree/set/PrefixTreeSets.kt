@@ -2,9 +2,9 @@
 @file:JvmName("PrefixTreeSets")
 @file:ApiStatus.Internal
 
-package com.intellij.util.containers.prefix.set
+package com.intellij.util.containers.prefixTree.set
 
-import com.intellij.util.containers.prefix.factory.PrefixTreeFactory
+import com.intellij.util.containers.prefixTree.PrefixTreeFactory
 import org.jetbrains.annotations.ApiStatus
 
 /**
