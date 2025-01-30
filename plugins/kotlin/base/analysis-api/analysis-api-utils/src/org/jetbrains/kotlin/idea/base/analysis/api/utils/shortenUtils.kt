@@ -147,13 +147,11 @@ fun ShortenCommand.invokeShortening(): List<KtElement> {
     //        PostprocessReformattingAspect.getInstance(targetFile.project).disablePostprocessFormattingInside {
     for ((typePointer, shortenedRef) in listOfTypeToShortenInfo) {
         val type = typePointer.element ?: continue
-        if (shortenedRef == null) {
-            type.deleteQualifier()
-            shorteningResults.add(type.createSmartPointer())
-        } else {
-            val shorteningResult = type.replace(psiFactory.createExpression(shortenedRef)) as? KtElement ?: continue
-            shorteningResults.add(shorteningResult.createSmartPointer())
+        type.deleteQualifier()
+        if (shortenedRef != null) {
+            type.referenceExpression?.replace(psiFactory.createExpression(shortenedRef))
         }
+        shorteningResults.add(type.createSmartPointer())
     }
 
     for ((callPointer, shortenedRef) in listOfQualifierToShortenInfo) {
