@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.externalSystem.service.project.manage
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.containers.prefixTree
 
-import com.intellij.util.containers.prefixTree.PrefixTreeFactory
 import com.intellij.util.containers.prefixTree.map.asMap
 import com.intellij.util.containers.prefixTree.map.asMutableMap
 import org.assertj.core.api.Assertions.entry
