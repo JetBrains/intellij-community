@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,6 +27,8 @@ import java.util.Objects;
  * The "import foo" or "import foo as bar" parts.
  */
 public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> implements PyImportElement {
+  private volatile @Nullable Ref<PyReferenceExpression> myImportReferenceExpression;
+
   public PyImportElementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -36,6 +39,17 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
 
   public PyImportElementImpl(PyImportElementStub stub, IStubElementType nodeType) {
     super(stub, nodeType);
+  }
+
+
+  @SuppressWarnings("DataFlowIssue")
+  @Override
+  public @Nullable PyReferenceExpression getImportReferenceExpression() {
+    PyReferenceExpression importReferenceExpression = myImportReferenceExpression == null ? null : myImportReferenceExpression.get();
+    if (myImportReferenceExpression == null || importReferenceExpression != null && !importReferenceExpression.isValid()) {
+      myImportReferenceExpression = new Ref<>(PyImportElement.super.getImportReferenceExpression());
+    }
+    return myImportReferenceExpression.get();
   }
 
   @Override
