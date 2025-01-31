@@ -1356,6 +1356,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("find-all-model-experimental"),
     jetbrainsLibrary("find-classes-model"),
     jetbrainsLibrary("find-classes-model-experimental"),
+    jetbrainsLibrary("find-ec-model-experimental"),
     jetbrainsLibrary("find-file-model"),
     jetbrainsLibrary("find-file-model-experimental"),
     jetbrainsLibrary("git-learning-project"),

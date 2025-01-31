@@ -43,6 +43,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
         tab == SearchEverywhereTabWithMlRanking.CLASSES && PlatformUtils.isPyCharm() && PlatformUtils.isIntelliJ()
       }
       SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL -> true
+      SearchEverywhereMlExperiment.ExperimentType.ESSENTIAL_CONTRIBUTOR_PREDICTION -> true
       else -> false
     }
   }
@@ -133,6 +134,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     else {
       return settings.isSortingByMlEnabled(tab)
              || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.USE_EXPERIMENTAL_MODEL
+             || experiment.getExperimentForTab(tab) == SearchEverywhereMlExperiment.ExperimentType.ESSENTIAL_CONTRIBUTOR_PREDICTION
     }
   }
 
