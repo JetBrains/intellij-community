@@ -255,8 +255,8 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   public static XValuePresentation createPresentation(ValueDescriptorImpl descriptor) {
     Renderer lastLabelRenderer = descriptor.getLastLabelRenderer();
-    if (lastLabelRenderer instanceof XValuePresentationProvider) {
-      return ((XValuePresentationProvider)lastLabelRenderer).getPresentation(descriptor);
+    if (lastLabelRenderer instanceof XValuePresentationProvider presentationProvider) {
+      return presentationProvider.getPresentation(descriptor);
     }
     return new JavaValuePresentation(descriptor);
   }
@@ -584,9 +584,6 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
   @Override
   public @Nullable String getValueText() {
-    if (myValueDescriptor.getLastLabelRenderer() instanceof XValuePresentationProvider) {
-      return null;
-    }
     return myValueDescriptor.getValueText();
   }
 
