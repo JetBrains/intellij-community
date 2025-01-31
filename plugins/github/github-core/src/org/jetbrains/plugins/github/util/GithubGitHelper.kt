@@ -32,17 +32,7 @@ class GithubGitHelper {
     @JvmStatic
     fun findGitRepository(project: Project, file: VirtualFile? = null): GitRepository? {
       val manager = GitUtil.getRepositoryManager(project)
-      if (file != null) {
-        return manager.getRepositoryForFileQuick(file)
-      }
-      val repositories = manager.repositories
-      if (repositories.size == 0) {
-        return null
-      }
-      if (repositories.size == 1) {
-        return repositories[0]
-      }
-      return manager.getRepositoryForFileQuick(project.baseDir)
+      return manager.getRepositoryForFileQuick(file ?: project.baseDir)
     }
 
     @JvmStatic
