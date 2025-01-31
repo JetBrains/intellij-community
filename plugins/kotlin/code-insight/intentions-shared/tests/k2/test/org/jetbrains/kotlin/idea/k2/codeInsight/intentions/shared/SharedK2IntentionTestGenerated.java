@@ -3342,4 +3342,58 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             }
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/valToObject")
+    public static class ValToObject extends AbstractSharedK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotations.kt")
+        public void testAnnotations() throws Exception {
+            runTest("../testData/intentions/valToObject/annotations.kt");
+        }
+
+        @TestMetadata("callableReference.kt")
+        public void testCallableReference() throws Exception {
+            runTest("../testData/intentions/valToObject/callableReference.kt");
+        }
+
+        @TestMetadata("expected.kt")
+        public void testExpected() throws Exception {
+            runTest("../testData/intentions/valToObject/expected.kt");
+        }
+
+        @TestMetadata("getter.kt")
+        public void testGetter() throws Exception {
+            runTest("../testData/intentions/valToObject/getter.kt");
+        }
+
+        @TestMetadata("nonTopLevel.kt")
+        public void testNonTopLevel() throws Exception {
+            runTest("../testData/intentions/valToObject/nonTopLevel.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/intentions/valToObject/simple.kt");
+        }
+
+        @TestMetadata("var.kt")
+        public void testVar() throws Exception {
+            runTest("../testData/intentions/valToObject/var.kt");
+        }
+
+        @TestMetadata("withJavaUsage.kt")
+        public void testWithJavaUsage() throws Exception {
+            runTest("../testData/intentions/valToObject/withJavaUsage.kt");
+        }
+    }
 }

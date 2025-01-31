@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.intentions.ValToObjectIntention
+org.jetbrains.kotlin.idea.codeInsight.intentions.shared.ValToObjectIntention
