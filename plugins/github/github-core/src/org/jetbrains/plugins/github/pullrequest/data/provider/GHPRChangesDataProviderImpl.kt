@@ -17,7 +17,6 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.github.api.data.GHCommit
-import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRChangesService
 import java.util.concurrent.CompletableFuture
@@ -139,7 +138,6 @@ private data class AllPRReferences(
 // TODO: can we get rid of the tree?
 private fun sortCommits(commits: Collection<GHCommit>, lastCommitSha: String): List<GHCommit> {
   val commitsBySha = mutableMapOf<String, GHCommit>()
-  val parentCommits = mutableSetOf<GHCommitHash>()
 
   var lastCommit: GHCommit? = null
   for (commit in commits) {
@@ -147,7 +145,6 @@ private fun sortCommits(commits: Collection<GHCommit>, lastCommitSha: String): L
       lastCommit = commit
     }
     commitsBySha[commit.oid] = commit
-    parentCommits.addAll(commit.parents)
   }
   checkNotNull(lastCommit) { "Could not determine last commit" }
 
