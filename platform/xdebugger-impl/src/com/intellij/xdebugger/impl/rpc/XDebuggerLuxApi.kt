@@ -14,6 +14,8 @@ interface XDebuggerLuxApi : RemoteApi<Unit> {
 
   suspend fun showLuxInspectDialog(xValueId: XValueId, nodeName: String)
 
+  suspend fun showReferringObjectsDialog(xValueId: XValueId, nodeName: String)
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebuggerLuxApi {

@@ -21,6 +21,7 @@ import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorId
 import com.intellij.xdebugger.impl.rpc.XDebuggerLuxApi
 import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.ui.tree.XInspectDialog
+import com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction
 import com.jetbrains.rhizomedb.entity
 import kotlinx.coroutines.*
 import org.jetbrains.concurrency.await
@@ -72,6 +73,29 @@ internal class BackendXDebuggerLuxApi : XDebuggerLuxApi {
         val dialog = XInspectDialog(project, editorsProvider, sourcePosition, nodeName, xValue,
                                     valueMarkers, session, true)
         dialog.show()
+      }
+    }
+  }
+
+  override suspend fun showReferringObjectsDialog(xValueId: XValueId, nodeName: String) {
+    val xValueEntity = entity(XValueEntity.XValueId, xValueId) ?: return
+    val sessionEntity = xValueEntity.sessionEntity
+    val session = sessionEntity.session
+    val project = sessionEntity.projectEntity.projectId.findProject()
+    val xValue = xValueEntity.xValue
+    val sourcePositionDeferred = CompletableDeferred<XSourcePosition?>()
+    xValue.computeSourcePosition {
+      sourcePositionDeferred.complete(it)
+    }
+    val valueMarkers = (session as? XDebugSessionImpl)?.valueMarkers
+
+    project.service<BackendXDebuggerLuxApiCoroutineScope>().cs.launch {
+      val sourcePosition = sourcePositionDeferred.await()
+      withContext(Dispatchers.EDT) {
+        val dialog = ShowReferringObjectsAction.createReferringObjectsDialog(
+          xValue, session, nodeName, sourcePosition, valueMarkers
+        )
+        dialog?.show()
       }
     }
   }

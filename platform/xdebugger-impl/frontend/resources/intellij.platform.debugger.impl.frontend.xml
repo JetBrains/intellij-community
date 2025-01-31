@@ -35,14 +35,20 @@
 
     <action id="EvaluateExpression.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendEvaluateAction"
             icon="AllIcons.Debugger.EvaluateExpression">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="after"
                     relative-to-action="XDebugger.CopyName.Frontend"/>
     </action>
 
     <action id="Debugger.AddToWatch.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXAddToWatchesTreeAction"
             icon="AllIcons.Debugger.AddToWatch">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="after"
                     relative-to-action="EvaluateExpression.Frontend"/>
+    </action>
+
+    <action id="Debugger.ShowReferring.Frontend"
+            class="com.intellij.platform.debugger.impl.frontend.actions.FrontendShowReferringObjectsAction">
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="after"
+                    relative-to-action="Debugger.AddToWatch.Frontend"/>
     </action>
 
     <action id="XDebugger.JumpToSource.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXJumpToSourceAction"
