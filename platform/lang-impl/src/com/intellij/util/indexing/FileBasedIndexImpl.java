@@ -180,6 +180,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myReadLock = lock.readLock();
     myWriteLock = lock.writeLock();
 
+    // we preload this service, as it may be attempted to initialize latre
+    FileTypeManager.getInstance();
+
     myFileDocumentManager = FileDocumentManager.getInstance();
     myIsUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
