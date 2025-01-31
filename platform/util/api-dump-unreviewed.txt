@@ -1737,6 +1737,7 @@ Fc:com.intellij.openapi.util.text.StringUtil
 - s:isJavaIdentifierStart(C):Z
 - s:isLatinAlphanumeric(java.lang.CharSequence):Z
 - s:isLineBreak(C):Z
+- s:isLowerCase(java.lang.CharSequence):Z
 - s:isNotEmpty(java.lang.String):Z
 - s:isNotNegativeNumber(java.lang.CharSequence):Z
 - s:isNumeric(java.lang.CharSequence):Z
