@@ -4,6 +4,8 @@ package com.intellij.terminal.backend
 import com.google.common.base.Ascii
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.backend.util.TerminalSessionTestUtil
+import com.intellij.terminal.backend.util.TerminalSessionTestUtil.ENTER_BYTES
+import com.intellij.terminal.backend.util.TerminalSessionTestUtil.awaitOutputEvent
 import com.intellij.terminal.session.*
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ExtensionTestUtil
@@ -11,8 +13,6 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jediterm.core.util.TermSize
-import com.jediterm.terminal.TerminalKeyEncoder
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -25,7 +25,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.awt.event.KeyEvent
 import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.time.Duration.Companion.seconds
@@ -34,8 +33,6 @@ import kotlin.time.Duration.Companion.seconds
 internal class ShellIntegrationTest(private val shellPath: Path) {
   private val projectRule: ProjectRule = ProjectRule()
   private val disposableRule = DisposableRule()
-
-  private val keyEncoder = TerminalKeyEncoder()
 
   @Rule
   @JvmField
@@ -52,7 +49,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
   @Test
   fun `shell integration send correct events on command invocation`() = timeoutRunBlocking(30.seconds) {
     val events = startSessionAndCollectOutputEvents { session ->
-      session.sendInputEvent(TerminalWriteBytesEvent("pwd".toByteArray() + keyEncoder.enterBytes()))
+      session.sendInputEvent(TerminalWriteBytesEvent("pwd".toByteArray() + ENTER_BYTES))
     }
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
@@ -132,7 +129,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val events = startSessionAndCollectOutputEvents(TermSize(80, 100)) { session ->
       // Configure the shell to show completion items on the first Tab key press.
-      session.sendInputEvent(TerminalWriteBytesEvent(bindCommand.toByteArray() + keyEncoder.enterBytes()))
+      session.sendInputEvent(TerminalWriteBytesEvent(bindCommand.toByteArray() + ENTER_BYTES))
       delay(1000)
       session.sendInputEvent(TerminalWriteBytesEvent("gi".toByteArray() + TAB_BYTES))
     }
@@ -199,19 +196,15 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       val session = TerminalSessionTestUtil.startTestTerminalSession(shellPath.toString(), projectRule.project, childScope("TerminalSession"), size)
 
       val outputEvents = mutableListOf<TerminalOutputEvent>()
-      val promptFinishedEventDeferred = CompletableDeferred<Unit>(null)
       launch {
         val outputFlow = session.getOutputFlow()
         outputFlow.collect { events ->
           outputEvents.addAll(events)
-          if (events.any { it is TerminalPromptFinishedEvent }) {
-            promptFinishedEventDeferred.complete(Unit)
-          }
         }
       }
 
       // Wait for prompt initialization before going further
-      promptFinishedEventDeferred.await()
+      session.awaitOutputEvent(TerminalPromptFinishedEvent)
 
       block(session)
 
@@ -248,10 +241,6 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     assertThat(actual)
       .overridingErrorMessage(errorMessage)
       .isEqualTo(expected)
-  }
-
-  private fun TerminalKeyEncoder.enterBytes(): ByteArray {
-    return getCode(KeyEvent.VK_ENTER, 0)
   }
 
   private val CTRL_C_BYTES: ByteArray = byteArrayOf(Ascii.ETX)
