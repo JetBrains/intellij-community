@@ -3,51 +3,72 @@ package org.jetbrains.plugins.gradle.service.sources
 
 import junit.framework.AssertionFailedError
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import java.util.*
 
 class ArtifactCoordinatesUtilTest {
 
   @Test
   fun `test artifact notation parsing`() {
-    val dependencyId = DefaultExternalDependencyId("mygroup", "myartifact", "myversion")
-    Assert.assertEquals("mygroup:myartifact:myversion",
-                        parseArtifactCoordinates(dependencyId.presentableName) {
-                          true
-                        })
+    val dependencyId = getRandomDependencyId()
+    val actual = parseArtifactCoordinates(dependencyId.presentableName) { true }
+    assertEquals("${dependencyId.group}:${dependencyId.name}:${dependencyId.version}", actual)
+  }
 
-    dependencyId.classifier = "myclassifier"
-    Assert.assertEquals("mygroup:myartifact:myversion",
-                        parseArtifactCoordinates(dependencyId.presentableName) {
-                          true
-                        })
+  @Test
+  fun `test artifact notation parsing with classifier`() {
+    val dependencyId = getRandomDependencyId()
+    val classifier = getRandomString()
+    dependencyId.classifier = classifier
 
-    dependencyId.packaging = "mypackaging"
-    Assert.assertEquals("mygroup:myartifact:myversion",
-                        parseArtifactCoordinates(dependencyId.presentableName) {
-                          true
-                        })
+    val actual = parseArtifactCoordinates(dependencyId.presentableName) { true }
+    assertEquals("${dependencyId.group}:${dependencyId.name}:${dependencyId.version}", actual)
+  }
 
-    Assert.assertEquals("mygroup:myartifact:myversion",
-                        parseArtifactCoordinates(
-                          DefaultExternalDependencyId("mygroup", "myartifact",
-                                                      "myversion").apply { packaging = "mypackaging" }.presentableName) {
-                          true
-                        })
+  @Test
+  fun `test artifact notation parsing with packaging`() {
+    val dependencyId = getRandomDependencyId()
+    val packaging = getRandomString()
+    dependencyId.packaging = packaging
 
-    Assert.assertEquals("myartifact:myversion",
-                        parseArtifactCoordinates("myartifact:myversion") {
-                          throw AssertionFailedError("artifactIdChecker shouldn't be called")
-                        })
+    val actual = parseArtifactCoordinates(dependencyId.presentableName) { true }
+    assertEquals("${dependencyId.group}:${dependencyId.name}:${dependencyId.version}", actual)
+  }
 
-    Assert.assertEquals("mygroup:myartifact",
-                        parseArtifactCoordinates("mygroup:myartifact") {
-                          throw AssertionFailedError("artifactIdChecker shouldn't be called")
-                        })
+  @Test
+  fun `test artifact notation without version`() {
+    val group = getRandomString()
+    val artifact = getRandomString()
 
-    Assert.assertEquals("mygroup:myartifact:myversion",
-                        parseArtifactCoordinates("mygroup:myartifact:myversion@aar") {
-                          throw AssertionFailedError("artifactIdChecker shouldn't be called")
-                        })
+    val actual = parseArtifactCoordinates("$group:$artifact") {
+      throw AssertionFailedError("artifactIdChecker shouldn't be called")
+    }
+    assertEquals("$group:$artifact", actual)
+  }
+
+
+  @Test
+  fun `test aar artifact notation parsing`() {
+    val group = getRandomString()
+    val artifact = getRandomString()
+    val version = getRandomString()
+
+    val actual = parseArtifactCoordinates("$group:$artifact:$version@aar") {
+      throw AssertionFailedError("artifactIdChecker shouldn't be called")
+    }
+    assertEquals("$group:$artifact:$version", actual)
+  }
+
+  private fun getRandomString(): String {
+    return UUID.randomUUID().toString().substring(0, 12)
+  }
+
+  private fun getRandomDependencyId(): DefaultExternalDependencyId {
+    return DefaultExternalDependencyId(
+      getRandomString(),
+      getRandomString(),
+      getRandomString()
+    )
   }
 }
