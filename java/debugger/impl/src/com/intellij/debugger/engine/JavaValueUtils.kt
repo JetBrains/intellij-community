@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -24,16 +24,15 @@ internal fun scheduleSourcePositionCompute(
 
     override suspend fun contextActionSuspend(suspendContext: SuspendContextImpl) {
       val debugContext = evaluationContext.debugProcess.debuggerContext
-      var position = SourcePositionProvider.getSourcePosition(descriptor, descriptor.project, debugContext, false)
-      if (position != null) {
-        readAction { navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position)) }
-        if (inline) {
-          position = SourcePositionProvider.getSourcePosition(descriptor, descriptor.project, debugContext, true)
-          if (position != null) {
-            readAction { navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position)) }
-          }
+      if (inline) {
+        val inlinePosition = SourcePositionProvider.getSourcePosition(descriptor, descriptor.project, debugContext, true)
+        if (inlinePosition != null) {
+          readAction { navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(inlinePosition)) }
+          return
         }
       }
+      val position = SourcePositionProvider.getSourcePosition(descriptor, descriptor.project, debugContext, false)
+      readAction { navigatable.setSourcePosition(DebuggerUtilsEx.toXSourcePosition(position)) }
     }
   })
 }
