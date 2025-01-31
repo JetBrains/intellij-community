@@ -21,6 +21,7 @@ import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.pipenv.pipFileLockRequirements
 import com.jetbrains.python.sdk.pipenv.runPipEnv
 import com.jetbrains.python.sdk.pythonSdk
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
@@ -92,7 +93,7 @@ class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
         packages = emptyList()
         throw it
       }
-      packages = parsePipEnvGraph(output)
+      packages = parsePipEnvGraphEntries(parsePipEnvGraph(output))
       ApplicationManager.getApplication().messageBus.syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
     }
     return packages ?: emptyList()
@@ -117,30 +118,36 @@ class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
   }
 
   companion object {
-    private data class GraphPackage(
+    @ApiStatus.Internal
+    data class GraphPackage(
       @SerializedName("key") var key: String,
       @SerializedName("package_name") var packageName: String,
       @SerializedName("installed_version") var installedVersion: String,
       @SerializedName("required_version") var requiredVersion: String?,
     )
-
-    private data class GraphEntry(
+    @ApiStatus.Internal
+    data class GraphEntry(
       @SerializedName("package") var pkg: GraphPackage,
       @SerializedName("dependencies") var dependencies: List<GraphPackage>,
     )
 
     /**
-     * Parses the output of `pipenv graph --json` into a list of packages.
+     * Parses the output of `pipenv graph --json` into a list of GraphEntries.
      */
-    private fun parsePipEnvGraph(input: String): List<PyPackage> {
-      val entries = try {
-        Gson().fromJson(input, Array<GraphEntry>::class.java)
+    fun parsePipEnvGraph(input: String): List<GraphEntry> = try {
+        Gson().fromJson(input, Array<GraphEntry>::class.java).toList()
       }
       catch (e: JsonSyntaxException) {
         // TODO: Log errors
-        return emptyList()
+        emptyList()
       }
-      return entries
+
+
+    /**
+     * Parses the list of GraphEntries into a list of packages.
+     */
+    private fun parsePipEnvGraphEntries(input: List<GraphEntry>): List<PyPackage> {
+      return input
         .asSequence()
         .flatMap { sequenceOf(it.pkg) + it.dependencies.asSequence() }
         .map { PyPackage(it.packageName, it.installedVersion) }
