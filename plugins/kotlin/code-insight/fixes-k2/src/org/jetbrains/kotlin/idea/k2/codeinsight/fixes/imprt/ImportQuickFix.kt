@@ -12,13 +12,26 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.statistics.StatisticsManager
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.isOneSegmentFQN
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 @ApiStatus.Internal
 class ImportQuickFix(
@@ -76,8 +89,48 @@ class ImportQuickFix(
 
         StatisticsManager.getInstance().incUseCount(importVariant.statisticsInfo)
 
+        val element = element ?: return
+
+        @OptIn(
+            KaAllowAnalysisOnEdt::class, 
+            KaAllowAnalysisFromWriteAction::class
+        )
+        val useShortening = allowAnalysisOnEdt {
+            allowAnalysisFromWriteAction {
+                analyze(element) {
+                    shouldBeImportedWithShortening(element, importVariant)
+                }
+            }
+        }
+
         project.executeWriteCommand(QuickFixBundle.message("add.import")) {
-            file.addImport(importVariant.fqName)
+            if (useShortening) {
+                (element.mainReference as? KtSimpleNameReference)?.bindToFqName(
+                    importVariant.fqName.withRootPrefixIfNeeded(), // TODO remove this as soon as KTIJ-32932 is fixed
+                    KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
+                )
+            } else {
+                file.addImport(importVariant.fqName)
+            }
         }
     }
+    
+    context(KaSession)
+    private fun shouldBeImportedWithShortening(element: KtElement, importVariant: SymbolBasedAutoImportVariant): Boolean {
+        if (element !is KtSimpleNameExpression) return false
+
+        // Declarations from root package cannot be imported by FQN, hence cannot be shortened
+        if (importVariant.fqName.isOneSegmentFQN()) return false
+        
+        val restoredCandidate = importVariant.candidatePointer.restore() ?: return false
+
+        // for class or package we use ShortenReferences because we not necessary insert an import but may want to
+        // insert a partially qualified name
+        if (restoredCandidate.symbol !is KaClassLikeSymbol) return false
+        
+        // callable references cannot be fully qualified
+        if (element.parent is KtCallableReferenceExpression) return false
+        
+        return true
+    } 
 }
