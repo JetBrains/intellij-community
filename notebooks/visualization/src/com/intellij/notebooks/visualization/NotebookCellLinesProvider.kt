@@ -34,7 +34,7 @@ interface NotebookCellLinesProvider : IntervalsGenerator {
     fun get(document: Document): NotebookCellLinesProvider? {
       return document.getUserData(key)
     }
-    @TestOnly
+
     fun install(document: Document, provider: NotebookCellLinesProvider): NotebookCellLines {
       key.set(document, provider)
       return provider.create(document)
