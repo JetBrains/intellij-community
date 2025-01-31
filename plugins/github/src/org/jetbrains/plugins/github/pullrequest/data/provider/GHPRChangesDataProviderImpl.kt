@@ -142,7 +142,10 @@ private fun sortCommits(commits: Collection<GHCommit>, lastCommitSha: String): L
   }
   checkNotNull(lastCommit) { "Could not determine last commit" }
 
+  val processedCommits = mutableSetOf<String>()
   fun ImmutableGraph.Builder<GHCommit>.addCommits(commit: GHCommit) {
+    val alreadyProcessed = processedCommits.add(commit.oid)
+    if (alreadyProcessed) return
     addNode(commit)
     for (parent in commit.parents) {
       val parentCommit = commitsBySha[parent.oid]
