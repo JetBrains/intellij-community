@@ -13,6 +13,7 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jediterm.core.util.TermSize
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -196,7 +197,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       val session = TerminalSessionTestUtil.startTestTerminalSession(shellPath.toString(), projectRule.project, childScope("TerminalSession"), size)
 
       val outputEvents = mutableListOf<TerminalOutputEvent>()
-      launch {
+      val eventsCollectionJob = launch {
         val outputFlow = session.getOutputFlow()
         outputFlow.collect { events ->
           outputEvents.addAll(events)
@@ -208,7 +209,14 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
       block(session)
 
+      launch(start = CoroutineStart.UNDISPATCHED) {
+        // Block the coroutine scope completion until we receive the termination event.
+        session.awaitOutputEvent(TerminalSessionTerminatedEvent)
+        eventsCollectionJob.cancel()
+      }
+
       delay(1000) // Wait for the shell to handle input sent in `block`
+
       session.sendInputEvent(TerminalCloseEvent)
 
       outputEvents
