@@ -41,6 +41,7 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kaml" level="project" />
-    <orderEntry type="library" name="okhttp" level="project" />
+    <orderEntry type="library" name="hash4j" level="project" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
   </component>
 </module>
