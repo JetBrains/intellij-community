@@ -8,7 +8,7 @@ import com.intellij.terminal.session.TerminalCloseEvent
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.launchOnceOnShow
+import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
@@ -29,12 +29,16 @@ internal object TerminalSessionStartHelper {
     options: ShellStartupOptions,
     deferSessionStartUntilUiShown: Boolean,
   ) {
-    if (deferSessionStartUntilUiShown) {
-      widget.component.launchOnceOnShow("Terminal session start") {
-        doStartTerminalSessionForWidget(project, widget, options)
-      }
+    val doStart = Runnable {
+      doStartTerminalSessionForWidget(project, widget, options)
     }
-    else doStartTerminalSessionForWidget(project, widget, options)
+    if (deferSessionStartUntilUiShown) {
+      // Can't use coroutine `launchOnceOnShow` here because terminal toolwindow is adding and removing component
+      // from the hierarchy several times during tabs restore.
+      // It cancels the coroutine, leaving the terminal session stuck not started.
+      UiNotifyConnector.doWhenFirstShown(widget.component, doStart, parent = widget)
+    }
+    else doStart.run()
   }
 
   @JvmStatic
