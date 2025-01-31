@@ -205,7 +205,7 @@
 
     <group id="Git.Branches.List">
       <reference ref="Git.Ongoing.Rebase.Actions"/>
-      <action class="git4idea.actions.branch.GitNewBranchAction"/>
+      <reference ref="Git.CreateNewBranch"/>
       <action class="git4idea.actions.branch.GitCheckoutFromInputAction"/>
     </group>
 

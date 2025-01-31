@@ -1170,7 +1170,7 @@
     <keyboard-shortcut first-keystroke="Shift F6"/>
   </action>
 
-  <action id="GitNewBranchAction">
+  <action id="Git.CreateNewBranch">
     <keyboard-shortcut first-keystroke="control alt N"/>
   </action>
 

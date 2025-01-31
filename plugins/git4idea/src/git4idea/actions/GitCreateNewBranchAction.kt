@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions
 
-import com.intellij.dvcs.branch.DvcsSyncSettings.Value.SYNC
 import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -15,14 +14,16 @@ import com.intellij.vcs.log.ui.table.size
 import git4idea.GitRemoteBranch
 import git4idea.GitUtil.HEAD
 import git4idea.GitUtil.getRepositoryManager
-import git4idea.branch.GitBranchUtil
-import git4idea.config.GitVcsSettings
+import git4idea.actions.branch.GitBranchActionsUtil.getRepositoriesForTopLevelActions
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.createOrCheckoutNewBranch
+import git4idea.ui.branch.popup.GitBranchesTreePopupBase
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-internal class GitCreateNewBranchAction : DumbAwareAction() {
+@ApiStatus.Internal
+class GitCreateNewBranchAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
@@ -75,17 +76,8 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
       }
     }
 
-    val repositories =
-      if (manager.moreThanOneRoot()) {
-        if (GitVcsSettings.getInstance(project).syncSetting == SYNC) manager.repositories
-        else {
-          val repository = GitBranchUtil.guessRepositoryForOperation(project, e.dataContext)
-          repository?.let { listOf(repository) }
-        }
-      }
-      else listOf(manager.repositories.first())
-
-    if (repositories == null || repositories.any { it.isFresh }) {
+    val repositories = getRepositoriesForTopLevelActions(e) { it.place == GitBranchesTreePopupBase.TOP_LEVEL_ACTION_PLACE }
+    if (repositories.any { it.isFresh }) {
       return Data.Disabled(GitBundle.message("action.New.Branch.disabled.fresh.description"))
     }
     return Data.NoCommit(project, repositories)

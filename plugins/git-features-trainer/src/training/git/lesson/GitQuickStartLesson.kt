@@ -24,7 +24,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogExtensionList
 import com.intellij.vcs.commit.CommitNotification
-import git4idea.actions.branch.GitNewBranchAction
+import git4idea.actions.GitCreateNewBranchAction
 import git4idea.i18n.GitBundle
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
@@ -171,7 +171,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
            LearningBalloonConfig(Balloon.Position.below, width = 0))
       triggerAndBorderHighlight().treeItem { _, path ->
         val action = (path.lastPathComponent as? PopupFactoryImpl.ActionItem)?.action
-        action is GitNewBranchAction
+        action is GitCreateNewBranchAction
       }
       test {
         val widget = previous.ui ?: error("Not found VCS widget")
@@ -188,7 +188,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       }
       restoreByUi(showBranchesTaskId, delayMillis = defaultRestoreDelay)
       test {
-        clickTreeRow { item -> (item as? PopupFactoryImpl.ActionItem)?.action is GitNewBranchAction }
+        clickTreeRow { item -> (item as? PopupFactoryImpl.ActionItem)?.action is GitCreateNewBranchAction }
       }
     }
 
