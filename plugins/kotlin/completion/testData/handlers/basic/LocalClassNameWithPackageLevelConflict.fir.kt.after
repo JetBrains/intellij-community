@@ -5,7 +5,7 @@ package test
 fun test() {
     class Bar
 
-    val bar = Bar<caret>
+    val bar = foo.Bar<caret>
 }
 
 // ELEMENT: Bar
