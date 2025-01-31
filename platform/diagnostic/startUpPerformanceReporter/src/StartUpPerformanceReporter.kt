@@ -1,6 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.startUpPerformanceReporter
 
 import com.intellij.diagnostic.ActivityCategory
@@ -65,7 +63,7 @@ open class StartUpPerformanceReporter(private val coroutineScope: CoroutineScope
 
   override fun getMetrics(): Flow<Object2IntMap<String>> = lastMetrics
 
-  override fun getPluginCostMap(): Map<String, Object2LongMap<String>> = pluginCostMap!!
+  override fun getPluginCostMap(): Map<String, Object2LongMap<String>> = pluginCostMap ?: emptyMap()
 
   override fun getLastReport(): ByteBuffer? = lastReport
 
