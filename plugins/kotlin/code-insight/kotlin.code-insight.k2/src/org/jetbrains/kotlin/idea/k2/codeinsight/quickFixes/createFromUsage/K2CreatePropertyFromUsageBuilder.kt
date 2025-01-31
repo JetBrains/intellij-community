@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
+import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -107,11 +108,17 @@ object K2CreatePropertyFromUsageBuilder {
           else -> return emptyList()
         }
 
-        val jvmModifiers = createModifiers(ref, defaultContainerPsi ?: ref.containingKtFile, isExtension = false, static)
+        val lightClass = (defaultContainerPsi as? KtClassOrObject)?.toLightClass() ?: defaultContainerPsi as? PsiClass
+        val isAbstract = lightClass?.hasModifier(JvmModifier.ABSTRACT)
+        val jvmModifiers = createModifiers(ref, defaultContainerPsi ?: ref.containingKtFile, isExtension = false, static, isAbstract == true)
         if (defaultContainerPsi != null) {
-            val lightClass = (defaultContainerPsi as? KtClassOrObject)?.toLightClass() ?: defaultContainerPsi as? PsiClass
-            if (lightClass != null && (static || !lightClass.hasModifier(JvmModifier.ABSTRACT))) {
-                requests.add(lightClass to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, null, null, false))
+            if (lightClass != null) {
+                if (static || isAbstract!!.not()) {
+                    requests.add(lightClass to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, null, null, false))
+                }
+                if (lightClass.hasModifier(JvmModifier.ABSTRACT)) {
+                    requests.add(lightClass to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers + JvmModifier.ABSTRACT, null, null, false))
+                }
             }
         } else {
             ref.containingKtFile.toLightElements().firstOrNull()?.let { lightElement ->
@@ -121,7 +128,7 @@ object K2CreatePropertyFromUsageBuilder {
         return requests
     }
 
-    private fun createModifiers(ref: KtNameReferenceExpression, container: PsiElement, isExtension: Boolean, static: Boolean): List<JvmModifier> {
+    private fun createModifiers(ref: KtNameReferenceExpression, container: PsiElement, isExtension: Boolean, static: Boolean, isAbstract: Boolean): List<JvmModifier> {
         val qualifiedElement = ref.getQualifiedElement()
         val assignment = (if (qualifiedElement is KtQualifiedExpression && qualifiedElement.selectorExpression == ref) qualifiedElement else ref).getAssignmentByLHS()
         val varExpected = assignment != null
@@ -129,7 +136,7 @@ object K2CreatePropertyFromUsageBuilder {
         val staticModifier = if (static) JvmModifier.STATIC else null
         val jvmModifier = CreateFromUsageUtil.computeDefaultVisibilityAsJvmModifier(
             container,
-            isAbstract = false,
+            isAbstract = isAbstract,
             isExtension = isExtension,
             isConstructor = false,
             originalElement = ref
@@ -169,7 +176,7 @@ object K2CreatePropertyFromUsageBuilder {
             get() =
                 buildList {
                     request.modifiers
-                        .filter { it != JvmModifier.PUBLIC }
+                        .filter { it != JvmModifier.PUBLIC && it != JvmModifier.ABSTRACT }
                         .mapNotNullTo(this, CreateFromUsageUtil::jvmModifierToKotlin)
 
                     if (lateinit) {
@@ -181,7 +188,10 @@ object K2CreatePropertyFromUsageBuilder {
 
         override fun getText(): String {
             return if (request is CreatePropertyFromKotlinUsageRequest) {
-                KotlinBundle.message("fix.create.from.usage.property", request.fieldName)
+                val key = if (JvmModifier.ABSTRACT in request.modifiers) {
+                    "fix.create.from.usage.abstract.property"
+                } else "fix.create.from.usage.property"
+                KotlinBundle.message(key, request.fieldName)
             } else
             KotlinBundle.message(
                 "quickFix.add.property.text",
@@ -206,6 +216,11 @@ object K2CreatePropertyFromUsageBuilder {
                 }
 
                 kotlinModifiers?.joinTo(this, separator = " ", postfix = " ")
+
+                if (JvmModifier.ABSTRACT in request.modifiers && (container as? KtDeclaration)?.isAbstract() == true) {
+                    append("abstract")
+                    append(" ")
+                }
 
                 append(varVal)
                 append(" ")
