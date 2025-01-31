@@ -16,9 +16,10 @@ private const val VSCODE_ID = ".vscode"
 private const val CURSOR_ID = ".cursor"
 private const val WINDSURF_ID = ".windsurf"
 private const val ECLIPSE_ID = ".eclipse"
+private const val ZED_ID = ".zed"
 
 internal class EditorsCollector :  ApplicationUsagesCollector() {
-  private val EDITORS_GROUP: EventLogGroup = EventLogGroup("editors", 3)
+  private val EDITORS_GROUP: EventLogGroup = EventLogGroup("editors", 4)
 
   override fun getGroup(): EventLogGroup = EDITORS_GROUP
 
@@ -27,7 +28,8 @@ internal class EditorsCollector :  ApplicationUsagesCollector() {
     VSCODE_ID,
     CURSOR_ID,
     WINDSURF_ID,
-    ECLIPSE_ID
+    ECLIPSE_ID,
+    ZED_ID
   )
 
   private val CONFIG_EXISTS: EventId1<String> = EDITORS_GROUP.registerEvent(
@@ -79,6 +81,11 @@ internal class EditorsCollector :  ApplicationUsagesCollector() {
 
         if (Files.isDirectory(Paths.get(homeDir, ".eclipse"))) {
           add(CONFIG_EXISTS.metric(ECLIPSE_ID))
+        }
+
+        val zedCollectionDataProvider = ZedCollectionDataProvider()
+        if (zedCollectionDataProvider.isZedDetected()) {
+          add(CONFIG_EXISTS.metric(ZED_ID))
         }
       }
     }
