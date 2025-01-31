@@ -80,7 +80,6 @@ def __get_table_provider(output):
                                         'tensorflow.python.ops.resource_variable_ops.ResourceVariable',
                                         'tensorflow.python.framework.sparse_tensor.SparseTensor',
                                         'torch.Tensor']
-    table_provider = None
     if type_qualified_name in ['pandas.core.frame.DataFrame',
                                'pandas.core.series.Series',
                                'geopandas.geoseries.GeoSeries',
