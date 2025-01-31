@@ -1734,6 +1734,11 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("../testData/evaluation/singleBreakpoint/capturedVariablesInSamLambda.kt");
             }
 
+            @TestMetadata("checkCastOtherClassloader.kt")
+            public void testCheckCastOtherClassloader() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/checkCastOtherClassloader.kt");
+            }
+
             @TestMetadata("classFromAnotherPackage.kt")
             public void testClassFromAnotherPackage() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/classFromAnotherPackage.kt");
