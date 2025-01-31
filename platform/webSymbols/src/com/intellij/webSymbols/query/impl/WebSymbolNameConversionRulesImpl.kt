@@ -8,9 +8,10 @@ import com.intellij.webSymbols.query.WebSymbolNameConverter
 internal data class WebSymbolNameConversionRulesImpl(
   override val canonicalNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>,
   override val matchNames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>,
-  override val completionVariants: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>
+  override val completionVariants: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>,
+  override val renames: Map<WebSymbolQualifiedKind, WebSymbolNameConverter>,
 ) : WebSymbolNameConversionRules {
   companion object {
-    val EMPTY = WebSymbolNameConversionRulesImpl(emptyMap(), emptyMap(), emptyMap())
+    val EMPTY = WebSymbolNameConversionRulesImpl(emptyMap(), emptyMap(), emptyMap(), emptyMap())
   }
 }

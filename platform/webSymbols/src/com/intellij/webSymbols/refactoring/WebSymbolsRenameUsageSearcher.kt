@@ -2,6 +2,8 @@
 package com.intellij.webSymbols.refactoring
 
 import com.intellij.model.Pointer
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.rename.api.*
 import com.intellij.util.Query
 import com.intellij.webSymbols.WebSymbol
@@ -18,16 +20,20 @@ internal class WebSymbolsRenameUsageSearcher : RenameUsageSearcher {
         WebSymbolUsageQueries.buildWebSymbolUsagesQueries(symbol, parameters.project, parameters.searchScope)
           .map { query ->
             query.mapping {
-              WebSymbolPsiModifiableRenameUsage(WebSymbolsQueryExecutorFactory.create(it.file), symbol,
-                                                PsiRenameUsage.defaultPsiRenameUsage(it))
+              WebSymbolPsiModifiableRenameUsage(
+                WebSymbolsQueryExecutorFactory.create(PsiTreeUtil.findElementOfClassAtRange(it.file, it.range.startOffset, it.range.endOffset, PsiElement::class.java)
+                                                      ?: it.file), symbol,
+                PsiRenameUsage.defaultPsiRenameUsage(it))
             }
           }
       }
     ?: emptyList()
 
-  private class WebSymbolPsiModifiableRenameUsage(private val queryExecutor: WebSymbolsQueryExecutor,
-                                                  private val symbol: WebSymbol,
-                                                  private val psiRenameUsage: PsiRenameUsage)
+  private class WebSymbolPsiModifiableRenameUsage(
+    private val queryExecutor: WebSymbolsQueryExecutor,
+    private val symbol: WebSymbol,
+    private val psiRenameUsage: PsiRenameUsage,
+  )
     : PsiRenameUsage by psiRenameUsage, PsiModifiableRenameUsage {
 
     override val fileUpdater: ModifiableRenameUsage.FileUpdater
