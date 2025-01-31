@@ -193,17 +193,19 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
 
         val writable = JvmModifier.FINAL !in request.modifiers && !request.isConstant
 
+        val action = K2CreatePropertyFromUsageBuilder.generatePropertyAction(
+            targetContainer = targetContainer, classOrFileName = targetClass.name, request = request, lateinit = false
+        )
         val actions = if (writable) {
             listOfNotNull(
+                action.takeIf { ktRequest == null },
                 K2CreatePropertyFromUsageBuilder.generatePropertyAction(
                     targetContainer = targetContainer, classOrFileName = targetClass.name, request = request, lateinit = true
                 )
             )
         } else {
             listOfNotNull(
-                K2CreatePropertyFromUsageBuilder.generatePropertyAction(
-                    targetContainer = targetContainer, classOrFileName = targetClass.name, request = request, lateinit = false
-                )
+                action
             )
         }
         return actions

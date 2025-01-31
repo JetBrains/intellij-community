@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.lang.java.request.CreateFieldFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmLong
 import com.intellij.lang.jvm.JvmModifier
@@ -15,13 +16,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiPrimitiveType
-import com.intellij.psi.PsiType
-import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.findParentOfType
@@ -204,6 +199,12 @@ object K2CreatePropertyFromUsageBuilder {
             val container = pointer.element ?: return ""
 
             return buildString {
+                if (request is CreateFieldFromJavaUsageRequest && !lateinit) {
+                    append("@")
+                    append(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
+                    append(" ")
+                }
+
                 kotlinModifiers?.joinTo(this, separator = " ", postfix = " ")
 
                 append(varVal)
@@ -240,18 +241,10 @@ object K2CreatePropertyFromUsageBuilder {
                 return
             }
             WriteCommandAction.writeCommandAction(project).run<Throwable> {
-                val createConstructorParameter = container is KtClass &&
-                        request !is CreatePropertyFromKotlinUsageRequest &&
-                        !request.modifiers.contains(JvmModifier.STATIC) &&
-                        !lateinit
-
-                val adjustedContainer = if (createConstructorParameter) {
-                    container.createPrimaryConstructorIfAbsent().valueParameterList!!
-                } else {
+                val adjustedContainer =
                     if (container is KtClass && request.modifiers.contains(JvmModifier.STATIC))
                         container.getOrCreateCompanionObject()
                     else container
-                }
                 val psiFactory = KtPsiFactory(pointer.project)
                 val actualAnchor = when (adjustedContainer) {
                     is KtClassOrObject -> {
@@ -274,17 +267,11 @@ object K2CreatePropertyFromUsageBuilder {
                     else -> throw IllegalStateException(container.toString())
                 }
                 val createdDeclaration: KtCallableDeclaration =
-                    if (createConstructorParameter) {
-                        psiFactory.createParameter(declarationText)
-                    } else {
                         psiFactory.createDeclaration(declarationText) as KtVariableDeclaration
-                    }
 
                 val declarationInContainer =
                     CreateFromUsageUtil.placeDeclarationInContainer(createdDeclaration, adjustedContainer, actualAnchor)
-                declarationInContainer.typeReference?.let {
-                    shortenReferences(it)
-                }
+                shortenReferences(declarationInContainer)
             }
         }
 
