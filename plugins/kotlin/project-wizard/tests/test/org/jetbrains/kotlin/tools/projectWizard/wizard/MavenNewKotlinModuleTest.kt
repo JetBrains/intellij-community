@@ -6,7 +6,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVE
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
-import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -116,7 +115,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
         waitForProjectCreation {
             createProjectFromTemplate(JAVA) {
                 it.baseData!!.name = "project"
-                it.languageData!!.language = JAVA
                 it.javaBuildSystemData!!.buildSystem = MAVEN
                 it.javaMavenData!!.sdk = mySdk
                 it.javaMavenData!!.groupId = "org.testcase"
@@ -263,7 +261,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     ): Project {
         return createProjectFromTemplate(KOTLIN) {
             it.baseData!!.name = "project"
-            it.languageData!!.language = KOTLIN
             it.kotlinBuildSystemData!!.buildSystem = MAVEN
             it.kotlinMavenData!!.sdk = mySdk
             it.kotlinMavenData!!.parentData = null
@@ -288,7 +285,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
 
         return createModuleFromTemplate(project, KOTLIN) {
             it.baseData!!.name = newModuleName
-            it.languageData!!.language = KOTLIN
             it.kotlinBuildSystemData!!.buildSystem = MAVEN
             it.kotlinMavenData!!.sdk = mySdk
 
