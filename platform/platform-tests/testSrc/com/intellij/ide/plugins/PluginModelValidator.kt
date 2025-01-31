@@ -608,14 +608,10 @@ class PluginModelValidator(sourceModules: List<Module>) {
       return
     }
 
-    if (pluginDescriptor == null) {
-      fileInfo.moduleDescriptorFile = moduleDescriptorFile
-      fileInfo.moduleDescriptor = moduleDescriptor
-    }
-    else {
-      fileInfo.pluginDescriptorFile = pluginDescriptorFile
-      fileInfo.pluginDescriptor = pluginDescriptor
-    }
+    fileInfo.moduleDescriptorFile = moduleDescriptorFile
+    fileInfo.moduleDescriptor = moduleDescriptor
+    fileInfo.pluginDescriptorFile = pluginDescriptorFile
+    fileInfo.pluginDescriptor = pluginDescriptor
   }
 }
 
