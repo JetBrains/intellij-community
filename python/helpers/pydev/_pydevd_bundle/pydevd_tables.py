@@ -66,16 +66,16 @@ def exec_table_command(init_command, command_type, start_index, end_index, forma
     return True, ''.join(res)
 
 
-def __get_table_type_name(table):
-    nested_data_type = type(table)
-    nested_data_type_name = '{}.{}'.format(nested_data_type.__module__, nested_data_type.__name__)
-    return nested_data_type_name
+def __get_type_name(table):
+    table_data_type = type(table)
+    table_data_type_name = '{}.{}'.format(table_data_type.__module__, table_data_type.__name__)
+    return table_data_type_name
 
 
 # noinspection PyUnresolvedReferences
 def __get_table_provider(output):
     # type: (str) -> Any
-    type_qualified_name = __get_table_type_name(output['data'])
+    type_qualified_name = __get_type_name(output)
     numpy_based_type_qualified_names = ['tensorflow.python.framework.ops.EagerTensor',
                                         'tensorflow.python.ops.resource_variable_ops.ResourceVariable',
                                         'tensorflow.python.framework.sparse_tensor.SparseTensor',
@@ -89,8 +89,8 @@ def __get_table_provider(output):
         import _pydevd_bundle.tables.pydevd_pandas as table_provider
     # dict is needed for sort commands
     elif type_qualified_name == 'builtins.dict':
-        table_type = '{}.{}'.format(type(output['data']).__module__, type(output['data']).__name__)
-        if table_type in numpy_based_type_qualified_names:
+        table_type_name = __get_type_name(output['data'])
+        if table_type_name in numpy_based_type_qualified_names:
             import _pydevd_bundle.tables.pydevd_numpy_based as table_provider
         else:
             import _pydevd_bundle.tables.pydevd_numpy as table_provider
@@ -111,15 +111,15 @@ def __get_table_provider(output):
 # noinspection PyUnresolvedReferences
 def __get_image_provider(output):
     # type: (str) -> Any
-    __get_table_type_name(output['data'])
+    type_qualified_name = __get_type_name(output)
     numpy_based_type_qualified_names = ['tensorflow.python.framework.ops.EagerTensor',
                                         'tensorflow.python.ops.resource_variable_ops.ResourceVariable',
                                         'tensorflow.python.framework.sparse_tensor.SparseTensor',
                                         'torch.Tensor']
     image_provider = None
     if type_qualified_name == 'builtins.dict':
-        table_type = '{}.{}'.format(type(output['data']).__module__, type(output['data']).__name__)
-        if table_type in numpy_based_type_qualified_names:
+        table_type_name = __get_type_name(output['data'])
+        if table_type_name in numpy_based_type_qualified_names:
             import _pydevd_bundle.tables.images.pydevd_numpy_based_image as image_provider
         else:
             import _pydevd_bundle.tables.images.pydevd_numpy_image as image_provider
