@@ -106,7 +106,7 @@ open class MoveKotlinDeclarationsProcessor(
 
     fun getConflictsAsUsages(): List<UsageInfo> = conflicts.entrySet().map { MoveConflictUsageInfo(it.key, it.value) }
 
-    override fun findUsages(): Array<UsageInfo> {
+    public override fun findUsages(): Array<UsageInfo> {
         if (!descriptor.searchReferences || elementsToMove.isEmpty()) return UsageInfo.EMPTY_ARRAY
 
         val newContainerName = descriptor.moveTarget.targetContainerFqName?.asString() ?: ""

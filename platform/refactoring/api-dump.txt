@@ -194,8 +194,9 @@ a:com.intellij.refactoring.BaseRefactoringProcessor
 - pa:createUsageViewDescriptor(com.intellij.usageView.UsageInfo[]):com.intellij.usageView.UsageViewDescriptor
 - p:customizeUsagesView(com.intellij.usageView.UsageViewDescriptor,com.intellij.usages.UsageView):V
 - p:doRun():V
+- p:execute(com.intellij.usageView.UsageInfo[]):V
 - executeEx(com.intellij.usageView.UsageInfo[]):V
-- a:findUsages():com.intellij.usageView.UsageInfo[]
+- pa:findUsages():com.intellij.usageView.UsageInfo[]
 - p:getAfterData(com.intellij.usageView.UsageInfo[]):com.intellij.refactoring.listeners.RefactoringEventData
 - p:getBeforeData():com.intellij.refactoring.listeners.RefactoringEventData
 - pa:getCommandName():java.lang.String
@@ -204,13 +205,13 @@ a:com.intellij.refactoring.BaseRefactoringProcessor
 - p:getTransaction():com.intellij.refactoring.listeners.impl.RefactoringTransaction
 - p:getUndoConfirmationPolicy():com.intellij.openapi.command.UndoConfirmationPolicy
 - p:isGlobalUndoAction():Z
-- isPreviewUsages(com.intellij.usageView.UsageInfo[]):Z
+- p:isPreviewUsages(com.intellij.usageView.UsageInfo[]):Z
 - p:isToBeChanged(com.intellij.usageView.UsageInfo):Z
 - p:performPsiSpoilingRefactoring():V
 - pa:performRefactoring(com.intellij.usageView.UsageInfo[]):V
 - p:prepareConflictsDialog(com.intellij.util.containers.MultiMap,com.intellij.usageView.UsageInfo[]):com.intellij.refactoring.ConflictsDialogBase
 - p:prepareSuccessful():V
-- preprocessUsages(com.intellij.openapi.util.Ref):Z
+- p:preprocessUsages(com.intellij.openapi.util.Ref):Z
 - p:previewRefactoring(com.intellij.usageView.UsageInfo[]):V
 - s:processConflicts(com.intellij.openapi.project.Project,com.intellij.util.containers.MultiMap):Z
 - p:refreshElements(com.intellij.psi.PsiElement[]):V
