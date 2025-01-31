@@ -9,7 +9,6 @@ import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHCommit
-import java.util.concurrent.CompletableFuture
 
 interface GHPRChangesDataProvider {
 
@@ -24,9 +23,6 @@ interface GHPRChangesDataProvider {
   suspend fun loadPatchFromMergeBase(commitSha: String, filePath: String): FilePatch?
 
   suspend fun signalChangesNeedReload()
-
-  @Deprecated("Please migrate ro coroutines and use loadCommits")
-  fun loadCommitsFromApi(): CompletableFuture<List<GHCommit>>
 }
 
 @ApiStatus.Internal
