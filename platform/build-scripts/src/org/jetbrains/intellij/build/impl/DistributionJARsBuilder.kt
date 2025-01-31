@@ -1231,8 +1231,9 @@ suspend fun createIdeClassPath(platformLayout: PlatformLayout, context: BuildCon
   val pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
   for (entry in contentReport.bundledPlugins.flatMap { it.second }) {
     val relativePath = pluginDir.relativize(entry.path)
-    // for plugins, our classloader load JARs only from the "lib/" directory
-    if (relativePath.nameCount != 3 || relativePath.getName(1).toString() != LIB_DIRECTORY) {
+    // for plugins, our classloaders load JARs only from the "lib/" and "lib/modules/" directories
+    if (!(relativePath.nameCount in 3..4 && relativePath.getName(1).toString() == LIB_DIRECTORY && 
+          (relativePath.nameCount == 3 || relativePath.getName(2).toString() == "modules"))) {
       continue
     }
 
