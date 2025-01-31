@@ -6,6 +6,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixture.PythonCommonTestCase;
@@ -1360,6 +1361,63 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
 
   // PY-77060
   public void testSpaceAfterStarInTypeParameterList() {
+    doTest();
+  }
+
+  // PY-31689
+  public void testListWrappingBracketsOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().LIST_NEW_LINE_AFTER_LEFT_BRACKET = true;
+    getPythonCodeStyleSettings().LIST_NEW_LINE_BEFORE_RIGHT_BRACKET = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testListChopDownBracketsOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getPythonCodeStyleSettings().LIST_NEW_LINE_AFTER_LEFT_BRACKET = true;
+    getPythonCodeStyleSettings().LIST_NEW_LINE_BEFORE_RIGHT_BRACKET = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testListWrappingBracketsOnSameLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    doTest();
+  }
+
+  // PY-31689
+  public void testListChopDownBracketsOnSameLine() {
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    doTest();
+  }
+
+  // PY-31689
+  public void testListWrappingFirstBracketOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().LIST_NEW_LINE_AFTER_LEFT_BRACKET = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testListWrappingLastBracketOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().LIST_NEW_LINE_BEFORE_RIGHT_BRACKET = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testListWrappingDoNotAlign() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getPythonCodeStyleSettings().LIST_NEW_LINE_BEFORE_RIGHT_BRACKET = true;
+    getPythonCodeStyleSettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = false;
     doTest();
   }
 }

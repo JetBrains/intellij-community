@@ -96,6 +96,7 @@ public class PyBlock implements ASTBlock {
   private Alignment myChildAlignment = null;
   private Alignment myDictAlignment = null;
   private Wrap myDictWrapping = null;
+  private Wrap myListWrapping = null;
   private Wrap myFromImportWrapping = null;
   private Wrap myParameterListWrapping = null;
   private Wrap myArgumentListWrapping = null;
@@ -119,6 +120,9 @@ public class PyBlock implements ASTBlock {
     if (node.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION) {
       myDictAlignment = Alignment.createAlignment(true);
       myDictWrapping = Wrap.createWrap(pySettings.DICT_WRAPPING, true);
+    }
+    else if (node.getElementType() == PyElementTypes.LIST_LITERAL_EXPRESSION) {
+      myListWrapping = Wrap.createWrap(pySettings.LIST_WRAPPING, pySettings.LIST_NEW_LINE_AFTER_LEFT_BRACKET);
     }
     else if (node.getElementType() == PyElementTypes.FROM_IMPORT_STATEMENT) {
       myFromImportWrapping = Wrap.createWrap(pySettings.FROM_IMPORT_WRAPPING, false);
@@ -427,6 +431,12 @@ public class PyBlock implements ASTBlock {
     }
     if (childType == PyElementTypes.KEY_VALUE_EXPRESSION && isChildOfDictLiteral(child)) {
       childWrap = myDictWrapping;
+    }
+    if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION &&
+        childType != PyTokenTypes.COMMA &&
+        childType != PyTokenTypes.LBRACKET &&
+        childType != PyTokenTypes.RBRACKET) {
+      childWrap = myListWrapping;
     }
     if (parentType == PyElementTypes.PARAMETER_LIST &&
         childType != PyTokenTypes.COMMA &&
@@ -744,8 +754,11 @@ public class PyBlock implements ASTBlock {
           myContext.getMode() == FormattingMode.ADJUST_INDENT) {
         return true;
       }
-      return !hasHangingIndent(myNode.getPsi()) && !(myNode.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION &&
-                                                     myContext.getPySettings().DICT_NEW_LINE_AFTER_LEFT_BRACE);
+      return !hasHangingIndent(myNode.getPsi())
+             && !(myNode.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION &&
+                  myContext.getPySettings().DICT_NEW_LINE_AFTER_LEFT_BRACE)
+             && !(myNode.getElementType() == PyElementTypes.LIST_LITERAL_EXPRESSION &&
+                  myContext.getPySettings().LIST_NEW_LINE_AFTER_LEFT_BRACKET);
     }
     if (myNode.getElementType() == PyElementTypes.ARGUMENT_LIST) {
       if (!myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS || hasHangingIndent(myNode.getPsi())) {

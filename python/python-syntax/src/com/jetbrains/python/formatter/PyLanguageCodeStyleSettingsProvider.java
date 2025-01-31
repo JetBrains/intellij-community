@@ -130,6 +130,14 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
                                 PySyntaxBundle.message("formatter.from.import.statements.force.comma.if.multline"),
                                 PySyntaxBundle.message("formatter.from.import.statements"));
 
+      consumer.showCustomOption(PyCodeStyleSettings.class, "LIST_WRAPPING",
+                                PySyntaxBundle.message("formatter.list.literals"), null, getInstance().WRAP_OPTIONS, WRAP_VALUES);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "LIST_NEW_LINE_AFTER_LEFT_BRACKET",
+                                ApplicationBundle.message("wrapping.new.line.after.lbracket"), PySyntaxBundle.message("formatter.list.literals"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "LIST_NEW_LINE_BEFORE_RIGHT_BRACKET",
+                                ApplicationBundle.message("wrapping.rbracket.on.new.line"), PySyntaxBundle.message("formatter.list.literals"));
+
+
       consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_WRAPPING",
                                 PySyntaxBundle.message("formatter.dictionary.literals"), null, getInstance().WRAP_OPTIONS, WRAP_VALUES);
       consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_NEW_LINE_AFTER_LEFT_BRACE",

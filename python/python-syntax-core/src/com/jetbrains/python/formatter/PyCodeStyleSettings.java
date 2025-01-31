@@ -9,6 +9,8 @@ import com.jetbrains.python.PySyntaxCoreBundle;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.WRAP_AS_NEEDED;
+
 
 public class PyCodeStyleSettings extends CustomCodeStyleSettings {
 
@@ -70,6 +72,11 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public int DICT_WRAPPING = WrapType.NORMAL.getLegacyRepresentation();
   public boolean DICT_NEW_LINE_AFTER_LEFT_BRACE = false;
   public boolean DICT_NEW_LINE_BEFORE_RIGHT_BRACE = false;
+
+  @CommonCodeStyleSettings.WrapConstant
+  public int LIST_WRAPPING = WRAP_AS_NEEDED;
+  public boolean LIST_NEW_LINE_AFTER_LEFT_BRACKET = false;
+  public boolean LIST_NEW_LINE_BEFORE_RIGHT_BRACKET = false;
 
   public int BLANK_LINES_AFTER_LOCAL_IMPORTS = 0;
   /**
