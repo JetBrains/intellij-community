@@ -1207,6 +1207,13 @@ f:com.intellij.icons.AllIcons$Status
 - sf:FailedInProgress:javax.swing.Icon
 - sf:Success:javax.swing.Icon
 - <init>():V
+f:com.intellij.icons.AllIcons$Survey
+- sf:Dissatisfied:javax.swing.Icon
+- sf:Neutral:javax.swing.Icon
+- sf:Satisfied:javax.swing.Icon
+- sf:VeryDissatisfied:javax.swing.Icon
+- sf:VerySatisfied:javax.swing.Icon
+- <init>():V
 f:com.intellij.icons.AllIcons$Table
 - sf:Pagination:javax.swing.Icon
 - <init>():V

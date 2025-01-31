@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.icons;
 
 import com.intellij.ui.IconManager;
@@ -1315,6 +1315,14 @@ public class AllIcons {
   }
 
   /** 16x16 */ public static final @NotNull Icon Stub = load("expui/stub.svg", -784127213, 2);
+
+  public static final class Survey {
+    /** 16x16 */ public static final @NotNull Icon Dissatisfied = load("expui/survey/dissatisfied.svg", -804389422, 2);
+    /** 16x16 */ public static final @NotNull Icon Neutral = load("expui/survey/neutral.svg", -1987031457, 2);
+    /** 16x16 */ public static final @NotNull Icon Satisfied = load("expui/survey/satisfied.svg", 1105387664, 2);
+    /** 16x16 */ public static final @NotNull Icon VeryDissatisfied = load("expui/survey/veryDissatisfied.svg", 223633271, 2);
+    /** 16x16 */ public static final @NotNull Icon VerySatisfied = load("expui/survey/verySatisfied.svg", -1470265700, 2);
+  }
 
   public static final class Table {
     /** 16x16 */ public static final @NotNull Icon Pagination = load("expui/table/pagination.svg", "table/pagination.svg", -773531095, 2);
