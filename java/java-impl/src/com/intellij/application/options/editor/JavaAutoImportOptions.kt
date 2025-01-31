@@ -31,7 +31,6 @@ import javax.swing.JComponent
 class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Simple(), AutoImportOptionsProvider {
   private val excludeTable = object : ImportTable(project,
                                                   JavaBundle.message("exclude.from.imports.no.exclusions"),
-                                                  JavaBundle.message("exclude.from.imports.no.exclusions.2"),
                                                   JavaBundle.message("exclude.table.mask"),
                                                   JavaBundle.message("exclude.table.scope.column")) {
     override fun getIdeRows(): Array<out String> {
@@ -53,7 +52,6 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
 
   private val autoStaticImportTable = object : ImportTable(project,
                                                            JavaBundle.message("auto.static.import.comment"),
-                                                           JavaBundle.message("auto.static.import.comment.2"),
                                                            JavaBundle.message("auto.static.import.class"),
                                                            JavaBundle.message("auto.static.import.scope")) {
     override fun createAddAction(): AnActionButtonRunnable? {

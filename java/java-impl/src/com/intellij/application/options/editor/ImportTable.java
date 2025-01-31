@@ -50,16 +50,14 @@ abstract class ImportTable extends ListTableWithButtons<ImportTable.Item> implem
 
 
   ImportTable(@NotNull Disposable parentDisposable,
-              @NlsSafe @NotNull String firstMessageLine,
-              @NlsSafe @NotNull String secondMessageLine,
+              @NlsSafe @NotNull String messageLine,
               @NotNull @Nls String nameColumn,
               @NotNull @Nls String scopeColumn) {
     myNameColumn = nameColumn;
     myScopeColumn = scopeColumn;
     JBTable table = getTableView();
     table.getEmptyText().clear();
-    table.getEmptyText().appendLine(firstMessageLine);
-    table.getEmptyText().appendLine(secondMessageLine);
+    table.getEmptyText().appendLine(messageLine);
     table.setStriped(false);
     new CellTooltipManager(parentDisposable).withCellComponentProvider(CellComponentProvider.forTable(table)).installOn(table);
     Disposer.register(parentDisposable, validatorsDisposable);
