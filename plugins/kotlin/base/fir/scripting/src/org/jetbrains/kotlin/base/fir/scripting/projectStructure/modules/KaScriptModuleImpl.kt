@@ -11,7 +11,10 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModule
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForTest
 import org.jetbrains.kotlin.idea.base.scripting.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.scripting.getPlatform
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.scriptModuleEntity
@@ -24,7 +27,9 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import org.jetbrains.kotlin.utils.addIfNotNull
-import java.util.Objects
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.withVirtualFileEntry
+import java.util.*
 
 internal class KaScriptModuleImpl(
     override val project: Project,
@@ -37,8 +42,20 @@ internal class KaScriptModuleImpl(
 
 
     override val file: KtFile
-        get() = scriptFile.findPsiFile(project) as? KtFile
-            ?: error("KtFile should be alive for ${KaScriptModuleImpl::class.simpleName}")
+        get() {
+            (scriptFile.findPsiFile(project) as? KtFile)?.let { return it }
+            val errorMessage = buildString {
+                append("KtFile should be alive for ${KaScriptModuleImpl::class.simpleName}")
+                if (scriptFile.isValid) {
+                    append(", virtualFile: { class: ${scriptFile::class.qualifiedName}, extension: ${scriptFile.extension}, fileType: ${scriptFile.fileType}, fileSystem: ${scriptFile.fileSystem::class.qualifiedName} }")
+                } else {
+                    append(", virtualFile (${scriptFile::class.qualifiedName}) is invalid")
+                }
+            }
+            errorWithAttachment(errorMessage) {
+                withVirtualFileEntry("virtualFile", scriptFile)
+            }
+        }
 
 
     override val directDependsOnDependencies: List<KaModule> get() = emptyList()
