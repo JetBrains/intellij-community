@@ -288,6 +288,7 @@ object InlayHintsUtils {
     return storage
   }
 
+  @JvmOverloads
   fun computeCodeVisionUnderReadAction(expectsIndicator: Boolean = false, computable: () -> CodeVisionState): CodeVisionState {
     try {
       if (!EDT.isCurrentThreadEdt()) {
