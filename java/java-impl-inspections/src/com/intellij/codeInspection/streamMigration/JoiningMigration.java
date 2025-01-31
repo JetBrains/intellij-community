@@ -73,6 +73,10 @@ public class JoiningMigration extends BaseStreamApiMigration {
       JoiningTerminal.DelimiterRewriteJoiningTerminal::extractDelimiterRewritingTerminal,
       JoiningTerminal.IndexBasedJoiningTerminal::extractIndexBasedTerminal
     );
+    if (terminalBlock.operations().select(StreamApiMigrationInspection.LimitOp.class)
+      .anyMatch(limitOp -> limitOp.getCounterVariable() == null)) {
+      return null;
+    }
     return StreamEx.of(extractors)
       .map(extractor -> extractor.apply(terminalBlock, nonFinalVariables))
       .nonNull()

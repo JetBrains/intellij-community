@@ -203,8 +203,7 @@ final class TerminalBlock {
         if(ifStatement.getElseBranch() == null && condition != null) {
           PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
           PsiStatement sourceStatement = getStreamSourceStatement();
-          if( sourceStatement instanceof PsiLoopStatement && ControlFlowUtils.statementBreaksLoop(thenStatement,
-                                                                                                  (PsiLoopStatement)sourceStatement)) {
+          if(sourceStatement instanceof PsiLoopStatement loop && ControlFlowUtils.statementBreaksLoop(thenStatement, loop)) {
             TakeWhileOp op = new TakeWhileOp(condition, myVariable, true);
             PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
             return new TerminalBlock(this, op, myVariable, leftOver);
@@ -260,8 +259,8 @@ final class TerminalBlock {
       tb = new TerminalBlock(myOperations, myVariable, Arrays.copyOfRange(myStatements, count, myStatements.length)).extractFilter();
     }
     PsiStatement sourceStatement = getStreamSourceStatement();
-    if (tb == null || (sourceStatement instanceof PsiLoopStatement && !ControlFlowUtils.statementBreaksLoop(tb.getSingleStatement(),
-                                                                                                            (PsiLoopStatement)sourceStatement))) return this;
+    if (tb == null || (sourceStatement instanceof PsiLoopStatement loop && 
+                       !ControlFlowUtils.statementBreaksLoop(tb.getSingleStatement(), loop))) return this;
     FilterOp filter = tb.getLastOperation(FilterOp.class);
     if (filter == null) return this;
     PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(filter.getExpression()), PsiBinaryExpression.class);
@@ -287,9 +286,9 @@ final class TerminalBlock {
     PsiExpression incrementedValue = extractIncrementedLValue(countExpression);
     PsiLocalVariable var = null;
     if (dedicatedCounter) {
-      if (!(incrementedValue instanceof PsiReferenceExpression)) return this;
-      var = tryCast(((PsiReferenceExpression)incrementedValue).resolve(), PsiLocalVariable.class);
-      if (var == null || !ExpressionUtils.isZero(var.getInitializer()) || ReferencesSearch.search(var).findAll().size() != 1) return this;
+      if (!(incrementedValue instanceof PsiReferenceExpression ref)) return this;
+      var = tryCast(ref.resolve(), PsiLocalVariable.class);
+      if (var == null || !ExpressionUtils.isZero(var.getInitializer()) || VariableAccessUtils.getVariableReferences(var).size() != 1) return this;
     }
     PsiExpression limit = flipped ? binOp.getLOperand() : binOp.getROperand();
     if(!ExpressionUtils.isSafelyRecomputableExpression(limit) || VariableAccessUtils.variableIsUsed(myVariable, limit)) return this;
