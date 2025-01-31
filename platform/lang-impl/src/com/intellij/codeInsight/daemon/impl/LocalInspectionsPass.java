@@ -434,9 +434,7 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
       String displayNameByKey = HighlightDisplayKey.getDisplayNameByKey(key);
       LOG.assertTrue(displayNameByKey != null, key.toString());
 
-      result.add(Registry.is("llm.empty.intention.generation")
-                 ? new EmptyIntentionGeneratorIntention(displayNameByKey, descriptor.getDescriptionTemplate())
-                 : new EmptyIntentionAction(displayNameByKey));
+      result.add(new EmptyIntentionAction(displayNameByKey));
     }
     return result;
   }
