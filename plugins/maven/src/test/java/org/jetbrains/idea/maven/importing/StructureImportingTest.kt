@@ -561,7 +561,6 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testModuleWithPropertiesWithParentWithoutARelativePath() = runBlocking {
-    runWithoutStaticSync()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
