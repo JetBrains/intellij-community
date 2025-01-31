@@ -23,13 +23,11 @@ import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PythonSdkUtil
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -93,12 +91,6 @@ class PyRequirementVisitor(
     ignoredPackages: Set<String?>,
   ): List<PyRequirement> {
     val requirements = getRequirements(module) ?: return emptyList()
-    val serviceScope = PyPackagingToolWindowService.getInstance(module.project).serviceScope
-
-    serviceScope.launch {
-      manager.reloadPackages()
-    }
-
     val installedPackages = manager.installedPackages.toPyPackages()
     val modulePackages = collectPackagesInModule(module)
 
