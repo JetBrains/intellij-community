@@ -51,6 +51,30 @@ public class DotBadgeShape(
         )
     }
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as DotBadgeShape
+
+        if (x != other.x) return false
+        if (y != other.y) return false
+        if (radius != other.radius) return false
+        if (border != other.border) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = x.hashCode()
+        result = 31 * result + y.hashCode()
+        result = 31 * result + radius.hashCode()
+        result = 31 * result + border.hashCode()
+        return result
+    }
+
+    override fun toString(): String = "DotBadgeShape(x=$x, y=$y, radius=$radius, border=$border)"
+
     public companion object {
         public val Default: DotBadgeShape = DotBadgeShape()
     }

@@ -14,6 +14,26 @@ import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape
 @GenerateDataFunctions
 private class BadgeImpl(private val color: Color, private val shape: BadgeShape) : PainterWrapperHint {
     override fun PainterProviderScope.wrap(painter: Painter): Painter = BadgePainter(painter, color, shape)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as BadgeImpl
+
+        if (color != other.color) return false
+        if (shape != other.shape) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = color.hashCode()
+        result = 31 * result + shape.hashCode()
+        return result
+    }
+
+    override fun toString(): String = "BadgeImpl(color=$color, shape=$shape)"
 }
 
 /** Adds a colored badge to the image being loaded. */

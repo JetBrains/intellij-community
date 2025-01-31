@@ -201,6 +201,7 @@ f:org.jetbrains.jewel.samples.showcase.views.ComposableSingletons$ComponentsView
 - f:getLambda-9$intellij_platform_jewel_samples_showcase():kotlin.jvm.functions.Function2
 f:org.jetbrains.jewel.samples.showcase.views.KeyBinding
 - sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.samples.showcase.views.KeyBinding$Companion
 - <init>():V
 - <init>(java.util.Set,java.util.Set,java.util.Set):V
 - b:<init>(java.util.Set,java.util.Set,java.util.Set,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -209,8 +210,10 @@ f:org.jetbrains.jewel.samples.showcase.views.KeyBinding
 - f:getMacOs():java.util.Set
 - f:getWindows():java.util.Set
 - hashCode():I
+f:org.jetbrains.jewel.samples.showcase.views.KeyBinding$Companion
 f:org.jetbrains.jewel.samples.showcase.views.ViewInfo
 - sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.samples.showcase.views.ViewInfo$Companion
 - <init>(java.lang.String,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.samples.showcase.views.KeyBinding,kotlin.jvm.functions.Function2):V
 - b:<init>(java.lang.String,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.samples.showcase.views.KeyBinding,kotlin.jvm.functions.Function2,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - equals(java.lang.Object):Z
@@ -219,5 +222,6 @@ f:org.jetbrains.jewel.samples.showcase.views.ViewInfo
 - f:getKeyboardShortcut():org.jetbrains.jewel.samples.showcase.views.KeyBinding
 - f:getTitle():java.lang.String
 - hashCode():I
+f:org.jetbrains.jewel.samples.showcase.views.ViewInfo$Companion
 f:org.jetbrains.jewel.samples.showcase.views.ViewInfoKt
 - sf:forCurrentOs(org.jetbrains.jewel.samples.showcase.views.KeyBinding):java.util.Set
