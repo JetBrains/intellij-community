@@ -5,6 +5,13 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <actionPromoter implementation="com.intellij.terminal.frontend.action.SendShortcutToTerminalActionPromoter"/>
+
+    <editorActionHandler action="FindNext" implementationClass="com.intellij.terminal.frontend.action.TerminalFindNextHandler"
+                         id="terminalFindNext" order="first"/>
+    <editorActionHandler action="FindPrevious" implementationClass="com.intellij.terminal.frontend.action.TerminalFindPreviousHandler"
+                         id="terminalFindPrevious" order="first"/>
+    <editorActionHandler action="Replace" implementationClass="com.intellij.terminal.frontend.action.TerminalReplaceHandler"
+                         id="terminalReplace" order="first"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
@@ -23,6 +30,9 @@
       <keyboard-shortcut first-keystroke="shift INSERT" keymap="Default for XWin"/>
       <keyboard-shortcut first-keystroke="control V" keymap="$default"/>
       <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
+    </action>
+    <action id="Terminal.Find" class="com.intellij.terminal.frontend.action.TerminalFindAction" use-shortcut-of="Find">
+      <override-text place="GoToAction"/>
     </action>
 
     <action id="Terminal.EnableNewUi" class="com.intellij.terminal.frontend.action.EnableBlockTerminalUiAction"/>

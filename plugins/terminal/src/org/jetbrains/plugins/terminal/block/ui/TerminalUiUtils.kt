@@ -472,6 +472,6 @@ inline fun <T> TerminalTextBuffer.withLock(callable: (TerminalTextBuffer) -> T):
   }
 }
 
-internal fun JBLayeredPane.addToLayer(component: JComponent, layer: Int) {
+fun JBLayeredPane.addToLayer(component: JComponent, layer: Int) {
   add(component, layer as Any) // Any is needed to resolve to the correct overload.
 }

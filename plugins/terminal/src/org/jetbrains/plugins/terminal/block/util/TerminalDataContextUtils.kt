@@ -15,7 +15,6 @@ import org.jetbrains.plugins.terminal.block.output.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.output.TerminalSelectionController
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptController
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalSearchController
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 
 @ApiStatus.Experimental
@@ -76,9 +75,6 @@ object TerminalDataContextUtils {
   @get:ApiStatus.Internal
   val DataContext.terminalSession: BlockTerminalSession?
     get() = getData(BlockTerminalSession.DATA_KEY)
-
-  internal val DataContext.terminalSearchController: TerminalSearchController?
-    get() = getData(TerminalSearchController.KEY)
 
 
 

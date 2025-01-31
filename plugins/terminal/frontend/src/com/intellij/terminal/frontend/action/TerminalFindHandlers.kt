@@ -1,19 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.output
+package com.intellij.terminal.frontend.action
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
+import com.intellij.terminal.frontend.TerminalSearchController
+import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalSearchController
 import org.jetbrains.plugins.terminal.block.BlockTerminalController
-import org.jetbrains.plugins.terminal.block.reworked.TerminalSearchController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.blockTerminalController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSearchController
 
 internal abstract class TerminalSearchActionHandler(private val originalHandler: EditorActionHandler?) : EditorActionHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
