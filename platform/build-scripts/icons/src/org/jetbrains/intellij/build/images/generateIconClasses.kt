@@ -29,6 +29,10 @@ data class IntellijIconClassGeneratorModuleConfig(
    * The directory where icons are located relative to resource root.
    */
   val iconDirectory: String? = null,
+  /**
+   * Exclude specified packages from icon processing
+   */
+  val excludePackages: List<String> = emptyList(),
 )
 
 abstract class IconClasses {
