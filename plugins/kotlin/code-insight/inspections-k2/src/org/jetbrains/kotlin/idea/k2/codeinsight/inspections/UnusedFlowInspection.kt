@@ -21,6 +21,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getStartOffsetIn
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
+private val FLOW_CLASS_ID = ClassId.fromString("kotlinx/coroutines/flow/Flow")
+
 internal class UnusedFlowInspection : KotlinApplicableInspectionBase<KtExpression, Unit>() {
     override fun InspectionManager.createProblemDescriptor(
         element: KtExpression,
@@ -64,8 +66,6 @@ internal class UnusedFlowInspection : KotlinApplicableInspectionBase<KtExpressio
         if (!element.isTopMostExpression()) return false
         return super.isApplicableByPsi(element)
     }
-
-    private val FLOW_CLASS_ID = ClassId.fromString("kotlinx/coroutines/flow/Flow")
 
     /**
      * To reduce visual clutter, we only want to highlight the last call in the chain of the flow (and without lambda argument).
