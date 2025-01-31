@@ -137,4 +137,25 @@ public fun SimpleListItem(
     }
 }
 
-@GenerateDataFunctions public class ListItemState(public val isSelected: Boolean, public val isActive: Boolean = true)
+@GenerateDataFunctions
+public class ListItemState(public val isSelected: Boolean, public val isActive: Boolean = true) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ListItemState
+
+        if (isSelected != other.isSelected) return false
+        if (isActive != other.isActive) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = isSelected.hashCode()
+        result = 31 * result + isActive.hashCode()
+        return result
+    }
+
+    override fun toString(): String = "ListItemState(isSelected=$isSelected, isActive=$isActive)"
+}

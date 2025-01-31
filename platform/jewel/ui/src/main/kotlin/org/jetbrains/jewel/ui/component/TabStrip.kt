@@ -87,7 +87,41 @@ public sealed class TabData {
         override val closable: Boolean = true,
         override val onClose: () -> Unit = {},
         override val onClick: () -> Unit = {},
-    ) : TabData()
+    ) : TabData() {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Default
+
+            if (selected != other.selected) return false
+            if (closable != other.closable) return false
+            if (content != other.content) return false
+            if (onClose != other.onClose) return false
+            if (onClick != other.onClick) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = selected.hashCode()
+            result = 31 * result + closable.hashCode()
+            result = 31 * result + content.hashCode()
+            result = 31 * result + onClose.hashCode()
+            result = 31 * result + onClick.hashCode()
+            return result
+        }
+
+        override fun toString(): String {
+            return "Default(" +
+                "selected=$selected, " +
+                "content=$content, " +
+                "closable=$closable, " +
+                "onClose=$onClose, " +
+                "onClick=$onClick" +
+                ")"
+        }
+    }
 
     @Immutable
     @GenerateDataFunctions
@@ -97,7 +131,41 @@ public sealed class TabData {
         override val closable: Boolean = true,
         override val onClose: () -> Unit = {},
         override val onClick: () -> Unit = {},
-    ) : TabData()
+    ) : TabData() {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Editor
+
+            if (selected != other.selected) return false
+            if (closable != other.closable) return false
+            if (content != other.content) return false
+            if (onClose != other.onClose) return false
+            if (onClick != other.onClick) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = selected.hashCode()
+            result = 31 * result + closable.hashCode()
+            result = 31 * result + content.hashCode()
+            result = 31 * result + onClose.hashCode()
+            result = 31 * result + onClick.hashCode()
+            return result
+        }
+
+        override fun toString(): String {
+            return "Editor(" +
+                "selected=$selected, " +
+                "content=$content, " +
+                "closable=$closable, " +
+                "onClose=$onClose, " +
+                "onClick=$onClick" +
+                ")"
+        }
+    }
 }
 
 @Immutable

@@ -470,14 +470,22 @@ f:org.jetbrains.jewel.intui.standalone.styling.IntUiWarningBannerColorFactory
 - f:dark-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
 - f:light-dgg9oW8(J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.styling.BannerColors
 f:org.jetbrains.jewel.intui.standalone.theme.IntUiGlobalColorsKt
-- sf:dark-GyCwops(org.jetbrains.jewel.foundation.BorderColors$Companion,J,J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.BorderColors
-- sf:dark-Hformbs(org.jetbrains.jewel.foundation.OutlineColors$Companion,J,J,J,J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.OutlineColors
-- sf:dark-Hformbs(org.jetbrains.jewel.foundation.TextColors$Companion,J,J,J,J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.TextColors
-- sf:dark-yrwZFoE(org.jetbrains.jewel.foundation.GlobalColors$Companion,org.jetbrains.jewel.foundation.BorderColors,org.jetbrains.jewel.foundation.OutlineColors,org.jetbrains.jewel.foundation.TextColors,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.GlobalColors
-- sf:light-GyCwops(org.jetbrains.jewel.foundation.BorderColors$Companion,J,J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.BorderColors
-- sf:light-Hformbs(org.jetbrains.jewel.foundation.OutlineColors$Companion,J,J,J,J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.OutlineColors
-- sf:light-Hformbs(org.jetbrains.jewel.foundation.TextColors$Companion,J,J,J,J,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.TextColors
-- sf:light-yrwZFoE(org.jetbrains.jewel.foundation.GlobalColors$Companion,org.jetbrains.jewel.foundation.BorderColors,org.jetbrains.jewel.foundation.OutlineColors,org.jetbrains.jewel.foundation.TextColors,J,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.GlobalColors
+- sf:dark-jdqzblg(org.jetbrains.jewel.foundation.OutlineColors$Companion,J,J,J,J,J):org.jetbrains.jewel.foundation.OutlineColors
+- sf:dark-jdqzblg(org.jetbrains.jewel.foundation.TextColors$Companion,J,J,J,J,J):org.jetbrains.jewel.foundation.TextColors
+- bs:dark-jdqzblg$default(org.jetbrains.jewel.foundation.OutlineColors$Companion,J,J,J,J,J,I,java.lang.Object):org.jetbrains.jewel.foundation.OutlineColors
+- bs:dark-jdqzblg$default(org.jetbrains.jewel.foundation.TextColors$Companion,J,J,J,J,J,I,java.lang.Object):org.jetbrains.jewel.foundation.TextColors
+- sf:dark-xwkQ0AY(org.jetbrains.jewel.foundation.GlobalColors$Companion,org.jetbrains.jewel.foundation.BorderColors,org.jetbrains.jewel.foundation.OutlineColors,org.jetbrains.jewel.foundation.TextColors,J):org.jetbrains.jewel.foundation.GlobalColors
+- bs:dark-xwkQ0AY$default(org.jetbrains.jewel.foundation.GlobalColors$Companion,org.jetbrains.jewel.foundation.BorderColors,org.jetbrains.jewel.foundation.OutlineColors,org.jetbrains.jewel.foundation.TextColors,J,I,java.lang.Object):org.jetbrains.jewel.foundation.GlobalColors
+- sf:dark-zSO0fhY(org.jetbrains.jewel.foundation.BorderColors$Companion,J,J,J):org.jetbrains.jewel.foundation.BorderColors
+- bs:dark-zSO0fhY$default(org.jetbrains.jewel.foundation.BorderColors$Companion,J,J,J,I,java.lang.Object):org.jetbrains.jewel.foundation.BorderColors
+- sf:light-jdqzblg(org.jetbrains.jewel.foundation.OutlineColors$Companion,J,J,J,J,J):org.jetbrains.jewel.foundation.OutlineColors
+- sf:light-jdqzblg(org.jetbrains.jewel.foundation.TextColors$Companion,J,J,J,J,J):org.jetbrains.jewel.foundation.TextColors
+- bs:light-jdqzblg$default(org.jetbrains.jewel.foundation.OutlineColors$Companion,J,J,J,J,J,I,java.lang.Object):org.jetbrains.jewel.foundation.OutlineColors
+- bs:light-jdqzblg$default(org.jetbrains.jewel.foundation.TextColors$Companion,J,J,J,J,J,I,java.lang.Object):org.jetbrains.jewel.foundation.TextColors
+- sf:light-xwkQ0AY(org.jetbrains.jewel.foundation.GlobalColors$Companion,org.jetbrains.jewel.foundation.BorderColors,org.jetbrains.jewel.foundation.OutlineColors,org.jetbrains.jewel.foundation.TextColors,J):org.jetbrains.jewel.foundation.GlobalColors
+- bs:light-xwkQ0AY$default(org.jetbrains.jewel.foundation.GlobalColors$Companion,org.jetbrains.jewel.foundation.BorderColors,org.jetbrains.jewel.foundation.OutlineColors,org.jetbrains.jewel.foundation.TextColors,J,I,java.lang.Object):org.jetbrains.jewel.foundation.GlobalColors
+- sf:light-zSO0fhY(org.jetbrains.jewel.foundation.BorderColors$Companion,J,J,J):org.jetbrains.jewel.foundation.BorderColors
+- bs:light-zSO0fhY$default(org.jetbrains.jewel.foundation.BorderColors$Companion,J,J,J,I,java.lang.Object):org.jetbrains.jewel.foundation.BorderColors
 f:org.jetbrains.jewel.intui.standalone.theme.IntUiGlobalMetricsKt
 - sf:defaults-VpY3zN4(org.jetbrains.jewel.foundation.GlobalMetrics$Companion,F,F):org.jetbrains.jewel.foundation.GlobalMetrics
 - bs:defaults-VpY3zN4$default(org.jetbrains.jewel.foundation.GlobalMetrics$Companion,F,F,I,java.lang.Object):org.jetbrains.jewel.foundation.GlobalMetrics

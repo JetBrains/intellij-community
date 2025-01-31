@@ -34,6 +34,34 @@ public class GfmTableStyling(
         headerBaseFontWeight = headerBaseFontWeight,
     )
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as GfmTableStyling
+
+        if (colors != other.colors) return false
+        if (metrics != other.metrics) return false
+        if (headerBaseFontWeight != other.headerBaseFontWeight) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = colors.hashCode()
+        result = 31 * result + metrics.hashCode()
+        result = 31 * result + headerBaseFontWeight.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "GfmTableStyling(" +
+               "colors=$colors, " +
+               "metrics=$metrics, " +
+               "headerBaseFontWeight=$headerBaseFontWeight" +
+               ")"
+    }
+
     public companion object
 }
 
@@ -44,6 +72,37 @@ public class GfmTableColors(
     public val alternateRowBackgroundColor: Color,
     public val rowBackgroundStyle: RowBackgroundStyle,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as GfmTableColors
+
+        if (borderColor != other.borderColor) return false
+        if (rowBackgroundColor != other.rowBackgroundColor) return false
+        if (alternateRowBackgroundColor != other.alternateRowBackgroundColor) return false
+        if (rowBackgroundStyle != other.rowBackgroundStyle) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = borderColor.hashCode()
+        result = 31 * result + rowBackgroundColor.hashCode()
+        result = 31 * result + alternateRowBackgroundColor.hashCode()
+        result = 31 * result + rowBackgroundStyle.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "GfmTableColors(" +
+               "borderColor=$borderColor, " +
+               "rowBackgroundColor=$rowBackgroundColor, " +
+               "alternateRowBackgroundColor=$alternateRowBackgroundColor, " +
+               "rowBackgroundStyle=$rowBackgroundStyle" +
+               ")"
+    }
+
     public companion object
 }
 
@@ -68,5 +127,36 @@ public class GfmTableMetrics(
     public val defaultCellContentAlignment: Alignment.Horizontal,
     public val headerDefaultCellContentAlignment: Alignment.Horizontal,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as GfmTableMetrics
+
+        if (borderWidth != other.borderWidth) return false
+        if (cellPadding != other.cellPadding) return false
+        if (defaultCellContentAlignment != other.defaultCellContentAlignment) return false
+        if (headerDefaultCellContentAlignment != other.headerDefaultCellContentAlignment) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = borderWidth.hashCode()
+        result = 31 * result + cellPadding.hashCode()
+        result = 31 * result + defaultCellContentAlignment.hashCode()
+        result = 31 * result + headerDefaultCellContentAlignment.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "GfmTableMetrics(" +
+               "borderWidth=$borderWidth, " +
+               "cellPadding=$cellPadding, " +
+               "defaultCellContentAlignment=$defaultCellContentAlignment, " +
+               "headerDefaultCellContentAlignment=$headerDefaultCellContentAlignment" +
+               ")"
+    }
+
     public companion object
 }

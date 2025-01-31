@@ -21,7 +21,31 @@ public sealed class Stroke {
         public val color: Color,
         public val alignment: Alignment,
         public val expand: Dp,
-    ) : Stroke()
+    ) : Stroke() {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Solid
+
+            if (width != other.width) return false
+            if (color != other.color) return false
+            if (alignment != other.alignment) return false
+            if (expand != other.expand) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = width.hashCode()
+            result = 31 * result + color.hashCode()
+            result = 31 * result + alignment.hashCode()
+            result = 31 * result + expand.hashCode()
+            return result
+        }
+
+        override fun toString(): String = "Solid(width=$width, color=$color, alignment=$alignment, expand=$expand)"
+    }
 
     @Immutable
     @GenerateDataFunctions
@@ -31,7 +55,31 @@ public sealed class Stroke {
         public val brush: androidx.compose.ui.graphics.Brush,
         public val alignment: Alignment,
         public val expand: Dp,
-    ) : Stroke()
+    ) : Stroke() {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Brush
+
+            if (width != other.width) return false
+            if (brush != other.brush) return false
+            if (alignment != other.alignment) return false
+            if (expand != other.expand) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = width.hashCode()
+            result = 31 * result + brush.hashCode()
+            result = 31 * result + alignment.hashCode()
+            result = 31 * result + expand.hashCode()
+            return result
+        }
+
+        override fun toString(): String = "Brush(width=$width, brush=$brush, alignment=$alignment, expand=$expand)"
+    }
 
     public enum class Alignment {
         Inside,

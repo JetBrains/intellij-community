@@ -178,6 +178,7 @@ object CommunityLibraryLicenses {
       .simplifiedBsd("https://github.com/commonmark/commonmark-java/blob/main/LICENSE.txt")
       .additionalLibraryNames(
         "commonmark.ext.autolink",
+        "commonmark.ext.gfm.tables",
         "org.commonmark.commonmark"
       )
       .copyrightText("Copyright (c) 2015, Atlassian Pty Ltd")
@@ -301,6 +302,9 @@ object CommunityLibraryLicenses {
     LibraryLicense("dbus-java", libraryName = "dbus-java", url = "https://github.com/hypfvieh/dbus-java")
       .lgpl2("https://github.com/hypfvieh/dbus-java/blob/dbus-java-3.0/LICENSE")
       .suppliedByPersons("David M. <hypfvieh@googlemail.com>"),
+
+    LibraryLicense("Detekt", libraryName = "io.gitlab.arturbosch.detekt.api", url = "https://github.com/detekt/detekt")
+      .apache("https://github.com/detekt/detekt/blob/master/LICENSE"),
 
     LibraryLicense("docutils", version = "0.12", attachedTo = "intellij.python", url = "https://docutils.sourceforge.io/")
       .public("https://sourceforge.net/p/docutils/code/HEAD/tree/trunk/docutils/COPYING.rst"),

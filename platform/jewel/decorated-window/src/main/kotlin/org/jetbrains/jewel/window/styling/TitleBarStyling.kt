@@ -27,6 +27,46 @@ public class TitleBarStyle(
     public val paneButtonStyle: IconButtonStyle,
     public val paneCloseButtonStyle: IconButtonStyle,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as TitleBarStyle
+
+        if (colors != other.colors) return false
+        if (metrics != other.metrics) return false
+        if (icons != other.icons) return false
+        if (dropdownStyle != other.dropdownStyle) return false
+        if (iconButtonStyle != other.iconButtonStyle) return false
+        if (paneButtonStyle != other.paneButtonStyle) return false
+        if (paneCloseButtonStyle != other.paneCloseButtonStyle) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = colors.hashCode()
+        result = 31 * result + metrics.hashCode()
+        result = 31 * result + icons.hashCode()
+        result = 31 * result + dropdownStyle.hashCode()
+        result = 31 * result + iconButtonStyle.hashCode()
+        result = 31 * result + paneButtonStyle.hashCode()
+        result = 31 * result + paneCloseButtonStyle.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "TitleBarStyle(" +
+            "colors=$colors, " +
+            "metrics=$metrics, " +
+            "icons=$icons, " +
+            "dropdownStyle=$dropdownStyle, " +
+            "iconButtonStyle=$iconButtonStyle, " +
+            "paneButtonStyle=$paneButtonStyle, " +
+            "paneCloseButtonStyle=$paneCloseButtonStyle" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -62,6 +102,64 @@ public class TitleBarColors(
             }
         )
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as TitleBarColors
+
+        if (background != other.background) return false
+        if (inactiveBackground != other.inactiveBackground) return false
+        if (content != other.content) return false
+        if (border != other.border) return false
+        if (fullscreenControlButtonsBackground != other.fullscreenControlButtonsBackground) return false
+        if (titlePaneButtonHoveredBackground != other.titlePaneButtonHoveredBackground) return false
+        if (titlePaneButtonPressedBackground != other.titlePaneButtonPressedBackground) return false
+        if (titlePaneCloseButtonHoveredBackground != other.titlePaneCloseButtonHoveredBackground) return false
+        if (titlePaneCloseButtonPressedBackground != other.titlePaneCloseButtonPressedBackground) return false
+        if (iconButtonHoveredBackground != other.iconButtonHoveredBackground) return false
+        if (iconButtonPressedBackground != other.iconButtonPressedBackground) return false
+        if (dropdownPressedBackground != other.dropdownPressedBackground) return false
+        if (dropdownHoveredBackground != other.dropdownHoveredBackground) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = background.hashCode()
+        result = 31 * result + inactiveBackground.hashCode()
+        result = 31 * result + content.hashCode()
+        result = 31 * result + border.hashCode()
+        result = 31 * result + fullscreenControlButtonsBackground.hashCode()
+        result = 31 * result + titlePaneButtonHoveredBackground.hashCode()
+        result = 31 * result + titlePaneButtonPressedBackground.hashCode()
+        result = 31 * result + titlePaneCloseButtonHoveredBackground.hashCode()
+        result = 31 * result + titlePaneCloseButtonPressedBackground.hashCode()
+        result = 31 * result + iconButtonHoveredBackground.hashCode()
+        result = 31 * result + iconButtonPressedBackground.hashCode()
+        result = 31 * result + dropdownPressedBackground.hashCode()
+        result = 31 * result + dropdownHoveredBackground.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "TitleBarColors(" +
+            "background=$background, " +
+            "inactiveBackground=$inactiveBackground, " +
+            "content=$content, " +
+            "border=$border, " +
+            "fullscreenControlButtonsBackground=$fullscreenControlButtonsBackground, " +
+            "titlePaneButtonHoveredBackground=$titlePaneButtonHoveredBackground, " +
+            "titlePaneButtonPressedBackground=$titlePaneButtonPressedBackground, " +
+            "titlePaneCloseButtonHoveredBackground=$titlePaneCloseButtonHoveredBackground, " +
+            "titlePaneCloseButtonPressedBackground=$titlePaneCloseButtonPressedBackground, " +
+            "iconButtonHoveredBackground=$iconButtonHoveredBackground, " +
+            "iconButtonPressedBackground=$iconButtonPressedBackground, " +
+            "dropdownPressedBackground=$dropdownPressedBackground, " +
+            "dropdownHoveredBackground=$dropdownHoveredBackground" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -73,6 +171,37 @@ public class TitleBarMetrics(
     public val gradientEndX: Dp,
     public val titlePaneButtonSize: DpSize,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as TitleBarMetrics
+
+        if (height != other.height) return false
+        if (gradientStartX != other.gradientStartX) return false
+        if (gradientEndX != other.gradientEndX) return false
+        if (titlePaneButtonSize != other.titlePaneButtonSize) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = height.hashCode()
+        result = 31 * result + gradientStartX.hashCode()
+        result = 31 * result + gradientEndX.hashCode()
+        result = 31 * result + titlePaneButtonSize.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "TitleBarMetrics(" +
+            "height=$height, " +
+            "gradientStartX=$gradientStartX, " +
+            "gradientEndX=$gradientEndX, " +
+            "titlePaneButtonSize=$titlePaneButtonSize" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -84,6 +213,37 @@ public class TitleBarIcons(
     public val restoreButton: IconKey,
     public val closeButton: IconKey,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as TitleBarIcons
+
+        if (minimizeButton != other.minimizeButton) return false
+        if (maximizeButton != other.maximizeButton) return false
+        if (restoreButton != other.restoreButton) return false
+        if (closeButton != other.closeButton) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = minimizeButton.hashCode()
+        result = 31 * result + maximizeButton.hashCode()
+        result = 31 * result + restoreButton.hashCode()
+        result = 31 * result + closeButton.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "TitleBarIcons(" +
+            "minimizeButton=$minimizeButton, " +
+            "maximizeButton=$maximizeButton, " +
+            "restoreButton=$restoreButton, " +
+            "closeButton=$closeButton" +
+            ")"
+    }
+
     public companion object
 }
 

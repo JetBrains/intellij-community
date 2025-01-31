@@ -17,6 +17,40 @@ public class AlertStyling(
     public val warning: WarningAlertStyling,
     public val caution: CautionAlertStyling,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as AlertStyling
+
+        if (note != other.note) return false
+        if (tip != other.tip) return false
+        if (important != other.important) return false
+        if (warning != other.warning) return false
+        if (caution != other.caution) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = note.hashCode()
+        result = 31 * result + tip.hashCode()
+        result = 31 * result + important.hashCode()
+        result = 31 * result + warning.hashCode()
+        result = 31 * result + caution.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "AlertStyling(" +
+            "note=$note, " +
+            "tip=$tip, " +
+            "important=$important, " +
+            "warning=$warning, " +
+            "caution=$caution" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -44,6 +78,52 @@ public class NoteAlertStyling(
     override val titleIconTint: Color,
     override val textColor: Color,
 ) : BaseAlertStyling {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as NoteAlertStyling
+
+        if (padding != other.padding) return false
+        if (lineWidth != other.lineWidth) return false
+        if (lineColor != other.lineColor) return false
+        if (pathEffect != other.pathEffect) return false
+        if (strokeCap != other.strokeCap) return false
+        if (titleTextStyle != other.titleTextStyle) return false
+        if (titleIconKey != other.titleIconKey) return false
+        if (titleIconTint != other.titleIconTint) return false
+        if (textColor != other.textColor) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = padding.hashCode()
+        result = 31 * result + lineWidth.hashCode()
+        result = 31 * result + lineColor.hashCode()
+        result = 31 * result + (pathEffect?.hashCode() ?: 0)
+        result = 31 * result + strokeCap.hashCode()
+        result = 31 * result + titleTextStyle.hashCode()
+        result = 31 * result + (titleIconKey?.hashCode() ?: 0)
+        result = 31 * result + titleIconTint.hashCode()
+        result = 31 * result + textColor.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "NoteAlertStyling(" +
+            "padding=$padding, " +
+            "lineWidth=$lineWidth, " +
+            "lineColor=$lineColor, " +
+            "pathEffect=$pathEffect, " +
+            "strokeCap=$strokeCap, " +
+            "titleTextStyle=$titleTextStyle, " +
+            "titleIconKey=$titleIconKey, " +
+            "titleIconTint=$titleIconTint, " +
+            "textColor=$textColor" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -59,6 +139,52 @@ public class TipAlertStyling(
     override val titleIconTint: Color,
     override val textColor: Color,
 ) : BaseAlertStyling {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as TipAlertStyling
+
+        if (padding != other.padding) return false
+        if (lineWidth != other.lineWidth) return false
+        if (lineColor != other.lineColor) return false
+        if (pathEffect != other.pathEffect) return false
+        if (strokeCap != other.strokeCap) return false
+        if (titleTextStyle != other.titleTextStyle) return false
+        if (titleIconKey != other.titleIconKey) return false
+        if (titleIconTint != other.titleIconTint) return false
+        if (textColor != other.textColor) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = padding.hashCode()
+        result = 31 * result + lineWidth.hashCode()
+        result = 31 * result + lineColor.hashCode()
+        result = 31 * result + (pathEffect?.hashCode() ?: 0)
+        result = 31 * result + strokeCap.hashCode()
+        result = 31 * result + titleTextStyle.hashCode()
+        result = 31 * result + (titleIconKey?.hashCode() ?: 0)
+        result = 31 * result + titleIconTint.hashCode()
+        result = 31 * result + textColor.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "TipAlertStyling(" +
+            "padding=$padding, " +
+            "lineWidth=$lineWidth, " +
+            "lineColor=$lineColor, " +
+            "pathEffect=$pathEffect, " +
+            "strokeCap=$strokeCap, " +
+            "titleTextStyle=$titleTextStyle, " +
+            "titleIconKey=$titleIconKey, " +
+            "titleIconTint=$titleIconTint, " +
+            "textColor=$textColor" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -74,6 +200,52 @@ public class ImportantAlertStyling(
     override val titleIconTint: Color,
     override val textColor: Color,
 ) : BaseAlertStyling {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ImportantAlertStyling
+
+        if (padding != other.padding) return false
+        if (lineWidth != other.lineWidth) return false
+        if (lineColor != other.lineColor) return false
+        if (pathEffect != other.pathEffect) return false
+        if (strokeCap != other.strokeCap) return false
+        if (titleTextStyle != other.titleTextStyle) return false
+        if (titleIconKey != other.titleIconKey) return false
+        if (titleIconTint != other.titleIconTint) return false
+        if (textColor != other.textColor) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = padding.hashCode()
+        result = 31 * result + lineWidth.hashCode()
+        result = 31 * result + lineColor.hashCode()
+        result = 31 * result + (pathEffect?.hashCode() ?: 0)
+        result = 31 * result + strokeCap.hashCode()
+        result = 31 * result + titleTextStyle.hashCode()
+        result = 31 * result + (titleIconKey?.hashCode() ?: 0)
+        result = 31 * result + titleIconTint.hashCode()
+        result = 31 * result + textColor.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "ImportantAlertStyling(" +
+            "padding=$padding, " +
+            "lineWidth=$lineWidth, " +
+            "lineColor=$lineColor, " +
+            "pathEffect=$pathEffect, " +
+            "strokeCap=$strokeCap, " +
+            "titleTextStyle=$titleTextStyle, " +
+            "titleIconKey=$titleIconKey, " +
+            "titleIconTint=$titleIconTint, " +
+            "textColor=$textColor" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -89,6 +261,52 @@ public class WarningAlertStyling(
     override val titleIconTint: Color,
     override val textColor: Color,
 ) : BaseAlertStyling {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as WarningAlertStyling
+
+        if (padding != other.padding) return false
+        if (lineWidth != other.lineWidth) return false
+        if (lineColor != other.lineColor) return false
+        if (pathEffect != other.pathEffect) return false
+        if (strokeCap != other.strokeCap) return false
+        if (titleTextStyle != other.titleTextStyle) return false
+        if (titleIconKey != other.titleIconKey) return false
+        if (titleIconTint != other.titleIconTint) return false
+        if (textColor != other.textColor) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = padding.hashCode()
+        result = 31 * result + lineWidth.hashCode()
+        result = 31 * result + lineColor.hashCode()
+        result = 31 * result + (pathEffect?.hashCode() ?: 0)
+        result = 31 * result + strokeCap.hashCode()
+        result = 31 * result + titleTextStyle.hashCode()
+        result = 31 * result + (titleIconKey?.hashCode() ?: 0)
+        result = 31 * result + titleIconTint.hashCode()
+        result = 31 * result + textColor.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "WarningAlertStyling(" +
+            "padding=$padding, " +
+            "lineWidth=$lineWidth, " +
+            "lineColor=$lineColor, " +
+            "pathEffect=$pathEffect, " +
+            "strokeCap=$strokeCap, " +
+            "titleTextStyle=$titleTextStyle, " +
+            "titleIconKey=$titleIconKey, " +
+            "titleIconTint=$titleIconTint, " +
+            "textColor=$textColor" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -104,5 +322,51 @@ public class CautionAlertStyling(
     override val titleIconTint: Color,
     override val textColor: Color,
 ) : BaseAlertStyling {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as CautionAlertStyling
+
+        if (padding != other.padding) return false
+        if (lineWidth != other.lineWidth) return false
+        if (lineColor != other.lineColor) return false
+        if (pathEffect != other.pathEffect) return false
+        if (strokeCap != other.strokeCap) return false
+        if (titleTextStyle != other.titleTextStyle) return false
+        if (titleIconKey != other.titleIconKey) return false
+        if (titleIconTint != other.titleIconTint) return false
+        if (textColor != other.textColor) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = padding.hashCode()
+        result = 31 * result + lineWidth.hashCode()
+        result = 31 * result + lineColor.hashCode()
+        result = 31 * result + (pathEffect?.hashCode() ?: 0)
+        result = 31 * result + strokeCap.hashCode()
+        result = 31 * result + titleTextStyle.hashCode()
+        result = 31 * result + (titleIconKey?.hashCode() ?: 0)
+        result = 31 * result + titleIconTint.hashCode()
+        result = 31 * result + textColor.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "CautionAlertStyling(" +
+            "padding=$padding, " +
+            "lineWidth=$lineWidth, " +
+            "lineColor=$lineColor, " +
+            "pathEffect=$pathEffect, " +
+            "strokeCap=$strokeCap, " +
+            "titleTextStyle=$titleTextStyle, " +
+            "titleIconKey=$titleIconKey, " +
+            "titleIconTint=$titleIconTint, " +
+            "textColor=$textColor" +
+            ")"
+    }
+
     public companion object
 }

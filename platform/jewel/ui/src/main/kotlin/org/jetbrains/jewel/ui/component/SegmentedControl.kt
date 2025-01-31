@@ -116,7 +116,35 @@ public class SegmentedControlButtonData(
         @Composable
         SegmentedControlButtonScope.(segmentedControlButtonState: SegmentedControlButtonState) -> Unit,
     public val onSelect: () -> Unit,
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SegmentedControlButtonData
+
+        if (selected != other.selected) return false
+        if (content != other.content) return false
+        if (onSelect != other.onSelect) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = selected.hashCode()
+        result = 31 * result + content.hashCode()
+        result = 31 * result + onSelect.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "SegmentedControlButtonData(" +
+            "selected=$selected, " +
+            "content=$content, " +
+            "onSelect=$onSelect" +
+            ")"
+    }
+}
 
 @Immutable
 @JvmInline

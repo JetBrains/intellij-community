@@ -12,6 +12,17 @@ private class PathOverrideImpl(private val overrides: Map<String, String>) : Pai
     override fun PainterProviderScope.patch(): String = overrides[path] ?: path
 
     override fun toString(): String = "PathOverrideImpl(overrides=$overrides)"
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as PathOverrideImpl
+
+        return overrides == other.overrides
+    }
+
+    override fun hashCode(): Int = overrides.hashCode()
 }
 
 /**

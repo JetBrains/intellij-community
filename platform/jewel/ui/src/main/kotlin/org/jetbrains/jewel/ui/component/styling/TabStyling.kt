@@ -23,6 +23,40 @@ public class TabStyle(
     public val contentAlpha: TabContentAlpha,
     public val scrollbarStyle: ScrollbarStyle,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as TabStyle
+
+        if (colors != other.colors) return false
+        if (metrics != other.metrics) return false
+        if (icons != other.icons) return false
+        if (contentAlpha != other.contentAlpha) return false
+        if (scrollbarStyle != other.scrollbarStyle) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = colors.hashCode()
+        result = 31 * result + metrics.hashCode()
+        result = 31 * result + icons.hashCode()
+        result = 31 * result + contentAlpha.hashCode()
+        result = 31 * result + scrollbarStyle.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "TabStyle(" +
+            "colors=$colors, " +
+            "metrics=$metrics, " +
+            "icons=$icons, " +
+            "contentAlpha=$contentAlpha, " +
+            "scrollbarStyle=$scrollbarStyle" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -35,12 +69,59 @@ public class TabMetrics(
     public val tabContentSpacing: Dp,
     public val closeContentGap: Dp,
 ) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as TabMetrics
+
+        if (underlineThickness != other.underlineThickness) return false
+        if (tabPadding != other.tabPadding) return false
+        if (tabHeight != other.tabHeight) return false
+        if (tabContentSpacing != other.tabContentSpacing) return false
+        if (closeContentGap != other.closeContentGap) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = underlineThickness.hashCode()
+        result = 31 * result + tabPadding.hashCode()
+        result = 31 * result + tabHeight.hashCode()
+        result = 31 * result + tabContentSpacing.hashCode()
+        result = 31 * result + closeContentGap.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "TabMetrics(" +
+            "underlineThickness=$underlineThickness, " +
+            "tabPadding=$tabPadding, " +
+            "tabHeight=$tabHeight, " +
+            "tabContentSpacing=$tabContentSpacing, " +
+            "closeContentGap=$closeContentGap" +
+            ")"
+    }
+
     public companion object
 }
 
 @Immutable
 @GenerateDataFunctions
 public class TabIcons(public val close: IconKey) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as TabIcons
+
+        return close == other.close
+    }
+
+    override fun hashCode(): Int = close.hashCode()
+
+    override fun toString(): String = "TabIcons(close=$close)"
+
     public companion object
 }
 
@@ -108,6 +189,70 @@ public class TabColors(
             }
         )
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as TabColors
+
+        if (background != other.background) return false
+        if (backgroundDisabled != other.backgroundDisabled) return false
+        if (backgroundPressed != other.backgroundPressed) return false
+        if (backgroundHovered != other.backgroundHovered) return false
+        if (backgroundSelected != other.backgroundSelected) return false
+        if (content != other.content) return false
+        if (contentDisabled != other.contentDisabled) return false
+        if (contentPressed != other.contentPressed) return false
+        if (contentHovered != other.contentHovered) return false
+        if (contentSelected != other.contentSelected) return false
+        if (underline != other.underline) return false
+        if (underlineDisabled != other.underlineDisabled) return false
+        if (underlinePressed != other.underlinePressed) return false
+        if (underlineHovered != other.underlineHovered) return false
+        if (underlineSelected != other.underlineSelected) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = background.hashCode()
+        result = 31 * result + backgroundDisabled.hashCode()
+        result = 31 * result + backgroundPressed.hashCode()
+        result = 31 * result + backgroundHovered.hashCode()
+        result = 31 * result + backgroundSelected.hashCode()
+        result = 31 * result + content.hashCode()
+        result = 31 * result + contentDisabled.hashCode()
+        result = 31 * result + contentPressed.hashCode()
+        result = 31 * result + contentHovered.hashCode()
+        result = 31 * result + contentSelected.hashCode()
+        result = 31 * result + underline.hashCode()
+        result = 31 * result + underlineDisabled.hashCode()
+        result = 31 * result + underlinePressed.hashCode()
+        result = 31 * result + underlineHovered.hashCode()
+        result = 31 * result + underlineSelected.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "TabColors(" +
+            "background=$background, " +
+            "backgroundDisabled=$backgroundDisabled, " +
+            "backgroundPressed=$backgroundPressed, " +
+            "backgroundHovered=$backgroundHovered, " +
+            "backgroundSelected=$backgroundSelected, " +
+            "content=$content, " +
+            "contentDisabled=$contentDisabled, " +
+            "contentPressed=$contentPressed, " +
+            "contentHovered=$contentHovered, " +
+            "contentSelected=$contentSelected, " +
+            "underline=$underline, " +
+            "underlineDisabled=$underlineDisabled, " +
+            "underlinePressed=$underlinePressed, " +
+            "underlineHovered=$underlineHovered, " +
+            "underlineSelected=$underlineSelected" +
+            ")"
+    }
+
     public companion object
 }
 
@@ -156,6 +301,55 @@ public class TabContentAlpha(
                     )
             }
         )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as TabContentAlpha
+
+        if (iconNormal != other.iconNormal) return false
+        if (iconDisabled != other.iconDisabled) return false
+        if (iconPressed != other.iconPressed) return false
+        if (iconHovered != other.iconHovered) return false
+        if (iconSelected != other.iconSelected) return false
+        if (contentNormal != other.contentNormal) return false
+        if (contentDisabled != other.contentDisabled) return false
+        if (contentPressed != other.contentPressed) return false
+        if (contentHovered != other.contentHovered) return false
+        if (contentSelected != other.contentSelected) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = iconNormal.hashCode()
+        result = 31 * result + iconDisabled.hashCode()
+        result = 31 * result + iconPressed.hashCode()
+        result = 31 * result + iconHovered.hashCode()
+        result = 31 * result + iconSelected.hashCode()
+        result = 31 * result + contentNormal.hashCode()
+        result = 31 * result + contentDisabled.hashCode()
+        result = 31 * result + contentPressed.hashCode()
+        result = 31 * result + contentHovered.hashCode()
+        result = 31 * result + contentSelected.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "TabContentAlpha(" +
+            "iconNormal=$iconNormal, " +
+            "iconDisabled=$iconDisabled, " +
+            "iconPressed=$iconPressed, " +
+            "iconHovered=$iconHovered, " +
+            "iconSelected=$iconSelected, " +
+            "contentNormal=$contentNormal, " +
+            "contentDisabled=$contentDisabled, " +
+            "contentPressed=$contentPressed, " +
+            "contentHovered=$contentHovered, " +
+            "contentSelected=$contentSelected" +
+            ")"
+    }
 
     public companion object
 }
