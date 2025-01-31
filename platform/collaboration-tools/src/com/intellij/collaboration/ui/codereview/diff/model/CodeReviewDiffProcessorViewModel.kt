@@ -50,7 +50,7 @@ interface PreLoadingCodeReviewAsyncDiffViewModelDelegate<C : Any, CVM : AsyncDif
   companion object {
     fun <D : Any, C : Any, CVM : AsyncDiffViewModel> create(
       preloadedDataFlow: Flow<ComputedResult<D>?>,
-      changesPreProcessor: Flow<(List<C>) -> List<C>>,
+      changesPreProcessor: Flow<(List<C>) -> List<C>> = flowOf { it },
       createViewModel: CoroutineScope.(D, C) -> CVM,
     ): PreLoadingCodeReviewAsyncDiffViewModelDelegate<C, CVM> =
       PreLoadingCodeReviewAsyncDiffViewModelDelegateImpl(preloadedDataFlow, changesPreProcessor, createViewModel)

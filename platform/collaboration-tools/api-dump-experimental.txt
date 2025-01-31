@@ -975,6 +975,7 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - bs:showChanges$default(com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate,com.intellij.openapi.ListSelection,com.intellij.collaboration.ui.codereview.diff.model.DiffViewerScrollRequest,I,java.lang.Object):V
 *f:com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate$Companion
 - f:create(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function3):com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate
+- bs:create$default(com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate$Companion,kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function3,I,java.lang.Object):com.intellij.collaboration.ui.codereview.diff.model.PreLoadingCodeReviewAsyncDiffViewModelDelegate
 *:com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter
 - a:sort(java.util.List):java.util.List
 *f:com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter$Grouping
