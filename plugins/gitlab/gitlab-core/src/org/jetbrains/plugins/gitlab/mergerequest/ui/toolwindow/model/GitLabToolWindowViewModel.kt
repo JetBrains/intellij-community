@@ -20,7 +20,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.createSingleProjectAndAccountState
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel.Companion.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowConnectedProjectViewModel.Companion.GitLabToolWindowConnectedProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestsUtil.repoAndAccountState
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
@@ -28,7 +28,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 internal class GitLabToolWindowViewModel(
   private val project: Project,
   parentCs: CoroutineScope
-) : ReviewToolwindowViewModel<GitLabToolWindowProjectViewModel> {
+) : ReviewToolwindowViewModel<GitLabToolWindowConnectedProjectViewModel> {
   private val cs = parentCs.childScope(Dispatchers.Default)
 
   private val connectionManager: GitLabProjectConnectionManager = project.service<GitLabProjectConnectionManager>()
@@ -39,9 +39,9 @@ internal class GitLabToolWindowViewModel(
     it.isNotEmpty()
   }
 
-  override val projectVm: StateFlow<GitLabToolWindowProjectViewModel?> =
+  override val projectVm: StateFlow<GitLabToolWindowConnectedProjectViewModel?> =
     connectionManager.connectionState.mapScoped { connection ->
-      connection?.let { GitLabToolWindowProjectViewModel(project, accountManager, projectsManager, it, this@GitLabToolWindowViewModel) }
+      connection?.let { GitLabToolWindowConnectedProjectViewModel(project, accountManager, projectsManager, it, this@GitLabToolWindowViewModel) }
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
   val selectorVm: StateFlow<GitLabRepositoryAndAccountSelectorViewModel?> = isAvailable.mapScoped {
@@ -100,7 +100,7 @@ internal class GitLabToolWindowViewModel(
     _activationRequests.tryEmit(Unit)
   }
 
-  fun activateAndAwaitProject(action: GitLabToolWindowProjectViewModel.() -> Unit) {
+  internal fun activateAndAwaitProject(action: GitLabToolWindowConnectedProjectViewModel.() -> Unit) {
     cs.launch {
       _activationRequests.emit(Unit)
       projectVm.filterNotNull().first().action()

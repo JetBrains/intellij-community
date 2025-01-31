@@ -42,9 +42,9 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestT
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
-private val LOG = logger<GitLabToolWindowProjectViewModel>()
+private val LOG = logger<GitLabToolWindowConnectedProjectViewModel>()
 
-internal class GitLabToolWindowProjectViewModel
+internal class GitLabToolWindowConnectedProjectViewModel
 private constructor(parentCs: CoroutineScope,
                     private val project: Project,
                     accountManager: GitLabAccountManager,
@@ -62,7 +62,7 @@ private constructor(parentCs: CoroutineScope,
     connection.projectData.mergeRequests.getShared(iid)
       .transformConsecutiveSuccesses {
         mapScoped {
-          GitLabMergeRequestViewModels(project, this, connection.projectData, it, this@GitLabToolWindowProjectViewModel, connection.currentUser)
+          GitLabMergeRequestViewModels(project, this, connection.projectData, it, this@GitLabToolWindowConnectedProjectViewModel, connection.currentUser)
         }
       }
       .shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
@@ -187,12 +187,14 @@ private constructor(parentCs: CoroutineScope,
   }
 
   companion object {
-    internal fun CoroutineScope.GitLabToolWindowProjectViewModel(project: Project,
-                                                                 accountManager: GitLabAccountManager,
-                                                                 projectsManager: GitLabProjectsManager,
-                                                                 connection: GitLabProjectConnection,
-                                                                 twVm: GitLabToolWindowViewModel) =
-      GitLabToolWindowProjectViewModel(this, project, accountManager, projectsManager, connection, twVm)
+    internal fun CoroutineScope.GitLabToolWindowConnectedProjectViewModel(
+      project: Project,
+      accountManager: GitLabAccountManager,
+      projectsManager: GitLabProjectsManager,
+      connection: GitLabProjectConnection,
+      twVm: GitLabToolWindowViewModel,
+    ) =
+      GitLabToolWindowConnectedProjectViewModel(this, project, accountManager, projectsManager, connection, twVm)
 
     private fun GitLabReviewTab.toStatistics(): GitLabStatistics.ToolWindowTabType {
       return when (this) {
@@ -206,7 +208,7 @@ private constructor(parentCs: CoroutineScope,
 private suspend fun findOpenReviewIdByBranch(
   connection: GitLabProjectConnection,
   currentRemoteBranch: String,
-  targetProjectPath: String
+  targetProjectPath: String,
 ): String? {
   return connection.projectData.mergeRequests.findByBranches(GitLabMergeRequestState.OPENED, currentRemoteBranch).find {
     it.targetProject.fullPath == targetProjectPath && it.sourceProject?.fullPath == targetProjectPath

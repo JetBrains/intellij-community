@@ -29,7 +29,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDis
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModelsImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.LoadAllGitLabMergeRequestTimelineViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowConnectedProjectViewModel
 
 /**
  * Collection of view models for different merge request views
@@ -39,7 +39,7 @@ internal class GitLabMergeRequestViewModels(
   parentCs: CoroutineScope,
   projectData: GitLabProject,
   private val mergeRequest: GitLabMergeRequest,
-  private val projectVm: GitLabToolWindowProjectViewModel,
+  private val projectVm: GitLabToolWindowConnectedProjectViewModel,
   currentUser: GitLabUserDTO,
 ) {
   private val cs = parentCs.childScope(javaClass.name)

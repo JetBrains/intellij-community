@@ -29,7 +29,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowConnectedProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestErrorUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -93,7 +93,7 @@ private class ComponentFactory(private val project: Project, parentCs: Coroutine
     return wrapper
   }
 
-  private suspend fun showTimelineOrError(projectVm: GitLabToolWindowProjectViewModel,
+  private suspend fun showTimelineOrError(projectVm: GitLabToolWindowConnectedProjectViewModel,
                                           timelineVmResult: Result<GitLabMergeRequestTimelineViewModel>,
                                           mergeRequestId: String,
                                           wrapper: Wrapper) {

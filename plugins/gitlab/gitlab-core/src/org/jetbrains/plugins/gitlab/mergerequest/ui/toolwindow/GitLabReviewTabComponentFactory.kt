@@ -28,7 +28,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeReq
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsPanelFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabRepositoryAndAccountSelectorViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabReviewTabViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowConnectedProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
@@ -42,18 +42,18 @@ import javax.swing.*
 internal class GitLabReviewTabComponentFactory(
   private val project: Project,
   private val toolwindowViewModel: GitLabToolWindowViewModel,
-) : ReviewTabsComponentFactory<GitLabReviewTabViewModel, GitLabToolWindowProjectViewModel> {
+) : ReviewTabsComponentFactory<GitLabReviewTabViewModel, GitLabToolWindowConnectedProjectViewModel> {
 
   override fun createReviewListComponent(
     cs: CoroutineScope,
-    projectVm: GitLabToolWindowProjectViewModel,
+    projectVm: GitLabToolWindowConnectedProjectViewModel,
   ): JComponent {
     GitLabStatistics.logTwTabOpened(project, ToolWindowTabType.LIST, ToolWindowOpenTabActionPlace.TOOLWINDOW)
     return GitLabMergeRequestsPanelFactory().create(cs, projectVm.accountVm, projectVm.listVm)
   }
 
   override fun createTabComponent(cs: CoroutineScope,
-                                  projectVm: GitLabToolWindowProjectViewModel,
+                                  projectVm: GitLabToolWindowConnectedProjectViewModel,
                                   tabVm: GitLabReviewTabViewModel): JComponent {
     return when (tabVm) {
       is GitLabReviewTabViewModel.Details -> {
@@ -76,7 +76,7 @@ internal class GitLabReviewTabComponentFactory(
 
   private fun createReviewDetailsComponent(
     cs: CoroutineScope,
-    projectVm: GitLabToolWindowProjectViewModel,
+    projectVm: GitLabToolWindowConnectedProjectViewModel,
     reviewDetailsVm: GitLabMergeRequestDetailsLoadingViewModel
   ): JComponent {
     val avatarIconsProvider = projectVm.avatarIconProvider
