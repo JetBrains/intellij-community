@@ -155,7 +155,7 @@ suspend fun runTestBuild(
   context: suspend () -> BuildContext,
   build: suspend (BuildContext) -> Unit = { buildDistributions(it) }
 ) {
-  doRunTestBuild(context(), traceSpanName = testInfo.spanName, writeTelemetry = true, build = build)
+  doRunTestBuild(context(), testInfo.spanName, writeTelemetry = true, build)
 }
 
 private val defaultLogFactory = Logger.getFactory()

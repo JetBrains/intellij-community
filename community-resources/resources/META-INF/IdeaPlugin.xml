@@ -28,6 +28,7 @@
   </xi:include>
 
   <extensions defaultExtensionNs="com.intellij">
+    <!--suppress PluginXmlRegistrationCheck -->
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"
                         serviceImplementation="com.intellij.openapi.updateSettings.base.ShowWhatIsNewPageAfterUpdateCustomization"
                         overrides="true"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.util.xml.dom.readXmlAsModel
@@ -16,13 +16,13 @@ fun runEssentialPluginsTest(
   homePath: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools,
-) = runBlocking(Dispatchers.Default) {
+): Unit = runBlocking(Dispatchers.Default) {
   val buildContext = BuildContextImpl.createContext(
-    projectHome = homePath,
-    productProperties = productProperties,
-    proprietaryBuildTools = buildTools,
+    homePath,
+    productProperties,
     setupTracer = false,
-    options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homePath)
+    buildTools,
+    createBuildOptionsForTest(productProperties, homePath)
   )
   val essentialPlugins = readXmlAsModel(buildContext.appInfoXml.toByteArray()).children.filter { it.name == "essential-plugin" }.mapNotNull { it.content }
   val softly = SoftAssertions()
@@ -34,7 +34,7 @@ fun runEssentialPluginsTest(
     essentialPluginDescription.requiredDependencies.filter { it in pluginById }.forEach { requiredPlugin ->
       println("$essentialPlugin depends on $requiredPlugin")
       if (requiredPlugin !in essentialPlugins) {
-        softly.fail<Unit>("$essentialPlugin depends on non-essential plugin $requiredPlugin")
+        softly.fail("$essentialPlugin depends on non-essential plugin $requiredPlugin")
       }
     }
   }
@@ -48,10 +48,10 @@ private data class PluginDescription(
 
 private suspend fun getPluginByIdMap(context: BuildContext): Map<String, PluginDescription> {
   val pluginMap = collectPluginDescriptors(
-    skipImplementationDetailPlugins = true, //it's not possible to disable implementation detail plugin
-    skipBundledPlugins = false,
+    skipImplementationDetails = true,  // it's not possible to disable implementation detail plugins
+    skipBundled = false,
     honorCompatiblePluginsToIgnore = false,
-    context = context
+    context
   )
-  return pluginMap.values.associate { it.id to PluginDescription(pluginId = it.id, requiredDependencies = it.requiredDependencies) }
+  return pluginMap.values.associate { it.id to PluginDescription(it.id, it.requiredDependencies) }
 }
