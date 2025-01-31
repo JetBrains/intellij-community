@@ -66,17 +66,21 @@ def exec_table_command(init_command, command_type, start_index, end_index, forma
     return True, ''.join(res)
 
 
+def __get_table_type_name(table):
+    nested_data_type = type(table)
+    nested_data_type_name = '{}.{}'.format(nested_data_type.__module__, nested_data_type.__name__)
+    return nested_data_type_name
+
+
 # noinspection PyUnresolvedReferences
 def __get_table_provider(output):
     # type: (str) -> Any
-    output_type = type(output)
-
-    table_provider = None
-    type_qualified_name = '{}.{}'.format(output_type.__module__, output_type.__name__)
+    type_qualified_name = __get_table_type_name(output['data'])
     numpy_based_type_qualified_names = ['tensorflow.python.framework.ops.EagerTensor',
                                         'tensorflow.python.ops.resource_variable_ops.ResourceVariable',
                                         'tensorflow.python.framework.sparse_tensor.SparseTensor',
                                         'torch.Tensor']
+    table_provider = None
     if type_qualified_name in ['pandas.core.frame.DataFrame',
                                'pandas.core.series.Series',
                                'geopandas.geoseries.GeoSeries',
@@ -107,23 +111,22 @@ def __get_table_provider(output):
 # noinspection PyUnresolvedReferences
 def __get_image_provider(output):
     # type: (str) -> Any
-    output_type = type(output)
-    image_provider = None
-    type_qualified_name = '{}.{}'.format(output_type.__module__, output_type.__name__)
+    __get_table_type_name(output['data'])
     numpy_based_type_qualified_names = ['tensorflow.python.framework.ops.EagerTensor',
                                         'tensorflow.python.ops.resource_variable_ops.ResourceVariable',
                                         'tensorflow.python.framework.sparse_tensor.SparseTensor',
                                         'torch.Tensor']
+    image_provider = None
     if type_qualified_name == 'builtins.dict':
         table_type = '{}.{}'.format(type(output['data']).__module__, type(output['data']).__name__)
         if table_type in numpy_based_type_qualified_names:
             import _pydevd_bundle.tables.images.pydevd_numpy_based_image as image_provider
         else:
             import _pydevd_bundle.tables.images.pydevd_numpy_image as image_provider
-    elif type_qualified_name == 'numpy.ndarray':
-        import _pydevd_bundle.tables.images.pydevd_numpy_image as image_provider
     elif type_qualified_name in numpy_based_type_qualified_names:
         import _pydevd_bundle.tables.images.pydevd_numpy_based_image as image_provider
+    elif type_qualified_name == 'numpy.ndarray':
+        import _pydevd_bundle.tables.images.pydevd_numpy_image as image_provider
     elif type_qualified_name == 'PIL.Image.Image':
         import _pydevd_bundle.tables.images.pydevd_pillow_image as image_provider
     elif type_qualified_name == 'matplotlib.figure.Figure':

@@ -19,17 +19,19 @@ def get_bytes(arr):
             raise ValueError("Only numeric array types are supported.")
 
         if arr.ndim == 1:
-            arr = np.expand_dims(arr, axis=0)
-
-        arr_min, arr_max = np.min(arr), np.max(arr)
-        if arr_min == arr_max:  # handle constant values
-            arr = np.full_like(arr, 127, dtype=np.uint8)
+            arr_to_convert = np.expand_dims(arr, axis=0)
         else:
-            arr = ((arr - arr_min) / (arr_max - arr_min) * 255).astype(np.uint8)
+            arr_to_convert = arr
 
-        mode = GRAYSCALE_MODE if arr.ndim == 2 else RGB_MODE
+        arr_min, arr_max = np.min(arr_to_convert), np.max(arr_to_convert)
+        if arr_min == arr_max:  # handle constant values
+            arr_to_convert = np.full_like(arr_to_convert, 127, dtype=np.uint8)
+        else:
+            arr_to_convert = ((arr_to_convert - arr_min) / (arr_max - arr_min) * 255).astype(np.uint8)
+
+        mode = GRAYSCALE_MODE if arr_to_convert.ndim == 2 else RGB_MODE
         bytes_buffer = io.BytesIO()
-        image = Image.fromarray(arr, mode=mode)
+        image = Image.fromarray(arr_to_convert, mode=mode)
         image.save(bytes_buffer, format=DEFAULT_IMAGE_FORMAT)
         return base64.b64encode(bytes_buffer.getvalue()).decode(DEFAULT_ENCODING)
     except ImportError:
