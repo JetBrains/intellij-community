@@ -39,10 +39,11 @@ final class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnaly
   @Override
   public void processFile(@NotNull Path path) throws IOException {
     // ASM ClassReader in any case reads the whole file into memory
-    processByteArray(Files.readAllBytes(path));
+    processData(Files.readAllBytes(path));
   }
 
-  private void processByteArray(byte @NotNull [] data) {
+  @Override
+  public void processData(byte @NotNull [] data) {
     ClassReader cr = new ClassReader(data) {
       @Override
       protected Label readLabel(int offset, Label[] labels) {
@@ -61,7 +62,7 @@ final class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnaly
 
   @Override
   public void processInputStream(@NotNull InputStream inputStream) throws IOException {
-    processByteArray(inputStream.readAllBytes());
+    processData(inputStream.readAllBytes());
   }
 
   @Override
@@ -83,13 +84,7 @@ final class ClassFileAnalyzerImpl extends ClassVisitor implements ClassFileAnaly
   private final Map<String, JvmClassBytecodeDeclaration> myClassDeclarations = new HashMap<>();
 
   private @NotNull JvmClassBytecodeDeclaration getOrCreateClassDeclaration(@NotNull String name) {
-    JvmClassBytecodeDeclaration result = myClassDeclarations.get(name);
-    if (result == null) {
-      result = new JvmClassBytecodeDeclarationImpl(name);
-      myClassDeclarations.put(name, result);
-    }
-
-    return result;
+    return myClassDeclarations.computeIfAbsent(name, JvmClassBytecodeDeclarationImpl::new);
   }
 
   private void processMethodReference(JvmClassBytecodeDeclaration targetClass, String methodName, String methodDescriptor) {
