@@ -13,13 +13,11 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRChangesService
-import java.util.concurrent.CompletableFuture
 
 internal class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
                                            private val changesService: GHPRChangesService,
@@ -80,10 +78,6 @@ internal class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
     val mergeBase = changesService.loadMergeBaseOid(refs.baseRef, refs.headRef)
     return changesService.loadPatch(mergeBase, commitSha).find { it.filePath == filePath }
   }
-
-  @Deprecated("Please migrate ro coroutines and use apiCommitsRequest")
-  override fun loadCommitsFromApi(): CompletableFuture<List<GHCommit>> =
-    cs.async { loadCommits() }.asCompletableFuture()
 
   private inner class ChangesDataLoader(parentCs: CoroutineScope, val refs: GHPRBranchesRefs) {
     private val cs = parentCs.childScope()
