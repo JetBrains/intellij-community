@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -16,15 +17,55 @@ import org.jetbrains.kotlin.resolve.deprecation.DeprecationInfo
 
 internal sealed interface ImportCandidate {
     val symbol: KaDeclarationSymbol
+
+    context(KaSession)
+    fun createPointer(): ImportCandidatePointer
 }
 
-internal data class ClassLikeImportCandidate(override val symbol: KaClassLikeSymbol): ImportCandidate
+internal interface ImportCandidatePointer {
+    context(KaSession)
+    fun restore(): ImportCandidate?
+}
+
+
+internal data class ClassLikeImportCandidate(override val symbol: KaClassLikeSymbol) : ImportCandidate {
+    context(KaSession)
+    override fun createPointer(): ImportCandidatePointer = Pointer(symbol.createPointer())
+
+    private class Pointer(private val symbolPointer: KaSymbolPointer<KaClassLikeSymbol>) : ImportCandidatePointer {
+        context(KaSession)
+        override fun restore(): ImportCandidate? {
+            val symbol = symbolPointer.restoreSymbol() ?: return null
+            return ClassLikeImportCandidate(symbol)
+        }
+    }
+}
 
 @ConsistentCopyVisibility
 internal data class CallableImportCandidate private constructor(
     override val symbol: KaCallableSymbol,
     val dispatcherObject: KaClassSymbol?,
 ) : ImportCandidate {
+
+    context(KaSession)
+    override fun createPointer(): ImportCandidatePointer = Pointer(symbol.createPointer(), dispatcherObject?.createPointer())
+
+    private class Pointer(
+        val symbolPointer: KaSymbolPointer<KaCallableSymbol>,
+        val dispatcherObjectPointer: KaSymbolPointer<KaClassSymbol>?,
+    ) : ImportCandidatePointer {
+
+        context(KaSession)
+        override fun restore(): ImportCandidate? {
+            val symbol = symbolPointer.restoreSymbol() ?: return null
+
+            if (dispatcherObjectPointer == null) return create(symbol)
+
+            val dispatcherObject = dispatcherObjectPointer.restoreSymbol() ?: return null
+            return create(symbol, dispatcherObject)
+        }
+    }
+
     companion object {
         context(KaSession)
         fun create(
@@ -32,7 +73,7 @@ internal data class CallableImportCandidate private constructor(
             dispatcherObject: KaClassSymbol? = null,
         ): CallableImportCandidate {
             return CallableImportCandidate(
-                symbol, 
+                symbol,
                 dispatcherObject?.takeUnless { it == symbol.containingSymbol },
             )
         }
@@ -78,6 +119,7 @@ internal val ImportCandidate.psi: PsiElement?
             // So, even if there is a dispatcher object, we still return the PSI of the original method.
             symbol.psi
         }
+
         is ClassLikeImportCandidate -> symbol.psi
     }
 
