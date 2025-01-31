@@ -7080,9 +7080,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/inspectionsLocal/kotlinUnreachableCode/simple.kt");
+        @TestMetadata("afterInfiniteLoop.kt")
+        public void testAfterInfiniteLoop() throws Exception {
+            runTest("testData/inspectionsLocal/kotlinUnreachableCode/afterInfiniteLoop.kt");
+        }
+
+        @TestMetadata("afterReturnInFunction.kt")
+        public void testAfterReturnInFunction() throws Exception {
+            runTest("testData/inspectionsLocal/kotlinUnreachableCode/afterReturnInFunction.kt");
+        }
+
+        @TestMetadata("afterThrow.kt")
+        public void testAfterThrow() throws Exception {
+            runTest("testData/inspectionsLocal/kotlinUnreachableCode/afterThrow.kt");
         }
     }
 
