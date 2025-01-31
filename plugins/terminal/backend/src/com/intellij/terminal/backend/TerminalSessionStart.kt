@@ -9,6 +9,8 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalExecutorServiceManagerImpl
 import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toTermSize
+import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.awaitCancellationAndInvoke
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.*
@@ -19,7 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.job
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
@@ -29,6 +31,7 @@ import org.jetbrains.plugins.terminal.util.waitFor
 
 private val LOG: Logger = Logger.getInstance(BackendTerminalSession::class.java)
 
+@OptIn(AwaitCancellationAndInvoke::class)
 internal fun startTerminalSession(
   project: Project,
   options: ShellStartupOptions,
@@ -55,19 +58,21 @@ internal fun startTerminalSession(
       startTerminalEmulation(services.terminalStarter)
     }
     finally {
+      outputFlow.tryEmit(listOf(TerminalSessionTerminatedEvent))
       coroutineScope.cancel()
     }
   }
 
-  coroutineScope.coroutineContext.job.invokeOnCompletion {
+  // For the case when coroutine scope is canceled externally
+  coroutineScope.awaitCancellationAndInvoke {
     val starter = services.terminalStarter
     starter.close() // close in background
-    //starter.ttyConnector.waitFor(STOP_EMULATOR_TIMEOUT) {
-    //  starter.requestEmulatorStop()
-    //}
+    starter.ttyConnector.waitFor(STOP_EMULATOR_TIMEOUT) {
+      starter.requestEmulatorStop()
+    }
   }
 
-  return BackendTerminalSession(inputChannel, outputFlow)
+  return BackendTerminalSession(inputChannel, outputFlow.asSharedFlow())
 }
 
 private fun startTerminalProcess(project: Project, options: ShellStartupOptions, initialSize: TermSize): TtyConnector {

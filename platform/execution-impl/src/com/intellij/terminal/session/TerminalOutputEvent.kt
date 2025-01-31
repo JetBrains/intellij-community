@@ -33,6 +33,10 @@ data class TerminalStateChangedEvent(val state: TerminalStateDto) : TerminalOutp
 @Serializable
 data object TerminalBeepEvent : TerminalOutputEvent
 
+@ApiStatus.Internal
+@Serializable
+data object TerminalSessionTerminatedEvent : TerminalOutputEvent
+
 // Shell Integration Events
 
 @ApiStatus.Internal

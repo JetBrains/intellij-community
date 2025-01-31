@@ -4,7 +4,10 @@ package org.jetbrains.plugins.terminal.block.reworked.session
 import com.intellij.terminal.session.TerminalInputEvent
 import com.intellij.terminal.session.TerminalOutputEvent
 import com.intellij.terminal.session.TerminalSession
+import com.intellij.terminal.session.TerminalSessionTerminatedEvent
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.onEach
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionApi
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 
@@ -15,11 +18,27 @@ import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSession
  * because it should be accessible from the shared terminal widget creating API with a lot of external usages.
  */
 internal class FrontendTerminalSession(private val id: TerminalSessionId) : TerminalSession {
+  @Volatile
+  private var isClosed: Boolean = false
+
   override suspend fun sendInputEvent(event: TerminalInputEvent) {
-    TerminalSessionApi.Companion.getInstance().sendInputEvent(id, event)
+    if (isClosed) {
+      return
+    }
+
+    TerminalSessionApi.getInstance().sendInputEvent(id, event)
   }
 
   override suspend fun getOutputFlow(): Flow<List<TerminalOutputEvent>> {
-    return TerminalSessionApi.Companion.getInstance().getOutputFlow(id)
+    if (isClosed) {
+      return emptyFlow()
+    }
+
+    val flow = TerminalSessionApi.getInstance().getOutputFlow(id)
+    return flow.onEach { events ->
+      if (events.any { it == TerminalSessionTerminatedEvent }) {
+        isClosed = true
+      }
+    }
   }
 }

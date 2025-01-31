@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.reworked
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
+import com.intellij.terminal.session.TerminalCloseEvent
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -34,6 +35,13 @@ internal object TerminalSessionStartHelper {
       }
     }
     else doStartTerminalSessionForWidget(project, widget, options)
+  }
+
+  @JvmStatic
+  fun closeTerminalSession(project: Project, session: TerminalSession) {
+    terminalProjectScope(project).launch {
+      session.sendInputEvent(TerminalCloseEvent)
+    }
   }
 
   private fun doStartTerminalSessionForWidget(

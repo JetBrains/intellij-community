@@ -46,6 +46,13 @@ interface TerminalWidget : ComponentContainer {
   @get:ApiStatus.Internal
   val session: TerminalSession?
 
+  /**
+   * Makes this terminal widget handle output events from this [session] and send input events to it.
+   *
+   * Note that session lifecycle is not bound to the lifecycle of the widget.
+   * If the widget is disposed, the session will continue running.
+   * To close the session, send [com.intellij.terminal.session.TerminalCloseEvent] using [TerminalSession.sendInputEvent].
+   */
   @ApiStatus.Internal
   fun connectToSession(session: TerminalSession)
 

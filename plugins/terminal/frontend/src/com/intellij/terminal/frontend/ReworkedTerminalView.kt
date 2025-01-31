@@ -122,7 +122,7 @@ internal class ReworkedTerminalView(
       alternateBufferModel,
       blocksModel,
       settings,
-      coroutineScope.childScope("TerminalSessionController")
+      coroutineScope.childScope("TerminalSessionController"),
     )
 
     sessionFuture.thenAccept { session ->

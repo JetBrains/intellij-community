@@ -11,9 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.ui.withLock
 
@@ -22,7 +20,7 @@ internal fun createTerminalOutputFlow(
   terminalDisplay: TerminalDisplayImpl,
   controller: ObservableJediTerminal,
   coroutineScope: CoroutineScope,
-): Flow<List<TerminalOutputEvent>> {
+): MutableSharedFlow<List<TerminalOutputEvent>> {
   val outputFlow = MutableSharedFlow<List<TerminalOutputEvent>>(
     extraBufferCapacity = Int.MAX_VALUE,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
@@ -188,5 +186,5 @@ internal fun createTerminalOutputFlow(
     }
   })
 
-  return outputFlow.asSharedFlow()
+  return outputFlow
 }

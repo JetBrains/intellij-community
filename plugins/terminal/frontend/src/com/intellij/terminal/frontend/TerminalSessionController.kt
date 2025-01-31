@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
@@ -8,10 +9,8 @@ import com.intellij.terminal.session.*
 import com.intellij.terminal.session.dto.toStyleRange
 import com.intellij.terminal.session.dto.toTerminalState
 import com.intellij.util.EventDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.intellij.util.containers.DisposableWrapperList
+import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
@@ -75,6 +74,9 @@ internal class TerminalSessionController(
         if (settings.audibleBell()) {
           Toolkit.getDefaultToolkit().beep()
         }
+      }
+      TerminalSessionTerminatedEvent -> {
+        fireSessionTerminated()
       }
       TerminalShellIntegrationInitializedEvent -> {
         // TODO

@@ -38,6 +38,7 @@ import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.TerminalTitle;
 import com.intellij.terminal.TerminalTitleListener;
+import com.intellij.terminal.session.TerminalSession;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TerminalWidgetKt;
 import com.intellij.toolWindow.InternalDecoratorImpl;
@@ -358,6 +359,23 @@ public final class TerminalToolWindowManager implements Disposable {
     panel.updateDFState();
 
     content.setPreferredFocusedComponent(() -> finalWidget.getPreferredFocusableComponent());
+
+    Disposer.register(content, new Disposable() {
+      @Override
+      public void dispose() {
+        // Terminal session lifecycle is not directly bound to the Tool Window tab lifecycle.
+        // We need to close the session when the tab is closed explicitly.
+        // And don't need it when a user is closing the project leaving the terminal tabs opened: to be able to reconnect back.
+        // So we send close event only if the tab is closed explicitly: backend will close it on its termination.
+        // It is not easy to determine whether it is explicit closing or not, so we use the heuristic.
+        TerminalSession session = finalWidget.getSession();
+        boolean isProjectClosing = toolWindow.getContentManager().isDisposed();
+        if (session != null && !isProjectClosing) {
+          TerminalSessionStartHelper.closeTerminalSession(myProject, session);
+        }
+      }
+    });
+
     return content;
   }
 
