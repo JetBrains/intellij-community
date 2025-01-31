@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.compose.preview
 
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.TweenSpec
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -95,7 +98,11 @@ internal class MarkdownComposePanel(
   @OptIn(FlowPreview::class)
   @Suppress("FunctionName")
   @Composable
-  private fun MarkdownPreviewPanel(scrollState: ScrollState, scrollingSynchronizer: ScrollingSynchronizer?, blockRenderer: ScrollSyncMarkdownBlockRenderer) {
+  private fun MarkdownPreviewPanel(scrollState: ScrollState,
+                                   scrollingSynchronizer: ScrollingSynchronizer?,
+                                   blockRenderer: ScrollSyncMarkdownBlockRenderer,
+                                   animationSpec: AnimationSpec<Float> = TweenSpec(easing = LinearEasing)
+  ) {
     val request by updateHandler.requests.collectAsState(null)
     (request as? PreviewRequest.Update)?.let {
       if (scrollingSynchronizer != null) {
@@ -103,7 +110,7 @@ internal class MarkdownComposePanel(
         LaunchedEffect(Unit) {
           coroutineScope.launch {
             scrollToLineFlow.debounce(16.milliseconds).collect { scrollToLine ->
-              scrollingSynchronizer.scrollToLine(scrollToLine)
+              scrollingSynchronizer.scrollToLine(scrollToLine, animationSpec)
             }
           }
         }

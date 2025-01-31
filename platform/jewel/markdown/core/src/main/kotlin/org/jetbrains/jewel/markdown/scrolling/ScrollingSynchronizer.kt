@@ -2,6 +2,8 @@
 // Apache 2.0 license.
 package org.jetbrains.jewel.markdown.scrolling
 
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.SpringSpec
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.lazy.LazyListState
@@ -69,7 +71,7 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 @ExperimentalJewelApi
 public abstract class ScrollingSynchronizer {
     /** Scroll the preview to the position that match the given [sourceLine] the best. */
-    public abstract suspend fun scrollToLine(sourceLine: Int)
+    public abstract suspend fun scrollToLine(sourceLine: Int, animationSpec: AnimationSpec<Float> = SpringSpec())
 
     /**
      * Called when [MarkdownProcessor] processes the raw markdown text. The processing itself is passed as an [action].
@@ -146,7 +148,7 @@ public abstract class ScrollingSynchronizer {
         // so this map always keeps relevant information.
         private val blocks2TextOffsets = mutableMapOf<MarkdownBlock, List<Int>>()
 
-        override suspend fun scrollToLine(sourceLine: Int) {
+        override suspend fun scrollToLine(sourceLine: Int, animationSpec: AnimationSpec<Float>) {
             val block = findBestBlockForLine(sourceLine) ?: return
             val y = blocks2Top[block] ?: return
             if (y < 0) return
@@ -156,7 +158,7 @@ public abstract class ScrollingSynchronizer {
             // in this case scroll to the first line of the first block positioned after the line
             val lineIndexInBlock = maxOf(0, sourceLine - lineRange.start)
             val lineOffset = textOffsets?.get(lineIndexInBlock) ?: 0
-            scrollState.animateScrollTo(y + lineOffset)
+            scrollState.animateScrollTo(y + lineOffset, animationSpec)
         }
 
         private fun findBestBlockForLine(line: Int): MarkdownBlock? {
