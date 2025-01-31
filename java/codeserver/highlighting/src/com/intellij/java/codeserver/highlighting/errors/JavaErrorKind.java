@@ -114,6 +114,13 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
            psi -> { });
     }
 
+    private <T> @NotNull T checkNotNull(T val, String name) {
+      if (val == null) {
+        throw new NullPointerException("Function '" + name + "' returns null for key " + key());
+      }
+      return val;
+    }
+
     @Override
     public @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key() {
       return myKey;
@@ -121,17 +128,17 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
 
     @Override
     public @NotNull HtmlChunk description(@NotNull Psi psi, Void unused) {
-      return myDescription.apply(psi);
+      return checkNotNull(myDescription.apply(psi), "description");
     }
 
     @Override
     public @NotNull HtmlChunk tooltip(@NotNull Psi psi, Void unused) {
-      return myTooltip.apply(psi);
+      return checkNotNull(myTooltip.apply(psi), "tooltip");
     }
 
     @Override
     public @NotNull PsiElement anchor(@NotNull Psi psi, Void unused) {
-      return myAnchor.apply(psi);
+      return checkNotNull(myAnchor.apply(psi), "anchor");
     }
 
     @Override
@@ -141,7 +148,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
 
     @Override
     public @NotNull JavaErrorHighlightType highlightType(@NotNull Psi psi, Void unused) {
-      return myHighlightType.apply(psi);
+      return checkNotNull(myHighlightType.apply(psi), "highlightType");
     }
 
     @Override
@@ -266,6 +273,13 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
       myHighlightType = type;
       myValidator = validator;
     }
+
+    private <T> @NotNull T checkNotNull(T val, String name) {
+      if (val == null) {
+        throw new NullPointerException("Function '" + name + "' returns null for key " + key());
+      }
+      return val;
+    }
     
     Parameterized(@NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
       this(key,
@@ -284,17 +298,17 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
 
     @Override
     public @NotNull HtmlChunk description(@NotNull Psi psi, Context context) {
-        return myDescription.apply(psi, context);
+      return checkNotNull(myDescription.apply(psi, context), "description");
     }
 
     @Override
     public @NotNull HtmlChunk tooltip(@NotNull Psi psi, Context context) {
-        return myTooltip.apply(psi, context);
+        return checkNotNull(myTooltip.apply(psi, context), "tooltip");
     }
 
     @Override
     public @NotNull PsiElement anchor(@NotNull Psi psi, Context context) {
-      return myAnchor.apply(psi, context);
+      return checkNotNull(myAnchor.apply(psi, context), "anchor");
     }
 
     @Override
@@ -304,7 +318,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
 
     @Override
     public @NotNull JavaErrorHighlightType highlightType(@NotNull Psi psi, Context context) {
-      return myHighlightType.apply(psi, context);
+      return checkNotNull(myHighlightType.apply(psi, context), "highlightType");
     }
 
     @Override
