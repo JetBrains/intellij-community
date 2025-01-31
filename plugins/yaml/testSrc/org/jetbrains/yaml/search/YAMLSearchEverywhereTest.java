@@ -20,7 +20,7 @@ import java.util.List;
 public class YAMLSearchEverywhereTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/search/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/search/data/";
   }
 
   public void testSearch() throws IOException {

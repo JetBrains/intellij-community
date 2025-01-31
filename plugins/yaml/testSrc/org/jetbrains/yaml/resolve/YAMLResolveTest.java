@@ -15,7 +15,7 @@ import java.util.*;
 public class YAMLResolveTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/resolve/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/resolve/data/";
   }
 
   public void testAnchorsAndAliases() {

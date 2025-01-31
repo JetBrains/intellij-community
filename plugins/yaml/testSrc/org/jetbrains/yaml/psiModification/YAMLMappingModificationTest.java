@@ -17,7 +17,7 @@ import java.util.Map;
 public class YAMLMappingModificationTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/psiModification/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/psiModification/data/";
   }
 
   // TODO make

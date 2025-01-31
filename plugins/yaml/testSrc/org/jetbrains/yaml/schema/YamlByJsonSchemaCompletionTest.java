@@ -15,7 +15,7 @@ public class YamlByJsonSchemaCompletionTest extends JsonBySchemaCompletionBaseTe
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/schema/data/completion";
+    return PlatformTestUtil.getCommunityPath() + "/plugins/yaml/testData/org/jetbrains/yaml/schema/data/completion";
   }
 
   public void testTopLevel() throws Exception {

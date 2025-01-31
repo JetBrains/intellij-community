@@ -21,7 +21,7 @@ import java.awt.datatransfer.StringSelection;
 public class YAMLKeyPasteTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/paste/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/paste/data/";
   }
 
   public void testPasteKeysInStart1() {

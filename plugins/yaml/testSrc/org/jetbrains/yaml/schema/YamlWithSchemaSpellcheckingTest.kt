@@ -12,7 +12,7 @@ import java.util.function.Predicate
 
 class YamlWithSchemaSpellcheckingTest : JsonSchemaHighlightingTestBase() {
   override fun getTestDataPath(): String {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/schema/data/highlighting"
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/schema/data/highlighting"
   }
 
   override fun getTestFileName(): String {

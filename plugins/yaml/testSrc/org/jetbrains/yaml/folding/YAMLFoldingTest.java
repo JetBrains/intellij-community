@@ -6,7 +6,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 public class YAMLFoldingTest extends BasePlatformTestCase {
 
-  public static final String RELATIVE_TEST_DATA_PATH = "/plugins/yaml/testSrc/org/jetbrains/yaml/";
+  public static final String RELATIVE_TEST_DATA_PATH = "/plugins/yaml/testData/org/jetbrains/yaml/";
   public static final String TEST_DATA_PATH = PathManagerEx.getCommunityHomePath() + RELATIVE_TEST_DATA_PATH;
 
   public void testFolding() {

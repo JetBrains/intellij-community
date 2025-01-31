@@ -22,7 +22,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
   @NotNull
   @Override
   public String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/schema/data/highlighting";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/schema/data/highlighting";
   }
 
   @Override

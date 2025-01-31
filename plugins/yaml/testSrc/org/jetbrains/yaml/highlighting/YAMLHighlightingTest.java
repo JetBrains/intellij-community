@@ -11,7 +11,7 @@ import org.jetbrains.yaml.inspections.YAMLUnusedAnchorInspection;
 public class YAMLHighlightingTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/highlighting/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/highlighting/data/";
   }
 
   public void testBlockScalarHeaderError() {

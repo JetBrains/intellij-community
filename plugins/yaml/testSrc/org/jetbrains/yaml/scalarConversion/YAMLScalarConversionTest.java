@@ -23,7 +23,7 @@ public class YAMLScalarConversionTest extends BasePlatformTestCase {
   
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/scalarConversion/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/scalarConversion/data/";
   }
 
   @Override

@@ -22,7 +22,7 @@ public class YAMLLexerTest extends LexerTestCase {
 
   @Override
   protected @NotNull String getDirPath() {
-    return (PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/lexer/data/")
+    return (PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/lexer/data/")
       .substring(PathManager.getHomePath().length());
   }
 

@@ -55,7 +55,7 @@ class YAMLInlineExpandTest : BasePlatformTestCase() {
   }
 
   override fun getTestDataPath(): String {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/formatting/inlineExpandConversation/data/"
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/formatting/inlineExpandConversation/data/"
   }
 
   // Simple INLINE tests

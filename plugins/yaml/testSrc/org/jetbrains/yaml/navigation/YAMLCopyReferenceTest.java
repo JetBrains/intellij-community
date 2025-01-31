@@ -18,7 +18,7 @@ import java.io.IOException;
 public class YAMLCopyReferenceTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/navigation/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/navigation/data/";
   }
 
   public void testSimpleConfig() {

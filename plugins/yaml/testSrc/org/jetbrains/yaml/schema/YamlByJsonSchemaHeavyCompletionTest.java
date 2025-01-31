@@ -18,7 +18,7 @@ public class YamlByJsonSchemaHeavyCompletionTest extends JsonBySchemaHeavyComple
   @NotNull
   @Override
   public String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/schema/data/completion";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/schema/data/completion";
   }
 
   @Override

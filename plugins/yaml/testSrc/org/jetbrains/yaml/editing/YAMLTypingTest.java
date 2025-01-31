@@ -13,7 +13,7 @@ import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
 public class YAMLTypingTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/editing/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/editing/data/";
   }
 
   public void testEmptyValue() {

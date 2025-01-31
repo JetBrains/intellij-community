@@ -23,7 +23,7 @@ import java.util.function.Consumer;
 public class YAMLFormattingTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/formatting/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/formatting/data/";
   }
 
   public void testSample_default() {

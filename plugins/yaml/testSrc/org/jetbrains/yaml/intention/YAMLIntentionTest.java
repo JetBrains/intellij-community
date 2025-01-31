@@ -14,7 +14,7 @@ import java.util.Optional;
 public class YAMLIntentionTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/intention/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/intention/data/";
   }
 
   public void testDeleteDuplicatedKey() {

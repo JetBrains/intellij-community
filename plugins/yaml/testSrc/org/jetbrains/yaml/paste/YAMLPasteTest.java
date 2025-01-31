@@ -67,7 +67,7 @@ public abstract class YAMLPasteTest extends BasePlatformTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/paste/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/paste/data/";
   }
 
   public void testOneLinePaste() {

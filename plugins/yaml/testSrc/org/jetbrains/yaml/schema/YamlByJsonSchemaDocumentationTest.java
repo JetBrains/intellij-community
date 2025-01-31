@@ -9,7 +9,7 @@ public class YamlByJsonSchemaDocumentationTest extends JsonBySchemaDocumentation
   @NotNull
   @Override
   public String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/schema/data";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/schema/data";
   }
 
   @Override

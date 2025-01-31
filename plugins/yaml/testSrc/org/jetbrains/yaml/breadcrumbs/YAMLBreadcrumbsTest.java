@@ -23,7 +23,7 @@ public class YAMLBreadcrumbsTest extends BasePlatformTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/breadcrumbs/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/breadcrumbs/data/";
   }
 
   public void testText() {

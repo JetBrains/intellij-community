@@ -15,7 +15,7 @@ public class YAMLParserTest extends ParsingTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/parser/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/parser/data/";
   }
 
   public void test2docs() throws Throwable {

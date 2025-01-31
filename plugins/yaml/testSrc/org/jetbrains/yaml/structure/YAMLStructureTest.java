@@ -11,7 +11,7 @@ import javax.swing.tree.TreePath;
 public class YAMLStructureTest extends BasePlatformTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/structure/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testData/org/jetbrains/yaml/structure/data/";
   }
 
 
