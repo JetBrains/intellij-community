@@ -33,9 +33,7 @@ internal class AnalyzePluginStartupPerformanceAction : DumbAwareAction() {
     e.presentation.isEnabled = e.project != null && StartUpPerformanceService.getInstance().getPluginCostMap().isNotEmpty()
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
 private data class PluginStartupCostEntry(
@@ -87,6 +85,7 @@ private class PluginStartupCostDialog(private val project: Project) : DialogWrap
       override fun valueOf(item: PluginStartupCostEntry) =
         item.pluginName + (if (item.pluginId in pluginsToDisable) " (will be disabled)" else "")
     }
+    @Suppress("DialogTitleCapitalization")
     val costColumn = object : ColumnInfo<PluginStartupCostEntry, Int>(IdeBundle.message("column.name.startup.time.ms")) {
       override fun valueOf(item: PluginStartupCostEntry) = TimeUnit.NANOSECONDS.toMillis(item.cost).toInt()
     }
@@ -125,10 +124,7 @@ private class PluginStartupCostDialog(private val project: Project) : DialogWrap
     super.doOKAction()
     DisablePluginsDialog.confirmDisablePlugins(
       project,
-      pluginsToDisable.asSequence()
-        .map(PluginId::getId)
-        .mapNotNull(PluginManagerCore::getPlugin)
-        .toList(),
+      pluginsToDisable.mapNotNull { PluginManagerCore.getPlugin(PluginId.getId(it)) }
     )
   }
 
