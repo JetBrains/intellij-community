@@ -148,6 +148,7 @@ class TraceStreamRunner(val cs: CoroutineScope) {
         val resultInterpreter = TraceResultInterpreterImpl(provider.getLibrarySupport().interpreterFactory)
         val xValueInterpreter = provider.getXValueInterpreter(project)
         val tracer: StreamTracer = EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter)
+
         val result = tracer.trace(chain)
         when (result) {
           is StreamTracer.Result.Evaluated -> {
