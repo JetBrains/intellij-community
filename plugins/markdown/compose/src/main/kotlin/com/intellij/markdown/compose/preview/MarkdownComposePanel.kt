@@ -107,6 +107,13 @@ internal class MarkdownComposePanel(
             }
           }
         }
+        LaunchedEffect(it.initialScrollOffset) {
+          coroutineScope.launch {
+            if (it.initialScrollOffset != 0) {
+              scrollToLineFlow.emit(it.initialScrollOffset)
+            }
+          }
+        }
       }
       Markdown(
         it.content,
@@ -122,7 +129,10 @@ internal class MarkdownComposePanel(
   }
 
   override fun setHtml(html: String, initialScrollOffset: Int, document: VirtualFile?) {
-    updateHandler.setContent(html, initialScrollOffset, document)
+  }
+
+  override fun setHtml(html: String, initialScrollOffset: Int, initialScrollLineNumber: Int, document: VirtualFile?) {
+    updateHandler.setContent(html, initialScrollLineNumber, document)
   }
 
   override fun reloadWithOffset(offset: Int) {

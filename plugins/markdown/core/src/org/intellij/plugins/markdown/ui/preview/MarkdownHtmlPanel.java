@@ -48,6 +48,10 @@ public interface MarkdownHtmlPanel extends ScrollableMarkdownPreview, Disposable
 
   void setHtml(@NotNull String html, int initialScrollOffset, @Nullable VirtualFile document);
 
+  default void setHtml(@NotNull String html, int initialScrollOffset, int initialScrollLineNumber, @Nullable VirtualFile document) {
+    setHtml(html, initialScrollOffset, document);
+  }
+
   /**
    * @return null if current preview implementation doesn't support any message passing.
    */

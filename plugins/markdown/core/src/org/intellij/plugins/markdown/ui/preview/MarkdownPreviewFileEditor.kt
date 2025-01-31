@@ -215,7 +215,8 @@ class MarkdownPreviewFileEditor(
     val editor = mainEditor.firstOrNull() ?: return
     writeIntentReadAction {
       val offset = editor.caretModel.offset
-      panel.setHtml(lastRenderedHtml, offset, file)
+      val line = editor.document.getLineNumber(offset)
+      panel.setHtml(lastRenderedHtml, offset, line, file)
     }
   }
 
