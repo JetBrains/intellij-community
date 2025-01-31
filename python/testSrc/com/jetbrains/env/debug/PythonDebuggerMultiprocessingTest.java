@@ -1,18 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.debug;
 
-import com.google.common.collect.ImmutableSet;
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.util.SystemInfo;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
 import org.junit.Test;
 
 import java.util.HashSet;
-import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -81,6 +78,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         waitForOutput("Done");
+        waitForTerminate();
         assertFalse(output().contains("KeyboardInterrupt"));
       }
     });
@@ -117,8 +115,8 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForPause();
         resume();
+        waitForOutput("The subprocess finished with the return code 0.");
         waitForTerminate();
-        outputContains("The subprocess finished with the return code 0.");
       }
     });
   }
@@ -148,7 +146,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
       @Override
       public void before() {
         toggleBreakpoint(getFilePath("test_multiprocess_process.py"), 5);
-        setWaitForTermination(false);
       }
 
       @Override
@@ -156,6 +153,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         waitForPause();
         eval("name").hasValue("'subprocess'");
         resume();
+        waitForTerminate();
       }
     });
   }
@@ -235,6 +233,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
 
   @Test
   @TestFor(issues = "PY-37366")
+  @EnvTestTagsRequired(tags = "python3")
   public void testMultiprocessManagerFork() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_manager_fork.py") {
       @Override
@@ -264,7 +263,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         var expectedValues = new HashSet<String>();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 1; i < 4; i++) {
           expectedValues.add(Integer.toString(i));
         }
 

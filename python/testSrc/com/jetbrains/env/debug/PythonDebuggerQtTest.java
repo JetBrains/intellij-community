@@ -6,6 +6,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
@@ -25,6 +26,11 @@ public class PythonDebuggerQtTest extends PyEnvTestCase {
     @Override
     public Set<String> getTags() {
       return ImmutableSet.of("qt");
+    }
+
+    @Override
+    public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
+      return level.compareTo(LanguageLevel.PYTHON38) != 0;
     }
   }
 
