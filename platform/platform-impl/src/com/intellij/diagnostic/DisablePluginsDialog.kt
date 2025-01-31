@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.IdeBundle
@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -58,7 +59,7 @@ internal object DisablePluginsDialog {
     if (doDisable) {
       PluginEnabler.HEADLESS.disable(pluginsToDisable)
       if (doRestart) {
-        ApplicationManager.getApplication().restart()
+        ApplicationManagerEx.getApplicationEx().restart(true)
       }
     }
   }
