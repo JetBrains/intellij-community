@@ -109,6 +109,7 @@ class PyTypeHintsInspection : PyInspection() {
       checkPlainGenericInheritance(superClassExpressions)
       checkGenericDuplication(superClassExpressions)
       checkGenericCompleteness(node)
+      checkGenericClassTypeParametersNotUsedByOuterScope(node)
       checkMetaClass(node.metaClassExpression)
     }
 
@@ -864,6 +865,40 @@ class PyTypeHintsInspection : PyInspection() {
         }
 
       return Pair(if (seenGeneric) genericTypeVars else null, nonGenericTypeVars)
+    }
+
+    private fun checkGenericClassTypeParametersNotUsedByOuterScope(cls: PyClass) {
+      fun getTypeParameters(clazz: PyClass): Iterable<PyTypeParameterType> {
+        val clazzType = PyTypeChecker.findGenericDefinitionType(clazz, myTypeEvalContext) ?: return emptyList()
+        return clazzType.elementTypes.filterIsInstance<PyTypeParameterType>()
+      }
+
+      val names = getTypeParameters(cls).map { it.name }.toMutableSet()
+      if (names.isEmpty()) {
+        return
+      }
+      val namesUsedByOuterScopes = mutableListOf<String>()
+      var scopeOwner: ScopeOwner? = cls
+      do {
+        scopeOwner = PsiTreeUtil.getParentOfType(scopeOwner, PyClass::class.java, PyFunction::class.java)
+        val typeParameters = when (scopeOwner) {
+          is PyClass -> getTypeParameters(scopeOwner)
+          is PyFunction -> PyTypingTypeProvider.collectTypeParameters(scopeOwner, myTypeEvalContext)
+          else -> break
+        }
+        for (typeParameter in typeParameters) {
+          val name = typeParameter.name
+          if (names.remove(name)) {
+            namesUsedByOuterScopes.add(name)
+          }
+        }
+      }
+      while (true)
+
+      if (namesUsedByOuterScopes.isNotEmpty()) {
+        registerProblem(cls.nameIdentifier, PyPsiBundle.message("INSP.type.hints.some.type.variables.are.used.by.an.outer.scope",
+                                                                namesUsedByOuterScopes.joinToString(", ")))
+      }
     }
 
     private fun checkParameters(node: PySubscriptionExpression) {

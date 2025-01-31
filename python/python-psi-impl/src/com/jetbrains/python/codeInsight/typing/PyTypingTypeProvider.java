@@ -1654,30 +1654,36 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     PyQualifiedNameOwner typeVarDeclaration = context.getTypeAliasStack().pop();
     assert typeVarDeclaration instanceof PyTargetExpression;
     try {
-      if (owner instanceof PyClass) {
-        return StreamEx.of(collectTypeParameters((PyClass)owner, context))
-          .findFirst(type -> name.equals(type.getName()))
-          .orElse(null);
+      final Iterable<PyTypeParameterType> typeParameters;
+      if (owner instanceof PyClass cls) {
+        typeParameters = collectTypeParameters(cls, context);
       }
       else if (owner instanceof PyFunction function) {
-        return StreamEx.of(function.getParameterList().getParameters())
-          .select(PyNamedParameter.class)
-          .map(parameter -> new PyTypingTypeProvider().getParameterType(parameter, function, context))
-          .append(new PyTypingTypeProvider().getReturnType(function, context))
-          .map(Ref::deref)
-          .map(paramType -> PyTypeChecker.collectGenerics(paramType, context.getTypeContext()))
-          .flatMap(generics -> StreamEx.<PyTypeParameterType>of(generics.getTypeVars())
-            .append(generics.getParamSpecs())
-            .append(generics.getTypeVarTuples())
-          )
-          .findFirst(type -> name.equals(type.getName()))
-          .orElse(null);
+        typeParameters = collectTypeParameters(function, context.getTypeContext());
       }
+      else {
+        typeParameters = List.of();
+      }
+      return ContainerUtil.find(typeParameters, type -> name.equals(type.getName()));
     }
     finally {
       context.getTypeAliasStack().push(typeVarDeclaration);
     }
-    return null;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Iterable<PyTypeParameterType> collectTypeParameters(@NotNull PyFunction function,
+                                                                             @NotNull TypeEvalContext context) {
+    return StreamEx.of(function.getParameterList().getParameters())
+      .select(PyNamedParameter.class)
+      .map(parameter -> new PyTypingTypeProvider().getParameterType(parameter, function, context))
+      .append(new PyTypingTypeProvider().getReturnType(function, context))
+      .map(Ref::deref)
+      .map(paramType -> PyTypeChecker.collectGenerics(paramType, context))
+      .flatMap(generics -> StreamEx.<PyTypeParameterType>of(generics.getTypeVars())
+        .append(generics.getParamSpecs())
+        .append(generics.getTypeVarTuples())
+      );
   }
 
   private static @NotNull PsiElement getStubRetainedTypeHintContext(@NotNull PsiElement typeHintExpression) {

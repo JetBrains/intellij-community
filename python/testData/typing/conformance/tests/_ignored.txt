@@ -39,7 +39,6 @@ generics_paramspec_basic.py
 generics_paramspec_components.py
 generics_paramspec_semantics.py
 generics_paramspec_specialization.py
-generics_scoping.py
 generics_self_advanced.py
 generics_self_basic.py
 generics_self_usage.py

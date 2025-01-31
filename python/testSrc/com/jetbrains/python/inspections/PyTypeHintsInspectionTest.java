@@ -304,6 +304,30 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                 ...""");
   }
 
+  public void testGenericClassCannotUseTypeVariablesFromOuterScope() {
+    doTestByText("""
+                   from typing import TypeVar, Generic, Iterable
+                   
+                   T = TypeVar('T')
+                   S = TypeVar('S')
+                   
+                   def a_fun(x: T) -> None:
+                       a_list: list[T] = []
+                   
+                       class <warning descr="Some type variables (T) are used by an outer scope">MyGeneric</warning>(Generic[T]):
+                           ...
+                   
+                   class Outer(Generic[T]):
+                       class <warning descr="Some type variables (T) are used by an outer scope">Bad</warning>(Iterable[T]):
+                           ...
+                       class AlsoBad:
+                           x: list[<warning descr="Unbound type variable">T</warning>]
+                   
+                       class Inner(Iterable[S]):
+                           ...
+                       attr: Inner[T]""");
+  }
+
   // PY-28249
   public void testInstanceAndClassChecksOnAny() {
     doTestByText("""
