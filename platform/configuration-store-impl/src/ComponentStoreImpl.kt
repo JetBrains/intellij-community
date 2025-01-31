@@ -105,6 +105,13 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   internal fun getComponents(): Map<String, ComponentInfo> = components
 
+  @ApiStatus.Internal
+  fun incrementModificationCount(componentName: String) {
+    components[componentName]?.let { info ->
+      info.updateModificationCount(info.lastModificationCount + 1)
+    }
+  }
+
   fun getComponentNames(): Set<String> = HashSet(components.keys)
 
   override fun clearCaches() {
