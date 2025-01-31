@@ -757,6 +757,11 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (resolved != null && parent instanceof PsiReferenceList referenceList && !hasErrorResults()) {
       checkElementInReferenceList(ref, referenceList, result);
     }
+    if (!hasErrorResults()) myClassChecker.checkAbstractInstantiation(ref);
+    if (!hasErrorResults()) myClassChecker.checkExtendsDuplicate(ref, resolved);
+    if (!hasErrorResults()) myClassChecker.checkClassExtendsForeignInnerClass(ref, resolved);
+    if (!hasErrorResults()) myGenericsChecker.checkSelectStaticClassFromParameterizedType(resolved, ref);
+    if (!hasErrorResults() && parent instanceof PsiNewExpression newExpression) myGenericsChecker.checkDiamondTypeNotAllowed(newExpression);
     if (!hasErrorResults() && (!(parent instanceof PsiNewExpression newExpression) || !newExpression.isArrayCreation())) {
       myGenericsChecker.checkParameterizedReferenceTypeArguments(resolved, ref, result.getSubstitutor());
     }
@@ -791,11 +796,6 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (parent instanceof PsiAnonymousClass psiAnonymousClass && ref.equals(psiAnonymousClass.getBaseClassReference())) {
       if (!hasErrorResults()) myGenericsChecker.checkGenericCannotExtendException(psiAnonymousClass);
     }
-    if (!hasErrorResults()) myClassChecker.checkAbstractInstantiation(ref);
-    if (!hasErrorResults()) myClassChecker.checkExtendsDuplicate(ref, resolved);
-    if (!hasErrorResults()) myClassChecker.checkClassExtendsForeignInnerClass(ref, resolved);
-    if (!hasErrorResults() && parent instanceof PsiNewExpression newExpression) myGenericsChecker.checkDiamondTypeNotAllowed(newExpression);
-    if (!hasErrorResults()) myGenericsChecker.checkSelectStaticClassFromParameterizedType(resolved, ref);
     if (!hasErrorResults() && resolved instanceof PsiClass psiClass) myExpressionChecker.checkRestrictedIdentifierReference(ref, psiClass);
     return result;
   }

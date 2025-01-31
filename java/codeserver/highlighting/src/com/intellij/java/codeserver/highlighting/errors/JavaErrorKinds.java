@@ -734,13 +734,13 @@ public final class JavaErrorKinds {
       })
       .withRawDescription((list, ctx) -> message("pattern.deconstruction.count.mismatch", 
                                                  ctx.recordComponents().length, ctx.patternComponents().length));
-  public static final Parameterized<PsiInstanceOfExpression, JavaIncompatibleTypeErrorContext> PATTERN_INSTANCEOF_SUPERTYPE =
-    parameterized(PsiInstanceOfExpression.class, JavaIncompatibleTypeErrorContext.class, "pattern.instanceof.supertype")
+  public static final Parameterized<PsiTypeTestPattern, JavaIncompatibleTypeErrorContext> PATTERN_INSTANCEOF_SUPERTYPE =
+    parameterized(PsiTypeTestPattern.class, JavaIncompatibleTypeErrorContext.class, "pattern.instanceof.supertype")
       .withAnchor((expr, context) -> expr.getCheckType())
       .withRawDescription((expr, context) -> message(
         "pattern.instanceof.supertype", context.lType().getPresentableText(), requireNonNull(context.rType()).getPresentableText()));
-  public static final Parameterized<PsiInstanceOfExpression, PsiType> PATTERN_INSTANCEOF_EQUALS =
-    parameterized(PsiInstanceOfExpression.class, PsiType.class, "pattern.instanceof.equals")
+  public static final Parameterized<PsiTypeTestPattern, PsiType> PATTERN_INSTANCEOF_EQUALS =
+    parameterized(PsiTypeTestPattern.class, PsiType.class, "pattern.instanceof.equals")
       .withAnchor((expr, context) -> expr.getCheckType())
       .withRawDescription((expr, context) -> message("pattern.instanceof.equals", context.getPresentableText()));
   

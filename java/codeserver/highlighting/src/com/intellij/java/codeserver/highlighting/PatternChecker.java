@@ -223,11 +223,11 @@ final class PatternChecker {
     PsiType expressionType = expression.getOperand().getType();
     if (expressionType != null && checkType.isAssignableFrom(expressionType)) {
       if (checkType.equals(expressionType)) {
-        myVisitor.report(JavaErrorKinds.PATTERN_INSTANCEOF_EQUALS.create(expression, checkType));
+        myVisitor.report(JavaErrorKinds.PATTERN_INSTANCEOF_EQUALS.create(pattern, checkType));
       }
       else {
         myVisitor.report(JavaErrorKinds.PATTERN_INSTANCEOF_SUPERTYPE.create(
-          expression, new JavaIncompatibleTypeErrorContext(checkType, expressionType)));
+          pattern, new JavaIncompatibleTypeErrorContext(checkType, expressionType)));
       }
     }
   }

@@ -1319,6 +1319,7 @@ final class ExpressionChecker {
       }
       myVisitor.report(JavaErrorKinds.CAST_INCONVERTIBLE.create(
         expression, new JavaIncompatibleTypeErrorContext(operandType, checkType)));
+      return;
     }
     PsiPrimaryPattern pattern = expression.getPattern();
     if (pattern instanceof PsiDeconstructionPattern deconstruction) {

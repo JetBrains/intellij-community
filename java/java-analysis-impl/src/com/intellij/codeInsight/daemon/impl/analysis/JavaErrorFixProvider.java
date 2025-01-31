@@ -324,6 +324,17 @@ final class JavaErrorFixProvider {
         sink.accept(QuickFixFactory.getInstance().createDeleteFix(elementsToDelete, text));
       }
     });
+    fix(UNSUPPORTED_FEATURE, error -> {
+      if (error.context() == JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS &&
+          error.psi() instanceof PsiInstanceOfExpression instanceOfExpression) {
+        PsiTypeElement element = InstanceOfUtils.findCheckTypeElement(instanceOfExpression);
+        PsiType operandType = instanceOfExpression.getOperand().getType();
+        if (element != null && operandType != null && TypeConversionUtil.isPrimitiveAndNotNull(element.getType())) {
+          return myFactory.createReplacePrimitiveWithBoxedTypeAction(operandType, requireNonNull(element));
+        }
+      }
+      return null;
+    });
     fix(CAST_INCONVERTIBLE, error -> {
       if (error.psi() instanceof PsiInstanceOfExpression instanceOfExpression &&
           TypeConversionUtil.isPrimitiveAndNotNull(error.context().rType())) {
@@ -332,12 +343,10 @@ final class JavaErrorFixProvider {
       }
       return null;
     });
-    JavaFixProvider<PsiInstanceOfExpression, Object> redundantInstanceOfFix = error -> {
-      if (error.psi().getPattern() instanceof PsiTypeTestPattern pattern) {
-        PsiPatternVariable variable = pattern.getPatternVariable();
-        if (variable != null && !VariableAccessUtils.variableIsUsed(variable, variable.getDeclarationScope())) {
-          return new RedundantInstanceofFix(error.psi());
-        }
+    JavaFixProvider<PsiTypeTestPattern, Object> redundantInstanceOfFix = error -> {
+      PsiPatternVariable variable = error.psi().getPatternVariable();
+      if (variable != null && !VariableAccessUtils.variableIsUsed(variable, variable.getDeclarationScope())) {
+        return new RedundantInstanceofFix(error.psi().getParent());
       }
       return null;
     };
@@ -392,7 +401,7 @@ final class JavaErrorFixProvider {
         error -> error.context() instanceof PsiClass cls ? myFactory.createChangeClassSignatureFromUsageFix(cls, error.psi()) : null);
     JavaFixProvider<PsiTypeElement, TypeParameterBoundMismatchContext> addBoundFix = error -> {
       if (error.context().bound() instanceof PsiClassType bound) {
-        PsiClass psiClass = bound.resolve();
+        PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(error.context().actualType());
         if (psiClass != null) {
           return myFactory.createExtendsListFix(psiClass, bound, true);
         }
