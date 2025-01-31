@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import com.intellij.codeInspection.*
@@ -76,24 +76,37 @@ abstract class KotlinApplicableInspectionBase<E : KtElement, C : Any> : LocalIns
             context: C,
         ): ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 
-        protected abstract fun createQuickFixes(
+        protected abstract fun createQuickFix(
             element: E,
             context: C,
-        ): Array<KotlinModCommandQuickFix<E>>
+        ): KotlinModCommandQuickFix<E>?
 
         final override fun InspectionManager.createProblemDescriptor(
             element: E,
             context: C,
             rangeInElement: TextRange?,
             onTheFly: Boolean
-        ): ProblemDescriptor = createProblemDescriptor(
-            /* psiElement = */ element,
-            /* rangeInElement = */ rangeInElement,
-            /* descriptionTemplate = */ getProblemDescription(element, context),
-            /* highlightType = */ getProblemHighlightType(element, context),
-            /* onTheFly = */ onTheFly,
-            /* ...fixes = */ *createQuickFixes(element, context),
-        )
+        ): ProblemDescriptor {
+            val fix = createQuickFix(element, context)
+            return if (fix != null) {
+                createProblemDescriptor(
+                    /* psiElement = */ element,
+                    /* rangeInElement = */ rangeInElement,
+                    /* descriptionTemplate = */ getProblemDescription(element, context),
+                    /* highlightType = */ getProblemHighlightType(element, context),
+                    /* onTheFly = */ onTheFly,
+                    /* ...fixes = */ fix,
+                )
+            } else {
+                createProblemDescriptor(
+                    /* psiElement = */ element,
+                    /* rangeInElement = */ rangeInElement,
+                    /* descriptionTemplate = */ getProblemDescription(element, context),
+                    /* highlightType = */ getProblemHighlightType(element, context),
+                    /* onTheFly = */ onTheFly
+                )
+            }
+        }
     }
 
     abstract class Multiple<E : KtElement, C : Any> : KotlinApplicableInspectionBase<E, C>() {

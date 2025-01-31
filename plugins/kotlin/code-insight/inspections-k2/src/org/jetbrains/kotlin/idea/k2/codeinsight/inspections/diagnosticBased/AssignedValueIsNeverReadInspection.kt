@@ -32,10 +32,10 @@ internal class AssignedValueIsNeverReadInspection : KotlinPsiDiagnosticBasedInsp
     override fun getProblemHighlightType(element: KtExpression, context: Unit): ProblemHighlightType =
         ProblemHighlightType.LIKE_UNUSED_SYMBOL
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtExpression>> = emptyArray() // KTIJ-29530
+    ): KotlinModCommandQuickFix<KtExpression>? = null // KTIJ-29530
 
     override fun buildVisitor(
         holder: ProblemsHolder,

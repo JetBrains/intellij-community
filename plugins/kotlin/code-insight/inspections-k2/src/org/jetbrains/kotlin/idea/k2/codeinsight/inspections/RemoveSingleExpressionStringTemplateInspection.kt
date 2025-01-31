@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -41,10 +41,10 @@ internal class RemoveSingleExpressionStringTemplateInspection :
         return Context(type?.isStringType == true && !type.isMarkedNullable)
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtStringTemplateExpression,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtStringTemplateExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtStringTemplateExpression>() {
+    ) = object : KotlinModCommandQuickFix<KtStringTemplateExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.single.expression.string.template")
@@ -68,7 +68,7 @@ internal class RemoveSingleExpressionStringTemplateInspection :
             }
             element.replace(newElement)
         }
-    })
+    }
 
     private fun KtStringTemplateExpression.singleExpressionOrNull() = children.singleOrNull()?.children?.firstOrNull() as? KtExpression
 }

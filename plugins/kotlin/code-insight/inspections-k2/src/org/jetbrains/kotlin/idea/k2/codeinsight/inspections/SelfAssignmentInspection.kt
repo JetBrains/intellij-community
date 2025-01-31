@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
@@ -26,10 +26,10 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
     override fun getProblemDescription(element: KtBinaryExpression, context: String): String =
         KotlinBundle.message("variable.0.is.assigned.to.itself", context)
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtBinaryExpression,
         context: String,
-    ): Array<KotlinModCommandQuickFix<KtBinaryExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    ) = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.self.assignment.fix.text")
@@ -41,7 +41,7 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         ) {
             element.delete()
         }
-    })
+    }
 
     override fun buildVisitor(
         holder: ProblemsHolder,

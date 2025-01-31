@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -36,10 +36,10 @@ internal class RedundantRunCatchingInspection : KotlinApplicableInspectionBase.S
     override fun getProblemDescription(element: KtQualifiedExpression, context: CallChainExpressions): String =
         KotlinBundle.message("redundant.runcatching.call.may.be.reduced.to.0", conversion.replacement)
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtQualifiedExpression,
         context: CallChainExpressions
-    ): Array<KotlinModCommandQuickFix<KtQualifiedExpression>> = arrayOf(SimplifyCallChainFix(conversion))
+    ): KotlinModCommandQuickFix<KtQualifiedExpression> = SimplifyCallChainFix(conversion)
 
     override fun getApplicableRanges(element: KtQualifiedExpression): List<TextRange> {
         val chain = CallChainExpressions.from(element) ?: return emptyList()

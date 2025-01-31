@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
@@ -135,10 +135,10 @@ internal class JoinDeclarationAndAssignmentInspection :
                 && element.receiverTypeReference == null
                 && element.name != null
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtProperty,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtProperty>> = arrayOf(object : KotlinModCommandQuickFix<KtProperty>() {
+    ) = object : KotlinModCommandQuickFix<KtProperty>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("join.declaration.and.assignment")
@@ -187,7 +187,7 @@ internal class JoinDeclarationAndAssignmentInspection :
                 updater.update(newProperty, context.canOmitDeclaredType)
             }
         }
-    })
+    }
 
     context(KaSession)
     private fun canBeMovedToConstructor(element: KtProperty, initializer: KtExpression): Boolean {

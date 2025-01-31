@@ -42,10 +42,10 @@ internal class VariableInitializerIsRedundantInspection : KotlinPsiDiagnosticBas
     override fun getProblemHighlightType(element: KtElement, context: TypeInfo): ProblemHighlightType =
         ProblemHighlightType.LIKE_UNUSED_SYMBOL
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtElement,
         context: TypeInfo,
-    ): Array<KotlinModCommandQuickFix<KtElement>> = arrayOf(object : KotlinModCommandQuickFix<KtElement>() {
+    ): KotlinModCommandQuickFix<KtElement>? = object : KotlinModCommandQuickFix<KtElement>() {
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.redundant.initializer")
 
         override fun applyFix(
@@ -64,7 +64,7 @@ internal class VariableInitializerIsRedundantInspection : KotlinPsiDiagnosticBas
                 updater = updater,
             )
         }
-    })
+    }
 
     override fun buildVisitor(
         holder: ProblemsHolder,

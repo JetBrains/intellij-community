@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
@@ -46,10 +46,12 @@ internal class FloatingPointLiteralPrecisionInspection : KotlinApplicableInspect
         return KotlinBundle.message("floating.point.literal.precision.inspection")
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtConstantExpression,
         context: String
-    ): Array<KotlinModCommandQuickFix<KtConstantExpression>> = arrayOf(FloatingPointLiteralPrecisionQuickFix(context))
+    ): KotlinModCommandQuickFix<KtConstantExpression> {
+        return FloatingPointLiteralPrecisionQuickFix(context)
+    }
 
     context(KaSession)
     override fun prepareContext(element: KtConstantExpression): String? {

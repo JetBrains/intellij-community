@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -60,10 +60,10 @@ internal class SelfReferenceConstructorParameterInspection :
         )
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtPrimaryConstructor,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtPrimaryConstructor>> = arrayOf(object : KotlinModCommandQuickFix<KtPrimaryConstructor>() {
+    ): KotlinModCommandQuickFix<KtPrimaryConstructor> = object : KotlinModCommandQuickFix<KtPrimaryConstructor>() {
 
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.to.nullable.type.fix.text")
 
@@ -76,5 +76,5 @@ internal class SelfReferenceConstructorParameterInspection :
             val parameter = element.valueParameterList?.parameters[context.parameterIndex] ?: return
             parameter.typeReference = KtPsiFactory(project).createType(context.nullableType)
         }
-    })
+    }
 }

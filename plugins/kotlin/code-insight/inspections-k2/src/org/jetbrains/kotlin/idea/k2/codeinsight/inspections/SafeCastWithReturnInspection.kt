@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
@@ -22,10 +22,10 @@ class SafeCastWithReturnInspection : KotlinApplicableInspectionBase.Simple<KtBin
         context: Unit
     ): @InspectionMessage String = KotlinBundle.message("should.be.replaced.with.if.type.check")
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtBinaryExpression,
         context: Unit
-    ): Array<KotlinModCommandQuickFix<KtBinaryExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    ): KotlinModCommandQuickFix<KtBinaryExpression> = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
         override fun getFamilyName() = KotlinBundle.message("replace.with.if.fix.text")
 
         override fun applyFix(
@@ -47,7 +47,7 @@ class SafeCastWithReturnInspection : KotlinApplicableInspectionBase.Simple<KtBin
             )
             commentSaver.restore(result)
         }
-    })
+    }
 
     override fun isApplicableByPsi(expression: KtBinaryExpression): Boolean {
         val left = expression.left?.safeDeparenthesize() as? KtBinaryExpressionWithTypeRHS ?: return false

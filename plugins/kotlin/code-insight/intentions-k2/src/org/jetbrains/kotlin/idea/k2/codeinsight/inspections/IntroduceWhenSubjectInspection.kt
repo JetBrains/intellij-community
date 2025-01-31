@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -26,10 +26,10 @@ internal class IntroduceWhenSubjectInspection :
         context: String,
     ): String = KotlinBundle.message("introduce.0.as.subject.0.when", context)
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtWhenExpression,
         context: String,
-    ): Array<KotlinModCommandQuickFix<KtWhenExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtWhenExpression>() {
+    ) = object : KotlinModCommandQuickFix<KtWhenExpression>() {
 
         override fun applyFix(
             project: Project,
@@ -50,7 +50,7 @@ internal class IntroduceWhenSubjectInspection :
 
         override fun getFamilyName(): String =
             KotlinBundle.message("introduce.when.subject")
-    })
+    }
 
     override fun buildVisitor(
         holder: ProblemsHolder,

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
@@ -26,10 +26,10 @@ internal class IfThenToElvisInspection @JvmOverloads constructor(
     override fun getProblemDescription(element: KtIfExpression, context: IfThenToElvisInspectionData): String =
         KotlinBundle.message("if.then.foldable.to")
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtIfExpression,
         context: IfThenToElvisInspectionData
-    ): Array<KotlinModCommandQuickFix<KtIfExpression>> = arrayOf(IfThenToElviFix(context))
+    ): KotlinModCommandQuickFix<KtIfExpression> = IfThenToElviFix(context)
 
     override fun getApplicableRanges(element: KtIfExpression): List<TextRange> =
         ApplicabilityRanges.ifExpressionExcludingBranches(element)

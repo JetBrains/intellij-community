@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-internal class RemoveExplicitTypeArgumentsInspection : KotlinApplicableInspectionBase.Simple<KtTypeArgumentList, Unit>() {
+internal class RemoveExplicitTypeArgumentsInspection : KotlinApplicableInspectionBase.Multiple<KtTypeArgumentList, Unit>() {
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean,
@@ -43,11 +43,10 @@ internal class RemoveExplicitTypeArgumentsInspection : KotlinApplicableInspectio
     override fun createQuickFixes(
         element: KtTypeArgumentList,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtTypeArgumentList>> {
+    ): List<KotlinModCommandQuickFix<KtTypeArgumentList>> {
         val removeExplicitTypeArgumentsFix = createRemoveExplicitTypeArgumentsFix()
         val removeExplicitTypeFix = createRemoveExplicitTypeFix(element)
-        return if (removeExplicitTypeFix == null) arrayOf(removeExplicitTypeArgumentsFix)
-        else arrayOf(removeExplicitTypeArgumentsFix, removeExplicitTypeFix)
+        return listOfNotNull(removeExplicitTypeArgumentsFix, removeExplicitTypeFix)
     }
 
     private fun createRemoveExplicitTypeArgumentsFix(): KotlinModCommandQuickFix<KtTypeArgumentList> =
