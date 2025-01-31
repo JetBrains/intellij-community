@@ -18,7 +18,7 @@ private const val WINDSURF_ID = ".windsurf"
 private const val ECLIPSE_ID = ".eclipse"
 
 internal class EditorsCollector :  ApplicationUsagesCollector() {
-  private val EDITORS_GROUP: EventLogGroup = EventLogGroup("editors", 2)
+  private val EDITORS_GROUP: EventLogGroup = EventLogGroup("editors", 3)
 
   override fun getGroup(): EventLogGroup = EDITORS_GROUP
 
@@ -35,6 +35,15 @@ internal class EditorsCollector :  ApplicationUsagesCollector() {
     EventFields.String("config", CONFIGS)
   )
 
+  private val IS_VSCODE_USED_RECENTLY: EventId1<Boolean> = EDITORS_GROUP.registerEvent(
+    "vscode.used.recently",
+    EventFields.Boolean("is_vscode_used_recently"))
+
+  private val VS_CODE_EXTENSION_INSTALLED: EventId1<List<String>> = EDITORS_GROUP.registerEvent(
+    "vscode.extension.installed",
+    EventFields.StringList("extension_ids", emptyList())
+  )
+
   override suspend fun getMetricsAsync(): Set<MetricEvent> {
     val homeDir = System.getProperty("user.home")
     return withContext(Dispatchers.IO) {
@@ -47,7 +56,16 @@ internal class EditorsCollector :  ApplicationUsagesCollector() {
           add(CONFIG_EXISTS.metric(VIMRC_ID))
         }
 
-        if (Files.isDirectory(Paths.get(homeDir, ".vscode"))) {
+        val vsCodeCollectionDataProvider = VSCodeCollectionDataProvider()
+        if (vsCodeCollectionDataProvider.isVSCodeDetected()) {
+          val isVSCodeUsedRecently = vsCodeCollectionDataProvider.isVSCodeUsedRecently()
+          isVSCodeUsedRecently?.let {
+            add(IS_VSCODE_USED_RECENTLY.metric(it))
+          }
+          
+          if (vsCodeCollectionDataProvider.isVSCodePluginsProcessingPossible()) {
+            add(VS_CODE_EXTENSION_INSTALLED.metric(vsCodeCollectionDataProvider.getVSCodePluginsIds()))
+          }
           add(CONFIG_EXISTS.metric(VSCODE_ID))
         }
 
