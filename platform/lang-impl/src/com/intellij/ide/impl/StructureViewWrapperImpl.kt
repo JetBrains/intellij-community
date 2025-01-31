@@ -476,6 +476,16 @@ class StructureViewWrapperImpl(
     }
   }
 
+  @ApiStatus.Internal
+  fun queueUpdate() {
+    if (myStructureView is StructureViewComponent) {
+      (myStructureView as StructureViewComponent).queueUpdate()
+    }
+    if (myStructureView is StructureViewComposite) {
+      ((myStructureView as StructureViewComposite).selectedStructureView as? StructureViewComponent)?.queueUpdate()
+    }
+  }
+
   private suspend fun updateHeaderActions(structureView: StructureView?) {
     val titleActions: List<AnAction> = if (structureView is StructureViewComponent) {
       if (ExperimentalUI.isNewUI()) {
