@@ -3,6 +3,11 @@
     <plugin id="com.intellij.platform.experimental.frontend"/>
   </dependencies>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.escapeHandler"
+                    interface="com.intellij.terminal.frontend.action.TerminalEscapeHandler" dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <actionPromoter implementation="com.intellij.terminal.frontend.action.SendShortcutToTerminalActionPromoter"/>
 
@@ -16,6 +21,10 @@
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <terminalWidgetProvider implementation="com.intellij.terminal.frontend.ReworkedTerminalWidgetProvider"/>
+
+    <escapeHandler implementation="com.intellij.terminal.frontend.action.CancelSelection"/>
+    <escapeHandler implementation="com.intellij.terminal.frontend.action.CloseSearch"/>
+    <escapeHandler implementation="com.intellij.terminal.frontend.action.SelectEditor"/>
   </extensions>
 
   <actions resource-bundle="messages.TerminalBundle">
@@ -34,6 +43,7 @@
     <action id="Terminal.Find" class="com.intellij.terminal.frontend.action.TerminalFindAction" use-shortcut-of="Find">
       <override-text place="GoToAction"/>
     </action>
+    <action id="Terminal.Escape" class="com.intellij.terminal.frontend.action.TerminalEscapeAction" use-shortcut-of="EditorEscape"/>
 
     <action id="Terminal.EnableNewUi" class="com.intellij.terminal.frontend.action.EnableBlockTerminalUiAction"/>
 

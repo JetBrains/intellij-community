@@ -1,14 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.action.reworked
+package com.intellij.terminal.frontend.action
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.wm.ToolWindowManager
-import org.jetbrains.plugins.terminal.action.TerminalEscapeHandler
+import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalSearchController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
-import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSearchController
 
 internal class CancelSelection : TerminalEscapeHandler {
   override val order: Int

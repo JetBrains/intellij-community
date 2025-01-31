@@ -151,8 +151,6 @@
     </action>
     <action id="Terminal.ShowDocumentation" class="org.jetbrains.plugins.terminal.action.TerminalShowDocAction"
             use-shortcut-of="QuickJavaDoc"/>
-    <action id="Terminal.Escape" class="org.jetbrains.plugins.terminal.action.TerminalEscapeAction"
-            use-shortcut-of="EditorEscape"/>
     <action id="Terminal.CloseSession" class="org.jetbrains.plugins.terminal.action.TerminalCloseSessionAction">
       <keyboard-shortcut first-keystroke="control D" keymap="$default"/>
       <keyboard-shortcut first-keystroke="control D" keymap="Mac OS X" replace-all="true"/>

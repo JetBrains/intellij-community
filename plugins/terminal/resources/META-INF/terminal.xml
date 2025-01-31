@@ -99,9 +99,6 @@
     <localTerminalCustomizer implementation="org.jetbrains.plugins.terminal.TerminalCommandHandlerCustomizer"/>
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.json.ShellDefaultCommandSpecsProvider"/>
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.specs.ShellCodeBasedCommandSpecsProvider"/>
-    <escapeHandler implementation="org.jetbrains.plugins.terminal.action.reworked.CancelSelection" />
-    <escapeHandler implementation="org.jetbrains.plugins.terminal.action.reworked.CloseSearch" />
-    <escapeHandler implementation="org.jetbrains.plugins.terminal.action.reworked.SelectEditor" />
 
     <shellSupport key="zsh" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.zsh.ZshSupport"/>
     <shellSupport key="bash" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.bash.BashSupport"/>
@@ -127,8 +124,6 @@
                     interface="org.jetbrains.plugins.terminal.block.history.TerminalCommandHistoryProvider"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.exp.commandBlockHighlighterProvider"
                     interface="org.jetbrains.plugins.terminal.block.output.highlighting.TerminalCommandBlockHighlighterProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.escapeHandler"
-                    interface="org.jetbrains.plugins.terminal.action.TerminalEscapeHandler" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalWidgetProvider" dynamic="true"
                     interface="org.jetbrains.plugins.terminal.TerminalWidgetProvider"/>
   </extensionPoints>
