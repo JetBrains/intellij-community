@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.interpret
 
 import com.intellij.debugger.streams.trace.*
 import com.intellij.debugger.streams.trace.impl.TraceElementImpl
+import com.intellij.debugger.streams.trace.impl.interpret.ValuesOrderInfo
 import com.intellij.debugger.streams.trace.impl.interpret.ex.UnexpectedValueTypeException
 import com.intellij.debugger.streams.wrapper.StreamCall
 
@@ -14,7 +15,7 @@ class FilterTraceInterpreter(private val predicateValueToAccept: Boolean) : Call
         val filteringMap = value.getValue(1)
         val after = resolveValuesAfter(before, filteringMap!!)
 
-        return ValuesOrder(call, before, after)
+        return ValuesOrderInfo(call, before, after)
     }
 
     private fun resolveValuesBefore(map: Value): Map<Int, TraceElement> {

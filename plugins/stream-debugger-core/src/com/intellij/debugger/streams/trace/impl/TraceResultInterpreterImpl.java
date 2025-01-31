@@ -44,7 +44,7 @@ public class TraceResultInterpreterImpl implements TraceResultInterpreter {
       final Value trace = info.getValue(i);
       final CallTraceInterpreter interpreter = myInterpreterFactory.getInterpreter(call.getName(), call.getType());
 
-      final TraceInfo traceInfo = trace == null ? ValuesOrderInfo.empty(call) : interpreter.resolve(call, trace);
+      final TraceInfo traceInfo = trace == null ? ValuesOrderInfo.Companion.empty(call) : interpreter.resolve(call, trace);
       result.add(traceInfo);
     }
 

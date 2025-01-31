@@ -7,7 +7,6 @@ import com.intellij.debugger.streams.trace.impl.interpret.ex.UnexpectedValueExce
 import com.intellij.debugger.streams.trace.impl.interpret.ex.UnexpectedValueTypeException;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -32,7 +31,7 @@ public class DistinctCallTraceInterpreter implements CallTraceInterpreter {
       final Map<TraceElement, List<TraceElement>> direct = resolve(trace, order, Direction.DIRECT);
       final Map<TraceElement, List<TraceElement>> reverse = resolve(trace, order, Direction.REVERSE);
 
-      return new MyDistinctInfo(order, direct, reverse);
+      return new ValuesOrderInfo(order.getCall(), order.getValuesOrderBefore(), order.getValuesOrderAfter(), direct, reverse);
     }
 
     throw new UnexpectedValueException("distinct trace must be an array value");
@@ -104,29 +103,6 @@ public class DistinctCallTraceInterpreter implements CallTraceInterpreter {
     }
 
     return result;
-  }
-
-  private static final class MyDistinctInfo extends ValuesOrderInfo {
-    private final Map<TraceElement, List<TraceElement>> myDirectTrace;
-    private final Map<TraceElement, List<TraceElement>> myReverseTrace;
-
-    private MyDistinctInfo(@NotNull TraceInfo info,
-                           @NotNull Map<TraceElement, List<TraceElement>> directTrace,
-                           @NotNull Map<TraceElement, List<TraceElement>> reverseTrace) {
-      super(info.getCall(), info.getValuesOrderBefore(), info.getValuesOrderAfter());
-      myDirectTrace = directTrace;
-      myReverseTrace = reverseTrace;
-    }
-
-    @Override
-    public @Nullable Map<TraceElement, List<TraceElement>> getDirectTrace() {
-      return Collections.unmodifiableMap(myDirectTrace);
-    }
-
-    @Override
-    public @Nullable Map<TraceElement, List<TraceElement>> getReverseTrace() {
-      return Collections.unmodifiableMap(myReverseTrace);
-    }
   }
 
   private static int extractIntValue(@NotNull Value value) {

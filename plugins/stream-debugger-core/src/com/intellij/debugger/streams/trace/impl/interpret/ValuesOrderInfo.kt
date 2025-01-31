@@ -1,56 +1,31 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.streams.trace.impl.interpret;
+package com.intellij.debugger.streams.trace.impl.interpret
 
-import com.intellij.debugger.streams.trace.TraceElement;
-import com.intellij.debugger.streams.trace.TraceInfo;
-import com.intellij.debugger.streams.wrapper.StreamCall;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.debugger.streams.trace.TraceElement
+import com.intellij.debugger.streams.trace.TraceInfo
+import com.intellij.debugger.streams.wrapper.StreamCall
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+class ValuesOrderInfo(
+  private val streamCall: StreamCall,
+  private val before: Map<Int, TraceElement>,
+  private val after: Map<Int, TraceElement>,
+  private val direct: Map<TraceElement, List<TraceElement>>? = null,
+  private val reverse: Map<TraceElement, List<TraceElement>>? = null,
+) : TraceInfo {
+  constructor(call: StreamCall, before: Map<Int, TraceElement>, after: Map<Int, TraceElement>) : this(call, before, after, null, null)
 
-/**
- * @author Vitaliy.Bibaev
- */
-public class ValuesOrderInfo implements TraceInfo {
-  private final StreamCall myStreamCall;
-  private final Map<Integer, TraceElement> myValuesOrderAfter;
-  private final Map<Integer, TraceElement> myValuesOrderBefore;
+  override fun getCall(): StreamCall = streamCall
 
-  ValuesOrderInfo(@NotNull StreamCall call, @NotNull Map<Integer, TraceElement> before, @NotNull Map<Integer, TraceElement> after) {
-    myStreamCall = call;
-    myValuesOrderBefore = before;
-    myValuesOrderAfter = after;
-  }
+  override fun getValuesOrderBefore(): Map<Int, TraceElement> = before
 
-  @Override
-  public @NotNull StreamCall getCall() {
-    return myStreamCall;
-  }
+  override fun getValuesOrderAfter(): Map<Int, TraceElement> = after
 
-  @Override
-  public @NotNull Map<Integer, TraceElement> getValuesOrderBefore() {
-    return myValuesOrderBefore;
-  }
+  override fun getDirectTrace(): Map<TraceElement, List<TraceElement>>? = direct
 
-  @Override
-  public @NotNull Map<Integer, TraceElement> getValuesOrderAfter() {
-    return myValuesOrderAfter;
-  }
+  override fun getReverseTrace(): Map<TraceElement, List<TraceElement>>? = reverse
 
-  @Override
-  public @Nullable Map<TraceElement, List<TraceElement>> getDirectTrace() {
-    return null;
-  }
-
-  @Override
-  public @Nullable Map<TraceElement, List<TraceElement>> getReverseTrace() {
-    return null;
-  }
-
-  public static TraceInfo empty(@NotNull StreamCall call) {
-    return new ValuesOrderInfo(call, Collections.emptyMap(), Collections.emptyMap());
+  companion object {
+    fun empty(call: StreamCall): TraceInfo {
+      return ValuesOrderInfo(call, emptyMap(), emptyMap())
+    }
   }
 }
