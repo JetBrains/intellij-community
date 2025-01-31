@@ -28,17 +28,14 @@ object AssetsOnboardingTips {
     return Registry.`is`("doc.onboarding.tips.render")
   }
 
+  @Deprecated("The onboarding tips generated unconditionally")
   fun proposeToGenerateOnboardingTipsByDefault(): Boolean {
     return RecentProjectsManagerBase.getInstanceEx().getRecentPaths().isEmpty()
   }
 }
 
 @ApiStatus.Internal
-fun AssetsNewProjectWizardStep.prepareOnboardingTips(
-  project: Project,
-  fileName: String,
-  breakpointSelector: (CharSequence) -> Int?,
-) {
+fun AssetsNewProjectWizardStep.prepareOnboardingTips(project: Project, fileName: String, breakpointSelector: (CharSequence) -> Int?) {
   val onboardingInfo = OnboardingTipsInstallationInfo(fileName, breakpointSelector)
   for (extension in NewProjectOnboardingTips.EP_NAME.extensions) {
     extension.installTips(project, onboardingInfo)

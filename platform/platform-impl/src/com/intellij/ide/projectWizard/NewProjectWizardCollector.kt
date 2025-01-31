@@ -33,7 +33,7 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 39)
+  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 40)
 
   private val LANGUAGES = listOf(
     NewProjectWizardConstants.Language.JAVA, NewProjectWizardConstants.Language.KOTLIN,
@@ -63,7 +63,6 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
   private val isSucceededField = EventFields.Boolean("project_created")
   private val inputMaskField = EventFields.Long("input_mask")
   private val addSampleCodeField = EventFields.Boolean("add_sample_code")
-  private val addSampleOnboardingTipsField = EventFields.Boolean("add_sample_onboarding_tips")
   private val buildSystemField = EventFields.String("build_system", BUILD_SYSTEMS)
   private val buildSystemSdkField = EventFields.Int("build_system_sdk_version")
   private val buildSystemParentField = EventFields.Boolean("build_system_parent")
@@ -97,8 +96,6 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
   private val gitFinish = GROUP.registerVarargEvent("git.finished", *baseFields, gitField)
   private val addSampleCodeChanged = GROUP.registerVarargEvent("build.system.add.sample.code.changed", *buildSystemFields, addSampleCodeField)
   private val addSampleCodeFinished = GROUP.registerVarargEvent("build.system.add.sample.code.finished", *buildSystemFields, addSampleCodeField)
-  private val addSampleOnboardingTipsChanged = GROUP.registerVarargEvent("build.system.add.sample.onboarding.tips.changed", *buildSystemFields, addSampleOnboardingTipsField)
-  private val addSampleOnboardingTipsFinished = GROUP.registerVarargEvent("build.system.add.sample.onboarding.tips.finished", *buildSystemFields, addSampleOnboardingTipsField)
 
   private val buildSystemChangedEvent = GROUP.registerVarargEvent("build.system.changed", *baseFields, buildSystemField)
   private val buildSystemFinishedEvent = GROUP.registerVarargEvent("build.system.finished", *baseFields, buildSystemField)
@@ -224,19 +221,13 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
     fun NewProjectWizardStep.logAddSampleCodeFinished(isSelected: Boolean): Unit =
       addSampleCodeFinished.logBuildSystemEvent(this, addSampleCodeField with isSelected)
 
-    fun NewProjectWizardStep.logAddSampleOnboardingTipsChanged(isSelected: Boolean): Unit =
-      addSampleOnboardingTipsChanged.logBuildSystemEvent(this, addSampleOnboardingTipsField with isSelected)
+    @Deprecated("The onboarding tips generated unconditionally")
+    fun NewProjectWizardStep.logAddSampleOnboardingTipsChanged(isSelected: Boolean): Unit = Unit
 
-    fun NewProjectWizardStep.logAddSampleOnboardingTipsFinished(isSelected: Boolean): Unit =
-      addSampleOnboardingTipsFinished.logBuildSystemEvent(this, addSampleOnboardingTipsField with isSelected)
+    @Deprecated("The onboarding tips generated unconditionally")
+    fun NewProjectWizardStep.logAddSampleOnboardingTipsFinished(isSelected: Boolean): Unit = Unit
 
-    @Deprecated(
-      "Moved. Please use the same function NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged",
-      ReplaceWith(
-        "logAddSampleOnboardingTipsChanged(isSelected)",
-        "com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged"
-      ),
-    )
+    @Deprecated("The onboarding tips generated unconditionally")
     fun NewProjectWizardStep.logAddSampleOnboardingTipsChangedEvent(isSelected: Boolean): Unit =
       logAddSampleOnboardingTipsChanged(isSelected)
   }

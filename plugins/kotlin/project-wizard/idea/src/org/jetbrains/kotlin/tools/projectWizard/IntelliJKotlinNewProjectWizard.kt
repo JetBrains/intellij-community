@@ -60,7 +60,6 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
         override fun setupSettingsUI(builder: Panel) {
             setupJavaSdkUI(builder)
             setupSampleCodeUI(builder)
-            setupSampleCodeWithOnBoardingTipsUI(builder)
             setupCompactDirectoryLayoutUI(builder)
             if (context.isCreatingNewProject) {
                 addMultiPlatformLink(builder)
@@ -141,11 +140,9 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 addAssets(KotlinAssetsProvider.getKotlinIgnoreAssets())
             }
             if (parent.addSampleCode) {
-                if (parent.generateOnboardingTips) {
-                    prepareKotlinSampleOnboardingTips(project)
-                }
+                prepareKotlinSampleOnboardingTips(project)
                 val sourceRootPath = if (parent.useCompactProjectStructure) "src" else "src/main/kotlin"
-                withKotlinSampleCode(sourceRootPath, null, parent.generateOnboardingTips)
+                withKotlinSampleCode(sourceRootPath, null)
             }
         }
     }

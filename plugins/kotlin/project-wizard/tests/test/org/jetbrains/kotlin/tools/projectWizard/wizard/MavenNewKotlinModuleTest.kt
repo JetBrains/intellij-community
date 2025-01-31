@@ -15,9 +15,9 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.withValue
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.useProject
-import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizardData.Companion.javaMavenData
@@ -122,7 +122,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
                 it.javaMavenData!!.groupId = "org.testcase"
                 it.javaMavenData!!.version = "1.0.0"
                 it.javaMavenData!!.addSampleCode = false
-                it.javaMavenData!!.generateOnboardingTips = false
             }
         }.useProject { project ->
             assertModules(project, "project")
@@ -155,7 +154,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
         version: String = "1.0.0",
         addSampleCodeToProject: Boolean = false,
         addSampleCodeToModule: Boolean = false,
-        generateOnboardingTips: Boolean = false,
         independentHierarchy: Boolean = false,
         additionalAssertions: (Project) -> Unit = {}
     ) = runBlocking {
@@ -163,8 +161,7 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             createKotlinProjectFromTemplate(
                 groupId = groupId,
                 version = version,
-                addSampleCode = addSampleCodeToProject,
-                generateOnboardingTips = generateOnboardingTips
+                addSampleCode = addSampleCodeToProject
             )
         }.useProject { project ->
             assertModules(project, "project")
@@ -177,7 +174,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
                         project, groupId = groupId,
                         version = version,
                         addSampleCode = addSampleCodeToModule,
-                        generateOnboardingTips = generateOnboardingTips,
                         independentHierarchy = independentHierarchy
                     )
                 }
@@ -219,11 +215,31 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     @Test
-    fun testOnboardingTips() {
+    fun testSampleCode() {
+        runBlocking {
+            waitForProjectCreation {
+                createKotlinProjectFromTemplate(addSampleCode = true)
+            }.useProject { project ->
+                val mainFileContent = project.findMainFileContent()
+                Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
+                Assertions.assertTrue(
+                    mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
+                    "Main file did not contain onboarding tips"
+                )
+                Assertions.assertTrue(
+                    mainFileContent.contains("//TIP"),
+                    "Main file contained rendered onboarding tips"
+                )
+            }
+        }
+    }
+
+    @Test
+    fun testSampleCodeRawOnboardingTips() {
         Registry.get("doc.onboarding.tips.render").withValue(false) {
             runBlocking {
                 waitForProjectCreation {
-                    createKotlinProjectFromTemplate(addSampleCode = true, generateOnboardingTips = true)
+                    createKotlinProjectFromTemplate(addSampleCode = true)
                 }.useProject { project ->
                     val mainFileContent = project.findMainFileContent()
                     Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
@@ -236,29 +252,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
                         "Main file contained rendered onboarding tips"
                     )
                 }
-                return@runBlocking
-            }
-        }
-    }
-
-    @Test
-    fun testRenderedOnboardingTips() {
-        Registry.get("doc.onboarding.tips.render").withValue(true) {
-            runBlocking {
-                waitForProjectCreation {
-                    createKotlinProjectFromTemplate(addSampleCode = true, generateOnboardingTips = true)
-                }.useProject { project ->
-                    val mainFileContent = project.findMainFileContent()
-                    Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
-                    Assertions.assertTrue(
-                        mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
-                        "Main file did not contain onboarding tips"
-                    )
-                    Assertions.assertTrue(
-                        mainFileContent.contains("//TIP"),
-                        "Main file contained rendered onboarding tips"
-                    )
-                }
             }
         }
     }
@@ -267,7 +260,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
         groupId: String = "org.testcase",
         version: String = "1.0.0",
         addSampleCode: Boolean = false,
-        generateOnboardingTips: Boolean = false
     ): Project {
         return createProjectFromTemplate(KOTLIN) {
             it.baseData!!.name = "project"
@@ -281,7 +273,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             it.kotlinMavenData!!.version = version
 
             it.kotlinMavenData!!.addSampleCode = addSampleCode
-            it.kotlinMavenData!!.generateOnboardingTips = generateOnboardingTips
         }
     }
 
@@ -290,7 +281,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
         groupId: String = "org.testcase",
         version: String = "1.0.0",
         addSampleCode: Boolean = false,
-        generateOnboardingTips: Boolean = false,
         independentHierarchy: Boolean = false
     ): Module {
         val projectModule = project.modules.single()
@@ -307,7 +297,6 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
             it.kotlinMavenData!!.version = version
 
             it.kotlinMavenData!!.addSampleCode = addSampleCode
-            it.kotlinMavenData!!.generateOnboardingTips = generateOnboardingTips
 
             it.kotlinMavenData!!.parentData = if (independentHierarchy) {
                 null

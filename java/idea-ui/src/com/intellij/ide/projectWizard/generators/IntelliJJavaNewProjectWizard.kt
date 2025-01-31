@@ -27,7 +27,6 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     override fun setupSettingsUI(builder: Panel) {
       setupJavaSdkUI(builder)
       setupSampleCodeUI(builder)
-      setupSampleCodeWithOnBoardingTipsUI(builder)
     }
 
     override fun setupAdvancedSettingsUI(builder: Panel) {
@@ -56,10 +55,8 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
       }
       if (parent.addSampleCode) {
-        if (parent.generateOnboardingTips) {
-          prepareJavaSampleOnboardingTips(project)
-        }
-        withJavaSampleCodeAsset("src", null, parent.generateOnboardingTips)
+        prepareJavaSampleOnboardingTips(project)
+        withJavaSampleCodeAsset("src", null)
       }
     }
   }

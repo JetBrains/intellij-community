@@ -11,8 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.withValue
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.junit5.RegistryKey
@@ -142,7 +140,6 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         groupId: String = "org.testcase",
         version: String = "1.0.0",
         addSampleCode: Boolean = false,
-        generateOnboardingTips: Boolean = false,
         parentData: ProjectData? = null,
         generateMultipleModules: Boolean = false,
     ) {
@@ -156,7 +153,6 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         kotlinGradleData!!.artifactId = name
         kotlinGradleData!!.version = version
         kotlinGradleData!!.addSampleCode = addSampleCode
-        kotlinGradleData!!.generateOnboardingTips = generateOnboardingTips
     }
 
     private fun runNewProjectTestCase(
@@ -166,7 +162,6 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         groupId: String = "org.testcase",
         version: String = "1.0.0",
         addSampleCode: Boolean = false,
-        generateOnboardingTips: Boolean = false,
         generateMultipleModules: Boolean = false,
         additionalAssertions: (Project) -> Unit = {}
     ) {
@@ -181,7 +176,6 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
                     parentData = null,
                     path = name,
                     addSampleCode = addSampleCode,
-                    generateOnboardingTips = generateOnboardingTips,
                     generateMultipleModules = generateMultipleModules,
                 )
             }.useProjectAsync { project ->
@@ -210,16 +204,6 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         }
     }
 
-    @Test
-    fun testSampleCode() {
-        runNewProjectTestCase(addSampleCode = true)
-    }
-
-    @Test
-    fun testSampleCodeKts() {
-        runNewProjectTestCase(useKotlinDsl = true, addSampleCode = true)
-    }
-
     private val expectedMultiModuleProjectModules = listOf(
         "project",
         "project.app",
@@ -245,18 +229,6 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         runNewProjectTestCase(
             useKotlinDsl = true,
             addSampleCode = true,
-            generateOnboardingTips = false,
-            expectedModules = expectedMultiModuleProjectModules,
-            generateMultipleModules = true
-        )
-    }
-
-    @Test
-    fun testMultiModuleProjectOnboardingTipsKts() {
-        runNewProjectTestCase(
-            useKotlinDsl = true,
-            addSampleCode = true,
-            generateOnboardingTips = true,
             expectedModules = expectedMultiModuleProjectModules,
             generateMultipleModules = true
         )
@@ -267,7 +239,6 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         runNewProjectTestCase(
             useKotlinDsl = true,
             addSampleCode = false,
-            generateOnboardingTips = false,
             expectedModules = expectedMultiModuleProjectModules,
             generateMultipleModules = true
         ) { project ->
@@ -278,76 +249,70 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
     }
 
     @Test
-    fun testOnboardingTips() {
-        Registry.get("doc.onboarding.tips.render").withValue(false) {
-            runNewProjectTestCase(addSampleCode = true, generateOnboardingTips = true) { project ->
-                val mainFileContent = project.findMainFileContent()
-                Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
-                Assertions.assertTrue(
-                    mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
-                    "Main file did not contain onboarding tips"
-                )
-                Assertions.assertFalse(
-                    mainFileContent.contains("//TIP"),
-                    "Main file contained rendered onboarding tips"
-                )
-            }
+    fun testSampleCode() {
+        runNewProjectTestCase(addSampleCode = true) { project ->
+            val mainFileContent = project.findMainFileContent()
+            Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
+            Assertions.assertTrue(
+                mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
+                "Main file did not contain onboarding tips"
+            )
+            Assertions.assertTrue(
+                mainFileContent.contains("//TIP"),
+                "Main file contained rendered onboarding tips"
+            )
         }
     }
 
     // The onboarding tips have to be handled a bit more manually because the rendered text depends on the OS of the system
     // because shortcuts are OS specific
     @Test
-    fun testOnboardingTipsKts() {
-        Registry.get("doc.onboarding.tips.render").withValue(false) {
-            runNewProjectTestCase(useKotlinDsl = true, addSampleCode = true, generateOnboardingTips = true) { project ->
-                val mainFileContent = project.findMainFileContent()
-                Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
-                Assertions.assertTrue(
-                    mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
-                    "Main file did not contain onboarding tips"
-                )
-                Assertions.assertFalse(
-                    mainFileContent.contains("//TIP"),
-                    "Main file contained rendered onboarding tips"
-                )
-            }
+    fun testSampleCodeKts() {
+        runNewProjectTestCase(useKotlinDsl = true, addSampleCode = true) { project ->
+            val mainFileContent = project.findMainFileContent()
+            Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
+            Assertions.assertTrue(
+                mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
+                "Main file did not contain onboarding tips"
+            )
+            Assertions.assertTrue(
+                mainFileContent.contains("//TIP"),
+                "Main file contained rendered onboarding tips"
+            )
         }
     }
 
     @Test
-    fun testRenderedOnboardingTips() {
-        Registry.get("doc.onboarding.tips.render").withValue(true) {
-            runNewProjectTestCase(addSampleCode = true, generateOnboardingTips = true) { project ->
-                val mainFileContent = project.findMainFileContent()
-                Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
-                Assertions.assertTrue(
-                    mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
-                    "Main file did not contain onboarding tips"
-                )
-                Assertions.assertTrue(
-                    mainFileContent.contains("//TIP"),
-                    "Main file contained rendered onboarding tips"
-                )
-            }
+    @RegistryKey("doc.onboarding.tips.render", "false")
+    fun testSampleCodeRawOnboardingTips() {
+        runNewProjectTestCase(addSampleCode = true) { project ->
+            val mainFileContent = project.findMainFileContent()
+            Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
+            Assertions.assertTrue(
+                mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
+                "Main file did not contain onboarding tips"
+            )
+            Assertions.assertFalse(
+                mainFileContent.contains("//TIP"),
+                "Main file contained rendered onboarding tips"
+            )
         }
     }
 
     @Test
-    fun testRenderedOnboardingTipsKts() {
-        Registry.get("doc.onboarding.tips.render").withValue(true) {
-            runNewProjectTestCase(useKotlinDsl = true, addSampleCode = true, generateOnboardingTips = true) { project ->
-                val mainFileContent = project.findMainFileContent()
-                Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
-                Assertions.assertTrue(
-                    mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
-                    "Main file did not contain onboarding tips"
-                )
-                Assertions.assertTrue(
-                    mainFileContent.contains("//TIP"),
-                    "Main file contained rendered onboarding tips"
-                )
-            }
+    @RegistryKey("doc.onboarding.tips.render", "false")
+    fun testSampleCodeRawOnboardingTipsKts() {
+        runNewProjectTestCase(useKotlinDsl = true, addSampleCode = true) { project ->
+            val mainFileContent = project.findMainFileContent()
+            Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
+            Assertions.assertTrue(
+                mainFileContent!!.contains(ONBOARDING_TIPS_SEARCH_STR),
+                "Main file did not contain onboarding tips"
+            )
+            Assertions.assertFalse(
+                mainFileContent.contains("//TIP"),
+                "Main file contained rendered onboarding tips"
+            )
         }
     }
 
@@ -360,7 +325,6 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         groupId: String = "org.testcase",
         version: String = "1.0.0",
         addSampleCode: Boolean = false,
-        generateOnboardingTips: Boolean = false,
         independentHierarchy: Boolean = false,
         generateMultipleModules: Boolean = false,
         additionalAssertions: (Project) -> Unit = {}
@@ -379,7 +343,6 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
                         parentData = parentData.data.takeUnless { independentHierarchy },
                         path = "$parentPath/$name",
                         addSampleCode = addSampleCode,
-                        generateOnboardingTips = generateOnboardingTips,
                         generateMultipleModules = generateMultipleModules,
                     )
                 }
