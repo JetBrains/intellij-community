@@ -28,7 +28,10 @@ import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.eel.provider.utils.EelPathUtils
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.JavaModuleSystem.*
@@ -40,6 +43,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.jps.model.serialization.SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
@@ -305,9 +309,29 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
   private fun inSameMultiReleaseModule(current: ModuleInfo, target: ModuleInfo): Boolean {
     val placeModule = current.jpsModule ?: return false
     val targetModule = target.jpsModule ?: return false
-    if (targetModule.name.endsWith(".$MAIN")) {
-      val baseModuleName = targetModule.name.substringBeforeLast(MAIN)
-      return javaVersionPattern.matcher(placeModule.name.substringAfter(baseModuleName)).matches()
+
+    // Maven
+    val project = placeModule.project
+    val storage = project.workspaceModel.currentSnapshot
+    val placeModuleName = placeModule.name
+    val targetModuleName = targetModule.name
+    val placeModuleExOptions = storage.resolve(ModuleId(placeModuleName))?.exModuleOptions
+    val targetModuleExOptions = storage.resolve(ModuleId(targetModuleName))?.exModuleOptions
+    if (placeModuleExOptions?.externalSystem == MAVEN_EXTERNAL_SOURCE_ID
+        && targetModuleExOptions?.externalSystem == MAVEN_EXTERNAL_SOURCE_ID) {
+      val baseModuleName = targetModuleName.substringBeforeLast('.')
+      if (placeModuleName.startsWith(baseModuleName)
+          && placeModuleExOptions.externalSystemModuleType == "MAIN_ONLY_ADDITIONAL" // StandardMavenModuleType.MAIN_ONLY_ADDITIONAL
+          && targetModuleExOptions.externalSystemModuleType == "MAIN_ONLY" // StandardMavenModuleType.MAIN_ONLY
+        ) {
+        return true
+      }
+    }
+
+    // Gradle
+    if (targetModuleName.endsWith(".$MAIN")) {
+      val baseModuleName = targetModuleName.substringBeforeLast(MAIN)
+      return javaVersionPattern.matcher(placeModuleName.substringAfter(baseModuleName)).matches()
     }
     return false
   }
