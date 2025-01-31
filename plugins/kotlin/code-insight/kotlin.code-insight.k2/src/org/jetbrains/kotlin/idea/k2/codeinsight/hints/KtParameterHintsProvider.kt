@@ -141,8 +141,11 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         val symbolName = symbol.name.asString()
         if (argumentText == symbolName) return true
 
-        // avoid cases like "`value =` myValue"
-        if (symbolName.length > 1 && argumentText.endsWith(symbolName[0].uppercaseChar() + symbolName.substring(1))) return true
+        if (symbolName.length > 1) {
+            val name = symbolName[0].uppercaseChar() + symbolName.substring(1)
+            // avoid cases like "`type = Type(...)`" and "`value =` myValue"
+            if (argumentText.startsWith(name) || argumentText.endsWith(name)) return true
+        }
 
         // avoid cases like "/* value = */ value"
         var sibling: PsiElement? = this.prevSibling
