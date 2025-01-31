@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.formatter;
 
-import com.intellij.formatting.WrapType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
@@ -63,13 +62,9 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean SPACE_BEFORE_NUMBER_SIGN = true;
 
   public int DICT_ALIGNMENT = DICT_ALIGNMENT_NONE;
-  @MagicConstant(intValues = {
-    CommonCodeStyleSettings.DO_NOT_WRAP,
-    CommonCodeStyleSettings.WRAP_AS_NEEDED,
-    CommonCodeStyleSettings.WRAP_ALWAYS,
-    CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
-  })
-  public int DICT_WRAPPING = WrapType.NORMAL.getLegacyRepresentation();
+
+  @CommonCodeStyleSettings.WrapConstant
+  public int DICT_WRAPPING = WRAP_AS_NEEDED;
   public boolean DICT_NEW_LINE_AFTER_LEFT_BRACE = false;
   public boolean DICT_NEW_LINE_BEFORE_RIGHT_BRACE = false;
 
@@ -100,13 +95,8 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   /**
    * Affects wrapping of multiple imported names in a single "from" import.
    */
-  @MagicConstant(intValues = {
-    CommonCodeStyleSettings.DO_NOT_WRAP,
-    CommonCodeStyleSettings.WRAP_AS_NEEDED,
-    CommonCodeStyleSettings.WRAP_ALWAYS,
-    CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
-  })
-  public int FROM_IMPORT_WRAPPING = WrapType.NORMAL.getLegacyRepresentation();
+  @CommonCodeStyleSettings.WrapConstant
+  public int FROM_IMPORT_WRAPPING = WRAP_AS_NEEDED;
   public boolean FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS = false;
   public boolean FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = false;
   
