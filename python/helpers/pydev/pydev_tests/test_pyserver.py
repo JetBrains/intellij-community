@@ -89,7 +89,6 @@ class TestCPython(unittest.TestCase):
 
         return msg
 
-    @pytest.mark.xfail(IS_PY39_OR_GREATER, reason="PCQA-731")
     def test_completion_sockets_and_messages(self):
         t, socket = self.create_connections()
         self.socket = socket
@@ -107,10 +106,7 @@ class TestCPython(unittest.TestCase):
             if ('/math.so,' in completions or
                 '/math.cpython-33m.so,' in completions or 
                 '/math.cpython-34m.so,' in completions or 
-                'math.cpython-35m' in completions or 
-                'math.cpython-36m' in completions or
-                'math.cpython-37m' in completions or
-                'math.cpython-38' in completions
+                'math.cpython' in completions
                 ):
                 return
             self.assertTrue(completions.startswith(start) or completions.startswith(start_2), '%s DOESNT START WITH %s' % (completions, (start, start_2)))
