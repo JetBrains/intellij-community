@@ -2150,6 +2150,7 @@ com.intellij.util.Consumer
 f:com.intellij.util.CoroutineScopeKt
 - sf:asDisposable(kotlinx.coroutines.CoroutineScope):com.intellij.openapi.Disposable
 - sf:attachAsChildTo(com.intellij.openapi.Disposable,kotlinx.coroutines.CoroutineScope):V
+- sf:disposeOnCompletion(com.intellij.openapi.Disposable,kotlinx.coroutines.CoroutineScope):V
 f:com.intellij.util.DefaultBundleService
 - <init>():V
 - compute(java.util.function.Supplier):java.lang.Object

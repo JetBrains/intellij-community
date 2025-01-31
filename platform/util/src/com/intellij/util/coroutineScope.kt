@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.openapi.Disposable
@@ -29,7 +29,7 @@ fun Job.cancelOnDispose(disposable: Disposable, disposeOnCompletion: Boolean = t
  *
  * When [this] disposable is disposed from another place [cs] won't be touched.
  */
-fun Disposable.attachAsChildTo(cs: CoroutineScope) {
+fun Disposable.disposeOnCompletion(cs: CoroutineScope) {
   val disposableRef = AtomicReference<Disposable?>(this)
   val disposableHandle = cs.coroutineContext.job.invokeOnCompletion {
     disposableRef.getAndSet(null)?.let {
@@ -43,6 +43,16 @@ fun Disposable.attachAsChildTo(cs: CoroutineScope) {
     }
   }
   if (!registered) disposableHandle.dispose()
+}
+
+/**
+ * This function is deprecated to emphasize that the disposable does not become a child of the scope.
+ * - Its disposal happens out of scope, after the scope is completed. The scope does not wait for the disposal.
+ * - The disposal failure does not cancel the scope.
+ */
+@Deprecated("Use `disposeOnCompletion` instead", ReplaceWith("disposeOnCompletion(cs)"))
+fun Disposable.attachAsChildTo(cs: CoroutineScope) {
+  disposeOnCompletion(cs)
 }
 
 /**
