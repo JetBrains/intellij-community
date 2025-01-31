@@ -35,7 +35,7 @@ internal class KDocUnresolvedReferenceInspection : AbstractKotlinInspection() {
             if (reference.resolve() != null) return
             val quickFix = createQuickFix(element)
             if (quickFix != null) {
-                holder.registerProblem(element, KotlinBundle.message("add.qualifier"), IntentionWrapper(quickFix))
+                holder.registerProblem(element, ProblemsHolder.unresolvedReferenceMessage(reference), IntentionWrapper(quickFix))
             } else {
                 holder.registerProblem(reference)
             }
