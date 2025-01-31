@@ -44,7 +44,6 @@ import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementKind;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -686,7 +685,7 @@ public final class PyUtil {
     if (isInitMethod(function)) {
       final PyClass cls = function.getContainingClass();
       if (cls != null) {
-        PyType providedClassType = getGenericTypeForClass(context, cls);
+        PyType providedClassType = PyTypeChecker.findGenericDefinitionType(cls, context);
         if (providedClassType != null) return providedClassType;
 
         final PyInstantiableType classType = as(context.getType(cls), PyInstantiableType.class);
@@ -697,16 +696,6 @@ public final class PyUtil {
     }
 
     return context.getReturnType(function);
-  }
-
-  public static @Nullable PyType getGenericTypeForClass(@NotNull TypeEvalContext context, PyClass cls) {
-    for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
-      final PyType providedClassType = provider.getGenericType(cls, context);
-      if (providedClassType != null) {
-        return providedClassType;
-      }
-    }
-    return null;
   }
 
   /**

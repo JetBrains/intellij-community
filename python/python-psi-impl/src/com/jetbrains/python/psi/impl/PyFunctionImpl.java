@@ -50,7 +50,6 @@ import static com.intellij.util.containers.ContainerUtil.map;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
 import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.PyUtil.getGenericTypeForClass;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsModifierWrappingCall;
 import static com.jetbrains.python.psi.impl.PyDeprecationUtilKt.extractDeprecationMessageFromDecorator;
 
@@ -227,7 +226,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (substitutions != null) {
         PyClass containingClass = getContainingClass();
         if (containingClass != null && type instanceof PySelfType) {
-          PyType genericType = getGenericTypeForClass(context, containingClass);
+          PyType genericType = PyTypeChecker.findGenericDefinitionType(containingClass, context);
           if (genericType != null) {
             type = genericType;
           }
