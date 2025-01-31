@@ -5,7 +5,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.python.community.execService.impl.ExecServiceImpl
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyError.ExecException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
@@ -28,7 +28,7 @@ interface ExecService {
    */
   @ApiStatus.Internal
   @CheckReturnValue
-  suspend fun execGetStdout(whatToExec: WhatToExec, args: List<String> = emptyList<String>(), processDescription: @Nls String? = null, timeout: Duration = 1.minutes): Result<String, PyError>
+  suspend fun execGetStdout(whatToExec: WhatToExec, args: List<String> = emptyList<String>(), processDescription: @Nls String? = null, timeout: Duration = 1.minutes): Result<String, ExecException>
 }
 
 sealed interface WhatToExec {

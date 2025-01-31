@@ -12,7 +12,7 @@ import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.WhatToExec
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.errorProcessing.PyError.ExecException
 import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.execution.FailureReason
 import com.jetbrains.python.execution.userMessage
@@ -25,7 +25,7 @@ import kotlin.time.Duration
 
 
 internal object ExecServiceImpl : ExecService {
-  override suspend fun execGetStdout(whatToExec: WhatToExec, args: List<String>, processDescription: @Nls String?, timeout: Duration): Result<String, PyError> {
+  override suspend fun execGetStdout(whatToExec: WhatToExec, args: List<String>, processDescription: @Nls String?, timeout: Duration): Result<String, ExecException> {
     val (eel, exe, args) = when (whatToExec) {
       is WhatToExec.Binary -> Triple(whatToExec.binary.getEelDescriptor().upgrade(), whatToExec.binary.pathString, args)
       is WhatToExec.Helper -> {
@@ -54,7 +54,7 @@ private suspend fun EelApi.execGetStdoutImpl(
   args: List<String>,
   processDescription: @Nls String,
   timeout: Duration,
-): Result<String, PyError> {
+): Result<String, ExecException> {
   val process = exec.executeProcess(exe, *args.toTypedArray()).getOr { err ->
     val text = PyExecBundle.message("py.exec.start.error", processDescription, err.error.message, err.error.errno)
     val failure = PyExecFailureImpl(exe, args, text, FailureReason.CantStart)
