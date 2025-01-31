@@ -33,7 +33,6 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
       return Result.failure(it)
     }
 
-    // FIXME: refactor command return value, it's not used
     return Result.success(Unit)
   }
 
@@ -42,7 +41,6 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
       return Result.failure(it)
     }
 
-    // FIXME: refactor command return value, it's not used
     return Result.success(Unit)
   }
 
@@ -58,12 +56,11 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
       return Result.failure(it)
     }
 
-    // FIXME: refactor command return value, it's not used
     return Result.success(Unit)
   }
 
   override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
-    // ignoring errors as handling outdated packages is pretty new option
+    // ignoring errors as handling outdated packages is a pretty new option
     uv.listOutdatedPackages().onSuccess {
       outdatedPackages = it.associateBy { it.name }
     }
