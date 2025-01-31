@@ -47,7 +47,7 @@ open class JavaStatementFactory : StatementFactory {
   override fun and(left: Expression, right: Expression): Expression = TextExpression("${left.toCode()} && ${right.toCode()}")
 
   override fun equals(left: Expression, right: Expression): Expression =
-    TextExpression("java.util.Objects.equals(${left.toCode()}, ${right.toCode()}")
+    TextExpression("java.util.Objects.equals(${left.toCode()}, ${right.toCode()})")
 
   override fun same(left: Expression, right: Expression): Expression = TextExpression("${left.toCode()} == ${right.toCode()}")
 

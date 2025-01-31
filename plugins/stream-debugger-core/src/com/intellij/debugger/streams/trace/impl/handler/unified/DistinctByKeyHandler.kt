@@ -3,6 +3,7 @@ package com.intellij.debugger.streams.trace.impl.handler.unified
 import com.intellij.debugger.streams.trace.dsl.*
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.impl.handler.type.ClassTypeImpl
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.wrapper.CallArgument
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.impl.CallArgumentImpl
@@ -13,26 +14,28 @@ open class DistinctByKeyHandler(callNumber: Int,
                                 private val myCall: IntermediateStreamCall,
                                 dsl: Dsl,
                                 private val functionApplyName: String = "apply",
-                                private val compareByReference: Boolean = true) : HandlerBase.Intermediate(dsl)
+                                protected val keyExtractorPosition: Int = 0,
+                                protected val myKeyType: GenericType = dsl.types.ANY
+                                ) : HandlerBase.Intermediate(dsl)
 {
-  private companion object {
-    const val KEY_EXTRACTOR_VARIABLE_PREFIX = "keyExtractor"
-    const val TRANSITIONS_ARRAY_NAME = "transitionsArray"
+  protected companion object {
+    const val KEY_EXTRACTOR_VARIABLE_PREFIX: String = "keyExtractor"
+    const val TRANSITIONS_ARRAY_NAME: String = "transitionsArray"
   }
 
-  private val myPeekHandler = PeekTraceHandler(callNumber, "distinct", myCall.typeBefore, myCall.typeAfter, dsl)
-  private val myKeyExtractor: CallArgument
-  private val myTypeAfter = myCall.typeAfter
-  private val myExtractorVariable: Variable
-  private val myBeforeTimes = dsl.list(dsl.types.INT, myCall.name + callNumber + "BeforeTimes")
-  private val myBeforeValues = dsl.list(dsl.types.ANY, myCall.name + callNumber + "BeforeValues")
-  private val myKeys = dsl.list(dsl.types.ANY, myCall.name + callNumber + "Keys")
-  private val myTime2ValueAfter = dsl.linkedMap(dsl.types.INT, dsl.types.ANY, myCall.name + callNumber + "after")
+  protected val myPeekHandler: PeekTraceHandler = PeekTraceHandler(callNumber, "distinct", myCall.typeBefore, myCall.typeAfter, dsl)
+  protected val myKeyExtractor: CallArgument
+  protected val myTypeAfter: GenericType = myCall.typeAfter
+  protected val myExtractorVariable: Variable
+  protected val myBeforeTimes: ListVariable = dsl.list(dsl.types.INT, myCall.name + callNumber + "BeforeTimes")
+  protected val myBeforeValues: ListVariable = dsl.list(dsl.types.ANY, myCall.name + callNumber + "BeforeValues")
+  protected val myKeys: ListVariable = dsl.list(myKeyType, myCall.name + callNumber + "Keys")
+  protected val myTime2ValueAfter: MapVariable = dsl.linkedMap(dsl.types.INT, dsl.types.ANY, myCall.name + callNumber + "after")
 
   init {
     val arguments = myCall.arguments
     assert(arguments.isNotEmpty()) { "Key extractor is not specified" }
-    myKeyExtractor = arguments.first()
+    myKeyExtractor = arguments[keyExtractorPosition]
     myExtractorVariable = dsl.variable(ClassTypeImpl(myKeyExtractor.type), KEY_EXTRACTOR_VARIABLE_PREFIX + callNumber)
   }
 
@@ -48,47 +51,74 @@ open class DistinctByKeyHandler(callNumber: Int,
 
   override fun transformCall(call: IntermediateStreamCall): IntermediateStreamCall {
     val newKeyExtractor = dsl.lambda("x") {
-      val key = dsl.variable(dsl.types.ANY, "key")
+      val key = dsl.variable(myKeyType, "key")
       declare(key, myExtractorVariable.call(functionApplyName, lambdaArg), false)
       statement { myBeforeTimes.add(dsl.currentTime()) }
       statement { myBeforeValues.add(lambdaArg) }
       statement { myKeys.add(key) }
       doReturn(key)
     }.toCode()
-    return call.updateArguments(listOf(CallArgumentImpl(myKeyExtractor.type, newKeyExtractor)))
+
+    val newArgs = call.arguments.toMutableList()
+    if (keyExtractorPosition < newArgs.size) {
+      newArgs[keyExtractorPosition] = CallArgumentImpl(myKeyExtractor.type, newKeyExtractor)
+    } else {
+      newArgs.add(keyExtractorPosition, CallArgumentImpl(myKeyExtractor.type, newKeyExtractor))
+    }
+
+    return call.updateArguments(newArgs)
   }
 
+  protected open fun getMapArguments(): Array<Expression> = emptyArray()
+
   override fun prepareResult(): CodeBlock {
-    val keys2TimesBefore = dsl.map(dsl.types.ANY, dsl.types.list(dsl.types.INT), "keys2Times")
+    val keys2TimesBefore = dsl.map(myKeyType, dsl.types.list(dsl.types.INT), "keys2Times", *getMapArguments())
     val transitions = dsl.map(dsl.types.INT, dsl.types.INT, "transitionsMap")
+    val nullKeyList = dsl.list(dsl.types.INT, "nullKeyList")
 
     return dsl.block {
       add(myPeekHandler.prepareResult())
       declare(keys2TimesBefore.defaultDeclaration())
       declare(transitions.defaultDeclaration())
+      declare(nullKeyList.defaultDeclaration())
 
       integerIteration(myKeys.size(), block@ this) {
-        val key = declare(variable(types.ANY, "key"), myKeys.get(loopVariable), false)
+        val key = declare(variable(myKeyType, "key"), myKeys.get(loopVariable), false)
         val lst = list(dsl.types.INT, "lst")
         declare(lst, true)
-        add(keys2TimesBefore.computeIfAbsent(dsl, key, newList(types.INT), lst))
+        ifBranch(key same nullExpression) {
+          lst assign nullKeyList
+        }.elseBranch {
+          add(keys2TimesBefore.computeIfAbsent(dsl, key, newList(types.INT), lst))
+        }
         statement { lst.add(myBeforeTimes.get(loopVariable)) }
       }
 
       forEachLoop(variable(types.INT, "afterTime"), myTime2ValueAfter.keys()) {
         val afterTime = loopVariable
         val valueAfter = declare(variable(types.ANY, "valueAfter"), myTime2ValueAfter.get(loopVariable), false)
-        val key = declare(variable(types.ANY, "key"), nullExpression, true)
+        val key = declare(variable(myKeyType, "key"), myKeyType.defaultValue.expr, true)
+        val found = declare(variable(types.BOOLEAN, "found"), "false".expr, true)
         integerIteration(myBeforeTimes.size(), forEachLoop@ this) {
-          val same = if (compareByReference) valueAfter same myBeforeValues.get(loopVariable) else valueAfter equals myBeforeValues.get(loopVariable)
-          ifBranch(same and !transitions.contains(myBeforeTimes.get(loopVariable))) {
+          val equals = valueAfter equals myBeforeValues.get(loopVariable)
+          ifBranch(equals and !transitions.contains(myBeforeTimes.get(loopVariable))) {
             key assign myKeys.get(loopVariable)
+            found assign "true".expr
             statement { breakIteration() }
           }
         }
 
-        forEachLoop(variable(types.INT, "beforeTime"), keys2TimesBefore.get(key)) {
-          statement { transitions.set(loopVariable, afterTime) }
+        ifBranch(found) {
+          val key2TimesBeforeList = list(dsl.types.INT, "key2TimesBeforeList")
+          declare(key2TimesBeforeList, true)
+          ifBranch(key same nullExpression) {
+            key2TimesBeforeList assign nullKeyList
+          }.elseBranch {
+            key2TimesBeforeList assign keys2TimesBefore.get(key)
+          }
+          forEachLoop(variable(types.INT, "beforeTime"), key2TimesBeforeList) {
+            statement { transitions.set(loopVariable, afterTime) }
+          }
         }
       }
 
@@ -112,13 +142,13 @@ open class DistinctByKeyHandler(callNumber: Int,
     return callsAfter
   }
 
-  private fun CodeContext.integerIteration(border: Expression, block: CodeBlock, init: ForLoopBody.() -> Unit) {
+  protected fun CodeContext.integerIteration(border: Expression, block: CodeBlock, init: ForLoopBody.() -> Unit) {
     block.forLoop(declaration(variable(types.INT, "i"), TextExpression("0"), true),
                   TextExpression("i < ${border.toCode()}"),
                   TextExpression("i = i + 1"), init)
   }
 
-  private fun IntermediateStreamCall.updateArguments(args: List<CallArgument>): IntermediateStreamCall =
+  protected fun IntermediateStreamCall.updateArguments(args: List<CallArgument>): IntermediateStreamCall =
     IntermediateStreamCallImpl(myCall.name, myCall.genericArguments, args, typeBefore, typeAfter, textRange)
 
   open class DistinctByCustomKey(callNumber: Int,
