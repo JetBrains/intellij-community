@@ -190,6 +190,7 @@ object ImportQuickFixProvider {
         val sortedImportVariants = uniqueFqNameSortedImportCandidates
             .map { (candidate, priority) ->
                 SymbolBasedAutoImportVariant(
+                    candidate.createPointer(),
                     candidate.getFqName(),
                     candidate.psi,
                     getIconFor(candidate),
