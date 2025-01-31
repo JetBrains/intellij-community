@@ -29,6 +29,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuilder {
 
@@ -180,10 +181,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
         // not interested in collecting complete array value; need to know just an array type
         myArrayName = null;
       }
-      if (argName != null) {
-        registerUsages(argName, getMethodDescr(value, isArray), value);
-      }
-      myHashBuilder.update(value);
+      registerUsages(argName, () -> getMethodDescr(value, isArray), value);
     }
 
     @Override
@@ -198,9 +196,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
         // not interested in collecting complete array value; need to know just an array type
         myArrayName = null;
       }
-      if (argName != null) {
-        registerUsages(argName, (isArray? "()[" : "()") + desc, value);
-      }
+      registerUsages(argName, () -> (isArray? "()[" : "()") + desc, value);
     }
 
     @Override
@@ -214,13 +210,17 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       return this;
     }
 
-    private void registerUsages(String methodName, String methodDescr, Object value) {
+    private void registerUsages(@Nullable String methodName, Supplier<String> methodDescr, Object value) {
       if (value instanceof Type) {
         final String className = ((Type)value).getClassName().replace('.', '/');
         addUsage(new ClassUsage(className));
       }
-      addUsage(new MethodUsage(myType.getJvmName(), methodName, methodDescr));
-      myUsedArguments.add(methodName);
+      if (methodName != null) {
+        addUsage(new MethodUsage(myType.getJvmName(), methodName, methodDescr.get()));
+        myUsedArguments.add(methodName);
+        myHashBuilder.update(methodName);
+      }
+      myHashBuilder.update(value);
     }
 
     @Override
