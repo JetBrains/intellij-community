@@ -16,13 +16,16 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.IdeUICustomization;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SearchTextField.FindAction;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.ApiStatus;
@@ -30,12 +33,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_FIND;
@@ -103,6 +109,33 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     @NotNull Function1<? super SpotlightPainter, Unit> updater
   ) {
     return new SpotlightPainter(target, updater);
+  }
+
+
+  @Override
+  protected @Nullable JComponent createTitlePane() {
+    if (!isNonModal())
+      return null;
+
+    ApplyActionWrapper applyActionWrapper = new ApplyActionWrapper(editor.getApplyAction());
+    applyActionWrapper.putValue(DEFAULT_ACTION, "true");
+    Action resetAction = editor.getResetAction();
+
+
+    JPanel panel = new NonOpaquePanel(new GridBagLayout());
+    Insets insets = JBInsets.create(new Insets(8, 16, 8, 16));
+    panel.setBorder(JBUI.Borders.customLineBottom(JBColor.border()));
+
+
+    GridBag bag = new GridBag().setDefaultInsets(insets);
+    panel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());   // left strut
+    JPanel buttonsPanel = createButtonsPanel(List.of(
+      createJButtonForAction(resetAction),
+      createJButtonForAction(applyActionWrapper)
+    ));
+    panel.add(buttonsPanel, bag.next());
+
+    return panel;
   }
 
   private void init(@Nullable Configurable configurable, @Nullable Project project) {
@@ -196,6 +229,14 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
   }
 
   @Override
+  protected JComponent createSouthPanel() {
+    if (isNonModal())
+      return null;
+    else
+      return super.createSouthPanel();
+  }
+
+  @Override
   protected @Nullable String getHelpId() {
     return editor.getHelpTopic();
   }
@@ -234,6 +275,13 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
 
   static @Nullable ShortcutSet getFindActionShortcutSet() {
     return EventHandler.getShortcuts(ACTION_FIND);
+  }
+
+  static public boolean isNonModal() {
+    if (System.getProperty("ide.ui.non.modal.settings.window") != null) {
+      return Boolean.parseBoolean(System.getProperty("ide.ui.non.modal.settings.window"));
+    }
+    return AdvancedSettings.getBoolean("ide.ui.non.modal.settings.window");
   }
 
   private final class ApplyActionWrapper extends AbstractAction {

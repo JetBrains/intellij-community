@@ -414,7 +414,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   @Override
   protected Action getResetAction() {
-    return null;
+    return editor.getResetAction();
   }
 
   @Override

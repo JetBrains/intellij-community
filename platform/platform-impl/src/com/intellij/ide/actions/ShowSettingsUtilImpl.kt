@@ -13,7 +13,6 @@ import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.TabbedConfigurable
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.ConfigurableWrapper
@@ -60,7 +59,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     private fun showInternal(project: Project?, toSelect: Configurable?, settingsDialogInitializer: () -> SettingsDialog) {
       val currentOrDefaultProject = currentOrDefaultProject(project)
       val isActualProject = currentOrDefaultProject != ProjectManager.getInstance().defaultProject
-      if (useNonModalSettingsWindow() && isActualProject) {
+      if (SettingsDialog.isNonModal() && isActualProject) {
         runWithModalProgressBlocking(currentOrDefaultProject, IdeBundle.message("settings.modal.opening.message")) {
           val settingsFile = SettingsVirtualFileHolder.getInstance(currentOrDefaultProject).getOrCreate(toSelect, settingsDialogInitializer)
           val fileEditorManager = FileEditorManager.getInstance(currentOrDefaultProject) as FileEditorManagerEx;
@@ -252,11 +251,6 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
                             advancedInitialization = null,
                             showApplyButton = isWorthToShowApplyButton(configurable))
   }
-}
-
-private fun useNonModalSettingsWindow(): Boolean {
-  return System.getProperty("ide.ui.non.modal.settings.window")?.toBoolean()
-         ?: AdvancedSettings.getBoolean("ide.ui.non.modal.settings.window")
 }
 
 
