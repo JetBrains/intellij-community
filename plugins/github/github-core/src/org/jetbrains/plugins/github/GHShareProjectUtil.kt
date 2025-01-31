@@ -76,9 +76,6 @@ object GHShareProjectUtil {
                            root: VirtualFile,
                            projectName: @NlsSafe String) {
     FileDocumentManager.getInstance().saveAllDocuments()
-    runWithModalProgressBlocking(project, IdeBundle.message("progress.saving.project", project.name)) {
-      saveSettings(project)
-    }
 
     val possibleRemotes = gitRepository
       ?.let(project.service<GHHostedRepositoriesManager>()::findKnownRepositories)
@@ -233,6 +230,12 @@ object GHShareProjectUtil {
         // check if there is no commits
         if (!repository.isFresh) {
           return true
+        }
+
+        invokeAndWaitIfNeeded(indicator.modalityState) {
+          runWithModalProgressBlocking(project, IdeBundle.message("progress.saving.project", project.name)) {
+            saveSettings(project, forceSavingAllSettings = true)
+          }
         }
 
         LOG.info("Trying to commit")
