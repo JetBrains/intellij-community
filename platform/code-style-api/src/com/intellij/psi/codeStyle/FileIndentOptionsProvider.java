@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +19,8 @@ import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
  * The provider can also offer ad hoc actions to control the current indentation policy without opening settings.
  */
 public abstract class FileIndentOptionsProvider {
-  public static final ExtensionPointName<FileIndentOptionsProvider> EP_NAME = new ExtensionPointName<>("com.intellij.fileIndentOptionsProvider");
+
+  public static final ExtensionPointName<FileIndentOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileIndentOptionsProvider");
 
   /**
    * @deprecated Use {@link #getIndentOptions(Project, CodeStyleSettings, VirtualFile)}
@@ -56,13 +56,11 @@ public abstract class FileIndentOptionsProvider {
     return true;
   }
 
-  @ApiStatus.Internal
-  public static void notifyIndentOptionsChanged(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+  protected static void notifyIndentOptionsChanged(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
   }
 
-  @ApiStatus.Internal
-  public static void notifyIndentOptionsChanged(@NotNull Project project) {
+  protected static void notifyIndentOptionsChanged(@NotNull Project project) {
     CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged();
   }
 

@@ -965,6 +965,8 @@ a:com.intellij.psi.codeStyle.FileIndentOptionsProvider
 - getIndentOptions(com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.PsiFile):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
 - getIndentStatusBarUiContributor(com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions):com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 - f:isAllowed(Z):Z
+- ps:notifyIndentOptionsChanged(com.intellij.openapi.project.Project):V
+- ps:notifyIndentOptionsChanged(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
 - useOnFullReformat():Z
 com.intellij.psi.codeStyle.ImportsLayoutSettings
 - a:getClassCountToUseImportOnDemand():I
