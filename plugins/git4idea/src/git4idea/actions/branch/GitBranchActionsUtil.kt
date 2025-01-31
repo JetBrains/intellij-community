@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.tail
 import git4idea.GitBranch
+import git4idea.actions.branch.GitBranchActionsUtil.getAffectedRepositories
 import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
@@ -71,7 +72,10 @@ object GitBranchActionsUtil {
       return repositoriesInContext
     }
 
-    if (userWantsSyncControl(project)) return GitRepositoryManager.getInstance(project).repositories
+    val allRepositories = GitRepositoryManager.getInstance(project).repositories
+    if (allRepositories.size == 1 || userWantsSyncControl(project)) {
+      return allRepositories
+    }
 
     return GitBranchUtil.guessRepositoryForOperation(project, e.dataContext)?.let(::listOf).orEmpty()
   }
