@@ -161,33 +161,6 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   }
 
   private class EvaluationException(val errorMessage: @NlsContexts.DialogMessage String) : Exception(errorMessage)
-
-  override suspend fun showLuxEvaluateDialog(evaluatorId: XDebuggerEvaluatorId, editorId: EditorId?, fileId: VirtualFileId?, xValueId: XValueId?) {
-    val evaluatorEntity = entity(XDebuggerEvaluatorEntity.EvaluatorId, evaluatorId) ?: return
-    val sessionEntity = evaluatorEntity.sessionEntity
-    val session = sessionEntity.session
-    val project = sessionEntity.projectEntity.projectId.findProject()
-    val evaluator = evaluatorEntity.evaluator
-    val editor = editorId?.findEditorOrNull()
-
-    val editorVirtualFile = editor?.document?.let { FileDocumentManager.getInstance().getFile(it) }
-    val virtualFile = fileId?.virtualFile() ?: editorVirtualFile
-
-    val psiFile = editor?.let { PsiEditorUtil.getPsiFile(it) }
-
-    val selectedValue = xValueId?.let { entity(XValueEntity.XValueId, it)?.xValue }
-
-    val expressionPromise = XDebuggerEvaluateActionHandler.getSelectedExpressionAsync(project, evaluator, editor, psiFile, selectedValue)
-
-    EvaluationCoroutineScopeProvider.getInstance().cs.launch {
-      val expression = expressionPromise.await()
-      withContext(Dispatchers.EDT) {
-        val editorsProvider = session.debugProcess.editorsProvider
-        val stackFrame = session.currentStackFrame
-        XDebuggerEvaluateActionHandler.showDialog(session, virtualFile, editorsProvider, stackFrame, evaluator, expression)
-      }
-    }
-  }
 }
 
 internal suspend fun XValueEntity.toXValueDto(): XValueDto {

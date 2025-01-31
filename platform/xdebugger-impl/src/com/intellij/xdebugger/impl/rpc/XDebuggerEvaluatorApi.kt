@@ -40,8 +40,6 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
 
   suspend fun evaluateFullValue(fullValueEvaluatorId: XFullValueEvaluatorId): Deferred<XFullValueEvaluatorResult>
 
-  suspend fun showLuxEvaluateDialog(evaluatorId: XDebuggerEvaluatorId, editorId: EditorId?, fileId: VirtualFileId?, xValueId: XValueId?)
-
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebuggerEvaluatorApi {

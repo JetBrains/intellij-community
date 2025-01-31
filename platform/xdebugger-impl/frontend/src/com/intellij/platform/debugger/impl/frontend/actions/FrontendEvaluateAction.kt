@@ -16,6 +16,7 @@ import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValu
 import com.intellij.xdebugger.impl.actions.areFrontendDebuggerActionsEnabled
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerEvaluateActionHandler
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorApi
+import com.intellij.xdebugger.impl.rpc.XDebuggerLuxApi
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -54,7 +55,7 @@ private class FrontendEvaluateAction : AnAction(), ActionRemoteBehaviorSpecifica
     val xValue = XDebuggerTreeActionBase.getSelectedNode(focusedDataContext)?.valueContainer as? FrontendXValue
 
     project.service<FrontendEvaluateActionCoroutineScope>().cs.launch {
-      XDebuggerEvaluatorApi.getInstance().showLuxEvaluateDialog(
+      XDebuggerLuxApi.getInstance().showLuxEvaluateDialog(
         evaluator.evaluatorDto.id, editor?.editorId(), virtualFile?.rpcId(), xValue?.xValueDto?.id
       )
     }
