@@ -7,6 +7,7 @@ import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSessionEntity
+import com.jetbrains.rd.ide.model.ActionTimestampSetModel
 import fleet.kernel.DurableRef
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -20,7 +21,8 @@ interface SeRemoteApi: RemoteApi<Unit> {
   suspend fun getItems(projectId: ProjectId,
                        sessionRef: DurableRef<SeSessionEntity>,
                        providerId: SeProviderId,
-                       params: SeParams): Flow<SeItemData>
+                       params: SeParams,
+                       timestampSetModel: ActionTimestampSetModel): Flow<SeItemData>
 
   suspend fun itemSelected(projectId: ProjectId,
                            sessionRef: DurableRef<SeSessionEntity>,

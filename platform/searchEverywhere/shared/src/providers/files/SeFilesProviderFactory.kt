@@ -4,7 +4,7 @@ package com.intellij.platform.searchEverywhere.providers.files
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributorFactory
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereAsyncContributor
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
@@ -14,18 +14,14 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeFilesProviderFactory : SeItemsProviderFactory {
-  override fun getItemsProvider(project: Project): SeItemsProvider {
+  override fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider {
     val legacyContributor = runBlockingCancellable {
       readAction {
-        FileSearchEverywhereContributorFactory().createContributor(createActionEvent(project)) as SearchEverywhereAsyncContributor<Any?>
+        val actionEvent = AnActionEvent.createFromDataContext("", null, dataContext)
+        FileSearchEverywhereContributorFactory().createContributor(actionEvent) as SearchEverywhereAsyncContributor<Any?>
       }
     }
 
     return SeFilesProvider(project, legacyContributor)
-  }
-
-  private fun createActionEvent(project: Project) = AnActionEvent.createFromDataContext("", null) {
-    if (CommonDataKeys.PROJECT.`is`(it)) project
-    else null
   }
 }

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeItemsProviderFactoryMockBackend: SeItemsProviderFactory {
-  override fun getItemsProvider(project: Project): SeItemsProvider =
+  override fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider =
     SeItemsProviderMock(resultPrefix = PREFIX, id = ID, delayMillis = 300, delayStep = 5)
 
   companion object {
