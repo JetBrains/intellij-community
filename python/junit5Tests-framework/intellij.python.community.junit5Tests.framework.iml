@@ -31,5 +31,6 @@
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.community.wintools" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
   </component>
 </module>
