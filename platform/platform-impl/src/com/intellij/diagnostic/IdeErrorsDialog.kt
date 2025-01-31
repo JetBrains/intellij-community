@@ -521,14 +521,18 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
       }
     }
 
-    val (userMessage, throwable) = cluster.decouple()
-    val events = arrayOf(IdeaLoggingEvent(userMessage, throwable, message.includedAttachments, cluster.plugin, message))
+    val pair = cluster.decouple()
+    if (pair == null) {
+      message.setSubmitted(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
+      return false
+    }
+
+    val events = arrayOf(IdeaLoggingEvent(pair.first, pair.second, message.includedAttachments, cluster.plugin, message))
     var parentComponent: Container = rootPane
     if (dialogClosed) {
       val frame = ComponentUtil.getParentOfType(IdeFrame::class.java, parentComponent)
       parentComponent = frame?.component ?: WindowManager.getInstance().findVisibleFrame() ?: parentComponent
     }
-
     val accepted = submitter.submit(events, message.additionalInfo, parentComponent) { reportInfo: SubmittedReportInfo? ->
       message.setSubmitted(reportInfo)
       UIUtil.invokeLaterIfNeeded { updateOnSubmit() }
@@ -674,18 +678,28 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
 
     val canSubmit: Boolean get() = submitter != null && isUnsent
 
-    fun decouple(): Pair<String?, Throwable> {
+    fun decouple(): Pair<String?, Throwable>? {
       val detailsText = detailsText!!
-      val p = detailsText.indexOf(first.throwable.javaClass.name)
-      val (message, stacktrace) = when {
-        p == 0 -> null to detailsText
-        p > 0 && detailsText[p - 1] == '\n' -> {
-          detailsText.substring(0, p).trim { it <= ' ' } to detailsText.substring(p)
-        }
-        else -> "*** exception class was changed or removed" to detailsText
+      val originalThrowableText = first.throwableText
+      val originalThrowableClass = first.throwable.javaClass.name
+
+      val p1 = detailsText.indexOf(originalThrowableText)
+      if (p1 >= 0) {
+        val message = detailsText.substring(0, p1).trim { it <= ' ' }.takeIf(String::isNotEmpty)
+        return message to first.throwable
       }
-      val throwable = if (stacktrace == first.throwableText) first.throwable else RecoveredThrowable.fromString(stacktrace)
-      return message to throwable
+
+      if (detailsText.startsWith(originalThrowableClass)) {
+        return null to RecoveredThrowable.fromString(detailsText)
+      }
+
+      val p2 = detailsText.indexOf('\n' + originalThrowableClass)
+      if (p2 >= 0) {
+        val message = detailsText.substring(0, p2).trim { it <= ' ' }.takeIf(String::isNotEmpty)
+        return message to RecoveredThrowable.fromString(detailsText.substring(p2 + 1))
+      }
+
+      return null
     }
   }
 
