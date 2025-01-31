@@ -4,20 +4,14 @@ package org.jetbrains.plugins.groovy.config.wizard
 
 import com.intellij.CommonBundle
 import com.intellij.framework.library.FrameworkLibraryVersion
-import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Groovy.logGroovyLibraryChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Groovy.logGroovyLibraryFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants
-import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.*
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.application
@@ -29,9 +23,6 @@ import org.jetbrains.plugins.groovy.config.loadLatestGroovyVersions
 import javax.swing.SwingUtilities
 
 const val GROOVY_SDK_FALLBACK_VERSION: String = "3.0.9"
-
-private const val MAIN_FILE = "Main.groovy"
-private const val MAIN_GROOVY_TEMPLATE = "template.groovy"
 
 fun <S> S.setupGroovySdkUI(builder: Panel) where S : NewProjectWizardStep, S : BuildSystemGroovyNewProjectWizardData {
   val groovyLibraryDescription = GroovyLibraryDescription()
@@ -113,15 +104,6 @@ private fun isBlankDistribution(distribution: DistributionInfo?): Boolean {
 private fun isInvalidSdk(distribution: DistributionInfo?): Boolean {
   return distribution == null || (distribution is LocalDistributionInfo &&
                                   GroovyConfigUtils.getInstance().getSDKVersionOrNull(distribution.path) == null)
-}
-
-fun ModuleBuilder.createSampleGroovyCodeFile(project: Project, sourceDirectory: VirtualFile) {
-  WriteCommandAction.runWriteCommandAction(project, GroovyBundle.message("new.project.wizard.groovy.creating.main.file"), null,
-                                           Runnable {
-                                             val fileTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(MAIN_GROOVY_TEMPLATE)
-                                             val helloWorldFile = sourceDirectory.createChildData(this, MAIN_FILE)
-                                             VfsUtil.saveText(helloWorldFile, fileTemplate.text)
-                                           })
 }
 
 fun moveUnstableVersionToTheEnd(left: FrameworkLibraryVersion, right: FrameworkLibraryVersion): Int {

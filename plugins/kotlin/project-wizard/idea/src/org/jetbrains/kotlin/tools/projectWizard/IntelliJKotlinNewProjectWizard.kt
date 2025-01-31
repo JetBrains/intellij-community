@@ -135,6 +135,8 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
 
     private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
         override fun setupAssets(project: Project) {
+            setOutputDirectory(parent.contentRoot)
+
             if (context.isCreatingNewProject) {
                 addAssets(KotlinAssetsProvider.getKotlinIgnoreAssets())
             }

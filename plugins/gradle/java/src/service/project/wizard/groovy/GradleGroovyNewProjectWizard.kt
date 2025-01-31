@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.project.wizard.groovy
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
-import com.intellij.ide.projectWizard.generators.AssetsJava
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
@@ -82,9 +81,7 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       addEmptyDirectoryAsset("src/test/resources")
 
       if (parent.addSampleCode) {
-        val sourcePath = AssetsJava.getJavaSampleSourcePath("src/main/groovy", parent.groupId, "Main.groovy")
-        addTemplateAsset(sourcePath, "Groovy Sample Code", "PACKAGE_NAME" to parent.groupId)
-        addFilesToOpen(sourcePath)
+        withGroovySampleCode("src/main/groovy", parent.groupId)
       }
 
       addOrConfigureSettingsScript {
