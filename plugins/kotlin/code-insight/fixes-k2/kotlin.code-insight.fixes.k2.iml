@@ -31,7 +31,7 @@
     <orderEntry type="library" name="kotlinc.analysis-api-k2" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-api-impl-base" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.editor" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />

@@ -29,7 +29,7 @@ private val PLATFORM_API_MODULES = java.util.List.of(
   "intellij.platform.analysis",
   "intellij.platform.builtInServer",
   "intellij.platform.diff",
-  "intellij.platform.editor",
+  "intellij.platform.editor.ui",
   "intellij.platform.externalSystem",
   "intellij.platform.externalSystem.dependencyUpdater",
   "intellij.platform.codeStyle",

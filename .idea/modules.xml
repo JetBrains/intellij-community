@@ -677,8 +677,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/diff-impl/tests/intellij.platform.diff.tests.iml" filepath="$PROJECT_DIR$/platform/diff-impl/tests/intellij.platform.diff.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/duplicates-analysis/intellij.platform.duplicates.analysis.iml" filepath="$PROJECT_DIR$/platform/duplicates-analysis/intellij.platform.duplicates.analysis.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-tests/durability/intellij.platform.durability.iml" filepath="$PROJECT_DIR$/platform/platform-tests/durability/intellij.platform.durability.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-api/intellij.platform.editor.iml" filepath="$PROJECT_DIR$/platform/editor-ui-api/intellij.platform.editor.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-ex/intellij.platform.editor.ex.iml" filepath="$PROJECT_DIR$/platform/editor-ui-ex/intellij.platform.editor.ex.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-api/intellij.platform.editor.ui.iml" filepath="$PROJECT_DIR$/platform/editor-ui-api/intellij.platform.editor.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/eel/intellij.platform.eel.iml" filepath="$PROJECT_DIR$/platform/eel/intellij.platform.eel.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/eel-impl/intellij.platform.eel.impl.iml" filepath="$PROJECT_DIR$/platform/eel-impl/intellij.platform.eel.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/eel-provider/intellij.platform.eel.provider.iml" filepath="$PROJECT_DIR$/platform/eel-provider/intellij.platform.eel.provider.iml" />

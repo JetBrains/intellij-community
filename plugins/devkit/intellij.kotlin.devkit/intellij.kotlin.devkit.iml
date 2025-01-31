@@ -38,7 +38,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.editor" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
