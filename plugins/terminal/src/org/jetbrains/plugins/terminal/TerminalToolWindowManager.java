@@ -189,6 +189,11 @@ public final class TerminalToolWindowManager implements Disposable {
     createNewSession(terminalRunner, tabState, true);
   }
 
+  @ApiStatus.Internal
+  public void createNewSession(@NotNull TerminalTabState tabState) {
+    createNewSession(myTerminalRunner, tabState);
+  }
+
   public @NotNull TerminalWidget createNewSession() {
     return createNewSession(myTerminalRunner, null, true, true);
   }
