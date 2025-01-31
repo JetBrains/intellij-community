@@ -240,7 +240,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usagesIn = refUsages.get();
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final ReferencedElementsCollector collector = new ReferencedElementsCollector();

@@ -25,7 +25,7 @@ open class KotlinChangeSignatureProcessor(project: Project, changeInfo: KotlinCh
         return KotlinUsagesViewDescriptor(method, RefactoringBundle.message("0.to.change.signature", UsageViewUtil.getType(method)))
     }
 
-    override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
+    protected override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usageProcessors = ChangeSignatureUsageProcessor.EP_NAME.extensions
 
         if (!usageProcessors.all { it.setupDefaultValues(myChangeInfo, refUsages, myProject) }) return false

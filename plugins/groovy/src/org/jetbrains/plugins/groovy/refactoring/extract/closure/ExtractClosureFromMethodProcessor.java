@@ -58,7 +58,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
   }
 
   @Override
-  public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final GrStatement[] statements = myHelper.getStatements();

@@ -63,7 +63,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
 
 
   @Override
-  public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final UsageInfo[] usages = refUsages.get();
     for (UsageInfo usage : usages) {
@@ -74,7 +74,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public boolean isPreviewUsages(UsageInfo @NotNull [] usages) {
+  protected boolean isPreviewUsages(UsageInfo @NotNull [] usages) {
     for (UsageInfo usage : usages) {
       if (usage instanceof ClosureUsage) return true;
     }

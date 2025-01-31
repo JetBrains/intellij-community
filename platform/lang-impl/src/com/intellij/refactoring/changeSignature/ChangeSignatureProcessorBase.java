@@ -118,7 +118,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
 
 
   @Override
-  public boolean isPreviewUsages(UsageInfo @NotNull [] usages) {
+  protected boolean isPreviewUsages(UsageInfo @NotNull [] usages) {
     for (ChangeSignatureUsageProcessor processor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
       if (processor.shouldPreviewUsages(myChangeInfo, usages)) return true;
     }

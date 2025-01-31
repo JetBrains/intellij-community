@@ -47,7 +47,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   private final List<UsageInfo> myVariablesUsages = new ArrayList<>();
 
   @Override
-  public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usages = refUsages.get();
     List<UsageInfo> filtered = new ArrayList<>();
     for (UsageInfo usage : usages) {

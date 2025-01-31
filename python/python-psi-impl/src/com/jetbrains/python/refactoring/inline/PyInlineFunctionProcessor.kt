@@ -46,7 +46,7 @@ class PyInlineFunctionProcessor(project: Project,
   private val myGenerator = PyElementGenerator.getInstance(myProject)
   private var myRemoveDeclaration = !myInlineThisOnly && removeDeclaration
 
-  override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
+  protected override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
     if (refUsages.isNull) return false
     val conflicts = MultiMap.create<PsiElement, String>()
     val usagesAndImports = refUsages.get()

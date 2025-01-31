@@ -73,7 +73,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   }
 
   @Override
-  public final boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
+  protected final boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     if (ApplicationManager.getApplication().isUnitTestMode() && !BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
       MultiMap<PsiElement, @Nls String> conflictDescriptions = getConflictDescriptions(usagesIn);

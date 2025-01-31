@@ -246,7 +246,7 @@ open class MoveKotlinDeclarationsProcessor(
         return UsageViewUtil.removeDuplicatedUsages(usages.toTypedArray())
     }
 
-    override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
+    protected override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         return showConflicts(conflicts, refUsages.get())
     }
 

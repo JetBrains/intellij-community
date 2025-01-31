@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move
 
@@ -42,7 +42,7 @@ class MoveToKotlinFileProcessor @JvmOverloads constructor(
         return MoveFilesWithDeclarationsViewDescriptor(arrayOf(sourceFile), targetDirectory)
     }
 
-    override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
+    protected override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val (conflicts, usages) = MoveConflictUsages.preprocess(refUsages)
         return showConflicts(conflicts, usages)
     }

@@ -108,7 +108,7 @@ public final class IntroduceParameterObjectProcessor<M extends PsiNamedElement, 
   }
 
   @Override
-  public boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usageInfos = refUsages.get();
     MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     myDelegate.collectConflicts(conflicts, usageInfos, myMethod, myClassDescriptor);
