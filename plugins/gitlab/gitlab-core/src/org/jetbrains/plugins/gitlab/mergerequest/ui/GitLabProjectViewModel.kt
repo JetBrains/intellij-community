@@ -47,7 +47,7 @@ internal class GitLabProjectViewModel(
   val selectorVm: StateFlow<GitLabRepositoryAndAccountSelectorViewModel?> = isAvailable.mapScoped {
     val preferences = project.service<GitLabMergeRequestsPreferences>()
     GitLabRepositoryAndAccountSelectorViewModel(
-      this, projectsManager, accountManager,
+      project, this, projectsManager, accountManager,
       onSelected = { mapping, account ->
         connectionManager.openConnection(mapping, account)
         preferences.selectedUrlAndAccountId = mapping.remote.url to account.id

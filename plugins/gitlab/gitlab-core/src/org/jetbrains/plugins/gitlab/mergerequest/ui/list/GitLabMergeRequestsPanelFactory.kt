@@ -24,7 +24,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabFiltersPanelFactory
 import javax.swing.JComponent
 
-internal class GitLabMergeRequestsPanelFactory {
+internal object GitLabMergeRequestsPanelFactory {
 
   fun create(scope: CoroutineScope,
              accountVm: GitLabAccountViewModel,
