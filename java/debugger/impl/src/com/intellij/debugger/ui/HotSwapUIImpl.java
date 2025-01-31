@@ -90,11 +90,13 @@ public final class HotSwapUIImpl extends HotSwapUI {
    * decide which sessions and classes participate in the hotswap and reload them.
    *
    * @param generatedPaths the relative paths of the {@code .class} files that were compiled, grouped by their content root
+   * @param isAutoRun marks this update as automatic, meaning not explicitly called by a user
    */
   private void hotSwapSessions(@NotNull List<DebuggerSession> sessions,
                                @Nullable Map<String, Collection<String>> generatedPaths,
                                @Nullable NotNullLazyValue<List<String>> outputPaths,
-                               @Nullable HotSwapStatusListener callback) {
+                               @Nullable HotSwapStatusListener callback,
+                               boolean isAutoRun) {
     boolean shouldAskBeforeHotswap = myAskBeforeHotswap;
     myAskBeforeHotswap = true;
 
@@ -148,10 +150,12 @@ public final class HotSwapUIImpl extends HotSwapUI {
       }
 
       if (modifiedClasses.isEmpty()) {
-        String message = JavaDebuggerBundle.message("status.hotswap.uptodate");
-        Notification notification = HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION);
-        HotSwapStatusNotificationManager.getInstance(myProject).trackNotification(notification);
-        notification.notify(myProject);
+        if (!isAutoRun) {
+          String message = JavaDebuggerBundle.message("status.hotswap.uptodate");
+          Notification notification = HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION);
+          HotSwapStatusNotificationManager.getInstance(myProject).trackNotification(notification);
+          notification.notify(myProject);
+        }
         HotSwapStatistics.logHotSwapStatus(myProject, HotSwapStatistics.HotSwapStatus.NO_CHANGES);
         statusListener.onNothingToReload(sessions);
         return;
@@ -159,6 +163,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
 
       ApplicationManager.getApplication().invokeLater(() -> {
         if (shouldAskBeforeHotswap && !DebuggerSettings.RUN_HOTSWAP_ALWAYS.equals(runHotswap)) {
+          // TODO Do not show dialog in case of `isAutoRun == true`: activate hotswap button instead
           RunHotswapDialog dialog = new RunHotswapDialog(myProject, sessions, shouldDisplayHangWarning);
           if (!dialog.showAndGet()) {
             for (DebuggerSession session : modifiedClasses.keySet()) {
@@ -300,7 +305,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
     }
     else {
       if (session.isAttached()) {
-        hotSwapSessions(Collections.singletonList(session), null, null, callback);
+        hotSwapSessions(Collections.singletonList(session), null, null, callback, false);
       }
       else if (callback != null) {
         callback.onFailure(List.of(session));
@@ -437,7 +442,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
       NotNullLazyValue<List<String>> outputRoots = context.getDirtyOutputPaths()
         .map(stream -> NotNullLazyValue.createValue(() -> stream.collect(Collectors.toList())))
         .orElse(null);
-      instance.hotSwapSessions(sessions, generatedPaths, outputRoots, callback);
+      instance.hotSwapSessions(sessions, generatedPaths, outputRoots, callback, context.isAutoRun());
     }
 
     private static void notifyCancelled(@Nullable HotSwapStatusListener callback, List<DebuggerSession> sessions) {
