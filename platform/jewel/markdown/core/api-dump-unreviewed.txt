@@ -581,6 +581,7 @@ a:org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
 - pa:afterProcessing():V
 - pa:beforeProcessing():V
 - f:process(kotlin.jvm.functions.Function0):java.lang.Object
-- a:scrollToLine(I,kotlin.coroutines.Continuation):java.lang.Object
+- a:scrollToLine(I,androidx.compose.animation.core.AnimationSpec,kotlin.coroutines.Continuation):java.lang.Object
+- bs:scrollToLine$default(org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer,I,androidx.compose.animation.core.AnimationSpec,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 f:org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer$Companion
 - f:create(androidx.compose.foundation.gestures.ScrollableState):org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
