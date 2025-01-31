@@ -79,8 +79,7 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       addEmptyDirectoryAsset("src/test/resources")
 
       if (parent.addSampleCode) {
-        prepareJavaSampleOnboardingTips(project)
-        withJavaSampleCodeAsset("src/main/java", parent.groupId)
+        withJavaSampleCodeAsset(project, "src/main/java", parent.groupId)
       }
 
       addOrConfigureSettingsScript {

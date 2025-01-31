@@ -7,7 +7,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampl
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logGenerateMultipleModulesChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logGenerateMultipleModulesFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
-import com.intellij.ide.projectWizard.generators.AssetsJava
 import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.shouldRenderOnboardingTips
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -48,7 +47,6 @@ import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersio
 import org.jetbrains.kotlin.tools.projectWizard.core.KotlinAssetsProvider
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
-import org.jetbrains.kotlin.tools.projectWizard.wizard.prepareKotlinSampleOnboardingTips
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaKotlinVersionProviderService
 import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
@@ -333,8 +331,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             addEmptyDirectoryAsset(SRC_TEST_RESOURCES_PATH)
 
             if (parent.addSampleCode) {
-                prepareKotlinSampleOnboardingTips(project)
-                withKotlinSampleCode(SRC_MAIN_KOTLIN_PATH, parent.groupId)
+                withKotlinSampleCode(project, SRC_MAIN_KOTLIN_PATH, parent.groupId)
             }
 
             addOrConfigureSettingsScript {
@@ -400,13 +397,11 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             addTemplateAsset("app/$KOTLIN_DSL_SCRIPT_NAME", "KotlinSampleAppBuildGradle", templateParameters)
 
             if (parent.addSampleCode) {
-                prepareKotlinSampleOnboardingTips(project, "App.kt")
                 val templateName = when (shouldRenderOnboardingTips()) {
                     true -> "KotlinSampleAppWithRenderedOnboardingTips"
                     else -> "KotlinSampleAppWithOnboardingTips"
                 }
-                val sourcePath = AssetsJava.getJavaSampleSourcePath(SRC_MAIN_KOTLIN_PATH, null, "App.kt")
-                withKotlinSampleCode("app/$sourcePath", templateName, parent.groupId)
+                withKotlinSampleCode(project, "app/$SRC_MAIN_KOTLIN_PATH", parent.groupId, "App.kt", templateName)
             }
 
             addEmptyDirectoryAsset("utils/$SRC_MAIN_KOTLIN_PATH")
@@ -416,10 +411,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             addTemplateAsset("utils/$KOTLIN_DSL_SCRIPT_NAME", "KotlinSampleUtilsBuildGradle", templateParameters)
 
             if (parent.addSampleCode) {
-                val utilitiesPath = AssetsJava.getJavaSampleSourcePath(SRC_MAIN_KOTLIN_PATH, null, "Utilities.kt")
-                val utilitiesTestPath = AssetsJava.getJavaSampleSourcePath(SRC_TEST_KOTLIN_PATH, null, "UtilitiesTest.kt")
-                addTemplateAsset("utils/$utilitiesPath", "KotlinSampleUtilsUtilities", templateParameters)
-                addTemplateAsset("utils/$utilitiesTestPath", "KotlinSampleUtilsUtilitiesTest", templateParameters)
+                addTemplateAsset("utils/$SRC_MAIN_KOTLIN_PATH/Utilities.kt", "KotlinSampleUtilsUtilities", templateParameters)
+                addTemplateAsset("utils/$SRC_TEST_KOTLIN_PATH/UtilitiesTest.kt", "KotlinSampleUtilsUtilitiesTest", templateParameters)
             }
         }
     }

@@ -25,7 +25,6 @@ import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
 import org.jetbrains.kotlin.tools.projectWizard.core.KotlinAssetsProvider
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
-import org.jetbrains.kotlin.tools.projectWizard.wizard.prepareKotlinSampleOnboardingTips
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.StdlibVersionChooserDialog
 import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode
 
@@ -140,9 +139,8 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 addAssets(KotlinAssetsProvider.getKotlinIgnoreAssets())
             }
             if (parent.addSampleCode) {
-                prepareKotlinSampleOnboardingTips(project)
                 val sourceRootPath = if (parent.useCompactProjectStructure) "src" else "src/main/kotlin"
-                withKotlinSampleCode(sourceRootPath, null)
+                withKotlinSampleCode(project, sourceRootPath)
             }
         }
     }

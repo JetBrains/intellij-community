@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard.Companion.getKotlinWizardVersion
 import org.jetbrains.kotlin.tools.projectWizard.addMultiPlatformLink
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
-import org.jetbrains.kotlin.tools.projectWizard.wizard.prepareKotlinSampleOnboardingTips
 import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode
 
 internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
@@ -122,8 +121,7 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
             addEmptyDirectoryAsset(SRC_TEST_RESOURCES_PATH)
 
             if (parent.addSampleCode) {
-                prepareKotlinSampleOnboardingTips(project)
-                withKotlinSampleCode(SRC_MAIN_KOTLIN_PATH, parent.groupId, shouldOpenFile = false)
+                withKotlinSampleCode(project, SRC_MAIN_KOTLIN_PATH, parent.groupId, shouldOpenFile = false)
             }
         }
     }

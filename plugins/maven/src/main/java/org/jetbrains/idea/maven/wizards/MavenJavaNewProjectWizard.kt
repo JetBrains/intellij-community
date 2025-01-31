@@ -78,8 +78,7 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
       }
       if (parent.addSampleCode) {
-        prepareJavaSampleOnboardingTips(project)
-        withJavaSampleCodeAsset("src/main/java", parent.groupId)
+        withJavaSampleCodeAsset(project, "src/main/java", parent.groupId)
       }
     }
   }

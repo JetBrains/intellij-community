@@ -25,6 +25,7 @@ object AssetsJava {
   fun getJavaSampleTemplateName(generateOnboardingTips: Boolean): String =
     getJavaSampleTemplateName()
 
+  @ApiStatus.Internal
   fun getJavaSampleTemplateName(): String {
     return when (shouldRenderOnboardingTips()) {
       true -> DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME
@@ -41,29 +42,42 @@ object AssetsJava {
     pathJoiner.add(fileName)
     return pathJoiner.toString()
   }
+
+  @ApiStatus.Internal
+  fun prepareJavaSampleOnboardingTips(project: Project, fileName: String) {
+    AssetsOnboardingTips.prepareOnboardingTips(project, fileName) { charSequence ->
+      charSequence.indexOf("System.out.println").takeIf { it >= 0 }
+    }
+  }
 }
 
 @Deprecated("The onboarding tips generated unconditionally")
-fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourceRootPath: String, packageName: String?, generateOnboardingTips: Boolean): Unit =
-  withJavaSampleCodeAsset(sourceRootPath, packageName)
+fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourceRootPath: String, packageName: String?, generateOnboardingTips: Boolean) {
+  val templateName = AssetsJava.getJavaSampleTemplateName()
+  val sourcePath = AssetsJava.getJavaSampleSourcePath(sourceRootPath, packageName, DEFAULT_FILE_NAME)
+  withJavaSampleCodeAsset(sourcePath, packageName, templateName)
+}
 
 @Deprecated("The onboarding tips generated unconditionally")
 fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(sourcePath: String, templateName: String, packageName: String?, generateOnboardingTips: Boolean): Unit =
-  withJavaSampleCodeAsset(sourcePath, templateName, packageName)
+  withJavaSampleCodeAsset(sourcePath, packageName, templateName)
 
 fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
+  project: Project,
   sourceRootPath: String,
-  packageName: String?,
+  packageName: String? = null,
+  fileName: String = DEFAULT_FILE_NAME,
+  templateName: String = AssetsJava.getJavaSampleTemplateName(),
 ) {
-  val templateName = AssetsJava.getJavaSampleTemplateName()
-  val sourcePath = AssetsJava.getJavaSampleSourcePath(sourceRootPath, packageName, DEFAULT_FILE_NAME)
-  withJavaSampleCodeAsset(sourcePath, templateName, packageName)
+  val sourcePath = AssetsJava.getJavaSampleSourcePath(sourceRootPath, packageName, fileName)
+  AssetsJava.prepareJavaSampleOnboardingTips(project, fileName)
+  withJavaSampleCodeAsset(sourcePath, packageName, templateName)
 }
 
-fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
+private fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
   sourcePath: String,
-  templateName: String,
   packageName: String?,
+  templateName: String,
 ) {
   addTemplateAsset(sourcePath, templateName, buildMap {
     if (packageName != null) {
@@ -102,8 +116,6 @@ fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
   addFilesToOpen(sourcePath)
 }
 
-fun AssetsNewProjectWizardStep.prepareJavaSampleOnboardingTips(project: Project) {
-  prepareOnboardingTips(project, DEFAULT_FILE_NAME) { charSequence ->
-    charSequence.indexOf("System.out.println").takeIf { it >= 0 }
-  }
-}
+@Deprecated("The onboarding tips are prepared in the withJavaSampleCodeAsset function")
+fun AssetsNewProjectWizardStep.prepareJavaSampleOnboardingTips(project: Project): Unit =
+  AssetsJava.prepareJavaSampleOnboardingTips(project, DEFAULT_FILE_NAME)
