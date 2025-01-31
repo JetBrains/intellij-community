@@ -375,6 +375,15 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     }
   }
 
+  @Override
+  protected Value internalInvokeInstanceMethod(@NotNull EvaluationContext evaluationContext,
+                                               @NotNull ObjectReference objRef,
+                                               @NotNull Method method,
+                                               @NotNull List<? extends Value> args) throws EvaluateException {
+    return ((EvaluationContextImpl)evaluationContext).getDebugProcess()
+      .invokeInstanceMethod(evaluationContext, objRef, method, args, 0, true);
+  }
+
   // compilable version of array class for compiling evaluator
   private static final String ARRAY_CLASS_NAME = "__Dummy_Array__";
   private static final String ARRAY_CLASS_TEXT =

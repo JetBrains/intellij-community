@@ -1,17 +1,33 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.exec;
 
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder;
 import com.intellij.debugger.ui.impl.watch.CompilingEvaluator;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * @author Vitaliy.Bibaev
  */
+@RunWith(JUnit4.class)
 public class EvaluationFailedTest extends FailEvaluationTestCase {
+  @Test
   public void testEvaluationExceptionDetected() {
-    doTest(true);
+    assumeFalse(Registry.is("debugger.evaluate.method.helper"));
+    doTest(true, "EvaluationExceptionDetected");
+  }
+
+  @Test
+  public void testEvaluationExceptionDetectedHelper() {
+    assumeTrue(Registry.is("debugger.evaluate.method.helper"));
+    doTest(true, "EvaluationExceptionDetected");
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerContext;
@@ -39,10 +39,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 public abstract class DebuggerUtils {
@@ -125,8 +122,9 @@ public abstract class DebuggerUtils {
             JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
         }
         Method finalToStringMethod = toStringMethod;
-        return getInstance().processCollectibleValue(
-          () -> debugProcess.invokeInstanceMethod(evaluationContext, objRef, finalToStringMethod, Collections.emptyList(), 0),
+        DebuggerUtils instance = getInstance();
+        return instance.processCollectibleValue(
+          () -> instance.internalInvokeInstanceMethod(evaluationContext, objRef, finalToStringMethod, Collections.emptyList()),
           result -> {
             // while result must be of com.sun.jdi.StringReference type, it turns out that sometimes (jvm bugs?)
             // it is a plain com.sun.tools.jdi.ObjectReferenceImpl
@@ -143,6 +141,11 @@ public abstract class DebuggerUtils {
       throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
     }
   }
+
+  protected abstract Value internalInvokeInstanceMethod(@NotNull EvaluationContext evaluationContext,
+                                                        @NotNull ObjectReference objRef,
+                                                        @NotNull Method method,
+                                                        @NotNull List<? extends Value> args) throws EvaluateException;
 
   @ApiStatus.Internal
   public abstract <R, T> R processCollectibleValue(

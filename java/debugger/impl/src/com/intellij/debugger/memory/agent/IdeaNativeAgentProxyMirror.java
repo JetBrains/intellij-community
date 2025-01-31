@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -283,7 +283,7 @@ public class IdeaNativeAgentProxyMirror {
       throw EvaluateExceptionUtil.createEvaluateException("No appropriate constructor found for proxy class");
     }
     return debugProcess.newInstance(
-      evaluationContext, proxyType, constructor, Arrays.asList(cancellationFileName, progressFileName, timeoutInMillis)
+      evaluationContext, proxyType, constructor, Arrays.asList(cancellationFileName, progressFileName, timeoutInMillis), 0, true
     );
   }
 
@@ -435,7 +435,7 @@ public class IdeaNativeAgentProxyMirror {
     ObjectReference agentPathMirror = getStringReference(evaluationContext, agentPath);
     ObjectReference propertyNameMirror = getStringReference(evaluationContext, "intellij.memory.agent.path");
     debugProcess.invokeMethod(
-      evaluationContext, systemClassType, setPropertyMethod, Arrays.asList(propertyNameMirror, agentPathMirror)
+      evaluationContext, systemClassType, setPropertyMethod, Arrays.asList(propertyNameMirror, agentPathMirror), true
     );
   }
 
@@ -454,8 +454,9 @@ public class IdeaNativeAgentProxyMirror {
     if (getPropertyMethod == null) return null;
 
     ObjectReference propertyNameMirror = getStringReference(evaluationContext, propertyName);
-    StringReference propertyValueRef = (StringReference)debugProcess.invokeMethod(
-      evaluationContext, systemClassType, getPropertyMethod, Collections.singletonList(propertyNameMirror)
+    StringReference propertyValueRef = (StringReference)evaluationContext.computeAndKeep(
+      () -> debugProcess.invokeMethod(evaluationContext, systemClassType, getPropertyMethod, Collections.singletonList(propertyNameMirror),
+                                      true)
     );
 
     return propertyValueRef == null ? null : propertyValueRef.value();

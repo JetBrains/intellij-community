@@ -87,6 +87,11 @@ internal fun tryInvokeWithHelper(
     require(DebuggerUtilsImpl.instanceOf(objRef.referenceType(), methodDeclaringType)) { "Invalid method" }
   }
 
+  // Class.forName may check getCallerClass which is different if helper is used
+  if (method.name().equals("forName") && methodDeclaringType.name() == CommonClassNames.JAVA_LANG_CLASS) {
+    return InvocationResult(false, null)
+  }
+
   val debugProcess = evaluationContext.debugProcess
   val invokerArgs = mutableListOf<Value?>()
 
