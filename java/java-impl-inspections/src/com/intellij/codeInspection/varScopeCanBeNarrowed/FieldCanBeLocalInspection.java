@@ -451,7 +451,8 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
         initializer = variable.getInitializer();
       }
       final PsiElementFactory psiFactory = JavaPsiFacade.getElementFactory(variable.getProject());
-      final PsiDeclarationStatement declaration = psiFactory.createVariableDeclarationStatement(localName, variable.getType(), initializer);
+      final PsiDeclarationStatement declaration =
+        psiFactory.createVariableDeclarationStatement(localName, variable.getType(), initializer, variable.getContainingFile());
       if (ContainerUtil.exists(references, PsiUtil::isAccessedForWriting)) {
         PsiUtil.setModifierProperty((PsiLocalVariable)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
       }
