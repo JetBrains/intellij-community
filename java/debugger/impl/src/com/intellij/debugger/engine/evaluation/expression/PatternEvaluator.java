@@ -40,7 +40,7 @@ public class PatternEvaluator implements Evaluator {
       res = primitiveType.name().equals(myPrimitiveType);
     }
     if (res && myVariableEvaluator != null) {
-      AssignmentEvaluator.assign(myVariableEvaluator.getModifier(), value, context);
+      AssignmentEvaluator.assign(myVariableEvaluator.evaluateModifiable(context).getModifier(), value, context);
     }
     return res;
   }

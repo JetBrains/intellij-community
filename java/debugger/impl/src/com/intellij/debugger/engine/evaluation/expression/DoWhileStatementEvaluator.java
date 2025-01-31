@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -13,11 +13,6 @@ public class DoWhileStatementEvaluator extends LoopEvaluator {
   public DoWhileStatementEvaluator(@NotNull Evaluator conditionEvaluator, Evaluator bodyEvaluator, String labelName) {
     super(labelName, bodyEvaluator);
     myConditionEvaluator = DisableGC.create(conditionEvaluator);
-  }
-
-  @Override
-  public Modifier getModifier() {
-    return myConditionEvaluator.getModifier();
   }
 
   @Override

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class ArrayAccessEvaluator
@@ -29,11 +15,16 @@ import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 
-class ArrayAccessEvaluator implements Evaluator {
+class ArrayAccessEvaluator implements ModifiableEvaluator {
   private final Evaluator myArrayReferenceEvaluator;
   private final Evaluator myIndexEvaluator;
+
+  // TODO remove non-final fields, see IDEA-366793
+  @Deprecated
   private ArrayReference myEvaluatedArrayReference;
+  @Deprecated
   private int myEvaluatedIndex;
 
   ArrayAccessEvaluator(Evaluator arrayReferenceEvaluator, Evaluator indexEvaluator) {
@@ -42,21 +33,21 @@ class ArrayAccessEvaluator implements Evaluator {
   }
 
   @Override
-  public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    myEvaluatedIndex = 0;
-    myEvaluatedArrayReference = null;
-    Value indexValue = (Value)myIndexEvaluator.evaluate(context);
-    Value arrayValue = (Value)myArrayReferenceEvaluator.evaluate(context);
-    if (!(arrayValue instanceof ArrayReference)) {
+  public @NotNull ModifiableValue evaluateModifiable(EvaluationContextImpl context) throws EvaluateException {
+    if (!(myArrayReferenceEvaluator.evaluate(context) instanceof ArrayReference evaluatedArrayReference)) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.array.reference.expected"));
     }
-    myEvaluatedArrayReference = (ArrayReference)arrayValue;
+    Value indexValue = (Value)myIndexEvaluator.evaluate(context);
     if (!DebuggerUtils.isInteger(indexValue)) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.invalid.index.expression"));
     }
-    myEvaluatedIndex = ((PrimitiveValue)indexValue).intValue();
+    int evaluatedIndex = ((PrimitiveValue)indexValue).intValue();
+
     try {
-      return myEvaluatedArrayReference.getValue(myEvaluatedIndex);
+      Value value = evaluatedArrayReference.getValue(evaluatedIndex);
+      myEvaluatedArrayReference = evaluatedArrayReference;
+      myEvaluatedIndex = evaluatedIndex;
+      return new ModifiableValue(value, new MyModifier(evaluatedArrayReference, evaluatedIndex));
     }
     catch (Exception e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);
@@ -65,41 +56,50 @@ class ArrayAccessEvaluator implements Evaluator {
 
   @Override
   public Modifier getModifier() {
-    Modifier modifier = null;
     if (myEvaluatedArrayReference != null) {
-      modifier = new Modifier() {
-        @Override
-        public boolean canInspect() {
-          return true;
-        }
-
-        @Override
-        public boolean canSetValue() {
-          return true;
-        }
-
-        @Override
-        public void setValue(Value value) throws ClassNotLoadedException, InvalidTypeException {
-          myEvaluatedArrayReference.setValue(myEvaluatedIndex, value);
-        }
-
-        @Override
-        public Type getExpectedType() throws EvaluateException {
-          try {
-            ArrayType type = (ArrayType)myEvaluatedArrayReference.referenceType();
-            return type.componentType();
-          }
-          catch (ClassNotLoadedException e) {
-            throw EvaluateExceptionUtil.createEvaluateException(e);
-          }
-        }
-
-        @Override
-        public NodeDescriptorImpl getInspectItem(Project project) {
-          return new ArrayElementDescriptorImpl(project, myEvaluatedArrayReference, myEvaluatedIndex);
-        }
-      };
+      return new MyModifier(myEvaluatedArrayReference, myEvaluatedIndex);
     }
-    return modifier;
+    return null;
+  }
+
+  private static class MyModifier implements Modifier {
+    private final ArrayReference myEvaluatedArrayReference;
+    private final int myEvaluatedIndex;
+
+    private MyModifier(ArrayReference evaluatedArrayReference, int evaluatedIndex) {
+      myEvaluatedArrayReference = evaluatedArrayReference;
+      myEvaluatedIndex = evaluatedIndex;
+    }
+
+    @Override
+    public boolean canInspect() {
+      return true;
+    }
+
+    @Override
+    public boolean canSetValue() {
+      return true;
+    }
+
+    @Override
+    public void setValue(Value value) throws ClassNotLoadedException, InvalidTypeException {
+      myEvaluatedArrayReference.setValue(myEvaluatedIndex, value);
+    }
+
+    @Override
+    public Type getExpectedType() throws EvaluateException {
+      try {
+        ArrayType type = (ArrayType)myEvaluatedArrayReference.referenceType();
+        return type.componentType();
+      }
+      catch (ClassNotLoadedException e) {
+        throw EvaluateExceptionUtil.createEvaluateException(e);
+      }
+    }
+
+    @Override
+    public NodeDescriptorImpl getInspectItem(Project project) {
+      return new ArrayElementDescriptorImpl(project, myEvaluatedArrayReference, myEvaluatedIndex);
+    }
   }
 }

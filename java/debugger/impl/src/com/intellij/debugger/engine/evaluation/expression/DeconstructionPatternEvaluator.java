@@ -40,7 +40,7 @@ public class DeconstructionPatternEvaluator extends PatternEvaluator {
         res = componentEvaluator.match(objRef.getValue(field), context);
       }
       if (res && myVariableEvaluator != null) {
-        AssignmentEvaluator.assign(myVariableEvaluator.getModifier(), value, context);
+        AssignmentEvaluator.assign(myVariableEvaluator.evaluateModifiable(context).getModifier(), value, context);
       }
       return res;
     }

@@ -936,17 +936,17 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     private static Evaluator createFallbackEvaluator(final Evaluator primary, final Evaluator fallback) {
-      return new Evaluator() {
+      return new ModifiableEvaluator() {
         private boolean myIsFallback;
 
         @Override
-        public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
+        public @NotNull ModifiableValue evaluateModifiable(@NotNull EvaluationContextImpl context) throws EvaluateException {
           try {
-            return primary.evaluate(context);
+            return primary.evaluateModifiable(context);
           }
           catch (EvaluateException e) {
             try {
-              Object res = fallback.evaluate(context);
+              ModifiableValue res = fallback.evaluateModifiable(context);
               myIsFallback = true;
               return res;
             }
