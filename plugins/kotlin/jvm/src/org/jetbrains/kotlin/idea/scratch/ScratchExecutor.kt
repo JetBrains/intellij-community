@@ -39,6 +39,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.script.KotlinScratchScript
 import org.jetbrains.kotlin.idea.core.script.scriptClassPath
 import org.jetbrains.kotlin.idea.scratch.actions.RunScratchAction.ExplainInfo
@@ -199,10 +200,10 @@ class K2ScratchExecutor(val scratchFile: ScratchFile, val project: Project, val 
 
         javaParameters.classPath.addAll(classPath)
         javaParameters.programParametersList.addAll(
-            "-kotlin-home", "/Users/Vladislav.Koshkin/dev/kotlin/dist/kotlinc",
+            "-kotlin-home", KotlinPluginLayout.kotlinc.toPath().absolutePathString(),
             scriptFile.path,
             "-d", getPathToScriptJar(scriptFile).absolutePathString(),
-            "-Xplugin=/Users/Vladislav.Koshkin/dev/kotlin/dist/kotlinc/lib/power-assert-compiler-plugin.jar",
+            "-Xplugin=${KotlinArtifacts.powerAssertPlugin.toPath().absolutePathString()}",
             "-script-templates", KotlinScratchScript::class.java.name,
             "-Xuse-fir-lt=false",
             "-Xallow-any-scripts-in-source-roots",
