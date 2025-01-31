@@ -4,6 +4,7 @@ package com.jetbrains.python.formatter;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.intellij.util.ui.PresentableEnum;
 import com.jetbrains.python.PySyntaxCoreBundle;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -13,15 +14,15 @@ import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
 public class PyCodeStyleSettings extends CustomCodeStyleSettings {
 
-  public enum DictAlignment {
-    NONE(PySyntaxCoreBundle.message("formatter.panel.dict.alignment.do.not.align")),
-    ON_VALUE(PySyntaxCoreBundle.message("formatter.panel.dict.alignment.align.on.value")),
-    ON_COLON(PySyntaxCoreBundle.message("formatter.panel.dict.alignment.align.on.colon"));
+  public enum DictAlignment implements PresentableEnum {
+    NONE("formatter.panel.dict.alignment.do.not.align"),
+    ON_VALUE("formatter.panel.dict.alignment.align.on.value"),
+    ON_COLON("formatter.panel.dict.alignment.align.on.colon");
 
-    String description;
+    private final String key;
 
-    DictAlignment(String description) {
-      this.description = description;
+    DictAlignment(String key) {
+      this.key = key;
     }
 
     public int asInt() {
@@ -29,8 +30,13 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
     }
 
     @Override
+    public String getPresentableText() {
+      return PySyntaxCoreBundle.message(key);
+    }
+
+    @Override
     public String toString() {
-      return description;
+      return getPresentableText();
     }
   }
 
