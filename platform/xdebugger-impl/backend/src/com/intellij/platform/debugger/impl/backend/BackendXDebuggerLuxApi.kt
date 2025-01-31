@@ -12,17 +12,17 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.findProject
 import com.intellij.psi.util.PsiEditorUtil
+import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerEvaluateActionHandler
 import com.intellij.xdebugger.impl.rhizome.XDebuggerEvaluatorEntity
 import com.intellij.xdebugger.impl.rhizome.XValueEntity
 import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorId
 import com.intellij.xdebugger.impl.rpc.XDebuggerLuxApi
 import com.intellij.xdebugger.impl.rpc.XValueId
+import com.intellij.xdebugger.impl.ui.tree.XInspectDialog
 import com.jetbrains.rhizomedb.entity
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.concurrency.await
 
 internal class BackendXDebuggerLuxApi : XDebuggerLuxApi {
@@ -53,7 +53,28 @@ internal class BackendXDebuggerLuxApi : XDebuggerLuxApi {
     }
   }
 
+  override suspend fun showLuxInspectDialog(xValueId: XValueId, nodeName: String) {
+    val xValueEntity = entity(XValueEntity.XValueId, xValueId) ?: return
+    val sessionEntity = xValueEntity.sessionEntity
+    val session = sessionEntity.session
+    val project = sessionEntity.projectEntity.projectId.findProject()
+    val xValue = xValueEntity.xValue
+    val sourcePositionDeferred = CompletableDeferred<XSourcePosition?>()
+    xValue.computeSourcePosition {
+      sourcePositionDeferred.complete(it)
+    }
+    val editorsProvider = session.debugProcess.editorsProvider
+    val valueMarkers = (session as? XDebugSessionImpl)?.valueMarkers
 
+    project.service<BackendXDebuggerLuxApiCoroutineScope>().cs.launch {
+      val sourcePosition = sourcePositionDeferred.await()
+      withContext(Dispatchers.EDT) {
+        val dialog = XInspectDialog(project, editorsProvider, sourcePosition, nodeName, xValue,
+                                    valueMarkers, session, true)
+        dialog.show()
+      }
+    }
+  }
 }
 
 @Service(Service.Level.PROJECT)

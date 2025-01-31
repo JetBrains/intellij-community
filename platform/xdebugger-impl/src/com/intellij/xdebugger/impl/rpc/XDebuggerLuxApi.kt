@@ -12,6 +12,8 @@ import fleet.rpc.remoteApiDescriptor
 interface XDebuggerLuxApi : RemoteApi<Unit> {
   suspend fun showLuxEvaluateDialog(evaluatorId: XDebuggerEvaluatorId, editorId: EditorId?, fileId: VirtualFileId?, xValueId: XValueId?)
 
+  suspend fun showLuxInspectDialog(xValueId: XValueId, nodeName: String)
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebuggerLuxApi {

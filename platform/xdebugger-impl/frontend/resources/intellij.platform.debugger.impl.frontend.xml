@@ -5,9 +5,14 @@
   </dependencies>
   <actions resource-bundle="messages.FrontendDebuggerImplBundle">
     <action id="QuickEvaluateExpression" class="com.intellij.platform.debugger.impl.frontend.actions.QuickEvaluateAction"/>
+    <action id="XDebugger.Inspect.Frontend"
+            class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXInspectAction">
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend"/>
+    </action>
     <action id="MarkObjectAction.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendMarkObjectAction"
             use-shortcut-of="ToggleBookmark">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend"/>
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
+                    relative-to-action="XDebugger.Inspect.Frontend"/>
     </action>
     <action id="XDebugger.SetValue.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXSetValueAction" use-shortcut-of="XDebugger.SetValue">
       <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
