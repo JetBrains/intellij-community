@@ -21,6 +21,7 @@ import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -324,8 +325,11 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
       fetchRunnable.run()
     }
     else {
-      @Suppress("UsagesOfObsoleteApi", "DEPRECATION")
-      ProgressIndicatorUtils.yieldToPendingWriteActions()
+      // IJPL-176529
+      if (ModalityState.defaultModalityState() == ModalityState.nonModal()) {
+        @Suppress("UsagesOfObsoleteApi", "DEPRECATION")
+        ProgressIndicatorUtils.yieldToPendingWriteActions()
+      }
       @Suppress("UsagesOfObsoleteApi", "DEPRECATION")
       ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(fetchRunnable, progressIndicator)
     }
