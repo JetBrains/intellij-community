@@ -51,6 +51,8 @@ internal fun generateIconClasses(config: IconClasses = IntellijIconClassGenerato
   val home = Path.of(config.homePath)
 
   val modules = config.modules
+    // Toolbox icons are not based on IJ Platform
+    .filter { !it.name.startsWith("toolbox.") }
 
   // TODO: update copyright into svg icons
 
