@@ -60,7 +60,6 @@ import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.File
 import java.util.concurrent.Callable
-import kotlin.collections.iterator
 import kotlin.math.max
 import kotlin.math.min
 
@@ -548,10 +547,15 @@ fun CodeInsightTestFixture.checkListByFile(actualList: List<String>, @TestDataFi
   if (!file.exists() && file.createNewFile()) {
     Logger.getInstance("#WebTestUtilKt").warn("File $file has been created.")
   }
-  val actualContents = actualList.joinToString("\n").trim() + "\n"
+  val actualContents = actualList.ifEmpty { listOf("<empty list>") }.joinToString("\n").trim() + "\n"
   val expectedContents = FileUtil.loadFile(file, "UTF-8", true).trim() + "\n"
   if (containsCheck) {
-    val expectedList = FileUtil.loadLines(file, "UTF-8").filter { it.isNotBlank() }
+    val expectedList = FileUtil.loadLines(file, "UTF-8").filter { it.isNotBlank() }.let {
+      if (it.size == 1 && it[0] == "<empty list>")
+        emptyList()
+      else
+        it
+    }
     val actualSet = actualList.toSet()
     if (!expectedList.all { actualSet.contains(it) }) {
       throw FileComparisonFailedError(expectedFile, expectedContents, actualContents, path)
