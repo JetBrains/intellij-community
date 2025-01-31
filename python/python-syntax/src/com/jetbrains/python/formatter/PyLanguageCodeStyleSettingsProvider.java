@@ -230,6 +230,10 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
     )
     attrs = [e.attr for e in
         items]
+    
+    num_dict = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5}
+    
+    colors = ['red', 'green', 'blue', 'black', 'white', 'gray']
 
     ingredients = [
         'green',
