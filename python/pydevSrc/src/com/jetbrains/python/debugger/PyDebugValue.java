@@ -33,18 +33,19 @@ public class PyDebugValue extends XNamedValue {
   private static final String ARRAY = "Array";
   private static final String DATA_FRAME = "DataFrame";
   private static final String SERIES = "Series";
-  private static final Map<String, String> EVALUATOR_POSTFIXES = ImmutableMap.of(
-    NodeTypes.NDARRAY_NODE_TYPE, ARRAY,
-    NodeTypes.EAGER_TENSOR_NODE_TYPE, ARRAY,
-    NodeTypes.RESOURCE_VARIABLE_NODE_TYPE, ARRAY,
-    NodeTypes.SPARSE_TENSOR_NODE_TYPE, ARRAY,
-    NodeTypes.TENSOR_NODE_TYPE, ARRAY,
-    NodeTypes.DATA_FRAME_NODE_TYPE, DATA_FRAME,
-    NodeTypes.SERIES_NODE_TYPE, SERIES,
-    NodeTypes.GEO_DATA_FRAME_NODE_TYPE, DATA_FRAME,
-    NodeTypes.GEO_SERIES_NODE_TYPE, SERIES,
-    NodeTypes.DATASET_NODE_TYPE, DATA_FRAME
-  );
+  private static final Map<String, String> EVALUATOR_POSTFIXES = ImmutableMap.<String, String>builder()
+    .put(NodeTypes.NDARRAY_NODE_TYPE, ARRAY)
+    .put(NodeTypes.RECARRAY_NODE_TYPE, ARRAY)
+    .put(NodeTypes.EAGER_TENSOR_NODE_TYPE, ARRAY)
+    .put(NodeTypes.RESOURCE_VARIABLE_NODE_TYPE, ARRAY)
+    .put(NodeTypes.SPARSE_TENSOR_NODE_TYPE, ARRAY)
+    .put(NodeTypes.TENSOR_NODE_TYPE, ARRAY)
+    .put(NodeTypes.DATA_FRAME_NODE_TYPE, DATA_FRAME)
+    .put(NodeTypes.SERIES_NODE_TYPE, SERIES)
+    .put(NodeTypes.GEO_DATA_FRAME_NODE_TYPE, DATA_FRAME)
+    .put(NodeTypes.GEO_SERIES_NODE_TYPE, SERIES)
+    .put(NodeTypes.DATASET_NODE_TYPE, DATA_FRAME)
+    .build();
   private static final int MAX_ITEMS_TO_HANDLE = 100;
   public static final int MAX_VALUE = 256;
   public static final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();

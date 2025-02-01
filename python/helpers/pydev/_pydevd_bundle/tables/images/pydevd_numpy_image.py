@@ -15,13 +15,13 @@ def get_bytes(arr):
     try:
         from PIL import Image
 
-        if not (np.issubdtype(arr.dtype, np.floating) or np.issubdtype(arr.dtype, np.integer)):
+        arr_to_convert = arr
+
+        if not (np.issubdtype(arr_to_convert.dtype, np.floating) or np.issubdtype(arr_to_convert.dtype, np.integer)):
             raise ValueError("Only numeric array types are supported.")
 
-        if arr.ndim == 1:
-            arr_to_convert = np.expand_dims(arr, axis=0)
-        else:
-            arr_to_convert = arr
+        if arr_to_convert.ndim == 1:
+            arr_to_convert = np.expand_dims(arr_to_convert, axis=0)
 
         arr_min, arr_max = np.min(arr_to_convert), np.max(arr_to_convert)
         if arr_min == arr_max:  # handle constant values

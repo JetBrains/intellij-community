@@ -29,6 +29,7 @@ object NodeTypes {
   const val SET_NODE_TYPE: String = "set"
   const val MATRIX_NODE_TYPE: String = "matrix"
   const val NDARRAY_NODE_TYPE: String = "ndarray"
+  const val RECARRAY_NODE_TYPE: String = "recarray"
   const val EAGER_TENSOR_NODE_TYPE: String = "EagerTensor"
   const val RESOURCE_VARIABLE_NODE_TYPE: String = "ResourceVariable"
   const val SPARSE_TENSOR_NODE_TYPE: String = "SparseTensor"
