@@ -425,7 +425,9 @@ final class ModuleHighlightUtil {
 
       PsiElement implTarget = implRef.resolve();
       if (implTarget instanceof PsiClass implClass) {
-        if (ModuleUtilCore.findModuleForFile(file) != ModuleUtilCore.findModuleForFile(implClass.getContainingFile())) {
+        Module fileModule = ModuleUtilCore.findModuleForFile(file);
+        Module implModule = ModuleUtilCore.findModuleForFile(implClass.getContainingFile());
+        if (fileModule != implModule && !MultiReleaseUtil.inSameMultiReleaseModule(implModule, fileModule)) {
           String message = JavaErrorBundle.message("module.service.alien");
           HighlightInfo.Builder info =
             HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message);
