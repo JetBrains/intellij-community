@@ -56,6 +56,7 @@ internal class TerminalOutputContentUpdatesScheduler(
         val partialChange = tracker.collectChangedOutputOrWait()
 
         scheduleChangeApplying(partialChange).join()
+        tracker.onOutputApplied()
       }
     }
 
@@ -73,13 +74,16 @@ internal class TerminalOutputContentUpdatesScheduler(
     }
   }
 
-  fun finishUpdating(): PartialCommandOutput? = textBuffer.withLock {
+  fun finishUpdating(): List<PartialCommandOutput> = textBuffer.withLock {
     val tracker = changesTracker ?: error("Finish updating called before start updating")
     changesTracker = null
     updatingJob?.cancel()
     finished = true
 
-    tracker.collectChangedOutputOrNull()
+    // Not-null `tracker.pendingOutput` means that it was either not applied due to
+    // cancellation or is being applied right now on EDT.
+    // If the latter, it won't hurt to apply it twice.
+    return listOfNotNull(tracker.pendingOutput, tracker.collectChangedOutputOrNull())
   }
 
   private val metricTextInBufferToTextVisible = ActionCoordinator<Unit, TimeMark>(

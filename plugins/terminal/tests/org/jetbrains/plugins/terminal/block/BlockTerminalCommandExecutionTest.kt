@@ -64,7 +64,7 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
     expected.forEach {
       session.commandExecutionManager.sendCommandToExecute(it.command)
     }
-    awaitBlocksFinalized(view.outputView.controller.outputModel, count)
+    awaitBlocksFinalized(view.outputView.controller.outputModel, count, 60.seconds)
     val actual = view.outputView.controller.outputModel.collectCommandResults()
     Assert.assertEquals(expected, actual)
   }

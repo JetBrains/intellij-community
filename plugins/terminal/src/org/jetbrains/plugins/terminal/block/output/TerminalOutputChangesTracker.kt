@@ -63,6 +63,10 @@ internal class TerminalOutputChangesTracker(
 
   private val changeListeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
 
+  @Volatile
+  var pendingOutput: PartialCommandOutput? = null
+    private set
+
   init {
     val listener = object : TextBufferChangesListener {
       override fun linesChanged(fromIndex: Int) = textBuffer.withLock {
@@ -175,7 +179,9 @@ internal class TerminalOutputChangesTracker(
     isAnyLineChanged = false
     isChangesDiscarded = false
 
-    return PartialCommandOutput(output.text, output.styleRanges, logicalLineIndex, textBuffer.width, anyDiscarded)
+    return PartialCommandOutput(output.text, output.styleRanges, logicalLineIndex, textBuffer.width, anyDiscarded).also {
+      pendingOutput = it
+    }
   }
 
   /**
@@ -189,5 +195,9 @@ internal class TerminalOutputChangesTracker(
       }
     }
     return count
+  }
+
+  internal fun onOutputApplied() {
+    pendingOutput = null
   }
 }
