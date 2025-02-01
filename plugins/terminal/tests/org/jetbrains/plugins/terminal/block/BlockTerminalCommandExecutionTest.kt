@@ -73,7 +73,7 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
   @Test
   fun `multiline commands with bracketed mode`() {
     val (session, view) = startSessionAndCreateView()
-    Assume.assumeTrue(session.model.isBracketedPasteMode)
+    assumeTrue(session.model.isBracketedPasteMode)
     val expected = listOf(
       CommandResult("echo 1\necho 2", "1\n2")
     )
