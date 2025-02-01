@@ -301,7 +301,7 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
   private fun inSameMultiReleaseModule(current: ModuleInfo, target: ModuleInfo): Boolean {
     val placeModule = current.jpsModule ?: return false
     val targetModule = target.jpsModule ?: return false
-    return com.intellij.codeInsight.daemon.impl.analysis.inSameMultiReleaseModule(targetModule, placeModule)
+    return com.intellij.codeInsight.daemon.impl.analysis.areMainAndAdditionalMultiReleaseModules(targetModule, placeModule)
   }
 
   private fun detectAutomaticModule(current: ModuleInfo): PsiJavaModule? {

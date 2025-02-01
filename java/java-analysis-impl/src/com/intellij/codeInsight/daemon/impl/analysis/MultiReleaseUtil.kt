@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
@@ -14,29 +15,48 @@ private const val MAIN = "main"
 private val javaVersionPattern: Pattern by lazy { Pattern.compile("java\\d+") }
 
 @Internal
-fun inSameMultiReleaseModule(mainModule: Module, additionalModule: Module): Boolean {
+fun areMainAndAdditionalMultiReleaseModules(mainModule: Module, additionalModule: Module): Boolean {
   // Maven
   val project = additionalModule.project
   val storage = project.workspaceModel.currentSnapshot
-  val placeModuleName = additionalModule.name
-  val targetModuleName = mainModule.name
-  val placeModuleExOptions = storage.resolve(ModuleId(placeModuleName))?.exModuleOptions
-  val targetModuleExOptions = storage.resolve(ModuleId(targetModuleName))?.exModuleOptions
-  if (placeModuleExOptions?.externalSystem == MAVEN_EXTERNAL_SOURCE_ID
-      && targetModuleExOptions?.externalSystem == MAVEN_EXTERNAL_SOURCE_ID) {
-    val baseModuleName = targetModuleName.substringBeforeLast('.')
-    if (placeModuleName.startsWith(baseModuleName)
-        && placeModuleExOptions.externalSystemModuleType == "MAIN_ONLY_ADDITIONAL" // StandardMavenModuleType.MAIN_ONLY_ADDITIONAL
-        && targetModuleExOptions.externalSystemModuleType == "MAIN_ONLY" // StandardMavenModuleType.MAIN_ONLY
+  val additionalModuleName = additionalModule.name
+  val mainModuleName = mainModule.name
+  val additionalModuleExOptions = storage.resolve(ModuleId(additionalModuleName))?.exModuleOptions
+  val mainModuleExOptions = storage.resolve(ModuleId(mainModuleName))?.exModuleOptions
+  if (additionalModuleExOptions?.externalSystem == MAVEN_EXTERNAL_SOURCE_ID
+      && mainModuleExOptions?.externalSystem == MAVEN_EXTERNAL_SOURCE_ID) {
+    val baseModuleName = mainModuleName.substringBeforeLast('.')
+    if (additionalModuleName.startsWith(baseModuleName)
+        && additionalModuleExOptions.externalSystemModuleType == "MAIN_ONLY_ADDITIONAL" // StandardMavenModuleType.MAIN_ONLY_ADDITIONAL
+        && mainModuleExOptions.externalSystemModuleType == "MAIN_ONLY" // StandardMavenModuleType.MAIN_ONLY
     ) {
       return true
     }
   }
 
   // Gradle
-  if (targetModuleName.endsWith(".$MAIN")) {
-    val baseModuleName = targetModuleName.substringBeforeLast(MAIN)
-    return javaVersionPattern.matcher(placeModuleName.substringAfter(baseModuleName)).matches()
+  if (mainModuleName.endsWith(".$MAIN")) {
+    val baseModuleName = mainModuleName.substringBeforeLast(MAIN)
+    return javaVersionPattern.matcher(additionalModuleName.substringAfter(baseModuleName)).matches()
   }
   return false
+}
+
+@Internal
+fun getMainMultiReleaseModule(additionalModule: Module): Module? {
+  // Maven
+  val project = additionalModule.project
+  val storage = project.workspaceModel.currentSnapshot
+  val additionalModuleName = additionalModule.name
+  val additionalModuleExOptions = storage.resolve(ModuleId(additionalModuleName))?.exModuleOptions
+  if (additionalModuleExOptions?.externalSystem == MAVEN_EXTERNAL_SOURCE_ID) {
+    val baseModuleName = additionalModuleName.substringBeforeLast('.')
+    val mainModuleName = "$baseModuleName.$MAIN"
+    val mainModuleExOptions = storage.resolve(ModuleId(mainModuleName))?.exModuleOptions
+    if (mainModuleExOptions?.externalSystemModuleType == "MAIN_ONLY" // StandardMavenModuleType.MAIN_ONLY
+    ) {
+      return ModuleManager.getInstance(project).findModuleByName(mainModuleName)
+    }
+  }
+  return null
 }
