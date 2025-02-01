@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
+import com.intellij.codeInsight.hints.InlayParameterHintsExtension
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.filtering.Matcher
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
@@ -28,8 +30,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
-    private val excludeListMatchers: List<Matcher> =
-        listOf(
+    private val excludeListMatchers: List<Matcher> by lazy {
+        (listOf(
             "*listOf", "*setOf", "*arrayOf", "*ListOf", "*SetOf", "*ArrayOf", "*assert*(*)", "*mapOf", "*MapOf",
             "kotlin.require*(*)", "kotlin.check*(*)", "*contains*(value)", "*containsKey(key)", "kotlin.lazyOf(value)",
             "*SequenceBuilder.resume(value)", "*SequenceBuilder.yield(value)",
@@ -51,7 +53,9 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             "org.gradle.kotlin.dsl.project(path,configuration)",
             "org.gradle.api.provider.Property.set(value)",
             "org.gradle.api.plugins.ObjectConfigurationAction.plugin(pluginId)",
-        ).mapNotNull { MatcherConstructor.createMatcher(it) }
+        ) + InlayParameterHintsExtension.forLanguage(JavaLanguage.INSTANCE).defaultBlackList)
+            .mapNotNull { MatcherConstructor.createMatcher(it) }
+    }
 
     override fun collectFromElement(
         element: PsiElement,
