@@ -41,6 +41,8 @@
                     beanClass="com.intellij.codeInsight.daemon.impl.analysis.InjectedLanguageJavaReferenceSupplier" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.jvm.annotations.marker.suppressor"
                     interface="com.intellij.codeInsight.NonCodeAnnotationsMarkerSuppressor" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.multiReleaseSupport" interface="com.intellij.codeInsight.daemon.impl.analysis.MultiReleaseSupport" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

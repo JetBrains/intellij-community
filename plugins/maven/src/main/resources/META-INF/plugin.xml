@@ -447,6 +447,8 @@
     <externalSystem.dependencyModifier implementation="org.jetbrains.idea.maven.dsl.MavenDependencyModificator"/>
 
     <referencesSearch implementation="org.jetbrains.idea.maven.search.MavenModuleReferenceSearcher"/>
+
+    <lang.jvm.multiReleaseSupport implementation="org.jetbrains.idea.maven.utils.MavenMultiReleaseSupport"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">

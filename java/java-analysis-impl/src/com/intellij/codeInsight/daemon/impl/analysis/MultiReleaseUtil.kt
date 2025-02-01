@@ -2,13 +2,9 @@
 @file:JvmName("MultiReleaseUtil")
 package com.intellij.codeInsight.daemon.impl.analysis
 
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.jps.model.serialization.SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
 import java.util.regex.Pattern
 
 private const val MAIN = "main"
@@ -31,19 +27,20 @@ fun areMainAndAdditionalMultiReleaseModules(mainModule: Module, additionalModule
 
 @Internal
 fun getMainMultiReleaseModule(additionalModule: Module): Module? {
-  // Maven
-  val project = additionalModule.project
-  val storage = project.workspaceModel.currentSnapshot
-  val additionalModuleName = additionalModule.name
-  val additionalModuleExOptions = storage.resolve(ModuleId(additionalModuleName))?.exModuleOptions
-  if (additionalModuleExOptions?.externalSystem == MAVEN_EXTERNAL_SOURCE_ID) {
-    val baseModuleName = additionalModuleName.substringBeforeLast('.')
-    val mainModuleName = "$baseModuleName.$MAIN"
-    val mainModuleExOptions = storage.resolve(ModuleId(mainModuleName))?.exModuleOptions
-    if (mainModuleExOptions?.externalSystemModuleType == "MAIN_ONLY" // StandardMavenModuleType.MAIN_ONLY
-    ) {
-      return ModuleManager.getInstance(project).findModuleByName(mainModuleName)
+  MultiReleaseSupport.EP_NAME.extensionList.forEach {
+    val result = it.getMainMultiReleaseModule(additionalModule)
+    if (null != result) {
+      return result
     }
   }
   return null
+}
+
+interface MultiReleaseSupport {
+  fun getMainMultiReleaseModule(additionalModule: Module): Module?
+
+  companion object {
+    @JvmField
+    val EP_NAME: ExtensionPointName<MultiReleaseSupport> = ExtensionPointName("com.intellij.lang.jvm.multiReleaseSupport")
+  }
 }
