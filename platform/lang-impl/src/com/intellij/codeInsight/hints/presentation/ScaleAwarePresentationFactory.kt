@@ -20,7 +20,6 @@ import kotlin.reflect.KProperty
 /**
  * Presentation factory, which handles presentation mode and scales Icons and Insets
  */
-@ApiStatus.Experimental
 class ScaleAwarePresentationFactory(
   val editor: Editor,
   private val delegate: PresentationFactory
