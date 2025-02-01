@@ -5,7 +5,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,10 +19,8 @@ import org.jetbrains.annotations.Nullable;
  * {@link com.intellij.util.FileContentUtilCore#reparseFiles(VirtualFile...)} if it's possible to identify specific files affected
  * by the change, or {@link FileTypeManagerEx#makeFileTypesChange(String, Runnable)} if the change affects an unknown number of files.
  */
-@ApiStatus.Experimental
 public interface FileTypeOverrider {
   ExtensionPointName<FileTypeOverrider> EP_NAME = ExtensionPointName.create("com.intellij.fileTypeOverrider");
 
-  @Nullable
-  FileType getOverriddenFileType(@NotNull VirtualFile file);
+  @Nullable FileType getOverriddenFileType(@NotNull VirtualFile file);
 }

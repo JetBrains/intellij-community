@@ -219,9 +219,6 @@ a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - *bs:openFile$default(com.intellij.openapi.fileEditor.ex.FileEditorManagerEx,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 a:com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 - *a:reallyExcludeCurrentCommandAsNavigation():V
-*:com.intellij.openapi.fileTypes.impl.FileTypeOverrider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:getOverriddenFileType(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.FileType
 *:com.intellij.openapi.options.ex.MutableConfigurableGroup
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.options.ConfigurableGroup

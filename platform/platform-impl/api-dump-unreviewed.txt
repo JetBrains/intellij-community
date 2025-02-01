@@ -9032,6 +9032,9 @@ c:com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 - removePlainTextAssociationsForFile(java.lang.CharSequence):V
 - setIgnoredFilesList(java.lang.String):V
 - unregisterFileType(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.extensions.PluginDescriptor):V
+com.intellij.openapi.fileTypes.impl.FileTypeOverrider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getOverriddenFileType(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.FileType
 c:com.intellij.openapi.fileTypes.impl.FileTypeRenderer
 - com.intellij.ui.SimpleListCellRenderer
 - <init>():V
