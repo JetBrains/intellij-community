@@ -33,8 +33,7 @@ internal class UnfoldReturnToWhenIntention : LowPriorityAction,
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.return.with.when.expression")
 
-    context(KaSession@KaSession)
-    override fun prepareContext(element: KtReturnExpression): List<String>? {
+    override fun KaSession.prepareContext(element: KtReturnExpression): List<String>? {
         val whenExpression = element.returnedExpression as? KtWhenExpression ?: return null
         val labelName = element.getLabelName()
 

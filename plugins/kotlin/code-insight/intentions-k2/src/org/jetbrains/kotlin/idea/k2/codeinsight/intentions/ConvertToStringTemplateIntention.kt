@@ -45,8 +45,7 @@ internal class ConvertToStringTemplateIntention :
      *     e.g., for "a" + 'b' + "c", we do not want to visit both 'b' + "c" and "a" + 'b' + "c" since 'b' + "c" will be handled
      *     in "a" + 'b' + "c".
      */
-    context(KaSession)
-    override fun prepareContext(element: KtBinaryExpression): Context? =
+    override fun KaSession.prepareContext(element: KtBinaryExpression): Context? =
         if (isFirstStringPlusExpressionWithoutNewLineInOperands(element) && !element.containsPrefixedStringOperands())
             Context(buildStringTemplateForBinaryExpression(element).createSmartPointer())
         else

@@ -34,8 +34,7 @@ internal class RedundantUnitReturnTypeInspection :
     override fun getProblemDescription(element: KtElement, context: CallableReturnTypeUpdaterUtils.TypeInfo): String =
         KotlinBundle.message("inspection.redundant.unit.return.type.display.name")
 
-    context(KaSession@KaSession)
-    override fun prepareContextByDiagnostic(
+    override fun KaSession.prepareContextByDiagnostic(
         element: KtElement,
         diagnostic: KaFirDiagnostic.RedundantReturnUnitType,
     ): CallableReturnTypeUpdaterUtils.TypeInfo? {

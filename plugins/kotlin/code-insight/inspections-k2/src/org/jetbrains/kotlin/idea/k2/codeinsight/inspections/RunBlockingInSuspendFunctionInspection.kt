@@ -70,8 +70,7 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
         return parentFunction?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true
     }
 
-    context(KaSession@KaSession)
-    override fun prepareContext(element: KtCallExpression): Context? {
+    override fun KaSession.prepareContext(element: KtCallExpression): Context? {
         val fixType = when (element.valueArguments.size) {
             1 -> {
                 val lambdaArgumentExpression = element.singleLambdaArgumentExpression() ?: return null

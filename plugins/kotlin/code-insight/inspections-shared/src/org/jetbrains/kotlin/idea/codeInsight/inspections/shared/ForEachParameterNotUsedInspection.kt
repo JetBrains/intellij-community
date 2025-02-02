@@ -97,8 +97,7 @@ internal class ForEachParameterNotUsedInspection :
         }
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtCallExpression): UnusedForEachParameterInfo? {
+    override fun KaSession.prepareContext(element: KtCallExpression): UnusedForEachParameterInfo? {
         // Synthetic check: ...forEach { }
         val calleeExpression = element.calleeExpression as? KtNameReferenceExpression
         if (calleeExpression?.getReferencedName() != FOREACH) return null

@@ -53,8 +53,7 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         }
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtBinaryExpression): String? {
+    override fun KaSession.prepareContext(element: KtBinaryExpression): String? {
         val left = element.left
         val right = element.right
 

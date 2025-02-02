@@ -106,9 +106,8 @@ sealed class ChangeVisibilityModifierIntention(
         return true
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtDeclaration): Unit? {
+    override fun KaSession.prepareContext(element: KtDeclaration): Unit? {
         val symbol = element.symbol
 
         @OptIn(KaExperimentalApi::class)

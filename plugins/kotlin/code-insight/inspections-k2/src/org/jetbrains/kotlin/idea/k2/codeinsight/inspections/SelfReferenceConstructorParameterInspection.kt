@@ -40,9 +40,8 @@ internal class SelfReferenceConstructorParameterInspection :
         context: Context,
     ): @InspectionMessage String = KotlinBundle.message("constructor.has.non.null.self.reference.parameter")
 
-    context(KaSession@KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtPrimaryConstructor): Context? {
+    override fun KaSession.prepareContext(element: KtPrimaryConstructor): Context? {
         val parameterList = element.valueParameterList ?: return null
         val containingClass = parameterList.containingClass() ?: return null
         val className = containingClass.name ?: return null

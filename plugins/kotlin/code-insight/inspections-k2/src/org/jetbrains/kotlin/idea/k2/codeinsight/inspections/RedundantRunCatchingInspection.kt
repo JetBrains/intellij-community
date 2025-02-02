@@ -58,8 +58,7 @@ internal class RedundantRunCatchingInspection : KotlinApplicableInspectionBase.S
         return lambdaArgument?.anyDescendantOfType<KtReturnExpression>() != true
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtQualifiedExpression): CallChainExpressions? {
+    override fun KaSession.prepareContext(element: KtQualifiedExpression): CallChainExpressions? {
         val callChainExpressions = CallChainExpressions.from(element) ?: return null
         val firstCalleeCall = callChainExpressions.firstCalleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
         val secondCalleeCall = callChainExpressions.secondCalleeExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null

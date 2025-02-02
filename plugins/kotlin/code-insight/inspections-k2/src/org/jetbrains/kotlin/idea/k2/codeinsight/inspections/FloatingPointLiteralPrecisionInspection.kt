@@ -51,8 +51,7 @@ internal class FloatingPointLiteralPrecisionInspection : KotlinApplicableInspect
         context: String
     ): Array<KotlinModCommandQuickFix<KtConstantExpression>> = arrayOf(FloatingPointLiteralPrecisionQuickFix(context))
 
-    context(KaSession)
-    override fun prepareContext(element: KtConstantExpression): String? {
+    override fun KaSession.prepareContext(element: KtConstantExpression): String? {
         if (element.elementType == KtConstantExpressionElementType.kindToConstantElementType(ConstantValueKind.FLOAT_CONSTANT)) {
             val isFloat = element.expressionType?.isFloatType == true
             val uppercaseSuffix = isFloat && element.text?.endsWith('F') == true

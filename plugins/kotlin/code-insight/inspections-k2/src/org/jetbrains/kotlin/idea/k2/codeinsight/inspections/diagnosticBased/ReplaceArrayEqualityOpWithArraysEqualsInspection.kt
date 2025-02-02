@@ -24,8 +24,7 @@ internal class ReplaceArrayEqualityOpWithArraysEqualsInspection :
 
     data class Context(val isNotEqualOperator: Boolean)
 
-    context(KaSession@KaSession)
-    override fun prepareContextByDiagnostic(
+    override fun KaSession.prepareContextByDiagnostic(
         element: KtExpression,
         diagnostic: KaFirDiagnostic.ArrayEqualityOperatorCanBeReplacedWithEquals,
     ): Context? {

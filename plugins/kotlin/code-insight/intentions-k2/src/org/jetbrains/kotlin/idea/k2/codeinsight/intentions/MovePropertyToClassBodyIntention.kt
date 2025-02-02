@@ -130,8 +130,7 @@ class MovePropertyToClassBodyIntention : KotlinApplicableModCommandAction<KtPara
         delete()
     }
 
-    context(KaSession@KaSession)
-    override fun prepareContext(element: KtParameter): Unit? {
+    override fun KaSession.prepareContext(element: KtParameter): Unit? {
         if (!element.isPropertyParameter()) return null
         val containingClass = element.containingClass() ?: return null
         return Unit.takeIf { !containingClass.mustHaveOnlyPropertiesInPrimaryConstructor() }

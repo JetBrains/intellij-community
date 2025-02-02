@@ -18,8 +18,7 @@ internal class AssignedValueIsNeverReadInspection : KotlinPsiDiagnosticBasedInsp
     override val diagnosticType: KClass<KaFirDiagnostic.AssignedValueIsNeverRead>
         get() = KaFirDiagnostic.AssignedValueIsNeverRead::class
 
-    context(KaSession@KaSession)
-    override fun prepareContextByDiagnostic(
+    override fun KaSession.prepareContextByDiagnostic(
         element: KtExpression,
         diagnostic: KaFirDiagnostic.AssignedValueIsNeverRead,
     ): Unit = Unit

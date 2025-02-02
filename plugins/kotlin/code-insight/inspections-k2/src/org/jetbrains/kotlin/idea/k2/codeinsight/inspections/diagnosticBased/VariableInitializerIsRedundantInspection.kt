@@ -25,8 +25,7 @@ internal class VariableInitializerIsRedundantInspection : KotlinPsiDiagnosticBas
     override val diagnosticType: KClass<KaFirDiagnostic.VariableInitializerIsRedundant>
         get() = KaFirDiagnostic.VariableInitializerIsRedundant::class
 
-    context(KaSession@KaSession)
-    override fun prepareContextByDiagnostic(
+    override fun KaSession.prepareContextByDiagnostic(
         element: KtElement,
         diagnostic: KaFirDiagnostic.VariableInitializerIsRedundant,
     ): TypeInfo? {

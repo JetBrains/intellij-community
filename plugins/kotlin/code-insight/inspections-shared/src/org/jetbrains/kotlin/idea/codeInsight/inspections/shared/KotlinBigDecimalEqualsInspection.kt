@@ -122,8 +122,7 @@ internal class KotlinBigDecimalEqualsInspection : KotlinApplicableInspectionBase
                 element.calleeExpression?.text == "equals" &&
                 element.parent is KtQualifiedExpression
 
-    context(KaSession)
-    override fun prepareContext(element: KtExpression): Context? {
+    override fun KaSession.prepareContext(element: KtExpression): Context? {
         return when (element) {
             is KtBinaryExpression -> {
                 val left = element.left ?: return null

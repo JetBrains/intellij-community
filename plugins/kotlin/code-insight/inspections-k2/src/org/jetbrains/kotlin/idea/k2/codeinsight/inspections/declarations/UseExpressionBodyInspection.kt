@@ -76,8 +76,7 @@ internal class UseExpressionBodyInspection :
         element: KtDeclarationWithBody, context: Context
     ): ProblemHighlightType = context.highlightType
 
-    context(KaSession)
-    override fun prepareContext(element: KtDeclarationWithBody): Context? {
+    override fun KaSession.prepareContext(element: KtDeclarationWithBody): Context? {
         val valueStatement = element.findValueStatement() ?: return null
         val requireType = valueStatement.expressionType?.isNothingType == true
         return when {

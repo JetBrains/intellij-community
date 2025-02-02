@@ -27,8 +27,7 @@ interface ContextProvider<E : KtElement, C : Any> {
      *
      * @param element a physical PSI
      */
-    context(KaSession)
-    fun prepareContext(element: E): C?
+    fun KaSession.prepareContext(element: E): C?
 }
 
 internal fun <E : KtElement, C : Any> ContextProvider<E, C>.getElementContext(

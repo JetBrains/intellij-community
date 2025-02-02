@@ -47,8 +47,7 @@ class CascadeIfInspection : KotlinApplicableInspectionBase.Simple<KtIfExpression
 
     override fun getApplicableRanges(element: KtIfExpression): List<TextRange> = ApplicabilityRanges.ifKeyword(element)
 
-    context(KaSession)
-    override fun prepareContext(element: KtIfExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtIfExpression): Unit? {
         var current: KtIfExpression? = element
         var lastSubjectCandidate: KtExpression? = null
         while (current != null) {

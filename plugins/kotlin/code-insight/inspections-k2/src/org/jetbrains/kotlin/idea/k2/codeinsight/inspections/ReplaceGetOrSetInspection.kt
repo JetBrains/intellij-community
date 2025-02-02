@@ -65,8 +65,7 @@ internal class ReplaceGetOrSetInspection :
     override fun isApplicableByPsi(element: KtDotQualifiedExpression): Boolean =
         ReplaceGetOrSetInspectionUtils.looksLikeGetOrSetOperatorCall(element)
 
-    context(KaSession)
-    override fun prepareContext(element: KtDotQualifiedExpression): Context? {
+    override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Context? {
         // `resolveCallOld()` is needed to filter out `set` functions with varargs or default values. See the `setWithVararg.kt` test.
         val call = element.resolveToCall()?.successfulCallOrNull<KaSimpleFunctionCall>() ?: return null
         val functionSymbol = call.symbol

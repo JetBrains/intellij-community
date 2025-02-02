@@ -36,8 +36,7 @@ internal class RemoveEmptyParenthesesFromLambdaCallInspection : KotlinApplicable
 
     override fun isApplicableByPsi(element: KtValueArgumentList): Boolean = canRemoveByPsi(element)
 
-    context(KaSession)
-    override fun prepareContext(element: KtValueArgumentList): Unit? =
+    override fun KaSession.prepareContext(element: KtValueArgumentList): Unit? =
         ((element.parent as? KtCallExpression)
             ?.resolveToCall() is KaSuccessCallInfo)
             .asUnit

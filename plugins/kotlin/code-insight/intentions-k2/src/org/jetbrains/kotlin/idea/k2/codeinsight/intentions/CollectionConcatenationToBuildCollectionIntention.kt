@@ -78,8 +78,7 @@ class CollectionConcatenationToBuildCollectionIntention :
         return operationToken == KtTokens.PLUS || operationToken == KtTokens.MINUS
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtExpression): Context? {
+    override fun KaSession.prepareContext(element: KtExpression): Context? {
         val ktBinaryExpression = element.safeDeparenthesize() as? KtBinaryExpression ?: return null
         val expressionType = ktBinaryExpression.expressionType ?: return null
         val collectionType = when {

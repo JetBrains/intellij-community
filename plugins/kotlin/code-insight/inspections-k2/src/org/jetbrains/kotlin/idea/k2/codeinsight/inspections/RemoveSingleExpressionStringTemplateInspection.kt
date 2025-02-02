@@ -34,8 +34,7 @@ internal class RemoveSingleExpressionStringTemplateInspection :
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean = element.singleExpressionOrNull() != null
 
-    context(KaSession)
-    override fun prepareContext(element: KtStringTemplateExpression): Context? {
+    override fun KaSession.prepareContext(element: KtStringTemplateExpression): Context? {
         val expression = element.singleExpressionOrNull() ?: return null
         val type = expression.expressionType
         return Context(type?.isStringType == true && !type.isMarkedNullable)

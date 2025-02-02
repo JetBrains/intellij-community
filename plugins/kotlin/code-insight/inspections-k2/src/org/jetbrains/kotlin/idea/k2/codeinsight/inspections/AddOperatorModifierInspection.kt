@@ -42,9 +42,8 @@ class AddOperatorModifierInspection : KotlinApplicableInspectionBase.Simple<KtNa
         }
     }
 
-    context(KaSession@KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtNamedFunction): Unit? {
+    override fun KaSession.prepareContext(element: KtNamedFunction): Unit? {
         val canBeOperator = analyze(element) {
             var symbol = element.symbol as? KaNamedFunctionSymbol
             symbol?.canBeOperator == true && !symbol.isOperator

@@ -87,7 +87,6 @@ internal class ReplaceArrayOfWithLiteralInspection : KotlinApplicableInspectionB
         return true
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtCallExpression): Unit? =
+    override fun KaSession.prepareContext(element: KtCallExpression): Unit? =
         element.isArrayOfFunction().asUnit
 }

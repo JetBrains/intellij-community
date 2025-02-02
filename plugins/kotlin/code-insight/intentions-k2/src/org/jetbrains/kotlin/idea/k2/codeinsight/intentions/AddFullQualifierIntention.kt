@@ -24,8 +24,7 @@ internal class AddFullQualifierIntention :
     override fun getPresentation(context: ActionContext, element: KtNameReferenceExpression): Presentation =
         Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
-    context(KaSession)
-    override fun prepareContext(element: KtNameReferenceExpression): Context? {
+    override fun KaSession.prepareContext(element: KtNameReferenceExpression): Context? {
         val contextSymbol = element.mainReference.resolveToSymbols().singleOrNull()
         if (contextSymbol != null && AddQualifiersUtil.isApplicableTo(element, contextSymbol)) {
             val fqName = AddQualifiersUtil.getFqName(contextSymbol)

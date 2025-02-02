@@ -38,8 +38,7 @@ class CanConvertToMultiDollarStringInspection :
         }
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtStringTemplateExpression): MultiDollarConversionInfo? {
+    override fun KaSession.prepareContext(element: KtStringTemplateExpression): MultiDollarConversionInfo? {
         if (!element.entries.any { it.isEscapedDollar() }) return null
         return prepareMultiDollarConversionInfo(element, useFallbackPrefix = false)
     }

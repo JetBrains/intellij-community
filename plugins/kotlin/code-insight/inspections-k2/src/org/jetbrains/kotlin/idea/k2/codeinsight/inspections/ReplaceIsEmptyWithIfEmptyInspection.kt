@@ -99,8 +99,7 @@ internal class ReplaceIsEmptyWithIfEmptyInspection : KotlinApplicableInspectionB
         context: Replacement
     ): Array<KotlinModCommandQuickFix<KtIfExpression>> = arrayOf(ReplaceFix(context))
 
-    context(KaSession)
-    override fun prepareContext(ifExpression: KtIfExpression): Replacement? {
+    override fun KaSession.prepareContext(ifExpression: KtIfExpression): Replacement? {
         if (ifExpression.languageVersionSettings.languageVersion < LanguageVersion.KOTLIN_1_3) return null
         if (ifExpression.node.elementType == KtNodeTypes.ELSE) return null
         val thenExpression = ifExpression.then ?: return null

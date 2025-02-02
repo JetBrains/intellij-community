@@ -71,8 +71,7 @@ internal class NullableBooleanElvisInspection : KotlinApplicableInspectionBase.S
 
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean = element.isTargetOfNullableBooleanElvisInspection()
 
-    context(KaSession)
-    override fun prepareContext(element: KtBinaryExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
         return element.left
             ?.expressionType
             ?.let { it.isBooleanType && it.nullability.isNullable }

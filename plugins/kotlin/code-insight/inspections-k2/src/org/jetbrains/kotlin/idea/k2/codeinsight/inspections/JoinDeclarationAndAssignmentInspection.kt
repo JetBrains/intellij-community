@@ -69,9 +69,8 @@ internal class JoinDeclarationAndAssignmentInspection :
         }
     }
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtProperty): Context? {
+    override fun KaSession.prepareContext(element: KtProperty): Context? {
         val assignment = findFirstAssignment(element) ?: return null
         val initializer = assignment.right ?: return null
 

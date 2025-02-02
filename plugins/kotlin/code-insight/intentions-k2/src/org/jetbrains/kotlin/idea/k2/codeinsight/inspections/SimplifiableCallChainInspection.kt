@@ -86,8 +86,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
         return true
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtQualifiedExpression): CallChainConversion? {
+    override fun KaSession.prepareContext(element: KtQualifiedExpression): CallChainConversion? {
         val callChainExpressions = CallChainExpressions.from(element) ?: return null
         val conversionId = ConversionId(callChainExpressions.firstCalleeExpression, callChainExpressions.secondCalleeExpression)
         val candidateConversions = getPotentialConversions(element, conversionId).ifEmpty { return null }

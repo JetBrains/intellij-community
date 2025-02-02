@@ -37,8 +37,7 @@ class NullableBooleanEqualityCheckToElvisIntention : KotlinApplicableModCommandA
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.boolean.const.to.elvis")
 
-    context(KaSession@KaSession)
-    override fun prepareContext(element: KtBinaryExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
         if (element.operationToken != KtTokens.EQEQ && element.operationToken != KtTokens.EXCLEQ) return null
         val lhs = element.left ?: return null
         val rhs = element.right ?: return null

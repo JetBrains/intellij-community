@@ -31,9 +31,8 @@ internal class ReplaceUnderscoreWithTypeArgumentIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.explicit.type")
 
-    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtTypeProjection): Context? {
+    override fun KaSession.prepareContext(element: KtTypeProjection): Context? {
         val newType = element.resolveType() ?: return null
         if (newType is KaErrorType) return null
 

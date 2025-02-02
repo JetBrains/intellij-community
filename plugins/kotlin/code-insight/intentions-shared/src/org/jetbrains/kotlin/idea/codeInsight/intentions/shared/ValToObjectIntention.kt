@@ -25,8 +25,7 @@ class ValToObjectIntention: KotlinApplicableModCommandAction<KtProperty, Unit>(K
         return element.getter == null && element.annotationEntries.isEmpty()
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtProperty): Unit? {
+    override fun KaSession.prepareContext(element: KtProperty): Unit? {
         // disable if has non-Kotlin usages
         return if (ReferencesSearch.search(element).all { it is KtReference && it.element.parent !is KtCallableReferenceExpression }) {
             Unit

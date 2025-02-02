@@ -20,8 +20,7 @@ internal class VariableNeverReadInspection : KotlinKtDiagnosticBasedInspectionBa
     override val diagnosticType: KClass<KaFirDiagnostic.VariableNeverRead>
         get() = KaFirDiagnostic.VariableNeverRead::class
 
-    context(KaSession@KaSession)
-    override fun prepareContextByDiagnostic(
+    override fun KaSession.prepareContextByDiagnostic(
         element: KtNamedDeclaration,
         diagnostic: KaFirDiagnostic.VariableNeverRead,
     ): Unit = Unit

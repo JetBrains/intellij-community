@@ -60,8 +60,7 @@ internal class RedundantElvisReturnNullInspection : KotlinApplicableInspectionBa
     }
 
     // The LHS of the binary expression must be nullable.
-    context(KaSession)
-    override fun prepareContext(element: KtBinaryExpression): Unit? =
+    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? =
         element.left
             ?.expressionType
             ?.isMarkedNullable

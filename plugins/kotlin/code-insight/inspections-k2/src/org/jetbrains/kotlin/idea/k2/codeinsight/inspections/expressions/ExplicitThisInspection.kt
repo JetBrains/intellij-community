@@ -42,8 +42,7 @@ internal class ExplicitThisInspection : KotlinApplicableInspectionBase.Simple<Kt
         return hasShortening.asUnit
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtThisExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtThisExpression): Unit? {
         val parent = element.parent ?: return null
 
         if (parent is KtCallableReferenceExpression) {

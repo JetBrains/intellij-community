@@ -68,8 +68,7 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
         return element.hasValOrVar()
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtParameter): Context? {
+    override fun KaSession.prepareContext(element: KtParameter): Context? {
         val parameterType = element.symbol.returnType
         if (!parameterType.isArrayOrPrimitiveArray) return null
         val containingClass = element.containingClass() ?: return null

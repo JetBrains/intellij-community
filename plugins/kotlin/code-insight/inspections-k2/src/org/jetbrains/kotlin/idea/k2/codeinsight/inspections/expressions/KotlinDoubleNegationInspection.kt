@@ -36,8 +36,7 @@ internal class KotlinDoubleNegationInspection : KotlinApplicableInspectionBase.S
         element.operationToken == KtTokens.EXCL
                 && (element.parentThroughParenthesis as? KtPrefixExpression)?.operationToken == KtTokens.EXCL
 
-    context(KaSession)
-    override fun prepareContext(element: KtPrefixExpression): Unit? =
+    override fun KaSession.prepareContext(element: KtPrefixExpression): Unit? =
         element.expressionType
             ?.isBooleanType
             ?.asUnit

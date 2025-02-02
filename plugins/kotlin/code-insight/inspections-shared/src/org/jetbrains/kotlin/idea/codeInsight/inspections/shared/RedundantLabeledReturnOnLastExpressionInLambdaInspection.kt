@@ -53,8 +53,7 @@ internal class RedundantLabeledReturnOnLastExpressionInLambdaInspection :
         return listOfNotNull(labelRange)
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtReturnExpression) {
+    override fun KaSession.prepareContext(element: KtReturnExpression) {
     }
 
     override fun createQuickFixes(

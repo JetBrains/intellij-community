@@ -93,8 +93,7 @@ internal class UnusedFlowInspection : KotlinApplicableInspectionBase<KtExpressio
         return selectApplicableRanges(element, element)?.let { listOf(it) } ?: super.getApplicableRanges(element)
     }
 
-    context(KaSession@KaSession)
-    override fun prepareContext(element: KtExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtExpression): Unit? {
         // We check if the element is a flow value and if it is used as an expression (i.e. its value is used).
         // If it is not used, then the user forgot to collect this flow.
         val returnType = (element.resolveExpression() as? KaCallableSymbol)?.returnType as? KaClassType ?: return null

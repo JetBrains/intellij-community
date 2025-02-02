@@ -40,8 +40,7 @@ internal class CanBePrimaryConstructorPropertyInspection :
 
     override fun isApplicableByPsi(element: KtProperty): Boolean = element.isMovableToConstructorByPsi()
 
-    context(KaSession)
-    override fun prepareContext(element: KtProperty): MovePropertyToConstructorInfo? {
+    override fun KaSession.prepareContext(element: KtProperty): MovePropertyToConstructorInfo? {
         val initializer = element.initializer ?: return null
         val paramSymbol = initializer.mainReference?.resolveToSymbol() as? KaValueParameterSymbol ?: return null
         if (element.nameAsName != paramSymbol.name) return null

@@ -63,8 +63,7 @@ internal class WhenToIfIntention :
         return entries.size <= 1
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtWhenExpression): Context? {
+    override fun KaSession.prepareContext(element: KtWhenExpression): Context? {
         if (element.hasNoElseButUsedAsExpression()) return null
 
         val subject = element.subjectExpression

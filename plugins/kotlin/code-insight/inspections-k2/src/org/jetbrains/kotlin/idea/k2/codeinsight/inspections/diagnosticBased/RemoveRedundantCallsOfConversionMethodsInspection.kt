@@ -24,8 +24,7 @@ internal class RemoveRedundantCallsOfConversionMethodsInspection :
     override val diagnosticType: KClass<KaFirDiagnostic.RedundantCallOfConversionMethod>
         get() = KaFirDiagnostic.RedundantCallOfConversionMethod::class
 
-    context(KaSession)
-    override fun prepareContextByDiagnostic(
+    override fun KaSession.prepareContextByDiagnostic(
         element: KtQualifiedExpression,
         diagnostic: KaFirDiagnostic.RedundantCallOfConversionMethod
     ): Unit = Unit

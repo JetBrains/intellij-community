@@ -46,8 +46,7 @@ internal class SimplifyWhenWithBooleanConstantConditionInspection : KotlinApplic
         return true
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtWhenExpression): Context {
+    override fun KaSession.prepareContext(element: KtWhenExpression): Context {
         return Context(element.isUsedAsExpression)
     }
 

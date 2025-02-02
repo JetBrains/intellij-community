@@ -83,8 +83,7 @@ internal class ConvertSecondaryConstructorToPrimaryInspection :
         return isReachableByDelegationFrom(delegatedConstructor, visited + constructor)
     }
 
-    context(KaSession)
-    override fun prepareContext(secondaryConstructor: KtSecondaryConstructor): SecondaryConstructorContext? {
+    override fun KaSession.prepareContext(secondaryConstructor: KtSecondaryConstructor): SecondaryConstructorContext? {
         val klass = secondaryConstructor.containingClassOrObject ?: return null
 
         for (constructorDescriptor in klass.secondaryConstructors) {

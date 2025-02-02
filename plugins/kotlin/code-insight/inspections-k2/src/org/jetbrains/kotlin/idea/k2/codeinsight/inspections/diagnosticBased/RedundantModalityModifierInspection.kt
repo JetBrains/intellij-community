@@ -32,8 +32,7 @@ internal class RedundantModalityModifierInspection :
     override fun getApplicableRanges(element: KtModifierListOwner): List<TextRange> =
         ApplicabilityRanges.modalityModifier(element)
 
-    context(KaSession)
-    override fun prepareContextByDiagnostic(
+    override fun KaSession.prepareContextByDiagnostic(
         element: KtModifierListOwner,
         diagnostic: KaFirDiagnostic.RedundantModalityModifier,
     ): ModifierContext? = when (element) {

@@ -65,7 +65,7 @@ internal class IntroduceWhenSubjectInspection :
     override fun getApplicableRanges(element: KtWhenExpression): List<TextRange> =
         ApplicabilityRanges.whenKeyword(element)
 
-    context(KaSession) override fun prepareContext(element: KtWhenExpression): String? =
+    override fun KaSession.prepareContext(element: KtWhenExpression): String? =
         element.getSubjectToIntroduce()?.text
 
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean = true

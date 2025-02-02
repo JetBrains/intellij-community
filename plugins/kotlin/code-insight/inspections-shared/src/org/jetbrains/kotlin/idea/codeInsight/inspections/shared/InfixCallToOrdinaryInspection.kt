@@ -52,7 +52,6 @@ internal class InfixCallToOrdinaryInspection : KotlinApplicableInspectionBase.Si
         return !(element.operationToken != KtTokens.IDENTIFIER || element.left == null || element.right == null)
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtBinaryExpression) {
+    override fun KaSession.prepareContext(element: KtBinaryExpression) {
     }
 }

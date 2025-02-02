@@ -60,8 +60,7 @@ internal class AddThrowsAnnotationIntention : KotlinApplicableModCommandAction<K
         return true
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtThrowExpression): Context? {
+    override fun KaSession.prepareContext(element: KtThrowExpression): Context? {
         val type = element.thrownExpression?.expressionType ?: return null
         if (type.symbol?.visibility == LOCAL) {
             // Can't expose local declaration in the `throws` clause

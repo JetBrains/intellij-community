@@ -85,8 +85,7 @@ internal class WhenWithOnlyElseInspection
      *   - whether the `when` expression itself is used as an expression
      *   - for the subject variable, if present, whether the initializer is pure.
      */
-    context(KaSession)
-    override fun prepareContext(element: KtWhenExpression): Context? {
+    override fun KaSession.prepareContext(element: KtWhenExpression): Context? {
         val singleEntry = element.entries.singleOrNull() ?: return null
         val elseExpression = singleEntry.takeIf { it.isElse }?.expression ?: return null
         val isWhenUsedAsExpression = element.isUsedAsExpression

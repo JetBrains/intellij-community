@@ -45,8 +45,7 @@ internal class ImplicitThisInspection : KotlinApplicableInspectionBase.Simple<Kt
         }
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtExpression): ImplicitReceiverInfo? {
+    override fun KaSession.prepareContext(element: KtExpression): ImplicitReceiverInfo? {
         return element.getImplicitReceiverInfo()
     }
 

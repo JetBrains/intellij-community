@@ -49,8 +49,7 @@ internal class IfThenToElvisInspection @JvmOverloads constructor(
         visitTargetElement(it, holder, isOnTheFly)
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtIfExpression): IfThenToElvisInspectionData? =
+    override fun KaSession.prepareContext(element: KtIfExpression): IfThenToElvisInspectionData? =
         IfThenTransformationUtils.prepareIfThenToElvisInspectionData(element)
 
     override fun getOptionsPane() = pane(

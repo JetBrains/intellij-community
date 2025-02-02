@@ -36,8 +36,7 @@ internal class CanBeValInspection : KotlinKtDiagnosticBasedInspectionBase<KtDecl
         return ApplicabilityRange.single(element) { (it as? KtValVarKeywordOwner)?.valOrVarKeyword }
     }
 
-    context(KaSession@KaSession)
-    override fun prepareContextByDiagnostic(
+    override fun KaSession.prepareContextByDiagnostic(
         element: KtDeclaration,
         diagnostic: KaFirDiagnostic.CanBeVal
     ): Unit? {

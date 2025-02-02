@@ -45,8 +45,7 @@ internal class MoveLambdaOutsideParenthesesInspection : KotlinApplicableInspecti
         }
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtCallExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtCallExpression): Unit? {
         return if (!element.canMoveLambdaOutsideParentheses(skipComplexCalls = false)) null else Unit
     }
 

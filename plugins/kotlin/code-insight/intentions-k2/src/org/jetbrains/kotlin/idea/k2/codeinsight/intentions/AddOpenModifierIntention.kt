@@ -30,8 +30,7 @@ internal class AddOpenModifierIntention :
                 && !element.hasModifier(KtTokens.ABSTRACT_KEYWORD)
                 && !element.hasModifier(KtTokens.PRIVATE_KEYWORD)
 
-    context(KaSession)
-    override fun prepareContext(element: KtCallableDeclaration): Unit? {
+    override fun KaSession.prepareContext(element: KtCallableDeclaration): Unit? {
         // The intention's applicability cannot solely depend on the PSI because compiler plugins may introduce modality different from
         // explicit syntax and language defaults.
         val elementSymbol = element.symbol

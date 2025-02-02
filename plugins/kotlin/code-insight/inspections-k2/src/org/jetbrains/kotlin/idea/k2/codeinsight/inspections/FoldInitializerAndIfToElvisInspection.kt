@@ -33,8 +33,7 @@ internal class FoldInitializerAndIfToElvisInspection :
         else -> ProblemHighlightType.INFORMATION
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
+    override fun KaSession.prepareContext(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
         return prepareData(element)
     }
 

@@ -61,9 +61,8 @@ class SafeCastWithReturnInspection : KotlinApplicableInspectionBase.Simple<KtBin
         return true
     }
 
-    context(KaSession@KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun prepareContext(element: KtBinaryExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
         val withRHS = element.left?.safeDeparenthesize() as? KtBinaryExpressionWithTypeRHS ?: return null
         if (element.isUsedAsExpression) {
             val lambda = withRHS.getStrictParentOfType<KtLambdaExpression>() ?: return null

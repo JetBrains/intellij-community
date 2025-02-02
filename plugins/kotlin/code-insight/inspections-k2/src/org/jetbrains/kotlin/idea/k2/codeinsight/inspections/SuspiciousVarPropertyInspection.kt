@@ -45,8 +45,7 @@ internal class SuspiciousVarPropertyInspection : KotlinApplicableInspectionBase<
         return element.getter != null && !element.hasDelegate()
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtProperty): Unit? {
+    override fun KaSession.prepareContext(element: KtProperty): Unit? {
         val getter = element.getter ?: return null
         if (doesOverrideVar(element)) return null
         if (!isBackingFieldRequired(element)) return null

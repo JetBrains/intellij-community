@@ -89,8 +89,7 @@ internal class RedundantElseInIfInspection : KotlinApplicableInspectionBase.Simp
         return true
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtIfExpression): Unit? {
+    override fun KaSession.prepareContext(element: KtIfExpression): Unit? {
         if (element.hasRedundantElse()) {
             return Unit
         }

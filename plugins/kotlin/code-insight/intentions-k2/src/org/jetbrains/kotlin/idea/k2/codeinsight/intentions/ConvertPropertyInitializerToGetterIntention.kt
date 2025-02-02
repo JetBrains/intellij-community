@@ -25,8 +25,7 @@ internal class ConvertPropertyInitializerToGetterIntention :
         return element is KtDeclaration || super.stopSearchAt(element, context)
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtProperty): CallableReturnTypeUpdaterUtils.TypeInfo? {
+    override fun KaSession.prepareContext(element: KtProperty): CallableReturnTypeUpdaterUtils.TypeInfo? {
         val initializer = element.initializer ?: return null
         if (initializer.hasReferenceToPrimaryConstructorParameter()) return null
 

@@ -52,8 +52,7 @@ internal class ConvertToStringTemplateInspection :
         }
     })
 
-    context(KaSession)
-    override fun prepareContext(element: KtBinaryExpression): Context? {
+    override fun KaSession.prepareContext(element: KtBinaryExpression): Context? {
         if (!canConvertToStringTemplate(element) || !isFirstStringPlusExpressionWithoutNewLineInOperands(element)) return null
         return Context(buildStringTemplateForBinaryExpression(element).createSmartPointer())
     }

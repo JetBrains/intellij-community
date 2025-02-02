@@ -95,8 +95,7 @@ internal class RedundantExplicitTypeInspection : KotlinApplicableInspectionBase.
         return element.typeReference != null
     }
 
-    context(KaSession)
-    override fun prepareContext(element: KtProperty): Unit? {
+    override fun KaSession.prepareContext(element: KtProperty): Unit? {
         return hasRedundantType(element).asUnit
     }
 }
