@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.tools
 
 import com.intellij.execution.target.FullPathOnTarget
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.python.community.testFramework.testEnv.PythonType
 import com.intellij.remote.RemoteSdkException
 import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualFile
 import com.jetbrains.python.sdk.PythonSdkType

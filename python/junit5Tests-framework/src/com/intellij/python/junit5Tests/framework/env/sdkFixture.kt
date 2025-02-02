@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.framework.env
 
 import com.intellij.openapi.application.EDT
@@ -6,14 +7,13 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.community.testFramework.testEnv.PythonType
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.tools.PythonType
 import com.jetbrains.python.tools.SdkCreationRequest.LocalPython
-import com.jetbrains.python.tools.createSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -27,7 +27,7 @@ typealias PySdkFixture = TestFixture<Sdk>
 fun pySdkFixture(
   pythonType: PythonType<*> = PythonType.VanillaPython3,
 ): PySdkFixture = testFixture {
-  val (sdk, autoClosable) = createSdk(LocalPython(pythonType))
+  val (sdk, autoClosable) = com.jetbrains.python.tools.createSdk(LocalPython(pythonType))
   sdk.persist()
   initialized(sdk) {
     writeAction {

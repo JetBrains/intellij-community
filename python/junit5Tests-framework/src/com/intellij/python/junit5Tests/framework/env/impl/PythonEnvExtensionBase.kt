@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.framework.env.impl
 
 import com.intellij.openapi.diagnostic.Logger
-import com.jetbrains.python.tools.PythonType
+import com.intellij.python.community.testFramework.testEnv.PythonType
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.NonNls
 import org.junit.jupiter.api.extension.BeforeAllCallback

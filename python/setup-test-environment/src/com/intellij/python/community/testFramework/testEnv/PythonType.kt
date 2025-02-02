@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.tools
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.testFramework.testEnv
 
 import com.intellij.execution.processTools.getResultStdout
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
@@ -8,19 +8,19 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.failure
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
-import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.Result.Companion.failure
 
 /**
  * Gradle script installs two types of python: conda and vanilla. Env could be obtained by [getTestEnvironment] which also provides closable
@@ -69,7 +69,7 @@ sealed class PythonType<T : Any>(private val tag: @NonNls String? = null) {
    */
   suspend fun getTestEnvironment(vararg additionalTags: @NonNls String): Result<Pair<T, AutoCloseable>> =
     getTestEnvironments(*additionalTags).firstOrNull()?.let { Result.success(it) }
-    ?: failure("No python found. See ${PyEnvTestSettings::class} class for more info")
+    ?: failure(AssertionError("No python found. See ${PyEnvTestSettings::class} class for more info"))
 
 
   protected abstract suspend fun pythonPathToEnvironment(pythonBinary: PythonBinary, envDir: Path): Pair<T, AutoCloseable>

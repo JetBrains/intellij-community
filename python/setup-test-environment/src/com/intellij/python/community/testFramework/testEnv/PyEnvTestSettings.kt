@@ -1,15 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.tools
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.python.community.testFramework.testEnv
 
+import com.intellij.python.community.testFramework.testEnv.PyEnvTestSettings.Companion.PATH_TO_TEST_ENV_PYTHON_INTERPRETERS
 import com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY
 import com.intellij.util.SystemProperties
-import com.jetbrains.python.tools.PyEnvTestSettings.Companion.PATH_TO_TEST_ENV_PYTHON_INTERPRETERS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 
-
-//TODO: Use Konfig instead?
 
 /**
  * Configures env test environment using env vars and properties.
