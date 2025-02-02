@@ -12,7 +12,10 @@ import com.jetbrains.python.PythonBinary
 import java.nio.file.Path
 
 data object TypeVanillaPython3 : PythonType<PythonBinary>("python3") {
-  override suspend fun createSdkFor(python: PythonBinary): Sdk =
+  override suspend fun createSdkFor(python: PythonBinary): Sdk = createSdk(python)
+
+  // TODO: DOC
+  fun createSdk(python: PythonBinary): Sdk =
     SdkConfigurationUtil.setupSdk(emptyArray(), python.refreshAndGetVirtualFile(),
                                   SdkType.findByName(PyNames.PYTHON_SDK_ID_NAME)!!, null, null)
 

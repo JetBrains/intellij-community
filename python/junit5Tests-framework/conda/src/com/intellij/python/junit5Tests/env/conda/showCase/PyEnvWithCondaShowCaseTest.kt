@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.python.junit5Tests.unit.showCase
+package com.intellij.python.junit5Tests.env.conda.showCase
 
 import com.intellij.python.community.junit5Tests.framework.conda.CondaEnv
 import com.intellij.python.community.junit5Tests.framework.conda.PyEnvTestCaseWithConda
@@ -18,7 +18,7 @@ import kotlin.io.path.isRegularFile
  */
 @PyEnvTestCaseWithConda
 @PyEnvTestCase
-class PyEnvTestExampleTest {
+class PyEnvWithCondaShowCaseTest {
   @Test
   fun checkPythonPath(@PythonBinaryPath python: Path) {
     ensurePythonWorks(python)

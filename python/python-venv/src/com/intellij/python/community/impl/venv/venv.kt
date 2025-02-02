@@ -4,10 +4,10 @@ package com.intellij.python.community.impl.venv
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.HelperName
 import com.intellij.python.community.execService.WhatToExec
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
-import com.jetbrains.python.VIRTUALENV_ZIPAPP_NAME
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.sdk.PySdkSettings
@@ -54,3 +54,7 @@ suspend fun createVenv(
   }
   return Result.success(venvPython)
 }
+
+// venv helper
+@Internal
+const val VIRTUALENV_ZIPAPP_NAME: HelperName = "virtualenv-20.24.5.pyz"

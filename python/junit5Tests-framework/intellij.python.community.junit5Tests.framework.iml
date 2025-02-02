@@ -9,7 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.community.impl" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5Jupiter" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5Pioneer" level="project" />
@@ -29,8 +28,9 @@
     <orderEntry type="module" module-name="intellij.pycharm.community" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.community.wintools" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.poetry" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.poetry" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.testFramework.testEnv" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community" scope="TEST" />
   </component>
 </module>
