@@ -7,6 +7,7 @@ import com.intellij.platform.eel.executeProcess
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.readWholeText
+import com.intellij.python.community.impl.venv.createVenv
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.junit5Tests.assertFail
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
@@ -14,9 +15,9 @@ import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
 import com.intellij.python.junit5Tests.randomBinary
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.jetbrains.python.venvReader.VirtualEnvReader
-import com.jetbrains.python.createVirtualenv
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.async
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasItem
@@ -53,7 +54,7 @@ class SystemPythonServiceShowCaseTest {
 
   @Test
   fun testCustomPythonSunnyDay(@PythonBinaryPath python: Path, @TempDir venvPath: Path): Unit = timeoutRunBlocking {
-    createVirtualenv(python, venvPath, venvPath)
+    createVenv(python, venvPath).getOrThrow()
     val python = VirtualEnvReader.Instance.findPythonInPythonRoot(venvPath) ?: error("no python in $venvPath")
     val newPython = SystemPythonService().registerSystemPython(python).orThrow()
     var allPythons = SystemPythonService().findSystemPythons()

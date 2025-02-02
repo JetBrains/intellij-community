@@ -29,5 +29,6 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl.installer" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.venv" scope="TEST" />
   </component>
 </module>

@@ -1,7 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.miscProject.impl
 
-import com.intellij.execution.ExecutionException
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -31,14 +30,14 @@ import com.intellij.psi.PsiManager
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 import com.intellij.pycharm.community.ide.impl.miscProject.TemplateFileName
+import com.intellij.python.community.impl.venv.createVenv
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.*
-import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.createVirtualenv
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import java.io.IOException
@@ -155,12 +154,8 @@ private suspend fun createProjectAndSdk(
     val systemPythonBinary = getSystemPython(confirmInstallation = confirmInstallation, systemPythonService).getOr { return it }
     logger.info("no venv in $venvDirPath, using system python $systemPythonBinary to create venv")
     // create venv using this system python
-    createVenv(systemPythonBinary, venvDirPath = venvDirPath, projectPath = projectPath).getOr { return it }
-    // try to find venv again
-    venvPython = findExistingVenv(venvDirPath)
-    if (venvPython == null) {
-      // No venv even after venv installation
-      return Result.failure(PyCharmCommunityCustomizationBundle.message("misc.project.error.create.venv", "", venvDirPath))
+    venvPython = createVenv(systemPythonBinary, venvDir = venvDirPath).getOr {
+      return Result.failure(PyCharmCommunityCustomizationBundle.message("misc.project.error.create.venv", it.error.message, venvDirPath))
     }
   }
 
@@ -195,14 +190,6 @@ private suspend fun findExistingVenv(
   }
 }
 
-private suspend fun createVenv(systemPython: PythonBinary, venvDirPath: Path, projectPath: Path): Result<Unit, @Nls String> =
-  try {
-    createVirtualenv(systemPython, venvDirPath, projectPath)
-    Result.success(Unit)
-  }
-  catch (e: ExecutionException) {
-    Result.failure(PyCharmCommunityCustomizationBundle.message("misc.project.error.create.venv", e.toString(), venvDirPath))
-  }
 
 private suspend fun getSystemPython(confirmInstallation: suspend () -> Boolean, pythonService: SystemPythonService): Result<PythonBinary, @Nls String> {
 

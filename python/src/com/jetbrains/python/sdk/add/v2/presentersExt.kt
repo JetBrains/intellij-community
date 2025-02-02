@@ -10,18 +10,16 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
-import com.jetbrains.python.failure
+import com.intellij.python.community.impl.venv.createVenv
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.createVirtualenv
-import com.jetbrains.python.packaging.PyExecutionException
+import com.jetbrains.python.errorProcessing.PyError
+import com.jetbrains.python.failure
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.excludeInnerVirtualEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.persist
-import com.jetbrains.python.errorProcessing.PyError
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -39,29 +37,16 @@ suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pat
                             }!!)
 
 
-  try {
-    createVirtualenv(baseSdkPath,
-                     venvPath,
-                     projectPath,
-                     inheritSitePackages = state.inheritSitePackages.get())
-  }
-  catch (e: PyExecutionException) {
-    return com.jetbrains.python.errorProcessing.failure(e)
-  }
+  val venvPython = createVenv(baseSdkPath, venvPath, inheritSitePackages = state.inheritSitePackages.get()).getOr { return it }
 
   if (targetEnvironmentConfiguration != null) error("Remote targets aren't supported")
-  val venvPython = VirtualEnvReader.Instance.findPythonInPythonRoot(venvPath)
-  if (venvPython == null) {
-    return com.jetbrains.python.errorProcessing.failure(message("commandLine.directoryCantBeAccessed", venvPath))
-  }
-
   val homeFile =
     // refresh needs write action
     writeAction {
       VfsUtil.findFile(venvPython, true)
     }
   if (homeFile == null) {
-    return com.jetbrains.python.errorProcessing.failure(message("commandLine.directoryCantBeAccessed", venvPath))
+    return com.jetbrains.python.errorProcessing.failure(message("commandLine.directoryCantBeAccessed", venvPython))
   }
 
   val newSdk = createSdk(homeFile, projectPath, existingSdks.toTypedArray())
