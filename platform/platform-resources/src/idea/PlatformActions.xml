@@ -1612,9 +1612,7 @@
       <add-to-group group-id="Internal"/>
     </group>
 
-    <action id="AnalyzePluginStartupPerformance" class="com.intellij.diagnostic.AnalyzePluginStartupPerformanceAction">
-      <add-to-group group-id="HelpDiagnosticTools" anchor="after" relative-to-action="Performance.ActivityMonitor"/>
-    </action>
+    <action id="AnalyzePluginStartupPerformance" class="com.intellij.diagnostic.AnalyzePluginStartupPerformanceAction" internal="true"/>
 
     <action id="TriggerLowMemoryNotification" class="com.intellij.diagnostic.TriggerLowMemoryNotificationAction" internal="true"/>
 
