@@ -17,6 +17,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.IJSwingUtilities
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -175,7 +176,8 @@ internal class ExpandableMenu(
     }
   }
 
-  private class HeaderColorfulPanel(component: JComponent, private val isColored: Boolean) : JPanel() {
+  @ApiStatus.Internal
+  class HeaderColorfulPanel(component: JComponent, private val isColored: Boolean) : JPanel() {
 
     var horizontalOffset = 0
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.RootPaneUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode.Companion.isMergedMainMenu
 import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.gridLayout.GridLayout
@@ -96,16 +97,6 @@ class MainMenuWithButton(
         }
       }
     }
-  }
-
-  // Keeping the previous state is essential for scenarios where the mode was changed to SEPARATE_TOOLBAR on Linux,
-  // but the system has not been restarted yet
-  private fun isMergedMainMenu(): Boolean {
-    var showMode = ShowMode.getCurrent()
-    if (!SystemInfoRt.isWindows && showMode == ShowMode.MENU) {
-      showMode = ShowMode.getShowMode(UISettings.getInstance().mainMenuDisplayModePrev)
-    }
-    return showMode == ShowMode.TOOLBAR_WITH_MENU
   }
 
   fun getButtonIcon(): Icon = if (isMergedMainMenu()) AllIcons.General.ChevronRight else AllIcons.General.WindowsMenu_20x20
