@@ -97,7 +97,7 @@ internal class K2QuickFixDiagnosticBasedProcessing<DIAGNOSTIC : KaDiagnosticWith
 
     context(KaSession)
     override fun createFix(diagnostic: DIAGNOSTIC): K2DiagnosticFix? {
-        val quickfix = fixFactory.createQuickFixes(diagnostic).singleOrNull() ?: return null
+        val quickfix = with(fixFactory) { createQuickFixes(diagnostic).singleOrNull() } ?: return null
         return object : K2DiagnosticFix {
             override fun apply(element: PsiElement) {
                 quickfix.invoke(element.project, null, element.containingFile)
@@ -113,7 +113,10 @@ internal class K2AddExclExclDiagnosticBasedProcessing<DIAGNOSTIC : KaDiagnosticW
 
     context(KaSession)
     override fun createFix(diagnostic: DIAGNOSTIC): K2DiagnosticFix? {
-        val addExclExclCallFix = fixFactory.createQuickFixes(diagnostic).firstOrNull { it is AddExclExclCallFix } ?: return null
+        val addExclExclCallFix =
+            with(fixFactory) {
+                createQuickFixes(diagnostic).firstOrNull { it is AddExclExclCallFix }
+            } ?: return null
         return object : K2DiagnosticFix {
             override fun apply(element: PsiElement) {
                 addExclExclCallFix.invoke(element.project, null, element.containingFile)

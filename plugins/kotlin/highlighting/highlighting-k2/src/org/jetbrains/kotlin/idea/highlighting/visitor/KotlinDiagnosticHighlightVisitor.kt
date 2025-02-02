@@ -208,7 +208,9 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
         val isWarning = diagnostic.severity == KaSeverity.WARNING
         val psiElement = diagnostic.psi
         val factoryName = diagnostic.factoryName
-        val fixes = KotlinQuickFixService.getInstance().getQuickFixesFor(diagnostic).takeIf { it.isNotEmpty() }
+        val quickFixService = KotlinQuickFixService.getInstance()
+        val quickFixesForDiagnostic = with(quickFixService) { getQuickFixesFor(diagnostic) }
+        val fixes = quickFixesForDiagnostic.takeIf { it.isNotEmpty() }
             ?: if (isWarning) listOf(CompilerWarningIntentionAction(factoryName)) else emptyList()
         val problemGroup = if (isWarning) {
             KotlinSuppressableWarningProblemGroup(factoryName)

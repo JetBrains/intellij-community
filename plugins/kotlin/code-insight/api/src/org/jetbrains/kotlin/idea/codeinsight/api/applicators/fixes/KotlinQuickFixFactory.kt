@@ -10,16 +10,14 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 
 /*sealed*/ fun interface KotlinQuickFixFactory<DIAGNOSTIC : KaDiagnosticWithPsi<*>> {
 
-    context(KaSession)
-    fun createQuickFixes(diagnostic: DIAGNOSTIC): List<CommonIntentionAction>
+    fun KaSession.createQuickFixes(diagnostic: DIAGNOSTIC): List<CommonIntentionAction>
 
     /**
      * Creates [IntentionAction]s from a diagnostic.
      */
     fun interface IntentionBased<DIAGNOSTIC : KaDiagnosticWithPsi<*>> : KotlinQuickFixFactory<DIAGNOSTIC> {
 
-        context(KaSession)
-        override fun createQuickFixes(diagnostic: DIAGNOSTIC): List<IntentionAction>
+        override fun KaSession.createQuickFixes(diagnostic: DIAGNOSTIC): List<IntentionAction>
     }
 
     /**
@@ -27,7 +25,6 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
      */
     fun interface ModCommandBased<DIAGNOSTIC : KaDiagnosticWithPsi<*>> : KotlinQuickFixFactory<DIAGNOSTIC> {
 
-        context(KaSession)
-        override fun createQuickFixes(diagnostic: DIAGNOSTIC): List<ModCommandAction>
+        override fun KaSession.createQuickFixes(diagnostic: DIAGNOSTIC): List<ModCommandAction>
     }
 }
