@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "html-tools_resources_1",
+  files = glob(["src/META-INF/**/*"]),
+  strip_prefix = "src"
+)
+
 jvm_library(
   name = "html-tools",
   module_name = "intellij.html.tools",
@@ -22,7 +28,10 @@ jvm_library(
     "//platform/indexing-impl",
     "//platform/core-ui",
   ],
-  runtime_deps = [":html-tools_resources"]
+  runtime_deps = [
+    ":html-tools_resources",
+    ":html-tools_resources_1",
+  ]
 )
 ### auto-generated section `build intellij.html.tools` end
 

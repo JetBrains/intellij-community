@@ -43,6 +43,7 @@ jvm_library(
     "//platform/jewel/markdown/ide-laf-bridge-styling:jewel-markdown-ideLafBridgeStyling",
     "//platform/jewel/markdown/core:jewel-markdown-core",
     "@lib//:kotlinx-datetime-jvm",
+    "//platform/jewel/samples/showcase:jewel-samples-showcase",
   ],
   runtime_deps = [":jewel-samples-idePlugin_resources"],
   plugins = ["@lib//:compose-plugin"]

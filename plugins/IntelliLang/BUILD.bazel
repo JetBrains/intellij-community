@@ -1,27 +1,3 @@
-### auto-generated section `build intellij.java.langInjection` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
-
-jvm_library(
-  name = "java-langInjection",
-  module_name = "intellij.java.langInjection",
-  visibility = ["//visibility:public"],
-  srcs = glob(["java-support/**/*.kt", "java-support/**/*.java"], allow_empty = True),
-  deps = [
-    "//java/openapi:java",
-    "//platform/platform-impl:ide-impl",
-    "//platform/lang-impl",
-    "//java/compiler/impl:java-compiler-impl",
-    "//RegExpSupport:regexp",
-    "//platform/platform-api:ide",
-    "//java/java-impl:impl",
-    "//plugins/IntelliLang:langInjection",
-    "//platform/core-ui",
-    "//platform/util/jdom",
-  ],
-  runtime_deps = ["//plugins/IntelliLang/intellilang-jps-plugin:java-langInjection-jps"]
-)
-### auto-generated section `build intellij.java.langInjection` end
-
 ### auto-generated section `build intellij.platform.langInjection` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
@@ -53,32 +29,3 @@ jvm_library(
   runtime_deps = [":langInjection_resources"]
 )
 ### auto-generated section `build intellij.platform.langInjection` end
-
-### auto-generated section `build intellij.xml.langInjection` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
-
-jvm_provided_library(
-  name = "xpath_provided",
-  lib = "//plugins/xpath"
-)
-
-jvm_library(
-  name = "xml-langInjection",
-  module_name = "intellij.xml.langInjection",
-  visibility = ["//visibility:public"],
-  srcs = glob(["xml-support/**/*.kt", "xml-support/**/*.java"], allow_empty = True),
-  deps = [
-    "//platform/platform-impl:ide-impl",
-    "//platform/lang-impl",
-    "//xml/impl",
-    "//RegExpSupport:regexp",
-    "//platform/platform-api:ide",
-    "@lib//:jaxen",
-    "//plugins/IntelliLang:langInjection",
-    "//xml/xml-frontback:frontback",
-    "//platform/core-ui",
-    "//platform/util/jdom",
-    ":xpath_provided",
-  ]
-)
-### auto-generated section `build intellij.xml.langInjection` end

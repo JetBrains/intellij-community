@@ -206,6 +206,7 @@ java_library(
     "//plugins/kotlin/kotlin.ide:ide",
     "//plugins/kotlin/jsr223",
     "//plugins/kotlin/internal:k2-internal",
+    "//plugins/kotlin/base/fir/scripting:kotlin-base-fir-scripting",
   ],
   runtime_deps = [
     "//platform/bootstrap",
@@ -419,6 +420,7 @@ java_library(
     "//plugins/kotlin/kotlin.ide:ide",
     "//plugins/kotlin/jsr223",
     "//plugins/kotlin/internal:k2-internal",
+    "//plugins/kotlin/base/fir/scripting:kotlin-base-fir-scripting",
   ]
 )
 ### auto-generated section `build intellij.kotlin.plugin.community.main` end

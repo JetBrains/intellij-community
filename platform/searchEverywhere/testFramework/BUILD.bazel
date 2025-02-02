@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.platform.searchEverywhere.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "testFramework_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "testFramework",
+  module_name = "intellij.platform.searchEverywhere.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/searchEverywhere/shared:searchEverywhere",
+    "//platform/searchEverywhere/backend",
+    "//platform/searchEverywhere/frontend",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+  ],
+  exports = [
+    "//platform/searchEverywhere/shared:searchEverywhere",
+    "//platform/searchEverywhere/backend",
+    "//platform/searchEverywhere/frontend",
+  ],
+  runtime_deps = [":testFramework_resources"]
+)
+### auto-generated section `build intellij.platform.searchEverywhere.testFramework` end

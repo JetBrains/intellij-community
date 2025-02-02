@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "java-decompiler_resources_1",
+  files = glob(["src/META-INF/**/*"]),
+  strip_prefix = "src"
+)
+
 jvm_library(
   name = "java-decompiler",
   module_name = "intellij.java.decompiler",
@@ -26,7 +32,10 @@ jvm_library(
     "//platform/statistics",
   ],
   exports = ["//plugins/java-decompiler/engine:java-decompiler-engine"],
-  runtime_deps = [":java-decompiler_resources"]
+  runtime_deps = [
+    ":java-decompiler_resources",
+    ":java-decompiler_resources_1",
+  ]
 )
 
 jvm_library(
@@ -55,7 +64,10 @@ jvm_library(
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
   ],
-  runtime_deps = [":java-decompiler_resources"]
+  runtime_deps = [
+    ":java-decompiler_resources",
+    ":java-decompiler_resources_1",
+  ]
 )
 
 jvm_test(

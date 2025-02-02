@@ -19,6 +19,8 @@ jvm_library(
     "//platform/util",
     "@lib//:kotlinc-analysis-api-provided",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "//platform/lang-api:lang",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
   ],
   runtime_deps = [":compose-ide-plugin_resources"]
 )

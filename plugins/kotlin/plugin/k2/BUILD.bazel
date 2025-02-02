@@ -130,6 +130,7 @@ java_library(
     "//plugins/kotlin/jvm-debugger/evaluation/k2:kotlin-jvm-debugger-evaluation-k2",
     "//plugins/kotlin/features-trainer",
     "//plugins/kotlin/internal:k2-internal",
+    "//plugins/kotlin/base/fir/scripting:kotlin-base-fir-scripting",
   ]
 )
 ### auto-generated section `build kotlin.plugin.k2` end

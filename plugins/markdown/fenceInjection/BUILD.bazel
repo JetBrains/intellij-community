@@ -9,7 +9,7 @@ jvm_resources(
 
 jvm_provided_library(
   name = "xml-langInjection_provided",
-  lib = "//plugins/IntelliLang:xml-langInjection"
+  lib = "//plugins/IntelliLang/xml-support:xml-langInjection"
 )
 
 jvm_library(

@@ -12,6 +12,7 @@ jvm_library(
     "//platform/execution",
     "//platform/lang-impl",
     "//python:python-community-impl",
+    "//python/setup-test-environment:community-testFramework-testEnv",
   ]
 )
 ### auto-generated section `build intellij.python.community.testFramework` end

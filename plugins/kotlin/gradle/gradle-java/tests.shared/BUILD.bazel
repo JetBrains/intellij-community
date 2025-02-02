@@ -82,6 +82,7 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "//plugins/kotlin/base/external-build-system:kotlin-base-external-build-system",
     "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//java/openapi:java",
   ]
 )
 

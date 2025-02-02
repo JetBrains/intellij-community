@@ -14,6 +14,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "jps_resources_1",
+  files = glob(["src/META-INF/**/*"]),
+  strip_prefix = "src"
+)
+
 jvm_library(
   name = "jps",
   module_name = "intellij.platform.workspace.jps",
@@ -36,6 +42,9 @@ jvm_library(
     "//platform/diagnostic/telemetry",
   ],
   exports = ["//platform/workspace/storage"],
-  runtime_deps = [":jps_resources"]
+  runtime_deps = [
+    ":jps_resources",
+    ":jps_resources_1",
+  ]
 )
 ### auto-generated section `build intellij.platform.workspace.jps` end

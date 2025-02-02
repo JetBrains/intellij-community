@@ -36,6 +36,7 @@ jvm_library(
     "@lib//:jackson",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
+    "//platform/backend/observation",
   ],
   exports = [
     "//platform/core-api:core",
@@ -77,6 +78,8 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
   ],
   runtime_deps = [":inspect_resources"]
 )

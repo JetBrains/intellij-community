@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "rt_resources_1",
+  files = glob(["src/META-INF/**/*"]),
+  strip_prefix = "src"
+)
+
 jvm_library(
   name = "rt",
   module_name = "intellij.java.rt",
@@ -17,6 +23,9 @@ jvm_library(
     "@lib//:java-rt-ant-1-7-1-provided",
     "@lib//:junit4",
   ],
-  runtime_deps = [":rt_resources"]
+  runtime_deps = [
+    ":rt_resources",
+    ":rt_resources_1",
+  ]
 )
 ### auto-generated section `build intellij.java.rt` end

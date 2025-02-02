@@ -46,6 +46,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
     "//platform/util/jdom",
     "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/code-insight/fixes-k2:kotlin-code-insight-fixes-k2",
   ]
 )
 

@@ -34,7 +34,7 @@ jvm_library(
     "//platform/platform-util-netty:ide-util-netty",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/IntelliLang:xml-langInjection",
+    "//plugins/IntelliLang/xml-support:xml-langInjection",
     "//platform/platform-tests:tests_test_lib",
     "@lib//:jsoup",
     "@lib//:jcef",

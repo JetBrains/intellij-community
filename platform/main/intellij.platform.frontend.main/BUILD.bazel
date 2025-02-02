@@ -8,6 +8,7 @@ java_library(
     "//platform/main/intellij.platform.main:main",
     "//platform/navbar/frontend",
     "//platform/xdebugger-impl/frontend:debugger-impl-frontend",
+    "//platform/searchEverywhere/frontend",
     "//platform/vcs-impl/frontend:vcs-impl-frontend",
     "//platform/bookmarks/frontend",
   ]

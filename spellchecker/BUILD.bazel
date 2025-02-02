@@ -13,6 +13,12 @@ jvm_resources(
   strip_prefix = "compatibilityResources"
 )
 
+jvm_resources(
+  name = "spellchecker_resources_2",
+  files = glob(["src/META-INF/**/*"]),
+  strip_prefix = "src"
+)
+
 jvm_library(
   name = "spellchecker",
   module_name = "intellij.spellchecker",
@@ -45,6 +51,7 @@ jvm_library(
   runtime_deps = [
     ":spellchecker_resources",
     ":spellchecker_resources_1",
+    ":spellchecker_resources_2",
   ]
 )
 
@@ -86,6 +93,7 @@ jvm_library(
   runtime_deps = [
     ":spellchecker_resources",
     ":spellchecker_resources_1",
+    ":spellchecker_resources_2",
   ]
 )
 

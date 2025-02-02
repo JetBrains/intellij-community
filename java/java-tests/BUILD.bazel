@@ -116,11 +116,13 @@ jvm_library(
     "//plugins/gradle",
     "//platform/todo",
     "//platform/statistics/testFramework",
+    "//platform/searchEverywhere/shared:searchEverywhere",
+    "//platform/searchEverywhere/testFramework",
   ],
   runtime_deps = [
     "//community-resources:customization",
-    "//plugins/IntelliLang:java-langInjection",
-    "//plugins/IntelliLang:xml-langInjection",
+    "//plugins/IntelliLang/java-support:java-langInjection",
+    "//plugins/IntelliLang/xml-support:xml-langInjection",
   ]
 )
 

@@ -6,7 +6,10 @@ create_kotlinc_options(
   name = "custom",
   jvm_target = 17,
   context_receivers = True,
-  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ]
 )
 
 jvm_resources(
@@ -49,6 +52,8 @@ jvm_library(
     "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
     "//plugins/kotlin/code-insight/intentions-shared:kotlin-code-insight-intentions-shared",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
   ],
   runtime_deps = [":kotlin-j2k-k1-new-post-processing_resources"]
 )

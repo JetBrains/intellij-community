@@ -29,19 +29,10 @@ jvm_test(
 ### auto-generated section `build intellij.platform.core.nio.fs.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_test")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
-
-kt_javac_options(
-  name = "custom-javac-options",
-  x_ep_disable_all_checks = True,
-  warn = "off",
-  add_exports = ["java.base/sun.nio.fs=ALL-UNNAMED"]
-)
 
 jvm_test(
   name = "core-nio-fs-tests_test",
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  javac_opts = ":custom-javac-options",
   deps = [
     "//platform/core-nio-fs",
     "//platform/util",

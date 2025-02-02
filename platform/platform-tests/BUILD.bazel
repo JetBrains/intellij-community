@@ -130,8 +130,6 @@ jvm_library(
     "@lib//:io-mockk-jvm",
     "//platform/bookmarks",
     "//platform/statistics/testFramework",
-    "//plugins/terminal",
-    "//plugins/terminal:terminal_test_lib",
     "//platform/platform-impl/bootstrap/eel:ide-bootstrap-eel",
   ],
   runtime_deps = [

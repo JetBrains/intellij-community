@@ -26,6 +26,7 @@ jvm_library(
     "//python/services/shared:python-community-services-shared",
     "//python/services/internal-impl:python-community-services-internal-impl",
     "//platform/util",
+    "//python/installer:community-impl-installer",
   ],
   runtime_deps = [":python-community-services-systemPython_resources"]
 )
@@ -58,6 +59,9 @@ jvm_library(
     "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
     "//platform/util",
     "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+    "//python/installer:community-impl-installer",
+    "//python/python-venv:community-impl-venv",
+    "//python/setup-test-environment:community-testFramework-testEnv",
   ],
   runtime_deps = [":python-community-services-systemPython_resources"]
 )

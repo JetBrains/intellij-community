@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "vcs-hg_resources_1",
+  files = glob(["src/META-INF/**/*"]),
+  strip_prefix = "src"
+)
+
 jvm_library(
   name = "vcs-hg",
   module_name = "intellij.vcs.hg",
@@ -30,7 +36,10 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/coroutines",
   ],
-  runtime_deps = [":vcs-hg_resources"]
+  runtime_deps = [
+    ":vcs-hg_resources",
+    ":vcs-hg_resources_1",
+  ]
 )
 
 jvm_library(
@@ -63,7 +72,10 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/coroutines",
   ],
-  runtime_deps = [":vcs-hg_resources"]
+  runtime_deps = [
+    ":vcs-hg_resources",
+    ":vcs-hg_resources_1",
+  ]
 )
 
 jvm_test(

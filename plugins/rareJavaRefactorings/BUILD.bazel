@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "java-rareRefactorings_resources_1",
+  files = glob(["src/META-INF/**/*"]),
+  strip_prefix = "src"
+)
+
 jvm_library(
   name = "java-rareRefactorings",
   module_name = "intellij.java.rareRefactorings",
@@ -23,7 +29,10 @@ jvm_library(
     "@lib//:stream_ex",
     "@lib//:fastutil-min",
   ],
-  runtime_deps = [":java-rareRefactorings_resources"]
+  runtime_deps = [
+    ":java-rareRefactorings_resources",
+    ":java-rareRefactorings_resources_1",
+  ]
 )
 
 jvm_test(
@@ -45,6 +54,9 @@ jvm_test(
     "@lib//:stream_ex",
     "@lib//:fastutil-min",
   ],
-  runtime_deps = [":java-rareRefactorings_resources"]
+  runtime_deps = [
+    ":java-rareRefactorings_resources",
+    ":java-rareRefactorings_resources_1",
+  ]
 )
 ### auto-generated section `build intellij.java.rareRefactorings` end

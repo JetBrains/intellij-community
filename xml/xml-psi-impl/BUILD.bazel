@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "psi-impl_resources_1",
+  files = glob(["resources-gen/**/*"]),
+  strip_prefix = "resources-gen"
+)
+
 jvm_library(
   name = "psi-impl",
   module_name = "intellij.xml.psi.impl",
@@ -42,6 +48,9 @@ jvm_library(
     "//xml/xml-frontback-impl:frontback-impl",
     "//xml/xml-psi-api:psi",
   ],
-  runtime_deps = [":psi-impl_resources"]
+  runtime_deps = [
+    ":psi-impl_resources",
+    ":psi-impl_resources_1",
+  ]
 )
 ### auto-generated section `build intellij.xml.psi.impl` end

@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "groovy_resources_1",
+  files = glob(["src/META-INF/**/*"]),
+  strip_prefix = "src"
+)
+
 jvm_provided_library(
   name = "ant_provided",
   lib = "//plugins/ant"
@@ -47,7 +53,7 @@ jvm_library(
     "//plugins/copyright",
     "//plugins/IntelliLang:langInjection",
     "@lib//:guava",
-    "//plugins/IntelliLang:java-langInjection",
+    "//plugins/IntelliLang/java-support:java-langInjection",
     "//jps/jps-builders:build",
     "//spellchecker",
     "//plugins/junit",
@@ -73,7 +79,10 @@ jvm_library(
     ":java-byteCodeViewer_provided",
   ],
   exports = ["//plugins/groovy/groovy-psi:psi"],
-  runtime_deps = [":groovy_resources"]
+  runtime_deps = [
+    ":groovy_resources",
+    ":groovy_resources_1",
+  ]
 )
 
 jvm_library(
@@ -112,8 +121,8 @@ jvm_library(
     "//plugins/ant:ant_test_lib",
     "@lib//:guava",
     "//java/testFramework",
-    "//plugins/IntelliLang:java-langInjection",
-    "//plugins/IntelliLang:xml-langInjection",
+    "//plugins/IntelliLang/java-support:java-langInjection",
+    "//plugins/IntelliLang/xml-support:xml-langInjection",
     "//jps/jps-builders:build",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
@@ -149,7 +158,10 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//java/unscramble",
   ],
-  runtime_deps = [":groovy_resources"]
+  runtime_deps = [
+    ":groovy_resources",
+    ":groovy_resources_1",
+  ]
 )
 
 jvm_test(

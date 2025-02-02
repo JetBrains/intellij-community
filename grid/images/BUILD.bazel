@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.grid.images.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "images-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "images-impl",
+  module_name = "intellij.grid.images.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//grid/impl",
+    "//grid/core-impl",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/ide-core",
+    "//images",
+  ],
+  runtime_deps = [":images-impl_resources"]
+)
+### auto-generated section `build intellij.grid.images.impl` end

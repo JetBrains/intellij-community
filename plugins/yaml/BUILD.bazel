@@ -31,7 +31,10 @@ jvm_library(
     "//platform/statistics",
     "//plugins/yaml/editing",
   ],
-  runtime_deps = [":yaml_resources"]
+  runtime_deps = [
+    ":yaml_resources",
+    "//platform/backend",
+  ]
 )
 
 jvm_library(

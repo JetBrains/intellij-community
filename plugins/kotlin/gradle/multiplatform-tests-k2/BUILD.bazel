@@ -37,6 +37,9 @@ jvm_test(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//plugins/gradle/java:java-tests_test_lib",
     "//plugins/kotlin/gradle/gradle-java/tests.shared:kotlin-gradle-gradle-java-tests-shared_test_lib",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure_test_lib",
+    "@lib//:kotlinc-analysis-api",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.multiplatform-tests.k2` end

@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "xpath-lang/resources"
 )
 
+jvm_resources(
+  name = "xpath_resources_1",
+  files = glob(["xpath-view/src/META-INF/**/*"]),
+  strip_prefix = "xpath-view/src"
+)
+
 jvm_library(
   name = "xpath",
   module_name = "intellij.xpath",
@@ -35,6 +41,7 @@ jvm_library(
   ],
   runtime_deps = [
     ":xpath_resources",
+    ":xpath_resources_1",
     "//xml/dom-impl",
   ]
 )
@@ -72,7 +79,10 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ],
-  runtime_deps = [":xpath_resources"]
+  runtime_deps = [
+    ":xpath_resources",
+    ":xpath_resources_1",
+  ]
 )
 
 jvm_test(

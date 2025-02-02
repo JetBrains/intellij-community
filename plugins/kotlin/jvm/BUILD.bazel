@@ -82,6 +82,8 @@ jvm_library(
     "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
     "//plugins/kotlin/kotlin.ide:ide",
     "//plugins/kotlin/jsr223",
+    "//platform/util/coroutines",
+    "//platform/core-api:core",
   ],
   runtime_deps = [":jvm_resources"]
 )

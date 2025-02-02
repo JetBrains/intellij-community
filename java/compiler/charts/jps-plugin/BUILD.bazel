@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "java-compiler-charts-jps_resources_1",
+  files = glob(["src/META-INF/**/*"]),
+  strip_prefix = "src"
+)
+
 jvm_library(
   name = "java-compiler-charts-jps",
   module_name = "intellij.java.compiler.charts.jps",
@@ -19,6 +25,9 @@ jvm_library(
     "@lib//:gson",
     "//jps/model-api:model",
   ],
-  runtime_deps = [":java-compiler-charts-jps_resources"]
+  runtime_deps = [
+    ":java-compiler-charts-jps_resources",
+    ":java-compiler-charts-jps_resources_1",
+  ]
 )
 ### auto-generated section `build intellij.java.compiler.charts.jps` end

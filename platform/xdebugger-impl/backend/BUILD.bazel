@@ -33,6 +33,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/statistics",
     "//platform/util/coroutines",
+    "//platform/execution-impl",
   ],
   runtime_deps = [
     ":debugger-impl-backend_resources",

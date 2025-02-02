@@ -18,7 +18,8 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kaml",
-    "@lib//:okhttp",
+    "@lib//:hash4j",
+    "@rules_jvm//zip:build-zip",
   ],
   runtime_deps = ["//jps/model-impl"]
 )

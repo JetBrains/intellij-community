@@ -15,6 +15,7 @@ jvm_test(
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
   ]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.tests` end

@@ -39,6 +39,8 @@ jvm_library(
     "//python/services/system-python:python-community-services-systemPython",
     "//platform/eel",
     "//python/services/shared:python-community-services-shared",
+    "//python/poetry:community-impl-poetry",
+    "//python/python-venv:community-impl-venv",
   ],
   runtime_deps = [":pycharm-community-ide-impl_resources"]
 )

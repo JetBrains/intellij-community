@@ -32,7 +32,7 @@ java_library(
     "//java/typeMigration",
     "//resources:java-resources",
     "//resources-en:java-resources-en",
-    "//plugins/IntelliLang:java-langInjection",
+    "//plugins/IntelliLang/java-support:java-langInjection",
     "//java/performancePlugin",
     "//java/vcs",
   ]

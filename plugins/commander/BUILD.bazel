@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "commander_resources_1",
+  files = glob(["src/META-INF/**/*"]),
+  strip_prefix = "src"
+)
+
 jvm_library(
   name = "commander",
   module_name = "intellij.commander",
@@ -20,7 +26,10 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/core-api:core",
   ],
-  runtime_deps = [":commander_resources"]
+  runtime_deps = [
+    ":commander_resources",
+    ":commander_resources_1",
+  ]
 )
 
 jvm_test(
@@ -41,6 +50,9 @@ jvm_test(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/core-api:core",
   ],
-  runtime_deps = [":commander_resources"]
+  runtime_deps = [
+    ":commander_resources",
+    ":commander_resources_1",
+  ]
 )
 ### auto-generated section `build intellij.commander` end

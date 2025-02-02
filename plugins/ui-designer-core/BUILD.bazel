@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "uiDesigner_resources_1",
+  files = glob(["src/META-INF/**/*"]),
+  strip_prefix = "src"
+)
+
 jvm_library(
   name = "uiDesigner",
   module_name = "intellij.uiDesigner",
@@ -25,6 +31,9 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/platform-impl/designer:ide-designer",
   ],
-  runtime_deps = [":uiDesigner_resources"]
+  runtime_deps = [
+    ":uiDesigner_resources",
+    ":uiDesigner_resources_1",
+  ]
 )
 ### auto-generated section `build intellij.uiDesigner` end

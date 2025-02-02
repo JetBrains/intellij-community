@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.platform.searchEverywhere.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.platform.searchEverywhere.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/searchEverywhere/shared:searchEverywhere",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/kernel/backend",
+    "//platform/core-api:core",
+    "//platform/project/shared:project",
+    "//platform/util",
+  ],
+  runtime_deps = [
+    ":backend_resources",
+    "//platform/backend",
+  ]
+)
+### auto-generated section `build intellij.platform.searchEverywhere.backend` end

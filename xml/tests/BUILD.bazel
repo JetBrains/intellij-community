@@ -33,7 +33,7 @@ jvm_library(
     "//RegExpSupport:regexp_test_lib",
     "//platform/util/nanoxml",
     "//plugins/IntelliLang:langInjection",
-    "//plugins/IntelliLang:java-langInjection",
+    "//plugins/IntelliLang/java-support:java-langInjection",
     "//xml/xml-analysis-impl:analysis-impl",
     "//platform/core-ui",
     "@lib//:assert_j",
@@ -43,7 +43,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//images/backend.svg:backend-svg",
   ],
-  runtime_deps = ["//plugins/IntelliLang:xml-langInjection"]
+  runtime_deps = ["//plugins/IntelliLang/xml-support:xml-langInjection"]
 )
 
 jvm_test(

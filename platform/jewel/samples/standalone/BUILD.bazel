@@ -43,6 +43,7 @@ jvm_library(
     "//platform/jewel/markdown/extension/gfm-alerts:jewel-markdown-extension-gfmAlerts",
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
     "//libraries/compose-foundation-desktop",
+    "//platform/jewel/samples/showcase:jewel-samples-showcase",
   ],
   runtime_deps = [
     ":jewel-samples-standalone_resources",

@@ -9,6 +9,7 @@ create_kotlinc_options(
   opt_in = [
     "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
     "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+    "org.jetbrains.kotlin.analysis.api.KaImplementationDetail",
   ]
 )
 
@@ -39,6 +40,11 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:fastutil-min",
+    "//java/openapi:java",
   ],
   runtime_deps = [":kotlin-base-fir-project-structure_resources"]
 )
@@ -87,6 +93,10 @@ jvm_library(
     "//plugins/kotlin/base/scripting:kotlin-base-scripting",
     "//plugins/kotlin/base/scripting:kotlin-base-scripting_test_lib",
     "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
+    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:fastutil-min",
+    "//java/openapi:java",
   ],
   runtime_deps = [":kotlin-base-fir-project-structure_resources"]
 )

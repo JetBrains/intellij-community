@@ -1,0 +1,15 @@
+### auto-generated section `build intellij.python.community.impl.poetry` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "community-impl-poetry",
+  module_name = "intellij.python.community.impl.poetry",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/core-api:core",
+  ]
+)
+### auto-generated section `build intellij.python.community.impl.poetry` end

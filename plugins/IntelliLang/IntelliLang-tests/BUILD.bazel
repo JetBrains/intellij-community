@@ -14,11 +14,11 @@ jvm_library(
   deps = [
     "//java/testFramework",
     "//plugins/IntelliLang:langInjection",
-    "//plugins/IntelliLang:xml-langInjection",
+    "//plugins/IntelliLang/xml-support:xml-langInjection",
     "//xml/impl",
     "//plugins/yaml",
     "//plugins/yaml:yaml_test_lib",
-    "//plugins/IntelliLang:java-langInjection",
+    "//plugins/IntelliLang/java-support:java-langInjection",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//jps/jps-builders:build",

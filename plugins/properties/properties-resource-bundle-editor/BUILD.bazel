@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "resource-bundle-editor_resources_1",
+  files = glob(["src/META-INF/**/*"]),
+  strip_prefix = "src"
+)
+
 jvm_library(
   name = "resource-bundle-editor",
   module_name = "intellij.properties.resource.bundle.editor",
@@ -26,7 +32,10 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/util/jdom",
   ],
-  runtime_deps = [":resource-bundle-editor_resources"]
+  runtime_deps = [
+    ":resource-bundle-editor_resources",
+    ":resource-bundle-editor_resources_1",
+  ]
 )
 
 jvm_library(
@@ -51,7 +60,10 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/util/jdom",
   ],
-  runtime_deps = [":resource-bundle-editor_resources"]
+  runtime_deps = [
+    ":resource-bundle-editor_resources",
+    ":resource-bundle-editor_resources_1",
+  ]
 )
 
 jvm_test(
