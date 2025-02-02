@@ -124,8 +124,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   var mainMenuDisplayMode: MainMenuDisplayMode
     get() = MainMenuDisplayMode.valueOf(state.mainMenuDisplayMode)
     set(value) {
+      mainMenuDisplayModePrev = MainMenuDisplayMode.valueOf(state.mainMenuDisplayMode)
       state.mainMenuDisplayMode = value.name
     }
+
+  @Internal
+  var mainMenuDisplayModePrev: MainMenuDisplayMode = mainMenuDisplayMode
 
   var useSmallLabelsOnTabs: Boolean
     get() = state.useSmallLabelsOnTabs

@@ -9,13 +9,11 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionToolbarListener
-import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.impl.RootPaneUtil
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.WindowButtonsConfiguration
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxIconThemeConfiguration
@@ -28,6 +26,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.HEADER_HEIGHT_
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath.SimpleCustomDecorationPathComponent
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
+import com.intellij.openapi.wm.impl.headertoolbar.MainMenuWithButton
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.platform.util.coroutines.childScope
@@ -41,7 +40,6 @@ import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
-import com.jetbrains.rd.util.collections.SynchronizedList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -51,10 +49,6 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
 import javax.swing.*
-
-private enum class ShowMode {
-  MENU, TOOLBAR, TOOLBAR_WITH_MENU
-}
 
 internal class ToolbarFrameHeader(
   private val coroutineScope: CoroutineScope,
@@ -67,12 +61,10 @@ internal class ToolbarFrameHeader(
   private val menuBarHeaderTitle = SimpleCustomDecorationPathComponent(frame = frame, isGrey = true).apply {
     isOpaque = false
   }
+  private val mainMenuWithButton = MainMenuWithButton(coroutineScope, frame)
   private val menuBarContainer = createMenuBarContainer()
-  private val toolbarMainMenu = RootPaneUtil.createMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = null).apply {
-    isOpaque = false
-    isVisible = false
-  }
-  private val mainMenuButton = MainMenuButton(coroutineScope, getButtonIcon()) { if (mode == ShowMode.TOOLBAR_WITH_MENU) toolbarMainMenu.menuCount else 0 }
+  private val toolbarMainMenu = mainMenuWithButton.toolbarMainMenu
+  private val mainMenuButton = MainMenuButton(coroutineScope, mainMenuWithButton.getButtonIcon()) { if (mode == ShowMode.TOOLBAR_WITH_MENU) toolbarMainMenu.menuCount else 0 }
   private val mainMenuButtonComponent = mainMenuButton.button
   private var toolbar: MainToolbar? = null
   private val selfDisposable = Disposer.newCheckedDisposable()
@@ -90,7 +82,6 @@ internal class ToolbarFrameHeader(
   @Volatile
   private var isCompactHeader: Boolean
 
-  private val removedItems = SynchronizedList<ActionMenu>()
   private val resizeListener = initListenerToResizeMenu()
 
   init {
@@ -153,11 +144,9 @@ internal class ToolbarFrameHeader(
           when (mode) {
             ShowMode.TOOLBAR, ShowMode.TOOLBAR_WITH_MENU -> {
               withContext(Dispatchers.EDT) {
-                mainMenuButtonComponent.isVisible = mode == ShowMode.TOOLBAR
-                mainMenuButtonComponent.presentation.icon = getButtonIcon()
+                mainMenuWithButton.recalculateWidth(toolbar)
                 mainMenuButtonComponent.revalidate()
                 mainMenuButtonComponent.repaint()
-                toolbarMainMenu.isVisible = mode == ShowMode.TOOLBAR_WITH_MENU
               }
               doUpdateToolbar(compactHeader)
             }
@@ -184,7 +173,7 @@ internal class ToolbarFrameHeader(
             if (mode == ShowMode.MENU) {
               menuBarHeaderTitle.isVisible = isCompactHeader
             }
-            resizeListener.componentResized(null)
+            mainMenuWithButton.recalculateWidth(toolbar)
             repaint()
           }
         }
@@ -254,16 +243,7 @@ internal class ToolbarFrameHeader(
   }
 
   private val mode: ShowMode
-    get() {
-      val mainMenuDisplayMode = UISettings.getInstance().mainMenuDisplayMode
-      return when (mainMenuDisplayMode) {
-        MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR -> ShowMode.TOOLBAR_WITH_MENU
-        MainMenuDisplayMode.UNDER_HAMBURGER_BUTTON -> ShowMode.TOOLBAR
-        else -> ShowMode.MENU
-      }
-    }
-
-  private fun getButtonIcon(): Icon = if (mode == ShowMode.TOOLBAR_WITH_MENU) AllIcons.General.ChevronRight else AllIcons.General.WindowsMenu_20x20
+    get() = ShowMode.getCurrent()
 
   private val contentResizeListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
@@ -303,7 +283,7 @@ internal class ToolbarFrameHeader(
       return
     }
 
-    removedItems.clear()
+    mainMenuWithButton.clearRemovedItems()
     val newToolbar = withContext(Dispatchers.EDT) {
       toolbar?.removeComponentListener(contentResizeListener)
       toolbar?.removeComponentListener(resizeListener)
@@ -323,7 +303,7 @@ internal class ToolbarFrameHeader(
 
       newToolbar.addToolbarListeners(object : ActionToolbarListener {
         override fun actionsUpdated() {
-          resizeListener.componentResized(null)
+          mainMenuWithButton.recalculateWidth(toolbar)
         }
       }, newToolbarDisposable)
       Disposer.register(selfDisposable, newToolbarDisposable)
@@ -343,7 +323,7 @@ internal class ToolbarFrameHeader(
       newToolbar.repaint()
       toolbarPlaceholder.revalidate()
       toolbarPlaceholder.repaint()
-      resizeListener.componentResized(null)
+      mainMenuWithButton.recalculateWidth(toolbar)
     }
   }
 
@@ -379,56 +359,7 @@ internal class ToolbarFrameHeader(
    */
   private fun initListenerToResizeMenu(): ComponentListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
-      if (mode == ShowMode.TOOLBAR_WITH_MENU) {
-        coroutineScope.launch(Dispatchers.EDT) {
-          var wasChanged = false
-          val toolbarPrefWidth = (toolbar?.calculatePreferredWidth()
-                                  ?: return@launch)
-          val parentPanelWidth = mainMenuButtonComponent.parent?.width ?: return@launch
-          val menuButton = mainMenuButtonComponent
-          val menuWidth = toolbarMainMenu.components.sumOf { it.size.width }
-          val menuButtonWidth = menuButton.preferredSize.width
-
-          var availableWidth = parentPanelWidth - menuWidth - (menuButtonWidth.takeIf { isVisible } ?: 0) - toolbarPrefWidth
-          val rootMenuItems = toolbarMainMenu.rootMenuItems
-          //when button is not visible we should keep in mind that it'll be visible on reduce, otherwise we already get it
-          val widthLimit = if (menuButton.isVisible) 0 else menuButton.preferredSize.width
-          if (availableWidth > widthLimit && removedItems.isNotEmpty()) {
-            do {
-              val item = removedItems.lastOrNull() ?: break
-              val itemWidth = item.size.width
-              if (availableWidth - itemWidth < widthLimit) break
-              if (toolbarMainMenu.rootMenuItems.none { it.text == item.text }) toolbarMainMenu.add(item)
-              removedItems.removeIf { it.text == item.text }
-              availableWidth -= itemWidth
-              wasChanged = true
-            }
-            while (availableWidth > widthLimit)
-          }
-          else if (availableWidth < 0 && rootMenuItems.count() > 1) {
-            var widthToReduce = -(availableWidth - widthLimit)
-            var ind = rootMenuItems.lastIndex
-            do {
-              val item = if (ind > 0) rootMenuItems[ind] else break
-              if (removedItems.none { it.text == item.text }) removedItems.add(item)
-              widthToReduce -= item.size.width
-              ind--
-              wasChanged = true
-            }
-            while (widthToReduce > 0)
-            removedItems.forEach { removedItem ->
-              toolbarMainMenu.rootMenuItems.find { it.text == removedItem.text }
-                ?.let { toolbarMainMenu.remove(it) }
-            }
-          }
-          mainMenuButtonComponent.isVisible = removedItems.isNotEmpty()
-          if (wasChanged) {
-            toolbarMainMenu.rootMenuItems.forEach { it.updateUI() }
-            toolbarPlaceholder.revalidate()
-            toolbarPlaceholder.repaint()
-          }
-        }
-      }
+      mainMenuWithButton.recalculateWidth(toolbar)
     }
   }
 
@@ -477,8 +408,7 @@ internal class ToolbarFrameHeader(
     }
     val toolbarPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
-      add(toolbarMainMenu, gb.next().fillCellVertically().weighty(1.0))
-      add(mainMenuButtonComponent, gb.next())
+      add(mainMenuWithButton, gb.next().fillCellVertically().weighty(1.0))
       add(toolbarPlaceholder, gb.next().weightx(1.0).fillCell())
     }
 

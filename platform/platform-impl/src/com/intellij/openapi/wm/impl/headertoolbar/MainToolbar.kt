@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.ActionToolbarPresentationFactory
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -29,6 +30,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.openapi.wm.impl.RootPaneUtil
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.hideNativeLinuxTitle
@@ -36,9 +38,16 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHe
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ExpandableMenu
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsX
+import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBInsets
@@ -46,6 +55,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import com.intellij.util.ui.showingScope
 import com.jetbrains.WindowDecorations
+import com.jetbrains.rd.util.collections.SynchronizedList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -73,7 +83,10 @@ private sealed interface MainToolbarFlavor {
 private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScope,
                                                    private val headerContent: JComponent,
                                                    frame: JFrame) : MainToolbarFlavor {
-  private val mainMenuButton = MainMenuButton(coroutineScope)
+
+
+  private val mainMenuWithButton = MainMenuWithButton(coroutineScope, frame)
+  private val mainMenuButton = mainMenuWithButton.mainMenuButton
 
   init {
     val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope, frame) {UISettings.shadowInstance.mainMenuDisplayMode != MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR}
@@ -82,8 +95,10 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
   }
 
   override fun addWidget() {
-    addWidget(widget = mainMenuButton.button, parent = headerContent, position = HorizontalLayout.Group.LEFT)
+    addWidget(widget = mainMenuWithButton, parent = headerContent, position = HorizontalLayout.Group.LEFT)
   }
+
+  fun recalculateWidth(toolbar: MainToolbar) = mainMenuWithButton.recalculateWidth(toolbar)
 }
 
 private data object DefaultMainToolbarFlavor : MainToolbarFlavor
@@ -117,12 +132,18 @@ class MainToolbar(
     }
     (layout as HorizontalLayout).apply {
       preferredSizeFunction = { component ->
-        if (component is ActionToolbar) {
-          val availableSize = Dimension(this@MainToolbar.width - 4 * JBUI.scale(layoutGap), this@MainToolbar.height)
-          CompressingLayoutStrategy.distributeSize(availableSize, components.filterIsInstance<ActionToolbar>()).getValue(component)
-        }
-        else {
-          component.preferredSize
+        when (component) {
+          is ActionToolbar -> {
+            val availableSize = Dimension(this@MainToolbar.width - 4 * JBUI.scale(layoutGap), this@MainToolbar.height)
+            CompressingLayoutStrategy.distributeSize(availableSize, components.filterIsInstance<ActionToolbar>()).getValue(component)
+          }
+          is MainMenuWithButton -> {
+            (flavor as? MenuButtonInToolbarMainToolbarFlavor)?.recalculateWidth(this@MainToolbar)
+            component.preferredSize
+          }
+          else -> {
+            component.preferredSize
+          }
         }
       }
     }
