@@ -4,6 +4,7 @@ package com.intellij.python.junit5Tests.framework.env.impl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.python.community.testFramework.testEnv.PythonType
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -24,7 +25,8 @@ import kotlin.reflect.KClass
  * [lazy]: postpone resource creation until first parameter used.
  * [additionalTags]: only use pythons with these tags
  */
-internal abstract class PythonEnvExtensionBase<ENV : Any, PYTHON_TYPE : PythonType<ENV>>(
+@Internal
+abstract class PythonEnvExtensionBase<ENV : Any, PYTHON_TYPE : PythonType<ENV>>(
   private val annotation: KClass<out Annotation>,
   private val pythonType: PYTHON_TYPE,
   private val envType: KClass<ENV>,

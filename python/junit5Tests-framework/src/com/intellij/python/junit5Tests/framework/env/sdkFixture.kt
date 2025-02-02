@@ -14,7 +14,6 @@ import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import com.jetbrains.python.sdk.persist
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.tools.SdkCreationRequest.LocalPython
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -23,12 +22,13 @@ import kotlin.io.path.pathString
 typealias PySdkFixture = TestFixture<Sdk>
 
 /**
- * Creates [Sdk] (if you only need a python path, use [PythonBinaryPath] or [CondaEnv])
+ * Creates [Sdk] (if you only need a python path, use [PythonBinaryPath] or [com.intellij.python.community.junit5Tests.framework.conda.CondaEnv])
  */
 fun pySdkFixture(
   pythonType: PythonType<*> = TypeVanillaPython3,
 ): PySdkFixture = testFixture {
-  val (sdk, autoClosable) = com.jetbrains.python.tools.createSdk(LocalPython(pythonType))
+  pythonType.createSdkClosableEnv()
+  val (sdk, autoClosable, _) = pythonType.createSdkClosableEnv().getOrThrow()
   sdk.persist()
   initialized(sdk) {
     writeAction {
