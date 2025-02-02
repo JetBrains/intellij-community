@@ -10,7 +10,6 @@ import com.intellij.python.community.execService.WhatToExec
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.jetbrains.python.Result
-import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.getOrThrow
 import org.hamcrest.CoreMatchers
 import org.hamcrest.MatcherAssert.assertThat
@@ -60,14 +59,10 @@ class ExecServiceShowCase {
     when (val output = ExecService().execGetStdout(command, listOf(arg))) {
       is Result.Success -> fail("Execution of bad command should lead to an error")
       is Result.Failure -> {
-        when (val err = output.error) {
-          is PyError.Message -> fail("Execution of bad command should lead to an execution error, not bare message")
-          is PyError.ExecException -> {
-            val failure = err.execFailure
-            assertEquals(command.command, failure.command, "Wrong command reported")
-            assertEquals("foo", failure.args[0], "Wrong args reported")
-          }
-        }
+        val err = output.error
+        val failure = err.execFailure
+        assertEquals(command.command, failure.command, "Wrong command reported")
+        assertEquals("foo", failure.args[0], "Wrong args reported")
       }
     }
   }

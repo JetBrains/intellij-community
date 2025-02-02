@@ -238,5 +238,6 @@
     <orderEntry type="module" module-name="intellij.grazie" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.community.wintools" scope="TEST" />
     <orderEntry type="module" module-name="intellij.compose.ide.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
   </component>
 </module>
