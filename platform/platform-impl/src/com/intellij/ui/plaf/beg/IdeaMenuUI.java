@@ -2,16 +2,13 @@
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ProjectWindowCustomizerService;
-import com.intellij.ide.ui.MainMenuDisplayMode;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ExpandableMenu;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode;
-import com.intellij.openapi.wm.impl.headertoolbar.MainMenuWithButton;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.hover.HoverListener;
@@ -60,14 +57,7 @@ public class IdeaMenuUI extends BasicMenuUI {
     }
     else if (IdeaPopupMenuUI.isMenuBarItem(c)) {
       outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets();
-      if (SwingUtilities.getAncestorOfClass(MainMenuWithButton.class, c) != null ||
-          (SwingUtilities.getAncestorOfClass(ExpandableMenu.HeaderColorfulPanel.class, c) != null &&
-           ShowMode.Companion.isMergedMainMenu())) {
-        radius = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().get();
-      }
-      else {
-        radius = 0;
-      }
+      radius = ShowMode.Companion.isMergedMainMenu() ? JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().get() : 0;
     }
     else {
       radius = JBUI.CurrentTheme.Menu.Selection.ARC.get();
@@ -97,8 +87,7 @@ public class IdeaMenuUI extends BasicMenuUI {
   @Override
   public void installUI(JComponent c) {
     super.installUI(c);
-    if (c instanceof JMenuItem && SwingUtilities.getAncestorOfClass(MainMenuWithButton.class, c) != null ||
-        (SwingUtilities.getAncestorOfClass(ExpandableMenu.HeaderColorfulPanel.class, c) != null && ShowMode.Companion.isMergedMainMenu())) {
+    if (c instanceof JMenuItem && ShowMode.Companion.isMergedMainMenu()) {
       hoverListener.addTo(c);
     }
   }
