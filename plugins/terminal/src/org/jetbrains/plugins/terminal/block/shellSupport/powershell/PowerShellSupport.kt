@@ -1,24 +1,25 @@
-package org.jetbrains.plugins.terminal.sh.powershell
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.block.shellSupport.powershell
 
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.tree.IElementType
-import com.intellij.sh.psi.ShFileElementType
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.jetbrains.plugins.terminal.block.shellSupport.ShLangService
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
-import org.jetbrains.plugins.terminal.sh.getShellCommandTokens
 
 internal class PowerShellSupport : TerminalShellSupport {
-  override val promptContentElementType: IElementType
-    get() = ShFileElementType.INSTANCE
+  override val promptContentElementType: IElementType?
+    get() = serviceOrNull<ShLangService>()?.promptContentElementType
 
   override val lineContinuationChar: Char = '`'
 
   override fun getCommandTokens(project: Project, command: String): List<String>? {
-    return getShellCommandTokens(project, command)
+    return serviceOrNull<ShLangService>()?.getShellCommandTokens(project, command)
   }
 
   override fun parseCommandHistory(history: String): List<String> {

@@ -109,6 +109,10 @@
     <escapeHandler implementation="org.jetbrains.plugins.terminal.action.reworked.CancelSelection" />
     <escapeHandler implementation="org.jetbrains.plugins.terminal.action.reworked.CloseSearch" />
     <escapeHandler implementation="org.jetbrains.plugins.terminal.action.reworked.SelectEditor" />
+
+    <shellSupport key="zsh" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.zsh.ZshSupport"/>
+    <shellSupport key="bash" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.bash.BashSupport"/>
+    <shellSupport key="powershell" implementationClass="org.jetbrains.plugins.terminal.block.shellSupport.powershell.PowerShellSupport"/>
   </extensions>
 
   <extensionPoints>
