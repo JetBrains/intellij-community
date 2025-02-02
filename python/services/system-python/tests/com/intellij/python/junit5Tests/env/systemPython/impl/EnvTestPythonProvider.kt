@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.python.community.testFramework.testEnv.PythonType
+import com.intellij.python.community.testFramework.testEnv.TypeVanillaPython3
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.systemPythonSpi.SystemPythonProvider
 import kotlinx.coroutines.flow.map
@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.toSet
 internal class EnvTestPythonProvider : SystemPythonProvider {
   override suspend fun findSystemPythons(eelApi: EelApi): Set<PythonBinary> {
     if (eelApi != localEel) return emptySet()
-    return PythonType.VanillaPython3
+    return TypeVanillaPython3
       .getTestEnvironments()
       .map { (python, closeable) ->
         Disposer.register(ApplicationManager.getApplication()) {

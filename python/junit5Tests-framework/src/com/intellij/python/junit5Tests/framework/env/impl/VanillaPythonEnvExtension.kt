@@ -6,7 +6,7 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.community.impl.poetry.poetryPath
-import com.intellij.python.community.testFramework.testEnv.PythonType
+import com.intellij.python.community.testFramework.testEnv.TypeVanillaPython3
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.jetbrains.python.PythonBinary
 import java.nio.file.Path
@@ -16,9 +16,9 @@ import java.nio.file.Path
  *
  * It also searches for poetry and stores it in [PropertiesComponent]
  */
-internal class VanillaPythonEnvExtension : PythonEnvExtensionBase<PythonBinary, PythonType.VanillaPython3>(
+internal class VanillaPythonEnvExtension : PythonEnvExtensionBase<PythonBinary, TypeVanillaPython3>(
   annotation = PythonBinaryPath::class,
-  pythonType = PythonType.VanillaPython3,
+  pythonType = TypeVanillaPython3,
   envType = PythonBinary::class,
   lazy = false,
   additionalTags = arrayOf("poetry")

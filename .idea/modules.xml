@@ -943,7 +943,6 @@
       <module fileurl="file://$PROJECT_DIR$/python/huggingFace/intellij.python.community.impl.huggingFace.iml" filepath="$PROJECT_DIR$/python/huggingFace/intellij.python.community.impl.huggingFace.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/installer/intellij.python.community.impl.installer.iml" filepath="$PROJECT_DIR$/python/installer/intellij.python.community.impl.installer.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/poetry/intellij.python.community.impl.poetry.iml" filepath="$PROJECT_DIR$/python/poetry/intellij.python.community.impl.poetry.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/setup-test-environment/intellij.python.community.impl.setupTestEnv.iml" filepath="$PROJECT_DIR$/python/setup-test-environment/intellij.python.community.impl.setupTestEnv.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-venv/intellij.python.community.impl.venv.iml" filepath="$PROJECT_DIR$/python/python-venv/intellij.python.community.impl.venv.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/junit5Tests-framework/intellij.python.community.junit5Tests.framework.iml" filepath="$PROJECT_DIR$/python/junit5Tests-framework/intellij.python.community.junit5Tests.framework.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/pluginCore/intellij.python.community.plugin.iml" filepath="$PROJECT_DIR$/python/pluginCore/intellij.python.community.plugin.iml" />
@@ -957,6 +956,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/services/shared/intellij.python.community.services.shared.iml" filepath="$PROJECT_DIR$/python/services/shared/intellij.python.community.services.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/services/system-python/intellij.python.community.services.systemPython.iml" filepath="$PROJECT_DIR$/python/services/system-python/intellij.python.community.services.systemPython.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/testFramework/intellij.python.community.testFramework.iml" filepath="$PROJECT_DIR$/python/testFramework/intellij.python.community.testFramework.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/setup-test-environment/intellij.python.community.testFramework.testEnv.iml" filepath="$PROJECT_DIR$/python/setup-test-environment/intellij.python.community.testFramework.testEnv.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.tests.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-copyright/intellij.python.copyright.iml" filepath="$PROJECT_DIR$/python/python-copyright/intellij.python.copyright.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-features-trainer/intellij.python.featuresTrainer.iml" filepath="$PROJECT_DIR$/python/python-features-trainer/intellij.python.featuresTrainer.iml" />

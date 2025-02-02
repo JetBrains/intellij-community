@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.testFramework.testEnv.PythonType
+import com.intellij.python.community.testFramework.testEnv.TypeVanillaPython3
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
@@ -25,7 +26,7 @@ typealias PySdkFixture = TestFixture<Sdk>
  * Creates [Sdk] (if you only need a python path, use [PythonBinaryPath] or [CondaEnv])
  */
 fun pySdkFixture(
-  pythonType: PythonType<*> = PythonType.VanillaPython3,
+  pythonType: PythonType<*> = TypeVanillaPython3,
 ): PySdkFixture = testFixture {
   val (sdk, autoClosable) = com.jetbrains.python.tools.createSdk(LocalPython(pythonType))
   sdk.persist()

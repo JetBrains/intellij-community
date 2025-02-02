@@ -52,8 +52,8 @@ internal abstract class PythonEnvExtensionBase<ENV : Any, PYTHON_TYPE : PythonTy
   }
 
   private fun createEnv(): ResourceWrapper<ENV> {
-    val (env, autoClosable) = runBlocking {
-      pythonType.getTestEnvironment(*additionalTags).getOrElse {
+    val (_, autoClosable, env) = runBlocking {
+      pythonType.createSdkClosableEnv(*additionalTags).getOrElse {
         // Logging due to IDEA-356206
         LOG.warn(it)
         val message = "Couldn't find python to run test against ($pythonType , ${additionalTags.toList()})"
