@@ -9,6 +9,7 @@ import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.impl.headertoolbar.MainMenuWithButton;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.hover.HoverListener;
@@ -57,7 +58,7 @@ public class IdeaMenuUI extends BasicMenuUI {
     }
     else if (IdeaPopupMenuUI.isMenuBarItem(c)) {
       outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets();
-      if (UISettings.getShadowInstance().getMainMenuDisplayMode() == MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR) {
+      if (SwingUtilities.getAncestorOfClass(MainMenuWithButton.class, c) != null) {
         radius = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().get();
       }
       else {
@@ -92,7 +93,7 @@ public class IdeaMenuUI extends BasicMenuUI {
   @Override
   public void installUI(JComponent c) {
     super.installUI(c);
-    if (UISettings.getInstance().getMainMenuDisplayMode() == MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR && c instanceof JMenuItem) {
+    if (SwingUtilities.getAncestorOfClass(MainMenuWithButton.class, c) != null && c instanceof JMenuItem) {
       hoverListener.addTo(c);
     }
   }
