@@ -30,6 +30,7 @@ class MainMenuWithButton(
 ) : NonOpaquePanel(GridLayout()) {
   val mainMenuButton: MainMenuButton = MainMenuButton(coroutineScope, getButtonIcon())
   val toolbarMainMenu: IdeJMenuBar = RootPaneUtil.createMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = null).apply {
+    addUpdateGlobalMenuRootsListener { components.forEach { (it as JMenu).isOpaque = false } }
     isOpaque = false
     isVisible = ShowMode.getCurrent() == ShowMode.TOOLBAR_WITH_MENU
     border = null
