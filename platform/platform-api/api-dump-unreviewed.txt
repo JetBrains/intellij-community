@@ -1276,6 +1276,7 @@ a:com.intellij.ide.wizard.AbstractWizard
 - getCurrentStepObject():com.intellij.ide.wizard.Step
 - p:getHelpButton():javax.swing.JButton
 - pa:getHelpID():java.lang.String
+- p:getNextButton():javax.swing.JButton
 - pf:getNextStep():I
 - p:getNextStep(I):I
 - p:getNextStepObject():com.intellij.ide.wizard.Step

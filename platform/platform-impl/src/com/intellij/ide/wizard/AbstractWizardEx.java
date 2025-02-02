@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard;
 
 import com.intellij.openapi.project.Project;
@@ -39,8 +39,8 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
 
         @Override
         public void doNextAction() {
-          if (getNextButton().isEnabled()) {
-            AbstractWizardEx.this.doNextAction();
+          if (_nextButton().isEnabled()) {
+            doNextAction();
           }
         }
       });
@@ -48,6 +48,10 @@ public class AbstractWizardEx extends AbstractWizard<AbstractWizardStepEx> {
     }
 
     init();
+  }
+
+  private JButton _nextButton() {
+    return super.getNextButton();
   }
 
   @Override
