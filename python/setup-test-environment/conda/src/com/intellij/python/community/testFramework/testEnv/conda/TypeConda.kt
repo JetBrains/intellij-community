@@ -1,10 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.python.community.testFramework.testEnv
+package com.intellij.python.community.testFramework.testEnv.conda
 
 import com.intellij.execution.processTools.getResultStdout
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.community.testFramework.testEnv.PythonType
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
 import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
@@ -12,8 +12,10 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
+@Internal
 data object TypeConda : PythonType<PyCondaEnv>("conda") {
   override suspend fun createSdkFor(env: PyCondaEnv): Sdk =
     env.createSdkFromThisEnv(null, emptyList())

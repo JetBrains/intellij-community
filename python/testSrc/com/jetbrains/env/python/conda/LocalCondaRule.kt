@@ -3,7 +3,7 @@ package com.jetbrains.env.python.conda
 
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
-import com.intellij.python.community.testFramework.testEnv.TypeConda
+import com.intellij.python.community.testFramework.testEnv.conda.TypeConda
 import com.jetbrains.python.sdk.conda.TargetCommandExecutor
 import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand

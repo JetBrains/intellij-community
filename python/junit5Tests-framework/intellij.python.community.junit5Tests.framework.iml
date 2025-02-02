@@ -33,5 +33,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.testFramework.testEnv" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.testFramework.testEnv.conda" scope="TEST" />
   </component>
 </module>

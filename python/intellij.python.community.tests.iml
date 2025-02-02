@@ -70,5 +70,6 @@
     <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
     <orderEntry type="module" module-name="intellij.platform.todo" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.testFramework.testEnv" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.testFramework.testEnv.conda" scope="TEST" />
   </component>
 </module>
