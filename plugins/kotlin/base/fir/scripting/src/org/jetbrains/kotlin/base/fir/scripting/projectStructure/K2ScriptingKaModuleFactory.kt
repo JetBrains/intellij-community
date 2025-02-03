@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.base.fir.scripting.projectStructure.modules.KaScript
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.K2KaModuleFactory
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
-import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 
 
@@ -35,7 +34,6 @@ internal class K2ScriptingKaModuleFactory : K2KaModuleFactory {
      * to avoid accessing stubs inside
      */
     private fun KtFile.kotlinParserWillCreateKtScriptHere(): Boolean {
-        if (this is KtCodeFragment) return false
         val extension = FileUtilRt.getExtension(name)
         val isRegularKtFile = extension.isEmpty() || extension == KotlinFileType.EXTENSION || isCompiled
         return !isRegularKtFile
