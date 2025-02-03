@@ -125,7 +125,6 @@ class KtSymbolFromIndexProvider(
         .map { it.symbol }
 
     context(KaSession)
-    @KaExperimentalApi
     fun getKotlinEnumEntriesByNameFilter(
         nameFilter: (Name) -> Boolean,
         scope: GlobalSearchScope = analysisScope,
