@@ -28,6 +28,24 @@ To generate a distribution to upload to PyPi, `python setup.py sdist bdist_wheel
 which should have a wheel and afterwards `twine upload -s dist/pydevd-*` should be run to actually upload the contents
 to PyPi.
 
+## Dependencies
+
+CI dependencies are stored in `ci-requirements/`. These are high-level dependencies required to initialize tests execution.
+Basically `tox` and it's transient requirements.
+
+Test dependencies are stored in `test-requirements/`. These dependencies are required for successful execution of all the tests.
+
+For local development you only need CI dependencies. Test dependencies are completely handled by `tox`, assuming you are running tests
+through it.
+
+Dependencies are pinned and split by supported Python version. It is done ...
+
+- to avoid rogue dependency update crashing the tests and consequently safe-push overnight if the test is in the aggregator,
+- to have reproducible builds,
+- to avoid finding a set of dependencies which satisfy all the supported Python version simultaneously.
+
+For more details on the current dependency declaration approach see [PCQA-914][PCQA-914] and [PCQA-904][PCQA-904].
+
 ## Tests
 
 Tests are executed via `tox` with the help of `pytest`.
@@ -51,3 +69,7 @@ tox -e py313 -- pydev_tests/test_pyserver.py::TestCPython::test_message
 ```
 
 [pydevd]: https://github.com/fabioz/PyDev.Debugger
+
+[PCQA-904]: https://youtrack.jetbrains.com/issue/PCQA-904
+
+[PCQA-914]: https://youtrack.jetbrains.com/issue/PCQA-914
