@@ -1475,7 +1475,7 @@ interface ProjectServiceContainerCustomizer {
  *
  * @return true, if we should proceed with project opening, false if the process of project opening should be canceled.
  */
-private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
+internal suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
   val locatedProject = TrustedProjectsLocator.locateProject(projectStoreBaseDir, project = null)
   if (TrustedProjects.isProjectTrusted(locatedProject)) {
     // the trusted state of this project path is already known => proceed with opening
