@@ -17,7 +17,7 @@ fragment pullRequestInfoShort on PullRequest {
 
   assignees(first: 100) {
     nodes {
-      ...userInfo
+      ...user
     }
   }
   labels(first: 100) {

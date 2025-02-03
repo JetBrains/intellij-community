@@ -80,7 +80,7 @@ fragment assignedEvent on AssignedEvent {
   }
   createdAt
   user {
-    ...userInfo
+    ...user
   }
 }
 
@@ -90,7 +90,7 @@ fragment unassignedEvent on UnassignedEvent {
   }
   createdAt
   user {
-    ...userInfo
+    ...user
   }
 }
 
