@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.find.TextSearchService
@@ -316,7 +316,7 @@ class DirtyFilesQueueTest {
   private fun restart(skipFullScanning: Boolean, project: Project? = null) {
     runBlocking(Dispatchers.EDT) {
       writeIntentReadAction {
-        val tumbler = FileBasedIndexTumbler("test")
+        val tumbler = FileBasedIndexTumbler("DirtyFilesQueueTest")
         if (skipFullScanning) {
           tumbler.allowSkippingFullScanning()
         }

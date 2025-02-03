@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.plugins.loadExtensionWithText
@@ -21,7 +21,7 @@ class IndexInfrastructureExtensionTest : LightJavaCodeInsightFixtureTestCase() {
       it.toList().associate { p -> p.fileName.toString() to p.getLastModifiedTime().toMillis() }.toSortedMap()
     }
 
-    val switcher = FileBasedIndexTumbler("test")
+    val switcher = FileBasedIndexTumbler("IndexInfrastructureExtensionTest")
     switcher.turnOff()
     switcher.turnOn()
 

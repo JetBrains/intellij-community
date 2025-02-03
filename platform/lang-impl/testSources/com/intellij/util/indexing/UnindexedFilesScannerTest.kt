@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.google.common.util.concurrent.SettableFuture
@@ -59,7 +59,7 @@ class UnindexedFilesScannerTest {
     @JvmStatic
     fun resetRegisteredIndexes() {
       runInEdtAndWait {
-        val tumbler = FileBasedIndexTumbler("test")
+        val tumbler = FileBasedIndexTumbler("UnindexedFilesScannerTest")
         tumbler.turnOff()
         tumbler.turnOn()
       }
@@ -394,7 +394,7 @@ class UnindexedFilesScannerTest {
   private fun registerIndexers(indexers: Collection<FileBasedIndexExtension<*, *>>) = registerIndexers(*indexers.toTypedArray())
   private fun registerIndexers(vararg indexers: FileBasedIndexExtension<*, *>) {
     runInEdtAndWait {
-      val tumbler = FileBasedIndexTumbler("test")
+      val tumbler = FileBasedIndexTumbler("UnindexedFilesScannerTest")
       tumbler.turnOff()
       indexers.forEach { indexer ->
         application.registerExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, indexer, testRootDisposable)

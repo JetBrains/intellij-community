@@ -168,6 +168,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     LOG.assertTrue(myFlushingTask == null);
     LOG.assertTrue(myUpToDateIndicesForUnsavedOrTransactedDocuments.isEmpty());
     LOG.assertTrue(myTransactionMap.isEmpty());
+    LOG.info("Dropping registered indexes");
 
     myRegisteredIndexes = null;
   }
@@ -415,6 +416,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @Override
   public synchronized void loadIndexes() {
     if (myRegisteredIndexes == null) {
+      LOG.info("Loading indexes");
+
       super.loadIndexes();
 
       LOG.assertTrue(myRegisteredIndexes == null);
@@ -425,6 +428,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       // capture VFS creation time. It will be used to identify VFS epoch for dirty files queue.
       // at the moment when we write the queue, VFS might have already been disposed via shutdown hook (in the case on emergency shutdown)
       vfsCreationStamp = ManagingFS.getInstance().getCreationTimestamp();
+    }
+    else {
+      LOG.info("Indexes are already loaded");
     }
   }
 
