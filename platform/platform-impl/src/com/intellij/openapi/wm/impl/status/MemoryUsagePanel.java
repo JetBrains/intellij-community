@@ -103,15 +103,20 @@ public final class MemoryUsagePanel implements CustomStatusBarWidget, Activatabl
       new ClickListener() {
         @Override
         public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-          if (JBR.isSystemUtilsSupported()) {
-            JBR.getSystemUtils().fullGC();
-          } else {
+          if (clickCount == 1) {
             //noinspection CallToSystemGC
             System.gc();
+          } else if (clickCount == 2) {
+            if (JBR.isSystemUtilsSupported()) {
+              JBR.getSystemUtils().fullGC();
+            } else {
+              //noinspection CallToSystemGC
+              System.gc();
+            }
+            StorageLockContext.forceDirectMemoryCache();
+            DirectByteBufferAllocator.ALLOCATOR.releaseCachedBuffers();
+            PlatformMemoryUtil.getInstance().trimLinuxNativeHeap();
           }
-          StorageLockContext.forceDirectMemoryCache();
-          DirectByteBufferAllocator.ALLOCATOR.releaseCachedBuffers();
-          PlatformMemoryUtil.getInstance().trimLinuxNativeHeap();
 
           updateState();
           return true;
