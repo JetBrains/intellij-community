@@ -1,4 +1,4 @@
-#  Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+#  Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 from _pydevd_bundle import pydevd_vars
@@ -80,6 +80,7 @@ def __get_table_provider(output):
                                         'tensorflow.python.ops.resource_variable_ops.ResourceVariable',
                                         'tensorflow.python.framework.sparse_tensor.SparseTensor',
                                         'torch.Tensor']
+    table_provider = None
     if type_qualified_name in ['pandas.core.frame.DataFrame',
                                'pandas.core.series.Series',
                                'geopandas.geoseries.GeoSeries',
