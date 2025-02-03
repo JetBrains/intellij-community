@@ -137,6 +137,13 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
       consumer.showCustomOption(PyCodeStyleSettings.class, "LIST_NEW_LINE_BEFORE_RIGHT_BRACKET",
                                 ApplicationBundle.message("wrapping.rbracket.on.new.line"), PySyntaxBundle.message("formatter.list.literals"));
 
+      consumer.showCustomOption(PyCodeStyleSettings.class, "SET_WRAPPING",
+                                PySyntaxBundle.message("formatter.set.literals"), null, getInstance().WRAP_OPTIONS, WRAP_VALUES);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "SET_NEW_LINE_AFTER_LEFT_BRACE",
+                                ApplicationBundle.message("wrapping.new.line.after.lbrace"), PySyntaxBundle.message("formatter.set.literals"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "SET_NEW_LINE_BEFORE_RIGHT_BRACE",
+                                ApplicationBundle.message("wrapping.rbrace.on.new.line"), PySyntaxBundle.message("formatter.set.literals"));
+
 
       consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_WRAPPING",
                                 PySyntaxBundle.message("formatter.dictionary.literals"), null, getInstance().WRAP_OPTIONS, WRAP_VALUES);
@@ -234,6 +241,8 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
     num_dict = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5}
     
     colors = ['red', 'green', 'blue', 'black', 'white', 'gray']
+    
+    star_names = {"Sirius", "Betelgeuse", "Polaris", "Vega", "Arcturus", "Aldebaran"}
 
     ingredients = [
         'green',

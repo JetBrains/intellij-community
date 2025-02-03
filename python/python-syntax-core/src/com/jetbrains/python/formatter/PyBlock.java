@@ -97,6 +97,7 @@ public class PyBlock implements ASTBlock {
   private Alignment myDictAlignment = null;
   private Wrap myDictWrapping = null;
   private Wrap myListWrapping = null;
+  private Wrap mySetWrapping = null;
   private Wrap myFromImportWrapping = null;
   private Wrap myParameterListWrapping = null;
   private Wrap myArgumentListWrapping = null;
@@ -123,6 +124,9 @@ public class PyBlock implements ASTBlock {
     }
     else if (node.getElementType() == PyElementTypes.LIST_LITERAL_EXPRESSION) {
       myListWrapping = Wrap.createWrap(pySettings.LIST_WRAPPING, pySettings.LIST_NEW_LINE_AFTER_LEFT_BRACKET);
+    }
+    else if (node.getElementType() == PyElementTypes.SET_LITERAL_EXPRESSION) {
+      mySetWrapping = Wrap.createWrap(pySettings.SET_WRAPPING, pySettings.SET_NEW_LINE_AFTER_LEFT_BRACE);
     }
     else if (node.getElementType() == PyElementTypes.FROM_IMPORT_STATEMENT) {
       myFromImportWrapping = Wrap.createWrap(pySettings.FROM_IMPORT_WRAPPING, false);
@@ -437,6 +441,12 @@ public class PyBlock implements ASTBlock {
         childType != PyTokenTypes.LBRACKET &&
         childType != PyTokenTypes.RBRACKET) {
       childWrap = myListWrapping;
+    }
+    if (parentType == PyElementTypes.SET_LITERAL_EXPRESSION &&
+        childType != PyTokenTypes.COMMA &&
+        childType != PyTokenTypes.LBRACE &&
+        childType != PyTokenTypes.RBRACE) {
+      childWrap = mySetWrapping;
     }
     if (parentType == PyElementTypes.PARAMETER_LIST &&
         childType != PyTokenTypes.COMMA &&
@@ -758,7 +768,9 @@ public class PyBlock implements ASTBlock {
              && !(myNode.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION &&
                   myContext.getPySettings().DICT_NEW_LINE_AFTER_LEFT_BRACE)
              && !(myNode.getElementType() == PyElementTypes.LIST_LITERAL_EXPRESSION &&
-                  myContext.getPySettings().LIST_NEW_LINE_AFTER_LEFT_BRACKET);
+                  myContext.getPySettings().LIST_NEW_LINE_AFTER_LEFT_BRACKET)
+             && !(myNode.getElementType() == PyElementTypes.SET_LITERAL_EXPRESSION &&
+                  myContext.getPySettings().SET_NEW_LINE_AFTER_LEFT_BRACE);
     }
     if (myNode.getElementType() == PyElementTypes.ARGUMENT_LIST) {
       if (!myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS || hasHangingIndent(myNode.getPsi())) {

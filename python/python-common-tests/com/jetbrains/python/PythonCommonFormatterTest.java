@@ -1420,4 +1420,54 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
     getPythonCodeStyleSettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = false;
     doTest();
   }
+
+  // PY-31689
+  public void testSetWrappingBracesOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().SET_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().SET_NEW_LINE_BEFORE_RIGHT_BRACE = true;
+    getPythonCodeStyleSettings().SET_NEW_LINE_AFTER_LEFT_BRACE = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testSetChopDownBracesOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().SET_WRAPPING = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getPythonCodeStyleSettings().SET_NEW_LINE_BEFORE_RIGHT_BRACE = true;
+    getPythonCodeStyleSettings().SET_NEW_LINE_AFTER_LEFT_BRACE = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testSetWrappingBracesOnSameLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    doTest();
+  }
+
+  // PY-31689
+  public void testSetWrappingFirstBraceOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().SET_NEW_LINE_AFTER_LEFT_BRACE = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testSetWrappingLastBraceOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().SET_NEW_LINE_BEFORE_RIGHT_BRACE = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testSetWrappingDoNotAlign() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getPythonCodeStyleSettings().SET_NEW_LINE_BEFORE_RIGHT_BRACE = true;
+    getPythonCodeStyleSettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = false;
+    doTest();
+  }
 }
