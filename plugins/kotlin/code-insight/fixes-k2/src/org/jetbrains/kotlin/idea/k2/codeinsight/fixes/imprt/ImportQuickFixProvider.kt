@@ -124,7 +124,10 @@ object ImportQuickFixProvider {
     @OptIn(KaExperimentalApi::class)
     private fun renderCandidate(candidate: ImportCandidate): String = prettyPrint {
         val fqName = candidate.getFqName()
-        if (candidate.symbol is KaNamedClassSymbol) {
+        if (
+            candidate.symbol is KaNamedClassSymbol || 
+            candidate.symbol is KaEnumEntrySymbol
+        ) {
             append("class $fqName")
         } else {
             renderer.renderDeclaration(useSiteSession, candidate.symbol, printer = this)
@@ -233,6 +236,8 @@ object ImportQuickFixProvider {
             symbol is KaNamedFunctionSymbol && symbol.isInfix -> ImportFixHelper.ImportKind.INFIX_FUNCTION
             symbol is KaNamedFunctionSymbol -> ImportFixHelper.ImportKind.FUNCTION
             
+            symbol is KaEnumEntrySymbol -> ImportFixHelper.ImportKind.CLASS
+            
             else -> null
         }
 
@@ -247,7 +252,10 @@ object ImportQuickFixProvider {
 
     context(KaSession)
     private fun ImportCandidate.getImportName(): String = buildString {
-        if (this@getImportName is CallableImportCandidate) {
+        if (
+            this@getImportName is CallableImportCandidate && 
+            symbol !is KaEnumEntrySymbol
+        ) {
             val classSymbol = when {
                 receiverType != null -> receiverType?.expandedSymbol
                 else -> containingClass
