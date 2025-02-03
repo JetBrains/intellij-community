@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.xml.XmlElementType.*;
+import static com.intellij.psi.xml.XmlTokenType.*;
 
 public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttributeDecl {
   private static final Logger LOG = Logger.getInstance(XmlAttributeDeclImpl.class);

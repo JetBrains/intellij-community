@@ -22,6 +22,7 @@ import com.intellij.xml.parsing.XmlParserBundle;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.xml.XmlElementType.*;
+import static com.intellij.psi.xml.XmlTokenType.*;
 
 public class DtdParsing extends XmlParsing {
   private static final Logger LOG = Logger.getInstance(XmlParser.class);

@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.xml.XmlElementType.*;
+import static com.intellij.psi.xml.XmlTokenType.*;
 
 /*
  * @author max
@@ -132,7 +133,7 @@ public class XmlParsing {
       }
       footer.drop();
 
-      while (token() != XmlTokenType.XML_TAG_END && token() != XmlTokenType.XML_START_TAG_START && token() != XmlTokenType.XML_END_TAG_START && !eof()) {
+      while (token() != XML_TAG_END && token() != XML_START_TAG_START && token() != XML_END_TAG_START && !eof()) {
         error(XmlParserBundle.message("xml.parsing.unexpected.token"));
         advance();
       }
@@ -307,9 +308,9 @@ public class XmlParsing {
     advance();
     while (true) {
       final IElementType tt = token();
-      if (tt == XML_COMMENT_CHARACTERS|| tt == XML_CONDITIONAL_COMMENT_START
-        || tt == XML_CONDITIONAL_COMMENT_START_END || tt == XML_CONDITIONAL_COMMENT_END_START
-        || tt == XML_CONDITIONAL_COMMENT_END) {
+      if (tt == XML_COMMENT_CHARACTERS || tt == XML_CONDITIONAL_COMMENT_START
+          || tt == XML_CONDITIONAL_COMMENT_START_END || tt == XML_CONDITIONAL_COMMENT_END_START
+          || tt == XML_CONDITIONAL_COMMENT_END) {
         advance();
         continue;
       }
@@ -431,7 +432,8 @@ public class XmlParsing {
       while (token() == XML_TAG_CHARACTERS) {
         advance();
       }
-    } else {
+    }
+    else {
       while (token() == XML_NAME) {
         advance();
         if (token() == XML_EQ) {

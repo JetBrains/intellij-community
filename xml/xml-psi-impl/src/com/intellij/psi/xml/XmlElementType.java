@@ -10,7 +10,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.xml.IXmlElementType;
 
-public interface XmlElementType extends XmlTokenType {
+public interface XmlElementType {
   IElementType XML_DOCUMENT = new IXmlElementType("XML_DOCUMENT");
   IElementType XML_PROLOG = new IXmlElementType("XML_PROLOG");
   IElementType XML_DECL = new IXmlElementType("XML_DECL");
