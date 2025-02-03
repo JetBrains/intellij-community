@@ -67,11 +67,13 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
         boolean shouldBeAutoImported = memberContainingClass != null &&
                                        member.hasModifierProperty(PsiModifier.STATIC) &&
                                        JavaCodeStyleManager.getInstance(member.getProject())
-                                         .isStaticAutoImportClass(memberContainingClass.getQualifiedName());
+                                         .isStaticAutoImportClass(memberContainingClass.getQualifiedName()) &&
+                                       member.getName() != null;
         if (shouldBeAutoImported) {
-          shouldImport = !ContainerUtil.exists(results, result ->
-            result.getElement() instanceof PsiModifierListOwner &&
-            ((PsiModifierListOwner)result.getElement()).hasModifierProperty(PsiModifier.STATIC));
+          shouldImport = !ContainerUtil.exists(results, result -> result.getElement() instanceof PsiModifierListOwner modifierListOwner &&
+                                                                  ((modifierListOwner).hasModifierProperty(PsiModifier.STATIC) ||
+                                                                   modifierListOwner instanceof PsiMember psiMember &&
+                                                                   member.getName().equals(psiMember.getName())));
         }
         else {
           shouldImport = false;
