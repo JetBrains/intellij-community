@@ -271,7 +271,7 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     if (type == null) {
       return false;
     }
-    if (superType.equals(type) || CommonClassNames.JAVA_LANG_OBJECT.equals(superType.name())) {
+    if (superType.equals(type) || (!(type instanceof InterfaceType) && CommonClassNames.JAVA_LANG_OBJECT.equals(superType.name()))) {
       return true;
     }
     if (type instanceof ArrayType arrayType) {
@@ -297,6 +297,15 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
       else {
         String superName = superType.name();
         return CommonClassNames.JAVA_LANG_CLONEABLE.equals(superName) || CommonClassNames.JAVA_IO_SERIALIZABLE.equals(superName);
+      }
+    }
+    if (superType instanceof ClassType) { // may check superclass only
+      if (type instanceof InterfaceType) {
+        return false;
+      }
+      if (type instanceof ClassType classType) {
+        ClassType superclass = classType.superclass();
+        return superclass != null && instanceOf(superclass, superType);
       }
     }
     return supertypes(type).anyMatch(t -> instanceOf(t, superType));
