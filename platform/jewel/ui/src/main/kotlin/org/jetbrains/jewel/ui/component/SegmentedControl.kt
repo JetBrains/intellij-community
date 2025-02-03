@@ -37,6 +37,36 @@ import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.theme.segmentedControlButtonStyle
 import org.jetbrains.jewel.ui.theme.segmentedControlStyle
 
+/**
+ * A segmented control component that displays a horizontal group of mutually exclusive buttons. Each segment represents
+ * an option that can be selected, with only one segment being selected at a time. The control provides built-in
+ * keyboard navigation and focus management.
+ *
+ * Segmented controls are commonly used for:
+ * - Switching between different views
+ * - Selecting from a small set of mutually exclusive options
+ * - Filtering content with different criteria
+ *
+ * **Guidelines:**
+ * [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/radio-button.html#5-and-more-options)
+ *
+ * **Example usage:**
+ * [`SegmentedControls`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/SegmentedControls.kt)
+ *
+ * **Swing equivalent:**
+ * [`JBRadioButton`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBRadioButton.java)
+ *
+ * @param buttons List of [SegmentedControlButtonData] that define the segments to display. Each button contains its
+ *   selection state, content, and selection callback.
+ * @param modifier Modifier to be applied to the control
+ * @param enabled Controls the enabled state of the entire control. When false, all segments become disabled
+ * @param style The [SegmentedControlStyle] that defines visual properties like colors and metrics for the control
+ *   container
+ * @param buttonStyle The [SegmentedControlButtonStyle] that defines visual properties for individual segments
+ * @param textStyle The [TextStyle] to be applied to text content within the segments
+ * @param interactionSource The [MutableInteractionSource] that will be used to handle interactions with the control
+ * @see com.intellij.ui.components.JBRadioButton
+ */
 @Composable
 public fun SegmentedControl(
     buttons: List<SegmentedControlButtonData>,

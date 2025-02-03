@@ -41,6 +41,41 @@ import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.theme.textFieldStyle
 
+/**
+ * A single-line text input component that follows the standard visual styling.
+ *
+ * Provides a text input field for single-line text entry with optional leading and trailing icons, placeholder text,
+ * and various text input features. The component supports standard text editing capabilities and platform-specific key
+ * bindings.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/input-field.html)
+ *
+ * **Usage example:**
+ * [`TextFields.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/TextFields.kt)
+ *
+ * **Swing equivalent:**
+ * [`JBTextField`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBTextField.java)
+ * and [`JTextField`](https://docs.oracle.com/javase/tutorial/uiswing/components/textfield.html)
+ *
+ * @param state The state object controlling the text content and selection
+ * @param modifier Modifier to be applied to the text field
+ * @param enabled Controls whether the text field can be interacted with
+ * @param readOnly Controls whether the text can be modified
+ * @param inputTransformation Transforms text input before it appears in the field
+ * @param textStyle The typography style to be applied to the text
+ * @param keyboardOptions Options controlling keyboard input behavior
+ * @param onKeyboardAction Handler for keyboard actions
+ * @param onTextLayout Callback for text layout changes
+ * @param interactionSource Source of interactions for this text field
+ * @param style The visual styling configuration for the text field
+ * @param outline The outline style to be applied to the text field
+ * @param placeholder Content to display when the text field is empty
+ * @param leadingIcon Optional icon to display before the text
+ * @param trailingIcon Optional icon to display after the text
+ * @param outputTransformation Transforms text output for display
+ * @param undecorated Whether to show the text field without decorations
+ * @see com.intellij.ui.components.JBTextField
+ */
 @Suppress("DuplicatedCode") // The dupe is scheduled for removal
 @Composable
 public fun TextField(

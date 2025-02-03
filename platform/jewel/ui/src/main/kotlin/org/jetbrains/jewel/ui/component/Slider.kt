@@ -86,8 +86,39 @@ import org.jetbrains.jewel.ui.component.styling.SliderStyle
 import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.theme.sliderStyle
 
-// Note: a lot of code in this file is from the Material 2 implementation
-
+/**
+ * A slider component that follows the standard visual styling.
+ *
+ * Provides a draggable thumb that moves along a track to select a value from a continuous range. Supports step
+ * intervals, keyboard navigation, and both mouse and touch input. The component includes visual feedback for hover,
+ * focus, and press states.
+ *
+ * Features:
+ * - Continuous or stepped value selection
+ * - Keyboard navigation with arrow keys, Home/End, and Page Up/Down
+ * - Mouse drag and click positioning
+ * - Touch input support
+ * - Optional tick marks for stepped values
+ * - RTL layout support
+ *
+ * This implementation is heavily based on the Material 2 slider implementation.
+ *
+ * **Usage example:**
+ * [`Slider.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Slider.kt)
+ *
+ * **Swing equivalent:** [`JSlider`](https://docs.oracle.com/javase/tutorial/uiswing/components/slider.html)
+ *
+ * @param value The current value of the slider
+ * @param onValueChange Called when the value changes as the user drags the thumb
+ * @param modifier Modifier to be applied to the slider
+ * @param enabled Controls whether the slider can be interacted with
+ * @param valueRange The range of values that the slider can take
+ * @param steps The number of discrete steps between valueRange.start and valueRange.endInclusive
+ * @param onValueChangeFinished Called when the user finishes moving the slider
+ * @param interactionSource Source of interactions for this slider
+ * @param style The visual styling configuration for the slider
+ * @see javax.swing.JSlider
+ */
 @Composable
 public fun Slider(
     value: Float,

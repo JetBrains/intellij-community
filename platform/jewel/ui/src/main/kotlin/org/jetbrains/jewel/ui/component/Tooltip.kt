@@ -31,15 +31,27 @@ import org.jetbrains.jewel.ui.theme.tooltipStyle
 import org.jetbrains.jewel.ui.util.isDark
 
 /**
- * Shows a tooltip when the mouse pointer lingers on the [content] for long enough. Provides the styling for the tooltip
- * container.
+ * A tooltip component that follows the standard visual styling.
  *
- * @param tooltip The content of the tooltip.
+ * Provides a floating tooltip that appears when hovering over or focusing the target content. The tooltip follows
+ * platform conventions for timing, positioning, and appearance, supporting both mouse and keyboard navigation.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/tooltip.html)
+ *
+ * **Usage example:**
+ * [`Tooltips.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Tooltips.kt)
+ *
+ * **Swing equivalent:**
+ * [`HelpTooltip`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ide/HelpTooltip.java)
+ * and [How to Use Tool Tips](https://docs.oracle.com/javase/tutorial/uiswing/components/tooltip.html)
+ *
+ * @param tooltip The content to be displayed in the tooltip
  * @param modifier Modifier to apply to the content's wrapper
- * @param enabled When true, the tooltip can be shown. When false, it will never show.
- * @param style The style to apply to the tooltip.
- * @param tooltipPlacement The placement of the tooltip.
- * @param content The component for which to show the tooltip on hover.
+ * @param enabled Controls whether the tooltip can be shown. When false, it will never show
+ * @param style The visual styling configuration for the tooltip
+ * @param tooltipPlacement The placement strategy for positioning the tooltip relative to the content
+ * @param content The component for which to show the tooltip on hover
+ * @see com.intellij.ide.HelpTooltip
  */
 @Composable
 public fun Tooltip(
@@ -87,12 +99,15 @@ private fun TooltipImpl(style: TooltipStyle, tooltip: @Composable () -> Unit) {
 }
 
 /**
- * [TooltipPlacement] implementation for providing a [PopupPositionProvider] that calculates the position of the popup
- * relative to the current mouse cursor position, but never changes it after showing the popup.
+ * A tooltip placement strategy that positions the tooltip relative to the cursor position.
  *
- * @param offset [DpOffset] to be added to the position of the popup.
- * @param alignment The alignment of the popup relative to the current cursor position.
- * @param windowMargin Defines the area within the window that limits the placement of the popup.
+ * Provides a [PopupPositionProvider] that calculates the position of the tooltip relative to the current mouse cursor
+ * position, maintaining that position after showing the tooltip. This allows for stable tooltip positioning that
+ * doesn't follow cursor movement.
+ *
+ * @param offset Additional offset to be added to the tooltip position
+ * @param alignment The alignment of the tooltip relative to the cursor position
+ * @param windowMargin The minimum distance to maintain from window edges
  */
 @ExperimentalJewelApi
 public class FixedCursorPoint(
@@ -111,13 +126,17 @@ public class FixedCursorPoint(
 }
 
 /**
- * A [PopupPositionProvider] that positions the popup at the given position relative to the anchor, but never updates it
- * after showing the popup.
+ * Creates a position provider that maintains a fixed position relative to an anchor point.
  *
- * @param positionPx the offset, in pixels, relative to the anchor, to position the popup at.
- * @param offset [DpOffset] to be added to the position of the popup.
- * @param alignment The alignment of the popup relative to desired position.
- * @param windowMargin Defines the area within the window that limits the placement of the popup.
+ * Returns a [PopupPositionProvider] that positions the popup at the given position relative to the anchor, maintaining
+ * that position after showing the popup. This ensures stable positioning that doesn't update with subsequent anchor
+ * movement.
+ *
+ * @param positionPx The offset in pixels relative to the anchor
+ * @param offset Additional offset to be added to the popup position
+ * @param alignment The alignment of the popup relative to the desired position
+ * @param windowMargin The minimum distance to maintain from window edges
+ * @return A [PopupPositionProvider] that maintains the specified positioning
  */
 @ExperimentalJewelApi
 @Composable

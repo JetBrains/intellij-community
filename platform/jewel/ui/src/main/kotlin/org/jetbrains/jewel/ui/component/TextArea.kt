@@ -50,6 +50,41 @@ import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.theme.scrollbarStyle
 import org.jetbrains.jewel.ui.theme.textAreaStyle
 
+/**
+ * A multi-line text input component that follows the standard visual styling.
+ *
+ * Provides a scrollable text editing area that can display and edit multiple lines of text. The component includes
+ * standard text editing capabilities, scrollbars when needed, and platform-specific key bindings.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/text-area.html)
+ *
+ * **Usage example:**
+ * [`TextAreas.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/TextAreas.kt)
+ *
+ * **Swing equivalent:**
+ * [`JBTextArea`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBTextArea.java)
+ *
+ * @param state The state object controlling the text content and selection
+ * @param modifier Modifier to be applied to the text area
+ * @param enabled Controls whether the text area can be interacted with
+ * @param readOnly Controls whether the text can be modified
+ * @param inputTransformation Transforms text input before it appears in the text area
+ * @param textStyle The typography style to be applied to the text
+ * @param keyboardOptions Options controlling keyboard input behavior
+ * @param onKeyboardAction Handler for keyboard actions
+ * @param lineLimits Constraints on the number of lines allowed
+ * @param onTextLayout Callback for text layout changes
+ * @param interactionSource Source of interactions for this text area
+ * @param style The visual styling configuration for the text area
+ * @param outline The outline style to be applied to the text area
+ * @param placeholder Content to display when the text area is empty
+ * @param decorationBoxModifier Modifier to be applied to the decoration box
+ * @param outputTransformation Transforms text output for display
+ * @param undecorated Whether to show the text area without decorations
+ * @param scrollState The state object controlling scrolling behavior
+ * @param scrollbarStyle The visual styling configuration for the scrollbar
+ * @see com.intellij.ui.components.JBTextArea
+ */
 @Composable
 public fun TextArea(
     state: TextFieldState,
