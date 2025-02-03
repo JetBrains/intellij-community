@@ -75,7 +75,7 @@ class JUnit5ConverterQuickFix : LocalQuickFix, BatchQuickFix {
 
     private class DescriptionBasedUsageInfo(val descriptor: ProblemDescriptor) : UsageInfo(descriptor.psiElement)
 
-    override fun findUsages(): Array<UsageInfo> {
+    protected override fun findUsages(): Array<UsageInfo> {
       val usages = super.findUsages()
       val inspectionManager = InspectionManager.getInstance(myProject)
       val globalContext = inspectionManager.createNewGlobalContext()

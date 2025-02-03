@@ -135,7 +135,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myReference)};
     Set<UsageInfo> usages = new HashSet<>();
     if (myReference != null) {

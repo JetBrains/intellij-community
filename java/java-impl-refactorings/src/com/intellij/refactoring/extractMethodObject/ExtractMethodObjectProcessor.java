@@ -91,7 +91,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final ArrayList<UsageInfo> result = new ArrayList<>();
     final PsiClass containingClass = Objects.requireNonNull(getMethod().getContainingClass());
     final SearchScope scope = PsiUtilCore.getVirtualFile(containingClass) == null

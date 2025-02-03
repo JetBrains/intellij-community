@@ -152,7 +152,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
 
     if (!mySettings.generateDelegate() && toSearchFor != null) {

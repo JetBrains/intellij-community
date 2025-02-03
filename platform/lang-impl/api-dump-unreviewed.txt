@@ -15791,7 +15791,7 @@ a:com.intellij.refactoring.changeSignature.ChangeSignatureProcessorBase
 - s:collectConflictsFromExtensions(com.intellij.openapi.util.Ref,com.intellij.util.containers.MultiMap,com.intellij.refactoring.changeSignature.ChangeInfo):V
 - s:doChangeSignature(com.intellij.refactoring.changeSignature.ChangeInfo,com.intellij.usageView.UsageInfo[]):V
 - ps:filterUsages(java.util.List):java.util.List
-- findUsages():com.intellij.usageView.UsageInfo[]
+- p:findUsages():com.intellij.usageView.UsageInfo[]
 - s:findUsages(com.intellij.refactoring.changeSignature.ChangeInfo):com.intellij.usageView.UsageInfo[]
 - p:getAfterData(com.intellij.usageView.UsageInfo[]):com.intellij.refactoring.listeners.RefactoringEventData
 - p:getBeforeData():com.intellij.refactoring.listeners.RefactoringEventData
@@ -16401,7 +16401,6 @@ f:com.intellij.refactoring.invertBoolean.InvertBooleanHandler
 f:com.intellij.refactoring.invertBoolean.InvertBooleanProcessor
 - com.intellij.refactoring.BaseRefactoringProcessor
 - <init>(com.intellij.psi.PsiElement,java.lang.String):V
-- findUsages():com.intellij.usageView.UsageInfo[]
 c:com.intellij.refactoring.lang.ExtractIncludeDialog
 - com.intellij.openapi.ui.DialogWrapper
 - pf:myExtension:java.lang.String
@@ -16500,7 +16499,7 @@ c:com.intellij.refactoring.memberPushDown.PushDownProcessor
 - com.intellij.refactoring.BaseRefactoringProcessor
 - <init>(com.intellij.psi.PsiElement,java.util.List,com.intellij.refactoring.util.DocCommentPolicy):V
 - p:createUsageViewDescriptor(com.intellij.usageView.UsageInfo[]):com.intellij.usageView.UsageViewDescriptor
-- findUsages():com.intellij.usageView.UsageInfo[]
+- p:findUsages():com.intellij.usageView.UsageInfo[]
 - p:getAfterData(com.intellij.usageView.UsageInfo[]):com.intellij.refactoring.listeners.RefactoringEventData
 - p:getBeforeData():com.intellij.refactoring.listeners.RefactoringEventData
 - p:getCommandName():java.lang.String
@@ -16599,7 +16598,7 @@ c:com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesPr
 - com.intellij.refactoring.BaseRefactoringProcessor
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiDirectory[],com.intellij.psi.PsiDirectory,Z,Z,Z,com.intellij.refactoring.move.MoveCallback):V
 - p:createUsageViewDescriptor(com.intellij.usageView.UsageInfo[]):com.intellij.usageView.UsageViewDescriptor
-- findUsages():com.intellij.usageView.UsageInfo[]
+- p:findUsages():com.intellij.usageView.UsageInfo[]
 - p:getAfterData(com.intellij.usageView.UsageInfo[]):com.intellij.refactoring.listeners.RefactoringEventData
 - p:getBeforeData():com.intellij.refactoring.listeners.RefactoringEventData
 - p:getCommandName():java.lang.String
@@ -16665,7 +16664,7 @@ c:com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesPro
 - p:createUsageViewDescriptor(com.intellij.usageView.UsageInfo[]):com.intellij.usageView.UsageViewDescriptor
 - p:doMoveDirectory(com.intellij.psi.PsiDirectory,com.intellij.psi.PsiDirectory):V
 - p:doMoveFile(com.intellij.psi.PsiFile,com.intellij.psi.PsiDirectory):V
-- findUsages():com.intellij.usageView.UsageInfo[]
+- p:findUsages():com.intellij.usageView.UsageInfo[]
 - p:getAfterData(com.intellij.usageView.UsageInfo[]):com.intellij.refactoring.listeners.RefactoringEventData
 - p:getBeforeData():com.intellij.refactoring.listeners.RefactoringEventData
 - p:getCommandName():java.lang.String
@@ -17106,7 +17105,6 @@ f:com.intellij.refactoring.safeDelete.SafeDeleteProcessor
 - s:createInstance(com.intellij.openapi.project.Project,java.lang.Runnable,com.intellij.psi.PsiElement[],Z,Z,Z):com.intellij.refactoring.safeDelete.SafeDeleteProcessor
 - s:findGenericElementUsages(com.intellij.psi.PsiElement,java.util.List,com.intellij.psi.PsiElement[]):V
 - s:findGenericElementUsages(com.intellij.psi.PsiElement,java.util.List,com.intellij.psi.PsiElement[],com.intellij.psi.search.SearchScope):V
-- findUsages():com.intellij.usageView.UsageInfo[]
 - s:getDefaultInsideDeletedCondition(com.intellij.psi.PsiElement[]):com.intellij.openapi.util.Condition
 - getElements():com.intellij.psi.PsiElement[]
 - s:isInside(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
@@ -17414,7 +17412,7 @@ a:com.intellij.refactoring.util.FixableUsagesRefactoringProcessor
 - com.intellij.refactoring.BaseRefactoringProcessor
 - p:<init>(com.intellij.openapi.project.Project):V
 - ps:checkConflicts(com.intellij.openapi.util.Ref,com.intellij.util.containers.MultiMap):V
-- f:findUsages():com.intellij.usageView.UsageInfo[]
+- pf:findUsages():com.intellij.usageView.UsageInfo[]
 - pa:findUsages(java.util.List):V
 - p:performRefactoring(com.intellij.usageView.UsageInfo[]):V
 f:com.intellij.refactoring.util.RadioUpDownListener

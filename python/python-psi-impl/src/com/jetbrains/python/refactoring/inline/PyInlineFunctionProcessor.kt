@@ -93,7 +93,7 @@ class PyInlineFunctionProcessor(project: Project,
     return true
   }
 
-  override fun findUsages(): Array<UsageInfo> {
+  protected override fun findUsages(): Array<UsageInfo> {
     if (myInlineThisOnly) {
       val element = myReference!!.element as PyReferenceExpression
       val localImport = PyResolveUtil.resolveLocally(ScopeUtil.getScopeOwner(element)!!, element.name!!).firstOrNull { it is PyImportElement }

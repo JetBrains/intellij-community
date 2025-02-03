@@ -110,7 +110,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     List<UsageInfo> result = new ArrayList<>();
 
     final PsiMethod toSearchFor = (PsiMethod)myHelper.getToSearchFor();

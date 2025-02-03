@@ -114,7 +114,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final String targetClassName = myOptions.getTargetClassName();
     myTargetClass = JavaPsiFacade.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
     LOG.assertTrue(myTargetClass != null, "target class: " + targetClassName);

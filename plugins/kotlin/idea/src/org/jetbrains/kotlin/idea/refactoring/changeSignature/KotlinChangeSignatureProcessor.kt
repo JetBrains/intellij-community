@@ -59,7 +59,7 @@ class KotlinChangeSignatureProcessor(
 
     override fun getChangeInfo(): KotlinChangeInfo = super.getChangeInfo() as KotlinChangeInfo
 
-    override fun findUsages(): Array<UsageInfo> {
+    protected override fun findUsages(): Array<UsageInfo> {
         val allUsages = ArrayList<UsageInfo>()
         val javaUsages = mutableSetOf<UsageInfo>()
         changeInfo.getOrCreateJavaChangeInfos()?.let { javaChangeInfos ->

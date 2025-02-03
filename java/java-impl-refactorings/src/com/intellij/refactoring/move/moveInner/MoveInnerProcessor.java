@@ -84,7 +84,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     LOG.assertTrue(myTargetContainer != null);
 
     Collection<PsiReference> innerClassRefs = ReferencesSearch.search(myInnerClass, myRefactoringScope).findAll();

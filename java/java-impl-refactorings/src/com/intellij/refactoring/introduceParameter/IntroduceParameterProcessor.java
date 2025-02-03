@@ -164,7 +164,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
 
     PsiMethod[] overridingMethods =

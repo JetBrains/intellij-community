@@ -75,7 +75,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myProject);
     List<UsageInfo> result = new ArrayList<>();
 

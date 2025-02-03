@@ -124,7 +124,7 @@ public final class GrIntroduceParameterProcessor extends BaseRefactoringProcesso
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
 
     final PsiMethod toSearchFor = ((PsiMethod)mySettings.getToSearchFor());

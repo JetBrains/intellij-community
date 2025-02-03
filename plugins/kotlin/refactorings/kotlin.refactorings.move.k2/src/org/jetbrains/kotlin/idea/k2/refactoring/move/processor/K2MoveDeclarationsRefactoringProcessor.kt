@@ -74,7 +74,7 @@ open class K2MoveDeclarationsRefactoringProcessor(
             } + findInternalOuterInstanceUsages(moveDescriptor.source)
     }
 
-    override fun findUsages(): Array<UsageInfo> {
+    protected override fun findUsages(): Array<UsageInfo> {
         if (!operationDescriptor.searchReferences) return emptyArray()
         val allUsages = operationDescriptor.moveDescriptors.flatMap { moveDescriptor ->
             val usages = operationDescriptor.moveDescriptors.flatMapTo(mutableSetOf(), ::getUsages)

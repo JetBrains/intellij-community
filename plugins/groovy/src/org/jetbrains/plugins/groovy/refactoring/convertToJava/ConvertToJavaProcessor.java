@@ -56,7 +56,7 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     return UsageInfo.EMPTY_ARRAY;
   }
 

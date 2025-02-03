@@ -86,7 +86,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myRefExpr)};
 
     List<UsageInfo> usages = new ArrayList<>();

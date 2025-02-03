@@ -97,7 +97,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final List<UsageInfo> usages = new ArrayList<>();
     for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
       helper.findUsages(myFilesToMove, myDirectories, usages, mySearchInComments, mySearchInNonJavaFiles, myProject);

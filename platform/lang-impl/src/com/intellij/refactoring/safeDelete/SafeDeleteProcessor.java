@@ -114,7 +114,7 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<>());
     GlobalSearchScope searchScope = GlobalSearchScope.projectScope(myProject);
     for (PsiElement element : myElements) {

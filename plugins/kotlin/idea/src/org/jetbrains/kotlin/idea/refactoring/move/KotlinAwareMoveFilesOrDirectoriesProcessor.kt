@@ -39,7 +39,7 @@ class KotlinAwareMoveFilesOrDirectoriesProcessor @JvmOverloads constructor(
         return MoveFilesWithDeclarationsViewDescriptor(elementsToMove.toTypedArray(), targetDirectory)
     }
 
-    override fun findUsages(): Array<UsageInfo> {
+    protected override fun findUsages(): Array<UsageInfo> {
         try {
             markScopeToMove(elementsToMove)
             return if (searchReferences) super.findUsages() else UsageInfo.EMPTY_ARRAY

@@ -77,7 +77,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     int parameterIndex = myMethod.getParameterList().getParameterIndex(myParameter);
     final Map<PsiVariable, PsiElement> localToParamRef = new HashMap<>();
     final PsiExpression[] arguments = myMethodCall.getArgumentList().getExpressions();

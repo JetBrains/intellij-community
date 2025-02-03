@@ -193,7 +193,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
 
     ContainerUtil.addAll(result, MakeStaticUtil.findClassRefsInMember(myMember, true));

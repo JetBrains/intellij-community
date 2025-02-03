@@ -60,7 +60,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final List<UsageInfo> result = new ArrayList<>();
     for (MemberInfo memberInfo : myMembersToMove) {
       final PsiMember member = memberInfo.getMember();

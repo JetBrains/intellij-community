@@ -90,7 +90,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
 
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final GroovyControlFlow controlFlow = mySettings.getFlow();
     final List<BitSet> writes = ControlFlowUtils.inferWriteAccessMap(controlFlow, myLocal);
 

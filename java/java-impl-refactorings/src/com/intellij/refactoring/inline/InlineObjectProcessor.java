@@ -68,7 +68,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     return new UsageInfo[]{new UsageInfo(myReference)};
   }
 

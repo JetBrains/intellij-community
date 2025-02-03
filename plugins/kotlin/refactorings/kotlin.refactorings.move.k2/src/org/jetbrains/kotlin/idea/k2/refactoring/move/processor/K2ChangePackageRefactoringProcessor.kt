@@ -23,7 +23,7 @@ class K2ChangePackageRefactoringProcessor(private val descriptor: K2ChangePackag
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor = descriptor.usageViewDescriptor()
 
-    override fun findUsages(): Array<UsageInfo> {
+    protected override fun findUsages(): Array<UsageInfo> {
         return descriptor.files.flatMap {
             it.findUsages(descriptor.searchInComments, descriptor.searchForText, descriptor.target)
         }.toTypedArray()

@@ -84,7 +84,7 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final List<PsiElement> inheritors = myDelegate.findInheritors(myPushDownData);
     return ContainerUtil.map2Array(inheritors, UsageInfo.EMPTY_ARRAY, myDelegate::createUsageInfo);
   }

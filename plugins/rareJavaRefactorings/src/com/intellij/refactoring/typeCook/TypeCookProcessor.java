@@ -38,7 +38,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final SystemBuilder systemBuilder = new SystemBuilder(myProject, mySettings);
 
     final ReductionSystem commonSystem = systemBuilder.build(myElements);

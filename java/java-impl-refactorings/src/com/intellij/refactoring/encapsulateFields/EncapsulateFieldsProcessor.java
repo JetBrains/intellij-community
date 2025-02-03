@@ -225,7 +225,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     ArrayList<EncapsulateFieldUsageInfo> array = new ArrayList<>();
     for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
       for (final PsiReference reference : getFieldReferences(fieldDescriptor.getField())) {

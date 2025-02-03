@@ -64,7 +64,7 @@ class MoveKotlinMethodProcessor(
         return showConflicts(conflicts, refUsages.get())
     }
 
-    override fun findUsages(): Array<UsageInfo> {
+    protected override fun findUsages(): Array<UsageInfo> {
         val changeInfo = MoveContainerChangeInfo(
             MoveContainerInfo.Class(method.containingClassOrObject!!.fqName!!),
             MoveContainerInfo.Class(targetClassOrObject.fqName!!)

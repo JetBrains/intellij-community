@@ -169,7 +169,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final List<UsageInfo> allUsages = new ArrayList<>();
     final List<UsageInfo> usagesToSkip = new ArrayList<>();
     

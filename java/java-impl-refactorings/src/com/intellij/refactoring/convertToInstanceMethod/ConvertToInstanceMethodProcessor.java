@@ -89,7 +89,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     LOG.assertTrue(myTargetParameter == null || myTargetParameter.getDeclarationScope() == myMethod);
     final Project project = myMethod.getProject();
 

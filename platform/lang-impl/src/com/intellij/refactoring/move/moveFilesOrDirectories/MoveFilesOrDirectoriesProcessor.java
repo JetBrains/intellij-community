@@ -88,7 +88,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     List<UsageInfo> result = new ArrayList<>();
     for (PsiElement element : myElementsToMove) {
       if (mySearchForReferences) {

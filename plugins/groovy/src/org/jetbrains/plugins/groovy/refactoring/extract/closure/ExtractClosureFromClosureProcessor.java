@@ -59,7 +59,7 @@ public class ExtractClosureFromClosureProcessor extends ExtractClosureProcessorB
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final GrVariable var = (GrVariable)myHelper.getToSearchFor();
     if (var != null) {
       final List<UsageInfo> result = new ArrayList<>();

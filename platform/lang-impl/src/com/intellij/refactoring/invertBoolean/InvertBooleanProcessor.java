@@ -80,7 +80,7 @@ public final class InvertBooleanProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final List<SmartPsiElementPointer> toInvert = new ArrayList<>();
 
     final LinkedHashSet<PsiElement> elementsToInvert = new LinkedHashSet<>();

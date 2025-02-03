@@ -56,7 +56,7 @@ abstract class AbstractKotlinInlineNamedDeclarationProcessor<TDeclaration : KtNa
     open fun postAction() = Unit
     open fun postDeleteAction() = Unit
 
-    final override fun findUsages(): Array<UsageInfo> {
+    protected final override fun findUsages(): Array<UsageInfo> {
         if (inlineThisOnly && reference != null) return arrayOf(UsageInfo(reference))
         val usages = hashSetOf<UsageInfo>()
         for (usage in ReferencesSearchScopeHelper.search(declaration, myRefactoringScope)) {

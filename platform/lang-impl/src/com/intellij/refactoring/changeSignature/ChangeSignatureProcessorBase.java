@@ -54,7 +54,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     return findUsages(myChangeInfo);
   }
 

@@ -56,7 +56,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final PsiReference[] refs = ReferencesSearch.search(myClass, GlobalSearchScope.projectScope(myProject), false).toArray(
       PsiReference.EMPTY_ARRAY);
 

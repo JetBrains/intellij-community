@@ -158,7 +158,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final PsiManager manager = myMethod.getManager();
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(manager.getProject());
     final List<UsageInfo> usages = new ArrayList<>();

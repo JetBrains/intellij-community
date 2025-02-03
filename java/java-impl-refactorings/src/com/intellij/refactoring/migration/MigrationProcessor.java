@@ -80,7 +80,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  public UsageInfo @NotNull [] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     ArrayList<UsageInfo> usagesVector = new ArrayList<>();
     try {
       if (myMigrationMap == null) {
