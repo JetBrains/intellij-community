@@ -61,7 +61,7 @@ class c {
     int i8 = <error descr="Incompatible types. Found: 'java.lang.String', required: 'boolean'">"ff" + true</error> ? 1 : 2;
     int i9 = 1==2 ? 1 : <error descr="Incompatible types. Found: 'java.lang.String', required: 'int'">"ff" + true</error>;
     i9 = 1==2 ? 3 : <error descr="Incompatible types. Found: 'null', required: 'int'">null</error>;
-    Object o9 = true ? 0 : <error descr="Incompatible types. Found: 'java.lang.Object', required: 'int'">new Object()</error>;
+    Object o9 = true ? 0 : new <error descr="Incompatible types. Found: 'java.lang.Object', required: 'int'">Object</error>();
 
 
 

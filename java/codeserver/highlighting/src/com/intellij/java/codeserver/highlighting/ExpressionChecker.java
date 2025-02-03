@@ -12,6 +12,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.searches.ImplicitClassSearch;
@@ -1311,6 +1312,25 @@ final class ExpressionChecker {
     PsiPrimaryPattern pattern = expression.getPattern();
     if (pattern instanceof PsiDeconstructionPattern deconstruction) {
       myVisitor.myPatternChecker.checkDeconstructionErrors(deconstruction);
+    }
+  }
+
+  void checkConditionalExpressionBranchTypesMatch(@NotNull PsiExpression expression, @Nullable PsiType type) {
+    PsiElement parent = expression.getParent();
+    if (!(parent instanceof PsiConditionalExpression conditionalExpression)) return;
+    // check else branches only
+    if (conditionalExpression.getElseExpression() != expression) return;
+    PsiExpression thenExpression = conditionalExpression.getThenExpression();
+    assert thenExpression != null;
+    PsiType thenType = thenExpression.getType();
+    if (thenType == null || type == null) return;
+    if (conditionalExpression.getType() == null) {
+      if (PsiUtil.isLanguageLevel8OrHigher(conditionalExpression) && PsiPolyExpressionUtil.isPolyExpression(conditionalExpression)) {
+        return;
+      }
+      // cannot derive type of conditional expression
+      // elseType will never be cast-able to thenType, so no quick fix here
+      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(expression, new JavaIncompatibleTypeErrorContext(thenType, type)));
     }
   }
 }

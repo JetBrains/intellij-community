@@ -344,14 +344,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitExpression(@NotNull PsiExpression expression) {
     super.visitExpression(expression);
-
-    PsiElement parent = expression.getParent();
-    // Method expression of the call should not be especially processed
-    if (parent instanceof PsiMethodCallExpression) return;
-    PsiType type = expression.getType();
-
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkCannotWriteToFinal(expression, myFile));
-    if (!hasErrorResults()) add(HighlightUtil.checkConditionalExpressionBranchTypesMatch(expression, type));
   }
 
   @Override

@@ -753,28 +753,6 @@ public final class HighlightUtil {
   }
 
 
-  static HighlightInfo.Builder checkConditionalExpressionBranchTypesMatch(@NotNull PsiExpression expression, @Nullable PsiType type) {
-    PsiElement parent = expression.getParent();
-    if (!(parent instanceof PsiConditionalExpression conditionalExpression)) {
-      return null;
-    }
-    // check else branches only
-    if (conditionalExpression.getElseExpression() != expression) return null;
-    PsiExpression thenExpression = conditionalExpression.getThenExpression();
-    assert thenExpression != null;
-    PsiType thenType = thenExpression.getType();
-    if (thenType == null || type == null) return null;
-    if (conditionalExpression.getType() == null) {
-      if (PsiUtil.isLanguageLevel8OrHigher(conditionalExpression) && PsiPolyExpressionUtil.isPolyExpression(conditionalExpression)) {
-        return null;
-      }
-      // cannot derive type of conditional expression
-      // elseType will never be cast-able to thenType, so no quick fix here
-      return createIncompatibleTypeHighlightInfo(thenType, type, expression.getTextRange());
-    }
-    return null;
-  }
-
   static HighlightInfo.@NotNull Builder createIncompatibleTypeHighlightInfo(@NotNull PsiType lType,
                                                                             @Nullable PsiType rType,
                                                                             @NotNull TextRange textRange) {

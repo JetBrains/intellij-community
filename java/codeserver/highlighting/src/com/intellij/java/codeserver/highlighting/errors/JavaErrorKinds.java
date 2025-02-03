@@ -125,8 +125,8 @@ public final class JavaErrorKinds {
   // Can be anchored on @FunctionalInterface annotation or at a call site
   public static final Parameterized<PsiElement, PsiType> LAMBDA_MULTIPLE_TARGET_METHODS =
     parameterized(PsiElement.class, PsiType.class, "lambda.multiple.sam.candidates")
-      .withRawDescription((psi, type) -> message("lambda.multiple.sam.candidates", 
-                                                 TypeConversionUtil.erasure(type).getPresentableText()));
+      .withRawDescription((psi, type) -> message("lambda.multiple.sam.candidates",
+                                                 (type instanceof PsiClassType cls ? cls.rawType() : type).getPresentableText()));
   public static final Parameterized<PsiAnnotation, PsiClass> FUNCTIONAL_INTERFACE_SEALED =
     parameterized("lambda.sealed.functional.interface");
   public static final Simple<PsiLambdaExpression> LAMBDA_NOT_EXPECTED = error("lambda.not.expected");

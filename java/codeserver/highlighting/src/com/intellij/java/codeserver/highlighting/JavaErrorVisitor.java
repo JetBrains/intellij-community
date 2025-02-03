@@ -1037,15 +1037,17 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults() && expression instanceof PsiArrayAccessExpression accessExpression) {
       myExpressionChecker.checkValidArrayAccessExpression(accessExpression);
     }
+    PsiType type = expression.getType();
     if (!hasErrorResults() && expression.getParent() instanceof PsiThrowStatement statement && statement.getException() == expression) {
-      myTypeChecker.checkMustBeThrowable(expression, expression.getType());
+      myTypeChecker.checkMustBeThrowable(expression, type);
     }
     if (!hasErrorResults() && parent instanceof PsiNewExpression newExpression &&
         newExpression.getQualifier() != expression && newExpression.getArrayInitializer() != expression) {
-      myExpressionChecker.checkAssignability(PsiTypes.intType(), expression.getType(), expression, expression); // like in 'new String["s"]'
+      myExpressionChecker.checkAssignability(PsiTypes.intType(), type, expression, expression); // like in 'new String["s"]'
     }
     if (!hasErrorResults()) myStatementChecker.checkForeachExpressionTypeIsIterable(expression);
     if (!hasErrorResults()) myExpressionChecker.checkVariableExpected(expression);
+    if (!hasErrorResults()) myExpressionChecker.checkConditionalExpressionBranchTypesMatch(expression, type);
   }
 
   @Override

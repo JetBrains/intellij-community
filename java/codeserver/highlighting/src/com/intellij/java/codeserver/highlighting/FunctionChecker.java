@@ -92,7 +92,7 @@ final class FunctionChecker {
         PsiMethod inheritor = container.inheritor;
         PsiMethod target = container.targetMethod;
         if (!inheritor.hasModifier(JvmModifier.ABSTRACT) && LambdaUtil.isLambdaSubsignature(baseMethod, baseType, target, type)) {
-          return JavaErrorKinds.LAMBDA_NO_TARGET_METHOD.create(context, type);
+          return JavaErrorKinds.LAMBDA_NO_TARGET_METHOD.create(context, functionalInterfaceType);
         }
       }
       return null;
