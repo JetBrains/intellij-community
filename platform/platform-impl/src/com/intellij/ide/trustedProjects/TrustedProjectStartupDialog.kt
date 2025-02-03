@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects
 
 import com.intellij.diagnostic.WindowsDefenderStatisticsCollector
@@ -149,7 +149,6 @@ internal class TrustedProjectStartupDialog(
                   if (it.isSelected) {
                     windowsDefender.set(false)
                   }
-
                   if (trustAction != null) {
                     val trustButton = getButton(trustAction!!)
                     val text = if (it.isSelected) {
@@ -165,9 +164,7 @@ internal class TrustedProjectStartupDialog(
             }
           }
           row {
-            val trimmedFolderName = StringUtil.shortenTextWithEllipsis(projectPath.name.ifEmpty { projectPath.toString() }
-
-                                                                       , 18, 0, true)
+            val trimmedFolderName = StringUtil.shortenTextWithEllipsis(projectPath.name.ifEmpty { projectPath.toString() }, 18, 0, true)
             val idePaths = pathsToExclude.asSequence().filter { it != projectPath }.joinToString(separator = "<br>")
             windowsDefenderCheckBox = checkBox(IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", trimmedFolderName))
               .bindSelected(windowsDefender)

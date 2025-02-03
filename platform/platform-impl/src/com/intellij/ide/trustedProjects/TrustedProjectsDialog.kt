@@ -26,8 +26,8 @@ import java.nio.file.Path
 
 object TrustedProjectsDialog {
   /**
-   * Shows the "Trust project?" dialog, if the user wasn't asked yet if they trust this project,
-   * and sets the project trusted state according to the user choice.
+   * Shows the "Trust project" dialog if the user wasn't asked yet if they trust this project
+   * and sets the project trusted state according to the user's choice.
    *
    * @return `false` if the user chose not to open (link) the project at all;
    *   `true` otherwise, i.e., if the user chose to open (link) the project either in trust or in the safe mode,
