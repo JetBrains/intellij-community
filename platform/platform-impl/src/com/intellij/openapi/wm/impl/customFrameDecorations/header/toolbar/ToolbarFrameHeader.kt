@@ -59,7 +59,7 @@ internal class ToolbarFrameHeader(
   private val isFullScreen: () -> Boolean,
 ) : FrameHeader(frame), UISettingsListener, ToolbarHolder, MainFrameCustomHeader {
   private val ideMenuHelper = IdeMenuHelper(menu = ideMenuBar, coroutineScope = coroutineScope)
-  private val menuBarHeaderTitle = SimpleCustomDecorationPathComponent(frame = frame, isGrey = true).apply {
+  private val menuBarHeaderTitle = SimpleCustomDecorationPathComponent(frame = frame, isGrey = {true}).apply {
     isOpaque = false
   }
   private val mainMenuWithButton = MainMenuWithButton(coroutineScope, frame)
@@ -71,7 +71,7 @@ internal class ToolbarFrameHeader(
   private val toolbarPlaceholder = createToolbarPlaceholder()
   private val headerContent = createHeaderContent()
   private val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope.childScope("ExpandableMenu"), frame) { !isCompactHeader && !ShowMode.isMergedMainMenu() }
-  private val toolbarHeaderTitle = SimpleCustomDecorationPathComponent(frame = frame).apply {
+  private val toolbarHeaderTitle = SimpleCustomDecorationPathComponent(frame = frame, isGrey = { mode != ShowMode.TOOLBAR }).apply {
     isOpaque = false
   }
 
@@ -272,7 +272,7 @@ internal class ToolbarFrameHeader(
   }
 
   private suspend fun doUpdateToolbar(compactHeader: Boolean) {
-    val resetToolbar = compactHeader != isCompactHeader || toolbar == null
+    val resetToolbar = compactHeader != isCompactHeader || (compactHeader && mode != ShowMode.MENU) || toolbar == null
 
     if (!resetToolbar) {
       withContext(Dispatchers.EDT) {
@@ -312,7 +312,8 @@ internal class ToolbarFrameHeader(
       this@ToolbarFrameHeader.toolbar = newToolbar
       toolbarHeaderTitle.updateBorders(0)
       if (compactHeader) {
-        toolbarPlaceholder.add(toolbarHeaderTitle, BorderLayout.CENTER)
+        toolbarHeaderTitle.updateLabelForeground()
+        toolbarPlaceholder.add(toolbarHeaderTitle, if (mode == ShowMode.TOOLBAR_WITH_MENU) BorderLayout.WEST else BorderLayout.CENTER)
       }
       else {
         toolbarPlaceholder.add(newToolbar, BorderLayout.CENTER)
