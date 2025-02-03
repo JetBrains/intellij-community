@@ -160,6 +160,7 @@ public interface IdeActions {
   String ACTION_SELECT_NEXT_OCCURENCE = "SelectNextOccurrence";
   String ACTION_SELECT_ALL_OCCURRENCES = "SelectAllOccurrences";
   String ACTION_UNSELECT_PREVIOUS_OCCURENCE = "UnselectPreviousOccurrence";
+  String ACTION_TOGGLE_SCROLL_TO_RESULTS_DURING_TYPING = "ToggleScrollToResultsDuringTypingAction";
   String ACTION_REPLACE = "Replace";
   String ACTION_TOGGLE_FIND_IN_SELECTION_ONLY = "ToggleFindInSelection";
   String GROUP_EDITOR_SEARCH_FILTER_RESULTS = "Editor.Search.Filter.Results";

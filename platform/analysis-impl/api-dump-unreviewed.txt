@@ -2970,6 +2970,7 @@ a:com.intellij.find.FindSettings
 - a:isLocalWholeWordsOnly():Z
 - a:isPreserveCase():Z
 - a:isRegularExpressions():Z
+- a:isScrollToResultsDuringTyping():Z
 - a:isSearchOverloadedMethods():Z
 - a:isShowResultsInSeparateView():Z
 - a:isSkipResultsWithOneUsage():Z
@@ -2991,6 +2992,7 @@ a:com.intellij.find.FindSettings
 - a:setLocalWholeWordsOnly(Z):V
 - a:setPreserveCase(Z):V
 - a:setRegularExpressions(Z):V
+- a:setScrollToResultsDuringTyping(Z):V
 - a:setSearchOverloadedMethods(Z):V
 - a:setShowResultsInSeparateView(Z):V
 - a:setSkipResultsWithOneUsage(Z):V

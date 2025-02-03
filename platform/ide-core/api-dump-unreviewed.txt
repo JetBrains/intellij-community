@@ -1161,6 +1161,7 @@ com.intellij.openapi.actionSystem.IdeActions
 - sf:ACTION_TOGGLE_LINE_BREAKPOINT:java.lang.String
 - sf:ACTION_TOGGLE_RENDERED_DOC:java.lang.String
 - sf:ACTION_TOGGLE_RENDERED_DOC_FOR_ALL:java.lang.String
+- sf:ACTION_TOGGLE_SCROLL_TO_RESULTS_DURING_TYPING:java.lang.String
 - sf:ACTION_TYPE_HIERARCHY:java.lang.String
 - sf:ACTION_UNDO:java.lang.String
 - sf:ACTION_UNSELECT_PREVIOUS_OCCURENCE:java.lang.String

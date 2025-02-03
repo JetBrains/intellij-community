@@ -51,6 +51,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import static com.intellij.openapi.actionSystem.IdeActions.ACTION_TOGGLE_SCROLL_TO_RESULTS_DURING_TYPING;
+
 /**
  * @author max, andrey.zaytsev
  */
@@ -234,7 +236,9 @@ public class EditorSearchSession implements SearchSession,
       new Separator(ApplicationBundle.message("editorsearch.more.multiple.cursors")),
       new AddOccurrenceAction(),
       new RemoveOccurrenceAction(),
-      new SelectAllAction()
+      new SelectAllAction(),
+      new Separator(),
+      ActionManager.getInstance().getAction(ACTION_TOGGLE_SCROLL_TO_RESULTS_DURING_TYPING)
     );
 
     group.setPopup(true);
