@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
-import fleet.fastutil.ints.Int2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -55,7 +54,7 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
   private val globalCachingSelectorWeigher: TextMateSelectorWeigher = TextMateSelectorCachingWeigher(TextMateSelectorWeigherImpl())
   private val customHighlightingColors = HashMap<CharSequence, TextMateTextAttributesAdapter>()
   private var extensionMapping: Map<TextMateFileNameMatcher, CharSequence> = java.util.Map.of()
-  private val syntaxTable = AtomicReference<TextMateSyntaxTableCore>(TextMateSyntaxTableCore(emptyMap(), Int2ObjectOpenHashMap()))
+  private val syntaxTable = AtomicReference(TextMateSyntaxTableCore(emptyMap()))
   private val snippetRegistry = SnippetsRegistryImpl(globalCachingSelectorWeigher)
   private val preferenceRegistry = PreferencesRegistryImpl(globalCachingSelectorWeigher)
   private val shellVariablesRegistry = ShellVariablesRegistryImpl(globalCachingSelectorWeigher)

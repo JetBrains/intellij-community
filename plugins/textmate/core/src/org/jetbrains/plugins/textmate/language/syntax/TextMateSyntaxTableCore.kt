@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.language.syntax
 
-import fleet.fastutil.ints.Int2ObjectOpenHashMap
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -13,13 +12,12 @@ import org.slf4j.LoggerFactory
  *
  * Scope name of the target language can be found in syntax files of TextMate bundles.
  */
-class TextMateSyntaxTableCore(
-  private val rules: Map<CharSequence, SyntaxNodeDescriptor>,
-  private val rulesRepository: Int2ObjectOpenHashMap<SyntaxNodeDescriptor>,
-) {
+class TextMateSyntaxTableCore(private val rules: Map<CharSequence, SyntaxNodeDescriptor>) {
   companion object {
     private val LOG: Logger = LoggerFactory.getLogger(TextMateSyntaxTableCore::class.java)
   }
+
+  private var rulesRepository: Array<SyntaxNodeDescriptor?>? = null
 
   /**
    * Returns root syntax rule by scope name.
@@ -38,8 +36,12 @@ class TextMateSyntaxTableCore(
     return syntaxNodeDescriptor
   }
 
+  internal fun setRulesRepository(rulesRepository: Array<SyntaxNodeDescriptor?>) {
+    this.rulesRepository = rulesRepository
+  }
+
   internal fun getRule(ruleId: Int): SyntaxNodeDescriptor {
-    val syntaxNodeDescriptor = rulesRepository[ruleId]
+    val syntaxNodeDescriptor = rulesRepository?.getOrNull(ruleId)
     if (syntaxNodeDescriptor == null) {
       LOG.error("Can't find syntax node by id: '{}'", ruleId)
       return SyntaxNodeDescriptor.EMPTY_NODE

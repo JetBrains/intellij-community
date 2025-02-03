@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer
 
-import fleet.fastutil.ints.IntArrayList
-import fleet.fastutil.ints.isEmpty
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.plugins.textmate.Constants
@@ -27,7 +25,7 @@ class TextMateLexerCore(
   private var myCurrentOffset: Int = 0
   private var myText: CharSequence = ""
   private var myCurrentScope: TextMateScope = TextMateScope.EMPTY
-  private var myNestedScope = IntArrayList.of()
+  private var myNestedScope = ArrayDeque<Int>()
   private var myStates = persistentListOf<TextMateLexerState>()
 
   fun getCurrentOffset(): Int {
@@ -38,9 +36,9 @@ class TextMateLexerCore(
     myText = text
     myCurrentOffset = startOffset
 
-    myStates = persistentListOf<TextMateLexerState>(notMatched(languageDescriptor.rootSyntaxNode))
+    myStates = persistentListOf(notMatched(languageDescriptor.rootSyntaxNode))
     myCurrentScope = TextMateScope(languageDescriptor.scopeName, null)
-    myNestedScope = IntArrayList.of(1)
+    myNestedScope = ArrayDeque<Int>().also { it.addLast(1) }
   }
 
   fun advanceLine(checkCancelledCallback: Runnable?): MutableList<TextmateToken> {
@@ -337,7 +335,7 @@ class TextMateLexerCore(
       }
     }
     myCurrentScope = myCurrentScope.add(name?.subSequence(prevIndexOfSpace, name.length))
-    myNestedScope.add(count + 1)
+    myNestedScope.addLast(count + 1)
   }
 
   private fun closeScopeSelector(output: MutableList<TextmateToken>, position: Int) {
@@ -345,9 +343,8 @@ class TextMateLexerCore(
     if (lastOpenedName != null && !lastOpenedName.isEmpty()) {
       addToken(output, position)
     }
-    if (!myNestedScope.isEmpty()) {
-      val nested = myNestedScope.removeAt(myNestedScope.size - 1)
-      repeat(nested) {
+    myNestedScope.removeLastOrNull()?.let { nestingLevel ->
+      repeat(nestingLevel) {
         myCurrentScope = myCurrentScope.parent ?: myCurrentScope
       }
     }

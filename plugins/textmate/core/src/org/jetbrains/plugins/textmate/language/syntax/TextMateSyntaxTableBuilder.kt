@@ -1,8 +1,5 @@
 package org.jetbrains.plugins.textmate.language.syntax
 
-import fleet.fastutil.ints.Int2ObjectOpenHashMap
-import fleet.fastutil.ints.IntOpenHashSet
-import fleet.fastutil.ints.forEach
 import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.TextMateInterner
 import org.jetbrains.plugins.textmate.plist.PListValue
@@ -11,7 +8,11 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 
+private typealias RuleId = Int
+private typealias ReferenceRuleId = Int
+
 class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
+  // todo: import kotlinx.atomicfu.atomic
   private val currentRuleId = AtomicInteger(0)
   private val syntaxNodes: MutableMap<CharSequence, SyntaxRawNode> = ConcurrentHashMap()
 
@@ -31,26 +32,24 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
   }
 
   fun build(): TextMateSyntaxTableCore {
-    val referencedRulesSet = IntOpenHashSet()
-    val rulesRepository = Int2ObjectOpenHashMap<SyntaxNodeDescriptor>()
-    val compiledRules = Int2ObjectOpenHashMap<SyntaxNodeDescriptor>()
+    val ruleIdToReferenceRuleId = mutableMapOf<RuleId, ReferenceRuleId>()
+    val compiledRules = mutableMapOf<RuleId, SyntaxNodeDescriptor>()
 
     val rules = mutableMapOf<CharSequence, SyntaxNodeDescriptor>()
-    val syntaxTable = TextMateSyntaxTableCore(rules = rules, rulesRepository = rulesRepository)
+    val syntaxTable = TextMateSyntaxTableCore(rules = rules)
     syntaxNodes.forEach { (scopeName, nodeBuilder) ->
       nodeBuilder.compile(syntaxNodes,
                           compiledRules,
-                          referencedRulesSet,
+                          ruleIdToReferenceRuleId,
                           syntaxTable)?.let { compiledNode ->
         rules[scopeName] = compiledNode
       }
     }
-    referencedRulesSet.forEach { id ->
-      compiledRules[id]?.let { compiledRule ->
-        rulesRepository[id] = compiledRule
-      }
+    val rulesRepository = arrayOfNulls<SyntaxNodeDescriptor?>(ruleIdToReferenceRuleId.size)
+    ruleIdToReferenceRuleId.entries.forEach {
+      rulesRepository[it.value] = compiledRules[it.key]
     }
-    rulesRepository.trim()
+    syntaxTable.setRulesRepository(rulesRepository)
     return syntaxTable
   }
 
@@ -113,7 +112,7 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
   }
 
   private fun loadCaptures(captures: Plist, parent: SyntaxRawNode?): Array<TextMateRawCapture?>? {
-    val map = Int2ObjectOpenHashMap<TextMateRawCapture?>()
+    val map = mutableMapOf<Int, TextMateRawCapture?>()
     var maxGroupIndex = -1
     captures.entries().forEach { (key, value) ->
       key.toIntOrNull()?.let { index ->
@@ -150,8 +149,8 @@ private interface SyntaxRawNode {
 
   fun compile(
     topLevelNodes: Map<CharSequence, SyntaxRawNode>,
-    compiledNodes: Int2ObjectOpenHashMap<SyntaxNodeDescriptor>,
-    referencesNodesSet: IntOpenHashSet,
+    compiledNodes: MutableMap<Int, SyntaxNodeDescriptor>,
+    ruleIdToReferenceRuleId: MutableMap<RuleId, ReferenceRuleId>,
     syntaxTable: TextMateSyntaxTableCore,
   ): SyntaxNodeDescriptor?
 }
@@ -167,20 +166,27 @@ private class SyntaxIncludeRawNode(
 
   override fun compile(
     topLevelNodes: Map<CharSequence, SyntaxRawNode>,
-    compiledNodes: Int2ObjectOpenHashMap<SyntaxNodeDescriptor>,
-    referencesNodesSet: IntOpenHashSet,
+    compiledNodes: MutableMap<Int, SyntaxNodeDescriptor>,
+    ruleIdToReferenceRuleId: MutableMap<RuleId, ReferenceRuleId>,
     syntaxTable: TextMateSyntaxTableCore,
   ): SyntaxNodeDescriptor? {
     val resolvedNode = resolveInclude(topLevelNodes)
     return resolvedNode?.let { resolvedNode ->
       val compiledNode = compiledNodes[resolvedNode.ruleId]
-      if (compiledNode != null) {
-        // an optimization, reference directly already compiled nodes to save on SyntaxNodeReferenceDescriptor object
-        compiledNode
-      }
-      else {
-        referencesNodesSet.add(resolvedNode.ruleId)
-        SyntaxNodeReferenceDescriptor(resolvedNode.ruleId, syntaxTable)
+      val referenceRuleId = ruleIdToReferenceRuleId[resolvedNode.ruleId]
+      when {
+        compiledNode != null -> {
+          // an optimization, reference directly already compiled nodes to save on SyntaxNodeReferenceDescriptor object
+          compiledNode
+        }
+        referenceRuleId != null -> {
+          SyntaxNodeReferenceDescriptor(referenceRuleId, syntaxTable)
+        }
+        else -> {
+          val referenceRuleId = ruleIdToReferenceRuleId.size
+          ruleIdToReferenceRuleId[resolvedNode.ruleId] = referenceRuleId
+          SyntaxNodeReferenceDescriptor(referenceRuleId, syntaxTable)
+        }
       }
     }
   }
@@ -209,7 +215,7 @@ private class SyntaxIncludeRawNode(
 }
 
 private class SyntaxRawNodeImpl(
-  override val ruleId: Int,
+  override val ruleId: RuleId,
   override val parent: SyntaxRawNode?,
   val scopeName: CharSequence?,
 ) : SyntaxRawNode {
@@ -245,12 +251,12 @@ private class SyntaxRawNodeImpl(
 
   override fun compile(
     topLevelNodes: Map<CharSequence, SyntaxRawNode>,
-    compiledNodes: Int2ObjectOpenHashMap<SyntaxNodeDescriptor>,
-    referencesNodesSet: IntOpenHashSet,
+    compiledNodes: MutableMap<RuleId, SyntaxNodeDescriptor>,
+    ruleIdToReferenceRuleId: MutableMap<RuleId, ReferenceRuleId>,
     syntaxTable: TextMateSyntaxTableCore,
   ): SyntaxNodeDescriptor? {
     repository.values.forEach { repositoryNode ->
-      repositoryNode.compile(topLevelNodes, compiledNodes, referencesNodesSet, syntaxTable)?.let {
+      repositoryNode.compile(topLevelNodes, compiledNodes, ruleIdToReferenceRuleId, syntaxTable)?.let {
         compiledNodes[repositoryNode.ruleId] = it
       }
     }
@@ -262,7 +268,7 @@ private class SyntaxRawNodeImpl(
           when (it) {
             is TextMateRawCapture.Name -> TextMateCapture.Name(it.name)
             is TextMateRawCapture.Rule -> {
-              it.node.compile(topLevelNodes, compiledNodes, referencesNodesSet, syntaxTable)?.let { compiledRule ->
+              it.node.compile(topLevelNodes, compiledNodes, ruleIdToReferenceRuleId, syntaxTable)?.let { compiledRule ->
                 TextMateCapture.Rule(compiledRule)
               }
             }
@@ -286,10 +292,10 @@ private class SyntaxRawNodeImpl(
       null
     }
     val children = rawChildren.mapNotNull { child ->
-      child.compile(topLevelNodes, compiledNodes, referencesNodesSet, syntaxTable)
+      child.compile(topLevelNodes, compiledNodes, ruleIdToReferenceRuleId, syntaxTable)
     }.compactList()
     val injections = rawInjections.mapNotNull { (selector, injection) ->
-      injection.compile(topLevelNodes, compiledNodes, referencesNodesSet, syntaxTable)?.let { compiledRule ->
+      injection.compile(topLevelNodes, compiledNodes, ruleIdToReferenceRuleId, syntaxTable)?.let { compiledRule ->
         InjectionNodeDescriptor(selector, compiledRule)
       }
     }.compactList()

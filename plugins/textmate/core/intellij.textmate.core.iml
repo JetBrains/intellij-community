@@ -42,7 +42,6 @@
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
-    <orderEntry type="module" module-name="fleet.fastutil" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
   </component>
 </module>
