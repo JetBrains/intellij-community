@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -17,9 +17,11 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
-import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector
+import com.intellij.openapi.vcs.VcsListener
+import com.intellij.openapi.vcs.VcsType
 import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vcs.impl.VcsStartupActivity
@@ -36,7 +38,6 @@ private const val TOGGLE_COMMIT_UI = "vcs.non.modal.commit.toggle.ui"
 
 private val isToggleCommitUi get() = AdvancedSettings.getBoolean(TOGGLE_COMMIT_UI)
 private val isForceNonModalCommit get() = Registry.get("vcs.force.non.modal.commit")
-private val appSettings get() = VcsApplicationSettings.getInstance()
 
 internal fun AnActionEvent.getProjectCommitMode(): CommitMode? {
   return project?.let { CommitModeManager.getInstance(it).getCurrentCommitMode() }
@@ -90,6 +91,10 @@ class CommitModeManager(private val project: Project, private val coroutineScope
 
     if (singleVcs != null && singleVcs.isWithCustomLocalChanges) {
       return CommitMode.ExternalCommitMode(singleVcs)
+    }
+
+    if (System.getProperty("vcs.force.modal.commit").toBoolean()) {
+      return CommitMode.ModalCommitMode
     }
 
     if (canSetNonModal()) {
