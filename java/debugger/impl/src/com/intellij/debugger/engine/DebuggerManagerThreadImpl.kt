@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.managerThread.DebuggerCommand
 import com.intellij.debugger.engine.managerThread.DebuggerManagerThread
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand
 import com.intellij.debugger.impl.*
+import com.intellij.debugger.statistics.StatisticsStorage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
@@ -27,17 +28,23 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
+import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import kotlin.system.measureNanoTime
 
-class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: CoroutineScope) :
-  InvokeAndWaitThread<DebuggerCommandImpl?>(), DebuggerManagerThread, Disposable {
+class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
+  parent: Disposable,
+  private val parentScope: CoroutineScope,
+  debugProcess: DebugProcess? = null,
+) : InvokeAndWaitThread<DebuggerCommandImpl?>(), DebuggerManagerThread, Disposable {
 
   @Volatile
   private var myDisposed = false
 
   private val myDebuggerThreadDispatcher = DebuggerThreadDispatcher(this)
+  private val myDebugProcess = WeakReference(debugProcess)
   val unfinishedCommands = ConcurrentCollectionFactory.createConcurrentSet<DebuggerCommandImpl>()
 
   @ApiStatus.Internal
@@ -163,7 +170,13 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: Cor
         managerCommand.notifyCancelled()
       }
       else {
-        managerCommand.invokeCommand(myDebuggerThreadDispatcher, coroutineScope)
+        val commandTimeNs = measureNanoTime {
+          managerCommand.invokeCommand(myDebuggerThreadDispatcher, coroutineScope)
+        }
+        myDebugProcess.get()?.let { debugProcess ->
+          val commandTimeMs = TimeUnit.NANOSECONDS.toMillis(commandTimeNs)
+          StatisticsStorage.addCommandTime(debugProcess, commandTimeMs)
+        }
       }
     }
     catch (e: VMDisconnectedException) {
