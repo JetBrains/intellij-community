@@ -36,27 +36,25 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
-import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.intellij.xdebugger.frame.*;
-import com.intellij.xdebugger.impl.mixedmode.XDebugSessionMixedModeExtension;
-import com.intellij.xdebugger.impl.mixedmode.XMixedModeSuspendContext;
-import com.intellij.xdebugger.mixedMode.XMixedModeDebugProcesses;
-import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess;
-import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess;
+import com.intellij.xdebugger.frame.XExecutionStack;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.*;
+import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess;
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
+import com.intellij.xdebugger.impl.mixedmode.XDebugSessionMixedModeExtension;
 import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.util.BringDebuggeeInForegroundUtilsKt;
-import com.intellij.xdebugger.mixedMode.XMixedModeProcessesConfiguration;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import kotlin.coroutines.EmptyCoroutineContext;
@@ -124,9 +122,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private final XDebugSessionCurrentStackFrameManager myCurrentStackFrameManager;
 
   @Nullable
-  private XDebugSessionMixedModeExtension myMixedModeExtension;
-  @Nullable
-  public XMixedModeProcessesConfiguration mixedModeConfig;
+  public XDebugSessionMixedModeExtension myMixedModeExtension;
 
   private volatile boolean breakpointsInitialized;
   private long myUserRequestStart;
@@ -274,10 +270,8 @@ public final class XDebugSessionImpl implements XDebugSession {
   @Override
   public @NotNull XDebugProcess getDebugProcess(boolean lowLevel) {
     Objects.requireNonNull(myMixedModeExtension);
-    if (lowLevel) {
-      return myMixedModeLowLevelDebugProcess;
-    }
-    return getDebugProcess();
+    var process = ((XMixedModeCombinedDebugProcess)getDebugProcess());
+    return lowLevel ? process.getLow() : process.getHigh();
   }
 
   @Override
@@ -335,39 +329,10 @@ public final class XDebugSessionImpl implements XDebugSession {
     return myAlternativeSourceHandler != null ? myAlternativeSourceHandler.getAlternativeSourceKindState() : ALWAYS_FALSE_STATE;
   }
 
-  void initMixedMode(@NotNull XMixedModeDebugProcesses processes,
-                     @Nullable RunContentDescriptor contentToReuse) {
-    myMixedModeLowLevelDebugProcess = processes.getLowDebugProcess();
-    myMixedModeExtension = new XDebugSessionMixedModeExtension(this.myCoroutineScope,
-                                                               (XMixedModeHighLevelDebugProcess)processes.getHighDebugProcess(),
-                                                               (XMixedModeLowLevelDebugProcess)processes.getLowDebugProcess(),
-                                                               this::positionReachedInternal);
-    mixedModeConfig = processes.getConfig();
-    var highAlternativeSourceHandler = processes.getHighDebugProcess().getAlternativeSourceHandler();
-    var lowAlternativeSourceHandler = processes.getLowDebugProcess().getAlternativeSourceHandler();
-
-    if (highAlternativeSourceHandler != null && lowAlternativeSourceHandler != null) {
-      throw new UnsupportedOperationException("At most one alternative source handler is supported in mixed mode");
-    }
-
-    var console = (processes.getConfig().getUseLowDebugProcessConsole()
-                   ? processes.getLowDebugProcess()
-                   : processes.getHighDebugProcess()).createConsole();
-    init(processes.getHighDebugProcess(), contentToReuse, console,
-         highAlternativeSourceHandler != null ? highAlternativeSourceHandler : lowAlternativeSourceHandler);
-  }
-
   void init(@NotNull XDebugProcess process, @Nullable RunContentDescriptor contentToReuse) {
-    init(process, contentToReuse, process.createConsole(), process.getAlternativeSourceHandler());
-  }
-
-  private void init(@NotNull XDebugProcess process,
-                    @Nullable RunContentDescriptor contentToReuse,
-                    @NotNull ExecutionConsole console,
-                    @Nullable XAlternativeSourceHandler alternativeSourceHandler) {
     LOG.assertTrue(myDebugProcess == null);
     myDebugProcess = process;
-    myAlternativeSourceHandler = alternativeSourceHandler;
+    myAlternativeSourceHandler = myDebugProcess.getAlternativeSourceHandler();
     myExecutionPointManager.setAlternativeSourceKindFlow(getAlternativeSourceKindState());
 
     if (myDebugProcess.checkCanInitBreakpoints()) {
@@ -387,7 +352,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       }
     });
     //todo make 'createConsole()' method return ConsoleView
-    myConsoleView = (ConsoleView)console;
+    myConsoleView = (ConsoleView)myDebugProcess.createConsole();
     if (!myShowTabOnSuspend.get()) {
       initSessionTab(contentToReuse);
     }
@@ -438,9 +403,6 @@ public final class XDebugSessionImpl implements XDebugSession {
   private void initSessionTab(@Nullable RunContentDescriptor contentToReuse) {
     mySessionTab = XDebugSessionTab.create(this, myIcon, myEnvironment, contentToReuse);
     myDebugProcess.sessionInitialized();
-    if (myMixedModeLowLevelDebugProcess != null) {
-      myMixedModeLowLevelDebugProcess.sessionInitialized();
-    }
     addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionPaused() {
@@ -555,12 +517,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   private void processAllHandlers(final XBreakpoint<?> breakpoint, final boolean register) {
-    var handlers = new ArrayList<>(Arrays.asList(myDebugProcess.getBreakpointHandlers()));
-    if (isMixedMode()) {
-      handlers.addAll(Arrays.asList(myMixedModeLowLevelDebugProcess.getBreakpointHandlers()));
-    }
-
-    for (XBreakpointHandler<?> handler : handlers) {
+    for (XBreakpointHandler<?> handler : myDebugProcess.getBreakpointHandlers()) {
       processBreakpoint(breakpoint, handler, register);
     }
   }
@@ -622,18 +579,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       setBreakpointsDisabledTemporarily(true);
     }
 
-    var suspendContext = doResume();
-    var debugProcess = myDebugProcess;
-    if (isMixedMode()) {
-      if (isMixedModeHighProcessReady()) {
-        assert suspendContext != null;
-        myMixedModeExtension.stepOver((XMixedModeSuspendContext)suspendContext);
-        return;
-      }
-      debugProcess = getDebugProcess(true);
-    }
-
-    debugProcess.startStepOver(suspendContext);
+    myDebugProcess.startStepOver(doResume());
   }
 
   @Override
@@ -641,17 +587,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     rememberUserActionStart(XDebuggerActions.STEP_INTO);
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
-    var suspendContext = doResume();
-    var debugProcess = myDebugProcess;
-    if (isMixedMode()) {
-      if (isMixedModeHighProcessReady()) {
-        assert suspendContext != null;
-        myMixedModeExtension.stepInto((XMixedModeSuspendContext)suspendContext);
-        return;
-      }
-      debugProcess = getDebugProcess(true);
-    }
-    debugProcess.startStepInto(suspendContext);
+    myDebugProcess.startStepInto(doResume());
   }
 
   @Override
@@ -659,17 +595,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     rememberUserActionStart(XDebuggerActions.STEP_OUT);
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
-    var suspendContext = doResume();
-    var debugProcess = myDebugProcess;
-    if (isMixedMode()) {
-      if(isMixedModeHighProcessReady()) {
-        assert suspendContext != null;
-        myMixedModeExtension.stepOut((XMixedModeSuspendContext)suspendContext);
-        return;
-      }
-      debugProcess = getDebugProcess(true);
-    }
-    debugProcess.startStepOut(suspendContext);
+    myDebugProcess.startStepOut(doResume());
   }
 
   @Override
@@ -698,18 +624,7 @@ public final class XDebugSessionImpl implements XDebugSession {
       setBreakpointsDisabledTemporarily(true);
     }
 
-    var suspendContext = doResume();
-    var debugProcess = myDebugProcess;
-    if (isMixedMode()) {
-      if (isMixedModeHighProcessReady()) {
-        assert suspendContext != null;
-        myMixedModeExtension.runToPosition(position, (XMixedModeSuspendContext)suspendContext);
-        return;
-      }
-      debugProcess = getDebugProcess(true);
-    }
-
-    debugProcess.runToPosition(position, doResume());
+    myDebugProcess.runToPosition(position, doResume());
   }
 
   @Override
@@ -717,26 +632,12 @@ public final class XDebugSessionImpl implements XDebugSession {
     rememberUserActionStart(XDebuggerActions.PAUSE);
     if (!myDebugProcess.checkCanPerformCommands()) return;
 
-    if (isMixedMode() && isMixedModeHighProcessReady()) {
-      myMixedModeExtension.pause();
-      return;
-    }
-
     myDebugProcess.startPausing();
   }
 
   @RequiresReadLock
   private void processAllBreakpoints(final boolean register, final boolean temporary) {
-    var breakpointHandlers = new ArrayList<XBreakpointHandler<?>>();
-    if (isMixedMode()) {
-      breakpointHandlers.addAll(Arrays.stream(getDebugProcess(false).getBreakpointHandlers()).toList());
-      breakpointHandlers.addAll(Arrays.stream(getDebugProcess(true).getBreakpointHandlers()).toList());
-    }
-    else {
-      breakpointHandlers.addAll(Arrays.stream(getDebugProcess().getBreakpointHandlers()).toList());
-    }
-
-    for (XBreakpointHandler<?> handler : breakpointHandlers) {
+    for (XBreakpointHandler<?> handler : myDebugProcess.getBreakpointHandlers()) {
       processBreakpoints(handler, register, temporary);
     }
   }
@@ -754,17 +655,8 @@ public final class XDebugSessionImpl implements XDebugSession {
   @Override
   public void resume() {
     if (!myDebugProcess.checkCanPerformCommands()) return;
-    var suspendContext = doResume();
-    var debugProcess = myDebugProcess;
-    if (isMixedMode()) {
-      if (isMixedModeHighProcessReady()) {
-        myMixedModeExtension.resume();
-        return;
-      }
-      debugProcess = getDebugProcess(true);
-    }
 
-    debugProcess.resume(suspendContext);
+    myDebugProcess.resume(doResume());
   }
 
   private @Nullable XSuspendContext doResume() {
@@ -1060,7 +952,8 @@ public final class XDebugSessionImpl implements XDebugSession {
     positionReachedInternal(suspendContext, attract);
   }
 
-  private void positionReachedInternal(final @NotNull XSuspendContext suspendContext, boolean attract) {
+  // TODO: roll the privacy back
+  public void positionReachedInternal(final @NotNull XSuspendContext suspendContext, boolean attract) {
     setBreakpointsDisabledTemporarily(false);
     mySuspendContext = suspendContext;
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
@@ -1139,7 +1032,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public boolean isMixedMode() {
-    return myMixedModeExtension != null;
+    return myDebugProcess instanceof XMixedModeCombinedDebugProcess;
   }
 
   @Override
@@ -1226,11 +1119,11 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void stop() {
-    if (myMixedModeExtension != null) {
-      myMixedModeExtension.stop();
-    }
+    stop(myDebugProcess);
+  }
 
-    ProcessHandler processHandler = getProcessHandler();
+  private void stop(XDebugProcess process) {
+    ProcessHandler processHandler = process == null ? null : process.getProcessHandler();
     if (processHandler == null || processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) return;
 
     if (processHandler.detachIsDefault()) {
@@ -1361,22 +1254,5 @@ public final class XDebugSessionImpl implements XDebugSession {
     else {
       XDebuggerPerformanceCollector.logBreakpointReached(myProject, fileType);
     }
-  }
-
-  public @Nullable ProcessHandler getProcessHandler() {
-    if (!isMixedMode()) {
-      // we had this check in `stop` method, moved it to here
-      if(myDebugProcess == null) {
-        return null;
-      }
-      return myDebugProcess.getProcessHandler();
-    }
-    return myMixedModeExtension.getProcessHandler();
-  }
-
-  @Override
-  public XDebuggerEditorsProvider getEditorsProvider() {
-    if (!isMixedMode()) return myDebugProcess.getEditorsProvider();
-    return myMixedModeExtension.getEditorsProvider();
   }
 }

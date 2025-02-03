@@ -5,7 +5,7 @@ import com.intellij.xdebugger.frame.XMixedModeSuspendContextBase
 import com.intellij.xdebugger.frame.XSuspendContext
 import kotlinx.coroutines.Deferred
 
-interface XMixedModeLowLevelDebugProcess : XMixedModeDebugProcess {
+interface XMixedModeLowLevelDebugProcess : XMixedModeDebugProcessExtension {
   val ready : Deferred<Unit>
   val mixedStackBuilder: MixedModeStackBuilder
 
@@ -18,5 +18,5 @@ interface XMixedModeLowLevelDebugProcess : XMixedModeDebugProcess {
   fun lowToHighTransitionDuringLastStepHappened() : Boolean
 
   suspend fun beforeStep(mixedSuspendContext: XMixedModeSuspendContextBase)
-  fun isLowSuspendContext(context: XSuspendContext) : Boolean
+  fun belongsToMe(context: XSuspendContext) : Boolean
 }

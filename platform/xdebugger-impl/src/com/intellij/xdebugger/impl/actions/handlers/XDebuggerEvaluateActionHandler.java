@@ -41,7 +41,7 @@ import java.awt.*;
 public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
   @Override
   protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
-    final XDebuggerEditorsProvider editorsProvider = session.getEditorsProvider();
+    final XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
     final XStackFrame stackFrame = session.getCurrentStackFrame();
     final XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
     if (evaluator == null) {

@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
@@ -182,6 +181,4 @@ public interface XDebugSession extends AbstractDebuggerSession {
   ConsoleView getConsoleView();
 
   RunnerLayoutUi getUI();
-
-  XDebuggerEditorsProvider getEditorsProvider();
 }

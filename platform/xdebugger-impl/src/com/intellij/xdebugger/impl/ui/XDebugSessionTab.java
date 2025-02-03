@@ -39,6 +39,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess;
 import com.intellij.xdebugger.impl.frame.*;
 import com.intellij.xdebugger.mixedMode.XMixedModeProcessesConfiguration;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
@@ -50,7 +51,6 @@ import javax.swing.*;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @ApiStatus.Internal
 public class XDebugSessionTab extends DebuggerSessionTabBase {
@@ -221,7 +221,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       restartActions = restartActionsList.toArray(AnAction.EMPTY_ARRAY);
     }
 
-    myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getProcessHandler(),
+    myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(),
                                                       myUi.getComponent(), session.getSessionName(), icon, this::computeWatches, restartActions);
     myRunContentDescriptor.setRunnerLayoutUi(myUi);
     Disposer.register(myRunContentDescriptor, this);
@@ -292,7 +292,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     if (session.isMixedMode()) {
-      XMixedModeProcessesConfiguration config = Objects.requireNonNull(session.mixedModeConfig);
+      XMixedModeProcessesConfiguration config = ((XMixedModeCombinedDebugProcess)(session.getDebugProcess())).getConfig();
       initializeDebugProcessTabLayout(session.getDebugProcess(true), config.getUseLowDebugProcessConsole());
       initializeDebugProcessTabLayout(session.getDebugProcess(false), !config.getUseLowDebugProcessConsole());
     }

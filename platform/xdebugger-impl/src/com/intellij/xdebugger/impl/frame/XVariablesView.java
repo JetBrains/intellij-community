@@ -32,7 +32,7 @@ public class XVariablesView extends XVariablesViewBase {
   protected final WeakReference<XDebugSessionImpl> mySession;
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
-    super(session.getProject(), session.getEditorsProvider(), session.getValueMarkers());
+    super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());
     mySession = new WeakReference<>(session);
     myComponent = UiDataProvider.wrapComponent(createMainPanel(super.getPanel()), sink -> uiDataSnapshot(sink));
   }

@@ -57,9 +57,9 @@ class CollectionHistoryView(private val myClsName: String,
   private val myStackFrameList = StackFrameList(myDebugProcess)
   private val mySplitter = JBSplitter(false, DEFAULT_SPLITTER_PROPORTION)
   private val myNodeManager = MyNodeManager(myDebugSession.project)
-  private val myHistoryInstancesTree: InstancesTree = InstancesTree(myDebugProcess.project, myDebugSession.editorsProvider,
+  private val myHistoryInstancesTree: InstancesTree = InstancesTree(myDebugProcess.project, myDebugSession.debugProcess.editorsProvider,
                                                                     getValueMarkers(myDebugProcess)) { }
-  private val myHistoryTree: InstancesTree = InstancesTree(myDebugProcess.project, myDebugSession.editorsProvider,
+  private val myHistoryTree: InstancesTree = InstancesTree(myDebugProcess.project, myDebugSession.debugProcess.editorsProvider,
                                                            getValueMarkers(myDebugProcess)) { }
   private val myMainComponent: JComponent
 

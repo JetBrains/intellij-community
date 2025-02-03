@@ -56,7 +56,7 @@ class XDebugSessionMixedModeExtension(
   // On stop, low level debugger calls positionReached first and then the high level debugger does it
   fun positionReached(suspendContext: XSuspendContext, attract: Boolean) {
     myAttract = myAttract || attract // if any of the processes requires attraction, we'll do it
-    val isHighSuspendContext = !low.isLowSuspendContext(suspendContext)
+    val isHighSuspendContext = !low.belongsToMe(suspendContext)
     stateMachine.set(if (isHighSuspendContext) HighLevelPositionReached(suspendContext) else LowLevelPositionReached(suspendContext))
   }
 
@@ -132,7 +132,7 @@ class XDebugSessionMixedModeExtension(
     return processHandler ?: XMixedModeProcessHandler(
       high.asXDebugProcess.processHandler,
       low.asXDebugProcess.processHandler,
-      checkNotNull(session.mixedModeConfig)).also { processHandler = it }
+      checkNotNull(session.mixedModeDebugProcessOrThrow.config)).also { processHandler = it }
   }
 
   fun stop() {

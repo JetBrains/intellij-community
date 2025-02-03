@@ -6,11 +6,11 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 
-interface XMixedModeDebugProcess {
+interface XMixedModeDebugProcessExtension {
   fun getStoppedThreadId(context : XSuspendContext) : Long
   fun belongsToMe(frame: XStackFrame): Boolean
   fun belongsToMe(file: VirtualFile): Boolean
 }
 
-val XMixedModeDebugProcess.asXDebugProcess: XDebugProcess
+val XMixedModeDebugProcessExtension.asXDebugProcess: XDebugProcess
   get() = this as XDebugProcess

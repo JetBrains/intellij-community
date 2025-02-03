@@ -80,7 +80,7 @@ public class XValueHint extends AbstractValueHint {
                     @NotNull XDebuggerEvaluator evaluator,
                     @NotNull XDebugSession session,
                     boolean fromKeyboard) {
-    this(project, session.getEditorsProvider(), editor, point, type, offset, expressionInfo, evaluator,
+    this(project, session.getDebugProcess().getEditorsProvider(), editor, point, type, offset, expressionInfo, evaluator,
          ((XDebugSessionImpl)session).getValueMarkers(), session.getCurrentPosition(), fromKeyboard);
   }
 

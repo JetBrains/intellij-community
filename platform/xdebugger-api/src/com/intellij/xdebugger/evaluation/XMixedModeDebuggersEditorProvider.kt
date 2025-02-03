@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.mixedMode.XMixedModeDebugProcess
+import com.intellij.xdebugger.mixedMode.XMixedModeDebugProcessExtension
 import org.jetbrains.annotations.Unmodifiable
 
 class XMixedModeDebuggersEditorProvider(
@@ -45,7 +45,7 @@ class XMixedModeDebuggersEditorProvider(
 
   private fun getActiveProvider(): XDebuggerEditorsProvider {
     val file = session.currentStackFrame?.sourcePosition?.file ?: return highDebuggerEditorsProvider
-    return if ((session.getDebugProcess(true) as XMixedModeDebugProcess).belongsToMe(file))
+    return if ((session.getDebugProcess(true) as XMixedModeDebugProcessExtension).belongsToMe(file))
       lowDebuggerEditorsProvider
     else
       highDebuggerEditorsProvider

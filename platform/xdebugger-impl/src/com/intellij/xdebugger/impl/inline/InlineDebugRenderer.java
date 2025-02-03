@@ -71,7 +71,7 @@ public final class InlineDebugRenderer extends InlineDebugRendererBase {
     updatePresentation();
     XValueMarkers<?, ?> markers = session instanceof XDebugSessionImpl ?  ((XDebugSessionImpl)session).getValueMarkers() : null;
     myTreeCreator = new XDebuggerTreeCreator(session.getProject(),
-                                             session.getEditorsProvider(),
+                                             session.getDebugProcess().getEditorsProvider(),
                                              session.getCurrentPosition(),
                                              markers);
   }

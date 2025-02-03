@@ -113,7 +113,7 @@ class InstancesView extends InstancesViewBase {
     myNodeManager = new MyNodeManager(session.getProject());
     myWarningMessageConsumer = warningMessageConsumer;
 
-    final XDebuggerEditorsProvider editorsProvider = session.getEditorsProvider();
+    final XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
 
     myFilterConditionEditor = new ExpressionEditorWithHistory(
       session.getProject(), myClassName, editorsProvider, this

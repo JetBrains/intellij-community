@@ -13,3 +13,6 @@ val XDebugSession.mixedModeExecutionStackOrThrow: XMixedModeExecutionStack
 // In mixed mode we preserve all frames in high- and low- execution stacks letting XMixedModeExecutionStack filter them
 val XDebugProcess.canFilterFramesMixedModeAware: Boolean
   get() = !session.isMixedMode || !session.isMixedModeHighProcessReady
+
+val XDebugSession.mixedModeDebugProcessOrThrow: XMixedModeCombinedDebugProcess
+  get() = debugProcess as XMixedModeCombinedDebugProcess
