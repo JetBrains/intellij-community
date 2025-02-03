@@ -15,7 +15,10 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -156,33 +159,6 @@ public final class HighlightMethodUtil {
       errorResult.registerFix(action, null, null, null, null);
     }
 
-    return errorResult;
-  }
-
-  static HighlightInfo.Builder checkAbstractMethodInConcreteClass(@NotNull PsiMethod method, @NotNull PsiElement elementToHighlight) {
-    HighlightInfo.Builder errorResult = null;
-    PsiClass aClass = method.getContainingClass();
-    if (method.hasModifierProperty(PsiModifier.ABSTRACT)
-        && aClass != null
-        && (aClass.isEnum() || !aClass.hasModifierProperty(PsiModifier.ABSTRACT))
-        && !PsiUtilCore.hasErrorElementChild(method)) {
-      if (aClass.isEnum()) {
-        for (PsiField field : aClass.getFields()) {
-          if (field instanceof PsiEnumConstant) {
-            // only report an abstract method in enum when there are no enum constants to implement it
-            return null;
-          }
-        }
-      }
-      String description = JavaErrorBundle.message("abstract.method.in.non.abstract.class");
-      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(description);
-      errorResult.registerFix(method.getBody() != null
-                              ? QuickFixFactory.getInstance().createModifierListFix(method, PsiModifier.ABSTRACT, false, false)
-                              : QuickFixFactory.getInstance().createAddMethodBodyFix(method), null, null, null, null);
-      if (!aClass.isEnum()) {
-        errorResult.registerFix(QuickFixFactory.getInstance().createModifierListFix(aClass, PsiModifier.ABSTRACT, true, false), null, null, null, null);
-      }
-    }
     return errorResult;
   }
 

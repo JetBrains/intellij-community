@@ -419,6 +419,7 @@ public final class JavaErrorKinds {
         int initializerType = initializer instanceof PsiMethod ? 1 : initializer instanceof PsiField ? 2 : 3;
         return message("enum.constant.illegal.access.in.constructor", fieldType, initializerType);
       });
+  public static final Simple<PsiKeyword> ENUM_CONSTANT_MODIFIER = error(PsiKeyword.class, "enum.constant.modifier");
 
   public static final Simple<PsiClassInitializer> INTERFACE_CLASS_INITIALIZER = error("interface.class.initializer");
   public static final Simple<PsiMethod> INTERFACE_CONSTRUCTOR = error("interface.constructor");
@@ -500,6 +501,8 @@ public final class JavaErrorKinds {
     error(PsiMethod.class, "method.interface.body").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
   public static final Simple<PsiMethod> METHOD_ABSTRACT_BODY =
     error(PsiMethod.class, "method.abstract.body").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
+  public static final Parameterized<PsiKeyword, PsiMethod> METHOD_ABSTRACT_IN_NON_ABSTRACT_CLASS =
+    parameterized(PsiKeyword.class, PsiMethod.class, "method.abstract.in.non.abstract.class");
   public static final Simple<PsiMethod> METHOD_NATIVE_BODY =
     error(PsiMethod.class, "method.native.body").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
   public static final Simple<PsiMethod> METHOD_STATIC_IN_INTERFACE_SHOULD_HAVE_BODY =
@@ -1008,6 +1011,7 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_UNRESOLVED_NAME =
     parameterized(PsiMethodCallExpression.class, JavaResolveResult[].class, "call.unresolved.name")
       .withRange((call, cls) -> getRange(call))
+      .withHighlightType((call, results) -> JavaErrorHighlightType.WRONG_REF)
       .withRawDescription((call, results) -> message(
         "call.unresolved.name", call.getMethodExpression().getReferenceName() + formatArgumentTypes(call.getArgumentList(), true)));
   public static final Parameterized<PsiMethodCallExpression, JavaAmbiguousCallContext> CALL_AMBIGUOUS =
@@ -1093,6 +1097,7 @@ public final class JavaErrorKinds {
     error(PsiJavaCodeReferenceElement.class, "import.static.on.demand.resolves.to.class")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
       .withRawDescription(ref -> message("import.static.on.demand.resolves.to.class", ref.getCanonicalText()));
+  public static final Simple<PsiJavaToken> IMPORT_LIST_EXTRA_SEMICOLON = error(PsiJavaToken.class, "import.list.extra.semicolon");
   
   public static final Simple<PsiIdentifier> UNDERSCORE_IDENTIFIER = error("underscore.identifier");
   public static final Simple<PsiIdentifier> UNDERSCORE_IDENTIFIER_UNNAMED = error("underscore.identifier.unnamed");

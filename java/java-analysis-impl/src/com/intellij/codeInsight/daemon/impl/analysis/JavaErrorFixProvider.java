@@ -103,7 +103,8 @@ final class JavaErrorFixProvider {
                                             STATEMENT_CASE_OUTSIDE_SWITCH, NEW_EXPRESSION_DIAMOND_NOT_APPLICABLE,
                                             NEW_EXPRESSION_ANONYMOUS_IMPLEMENTS_INTERFACE_WITH_TYPE_ARGUMENTS,
                                             CALL_DIRECT_ABSTRACT_METHOD_ACCESS, RECORD_SPECIAL_METHOD_TYPE_PARAMETERS,
-                                            RECORD_SPECIAL_METHOD_THROWS, ARRAY_TYPE_ARGUMENTS, ARRAY_EMPTY_DIAMOND)) {
+                                            RECORD_SPECIAL_METHOD_THROWS, ARRAY_TYPE_ARGUMENTS, ARRAY_EMPTY_DIAMOND,
+                                            IMPORT_LIST_EXTRA_SEMICOLON, ENUM_CONSTANT_MODIFIER)) {
       fix(kind, genericRemover);
     }
 
@@ -230,6 +231,14 @@ final class JavaErrorFixProvider {
       PsiType expectedType = HighlightFixUtil.determineReturnType(method);
       if (expectedType != null) {
         sink.accept(myFactory.createMethodReturnFix(method, expectedType, true, true));
+      }
+    });
+    fixes(METHOD_ABSTRACT_IN_NON_ABSTRACT_CLASS, (error, sink) -> {
+      PsiMethod method = error.context();
+      sink.accept(method.getBody() != null ? removeModifierFix(method, PsiModifier.ABSTRACT) : myFactory.createAddMethodBodyFix(method));
+      PsiClass aClass = method.getContainingClass();
+      if (aClass != null && !aClass.isEnum() && !aClass.isRecord()) {
+        sink.accept(addModifierFix(aClass, PsiModifier.ABSTRACT));
       }
     });
   }

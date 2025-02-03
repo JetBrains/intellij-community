@@ -3,8 +3,11 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -106,6 +109,12 @@ final class ImportChecker {
         return;
       }
       mySingleImportedClasses.put(name, Pair.pair(null, psiClass));
+    }
+  }
+
+  void checkExtraSemicolonBetweenImportStatements(@NotNull PsiJavaToken token, IElementType type) {
+    if (type == JavaTokenType.SEMICOLON && myVisitor.languageLevel().isAtLeast(LanguageLevel.JDK_21) && PsiUtil.isFollowedByImport(token)) {
+      myVisitor.report(JavaErrorKinds.IMPORT_LIST_EXTRA_SEMICOLON.create(token));
     }
   }
 }

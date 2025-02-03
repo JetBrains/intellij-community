@@ -319,9 +319,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitJavaToken(token);
 
     IElementType type = token.getTokenType();
-    if (!hasErrorResults() && type == JavaTokenType.TEXT_BLOCK_LITERAL) {
-      add(checkFeature(token, JavaFeature.TEXT_BLOCKS));
-    }
 
     if (!hasErrorResults() && type == JavaTokenType.RBRACE && token.getParent() instanceof PsiCodeBlock) {
       PsiElement gParent = token.getParent().getParent();
@@ -341,10 +338,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         return;
       }
       add(HighlightControlFlowUtil.checkMissingReturnStatement(codeBlock, returnType));
-    }
-
-    if (!hasErrorResults()) {
-      add(HighlightUtil.checkExtraSemicolonBetweenImportStatements(token, type, myLanguageLevel));
     }
   }
 
@@ -410,25 +403,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitImportModuleStatement(statement);
     if (!hasErrorResults()) add(checkFeature(statement, JavaFeature.MODULE_IMPORT_DECLARATIONS));
     if (!hasErrorResults()) add(ModuleHighlightUtil.checkModuleReference(statement));
-  }
-
-  @Override
-  public void visitKeyword(@NotNull PsiKeyword keyword) {
-    super.visitKeyword(keyword);
-    PsiElement parent = keyword.getParent();
-    String text = keyword.getText();
-    if (parent instanceof PsiModifierList psiModifierList) {
-      PsiElement pParent = psiModifierList.getParent();
-      if (PsiModifier.ABSTRACT.equals(text) && pParent instanceof PsiMethod psiMethod) {
-        if (!hasErrorResults()) {
-          add(HighlightMethodUtil.checkAbstractMethodInConcreteClass(psiMethod, keyword));
-        }
-      }
-      else if (pParent instanceof PsiEnumConstant) {
-        String description = JavaErrorBundle.message("modifiers.for.enum.constants");
-        add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(description));
-      }
-    }
   }
 
   @Override

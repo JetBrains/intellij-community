@@ -19,6 +19,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ObjectUtils;
@@ -436,6 +437,20 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitJavaToken(@NotNull PsiJavaToken token) {
+    super.visitJavaToken(token);
+
+    IElementType type = token.getTokenType();
+    if (!hasErrorResults() && type == JavaTokenType.TEXT_BLOCK_LITERAL) {
+      checkFeature(token, JavaFeature.TEXT_BLOCKS);
+    }
+
+    if (!hasErrorResults()) {
+      myImportChecker.checkExtraSemicolonBetweenImportStatements(token, type);
+    }
+  }
+
+  @Override
   public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
     super.visitClassInitializer(initializer);
     if (!hasErrorResults()) myClassChecker.checkImplicitClassMember(initializer);
@@ -524,6 +539,16 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (parent instanceof PsiModifierList psiModifierList) {
       if (!hasErrorResults()) myModifierChecker.checkNotAllowedModifier(keyword, psiModifierList);
       if (!hasErrorResults()) myModifierChecker.checkIllegalModifierCombination(keyword, psiModifierList);
+      PsiElement pParent = psiModifierList.getParent();
+      String text = keyword.getText();
+      if (PsiModifier.ABSTRACT.equals(text) && pParent instanceof PsiMethod psiMethod) {
+        if (!hasErrorResults()) {
+          myMethodChecker.checkAbstractMethodInConcreteClass(psiMethod, keyword);
+        }
+      }
+      else if (pParent instanceof PsiEnumConstant) {
+        report(JavaErrorKinds.ENUM_CONSTANT_MODIFIER.create(keyword));
+      }
     }
   }
 

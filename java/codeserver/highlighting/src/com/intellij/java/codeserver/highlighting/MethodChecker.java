@@ -411,6 +411,24 @@ final class MethodChecker {
     }
   }
 
+  void checkAbstractMethodInConcreteClass(@NotNull PsiMethod method, @NotNull PsiKeyword elementToHighlight) {
+    PsiClass aClass = method.getContainingClass();
+    if (method.hasModifierProperty(PsiModifier.ABSTRACT)
+        && aClass != null
+        && (aClass.isEnum() || !aClass.hasModifierProperty(PsiModifier.ABSTRACT))
+        && !PsiUtilCore.hasErrorElementChild(method)) {
+      if (aClass.isEnum()) {
+        for (PsiField field : aClass.getFields()) {
+          if (field instanceof PsiEnumConstant) {
+            // only report an abstract method in enum when there are no enum constants to implement it
+            return;
+          }
+        }
+      }
+      myVisitor.report(JavaErrorKinds.METHOD_ABSTRACT_IN_NON_ABSTRACT_CLASS.create(elementToHighlight, method));
+    }
+  }
+
   static @Nullable TextRange getCStyleDeclarationRange(@NotNull PsiVariable variable) {
     PsiIdentifier identifier = variable.getNameIdentifier();
     TextRange range = null;

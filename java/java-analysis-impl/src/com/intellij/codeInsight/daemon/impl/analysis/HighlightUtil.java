@@ -801,18 +801,6 @@ public final class HighlightUtil {
       .navigationShift(0);
   }
 
-  static HighlightInfo.Builder checkExtraSemicolonBetweenImportStatements(@NotNull PsiJavaToken token,
-                                                                          IElementType type,
-                                                                          @NotNull LanguageLevel level) {
-    if (type == JavaTokenType.SEMICOLON && level.isAtLeast(LanguageLevel.JDK_21) && PsiUtil.isFollowedByImport(token)) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .range(token)
-        .registerFix(QuickFixFactory.getInstance().createDeleteFix(token), null, null, null, null)
-        .descriptionAndTooltip(JavaErrorBundle.message("error.extra.semicolons.between.import.statements.not.allowed"));
-    }
-    return null;
-  }
-
   /**
    * @param elementToHighlight element to attach the highlighting
    * @return HighlightInfo builder that adds a pending reference highlight
