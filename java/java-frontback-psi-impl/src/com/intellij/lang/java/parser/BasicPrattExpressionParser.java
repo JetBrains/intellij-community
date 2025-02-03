@@ -959,7 +959,7 @@ public class BasicPrattExpressionParser {
       if (right == null) {
         error(builder, JavaPsiBundle.message("expected.expression"));
       }
-      done(beforeLhs, myJavaElementTypeContainer.ASSIGNMENT_EXPRESSION, myWhiteSpaceAndCommentSetHolder);
+      done(beforeLhs, myJavaElementTypeContainer.ASSIGNMENT_EXPRESSION, builder, myWhiteSpaceAndCommentSetHolder);
     }
   }
 
@@ -987,7 +987,7 @@ public class BasicPrattExpressionParser {
       }
       done(beforeLhs, operandCount > 2
                       ? myJavaElementTypeContainer.POLYADIC_EXPRESSION
-                      : myJavaElementTypeContainer.BINARY_EXPRESSION, myWhiteSpaceAndCommentSetHolder);
+                      : myJavaElementTypeContainer.BINARY_EXPRESSION, builder, myWhiteSpaceAndCommentSetHolder);
     }
   }
 

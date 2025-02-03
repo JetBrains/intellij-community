@@ -93,12 +93,12 @@ public class BasicFileParser {
     }
 
     if (impListInfo.second && firstDeclarationOk == Boolean.TRUE) {
-      impListInfo.first.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getPrecedingCommentBinder(), null);  // pass comments behind fake import list
-      firstDeclaration.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getSpecialPrecedingCommentBinder(), null);
+      impListInfo.first.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getPrecedingCommentBinder(getLanguageLevel(builder)), null);  // pass comments behind fake import list
+      firstDeclaration.setCustomEdgeTokenBinders(myWhiteSpaceAndCommentSetHolder.getSpecialPrecedingCommentBinder(getLanguageLevel(builder)), null);
     }
     if (isImplicitClass) {
       PsiBuilder.Marker beforeFirst = firstDeclaration.precede();
-      done(beforeFirst, myJavaElementTypeContainer.IMPLICIT_CLASS, myWhiteSpaceAndCommentSetHolder);
+      done(beforeFirst, myJavaElementTypeContainer.IMPLICIT_CLASS, builder, myWhiteSpaceAndCommentSetHolder);
     }
   }
 
@@ -122,7 +122,7 @@ public class BasicFileParser {
     if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
       PsiBuilder.Marker modList = builder.mark();
       myParser.getDeclarationParser().parseAnnotations(builder);
-      done(modList, myJavaElementTypeContainer.MODIFIER_LIST, myWhiteSpaceAndCommentSetHolder);
+      done(modList, myJavaElementTypeContainer.MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
       if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
         statement.rollbackTo();
         return;
@@ -137,7 +137,7 @@ public class BasicFileParser {
 
     semicolon(builder);
 
-    done(statement, myJavaElementTypeContainer.PACKAGE_STATEMENT, myWhiteSpaceAndCommentSetHolder);
+    done(statement, myJavaElementTypeContainer.PACKAGE_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
   }
 
   protected @NotNull Pair<PsiBuilder.Marker, Boolean> parseImportList(PsiBuilder builder, Predicate<? super PsiBuilder> stopper) {
@@ -180,7 +180,7 @@ public class BasicFileParser {
       list = precede;
     }
 
-    done(list, myJavaElementTypeContainer.IMPORT_LIST, myWhiteSpaceAndCommentSetHolder);
+    done(list, myJavaElementTypeContainer.IMPORT_LIST, builder, myWhiteSpaceAndCommentSetHolder);
     return Pair.create(list, isEmpty);
   }
 
@@ -210,7 +210,7 @@ public class BasicFileParser {
       semicolon(builder);
     }
 
-    done(statement, type, myWhiteSpaceAndCommentSetHolder);
+    done(statement, type, builder, myWhiteSpaceAndCommentSetHolder);
     return statement;
   }
 

@@ -60,10 +60,30 @@ public final class BasicJavaParserUtil {
     return Boolean.TRUE.equals(builder.getUserData(DEEP_PARSE_BLOCKS_IN_STATEMENTS));
   }
 
-  public static void done(final PsiBuilder.Marker marker, final IElementType type, final WhiteSpaceAndCommentSetHolder commentSetHolder) {
+  /**
+   * @deprecated use {@link BasicJavaParserUtil#done(PsiBuilder.Marker, IElementType, PsiBuilder, WhiteSpaceAndCommentSetHolder)}
+   */
+  @Deprecated
+  public static void done(final @NotNull PsiBuilder.Marker marker,
+                          final @NotNull IElementType type,
+                          final @NotNull WhiteSpaceAndCommentSetHolder commentSetHolder) {
     marker.done(type);
     final WhitespacesAndCommentsBinder left =
-      commentSetHolder.getPrecedingCommentSet().contains(type) ? commentSetHolder.getPrecedingCommentBinder()
+      commentSetHolder.getPrecedingCommentSet().contains(type) ? commentSetHolder.getPrecedingCommentBinder(LanguageLevel.HIGHEST)
+                                                               : null;
+    final WhitespacesAndCommentsBinder right =
+      commentSetHolder.getTrailingCommentSet().contains(type) ? commentSetHolder.getTrailingCommentBinder()
+                                                              : null;
+    marker.setCustomEdgeTokenBinders(left, right);
+  }
+
+  public static void done(final @NotNull PsiBuilder.Marker marker,
+                          final @NotNull IElementType type,
+                          final @NotNull PsiBuilder builder,
+                          final @NotNull WhiteSpaceAndCommentSetHolder commentSetHolder) {
+    marker.done(type);
+    final WhitespacesAndCommentsBinder left =
+      commentSetHolder.getPrecedingCommentSet().contains(type) ? commentSetHolder.getPrecedingCommentBinder(getLanguageLevel(builder))
                                                                : null;
     final WhitespacesAndCommentsBinder right =
       commentSetHolder.getTrailingCommentSet().contains(type) ? commentSetHolder.getTrailingCommentBinder()

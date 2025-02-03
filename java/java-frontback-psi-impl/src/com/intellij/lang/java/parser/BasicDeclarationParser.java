@@ -136,7 +136,7 @@ public class BasicDeclarationParser {
       parseClassBodyWithBraces(builder, isAnnotation, isEnum);
     }
 
-    done(declaration, myJavaElementTypeContainer.CLASS, WhiteSpaceAndCommentSetHolder.INSTANCE);
+    done(declaration, myJavaElementTypeContainer.CLASS, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
     return declaration;
   }
 
@@ -195,10 +195,10 @@ public class BasicDeclarationParser {
       if (builder.getTokenType() == JavaTokenType.LBRACE) {
         final PsiBuilder.Marker constantInit = builder.mark();
         parseClassBodyWithBraces(builder, false, false);
-        done(constantInit, myJavaElementTypeContainer.ENUM_CONSTANT_INITIALIZER, WhiteSpaceAndCommentSetHolder.INSTANCE);
+        done(constantInit, myJavaElementTypeContainer.ENUM_CONSTANT_INITIALIZER, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
       }
 
-      done(constant, myJavaElementTypeContainer.ENUM_CONSTANT, WhiteSpaceAndCommentSetHolder.INSTANCE);
+      done(constant, myJavaElementTypeContainer.ENUM_CONSTANT, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
       return constant;
     }
     else {
@@ -312,7 +312,7 @@ public class BasicDeclarationParser {
         error.errorBefore(JavaPsiBundle.message("unexpected.token"), codeBlock);
       }
 
-      done(declaration, myJavaElementTypeContainer.CLASS_INITIALIZER, WhiteSpaceAndCommentSetHolder.INSTANCE);
+      done(declaration, myJavaElementTypeContainer.CLASS_INITIALIZER, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
       return declaration;
     }
 
@@ -492,7 +492,7 @@ public class BasicDeclarationParser {
       }
     }
 
-    done(modList, myJavaElementTypeContainer.MODIFIER_LIST, WhiteSpaceAndCommentSetHolder.INSTANCE);
+    done(modList, myJavaElementTypeContainer.MODIFIER_LIST, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
     return Pair.create(modList, isEmpty);
   }
 
@@ -541,7 +541,7 @@ public class BasicDeclarationParser {
     }
 
     done(declaration, anno ? myJavaElementTypeContainer.ANNOTATION_METHOD : myJavaElementTypeContainer.METHOD,
-         WhiteSpaceAndCommentSetHolder.INSTANCE);
+         builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
     return declaration;
   }
 
@@ -680,7 +680,7 @@ public class BasicDeclarationParser {
       invalidElements.error(errorMessage);
     }
 
-    done(elementList, type.getNodeType(myJavaElementTypeContainer), WhiteSpaceAndCommentSetHolder.INSTANCE);
+    done(elementList, type.getNodeType(myJavaElementTypeContainer), builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
   }
 
   public @Nullable PsiBuilder.Marker parseParameter(PsiBuilder builder, boolean ellipsis, boolean disjunctiveType, boolean varType) {
@@ -750,7 +750,7 @@ public class BasicDeclarationParser {
         PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
         if (expr != null && exprType(expr) == myJavaElementTypeContainer.THIS_EXPRESSION) {
           mark.drop();
-          done(param, myJavaElementTypeContainer.RECEIVER_PARAMETER, WhiteSpaceAndCommentSetHolder.INSTANCE);
+          done(param, myJavaElementTypeContainer.RECEIVER_PARAMETER, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
           return param;
         }
 
@@ -761,7 +761,7 @@ public class BasicDeclarationParser {
     if (expect(builder, JavaTokenType.IDENTIFIER)) {
       if (type == myJavaElementTypeContainer.PARAMETER || type == myJavaElementTypeContainer.RECORD_COMPONENT) {
         eatBrackets(builder, null);
-        done(param, type, WhiteSpaceAndCommentSetHolder.INSTANCE);
+        done(param, type, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
         return param;
       }
     }
@@ -777,7 +777,7 @@ public class BasicDeclarationParser {
       }
     }
 
-    done(param, myJavaElementTypeContainer.RESOURCE_VARIABLE, WhiteSpaceAndCommentSetHolder.INSTANCE);
+    done(param, myJavaElementTypeContainer.RESOURCE_VARIABLE, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
     return param;
   }
 
@@ -824,7 +824,7 @@ public class BasicDeclarationParser {
       }
 
       if (builder.getTokenType() != JavaTokenType.COMMA) break;
-      done(variable, varType, WhiteSpaceAndCommentSetHolder.INSTANCE);
+      done(variable, varType, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
       builder.advanceLexer();
 
       if (builder.getTokenType() != JavaTokenType.IDENTIFIER) {
@@ -863,7 +863,7 @@ public class BasicDeclarationParser {
     }
 
     if (openMarker) {
-      done(variable, varType, WhiteSpaceAndCommentSetHolder.INSTANCE);
+      done(variable, varType, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
     }
 
     return declaration;
@@ -934,7 +934,7 @@ public class BasicDeclarationParser {
 
     parseAnnotationParameterList(builder);
 
-    done(anno, myJavaElementTypeContainer.ANNOTATION, WhiteSpaceAndCommentSetHolder.INSTANCE);
+    done(anno, myJavaElementTypeContainer.ANNOTATION, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
     return anno;
   }
 
@@ -942,13 +942,13 @@ public class BasicDeclarationParser {
     PsiBuilder.Marker list = builder.mark();
 
     if (!expect(builder, JavaTokenType.LPARENTH) || expect(builder, JavaTokenType.RPARENTH)) {
-      done(list, myJavaElementTypeContainer.ANNOTATION_PARAMETER_LIST, WhiteSpaceAndCommentSetHolder.INSTANCE);
+      done(list, myJavaElementTypeContainer.ANNOTATION_PARAMETER_LIST, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
       return;
     }
 
     if (builder.getTokenType() == null) {
       error(builder, JavaPsiBundle.message("expected.parameter.or.rparen"));
-      done(list, myJavaElementTypeContainer.ANNOTATION_PARAMETER_LIST, WhiteSpaceAndCommentSetHolder.INSTANCE);
+      done(list, myJavaElementTypeContainer.ANNOTATION_PARAMETER_LIST, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
       return;
     }
     PsiBuilder.Marker elementMarker = parseAnnotationElement(builder);
@@ -980,7 +980,7 @@ public class BasicDeclarationParser {
       }
     }
 
-    done(list, myJavaElementTypeContainer.ANNOTATION_PARAMETER_LIST, WhiteSpaceAndCommentSetHolder.INSTANCE);
+    done(list, myJavaElementTypeContainer.ANNOTATION_PARAMETER_LIST, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
   }
 
   private PsiBuilder.Marker parseAnnotationElement(PsiBuilder builder) {
@@ -992,7 +992,7 @@ public class BasicDeclarationParser {
       return null;
     }
     if (builder.getTokenType() != JavaTokenType.EQ) {
-      done(pair, myJavaElementTypeContainer.NAME_VALUE_PAIR, WhiteSpaceAndCommentSetHolder.INSTANCE);
+      done(pair, myJavaElementTypeContainer.NAME_VALUE_PAIR, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
       return pair;
     }
 
@@ -1004,7 +1004,7 @@ public class BasicDeclarationParser {
     valueMarker = parseAnnotationValue(builder);
     if (valueMarker == null) error(builder, JavaPsiBundle.message("expected.value"));
 
-    done(pair, myJavaElementTypeContainer.NAME_VALUE_PAIR, WhiteSpaceAndCommentSetHolder.INSTANCE);
+    done(pair, myJavaElementTypeContainer.NAME_VALUE_PAIR, builder, WhiteSpaceAndCommentSetHolder.INSTANCE);
     return pair;
   }
 
