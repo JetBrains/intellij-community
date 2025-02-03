@@ -3,8 +3,6 @@ package org.jetbrains.plugins.terminal
 
 import _LastInSuiteTest
 import org.jetbrains.plugins.terminal.block.*
-import org.jetbrains.plugins.terminal.block.BlockTerminalTest
-import org.jetbrains.plugins.terminal.block.TerminalTextHighlighterTest
 import org.jetbrains.plugins.terminal.block.actions.actions.TerminalDeletePreviousWordTest
 import org.jetbrains.plugins.terminal.block.completion.ShellCdCommandTest
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecSuggestionsTest
@@ -12,15 +10,19 @@ import org.jetbrains.plugins.terminal.block.completion.ShellCommandTreeBuilderTe
 import org.jetbrains.plugins.terminal.block.completion.ShellMakefileCompletionTest
 import org.jetbrains.plugins.terminal.block.completion.ml.ShMLModelMetadataTest
 import org.jetbrains.plugins.terminal.classic.BasicShellTerminalIntegrationTest
-import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
 /**
  * Helps to debug project leaks locally, see [_LastInSuiteTest].
  * Not used on TeamCity.
  * New tests can be added here on demand.
+ *
+ * The suite is disabled to avoid test duplication when running locally
+ * all terminal tests in `org.jetbrains.plugins.terminal` package.
+ * Uncomment `@org.junit.runner.RunWith(Suite::class)` to enable the suite.
  */
-@RunWith(Suite::class)
+//@org.junit.runner.RunWith(Suite::class)
+@Suppress("unused")
 @Suite.SuiteClasses(
   BlockTerminalTest::class,
   TerminalOutputModelTest::class,
@@ -43,4 +45,4 @@ import org.junit.runners.Suite
 
   _LastInSuiteTest::class,
 )
-class TerminalTestSuite
+class ProjectLeakHunterTerminalSuite
