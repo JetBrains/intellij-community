@@ -5,6 +5,7 @@ import com.intellij.debugger.actions.JvmSmartStepIntoHandler
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebugProcessEvents
 import com.intellij.debugger.engine.SteppingAction
+import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 object DebuggerStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("java.debugger", 9)
+  private val GROUP = EventLogGroup("java.debugger", 10)
 
   // fields
 
@@ -51,6 +52,10 @@ object DebuggerStatistics : CounterUsagesCollector() {
 
   private val breakpointSkipped = GROUP.registerEvent("breakpoint.skipped", EventFields.Enum<DebugProcessEvents.SkippedBreakpointReason>("reason"))
 
+  /** Reports execution time of debugger commands in buckets, updated at the end of a debugger session. */
+  private val timeBucketCount = GROUP.registerEvent("debugger.command.time.bucket.updated", EventFields.Int("bucket_upper_limit_ms"), EventFields.Count, EventFields.Boolean("is_remote"))
+  internal val bucketUpperLimits = (generateSequence(1L) { it * 2 }.takeWhile { it <= 2048 } + Long.MAX_VALUE).toList().toLongArray()
+
   @JvmStatic
   fun logProcessStatistics(debugProcess: DebugProcess) {
     val collectedStats = StatisticsStorage.collectAndClearData(debugProcess)
@@ -60,6 +65,13 @@ object DebuggerStatistics : CounterUsagesCollector() {
         is BreakpointInstallStatistic -> logBreakpointInstallOverhead(key.breakpoint, timeMs)
         is SteppingStatistic -> logSteppingOverhead(debugProcess.project, key, timeMs)
       }
+    }
+
+    val isRemote = DebuggerUtilsImpl.isRemote(debugProcess)
+    val bucketCounts = StatisticsStorage.collectCommandsPerformance(debugProcess)
+    val intUpperLimits = bucketUpperLimits.map { if (it == Long.MAX_VALUE) Int.MAX_VALUE else it.toInt() }.toIntArray()
+    for ((upperLimitMs, count) in intUpperLimits.zip(bucketCounts)) {
+      timeBucketCount.log(debugProcess.project, upperLimitMs, count, isRemote)
     }
   }
 

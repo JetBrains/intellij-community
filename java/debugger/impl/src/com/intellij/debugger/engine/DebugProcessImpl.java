@@ -205,7 +205,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private DebuggerManagerThreadImpl createManagerThread() {
     CoroutineScope projectScope = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).getCoroutineScope();
-    return new DebuggerManagerThreadImpl(disposable, projectScope);
+    return new DebuggerManagerThreadImpl(disposable, projectScope, this);
   }
 
   private void reloadRenderers() {
