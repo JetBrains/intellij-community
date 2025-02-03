@@ -11,6 +11,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.StorageAlreadyInUseException;
 import com.intellij.util.io.VersionUpdatedException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -27,7 +28,8 @@ import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorC
  * Static helper responsible for 'connecting' (opening, initializing) {@linkplain PersistentFSConnection} object,
  * and closing it. It does a few tries to initialize VFS storages, tries to correct/rebuild broken parts, and so on.
  */
-final class PersistentFSConnector {
+@ApiStatus.Internal
+public final class PersistentFSConnector {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnector.class);
 
   /**
