@@ -30,6 +30,26 @@ import org.jetbrains.jewel.foundation.state.CommonStateBitMask
 import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.ui.component.styling.TabStyle
 
+/**
+ * A horizontal strip of tabs that follows the standard visual styling with customizable appearance.
+ *
+ * Provides a scrollable container for displaying a row of tabs, with support for selection, hover effects, and
+ * automatic scrollbar visibility. The tabs can be closable or fixed, and support custom content layouts.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/tabs.html)
+ *
+ * **Usage example:**
+ * [`Tabs.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Tabs.kt)
+ *
+ * **Swing equivalent:** [`JTabbedPane`](https://docs.oracle.com/javase/tutorial/uiswing/components/tabbedpane.html)
+ *
+ * @param tabs The list of tab data objects defining the content and behavior of each tab
+ * @param style The visual styling configuration for the tab strip and its tabs
+ * @param modifier Modifier to be applied to the tab strip container
+ * @param enabled Controls the enabled state of the tab strip. When false, no tabs can be interacted with
+ * @see javax.swing.JTabbedPane
+ * @see com.intellij.ui.components.JBTabbedPane
+ */
 @Composable
 public fun TabStrip(tabs: List<TabData>, style: TabStyle, modifier: Modifier = Modifier, enabled: Boolean = true) {
     var tabStripState: TabStripState by remember { mutableStateOf(TabStripState.of(enabled = true)) }
@@ -79,6 +99,18 @@ public sealed class TabData {
     public abstract val onClose: () -> Unit
     public abstract val onClick: () -> Unit
 
+    /**
+     * Standard tab implementation suitable for most use cases.
+     *
+     * This implementation provides the standard tab behavior and appearance, making it suitable for general-purpose
+     * tabs in dialogs, tool windows, and other UI components.
+     *
+     * @property selected Whether this tab is currently selected
+     * @property content The composable content to be displayed within the tab
+     * @property closable Whether this tab can be closed by the user (defaults to true)
+     * @property onClose Called when the user attempts to close the tab
+     * @property onClick Called when the user clicks the tab
+     */
     @Immutable
     @GenerateDataFunctions
     public class Default(
@@ -123,6 +155,18 @@ public sealed class TabData {
         }
     }
 
+    /**
+     * Editor-specific tab implementation with specialized styling and behavior.
+     *
+     * This implementation is specifically designed for editor tabs, providing the appropriate styling and behavior for
+     * displaying file editors. It matches the appearance of IDE editor tabs.
+     *
+     * @property selected Whether this tab is currently selected
+     * @property content The composable content to be displayed within the tab
+     * @property closable Whether this tab can be closed by the user (defaults to true)
+     * @property onClose Called when the user attempts to close the tab
+     * @property onClick Called when the user clicks the tab
+     */
     @Immutable
     @GenerateDataFunctions
     public class Editor(
@@ -168,6 +212,16 @@ public sealed class TabData {
     }
 }
 
+/**
+ * State holder for the tab strip component that tracks various interaction states.
+ *
+ * This class maintains the state of a tab strip, including enabled/disabled state, focus, hover, and press states. It
+ * uses a bit-masked value for efficient state storage and implements [FocusableComponentState] for consistent behavior
+ * with other focusable components.
+ *
+ * @property state The raw bit-masked state value
+ * @see FocusableComponentState
+ */
 @Immutable
 @JvmInline
 public value class TabStripState(public val state: ULong) : FocusableComponentState {
