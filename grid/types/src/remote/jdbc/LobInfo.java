@@ -18,7 +18,6 @@ import java.util.Objects;
  * @author gregsh
  */
 public abstract class LobInfo<T extends LobInfo<?>> implements Comparable<T>, Serializable {
-  public static final int MAX_ARRAY_SIZE = 100;
   public final long length;
 
   private static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {

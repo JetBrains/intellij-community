@@ -8,6 +8,7 @@ import com.intellij.database.run.ReservedCellValue;
 import com.intellij.database.run.actions.LoadFileAction;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.settings.DataGridSettings;
+import com.intellij.database.util.LobInfoHelper;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -68,7 +69,8 @@ public class DefaultTextEditorFactory implements GridCellEditorFactory {
   protected static boolean isEditable(Object value) {
     if (value == null || value instanceof String || value instanceof ReservedCellValue ||
         value instanceof LobInfo && !((LobInfo<?>)value).isTruncated() &&
-        (value instanceof LobInfo.ClobInfo || ((LobInfo<?>)value).length == 0)) {
+        (value instanceof LobInfo.ClobInfo || ((LobInfo<?>)value).length == 0) ||
+        (value instanceof Object[] objArr && objArr.length < LobInfoHelper.MAX_ARRAY_SIZE)) {
       return true;
     }
     return false;
