@@ -22,10 +22,8 @@ import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.adminPermissionsNeeded
-import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import com.jetbrains.python.ui.PyUiUtil
 import org.jetbrains.annotations.Nls
 
@@ -49,29 +47,11 @@ internal class PyInstallRequirementsFix(
   }
 
   private fun installPackages(project: Project, descriptor: ProblemDescriptor) {
-    val chosenRequirements = chooseRequirements(project)
-    if (chosenRequirements.isEmpty()) return
-
     if (hasPackageManagement(PythonPackageManager.forSdk(project, sdk))) {
-      installRequirements(project, chosenRequirements, descriptor)
+      installRequirements(project, unsatisfied, descriptor)
     } else {
-      installRequirementsAfterManagement(project, chosenRequirements, descriptor)
+      installRequirementsAfterManagement(project, unsatisfied, descriptor)
     }
-  }
-
-  private fun chooseRequirements(project: Project): List<PyRequirement> {
-    if (unsatisfied.size <= 1) return unsatisfied
-    return showRequirementsDialog(project) ?: logAndReturnEmptyRequirements()
-  }
-
-  private fun showRequirementsDialog(project: Project): List<PyRequirement>? {
-    val dialog = PyChooseRequirementsDialog(project, unsatisfied) { it.presentableText }
-    return if (dialog.showAndGet()) dialog.markedElements else null
-  }
-
-  private fun logAndReturnEmptyRequirements(): List<PyRequirement> {
-    PyPackagesUsageCollector.installAllCanceledEvent.log()
-    return emptyList()
   }
 
   private fun installPackageManagement(project: Project, onSuccess: () -> Unit) {

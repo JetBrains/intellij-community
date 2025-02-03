@@ -16,6 +16,7 @@ import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog
+import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -108,29 +109,19 @@ object PyPackageInstallUtils {
   }
 }
 
-fun getConfirmedPackages(packageNames: List<String>, project: Project): List<String> {
-  val confirmationEnabled = PropertiesComponent.getInstance().getBoolean(InstallPackageQuickFix.CONFIRM_PACKAGE_INSTALLATION_PROPERTY, true)
-  if (!confirmationEnabled) {
-    return packageNames
+internal fun getConfirmedPackages(packageNames: List<PyRequirement>, project: Project): Set<PyRequirement> {
+  val confirmationEnabled = PropertiesComponent.getInstance()
+    .getBoolean(InstallPackageQuickFix.CONFIRM_PACKAGE_INSTALLATION_PROPERTY, true)
+
+  if (!confirmationEnabled || packageNames.isEmpty()) return packageNames.toSet()
+
+  val dialog = PyChooseRequirementsDialog(project, packageNames) { it.presentableText }
+
+  if (!dialog.showAndGet()) {
+    PyPackagesUsageCollector.installAllCanceledEvent.log()
+    return emptySet()
   }
 
-  val packageRank = ApplicationManager.getApplication()
-    .getService(PyPIPackageRanking::class.java)
-    .packageRank
-
-  val (knownPackages, nonWellKnownPackages) = packageNames.partition {
-    packageRank.containsKey(it)
-  }
-
-  if (nonWellKnownPackages.isEmpty()) {
-    return packageNames
-  }
-
-  val dialog = PyChooseRequirementsDialog(project, nonWellKnownPackages) { it }
-
-  val isOk = dialog.showAndGet()
-  if (!isOk) {
-    return emptyList()
-  }
-  return knownPackages + dialog.markedElements
+  return dialog.markedElements.toSet()
 }
+
