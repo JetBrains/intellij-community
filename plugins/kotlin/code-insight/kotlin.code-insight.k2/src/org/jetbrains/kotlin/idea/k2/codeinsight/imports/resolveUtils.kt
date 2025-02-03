@@ -5,6 +5,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KaClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -47,11 +48,20 @@ internal fun KaSession.resolveTypeAliasedConstructorReference(
     if (!typeAliasIsAvailable(originalReferenceName, containingFile)) return null
 
     val referencedType = resolveReferencedType(reference) ?: return null
-    if (referencedType.symbol != expandedClassSymbol) return null
 
-    val typealiasType = referencedType.abbreviation ?: return null
+    if (referencedType !is KaClassErrorType) {
+        if (referencedType.symbol != expandedClassSymbol) return null
 
-    return typealiasType.symbol
+        val typealiasType = referencedType.abbreviation ?: return null
+
+        return typealiasType.symbol
+    } else {
+        val singleCandidate = referencedType.candidateSymbols.singleOrNull() as? KaTypeAliasSymbol?: return null
+
+        if (singleCandidate.expandedType.symbol != expandedClassSymbol) return null
+
+        return singleCandidate
+    }
 }
 
 private fun KaSession.typeAliasIsAvailable(name: Name, containingFile: KtFile): Boolean {

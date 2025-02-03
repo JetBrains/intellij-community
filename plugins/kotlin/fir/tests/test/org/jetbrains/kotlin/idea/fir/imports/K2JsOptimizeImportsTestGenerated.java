@@ -661,9 +661,19 @@ public abstract class K2JsOptimizeImportsTestGenerated extends AbstractK2JsOptim
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/TypeAliasedConstructor_samConstructor.kt");
             }
 
+            @TestMetadata("TypeAliasedConstructor_samConstructor_withGenerics.kt")
+            public void testTypeAliasedConstructor_samConstructor_withGenerics() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/TypeAliasedConstructor_samConstructor_withGenerics.kt");
+            }
+
             @TestMetadata("TypeAliasedConstructor_sameName.kt")
             public void testTypeAliasedConstructor_sameName() throws Exception {
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/TypeAliasedConstructor_sameName.kt");
+            }
+
+            @TestMetadata("TypeAliasedConstructor_withGenerics.kt")
+            public void testTypeAliasedConstructor_withGenerics() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/TypeAliasedConstructor_withGenerics.kt");
             }
 
             @TestMetadata("UnresolvedImport.kt")
