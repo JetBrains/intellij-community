@@ -13,10 +13,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.ConfigurableVisitor;
-import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.options.ex.MutableConfigurableGroup;
-import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.options.ex.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.Splitter;
@@ -29,6 +26,7 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SearchTextField;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
@@ -46,6 +44,7 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
@@ -72,6 +71,14 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   private final Map<Configurable, ConfigurableController> controllers = new HashMap<>();
   private ConfigurableController lastController;
+
+  private final AbstractAction myResetAllAction = new AbstractAction(UIBundle.message("settings.reset.all.action.name")) {
+    @Override
+    public void actionPerformed(ActionEvent event) {
+      reset();
+    }
+  };
+
 
   SettingsEditor(@NotNull Disposable parent,
                  @NotNull Project project,
@@ -414,7 +421,14 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   @Override
   protected Action getResetAction() {
-    return editor.getResetAction();
+    return myResetAllAction;
+  }
+
+  private void reset() {
+    checkModified(filter.context.getCurrentConfigurable());
+    for (Configurable configurable : filter.context.getModified()) {
+      filter.context.fireReset(configurable);
+    }
   }
 
   @Override
@@ -465,7 +479,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     filter.updateSpotlight(configurable == null);
     if (editor != null) {
       ConfigurationException exception = filter.context.getErrors().get(configurable);
-      editor.getApplyAction().setEnabled(!filter.context.getModified().isEmpty());
+      boolean hasModified = filter.context.getModified().isEmpty();
+      editor.getApplyAction().setEnabled(!hasModified);
+      myResetAllAction.setEnabled(!hasModified);
       editor.getResetAction().setEnabled(filter.context.isModified(configurable) || exception != null);
       editor.setError(exception);
       editor.revalidate();

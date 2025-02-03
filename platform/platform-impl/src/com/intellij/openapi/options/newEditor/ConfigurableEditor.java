@@ -63,11 +63,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   private final AbstractAction myResetAction = new AbstractAction(UIBundle.message("configurable.reset.action.name")) {
     @Override
     public void actionPerformed(ActionEvent event) {
-      if (configurable != null) {
-        ConfigurableCardPanel.reset(configurable);
-        updateCurrent(configurable, true);
-        FeatureUsageUiEventsKt.getUiEventLogger().logResetConfigurable(configurable);
-      }
+      reset();
     }
   };
   private Configurable configurable;
@@ -131,6 +127,14 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     // do not apply changes of a single configurable if it is not modified
     updateIfCurrent(configurable);
     return setError(apply(myApplyAction.isEnabled() ? configurable : null));
+  }
+
+  protected void reset() {
+    if (configurable != null) {
+      ConfigurableCardPanel.reset(configurable);
+      updateCurrent(configurable, true);
+      FeatureUsageUiEventsKt.getUiEventLogger().logResetConfigurable(configurable);
+    }
   }
 
   @Override
