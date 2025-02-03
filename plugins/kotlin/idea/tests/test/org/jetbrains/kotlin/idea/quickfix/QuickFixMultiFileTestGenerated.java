@@ -546,6 +546,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/enumEntries_ExplicitReceiver.test");
             }
 
+            @TestMetadata("enumEntries_FromJava.test")
+            public void testEnumEntries_FromJava() throws Exception {
+                runTest("testData/quickfix/autoImports/enumEntries_FromJava.test");
+            }
+
+            @TestMetadata("enumEntries_FromJava_private.test")
+            public void testEnumEntries_FromJava_private() throws Exception {
+                runTest("testData/quickfix/autoImports/enumEntries_FromJava_private.test");
+            }
+
             @TestMetadata("enumEntries_Private.test")
             public void testEnumEntries_Private() throws Exception {
                 runTest("testData/quickfix/autoImports/enumEntries_Private.test");
