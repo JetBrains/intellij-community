@@ -111,6 +111,8 @@
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer"/>
 
+    <workspaceModel.fileIndexContributor implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleKotlinScriptIndexContributor"/>
+
     <registryKey
             key="kotlin.gradle.testing.enabled"
             description="Import Kotlin Gradle test tasks and process test output"

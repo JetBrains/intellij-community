@@ -98,8 +98,8 @@
                  key="kotlin.k2.scripting.show.modules"
                  description="Enable displaying Kotlin Script modules in 'Project Structure' | 'Modules' view "/>
     <registryKey
-            key="kotlin.scripting.fs.roots.storage.enabled"
-            description="Cache resolved dependencies paths across all scripts"
+            key="kotlin.scripting.index.dependencies.sources"
+            description="Index script dependencies sources eagerly (not deferred)"
             defaultValue="false"
             restartRequired="true"/>
 
@@ -124,9 +124,6 @@
 
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptResolveScopeProvider"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
-
-    <workspaceModel.fileIndexContributor
-            implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptWorkspaceFileIndexContributor"/>
 
     <configuration.moduleStructureFilterExtension
             implementation="org.jetbrains.kotlin.idea.base.scripting.projectStructure.KotlinScriptsProjectStructureFilter"/>

@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeI
  * [here](https://youtrack.jetbrains.com/articles/IDEA-A-239/Integration-of-custom-workspace-entities-with-platform-functionality)
  */
 
-fun indexSourceRootsEagerly() = Registry.`is`("kotlin.scripting.index.dependencies.sources", false)
+fun indexSourceRootsEagerly(): Boolean = Registry.`is`("kotlin.scripting.index.dependencies.sources", false)
 
 class KotlinScriptWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<KotlinScriptLibraryEntity> {
     override val entityClass: Class<KotlinScriptLibraryEntity>
