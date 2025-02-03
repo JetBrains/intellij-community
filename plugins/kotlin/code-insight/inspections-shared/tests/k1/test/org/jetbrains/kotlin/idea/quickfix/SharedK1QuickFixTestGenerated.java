@@ -82,4 +82,23 @@ public abstract class SharedK1QuickFixTestGenerated extends AbstractSharedK1Quic
             runTest("../testData/quickfix/unresolvedInvocation/propertyCallWithArguments.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/quickfix/unusedImport")
+    public static class UnusedImport extends AbstractSharedK1QuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("import.kt")
+        public void testImport() throws Exception {
+            runTest("../testData/quickfix/unusedImport/import.kt");
+        }
+    }
 }
