@@ -14,11 +14,13 @@ import com.jetbrains.rhizomedb.requireChangeScope
 import fleet.kernel.DurableEntityType
 import kotlinx.serialization.builtins.serializer
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 
 private typealias Att<T> = Attributes<AdDocumentEntity>.Required<T>
 
+@Internal
 @Experimental
-internal class AdDocumentEntity(override val eid: EID) : Entity {
+class AdDocumentEntity(override val eid: EID) : Entity {
   val text: Text by TextAttr
   val modStamp: Long by ModStampAttr
   val editLog: EditLog by EditLogAttr
