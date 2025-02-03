@@ -38,7 +38,7 @@ class MainMenuWithButton(
     isOpaque = false
     RowsGridBuilder(this).defaultVerticalAlign(VerticalAlign.FILL)
       .row(resizable = true)
-      .cell(component = toolbarMainMenu, resizableColumn = true, gaps = UnscaledGaps(top = 5, bottom = 5))
+      .cell(component = toolbarMainMenu, resizableColumn = true)
       .cell(component = mainMenuButton.button, gaps = UnscaledGaps(top = 5, bottom = 5))
   }
 
