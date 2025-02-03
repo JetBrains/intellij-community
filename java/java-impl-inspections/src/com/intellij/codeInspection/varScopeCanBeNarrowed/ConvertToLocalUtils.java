@@ -5,7 +5,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.CommonJavaInlineUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
@@ -27,21 +26,20 @@ final class ConvertToLocalUtils {
     if (anchorBlock == null) return null; // was assertion, but need to fix the case when obsolete inspection highlighting is left
     final PsiElement firstElement = getLowestOffsetElement(references);
     final String localName = newName.apply(anchorBlock);
-    if (firstElement == null) return null;
     final PsiElement anchor = getAnchorElement(anchorBlock, firstElement);
     if (anchor == null) return null;
     final PsiAssignmentExpression anchorAssignmentExpression = searchAssignmentExpression(anchor);
-    final PsiExpression initializer;
-    if (anchorAssignmentExpression != null && isVariableAssignment(anchorAssignmentExpression, variable)) {
-      initializer = anchorAssignmentExpression.getRExpression();
-    }
-    else {
-      initializer = variable.getInitializer();
-    }
+    final PsiExpression initializer = anchorAssignmentExpression != null && isVariableAssignment(anchorAssignmentExpression, variable)
+                                      ? anchorAssignmentExpression.getRExpression()
+                                      : variable.getInitializer();
     final PsiElementFactory psiFactory = JavaPsiFacade.getElementFactory(variable.getProject());
-    final PsiDeclarationStatement declaration = psiFactory.createVariableDeclarationStatement(localName, variable.getType(), initializer);
-    if (ContainerUtil.exists(references, PsiUtil::isAccessedForWriting)) {
-      PsiUtil.setModifierProperty((PsiLocalVariable)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
+    final PsiDeclarationStatement declaration =
+      psiFactory.createVariableDeclarationStatement(localName, variable.getType(), initializer, variable);
+    for (int i = 1; i < references.size(); i++) {
+      if (PsiUtil.isAccessedForWriting(references.get(i))) {
+        PsiUtil.setModifierProperty((PsiLocalVariable)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
+        break;
+      }
     }
     final PsiElement newDeclaration;
     if (anchorAssignmentExpression != null && isVariableAssignment(anchorAssignmentExpression, variable)) {
