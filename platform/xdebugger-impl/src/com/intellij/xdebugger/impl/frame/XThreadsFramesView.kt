@@ -237,17 +237,11 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     })
 
     myThreadsList.addMouseListener(object : MouseAdapter() {
-      // not mousePressed here, otherwise click in unfocused frames list transfers focus to the new opened editor
+      // not mousePressed here, otherwise click in an unfocused frames list transfers focus to the new opened editor
       override fun mouseReleased(e: MouseEvent) {
-        if (!myListenersEnabled) return
-
-        val i = myThreadsList.locationToIndex(e.point)
-        if (i == -1 || !myThreadsList.isSelectedIndex(i)) return
-
-        val session = getSession(e) ?: return
-        val stack = myThreadsList.selectedValue?.stack ?: return
-
-        stack.setActive(session)
+        processMouseEvent(e) { session, stack, _ ->
+          stack.setActive(session)
+        }
       }
     })
 
@@ -270,20 +264,27 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     })
 
     myFramesList.addMouseListener(object : MouseAdapter() {
-      // not mousePressed here, otherwise click in unfocused frames list transfers focus to the new opened editor
+      // not mousePressed here, otherwise click in an unfocused frames list transfers focus to the new opened editor
       override fun mouseReleased(e: MouseEvent) {
-        if (!myListenersEnabled) return
-
-        val i = myFramesList.locationToIndex(e.point)
-        if (i == -1 || !myFramesList.isSelectedIndex(i)) return
-
-        val session = getSession(e) ?: return
-        val stack = myThreadsList.selectedValue?.stack ?: return
-        val frame = myFramesList.selectedValue as? XStackFrame ?: return
-
-        session.setCurrentStackFrame(stack, frame)
+        processMouseEvent(e) { session, stack, frame ->
+          frame ?: return@processMouseEvent
+          session.setCurrentStackFrame(stack, frame)
+        }
       }
     })
+  }
+
+  private inline fun processMouseEvent(e: MouseEvent, action: (XDebugSession, XExecutionStack, XStackFrame?) -> Unit) {
+    if (!myListenersEnabled) return
+
+    val i = myFramesList.locationToIndex(e.point)
+    if (i == -1 || !myFramesList.isSelectedIndex(i)) return
+
+    val session = getSession(e) ?: return
+    val stack = myThreadsList.selectedValue?.stack ?: return
+    val frame = myFramesList.selectedValue as? XStackFrame
+
+    action(session, stack, frame)
   }
 
   private fun setActiveThreadDescription(@Nls text: String) {
