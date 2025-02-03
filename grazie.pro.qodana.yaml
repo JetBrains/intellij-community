@@ -6,4 +6,5 @@ properties:
 profile:
   path: .idea/inspectionProfiles/idea_fatal_errors.yml
 plugins:
+  - id: com.intellij.platform.ide.provisioner
   - id: com.intellij.grazie.pro
