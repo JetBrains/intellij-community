@@ -167,7 +167,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
-    myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
+    myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject, this);
     myRequestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(this::reloadRenderers, myDisposable);
     NodeRenderer.EP_NAME.addChangeListener(this::reloadRenderers, myDisposable);
@@ -2315,7 +2315,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (keepCurrentVM) {
         detachProcess(false, true, vmData -> {
           myStashedVirtualMachines.addFirst(vmData);
-          myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
+          myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject, this);
         });
       }
       else {

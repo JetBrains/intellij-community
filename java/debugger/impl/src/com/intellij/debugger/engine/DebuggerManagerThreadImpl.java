@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.InvokeAndWaitThread;
 import com.intellij.debugger.impl.PrioritizedTask;
+import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,11 +18,13 @@ import com.intellij.openapi.progress.util.ProgressIndicatorListener;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
@@ -32,10 +35,16 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   static final int COMMAND_TIMEOUT = 3000;
 
   private volatile boolean myDisposed;
+  private final WeakReference<DebugProcess> myProcess;
 
   DebuggerManagerThreadImpl(@NotNull Disposable parent, Project project) {
+    this(parent, project, null);
+  }
+
+  DebuggerManagerThreadImpl(@NotNull Disposable parent, Project project, DebugProcess debugProcess) {
     super(project);
     Disposer.register(parent, this);
+    myProcess = new WeakReference<>(debugProcess);
   }
 
   @Override
@@ -153,7 +162,11 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
         managerCommand.notifyCancelled();
       }
       else {
-        managerCommand.run();
+        long timeMs = TimeoutUtil.measureExecutionTime(() -> managerCommand.run());
+        DebugProcess process = myProcess.get();
+        if (process != null) {
+          StatisticsStorage.addCommandTime(process, timeMs);
+        }
       }
     }
     catch (VMDisconnectedException e) {
