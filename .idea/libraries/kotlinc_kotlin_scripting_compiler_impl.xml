@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-compiler-impl" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:2.2.0-dev-2643">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:2.2.0-dev-3086">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.0-dev-2643/kotlin-scripting-compiler-impl-2.2.0-dev-2643.jar">
-          <sha256sum>db0fab83e0eef06a2e2b8e353a212062dcaf50a49723b8726f295c1767943a8c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.0-dev-3086/kotlin-scripting-compiler-impl-2.2.0-dev-3086.jar">
+          <sha256sum>c6f95965b166eea56612035a5a6dc349c221ecc8bf38c967fb1b5ce2d828d03e</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.0-dev-2643/kotlin-scripting-compiler-impl-2.2.0-dev-2643.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.0-dev-3086/kotlin-scripting-compiler-impl-2.2.0-dev-3086.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.0-dev-2643/kotlin-scripting-compiler-impl-2.2.0-dev-2643-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.2.0-dev-3086/kotlin-scripting-compiler-impl-2.2.0-dev-3086-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
