@@ -4,11 +4,9 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.google.common.collect.RangeSet;
 import com.intellij.openapi.util.Version;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.PyImportStatement;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
 import org.jetbrains.annotations.NotNull;
 

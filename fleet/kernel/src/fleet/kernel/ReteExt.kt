@@ -7,7 +7,6 @@ import fleet.util.AtomicRef
 import fleet.util.logging.logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlin.reflect.KClass
 
 /**
  * [f] will be invoked each time when it's return value may be changed.

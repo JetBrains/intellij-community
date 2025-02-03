@@ -1,6 +1,5 @@
 package com.intellij.database.datagrid;
 
-import com.intellij.database.extractors.BinaryDisplayType;
 import com.intellij.database.extractors.DisplayType;
 import com.intellij.lang.Language;
 import com.intellij.util.messages.Topic;

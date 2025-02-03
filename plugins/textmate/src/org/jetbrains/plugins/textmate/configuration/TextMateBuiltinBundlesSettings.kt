@@ -3,7 +3,6 @@ package org.jetbrains.plugins.textmate.configuration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import org.jetbrains.plugins.textmate.TextMateBundleToLoad
-import java.nio.file.Path
 
 @State(name = "TextMateBuiltinBundlesSettings",
        category = SettingsCategory.TOOLS,

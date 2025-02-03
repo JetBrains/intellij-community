@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.core
 
-import com.intellij.cce.core.Language.entries
-
 
 enum class Language(val displayName: String, private val extensions: List<String>, val ideaLanguageId: String, val needSdk: Boolean = false,
                     val curlyBracket: Boolean = true) {

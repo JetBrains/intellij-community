@@ -1,7 +1,6 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
@@ -14,7 +13,6 @@ import java.awt.event.HierarchyEvent
 import java.lang.ref.WeakReference
 import javax.swing.JComponent
 import javax.swing.JScrollPane
-import javax.swing.SwingUtilities
 
 fun EditorEx.addComponentInlay(
   component: JComponent,

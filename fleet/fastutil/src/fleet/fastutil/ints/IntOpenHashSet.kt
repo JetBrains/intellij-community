@@ -18,7 +18,6 @@ package fleet.fastutil.ints
 import fleet.fastutil.Arrays
 import fleet.fastutil.Hash
 import fleet.fastutil.HashCommon
-import fleet.fastutil.ints.IntArrays.unwrap
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min

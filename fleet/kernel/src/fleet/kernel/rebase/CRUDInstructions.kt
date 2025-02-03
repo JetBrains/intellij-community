@@ -5,9 +5,6 @@ import fleet.kernel.DurableDbValue
 import fleet.util.UID
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.modules.SerializersModuleBuilder
-import kotlinx.serialization.modules.polymorphic
-import kotlinx.serialization.modules.subclass
 
 @Serializable
 data class SharedCreateEntity(

@@ -12,7 +12,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts
 import com.intellij.refactoring.move.MoveHandler
 import com.jetbrains.performancePlugin.commands.dto.MoveFilesData
-import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

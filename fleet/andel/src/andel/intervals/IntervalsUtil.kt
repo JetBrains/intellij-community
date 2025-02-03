@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package andel.intervals
 
-import andel.intervals.impl.IntervalsQuerySum
 import andel.intervals.impl.KeyedIntervals
 
 fun <K, T, R> IntervalsQuery<K, T>.mapValues(f: (T) -> R): IntervalsQuery<K, R> {

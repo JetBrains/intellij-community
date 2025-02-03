@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.intention.valvar.to;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;

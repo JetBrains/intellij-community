@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 import org.apache.commons.lang3.StringEscapeUtils
-import com.intellij.openapi.diagnostic.logger
 
 
 open class BasicFileReportGenerator(

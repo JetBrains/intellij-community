@@ -3,8 +3,6 @@ package com.intellij.database.extractors;
 import com.intellij.database.DataGridBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.OutputStream;
-
 public class XlsxExtractorFactory implements DataExtractorFactory {
   @Override
   public @NotNull String getName() {

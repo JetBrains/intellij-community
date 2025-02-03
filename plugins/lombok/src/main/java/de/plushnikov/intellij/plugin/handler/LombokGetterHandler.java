@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Predicate;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.function.Predicate.not;

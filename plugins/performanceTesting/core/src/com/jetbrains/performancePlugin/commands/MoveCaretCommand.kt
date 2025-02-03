@@ -1,6 +1,5 @@
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.concurrency.awaitPromise
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.playback.PlaybackContext
