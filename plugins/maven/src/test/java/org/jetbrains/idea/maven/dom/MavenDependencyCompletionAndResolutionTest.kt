@@ -160,7 +160,6 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
   @Test
   fun testResolvingPropertiesForLocalProjectsInCompletion() = runBlocking {
-    runWithoutStaticSync()
     updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
