@@ -39,14 +39,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
 import com.intellij.util.ObjectUtils;
@@ -947,46 +945,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitTypeElement(type);
     if (!hasErrorResults()) {
       PreviewFeatureUtil.checkPreviewFeature(type, myPreviewFeatureVisitor);
-    }
-  }
-
-  @Override
-  public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
-    super.visitConditionalExpression(expression);
-    if (!myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) || !PsiPolyExpressionUtil.isPolyExpression(expression)) return;
-    PsiExpression thenExpression = expression.getThenExpression();
-    PsiExpression elseExpression = expression.getElseExpression();
-    if (thenExpression == null || elseExpression == null) return;
-    PsiType conditionalType = expression.getType();
-    if (conditionalType == null) return;
-    PsiExpression[] sides = {thenExpression, elseExpression};
-    PsiType expectedType = null;
-    boolean isExpectedTypeComputed = false;
-    for (int i = 0; i < sides.length; i++) {
-      PsiExpression side = sides[i];
-      PsiExpression otherSide = i == 0 ? sides[1] : sides[0];
-      PsiType sideType = side.getType();
-      if (sideType != null && !TypeConversionUtil.isAssignable(conditionalType, sideType)) {
-        HighlightInfo.Builder info = HighlightUtil.checkAssignability(conditionalType, sideType, side, side);
-        if (info == null) continue;
-        if (!TypeConversionUtil.isVoidType(sideType)) {
-          if (TypeConversionUtil.isVoidType(otherSide.getType())) {
-            HighlightUtil.registerChangeTypeFix(info, expression, sideType);
-          }
-          else {
-            if (!isExpectedTypeComputed) {
-              PsiElementFactory factory = PsiElementFactory.getInstance(expression.getProject());
-              PsiExpression expressionCopy = factory.createExpressionFromText(expression.getText(), expression);
-              expectedType = expressionCopy.getType();
-              isExpectedTypeComputed = true;
-            }
-            if (expectedType != null) {
-              HighlightUtil.registerChangeTypeFix(info, expression, expectedType);
-            }
-          }
-        }
-        add(info);
-      }
     }
   }
 

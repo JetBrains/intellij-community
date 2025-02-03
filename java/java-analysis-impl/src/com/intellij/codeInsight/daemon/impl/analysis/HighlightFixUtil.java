@@ -722,7 +722,7 @@ public final class HighlightFixUtil {
     PsiShortNamesCache shortNamesCache = PsiShortNamesCache.getInstance(project);
     PsiClass[] classes = shortNamesCache.getClassesByName(shortName, GlobalSearchScope.allScope(project));
     PsiElementFactory factory = facade.getElementFactory();
-    JavaSdkVersion version = Objects.requireNonNullElse(JavaVersionService.getInstance().getJavaSdkVersion(file),
+    JavaSdkVersion version = requireNonNullElse(JavaVersionService.getInstance().getJavaSdkVersion(file),
                                                         JavaSdkVersion.fromLanguageLevel(PsiUtil.getLanguageLevel(file)));
     for (PsiClass aClass : classes) {
       if (aClass == null) {
@@ -799,6 +799,92 @@ public final class HighlightFixUtil {
     PermuteArgumentsFix.registerFix(sink, methodCall, candidates);
     registerChangeParameterClassFix(methodCall, list, sink);
     registerMethodCallIntentions(sink, methodCall, list);
+  }
+
+  static void registerIncompatibleTypeFixes(@NotNull Consumer<? super @Nullable CommonIntentionAction> sink,
+                                            @NotNull PsiElement anchor,
+                                            @NotNull PsiType lType, @Nullable PsiType rType) {
+    QuickFixFactory factory = QuickFixFactory.getInstance();
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(anchor.getParent());
+    if (anchor instanceof PsiJavaCodeReferenceElement && parent instanceof PsiReferenceList &&
+        parent.getParent() instanceof PsiMethod method && method.getThrowsList() == parent) {
+      // Incompatible type in throws clause
+      PsiClass usedClass = PsiUtil.resolveClassInClassTypeOnly(rType);
+      if (usedClass != null && lType instanceof PsiClassType throwableType) {
+        sink.accept(factory.createExtendsListFix(usedClass, throwableType, true));
+      }
+    }
+    if (anchor instanceof PsiExpression expression) {
+      AddTypeArgumentsConditionalFix.register(sink, expression, lType);
+      AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(sink, expression, lType, rType);
+      sink.accept(ChangeNewOperatorTypeFix.createFix(expression, lType));
+      if (PsiTypes.booleanType().equals(lType) && expression instanceof PsiAssignmentExpression assignment &&
+          assignment.getOperationTokenType() == JavaTokenType.EQ) {
+        sink.accept(factory.createAssignmentToComparisonFix(assignment));
+      }
+      else if (expression instanceof PsiMethodCallExpression callExpression) {
+        registerCallInferenceFixes(callExpression, sink);
+      }
+      if (parent instanceof PsiArrayInitializerExpression initializerList) {
+        PsiType sameType = JavaHighlightUtil.sameType(initializerList.getInitializers());
+        sink.accept(sameType == null ? null : VariableArrayTypeFix.createFix(initializerList, sameType));
+      }
+      else if (parent instanceof PsiConditionalExpression ternary) {
+        PsiExpression thenExpression = PsiUtil.skipParenthesizedExprDown(ternary.getThenExpression());
+        PsiExpression elseExpression = PsiUtil.skipParenthesizedExprDown(ternary.getElseExpression());
+        PsiExpression otherSide = elseExpression == expression ? thenExpression : elseExpression;
+        if (otherSide != null && !TypeConversionUtil.isVoidType(rType)) {
+          if (TypeConversionUtil.isVoidType(otherSide.getType())) {
+            registerIncompatibleTypeFixes(sink, ternary, lType, rType);
+          } else {
+            PsiExpression expressionCopy = PsiElementFactory.getInstance(expression.getProject())
+              .createExpressionFromText(ternary.getText(), ternary);
+            PsiType expectedType = expression.getType();
+            PsiType actualType = expressionCopy.getType();
+            if (expectedType != null && actualType != null && !expectedType.isAssignableFrom(actualType)) {
+              registerIncompatibleTypeFixes(sink, ternary, expectedType, actualType);
+            }
+          }
+        }
+      }
+      else if (parent instanceof PsiReturnStatement && rType != null && !PsiTypes.voidType().equals(rType)) {
+        if (PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiMethod method) {
+          sink.accept(factory.createMethodReturnFix(method, rType, true, true));
+          PsiType expectedType = determineReturnType(method);
+          if (expectedType != null && !PsiTypes.voidType().equals(expectedType) && !expectedType.equals(rType)) {
+            sink.accept(factory.createMethodReturnFix(method, expectedType, true, true));
+          }
+        }
+      }
+      else if (parent instanceof PsiVariable var &&
+               PsiUtil.skipParenthesizedExprDown(var.getInitializer()) == expression && rType != null) {
+        registerChangeVariableTypeFixes(var, rType, sink);
+      }
+      else if (parent instanceof PsiAssignmentExpression assignment &&
+               PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()) == expression) {
+        PsiExpression lExpr = assignment.getLExpression();
+
+        sink.accept(factory.createChangeToAppendFix(assignment.getOperationTokenType(), lType, assignment));
+        if (rType != null) {
+          registerChangeVariableTypeFixes(lExpr, rType, sink);
+          if (expression instanceof PsiMethodCallExpression call && assignment.getParent() instanceof PsiStatement &&
+              PsiTypes.voidType().equals(rType)) {
+            sink.accept(new ReplaceAssignmentFromVoidWithStatementIntentionAction(assignment, call));
+          }
+        }
+      }
+    }
+    if (anchor instanceof PsiParameter parameter && parent instanceof PsiForeachStatement forEach) {
+      registerChangeVariableTypeFixes(parameter, lType, sink);
+      PsiExpression iteratedValue = forEach.getIteratedValue();
+      if (iteratedValue != null && rType != null) {
+        PsiType type = iteratedValue.getType();
+        if (type instanceof PsiArrayType) {
+          AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(sink, iteratedValue, rType.createArrayType(), type);
+        }
+      }
+    }
+    registerChangeParameterClassFix(lType, rType, sink);
   }
 
   private static final class ReturnModel {

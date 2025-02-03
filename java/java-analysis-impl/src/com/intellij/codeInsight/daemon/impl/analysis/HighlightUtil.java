@@ -304,7 +304,7 @@ public final class HighlightUtil {
             .message("bad.type.in.switch.expression", expressionType.getCanonicalText(), switchExpressionType.getCanonicalText());
           HighlightInfo.Builder info =
             HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text);
-          registerChangeTypeFix(info, switchExpression, expressionType);
+          HighlightFixUtil.registerIncompatibleTypeFixes(asConsumer(info), switchExpression, switchExpressionType, expressionType);
           errorSink.accept(info);
         }
       }
@@ -315,25 +315,6 @@ public final class HighlightUtil {
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(switchExpression.getFirstChild()).descriptionAndTooltip(text);
         errorSink.accept(info);
       }
-    }
-  }
-
-  static void registerChangeTypeFix(@Nullable HighlightInfo.Builder info,
-                                    @NotNull PsiExpression expression,
-                                    @NotNull PsiType expectedType) {
-    if (info == null) return;
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiReturnStatement) {
-      PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, false, PsiLambdaExpression.class);
-      if (method != null) {
-        registerReturnTypeFixes(info, method, expectedType);
-      }
-    }
-    else if (parent instanceof PsiLocalVariable localVariable) {
-      HighlightFixUtil.registerChangeVariableTypeFixes(localVariable, expectedType, info);
-    }
-    else if (parent instanceof PsiAssignmentExpression assignmentExpression) {
-      HighlightFixUtil.registerChangeVariableTypeFixes(assignmentExpression.getLExpression(), expectedType, asConsumer(info));
     }
   }
 

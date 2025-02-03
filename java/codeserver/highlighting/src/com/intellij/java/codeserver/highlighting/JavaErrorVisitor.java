@@ -710,6 +710,25 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
+    super.visitConditionalExpression(expression);
+    if (!myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) || !PsiPolyExpressionUtil.isPolyExpression(expression)) return;
+    PsiExpression thenExpression = expression.getThenExpression();
+    PsiExpression elseExpression = expression.getElseExpression();
+    if (thenExpression == null || elseExpression == null) return;
+    PsiType conditionalType = expression.getType();
+    if (conditionalType == null) return;
+    PsiExpression[] sides = {thenExpression, elseExpression};
+    for (PsiExpression side : sides) {
+      PsiType sideType = side.getType();
+      if (sideType != null && !TypeConversionUtil.isAssignable(conditionalType, sideType)) {
+        myExpressionChecker.checkAssignability(conditionalType, sideType, side, side);
+      }
+    }
+  }
+
+
+  @Override
   public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
     super.visitTypeCastExpression(expression);
     if (!hasErrorResults()) myExpressionChecker.checkIntersectionInTypeCast(expression);

@@ -15,7 +15,6 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
-import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.java.codeserver.highlighting.errors.JavaMismatchedCallContext;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.JvmModifiersOwner;
@@ -543,74 +542,8 @@ final class JavaErrorFixProvider {
   }
 
   private void createTypeFixes() {
-    fixes(TYPE_INCOMPATIBLE, (error, sink) -> {
-      JavaIncompatibleTypeErrorContext context = error.context();
-      PsiElement anchor = error.psi();
-      PsiElement parent = PsiUtil.skipParenthesizedExprUp(anchor.getParent());
-      PsiType lType = context.lType();
-      PsiType rType = context.rType();
-      if (anchor instanceof PsiJavaCodeReferenceElement && parent instanceof PsiReferenceList &&
-          parent.getParent() instanceof PsiMethod method && method.getThrowsList() == parent) {
-        // Incompatible type in throws clause
-        PsiClass usedClass = PsiUtil.resolveClassInClassTypeOnly(rType);
-        if (usedClass != null && lType instanceof PsiClassType throwableType) {
-          sink.accept(myFactory.createExtendsListFix(usedClass, throwableType, true));
-        }
-      }
-      if (anchor instanceof PsiExpression expression) {
-        AddTypeArgumentsConditionalFix.register(sink, expression, lType);
-        AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(sink, expression, lType, rType);
-        sink.accept(ChangeNewOperatorTypeFix.createFix(expression, lType));
-        if (PsiTypes.booleanType().equals(lType) && expression instanceof PsiAssignmentExpression assignment &&
-            assignment.getOperationTokenType() == JavaTokenType.EQ) {
-          sink.accept(myFactory.createAssignmentToComparisonFix(assignment));
-        }
-        else if (expression instanceof PsiMethodCallExpression callExpression) {
-          HighlightFixUtil.registerCallInferenceFixes(callExpression, sink);
-        }
-        if (parent instanceof PsiArrayInitializerExpression initializerList) {
-          PsiType sameType = JavaHighlightUtil.sameType(initializerList.getInitializers());
-          sink.accept(sameType == null ? null : VariableArrayTypeFix.createFix(initializerList, sameType));
-        }
-        else if (parent instanceof PsiReturnStatement && rType != null && !PsiTypes.voidType().equals(rType)) {
-          if (PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiMethod method) {
-            sink.accept(myFactory.createMethodReturnFix(method, rType, true, true));
-            PsiType expectedType = HighlightFixUtil.determineReturnType(method);
-            if (expectedType != null && !PsiTypes.voidType().equals(expectedType) && !expectedType.equals(rType)) {
-              sink.accept(myFactory.createMethodReturnFix(method, expectedType, true, true));
-            }
-          }
-        }
-        else if (parent instanceof PsiVariable var && 
-                 PsiUtil.skipParenthesizedExprDown(var.getInitializer()) == expression && rType != null) {
-          HighlightFixUtil.registerChangeVariableTypeFixes(var, rType, sink);
-        }
-        else if (parent instanceof PsiAssignmentExpression assignment && 
-                 PsiUtil.skipParenthesizedExprDown(assignment.getRExpression()) == expression) {
-          PsiExpression lExpr = assignment.getLExpression();
-
-          sink.accept(myFactory.createChangeToAppendFix(assignment.getOperationTokenType(), lType, assignment));
-          if (rType != null) {
-            HighlightFixUtil.registerChangeVariableTypeFixes(lExpr, rType, sink);
-            if (expression instanceof PsiMethodCallExpression call && assignment.getParent() instanceof PsiStatement &&
-                PsiTypes.voidType().equals(rType)) {
-              sink.accept(new ReplaceAssignmentFromVoidWithStatementIntentionAction(assignment, call));
-            }
-          }
-        }
-      }
-      if (anchor instanceof PsiParameter parameter && parent instanceof PsiForeachStatement forEach) {
-        HighlightFixUtil.registerChangeVariableTypeFixes(parameter, lType, sink);
-        PsiExpression iteratedValue = forEach.getIteratedValue();
-        if (iteratedValue != null && rType != null) {
-          PsiType type = iteratedValue.getType();
-          if (type instanceof PsiArrayType) {
-            AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(sink, iteratedValue, rType.createArrayType(), type);
-          }
-        }
-      }
-      HighlightFixUtil.registerChangeParameterClassFix(lType, rType, sink);
-    });
+    fixes(TYPE_INCOMPATIBLE, (error, sink) -> 
+      HighlightFixUtil.registerIncompatibleTypeFixes(sink, error.psi(), error.context().lType(), error.context().rType()));
     fixes(CALL_TYPE_INFERENCE_ERROR, (error, sink) -> {
       if (error.psi() instanceof PsiMethodCallExpression callExpression) {
         HighlightFixUtil.registerCallInferenceFixes(callExpression, sink);
