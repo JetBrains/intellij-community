@@ -9,6 +9,6 @@ import java.awt.Color
 internal class XNextBar : JBPanel<JBPanel<*>>() {
 
   override fun getBackground(): Color? {
-    return InternalUICustomization.getInstance().getCustomMainBackgroundColor() ?: JBUI.CurrentTheme.StatusBar.BACKGROUND
+    return InternalUICustomization.getInstance()?.getCustomMainBackgroundColor() ?: JBUI.CurrentTheme.StatusBar.BACKGROUND
   }
 }

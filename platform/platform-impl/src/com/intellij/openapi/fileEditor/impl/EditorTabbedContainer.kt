@@ -43,6 +43,7 @@ import com.intellij.ui.docking.DockableContent
 import com.intellij.ui.docking.DragSession
 import com.intellij.ui.docking.impl.DockManagerImpl.Companion.isNorthPanelAvailable
 import com.intellij.ui.tabs.*
+import com.intellij.ui.tabs.JBTabPainter.Companion.DEFAULT
 import com.intellij.ui.tabs.TabInfo.DragOutDelegate
 import com.intellij.ui.tabs.UiDecorator.UiDecoration
 import com.intellij.ui.tabs.impl.*
@@ -224,7 +225,7 @@ class EditorTabbedContainer internal constructor(
         if (UISettings.getInstance().showFileIconInTabs) {
           it.setIcon(icon)
         }
-        InternalUICustomization.getInstance().componentMarker.markAIComponent(it.component, selectedEditor)
+        InternalUICustomization.getInstance()?.aiComponentMarker?.markAiComponent(it.component, selectedEditor)
       }
     )
     selectedEditor?.tabActions?.let {
@@ -648,7 +649,7 @@ private class EditorTabs(
     return closeTabAction?.getIcon(isHovered)
   }
 
-  override fun createTabPainterAdapter(): TabPainterAdapter = InternalUICustomization.getInstance().editorTabPainterAdapter
+  override fun createTabPainterAdapter(): TabPainterAdapter = InternalUICustomization.getInstance()?.editorTabPainterAdapter ?: DefaultTabPainterAdapter(DEFAULT)
 
   override fun createTabBorder(): JBTabsBorder = JBEditorTabsBorder(this)
 

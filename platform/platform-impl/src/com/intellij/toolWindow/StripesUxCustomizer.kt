@@ -14,6 +14,4 @@ internal open class StripesUxCustomizer {
   }
 
   open fun createCustomButtonManager(paneId: String): ToolWindowButtonManager? = null
-
-  open fun decorateAndReturnHolder(divider: JComponent, child: JComponent): JComponent? = null
 }
