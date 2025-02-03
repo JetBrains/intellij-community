@@ -1,5 +1,6 @@
 package ru.adelf.idea.dotenv.tests
 
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -37,6 +38,21 @@ abstract class DotEnvFileBasedTestCase : BasePlatformTestCase() {
         val text = myFixture.file.text
         val actual = LexerTestCase.printTokens(text, 0, DotEnvLexerAdapter())
         assertSameLinesWithFile(referenceFile, actual)
+    }
+
+    fun doInspectionTest(inspection: LocalInspectionTool) {
+        myFixture.enableInspections(inspection)
+        myFixture.testHighlighting(true, true, true)
+    }
+
+    fun doQuickFixTest(inspection: LocalInspectionTool) {
+        myFixture.enableInspections(inspection)
+        myFixture.doHighlighting()
+        val intention = myFixture.findSingleIntention("Put value inside double quotes")
+        myFixture.launchAction(intention)
+        val referenceFile = filenamePrefixForCurrentTest("txt")
+        myFixture.copyFileToProject(referenceFile)
+        myFixture.checkResultByFile(referenceFile)
     }
 
     fun doUsageTest() {
