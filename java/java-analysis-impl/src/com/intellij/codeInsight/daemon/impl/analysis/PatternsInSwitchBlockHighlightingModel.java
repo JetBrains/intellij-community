@@ -375,8 +375,6 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
                                     @NotNull PsiElement who,
                                     @NotNull PsiType selectorType) {
     boolean isOverWhomUnconditionalForSelector = JavaPsiPatternUtil.isUnconditionalForType(overWhom, selectorType);
-    boolean isWhoUnconditionalForSelector = who instanceof PsiCaseLabelElement whoCase &&
-                                            JavaPsiPatternUtil.isUnconditionalForType(whoCase, selectorType);
     if (!isOverWhomUnconditionalForSelector &&
         ((!(overWhom instanceof PsiExpression expression) || ExpressionUtils.isNullLiteral(expression)) &&
          who instanceof PsiKeyword &&
@@ -385,12 +383,6 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
       // A 'default' label dominates a case label with a case pattern,
       // and it also dominates a case label with a null case constant.
       // A 'case null, default' label dominates all other switch labels.
-      return true;
-    }
-    if (isWhoUnconditionalForSelector && !isOverWhomUnconditionalForSelector &&
-        !(isInCaseNullDefaultLabel(overWhom) ||
-          (overWhom instanceof PsiKeyword && PsiKeyword.DEFAULT.equals(overWhom.getText())) ||
-          (overWhom instanceof PsiExpression expression && ExpressionUtils.isNullLiteral(expression)))) {
       return true;
     }
     if (who instanceof PsiCaseLabelElement currentElement) {
