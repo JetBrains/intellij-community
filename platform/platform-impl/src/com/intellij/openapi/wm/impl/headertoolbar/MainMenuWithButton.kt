@@ -2,10 +2,8 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.RootPaneUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode
@@ -14,7 +12,6 @@ import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.ui.dsl.gridLayout.UnscaledGapsX
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.jetbrains.rd.util.collections.SynchronizedList
@@ -24,12 +21,11 @@ import kotlinx.coroutines.launch
 import javax.swing.Icon
 import javax.swing.JFrame
 import javax.swing.JMenu
-import javax.swing.JPanel
 
 class MainMenuWithButton(
   val coroutineScope: CoroutineScope, private val frame: JFrame,
 ) : NonOpaquePanel(GridLayout()) {
-  val mainMenuButton: MainMenuButton = MainMenuButton(coroutineScope, getButtonIcon())
+  val mainMenuButton: MainMenuButton = MainMenuButton(coroutineScope, getButtonIcon()) { if (ShowMode.isMergedMainMenu()) toolbarMainMenu.menuCount else 0 }
   val toolbarMainMenu: IdeJMenuBar = RootPaneUtil.createMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = null).apply {
     addUpdateGlobalMenuRootsListener { components.forEach { (it as JMenu).isOpaque = false } }
     isOpaque = false

@@ -43,7 +43,7 @@ private val LOG = logger<MainMenuButton>()
 private const val MAIN_MENU_ACTION_ID = "MainMenuButton.ShowMenu"
 
 @ApiStatus.Internal
-class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.General.WindowsMenu_20x20, getItemToSelect: () -> Int = { 0 }) {
+class MainMenuButton(coroutineScope: CoroutineScope, icon: Icon = AllIcons.General.WindowsMenu_20x20, getItemToSelect: () -> Int) {
 
   internal var expandableMenu: ExpandableMenu? = null
     set(value) {

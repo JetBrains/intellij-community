@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.ProjectWindowCustomizerService
-import com.intellij.ide.ui.MainMenuDisplayMode
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
@@ -25,8 +23,8 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.HEADER_HEIGHT_DFM
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameCustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath.SimpleCustomDecorationPathComponent
-import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.MainMenuWithButton
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.platform.util.coroutines.childScope
@@ -48,7 +46,10 @@ import java.awt.GridBagConstraints.WEST
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JFrame
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 internal class ToolbarFrameHeader(
   private val coroutineScope: CoroutineScope,
@@ -63,15 +64,13 @@ internal class ToolbarFrameHeader(
   }
   private val mainMenuWithButton = MainMenuWithButton(coroutineScope, frame)
   private val menuBarContainer = createMenuBarContainer()
-  private val toolbarMainMenu = mainMenuWithButton.toolbarMainMenu
-  private val mainMenuButton = MainMenuButton(coroutineScope, mainMenuWithButton.getButtonIcon()) { if (mode == ShowMode.TOOLBAR_WITH_MENU) toolbarMainMenu.menuCount else 0 }
-  private val mainMenuButtonComponent = mainMenuButton.button
+  private val mainMenuButtonComponent = mainMenuWithButton.mainMenuButton.button
   private var toolbar: MainToolbar? = null
   private val selfDisposable = Disposer.newCheckedDisposable()
   private var toolbarDisposable: Disposable? =  null
   private val toolbarPlaceholder = createToolbarPlaceholder()
   private val headerContent = createHeaderContent()
-  private val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope.childScope("ExpandableMenu"), frame) { !isCompactHeader && mode != ShowMode.TOOLBAR_WITH_MENU }
+  private val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope.childScope("ExpandableMenu"), frame) { !isCompactHeader && !ShowMode.isMergedMainMenu() }
   private val toolbarHeaderTitle = SimpleCustomDecorationPathComponent(frame = frame).apply {
     isOpaque = false
   }
@@ -89,7 +88,7 @@ internal class ToolbarFrameHeader(
     isOpaque = false
     isCompactHeader = isAlwaysCompact || isCompactHeader()
 
-    mainMenuButton.expandableMenu = expandableMenu
+    mainMenuWithButton.mainMenuButton.expandableMenu = expandableMenu
     layout = object : GridBagLayout() {
       override fun preferredLayoutSize(parent: Container?): Dimension {
         val size = super.preferredLayoutSize(parent)
@@ -329,7 +328,7 @@ internal class ToolbarFrameHeader(
 
   override fun installListeners() {
     super.installListeners()
-    mainMenuButton.rootPane = frame.rootPane
+    mainMenuWithButton.mainMenuButton.rootPane = frame.rootPane
     ideMenuBar.addComponentListener(contentResizeListener)
     ideMenuHelper.installListeners()
   }
@@ -381,7 +380,7 @@ internal class ToolbarFrameHeader(
   private fun updateMenuBar() {
     if (hideNativeLinuxTitle(UISettings.shadowInstance)) {
       ideMenuBar.border = null
-      toolbarMainMenu.border = null
+      mainMenuWithButton.toolbarMainMenu.border = null
     }
   }
 
