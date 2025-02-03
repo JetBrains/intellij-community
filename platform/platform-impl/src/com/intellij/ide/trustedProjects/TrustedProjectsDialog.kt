@@ -14,7 +14,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
@@ -114,10 +113,9 @@ object TrustedProjectsDialog {
         checker.isRealTimeProtectionEnabled == true
       ) {
         val paths = checker.filterDevDrivePaths(checker.getPathsToExclude(project, projectPath)).toMutableList()
-        if (paths.isEmpty() || projectPath !in paths) {
-          logger<TrustedProjectsDialog>().info("project is on a DevDrive")
+        if (projectPath in paths) {
+          return paths
         }
-        return paths
       }
     }
     return emptyList()
