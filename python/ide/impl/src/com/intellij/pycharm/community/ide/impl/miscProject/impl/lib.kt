@@ -195,7 +195,7 @@ private suspend fun getSystemPython(confirmInstallation: suspend () -> Boolean, 
 
 
   // First, find the latest python according to strategy
-  var systemPythonBinary = pythonService.findSystemPythons().minByOrNull { it.languageLevel }
+  var systemPythonBinary = pythonService.findSystemPythons().firstOrNull()
 
   // No python found?
   if (systemPythonBinary == null) {
@@ -213,7 +213,7 @@ private suspend fun getSystemPython(confirmInstallation: suspend () -> Boolean, 
         }
         is Result.Success -> {
           // Find the latest python again, after installation
-          systemPythonBinary = pythonService.findSystemPythons().minByOrNull { it.languageLevel }
+          systemPythonBinary = pythonService.findSystemPythons().firstOrNull()
         }
       }
     }

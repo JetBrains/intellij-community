@@ -38,7 +38,7 @@ internal class SystemPythonServiceImpl : SystemPythonService, SimplePersistentSt
   override fun getInstaller(eelApi: EelApi): PythonInstallerService? =
     if (eelApi == localEel) LocalPythonInstaller else null
 
-  override suspend fun findSystemPythons(eelApi: EelApi): Set<SystemPython> = withContext(Dispatchers.IO) {
+  override suspend fun findSystemPythons(eelApi: EelApi): List<SystemPython> = withContext(Dispatchers.IO) {
     val corePythons = if (eelApi == localEel)
       PythonSdkFlavor.getApplicableFlavors(false)
         .flatMap {
@@ -68,7 +68,7 @@ internal class SystemPythonServiceImpl : SystemPythonService, SimplePersistentSt
       }.toSet()
     // Remove stale pythons from cache
     state.userProvidedPythons.removeAll(badPythons)
-    return@withContext result
+    return@withContext result.sortedByDescending { it.languageLevel }
   }
 
 

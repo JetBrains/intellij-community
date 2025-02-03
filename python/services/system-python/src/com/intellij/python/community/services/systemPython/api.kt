@@ -18,10 +18,9 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.NonExtendable
 sealed interface SystemPythonService {
   /**
-   * System pythons installed on OS.
-   * Sort pythons by [SystemPython.languageLevel] to find the highest one
+   * @return system pythons installed on OS in order from highest (hence, the first one is usually the best one)
    */
-  suspend fun findSystemPythons(eelApi: EelApi = localEel): Set<SystemPython>
+  suspend fun findSystemPythons(eelApi: EelApi = localEel): List<SystemPython>
 
   /**
    * When user provides a path to the python binary, use this method to the [SystemPython].
