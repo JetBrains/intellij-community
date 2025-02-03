@@ -79,7 +79,7 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
   private val mainMenuButton = mainMenuWithButton.mainMenuButton
 
   init {
-    val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope, frame) { ShowMode.isMergedMainMenu() }
+    val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope, frame) { !ShowMode.isMergedMainMenu() }
     mainMenuButton.expandableMenu = expandableMenu
     mainMenuButton.rootPane = frame.rootPane
   }
