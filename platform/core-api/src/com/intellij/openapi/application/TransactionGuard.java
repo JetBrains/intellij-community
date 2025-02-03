@@ -75,8 +75,9 @@ public abstract class TransactionGuard {
   public abstract void assertWriteSafeContext(@NotNull ModalityState modality);
 
   /**
-   * Checks whether the current state allows for writing the model. Must be called from write thread.
-   * @return {@code true} is current context is write-safe, {@code false} otherwise
+   * Checks whether the current thread is allowed to initiate write action.
+   * It does <b>not</b> mean that the thread is allowed to change the model. I.e., if the current thread holds the write-intent lock
+   * and is allowed to upgrade the lock to the write one, then this method will return {@code} true.
    */
   public abstract boolean isWritingAllowed();
 
