@@ -23,7 +23,6 @@ from _pydevd_bundle.pydevd_constants import IS_PY38
 from _pydevd_bundle.pydevd_constants import IS_PY39_OR_GREATER
 from _pydevd_bundle.pydevd_constants import IS_PY310_OR_GREATER
 from _pydevd_bundle.pydevd_constants import IS_PY312_OR_GREATER
-from _pydevd_bundle.pydevd_constants import IS_PY312_OR_LESSER
 from _pydevd_bundle.pydevd_constants import IS_PY313
 
 
