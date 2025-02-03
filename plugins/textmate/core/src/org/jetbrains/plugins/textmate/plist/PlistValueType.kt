@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.textmate.plist
 
-import java.util.*
-
 enum class PlistValueType {
   STRING, INTEGER, REAL, BOOLEAN, DATE, ARRAY, DICT;
 
@@ -25,9 +23,6 @@ enum class PlistValueType {
         }
         is Boolean -> {
           return BOOLEAN
-        }
-        is Date -> {
-          return DATE
         }
         else -> {
           error("Unknown type of object: $o")

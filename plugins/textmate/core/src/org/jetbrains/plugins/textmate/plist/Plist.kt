@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.textmate.plist
 
 import org.jetbrains.plugins.textmate.plist.PlistValueType.Companion.fromObject
-import java.text.SimpleDateFormat
 
 data class Plist(private val myMap: Map<String, PListValue>) {
   fun getPlistValue(key: String): PListValue? {
@@ -23,9 +22,5 @@ data class Plist(private val myMap: Map<String, PListValue>) {
   companion object {
     @JvmField
     val EMPTY_PLIST: Plist = Plist(emptyMap())
-
-    fun dateFormatter(): SimpleDateFormat {
-      return SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
-    }
   }
 }

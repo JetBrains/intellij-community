@@ -2,15 +2,12 @@ package org.jetbrains.plugins.textmate.plist
 
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.array
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.bool
-import org.jetbrains.plugins.textmate.plist.PListValue.Companion.date
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.dict
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.integer
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.real
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.string
-import org.jetbrains.plugins.textmate.plist.Plist.Companion.dateFormatter
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
-import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -58,18 +55,6 @@ class XmlPlistReaderTest {
     assertEquals(1, plist.entries().size.toLong())
     assertEquals(real(145.3), plist.getPlistValue("real"))
     assertEquals(real(120.0), plist.getPlistValue("unknown", 120.0))
-    assertNull(plist.getPlistValue("unknown"))
-  }
-
-  @Test
-  fun parseDate() {
-    val calendar = Calendar.getInstance()
-    calendar.set(Calendar.MILLISECOND, 0) //Plist doesn't respect to ms
-    val date = calendar.getTime()
-
-    val plist = read("<dict><key>date</key><date>" + dateFormatter().format(date) + "</date></dict>")
-    assertEquals(1, plist.entries().size.toLong())
-    assertEquals(date(date), plist.getPlistValue("date"))
     assertNull(plist.getPlistValue("unknown"))
   }
 
