@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,6 +14,7 @@ import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,8 @@ import java.util.function.BiConsumer;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER;
 
-class PersistentFSTreeAccessor {
+@ApiStatus.Internal
+public class PersistentFSTreeAccessor {
   /**
    * The attribute is a list of child fileId, diff-compressed -- see {@link #doSaveChildren} for details.
    * The FS super-root ({@link #SUPER_ROOT_ID}) is an exceptional case: there is stored both child fileId
