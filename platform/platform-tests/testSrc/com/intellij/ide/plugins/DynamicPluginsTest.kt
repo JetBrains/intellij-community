@@ -876,6 +876,7 @@ private class MyRegistryAccessor {
   var invocations: Int = 0
 
   fun accessRegistry() {
+    @Suppress("UnresolvedPluginConfigReference")
     check(Registry.get("test.plugin.registry.key").asBoolean())
     invocations++
   }
