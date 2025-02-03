@@ -1,11 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
-import com.intellij.codeInsight.hints.InlayParameterHintsExtension
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.filtering.Matcher
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
@@ -31,7 +29,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     private val excludeListMatchers: List<Matcher> by lazy {
-        (listOf(
+        setOf(
             "*listOf", "*setOf", "*arrayOf", "*ListOf", "*SetOf", "*ArrayOf", "*assert*(*)", "*mapOf", "*MapOf",
             "kotlin.require*(*)", "kotlin.check*(*)", "*contains*(value)", "*containsKey(key)", "kotlin.lazyOf(value)",
             "*SequenceBuilder.resume(value)", "*SequenceBuilder.yield(value)",
@@ -53,8 +51,57 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             "org.gradle.kotlin.dsl.project(path,configuration)",
             "org.gradle.api.provider.Property.set(value)",
             "org.gradle.api.plugins.ObjectConfigurationAction.plugin(pluginId)",
-        ) + InlayParameterHintsExtension.forLanguage(JavaLanguage.INSTANCE).defaultBlackList)
-            .mapNotNull { MatcherConstructor.createMatcher(it) }
+
+            /* copied from com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider.defaultBlackList */
+            // TODO: IJPL-166464 should provide API like InlayParameterHintsProvider#getBlackListDependencyLanguage
+
+            "(begin*, end*)",
+            "(start*, end*)",
+            "(first*, last*)",
+            "(first*, second*)",
+            "(from*, to*)",
+            "(min*, max*)",
+            "(key, value)",
+            "(format, arg*)",
+            "(message)",
+            "(message, error)",
+
+            "*Exception",
+
+            "*.set*(*)",
+            "*.add(*)",
+            "*.set(*,*)",
+            "*.get(*)",
+            "*.create(*)",
+            "*.getProperty(*)",
+            "*.setProperty(*,*)",
+            "*.print(*)",
+            "*.println(*)",
+            "*.append(*)",
+            "*.charAt(*)",
+            "*.indexOf(*)",
+            "*.contains(*)",
+            "*.startsWith(*)",
+            "*.endsWith(*)",
+            "*.equals(*)",
+            "*.equal(*)",
+            "*.compareTo(*)",
+            "*.compare(*,*)",
+
+            "java.lang.Math.*",
+            "org.slf4j.Logger.*",
+
+            "*.singleton(*)",
+            "*.singletonList(*)",
+
+            "*.Set.of",
+            "*.ImmutableList.of",
+            "*.ImmutableMultiset.of",
+            "*.ImmutableSortedMultiset.of",
+            "*.ImmutableSortedSet.of",
+            "*.Arrays.asList"
+
+        ).mapNotNull { MatcherConstructor.createMatcher(it) }
     }
 
     override fun collectFromElement(
