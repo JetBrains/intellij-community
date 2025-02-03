@@ -17,6 +17,7 @@ kt_jvm_library(
         "//:opentelemetry-exporter-logging-otlp",
         "//:kotlinx-coroutines-core",
         "//:protobuf-java",
+        "@lib//:netty-buffer",
         "@lib//:jetbrains-annotations",
     ],
     runtime_deps = [

@@ -4585,17 +4585,17 @@ http_file(
 )
 
 http_file(
-  name = "kotlin-metadata-jvm-2_1_20-Beta1_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.1.20-Beta1/kotlin-metadata-jvm-2.1.20-Beta1.jar",
-  sha256 = "243ac56352ce7e1ca7f294a53b1a1b3040ca12b95725449f0c04bbee6d43d84c",
-  downloaded_file_path = "kotlin-metadata-jvm-2.1.20-Beta1.jar"
+  name = "kotlin-metadata-jvm-2_1_20-Beta2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.1.20-Beta2/kotlin-metadata-jvm-2.1.20-Beta2.jar",
+  sha256 = "a4d99e5b88eff9972c117b577436aa587e83f78e60cf005cd614065f59ead7a9",
+  downloaded_file_path = "kotlin-metadata-jvm-2.1.20-Beta2.jar"
 )
 
 http_file(
-  name = "kotlin-metadata-jvm-2_1_20-Beta1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.1.20-Beta1/kotlin-metadata-jvm-2.1.20-Beta1-sources.jar",
+  name = "kotlin-metadata-jvm-2_1_20-Beta2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.1.20-Beta2/kotlin-metadata-jvm-2.1.20-Beta2-sources.jar",
   sha256 = "3f5468b5c409702c7cac30067208b7218ab9e3f7209e686966c6c2de2134dd18",
-  downloaded_file_path = "kotlin-metadata-jvm-2.1.20-Beta1-sources.jar"
+  downloaded_file_path = "kotlin-metadata-jvm-2.1.20-Beta2-sources.jar"
 )
 
 http_file(

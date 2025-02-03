@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.cli.jvm.compiler
 
 import org.jetbrains.bazel.jvm.kotlin.TraceHelper
@@ -44,6 +44,10 @@ private class WorkerKotlinLogger(private val out: Writer, override val isDebugEn
         throwable.printStackTrace(it)
       }
     }
+  }
+
+  override fun warn(msg: String, throwable: Throwable?) {
+    out.append("WARN: ").appendLine(msg + " " + throwable?.stackTraceToString())
   }
 
   override fun warn(msg: String) {

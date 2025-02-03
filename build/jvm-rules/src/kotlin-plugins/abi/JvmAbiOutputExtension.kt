@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.jvm.abi
 
@@ -199,8 +199,8 @@ internal class JvmAbiOutputExtension(
                                     av.visitEnd()
                                 }
 
-                                innerClassesToKeep.addInnerClasses(innerClassInfos, internalName)
-                                innerClassesToKeep.addOuterClasses(innerClassInfos)
+                              addInnerClasses(innerClassesToKeep, innerClassInfos, internalName)
+                              addOuterClasses(innerClassesToKeep, innerClassInfos)
                                 for (name in innerClassesToKeep.sorted()) {
                                     innerClassInfos[name]?.let { cv.visitInnerClass(it.name, it.outerName, it.innerName, it.access) }
                                 }
@@ -219,12 +219,12 @@ internal class JvmAbiOutputExtension(
 
         // Outer class infos for a class and all classes transitively nested in it (that are public ABI)
         // should be kept in its own class file even if the classes are otherwise unused.
-        private fun MutableSet<String>.addInnerClasses(innerClassInfos: Map<String, InnerClassInfo>, internalName: String) {
+        private fun addInnerClasses(names: MutableSet<String>, innerClassInfos: Map<String, InnerClassInfo>, internalName: String) {
             val innerClassesByOuterName = innerClassInfos.values.groupBy { it.outerName }
             val stack = mutableListOf(internalName)
             while (stack.isNotEmpty()) {
                 val next = stack.removeLast()
-                add(next)
+                names.add(next)
                 // Classes form a tree by nesting, so none of the children have been visited yet.
                 innerClassesByOuterName[next]?.mapNotNullTo(stack) { info ->
                     info.name.takeUnless { abiClassInfos[it] == AbiClassInfo.Deleted }
@@ -233,11 +233,11 @@ internal class JvmAbiOutputExtension(
         }
 
         // For every class A.B, if its outer class info is kept then so should be A's.
-        private fun MutableSet<String>.addOuterClasses(innerClassInfos: Map<String, InnerClassInfo>) {
-            for (name in toList()) {
+        private fun addOuterClasses(names: MutableSet<String>, innerClassInfos: Map<String, InnerClassInfo>) {
+            for (name in names.toTypedArray()) {
                 var info = innerClassInfos[name]
                 while (info != null) {
-                    info = info.outerName?.takeIf(::add)?.let(innerClassInfos::get)
+                    info = info.outerName?.takeIf { names.add(it) }?.let(innerClassInfos::get)
                 }
             }
         }

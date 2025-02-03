@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.kotlin
 
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +16,7 @@ internal object TestKotlinBuildWorker {
     val testPaths = getTestWorkerPaths()
     val baseDir = testPaths.baseDir
     runBlocking(Dispatchers.Default) {
-      val testModule = TestModules.PLATFORM_BOOTSTRAP
+      val testModule = TestModules.XML_DOM
       val sources = collectSources(sourceDirPath = testModule.sourcePath, paths = testPaths)
       val testParams = testModule.getParams(baseDir)
 

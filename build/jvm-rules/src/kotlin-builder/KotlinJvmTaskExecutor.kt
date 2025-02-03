@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.kotlin
 
 import com.google.devtools.build.lib.view.proto.Deps
@@ -11,18 +11,24 @@ import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.messages.*
+import org.jetbrains.kotlin.cli.common.moduleChunk
 import org.jetbrains.kotlin.cli.common.modules.ModuleBuilder
+import org.jetbrains.kotlin.cli.common.modules.ModuleChunk
 import org.jetbrains.kotlin.cli.common.setupCommonArguments
+import org.jetbrains.kotlin.cli.jvm.compiler.BazelJvmCliPipeline
+import org.jetbrains.kotlin.cli.jvm.compiler.BazelJvmConfigurationPipelinePhase
+import org.jetbrains.kotlin.cli.jvm.compiler.configTemplate
 import org.jetbrains.kotlin.cli.jvm.compiler.configurePlugins
-import org.jetbrains.kotlin.cli.jvm.compiler.k2jvm
 import org.jetbrains.kotlin.cli.jvm.compiler.loadPlugins
 import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
 import org.jetbrains.kotlin.cli.jvm.config.JvmModulePathRoot
 import org.jetbrains.kotlin.cli.jvm.config.addJavaSourceRoot
 import org.jetbrains.kotlin.cli.jvm.setupJvmSpecificArguments
-import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
+import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.config.messageCollector
+import org.jetbrains.kotlin.config.moduleName
+import org.jetbrains.kotlin.config.modules
 import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.modules.JavaRootPath
 import java.io.BufferedInputStream
@@ -68,7 +74,7 @@ internal suspend fun compileKotlinForJvm(
   kotlinArgs.freeArgs = sources.map { it.toString() }
   val messageCollector = WriterBackedMessageCollector(verbose = context.isTracing)
 
-  val config = org.jetbrains.kotlin.cli.jvm.compiler.configTemplate.copy()
+  val config = configTemplate.copy()
   config.put(CLIConfigurationKeys.ORIGINAL_MESSAGE_COLLECTOR_KEY, messageCollector)
   val collector = GroupingMessageCollector(messageCollector, kotlinArgs.allWarningsAsErrors, kotlinArgs.reportAllWarnings).also {
     config.messageCollector = it
@@ -88,7 +94,7 @@ internal suspend fun compileKotlinForJvm(
     loadPlugins(configuration = config, pluginConfigurations = pluginConfigurations)
 
     val moduleName = info.moduleName
-    config.put(CommonConfigurationKeys.MODULE_NAME, moduleName)
+    config.moduleName = moduleName
 
     val module = ModuleBuilder(moduleName, outFilePath, "java-production")
 
@@ -128,14 +134,21 @@ internal suspend fun compileKotlinForJvm(
       config.add(CLIConfigurationKeys.CONTENT_ROOTS, JvmClasspathRoot(ioFile))
     }
 
-    config.addAll(JVMConfigurationKeys.MODULES, listOf(module))
+    val modules = listOf(module)
+    config.modules = modules
+    config.moduleChunk = ModuleChunk(modules)
 
-    k2jvm(
-      config = config,
-      rootDisposable = rootDisposable,
-      module = module,
-      messageCollector = messageCollector,
-    ).code
+    val pipeline = BazelJvmCliPipeline(BazelJvmConfigurationPipelinePhase(config))
+    //val groupingMessageCollector = GroupingMessageCollector(messageCollector, false, false)
+    //val argumentsInput = ArgumentsPipelineArtifact(
+    //  kotlinArgs,
+    //  Services.EMPTY,
+    //  rootDisposable,
+    //  groupingMessageCollector,
+    //  pipeline.defaultPerformanceManager,
+    //)
+
+    pipeline.execute(kotlinArgs, Services.EMPTY, messageCollector).code
   }
   finally {
     Disposer.dispose(rootDisposable)

@@ -1,15 +1,17 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.bazel.jvm.abi
 
 import org.jetbrains.org.objectweb.asm.AnnotationVisitor
-import org.jetbrains.org.objectweb.asm.Attribute
+import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
+import org.jetbrains.org.objectweb.asm.ClassWriter
 import org.jetbrains.org.objectweb.asm.FieldVisitor
 import org.jetbrains.org.objectweb.asm.MethodVisitor
-import org.jetbrains.org.objectweb.asm.ModuleVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
-import org.jetbrains.org.objectweb.asm.RecordComponentVisitor
-import org.jetbrains.org.objectweb.asm.TypePath
-import org.jetbrains.org.objectweb.asm.tree.AnnotationNode
+import org.jetbrains.org.objectweb.asm.commons.ClassRemapper
+import org.jetbrains.org.objectweb.asm.commons.Remapper
 import org.jetbrains.org.objectweb.asm.tree.FieldNode
 import org.jetbrains.org.objectweb.asm.tree.MethodNode
 import kotlin.metadata.KmClass
@@ -29,51 +31,56 @@ import kotlin.metadata.jvm.localDelegatedProperties
 import kotlin.metadata.jvm.signature
 import kotlin.metadata.visibility
 
-internal class KotlinAbiClassVisitor(
-  private val classVisitor: ClassVisitor,
+internal fun createAbForKotlin(classesToBeDeleted: HashSet<String>, item: JarContentToProcess): ByteArray? {
+  val classWriter = ClassWriter(0)
+  val innerClassesToKeep = HashSet<String>()
+  val remapper = ClassRemapper(classWriter, object : Remapper() {
+    override fun map(internalName: String): String {
+      innerClassesToKeep.add(internalName)
+      return internalName
+    }
+
+    override fun mapInnerClassName(name: String, ownerName: String?, innerName: String?): String? = innerName
+  })
+  val abiClassVisitor = KotlinAbiClassVisitor(
+    classesToBeDeleted = classesToBeDeleted,
+    treatInternalAsPrivate = false,
+    remapper = remapper,
+    innerClassesToKeep = innerClassesToKeep,
+  )
+  ClassReader(item.data).accept(abiClassVisitor, ClassReader.SKIP_FRAMES)
+  if (abiClassVisitor.isApiClass) {
+    return classWriter.toByteArray()
+  }
+  return null
+}
+
+private class InnerClassInfo(
+  @JvmField val name: String,
+  @JvmField val outerName: String?,
+  @JvmField val innerName: String?,
+  @JvmField val access: Int,
+)
+
+// inspired by JvmAbiOutputExtension
+private class KotlinAbiClassVisitor(
   private val classesToBeDeleted: MutableSet<String>,
   private val treatInternalAsPrivate: Boolean,
-) : ClassVisitor(Opcodes.API_VERSION) {
+  remapper: ClassRemapper,
+  private val innerClassesToKeep: MutableSet<String>,
+) : ClassVisitor(Opcodes.API_VERSION, remapper) {
+  private val innerClassToInfo = mutableMapOf<String, InnerClassInfo>()
+
   // tracks if this class has any public API members
   var isApiClass: Boolean = true
     private set
-
-  private val visibleAnnotations = ArrayList<AnnotationNode>()
-  private val invisibleAnnotations = ArrayList<AnnotationNode>()
 
   private val fields = mutableListOf<FieldNode>()
   private val methods = mutableListOf<MethodNode>()
   private var kotlinMetadata: Pair<String, KotlinClassMetadata>? = null
 
-  override fun visitAnnotation(descriptor: String, visible: Boolean): AnnotationVisitor? {
-    // parse @Metadata for Kotlin-specific visibility information
-    @Suppress("SpellCheckingInspection")
-    if (descriptor == "Lkotlin/Metadata;") {
-      return KotlinAnnotationVisitor {
-        kotlinMetadata = descriptor to KotlinClassMetadata.readStrict(it)
-      }
-    }
-    else {
-      val annotationNode = AnnotationNode(api, descriptor)
-      (if (visible) visibleAnnotations else invisibleAnnotations).add(annotationNode)
-      return annotationNode
-    }
-  }
-
-  override fun visit(version: Int, access: Int, name: String, signature: String?, superName: String?, interfaces: Array<String>?) {
-    isApiClass = (access and (Opcodes.ACC_PUBLIC or Opcodes.ACC_PROTECTED)) != 0
-    if (isApiClass) {
-      val visibility = (kotlinMetadata?.second as? KotlinClassMetadata.Class)?.kmClass?.visibility
-      if (visibility == null || !isPrivateVisibility(visibility, treatInternalAsPrivate)) {
-        classVisitor.visit(version, access, name, signature, superName, interfaces)
-        return
-      }
-      else {
-        isApiClass = false
-      }
-    }
-
-    classesToBeDeleted.add(name)
+  override fun visitSource(source: String?, debug: String?) {
+    // debug not important
   }
 
   override fun visitField(
@@ -113,20 +120,61 @@ internal class KotlinAbiClassVisitor(
     val method = MethodNode(Opcodes.API_VERSION, access, name, descriptor, signature, exceptions)
     methods.add(method)
 
+    if (access and (Opcodes.ACC_NATIVE or Opcodes.ACC_ABSTRACT) != 0) {
+      return method
+    }
+
     val functions = kotlinMetadata?.second?.let { getFunctions(it) }
     val isInlineMethod = functions != null && functions.any { it.isInline && it.name == method.name }
     if (isInlineMethod) {
       return method
     }
     else {
-      return ReplaceWithEmptyBody(method)
+      return BodyStrippingMethodVisitor(method)
     }
   }
 
-  override fun visitEnd() {
-    visibleAnnotations.sortBy { it.desc }
-    invisibleAnnotations.sortBy { it.desc }
+   override fun visitInnerClass(name: String, outerName: String?, innerName: String?, access: Int) {
+     // `visitInnerClass` is called before `visitField`/`visitMethod`, so we don't know
+     // which types are referenced by kept methods yet.
+     innerClassToInfo[name] = InnerClassInfo(name, outerName, innerName, access)
+   }
 
+  override fun visitAnnotation(descriptor: String, visible: Boolean): AnnotationVisitor? {
+    // parse @Metadata for Kotlin-specific visibility information
+    @Suppress("SpellCheckingInspection")
+    when (descriptor) {
+      "Lkotlin/Metadata;" -> {
+        return KotlinAnnotationVisitor {
+          kotlinMetadata = descriptor to KotlinClassMetadata.readStrict(it)
+        }
+      }
+      "Lkotlin/jvm/internal/SourceDebugExtension;" -> {
+        return null
+      }
+      else -> {
+        return super.visitAnnotation(descriptor, visible)
+      }
+    }
+  }
+
+  override fun visit(version: Int, access: Int, name: String, signature: String?, superName: String?, interfaces: Array<String>?) {
+    isApiClass = (access and (Opcodes.ACC_PUBLIC or Opcodes.ACC_PROTECTED)) != 0
+    if (isApiClass) {
+      val visibility = (kotlinMetadata?.second as? KotlinClassMetadata.Class)?.kmClass?.visibility
+      if (visibility == null || !isPrivateVisibility(visibility, treatInternalAsPrivate)) {
+        cv.visit(version, access, name, signature, superName, interfaces)
+        return
+      }
+      else {
+        isApiClass = false
+      }
+    }
+
+    classesToBeDeleted.add(name)
+  }
+
+  override fun visitEnd() {
     fields.sortBy { it.name }
     methods.sortBy { it.name }
 
@@ -134,85 +182,27 @@ internal class KotlinAbiClassVisitor(
       transformAndWriteKotlinMetadata(
         metadata = header,
         descriptor = descriptor,
-        classVisitor = classVisitor,
+        classVisitor = cv,
         classesToBeDeleted = classesToBeDeleted,
         treatInternalAsPrivate = treatInternalAsPrivate,
       )
     }
 
-    for (annotation in visibleAnnotations) {
-      annotation.accept(classVisitor.visitAnnotation(annotation.desc, true))
-    }
-    for (annotation in invisibleAnnotations) {
-      annotation.accept(classVisitor.visitAnnotation(annotation.desc, false))
-    }
-
     for (field in fields) {
-      field.accept(classVisitor)
+      field.accept(cv)
     }
 
-    //val km = kotlinMetadata?.second
-    //val functions = getFunctions(km)
     for (method in methods) {
-      //if (isInlineMethod || !isKotlin) {
-      method.accept(classVisitor)
-      //}
-      //else {
-      //  val methodVisitor = cv.visitMethod(method.access, method.name, method.desc, method.signature, method.exceptions?.toTypedArray())
-      //  methodVisitor.visitCode()
-      //  methodVisitor.visitInsn(Opcodes.RETURN)
-      //  methodVisitor.visitMaxs(0, 0)
-      //  methodVisitor.visitEnd()
-      //}
+      val methodVisitor = cv.visitMethod(method.access, method.name, method.desc, method.signature, method.exceptions?.toTypedArray())
+      method.accept(methodVisitor)
     }
 
-    classVisitor.visitEnd()
-  }
-
-  override fun visitSource(source: String?, debug: String?) {
-    classVisitor.visitSource(source, debug)
-  }
-
-  override fun visitModule(name: String?, access: Int, version: String?): ModuleVisitor? {
-    return classVisitor.visitModule(name, access, version)
-  }
-
-  override fun visitAttribute(attribute: Attribute?) {
-    classVisitor.visitAttribute(attribute)
-  }
-
-  override fun visitOuterClass(owner: String?, name: String?, descriptor: String?) {
-    classVisitor.visitOuterClass(owner, name, descriptor)
-  }
-
-  override fun visitRecordComponent(name: String?, descriptor: String?, signature: String?): RecordComponentVisitor? {
-    return classVisitor.visitRecordComponent(name, descriptor, signature)
-  }
-
-  override fun visitTypeAnnotation(typeRef: Int, typePath: TypePath?, descriptor: String?, visible: Boolean): AnnotationVisitor? {
-    return classVisitor.visitTypeAnnotation(typeRef, typePath, descriptor, visible)
-  }
-
-  override fun visitNestMember(nestMember: String?) {
-    if (nestMember == null || !classesToBeDeleted.contains(nestMember)) {
-      classVisitor.visitNestMember(nestMember)
+    for (name in innerClassesToKeep.sorted()) {
+      val innerClassInfo = innerClassToInfo.get(name) ?: continue
+      cv.visitInnerClass(innerClassInfo.name, innerClassInfo.outerName, innerClassInfo.innerName, innerClassInfo.access)
     }
-  }
 
-  override fun visitPermittedSubclass(permittedSubclass: String?) {
-    if (permittedSubclass == null || !classesToBeDeleted.contains(permittedSubclass)) {
-      classVisitor.visitPermittedSubclass(permittedSubclass)
-    }
-  }
-
-  override fun visitInnerClass(name: String?, outerName: String?, innerName: String?, access: Int) {
-    if (innerName == null || !classesToBeDeleted.contains(name)) {
-      classVisitor.visitInnerClass(name, outerName, innerName, access)
-    }
-  }
-
-  override fun visitNestHost(nestHost: String?) {
-    classVisitor.visitNestHost(nestHost)
+    cv.visitEnd()
   }
 
   private fun isMethodKotlinInternal(methodName: String?): Boolean {
@@ -373,27 +363,13 @@ private fun removePrivateDeclarationsForDeclarationContainer(
   }
 }
 
-private class ReplaceWithEmptyBody(
-  private val targetWriter: MethodVisitor,
-) : MethodVisitor(Opcodes.API_VERSION) {
+private class BodyStrippingMethodVisitor(visitor: MethodVisitor) : MethodVisitor(Opcodes.API_VERSION, visitor) {
   override fun visitCode() {
-    targetWriter.visitCode()
-    targetWriter.visitInsn(Opcodes.RETURN)
-  }
-
-  override fun visitParameter(name: String?, access: Int) {
-    targetWriter.visitParameter(name, access)
-  }
-
-  override fun visitParameterAnnotation(parameter: Int, descriptor: String?, visible: Boolean): AnnotationVisitor? {
-    return targetWriter.visitParameterAnnotation(parameter, descriptor, visible)
-  }
-
-  override fun visitAnnotation(descriptor: String?, visible: Boolean): AnnotationVisitor? {
-    return targetWriter.visitAnnotation(descriptor, visible)
-  }
-
-  override fun visitEnd() {
-    targetWriter.visitEnd()
+    mv.visitCode()
+    mv.visitInsn(Opcodes.ACONST_NULL)
+    mv.visitInsn(Opcodes.ATHROW)
+    mv.visitMaxs(0, 0)
+    mv.visitEnd()
+    mv = null
   }
 }

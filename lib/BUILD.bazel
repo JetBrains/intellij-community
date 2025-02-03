@@ -3323,8 +3323,8 @@ kt_jvm_import(
 
 kt_jvm_import(
   name = "kotlin-metadata",
-  jar = "@kotlin-metadata-jvm-2_1_20-Beta1_http//file",
-  srcjar = "@kotlin-metadata-jvm-2_1_20-Beta1-sources_http//file",
+  jar = "@kotlin-metadata-jvm-2_1_20-Beta2_http//file",
+  srcjar = "@kotlin-metadata-jvm-2_1_20-Beta2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

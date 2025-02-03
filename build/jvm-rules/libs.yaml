@@ -5,28 +5,28 @@
       version: 4.29.3
     # kotlin JPS plugin
     - id: org.jetbrains.kotlin:kotlin-build-tools-api
-      version: 2.1.20-Beta1
+      version: 2.1.20-Beta2
     - id: org.jetbrains.kotlin:kotlin-util-klib
-      version: 2.1.20-Beta1
+      version: 2.1.20-Beta2
     - id: org.jetbrains.kotlin:kotlin-util-klib-metadata
-      version: 2.1.20-Beta1
+      version: 2.1.20-Beta2
     # kotlin compiler
     - id: org.jetbrains.kotlin:kotlin-build-tools-impl
-      version: 2.1.20-Beta1
+      version: 2.1.20-Beta2
     - id: org.jetbrains.kotlin:kotlin-compiler
-      version: 2.1.20-Beta1
+      version: 2.1.20-Beta2
       runtimeDeps:
         - "@lib//:jetbrains-annotations"
         - ":kotlinx-coroutines-core"
     - id: org.jetbrains.kotlin:kotlin-metadata-jvm
-      version: 2.1.20-Beta1
+      version: 2.1.20-Beta2
     - id: org.jetbrains.kotlin:kotlin-jps-plugin
-      version: 2.1.20-Beta1
+      version: 2.1.20-Beta2
     # kotlin compiler plugins
     - id: org.jetbrains.kotlin:kotlin-serialization-compiler-plugin
-      version: 2.1.20-Beta1
+      version: 2.1.20-Beta2
     - id: org.jetbrains.kotlin:kotlin-compose-compiler-plugin
-      version: 2.1.20-Beta1
+      version: 2.1.20-Beta2
     - id: dev.drewhamilton.poko:poko-compiler-plugin
       version: 0.18.2
     # other libs

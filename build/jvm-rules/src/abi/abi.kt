@@ -40,16 +40,11 @@ suspend fun writeAbi(abiJar: Path, classChannel: Channel<JarContentToProcess>) {
 
 private fun createAbi(item: JarContentToProcess, classesToBeDeleted: HashSet<String>): ByteArray? {
   if (item.isKotlin) {
-    val classWriter = ClassWriter(ClassWriter.COMPUTE_MAXS)
-    val abiClassVisitor = KotlinAbiClassVisitor(
-      classVisitor = classWriter,
-      classesToBeDeleted = classesToBeDeleted,
-      treatInternalAsPrivate = false,
-    )
-    ClassReader(item.data).accept(abiClassVisitor, ClassReader.SKIP_FRAMES)
-    if (abiClassVisitor.isApiClass) {
-      return classWriter.toByteArray()
+    // check that Java ABI works
+    if (true) {
+      return item.data
     }
+    return createAbForKotlin(classesToBeDeleted, item)
   }
   else {
     val classWriter = ClassWriter(0)

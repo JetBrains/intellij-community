@@ -14,7 +14,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import kotlinx.coroutines.*
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.bazel.jvm.WorkRequest
 import org.jetbrains.bazel.jvm.WorkRequestExecutor
 import org.jetbrains.bazel.jvm.jps.impl.*
 import org.jetbrains.bazel.jvm.jps.state.LoadStateResult
@@ -28,7 +27,6 @@ import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
 import org.jetbrains.bazel.jvm.processRequests
 import org.jetbrains.bazel.jvm.use
-import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
@@ -77,7 +75,7 @@ fun configureGlobalJps(tracer: Tracer, scope: CoroutineScope) {
   configureKotlincHome()
 }
 
-internal class JpsBuildWorker private constructor(private val allocator: RootAllocator) : WorkRequestExecutor {
+internal class JpsBuildWorker private constructor(private val allocator: RootAllocator) : WorkRequestExecutor<WorkRequestWithDigests> {
   companion object {
     @JvmStatic
     fun main(startupArgs: Array<String>) {
@@ -86,14 +84,15 @@ internal class JpsBuildWorker private constructor(private val allocator: RootAll
           startupArgs = startupArgs,
           executor = JpsBuildWorker(allocator),
           setup = { tracer, scope -> configureGlobalJps(tracer = tracer, scope = scope) },
-          serviceName = "jps-builder"
+          reader = WorkRequestWithDigestReader(System.`in`),
+          serviceName = "jps-builder",
         )
       }
     }
   }
 
   @OptIn(ExperimentalStdlibApi::class)
-  override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path, tracingContext: Context, tracer: Tracer): Int {
+  override suspend fun execute(request: WorkRequestWithDigests, writer: Writer, baseDir: Path, tracingContext: Context, tracer: Tracer): Int {
     val dependencyFileToDigest = hashMap<Path, ByteArray>()
     val sourceFileToDigest = hashMap<Path, ByteArray>(request.inputPaths.size)
     val sources = ArrayList<Path>()
@@ -101,7 +100,7 @@ internal class JpsBuildWorker private constructor(private val allocator: RootAll
     val sourceFileToDigestDebugString = if (isDebugEnabled) StringBuilder() else null
     val dependencyFileToDigestDebugString = if (isDebugEnabled) StringBuilder() else null
     for ((index, input) in request.inputPaths.withIndex()) {
-      val digest = request.inputDigests[index]
+      val digest = request.inputDigests.get(index)
       if (input.endsWith(".kt") || input.endsWith(".java")) {
         val file = baseDir.resolve(input).normalize()
         sources.add(file)
@@ -347,11 +346,11 @@ private suspend fun initAndBuild(
   val storageInitializer = StorageInitializer(dataDir = dataDir, classOutDir = classOutDir)
   val storageManager = tracer.spanBuilder("init storage").setParent(tracingContext).use { span ->
     if (isRebuild) {
-        storageInitializer.clearAndInit(span)
-      }
-      else {
-        storageInitializer.init(span)
-      }
+      storageInitializer.clearAndInit(span)
+    }
+    else {
+      storageInitializer.init(span)
+    }
   }
   try {
     val projectDescriptor = storageInitializer.createProjectDescriptor(
@@ -376,10 +375,7 @@ private suspend fun initAndBuild(
         projectDescriptor,
         messageHandler,
         emptyMap(),
-        object : CanceledStatus {
-          override fun isCanceled(): Boolean = !coroutineContext.isActive
-        },
-      )
+      ) { !coroutineContext.isActive }
 
       val exitCode = tracer.spanBuilder("compile")
         .setParent(tracingContext)

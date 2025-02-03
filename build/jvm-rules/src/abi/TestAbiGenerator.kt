@@ -13,16 +13,16 @@ internal object TestAbiGenerator {
     try {
       //val className = "com.intellij.codeInsight.folding.impl.FoldingUtil"
       val className = "com.intellij.ui.AppUIUtilKt"
-      val classReader = ClassReader(zip.getInputStream(zip.getEntry(className.replace('.', '/') + ".class")))
+      val zipName = className.replace('.', '/') + ".class"
+      val data = zip.getInputStream(zip.getEntry(zipName)).use { it.readAllBytes() }
+
       val classesToBeDeleted = HashSet<String>()
-      val classWriter = ClassWriter(classReader, 0)
-      val abiVisitor = KotlinAbiClassVisitor(
-        classVisitor = classWriter,
-        classesToBeDeleted = classesToBeDeleted,
-        treatInternalAsPrivate = false,
-      )
-      classReader.accept(abiVisitor, ClassReader.SKIP_CODE or ClassReader.SKIP_FRAMES)
-      val bytes = classWriter.toByteArray()
+      val bytes = createAbForKotlin(HashSet(), JarContentToProcess(
+        name = zipName.toByteArray(),
+        data = data,
+        isKotlinModuleMetadata = false,
+        isKotlin = true,
+      ))
       //val classNode = ClassNode()
       //ClassReader(bytes).accept(classNode, 0)
     }

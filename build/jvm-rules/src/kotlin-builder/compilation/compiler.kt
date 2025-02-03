@@ -1,40 +1,44 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.cli.jvm.compiler
 
-import com.intellij.openapi.Disposable
-import org.jetbrains.kotlin.backend.jvm.jvmLoweringPhases
-import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
-import org.jetbrains.kotlin.cli.common.ExitCode
+import org.jetbrains.kotlin.backend.common.phaser.then
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.createPhaseConfig
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.cli.common.modules.ModuleBuilder
-import org.jetbrains.kotlin.cli.jvm.compiler.pipeline.compileModulesUsingFrontendIrAndLightTree
-import org.jetbrains.kotlin.cli.jvm.compiler.pipeline.createProjectEnvironment
+import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.K2JVMCompilerPerformanceManager
 import org.jetbrains.kotlin.cli.jvm.config.configureJdkClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.configureAdvancedJvmOptions
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser.RegisteredPluginInfo
+import org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline
+import org.jetbrains.kotlin.cli.pipeline.AbstractConfigurationPhase
+import org.jetbrains.kotlin.cli.pipeline.ArgumentsPipelineArtifact
+import org.jetbrains.kotlin.cli.pipeline.CheckCompilationErrors
+import org.jetbrains.kotlin.cli.pipeline.ConfigurationPipelineArtifact
+import org.jetbrains.kotlin.cli.pipeline.PipelineContext
+import org.jetbrains.kotlin.cli.pipeline.jvm.JvmBackendPipelinePhase
+import org.jetbrains.kotlin.cli.pipeline.jvm.JvmBinaryPipelineArtifact
+import org.jetbrains.kotlin.cli.pipeline.jvm.JvmFir2IrPipelinePhase
+import org.jetbrains.kotlin.cli.pipeline.jvm.JvmFrontendPipelinePhase
 import org.jetbrains.kotlin.cli.plugins.processCompilerPluginOptions
 import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.compiler.plugin.PluginProcessingException
-import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.messageCollector
+import org.jetbrains.kotlin.config.phaseConfig
+import org.jetbrains.kotlin.config.phaser.CompilerPhase
+import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
+import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.util.ServiceLoaderLite
 import java.io.File
 import java.net.URLClassLoader
 
 private fun createCompilerConfigurationTemplate(): CompilerConfiguration {
   val config = CompilerConfiguration()
-  config.put(CLIConfigurationKeys.FLEXIBLE_PHASE_CONFIG, createPhaseConfig(
-    compoundPhase = jvmLoweringPhases,
-    arguments = CommonCompilerArguments.DummyImpl(),
-    messageCollector = MessageCollector.NONE,
-  ))
+  config.phaseConfig = createPhaseConfig(arguments = CommonCompilerArguments.DummyImpl())
 
   config.put(JVMConfigurationKeys.JDK_HOME, File(System.getProperty("java.home") ?: error("No java.home system property")))
   config.put(JVMConfigurationKeys.DISABLE_STANDARD_SCRIPT_DEFINITION, true)
@@ -50,55 +54,83 @@ private fun createCompilerConfigurationTemplate(): CompilerConfiguration {
 
 internal val configTemplate = createCompilerConfigurationTemplate()
 
-internal fun k2jvm(
-  config: CompilerConfiguration,
-  rootDisposable: Disposable,
-  module: ModuleBuilder,
-  messageCollector: MessageCollector,
-): ExitCode {
-  val moduleBuilders = listOf(module)
+internal class BazelJvmCliPipeline(
+  private val configPhase: BazelJvmConfigurationPipelinePhase,
+) : AbstractCliPipeline<K2JVMCompilerArguments>() {
+  override val defaultPerformanceManager: K2JVMCompilerPerformanceManager = K2JVMCompilerPerformanceManager()
 
-  val modularJdkRoot = module.modularJdkRoot
-  if (modularJdkRoot != null) {
-    // We use the SDK of the first module in the chunk, which is not always correct because some other module in the chunk
-    // might depend on a different SDK
-    config.put(JVMConfigurationKeys.JDK_HOME, File(modularJdkRoot))
+  override fun createCompoundPhase(arguments: K2JVMCompilerArguments): CompilerPhase<PipelineContext, ArgumentsPipelineArtifact<K2JVMCompilerArguments>, *> {
+    return createRegularPipeline()
   }
 
-  require(config.getBoolean(CommonConfigurationKeys.USE_LIGHT_TREE))
-  require(config.getBoolean(CommonConfigurationKeys.USE_FIR))
-  if (messageCollector.hasErrors()) {
-    return ExitCode.COMPILATION_ERROR
+  private fun createRegularPipeline(): CompilerPhase<PipelineContext, ArgumentsPipelineArtifact<K2JVMCompilerArguments>, JvmBinaryPipelineArtifact> {
+    // instead of JvmConfigurationPipelinePhase, we use our own BazelJvmConfigurationPipelinePhase
+    return configPhase then
+      JvmFrontendPipelinePhase then
+      JvmFir2IrPipelinePhase then
+      JvmBackendPipelinePhase
   }
-
-  val projectEnvironment = createProjectEnvironment(
-    configuration = config,
-    parentDisposable = rootDisposable,
-    configFiles = EnvironmentConfigFiles.JVM_CONFIG_FILES,
-    messageCollector = messageCollector,
-  )
-  if (messageCollector.hasErrors()) {
-    return ExitCode.COMPILATION_ERROR
-  }
-
-  if (!FirKotlinToJvmBytecodeCompiler.checkNotSupportedPlugins(config, messageCollector)) {
-    return ExitCode.COMPILATION_ERROR
-  }
-
-  if (compileModulesUsingFrontendIrAndLightTree(
-      projectEnvironment = projectEnvironment,
-      compilerConfiguration = config,
-      messageCollector = messageCollector,
-      buildFile = null,
-      chunk = moduleBuilders,
-      targetDescription = module.getModuleName() + "-" + module.getModuleType(),
-      checkSourceFiles = false,
-      isPrintingVersion = false,
-    )) {
-    return ExitCode.OK
-  }
-  return ExitCode.COMPILATION_ERROR
 }
+
+internal class BazelJvmConfigurationPipelinePhase(
+  private val config: CompilerConfiguration,
+) : AbstractConfigurationPhase<K2JVMCompilerArguments>(
+  name = "JvmConfigurationPipelinePhase",
+  postActions = setOf(CheckCompilationErrors.CheckMessageCollector),
+  configurationUpdaters = emptyList()
+) {
+  override fun executePhase(input: ArgumentsPipelineArtifact<K2JVMCompilerArguments>): ConfigurationPipelineArtifact? {
+    return ConfigurationPipelineArtifact(config, input.diagnosticCollector, input.rootDisposable)
+  }
+
+  override fun createMetadataVersion(versionArray: IntArray): BinaryVersion = MetadataVersion(*versionArray)
+}
+
+//internal fun k2jvm(
+//  config: CompilerConfiguration,
+//  rootDisposable: Disposable,
+//  module: ModuleBuilder,
+//  messageCollector: MessageCollector,
+//): ExitCode {
+//  val moduleBuilders = listOf(module)
+//
+//  val modularJdkRoot = module.modularJdkRoot
+//  if (modularJdkRoot != null) {
+//    // We use the SDK of the first module in the chunk, which is not always correct because some other module in the chunk
+//    // might depend on a different SDK
+//    config.put(JVMConfigurationKeys.JDK_HOME, File(modularJdkRoot))
+//  }
+//
+//  require(config.getBoolean(CommonConfigurationKeys.USE_LIGHT_TREE))
+//  require(config.getBoolean(CommonConfigurationKeys.USE_FIR))
+//  if (messageCollector.hasErrors()) {
+//    return ExitCode.COMPILATION_ERROR
+//  }
+//
+//  val projectEnvironment = createCoreEnvironment(
+//    configuration = config,
+//    rootDisposable = rootDisposable,
+//    configFiles = EnvironmentConfigFiles.JVM_CONFIG_FILES,
+//    messageCollector = messageCollector,
+//  )
+//  if (messageCollector.hasErrors()) {
+//    return ExitCode.COMPILATION_ERROR
+//  }
+//
+//  if (compileModulesUsingFrontendIrAndLightTree(
+//      projectEnvironment = projectEnvironment,
+//      compilerConfiguration = config,
+//      messageCollector = messageCollector,
+//      buildFile = null,
+//      chunk = moduleBuilders,
+//      targetDescription = module.getModuleName() + "-" + module.getModuleType(),
+//      checkSourceFiles = false,
+//      isPrintingVersion = false,
+//    )) {
+//    return ExitCode.OK
+//  }
+//  return ExitCode.COMPILATION_ERROR
+//}
 
 @OptIn(ExperimentalCompilerApi::class)
 internal fun loadPlugins(

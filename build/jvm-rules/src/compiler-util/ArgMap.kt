@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.kotlin
 
 import java.util.*
@@ -30,7 +30,7 @@ class ArgMap<T : Enum<T>> internal constructor(private val map: EnumMap<T, Mutab
     }
   }
 
-  fun mandatory(key: T): List<String> = requireNotNull(map[key]) { "$key is not optional"}
+  fun mandatory(key: T): List<String> = requireNotNull(map[key]) { "$key is not optional" }
 
   fun optional(key: T): List<String>? = map[key]
 
@@ -68,7 +68,8 @@ fun <T : Enum<T>> createArgMap(
     if (it.startsWith("--")) {
       mergeCurrent()
       currentKey = java.lang.Enum.valueOf(enumClass, it.substring(2).uppercase().replace('-', '_'))
-    } else {
+    }
+    else {
       currentValue.add(it)
     }
   }

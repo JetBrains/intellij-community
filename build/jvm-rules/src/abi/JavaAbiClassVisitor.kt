@@ -35,8 +35,6 @@ internal class JavaAbiClassVisitor(
   }
 
   override fun visit(version: Int, access: Int, name: String, signature: String?, superName: String?, interfaces: Array<String>?) {
-    //isApiClass = (access and (Opcodes.ACC_PUBLIC or Opcodes.ACC_PROTECTED)) != 0
-    // we have a lot of violations for now - allow any, even package-local class
     isApiClass = (access and (Opcodes.ACC_PUBLIC or Opcodes.ACC_PROTECTED)) != 0
     if (isApiClass) {
       classVisitor.visit(version, access, name, signature, superName, interfaces)

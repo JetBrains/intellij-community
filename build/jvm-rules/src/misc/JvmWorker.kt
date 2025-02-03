@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm
 
 import io.opentelemetry.api.trace.Tracer
@@ -11,10 +11,10 @@ import java.io.Writer
 import java.nio.channels.FileChannel
 import java.nio.file.Path
 
-object JvmWorker : WorkRequestExecutor {
+object JvmWorker : WorkRequestExecutor<WorkRequest> {
   @JvmStatic
   fun main(startupArgs: Array<String>) {
-    processRequests(startupArgs = startupArgs, executor = this, serviceName = "jvm-worker")
+    processRequests(startupArgs = startupArgs, executor = this, reader = WorkRequestReaderWithoutDigest(System.`in`), serviceName = "jvm-worker")
   }
 
   override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path, tracingContext: Context, tracer: Tracer): Int {
