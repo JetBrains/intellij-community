@@ -137,6 +137,18 @@ class KtSymbolFromIndexProvider(
         .map { it.symbol }
 
     context(KaSession)
+    fun getKotlinEnumEntriesByName(
+        name: Name,
+        scope: GlobalSearchScope = analysisScope,
+        psiFilter: (KtEnumEntry) -> Boolean = { true },
+    ): Sequence<KaEnumEntrySymbol> = KotlinClassShortNameIndex.getAllElements(
+        key = name.asString(),
+        project = project,
+        scope = scope,
+    ) { it is KtEnumEntry && it.isAcceptable(psiFilter) }
+        .map { (it as KtEnumEntry).symbol }
+
+    context(KaSession)
     fun getJavaClassesByNameFilter(
         nameFilter: (Name) -> Boolean,
         scope: GlobalSearchScope = analysisScope,

@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -124,9 +125,14 @@ class ImportQuickFix(
         
         val restoredCandidate = importVariant.candidatePointer.restore() ?: return false
 
-        // for class or package we use ShortenReferences because we not necessary insert an import but may want to
+        // for class or enum entry we use ShortenReferences because we not necessary insert an import but may want to
         // insert a partially qualified name
-        if (restoredCandidate.symbol !is KaClassLikeSymbol) return false
+        if (
+            restoredCandidate.symbol !is KaClassLikeSymbol &&
+            restoredCandidate.symbol !is KaEnumEntrySymbol
+        ) {
+            return false
+        }
         
         // callable references cannot be fully qualified
         if (element.parent is KtCallableReferenceExpression) return false

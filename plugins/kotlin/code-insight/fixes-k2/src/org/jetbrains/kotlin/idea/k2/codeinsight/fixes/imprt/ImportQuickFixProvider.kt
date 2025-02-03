@@ -83,6 +83,7 @@ object ImportQuickFixProvider {
         is KotlinExpressionNameReferencePositionContext -> sequenceOf(
             CallableImportCandidatesProvider(positionContext),
             ClassifierImportCandidatesProvider(positionContext),
+            EnumEntryImportCandidatesProvider(positionContext),
         )
 
         is KotlinInfixCallPositionContext -> sequenceOf(
