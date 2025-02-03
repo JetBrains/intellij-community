@@ -134,7 +134,6 @@ class TextMateSelectorParser internal constructor(private val myHighlightingSele
 
   private class Selector(private val selector: String) : Node {
     override fun weigh(scope: TextMateScope): TextMateWeigh {
-      "".toRegex()
       val scopeName = scope.scopeName
       if (scopeName != null && (selector.isEmpty() ||
                                 scopeName.startsWith("$selector.") ||
