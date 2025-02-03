@@ -501,9 +501,10 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     mavenModel.modules = rootModel.getChildrenText("modules", "module")
     mavenModel.packaging = rootModel.getChildTextTrim("packaging") ?: "jar"
 
-    mavenModel.build.directory = parentFolder.resolve("target").toString()
-    mavenModel.build.outputDirectory = parentFolder.resolve("target/classes").toString()
-    mavenModel.build.testOutputDirectory = parentFolder.resolve("target/test-classes").toString()
+    val buildDir = MavenJDOMUtil.findChildValueByPath(rootModel, "build.directory") ?: "target"
+    mavenModel.build.directory = parentFolder.resolve(buildDir).toString()
+    mavenModel.build.outputDirectory = parentFolder.resolve("$buildDir/classes").toString()
+    mavenModel.build.testOutputDirectory = parentFolder.resolve("$buildDir/test-classes").toString()
 
     declaredDependencies.addAll(
       MavenJDOMUtil.findChildrenByPath(rootModel, "dependencies", "dependency").map {
@@ -575,9 +576,10 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     val parentFolder = mavenProjectData.file.parent.toNioPath()
 
 
-    mavenProjectData.mavenModel.build.directory = parentFolder.resolve("target").toString()
-    mavenProjectData.mavenModel.build.outputDirectory = parentFolder.resolve("target/classes").toString()
-    mavenProjectData.mavenModel.build.testOutputDirectory = parentFolder.resolve("target/test-classes").toString()
+    val buildDir = MavenJDOMUtil.findChildValueByPath(mavenProjectData.rootModel, "build.directory") ?: "target"
+    mavenProjectData.mavenModel.build.directory = parentFolder.resolve(buildDir).toString()
+    mavenProjectData.mavenModel.build.outputDirectory = parentFolder.resolve("$buildDir/classes").toString()
+    mavenProjectData.mavenModel.build.testOutputDirectory = parentFolder.resolve("$buildDir/test-classes").toString()
     mavenProjectData.mavenModel.build.sources = sources
       .mapNotNull { resolveProperty(mavenProjectData, it) }
       .map(parentFolder::resolve)

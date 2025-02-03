@@ -74,8 +74,17 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotResetFoldersAfterResolveIfProjectIsInvalid() = runBlocking {
-    runWithoutStaticSync()
     createStdProjectFolders()
+    importProjectAsync("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>""")
+    assertModules("project")
+    assertSources("project", "src/main/java")
+    assertDefaultResources("project")
+    assertTestSources("project", "src/test/java")
+    assertDefaultTestResources("project")
+
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -1180,7 +1189,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testExcludingOutputDirectoriesIfProjectOutputIsUsed() = runBlocking {
-    runWithoutStaticSync()
     mavenImporterSettings.isUseMavenOutput = false
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -1226,7 +1234,6 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testExcludingCustomOutputDirectories() = runBlocking {
-    runWithoutStaticSync()
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
