@@ -17,12 +17,13 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.xml.parsing.XmlParserBundle;
 import org.jetbrains.annotations.NotNull;
 
-public class DtdParsing extends XmlParsing implements XmlElementType {
+import static com.intellij.psi.xml.XmlElementType.*;
+
+public class DtdParsing extends XmlParsing {
   private static final Logger LOG = Logger.getInstance(XmlParser.class);
 
   private final IElementType myRootType;
