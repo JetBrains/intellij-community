@@ -2,6 +2,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.CodeStyleBundle;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.configurationStore.Property;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -136,7 +138,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   /**
    * @deprecated
-   * For short-lived temporary settings use {@code CodeStyle.doWithTemporarySettings(project,baseSettings,modifier,runnable},
+   * For short-lived temporary settings use {@link CodeStyle#runWithLocalSettings(Project, CodeStyleSettings, Consumer)},
    * for permanently created settings use {@link CodeStyleSettingsManager#cloneSettings(CodeStyleSettings)}
    */
   @Override
