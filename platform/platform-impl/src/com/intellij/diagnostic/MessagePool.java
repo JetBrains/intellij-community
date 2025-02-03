@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Internal API, please don't use.
+ * The class is for routing messages inside an IDE and shouldn't be accessed from plugins.
  * <p>
  * For reporting errors, see {@link com.intellij.openapi.diagnostic.Logger#error} methods.
  * <p>
@@ -60,7 +60,7 @@ public final class MessagePool {
     return State.ReadErrors;
   }
 
-  public List<AbstractMessage> getFatalErrors(boolean includeReadMessages, boolean includeSubmittedMessages) {
+  public @NotNull List<AbstractMessage> getFatalErrors(boolean includeReadMessages, boolean includeSubmittedMessages) {
     var result = new ArrayList<AbstractMessage>();
     for (var message : myErrors) {
       if (!includeReadMessages && message.isRead()) continue;

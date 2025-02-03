@@ -66,9 +66,9 @@ internal suspend fun startSystemHealthMonitor() {
     checkTempDirEnvVars()
     checkAncientOs()
   }
-  startDiskSpaceMonitoring()
+  checkEelVmOptions()
 
-  MultiRoutingFileSystemVmOptionsSetter.onApplicationActivated()
+  startDiskSpaceMonitoring()
 }
 
 private val LOG = logger<Application>()
@@ -392,14 +392,14 @@ private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore,
   }
 }
 
-private fun storeName(store: FileStore): String {
-  return if (store.name().isBlank()) store.toString().trim().trimStart('(').trimEnd(')') else store.toString()
-}
+private fun storeName(store: FileStore): String =
+  if (store.name().isBlank()) store.toString().trim().trimStart('(').trimEnd(')')
+  else store.toString()
 
-private suspend fun MultiRoutingFileSystemVmOptionsSetter.onApplicationActivated() {
+private suspend fun checkEelVmOptions() {
   if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) return
 
-  val changedOptions = ensureInVmOptions()
+  val changedOptions = MultiRoutingFileSystemVmOptionsSetter.ensureInVmOptions()
   when {
     changedOptions.isEmpty() -> {
       IjentWslNioFsToggler.instanceAsync().enableForAllWslDistributions()
@@ -409,26 +409,22 @@ private suspend fun MultiRoutingFileSystemVmOptionsSetter.onApplicationActivated
       logger<MultiRoutingFileSystemVmOptionsSetter>().warn(
         changedOptions.joinToString(
           prefix = "This message is seen only in Dev Mode/Run from sources.\n" +
-                   "The value of the registry flag for IJent FS " +
-                   "doesn't match the VM options.\n" +
+                   "The value of the registry flag for Eel FS doesn't match the VM options.\n" +
                    "Add the following VM options to the Run Configuration:\n",
           separator = "\n",
-        ) { (k, v) ->
-          "  $k${v.orEmpty()}"
-        }
+        ) { (k, v) -> "  $k${v.orEmpty()}" }
       )
     }
 
-    else -> withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+    else -> {
+      val actionName = IdeBundle.message(
+        if (ApplicationManager.getApplication().isRestartCapable) "ijent.wsl.fs.dialog.restart.button"
+        else "ijent.wsl.fs.dialog.shutdown.button"
+      )
       showNotification(
         key = "ijent.wsl.fs.dialog.message",
         suppressable = false,
-        action = object : NotificationAction(
-          if (ApplicationManager.getApplication().isRestartCapable)
-            IdeBundle.message("ijent.wsl.fs.dialog.restart.button")
-          else
-            IdeBundle.message("ijent.wsl.fs.dialog.shutdown.button")
-        ) {
+        action = object : NotificationAction(actionName) {
           override fun actionPerformed(e: AnActionEvent, notification: Notification) {
             ApplicationManagerEx.getApplicationEx().restart(true)
           }

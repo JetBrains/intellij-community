@@ -3,8 +3,6 @@ package com.intellij.platform.ide.bootstrap.eel
 
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.wsl.WslIjentAvailabilityService
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
@@ -90,14 +88,6 @@ object MultiRoutingFileSystemVmOptionsSetter {
 
   fun ensureInVmOptions(): Collection<Pair<String, String?>> {
     val isEnabled = WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()
-
-    // In Dev Server, it's possible to customize VM options only through the Run Configuration.
-    // Invoking the action "Customize VM Options" won't have any effect because the Dev Server resets the file on restart.
-    val getEffectiveVmOptions =
-      PluginManagerCore.isRunningFromSources() ||
-      AppMode.isDevServer() ||
-      ApplicationManager.getApplication().isUnitTestMode ||
-      !VMOptions.canWriteOptions()  // It happens when the IDE is launched from `.\gradlew runIde` with intellij-platform-gradle-plugin.
 
     val serializedProperties: List<String> = ManagementFactory.getRuntimeMXBean().inputArguments
     val changedOptions = ensureInVmOptionsImpl(isEnabled, false) { prefix ->
