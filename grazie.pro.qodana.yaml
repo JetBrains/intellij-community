@@ -4,7 +4,7 @@ properties:
   shared.index.git.hashes: false
   idea.batch.inspections.inspect.injected.psi: false
 profile:
-  path: .idea/inspectionProfiles/idea_fatal_errors.yml
+  path: .idea/inspectionProfiles/qodana_zero_tolerance_profanity_check.yml
 plugins:
   - id: com.intellij.platform.ide.provisioner
   - id: com.intellij.grazie.pro
