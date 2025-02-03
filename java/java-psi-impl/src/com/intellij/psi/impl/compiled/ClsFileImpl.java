@@ -397,6 +397,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
     return (PsiFile)getMirror();
   }
 
+  @Override
   public @Nullable PsiFile getCachedMirror() {
     TreeElement mirrorTreeElement = dereference(myMirrorFileElement);
     return mirrorTreeElement == null ? null : (PsiFile)mirrorTreeElement.getPsi();

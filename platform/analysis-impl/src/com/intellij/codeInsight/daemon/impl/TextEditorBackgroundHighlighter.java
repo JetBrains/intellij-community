@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -21,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,6 +53,7 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
   }
 
   private @NotNull List<TextEditorHighlightingPass> createPasses() {
+    ThreadingAssertions.assertBackgroundThread();
     if (project.isDisposed()) {
       return List.of();
     }
@@ -98,10 +101,27 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
     return passes.isEmpty() ? TextEditorHighlightingPass.EMPTY_ARRAY : passes.toArray(TextEditorHighlightingPass.EMPTY_ARRAY);
   }
 
-  static PsiFile renewFile(@NotNull Project project, @NotNull Document document)  {
+  @ApiStatus.Internal
+  public static PsiFile renewFile(@NotNull Project project, @NotNull Document document)  {
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile instanceof PsiCompiledFile compiled) {
       psiFile = compiled.getDecompiledPsiFile();
+    }
+    if (psiFile == null) return null;
+    psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, true);
+    return psiFile;
+  }
+
+  /**
+   * Returns PSI file associated with {@param document}, if it's exists and cached, or null otherwise.
+   * Guarantees no expensive PSI creation/decompilation ops are performed here
+   */
+  @ApiStatus.Internal
+  public static PsiFile getCachedFileToHighlight(@NotNull Project project, @NotNull VirtualFile virtualFile)  {
+    PsiDocumentManagerBase psiDocumentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    PsiFile psiFile = psiDocumentManager.getRawCachedFile(virtualFile);
+    if (psiFile instanceof PsiCompiledFile compiled) {
+      psiFile = (PsiFile)compiled.getCachedMirror();
     }
     if (psiFile == null) return null;
     psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, true);

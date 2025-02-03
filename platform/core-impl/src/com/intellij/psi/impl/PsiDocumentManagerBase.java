@@ -138,6 +138,16 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return virtualFile == null || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile);
   }
 
+  /**
+   * @return associated psi file, it's it cached in {@link FileManagerImpl}.
+   * It's guaranteed to not perform any expensive ops like creating files/reparse/resurrecting PsiFile from temp comatose state.
+   */
+  @ApiStatus.Internal
+  public PsiFile getRawCachedFile(@NotNull VirtualFile virtualFile) {
+    FileManagerImpl manager = ((FileManagerImpl)getFileManager());
+    return manager.getRawCachedFile(virtualFile);
+  }
+
   @Nullable
   @ApiStatus.Internal
   public FileViewProvider getCachedViewProvider(@NotNull Document document) {

@@ -261,6 +261,16 @@ public final class FileManagerImpl implements FileManager {
     return viewProvider == null ? vFile.getUserData(myPsiHardRefKey) : viewProvider;
   }
 
+  /**
+   * @return associated psi file, it's it cached in {@link #myVFileToViewProviderMap}
+   * It's guaranteed to not perform any expensive ops like creating files/reparse/resurrecting PsiFile from temp comatose state.
+   */
+  @ApiStatus.Internal
+  public @Nullable PsiFile getRawCachedFile(@NotNull VirtualFile vFile) {
+    FileViewProvider viewProvider = getRawCachedViewProvider(vFile);
+    return viewProvider == null ? null : viewProvider.getPsi(viewProvider.getBaseLanguage());
+  }
+
   @Override
   public void setViewProvider(@NotNull VirtualFile vFile, @Nullable FileViewProvider viewProvider) {
     FileViewProvider prev = getRawCachedViewProvider(vFile);
