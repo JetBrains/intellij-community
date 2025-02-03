@@ -320,6 +320,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/KTIJ_32792/");
     }
 
+    @TestMetadata("KTIJ_32930")
+    public void testKTIJ_32930() throws Exception {
+        runTest("../testData/basic/multifile/KTIJ_32930/");
+    }
+
     @TestMetadata("MoreSpecificExtensionGeneric")
     public void testMoreSpecificExtensionGeneric() throws Exception {
         runTest("../testData/basic/multifile/MoreSpecificExtensionGeneric/");
