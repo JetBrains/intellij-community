@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
@@ -114,19 +115,36 @@ public final class JavaErrorKinds {
   public static final Simple<PsiReferenceList> ANNOTATION_PERMITS = error(PsiReferenceList.class, "annotation.permits")
     .withAnchor(PsiReferenceList::getFirstChild);
 
-  // Can be anchored on @FunctionalInterface annotation or at call site
-  public static final Parameterized<PsiElement, PsiClass> LAMBDA_NOT_FUNCTIONAL_INTERFACE =
-    parameterized(PsiElement.class, PsiClass.class, "lambda.not.a.functional.interface")
-      .withRawDescription((element, aClass) -> message("lambda.not.a.functional.interface", aClass.getName()));
-  // Can be anchored on @FunctionalInterface annotation or at call site
-  public static final Parameterized<PsiElement, PsiClass> LAMBDA_NO_TARGET_METHOD =
+  // Can be anchored on @FunctionalInterface annotation or at a call site
+  public static final Parameterized<PsiElement, PsiType> LAMBDA_NOT_FUNCTIONAL_INTERFACE =
+    parameterized(PsiElement.class, PsiType.class, "lambda.not.a.functional.interface")
+      .withRawDescription((element, type) -> message("lambda.not.a.functional.interface", formatType(type)));
+  // Can be anchored on @FunctionalInterface annotation or at a call site
+  public static final Parameterized<PsiElement, PsiType> LAMBDA_NO_TARGET_METHOD =
     parameterized("lambda.no.target.method.found");
-  // Can be anchored on @FunctionalInterface annotation or at call site
-  public static final Parameterized<PsiElement, PsiClass> LAMBDA_MULTIPLE_TARGET_METHODS =
-    parameterized(PsiElement.class, PsiClass.class, "lambda.multiple.sam.candidates")
-      .withRawDescription((psi, aClass) -> message("lambda.multiple.sam.candidates", aClass.getName()));
-  public static final Parameterized<PsiAnnotation, PsiClass> LAMBDA_FUNCTIONAL_INTERFACE_SEALED =
+  // Can be anchored on @FunctionalInterface annotation or at a call site
+  public static final Parameterized<PsiElement, PsiType> LAMBDA_MULTIPLE_TARGET_METHODS =
+    parameterized(PsiElement.class, PsiType.class, "lambda.multiple.sam.candidates")
+      .withRawDescription((psi, type) -> message("lambda.multiple.sam.candidates", 
+                                                 TypeConversionUtil.erasure(type).getPresentableText()));
+  public static final Parameterized<PsiAnnotation, PsiClass> FUNCTIONAL_INTERFACE_SEALED =
     parameterized("lambda.sealed.functional.interface");
+  public static final Simple<PsiLambdaExpression> LAMBDA_NOT_EXPECTED = error("lambda.not.expected");
+  public static final Simple<PsiParameterList> LAMBDA_PARAMETERS_INCONSISTENT_VAR = error("lambda.parameters.inconsistent.var");
+  public static final Simple<PsiLambdaExpression> LAMBDA_SEALED = error("lambda.sealed");
+  public static final Simple<PsiFunctionalExpression> LAMBDA_TYPE_INFERENCE_FAILURE = error("lambda.type.inference.failure");
+  public static final Simple<PsiFunctionalExpression> LAMBDA_SAM_GENERIC = error("lambda.sam.generic");
+  public static final Parameterized<PsiFunctionalExpression, PsiType> LAMBDA_TARGET_NOT_INTERFACE = 
+    parameterized("lambda.target.not.interface");
+  public static final Parameterized<PsiLambdaExpression, MethodCandidateInfo> LAMBDA_INFERENCE_ERROR =
+    parameterized(PsiLambdaExpression.class, MethodCandidateInfo.class, "lambda.inference.error")
+      .withRawDescription((psi, candidate) -> message("lambda.inference.error", candidate.getInferenceErrorMessage()));
+  public static final Parameterized<PsiElement, String> LAMBDA_RETURN_TYPE_ERROR =
+    parameterized(PsiElement.class, String.class, "lambda.return.type.error")
+      .withRawDescription((psi, message) -> message("lambda.return.type.error", message));
+  
+  public static final Simple<PsiMethodReferenceExpression> METHOD_REFERENCE_SEALED = error("method.reference.sealed");
+  
   public static final Parameterized<PsiAnnotation, @NotNull List<PsiAnnotation.@NotNull TargetType>> ANNOTATION_NOT_APPLICABLE =
     error(PsiAnnotation.class, "annotation.not.applicable").<@NotNull List<PsiAnnotation.@NotNull TargetType>>parameterized()
       .withValidator((annotation, types) -> {

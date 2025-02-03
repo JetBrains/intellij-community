@@ -52,7 +52,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +60,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
-import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Objects.*;
 
 // java highlighting: problems in java code like unresolved/incompatible symbols/methods etc.
@@ -103,10 +101,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Contract(pure = true)
   private boolean hasErrorResults() {
     return myHasError;
-  }
-
-  private @Contract(pure = true) @NotNull Project getProject() {
-    return myHolder.getProject();
   }
 
   // element -> a constructor inside which this element is contained
@@ -276,86 +270,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
-    add(checkFeature(expression, JavaFeature.LAMBDA_EXPRESSIONS));
+    visitElement(expression);
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (toReportFunctionalExpressionProblemOnParent(parent)) return;
-    if (!hasErrorResults() && !LambdaUtil.isValidLambdaContext(parent)) {
-      add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
-            .descriptionAndTooltip(JavaErrorBundle.message("lambda.expression.not.expected")));
-    }
-
-    if (!hasErrorResults()) add(LambdaHighlightingUtil.checkConsistentParameterDeclaration(expression));
+    if (hasErrorResults() || toReportFunctionalExpressionProblemOnParent(parent)) return;
 
     PsiType functionalInterfaceType = null;
     if (!hasErrorResults()) {
       functionalInterfaceType = expression.getFunctionalInterfaceType();
       if (functionalInterfaceType != null) {
-        add(HighlightClassUtil.checkExtendsSealedClass(expression, functionalInterfaceType));
-        if (!hasErrorResults()) {
-          String notFunctionalMessage = LambdaHighlightingUtil.checkInterfaceFunctional(expression, functionalInterfaceType);
-          if (notFunctionalMessage != null) {
-            add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
-                  .descriptionAndTooltip(notFunctionalMessage));
-          }
-          else {
-            add(LambdaHighlightingUtil.checkFunctionalInterfaceTypeAccessible(myFile.getProject(), expression, functionalInterfaceType));
-          }
-        }
-      }
-      else if (LambdaUtil.getFunctionalInterfaceType(expression, true) != null) {
-        add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(
-          JavaErrorBundle.message("cannot.infer.functional.interface.type")));
-      }
-    }
-
-    if (!hasErrorResults() && functionalInterfaceType != null) {
-      PsiCallExpression callExpression = parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression ?
-                                         (PsiCallExpression)parent.getParent() : null;
-      MethodCandidateInfo parentCallResolveResult =
-        callExpression != null ? tryCast(callExpression.resolveMethodGenerics(), MethodCandidateInfo.class) : null;
-      String parentInferenceErrorMessage = parentCallResolveResult != null ? parentCallResolveResult.getInferenceErrorMessage() : null;
-      PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
-      Map<PsiElement, @Nls String> returnErrors = null;
-      Set<PsiTypeParameter> parentTypeParameters =
-        parentCallResolveResult == null ? Set.of() : Set.of(parentCallResolveResult.getElement().getTypeParameters());
-      // If return type of the lambda was not fully inferred and lambda parameters don't mention the same type,
-      // it means that lambda is not responsible for inference failure and blaming it would be unreasonable.
-      boolean skipReturnCompatibility = parentCallResolveResult != null &&
-                                        PsiTypesUtil.mentionsTypeParameters(returnType, parentTypeParameters)
-                                        && !LambdaHighlightingUtil.lambdaParametersMentionTypeParameter(functionalInterfaceType, parentTypeParameters);
-      if (!skipReturnCompatibility) {
-        returnErrors = LambdaUtil.checkReturnTypeCompatible(expression, returnType);
-      }
-      if (parentInferenceErrorMessage != null && (returnErrors == null || !returnErrors.containsValue(parentInferenceErrorMessage))) {
-        if (returnErrors == null) return;
-        HighlightInfo.Builder info =
-          HighlightMethodUtil.createIncompatibleTypeHighlightInfo(callExpression,
-                                                                  parentCallResolveResult, expression);
-        if (info != null) {
-          for (PsiElement errorElement : returnErrors.keySet()) {
-            IntentionAction action = AdjustFunctionContextFix.createFix(errorElement);
-            if (action != null) {
-              info.registerFix(action, null, null, null, null);
-            }
-          }
-          add(info);
-        }
-      }
-      else if (returnErrors != null && !PsiTreeUtil.hasErrorElements(expression)) {
-        for (Map.Entry<PsiElement, @Nls String> entry : returnErrors.entrySet()) {
-          PsiElement element = entry.getKey();
-          HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .range(element)
-            .descriptionAndTooltip(entry.getValue());
-          IntentionAction action = AdjustFunctionContextFix.createFix(element);
-          if (action != null) {
-            info.registerFix(action, null, null, null, null);
-          }
-          if (element instanceof PsiExpression expr) {
-            HighlightFixUtil.registerLambdaReturnTypeFixes(HighlightUtil.asConsumer(info), expression, expr);
-          }
-          add(info);
-        }
+        add(LambdaHighlightingUtil.checkFunctionalInterfaceTypeAccessible(myFile.getProject(), expression, functionalInterfaceType));
       }
     }
 
@@ -757,9 +680,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (functionalInterfaceType != null) {
-      if (!hasErrorResults()) {
-        add(HighlightClassUtil.checkExtendsSealedClass(expression, functionalInterfaceType));
-      }
       if (!hasErrorResults()) {
         boolean isFunctional = LambdaUtil.isFunctionalType(functionalInterfaceType);
         if (!isFunctional && !(IncompleteModelUtil.isIncompleteModel(expression) &&

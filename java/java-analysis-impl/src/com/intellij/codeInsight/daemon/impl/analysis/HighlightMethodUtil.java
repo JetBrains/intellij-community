@@ -8,17 +8,14 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
-import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordMethod;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-
-import static com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.asConsumer;
 
 public final class HighlightMethodUtil {
 
@@ -163,57 +157,6 @@ public final class HighlightMethodUtil {
     }
 
     return errorResult;
-  }
-
-  static HighlightInfo.Builder createIncompatibleTypeHighlightInfo(@NotNull PsiCall methodCall,
-                                                                   @NotNull MethodCandidateInfo resolveResult,
-                                                           @NotNull PsiElement elementToHighlight) {
-    String errorMessage = resolveResult.getInferenceErrorMessage();
-    if (errorMessage == null) return null;
-    if (favorParentReport(methodCall, errorMessage)) return null;
-    PsiMethod method = resolveResult.getElement();
-    HighlightInfo.Builder builder;
-    PsiType expectedTypeByParent = InferenceSession.getTargetTypeByParent(methodCall);
-    PsiType actualType =
-      methodCall instanceof PsiExpression ? ((PsiExpression)methodCall.copy()).getType() :
-      resolveResult.getSubstitutor(false).substitute(method.getReturnType());
-    TextRange fixRange = getFixRange(elementToHighlight);
-    if (expectedTypeByParent != null && actualType != null && !expectedTypeByParent.isAssignableFrom(actualType)) {
-      builder = HighlightUtil.createIncompatibleTypeHighlightInfo(
-        expectedTypeByParent, actualType, fixRange, 0, XmlStringUtil.escapeString(errorMessage));
-      if (methodCall instanceof PsiExpression) {
-        AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(asConsumer(builder),
-                                                             (PsiExpression)methodCall, expectedTypeByParent, actualType);
-      }
-      PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
-      if (parent instanceof PsiReturnStatement) {
-        PsiParameterListOwner context = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class);
-        if (context instanceof PsiMethod containingMethod) {
-          HighlightUtil.registerReturnTypeFixes(builder, containingMethod, actualType);
-        }
-      } else if (parent instanceof PsiLocalVariable var) {
-        HighlightFixUtil.registerChangeVariableTypeFixes(var, actualType, builder);
-      }
-    }
-    else {
-      builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(errorMessage).range(fixRange);
-    }
-    if (methodCall instanceof PsiMethodCallExpression callExpression) {
-      HighlightFixUtil.registerMethodCallIntentions(asConsumer(builder), callExpression, callExpression.getArgumentList());
-      if (!PsiTypesUtil.mentionsTypeParameters(actualType, Set.of(method.getTypeParameters()))) {
-        HighlightFixUtil.registerMethodReturnFixAction(asConsumer(builder), resolveResult, methodCall);
-      }
-      HighlightFixUtil.registerTargetTypeFixesBasedOnApplicabilityInference(callExpression, resolveResult, method, asConsumer(builder));
-    }
-    return builder;
-  }
-
-  private static boolean favorParentReport(@NotNull PsiCall methodCall, @NotNull String errorMessage) {
-    // Parent resolve failed as well, and it's likely more informative.
-    // Suppress this error to allow reporting from parent
-    return (errorMessage.equals(JavaPsiBundle.message("error.incompatible.type.failed.to.resolve.argument")) ||
-            errorMessage.equals(JavaPsiBundle.message("error.incompatible.type.declaration.for.the.method.reference.not.found"))) &&
-           hasSurroundingInferenceError(methodCall);
   }
 
   static HighlightInfo.Builder checkAbstractMethodInConcreteClass(@NotNull PsiMethod method, @NotNull PsiElement elementToHighlight) {

@@ -100,7 +100,7 @@ final class PatternHighlightingModel {
               continue;
             }
             builder = HighlightUtil.createIncompatibleTypeHighlightInfo(substitutedRecordComponentType, deconstructionComponentType,
-                                                                        deconstructionComponent.getTextRange(), 0);
+                                                                        deconstructionComponent.getTextRange());
           }
 
           errorSink.accept(builder);

@@ -549,6 +549,31 @@ final class JavaErrorFixProvider {
         HighlightFixUtil.registerCallInferenceFixes(callExpression, sink);
       }
     });
+    fixes(LAMBDA_INFERENCE_ERROR, (error, sink) -> {
+      if (error.psi().getParent() instanceof PsiExpressionList list && 
+          list.getParent() instanceof PsiMethodCallExpression callExpression) {
+        MethodCandidateInfo resolveResult = error.context();
+        PsiMethod method = resolveResult.getElement();
+        HighlightFixUtil.registerMethodCallIntentions(sink, callExpression, callExpression.getArgumentList());
+        if (!PsiTypesUtil.mentionsTypeParameters(((PsiExpression)callExpression.copy()).getType(), Set.of(method.getTypeParameters()))) {
+          HighlightFixUtil.registerMethodReturnFixAction(sink, resolveResult, callExpression);
+        }
+        HighlightFixUtil.registerTargetTypeFixesBasedOnApplicabilityInference(callExpression, resolveResult, method, sink);
+        LambdaUtil.getReturnExpressions(error.psi())
+          .stream().map(PsiExpression::getType).distinct()
+          .map(type -> AdjustFunctionContextFix.createFix(type, error.psi()))
+          .forEach(sink);
+      }
+    });
+    fixes(LAMBDA_RETURN_TYPE_ERROR, (error, sink) -> {
+      if (error.psi() instanceof PsiExpression expr) {
+        sink.accept(AdjustFunctionContextFix.createFix(expr));
+        PsiLambdaExpression lambda = PsiTreeUtil.getParentOfType(expr, PsiLambdaExpression.class);
+        if (lambda != null) {
+          HighlightFixUtil.registerLambdaReturnTypeFixes(sink, lambda, expr);
+        }
+      }
+    });
     fixes(CALL_WRONG_ARGUMENTS, (error, sink) -> {
       JavaMismatchedCallContext context = error.context();
       PsiExpressionList list = context.list();
@@ -744,7 +769,7 @@ final class JavaErrorFixProvider {
                                             ANNOTATION_NOT_ALLOWED_REF, ANNOTATION_NOT_ALLOWED_VAR,
                                             ANNOTATION_NOT_ALLOWED_VOID, LAMBDA_MULTIPLE_TARGET_METHODS, LAMBDA_NO_TARGET_METHOD,
                                             LAMBDA_NOT_FUNCTIONAL_INTERFACE, ANNOTATION_NOT_APPLICABLE,
-                                            LAMBDA_FUNCTIONAL_INTERFACE_SEALED, OVERRIDE_ON_STATIC_METHOD,
+                                            FUNCTIONAL_INTERFACE_SEALED, OVERRIDE_ON_STATIC_METHOD,
                                             OVERRIDE_ON_NON_OVERRIDING_METHOD, SAFE_VARARGS_ON_FIXED_ARITY,
                                             SAFE_VARARGS_ON_NON_FINAL_METHOD, SAFE_VARARGS_ON_RECORD_COMPONENT,
                                             ANNOTATION_CONTAINER_WRONG_PLACE, ANNOTATION_CONTAINER_NOT_APPLICABLE)) {

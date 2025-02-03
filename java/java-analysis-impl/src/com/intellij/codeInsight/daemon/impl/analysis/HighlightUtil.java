@@ -98,7 +98,7 @@ public final class HighlightUtil {
         IncompleteModelUtil.isPotentiallyConvertible(lType, expression)) {
       return null;
     }
-    HighlightInfo.Builder highlightInfo = createIncompatibleTypeHighlightInfo(lType, rType, textRange, 0);
+    HighlightInfo.Builder highlightInfo = createIncompatibleTypeHighlightInfo(lType, rType, textRange);
     AddTypeArgumentsConditionalFix.register(asConsumer(highlightInfo), expression, lType);
     if (expression != null) {
       AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(asConsumer(highlightInfo), expression, lType, rType);
@@ -125,11 +125,6 @@ public final class HighlightUtil {
         highlightInfo.registerFix(fix.asIntention(), null, null, null, null);
       }
     };
-  }
-
-  static void registerReturnTypeFixes(@NotNull HighlightInfo.Builder info, @NotNull PsiMethod method, @NotNull PsiType expectedReturnType) {
-    IntentionAction action = getFixFactory().createMethodReturnFix(method, expectedReturnType, true, true);
-    info.registerFix(action, null, null, null, null);
   }
 
   public static @NotNull @NlsContexts.DetailedDescription String getUnhandledExceptionsDescriptor(@NotNull Collection<? extends PsiClassType> unhandled) {
@@ -775,23 +770,15 @@ public final class HighlightUtil {
       }
       // cannot derive type of conditional expression
       // elseType will never be cast-able to thenType, so no quick fix here
-      return createIncompatibleTypeHighlightInfo(thenType, type, expression.getTextRange(), 0);
+      return createIncompatibleTypeHighlightInfo(thenType, type, expression.getTextRange());
     }
     return null;
   }
 
-  static @NotNull HighlightInfo.Builder createIncompatibleTypeHighlightInfo(@NotNull PsiType lType,
+  static HighlightInfo.@NotNull Builder createIncompatibleTypeHighlightInfo(@NotNull PsiType lType,
                                                                             @Nullable PsiType rType,
-                                                                            @NotNull TextRange textRange,
-                                                                            int navigationShift) {
-    return createIncompatibleTypeHighlightInfo(lType, rType, textRange, navigationShift, getReasonForIncompatibleTypes(rType));
-  }
-
-  static @NotNull HighlightInfo.Builder createIncompatibleTypeHighlightInfo(@NotNull PsiType lType,
-                                                                            @Nullable PsiType rType,
-                                                                            @NotNull TextRange textRange,
-                                                                            int navigationShift,
-                                                                            @NotNull String reason) {
+                                                                            @NotNull TextRange textRange) {
+    @NotNull String reason = getReasonForIncompatibleTypes(rType);
     PsiType baseLType = PsiUtil.convertAnonymousToBaseType(lType);
     PsiType baseRType = rType == null ? null : PsiUtil.convertAnonymousToBaseType(rType);
     boolean leftAnonymous = PsiUtil.resolveClassInClassTypeOnly(lType) instanceof PsiAnonymousClass;
@@ -811,7 +798,7 @@ public final class HighlightUtil {
       .range(textRange)
       .description(description)
       .escapedToolTip(toolTip)
-      .navigationShift(navigationShift);
+      .navigationShift(0);
   }
 
   static HighlightInfo.Builder checkExtraSemicolonBetweenImportStatements(@NotNull PsiJavaToken token,

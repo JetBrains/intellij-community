@@ -371,13 +371,14 @@ final class AnnotationChecker {
       if (owner instanceof PsiModifierList list) {
         PsiElement parent = list.getParent();
         if (parent instanceof PsiClass psiClass) {
+          PsiClassType type = myVisitor.factory().createType(psiClass);
           switch (LambdaUtil.checkInterfaceFunctional(psiClass)) {
-            case NOT_INTERFACE -> myVisitor.report(JavaErrorKinds.LAMBDA_NOT_FUNCTIONAL_INTERFACE.create(annotation, psiClass));
-            case NO_ABSTRACT_METHOD -> myVisitor.report(JavaErrorKinds.LAMBDA_NO_TARGET_METHOD.create(annotation, psiClass));
-            case MULTIPLE_ABSTRACT_METHODS -> myVisitor.report(JavaErrorKinds.LAMBDA_MULTIPLE_TARGET_METHODS.create(annotation, psiClass));
+            case NOT_INTERFACE -> myVisitor.report(JavaErrorKinds.LAMBDA_NOT_FUNCTIONAL_INTERFACE.create(annotation, type));
+            case NO_ABSTRACT_METHOD -> myVisitor.report(JavaErrorKinds.LAMBDA_NO_TARGET_METHOD.create(annotation, type));
+            case MULTIPLE_ABSTRACT_METHODS -> myVisitor.report(JavaErrorKinds.LAMBDA_MULTIPLE_TARGET_METHODS.create(annotation, type));
           }
           if (psiClass.hasModifierProperty(PsiModifier.SEALED)) {
-            myVisitor.report(JavaErrorKinds.LAMBDA_FUNCTIONAL_INTERFACE_SEALED.create(annotation, psiClass));
+            myVisitor.report(JavaErrorKinds.FUNCTIONAL_INTERFACE_SEALED.create(annotation, psiClass));
           }
         }
       }

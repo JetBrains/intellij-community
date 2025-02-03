@@ -101,16 +101,7 @@ public final class HighlightClassUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkExtendsSealedClass(@NotNull PsiFunctionalExpression expression, @NotNull PsiType functionalInterfaceType) {
-    PsiClass functionalInterface = PsiUtil.resolveClassInClassTypeOnly(functionalInterfaceType);
-    if (functionalInterface == null || !functionalInterface.hasModifierProperty(PsiModifier.SEALED)) return null;
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-      .range(expression)
-      .descriptionAndTooltip(JavaErrorBundle.message("sealed.cannot.be.functional.interface"))
-      ;
-  }
-
-   public static HighlightInfo.Builder checkExtendsSealedClass(@NotNull PsiClass aClass,
+  public static HighlightInfo.Builder checkExtendsSealedClass(@NotNull PsiClass aClass,
                                                        @NotNull PsiClass superClass,
                                                        @NotNull PsiJavaCodeReferenceElement elementToHighlight) {
     if (superClass.hasModifierProperty(PsiModifier.SEALED)) {

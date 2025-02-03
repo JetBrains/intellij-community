@@ -23,10 +23,13 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import static java.util.Objects.*;
@@ -49,6 +52,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   final @NotNull TypeChecker myTypeChecker = new TypeChecker(this);
   final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
+  private final @NotNull FunctionChecker myFunctionChecker = new FunctionChecker(this);
   final @NotNull PatternChecker myPatternChecker = new PatternChecker(this);
   final @NotNull ModifierChecker myModifierChecker = new ModifierChecker(this);
   final @NotNull ExpressionChecker myExpressionChecker = new ExpressionChecker(this);
@@ -366,6 +370,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       if (!hasErrorResults() && containingClass != null && containingClass.isInterface()) {
         myExpressionChecker.checkStaticInterfaceCallQualifier(expression, result, containingClass);
       }
+    }
+    if (functionalInterfaceType != null) {
+      if (!hasErrorResults()) myFunctionChecker.checkExtendsSealedClass(expression, functionalInterfaceType);
     }
   }
 
@@ -727,6 +734,64 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
   }
 
+  @Override
+  public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
+    checkFeature(expression, JavaFeature.LAMBDA_EXPRESSIONS);
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (toReportFunctionalExpressionProblemOnParent(parent)) return;
+    if (!hasErrorResults() && !LambdaUtil.isValidLambdaContext(parent)) {
+      report(JavaErrorKinds.LAMBDA_NOT_EXPECTED.create(expression));
+    }
+    if (!hasErrorResults()) myFunctionChecker.checkConsistentParameterDeclaration(expression);
+    PsiType functionalInterfaceType = null;
+    if (!hasErrorResults()) {
+      functionalInterfaceType = expression.getFunctionalInterfaceType();
+      if (functionalInterfaceType != null) {
+        myFunctionChecker.checkExtendsSealedClass(expression, functionalInterfaceType);
+        if (!hasErrorResults()) myFunctionChecker.checkInterfaceFunctional(expression, functionalInterfaceType);
+      }
+      else if (LambdaUtil.getFunctionalInterfaceType(expression, true) != null) {
+        report(JavaErrorKinds.LAMBDA_TYPE_INFERENCE_FAILURE.create(expression));
+      }
+    }
+    if (!hasErrorResults() && functionalInterfaceType != null) {
+      PsiCallExpression callExpression = parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression ?
+                                         (PsiCallExpression)parent.getParent() : null;
+      MethodCandidateInfo parentCallResolveResult =
+        callExpression != null ? ObjectUtils.tryCast(callExpression.resolveMethodGenerics(), MethodCandidateInfo.class) : null;
+      String parentInferenceErrorMessage = parentCallResolveResult != null ? parentCallResolveResult.getInferenceErrorMessage() : null;
+      PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+      Map<PsiElement, @Nls String> returnErrors = null;
+      Set<PsiTypeParameter> parentTypeParameters =
+        parentCallResolveResult == null ? Set.of() : Set.of(parentCallResolveResult.getElement().getTypeParameters());
+      // If return type of the lambda was not fully inferred and lambda parameters don't mention the same type,
+      // it means that lambda is not responsible for inference failure and blaming it would be unreasonable.
+      boolean skipReturnCompatibility = parentCallResolveResult != null &&
+                                        PsiTypesUtil.mentionsTypeParameters(returnType, parentTypeParameters)
+                                        && !FunctionChecker.lambdaParametersMentionTypeParameter(functionalInterfaceType, parentTypeParameters);
+      if (!skipReturnCompatibility) {
+        returnErrors = LambdaUtil.checkReturnTypeCompatible(expression, returnType);
+      }
+      if (parentInferenceErrorMessage != null && (returnErrors == null || !returnErrors.containsValue(parentInferenceErrorMessage))) {
+        if (returnErrors == null) return;
+        myFunctionChecker.checkLambdaInferenceFailure(callExpression, parentCallResolveResult, expression);
+      }
+      else if (returnErrors != null && !PsiTreeUtil.hasErrorElements(expression)) {
+        returnErrors.forEach((expr, message) -> report(JavaErrorKinds.LAMBDA_RETURN_TYPE_ERROR.create(expr, message)));
+      }
+    }
+
+  }
+
+  /**
+   * @return true for {@code functional_expression;} or {@code var l = functional_expression;}
+   */
+  private static boolean toReportFunctionalExpressionProblemOnParent(@Nullable PsiElement parent) {
+    if (parent instanceof PsiLocalVariable variable) {
+      return variable.getTypeElement().isInferredType();
+    }
+    return parent instanceof PsiExpressionStatement && !(parent.getParent() instanceof PsiSwitchLabeledRuleStatement);
+  }
 
   @Override
   public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {

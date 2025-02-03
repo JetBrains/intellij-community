@@ -209,7 +209,7 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
         if (!IncompleteModelUtil.isIncompleteModel(label) ||
             (!IncompleteModelUtil.isPotentiallyConvertible(mySelectorType, patternType, label))) {
           HighlightInfo.Builder error =
-            HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, elementToReport.getTextRange(), 0);
+            HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, elementToReport.getTextRange());
           if (mySelectorType instanceof PsiPrimitiveType) {
             HighlightInfo.Builder infoFeature =
               HighlightUtil.checkFeature(elementToReport, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS,
@@ -233,7 +233,7 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     else if (label instanceof PsiExpression expr) {
       if (mySelectorType.equals(PsiTypes.nullType())) {
         HighlightInfo.Builder info =
-          HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, expr.getType(), expr.getTextRange(), 0);
+          HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, expr.getType(), expr.getTextRange());
         errorSink.accept(info);
         return true;
       }
@@ -268,7 +268,7 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
           PsiType unboxedType = PsiPrimitiveType.getOptionallyUnboxedType(mySelectorType);
           if (unboxedType != null) {
             HighlightInfo.Builder error =
-              HighlightUtil.createIncompatibleTypeHighlightInfo(unboxedType, expr.getType(), label.getTextRange(), 0);
+              HighlightUtil.createIncompatibleTypeHighlightInfo(unboxedType, expr.getType(), label.getTextRange());
             errorSink.accept(error);
             return true;
           }
@@ -277,7 +277,7 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
       }
       if (ConstantExpressionUtil.computeCastTo(constValue, mySelectorType) == null) {
         HighlightInfo.Builder error =
-          HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, expr.getType(), label.getTextRange(), 0);
+          HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, expr.getType(), label.getTextRange());
         errorSink.accept(error);
         return true;
       }

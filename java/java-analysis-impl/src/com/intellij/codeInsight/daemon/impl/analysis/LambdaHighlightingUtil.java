@@ -149,26 +149,6 @@ public final class LambdaHighlightingUtil {
     return JavaErrorBundle.message("not.a.functional.interface", functionalInterfaceType.getPresentableText());
   }
 
-  static HighlightInfo.Builder checkConsistentParameterDeclaration(@NotNull PsiLambdaExpression expression) {
-    PsiParameter[] parameters = expression.getParameterList().getParameters();
-    if (parameters.length < 2) return null;
-    boolean hasExplicitParameterTypes = hasExplicitType(parameters[0]);
-    for (int i = 1; i < parameters.length; i++) {
-      if (hasExplicitParameterTypes != hasExplicitType(parameters[i])) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                            .descriptionAndTooltip(JavaErrorBundle.message("lambda.parameters.consistency.message"))
-                            .range(expression.getParameterList());
-      }
-    }
-
-    return null;
-  }
-
-  private static boolean hasExplicitType(@NotNull PsiParameter parameter) {
-    PsiTypeElement typeElement = parameter.getTypeElement();
-    return typeElement != null && !typeElement.isInferredType();
-  }
-
   // 15.13 | 15.27
   // It is a compile-time error if any class or interface mentioned by either U or the function type of U
   // is not accessible from the class or interface in which the method reference expression appears.
@@ -237,16 +217,5 @@ public final class LambdaHighlightingUtil {
     }
 
     return null;
-  }
-
-  static boolean lambdaParametersMentionTypeParameter(@NotNull PsiType functionalInterfaceType, @NotNull Set<? extends PsiTypeParameter> parameters) {
-    if (!(functionalInterfaceType instanceof PsiClassType classType)) return false;
-    PsiSubstitutor substitutor = classType.resolveGenerics().getSubstitutor();
-    PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
-    if (method == null) return false;
-    for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      if (PsiTypesUtil.mentionsTypeParameters(substitutor.substitute(parameter.getType()), parameters)) return true;
-    }
-    return false;
   }
 }
