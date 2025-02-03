@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.*
-import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.utils.SmartSet
@@ -137,8 +136,10 @@ constructor(
     override fun computeAnnotations(annotations: SmartSet<PsiAnnotation>) {
         analyzeForUast(context) {
             val functionSymbol = original.restoreSymbol() ?: return
-            functionSymbol.annotations.forEach { annoApp ->
-                annoApp.psi?.toLightAnnotation()?.let { annotations.add(it) }
+            for (annoApp in functionSymbol.annotations) {
+                annotations.add(
+                    UastFakeDeserializedSymbolAnnotation(original, annoApp.classId, context)
+                )
             }
         }
     }
@@ -199,14 +200,15 @@ constructor(
                     analyzeForUast(context) l@{
                         val functionSymbol = original.restoreSymbol() ?: return@l
                         val functionSymbolPtr = functionSymbol.createPointer()
-                        (functionSymbol.receiverParameter?.psi as? KtTypeReference)?.let { receiver ->
+                        functionSymbol.receiverParameter?.let { receiverParameter ->
+                            val receiverOrigin = receiverParameter.psi as? KtTypeReference ?: context
                             parameterList.addParameter(
                                 UastKotlinPsiParameterBase(
                                     "\$this\$$name",
                                     parameterList,
                                     isVarArgs = false,
                                     ktDefaultValue = null,
-                                    ktOrigin = receiver
+                                    ktOrigin = receiverOrigin
                                 ) {
                                     analyzeForUast(context) {
                                         functionSymbolPtr.restoreSymbol()
