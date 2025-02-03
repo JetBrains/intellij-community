@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects
 
 import com.intellij.diagnostic.WindowsDefenderChecker
-import com.intellij.diagnostic.WindowsDefenderChecker.TaskType
 import com.intellij.diagnostic.WindowsDefenderCheckerActivity
 import com.intellij.diagnostic.WindowsDefenderStatisticsCollector
 import com.intellij.ide.IdeBundle
@@ -78,9 +77,8 @@ object TrustedProjectsDialog {
     TrustedProjectsStatistics.NEW_PROJECT_OPEN_OR_IMPORT_CHOICE.log(openChoice)
 
     if (openChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN) {
-      val checker = serviceAsync<WindowsDefenderChecker>()
-      checker.schedule(projectRoot, TaskType.SKIP_NOTIFICATION)
-      dialog.getDefenderTrustFolder()?.let { defenderTrustDir ->
+      val defenderTrustDir = dialog.getDefenderTrustFolder()
+      if (defenderTrustDir != null) {
         WindowsDefenderStatisticsCollector.excludedFromTrustDialog(dialog.isTrustAll())
         if (defenderTrustDir != projectRoot) {
           (pathsToExclude as MutableList<Path>).apply {
@@ -88,7 +86,19 @@ object TrustedProjectsDialog {
             add(0, defenderTrustDir)
           }
         }
-        WindowsDefenderCheckerActivity.runAndNotify(checker, pathsToExclude, project, projectRoot)
+        val checker = serviceAsync<WindowsDefenderChecker>()
+        if (project == null) {
+          checker.schedule(projectRoot, pathsToExclude)
+        }
+        else {
+          WindowsDefenderCheckerActivity.runAndNotify(project) {
+            checker.excludeProjectPaths(project, pathsToExclude)
+          }
+        }
+      }
+      else if (pathsToExclude.isNotEmpty()) {
+        val checker = serviceAsync<WindowsDefenderChecker>()
+        checker.schedule(projectRoot, emptyList())  // skipping Defender check if the checkbox was shown but ignored
       }
     }
 
