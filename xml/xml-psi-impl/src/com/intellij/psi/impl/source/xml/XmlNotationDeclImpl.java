@@ -3,10 +3,12 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.xml.XmlElementContentSpec;
-import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlNotationDecl;
 
-public class XmlNotationDeclImpl extends XmlElementImpl implements XmlNotationDecl, XmlElementType {
+import static com.intellij.psi.xml.XmlElementType.XML_ELEMENT_CONTENT_SPEC;
+import static com.intellij.psi.xml.XmlElementType.XML_NOTATION_DECL;
+
+public class XmlNotationDeclImpl extends XmlElementImpl implements XmlNotationDecl {
   public XmlNotationDeclImpl() {
     super(XML_NOTATION_DECL);
   }

@@ -5,11 +5,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlDoctype;
-import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlProlog;
 import org.jetbrains.annotations.NotNull;
 
-public class XmlPrologImpl extends XmlElementImpl implements XmlProlog, XmlElementType {
+import static com.intellij.psi.xml.XmlElementType.XML_DOCTYPE;
+import static com.intellij.psi.xml.XmlElementType.XML_PROLOG;
+
+public class XmlPrologImpl extends XmlElementImpl implements XmlProlog {
   public XmlPrologImpl() {
     super(XML_PROLOG);
   }
