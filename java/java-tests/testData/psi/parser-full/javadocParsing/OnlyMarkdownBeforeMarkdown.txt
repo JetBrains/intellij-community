@@ -1,4 +1,4 @@
-PsiJavaFile:MarkdownWithDocComment.java
+PsiJavaFile:OnlyMarkdownBeforeMarkdown.java
   PsiPackageStatement:test.pkg
     PsiKeyword:package('package')
     PsiWhiteSpace(' ')
@@ -16,14 +16,6 @@ PsiJavaFile:MarkdownWithDocComment.java
   PsiImportList
     <empty list>
   PsiClass:Test
-    PsiDocComment
-      PsiDocToken:DOC_COMMENT_START('/**')
-      PsiWhiteSpace('\n ')
-      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('*')
-      PsiDocToken:DOC_COMMENT_DATA(' Doc')
-      PsiWhiteSpace('\n ')
-      PsiDocToken:DOC_COMMENT_END('*/')
-    PsiWhiteSpace('\n')
     PsiDocComment
       PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
       PsiWhiteSpace(' ')

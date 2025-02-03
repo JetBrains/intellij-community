@@ -51,7 +51,7 @@ public class BasicModuleParser {
       mapAndAdvance(builder, JavaTokenType.OPEN_KEYWORD);
       text = builder.getTokenText();
     }
-    BasicJavaParserUtil.done(modifierList, myJavaElementTypeContainer.MODIFIER_LIST, myWhiteSpaceAndCommentSetHolder);
+    BasicJavaParserUtil.done(modifierList, myJavaElementTypeContainer.MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
 
     if (PsiKeyword.MODULE.equals(text)) {
       mapAndAdvance(builder, JavaTokenType.MODULE_KEYWORD);
@@ -85,7 +85,7 @@ public class BasicModuleParser {
       parseModuleContent(builder);
     }
 
-    BasicJavaParserUtil.done(module, myJavaElementTypeContainer.MODULE, myWhiteSpaceAndCommentSetHolder);
+    BasicJavaParserUtil.done(module, myJavaElementTypeContainer.MODULE, builder, myWhiteSpaceAndCommentSetHolder);
 
     if (builder.getTokenType() != null) {
       parseExtras(builder, JavaPsiBundle.message("unexpected.tokens"));
@@ -186,7 +186,7 @@ public class BasicModuleParser {
       }
       break;
     }
-    BasicJavaParserUtil.done(modifierList, myJavaElementTypeContainer.MODIFIER_LIST, myWhiteSpaceAndCommentSetHolder);
+    BasicJavaParserUtil.done(modifierList, myJavaElementTypeContainer.MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
 
     if (parseNameRef(builder) != null) {
       semicolon(builder);
