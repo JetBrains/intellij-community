@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -34,8 +34,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 @Internal
 public final class IndexingStamp {
-  static final long INDEX_DATA_OUTDATED_STAMP = -2L;
-  static final long HAS_NO_INDEXED_DATA_STAMP = 0L;
+  public static final long INDEX_DATA_OUTDATED_STAMP = -2L;
+  public static final long HAS_NO_INDEXED_DATA_STAMP = 0L;
 
   private IndexingStamp() { }
 

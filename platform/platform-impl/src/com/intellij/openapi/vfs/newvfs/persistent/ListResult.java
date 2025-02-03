@@ -23,12 +23,10 @@ import java.util.Objects;
 @ApiStatus.Internal
 public final class ListResult {
   private final int parentModStamp;
-  final @Unmodifiable List<? extends ChildInfo> children;  // sorted by `#getId`
+  public final @Unmodifiable List<? extends ChildInfo> children;  // sorted by `#getId`
   private final int parentId;
 
-  public ListResult(int parentModStamp,
-             @NotNull @Unmodifiable List<? extends ChildInfo> children,
-             int parentId) {
+  public ListResult(int parentModStamp, @NotNull @Unmodifiable List<? extends ChildInfo> children, int parentId) {
     this.parentModStamp = parentModStamp;
     this.children = children;
     this.parentId = parentId;
