@@ -16,10 +16,7 @@
 package org.intellij.plugins.intelliLang.inject.java.validation;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PsiUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.util.AbstractAnnotationNotApplicableInspection;

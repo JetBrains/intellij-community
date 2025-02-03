@@ -2,7 +2,6 @@
 package com.jetbrains.python.intentions;
 
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.LanguageLevel;
 
 public class SpecifyTypeInPy3AnnotationsIntentionTest extends PyIntentionTestCase {
   public void testCaretOnDefinition() {

@@ -5,7 +5,6 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

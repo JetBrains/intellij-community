@@ -5,7 +5,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
-import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceWithTrivialLambdaFixTest extends LightQuickFixParameterizedTestCase {

@@ -2,11 +2,7 @@
 package git4idea.commit.signing
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.PathUtil
-import com.intellij.util.io.write
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readLines

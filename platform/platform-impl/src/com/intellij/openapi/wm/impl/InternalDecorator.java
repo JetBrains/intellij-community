@@ -6,8 +6,6 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 public abstract class InternalDecorator extends JBPanel<InternalDecorator> {
   /**
    * See {@link com.intellij.ide.actions.ToolWindowViewModeAction} and {@link com.intellij.ide.actions.ToolWindowMoveAction}

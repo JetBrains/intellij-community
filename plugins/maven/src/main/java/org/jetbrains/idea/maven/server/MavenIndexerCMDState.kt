@@ -29,7 +29,6 @@ import java.net.URI
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
-import java.util.function.Predicate
 
 class MavenIndexerCMDState(
   private val myJdk: Sdk,

@@ -3,7 +3,6 @@ package com.intellij.ui
 
 import com.intellij.ide.projectWizard.ProjectWizardJdkComboBox
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent
-import com.intellij.ide.projectWizard.ProjectWizardTestCase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable

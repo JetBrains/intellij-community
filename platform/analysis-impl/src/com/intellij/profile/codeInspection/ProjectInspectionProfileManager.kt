@@ -2,7 +2,6 @@
 package com.intellij.profile.codeInspection
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
-import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.codeInspection.ex.ProjectInspectionToolRegistrar
 import com.intellij.configurationStore.*
 import com.intellij.diagnostic.runActivity

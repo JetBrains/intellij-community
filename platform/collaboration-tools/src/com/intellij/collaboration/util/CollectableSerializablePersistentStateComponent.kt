@@ -3,7 +3,6 @@ package com.intellij.collaboration.util
 
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental

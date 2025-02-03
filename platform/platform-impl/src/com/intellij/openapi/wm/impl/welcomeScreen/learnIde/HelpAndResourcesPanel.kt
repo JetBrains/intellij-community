@@ -19,8 +19,6 @@ import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.*
-import javax.swing.Box.Filler.LEFT_ALIGNMENT
-import javax.swing.JPanel.LEFT_ALIGNMENT
 import javax.swing.plaf.ComponentUI
 
 @ApiStatus.Internal

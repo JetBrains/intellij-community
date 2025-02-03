@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalSystem
 
-import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
 import com.intellij.java.library.MavenCoordinates
 import com.intellij.openapi.externalSystem.model.project.LibraryData
 import com.intellij.openapi.externalSystem.service.project.manage.LibraryDataServiceExtension

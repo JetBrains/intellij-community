@@ -25,7 +25,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.ui.popup.JBPopupFactory.ActionSelectionAid;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;

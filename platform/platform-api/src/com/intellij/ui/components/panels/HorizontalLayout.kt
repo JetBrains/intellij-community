@@ -3,10 +3,8 @@ package com.intellij.ui.components.panels
 
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBValue
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
-import java.util.function.IntSupplier
 import javax.swing.SwingConstants
 import kotlin.math.abs
 

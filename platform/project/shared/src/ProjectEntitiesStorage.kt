@@ -8,9 +8,6 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.kernel.withKernel
-import com.jetbrains.rhizomedb.entity
-import fleet.kernel.change
-import fleet.kernel.shared
 import org.jetbrains.annotations.ApiStatus
 
 /**

@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiDocumentManagerImpl
 import com.intellij.psi.util.PsiTreeUtil

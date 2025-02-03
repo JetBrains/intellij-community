@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.LightweightHint
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.geom.Rectangle2D

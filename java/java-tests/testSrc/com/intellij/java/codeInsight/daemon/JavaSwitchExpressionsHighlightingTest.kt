@@ -7,8 +7,6 @@ import com.intellij.codeInspection.redundantCast.RedundantCastInspection
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_15
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.assertEquals
 
 class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = JAVA_15

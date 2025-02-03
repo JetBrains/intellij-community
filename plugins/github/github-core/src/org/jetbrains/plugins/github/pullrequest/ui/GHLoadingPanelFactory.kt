@@ -13,7 +13,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.ui.ProgressStripe
-import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel

@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.util.PlatformUtils
-import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.facet.LibraryContributingFacet
 import com.jetbrains.python.library.PythonLibraryType
 import com.jetbrains.python.remote.PyRemotePathMapper
@@ -31,7 +30,6 @@ import com.jetbrains.python.run.target.getTargetPathForPythonConsoleExecution
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import java.io.File
 import java.nio.file.Path
 

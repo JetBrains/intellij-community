@@ -3,9 +3,7 @@ package com.intellij.usages.impl.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.Project;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import org.jetbrains.annotations.NotNull;
 
 

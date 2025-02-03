@@ -3,7 +3,6 @@ package com.intellij.ide.structureView.logical
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.ClassExtension
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**

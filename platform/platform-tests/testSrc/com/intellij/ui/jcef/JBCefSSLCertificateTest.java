@@ -9,7 +9,6 @@ import org.cef.callback.CefCallback;
 import org.cef.handler.CefLoadHandler;
 import org.cef.security.CefSSLInfo;
 import org.cef.security.CefX509Certificate;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;

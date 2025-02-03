@@ -17,10 +17,7 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ReplaceNullCheckInspection;
 import com.intellij.codeInspection.SequencedCollectionMethodCanBeUsedInspection;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 

@@ -13,13 +13,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.LazyIcon
 import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.scale.*
-import com.intellij.ui.svg.SvgCacheClassifier
-import com.intellij.ui.svg.loadSvg
 import com.intellij.ui.svg.renderSvg
 import com.intellij.util.ImageLoader
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ResourceUtil
-import com.intellij.util.SVGLoader
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil

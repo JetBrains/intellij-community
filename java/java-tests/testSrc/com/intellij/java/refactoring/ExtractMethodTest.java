@@ -25,7 +25,6 @@ import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;

@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.search.FileTypeIndex;
-import com.intellij.python.community.plugin.java.facet.JavaPythonFacetConfiguration;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.intellij.python.community.plugin.java.facet.JavaPythonFacet;

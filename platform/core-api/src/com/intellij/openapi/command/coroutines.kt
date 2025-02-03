@@ -5,7 +5,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAndWriteScope
 import com.intellij.openapi.application.ReadResult
 import com.intellij.openapi.application.writeIntentReadAction
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import kotlinx.coroutines.Dispatchers

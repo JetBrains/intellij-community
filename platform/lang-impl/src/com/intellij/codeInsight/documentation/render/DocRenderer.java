@@ -29,7 +29,6 @@ import com.intellij.platform.backend.documentation.InlineDocumentation;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBHtmlPane;
 import com.intellij.ui.components.JBHtmlPaneConfiguration;
 import com.intellij.ui.scale.JBUIScale;

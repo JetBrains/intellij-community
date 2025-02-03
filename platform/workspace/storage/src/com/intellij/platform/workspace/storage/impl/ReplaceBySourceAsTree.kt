@@ -5,7 +5,6 @@ import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.ReplaceBySourceAsTree.OperationsApplier
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap

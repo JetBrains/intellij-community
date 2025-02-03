@@ -22,7 +22,6 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.testing.PyTestFactory;
-import com.jetbrains.python.testing.PyUnitTestFactory;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.NotNull;

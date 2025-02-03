@@ -2,7 +2,6 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.sun.jdi.Method;

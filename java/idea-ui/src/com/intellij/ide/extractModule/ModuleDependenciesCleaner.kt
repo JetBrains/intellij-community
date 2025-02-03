@@ -8,7 +8,6 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
@@ -20,7 +19,6 @@ import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.packageDependencies.DependenciesToolWindow
 import com.intellij.packageDependencies.ForwardDependenciesBuilder
 import com.intellij.packageDependencies.ui.DependenciesPanel
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiFile
 import com.intellij.ui.content.ContentFactory
 import org.jetbrains.concurrency.AsyncPromise

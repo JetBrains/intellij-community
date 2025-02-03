@@ -2,7 +2,6 @@
 package git4idea.ui.branch.tree
 
 import com.intellij.dvcs.DvcsUtil
-import com.intellij.dvcs.branch.BranchType
 import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry

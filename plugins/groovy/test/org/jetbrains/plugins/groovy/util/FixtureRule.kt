@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.util
 
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.junit.rules.ExternalResource

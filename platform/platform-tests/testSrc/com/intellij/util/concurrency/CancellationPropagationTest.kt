@@ -26,13 +26,10 @@ import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
 import com.intellij.util.getValue
-import com.intellij.util.io.awaitFor
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.asCancellablePromise
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test

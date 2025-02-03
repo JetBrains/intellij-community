@@ -3,15 +3,12 @@ package com.intellij.xdebugger.impl.rpc
 
 import com.intellij.ide.rpc.DocumentId
 import com.intellij.ide.ui.icons.IconId
-import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
-import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
 import com.jetbrains.rhizomedb.EID
@@ -24,7 +21,6 @@ import fleet.rpc.remoteApiDescriptor
 import fleet.util.UID
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.jetbrains.annotations.ApiStatus

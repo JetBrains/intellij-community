@@ -6,7 +6,6 @@ import com.intellij.psi.stubs.StubOutputStream
 import com.jetbrains.python.psi.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.util.*
 
 @ApiStatus.Internal
 enum class PyLiteralKind {

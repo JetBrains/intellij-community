@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.icons.*
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.svg.*
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
 import org.imgscalr.Scalr
@@ -19,7 +18,6 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
-import java.util.*
 
 object ImageLoader {
   @Suppress("unused")

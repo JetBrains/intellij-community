@@ -15,7 +15,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory
 import com.intellij.psi.impl.CheckUtil

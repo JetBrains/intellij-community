@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.vcs.ignore.IgnoredToExcludedSynchronizerConstants.ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY
-import org.jetbrains.annotations.NonNls
 
 internal class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP

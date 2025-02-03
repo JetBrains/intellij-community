@@ -6,7 +6,6 @@ import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.util.treeView.smartTree.SortableTreeElement
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.psi.NavigatablePsiElement
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.childrenOfType
 import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.psi.EditorConfigRootDeclaration

@@ -5,7 +5,6 @@ import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
 import org.jetbrains.plugins.github.api.data.GHCommitCheckSuiteConclusion
 import org.jetbrains.plugins.github.api.data.GHCommitStatusContextState
-import org.jetbrains.plugins.github.api.data.GHRefUpdateRule
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeStateStatus
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState

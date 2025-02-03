@@ -4,9 +4,6 @@ package org.jetbrains.plugins.github.util
 import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.async.CompletableFutureUtil.cancellationOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
-import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.execution.process.ProcessIOExecutorService
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.ProgressIndicator

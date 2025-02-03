@@ -1,9 +1,6 @@
 package org.jetbrains.idea.maven.performancePlugin
 
-import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
-import com.intellij.execution.process.ProcessHandler
-import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager

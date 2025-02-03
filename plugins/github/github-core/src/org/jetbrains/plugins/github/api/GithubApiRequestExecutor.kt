@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
-import com.intellij.collaboration.api.dto.GraphQLRequestDTO
 import com.intellij.collaboration.api.httpclient.HttpClientUtil
 import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.openapi.Disposable
@@ -31,7 +30,6 @@ import java.io.InputStreamReader
 import java.io.Reader
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.*
 import java.util.zip.GZIPInputStream
 
 /**

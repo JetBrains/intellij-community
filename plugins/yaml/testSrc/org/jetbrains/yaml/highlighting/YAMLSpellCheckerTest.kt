@@ -1,14 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.highlighting
 
-import com.intellij.lang.Language
-import com.intellij.psi.injection.Injectable
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.InjectionTestFixture
 import org.intellij.lang.regexp.RegExpLanguage
-import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
-import org.jetbrains.annotations.Nls
 
 class YAMLSpellCheckerTest : BasePlatformTestCase() {
   override fun setUp() {

@@ -5,7 +5,6 @@ import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import io.opentelemetry.api.trace.Span
 import java.util.concurrent.atomic.AtomicLong
 
 private val eventsCounter: AtomicLong = AtomicLong()

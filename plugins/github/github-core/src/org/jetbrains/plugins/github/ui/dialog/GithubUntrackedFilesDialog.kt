@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import javax.swing.JComponent
 

@@ -3,8 +3,6 @@
 package org.jetbrains.kotlin.idea.scratch.actions
 
 import com.intellij.execution.Executor
-import com.intellij.execution.Location
-import com.intellij.execution.PsiLocation
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
@@ -25,7 +23,6 @@ import org.jetbrains.kotlin.idea.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.scratch.SequentialScratchExecutor
 import org.jetbrains.kotlin.idea.scratch.printDebugMessage
 import org.jetbrains.kotlin.utils.addToStdlib.cast
-import org.jetbrains.kotlin.utils.exceptions.rethrowExceptionWithDetails
 import org.jetbrains.kotlin.idea.scratch.LOG as log
 
 class RunScratchAction : ScratchAction(

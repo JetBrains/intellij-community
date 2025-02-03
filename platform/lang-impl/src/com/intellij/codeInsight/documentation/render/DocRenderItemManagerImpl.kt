@@ -9,11 +9,8 @@ import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.util.ConcurrencyUtil
-import com.intellij.util.containers.toArray
 import com.intellij.util.messages.Topic
-import kotlinx.collections.immutable.toImmutableList
 import java.util.*
 import java.util.function.BooleanSupplier
 import java.util.function.Consumer

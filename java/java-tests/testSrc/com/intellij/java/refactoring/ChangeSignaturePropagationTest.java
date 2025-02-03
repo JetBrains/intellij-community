@@ -22,8 +22,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
-
 public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
   public void testParamSimple() {
     parameterPropagationTest();

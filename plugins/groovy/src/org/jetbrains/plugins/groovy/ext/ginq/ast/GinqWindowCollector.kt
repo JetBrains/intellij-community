@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.ext.ginq.ast
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.asSafely
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall

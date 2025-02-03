@@ -2,11 +2,8 @@
 package com.intellij.ide.projectView.impl
 
 import com.intellij.ide.projectView.PresentationData
-import com.intellij.ide.util.treeView.InplaceCommentAppender
 import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 
 open class ProjectViewRenderer : NodeRenderer() {

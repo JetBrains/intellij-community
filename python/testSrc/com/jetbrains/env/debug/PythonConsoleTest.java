@@ -2,7 +2,6 @@
 package com.jetbrains.env.debug;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;

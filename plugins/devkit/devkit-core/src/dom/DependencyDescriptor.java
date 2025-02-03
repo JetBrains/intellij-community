@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.util.xml.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.IdeaPluginConverter;
 

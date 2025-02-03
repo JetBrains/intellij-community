@@ -12,13 +12,10 @@ import org.jetbrains.plugins.github.api.data.commit.GHCommitFiles
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRestIdOnly
 import org.jetbrains.plugins.github.api.data.request.*
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
-import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder.Companion.searchQuery
-import org.jetbrains.plugins.github.api.util.GithubApiUrlQueryBuilder
 import org.jetbrains.plugins.github.api.util.GithubApiUrlQueryBuilder.Companion.paginationQuery
 import org.jetbrains.plugins.github.api.util.GithubApiUrlQueryBuilder.Companion.urlQuery
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.QualifierName
 import java.awt.image.BufferedImage
 

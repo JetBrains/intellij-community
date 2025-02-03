@@ -1,6 +1,5 @@
 package com.intellij.ui.charts
 
-import com.intellij.ui.charts.*
 import com.intellij.util.ui.ImageUtil
 import org.junit.Assert
 import org.junit.Test

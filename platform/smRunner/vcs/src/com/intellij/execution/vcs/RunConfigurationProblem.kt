@@ -6,7 +6,6 @@ import com.intellij.execution.impl.EditConfigurationsDialog
 import com.intellij.execution.impl.RunDialog
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe

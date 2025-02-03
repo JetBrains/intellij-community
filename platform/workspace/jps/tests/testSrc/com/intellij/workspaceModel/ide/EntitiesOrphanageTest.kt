@@ -17,8 +17,6 @@ import com.intellij.testFramework.waitUntil
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.junit.jupiter.api.Assumptions
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest

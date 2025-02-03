@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.VcsNotificationIdsHolder.Companion.COMMIT_FINISHED
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.ToolWindowId

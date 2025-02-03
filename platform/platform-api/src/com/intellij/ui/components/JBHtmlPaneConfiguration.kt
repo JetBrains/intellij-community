@@ -6,7 +6,6 @@ import com.intellij.util.ui.CSSFontResolver
 import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.StyleSheetUtil
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Color
 import java.awt.Image

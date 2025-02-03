@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl.views
 
-import com.intellij.codeInsight.hints.declarative.impl.InlayData
 import com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.formatting.visualLayer.VirtualFormattingInlaysInfo

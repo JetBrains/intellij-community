@@ -12,7 +12,6 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.Nls
 
 /**
  * Intention action that is used as a title of [IntentionActionWithChoice].

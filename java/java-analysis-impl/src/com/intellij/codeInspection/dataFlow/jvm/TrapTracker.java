@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.dataFlow.jvm;
 
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
-import com.intellij.codeInspection.dataFlow.java.JavaClassDef;
 import com.intellij.codeInspection.dataFlow.jvm.transfer.EnterFinallyTrap;
 import com.intellij.codeInspection.dataFlow.jvm.transfer.ExceptionTransfer;
 import com.intellij.codeInspection.dataFlow.jvm.transfer.TryCatchAllTrap;

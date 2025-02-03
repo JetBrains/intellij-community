@@ -36,7 +36,6 @@ import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
 import git4idea.history.GitHistoryProvider;
 import git4idea.i18n.GitBundle;
-import git4idea.index.GitStageManagerKt;
 import git4idea.merge.GitMergeProvider;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;

@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.Objects;
 
 public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSystemItem> {
   private final int myMaxWidth;

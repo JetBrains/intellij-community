@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
-import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.internal.statistic.DeviceIdManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;

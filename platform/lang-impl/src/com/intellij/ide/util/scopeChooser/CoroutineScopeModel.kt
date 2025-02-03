@@ -4,7 +4,6 @@ package com.intellij.ide.util.scopeChooser
 import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.WeighedItem
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ModalityState

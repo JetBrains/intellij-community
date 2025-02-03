@@ -4,7 +4,6 @@ package com.intellij.debugger.streams.trace.dsl
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Vitaliy.Bibaev

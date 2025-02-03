@@ -3,7 +3,6 @@ package com.intellij.jarRepository
 
 import com.intellij.jarRepository.JarRepositoryAuthenticationDataProvider.AuthenticationData
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName

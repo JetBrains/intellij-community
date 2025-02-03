@@ -4,10 +4,8 @@ package com.jetbrains.python.packaging.toolwindow
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -41,7 +39,6 @@ import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.modules
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
-import kotlin.coroutines.CoroutineContext
 
 @Service(Service.Level.PROJECT)
 class PyPackagingToolWindowService(val project: Project, val serviceScope: CoroutineScope) : Disposable {

@@ -26,7 +26,6 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitUtil.getLogString
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.addCommit
-import git4idea.test.git
 import java.io.File
 
 class GitMoveTest : GitSingleRepoTest() {

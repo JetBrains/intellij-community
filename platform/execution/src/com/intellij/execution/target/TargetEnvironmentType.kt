@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target
 
-import com.intellij.execution.target.LanguageRuntimeType.Companion.EXTENSION_NAME
 import com.intellij.execution.target.TargetEnvironmentType.Companion.EXTENSION_NAME
 import com.intellij.ide.wizard.AbstractWizardStepEx
 import com.intellij.openapi.components.PersistentStateComponent

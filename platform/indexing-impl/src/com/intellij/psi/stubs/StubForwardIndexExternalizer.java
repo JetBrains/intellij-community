@@ -7,7 +7,6 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

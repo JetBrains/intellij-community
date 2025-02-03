@@ -3,7 +3,6 @@ package com.jetbrains.python.fixtures;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.inspections.PyInspection;
 import org.jetbrains.annotations.NotNull;

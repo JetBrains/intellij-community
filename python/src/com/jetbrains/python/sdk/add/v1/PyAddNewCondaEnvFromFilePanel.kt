@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.add.v1.PyAddNewEnvCollector
 import com.jetbrains.python.sdk.add.v1.PyAddNewEnvCollector.InputData
 import org.jetbrains.annotations.SystemDependent
 import java.awt.BorderLayout

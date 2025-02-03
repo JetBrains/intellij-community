@@ -30,7 +30,6 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Graphics
 import java.awt.Point

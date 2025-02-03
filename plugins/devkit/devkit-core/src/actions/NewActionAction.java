@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.actions;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.ide.actions.CreateTemplateInPackageAction;
 import com.intellij.ide.actions.JavaCreateTemplateInPackageAction;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;

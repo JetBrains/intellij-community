@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors.conda
 
-import com.google.gson.*
 import com.google.gson.annotations.JsonAdapter
 import com.intellij.execution.target.FullPathOnTarget
 import com.jetbrains.python.sdk.SealedClassAdapter

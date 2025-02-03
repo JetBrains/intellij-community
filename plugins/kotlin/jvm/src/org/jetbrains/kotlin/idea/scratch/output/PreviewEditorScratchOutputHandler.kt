@@ -6,8 +6,6 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Document
@@ -17,7 +15,6 @@ import com.intellij.openapi.editor.FoldingModel
 import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.scratch.ScratchExpression

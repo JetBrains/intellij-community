@@ -1,7 +1,6 @@
 package com.intellij.execution.multilaunch.execution
 
 import com.intellij.execution.multilaunch.design.ExecutableRow
-import com.intellij.execution.multilaunch.execution.ExecutionDescriptor
 
 internal object ExecutionDescriptorFactory {
   fun create(row: ExecutableRow): ExecutionDescriptor? {

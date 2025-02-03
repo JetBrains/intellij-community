@@ -16,7 +16,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.Graph;
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceModelLegacyBridge;
 import org.jetbrains.annotations.ApiStatus;
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.platform.workspace.jps.entities.ExtensionsKt.collectTransitivelyDependentModules;
 

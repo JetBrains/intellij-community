@@ -4,7 +4,6 @@ package com.intellij.platform.testFramework.junit5.eel.impl
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.platform.eel.path.pathOs
 
 internal class EelTestDescriptor(val id: String, os: EelPath.OS, val apiProvider: () -> EelApi) : EelDescriptor {
   override val operatingSystem: EelPath.OS = os

@@ -26,7 +26,6 @@ import java.io.*
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.pathString
 
 object ExecUtil {
   private val hasGnomeTerminal = PathExecLazyValue.create("gnome-terminal")

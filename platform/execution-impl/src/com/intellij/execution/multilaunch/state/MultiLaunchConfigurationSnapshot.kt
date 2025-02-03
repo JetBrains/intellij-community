@@ -1,7 +1,6 @@
 package com.intellij.execution.multilaunch.state
 
 import com.intellij.execution.configurations.RunConfigurationOptions
-import com.intellij.openapi.components.BaseState
 import com.intellij.util.xmlb.annotations.XCollection
 
 class MultiLaunchConfigurationSnapshot : RunConfigurationOptions() {

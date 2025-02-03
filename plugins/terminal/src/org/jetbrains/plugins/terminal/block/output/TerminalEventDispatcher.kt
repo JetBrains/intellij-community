@@ -22,7 +22,6 @@ import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.block.session.TerminalModel
-import org.jetbrains.plugins.terminal.block.output.TerminalEventDispatcher.MyKeyEventsListener
 import java.awt.AWTEvent
 import java.awt.event.*
 import javax.swing.KeyStroke

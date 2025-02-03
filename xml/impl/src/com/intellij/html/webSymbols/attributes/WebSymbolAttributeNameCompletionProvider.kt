@@ -7,16 +7,11 @@ import com.intellij.codeInsight.completion.XmlAttributeInsertHandler
 import com.intellij.html.webSymbols.HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors
 import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
 import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator
-import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.psi.PsiElement
-import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
-import com.intellij.psi.xml.XmlElement
-import com.intellij.psi.xml.XmlTag
 import com.intellij.webSymbols.WebSymbol.Companion.HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
 import com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase

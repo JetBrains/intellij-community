@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertArrayEquals;
 
 /**
  * Test for specific implementation methods: writing/reading attribute record/entries from a

@@ -6,7 +6,6 @@ import com.intellij.openapi.externalSystem.test.compileModules
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.utils.io.getChildren
 import com.intellij.testFramework.utils.io.deleteRecursively
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.GradleTestCase

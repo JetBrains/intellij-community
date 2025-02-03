@@ -22,7 +22,6 @@ import com.intellij.util.containers.MultiMap;
 import java.util.HashSet;
 import org.junit.Assert;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.util.Collection;
 import java.util.List;

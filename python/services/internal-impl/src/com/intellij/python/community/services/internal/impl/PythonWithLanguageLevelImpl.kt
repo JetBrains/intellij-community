@@ -6,7 +6,6 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.services.shared.PythonWithLanguageLevel
-import com.jetbrains.python.LocalizedErrorString
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.psi.LanguageLevel

@@ -2,7 +2,6 @@
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.StoragePathMacros
@@ -24,7 +23,6 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.Function
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test

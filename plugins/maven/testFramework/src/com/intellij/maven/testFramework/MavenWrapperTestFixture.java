@@ -13,8 +13,6 @@ import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.List;
 

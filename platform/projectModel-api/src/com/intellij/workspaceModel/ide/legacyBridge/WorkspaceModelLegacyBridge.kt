@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.openapi.module.Module
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.storage.EntityStorage
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Obsolete

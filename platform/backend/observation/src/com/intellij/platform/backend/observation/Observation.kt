@@ -6,7 +6,6 @@ import com.intellij.platform.backend.observation.Observation.awaitConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 
 object Observation {
 

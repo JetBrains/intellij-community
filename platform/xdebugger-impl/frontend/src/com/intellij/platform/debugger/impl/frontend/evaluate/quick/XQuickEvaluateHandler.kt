@@ -4,8 +4,6 @@ package com.intellij.platform.debugger.impl.frontend.evaluate.quick
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.editorId
-import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.RemoteValueHint
@@ -14,7 +12,6 @@ import com.intellij.frontend.FrontendType
 import com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerManager
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.evaluate.childCoroutineScope
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint

@@ -1,7 +1,6 @@
 package com.intellij.platform.diagnostic.plugin.freeze
 
 import com.intellij.DynamicBundle
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 

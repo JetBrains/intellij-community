@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptor
 import org.editorconfig.language.schema.descriptors.EditorConfigDescriptorVisitor
 import org.editorconfig.language.schema.descriptors.EditorConfigMutableDescriptor
-import java.util.regex.Pattern
 
 data class EditorConfigStringDescriptor(
   override val documentation: String?,

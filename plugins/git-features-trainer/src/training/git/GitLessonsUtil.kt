@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.BranchChangeListener
-import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
@@ -22,7 +21,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsProjectLog

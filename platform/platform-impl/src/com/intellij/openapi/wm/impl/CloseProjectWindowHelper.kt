@@ -21,7 +21,6 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 
 open class CloseProjectWindowHelper {
   companion object {

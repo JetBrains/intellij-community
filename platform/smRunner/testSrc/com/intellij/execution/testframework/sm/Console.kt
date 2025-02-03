@@ -2,7 +2,6 @@
 package com.intellij.execution.testframework.sm
 
 import com.intellij.openapi.util.Key
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import java.text.ParseException
 
 /**

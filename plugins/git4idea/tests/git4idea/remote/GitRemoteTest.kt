@@ -6,11 +6,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.UriUtil
 import com.intellij.util.io.URLUtil
 import git4idea.checkout.GitCheckoutProvider
-import git4idea.commands.Git
-import git4idea.commands.GitCommand
 import git4idea.commands.GitHttpAuthService
 import git4idea.commands.GitHttpAuthenticator
-import git4idea.commands.GitLineHandler
 import git4idea.commands.GitShallowCloneOptions
 import git4idea.config.GitVersion
 import git4idea.test.GitHttpAuthTestService

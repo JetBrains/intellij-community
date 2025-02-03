@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
-import org.jetbrains.plugins.groovy.intentions.style.inference.typeParameter
 
 internal class FieldProblemsTest : ProjectProblemsViewTest() {
 

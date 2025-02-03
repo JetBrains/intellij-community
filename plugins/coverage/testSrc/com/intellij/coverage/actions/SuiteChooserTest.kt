@@ -4,7 +4,6 @@ package com.intellij.coverage.actions
 import com.intellij.coverage.CoverageIntegrationBaseTest
 import com.intellij.coverage.CoverageSuite
 import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.CheckedTreeNode

@@ -1,10 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
-import com.intellij.concurrency.ThreadContext;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -13,12 +11,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbModeStatisticsCollector.IndexingFinishType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.ChildContext;
-import com.intellij.util.concurrency.Propagation;
-import kotlin.coroutines.CoroutineContext;
 import org.jetbrains.annotations.ApiStatus;
-import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

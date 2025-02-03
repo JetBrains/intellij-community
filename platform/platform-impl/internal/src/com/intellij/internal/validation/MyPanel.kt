@@ -1,8 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.validation
 
-import com.intellij.ui.ColoredTreeCellRenderer
-import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.TextTransferable
 import java.awt.datatransfer.Transferable
 import javax.swing.*

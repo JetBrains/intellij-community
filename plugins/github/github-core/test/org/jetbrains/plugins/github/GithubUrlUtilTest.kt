@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Pair
 import junit.framework.TestCase
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.util.GithubUrlUtil.*
-import java.net.URI
 import java.util.*
 
 class GithubUrlUtilTest : TestCase() {

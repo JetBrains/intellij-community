@@ -13,7 +13,6 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions
 import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider
 import com.intellij.psi.codeStyle.TimeStampedIndentOptions
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 

@@ -15,7 +15,6 @@ import com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerManager
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
 import com.intellij.xdebugger.impl.actions.areFrontendDebuggerActionsEnabled
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerEvaluateActionHandler
-import com.intellij.xdebugger.impl.rpc.XDebuggerEvaluatorApi
 import com.intellij.xdebugger.impl.rpc.XDebuggerLuxApi
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import kotlinx.coroutines.CoroutineScope

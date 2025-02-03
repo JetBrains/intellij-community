@@ -3,11 +3,8 @@ package com.intellij.util.ui
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.LoggedErrorProcessor.Action
 import com.intellij.testFramework.LoggedErrorProcessorEnabler
 import com.intellij.util.EventDispatcher
-import com.intellij.util.ExceptionUtil
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith

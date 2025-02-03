@@ -3,10 +3,8 @@ package com.intellij.internal.statistic.actions.devkit.scheme
 
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.internal.statistic.devkit.actions.scheme.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY
-import com.intellij.internal.statistic.devkit.actions.scheme.EventsSchemeJsonSchemaProviderFactory
 import com.intellij.internal.statistic.devkit.actions.scheme.EventsTestSchemeGroupConfiguration
 import com.intellij.internal.statistic.devkit.actions.scheme.PREFIXES
-import com.intellij.internal.statistic.devkit.actions.scheme.ValidationRulesCompletionContributor
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase

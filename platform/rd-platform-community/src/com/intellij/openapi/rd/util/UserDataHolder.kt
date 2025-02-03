@@ -4,7 +4,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.jetbrains.rd.util.assert
 import com.jetbrains.rd.util.lifetime.Lifetime
