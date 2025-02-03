@@ -38,7 +38,7 @@ jvm_library(
     "//plugins/kotlin/formatter",
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
     "//platform/code-style-impl:codeStyle-impl",

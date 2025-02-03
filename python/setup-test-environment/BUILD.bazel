@@ -12,7 +12,6 @@ jvm_library(
     "//python/openapi:community",
     "//platform/testFramework",
     "//python/python-sdk:sdk",
-    "//python:python-community-impl",
     "//platform/execution",
     "@lib//:kotlin-reflect",
     "//platform/lang-impl",

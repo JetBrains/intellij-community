@@ -28,7 +28,7 @@ jvm_library(
     "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
     "//plugins/kotlin/formatter",
     "//platform/lang-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//java/java-psi-api:psi",
     "@lib//:kotlinc-analysis-api-impl-base",
     "//platform/core-ui",

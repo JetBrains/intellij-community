@@ -32,7 +32,7 @@ jvm_library(
     "//plugins/kotlin/base/analysis:kotlin-base-analysis",
     "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
     "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
     "//plugins/kotlin/base/facet:kotlin-base-facet",

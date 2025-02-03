@@ -29,7 +29,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/lang-impl",
     "//platform/core-ui",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//java/java-impl:impl",
     "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
     "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",

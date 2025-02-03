@@ -46,7 +46,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/descriptions:kotlin-code-insight-descriptions",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//java/java-psi-api:psi",
     "@lib//:guava",
     "//plugins/kotlin/base/facet:kotlin-base-facet",

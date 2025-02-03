@@ -61,6 +61,7 @@ jvm_library(
     "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
     "//python/installer:community-impl-installer",
     "//python/python-venv:community-impl-venv",
+    "//python/python-venv:community-impl-venv_test_lib",
     "//python/setup-test-environment:community-testFramework-testEnv",
   ],
   runtime_deps = [":python-community-services-systemPython_resources"]

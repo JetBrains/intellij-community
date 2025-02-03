@@ -18,7 +18,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/analysis-impl",
     "//platform/execution",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
   ],
   runtime_deps = [
     ":commandInterface_resources",

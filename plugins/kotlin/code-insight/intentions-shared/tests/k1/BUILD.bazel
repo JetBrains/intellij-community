@@ -36,7 +36,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",

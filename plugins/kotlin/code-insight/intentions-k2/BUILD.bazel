@@ -36,7 +36,7 @@ jvm_library(
     "//plugins/kotlin/base/util:kotlin-base-util",
     "//plugins/kotlin/base/psi:kotlin-base-psi",
     "//platform/platform-impl:ide-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//platform/core-impl",
     "//java/java-psi-api:psi",

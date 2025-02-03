@@ -26,7 +26,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/ide-core-impl",
     "//platform/core-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
     "//platform/analysis-api:analysis",
     "@lib//:fastutil-min",

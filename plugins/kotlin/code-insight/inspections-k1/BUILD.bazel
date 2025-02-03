@@ -25,7 +25,7 @@ jvm_library(
     "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
     "//java/java-analysis-impl:analysis-impl",

@@ -139,7 +139,7 @@ jvm_library(
     "@lib//:stream_ex",
     "//platform/analysis-impl",
     "//platform/code-style-api:codeStyle",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
   ]
 )
 
@@ -378,6 +378,7 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "//platform/todo",
     "//python/setup-test-environment:community-testFramework-testEnv",
+    "//python/setup-test-environment/conda:python-community-testFramework-testEnv-conda",
   ],
   runtime_deps = [
     "//python/pluginCore/impl:python-community-plugin-impl",

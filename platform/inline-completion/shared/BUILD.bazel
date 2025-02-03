@@ -18,7 +18,7 @@ jvm_library(
     "//platform/util",
     "//platform/ide-core-impl",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
     "//platform/core-ui",

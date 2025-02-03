@@ -27,7 +27,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/ide-core-impl",
     "//platform/lang-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/core-ui",
     "//platform/external-system-api:externalSystem",
     "//platform/external-system-impl:externalSystem-impl",

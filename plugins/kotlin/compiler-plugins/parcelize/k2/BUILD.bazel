@@ -35,7 +35,7 @@ jvm_library(
     "//platform/util",
     "//platform/core-api:core",
     "//platform/core-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
   ],
   runtime_deps = [":kotlin-compiler-plugins-parcelize-k2_resources"]
 )

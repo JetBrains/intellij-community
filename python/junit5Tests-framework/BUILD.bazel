@@ -15,7 +15,6 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-    "//python:python-community-impl",
     "@lib//:junit5Jupiter",
     "//platform/util",
     "@lib//:junit5Pioneer",
@@ -39,12 +38,10 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "//python/setup-test-environment:community-testFramework-testEnv",
-    "//python/testFramework:community-testFramework",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
   ],
-  runtime_deps = [
-    "//python:pycharm-community",
-    "//python/pluginCore:community-plugin",
-  ]
+  runtime_deps = ["//python/pluginCore:community-plugin"]
 )
 
 jvm_test(

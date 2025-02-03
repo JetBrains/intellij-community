@@ -35,7 +35,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/core-ui",
     "//platform/util-ex",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core",
     "//platform/platform-util-io:ide-util-io",
     "//platform/util/concurrency",

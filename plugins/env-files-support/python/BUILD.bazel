@@ -17,7 +17,7 @@ jvm_library(
     "//platform/util",
     "//python/python-psi-api:psi",
     "//plugins/env-files-support:dotenv",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/analysis-api:analysis",
     "//platform/core-ui",
     "//platform/projectModel-api:projectModel",

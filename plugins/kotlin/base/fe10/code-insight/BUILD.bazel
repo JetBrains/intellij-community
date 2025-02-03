@@ -48,7 +48,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/refactoring",
     "//platform/lang-impl",
-    "//platform/editor-ui-api:editor",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/util:util-ui",
     "//platform/core-ui",
     "//java/java-psi-api:psi",
