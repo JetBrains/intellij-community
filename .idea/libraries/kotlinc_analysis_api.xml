@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.analysis-api">
+  <library name="kotlinc.analysis-api" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-for-ide:2.2.0-dev-3086">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-for-ide/2.2.0-dev-3086/analysis-api-for-ide-2.2.0-dev-3086.jar">
+          <sha256sum>8db4a300be06ea5353f1922a2ae447ffd4297f81d98e3079914fad558e7f2dfe</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/analysis-api-for-ide/2.2.255-dev-255/analysis-api-for-ide-2.2.255-dev-255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-for-ide/2.2.0-dev-3086/analysis-api-for-ide-2.2.0-dev-3086.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/analysis-api-for-ide/2.2.255-dev-255/analysis-api-for-ide-2.2.255-dev-255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-for-ide/2.2.0-dev-3086/analysis-api-for-ide-2.2.0-dev-3086-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
