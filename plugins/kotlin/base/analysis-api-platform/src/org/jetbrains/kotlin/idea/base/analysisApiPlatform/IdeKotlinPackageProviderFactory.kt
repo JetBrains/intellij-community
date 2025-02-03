@@ -16,19 +16,16 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import java.util.concurrent.ConcurrentHashMap
 
-internal class IdeKotlinPackageProviderFactory(private val project: Project) : KotlinPackageProviderFactory {
-    override fun createPackageProvider(searchScope: GlobalSearchScope): KotlinPackageProvider {
-        return IdeKotlinPackageProvider(project, searchScope)
-    }
+internal class IdeKotlinPackageProviderFactory(private val project: Project) : KotlinCachingPackageProviderFactory(project) {
+    override fun createNewPackageProvider(searchScope: GlobalSearchScope): KotlinPackageProvider =
+        IdeKotlinPackageProvider(project, searchScope)
 }
 
 internal class IdeKotlinPackageProviderMerger(private val project: Project) : KotlinPackageProviderMerger {
     override fun merge(providers: List<KotlinPackageProvider>): KotlinPackageProvider =
         providers.mergeSpecificProviders<_, IdeKotlinPackageProvider>(KotlinCompositePackageProvider.factory) { targetProviders ->
-            IdeKotlinPackageProvider(
-                project,
-                KotlinGlobalSearchScopeMerger.getInstance(project).union(targetProviders.map { it.searchScope }),
-            )
+            val combinedScope = KotlinGlobalSearchScopeMerger.getInstance(project).union(targetProviders.map { it.searchScope })
+            project.createPackageProvider(combinedScope)
         }
 }
 
