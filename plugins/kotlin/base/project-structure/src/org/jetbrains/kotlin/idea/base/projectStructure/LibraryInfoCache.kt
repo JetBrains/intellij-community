@@ -16,7 +16,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId.GlobalLibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.storage.GlobalStorageEntitySource
+import com.intellij.platform.workspace.jps.GlobalStorageEntitySource
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil

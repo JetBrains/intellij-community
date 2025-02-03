@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.workspace.storage.GlobalStorageEntitySource
+import com.intellij.platform.workspace.jps.GlobalStorageEntitySource
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 
