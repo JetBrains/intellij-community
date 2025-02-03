@@ -34,14 +34,14 @@ import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextA
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorCachingWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
-import java.io.ByteArrayInputStream
+import org.jetbrains.plugins.textmate.plist.CompositePlistReader
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.Volatile
+import kotlin.io.path.name
 import kotlin.time.measureTimedValue
 
 class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService() {
@@ -207,21 +207,9 @@ class TextMateServiceImpl(private val myScope: CoroutineScope) : TextMateService
     if (directory != null) {
       val bundleType = detectBundleType(directory)
       return when (bundleType) {
-        BundleType.TEXTMATE -> readTextMateBundle(directory)
-        BundleType.SUBLIME -> readSublimeBundle(directory)
-        BundleType.VSCODE -> readVSCBundle { relativePath: String ->
-          try {
-            return@readVSCBundle ByteArrayInputStream(Files.readAllBytes(directory.resolve(relativePath)))
-          }
-          catch (_: NoSuchFileException) {
-            LOG.warn("Cannot find referenced file `$relativePath` in bundle `$directory`")
-            return@readVSCBundle null
-          }
-          catch (e: Throwable) {
-            LOG.warn("Cannot read referenced file `$relativePath` in bundle `$directory`", e)
-            return@readVSCBundle null
-          }
-        }
+        BundleType.TEXTMATE -> readTextMateBundle(directory.name, CompositePlistReader(), TextMateNioResourceReader(directory))
+        BundleType.SUBLIME -> readSublimeBundle(directory.name, CompositePlistReader(), TextMateNioResourceReader(directory))
+        BundleType.VSCODE -> readVSCBundle(CompositePlistReader(), TextMateNioResourceReader(directory))
         BundleType.UNDEFINED -> null
       }
     }

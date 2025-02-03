@@ -5,9 +5,11 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.textmate.bundles.*
 import org.jetbrains.plugins.textmate.bundles.BundleType.Companion.detectBundleType
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
+import org.jetbrains.plugins.textmate.plist.CompositePlistReader
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
+import kotlin.io.path.name
 import kotlin.jvm.JvmStatic
 
 object TestUtil {
@@ -60,12 +62,13 @@ object TestUtil {
   fun readBundle(bundleName: String): TextMateBundleReader {
     val bundleDirectory = getBundleDirectory(bundleName)
     val bundleType = detectBundleType(bundleDirectory)
+    val bundleName = bundleDirectory.name
+    val plistReader = CompositePlistReader()
+    val resourceReader = TextMateNioResourceReader(bundleDirectory)
     return when (bundleType) {
-      BundleType.TEXTMATE -> readTextMateBundle(bundleDirectory)
-      BundleType.SUBLIME -> readSublimeBundle(bundleDirectory)
-      BundleType.VSCODE -> readVSCBundle { relativePath ->
-        bundleDirectory.resolve(relativePath).inputStream().buffered()
-      } ?: error("Cannot read VSCBundle from $bundleDirectory")
+      BundleType.TEXTMATE -> readTextMateBundle(bundleName, plistReader, resourceReader)
+      BundleType.SUBLIME -> readSublimeBundle(bundleName, plistReader, resourceReader)
+      BundleType.VSCODE -> readVSCBundle(plistReader, resourceReader) ?: error("Cannot read VSCBundle from $bundleDirectory")
       BundleType.UNDEFINED -> error("Unknown bundle type: $bundleName")
     }
   }

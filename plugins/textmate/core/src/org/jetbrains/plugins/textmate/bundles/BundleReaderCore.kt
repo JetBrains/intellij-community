@@ -3,17 +3,10 @@ package org.jetbrains.plugins.textmate.bundles
 import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.PreferencesReadUtil
 import org.jetbrains.plugins.textmate.language.preferences.*
-import org.jetbrains.plugins.textmate.plist.CompositePlistReader
 import org.jetbrains.plugins.textmate.plist.Plist
 import org.jetbrains.plugins.textmate.plist.PlistReader
 import org.slf4j.LoggerFactory
 import java.io.InputStream
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
-import kotlin.io.path.inputStream
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
-import kotlin.io.path.pathString
 
 interface TextMateBundleReader {
   companion object {
@@ -45,18 +38,17 @@ data class TextMatePreferences(val scopeName: TextMateScopeName,
                                val customHighlightingAttributes: TextMateTextAttributes?,
                                val onEnterRules: Set<OnEnterRule>?)
 
-fun readTextMateBundle(path: Path): TextMateBundleReader {
-  val plistReader = CompositePlistReader()
-  val infoPlistPath = path.resolve(Constants.BUNDLE_INFO_PLIST_NAME)
-  val infoPlist = infoPlistPath.inputStream().buffered().use { plistReader.read(it) }
-  val bundleName = infoPlist.getPlistValue(Constants.NAME_KEY, path.name).string!!
+fun readTextMateBundle(fallbackBundleName: String, plistReader: PlistReader, resourceReader: TextMateResourceReader): TextMateBundleReader {
+  val infoPlist = resourceReader.read(Constants.BUNDLE_INFO_PLIST_NAME)?.use { plistReader.read(it) }
+  val bundleName = infoPlist?.getPlistValue(Constants.NAME_KEY, fallbackBundleName)?.string!!
 
   return object : TextMateBundleReader {
     override val bundleName: String = bundleName
 
     override fun readGrammars(): Sequence<TextMateGrammar> {
-      return readPlistInDirectory(path.resolve("Syntaxes"), plistReader = plistReader,
-                                  glob = "*.{tmLanguage,plist,tmLanguage.json}").map { plist ->
+      return resourceReader.readPlistInDirectory(plistReader = plistReader, relativePath = "Syntaxes") { name ->
+        name.endsWith(".tmLanguage") || name.endsWith(".plist") || name.endsWith(".tmLanguage.json")
+      }.map { plist ->
         val fileNameMatchers = plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList<Any>()).stringArray.filterNotNull().flatMap { s ->
           listOf(TextMateFileNameMatcher.Name(s), TextMateFileNameMatcher.Extension(s))
         }
@@ -70,27 +62,35 @@ fun readTextMateBundle(path: Path): TextMateBundleReader {
     }
 
     override fun readPreferences(): Sequence<TextMatePreferences> {
-      return readPlistInDirectory(path.resolve("Preferences"), plistReader = plistReader,
-                                  glob = "*.{tmPreferences,plist}").mapNotNull { plist ->
+      return resourceReader.readPlistInDirectory(plistReader = plistReader, relativePath = "Preferences") { name ->
+        name.endsWith(".tmPreferences") || name.endsWith(".plist")
+      }.mapNotNull { plist ->
         readPreferencesFromPlist(plist)
       }
     }
 
     override fun readSnippets(): Sequence<TextMateSnippet> {
-      return readPlistInDirectory(path.resolve("Snippets"), plistReader = plistReader, glob = "*.{tmSnippet,plist}").mapNotNull { plist ->
-        readSnippetFromPlist(plist, path.pathString)
+      return resourceReader.readPlistInDirectory(plistReader = plistReader, relativePath = "Snippets") { name ->
+        name.endsWith(".tmSnippet") || name.endsWith(".plist")
+      }.mapNotNull { plist ->
+        readSnippetFromPlist(plist)
       }
     }
   }
 }
 
-fun readSublimeBundle(path: Path): TextMateBundleReader {
-  val plistReader = CompositePlistReader()
+fun readSublimeBundle(
+  bundleName: String,
+  plistReader: PlistReader,
+  resourceReader: TextMateResourceReader,
+): TextMateBundleReader {
   return object : TextMateBundleReader {
-    override val bundleName: String = path.name
+    override val bundleName: String = bundleName
 
     override fun readGrammars(): Sequence<TextMateGrammar> {
-      return readPlistInDirectory(path, plistReader = plistReader, glob = "*.{tmLanguage,plist,tmLanguage.json}").map { plist ->
+      return resourceReader.readPlistInDirectory(plistReader = plistReader, relativePath = ".") { name ->
+        name.endsWith(".tmLanguage") || name.endsWith(".plist") || name.endsWith(".tmLanguage.json")
+      }.map { plist ->
         val fileNameMatchers = plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList<Any>()).stringArray.filterNotNull().flatMap { s ->
           listOf(TextMateFileNameMatcher.Name(s), TextMateFileNameMatcher.Extension(s))
         }
@@ -104,26 +104,30 @@ fun readSublimeBundle(path: Path): TextMateBundleReader {
     }
 
     override fun readPreferences(): Sequence<TextMatePreferences> {
-      return readPlistInDirectory(path, plistReader = plistReader, glob = "*.{tmPreferences,plist}").mapNotNull { plist ->
+      return resourceReader.readPlistInDirectory(plistReader = plistReader, relativePath = ".") { name ->
+        name.endsWith(".tmPreferences") || name.endsWith(".plist")
+      }.mapNotNull { plist ->
         readPreferencesFromPlist(plist)
       }
     }
 
     override fun readSnippets(): Sequence<TextMateSnippet> {
-      return readPlistInDirectory(path, plistReader = plistReader, glob = "*.plist").mapNotNull { plist ->
-        readSnippetFromPlist(plist, path.pathString)
+      return resourceReader.readPlistInDirectory(plistReader = plistReader, relativePath = ".") { name ->
+        name.endsWith(".plist")
+      }.mapNotNull { plist ->
+        readSnippetFromPlist(plist)
       }
     }
   }
 }
 
-private fun readSnippetFromPlist(plist: Plist, explicitUuid: String): TextMateSnippet? {
+private fun readSnippetFromPlist(plist: Plist): TextMateSnippet? {
   val key = plist.getPlistValue(Constants.TAB_TRIGGER_KEY, "").string.takeIf { !it.isNullOrEmpty() } ?: return null
   val content = plist.getPlistValue(Constants.StringKey.CONTENT.value, "").string.takeIf { !it.isNullOrEmpty() } ?: return null
   val name = plist.getPlistValue(Constants.NAME_KEY, "").string.takeIf { !it.isNullOrEmpty() } ?: key
   val scope = plist.getPlistValue(Constants.SCOPE_KEY, "").string!!
   val description = plist.getPlistValue(Constants.DESCRIPTION_KEY, "").string!! //NON-NLS
-  val uuid = plist.getPlistValue(Constants.UUID_KEY, explicitUuid).string!!
+  val uuid = plist.getPlistValue(Constants.UUID_KEY, "").string!!
   return TextMateSnippet(key, content, scope, name, description, uuid)
 }
 
@@ -157,17 +161,15 @@ private fun readPreferencesFromPlist(plist: Plist): TextMatePreferences? {
   }
 }
 
-private fun readPlistInDirectory(directory: Path, plistReader: PlistReader, glob: String = "*"): Sequence<Plist> {
-  return runCatching {
-    directory.listDirectoryEntries(glob = glob).asSequence().mapNotNull { child ->
-      readPlist(child.inputStream().buffered(), plistReader, child.pathString)
+private fun TextMateResourceReader.readPlistInDirectory(
+  plistReader: PlistReader,
+  relativePath: String,
+  filter: (String) -> Boolean = { true },
+): Sequence<Plist> {
+  return list(relativePath).asSequence().filter(filter).mapNotNull { childName ->
+    read("$relativePath/$childName")?.use { inputStream ->
+      readPlist(inputStream.buffered(), plistReader, "$relativePath/$childName")
     }
-  }.getOrElse { e ->
-    when (e) {
-      is NoSuchFileException -> {}
-      else -> TextMateBundleReader.logger.warn("Can't load plists from directory: ${directory.pathString}", e)
-    }
-    emptySequence()
   }
 }
 

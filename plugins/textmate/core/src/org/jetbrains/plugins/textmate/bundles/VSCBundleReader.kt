@@ -12,21 +12,23 @@ import org.jetbrains.plugins.textmate.language.preferences.*
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader
 import org.jetbrains.plugins.textmate.plist.JsonPlistReader
 import org.jetbrains.plugins.textmate.plist.Plist
+import org.jetbrains.plugins.textmate.plist.PlistReader
 import org.jetbrains.plugins.textmate.plist.PlistValueType
 import java.io.InputStream
 
 private typealias VSCodeExtensionLanguageId = String
 
-fun readVSCBundle(resourceLoader: (relativePath: String) -> InputStream?): TextMateBundleReader? {
-  return resourceLoader(Constants.PACKAGE_JSON_NAME)?.use { packageJsonStream ->
+fun readVSCBundle(plistReader: PlistReader, resourceReader: TextMateResourceReader): TextMateBundleReader? {
+  return resourceReader.read(Constants.PACKAGE_JSON_NAME)?.use { packageJsonStream ->
     val extension = JsonPlistReader.textmateJson.decodeFromStream(VSCodeExtension.serializer(), packageJsonStream)
 
-    VSCBundleReader(extension = extension, resourceLoader = resourceLoader)
+    VSCBundleReader(plistReader = plistReader, extension = extension, resourceReader = resourceReader)
   }
 }
 
 private class VSCBundleReader(private val extension: VSCodeExtension,
-                              private val resourceLoader: (relativePath: String) -> InputStream?) : TextMateBundleReader {
+                              private val plistReader: PlistReader,
+                              private val resourceReader: TextMateResourceReader) : TextMateBundleReader {
   override val bundleName: String = extension.name
 
   private val languages: Map<VSCodeExtensionLanguageId, VSCodeExtensionLanguage> by lazy {
@@ -50,7 +52,7 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
   override fun readGrammars(): Sequence<TextMateGrammar> {
     return extension.contributes.grammars.asSequence().map { grammar ->
       val plist = lazy {
-        resourceLoader(grammar.path)?.use { readPlist(it, CompositePlistReader(), grammar.path) } ?: Plist.EMPTY_PLIST
+        resourceReader.read(grammar.path)?.use { readPlist(it, plistReader, grammar.path) } ?: Plist.EMPTY_PLIST
       }
 
       val language = languages[grammar.language]
@@ -71,7 +73,7 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
   override fun readPreferences(): Sequence<TextMatePreferences> {
     return extension.contributes.languages.asSequence().flatMap { language ->
       language.configuration?.let { path ->
-        resourceLoader(path)?.use { inputStream ->
+        resourceReader.read(path)?.use { inputStream ->
           readPreferencesImpl(inputStream, scopesForLanguage(language.id))
         }
       } ?: emptySequence()
@@ -82,8 +84,8 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
     return extension.contributes.snippets.asSequence().filter { snippetConfiguration ->
       snippetConfiguration.path.endsWith(".json") || snippetConfiguration.path.endsWith(".code-snippets")
     }.flatMap { snippetConfiguration ->
-      resourceLoader(snippetConfiguration.path)?.use { inputStream ->
-        readPlist(inputStream, CompositePlistReader(), snippetConfiguration.path)?.entries()?.asSequence()?.flatMap { (name, value) ->
+      resourceReader.read(snippetConfiguration.path)?.use { inputStream ->
+        readPlist(inputStream, plistReader, snippetConfiguration.path)?.entries()?.asSequence()?.flatMap { (name, value) ->
           val valuePlist = value.plist
           val bodyValue = valuePlist.getPlistValue("body", "")
           val body = when (bodyValue.type) {
