@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion.listeners
 import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.TypingEvent
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
@@ -17,14 +18,24 @@ internal class InlineCompletionEnterHandler(private val originalHandler: EditorA
     originalHandler.execute(editor, caret, dataContext)
 
     val finalOffset = currentCaret.offset
-    val handler = InlineCompletion.getHandlerOrNull(editor)
-    if (initialOffset >= finalOffset || handler == null) {
+    if (initialOffset >= finalOffset) {
       return
     }
-    val typedRange = TextRange(initialOffset, finalOffset)
-    val typed = editor.document.getText(typedRange)
+    var actualEditor = editor
+    var handler = InlineCompletion.getHandlerOrNull(editor)
+    var typedRange = TextRange(initialOffset, finalOffset)
+    while (handler == null && actualEditor is EditorWindow) {
+      typedRange = actualEditor.document.injectedToHost(typedRange)
+      actualEditor = actualEditor.delegate
+      handler = InlineCompletion.getHandlerOrNull(actualEditor)
+    }
+    if (handler == null) {
+      return
+    }
+
+    val typed = actualEditor.document.getText(typedRange)
     val typingEvent = TypingEvent.NewLine(typed, typedRange)
-    val icEvent = InlineCompletionEvent.DocumentChange(typingEvent, editor)
+    val icEvent = InlineCompletionEvent.DocumentChange(typingEvent, actualEditor)
     handler.invokeEvent(icEvent)
   }
 
