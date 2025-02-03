@@ -4,6 +4,7 @@ package com.intellij.debugger.streams.action;
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 
 /**
  * @author Vitaliy.Bibaev
@@ -11,7 +12,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 class TraceStreamAction : AnAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project ?: return
-    val chainStatus = TraceStreamRunner.getInstance(project).getChainStatus(e)
+    val chainStatus = TraceStreamRunner.getInstance(project).getChainStatus(DebuggerUIUtil.getSession(e))
     val presentation = e.presentation
     when (chainStatus) {
       ChainStatus.LANGUAGE_NOT_SUPPORTED -> presentation.setEnabledAndVisible(false)
@@ -33,6 +34,6 @@ class TraceStreamAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    TraceStreamRunner.getInstance(project).showChains(e)
+    TraceStreamRunner.getInstance(project).actionPerformed(DebuggerUIUtil.getSession(e))
   }
 }

@@ -15,7 +15,6 @@ import com.intellij.debugger.streams.ui.ElementChooser
 import com.intellij.debugger.streams.ui.impl.ElementChooserImpl
 import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow
 import com.intellij.debugger.streams.wrapper.StreamChain
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -28,7 +27,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import java.util.stream.Stream
@@ -37,8 +35,7 @@ import java.util.stream.Stream
 class TraceStreamRunner(val cs: CoroutineScope) {
   private val myPositionResolver: DebuggerPositionResolver = DebuggerPositionResolverImpl()
 
-  fun getChainStatus(e: AnActionEvent): ChainStatus {
-    val session = DebuggerUIUtil.getSession(e)
+  fun getChainStatus(session: XDebugSession?): ChainStatus {
     val element = if (session == null) null else myPositionResolver.getNearestElementToBreakpoint(session)
     if (element == null) {
       return ChainStatus.NOT_FOUND
@@ -48,37 +45,23 @@ class TraceStreamRunner(val cs: CoroutineScope) {
     }
   }
 
-  fun showChains(e: AnActionEvent): Job = cs.launch(Dispatchers.Default) {
-    val session = DebuggerUIUtil.getSession(e)
+  fun actionPerformed(session: XDebugSession?): Job = cs.launch(Dispatchers.Default) {
     if (session == null) {
       LOG.info("Session is null")
       return@launch
     }
 
-    val position = session.getCurrentPosition()
-    if (position == null) {
-      LOG.info("Position is null")
-      return@launch
-    }
+    val chains = getChains(session)
+    displayChains(session, chains)
+  }
 
-    val chains = readAction {
-      runBlockingCancellable {
-        val element = myPositionResolver.getNearestElementToBreakpoint(session)
-        if (element == null) {
-          LOG.info("Element at cursor is not found")
-          emptyList()
-        }
-        else {
-          withBackgroundProgress(session.project, StreamDebuggerBundle.message("action.calculating.chains.background.progress.title")) {
-            CHAIN_RESOLVER.getChains(element)
-          }
-        }
-      }
-    }
-
+  private suspend fun displayChains(
+    session: XDebugSession,
+    chains: List<StreamChainWithLibrary>,
+  ) {
     if (chains.isEmpty()) {
       LOG.warn("Stream chain is not built")
-      return@launch
+      return
     }
 
     withContext(Dispatchers.EDT) {
@@ -87,7 +70,7 @@ class TraceStreamRunner(val cs: CoroutineScope) {
       }
       else {
         val project = session.getProject()
-        val file = position.getFile()
+        val file = chains.first().chain.context.containingFile.virtualFile
         val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file), true)
                      ?: error("Cannot open editor for file: ${file.getName()}")
 
@@ -102,6 +85,24 @@ class TraceStreamRunner(val cs: CoroutineScope) {
           })
       }
     }
+  }
+
+  private suspend fun getChains(session: XDebugSession): List<StreamChainWithLibrary> {
+    val chains = readAction {
+      runBlockingCancellable {
+        val element = myPositionResolver.getNearestElementToBreakpoint(session)
+        if (element == null) {
+          LOG.info("Element at cursor is not found")
+          emptyList()
+        }
+        else {
+          withBackgroundProgress(session.project, StreamDebuggerBundle.message("action.calculating.chains.background.progress.title")) {
+            CHAIN_RESOLVER.getChains(element)
+          }
+        }
+      }
+    }
+    return chains
   }
 
   private class MyStreamChainChooser(editor: Editor) : ElementChooserImpl<StreamChainOption?>(editor)
