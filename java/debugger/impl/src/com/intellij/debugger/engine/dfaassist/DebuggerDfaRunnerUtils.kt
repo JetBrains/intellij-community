@@ -14,7 +14,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyEx
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.constrainedReadAction
@@ -25,9 +25,11 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ThreeState
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.xdebugger.impl.dfaassist.DfaResult
 import com.sun.jdi.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ExecutionException
 
@@ -170,16 +172,17 @@ internal fun scheduleDfaUpdate(assist: DfaAssist, newContext: DebuggerContextImp
         assist.cleanUp()
         return
       }
-      blockingContext {
-        val computation = ReadAction.nonBlocking<DfaResult> {
+      val project = suspendContext.debugProcess.project
+      val job = suspendContext.coroutineScope.launch {
+        assist.cancelComputation()
+        val hints = constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
           runnerPupa.transform()?.computeHints() ?: DfaResult.EMPTY
         }
-          .withDocumentsCommitted(suspendContext.debugProcess.project)
-          .coalesceBy(assist)
-          .finishOnUiThread(ModalityState.nonModal()) { hints -> assist.displayInlaysInternal(hints) }
-          .submit(AppExecutorUtil.getAppExecutorService())
-        assist.setComputation(computation)
+        withContext(Dispatchers.EDT) {
+          assist.displayInlaysInternal(hints)
+        }
       }
+      assist.setComputation(job)
     }
   })
 }
