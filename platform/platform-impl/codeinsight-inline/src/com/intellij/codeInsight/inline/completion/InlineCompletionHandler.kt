@@ -200,7 +200,12 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
 
     val elements = context.state.elements.map { it.element }
     val textToInsert = context.textToInsert()
-    val insertEnvironment = InlineCompletionInsertEnvironment(editor, session.request.file, TextRange.from(offset, textToInsert.length))
+    val insertEnvironment = InlineCompletionInsertEnvironment(
+      editor = editor,
+      file = session.request.file,
+      insertedRange = TextRange.from(offset, textToInsert.length),
+      request = session.request,
+    )
     context.copyUserDataTo(insertEnvironment)
     hide(context, FinishType.SELECTED)
 
