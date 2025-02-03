@@ -409,7 +409,7 @@
     <registryKey key="maven.incremental.sync.resolve.dependencies.incrementally" defaultValue="true"
                  description="During incremental sync, resolve dependencies incrementally"/>
 
-    <registryKey key="maven.sync.compileSourceRoots.and.multiReleaseOutput" defaultValue="false"
+    <registryKey key="maven.sync.compileSourceRoots.and.multiReleaseOutput" defaultValue="true"
                  description="Create source roots corresponding to compileSourceRoots and multireleaseOutput during Maven sync"/>
 
     <registryKey key="maven.delegate.trust.ssl.to.ide" defaultValue="true"
