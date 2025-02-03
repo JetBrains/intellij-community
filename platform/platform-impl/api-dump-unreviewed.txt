@@ -8203,12 +8203,10 @@ f:com.intellij.openapi.fileChooser.ex.LocalFsFinder$IoFile
 - getChildren(com.intellij.openapi.fileChooser.ex.FileLookup$LookupFilter):java.util.List
 - getFile():java.nio.file.Path
 - getIcon():javax.swing.Icon
-- f:getMacro():java.lang.String
 - getName():java.lang.String
 - getParent():com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile
 - hashCode():I
 - isDirectory():Z
-- f:setMacro(java.lang.String):V
 f:com.intellij.openapi.fileChooser.ex.LocalFsFinder$VfsFile
 - com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile
 - <init>(com.intellij.openapi.vfs.VirtualFile):V
@@ -8218,12 +8216,10 @@ f:com.intellij.openapi.fileChooser.ex.LocalFsFinder$VfsFile
 - getChildren(com.intellij.openapi.fileChooser.ex.FileLookup$LookupFilter):java.util.List
 - getFile():com.intellij.openapi.vfs.VirtualFile
 - getIcon():javax.swing.Icon
-- f:getMacro():java.lang.String
 - getName():java.lang.String
 - getParent():com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile
 - hashCode():I
 - isDirectory():Z
-- f:setMacro(java.lang.String):V
 a:com.intellij.openapi.fileChooser.ex.TextFieldAction
 - com.intellij.ui.components.labels.LinkLabel
 - com.intellij.ui.components.labels.LinkListener

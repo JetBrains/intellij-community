@@ -13017,15 +13017,12 @@ f:com.intellij.openapi.file.exclude.OverrideFileTypeManager
 - com.intellij.openapi.components.PersistentStateComponent
 - <init>():V
 - s:getInstance():com.intellij.openapi.file.exclude.OverrideFileTypeManager
-- getState():org.jdom.Element
 - isMarkedPlainText(com.intellij.openapi.vfs.VirtualFile):Z
-- loadState(org.jdom.Element):V
 f:com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager
 - com.intellij.openapi.components.PersistentStateComponent
 - <init>():V
 - getFiles():java.util.Collection
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.file.exclude.ProjectPlainTextFileTypeManager
-- getState():org.jdom.Element
 - loadState(org.jdom.Element):V
 c:com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl
 - com.intellij.openapi.Disposable
