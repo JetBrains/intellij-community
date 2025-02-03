@@ -8,8 +8,8 @@ import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.api.SeItemDataProvider
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
-import com.jetbrains.rd.ide.model.ActionTimestampSetModel
 import fleet.kernel.DurableRef
+import fleet.util.openmap.SerializedValue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -19,10 +19,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 class SeItemDataFrontendProvider(private val projectId: ProjectId,
                                  override val id: SeProviderId,
                                  private val sessionRef: DurableRef<SeSessionEntity>,
-                                 private val timestampSetModel: ActionTimestampSetModel): SeItemDataProvider {
+                                 private val serializedDataContext: SerializedValue?): SeItemDataProvider {
   override fun getItems(params: SeParams): Flow<SeItemData> {
     return channelFlow {
-      SeRemoteApi.getInstance().getItems(projectId, sessionRef, id, params, timestampSetModel).collectLatest {
+      SeRemoteApi.getInstance().getItems(projectId, sessionRef, id, params, serializedDataContext).collectLatest {
         send(it)
       }
     }

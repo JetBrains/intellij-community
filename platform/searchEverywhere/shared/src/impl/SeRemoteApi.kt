@@ -7,11 +7,11 @@ import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSessionEntity
-import com.jetbrains.rd.ide.model.ActionTimestampSetModel
 import fleet.kernel.DurableRef
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
+import fleet.util.openmap.SerializedValue
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
@@ -22,7 +22,7 @@ interface SeRemoteApi: RemoteApi<Unit> {
                        sessionRef: DurableRef<SeSessionEntity>,
                        providerId: SeProviderId,
                        params: SeParams,
-                       timestampSetModel: ActionTimestampSetModel): Flow<SeItemData>
+                       serializedDataContext: SerializedValue?): Flow<SeItemData>
 
   suspend fun itemSelected(projectId: ProjectId,
                            sessionRef: DurableRef<SeSessionEntity>,

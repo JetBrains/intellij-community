@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.providers
 
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.options.ObservableOptionEditor
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeItemData
@@ -35,7 +36,7 @@ class SeTabMock(override val name: String,
                        name: String,
                        providerIds: List<SeProviderId>,
                        forceRemote: Boolean = false): SeTabMock {
-      val helper = SeTabHelper.create(project, sessionRef, providerIds, forceRemote)
+      val helper = SeTabHelper.create(project, sessionRef, providerIds, DataContext.EMPTY_CONTEXT, forceRemote)
       return SeTabMock(name, helper)
     }
   }

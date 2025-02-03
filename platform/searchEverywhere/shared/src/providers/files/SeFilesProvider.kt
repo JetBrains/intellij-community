@@ -23,8 +23,7 @@ class SeFileItem(val legacyItem: ItemWithPresentation<*>) : SeItem {
 
 @Internal
 class SeFilesProvider(val project: Project, private val legacyContributor: SearchEverywhereAsyncContributor<Any?>): SeItemsProvider {
-  override val id: String
-    get() = "com.intellij.FileSearchEverywhereItemProvider"
+  override val id: String get() = ID
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val textSearchParams = params as? SeTextSearchParams ?: return
@@ -46,5 +45,9 @@ class SeFilesProvider(val project: Project, private val legacyContributor: Searc
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
     val legacyItem = (item as? SeFileItem)?.legacyItem ?: return false
     return legacyContributor.synchronousContributor.processSelectedItem(legacyItem, modifiers, searchText)
+  }
+
+  companion object {
+    const val ID: String = "com.intellij.FileSearchEverywhereItemProvider"
   }
 }

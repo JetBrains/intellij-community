@@ -14,8 +14,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeActionsAdaptedProvider(val project: Project, private val legacyContributor: ActionSearchEverywhereContributor): SeItemsProvider {
-  override val id: String
-    get() = "com.intellij.ActionsItemsProvider"
+  override val id: String get() = ID
 
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val textSearchParams = params as? SeTextSearchParams ?: return
@@ -34,5 +33,9 @@ class SeActionsAdaptedProvider(val project: Project, private val legacyContribut
   override suspend fun itemSelected(item: SeItem, modifiers: Int, searchText: String): Boolean {
     val legacyItem = (item as? SeActionItem)?.matchedValue ?: return false
     return legacyContributor.synchronousContributor.processSelectedItem(legacyItem, modifiers, searchText)
+  }
+
+  companion object {
+    const val ID: String = "com.intellij.ActionsItemsProvider"
   }
 }

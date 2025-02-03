@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.actions
 
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
@@ -23,9 +22,8 @@ class SeInitiatorAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.F
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val service = SeFrontendService.getInstance(project)
-    val actionId = ActionManager.getInstance().getId(this) ?: return
     service.coroutineScope.launch {
-      service.showPopup(timestampSetModel = timestampSetModel)
+      service.showPopup(null, e.dataContext)
     }
   }
 }

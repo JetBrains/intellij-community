@@ -16,6 +16,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 class SeActionsProviderFactory: SeItemsProviderFactory {
+  override val id: String
+    get() = SeActionsAdaptedProvider.ID
+
   override fun getItemsProvider(project: Project, dataContext: DataContext): SeItemsProvider {
     // TODO: This is unacceptable here, rewrite ActionsContributor
     return runBlockingCancellable {

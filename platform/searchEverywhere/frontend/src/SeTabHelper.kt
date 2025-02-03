@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend
 
+import com.intellij.ide.rpc.serializeToRpc
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
@@ -12,7 +14,6 @@ import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.api.SeItemDataProvider
 import com.intellij.platform.searchEverywhere.api.SeItemsProviderFactory
 import com.intellij.platform.searchEverywhere.frontend.dispatcher.SeDispatcher
-import com.jetbrains.rdclient.actions.cwm.ActionTimestampModelProvider
 import fleet.kernel.DurableRef
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -43,14 +44,17 @@ class SeTabHelper private constructor(val project: Project,
                        providerIds: List<SeProviderId>,
                        dataContext: DataContext,
                        forceRemote: Boolean): SeTabHelper {
-      val actionId = sessionRef.derefOrNull()?.actionId ?: throw IllegalStateException("Session is not initialized")
-      val timestampSetModel = ActionTimestampModelProvider.createTimestampModelSet(actionId, dataContext, false)
+      val serializedDataContext = readAction {
+        serializeToRpc(dataContext)
+      }
 
       val allProviderIds = providerIds.toSet()
 
       val localProviders =
         if (forceRemote) emptyMap()
-        else SeItemsProviderFactory.EP_NAME.extensionList.asFlow().mapNotNull {
+        else SeItemsProviderFactory.EP_NAME.extensionList.asFlow().filter {
+          allProviderIds.contains(SeProviderId(it.id))
+        }.mapNotNull {
           try {
             it.getItemsProvider(project, dataContext)
           }
@@ -58,8 +62,6 @@ class SeTabHelper private constructor(val project: Project,
             LOG.warn("SearchEverywhere item provider wasn't created. Exception: ${e.message}")
             null
           }
-        }.filter {
-          allProviderIds.contains(SeProviderId(it.id))
         }.toList().associate { provider ->
           SeProviderId(provider.id) to SeItemDataLocalProvider(provider, sessionRef)
         }
@@ -67,7 +69,7 @@ class SeTabHelper private constructor(val project: Project,
       val remoteProviderIds = allProviderIds - localProviders.keys.toSet()
 
       val frontendProviders = remoteProviderIds.associateWith { providerId ->
-        SeItemDataFrontendProvider(project.projectId(), providerId, sessionRef, timestampSetModel)
+        SeItemDataFrontendProvider(project.projectId(), providerId, sessionRef, serializedDataContext)
       }
 
       val providers = frontendProviders + localProviders
