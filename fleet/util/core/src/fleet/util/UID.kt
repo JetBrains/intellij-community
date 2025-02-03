@@ -34,8 +34,10 @@ class UID private constructor(val id: String) {
       UID(nextUidString(LEN))
     }
 
+    fun isUid(id: String): Boolean = id.matches(uidRegex)
+
     fun fromString(id: String): UID = run {
-      if (isFleetInternalDefaultValue && !id.matches(uidRegex)) {
+      if (isFleetInternalDefaultValue && !isUid(id)) {
         logger.error(Throwable()) {
           "Invalid UID format: \"$id\", UID is a random [A-Za-z0-9_-] string, case-sensitive, no more than 36 characters long. This will be a hard error in the future."
         }
