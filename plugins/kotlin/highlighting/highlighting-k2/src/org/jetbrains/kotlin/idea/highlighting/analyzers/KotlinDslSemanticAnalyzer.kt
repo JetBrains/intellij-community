@@ -38,8 +38,7 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
         val dslStyleId = DslStyleUtils.styleIdByFQName(dslAnnotation.asSingleFqName())
         return HighlightingFactory.highlightName(
             calleeExpression,
-            DslStyleUtils.typeById(dslStyleId),
-            DslStyleUtils.styleOptionDisplayName(dslStyleId)
+            DslStyleUtils.typeById(dslStyleId)
         )
     }
 }
