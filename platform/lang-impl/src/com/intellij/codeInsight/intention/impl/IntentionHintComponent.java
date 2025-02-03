@@ -65,6 +65,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -662,7 +663,8 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   }
 
-  static final class IntentionPopup implements AbstractIntentionPopup, Disposable.Parent {
+  @ApiStatus.Internal
+  public static final class IntentionPopup implements AbstractIntentionPopup, Disposable.Parent {
     private final @NotNull Project myProject;
     private final @NotNull Editor myEditor;
     private final @NotNull PsiFile myFile;
