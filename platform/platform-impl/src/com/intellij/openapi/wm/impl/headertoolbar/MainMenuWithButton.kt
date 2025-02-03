@@ -14,10 +14,11 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-import com.jetbrains.rd.util.collections.SynchronizedList
+import com.intellij.ui.util.width
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentLinkedDeque
 import javax.swing.Icon
 import javax.swing.JFrame
 import javax.swing.JMenu
@@ -32,7 +33,7 @@ class MainMenuWithButton(
     isVisible = ShowMode.getCurrent() == ShowMode.TOOLBAR_WITH_MENU
     border = null
   }
-  private val removedItems = SynchronizedList<ActionMenu>()
+  private val removedItems = ConcurrentLinkedDeque<ActionMenu>()
 
   init {
     isOpaque = false
@@ -46,54 +47,62 @@ class MainMenuWithButton(
     val isMergedMenu = isMergedMainMenu()
     toolbarMainMenu.isVisible = isMergedMenu
     mainMenuButton.button.presentation.icon = getButtonIcon()
-    if (isMergedMenu) {
-      coroutineScope.launch(Dispatchers.EDT) {
-        var wasChanged = false
-        val toolbarPrefWidth = (toolbar?.calculatePreferredWidth() ?: return@launch)
-        val menuButton = mainMenuButton.button
-        val parentPanelWidth = menuButton.parent?.parent?.width ?: return@launch
-        val menuWidth = toolbarMainMenu.components.sumOf { it.size.width }
-        val menuButtonWidth = menuButton.preferredSize.width
+    mainMenuButton.button.isVisible = !isMergedMenu || removedItems.isNotEmpty()
 
-        var availableWidth = parentPanelWidth - menuWidth - (menuButtonWidth.takeIf { menuButton.isVisible } ?: 0) - toolbarPrefWidth
-        val rootMenuItems = toolbarMainMenu.rootMenuItems //when button is not visible we should keep in mind that it'll be visible on reduce, otherwise we already get it
-        val widthLimit = if (menuButton.isVisible) 0 else menuButton.preferredSize.width
-        if (availableWidth > widthLimit && removedItems.isNotEmpty()) {
-          do {
-            val item = removedItems.lastOrNull() ?: break
-            val itemWidth = item.size.width
-            if (availableWidth - itemWidth < widthLimit) break
-            if (toolbarMainMenu.rootMenuItems.none { it.text == item.text }) toolbarMainMenu.add(item)
-            removedItems.removeIf { it.text == item.text }
-            availableWidth -= itemWidth
-            wasChanged = true
-          }
-          while (availableWidth > widthLimit)
+    if (!isMergedMenu) return
+
+    coroutineScope.launch(Dispatchers.EDT) {
+      val menuItemTexts = toolbarMainMenu.rootMenuItems.map { it.text }
+      removedItems.removeIf { removedItem -> menuItemTexts.contains(removedItem.text) }
+
+      var wasChanged = false
+      val toolbarPrefWidth = (toolbar?.calculatePreferredWidth() ?: return@launch) + (toolbar.parent?.insets?.width ?: 0)
+      val menuButton = mainMenuButton.button
+      val parentPanelWidth = menuButton.parent?.parent?.width ?: return@launch
+      val menuWidth = toolbarMainMenu.components.sumOf { it.size.width }
+      val menuButtonWidth = menuButton.preferredSize.width
+
+      var availableWidth = parentPanelWidth - menuWidth - (menuButtonWidth.takeIf { menuButton.isVisible } ?: 0) - toolbarPrefWidth
+      val rootMenuItems = toolbarMainMenu.rootMenuItems
+      val widthLimit = if (menuButton.isVisible) 0 else menuButton.preferredSize.width
+
+      if (availableWidth < 0) {
+        var widthToFree = -(availableWidth - widthLimit)
+        for (i in rootMenuItems.indices.reversed()) {
+          if (rootMenuItems.size <= 1 || widthToFree <= 0) break
+
+          val item = rootMenuItems[i]
+          removedItems.offerLast(item) // Add to removed items (LIFO behavior)
+          toolbarMainMenu.remove(item)
+          widthToFree -= item.size.width
+          wasChanged = true
         }
-        else if (availableWidth < 0 && rootMenuItems.count() > 1) {
-          var widthToReduce = -(availableWidth - widthLimit)
-          var ind = rootMenuItems.lastIndex
-          do {
-            val item = if (ind > 0) rootMenuItems[ind] else break
-            if (removedItems.none { it.text == item.text }) removedItems.add(item)
-            widthToReduce -= item.size.width
-            ind--
-            wasChanged = true
-          }
-          while (widthToReduce > 0)
-          removedItems.forEach { removedItem ->
-            toolbarMainMenu.rootMenuItems.find { it.text == removedItem.text }?.let { toolbarMainMenu.remove(it) }
-          }
+
+        availableWidth = 0 // Adjust to reflect that we've made space
+      }
+
+      while (availableWidth > widthLimit && removedItems.isNotEmpty()) {
+        val item = removedItems.pollLast() ?: break // Remove the last item (LIFO order)
+        val itemWidth = item.size.width
+        if (availableWidth - itemWidth < widthLimit) {
+          removedItems.offerLast(item)
+          break
         }
-        menuButton.isVisible = removedItems.isNotEmpty()
-        if (wasChanged) {
-          toolbarMainMenu.rootMenuItems.forEach { it.updateUI() }
-          toolbar.revalidate()
-          toolbar.repaint()
-        }
+
+        toolbarMainMenu.add(item)
+        availableWidth -= itemWidth
+        wasChanged = true
+      }
+
+      menuButton.isVisible = removedItems.isNotEmpty()
+      if (wasChanged) {
+        toolbarMainMenu.rootMenuItems.forEach { it.updateUI() }
+        toolbar.revalidate()
+        toolbar.repaint()
       }
     }
   }
+
 
   fun getButtonIcon(): Icon = if (isMergedMainMenu()) AllIcons.General.ChevronRight else AllIcons.General.WindowsMenu_20x20
 
