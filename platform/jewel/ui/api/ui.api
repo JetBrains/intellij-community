@@ -3030,6 +3030,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys {
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Actions {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Actions;
+	public final fun getAddDirectory ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getAddFile ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getAddList ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getAddMulticaret ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;

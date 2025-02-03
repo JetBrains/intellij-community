@@ -796,7 +796,8 @@ public abstract class org/jetbrains/jewel/markdown/scrolling/ScrollingSynchroniz
 	protected abstract fun afterProcessing ()V
 	protected abstract fun beforeProcessing ()V
 	public final fun process (Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
-	public abstract fun scrollToLine (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun scrollToLine (ILandroidx/compose/animation/core/AnimationSpec;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun scrollToLine$default (Lorg/jetbrains/jewel/markdown/scrolling/ScrollingSynchronizer;ILandroidx/compose/animation/core/AnimationSpec;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class org/jetbrains/jewel/markdown/scrolling/ScrollingSynchronizer$Companion {
