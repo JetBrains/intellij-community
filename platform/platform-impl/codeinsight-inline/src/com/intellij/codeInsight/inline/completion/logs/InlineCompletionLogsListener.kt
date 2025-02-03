@@ -105,7 +105,10 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     holder.totalInsertedLength += textToInsert.length
     holder.totalInsertedLines += textToInsert.lines().size
     holder.fullInsertActions++
+  }
 
+  override fun onAfterInsert(event: InlineCompletionEventType.AfterInsert) {
+    val context = InlineCompletionContext.getOrNull(editor) ?: return
     startTracking(context)
   }
 
