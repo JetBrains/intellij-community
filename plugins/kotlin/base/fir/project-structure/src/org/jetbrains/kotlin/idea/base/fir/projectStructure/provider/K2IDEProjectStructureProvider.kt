@@ -222,14 +222,6 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
             .toList()
     }
 
-    override fun getForcedKaModule(file: PsiFile): KaModule? {
-        return file.forcedKaModuleData
-    }
-
-    override fun setForcedKaModule(file: PsiFile, kaModule: KaModule?) {
-        file.forcedKaModuleData = kaModule
-    }
-
     override fun getKaLibraryModules(library: Library): List<KaLibraryModule> {
         require(library is LibraryBridge) {
             "Expected ${LibraryBridge::class}, but got ${library::class} instead"
@@ -253,10 +245,6 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
             project.ideProjectStructureProvider.self as K2IDEProjectStructureProvider
     }
 }
-
-private var PsiFile.forcedKaModuleData: KaModule? by UserDataProperty(Key.create("forcedKaModuleData"))
-    @ApiStatus.Internal get
-    @ApiStatus.Internal set
 
 private fun <T> cachedKaModule(
     anchorElement: PsiFileSystemItem,

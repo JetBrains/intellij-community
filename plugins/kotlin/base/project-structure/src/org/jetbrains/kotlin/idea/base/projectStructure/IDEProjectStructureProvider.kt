@@ -57,10 +57,6 @@ abstract class IDEProjectStructureProvider : KotlinProjectStructureProviderBase(
     abstract fun getKotlinLibraries(module: KaLibraryModule): List<KotlinLibrary>
 
     abstract fun getAssociatedKaModules(virtualFile: VirtualFile): List<KaModule>
-
-    abstract fun getForcedKaModule(file: PsiFile): KaModule?
-
-    abstract fun setForcedKaModule(file: PsiFile, kaModule: KaModule?)
 }
 
 

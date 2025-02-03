@@ -11,7 +11,6 @@ import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
@@ -64,8 +63,6 @@ internal class DelegatingIDEProjectStructureProvider(project: Project) : IDEProj
     override fun getKaLibraryModule(sdk: Sdk): KaLibraryModule = delegate.getKaLibraryModule(sdk)
     override fun getKotlinLibraries(module: KaLibraryModule): List<KotlinLibrary> = delegate.getKotlinLibraries(module)
     override fun getAssociatedKaModules(virtualFile: VirtualFile): List<KaModule> = delegate.getAssociatedKaModules(virtualFile)
-    override fun getForcedKaModule(file: PsiFile): KaModule? = delegate.getForcedKaModule(file)
-    override fun setForcedKaModule(file: PsiFile, kaModule: KaModule?) = delegate.setForcedKaModule(file, kaModule)
     override fun getModule(element: PsiElement, useSiteModule: KaModule?): KaModule = delegate.getModule(element, useSiteModule)
     override fun getImplementingModules(module: KaModule): List<KaModule> = delegate.getImplementingModules(module)
 

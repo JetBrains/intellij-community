@@ -11,8 +11,6 @@ import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
@@ -230,17 +228,3 @@ fun VirtualFile.getAssociatedKaModules(project: Project): List<KaModule> =
 
 fun KaLibraryModule.getKotlinLibraries(project: Project): List<KotlinLibrary> =
     project.ideProjectStructureProvider.getKotlinLibraries(this)
-
-/**
- * [forcedKaModule] provides a [KaModule] instance for a dummy file. It must not be changed after the first assignment because
- * [IDEProjectStructureProvider] might cache the module info.
- */
-var PsiFile.forcedKaModule: KaModule?
-    @ApiStatus.Internal
-    get() {
-        return project.ideProjectStructureProvider.getForcedKaModule(this)
-    }
-    @ApiStatus.Internal
-    set(value) {
-        project.ideProjectStructureProvider.setForcedKaModule(this, value)
-    }
