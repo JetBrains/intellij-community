@@ -3,40 +3,47 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
-import com.jetbrains.python.failure
+import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl
+import com.intellij.python.community.services.shared.PythonWithLanguageLevel
+import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.emit
+import com.jetbrains.python.failure
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.suggestCondaPath
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.pipenv.getPipEnvExecutable
 import com.jetbrains.python.sdk.poetry.getPoetryExecutable
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
-import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.pathString
 
 
 @OptIn(ExperimentalCoroutinesApi::class)
-abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
+abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, private val systemPythonService: SystemPythonService = SystemPythonService()) {
 
   val propertyGraph = PropertyGraph()
   val navigator = PythonNewEnvironmentDialogNavigator()
@@ -118,7 +125,6 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
 
   private suspend fun initInterpreterList() {
     withContext(Dispatchers.IO) {
-      // TODO: PythonInterpreterService: load valid system pythons
       val existingSdks = PyConfigurableInterpreterList.getInstance(null).getModel().sdks.toList()
 
 
@@ -135,16 +141,32 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
 
       val existingSdkPaths = existingSdks.mapNotNull { it.homePath }.mapNotNull { tryResolvePath(it) }.toSet()
 
-      val detected = PythonSdkFlavor.getApplicableFlavors(true).flatMap { sdkFlavor ->
-        // TODO: PythonInterpreterService: detect valid system pythons
-        sdkFlavor.suggestLocalHomePaths(null, null)
-          .filterNot { it in existingSdkPaths }
-          .map { DetectedSelectableInterpreter(it.pathString, sdkFlavor.getLanguageLevel(it.pathString)) }
-      }
+
+      // Venvs are not detected manually, but must migrate to VenvService or so
+      val venvs: List<PythonWithLanguageLevel> = VirtualEnvSdkFlavor.getInstance()
+        .suggestLocalHomePaths(null, null)
+        .mapNotNull { venv ->
+          return@mapNotNull when (val r = PythonWithLanguageLevelImpl.createByPythonBinary(venv)) {
+            is com.jetbrains.python.Result.Failure -> {
+              fileLogger().warn("Skipping $venv : ${r.error}")
+              null
+            }
+            is com.jetbrains.python.Result.Success -> r.result
+          }
+        }
+
+      // System (base) pythons
+      val system: List<PythonWithLanguageLevel> = systemPythonService.findSystemPythons()
+
+      // Python + isBase. Both: system and venv.
+      val detected = (venvs.map { Pair(it, false) } + system.map { Pair(it, true) })
+        .filterNot { (python, _) -> python.pythonBinary in existingSdkPaths }
+        .map { (python, base) -> DetectedSelectableInterpreter(python.pythonBinary.pathString, python.languageLevel, base) }
+        .sortedByDescending { it.languageLevel }
 
       withContext(uiContext) {
         installable = filteredInstallable
-        knownInterpreters.value = allValidSdks // todo check target?
+        knownInterpreters.value = allValidSdks
         _detectedInterpreters.value = detected
       }
 
@@ -162,6 +184,28 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams) {
     manuallyAddedInterpreters.value += ExistingSelectableInterpreter(sdk, PySdkUtil.getLanguageLevelForSdk(sdk), sdk.isSystemWide)
   }
 
+  /**
+   * Given [pathToPython] returns either cleaned path (if valid) or null and reports error to [errorSink]
+   */
+  suspend fun getSystemPythonFromSelection(pathToPython: String, errorSink: ErrorSink): String? {
+    val result = try {
+      when (val r = systemPythonService.registerSystemPython(Path(pathToPython))) {
+        is com.jetbrains.python.Result.Failure -> com.jetbrains.python.errorProcessing.failure(r.error)
+        is com.jetbrains.python.Result.Success -> com.jetbrains.python.Result.success(r.result)
+      }
+    }
+    catch (e: InvalidPathException) {
+      com.jetbrains.python.errorProcessing.failure(e.localizedMessage)
+    }
+
+    return when (result) {
+      is com.jetbrains.python.Result.Success -> result.result.pythonBinary.pathString
+      is com.jetbrains.python.Result.Failure -> {
+        errorSink.emit(result.error)
+        null
+      }
+    }
+  }
 }
 
 abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModelParams)
@@ -176,7 +220,6 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
   }
 
   suspend fun detectPoetryExecutable() {
-    // FIXME: support targets
     getPoetryExecutable().getOrNull()?.let {
       withContext(Dispatchers.EDT) {
         state.poetryExecutable.set(it.pathString)
@@ -185,7 +228,6 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
   }
 
   suspend fun detectPipEnvExecutable() {
-    // FIXME: support targets
     getPipEnvExecutable().getOrNull()?.let {
       withContext(Dispatchers.EDT) {
         state.pipenvExecutable.set(it.pathString)
@@ -194,7 +236,6 @@ abstract class PythonMutableTargetAddInterpreterModel(params: PyInterpreterModel
   }
 
   suspend fun detectUvExecutable() {
-    // FIXME: support targets
     getUvExecutable()?.pathString?.let {
       withContext(Dispatchers.EDT) {
         state.uvExecutable.set(it)
@@ -255,7 +296,12 @@ class ExistingSelectableInterpreter(val sdk: Sdk, override val languageLevel: La
   override val homePath = sdk.homePath!! // todo is it safe
 }
 
-class DetectedSelectableInterpreter(override val homePath: String, override val languageLevel: LanguageLevel) : PythonSelectableInterpreter()
+/**
+ * [isBase] is a system interpreter, see [isBasePython]
+ */
+class DetectedSelectableInterpreter(override val homePath: String, override val languageLevel: LanguageLevel, private val isBase: Boolean) : PythonSelectableInterpreter() {
+  override suspend fun isBasePython(): Boolean = isBase
+}
 
 class ManuallyAddedSelectableInterpreter(override val homePath: String, override val languageLevel: LanguageLevel) : PythonSelectableInterpreter()
 

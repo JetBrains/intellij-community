@@ -18,6 +18,8 @@ import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.community.impl.installer.CondaInstallManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredListCellRenderer
@@ -41,6 +43,7 @@ import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.VIRTUA
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.SharedFlow
@@ -239,7 +242,7 @@ internal fun Row.pythonInterpreterComboBox(
   onPathSelected: (String) -> Unit, busyState: StateFlow<Boolean>? = null,
 ): Cell<PythonInterpreterComboBox> {
 
-  val comboBox = PythonInterpreterComboBox(selectedSdkProperty, model, onPathSelected)
+  val comboBox = PythonInterpreterComboBox(selectedSdkProperty, model, onPathSelected, ShowingMessageErrorSync)
   val cell = cell(comboBox)
     .bindItem(selectedSdkProperty)
     .applyToComponent {
@@ -270,6 +273,7 @@ internal class PythonInterpreterComboBox(
   private val backingProperty: ObservableMutableProperty<PythonSelectableInterpreter?>,
   val controller: PythonAddInterpreterModel,
   val onPathSelected: (String) -> Unit,
+  private val errorSink: ErrorSink,
 ) : ComboBox<PythonSelectableInterpreter?>() {
 
   private lateinit var itemsFlow: StateFlow<List<PythonSelectableInterpreter>>
@@ -281,11 +285,14 @@ internal class PythonInterpreterComboBox(
   init {
     renderer = PythonSdkComboBoxListCellRenderer()
     val newOnPathSelected: (String) -> Unit = {
-      interpreterToSelect.set(it)
-      onPathSelected(it)
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), message("python.sdk.validating.environment")) {
+        controller.getSystemPythonFromSelection(it, errorSink)?.let { python ->
+          interpreterToSelect.set(python)
+          onPathSelected(python)
+        }
+      }
     }
     editor = PythonSdkComboBoxWithBrowseButtonEditor(this, controller, newOnPathSelected)
-
   }
 
   fun setItems(flow: StateFlow<List<PythonSelectableInterpreter>>) {
