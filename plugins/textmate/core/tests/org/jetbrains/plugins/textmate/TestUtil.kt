@@ -44,7 +44,6 @@ object TestUtil {
   const val GIT: @NonNls String = "git-base"
   const val RESTRUCTURED_TEXT: @NonNls String = "restructuredtext"
 
-  @JvmStatic
   fun getBundleDirectory(bundleName: String): Path {
     val bundleDirectory = Path.of(PathManager.getCommunityHomePath()).resolve("plugins/textmate/testData/bundles").resolve(bundleName)
     return if (bundleDirectory.exists()) {
@@ -55,7 +54,6 @@ object TestUtil {
     }
   }
 
-  @JvmStatic
   fun readBundle(bundleName: String): TextMateBundleReader {
     val resourceReader = getResourceReader(bundleName)
     val bundleType = detectBundleType(resourceReader, bundleName)
@@ -73,7 +71,6 @@ object TestUtil {
     return TextMateNioResourceReader(bundleDirectory)
   }
 
-  @JvmStatic
   fun scopeFromString(scopeString: String): TextMateScope {
     return scopeString.split(' ').dropLastWhile { it.isEmpty() }.fold(TextMateScope.EMPTY) { acc, i -> acc.add(i) }
   }

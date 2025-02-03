@@ -165,7 +165,7 @@ public class VSCBundle extends Bundle {
       return new Plist(map);
     }
     catch (FileNotFoundException e) {
-      return Plist.EMPTY_PLIST;
+      return Plist.Companion.getEMPTY_PLIST();
     }
     catch (Exception e) {
       throw new IOException(e);

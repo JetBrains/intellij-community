@@ -43,7 +43,7 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
     val map = HashMap<VSCodeExtensionLanguageId, MutableSet<TextMateScopeName>>()
     extension.contributes.grammars.map { grammar ->
       for ((scopeName, languageId) in grammar.embeddedLanguages) {
-        map.computeIfAbsent(languageId) { HashSet() }.add(scopeName)
+        map.getOrPut(languageId) { HashSet() }.add(scopeName)
       }
     }
     map

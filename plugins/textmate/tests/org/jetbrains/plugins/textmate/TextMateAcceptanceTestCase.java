@@ -36,7 +36,7 @@ public abstract class TextMateAcceptanceTestCase extends BasePlatformTestCase {
     if (!loadingBundles.equals(enabledBundles)) {
       Map<String, TextMatePersistentBundle> bundles = new HashMap<>();
       for (String bundleName : loadingBundles) {
-        Path bundleDirectory = TestUtil.getBundleDirectory(bundleName);
+        Path bundleDirectory = TestUtil.INSTANCE.getBundleDirectory(bundleName);
         String path = bundleDirectory.toAbsolutePath().toString();
         bundles.put(FileUtil.toSystemIndependentName(path), new TextMatePersistentBundle(bundleName, true));
       }
