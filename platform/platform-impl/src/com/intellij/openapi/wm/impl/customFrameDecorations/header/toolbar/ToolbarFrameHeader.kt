@@ -391,11 +391,12 @@ internal class ToolbarFrameHeader(
 
   override fun getHeaderBackground(active: Boolean): Color {
     val color = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(isActive)
-    return InternalUICustomization.getInstance().frameHeaderBackgroundConverter(color) ?: color
+    return InternalUICustomization.getInstance()?.frameHeaderBackgroundConverter(color) ?: color
   }
 
   override fun getComponentGraphics(graphics: Graphics?): Graphics? {
-    return InternalUICustomization.getInstance().transformGraphics(this, super.getComponentGraphics(graphics))
+    val componentGraphics = super.getComponentGraphics(graphics)
+    return InternalUICustomization.getInstance()?.transformGraphics(this, componentGraphics) ?: componentGraphics
   }
 
   override fun updateActive() {

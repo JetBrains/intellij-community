@@ -255,7 +255,7 @@ private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame,
         coroutineScope = coroutineScope,
         frame = frame,
         isOpaque = true,
-        background = InternalUICustomization.getInstance().getMainToolbarBackground(true),
+        background = InternalUICustomization.getInstance()?.getMainToolbarBackground(true) ?: JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(true),
         isFullScreen
       )
       toolbar.border = JBUI.Borders.emptyLeft(5)

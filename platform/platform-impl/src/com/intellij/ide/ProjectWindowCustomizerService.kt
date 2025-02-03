@@ -328,7 +328,7 @@ class ProjectWindowCustomizerService : Disposable {
 
   fun isAvailable(): Boolean {
     return !DistractionFreeModeController.shouldMinimizeCustomHeader() &&
-           InternalUICustomization.getInstance().isProjectCustomDecorationActive &&
+           InternalUICustomization.getInstance()?.isProjectCustomDecorationActive != false &&
            (PlatformUtils.isRider () || Registry.`is`("ide.colorful.toolbar", true))
   }
 
