@@ -1,6 +1,6 @@
 fragment reaction on Reaction {
   content
   user {
-    ...userInfo
+    ...user
   }
 }
