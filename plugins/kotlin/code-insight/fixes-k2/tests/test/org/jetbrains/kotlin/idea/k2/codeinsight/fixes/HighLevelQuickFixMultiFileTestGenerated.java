@@ -424,6 +424,21 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/dslMarkersOnReceiver.before.Main.kt");
             }
 
+            @TestMetadata("enumEntries_CallableReference.test")
+            public void testEnumEntries_CallableReference() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/enumEntries_CallableReference.test");
+            }
+
+            @TestMetadata("enumEntries_ExplicitReceiver.test")
+            public void testEnumEntries_ExplicitReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/enumEntries_ExplicitReceiver.test");
+            }
+
+            @TestMetadata("enumEntries_Private.test")
+            public void testEnumEntries_Private() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/enumEntries_Private.test");
+            }
+
             @TestMetadata("extensionErroneousReceiver.test")
             public void testExtensionErroneousReceiver() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/extensionErroneousReceiver.test");
