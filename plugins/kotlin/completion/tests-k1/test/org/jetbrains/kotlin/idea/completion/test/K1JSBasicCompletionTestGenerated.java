@@ -3439,6 +3439,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/KTIJ-26747.kt");
             }
 
+            @TestMetadata("KTIJ-28837.kt")
+            public void testKTIJ_28837() throws Exception {
+                runTest("../testData/basic/common/KTIJ-28837.kt");
+            }
+
             @TestMetadata("KTIJ-28919.kt")
             public void testKTIJ_28919() throws Exception {
                 runTest("../testData/basic/common/KTIJ-28919.kt");
