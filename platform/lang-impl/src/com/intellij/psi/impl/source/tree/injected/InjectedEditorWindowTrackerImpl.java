@@ -9,12 +9,14 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.UnsafeWeakList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Iterator;
 
-final class InjectedEditorWindowTrackerImpl extends InjectedEditorWindowTracker {
+@ApiStatus.Internal
+public final class InjectedEditorWindowTrackerImpl extends InjectedEditorWindowTracker {
   private final Collection<EditorWindowImpl> allEditors = new UnsafeWeakList<>(); // guarded by allEditors
 
   @NotNull
