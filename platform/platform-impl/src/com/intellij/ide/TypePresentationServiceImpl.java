@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -288,7 +289,8 @@ public final class TypePresentationServiceImpl extends TypePresentationService {
     };
   }
 
-  interface PresentationTemplate {
+  @ApiStatus.Internal
+  public interface PresentationTemplate {
     @Nullable
     Icon getIcon(Object o, int flags);
 
