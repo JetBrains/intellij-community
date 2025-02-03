@@ -53,9 +53,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.markdown"/>
     <module name="intellij.python.ml.features"/>
     <module name="intellij.python.terminal"/>
-    <module name="intellij.python.community.services.systemPython"/>
-    <module name="intellij.python.community.services.shared"/>
-    <module name="intellij.python.community.services.internal.impl"/>
+
   </content>
 
   <resource-bundle>messages.PyBundle</resource-bundle>
@@ -1042,7 +1040,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   <extensionPoints>
     <extensionPoint qualifiedName="Pythonid.systemPythonProvider"
                     dynamic="true"
-                    interface="com.jetbrains.python.systemPythonSpi.SystemPythonProvider"/>
+                    interface="com.intellij.python.community.services.systemPython.SystemPythonProvider"/>
   </extensionPoints>
 
 </idea-plugin>

@@ -5,9 +5,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.intellij.python.community.testFramework.testEnv.TypeVanillaPython3
 import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.systemPythonSpi.SystemPythonProvider
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toSet
 

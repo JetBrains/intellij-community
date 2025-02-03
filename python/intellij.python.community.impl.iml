@@ -170,5 +170,6 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.python.community.impl.venv" />
     <orderEntry type="module" module-name="intellij.python.community.execService" />
+    <orderEntry type="module" module-name="intellij.python.community.services.systemPython" />
   </component>
 </module>

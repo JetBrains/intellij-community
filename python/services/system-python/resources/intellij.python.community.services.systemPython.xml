@@ -1,8 +1,0 @@
-<idea-plugin package="com.intellij.python.community.services.systemPython">
-  <dependencies>
-    <module name="intellij.python.community.services.shared"/>
-    <module name="intellij.python.community.services.internal.impl"/>
-  </dependencies>
-
-
-</idea-plugin>

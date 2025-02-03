@@ -2,7 +2,6 @@
 
   <id>pycharm.systemPython.tests</id>
   <dependencies>
-    <module name="intellij.python.community.services.systemPython"/>
     <plugin id="PythonCore"/>
   </dependencies>
   <extensions defaultExtensionNs="Pythonid">

@@ -3,13 +3,13 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import com.jetbrains.python.sdk.uv.impl.hasUvExecutable
-import com.jetbrains.python.systemPythonSpi.SystemPythonProvider
 import java.nio.file.Path
 
-class UvSystemPythonProvider : SystemPythonProvider {
+internal class UvSystemPythonProvider : SystemPythonProvider {
   override suspend fun findSystemPythons(eelApi: EelApi): Result<Set<PythonBinary>> {
     if (eelApi != localEel || !hasUvExecutable()) {
       // TODO: support for remote execution

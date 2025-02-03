@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.services.systemPython
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.Service.Level.APP
@@ -16,45 +15,19 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.installer.installBinary
-import com.jetbrains.python.systemPythonSpi.SystemPythonProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
-/**
- * Service to register and obtain [SystemPython]s
- */
-@ApiStatus.NonExtendable
-sealed interface SystemPythonService {
-  /**
-   * System pythons installed on OS.
-   * Sort pythons by [SystemPython.languageLevel] to find the highest one
-   */
-  suspend fun findSystemPythons(eelApi: EelApi = localEel): Set<SystemPython>
-
-  /**
-   * When user provides a path to the python binary, use this method to the [SystemPython].
-   * @return either [SystemPython] or an error if python is broken.
-   */
-  suspend fun registerSystemPython(pythonPath: PythonBinary): Result<SystemPython, @Nls String>
-
-  /**
-   * @return tool to install python on OS If [eelApi] supports python installation
-   */
-  fun getInstaller(eelApi: EelApi = localEel): PythonInstallerService?
-}
-
-/**
- * Creates an instance of this service
- */
-fun SystemPythonService(): SystemPythonService = ApplicationManager.getApplication().service<SystemPythonServiceImpl>()
 
 // Implementation
 
 @Service(APP)
-@State(name = "SystemPythonService", storages = [Storage("systemPythonService.xml", roamingType = RoamingType.LOCAL)], allowLoadInTests = true)
-private class SystemPythonServiceImpl : SystemPythonService, SimplePersistentStateComponent<MyServiceState>(MyServiceState()) {
+@State(name = "SystemPythonService", storages = [Storage("systemPythonService.xml", roamingType = RoamingType.LOCAL)],
+       allowLoadInTests = true)
+@Internal
+internal class SystemPythonServiceImpl : SystemPythonService, SimplePersistentStateComponent<MyServiceState>(MyServiceState()) {
 
   override suspend fun registerSystemPython(pythonPath: PythonBinary): Result<SystemPython, @Nls String> {
     val impl = PythonWithLanguageLevelImpl.createByPythonBinary(pythonPath).getOr { return it }
