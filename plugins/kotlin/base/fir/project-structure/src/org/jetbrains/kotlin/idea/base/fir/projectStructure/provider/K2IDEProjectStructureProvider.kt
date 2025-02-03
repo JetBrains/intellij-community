@@ -150,7 +150,9 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
         openapiModule: Module,
         kind: KaSourceModuleKind,
     ): KaSourceModule? {
-        require(openapiModule is ModuleBridge)
+        require(openapiModule is ModuleBridge) {
+            "Expected ${ModuleBridge::class}, but got ${openapiModule::class} instead"
+        }
         val moduleEntity = openapiModule.findModuleEntity(project.workspaceModel.currentSnapshot) ?: return null
         return getKaSourceModule(moduleEntity, kind)
     }
@@ -163,17 +165,23 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
     }
 
     override fun getKaSourceModuleKind(module: KaSourceModule): KaSourceModuleKind {
-        require(module is KaSourceModuleBase)
+        require(module is KaSourceModuleBase) {
+            "Expected ${KaSourceModuleBase::class}, but got ${module::class} instead"
+        }
         return module.kind
     }
 
     override fun getKaSourceModuleSymbolId(module: KaSourceModule): ModuleId {
-        require(module is KaSourceModuleBase)
+        require(module is KaSourceModuleBase) {
+            "Expected ${KaSourceModuleBase::class}, but got ${module::class} instead"
+        }
         return module.entityId
     }
 
     override fun getOpenapiModule(module: KaSourceModule): Module {
-        require(module is KaSourceModuleBase)
+        require(module is KaSourceModuleBase) {
+            "Expected ${KaSourceModuleBase::class}, but got ${module::class} instead"
+        }
         return module.module
     }
 
@@ -194,7 +202,9 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
     }
 
     override fun getKaLibraryModuleSymbolicId(libraryModule: KaLibraryModule): LibraryId {
-        require(libraryModule is KaLibraryEntityBasedLibraryModuleBase)
+        require(libraryModule is KaLibraryEntityBasedLibraryModuleBase) {
+            "Expected ${KaLibraryEntityBasedLibraryModuleBase::class}, but got ${libraryModule::class} instead"
+        }
         return libraryModule.entityId
     }
 
@@ -221,7 +231,9 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
     }
 
     override fun getKaLibraryModules(library: Library): List<KaLibraryModule> {
-        require(library is LibraryBridge)
+        require(library is LibraryBridge) {
+            "Expected ${LibraryBridge::class}, but got ${library::class} instead"
+        }
         return getKaLibraryModules(library.libraryId)
     }
 
