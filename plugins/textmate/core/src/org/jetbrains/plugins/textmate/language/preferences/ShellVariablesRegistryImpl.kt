@@ -29,10 +29,7 @@ class ShellVariablesRegistryImpl(private val weigher: TextMateSelectorWeigher) :
     if (scope == null) {
       return null
     }
-    val variables = myVariables[name]
-    if (variables == null) {
-      return null
-    }
+    val variables = myVariables[name] ?: return null
     return TextMateScopeComparatorCore(weigher, scope, TextMateShellVariable::scopeSelector).max(variables)
   }
 

@@ -18,18 +18,15 @@ class SnippetsRegistryImpl(private val weigher: TextMateSelectorWeigher) : Snipp
 
   override fun findSnippet(key: String, scope: TextMateScope?): Collection<TextMateSnippet> {
     if (scope == null) {
-      return listOf<TextMateSnippet>()
+      return emptyList()
     }
-    val snippets = mySnippets[key]
-    if (snippets == null) {
-      return listOf<TextMateSnippet>()
-    }
+    val snippets = mySnippets[key] ?: return emptyList()
     return TextMateScopeComparatorCore(weigher, scope, TextMateSnippet::scopeSelector).sortAndFilter(snippets)
   }
 
   override fun getAvailableSnippets(scopeSelector: TextMateScope?): Collection<TextMateSnippet> {
     if (scopeSelector == null) {
-      return listOf<TextMateSnippet>()
+      return emptyList()
     }
     return TextMateScopeComparatorCore(weigher, scopeSelector, TextMateSnippet::scopeSelector)
       .sortAndFilter(mySnippets.values.flatMap { it })
