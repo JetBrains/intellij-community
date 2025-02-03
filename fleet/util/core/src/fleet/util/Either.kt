@@ -14,6 +14,7 @@ import kotlinx.serialization.encoding.encodeStructure
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
+import kotlin.error
 
 /**
  * Same as [Result], but non-throwable based. Can store any kind of errors
@@ -41,8 +42,8 @@ value class Either<out T, E> internal constructor(
    * Returns the encapsulated value if this instance represents [success][Either.isValue] or `null`
    * if it is [error][Either.isError].
    *
-   * This function is a shorthand for `getOrElse { null }` (see [getOrElse]) or
-   * `fold(onSuccess = { it }, onFailure = { null })` (see [fold]).
+   * This function is shorthand for `getOrElse { null }` (see [kotlin.collections.getOrElse]) or
+   * `fold(onSuccess = { it }, onFailure = { null })` (see [kotlin.collections.fold]).
    */
   @Suppress("UNCHECKED_CAST")
   val valueOrNull: T?
@@ -55,7 +56,7 @@ value class Either<out T, E> internal constructor(
    * Returns the encapsulated error if this instance represents [failure][isError] or `null`
    * if it is [success][isValue].
    *
-   * This function is a shorthand for `fold(onSuccess = { null }, onFailure = { it })` (see [fold]).
+   * This function is shorthand for `fold(onSuccess = { null }, onFailure = { it })` (see [kotlin.collections.fold]).
    */
   @Suppress("UNCHECKED_CAST")
   val errorOrNull: E?
@@ -140,7 +141,7 @@ inline fun <T, E> Either<T, E>.onValue(action: (value: T) -> Unit): Either<T, E>
   return this
 }
 
-private class EitherSerializer<T, E>(
+internal class EitherSerializer<T, E>(
   val valueSerializer: KSerializer<T>,
   val errorSerializer: KSerializer<E>,
 ) : KSerializer<Either<T, E>> {
