@@ -25,6 +25,7 @@ import java.lang.Runnable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.ContinuationInterceptor
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * @see WithModalProgressTest
@@ -285,7 +286,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
 
   @Suppress("ForbiddenInSuspectContextMethod")
   @Test
-  fun `simultaneous wa and wa are forbidden`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+  fun `simultaneous wa and wa are forbidden`(): Unit = timeoutRunBlocking(timeout = 30.seconds, context = Dispatchers.EDT) {
     val writeActionCounter = AtomicInteger(0)
     writeIntentReadAction {
       runWithModalProgressBlocking {

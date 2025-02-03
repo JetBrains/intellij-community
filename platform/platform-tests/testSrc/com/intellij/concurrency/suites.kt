@@ -13,6 +13,16 @@ import org.junit.platform.suite.api.Suite
   WithThreadLocalTest::class,
   ThreadContextTest::class,
 
+  // general threading
+  NonBlockingReadActionTest::class,
+  ProgressRunnerTest::class,
+  EdtCoroutineDispatcherTest::class,
+  ImplicitReadTest::class,
+  LaterInvocatorTest::class,
+  ModalCoroutineTest::class,
+  ReadWritePropagationTest::class,
+
+
   // contexts
   ContextSwitchTest::class,
   BlockingContextTest::class,
