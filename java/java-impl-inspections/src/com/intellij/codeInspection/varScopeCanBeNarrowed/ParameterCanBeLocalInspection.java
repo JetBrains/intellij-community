@@ -19,12 +19,14 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
 
@@ -64,13 +66,7 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
   }
 
   private static @NotNull List<PsiParameter> filterFinal(PsiParameter[] parameters) {
-    final List<PsiParameter> result = new ArrayList<>(parameters.length);
-    for (PsiParameter parameter : parameters) {
-      if (!parameter.hasModifierProperty(PsiModifier.FINAL)) {
-        result.add(parameter);
-      }
-    }
-    return result;
+    return ContainerUtil.filter(parameters, parameter -> !parameter.hasModifierProperty(PsiModifier.FINAL));
   }
 
   private static Collection<PsiParameter> getWriteBeforeRead(@NotNull Collection<? extends PsiParameter> parameters,
@@ -82,26 +78,19 @@ public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalIn
     if (result.isEmpty()) return Collections.emptyList();
     result.retainAll(ControlFlowUtil.getWrittenVariables(controlFlow, 0, controlFlow.getSize(), false));
     if (result.isEmpty()) return Collections.emptyList();
-    for (final PsiReferenceExpression readBeforeWrite : ControlFlowUtil.getReadBeforeWrite(controlFlow)) {
-      final PsiElement resolved = readBeforeWrite.resolve();
-      if (resolved instanceof PsiParameter) {
-        result.remove(resolved);
+    for (PsiReferenceExpression readBeforeWrite : ControlFlowUtil.getReadBeforeWrite(controlFlow)) {
+      if (readBeforeWrite.resolve() instanceof PsiParameter param) {
+        result.remove(param);
       }
     }
 
     return result;
   }
 
-  private static Set<PsiParameter> filterParameters(@NotNull ControlFlow controlFlow, @NotNull Collection<? extends PsiParameter> parameters) {
+  private static Set<PsiParameter> filterParameters(@NotNull ControlFlow controlFlow,
+                                                    @NotNull Collection<? extends PsiParameter> parameters) {
     final Set<PsiVariable> usedVars = new HashSet<>(ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize()));
-
-    final Set<PsiParameter> result = new HashSet<>();
-    for (PsiParameter parameter : parameters) {
-      if (usedVars.contains(parameter)) {
-        result.add(parameter);
-      }
-    }
-    return result;
+    return parameters.stream().filter(usedVars::contains).collect(Collectors.toSet());
   }
 
   private static boolean isOverrides(PsiMethod method) {

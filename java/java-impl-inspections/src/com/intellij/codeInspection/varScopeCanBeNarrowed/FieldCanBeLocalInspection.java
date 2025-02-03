@@ -5,7 +5,10 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.options.JavaClassValidator;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.AddToInspectionOptionListFix;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
@@ -40,14 +43,13 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
   public final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
   public boolean IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS = true;
 
-  private void doCheckClass(final PsiClass aClass,
+  private void doCheckClass(PsiClass aClass,
                             ProblemsHolder holder,
-                            final List<String> excludeAnnos,
+                            List<String> excludeAnnos,
                             boolean ignoreFieldsUsedInMultipleMethods) {
     if (aClass.isInterface()) return;
-    final PsiField[] fields = aClass.getFields();
     final Set<PsiField> candidates = new LinkedHashSet<>();
-    for (PsiField field : fields) {
+    for (PsiField field : aClass.getFields()) {
       if (!field.isPhysical() || AnnotationUtil.isAnnotated(field, excludeAnnos, 0)) {
         continue;
       }
@@ -56,7 +58,8 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
         // (e.g. if the only method where they are changed is called from several threads)
         continue;
       }
-      if (field.hasModifierProperty(PsiModifier.PRIVATE) && !(field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL))) {
+      if (field.hasModifierProperty(PsiModifier.PRIVATE)
+          && !(field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL))) {
         candidates.add(field);
       }
     }
@@ -73,7 +76,7 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
     final PsiClass scope = findVariableScope(aClass);
 
     FieldLoop:
-    for (final PsiField field : candidates) {
+    for (PsiField field : candidates) {
       if (usedFields.contains(field) && !hasImplicitReadOrWriteUsage(field, implicitUsageProviders)) {
         final List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(field, scope);
         final Map<PsiCodeBlock, List<PsiReferenceExpression>> refs = new HashMap<>();
@@ -122,10 +125,10 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
           final PsiCodeBlock body = method.getBody();
           if (body != null) {
             final PsiStatement[] statements = body.getStatements();
-            if (statements.length > 0 && statements[0] instanceof PsiExpressionStatement) {
-              final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-              if (expression instanceof PsiMethodCallExpression) {
-                final PsiMethod resolveMethod = ((PsiMethodCallExpression)expression).resolveMethod();
+            if (statements.length > 0 && statements[0] instanceof PsiExpressionStatement statement) {
+              final PsiExpression expression = statement.getExpression();
+              if (expression instanceof PsiMethodCallExpression call) {
+                final PsiMethod resolveMethod = call.resolveMethod();
                 if (resolveMethod != null && resolveMethod.isConstructor()) {
                   removeFieldsReferencedFromInitializers(aClass, expression, candidates);
                 }
@@ -174,9 +177,9 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
   }
 
   private static void removeReadFields(PsiClass aClass,
-                                       final Set<? super PsiField> candidates,
-                                       final Set<? super PsiField> usedFields,
-                                       final boolean ignoreFieldsUsedInMultipleMethods) {
+                                       Set<? super PsiField> candidates,
+                                       Set<? super PsiField> usedFields,
+                                       boolean ignoreFieldsUsedInMultipleMethods) {
     final Set<PsiField> ignored = new HashSet<>();
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
@@ -211,14 +214,14 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
     });
   }
 
-  private static void checkCodeBlock(final PsiElement body,
-                                     final Set<? super PsiField> candidates,
+  private static void checkCodeBlock(PsiElement body,
+                                     Set<? super PsiField> candidates,
                                      Set<? super PsiField> usedFields,
                                      boolean ignoreFieldsUsedInMultipleMethods,
                                      Set<? super PsiField> ignored) {
     try {
-      final ControlFlow controlFlow = ControlFlowFactory
-          .getControlFlow(body, AllVariablesControlFlowPolicy.getInstance(), ControlFlowOptions.NO_CONST_EVALUATE);
+      final ControlFlow controlFlow =
+        ControlFlowFactory.getControlFlow(body, AllVariablesControlFlowPolicy.getInstance(), ControlFlowOptions.NO_CONST_EVALUATE);
       final List<PsiField> usedVars = ContainerUtil.filterIsInstance(
         ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize()), PsiField.class);
       if (usedVars.isEmpty()) return;
@@ -235,8 +238,7 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
       }
       if (candidates.isEmpty()) return;
 
-      final List<PsiReferenceExpression> readBeforeWrites = ControlFlowUtil.getReadBeforeWrite(controlFlow);
-      for (final PsiReferenceExpression readBeforeWrite : readBeforeWrites) {
+      for (PsiReferenceExpression readBeforeWrite : ControlFlowUtil.getReadBeforeWrite(controlFlow)) {
         final PsiElement resolved = readBeforeWrite.resolve();
         if (resolved instanceof PsiField field &&
             (!isImmutableState(field.getType()) || !PsiUtil.isConstantExpression(field.getInitializer()) ||
@@ -262,7 +264,7 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
            Comparing.strEqual(CommonClassNames.JAVA_LANG_STRING, type.getCanonicalText());
   }
 
-  private static boolean hasImplicitReadOrWriteUsage(final PsiField field, List<? extends ImplicitUsageProvider> implicitUsageProviders) {
+  private static boolean hasImplicitReadOrWriteUsage(PsiField field, List<? extends ImplicitUsageProvider> implicitUsageProviders) {
     for (ImplicitUsageProvider provider : implicitUsageProviders) {
       if (provider.isImplicitRead(field) || provider.isImplicitWrite(field)) {
         return true;
@@ -297,12 +299,12 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
 
   private static @Nullable PsiCodeBlock getTopmostBlock(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
-    PsiCodeBlock block = null;
+    PsiCodeBlock result = null;
     while (parent != null && !(parent instanceof PsiClass)) {
-      if (parent instanceof PsiCodeBlock) block = (PsiCodeBlock)parent;
+      if (parent instanceof PsiCodeBlock block) result = block;
       parent = parent.getParent();
     }
-    return block;
+    return result;
   }
 
   private static boolean findExistentBlock(Map<PsiCodeBlock, List<PsiReferenceExpression>> refs,
@@ -337,7 +339,7 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
   }
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
