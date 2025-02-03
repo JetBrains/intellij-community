@@ -8,7 +8,11 @@ import com.intellij.openapi.project.Project
 val RANKING_EP_NAME = ExtensionPointName.create<SearchEverywhereMlService>("com.intellij.searchEverywhereMl.rankingService")
 
 private val RANKING_SERVICE: SearchEverywhereMlService
-  get() = RANKING_EP_NAME.extensionList.first()
+  get() = try {
+    RANKING_EP_NAME.extensionList.first()
+  } catch (ex: NoSuchElementException) {
+    throw RuntimeException("Implementation of the ranking service is not found - the ranking core module might be missing", ex)
+  }
 
 val ITEM_SELECTED_LISTENERS_EP_NAME = ExtensionPointName.create<SearchEverywhereItemSelectedListener>("com.intellij.searchEverywhereMl.itemSelectedListener")
 
