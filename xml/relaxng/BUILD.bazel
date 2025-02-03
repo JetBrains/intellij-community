@@ -7,12 +7,6 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-jvm_resources(
-  name = "relaxng_resources_1",
-  files = glob(["src/META-INF/**/*"]),
-  strip_prefix = "src"
-)
-
 jvm_library(
   name = "relaxng",
   module_name = "intellij.relaxng",
@@ -35,10 +29,7 @@ jvm_library(
     "//xml/xml-frontback:frontback",
     "//platform/util/jdom",
   ],
-  runtime_deps = [
-    ":relaxng_resources",
-    ":relaxng_resources_1",
-  ]
+  runtime_deps = [":relaxng_resources"]
 )
 
 jvm_library(
@@ -66,10 +57,7 @@ jvm_library(
     "//xml/xml-frontback:frontback",
     "//platform/util/jdom",
   ],
-  runtime_deps = [
-    ":relaxng_resources",
-    ":relaxng_resources_1",
-  ]
+  runtime_deps = [":relaxng_resources"]
 )
 
 jvm_test(

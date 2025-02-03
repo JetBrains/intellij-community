@@ -21,6 +21,9 @@ jvm_library(
     "@lib//:hash4j",
     "@rules_jvm//zip:build-zip",
   ],
-  runtime_deps = ["//jps/model-impl"]
+  runtime_deps = [
+    "//jps/model-impl",
+    "@lib//:okhttp",
+  ]
 )
 ### auto-generated section `build intellij.platform.buildScripts.bazel` end

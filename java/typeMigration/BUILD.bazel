@@ -7,12 +7,6 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-jvm_resources(
-  name = "typeMigration_resources_1",
-  files = glob(["src/META-INF/**/*"]),
-  strip_prefix = "src"
-)
-
 jvm_library(
   name = "typeMigration",
   module_name = "intellij.java.typeMigration",
@@ -28,10 +22,7 @@ jvm_library(
     "//java/structuralsearch-java:structuralSearch",
     "//java/java-impl-refactorings:impl-refactorings",
   ],
-  runtime_deps = [
-    ":typeMigration_resources",
-    ":typeMigration_resources_1",
-  ]
+  runtime_deps = [":typeMigration_resources"]
 )
 
 jvm_library(
@@ -54,10 +45,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//java/java-impl-refactorings:impl-refactorings",
   ],
-  runtime_deps = [
-    ":typeMigration_resources",
-    ":typeMigration_resources_1",
-  ]
+  runtime_deps = [":typeMigration_resources"]
 )
 
 jvm_test(

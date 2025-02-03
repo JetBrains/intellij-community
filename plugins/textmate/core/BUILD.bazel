@@ -28,7 +28,6 @@ jvm_library(
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   associates = [":core"],
   deps = [
-    "@lib//:junit4",
     "@lib//:joni",
     "@lib//:jetbrains-annotations",
     "//platform/util/xmlDom",
@@ -42,6 +41,7 @@ jvm_library(
     "@lib//:kotlin-test",
     "//platform/util",
     "//fleet/fastutil",
+    "@lib//:junit5",
   ]
 )
 

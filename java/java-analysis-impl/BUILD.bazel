@@ -7,12 +7,6 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-jvm_resources(
-  name = "analysis-impl_resources_1",
-  files = glob(["src/META-INF/**/*"]),
-  strip_prefix = "src"
-)
-
 jvm_library(
   name = "analysis-impl",
   module_name = "intellij.java.analysis.impl",
@@ -50,9 +44,6 @@ jvm_library(
     "//java/java-analysis-api:analysis",
     "//java/java-frontback-impl:frontback-impl",
   ],
-  runtime_deps = [
-    ":analysis-impl_resources",
-    ":analysis-impl_resources_1",
-  ]
+  runtime_deps = [":analysis-impl_resources"]
 )
 ### auto-generated section `build intellij.java.analysis.impl` end
