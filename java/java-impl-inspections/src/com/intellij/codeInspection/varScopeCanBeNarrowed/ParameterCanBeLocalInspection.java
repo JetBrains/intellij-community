@@ -21,24 +21,12 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
-  public static final @NonNls String SHORT_NAME = "ParameterCanBeLocal";
-
-  @Override
-  public @NotNull String getGroupDisplayName() {
-    return InspectionsBundle.message("group.names.class.structure");
-  }
-
-  @Override
-  public @NotNull String getShortName() {
-    return SHORT_NAME;
-  }
 
   @Override
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {

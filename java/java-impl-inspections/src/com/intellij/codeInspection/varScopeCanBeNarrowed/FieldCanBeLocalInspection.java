@@ -29,7 +29,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +37,6 @@ import java.util.*;
 import static com.intellij.codeInspection.options.OptPane.*;
 
 public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
-  public static final @NonNls String SHORT_NAME = "FieldCanBeLocal";
   public final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
   public boolean IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS = true;
 
@@ -329,16 +327,6 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
   @Override
   public boolean isEnabledByDefault() {
     return true;
-  }
-
-  @Override
-  public @NotNull String getGroupDisplayName() {
-    return InspectionsBundle.message("group.names.class.structure");
-  }
-
-  @Override
-  public @NotNull String getShortName() {
-    return SHORT_NAME;
   }
 
   @Override
