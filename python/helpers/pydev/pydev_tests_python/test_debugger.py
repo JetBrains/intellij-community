@@ -1940,7 +1940,7 @@ def test_case_dump_threads_to_stderr(case_setup):
         writer.finished_ok = True
 
 
-@pytest.mark.xfail(IS_PY39_OR_GREATER and IS_PY312_OR_LESSER, reason="PCQA-735")
+@pytest.mark.xfail(IS_PY39_OR_GREATER, reason="PCQA-735")
 def test_stop_on_start_regular(case_setup):
 
     with case_setup.test_file('_debugger_case_simple_calls.py') as writer:
@@ -1996,7 +1996,7 @@ def test_generator_cases(case_setup, filename):
 
         writer.finished_ok = True
 
-@pytest.mark.xfail(IS_PY39_OR_GREATER and IS_PY312_OR_LESSER, reason="PCQA-736")
+@pytest.mark.xfail(IS_PY39_OR_GREATER, reason="PCQA-736")
 def test_stop_on_start_m_switch(case_setup_m_switch):
 
     with case_setup_m_switch.test_file() as writer:
@@ -2010,7 +2010,7 @@ def test_stop_on_start_m_switch(case_setup_m_switch):
         writer.finished_ok = True
 
 
-@pytest.mark.xfail(IS_PY39_OR_GREATER and IS_PY312_OR_LESSER, reason="PCQA-737")
+@pytest.mark.xfail(IS_PY39_OR_GREATER, reason="PCQA-737")
 def test_stop_on_start_entry_point(case_setup_m_switch_entry_point):
 
     with case_setup_m_switch_entry_point.test_file() as writer:
