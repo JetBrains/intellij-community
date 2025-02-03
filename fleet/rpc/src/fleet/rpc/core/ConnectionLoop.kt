@@ -95,7 +95,7 @@ fun <T> CoroutineScope.connectionLoopOld(
 
       if (reason != null) {
         ConnectionLoop.logger.info(reason.takeIf { ConnectionLoop.logger.isDebugEnabled }) {
-          "Connection by <$connectionJobName> lost. Cause=${reason.causes().joinToString { it.localizedMessage ?: it.toString() }}\n" +
+          "Connection by <$connectionJobName> lost. Cause=${reason.causes().joinToString { it.message ?: it.toString() }}\n" +
           "Consider increasing logging level to DEBUG for ${ConnectionLoop::class.qualifiedName}"
         }
       }
