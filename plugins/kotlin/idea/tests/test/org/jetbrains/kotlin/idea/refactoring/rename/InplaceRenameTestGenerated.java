@@ -610,6 +610,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/MultiDeclaration.kt");
     }
 
+    @TestMetadata("NamedArguments.kt")
+    public void testNamedArguments() throws Exception {
+        runTest("testData/refactoring/rename/inplace/NamedArguments.kt");
+    }
+
     @TestMetadata("NoReformat.kt")
     public void testNoReformat() throws Exception {
         runTest("testData/refactoring/rename/inplace/NoReformat.kt");

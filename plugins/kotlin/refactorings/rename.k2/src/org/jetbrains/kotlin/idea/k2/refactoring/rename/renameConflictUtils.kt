@@ -101,7 +101,8 @@ fun checkCallableShadowing(
         val usage = usageIterator.next()
         val refElement = usage.element as? KtSimpleNameExpression ?: continue
         if (refElement.getStrictParentOfType<KtTypeReference>() != null ||
-            refElement.getStrictParentOfType<KtImportDirective>() != null) continue
+            refElement.getStrictParentOfType<KtImportDirective>() != null ||
+            refElement.parent is KtValueArgumentName) continue
 
         val parent = refElement.parent
         val callExpression = parent as? KtCallExpression ?: parent as? KtQualifiedExpression ?: parent as? KtCallableReferenceExpression ?: refElement
