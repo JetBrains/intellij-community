@@ -19,8 +19,8 @@ class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, 
     get() = SdkEntity::class.java
 
   override fun registerFileSets(entity: SdkEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-    val compiledRootsData = SdkRootFileSetData(entity.symbolicId, "")
-    val sourceRootFileSetData = SdkSourceRootFileSetData(entity.symbolicId, "")
+    val compiledRootsData = SdkRootFileSetData(entity.symbolicId)
+    val sourceRootFileSetData = SdkSourceRootFileSetData(entity.symbolicId)
     for (root in entity.roots) {
       when (root.type.name) {
         OrderRootType.CLASSES.customName -> registrar.registerFileSet(root.url, WorkspaceFileKind.EXTERNAL, entity, compiledRootsData)
@@ -33,15 +33,15 @@ class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, 
 
   internal class SdkSourceRootFileSetData(
     sdkId: SdkId,
-    packagePrefix: String,
-  ) : SdkRootFileSetData(sdkId, packagePrefix), ModuleOrLibrarySourceRootData
+  ) : SdkRootFileSetData(sdkId), ModuleOrLibrarySourceRootData
 
   internal open class SdkRootFileSetData(
     internal val sdkId: SdkId,
-    override val packagePrefix: String,
   ) : UnloadableFileSetData, JvmPackageRootDataInternal {
     override fun isUnloaded(project: Project): Boolean {
       return !ModuleDependencyIndex.getInstance(project).hasDependencyOn(sdkId)
     }
+
+    override val packagePrefix: String = ""
   }
 }
