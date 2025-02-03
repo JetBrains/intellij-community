@@ -9,6 +9,7 @@ import com.intellij.ide.ui.text.parts.RegularTextPart
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -26,6 +27,7 @@ import com.intellij.util.ui.TextTransferable
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
@@ -64,6 +66,8 @@ import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.text.StyleConstants
 import kotlin.time.toKotlinDuration
+
+private val logger = Logger.getInstance(XThreadsFramesView::class.java)
 
 @Internal
 class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
@@ -164,7 +168,11 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
       false,
       SPLITTER_PROPORTION_KEY,
       SPLITTER_PROPORTION_DEFAULT_VALUE,
-      debugTab, debugTab.project), OccurenceNavigator by myFramesList {}
+      debugTab, debugTab.project), OccurenceNavigator by myFramesList {
+      override fun getActionUpdateThread(): ActionUpdateThread {
+        return super.getActionUpdateThread()
+      }
+    }
 
     val minimumDimension = Dimension(JBUI.scale(26), 0)
     val threadsScrollPane = myThreadsList.withSpeedSearch().toScrollPane()
@@ -353,7 +361,14 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
     setActiveThreadDescription(IdeBundle.message("progress.text.loading"))
     stackInfoDescriptionRequester?.requestDescription(this) { description, exception ->
-      description?.let { setActiveThreadDescription(it.longDescription) }
+      if (exception != null) {
+        logger.error(exception)
+      }
+
+      @Nls
+      val longDescription = description?.longDescription ?: XDebuggerBundle.message("xdebugger.execution.stack.description.not.available.message")
+
+      setActiveThreadDescription(longDescription)
     }
 
     val currentFrame = myFramesManager.tryGetCurrentFrame(this) ?: return
@@ -673,9 +688,7 @@ internal class StackInfoDescriptionRequester(
       if (exception != null) {
         logger.error(exception)
       }
-      if (result != null) {
-        stackInfo.description = result.shortDescription
-      }
+      stackInfo.description = result?.shortDescription ?: XDebuggerBundle.message("xdebugger.execution.stack.description.not.available.message")
     }
   }
 
