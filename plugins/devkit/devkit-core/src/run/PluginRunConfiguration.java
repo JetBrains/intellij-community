@@ -47,7 +47,9 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.idea.LoggerFactory.LOG_FILE_NAME;
 import static org.jetbrains.idea.devkit.run.ProductInfoKt.resolveIdeHomeVariable;
@@ -264,9 +266,13 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
 
       private static List<String> getJarFileNames(@Nullable ProductInfo productInfo) {
         if (productInfo != null) {
-          List<String> jarNames = productInfo.getCurrentLaunch().getBootClassPathJarNames();
-          if (!jarNames.isEmpty()) {
-            return jarNames;
+          List<String> bootClassPathJarNames = productInfo.getCurrentLaunch().getBootClassPathJarNames();
+          List<String> additionalJarNames = List.of("nio-fs.jar");  // See IJPL-176801
+          if (!bootClassPathJarNames.isEmpty()) {
+            Set<String> result = new HashSet<>();
+            result.addAll(bootClassPathJarNames);
+            result.addAll(additionalJarNames);
+            return List.copyOf(result);
           }
         }
 
