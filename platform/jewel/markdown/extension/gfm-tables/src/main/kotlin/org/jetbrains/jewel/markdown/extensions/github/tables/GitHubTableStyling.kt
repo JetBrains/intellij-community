@@ -56,10 +56,10 @@ public class GfmTableStyling(
 
     override fun toString(): String {
         return "GfmTableStyling(" +
-               "colors=$colors, " +
-               "metrics=$metrics, " +
-               "headerBaseFontWeight=$headerBaseFontWeight" +
-               ")"
+            "colors=$colors, " +
+            "metrics=$metrics, " +
+            "headerBaseFontWeight=$headerBaseFontWeight" +
+            ")"
     }
 
     public companion object
@@ -96,11 +96,11 @@ public class GfmTableColors(
 
     override fun toString(): String {
         return "GfmTableColors(" +
-               "borderColor=$borderColor, " +
-               "rowBackgroundColor=$rowBackgroundColor, " +
-               "alternateRowBackgroundColor=$alternateRowBackgroundColor, " +
-               "rowBackgroundStyle=$rowBackgroundStyle" +
-               ")"
+            "borderColor=$borderColor, " +
+            "rowBackgroundColor=$rowBackgroundColor, " +
+            "alternateRowBackgroundColor=$alternateRowBackgroundColor, " +
+            "rowBackgroundStyle=$rowBackgroundStyle" +
+            ")"
     }
 
     public companion object
@@ -151,11 +151,11 @@ public class GfmTableMetrics(
 
     override fun toString(): String {
         return "GfmTableMetrics(" +
-               "borderWidth=$borderWidth, " +
-               "cellPadding=$cellPadding, " +
-               "defaultCellContentAlignment=$defaultCellContentAlignment, " +
-               "headerDefaultCellContentAlignment=$headerDefaultCellContentAlignment" +
-               ")"
+            "borderWidth=$borderWidth, " +
+            "cellPadding=$cellPadding, " +
+            "defaultCellContentAlignment=$defaultCellContentAlignment, " +
+            "headerDefaultCellContentAlignment=$headerDefaultCellContentAlignment" +
+            ")"
     }
 
     public companion object

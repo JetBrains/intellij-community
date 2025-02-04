@@ -38,13 +38,8 @@ public class TextFieldStyle(
         return result
     }
 
-    override fun toString(): String {
-        return "TextFieldStyle(" +
-               "colors=$colors, " +
-               "metrics=$metrics, " +
-               "iconButtonStyle=$iconButtonStyle" +
-               ")"
-    }
+    override fun toString(): String =
+        "TextFieldStyle(colors=$colors, metrics=$metrics, iconButtonStyle=$iconButtonStyle)"
 
     public companion object
 }
