@@ -31,7 +31,7 @@ class GitLabShowMergeRequestsAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     e.project!!.service<GitLabToolWindowViewModel>().activateAndAwaitProject {
-      selectTab(null)
+      viewMergeRequestList()
     }
   }
 }

@@ -15,6 +15,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.remote.hosting.findHostedRemoteBranchTrackedByCurrent
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -45,13 +46,14 @@ import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 private val LOG = logger<GitLabToolWindowConnectedProjectViewModel>()
 
 internal class GitLabToolWindowConnectedProjectViewModel
-private constructor(parentCs: CoroutineScope,
-                    private val project: Project,
-                    accountManager: GitLabAccountManager,
-                    private val projectsManager: GitLabProjectsManager,
-                    private val connection: GitLabProjectConnection,
-                    val twVm: GitLabToolWindowViewModel)
-  : ReviewToolwindowProjectViewModel<GitLabReviewTab, GitLabReviewTabViewModel> {
+private constructor(
+  parentCs: CoroutineScope,
+  private val project: Project,
+  accountManager: GitLabAccountManager,
+  private val projectsManager: GitLabProjectsManager,
+  private val connection: GitLabProjectConnection,
+  private val activate: () -> Unit,
+) : ReviewToolwindowProjectViewModel<GitLabReviewTab, GitLabReviewTabViewModel> {
 
   private val cs = parentCs.childScope()
 
@@ -62,13 +64,14 @@ private constructor(parentCs: CoroutineScope,
     connection.projectData.mergeRequests.getShared(iid)
       .transformConsecutiveSuccesses {
         mapScoped {
-          GitLabMergeRequestViewModels(project, this, connection.projectData, it, this@GitLabToolWindowConnectedProjectViewModel, connection.currentUser)
+          GitLabMergeRequestViewModels(project, this, connection.projectData, avatarIconProvider, it, connection.currentUser,
+                                       ::openMergeRequestDetails, ::openMergeRequestTimeline, ::openMergeRequestDiff)
         }
       }
       .shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
   }
 
-  val filesController: GitLabMergeRequestsFilesController = GitLabMergeRequestsFilesControllerImpl(project, connection)
+  private val filesController: GitLabMergeRequestsFilesController = GitLabMergeRequestsFilesControllerImpl(project, connection)
 
   val avatarIconProvider: IconsProvider<GitLabUserDTO> = CachingIconsProvider(AsyncImageIconsProvider(cs, connection.imageLoader))
 
@@ -98,7 +101,7 @@ private constructor(parentCs: CoroutineScope,
   private val tabsHelper = ReviewToolwindowTabsStateHolder<GitLabReviewTab, GitLabReviewTabViewModel>()
   override val tabs: StateFlow<ReviewToolwindowTabs<GitLabReviewTab, GitLabReviewTabViewModel>> = tabsHelper.tabs.asStateFlow()
 
-  fun showTab(tab: GitLabReviewTab, place: GitLabStatistics.ToolWindowOpenTabActionPlace) {
+  private fun showTab(tab: GitLabReviewTab, place: GitLabStatistics.ToolWindowOpenTabActionPlace) {
     tabsHelper.showTab(tab, {
       GitLabStatistics.logTwTabOpened(project, tab.toStatistics(), place)
       createVm(it)
@@ -127,8 +130,30 @@ private constructor(parentCs: CoroutineScope,
   override fun selectTab(tab: GitLabReviewTab?) = tabsHelper.select(tab)
   override fun closeTab(tab: GitLabReviewTab) = tabsHelper.close(tab)
 
-  fun showCreationTab(place: GitLabStatistics.ToolWindowOpenTabActionPlace) {
-    showTab(GitLabReviewTab.NewMergeRequest, place)
+  internal fun openMergeRequestDetails(mrIid: String?, place: GitLabStatistics.ToolWindowOpenTabActionPlace, focus: Boolean = false) {
+    val tab = if (mrIid == null) GitLabReviewTab.NewMergeRequest else GitLabReviewTab.ReviewSelected(mrIid)
+    showTab(tab, place)
+    if (focus) {
+      activate()
+    }
+  }
+
+  @RequiresEdt
+  internal fun openMergeRequestTimeline(mrIid: String, focus: Boolean) {
+    filesController.openTimeline(mrIid, focus)
+  }
+
+  @RequiresEdt
+  internal fun openMergeRequestDiff(mrIid: String, focus: Boolean) {
+    filesController.openDiff(mrIid, focus)
+  }
+
+  internal fun viewMergeRequestList() {
+    selectTab(null)
+  }
+
+  internal fun closeNewMergeRequestDetails() {
+    closeTab(GitLabReviewTab.NewMergeRequest)
   }
 
   private val mergeRequestCreatedSignal: MutableSharedFlow<Unit> = MutableSharedFlow()
@@ -192,9 +217,9 @@ private constructor(parentCs: CoroutineScope,
       accountManager: GitLabAccountManager,
       projectsManager: GitLabProjectsManager,
       connection: GitLabProjectConnection,
-      twVm: GitLabToolWindowViewModel,
+      activate: () -> Unit,
     ) =
-      GitLabToolWindowConnectedProjectViewModel(this, project, accountManager, projectsManager, connection, twVm)
+      GitLabToolWindowConnectedProjectViewModel(this, project, accountManager, projectsManager, connection, activate)
 
     private fun GitLabReviewTab.toStatistics(): GitLabStatistics.ToolWindowTabType {
       return when (this) {

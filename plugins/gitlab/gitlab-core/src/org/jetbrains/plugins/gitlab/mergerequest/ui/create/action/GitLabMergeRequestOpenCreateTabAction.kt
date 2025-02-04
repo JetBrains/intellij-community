@@ -43,7 +43,7 @@ internal class GitLabMergeRequestOpenCreateTabAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val place = if (e.place == ActionPlaces.TOOLWINDOW_TITLE) GitLabStatistics.ToolWindowOpenTabActionPlace.TOOLWINDOW
     else GitLabStatistics.ToolWindowOpenTabActionPlace.ACTION
-    openCreationTab(e, place)
+    openNewMergeRequestDetails(e, place)
   }
 }
 
@@ -80,12 +80,12 @@ internal class GitLabMergeRequestOpenCreateTabNotificationAction(
     selectorVm.selectRepoAndAccount(projectMapping, account)
     selectorVm.submitSelection()
 
-    openCreationTab(e, GitLabStatistics.ToolWindowOpenTabActionPlace.NOTIFICATION)
+    openNewMergeRequestDetails(e, GitLabStatistics.ToolWindowOpenTabActionPlace.NOTIFICATION)
   }
 }
 
-private fun openCreationTab(event: AnActionEvent, place: GitLabStatistics.ToolWindowOpenTabActionPlace) {
+private fun openNewMergeRequestDetails(event: AnActionEvent, place: GitLabStatistics.ToolWindowOpenTabActionPlace) {
   event.project!!.service<GitLabToolWindowViewModel>().activateAndAwaitProject {
-    showCreationTab(place)
+    openMergeRequestDetails(null, place, false)
   }
 }
