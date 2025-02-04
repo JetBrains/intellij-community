@@ -139,7 +139,7 @@ public final class LineStatusMarkerDrawUtil {
         Color gutterColor = colorScheme.getColor(editor, change.type);
         int line = gutter.getHoveredFreeMarkersLine();
         if (isRangeHovered(editor, line, x, start, end)) {
-          paintRect(g, gutterColor, null, x - 1, start, endX + 2, end);
+          paintRect(g, gutterColor, null, x - 3, start, endX, end);
         }
         else {
           paintRect(g, gutterColor, null, x, start, endX, end);

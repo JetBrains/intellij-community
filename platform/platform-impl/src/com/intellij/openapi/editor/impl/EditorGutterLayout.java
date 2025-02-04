@@ -195,14 +195,6 @@ public final class EditorGutterLayout {
         .showIf(() -> myEditorGutter.myTextAnnotationGuttersSize != 0)
     );
 
-    List<GutterArea> extraLeftFreePainters = List.of(
-      area(EXTRA_LEFT_FREE_PAINTERS_AREA, myEditorGutter::getExtraLeftFreePaintersAreaWidth)
-        .showIf(() -> myEditorGutter.isLineMarkersShown()),
-      area(GAP_BETWEEN_AREAS, EditorGutterComponentImpl.GAP_AFTER_VCS_MARKERS_WIDTH::get)
-        .as(EditorMouseEventArea.LINE_MARKERS_AREA)
-        .showIf(() -> myEditorGutter.getExtraLeftFreePaintersAreaWidth() > 0 && myEditorGutter.isLineMarkersShown())
-    );
-
     List<GutterArea> lineNumbersAreas = List.of(
       area(LINE_NUMBERS_AREA, () -> myEditorGutter.myLineNumberAreaWidth)
         .showIf(this::isLineNumbersShown),
@@ -232,8 +224,16 @@ public final class EditorGutterLayout {
 
     List<GutterArea> rightEdgeAreas = List.of(
       area(RIGHT_FREE_PAINTERS_AREA, myEditorGutter::getRightFreePaintersAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
-      area(FOLDING_AREA, myEditorGutter::getFoldingAreaWidth),
-      areaGap(3).showIf(() -> myEditorGutter.isLineMarkersShown())
+      area(FOLDING_AREA, myEditorGutter::getFoldingAreaWidth)
+    );
+
+    List<GutterArea> extraRightFreePainters = List.of(
+      area(GAP_BETWEEN_AREAS, EditorGutterComponentImpl.GAP_AFTER_VCS_MARKERS_WIDTH::get)
+        .as(EditorMouseEventArea.LINE_MARKERS_AREA)
+        .showIf(() -> myEditorGutter.getExtraLeftFreePaintersAreaWidth() > 0 && myEditorGutter.isLineMarkersShown()),
+      area(EXTRA_LEFT_FREE_PAINTERS_AREA, myEditorGutter::getExtraLeftFreePaintersAreaWidth)
+        .showIf(() -> myEditorGutter.isLineMarkersShown()),
+      areaGap(1).showIf(() -> myEditorGutter.isLineMarkersShown())
     );
 
     List<GutterArea> layout = new ArrayList<>();
@@ -241,25 +241,25 @@ public final class EditorGutterLayout {
       layout.addAll(annotationAreas);
       layout.addAll(dfmMarginArea);
       layout.addAll(lineNumbersAreas);
-      layout.addAll(extraLeftFreePainters);
       layout.addAll(iconRelatedAreas);
       layout.addAll(rightEdgeAreas);
+      layout.addAll(extraRightFreePainters);
     }
     else if (isLineNumbersAfterIcons()) {
       layout.addAll(annotationAreas);
-      layout.addAll(extraLeftFreePainters);
       layout.addAll(dfmMarginArea);
       layout.addAll(iconRelatedAreas);
       layout.addAll(lineNumbersAreas);
       layout.addAll(rightEdgeAreas);
+      layout.addAll(extraRightFreePainters);
     }
     else {
       layout.addAll(annotationAreas);
-      layout.addAll(extraLeftFreePainters);
       layout.addAll(lineNumbersAreas);
       layout.addAll(dfmMarginArea);
       layout.addAll(iconRelatedAreas);
       layout.addAll(rightEdgeAreas);
+      layout.addAll(extraRightFreePainters);
     }
     return layout;
   }

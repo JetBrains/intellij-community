@@ -452,6 +452,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
           g.setClip(clip.x, startY, clip.width, endY - startY);
         }
 
+        if (ExperimentalUI.isNewUI() && myPaintBackground && !DistractionFreeModeController.shouldMinimizeCustomHeader()) {
+          if (!myEditor.isStickyLinePainting()) { // suppress vertical line between gutter and editor on the sticky lines panel
+            g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
+            LinePainter2D.paint(g, gutterSeparatorX, clip.y, gutterSeparatorX, clip.y + clip.height);
+          }
+        }
+
         paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset, startVisualLine, endVisualLine);
 
         if (focusModeRange != null) {
@@ -463,13 +470,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
         paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
         paintLineNumbers(g, startVisualLine, endVisualLine);
         paintCurrentAccessibleLine(g);
-
-        if (ExperimentalUI.isNewUI() && myPaintBackground && !DistractionFreeModeController.shouldMinimizeCustomHeader()) {
-          if (!myEditor.isStickyLinePainting()) { // suppress vertical line between gutter and editor on the sticky lines panel
-            g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
-            LinePainter2D.paint(g, gutterSeparatorX, clip.y, gutterSeparatorX, clip.y + clip.height);
-          }
-        }
       }
       finally {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
