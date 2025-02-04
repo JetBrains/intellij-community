@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.mixedmode
 
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
 
@@ -45,3 +46,15 @@ val XDebugSession.lowLevelMixedModeExtensionOrThrow : XMixedModeLowLevelDebugPro
 
 val XDebugSession.highLevelMixedModeExtension : XMixedModeHighLevelDebugProcess
   get() = debugProcess.highLevelMixedModeExtensionOrThrow
+
+val XDebugSession.highLevelSuspendContext : XSuspendContext?
+  get() = suspendContext?.highLevel
+
+val XDebugSession.lowLevelSuspendContext : XSuspendContext?
+  get() = suspendContext?.lowLevel
+
+val XSuspendContext.highLevel : XSuspendContext?
+  get() = (this as? XMixedModeSuspendContext)?.highLevelDebugSuspendContext
+
+val XSuspendContext.lowLevel : XSuspendContext?
+  get() = (this as? XMixedModeSuspendContext)?.lowLevelDebugSuspendContext
