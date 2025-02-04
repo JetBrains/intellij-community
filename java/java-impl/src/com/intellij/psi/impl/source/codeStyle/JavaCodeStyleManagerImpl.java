@@ -135,10 +135,10 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   @Override
-  public boolean isStaticAutoImportClass(@Nullable String fqn) {
+  public boolean isStaticAutoImportName(@Nullable String fqn) {
     if (fqn == null) return false;
     JavaProjectCodeInsightSettings settings = JavaProjectCodeInsightSettings.getSettings(myProject);
-    return settings.isStaticAutoImportClass(fqn);
+    return settings.isStaticAutoImportName(fqn);
   }
 
   @Override

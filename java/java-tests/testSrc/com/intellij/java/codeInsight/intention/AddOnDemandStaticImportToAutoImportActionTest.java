@@ -54,8 +54,8 @@ public class AddOnDemandStaticImportToAutoImportActionTest extends LightJavaCode
             }
         }
         """);
-      assertTrue(tryToAddToAutoImport("java.util.Objects"));
-      assertTrue(tableContains("java.util.Objects"));
+      assertTrue(tryToAddToAutoImport("java.util.Objects.requireNonNull"));
+      assertTrue(tableContains("java.util.Objects.requireNonNull"));
     });
   }
 
@@ -82,7 +82,7 @@ public class AddOnDemandStaticImportToAutoImportActionTest extends LightJavaCode
 
   private boolean tableContains(@NotNull String name) {
     JavaProjectCodeInsightSettings codeInsightSettings = JavaProjectCodeInsightSettings.getSettings(getProject());
-    return codeInsightSettings.isStaticAutoImportClass(name);
+    return codeInsightSettings.isStaticAutoImportName(name);
   }
 
   private void doTest(@NotNull Runnable runnable) {

@@ -1,6 +1,6 @@
 import java.util.List;
 
-import static java.util.Arrays.sort;
+import static java.util.Arrays.*;
 
 
 class Foo {

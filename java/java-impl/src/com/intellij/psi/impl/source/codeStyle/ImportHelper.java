@@ -228,8 +228,7 @@ public final class ImportHelper {
     }
 
     classToCountMap.forEach((className, count) -> {
-      if (isToUseImportOnDemand(className, count, true, javaCodeStyleSettings) ||
-          javaProjectCodeInsightSettings.isStaticAutoImportClass(className)) {
+      if (isToUseImportOnDemand(className, count, true, javaCodeStyleSettings)) {
         outClassesOrPackagesToImportOnDemand.put(className, true);
       }
     });

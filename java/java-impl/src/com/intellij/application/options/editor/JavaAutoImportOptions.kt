@@ -142,6 +142,7 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
         cell(autoStaticImportTable.component)
           .align(AlignX.FILL)
           .label(JavaBundle.message("auto.static.import.completion.group"), LabelPosition.TOP)
+          .comment(JavaBundle.message("auto.static.import.example"))
           .onApply { autoStaticImportTable.apply() }
           .onReset { autoStaticImportTable.reset() }
           .onIsModified { autoStaticImportTable.isModified }

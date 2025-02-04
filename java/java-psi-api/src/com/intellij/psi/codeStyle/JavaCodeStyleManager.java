@@ -26,12 +26,12 @@ public abstract class JavaCodeStyleManager {
 
   /**
    * Determines whether the specified fully qualified name (FQN) represents
-   * a class that should be statically auto-imported in the context.
+   * a class or member of a class that should be statically auto-imported in the context.
    *
    * @param fqn the fully qualified name of the target class, must not be null
    * @return true if the class is configured to be statically auto-imported, false otherwise
    */
-  public abstract boolean isStaticAutoImportClass(@Nullable String fqn);
+  public abstract boolean isStaticAutoImportName(@Nullable String fqn);
 
   public abstract boolean addImport(@NotNull PsiJavaFile file, @NotNull PsiClass refClass);
   public abstract @NotNull PsiElement shortenClassReferences(@NotNull PsiElement element,

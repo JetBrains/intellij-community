@@ -23,7 +23,7 @@ import java.util.function.Predicate;
 
 public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
   @Override
-  public boolean isStaticAutoImportClass(@Nullable String fqn) {
+  public boolean isStaticAutoImportName(@Nullable String fqn) {
     return false;
   }
 

@@ -120,7 +120,7 @@ public final class AddOnDemandStaticImportAction extends PsiUpdateModCommandActi
     }
     Project project = element.getProject();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    if (codeStyleManager.isStaticAutoImportClass(classToImport.getQualifiedName())) {
+    if (codeStyleManager.isStaticAutoImportName(classToImport.getQualifiedName())) {
       return null;
     }
     return Presentation.of(JavaBundle.message("intention.add.on.demand.static.import.text", classToImport.getQualifiedName()));

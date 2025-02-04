@@ -87,7 +87,7 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
     if (PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class) != null) return null;
     if (!(qualifier.resolve() instanceof PsiClass psiClass)) return null;
     String classQualifiedName = psiClass.getQualifiedName();
-    if (!javaCodeStyleManager.isStaticAutoImportClass(classQualifiedName)) return null;
+    if (!javaCodeStyleManager.isStaticAutoImportName(classQualifiedName + "." + memberName)) return null;
     PsiElement referenceNameElement = qualifier.getReferenceNameElement();
     if (referenceNameElement == null) return null;
     PsiClass anImport = AddOnDemandStaticImportAction.getClassToPerformStaticImport(referenceNameElement);

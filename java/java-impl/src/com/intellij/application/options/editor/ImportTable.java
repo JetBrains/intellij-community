@@ -77,12 +77,14 @@ abstract class ImportTable extends ListTableWithButtons<ImportTable.Item> implem
 
       @Override
       public TableCellRenderer getRenderer(Item pair) {
-        return new ComboBoxTableRenderer<>(Scope.values());
+        return new ComboBoxTableRenderer<>(Scope.values())
+          .withClickCount(1);
       }
 
       @Override
       public TableCellEditor getEditor(Item pair) {
-        return new ComboBoxTableRenderer<>(Scope.values());
+        return new ComboBoxTableRenderer<>(Scope.values())
+          .withClickCount(1);
       }
 
       @Override

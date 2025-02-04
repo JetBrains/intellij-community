@@ -80,14 +80,14 @@ public final class AddOnDemandStaticImportToAutoImportAction extends PsiBasedMod
           }
           if (!staticStatement.isOnDemand() &&
               (classQualifiedName + "." + methodExpression.getReferenceName()).equals(importReference.getQualifiedName())) {
-            name = classQualifiedName;
+            name = importReference.getQualifiedName();
             break;
           }
         }
       }
     }
     if (name == null) return null;
-    if (JavaCodeStyleManager.getInstance(element.getProject()).isStaticAutoImportClass(name)) return null;
+    if (JavaCodeStyleManager.getInstance(element.getProject()).isStaticAutoImportName(name)) return null;
     return name;
   }
 }
