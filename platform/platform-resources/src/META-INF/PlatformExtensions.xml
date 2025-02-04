@@ -1847,6 +1847,11 @@
     
     <actionGroupCustomization
       implementation="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarActionGroupCustomization" />
+
+    <applicationService serviceInterface="com.intellij.platform.ide.provisioner.ProvisionedServiceRegistry"
+                        serviceImplementation="com.intellij.platform.ide.provisioner.DefaultProvisionedServiceRegistry"/>
+    <applicationService serviceInterface="com.intellij.platform.ide.provisioner.ProvisionerCompanyBrandingProvider"
+                        serviceImplementation="com.intellij.platform.ide.provisioner.DefaultProvisionerCompanyBrandingProvider"/>
   </extensions>
 
   <applicationListeners>

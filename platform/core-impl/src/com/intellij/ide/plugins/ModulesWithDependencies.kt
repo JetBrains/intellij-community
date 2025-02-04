@@ -95,9 +95,6 @@ internal fun createModulesWithDependenciesAndAdditionalEdges(plugins: Collection
       if (doesDependOnPluginAlias(module, ML_INLINE_ALIAS_ID)) {
         moduleMap.get("intellij.ml.inline.completion")?.let { dependenciesCollector.add(it) }
       }
-      if (doesDependOnPluginAlias(module, PROVISIONER_ALIAS_ID)) {
-        moduleMap.get("intellij.platform.ide.provisioner")?.let { dependenciesCollector.add(it) }
-      }
       if (doesDependOnPluginAlias(module, PluginId.getId("org.jetbrains.completion.full.line"))) {
         moduleMap.get("intellij.fullLine.core")?.let { dependenciesCollector.add(it) }
         moduleMap.get("intellij.fullLine.local")?.let { dependenciesCollector.add(it) }

@@ -7,6 +7,8 @@
   <module value="com.intellij.modules.java-capable"/>
   <module value="com.intellij.modules.python-core-capable"/> <!-- Python plugin can be installed -->
   <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/> <!-- Enable Non-Pycharm-IDE support in Python plugin -->
+  <module value="com.intellij.platform.ide.provisioner"/>
+
   <content>
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
