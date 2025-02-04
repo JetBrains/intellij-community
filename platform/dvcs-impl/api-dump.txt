@@ -67,6 +67,7 @@ f:com.intellij.dvcs.MultiRootBranches
 - sf:diverged(java.util.Collection):Z
 - sf:getCommonCurrentBranch(java.util.Collection):java.lang.String
 - sf:getCommonName(java.util.Collection,kotlin.jvm.functions.Function1):java.lang.String
+- sf:isSyncOptionEnabled(com.intellij.dvcs.branch.DvcsSyncSettings):Z
 f:com.intellij.dvcs.MultiRootMessage
 - com.intellij.dvcs.MultiMessage
 - <init>(com.intellij.openapi.project.Project,java.util.Collection,Z,Z):V
