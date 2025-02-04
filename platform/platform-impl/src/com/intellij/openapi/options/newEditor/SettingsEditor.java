@@ -133,7 +133,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     };
 
     JPanel searchPanel = new JPanel(new VerticalLayout(0));
-    searchPanel.add(VerticalLayout.CENTER, search);
+    if (!SettingsDialog.isNonModal()) {
+      searchPanel.add(VerticalLayout.CENTER, search);
+    }
     this.filter = new SettingsFilter(project, groups, search, coroutineScope) {
       @Override
       protected Configurable getConfigurable(SimpleNode node) {
@@ -316,6 +318,10 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   @ApiStatus.Internal
   public @NotNull SettingsTreeView getTreeView() {
     return treeView;
+  }
+
+  SettingsSearch getSearch() {
+    return search;
   }
 
   private @NotNull MutableConfigurableGroup.Listener createReloadListener(List<? extends ConfigurableGroup> groups) {

@@ -8,13 +8,14 @@ import com.intellij.ide.plugins.newui.EventHandler;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.ShortcutSet;
-import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Disposer;
@@ -25,6 +26,7 @@ import com.intellij.ui.SearchTextField.FindAction;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.ui.*;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
@@ -45,6 +47,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_FIND;
+import static com.intellij.openapi.options.newEditor.SettingsDialogExtensionsKt.createEditorToolbar;
 
 public class SettingsDialog extends DialogWrapper implements UiCompatibleDataProvider {
   public static final String DIMENSION_KEY = "SettingsEditor";
@@ -116,26 +119,13 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
   protected @Nullable JComponent createTitlePane() {
     if (!isNonModal())
       return null;
-
     ApplyActionWrapper applyActionWrapper = new ApplyActionWrapper(editor.getApplyAction());
     applyActionWrapper.putValue(DEFAULT_ACTION, "true");
     Action resetAction = editor.getResetAction();
 
-
-    JPanel panel = new NonOpaquePanel(new GridBagLayout());
-    Insets insets = JBInsets.create(new Insets(8, 16, 8, 16));
-    panel.setBorder(JBUI.Borders.customLineBottom(JBColor.border()));
-
-
-    GridBag bag = new GridBag().setDefaultInsets(insets);
-    panel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());   // left strut
-    JPanel buttonsPanel = createButtonsPanel(List.of(
-      createJButtonForAction(resetAction),
-      createJButtonForAction(applyActionWrapper)
-    ));
-    panel.add(buttonsPanel, bag.next());
-
-    return panel;
+    List<Action> actions = List.of(resetAction, applyActionWrapper);
+    DialogPanel toolbar = createEditorToolbar(this, actions);
+    return toolbar;
   }
 
   private void init(@Nullable Configurable configurable, @Nullable Project project) {
