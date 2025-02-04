@@ -4,7 +4,6 @@ package com.intellij.debugger.engine.events
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.DebuggerThreadDispatcher
 import com.intellij.debugger.impl.DebuggerTaskImpl
-import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.impl.PrioritizedTask
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -102,6 +101,7 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
   }
 
   internal fun invokeCommand(dispatcher: DebuggerThreadDispatcher, parentScope: CoroutineScope) {
+    val exception = AtomicReference<Throwable>()
     if (continuation.get() == null) {
       // executed synchronously until the first suspend, resume is handled by dispatcher
       val job = parentScope.async(this + dispatcher, start = CoroutineStart.UNDISPATCHED) {
@@ -118,12 +118,13 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
         }
       }
       onSuspendOrFinish()
-      handleCompletionException(job)
+      handleCompletionException(job, exception)
     }
     else {
       invokeContinuation()
       onSuspendOrFinish()
     }
+    exception.getAndSet(null)?.also { throw it }
   }
 
   object KEY : Key<DebuggerCommandImpl>
@@ -152,24 +153,21 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
 }
 
 /**
- * Rethrows exception if the job completes without suspension, or logs it otherwise.
+ * Sets completion exception into [exceptionReference].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-private fun handleCompletionException(job: Deferred<Unit>) {
+private fun handleCompletionException(job: Deferred<Unit>, exceptionReference: AtomicReference<Throwable>) {
   if (job.isCompleted) {
     val completionException = job.getCompletionExceptionOrNull() ?: return
     if (completionException !is CancellationException) {
-      throw completionException
+      exceptionReference.set(completionException)
     }
   }
   else {
     job.invokeOnCompletion {
-      // Should not throw in completion handler
-      runCatching {
-        val completionException = it ?: return@invokeOnCompletion
-        if (completionException !is CancellationException) {
-          DebuggerUtilsImpl.logError(completionException)
-        }
+      val completionException = it ?: return@invokeOnCompletion
+      if (completionException !is CancellationException) {
+        exceptionReference.set(completionException)
       }
     }
   }
