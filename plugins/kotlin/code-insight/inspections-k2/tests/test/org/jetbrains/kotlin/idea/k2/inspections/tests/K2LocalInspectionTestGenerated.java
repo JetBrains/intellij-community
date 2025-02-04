@@ -12148,6 +12148,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/selfReferenceConstructorParameter/basic.kt");
         }
 
+        @TestMetadata("fqn.kt")
+        public void testFqn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/selfReferenceConstructorParameter/fqn.kt");
+        }
+
         @TestMetadata("nullable.kt")
         public void testNullable() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/selfReferenceConstructorParameter/nullable.kt");

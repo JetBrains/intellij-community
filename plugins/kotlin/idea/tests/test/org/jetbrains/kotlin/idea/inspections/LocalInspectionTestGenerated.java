@@ -16010,6 +16010,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/selfReferenceConstructorParameter/basic.kt");
         }
 
+        @TestMetadata("fqn.kt")
+        public void testFqn() throws Exception {
+            runTest("testData/inspectionsLocal/selfReferenceConstructorParameter/fqn.kt");
+        }
+
         @TestMetadata("nullable.kt")
         public void testNullable() throws Exception {
             runTest("testData/inspectionsLocal/selfReferenceConstructorParameter/nullable.kt");
