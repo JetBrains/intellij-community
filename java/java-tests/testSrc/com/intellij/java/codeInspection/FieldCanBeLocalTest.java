@@ -52,9 +52,8 @@ public class FieldCanBeLocalTest extends LightJavaCodeInsightFixtureTestCase {
     doTest();
   }
 
-  public void testInnerClassConstructor() {
-    doTest();
-  }
+  public void testInnerClassConstructor() { doTest(); }
+  public void testAnonymousClassConstructor() { doTest(); }
 
   public void testStateField() {
     doTest();

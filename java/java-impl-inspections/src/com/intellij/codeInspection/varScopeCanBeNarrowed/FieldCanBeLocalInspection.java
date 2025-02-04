@@ -300,7 +300,7 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
   private static @Nullable PsiCodeBlock getTopmostBlock(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
     PsiCodeBlock result = null;
-    while (parent != null && !(parent instanceof PsiClass)) {
+    while (parent != null && !(parent instanceof PsiClass && result != null)) {
       if (parent instanceof PsiCodeBlock block) result = block;
       parent = parent.getParent();
     }
