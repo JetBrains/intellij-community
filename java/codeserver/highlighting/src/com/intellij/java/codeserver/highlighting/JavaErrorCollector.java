@@ -52,7 +52,7 @@ public final class JavaErrorCollector {
       
       @Override
       public void accept(JavaCompilationError<?, ?> error) {
-        if (myError != null) {
+        if (myError == null) {
           myError = error;
         }
       }

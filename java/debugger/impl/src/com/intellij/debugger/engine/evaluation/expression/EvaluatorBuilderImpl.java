@@ -20,6 +20,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
+import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.lang.java.parser.BasicExpressionParser;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1305,7 +1306,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     @Override
     public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       JavaCompilationError<?, ?> error = JavaErrorCollector.findSingleError(expression);
-      if (error != null) {
+      if (error != null && error.kind() != JavaErrorKinds.UNSUPPORTED_FEATURE) {
         throw evaluateException(error.description().toString());
       }
 
