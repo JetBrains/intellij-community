@@ -3,6 +3,7 @@ package com.intellij.testFramework.junit5.fixture
 
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
 import org.jetbrains.annotations.TestOnly
+import kotlin.reflect.KProperty
 
 /**
  * Main building block for fixtures.
@@ -36,6 +37,19 @@ sealed interface TestFixture<out T> {
    * @throws IllegalStateException when called during initialization. Use [TestFixtureInitializer.R.init] instead.
    */
   fun get(): T
+
+  /**
+   * Used for implementing property delegates of read-only properties.
+   *
+   * Example:
+   * ```
+   * @TestFixtures
+   * class MyTest {
+   *   private val path by pathFixture(...)
+   * }
+   * ```
+   */
+  operator fun getValue(thisRef: Any?, property: KProperty<*>): T = get()
 }
 
 sealed interface TestContext {
