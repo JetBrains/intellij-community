@@ -127,7 +127,7 @@ object XmlElementType {
 
   @JvmField
   val DTD_FILE: IFileElementType =
-    IFileElementType("DTD_FILE", DTDLanguage.INSTANCE)
+    IFileElementType("DTD_FILE", DTDLanguage)
 
   @JvmField
   val XML_MARKUP_DECL: IElementType =
