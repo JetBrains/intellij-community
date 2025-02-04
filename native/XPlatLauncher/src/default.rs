@@ -394,17 +394,31 @@ pub fn compute_launch_info(product_info: &ProductInfo, command_name: Option<&Str
 fn find_ide_home(current_exe: &Path) -> Result<(PathBuf, PathBuf)> {
     debug!("Looking for: '{PRODUCT_INFO_REL_PATH}'");
 
-    let mut candidate = current_exe
+    if let Some(paths) = traverse_parents(current_exe.to_path_buf())? {
+        return Ok(paths);
+    }
+
+    let dereferenced = current_exe
         .canonicalize().with_context(|| format!("Resolving symlinks in '{}'", current_exe.display()))?
         .strip_ns_prefix().with_context(|| format!("Resolving symlinks in '{}'", current_exe.display()))?;
+    if dereferenced != current_exe {
+        if let Some(paths) = traverse_parents(dereferenced)? {
+            return Ok(paths);
+        }
+    }
+
+    bail!("Max lookup depth ({IDE_HOME_LOOKUP_DEPTH}) reached")
+}
+
+fn traverse_parents(mut candidate: PathBuf) -> Result<Option<(PathBuf, PathBuf)>> {
     for _ in 0..IDE_HOME_LOOKUP_DEPTH {
         candidate = candidate.parent_or_err()?;
         debug!("Probing for IDE home: {:?}", candidate);
         let product_info_path = candidate.join(PRODUCT_INFO_REL_PATH);
         if product_info_path.is_file() {
-            return Ok((candidate, product_info_path))
+            return Ok(Some((candidate, product_info_path)))
         }
     }
-
-    bail!("Max lookup depth ({IDE_HOME_LOOKUP_DEPTH}) reached")
+    
+    Ok(None)
 }
