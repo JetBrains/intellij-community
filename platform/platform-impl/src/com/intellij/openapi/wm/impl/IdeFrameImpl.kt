@@ -255,6 +255,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   @Suppress("OVERRIDE_DEPRECATION") // just for debugging, because all other methods delegate to this one
   override fun reshape(x: Int, y: Int, width: Int, height: Int) {
     super.reshape(x, y, width, height)
+    checkForNonsenseBounds("reshape", width, height)
     IDE_FRAME_EVENT_LOG.traceThrowable {
       Throwable("IdeFrameImpl.reshape(x=$x, y=$y, width=$width, height=$height)")
     }
