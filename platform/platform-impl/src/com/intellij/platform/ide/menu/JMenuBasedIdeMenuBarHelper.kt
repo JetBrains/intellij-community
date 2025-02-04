@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode
 import com.intellij.util.concurrency.ThreadingAssertions
 import javax.swing.MenuSelectionManager
 
@@ -15,7 +16,7 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
   override suspend fun doUpdateVisibleActions(newVisibleActions: List<ActionGroup>, forceRebuild: Boolean) {
     ThreadingAssertions.assertEventDispatchThread()
     val menuBarComponent = menuBar.component
-    if (!forceRebuild && newVisibleActions == visibleActions && !presentationFactory.isNeedRebuild) {
+    if (!forceRebuild && (newVisibleActions == visibleActions || visibleActions.isNotEmpty() && ShowMode.isMergedMainMenu()) && !presentationFactory.isNeedRebuild) {
       val enableMnemonics = !UISettings.getInstance().disableMnemonics
       for (child in menuBarComponent.components) {
         if (child is ActionMenu) {
