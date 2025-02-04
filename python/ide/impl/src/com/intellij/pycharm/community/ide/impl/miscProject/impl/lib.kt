@@ -2,6 +2,8 @@
 package com.intellij.pycharm.community.ide.impl.miscProject.impl
 
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.trustedProjects.TrustedProjectsLocator.Companion.locateProject
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
@@ -16,7 +18,6 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
@@ -35,8 +36,10 @@ import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.*
+import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
@@ -164,7 +167,12 @@ private suspend fun createProjectAndSdk(
   val sdk = getSdk(venvPython, project)
   val module = project.modules.first()
   ensureModuleHasRoot(module, projectPathVfs)
-  ModuleRootModificationUtil.setModuleSdk(module, sdk)
+  withContext(Dispatchers.IO) {
+    // generated files should be readable by VFS
+    VfsUtil.markDirtyAndRefresh(false, true, true, projectPathVfs)
+  }
+  configurePythonSdk(project, module, sdk)
+  sdk.getOrCreateAdditionalData().associateWithModule(module)
   return Result.Success(Pair(project, sdk))
 }
 
@@ -228,9 +236,12 @@ private suspend fun getSystemPython(confirmInstallation: suspend () -> Boolean, 
 }
 
 private suspend fun openProject(projectPath: Path): Project {
+  TrustedProjects.setProjectTrusted(locateProject(projectPath, null), isTrusted = true)
   val projectManager = ProjectManagerEx.getInstanceEx()
   val project = projectManager.openProjectAsync(projectPath, OpenProjectTask {
     runConfigurators = false
+    isProjectCreatedWithWizard = true
+
   }) ?: error("Failed to open project in $projectPath, check logs")
   // There are countless number of reasons `openProjectAsync` might return null
   if (project.modules.isEmpty()) {
