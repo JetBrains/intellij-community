@@ -167,8 +167,9 @@ class XMixedModeCombinedDebugProcess(
   override fun getCurrentStateHyperlinkListener(): HyperlinkListener? = getIfOnlyOneExists { it.currentStateHyperlinkListener }
 
   override fun createTabLayouter(): XDebugTabLayouter {
-    error("TODO. It's needed only in com.intellij.xdebugger.impl.ui.XDebugSessionTab.attachToSession")
-    return super.createTabLayouter()
+    return XCombinedDebugTabLayouter(
+      listOf(low.createTabLayouter(), high.createTabLayouter()),
+      (if (config.useLowDebugProcessConsole) low else high).createTabLayouter())
   }
 
 

@@ -34,14 +34,11 @@ import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
-import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.mixedmode.XMixedModeCombinedDebugProcess;
 import com.intellij.xdebugger.impl.frame.*;
-import com.intellij.xdebugger.mixedMode.XMixedModeProcessesConfiguration;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -291,47 +288,22 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       attachViewToSession(session, view);
     }
 
-    if (session.isMixedMode()) {
-      XMixedModeProcessesConfiguration config = ((XMixedModeCombinedDebugProcess)(session.getDebugProcess())).getConfig();
-      initializeDebugProcessTabLayout(session.getDebugProcess(true), config.getUseLowDebugProcessConsole());
-      initializeDebugProcessTabLayout(session.getDebugProcess(false), !config.getUseLowDebugProcessConsole());
-    }
-    else {
-      initializeDebugProcessTabLayout(session.getDebugProcess(), true);
-    }
+    XDebugTabLayouter layouter = session.getDebugProcess().createTabLayouter();
+    Content consoleContent = layouter.registerConsoleContent(myUi, myConsole);
+    attachNotificationTo(consoleContent);
+
+    layouter.registerAdditionalContent(myUi);
+    RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 
+    consoleContent.setHelpId(DefaultDebugExecutor.getDebugExecutorInstance().getHelpId());
     initToolbars(session);
 
     if (myEnvironment != null) {
       initLogConsoles(myEnvironment.getRunProfile(), myRunContentDescriptor, myConsole);
-    }
-  }
-
-  private void initializeDebugProcessTabLayout(XDebugProcess process, boolean withConsole) {
-    XDebugTabLayouter layouter = process.createTabLayouter();
-
-    Content consoleContent = null;
-    if (withConsole) {
-      consoleContent = layouter.registerConsoleContent(myUi, myConsole);
-      attachNotificationTo(consoleContent);
-    }
-
-    layouter.registerAdditionalContent(myUi);
-
-    if (consoleContent != null) {
-      RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
-    }
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-
-    if (consoleContent != null) {
-      consoleContent.setHelpId(DefaultDebugExecutor.getDebugExecutorInstance().getHelpId());
     }
   }
 
@@ -378,9 +350,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   protected void registerAdditionalActions(DefaultActionGroup leftToolbar, DefaultActionGroup topLeftToolbar, DefaultActionGroup settings) {
     if (mySession != null) {
       mySession.getDebugProcess().registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
-      if (mySession.isMixedMode()) {
-        mySession.getDebugProcess(true).registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
-      }
     }
   }
 
