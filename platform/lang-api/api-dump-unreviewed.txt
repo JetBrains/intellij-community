@@ -3649,9 +3649,10 @@ f:com.intellij.microservices.oas.OasResponse
 - hashCode():I
 f:com.intellij.microservices.oas.OasSchema
 - <init>():V
-- <init>(com.intellij.microservices.oas.OasSchemaType,com.intellij.microservices.oas.OasSchemaFormat,java.lang.String,com.intellij.microservices.oas.OasSchema,java.util.List,java.lang.String,java.util.List,java.util.List,Z):V
-- b:<init>(com.intellij.microservices.oas.OasSchemaType,com.intellij.microservices.oas.OasSchemaFormat,java.lang.String,com.intellij.microservices.oas.OasSchema,java.util.List,java.lang.String,java.util.List,java.util.List,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.microservices.oas.OasSchemaType,com.intellij.microservices.oas.OasSchemaFormat,java.lang.String,com.intellij.microservices.oas.OasSchema,java.util.List,java.lang.String,java.util.List,java.util.List,Z,Z):V
+- b:<init>(com.intellij.microservices.oas.OasSchemaType,com.intellij.microservices.oas.OasSchemaFormat,java.lang.String,com.intellij.microservices.oas.OasSchema,java.util.List,java.lang.String,java.util.List,java.util.List,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():com.intellij.microservices.oas.OasSchemaType
+- f:component10():Z
 - f:component2():com.intellij.microservices.oas.OasSchemaFormat
 - f:component3():java.lang.String
 - f:component4():com.intellij.microservices.oas.OasSchema
@@ -3660,8 +3661,8 @@ f:com.intellij.microservices.oas.OasSchema
 - f:component7():java.util.List
 - f:component8():java.util.List
 - f:component9():Z
-- f:copy(com.intellij.microservices.oas.OasSchemaType,com.intellij.microservices.oas.OasSchemaFormat,java.lang.String,com.intellij.microservices.oas.OasSchema,java.util.List,java.lang.String,java.util.List,java.util.List,Z):com.intellij.microservices.oas.OasSchema
-- bs:copy$default(com.intellij.microservices.oas.OasSchema,com.intellij.microservices.oas.OasSchemaType,com.intellij.microservices.oas.OasSchemaFormat,java.lang.String,com.intellij.microservices.oas.OasSchema,java.util.List,java.lang.String,java.util.List,java.util.List,Z,I,java.lang.Object):com.intellij.microservices.oas.OasSchema
+- f:copy(com.intellij.microservices.oas.OasSchemaType,com.intellij.microservices.oas.OasSchemaFormat,java.lang.String,com.intellij.microservices.oas.OasSchema,java.util.List,java.lang.String,java.util.List,java.util.List,Z,Z):com.intellij.microservices.oas.OasSchema
+- bs:copy$default(com.intellij.microservices.oas.OasSchema,com.intellij.microservices.oas.OasSchemaType,com.intellij.microservices.oas.OasSchemaFormat,java.lang.String,com.intellij.microservices.oas.OasSchema,java.util.List,java.lang.String,java.util.List,java.util.List,Z,Z,I,java.lang.Object):com.intellij.microservices.oas.OasSchema
 - equals(java.lang.Object):Z
 - f:getDefault():java.lang.String
 - f:getEnum():java.util.List
@@ -3672,6 +3673,7 @@ f:com.intellij.microservices.oas.OasSchema
 - f:getRequired():java.util.List
 - f:getType():com.intellij.microservices.oas.OasSchemaType
 - hashCode():I
+- f:isItemsUnique():Z
 - f:isNullable():Z
 f:com.intellij.microservices.oas.OasSchema$Builder
 - <init>(com.intellij.microservices.oas.OasSchemaType):V
