@@ -231,7 +231,7 @@ final class LiteralChecker {
   }
 
   void checkFragmentError(@NotNull PsiFragment fragment) {
-    String text = InjectedLanguageManager.getInstance(fragment.getProject()).getUnescapedText(fragment);
+    String text = InjectedLanguageManager.getInstance(myVisitor.project()).getUnescapedText(fragment);
     if (fragment.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
       checkTextBlockNewlineAfterOpeningQuotes(fragment, text);
       if (myVisitor.hasErrorResults()) return;

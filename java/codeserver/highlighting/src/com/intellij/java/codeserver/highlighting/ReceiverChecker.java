@@ -32,7 +32,7 @@ final class ReceiverChecker {
     }
 
     if (enclosingClass == null) return;
-    PsiClassType type = PsiElementFactory.getInstance(parameter.getProject()).createType(enclosingClass, PsiSubstitutor.EMPTY);
+    PsiClassType type = myVisitor.factory().createType(enclosingClass, PsiSubstitutor.EMPTY);
     if (!type.equals(parameter.getType())) {
       myVisitor.report(JavaErrorKinds.RECEIVER_TYPE_MISMATCH.create(parameter, type));
       return;

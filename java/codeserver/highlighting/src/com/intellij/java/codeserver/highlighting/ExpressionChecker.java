@@ -900,7 +900,7 @@ final class ExpressionChecker {
             }
           }
         }
-        else if (ImplicitClassSearch.search(ref.getQualifiedName(), ref.getProject(), ref.getResolveScope()).findFirst() != null) {
+        else if (ImplicitClassSearch.search(ref.getQualifiedName(), myVisitor.project(), ref.getResolveScope()).findFirst() != null) {
           myVisitor.report(JavaErrorKinds.REFERENCE_IMPLICIT_CLASS.create(ref));
           return;
         }

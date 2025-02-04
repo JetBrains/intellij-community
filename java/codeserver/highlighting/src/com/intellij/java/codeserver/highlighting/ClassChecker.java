@@ -230,10 +230,10 @@ final class ClassChecker {
     if (module == null) return;
 
     GlobalSearchScope scope = GlobalSearchScope.moduleScope(module).intersectWith(aClass.getResolveScope());
-    PsiClass[] classes = JavaPsiFacade.getInstance(aClass.getProject()).findClasses(qualifiedName, scope);
+    PsiClass[] classes = JavaPsiFacade.getInstance(myVisitor.project()).findClasses(qualifiedName, scope);
     if (aClass.getContainingFile() instanceof PsiJavaFile javaFile && javaFile.getPackageStatement() == null) {
       Collection<? extends PsiClass> implicitClasses =
-        ImplicitClassSearch.search(qualifiedName, javaFile.getProject(), scope).findAll();
+        ImplicitClassSearch.search(qualifiedName, myVisitor.project(), scope).findAll();
       if (!implicitClasses.isEmpty()) {
         ArrayList<PsiClass> newClasses = new ArrayList<>();
         ContainerUtil.addAll(newClasses, classes);
@@ -256,7 +256,7 @@ final class ClassChecker {
     GlobalSearchScope scope = GlobalSearchScope.moduleScope(module).intersectWith(implicitClass.getResolveScope());
     String qualifiedName = implicitClass.getQualifiedName();
     if (qualifiedName == null) return;
-    PsiClass[] classes = JavaPsiFacade.getInstance(implicitClass.getProject()).findClasses(qualifiedName, scope);
+    PsiClass[] classes = JavaPsiFacade.getInstance(myVisitor.project()).findClasses(qualifiedName, scope);
     checkDuplicateClasses(implicitClass, classes);
   }
 
@@ -389,7 +389,7 @@ final class ClassChecker {
     PsiImplicitClass implicitClass = JavaImplicitClassUtil.getImplicitClassFor(file);
     if (implicitClass == null) return;
     String name = implicitClass.getQualifiedName();
-    if (!PsiNameHelper.getInstance(file.getProject()).isIdentifier(name)) {
+    if (!PsiNameHelper.getInstance(myVisitor.project()).isIdentifier(name)) {
       myVisitor.report(JavaErrorKinds.CLASS_IMPLICIT_INVALID_FILE_NAME.create(file, implicitClass));
       return;
     }
@@ -663,14 +663,14 @@ final class ClassChecker {
     PsiMethod[] constructors = baseClass.getConstructors();
     if (constructors.length == 0) return;
 
-    PsiElement resolved = JavaResolveUtil.resolveImaginarySuperCallInThisPlace(aClass, aClass.getProject(), baseClass);
+    PsiElement resolved = JavaResolveUtil.resolveImaginarySuperCallInThisPlace(aClass, myVisitor.project(), baseClass);
     List<PsiMethod> constructorCandidates = (resolved != null ? Collections.singletonList((PsiMethod)resolved)
                                                               : Arrays.asList(constructors))
       .stream()
       .filter(constructor -> {
         PsiParameter[] parameters = constructor.getParameterList().getParameters();
         return (parameters.length == 0 || parameters.length == 1 && parameters[0].isVarArgs()) &&
-               PsiResolveHelper.getInstance(aClass.getProject()).isAccessible(constructor, aClass, null);
+               PsiResolveHelper.getInstance(myVisitor.project()).isAccessible(constructor, aClass, null);
       })
       .limit(2).toList();
 

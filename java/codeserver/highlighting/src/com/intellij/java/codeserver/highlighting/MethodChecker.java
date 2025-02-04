@@ -177,7 +177,7 @@ final class MethodChecker {
       // optimization: do not analyze unrelated methods from Object: in case of no inheritance they can't conflict
       return;
     }
-    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
+    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(myVisitor.project()).getResolveHelper();
 
     for (HierarchicalMethodSignature signature : visibleSignatures) {
       PsiMethod method = signature.getMethod();
@@ -528,7 +528,7 @@ final class MethodChecker {
       methodCount++;
     }
 
-    if (methodCount == 1 && aClass.isEnum() && isEnumSyntheticMethod(methodSignature, aClass.getProject())) {
+    if (methodCount == 1 && aClass.isEnum() && isEnumSyntheticMethod(methodSignature, myVisitor.project())) {
       methodCount++;
     }
     if (methodCount > 1) {

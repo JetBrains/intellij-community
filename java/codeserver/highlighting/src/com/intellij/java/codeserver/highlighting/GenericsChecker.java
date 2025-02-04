@@ -197,7 +197,7 @@ final class GenericsChecker {
                                              @NotNull PsiClass aClass,
                                              @NotNull GlobalSearchScope resolveScope,
                                              boolean checkParameters) {
-    JavaPsiFacade factory = JavaPsiFacade.getInstance(aClass.getProject());
+    JavaPsiFacade factory = JavaPsiFacade.getInstance(myVisitor.project());
     for (PsiClassType superType : aClass.getSuperTypes()) {
       HashSet<PsiClass> checked = new HashSet<>();
       checked.add(aClass);
@@ -218,7 +218,7 @@ final class GenericsChecker {
     if (aClass != null && classes.add(aClass)) {
       VirtualFile vFile = PsiUtilCore.getVirtualFile(aClass);
       if (vFile == null) return;
-      FileIndexFacade index = FileIndexFacade.getInstance(aClass.getProject());
+      FileIndexFacade index = FileIndexFacade.getInstance(myVisitor.project());
       if (!index.isInSource(vFile) && !index.isInLibraryClasses(vFile)) return;
 
       PsiImplicitClass parentImplicitClass = PsiTreeUtil.getParentOfType(aClass, PsiImplicitClass.class);
@@ -596,7 +596,7 @@ final class GenericsChecker {
           if (!(resolved instanceof PsiClass psiClass)) continue;
           if (throwableClass == null) {
             throwableClass =
-              JavaPsiFacade.getInstance(klass.getProject()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, klass.getResolveScope());
+              JavaPsiFacade.getInstance(myVisitor.project()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, klass.getResolveScope());
           }
           if (InheritanceUtil.isInheritorOrSelf(psiClass, throwableClass, true)) {
             myVisitor.report(JavaErrorKinds.CLASS_GENERIC_EXTENDS_EXCEPTION.create(refElement));
