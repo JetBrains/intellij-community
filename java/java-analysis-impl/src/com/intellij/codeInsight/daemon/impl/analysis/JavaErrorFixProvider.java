@@ -104,7 +104,7 @@ final class JavaErrorFixProvider {
                                             NEW_EXPRESSION_ANONYMOUS_IMPLEMENTS_INTERFACE_WITH_TYPE_ARGUMENTS,
                                             CALL_DIRECT_ABSTRACT_METHOD_ACCESS, RECORD_SPECIAL_METHOD_TYPE_PARAMETERS,
                                             RECORD_SPECIAL_METHOD_THROWS, ARRAY_TYPE_ARGUMENTS, ARRAY_EMPTY_DIAMOND,
-                                            IMPORT_LIST_EXTRA_SEMICOLON, ENUM_CONSTANT_MODIFIER)) {
+                                            IMPORT_LIST_EXTRA_SEMICOLON, ENUM_CONSTANT_MODIFIER, METHOD_REFERENCE_PARAMETERIZED_QUALIFIER)) {
       fix(kind, genericRemover);
     }
 
@@ -536,6 +536,13 @@ final class JavaErrorFixProvider {
       }
       return null;
     });
+    fix(METHOD_REFERENCE_RETURN_TYPE_ERROR, error -> AdjustFunctionContextFix.createFix(error.psi()));
+    fix(METHOD_REFERENCE_UNRESOLVED_METHOD, error -> myFactory.createCreateMethodFromUsageFix(error.psi()));
+    fix(METHOD_REFERENCE_UNRESOLVED_CONSTRUCTOR, error -> myFactory.createCreateMethodFromUsageFix(error.psi()));
+    fix(METHOD_REFERENCE_INFERENCE_ERROR, error -> myFactory.createCreateMethodFromUsageFix(error.psi()));
+    fix(METHOD_REFERENCE_STATIC_METHOD_NON_STATIC_QUALIFIER, error -> removeModifierFix(error.context(), PsiModifier.STATIC));
+    fix(METHOD_REFERENCE_STATIC_METHOD_RECEIVER, error -> removeModifierFix(error.context(), PsiModifier.STATIC));
+    fix(METHOD_REFERENCE_NON_STATIC_METHOD_IN_STATIC_CONTEXT, error -> addModifierFix(error.context(), PsiModifier.STATIC));
   }
 
   private void createAccessFixes() {

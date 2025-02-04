@@ -14,6 +14,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.IncompleteModelUtil;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
@@ -334,12 +336,23 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
     visitElement(expression);
     checkFeature(expression, JavaFeature.METHOD_REFERENCES);
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (toReportFunctionalExpressionProblemOnParent(parent)) return;
     PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
     if (functionalInterfaceType != null && !PsiTypesUtil.allTypeParametersResolved(expression, functionalInterfaceType)) return;
 
     JavaResolveResult[] results = expression.multiResolve(true);
     JavaResolveResult result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
     PsiElement method = result.getElement();
+    if (method instanceof PsiJvmMember member && !result.isAccessible()) {
+      myModifierChecker.reportAccessProblem(expression, member, result);
+      return;
+    }
+    if (!(parent instanceof DummyHolder) && !LambdaUtil.isValidLambdaContext(parent)) {
+      report(JavaErrorKinds.METHOD_REFERENCE_NOT_EXPECTED.create(expression));
+      return;
+    }
+    if (!hasErrorResults()) myFunctionChecker.checkMethodReferenceQualifier(expression);
     if (!hasErrorResults()) {
       boolean resolvedButNonApplicable = results.length == 1 && results[0] instanceof MethodCandidateInfo methodInfo &&
                                          !methodInfo.isApplicable() &&
@@ -372,9 +385,19 @@ final class JavaErrorVisitor extends JavaElementVisitor {
         myExpressionChecker.checkStaticInterfaceCallQualifier(expression, result, containingClass);
       }
     }
+    if (!hasErrorResults()) myFunctionChecker.checkRawConstructorReference(expression);
     if (functionalInterfaceType != null) {
       if (!hasErrorResults()) myFunctionChecker.checkExtendsSealedClass(expression, functionalInterfaceType);
+      boolean isFunctional = LambdaUtil.isFunctionalType(functionalInterfaceType);
+      if (!hasErrorResults() && !isFunctional && 
+          !(IncompleteModelUtil.isIncompleteModel(expression) &&
+            IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType))) {
+        report(JavaErrorKinds.LAMBDA_NOT_FUNCTIONAL_INTERFACE.create(expression, functionalInterfaceType));
+      }
+      if (!hasErrorResults()) myFunctionChecker.checkMethodReferenceContext(expression, functionalInterfaceType);
     }
+    if (!hasErrorResults()) myFunctionChecker.checkMethodReferenceResolve(expression, results, functionalInterfaceType);
+    if (!hasErrorResults()) myFunctionChecker.checkMethodReferenceReturnType(expression, result, functionalInterfaceType);
   }
 
   @Override

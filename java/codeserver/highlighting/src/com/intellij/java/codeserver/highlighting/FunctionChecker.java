@@ -10,19 +10,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import static com.intellij.psi.LambdaUtil.getFunction;
-import static com.intellij.psi.LambdaUtil.getTargetMethod;
 
 final class FunctionChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
@@ -47,6 +40,113 @@ final class FunctionChecker {
     }
   }
 
+  void checkMethodReferenceQualifier(@NotNull PsiMethodReferenceExpression expression) {
+    PsiElement referenceNameElement = expression.getReferenceNameElement();
+    PsiElement qualifier = expression.getQualifier();
+    if (referenceNameElement instanceof PsiKeyword) {
+      if (!PsiMethodReferenceUtil.isValidQualifier(expression) && qualifier != null) {
+        boolean pending = qualifier instanceof PsiJavaCodeReferenceElement ref &&
+                          IncompleteModelUtil.isIncompleteModel(expression) &&
+                          IncompleteModelUtil.canBePendingReference(ref);
+        if (!pending) {
+          myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_QUALIFIER_CLASS_UNRESOLVED.create(qualifier));
+        }
+      }
+    }
+    if (qualifier instanceof PsiTypeElement typeElement) {
+      PsiType psiType = typeElement.getType();
+      if (psiType instanceof PsiClassType) {
+        final PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
+        if (referenceElement != null) {
+          PsiType[] typeParameters = referenceElement.getTypeParameters();
+          for (PsiType typeParameter : typeParameters) {
+            if (typeParameter instanceof PsiWildcardType) {
+              myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_QUALIFIER_WILDCARD.create(typeElement));
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  void checkRawConstructorReference(@NotNull PsiMethodReferenceExpression expression) {
+    if (expression.isConstructor()) {
+      PsiType[] typeParameters = expression.getTypeParameters();
+      if (typeParameters.length > 0) {
+        PsiElement qualifier = expression.getQualifier();
+        if (qualifier instanceof PsiReferenceExpression) {
+          PsiElement resolve = ((PsiReferenceExpression)qualifier).resolve();
+          if (resolve instanceof PsiClass && ((PsiClass)resolve).hasTypeParameters()) {
+            myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_RAW_CONSTRUCTOR.create(expression));
+          }
+        }
+      }
+    }
+  }
+
+  void checkMethodReferenceContext(@NotNull PsiMethodReferenceExpression methodRef, @NotNull PsiType functionalInterfaceType) {
+    PsiElement resolve = methodRef.resolve();
+
+    if (resolve == null) return;
+    PsiClass containingClass = resolve instanceof PsiMethod method ? method.getContainingClass() : (PsiClass)resolve;
+    boolean isStaticSelector = PsiMethodReferenceUtil.isStaticallyReferenced(methodRef);
+    PsiElement qualifier = methodRef.getQualifier();
+
+    boolean isConstructor = true;
+
+    if (resolve instanceof PsiMethod method) {
+      boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
+      isConstructor = method.isConstructor();
+
+      PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+      PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
+      boolean receiverReferenced = PsiMethodReferenceUtil.isResolvedBySecondSearch(
+        methodRef, interfaceMethod != null ? interfaceMethod.getSignature(LambdaUtil.getSubstitutor(interfaceMethod, resolveResult)) : null,
+        method.isVarArgs(), isMethodStatic, method.getParameterList().getParametersCount());
+
+      if (method.hasModifierProperty(PsiModifier.ABSTRACT) && qualifier instanceof PsiSuperExpression) {
+        myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_ABSTRACT_METHOD.create(methodRef, method));
+        return;
+      }
+      if (!receiverReferenced && isStaticSelector && !isMethodStatic && !isConstructor) {
+        if (functionalInterfaceType instanceof PsiClassType classType && classType.hasParameters()) {
+          // Prefer surrounding error, as it could be more descriptive
+          if (hasSurroundingInferenceError(methodRef)) return;
+        }
+        myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_NON_STATIC_METHOD_IN_STATIC_CONTEXT.create(methodRef, method));
+        return;
+      }
+      if (!receiverReferenced && !isStaticSelector && isMethodStatic) {
+        myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_STATIC_METHOD_NON_STATIC_QUALIFIER.create(methodRef, method));
+        return;
+      }
+      if (receiverReferenced && isStaticSelector && isMethodStatic) {
+        myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_STATIC_METHOD_RECEIVER.create(methodRef, method));
+        return;
+      }
+      if (isStaticSelector && isMethodStatic && qualifier instanceof PsiTypeElement) {
+        PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getChildOfType(qualifier, PsiJavaCodeReferenceElement.class);
+        if (referenceElement != null) {
+          PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+          if (parameterList != null && parameterList.getTypeArguments().length > 0) {
+            myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_PARAMETERIZED_QUALIFIER.create(parameterList));
+            return;
+          }
+        }
+      }
+    }
+
+    if (isConstructor) {
+      if (containingClass != null && PsiUtil.isInnerClass(containingClass) && containingClass.isPhysical()) {
+        PsiClass outerClass = containingClass.getContainingClass();
+        if (outerClass != null && !InheritanceUtil.hasEnclosingInstanceInScope(outerClass, methodRef, true, false)) {
+          myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_ENCLOSING_INSTANCE_NOT_IN_SCOPE.create(methodRef, outerClass));
+        }
+      }
+    }
+  }
+
   private static @Nullable JavaCompilationError<?, ?> getFunctionalInterfaceError(
     @NotNull PsiFunctionalExpression context, PsiType functionalInterfaceType) {
     if (functionalInterfaceType instanceof PsiIntersectionType intersection) {
@@ -54,14 +154,14 @@ final class FunctionChecker {
       Map<PsiType, MethodSignature> typeAndSignature = new HashMap<>();
       for (PsiType type : intersection.getConjuncts()) {
         if (getFunctionalInterfaceError(context, type) == null) {
-          MethodSignature signature = getFunction(PsiUtil.resolveClassInType(type));
+          MethodSignature signature = LambdaUtil.getFunction(PsiUtil.resolveClassInType(type));
           signatures.add(signature);
           typeAndSignature.put(type, signature);
         }
       }
       PsiType baseType = typeAndSignature.entrySet().iterator().next().getKey();
       MethodSignature baseSignature = typeAndSignature.get(baseType);
-      LambdaUtil.TargetMethodContainer baseContainer = getTargetMethod(baseType, baseSignature, baseType);
+      LambdaUtil.TargetMethodContainer baseContainer = LambdaUtil.getTargetMethod(baseType, baseSignature, baseType);
       if (baseContainer == null) {
         return JavaErrorKinds.LAMBDA_NO_TARGET_METHOD.create(context, baseType);
       }
@@ -71,7 +171,7 @@ final class FunctionChecker {
           if (baseType == entry.getKey()) {
             continue;
           }
-          LambdaUtil.TargetMethodContainer container = getTargetMethod(entry.getKey(), baseSignature, baseType);
+          LambdaUtil.TargetMethodContainer container = LambdaUtil.getTargetMethod(entry.getKey(), baseSignature, baseType);
           if (container == null) {
             return JavaErrorKinds.LAMBDA_MULTIPLE_TARGET_METHODS.create(context, functionalInterfaceType);
           }
@@ -85,7 +185,7 @@ final class FunctionChecker {
         if (typeAndSignature.containsKey(type)) {
           continue;
         }
-        LambdaUtil.TargetMethodContainer container = getTargetMethod(type, baseSignature, baseType);
+        LambdaUtil.TargetMethodContainer container = LambdaUtil.getTargetMethod(type, baseSignature, baseType);
         if (container == null) {
           continue;
         }
@@ -101,7 +201,7 @@ final class FunctionChecker {
     PsiClass aClass = resolveResult.getElement();
     if (aClass != null) {
       if (aClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
-      MethodSignature functionalMethod = getFunction(aClass);
+      MethodSignature functionalMethod = LambdaUtil.getFunction(aClass);
       if (functionalMethod != null && functionalMethod.getTypeParameters().length > 0) {
         return JavaErrorKinds.LAMBDA_SAM_GENERIC.create(context);
       }
@@ -190,5 +290,51 @@ final class FunctionChecker {
       if (PsiTypesUtil.mentionsTypeParameters(substitutor.substitute(parameter.getType()), parameters)) return true;
     }
     return false;
+  }
+
+  void checkMethodReferenceReturnType(@NotNull PsiMethodReferenceExpression expression, @NotNull JavaResolveResult result,
+                                      @Nullable PsiType functionalInterfaceType) {
+    String badReturnTypeMessage = PsiMethodReferenceUtil.checkReturnType(expression, result, functionalInterfaceType);
+    if (badReturnTypeMessage != null) {
+      myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_RETURN_TYPE_ERROR.create(expression, badReturnTypeMessage));
+    }
+  }
+
+  void checkMethodReferenceResolve(@NotNull PsiMethodReferenceExpression expression,
+                                   @NotNull JavaResolveResult @NotNull [] results,
+                                   @Nullable PsiType functionalInterfaceType) {
+    boolean resolvedButNonApplicable = results.length == 1 && results[0] instanceof MethodCandidateInfo methodInfo &&
+                                       !methodInfo.isApplicable() &&
+                                       functionalInterfaceType != null;
+    if (results.length != 1 || resolvedButNonApplicable) {
+      if (results.length == 1 && ((MethodCandidateInfo)results[0]).getInferenceErrorMessage() != null) {
+        myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_INFERENCE_ERROR.create(expression, (MethodCandidateInfo)results[0]));
+        return;
+      }
+      if (expression.isConstructor()) {
+        PsiClass containingClass = PsiMethodReferenceUtil.getQualifierResolveResult(expression).getContainingClass();
+
+        if (containingClass != null && containingClass.isPhysical()) {
+          myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_UNRESOLVED_CONSTRUCTOR.create(expression, containingClass));
+        }
+      }
+      else if (results.length > 1) {
+        if (!IncompleteModelUtil.isIncompleteModel(expression) ||
+            !IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType)) {
+          myVisitor.report(JavaErrorKinds.REFERENCE_AMBIGUOUS.create(expression, Arrays.asList(results)));
+        }
+      }
+      else {
+        if (IncompleteModelUtil.isIncompleteModel(expression) && IncompleteModelUtil.canBePendingReference(expression)) {
+          PsiElement referenceNameElement = expression.getReferenceNameElement();
+          if (referenceNameElement != null) {
+            myVisitor.report(JavaErrorKinds.REFERENCE_PENDING.create(referenceNameElement));
+          }
+        }
+        else if (!(resolvedButNonApplicable && hasSurroundingInferenceError(expression))) {
+          myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_UNRESOLVED_METHOD.create(expression));
+        }
+      }
+    }
   }
 }

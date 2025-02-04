@@ -142,8 +142,44 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiElement, String> LAMBDA_RETURN_TYPE_ERROR =
     parameterized(PsiElement.class, String.class, "lambda.return.type.error")
       .withRawDescription((psi, message) -> message("lambda.return.type.error", message));
-  
+    
   public static final Simple<PsiMethodReferenceExpression> METHOD_REFERENCE_SEALED = error("method.reference.sealed");
+  public static final Simple<PsiMethodReferenceExpression> METHOD_REFERENCE_NOT_EXPECTED = error("method.reference.not.expected");
+  public static final Simple<PsiMethodReferenceExpression> METHOD_REFERENCE_RAW_CONSTRUCTOR = error("method.reference.raw.constructor");
+  public static final Simple<PsiElement> METHOD_REFERENCE_QUALIFIER_CLASS_UNRESOLVED = 
+    error(PsiElement.class, "method.reference.qualifier.class.unresolved")
+      .withRawDescription(qualifier -> message("method.reference.qualifier.class.unresolved", qualifier.getText()));
+  public static final Simple<PsiTypeElement> METHOD_REFERENCE_QUALIFIER_WILDCARD = error("method.reference.qualifier.wildcard");
+  public static final Parameterized<PsiMethodReferenceExpression, String> METHOD_REFERENCE_RETURN_TYPE_ERROR =
+    parameterized(PsiMethodReferenceExpression.class, String.class, "method.reference.return.type.error")
+      .withRawDescription((psi, message) -> message("method.reference.return.type.error", message));
+  public static final Parameterized<PsiMethodReferenceExpression, MethodCandidateInfo> METHOD_REFERENCE_INFERENCE_ERROR =
+    parameterized(PsiMethodReferenceExpression.class, MethodCandidateInfo.class, "method.reference.inference.error")
+      .withAnchor((ref, candidate) -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription((ref, candidate) -> message("method.reference.inference.error", candidate.getInferenceErrorMessage()));
+  public static final Parameterized<PsiMethodReferenceExpression, PsiClass> METHOD_REFERENCE_UNRESOLVED_CONSTRUCTOR =
+    parameterized(PsiMethodReferenceExpression.class, PsiClass.class, "method.reference.unresolved.constructor")
+      .withAnchor((ref, cls) -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription((ref, cls) -> message("method.reference.unresolved.constructor", cls.getName()));
+  public static final Simple<PsiMethodReferenceExpression> METHOD_REFERENCE_UNRESOLVED_METHOD =
+    error(PsiMethodReferenceExpression.class, "method.reference.unresolved.method")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withHighlightType(ref -> JavaErrorHighlightType.WRONG_REF)
+      .withRawDescription(ref -> message("method.reference.unresolved.method", ref.getReferenceName()));
+  public static final Parameterized<PsiMethodReferenceExpression, PsiMethod> METHOD_REFERENCE_ABSTRACT_METHOD =
+    parameterized(PsiMethodReferenceExpression.class, PsiMethod.class, "method.reference.abstract.method")
+      .withRawDescription((psi, method) -> message("method.reference.abstract.method", method.getName()));
+  public static final Parameterized<PsiMethodReferenceExpression, PsiMethod> METHOD_REFERENCE_NON_STATIC_METHOD_IN_STATIC_CONTEXT =
+    parameterized(PsiMethodReferenceExpression.class, PsiMethod.class, "method.reference.non.static.method.in.static.context");
+  public static final Parameterized<PsiMethodReferenceExpression, PsiMethod> METHOD_REFERENCE_STATIC_METHOD_NON_STATIC_QUALIFIER =
+    parameterized(PsiMethodReferenceExpression.class, PsiMethod.class, "method.reference.static.method.non.static.qualifier");
+  public static final Parameterized<PsiMethodReferenceExpression, PsiMethod> METHOD_REFERENCE_STATIC_METHOD_RECEIVER =
+    parameterized(PsiMethodReferenceExpression.class, PsiMethod.class, "method.reference.static.method.receiver");
+  public static final Parameterized<PsiMethodReferenceExpression, PsiClass> METHOD_REFERENCE_ENCLOSING_INSTANCE_NOT_IN_SCOPE =
+    parameterized(PsiMethodReferenceExpression.class, PsiClass.class, "method.reference.enclosing.instance.not.in.scope")
+      .withRawDescription((psi, cls) -> message("method.reference.enclosing.instance.not.in.scope", formatClass(cls)));
+  public static final Simple<PsiReferenceParameterList> METHOD_REFERENCE_PARAMETERIZED_QUALIFIER =
+    error("method.reference.parameterized.qualifier");
   
   public static final Parameterized<PsiAnnotation, @NotNull List<PsiAnnotation.@NotNull TargetType>> ANNOTATION_NOT_APPLICABLE =
     error(PsiAnnotation.class, "annotation.not.applicable").<@NotNull List<PsiAnnotation.@NotNull TargetType>>parameterized()

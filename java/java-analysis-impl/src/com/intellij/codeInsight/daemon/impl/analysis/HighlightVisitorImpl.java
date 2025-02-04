@@ -6,22 +6,13 @@ import com.intellij.codeInsight.daemon.impl.DefaultHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
-import com.intellij.codeInsight.daemon.impl.quickfix.AdjustFunctionContextFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
-import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorHighlightType;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.lang.jvm.JvmModifier;
-import com.intellij.lang.jvm.JvmModifiersOwner;
-import com.intellij.lang.jvm.actions.JvmElementActionFactories;
-import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
@@ -30,17 +21,14 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
-import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
-import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -60,7 +48,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
-import static java.util.Objects.*;
 
 // java highlighting: problems in java code like unresolved/incompatible symbols/methods etc.
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
@@ -605,160 +592,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
     if (functionalInterfaceType != null && !PsiTypesUtil.allTypeParametersResolved(expression, functionalInterfaceType)) return;
 
-    JavaResolveResult result;
-    JavaResolveResult[] results;
-    try {
-      results = expression.multiResolve(true);
-      result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
-    }
-    catch (IndexNotReadyException e) {
-      return;
-    }
+    JavaResolveResult[] results = expression.multiResolve(true);
+    JavaResolveResult result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
     PsiElement method = result.getElement();
-    if (method instanceof PsiJvmMember && !result.isAccessible()) {
-      String accessProblem = HighlightUtil.accessProblemDescription(expression, method, result);
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(accessProblem);
-      HighlightFixUtil.registerAccessQuickFixAction(HighlightUtil.asConsumer(info), (PsiJvmMember)method, expression, result.getCurrentFileResolveScope());
-      add(info);
-    }
-
-    if (!LambdaUtil.isValidLambdaContext(parent)) {
-      String description = JavaErrorBundle.message("method.reference.expression.is.not.expected");
-      add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description));
-    }
-
-    if (!hasErrorResults()) {
-      PsiElement referenceNameElement = expression.getReferenceNameElement();
-      if (referenceNameElement instanceof PsiKeyword) {
-        if (!PsiMethodReferenceUtil.isValidQualifier(expression)) {
-          PsiElement qualifier = expression.getQualifier();
-          if (qualifier != null) {
-            boolean pending = qualifier instanceof PsiJavaCodeReferenceElement ref &&
-                              IncompleteModelUtil.isIncompleteModel(expression) &&
-                              IncompleteModelUtil.canBePendingReference(ref);
-            if (!pending) {
-              String description = JavaErrorBundle.message("cannot.find.class", qualifier.getText());
-              add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(description));
-            }
-          }
-        }
-      }
-    }
 
     if (functionalInterfaceType != null) {
       if (!hasErrorResults()) {
-        boolean isFunctional = LambdaUtil.isFunctionalType(functionalInterfaceType);
-        if (!isFunctional && !(IncompleteModelUtil.isIncompleteModel(expression) &&
-                               IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType))) {
-          String description =
-            JavaErrorBundle.message("not.a.functional.interface", functionalInterfaceType.getPresentableText());
-          add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description));
-        }
-      }
-      if (!hasErrorResults()) {
         add(LambdaHighlightingUtil.checkFunctionalInterfaceTypeAccessible(myFile.getProject(), expression, functionalInterfaceType));
       }
-      if (!hasErrorResults()) {
-        String errorMessage = PsiMethodReferenceHighlightingUtil.checkMethodReferenceContext(expression);
-        if (errorMessage != null) {
-          HighlightInfo.Builder info =
-            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(errorMessage);
-          if (method instanceof PsiMethod psiMethod &&
-              !psiMethod.isConstructor() &&
-              !psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-            boolean shouldHave = !psiMethod.hasModifierProperty(PsiModifier.STATIC);
-            QuickFixAction.registerQuickFixActions(info, null, JvmElementActionFactories.createModifierActions(
-              (JvmModifiersOwner)method, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, shouldHave)));
-          }
-          add(info);
-        }
-      }
     }
 
-    if (!hasErrorResults()) {
-      PsiElement qualifier = expression.getQualifier();
-      if (qualifier instanceof PsiTypeElement typeElement) {
-        PsiType psiType = typeElement.getType();
-        String wildcardMessage = checkTypeArguments(typeElement, psiType);
-        if (wildcardMessage != null) {
-          add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(wildcardMessage));
-        }
-      }
-    }
-
-    if (!hasErrorResults()) {
-      add(PsiMethodReferenceHighlightingUtil.checkRawConstructorReference(expression));
-    }
-
-    if (!hasErrorResults()) {
-      boolean resolvedButNonApplicable = results.length == 1 && results[0] instanceof MethodCandidateInfo methodInfo &&
-                                         !methodInfo.isApplicable() &&
-                                         functionalInterfaceType != null;
-      if (results.length != 1 || resolvedButNonApplicable) {
-        String description = null;
-        if (results.length == 1) {
-          description = ((MethodCandidateInfo)results[0]).getInferenceErrorMessage();
-        }
-        if (expression.isConstructor()) {
-          PsiClass containingClass = PsiMethodReferenceUtil.getQualifierResolveResult(expression).getContainingClass();
-
-          if (containingClass != null && 
-              containingClass.isPhysical() &&
-              description == null) {
-            description = JavaErrorBundle.message("cannot.resolve.constructor", containingClass.getName());
-          }
-        }
-        else if (description == null) {
-          if (results.length > 1) {
-            if (IncompleteModelUtil.isIncompleteModel(expression) &&
-                IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType)) {
-              return;
-            }
-            String t1 = HighlightUtil.format(requireNonNull(results[0].getElement()));
-            String t2 = HighlightUtil.format(requireNonNull(results[1].getElement()));
-            description = JavaErrorBundle.message("ambiguous.reference", expression.getReferenceName(), t1, t2);
-          }
-          else {
-            if (IncompleteModelUtil.isIncompleteModel(expression) && IncompleteModelUtil.canBePendingReference(expression)) {
-              PsiElement referenceNameElement = expression.getReferenceNameElement();
-              if (referenceNameElement != null) {
-                add(HighlightUtil.getPendingReferenceHighlightInfo(referenceNameElement));
-              }
-              return;
-            }
-            
-            if (!(resolvedButNonApplicable && HighlightMethodUtil.hasSurroundingInferenceError(expression))) {
-              description = JavaErrorBundle.message("cannot.resolve.method", expression.getReferenceName());
-            }
-          }
-        }
-
-        if (description != null) {
-          PsiElement referenceNameElement = ObjectUtils.notNull(expression.getReferenceNameElement(), expression);
-          HighlightInfoType type = results.length == 0 ? HighlightInfoType.WRONG_REF : HighlightInfoType.ERROR;
-          HighlightInfo.Builder highlightInfo =
-            HighlightInfo.newHighlightInfo(type).descriptionAndTooltip(description).range(referenceNameElement);
-          TextRange fixRange = HighlightMethodUtil.getFixRange(referenceNameElement);
-          IntentionAction action = QuickFixFactory.getInstance().createCreateMethodFromUsageFix(expression);
-          highlightInfo.registerFix(action, null, null, fixRange, null);
-          add(highlightInfo);
-        }
-      }
-    }
-
-    if (!hasErrorResults()) {
-      String badReturnTypeMessage = PsiMethodReferenceUtil.checkReturnType(expression, result, functionalInterfaceType);
-      if (badReturnTypeMessage != null) {
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(badReturnTypeMessage);
-        IntentionAction action = AdjustFunctionContextFix.createFix(expression);
-        if (action != null) {
-          info.registerFix(action, null, null, null, null);
-        }
-        add(info);
-      }
-    }
     if (!hasErrorResults() && method instanceof PsiModifierListOwner) {
       PreviewFeatureUtil.checkPreviewFeature(expression, myPreviewFeatureVisitor);
     }
@@ -894,20 +737,5 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private @Nullable HighlightInfo.Builder checkFeature(@NotNull PsiElement element, @NotNull JavaFeature feature) {
     return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
-  }
-
-  private static @NlsContexts.DetailedDescription String checkTypeArguments(PsiTypeElement qualifier, PsiType psiType) {
-    if (psiType instanceof PsiClassType) {
-      final PsiJavaCodeReferenceElement referenceElement = qualifier.getInnermostComponentReferenceElement();
-      if (referenceElement != null) {
-        PsiType[] typeParameters = referenceElement.getTypeParameters();
-        for (PsiType typeParameter : typeParameters) {
-          if (typeParameter instanceof PsiWildcardType) {
-            return JavaPsiBundle.message("error.message.wildcard.not.expected");
-          }
-        }
-      }
-    }
-    return null;
   }
 }
