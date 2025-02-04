@@ -961,16 +961,6 @@ public final class HighlightUtil {
       return HighlightControlFlowUtil.checkVariableMustBeFinal((PsiVariable)resolved, ref, languageLevel);
     }
 
-    if (resolved instanceof PsiClass psiClass &&
-        psiClass.getContainingClass() == null &&
-        PsiUtil.isFromDefaultPackage(resolved) &&
-        (PsiTreeUtil.getParentOfType(ref, PsiImportStatementBase.class) != null ||
-         PsiUtil.isModuleFile(containingFile) ||
-         !PsiUtil.isFromDefaultPackage(containingFile))) {
-      String description = JavaErrorBundle.message("class.in.default.package", psiClass.getName());
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description);
-    }
-
     return null;
   }
 

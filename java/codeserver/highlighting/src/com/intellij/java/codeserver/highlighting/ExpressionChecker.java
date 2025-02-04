@@ -924,6 +924,14 @@ final class ExpressionChecker {
         myVisitor.report(JavaErrorKinds.REFERENCE_UNRESOLVED.create(ref));
       }
     }
+    if (resolved instanceof PsiClass psiClass &&
+        psiClass.getContainingClass() == null &&
+        PsiUtil.isFromDefaultPackage(resolved) &&
+        (PsiTreeUtil.getParentOfType(ref, PsiImportStatementBase.class) != null ||
+         PsiUtil.isModuleFile(myVisitor.file()) ||
+         !PsiUtil.isFromDefaultPackage(myVisitor.file()))) {
+      myVisitor.report(JavaErrorKinds.REFERENCE_CLASS_IN_DEFAULT_PACKAGE.create(ref, psiClass));
+    }
   }
 
   private static boolean favorParentReport(@NotNull PsiCall methodCall, @NotNull String errorMessage) {

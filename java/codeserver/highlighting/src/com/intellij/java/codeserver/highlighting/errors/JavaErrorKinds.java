@@ -960,6 +960,11 @@ public final class JavaErrorKinds {
       .withHighlightType(ref -> JavaErrorHighlightType.WRONG_REF)
       .withRawDescription(ref -> message("reference.implicit.class", ref.getReferenceName()))
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> REFERENCE_CLASS_IN_DEFAULT_PACKAGE =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "reference.class.in.default.package")
+      .withHighlightType((ref, cls) -> JavaErrorHighlightType.WRONG_REF)
+      .withRawDescription((ref, cls) -> message("reference.class.in.default.package", cls.getName()))
+      .withAnchor((ref, cls) -> requireNonNullElse(ref.getReferenceNameElement(), ref));
   public static final Parameterized<PsiJavaCodeReferenceElement, List<JavaResolveResult>> REFERENCE_AMBIGUOUS =
     error(PsiJavaCodeReferenceElement.class, "reference.ambiguous")
       .withHighlightType(ref -> JavaErrorHighlightType.WRONG_REF)
