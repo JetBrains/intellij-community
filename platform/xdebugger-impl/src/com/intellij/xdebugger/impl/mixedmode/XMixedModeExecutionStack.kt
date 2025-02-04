@@ -12,7 +12,6 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
 import com.intellij.xdebugger.impl.util.adviseOnFrameChanged
 import com.intellij.xdebugger.mixedMode.MixedModeStackBuilder
-import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -83,7 +82,7 @@ class XMixedModeExecutionStack(
   override fun getExecutionLineIconRenderer(): GutterIconRenderer? {
     val frame = session.currentStackFrame ?: return super.getExecutionLineIconRenderer() // We don't need to render icon on a null frame
 
-    val isLowLevelFrameActive = (session.getDebugProcess(true) as XMixedModeLowLevelDebugProcess).belongsToMe(frame)
+    val isLowLevelFrameActive = session.lowLevelMixedModeExtensionOrThrow.belongsToMe(frame)
     return if (isLowLevelFrameActive)
       lowLevelExecutionStack.executionLineIconRenderer
     else

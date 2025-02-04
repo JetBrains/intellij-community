@@ -10,7 +10,6 @@ import com.intellij.xdebugger.*
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
-import com.intellij.xdebugger.evaluation.XMixedModeDebuggersEditorProvider
 import com.intellij.xdebugger.frame.XDropFrameHandler
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.frame.XValueMarkerProvider

@@ -5,7 +5,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.xdebugger.XMixedModeProcessHandler
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
-import com.intellij.xdebugger.evaluation.XMixedModeDebuggersEditorProvider
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.*
@@ -124,8 +123,8 @@ class XDebugSessionMixedModeExtension(
 
   fun getEditorsProvider(): XDebuggerEditorsProvider {
     return editorsProvider ?: XMixedModeDebuggersEditorProvider(session,
-                                                                session.getDebugProcess(true).getEditorsProvider(),
-                                                                session.getDebugProcess(false).getEditorsProvider()).also { editorsProvider = it }
+                                                                session.lowLevelProcessOrThrow.getEditorsProvider(),
+                                                                session.highLevelProcessOrThrow.getEditorsProvider()).also { editorsProvider = it }
   }
 
   fun getProcessHandler() : XMixedModeProcessHandler {

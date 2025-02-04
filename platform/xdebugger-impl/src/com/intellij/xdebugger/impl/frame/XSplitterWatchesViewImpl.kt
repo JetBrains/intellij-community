@@ -7,9 +7,11 @@ import com.intellij.util.application
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.mixedmode.highLevelProcessOrThrow
+import com.intellij.xdebugger.impl.mixedmode.lowLevelMixedModeExtensionOrThrow
+import com.intellij.xdebugger.impl.mixedmode.lowLevelProcessOrThrow
 import com.intellij.xdebugger.impl.ui.getBottomLocalsComponentProvider
 import com.intellij.xdebugger.impl.ui.useSplitterView
-import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -37,7 +39,8 @@ class XSplitterWatchesViewImpl(
     private fun tryGetBottomComponentProvider(session: XDebugSessionImpl, useLowLevelDebugProcessPanel: Boolean?) =
       when (useLowLevelDebugProcessPanel) {
         null -> session.debugProcess
-        else -> session.getDebugProcess(useLowLevelDebugProcessPanel)
+        true -> session.lowLevelProcessOrThrow
+        false -> session.highLevelProcessOrThrow
       }.getBottomLocalsComponentProvider()
 
   }
@@ -87,8 +90,8 @@ class XSplitterWatchesViewImpl(
   private fun addMixedModeListenerIfNeeded(session: XDebugSessionImpl) {
     if (!session.isMixedMode) return
 
-    val lowSupportsCustomization = session.getDebugProcess(true).useSplitterView()
-    val highSupportsCustomization = session.getDebugProcess(false).useSplitterView()
+    val lowSupportsCustomization = session.lowLevelProcessOrThrow.useSplitterView()
+    val highSupportsCustomization = session.highLevelProcessOrThrow.useSplitterView()
     if (lowSupportsCustomization == highSupportsCustomization) return
 
     session.addSessionListener(object : XDebugSessionListener {
@@ -116,9 +119,8 @@ class XSplitterWatchesViewImpl(
     val session = session ?: return false
     if (!session.isMixedMode) return true
 
-    val debugProcess = session.getDebugProcess(true)
-    val lowSupportsCustomization = debugProcess.useSplitterView()
-    val highSupportsCustomization = session.getDebugProcess(false).useSplitterView()
+    val lowSupportsCustomization = session.lowLevelProcessOrThrow.useSplitterView()
+    val highSupportsCustomization = session.highLevelProcessOrThrow.useSplitterView()
 
     val useLowLevelPanel = useLowLevelDebugProcessPanel() == true
     val useHighLevelPanel = !useLowLevelPanel
@@ -129,7 +131,6 @@ class XSplitterWatchesViewImpl(
     val session = session ?: return null
     if (!session.isMixedMode) return null
     val frame = session.currentStackFrame ?: return false
-    val low = session.getDebugProcess(true) as XMixedModeLowLevelDebugProcess
-    return low.belongsToMe(frame)
+    return session.lowLevelMixedModeExtensionOrThrow.belongsToMe(frame)
   }
 }

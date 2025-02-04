@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger.evaluation
+package com.intellij.xdebugger.impl.mixedmode
 
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
@@ -9,7 +9,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
-import com.intellij.xdebugger.mixedMode.XMixedModeDebugProcessExtension
+import com.intellij.xdebugger.evaluation.EvaluationMode
+import com.intellij.xdebugger.evaluation.InlineDebuggerHelper
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import org.jetbrains.annotations.Unmodifiable
 
 class XMixedModeDebuggersEditorProvider(
@@ -45,7 +47,7 @@ class XMixedModeDebuggersEditorProvider(
 
   private fun getActiveProvider(): XDebuggerEditorsProvider {
     val file = session.currentStackFrame?.sourcePosition?.file ?: return highDebuggerEditorsProvider
-    return if ((session.getDebugProcess(true) as XMixedModeDebugProcessExtension).belongsToMe(file))
+    return if (session.mixedModeDebugProcessOrThrow.lowLevelMixedModeExtensionOrThrow.belongsToMe(file))
       lowDebuggerEditorsProvider
     else
       highDebuggerEditorsProvider
