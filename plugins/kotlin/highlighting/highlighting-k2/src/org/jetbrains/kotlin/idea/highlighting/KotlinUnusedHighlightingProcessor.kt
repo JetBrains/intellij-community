@@ -124,6 +124,14 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
                 if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return
                 refHolder.registerLocalRef((call as? KaSimpleFunctionCall)?.symbol?.psi, expression)
             }
+
+            override fun visitArrayAccessExpression(expression: KtArrayAccessExpression) {
+                expression.getReferences().forEach { reference ->
+                    reference.resolve()?.let {
+                        refHolder.registerLocalRef(it, expression)
+                    }
+                }
+            }
         }
         for (declaration in elements) {
             declaration.accept(registerDeclarationAccessVisitor)
@@ -187,9 +195,9 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
 class KotlinRefsHolder {
     private val localRefs = mutableMapOf<KtDeclaration, KtElement>()
 
-    fun registerLocalRef(declaration: PsiElement?, reference: KtElement) {
+    fun registerLocalRef(declaration: PsiElement?, referenceElement: KtElement) {
         if (declaration is KtDeclaration) {
-            localRefs[declaration] = reference
+            localRefs[declaration] = referenceElement
         }
     }
 

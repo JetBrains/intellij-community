@@ -17922,6 +17922,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/annotationWithUseSiteTarget.kt");
             }
 
+            @TestMetadata("arrayAccessOperator.kt")
+            public void testArrayAccessOperator() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/arrayAccessOperator.kt");
+            }
+
             @TestMetadata("asDefaultConstructorParameter.kt")
             public void testAsDefaultConstructorParameter() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/asDefaultConstructorParameter.kt");

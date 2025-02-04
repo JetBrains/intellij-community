@@ -197,6 +197,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/annotationWithUseSiteTarget.kt");
         }
 
+        @TestMetadata("arrayAccessOperator.kt")
+        public void testArrayAccessOperator() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/arrayAccessOperator.kt");
+        }
+
         @TestMetadata("asDefaultConstructorParameter.kt")
         public void testAsDefaultConstructorParameter() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/asDefaultConstructorParameter.kt");
