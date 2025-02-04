@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects
 
-import com.intellij.diagnostic.WindowsDefenderStatisticsCollector
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
@@ -163,18 +162,18 @@ internal class TrustedProjectStartupDialog(
                 }
             }
           }
-          row {
-            val trimmedFolderName = StringUtil.shortenTextWithEllipsis(projectPath.name.ifEmpty { projectPath.toString() }, 18, 0, true)
-            val idePaths = pathsToExclude.asSequence().filter { it != projectPath }.joinToString(separator = "<br>")
-            windowsDefenderCheckBox = checkBox(IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", trimmedFolderName))
-              .bindSelected(windowsDefender)
-              .apply {
-                component.toolTipText = null
-                component.addMouseMotionListener(TooltipMouseAdapter { listOf(idePaths, getTrustFolder(isTrustAll()).pathString) })
-                comment(IdeBundle.message("untrusted.project.location.comment"))
-                visible(pathsToExclude.isNotEmpty())
-                if (pathsToExclude.isNotEmpty()) WindowsDefenderStatisticsCollector.checkboxShownInTrustDialog()
-              }
+          if (pathsToExclude.isNotEmpty()) {
+            row {
+              val trimmedFolderName = StringUtil.shortenTextWithEllipsis(projectPath.name.ifEmpty { projectPath.toString() }, 18, 0, true)
+              val idePaths = pathsToExclude.asSequence().filter { it != projectPath }.joinToString(separator = "<br>")
+              windowsDefenderCheckBox = checkBox(IdeBundle.message("untrusted.project.windows.defender.trust.location.checkbox", trimmedFolderName))
+                .bindSelected(windowsDefender)
+                .apply {
+                  component.toolTipText = null
+                  component.addMouseMotionListener(TooltipMouseAdapter { listOf(idePaths, getTrustFolder(isTrustAll()).pathString) })
+                  comment(IdeBundle.message("untrusted.project.location.comment"))
+                }
+            }
           }
         }.align(AlignX.FILL + AlignY.FILL)
       }

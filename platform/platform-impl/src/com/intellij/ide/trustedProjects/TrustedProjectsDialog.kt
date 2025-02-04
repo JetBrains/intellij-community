@@ -69,11 +69,9 @@ object TrustedProjectsDialog {
         service<TrustedPathsSettings>().addTrustedPath(projectLocationPath)
       }
     }
-    if (openChoice == OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE) {
+    else if (openChoice == OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE) {
       TrustedProjects.setProjectTrusted(locatedProject, false)
     }
-
-    TrustedProjectsStatistics.NEW_PROJECT_OPEN_OR_IMPORT_CHOICE.log(openChoice)
 
     if (openChoice != OpenUntrustedProjectChoice.CANCEL && pathsToExclude.isNotEmpty()) {
       val checker = serviceAsync<WindowsDefenderChecker>()
@@ -94,6 +92,11 @@ object TrustedProjectsDialog {
       else {
         checker.markProjectPath(projectRoot, /*skip =*/ true)
       }
+    }
+
+    TrustedProjectsStatistics.NEW_PROJECT_OPEN_OR_IMPORT_CHOICE.log(openChoice)
+    if (pathsToExclude.isNotEmpty()) {
+      WindowsDefenderStatisticsCollector.checkboxShownInTrustDialog()
     }
 
     return openChoice != OpenUntrustedProjectChoice.CANCEL
