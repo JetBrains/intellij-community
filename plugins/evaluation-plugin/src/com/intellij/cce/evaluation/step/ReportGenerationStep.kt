@@ -13,9 +13,9 @@ import com.intellij.cce.workspace.filter.CompareSessionsFilter
 import com.intellij.cce.workspace.filter.CompareSessionsStorage
 import com.intellij.cce.workspace.filter.CompareSessionsStorageImpl
 import com.intellij.cce.workspace.filter.SessionsFilter
+import com.intellij.cce.workspace.info.FileEvaluationDataInfo
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.info.FileSessionsInfo
-import com.intellij.cce.workspace.info.FileEvaluationDataInfo
 import com.intellij.cce.workspace.storages.FileErrorsStorage
 import com.intellij.cce.workspace.storages.SessionsStorage
 import com.intellij.openapi.application.ApplicationManager
@@ -128,6 +128,21 @@ class ReportGenerationStep<T : EvaluationStrategy>(
       title to MetricsEvaluator.withMetrics(title, feature.getMetrics())
     }.toMap()
 
+    var numberOfSessions = 0
+
+    for (sessionFile in sessionFiles.filter { it.value.size == sessionStorages.size }) {
+      var sessionsInfo: FileSessionsInfo? = null
+      for (file in sessionFile.value) {
+        sessionsInfo = sessionStorages[evaluationTitles.indexOf(file.evaluationType)].getSessions(file.path)
+        comparisonStorage.add(file.evaluationType, sessionsInfo.sessions)
+      }
+      if (sessionsInfo == null) throw IllegalStateException("Sessions file doesn't exist")
+      for (file in sessionFile.value) {
+        val sessionsEvaluation = sessionsInfo.copy(sessions = comparisonStorage.get(file.evaluationType))
+        numberOfSessions += sessionsEvaluation.sessions.sumOf { it.lookups.size }
+      }
+    }
+
     for (sessionFile in sessionFiles.filter { it.value.size == sessionStorages.size }) {
       val fileEvaluations = mutableListOf<FileEvaluationInfo>()
       var sessionsInfo: FileSessionsInfo? = null
@@ -141,7 +156,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
           sessions = comparisonStorage.get(file.evaluationType)
         )
         val evaluator = title2evaluator.getValue(file.evaluationType)
-        val metricsEvaluation = evaluator.evaluate(sessionsEvaluation.sessions)
+        val metricsEvaluation = evaluator.evaluate(sessionsEvaluation.sessions, numberOfSessions)
 
         val sessionIndividualEvaluationMap = metricsEvaluation
           .flatMap { it.individualScores?.entries ?: emptySet() }
@@ -171,7 +186,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     for (errorsStorage in errorStorages) {
       reportGenerators.forEach { it.generateErrorReports(errorsStorage.getErrors()) }
     }
-    val globalMetricInfos = title2evaluator.values.flatMap(MetricsEvaluator::globalMetricInfos)
+    val globalMetricInfos = title2evaluator.values.flatMap { it.globalMetricInfos(numberOfSessions) }
 
     return reportGenerators.map {
       ReportInfo(it.type, it.generateGlobalReport(globalMetricInfos))

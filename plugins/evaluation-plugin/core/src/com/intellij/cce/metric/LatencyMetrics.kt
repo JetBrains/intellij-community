@@ -3,6 +3,7 @@ package com.intellij.cce.metric
 
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
+import com.intellij.cce.metric.Metric.Companion.LOG
 import com.intellij.cce.metric.util.Bootstrap
 
 abstract class LatencyMetric(override val name: String) : Metric {
@@ -70,6 +71,14 @@ class PercentileLatencyMetric(private val percentile: Int) : LatencyMetric("Late
   override val description: String = "Latency $percentile percentile by all invocations"
   override val showByDefault = false
 
+  override fun shouldComputeIntervals(numberOfSessions: Int): Boolean {
+    val maximumSessions = 10000
+
+    if (numberOfSessions > maximumSessions) LOG.warn("Confidence Interval not calculated for metric $name because number of sessions $numberOfSessions exceeds maximum threshold $maximumSessions")
+
+    return super.shouldComputeIntervals(numberOfSessions) && numberOfSessions <= 10000
+  }
+
   override fun compute(sample: List<Double>): Double = computePercentile(sample, percentile)
 }
 
@@ -77,6 +86,14 @@ class SuccessPercentileLatencyMetric(private val percentile: Int) : LatencyMetri
   override val valueType = MetricValueType.INT
   override val description: String = "Latency $percentile percentile by invocations with selected proposal"
   override val showByDefault = false
+
+  override fun shouldComputeIntervals(numberOfSessions: Int): Boolean {
+    val maximumSessions = 10000
+
+    if (numberOfSessions > maximumSessions) LOG.warn("Confidence Interval not calculated for metric $name because number of sessions $numberOfSessions exceeds maximum threshold $maximumSessions")
+
+    return super.shouldComputeIntervals(numberOfSessions) && numberOfSessions <= 10000
+  }
 
   override fun compute(sample: List<Double>): Double = computePercentile(sample, percentile)
 

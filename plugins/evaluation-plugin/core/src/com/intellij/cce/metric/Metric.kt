@@ -4,8 +4,6 @@ package com.intellij.cce.metric
 import com.intellij.cce.core.Session
 import com.intellij.openapi.diagnostic.Logger
 
-private val LOG: Logger = Logger.getInstance(Metric::class.java)
-
 interface Metric {
   val supportsIndividualScores: Boolean
     get() = false
@@ -34,6 +32,14 @@ interface Metric {
 
   val showByDefault: Boolean
 
-  val shouldComputeIntervals: Boolean
-    get() = System.getenv("cce_compute_confidence_intervals")?.toBooleanStrictOrNull() == true
+  fun shouldComputeIntervals(numberOfSessions: Int): Boolean {
+    val maximumSessions = 200000
+
+    if (numberOfSessions > maximumSessions) LOG.warn("Confidence Interval not calculated for metric $name because number of sessions $numberOfSessions exceeds maximum threshold $maximumSessions")
+    return numberOfSessions <= maximumSessions && System.getenv("cce_compute_confidence_intervals")?.toBooleanStrictOrNull() == true
+  }
+
+  companion object {
+    val LOG: Logger = Logger.getInstance(Metric::class.java)
+  }
 }
