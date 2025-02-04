@@ -564,8 +564,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     for (InspectionToolWrapper<?, ?> toolWrapper : tools) {
       addTool(project, toolWrapper, dependencies);
 
-      if (toolWrapper instanceof LocalInspectionToolWrapper &&
-          ((LocalInspectionToolWrapper)toolWrapper).isDynamicGroup() &&
+      if (toolWrapper instanceof LocalInspectionToolWrapper local && local.isDynamicGroup() &&
           // some settings were read for the tool, so it must be initialized, otherwise no dynamic tools are expected
           toolWrapper.isInitialized()) {
         ToolsImpl parent = myTools.get(toolWrapper.getShortName());
@@ -625,9 +624,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       Computable<String> computable = extension == null || extension.displayName == null && extension.key == null
                                       ? new Computable.PredefinedValueComputable<>(toolWrapper.getDisplayName())
                                       : extension::getDisplayName;
-      if (toolWrapper instanceof LocalInspectionToolWrapper) {
-        key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(),
-                                           ((LocalInspectionToolWrapper)toolWrapper).getAlternativeID());
+      if (toolWrapper instanceof LocalInspectionToolWrapper local) {
+        key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(), local.getAlternativeID());
       }
       else {
         key = HighlightDisplayKey.register(shortName, computable, shortName);
@@ -681,8 +679,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   private static @Nullable InspectionElementsMergerBase getMerger(@NotNull String shortName) {
     InspectionElementsMerger merger = InspectionElementsMerger.getMerger(shortName);
-    if (merger instanceof InspectionElementsMergerBase) {
-      return (InspectionElementsMergerBase)merger;
+    if (merger instanceof InspectionElementsMergerBase base) {
+      return base;
     }
     return merger == null ? null : new InspectionElementsMergerBase() {
       @Override
