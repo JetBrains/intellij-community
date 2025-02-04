@@ -9,6 +9,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.SchemeDataHolder;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -631,11 +632,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       else {
         key = HighlightDisplayKey.register(shortName, computable, shortName);
       }
-    }
-
-    if (key == null) {
-      LOG.error(shortName + " ; number of initialized tools: " + myTools.size());
-      return;
+      if (key == null) {
+        PluginException.logPluginError(LOG, "Couldn't register HighlightDisplayKey '"+shortName + "' ; number of initialized tools: " + myTools.size()+"; toolWrapper:"+toolWrapper+"; extension:"+extension, null, toolWrapper.getDescriptionContextClass());
+        return;
+      }
     }
 
     HighlightDisplayLevel baseLevel = myBaseProfile != null && myBaseProfile.getToolsOrNull(shortName, project) != null
