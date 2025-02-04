@@ -1,20 +1,34 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.lang.html;
+package com.intellij.lang.html
 
-import com.intellij.lang.Language;
-import com.intellij.lang.xml.XMLLanguage;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.lang.Language
+import com.intellij.lang.xml.XMLLanguage
+import org.jetbrains.annotations.NonNls
 
-public class HTMLLanguage extends XMLLanguage {
+open class HTMLLanguage :
+  XMLLanguage {
 
-  public static final HTMLLanguage INSTANCE = new HTMLLanguage();
+  private constructor() : super(
+    baseLanguage = XMLLanguage.INSTANCE,
+    name = "HTML",
+    mimeTypes = arrayOf(
+      "text/html",
+      "text/htmlh",
+    )
+  )
 
-  private HTMLLanguage() {
-    super(XMLLanguage.INSTANCE, "HTML", "text/html", "text/htmlh");
-  }
+  protected constructor(
+    baseLanguage: Language,
+    name: @NonNls String,
+    vararg mimeTypes: String,
+  ) : super(
+    baseLanguage = baseLanguage,
+    name = name,
+    mimeTypes = mimeTypes,
+  )
 
-  protected HTMLLanguage(@NotNull Language baseLanguage, @NonNls @NotNull String name, @NonNls @NotNull String @NotNull ... mime) {
-    super(baseLanguage, name, mime);
+  companion object {
+    @JvmField
+    val INSTANCE: HTMLLanguage = HTMLLanguage()
   }
 }
