@@ -73,7 +73,7 @@ final class ShRunConfigurationProfileState implements RunProfileState {
       commandLine = createCommandLineForFile(eelDescriptor);
     }
     else {
-      commandLine = createCommandLineForScript();
+      commandLine = createCommandLineForScript(eelDescriptor);
     }
     ProcessHandler processHandler = createProcessHandler(commandLine);
     ProcessTerminatedListener.attach(processHandler);
@@ -91,13 +91,13 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     };
   }
 
-  private @NotNull GeneralCommandLine createCommandLineForScript() {
+  private @NotNull GeneralCommandLine createCommandLineForScript(@NotNull EelDescriptor eelDescriptor) {
     PtyCommandLine commandLine = new PtyCommandLine();
     commandLine.withConsoleMode(false);
     commandLine.withInitialColumns(120);
     commandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
-    commandLine.setWorkDirectory(myRunConfiguration.getScriptWorkingDirectory());
-    commandLine.withExePath(ShConfigurationType.getDefaultShell(myProject));
+    commandLine.withWorkingDirectory(Path.of(myRunConfiguration.getScriptWorkingDirectory()));
+    commandLine.withExePath(convertPathUsingEel(ShConfigurationType.getDefaultShell(myProject), eelDescriptor));
     commandLine.withParameters("-c");
     commandLine.withParameters(myRunConfiguration.getScriptText());
     return commandLine;
