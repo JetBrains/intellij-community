@@ -7,12 +7,8 @@ import com.jetbrains.rhizomedb.*
 import fleet.util.logging.logger
 import kotlinx.serialization.KSerializer
 import org.jetbrains.annotations.ApiStatus
-import java.io.InputStream
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-
-private const val ENTITIES_LIST_PATH = "META-INF/listOfEntities.txt"
-private const val ENTITY_TYPES_PROVIDERS_LIST_PATH = "META-INF/com.jetbrains.rhizomedb.impl.EntityTypeProvider.txt"
 
 interface SchemaBuilder {
   fun superclass(c: KClass<*>)
@@ -149,54 +145,15 @@ fun DbContext<Q>.attributeSerializer(attr: Attribute<*>): KSerializer<Any>? =
 fun DbContext<Q>.byEntityType(entityTypeEID: EID): List<EID> =
   queryIndex(IndexQuery.LookupMany(Entity.Type.attr as Attribute<EID>, entityTypeEID)).map { it.eid }
 
-internal fun versionForDurableEntityClass(c: Class<*>): String? =
-  c.getAnnotation(Version::class.java)?.version
-
 data class EntityTypeDefinition(val kClass: KClass<out Entity>,
                                 val schemaRegistrar: SchemaRegistrar,
                                 val ident: String,
                                 val module: String)
 
-fun collectEntityTypeProviders(module: Module): List<EntityTypeProvider> = listOf(
-  // TODO: replace with service providers. Hard to do before K2. After K2 have problems with IC (KT-66735), but seems they not interfere
-  MetaInfBasedEntityTypeProvider(module.classLoader, module::getResourceAsStream)
-)
-
-@Suppress("unused") // API for IJ
-fun collectEntityTypeProviders(classLoader: ClassLoader): List<EntityTypeProvider> = listOf(
-  MetaInfBasedEntityTypeProvider(classLoader, classLoader::getResourceAsStream)
-)
-
-private fun InputStream.metaInfLineSequence() : Sequence<String> =
-  bufferedReader()
-    .lineSequence()
-    .filter(String::isNotBlank)
-
 fun DbContext<Q>.entity(eid: EID): Entity? = impl.entity(eid)
 
 fun Q.entity(eid: EID): Entity? =
   getOne(eid, Entity.EntityObject.attr as Attribute<Entity>)
-
-private class MetaInfBasedEntityTypeProvider(
-  val classLoader: ClassLoader,
-  val resourceLoader: (String) -> InputStream?,
-) : EntityTypeProvider {
-  override val entityTypes: List<EntityType<*>> by lazy {
-    resourceLoader(ENTITY_TYPES_PROVIDERS_LIST_PATH)?.metaInfLineSequence()?.flatMap { providerClassName ->
-      try {
-        val providerClass = classLoader.loadClass(providerClassName)
-        val provider = providerClass.getField(INSTANCE).get(null) as EntityTypeProvider
-        provider.entityTypes
-      }
-      catch (e : Exception) {
-        logger.error(e) { "Couldn't load entity types from $providerClassName" }
-        emptyList()
-      }
-    }?.toList() ?: emptyList()
-  }
-
-  private val logger = logger<MetaInfBasedEntityTypeProvider>()
-}
 
 /**
  * Register entity type provider for loading.
@@ -207,8 +164,8 @@ private class MetaInfBasedEntityTypeProvider(
  */
 @ApiStatus.Internal
 fun registerEntityTypeProvider(provider: EntityTypeProvider): Boolean {
-  // Later: this should push entity type provider somewhere on non-JVM platforms
+  entityTypeProvidersList.add(provider)
   return true
 }
 
-private const val INSTANCE = "INSTANCE"
+val entityTypeProvidersList: MutableList<EntityTypeProvider> = mutableListOf()
