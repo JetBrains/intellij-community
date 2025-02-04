@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.tree.xml;
+package com.intellij.psi.tree.xml
 
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NonNls
 
-public class IXmlLeafElementType extends IXmlElementType {
-  public IXmlLeafElementType(@NonNls String debugName) {
-    super(debugName);
-  }
-}
+class IXmlLeafElementType(
+  debugName: @NonNls String,
+) : IXmlElementType(debugName)
