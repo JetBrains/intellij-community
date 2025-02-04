@@ -5,6 +5,7 @@ import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.impl.ProductModeMatcher
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
+import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ContentModuleFilter
 
 /**
@@ -34,4 +35,14 @@ internal class ContentModuleByProductModeFilter(
 
 internal object IncludeAllContentModuleFilter : ContentModuleFilter {
   override fun isOptionalModuleIncluded(moduleName: String, pluginMainModuleName: String?): Boolean = true
+  
+  override fun toString(): String = "IncludeAllContentModuleFilter"
+}
+
+internal class SkipUnresolvedOptionalContentModuleFilter(private val context: BuildContext) : ContentModuleFilter {
+  override fun isOptionalModuleIncluded(moduleName: String, pluginMainModuleName: String?): Boolean {
+    return context.findModule(moduleName) != null;
+  }
+  
+  override fun toString(): String = "SkipUnresolvedOptionalContentModuleFilter"
 }

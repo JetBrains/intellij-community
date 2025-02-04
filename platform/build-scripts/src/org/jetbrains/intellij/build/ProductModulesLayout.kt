@@ -6,6 +6,7 @@ package org.jetbrains.intellij.build
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import kotlinx.collections.immutable.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
@@ -117,6 +118,15 @@ class ProductModulesLayout {
    */
   var compatiblePluginsToIgnore: PersistentList<String> = persistentListOf()
 
+  /**
+   * If this property is set to `true`, modules registered as optional in `content` tag in `plugin.xml` files which doesn't exist in the JPS project configuration, will be excluded 
+   * from the distribution (by default, in such cases build scripts fail with an error).
+   * This can be used to build a product from a subset of a source repository. E.g., a plugin from intellij-community may refer to some additional modules located in the ultimate
+   * part of the project, and they should be skipped while building from intellij-community sources. 
+   */
+  @ApiStatus.Internal
+  var skipUnresolvedContentModules: Boolean = false
+  
   /**
    * Module names which should be excluded from this product.
    * Allows filtering out default platform modules (both api and implementation) as well as product modules.

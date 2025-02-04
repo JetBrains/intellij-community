@@ -238,7 +238,12 @@ class BuildContextImpl internal constructor(
 
   @OptIn(DelicateCoroutinesApi::class)
   private fun computeContentModuleFilter(): Deferred<ContentModuleFilter> {
-    if (productProperties.productMode == ProductMode.MONOLITH) return CompletableDeferred(IncludeAllContentModuleFilter)
+    if (productProperties.productMode == ProductMode.MONOLITH) {
+      if (productProperties.productLayout.skipUnresolvedContentModules) {
+        return CompletableDeferred(SkipUnresolvedOptionalContentModuleFilter(context = this))
+      }
+      return CompletableDeferred(IncludeAllContentModuleFilter)
+    }
     
     return GlobalScope.async(Dispatchers.Unconfined + CoroutineName("Content Modules Filter"), start = CoroutineStart.LAZY) {
       val bundledPluginModules = getBundledPluginModules()
