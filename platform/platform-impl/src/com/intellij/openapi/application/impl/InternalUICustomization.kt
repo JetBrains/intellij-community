@@ -2,7 +2,8 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileEditor.impl.EditorTabPainterAdapter
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Splittable
@@ -23,7 +24,9 @@ import javax.swing.JComponent
 open class InternalUICustomization {
   companion object{
     @JvmStatic
-    fun getInstance(): InternalUICustomization = ApplicationManager.getApplication().getService(InternalUICustomization::class.java)
+    fun getInstance(): InternalUICustomization = service()
+    @JvmStatic
+    fun getInstanceOrNull(): InternalUICustomization? = serviceOrNull()
   }
 
   open val componentMarker: InternalUiComponentMarker = InternalUiComponentMarker()
