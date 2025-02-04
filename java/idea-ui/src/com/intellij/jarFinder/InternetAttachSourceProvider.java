@@ -25,9 +25,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -233,8 +235,25 @@ public final class InternetAttachSourceProvider extends AbstractAttachSourceProv
     return true;
   }
 
+  /**
+   * @deprecated use {@link #attachSourceJar(Path, Collection<? extends Library>)} instead.
+   */
+  @Deprecated
   public static void attachSourceJar(@NotNull File sourceJar, @NotNull Collection<? extends Library> libraries) {
-    VirtualFile srcFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceJar);
+    attachSourceJar(
+      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceJar),
+      libraries
+    );
+  }
+
+  public static void attachSourceJar(@NotNull Path sourceJar, @NotNull Collection<? extends Library> libraries) {
+    attachSourceJar(
+      LocalFileSystem.getInstance().refreshAndFindFileByNioFile(sourceJar),
+      libraries
+    );
+  }
+
+  private static void attachSourceJar(@Nullable VirtualFile srcFile, @NotNull Collection<? extends Library> libraries) {
     if (srcFile == null) return;
 
     VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(srcFile);

@@ -17,7 +17,6 @@ import org.jetbrains.idea.devkit.run.ProductInfo
 import org.jetbrains.idea.devkit.run.loadProductInfo
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.util.GradleArtifactDownloader
-import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
@@ -157,7 +156,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         override fun perform(orderEntries: MutableList<out LibraryOrderEntry>): ActionCallback {
           val executionResult = ActionCallback()
 
-          attachSources(it.toFile(), orderEntries) {
+          attachSources(it, orderEntries) {
             executionResult.setDone()
           }
 
@@ -195,7 +194,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
               executionResult.setRejected()
             }
             else {
-              attachSources(path.toFile(), orderEntries) {
+              attachSources(path, orderEntries) {
                 executionResult.setDone()
               }
             }
@@ -208,7 +207,7 @@ internal class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
   /**
    * Attaches sources jar to the specified libraries and executes the provided block of code.
    */
-  private fun attachSources(path: File, orderEntries: MutableList<out LibraryOrderEntry>, block: () -> Unit) {
+  private fun attachSources(path: Path, orderEntries: MutableList<out LibraryOrderEntry>, block: () -> Unit) {
     ApplicationManager.getApplication().invokeLater {
       InternetAttachSourceProvider.attachSourceJar(path, orderEntries.mapNotNull { it.library })
       block()

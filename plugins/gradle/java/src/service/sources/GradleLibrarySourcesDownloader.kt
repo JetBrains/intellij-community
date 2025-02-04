@@ -21,9 +21,9 @@ import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.execution.target.maybeGetLocalValue
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.cache.GradleLocalCacheHelper
+import org.jetbrains.plugins.gradle.util.GradleArtifactDownloader
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.GradleArtifactDownloader
 import org.jetbrains.plugins.gradle.util.isValidJar
 import java.nio.file.Path
 import java.util.*
@@ -83,7 +83,7 @@ object GradleLibrarySourcesDownloader {
       orderEntries.forEach {
         ContainerUtil.addIfNotNull(libraries, it.library)
       }
-      attachSourceJar(sourcesJar.toFile(), libraries)
+      attachSourceJar(sourcesJar, libraries)
     }
   }
 
