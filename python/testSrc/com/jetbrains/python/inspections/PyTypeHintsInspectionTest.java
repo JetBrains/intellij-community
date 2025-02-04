@@ -2086,6 +2086,21 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-75759
+  public void testEllipsisNotReported() {
+    doTestByText("""
+                   from typing import Generic, ParamSpec, TypeVar, Callable
+                   T = TypeVar("T")
+                   P1 = ParamSpec("P1")
+                   
+                   class ClassA(Generic[T, P1]):
+                       ...
+                   
+                   def func23(x: ClassA[int, ...]) -> str:  # OK
+                       return ""
+                   """);
+  }
+
   // TODO remove when PY-77059 is supported
   public void testParameterizedImplicitTypeAlias() {
     doTestByText("""

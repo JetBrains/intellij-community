@@ -921,12 +921,13 @@ class PyTypeHintsInspection : PyInspection() {
           is PyBinaryExpression,
           is PyStarExpression,
           is PyStringLiteralExpression,
-          is PyListLiteralExpression,
-          is PyNoneLiteralExpression,
-            -> {
+          is PyListLiteralExpression, -> {
             val typeRef = PyTypingTypeProvider.getType(it, myTypeEvalContext)
             if (typeRef == null) registerProblem(it, PyPsiBundle.message("INSP.type.hints.invalid.type.argument"))
             typeArgumentTypes.add(Ref.deref(typeRef))
+          }
+          is PyNoneLiteralExpression -> {
+            typeArgumentTypes.add(if (it.isEllipsis) null else PyNoneType.INSTANCE)
           }
           else -> {
             registerProblem(it, PyPsiBundle.message("INSP.type.hints.invalid.type.argument"))
