@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm
 
+import io.opentelemetry.context.Context
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -14,6 +15,7 @@ import kotlin.io.path.walk
 import kotlin.system.exitProcess
 
 enum class TestModules(@JvmField val sourcePath: String, private val paramsPath: String) {
+  STAT_CONFIG("platform/statistics/config/src", "platform/statistics/config/config.jar-0.params"),
   XML_DOM("platform/util/xmlDom/src", "platform/util/xmlDom/xmlDom.jar-0.params"),
   PLATFORM_IMPL("platform/platform-impl/src", "platform/platform-impl/ide-impl.jar-0.params"),
   LANG_IMPL("platform/lang-impl/src", "platform/lang-impl/lang-impl.jar-0.params"),
@@ -82,12 +84,14 @@ fun performTestInvocation(execute: suspend (out: Writer, coroutineScope: Corouti
   val out = StringWriter()
   val exitCode: Int
   try {
-    exitCode = runBlocking(Dispatchers.Default) {
+    exitCode = runBlocking(Dispatchers.Default + OpenTelemetryContextElement(Context.root())) {
       execute(out, this)
     }
   }
   finally {
-    System.out.append(out.toString())
+    System.out.appendLine("╔══════════════════════════════════ OUT ══════════════════════════════════╗\n")
+    System.out.append(out.toString().trim().prependIndent("║  ") + "\n")
+    System.out.appendLine("╚═════════════════════════════════════════════════════════════════════════╝")
   }
 
   exitProcess(exitCode)

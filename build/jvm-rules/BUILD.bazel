@@ -185,9 +185,27 @@ jvm_import(
 )
 
 jvm_import(
-    name = "proguard-core",
-    jar = "@proguard-core//file",
-    source_jar = "@proguard-core-sources//file",
+    name = "opentelemetry-sdk-extension-autoconfigure-spi",
+    jar = "@opentelemetry-sdk-extension-autoconfigure-spi//file",
+    source_jar = "@opentelemetry-sdk-extension-autoconfigure-spi-sources//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "opentelemetry-exporter-otlp",
+    jar = "@opentelemetry-exporter-otlp//file",
+    source_jar = "@opentelemetry-exporter-otlp-sources//file",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        ":opentelemetry-exporter-sender-jdk",
+        ":opentelemetry-sdk-extension-autoconfigure-spi"
+    ],
+)
+
+jvm_import(
+    name = "opentelemetry-exporter-sender-jdk",
+    jar = "@opentelemetry-exporter-sender-jdk//file",
+    source_jar = "@opentelemetry-exporter-sender-jdk-sources//file",
     visibility = ["//visibility:public"],
 )
 

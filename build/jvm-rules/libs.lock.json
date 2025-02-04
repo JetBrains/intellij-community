@@ -1,7 +1,7 @@
 {
-  "com.google.flatbuffers:flatbuffers-java:24.12.23": [
-    "67c87e2e588734cf0166423e89ca99761479a580f1bd959c052b82a2546440e8",
-    "822f6a95531ec757019d3e3e8af68885b0a682e53825d571f7cecf0c71b4edde"
+  "com.google.flatbuffers:flatbuffers-java:25.1.24": [
+    "dbc103dfd4eb25664f87492968d8e01812c13cf939e5b72db2af38bfce530af3",
+    "5cd75b7500b07f93c5308ffd8d430aa0b62cd162dff7a5394d5e513cf3a7d534"
   ],
   "com.google.protobuf:protobuf-java:4.29.3": [
     "442db5991a11974d72127353be7d7e7abdf8d943d83b16668cb2e336d7392f54",
@@ -14,6 +14,18 @@
   "io.opentelemetry:opentelemetry-exporter-logging-otlp:1.46.0": [
     "afbed5afecd48ebc66ffe16c438cd92da31759af56bdcbde0f260b131e43042a",
     "10c69d372df6c0e80486edb3cbd4191b75a99325e5faba10406242b3e609311e"
+  ],
+  "io.opentelemetry:opentelemetry-exporter-otlp:1.46.0": [
+    "9df3776f9bb2ca5e63058006931b2806c177cd74e77e2875fdc54a49302ba733",
+    "1703983de4b3820336f2e2b55f9cd4e2323996863e0c8ba59d44397d780a7d22"
+  ],
+  "io.opentelemetry:opentelemetry-exporter-sender-jdk:1.46.0": [
+    "ae7f7b4ec65b814e45f8388863ccf453d3ae0c4fc513c8dc6127bec4507524a0",
+    "13eb527901c0d3e0b1760f1f5ade26b340f61a31ff72a6e5c0fcafb2c81206d7"
+  ],
+  "io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi:1.46.0": [
+    "ffe8ac4ddce31b13eab1c6280dc18dcf734fbbeb0cf86feacc084ac7ca3f6725",
+    "d3f7b7f5b2041a7c7d3f31b3619336f4c72f945d89e5c90a83292e308431fe67"
   ],
   "org.apache.arrow:arrow-algorithm:18.1.0": [
     "8627d00c1fa3341ff49d894fb88f003e9a7ca4a3846527e31d881c162cf146ff",

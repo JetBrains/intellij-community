@@ -81,12 +81,11 @@ private const val USE_MODULE_PATH_ONLY_OPTION = "compiler.force.module.path"
 @Suppress("RemoveRedundantQualifierName")
 internal val javaModuleTypes = java.util.Set.of(JpsJavaModuleType.INSTANCE)
 
-private val PREFER_TARGET_JDK_COMPILER: Key<Boolean> = GlobalContextKey.create<Boolean>("_prefer_target_jdk_javac_")
-private val SHOWN_NOTIFICATIONS: Key<MutableSet<String>> = GlobalContextKey.create<MutableSet<String>>("_shown_notifications_")
+private val PREFER_TARGET_JDK_COMPILER: Key<Boolean> = GlobalContextKey.create("_prefer_target_jdk_javac_")
+private val SHOWN_NOTIFICATIONS: Key<MutableSet<String>> = GlobalContextKey.create("_shown_notifications_")
 private val COMPILING_TOOL = Key.create<JavaCompilingTool>("_java_compiling_tool_")
-private val COMPILER_USAGE_STATISTICS = Key.create<ConcurrentMap<String, MutableCollection<String>>>("_java_compiler_usage_stats_")
-private val MODULE_PATH_SPLITTER: Key<ModulePathSplitter> = GlobalContextKey.create<ModulePathSplitter>("_module_path_splitter_")
-private val COMPILABLE_EXTENSIONS = mutableListOf<String>(JAVA_EXTENSION)
+private val MODULE_PATH_SPLITTER: Key<ModulePathSplitter> = GlobalContextKey.create("_module_path_splitter_")
+private val COMPILABLE_EXTENSIONS = mutableListOf(JAVA_EXTENSION)
 
 private const val PROC_ONLY_OPTION = "-proc:only"
 private const val PROC_FULL_OPTION = "-proc:full"
@@ -102,7 +101,7 @@ private const val SOURCE_OPTION = "-source"
 private const val SYSTEM_OPTION = "--system"
 
 @Suppress("RemoveRedundantQualifierName")
-private val FILTERED_OPTIONS = java.util.Set.of<String?>(TARGET_OPTION, RELEASE_OPTION, "-d")
+private val FILTERED_OPTIONS = java.util.Set.of(TARGET_OPTION, RELEASE_OPTION, "-d")
 
 @Suppress("RemoveRedundantQualifierName", "SpellCheckingInspection")
 private val FILTERED_SINGLE_OPTIONS: MutableSet<String?> = java.util.Set.of(
@@ -114,26 +113,26 @@ private val POSSIBLY_CONFLICTING_OPTIONS = java.util.Set.of(
   SOURCE_OPTION, SYSTEM_OPTION, "--boot-class-path", "-bootclasspath", "--class-path", "-classpath", "-cp", PROCESSORPATH_OPTION, "-sourcepath", "--module-path", "-p", "--module-source-path"
 )
 
-internal class JavaBuilder(private val span: Span, private val out: Appendable) : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
+internal class JavaBuilder(
+  private val span: Span,
+  private val out: Appendable,
+) : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
   private val refRegistrars = ArrayList<JavacFileReferencesRegistrar>()
 
   companion object {
     const val BUILDER_ID: String = "java"
 
-    private val ourDefaultRtJar: Path?
     private val ourProcFullRequiredFrom: Int // 0, if not set
 
     init {
-      var rtJar: Path? = null
       val tokenizer = StringTokenizer(System.getProperty("sun.boot.class.path", ""), File.pathSeparator, false)
       while (tokenizer.hasMoreTokens()) {
         val file = Path.of(tokenizer.nextToken())
         if (file.endsWith("rt.jar")) {
-          rtJar = file.normalize().toAbsolutePath()
+          error("rt.jar should not exists")
           break
         }
       }
-      ourDefaultRtJar = rtJar
       ourProcFullRequiredFrom = 0
     }
 
@@ -248,44 +247,6 @@ internal class JavaBuilder(private val span: Span, private val out: Appendable) 
         PREFER_TARGET_JDK_COMPILER.set(context, result)
       }
       return result
-    }
-
-    // If platformCp of the build process is the same as the target platform, do not specify platformCp explicitly
-    // this will allow javac to resolve against ct.sym file, which is required for the "compilation profiles" feature
-    private fun calcEffectivePlatformCp(
-      platformCp: Collection<Path>,
-      options: Iterable<String>
-    ): Collection<Path>? {
-      if (ourDefaultRtJar == null) {
-        return platformCp
-      }
-
-      var profileFeatureRequested = false
-      for (option in options) {
-        if ("-profile".equals(option, ignoreCase = true)) {
-          profileFeatureRequested = true
-          break
-        }
-      }
-      if (!profileFeatureRequested) {
-        return platformCp
-      }
-
-      var isTargetPlatformSameAsBuildRuntime = false
-      for (file in platformCp) {
-        if (file == ourDefaultRtJar) {
-          isTargetPlatformSameAsBuildRuntime = true
-          break
-        }
-      }
-      if (!isTargetPlatformSameAsBuildRuntime) {
-        // compact profile was requested, but we have to use alternative platform classpath to meet project settings
-        // consider this a compiler error and let user re-configure the project
-        return null
-      }
-      // returning an empty list will force default behavior for platform classpath calculation
-      // javac will resolve against its own bootclasspath and use ct.sym file when available
-      return emptyList()
     }
 
     @Synchronized
@@ -763,7 +724,6 @@ internal class JavaBuilder(private val span: Span, private val out: Appendable) 
     val compilingTool = JavaBuilderUtil.findCompilingTool(compilerId)
     COMPILING_TOOL.set(context, compilingTool)
     SHOWN_NOTIFICATIONS.set(context, Collections.synchronizedSet(HashSet<String>()))
-    COMPILER_USAGE_STATISTICS.set(context, ConcurrentHashMap<String, MutableCollection<String>>())
     val dataManager = context.projectDescriptor.dataManager
     if (!isJavac(compilingTool)) {
       dataManager.isProcessConstantsIncrementally = false
@@ -777,35 +737,22 @@ internal class JavaBuilder(private val span: Span, private val out: Appendable) 
     }
   }
 
-  override fun chunkBuildStarted(context: CompileContext?, chunk: ModuleChunk) {
+  override fun chunkBuildStarted(context: CompileContext, chunk: ModuleChunk) {
+    if (!(context as BazelCompileContext).scope.isIncrementalCompilation) {
+      return
+    }
+
     // before the first compilation round starts: find and mark dirty all classes that depend on removed or moved classes so
     // that all such files are compiled in the first round.
     JavaBuilderUtil.markDirtyDependenciesForInitialRound(context, object : DirtyFilesHolderBase<JavaSourceRootDescriptor, ModuleBuildTarget>(context) {
       override fun processDirtyFiles(processor: FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>) {
-        FSOperations.processFilesToRecompile(context, chunk, processor)
+        context.projectDescriptor.fsState.processFilesToRecompile(context, chunk.targets.single(), processor)
       }
     }, chunk)
   }
 
   override fun buildFinished(context: CompileContext) {
     refRegistrars.clear()
-    val stats = COMPILER_USAGE_STATISTICS.get(context)
-    if (stats.size == 1) {
-      val entry = stats.entries.iterator().next()
-      val compilerName = entry.key
-      context.processMessage(CompilerMessage("", BuildMessage.Kind.JPS_INFO,
-        JpsBuildBundle.message("build.message.0.was.used.to.compile.java.sources", compilerName)))
-    }
-    else {
-      for (entry in stats.entries) {
-        val compilerName = entry.key
-        val moduleNames = entry.value
-        context.processMessage(CompilerMessage("", BuildMessage.Kind.JPS_INFO,
-          if (moduleNames.size == 1) JpsBuildBundle.message("build.message.0.was.used.to.compile.1", compilerName, moduleNames.iterator().next()) else JpsBuildBundle.message("build.message.0.was.used.to.compile.1.modules", compilerName, moduleNames.size)
-        ))
-        span.addEvent("$compilerName was used to compile $moduleNames")
-      }
-    }
   }
 
   override fun getCompilableFileExtensions(): List<String> = COMPILABLE_EXTENSIONS
@@ -898,7 +845,6 @@ internal class JavaBuilder(private val span: Span, private val out: Appendable) 
 
     JavaBuilderUtil.ensureModuleHasJdk(chunk.representativeTarget().module, context, builderName)
     val classpath = ProjectPaths.getCompilationClasspath(chunk, false).map { it.toPath() }
-    val platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false).map { it.toPath() }
 
     // begin compilation round
     val outputSink = OutputFilesSink(
@@ -927,7 +873,6 @@ internal class JavaBuilder(private val span: Span, private val out: Appendable) 
                 AttributeKey.stringKey("module.name"), chunkName,
                 AttributeKey.stringArrayKey("files"), files.map { it.path },
                 AttributeKey.stringArrayKey("classpath"), classpath.map { it.toString() },
-                AttributeKey.stringArrayKey("platform classpath"), platformCp.map { it.toString() },
               )
             )
           }
@@ -938,7 +883,6 @@ internal class JavaBuilder(private val span: Span, private val out: Appendable) 
               chunk = chunk,
               files = files,
               originalClassPath = classpath,
-              originalPlatformCp = platformCp,
               sourcePath = emptyList(),
               diagnosticSink = diagnosticSink,
               outputSink = outputSink,
@@ -981,7 +925,6 @@ internal class JavaBuilder(private val span: Span, private val out: Appendable) 
     chunk: ModuleChunk,
     files: Collection<File>,
     originalClassPath: Collection<Path>,
-    originalPlatformCp: Collection<Path>,
     sourcePath: Collection<File>,
     diagnosticSink: DiagnosticOutputConsumer,
     outputSink: OutputFileConsumer,
@@ -1024,19 +967,17 @@ internal class JavaBuilder(private val span: Span, private val out: Appendable) 
     val vmOptions = vm_compilerOptions.first
     val options = vm_compilerOptions.second
 
-    val effectivePlatformCp = calcEffectivePlatformCp(platformCp = originalPlatformCp, options = options)
-    if (effectivePlatformCp == null) {
-      context.processMessage(CompilerMessage(builderName, BuildMessage.Kind.ERROR, JpsBuildBundle.message(
-        "build.message.unsupported.compact.compilation.profile.was.requested", chunk.name, System.getProperty("java.version")
-      )))
-      return false
-    }
-
     val platformCp: Iterable<Path>?
     val classPath: Iterable<Path>?
     val modulePath: ModulePath
     val upgradeModulePath: Iterable<Path>?
-    if (moduleInfoFile != null) {
+    if (moduleInfoFile == null) {
+      modulePath = ModulePath.EMPTY
+      upgradeModulePath = emptyList<Path>()
+      platformCp = emptyList<Path>()
+      classPath = originalClassPath
+    }
+    else {
       // has modules
       val splitter = MODULE_PATH_SPLITTER.get(context)
       val pair = splitter.splitPath(
@@ -1058,29 +999,13 @@ internal class JavaBuilder(private val span: Span, private val out: Appendable) 
         modulePath = pair.first
         classPath = pair.second.map { it.toPath() }
       }
+
       // modules above the JDK in the order entry list make a module upgrade path
-      upgradeModulePath = effectivePlatformCp
+      upgradeModulePath = emptyList()
       platformCp = emptyList<Path>()
-    }
-    else {
-      modulePath = ModulePath.EMPTY
-      upgradeModulePath = mutableListOf<Path>()
-      if (!effectivePlatformCp.iterator().hasNext() && getChunkSdkVersion(chunk) >= 9) {
-        // If chunk's SDK is 9 or higher, there is no way to specify full platform classpath
-        // because platform classes are stored in `jimage` binary files with unknown format.
-        // Because of this, we are clearing platform classpath so that javac will resolve against its own boot classpath
-        // and prepending additional jars from the JDK configuration to compilation classpath
-        platformCp = emptyList<Path>()
-        classPath = Iterators.flat(effectivePlatformCp, originalClassPath)
-      }
-      else {
-        platformCp = effectivePlatformCp
-        classPath = originalClassPath
-      }
     }
 
     if (forkSdk != null) {
-      updateCompilerUsageStatistics(context, "javac ${forkSdk.getSecond()}", chunk)
       val server = ensureJavacServerStarted(context)
       val paths = CompilationPaths.create(
         platformCp.map { it.toFile() },
@@ -1117,7 +1042,6 @@ internal class JavaBuilder(private val span: Span, private val out: Appendable) 
       }
     }
 
-    updateCompilerUsageStatistics(context = context, compilerName = compilingTool.description, chunk = chunk)
     return invokeJavac(
       compilerSdkVersion = compilerSdkVersion,
       context = context,
@@ -1442,11 +1366,4 @@ private fun collectAdditionalRequires(options: Iterable<String>): Collection<Str
 
 private fun interface JavacCaller {
   fun invoke(options: Iterable<String>, files: Iterable<File>, outSink: OutputFileConsumer): Boolean
-}
-
-private fun updateCompilerUsageStatistics(context: CompileContext, compilerName: String, chunk: ModuleChunk) {
-  val names = COMPILER_USAGE_STATISTICS.get(context).computeIfAbsent(compilerName) { Collections.synchronizedSet(hashSet()) }
-  for (module in chunk.modules) {
-    names.add(module.name)
-  }
 }

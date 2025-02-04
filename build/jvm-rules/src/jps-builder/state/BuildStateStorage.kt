@@ -7,9 +7,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.apache.arrow.memory.RootAllocator
-import org.apache.arrow.vector.BaseValueVector
 import org.apache.arrow.vector.BitVector
-import org.apache.arrow.vector.FixedSizeBinaryVector
 import org.apache.arrow.vector.VarBinaryVector
 import org.apache.arrow.vector.VarCharVector
 import org.apache.arrow.vector.VectorSchemaRoot
@@ -212,7 +210,6 @@ fun saveBuildState(
   }
 }
 
-// do not use an open-addressing hash map or immutable map - see https://stackoverflow.com/a/16303438
 data class LoadStateResult(
   @JvmField val rebuildRequested: String?,
 
@@ -252,7 +249,7 @@ private fun doLoad(
     val start = outputListVector.getElementStartIndex(rowIndex)
     val end = outputListVector.getElementEndIndex(rowIndex)
     val size = end - start
-    val outputs = if (size == 0) null else Array<String>(size) {
+    val outputs = if (size == 0) null else Array(size) {
       String(outputListInnerVector.get(it + start))
     }
 

@@ -1,12 +1,21 @@
 module(name = "rules_jvm", version = "0.1")
 
 bazel_dep(name = "bazel_worker_api", version = "0.0.4")
-bazel_dep(name = "rules_java", version = "8.7.1")
+bazel_dep(name = "rules_java", version = "8.8.0")
 bazel_dep(name = "rules_kotlin", version = "2.0.0-jb.5")
 # bazel_dep(name = "rules_graalvm", version = "0.11.3")
 bazel_dep(name = "lib")
-bazel_dep(name = "protobuf", version = "29.2")
+bazel_dep(name = "protobuf", version = "29.3")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
+bazel_dep(name = "toolchains_protoc", version = "0.3.7")
+
+protoc = use_extension("@toolchains_protoc//protoc:extensions.bzl", "protoc")
+protoc.toolchain(
+    google_protobuf = "com_google_protobuf",
+    version = "v29.3",
+)
+use_repo(protoc, "com_google_protobuf", "toolchains_protoc_hub")
+register_toolchains("@toolchains_protoc_hub//:all")
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -209,15 +218,15 @@ http_file(
 
 http_file(
     name = "flatbuffers-java",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/flatbuffers/flatbuffers-java/24.12.23/flatbuffers-java-24.12.23.jar",
-    sha256 = "67c87e2e588734cf0166423e89ca99761479a580f1bd959c052b82a2546440e8",
-    downloaded_file_path = "flatbuffers-java-24.12.23.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/flatbuffers/flatbuffers-java/25.1.24/flatbuffers-java-25.1.24.jar",
+    sha256 = "dbc103dfd4eb25664f87492968d8e01812c13cf939e5b72db2af38bfce530af3",
+    downloaded_file_path = "flatbuffers-java-25.1.24.jar",
 )
 http_file(
     name = "flatbuffers-java-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/flatbuffers/flatbuffers-java/24.12.23/flatbuffers-java-24.12.23-sources.jar",
-    sha256 = "822f6a95531ec757019d3e3e8af68885b0a682e53825d571f7cecf0c71b4edde",
-    downloaded_file_path = "flatbuffers-java-24.12.23-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/flatbuffers/flatbuffers-java/25.1.24/flatbuffers-java-25.1.24-sources.jar",
+    sha256 = "5cd75b7500b07f93c5308ffd8d430aa0b62cd162dff7a5394d5e513cf3a7d534",
+    downloaded_file_path = "flatbuffers-java-25.1.24-sources.jar",
 )
 
 http_file(
@@ -312,16 +321,42 @@ http_file(
 )
 
 http_file(
-    name = "proguard-core",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/guardsquare/proguard-core/9.1.7/proguard-core-9.1.7.jar",
-    sha256 = "db06fa9f6b43bb7d386420f854f41aa55a11023de36bad68e043c3ac3f33b8d5",
-    downloaded_file_path = "proguard-core-9.1.7.jar",
+    name = "opentelemetry-sdk-extension-autoconfigure-spi",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.46.0/opentelemetry-sdk-extension-autoconfigure-spi-1.46.0.jar",
+    sha256 = "ffe8ac4ddce31b13eab1c6280dc18dcf734fbbeb0cf86feacc084ac7ca3f6725",
+    downloaded_file_path = "opentelemetry-sdk-extension-autoconfigure-spi-1.46.0.jar",
 )
 http_file(
-    name = "proguard-core-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/guardsquare/proguard-core/9.1.7/proguard-core-9.1.7-sources.jar",
-    sha256 = "495063fbf5a1989435ee15ed6c6caf39b7dc7af22dd495e38fc7e6e7c00f1fcc",
-    downloaded_file_path = "proguard-core-9.1.7-sources.jar",
+    name = "opentelemetry-sdk-extension-autoconfigure-spi-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.46.0/opentelemetry-sdk-extension-autoconfigure-spi-1.46.0-sources.jar",
+    sha256 = "d3f7b7f5b2041a7c7d3f31b3619336f4c72f945d89e5c90a83292e308431fe67",
+    downloaded_file_path = "opentelemetry-sdk-extension-autoconfigure-spi-1.46.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-exporter-otlp",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp/1.46.0/opentelemetry-exporter-otlp-1.46.0.jar",
+    sha256 = "9df3776f9bb2ca5e63058006931b2806c177cd74e77e2875fdc54a49302ba733",
+    downloaded_file_path = "opentelemetry-exporter-otlp-1.46.0.jar",
+)
+http_file(
+    name = "opentelemetry-exporter-otlp-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp/1.46.0/opentelemetry-exporter-otlp-1.46.0-sources.jar",
+    sha256 = "1703983de4b3820336f2e2b55f9cd4e2323996863e0c8ba59d44397d780a7d22",
+    downloaded_file_path = "opentelemetry-exporter-otlp-1.46.0-sources.jar",
+)
+
+http_file(
+    name = "opentelemetry-exporter-sender-jdk",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.46.0/opentelemetry-exporter-sender-jdk-1.46.0.jar",
+    sha256 = "ae7f7b4ec65b814e45f8388863ccf453d3ae0c4fc513c8dc6127bec4507524a0",
+    downloaded_file_path = "opentelemetry-exporter-sender-jdk-1.46.0.jar",
+)
+http_file(
+    name = "opentelemetry-exporter-sender-jdk-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.46.0/opentelemetry-exporter-sender-jdk-1.46.0-sources.jar",
+    sha256 = "13eb527901c0d3e0b1760f1f5ade26b340f61a31ff72a6e5c0fcafb2c81206d7",
+    downloaded_file_path = "opentelemetry-exporter-sender-jdk-1.46.0-sources.jar",
 )
 
 ### auto-generated section `libraries` end

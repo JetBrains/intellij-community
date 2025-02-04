@@ -2,7 +2,6 @@
 package org.jetbrains.bazel.jvm
 
 import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.context.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.io.*
@@ -17,7 +16,7 @@ object JvmWorker : WorkRequestExecutor<WorkRequest> {
     processRequests(startupArgs = startupArgs, executor = this, reader = WorkRequestReaderWithoutDigest(System.`in`), serviceName = "jvm-worker")
   }
 
-  override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path, tracingContext: Context, tracer: Tracer): Int {
+  override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path, tracer: Tracer): Int {
     val args = request.arguments
     if (args.isEmpty()) {
       writer.appendLine("Command is not specified")

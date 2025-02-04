@@ -185,8 +185,8 @@ private fun configureClasspath(
   dependencyFileToDigest: Map<Path, ByteArray>,
   digests: TargetConfigurationDigestContainer,
 ) {
-  // REDUCED_CLASSPATH_MODE is not supported for JPS
-  val classPathRaw = args.mandatory(JvmBuilderFlags.CLASSPATH)
+  // no classpath if no source file (jvm_test without own sources)
+  val classPathRaw = args.optionalList(JvmBuilderFlags.CP)
   val files = Array<Path>(classPathRaw.size) {
     baseDir.resolve(classPathRaw[it]).normalize()
   }

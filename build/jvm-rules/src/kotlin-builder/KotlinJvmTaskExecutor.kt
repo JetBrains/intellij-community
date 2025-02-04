@@ -189,7 +189,7 @@ private inline fun wrapOutput(out: Writer, label: String, classifier: String, ta
 
 private fun createClasspath(args: ArgMap<JvmBuilderFlags>, baseDir: Path): List<Path> {
   if (!args.boolFlag(JvmBuilderFlags.REDUCED_CLASSPATH_MODE)) {
-    return args.mandatory(JvmBuilderFlags.CLASSPATH).map { baseDir.resolve(it).normalize() }
+    return args.mandatory(JvmBuilderFlags.CP).map { baseDir.resolve(it).normalize() }
   }
 
   val directDependencies = args.mandatory(JvmBuilderFlags.DIRECT_DEPENDENCIES)

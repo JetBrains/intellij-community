@@ -15,6 +15,7 @@ kt_jvm_library(
         "@lib//:opentelemetry",
         "@lib//:opentelemetry-semconv",
         "//:opentelemetry-exporter-logging-otlp",
+        "//:opentelemetry-exporter-otlp",
         "//:kotlinx-coroutines-core",
         "//:protobuf-java",
         "@lib//:netty-buffer",

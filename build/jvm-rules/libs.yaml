@@ -31,7 +31,7 @@
     - id: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm
       version: 1.10.1
     - id: com.google.flatbuffers:flatbuffers-java
-      version: 24.12.23
+      version: 25.1.24
     - id: org.apache.arrow:arrow-format
       version: 18.1.0
     - id: org.apache.arrow:arrow-algorithm
@@ -49,7 +49,15 @@
         - ":arrow-memory-netty-buffer-patch"
     - id: org.apache.arrow:arrow-memory-netty-buffer-patch
       version: 18.1.0
+    # OpenTelemetry
     - id: io.opentelemetry:opentelemetry-exporter-logging-otlp
       version: 1.46.0
-    - id: com.guardsquare:proguard-core
-      version: 9.1.7
+    - id: io.opentelemetry:opentelemetry-sdk-extension-autoconfigure-spi
+      version: 1.46.0
+    - id: io.opentelemetry:opentelemetry-exporter-otlp
+      runtimeDeps:
+        - ":opentelemetry-exporter-sender-jdk"
+        - ":opentelemetry-sdk-extension-autoconfigure-spi"
+      version: 1.46.0
+    - id: io.opentelemetry:opentelemetry-exporter-sender-jdk
+      version: 1.46.0

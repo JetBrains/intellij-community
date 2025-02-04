@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.build.report.ICReporterBase
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.compilerRunner.*
+import org.jetbrains.kotlin.compilerRunner.CompilerRunnerUtil
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.incremental.*
 import org.jetbrains.kotlin.incremental.components.*
@@ -31,46 +32,23 @@ import org.jetbrains.kotlin.jps.targets.KotlinModuleBuildTarget
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.preloading.ClassCondition
-import org.jetbrains.kotlin.utils.KotlinPaths
-import org.jetbrains.kotlin.utils.KotlinPathsFromHomeDir
+import org.jetbrains.kotlin.progress.CompilationCanceledException
 import java.io.File
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.system.measureTimeMillis
-
-private val classesToLoadByParent = ClassCondition { className ->
-  for (it in arrayOf(
-    "org.apache.log4j.", // For logging from compiler
-    "org.jetbrains.kotlin.incremental.components.",
-    "org.jetbrains.kotlin.incremental.js",
-    "org.jetbrains.kotlin.load.kotlin.incremental.components."
-  )) {
-    if (className.startsWith(it)) {
-      return@ClassCondition true
-    }
-  }
-  for (it in arrayOf(
-    "org.jetbrains.kotlin.config.Services",
-    "org.jetbrains.kotlin.progress.CompilationCanceledStatus",
-    "org.jetbrains.kotlin.progress.CompilationCanceledException",
-    "org.jetbrains.kotlin.modules.TargetId",
-    "org.jetbrains.kotlin.cli.common.ExitCode"
-  )) {
-    if (className == it) {
-      return@ClassCondition true
-    }
-  }
-
-  return@ClassCondition false
-}
 
 internal class BazelKotlinBuilder(
   private val isKotlinBuilderInDumbMode: Boolean,
+  private val isIncrementalCompilation: Boolean,
   private val enableLookupStorageFillingInDumbMode: Boolean = false,
   private val dataManager: BazelBuildDataProvider,
   private val span: Span,
 ) : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
   companion object {
-    const val JPS_KOTLIN_HOME_PROPERTY = "jps.kotlin.home"
+    init {
+      // force load our version, preload compiler classLoader
+      JpsKotlinCompilerRunner.triggerInit()
+    }
   }
 
   override fun getPresentableName() = "Kotlin Builder"
@@ -134,18 +112,16 @@ internal class BazelKotlinBuilder(
   }
 
   override fun chunkBuildStarted(context: CompileContext, chunk: ModuleChunk) {
-    super.chunkBuildStarted(context, chunk)
-
     val buildLogger = context.testingContext?.buildLogger
     buildLogger?.chunkBuildStarted(context, chunk)
 
-    if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
+    val kotlinContext = ensureKotlinContextInitialized(context)
+
+    if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context.scope)) {
       return
     }
 
-    val targets = chunk.targets
-    val kotlinContext = ensureKotlinContextInitialized(context)
-    if (targets.none { kotlinContext.hasKotlinMarker[it] == true }) {
+    if (chunk.targets.none { kotlinContext.hasKotlinMarker.get(it) == true }) {
       return
     }
 
@@ -174,7 +150,6 @@ internal class BazelKotlinBuilder(
         }
       }
     )
-    val fsOperations = BazelKotlinFsOperationsHelper(context, chunk, dirtyFilesHolder, span, dataManager = dataManager)
 
     val representativeTarget = kotlinContext.targetsBinding[chunk.representativeTarget()] ?: return
 
@@ -197,31 +172,32 @@ internal class BazelKotlinBuilder(
 
     val removedClasses = HashSet<String>()
     for (target in kotlinChunk.targets) {
-      val cache = incrementalCaches[target] ?: continue
+      val cache = incrementalCaches.get(target) ?: continue
       val dirtyFiles = dirtyFilesHolder.getDirtyFiles(target.jpsModuleBuildTarget).keys
       val removedFiles = dirtyFilesHolder.getRemovedFiles(target.jpsModuleBuildTarget)
 
-      val existingClasses = JpsKotlinCompilerRunner().classesFqNamesByFiles(environment, dirtyFiles)
+      val existingClasses = CompilerRunnerUtil.invokeClassesFqNames(environment, dirtyFiles)
       val previousClasses = cache.classesFqNamesBySources(dirtyFiles + removedFiles)
       for (jvmClassName in previousClasses) {
         val fqName = jvmClassName.asString()
-        if (fqName !in existingClasses) {
+        if (!existingClasses.contains(fqName)) {
           removedClasses.add(fqName)
         }
       }
     }
 
-    val changesCollector = ChangesCollector()
+    val changeCollector = ChangesCollector()
     for (it in removedClasses) {
-      changesCollector.collectSignature(FqName(it), areSubclassesAffected = true)
+      changeCollector.collectSignature(FqName(it), areSubclassesAffected = true)
     }
     val affectedByRemovedClasses = getDirtyFiles(
-      changeCollector = changesCollector,
+      changeCollector = changeCollector,
       caches = incrementalCaches.values,
       lookupStorageManager = kotlinContext.lookupStorageManager,
       reporter = BazelJpsICReporter(span),
     )
 
+    val fsOperations = BazelKotlinFsOperationsHelper(context, chunk, dirtyFilesHolder, span, dataManager = dataManager)
     fsOperations.markFilesForCurrentRound(affectedByRemovedClasses.dirtyFiles.asSequence() + affectedByRemovedClasses.forceRecompileTogether)
   }
 
@@ -240,15 +216,21 @@ internal class BazelKotlinBuilder(
       dataManager = dataManager,
       span = span,
     )
-    val proposedExitCode = doBuild(
-      chunk = chunk,
-      representativeTarget = kotlinTarget,
-      context = context,
-      kotlinDirtyFilesHolder = kotlinDirtyFilesHolder,
-      messageCollector = MessageCollectorAdapter(context, kotlinTarget),
-      outputConsumer = outputConsumer,
-      fsOperations = fsOperations
-    )
+    val proposedExitCode = try {
+      doBuild(
+        chunk = chunk,
+        representativeTarget = kotlinTarget,
+        context = context,
+        kotlinDirtyFilesHolder = kotlinDirtyFilesHolder,
+        messageCollector = MessageCollectorAdapter(context, kotlinTarget),
+        outputConsumer = outputConsumer,
+        fsOperations = fsOperations
+      )
+    }
+    catch (e: CompilationCanceledException) {
+      // https://youtrack.jetbrains.com/issue/KTI-2139
+      throw CancellationException(e)
+    }
 
     val actualExitCode = if (proposedExitCode == OK && fsOperations.hasMarkedDirty) ADDITIONAL_PASS_REQUIRED else proposedExitCode
     context.testingContext?.buildLogger?.buildFinished(actualExitCode)
@@ -276,8 +258,8 @@ internal class BazelKotlinBuilder(
 
     val targets = chunk.targets
 
-    val isChunkRebuilding = JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) ||
-      targets.any { kotlinContext.rebuildAfterCacheVersionChanged[it] == true }
+    val isChunkRebuilding = JavaBuilderUtil.isForcedRecompilationAllJavaModules(context.scope) ||
+      targets.any { kotlinContext.rebuildAfterCacheVersionChanged.get(it) == true }
 
     if (!kotlinDirtyFilesHolder.hasDirtyOrRemovedFiles) {
       if (isChunkRebuilding) {
@@ -295,20 +277,17 @@ internal class BazelKotlinBuilder(
     // but they are not dirty, so Groovy builder does not generate source stubs,
     // and Kotlin builder is filtering out output directory from classpath
     // (because it may contain outdated Java classes).
-    if (!isChunkRebuilding && !representativeTarget.isIncrementalCompilationEnabled) {
-      targets.forEach { kotlinContext.rebuildAfterCacheVersionChanged[it] = true }
+    if (!isChunkRebuilding && !isIncrementalCompilation) {
+      for (target in targets) {
+        kotlinContext.rebuildAfterCacheVersionChanged.set(target, true)
+      }
       return CHUNK_REBUILD_REQUIRED
     }
 
-    val targetsWithoutOutputDir = targets.filter { it.outputDir == null }
-    if (targetsWithoutOutputDir.isNotEmpty()) {
-      throw RuntimeException("Output directory not specified for ${targetsWithoutOutputDir.joinToString()}")
-    }
-
     val project = context.projectDescriptor.project
-    val lookupTracker = getLookupTracker(project, representativeTarget)
+    val lookupTracker = getLookupTracker(project, isIncrementalCompilation)
     val exceptActualTracker = ExpectActualTrackerImpl()
-    val incrementalCaches = kotlinChunk.loadCaches()
+    val incrementalCaches = kotlinChunk.loadCaches(loadDependent = false)
     val inlineConstTracker = InlineConstTrackerImpl()
     val enumWhenTracker = EnumWhenTrackerImpl()
     val importTracker = ImportTrackerImpl()
@@ -357,7 +336,7 @@ internal class BazelKotlinBuilder(
         generatedFiles = generatedFiles,
         kotlinContext = kotlinContext,
         incrementalCaches = incrementalCaches,
-        fsOperations = fsOperations
+        fsOperations = fsOperations,
       )
     }
 
@@ -390,7 +369,7 @@ internal class BazelKotlinBuilder(
       environment = environment
     )
 
-    if (!representativeTarget.isIncrementalCompilationEnabled) {
+    if (!isIncrementalCompilation) {
       return OK
     }
 
@@ -399,15 +378,15 @@ internal class BazelKotlinBuilder(
     environment.withProgressReporter { progress ->
       progress.progress("performing incremental compilation analysis")
 
-      val changesCollector = ChangesCollector()
+      val changeCollector = ChangesCollector()
 
       for ((target, files) in generatedFiles) {
-        val kotlinModuleBuilderTarget = kotlinContext.targetsBinding[target]!!
+        val kotlinModuleBuilderTarget = kotlinContext.targetsBinding.get(target)!!
         kotlinModuleBuilderTarget.updateCaches(
           dirtyFilesHolder = kotlinDirtyFilesHolder,
           jpsIncrementalCache = incrementalCaches.get(kotlinModuleBuilderTarget)!!,
           files = files,
-          changesCollector = changesCollector,
+          changesCollector = changeCollector,
           environment = environment,
         )
       }
@@ -418,7 +397,7 @@ internal class BazelKotlinBuilder(
 
       if (!isKotlinBuilderInDumbMode && !isChunkRebuilding) {
         processChangesUsingLookups(
-          collector = changesCollector,
+          collector = changeCollector,
           compiledFiles = kotlinDirtyFilesHolder.allDirtyFiles,
           lookupStorageManager = kotlinContext.lookupStorageManager,
           fsOperations = fsOperations,
@@ -447,12 +426,12 @@ internal class BazelKotlinBuilder(
       it.nextRound(context)
     }
 
-    if (representativeTarget.isIncrementalCompilationEnabled) {
+    if (isIncrementalCompilation) {
       for (target in kotlinChunk.targets) {
         val cache = incrementalCaches[target]
         val jpsTarget = target.jpsModuleBuildTarget
 
-        val targetDirtyFiles = dirtyFilesHolder.byTarget[jpsTarget]
+        val targetDirtyFiles = dirtyFilesHolder.byTarget.get(jpsTarget)
         if (cache != null && targetDirtyFiles != null) {
           val complementaryFiles = cache.getComplementaryFilesRecursive(targetDirtyFiles.dirty.keys + targetDirtyFiles.removed)
           context.testingContext?.buildLogger?.markedAsComplementaryFiles(ArrayList(complementaryFiles))
@@ -505,24 +484,13 @@ internal class BazelKotlinBuilder(
     }
 
     return JpsCompilerEnvironment(
-      kotlinPaths = computeKotlinPathsForJpsPlugin() ?: return null,
+      kotlinPaths = DummyKotlinPaths,
       services = compilerServices,
       classesToLoadByParent = classesToLoadByParent,
       messageCollector = messageCollector,
       outputItemsCollector = OutputItemsCollectorImpl(),
       progressReporter = ProgressReporterImpl(context, chunk)
     )
-  }
-
-  private fun computeKotlinPathsForJpsPlugin(): KotlinPaths? {
-    val jpsKotlinHome = System.getProperty(JPS_KOTLIN_HOME_PROPERTY)?.let { File(it) }
-      ?: throw RuntimeException("Make sure that '$JPS_KOTLIN_HOME_PROPERTY' system property is set in JPS process")
-    if (jpsKotlinHome.exists()) {
-      return KotlinPathsFromHomeDir(jpsKotlinHome)
-    }
-    else {
-      throw RuntimeException("Cannot find kotlinc home at $jpsKotlinHome")
-    }
   }
 
   private fun getGeneratedFiles(
@@ -542,7 +510,7 @@ internal class BazelKotlinBuilder(
 
     val representativeTarget = chunk.representativeTarget()
     fun SimpleOutputItem.target(): ModuleBuildTarget {
-      return sourceFiles.firstOrNull()?.let { sourceToTarget[it] }
+      return sourceFiles.firstOrNull()?.let { sourceToTarget.get(it) }
         ?: chunk.targets.singleOrNull { target ->
           target.outputDir?.let { outputDir ->
             outputFile.startsWith(outputDir)
@@ -561,8 +529,9 @@ internal class BazelKotlinBuilder(
     lookupStorageManager: JpsLookupStorageManager,
     dirtyFilesHolder: KotlinDirtySourceFilesHolder
   ) {
-    if (lookupTracker !is LookupTrackerImpl)
+    if (lookupTracker !is LookupTrackerImpl) {
       throw AssertionError("Lookup tracker is expected to be LookupTrackerImpl, got ${lookupTracker::class.java}")
+    }
 
     lookupStorageManager.withLookupStorage { lookupStorage ->
       lookupStorage.removeLookupsFrom(dirtyFilesHolder.allDirtyFiles.asSequence() + dirtyFilesHolder.allRemovedFilesFiles.asSequence())
@@ -650,12 +619,7 @@ private fun getDirtyFiles(
   )
 }
 
-private fun getLookupTracker(project: JpsProject, representativeTarget: KotlinModuleBuildTarget<*>): LookupTracker {
-  val testLookupTracker = project.testingContext?.lookupTracker ?: LookupTracker.DO_NOTHING
-  if (representativeTarget.isIncrementalCompilationEnabled) {
-    return LookupTrackerImpl(testLookupTracker)
-  }
-  else {
-    return testLookupTracker
-  }
+private fun getLookupTracker(project: JpsProject, isIncrementalCompilation: Boolean): LookupTracker {
+  val lookupTracker = project.testingContext?.lookupTracker ?: LookupTracker.DO_NOTHING
+  return if (isIncrementalCompilation) LookupTrackerImpl(lookupTracker) else lookupTracker
 }

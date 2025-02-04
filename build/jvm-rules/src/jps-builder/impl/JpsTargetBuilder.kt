@@ -4,12 +4,10 @@
 package org.jetbrains.bazel.jvm.jps.impl
 
 import com.intellij.openapi.util.text.Formats.formatDuration
-import com.intellij.tracing.Tracer.start
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.context.Context
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import kotlinx.coroutines.ensureActive
@@ -17,6 +15,7 @@ import org.jetbrains.bazel.jvm.jps.hashMap
 import org.jetbrains.bazel.jvm.jps.linkedSet
 import org.jetbrains.bazel.jvm.jps.state.LoadStateResult
 import org.jetbrains.bazel.jvm.jps.state.RemovedFileInfo
+import org.jetbrains.bazel.jvm.span
 import org.jetbrains.bazel.jvm.use
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.BuildRootDescriptor
@@ -31,7 +30,6 @@ import org.jetbrains.jps.incremental.fs.BuildFSState.CURRENT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.fs.BuildFSState.NEXT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.fs.CompilationRound
 import org.jetbrains.jps.incremental.messages.*
-import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -53,34 +51,27 @@ internal class JpsTargetBuilder(
   private val numberOfSourcesProcessedByBuilder = hashMap<Builder, AtomicInteger>()
 
   suspend fun build(
-    context: CompileContextImpl,
+    context: CompileContext,
     moduleTarget: BazelModuleBuildTarget,
     builders: Array<ModuleLevelBuilder>,
     buildState: LoadStateResult?,
     parentSpan: Span,
-    tracingContext: Context,
   ): Int {
     try {
-      val buildSpan = start("JpsTargetBuilder.runBuild")
       context.setDone(0.0f)
       context.addBuildListener(ChainedTargetsBuildListener(context, dataManager))
-      val allModuleLevelBuildersBuildStartedSpan = start("All ModuleLevelBuilder.buildStarted")
       for (builder in builders) {
         builder.buildStarted(context)
       }
-      allModuleLevelBuildersBuildStartedSpan.complete()
 
       try {
-        val span = start("build target")
-        buildTarget(context = context, target = moduleTarget, builders = builders, buildState = buildState, tracingContext)
-        span.complete()
+        buildTarget(context = context, target = moduleTarget, builders = builders, buildState = buildState)
       }
       finally {
         for (builder in builders) {
           builder.buildFinished(context)
         }
       }
-      buildSpan.complete()
 
       for ((builder, time) in builderToDuration) {
         val processedSources = numberOfSourcesProcessedByBuilder.get(builder)?.get() ?: 0
@@ -258,7 +249,6 @@ internal class JpsTargetBuilder(
     target: BazelModuleBuildTarget,
     builders: Array<ModuleLevelBuilder>,
     buildState: LoadStateResult?,
-    tracingContext: Context,
   ) {
     val targets = java.util.Set.of<BuildTarget<*>>(target)
     try {
@@ -271,7 +261,6 @@ internal class JpsTargetBuilder(
       val fsState = context.projectDescriptor.fsState
       require(!fsState.isInitialScanPerformed(target))
       tracer.spanBuilder("fs state init")
-        .setParent(tracingContext)
         .setAttribute("isCleanBuild", isCleanBuild)
         .use { span ->
           if (isCleanBuild || buildState == null) {
@@ -311,7 +300,7 @@ internal class JpsTargetBuilder(
 
       fsState.beforeChunkBuildStart(context, targets)
 
-      tracer.spanBuilder("runModuleLevelBuilders").setParent(tracingContext).use { span ->
+      tracer.span("runModuleLevelBuilders") { span ->
         if (runModuleLevelBuilders(context, target, builders, span)) {
           doneSomething = true
         }
@@ -349,7 +338,7 @@ internal class JpsTargetBuilder(
   }
 }
 
-private class ChainedTargetsBuildListener(private val context: CompileContextImpl, private val dataManager: BazelBuildDataProvider) : BuildListener {
+private class ChainedTargetsBuildListener(private val context: CompileContext, private val dataManager: BazelBuildDataProvider) : BuildListener {
   override fun filesGenerated(event: FileGeneratedEvent) {
     val projectDescriptor = context.projectDescriptor
     val fsState = projectDescriptor.fsState
@@ -428,22 +417,6 @@ private fun deleteOutputsAssociatedWithDeletedPaths(
 
   FSOperations.pruneEmptyDirs(context, dirsToDelete)
   return doneSomething
-}
-
-internal fun reportRebuiltModules(context: CompileContextImpl) {
-  val modules = BuildTargetConfiguration.MODULES_WITH_TARGET_CONFIG_CHANGED_KEY.get(context)
-  if (modules.isNullOrEmpty()) {
-    return
-  }
-
-  val text = "${modules.joinToString { m -> "'" + m.name + "'" }} was fully rebuilt due to project configuration changes"
-  context.processMessage(CompilerMessage("", BuildMessage.Kind.INFO, text))
-}
-
-internal fun reportUnprocessedChanges(context: CompileContextImpl, moduleTarget: ModuleBuildTarget) {
-  if (context.projectDescriptor.fsState.hasUnprocessedChanges(context, moduleTarget)) {
-    context.processMessage(UnprocessedFSChangesNotification())
-  }
 }
 
 /**

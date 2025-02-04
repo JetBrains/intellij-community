@@ -22,3 +22,6 @@ test --test_verbose_timeout_warnings --test_timeout=60 --test_output=all
 common --nolegacy_important_outputs --remote_build_event_upload=minimal --remote_cache_async --remote_cache_compression
 
 build --disk_cache=~/.bazel-ij-cache --experimental_disk_cache_gc_max_size=32G --experimental_disk_cache_gc_max_age=28d
+
+# protobuf
+common --incompatible_enable_proto_toolchain_resolution

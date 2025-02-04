@@ -22,8 +22,10 @@ fun parseArgs(args: Array<String>): ArgMap<JvmBuilderFlags> {
 }
 
 enum class JvmBuilderFlags {
+  INCREMENTAL,
   TARGET_LABEL,
-  CLASSPATH,
+  // classpath
+  CP,
   DIRECT_DEPENDENCIES,
   DEPS_ARTIFACTS,
 

@@ -2,7 +2,6 @@
 package org.jetbrains.bazel.jvm.kotlin
 
 import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.context.Context
 import org.jetbrains.bazel.jvm.WorkRequest
 import org.jetbrains.bazel.jvm.WorkRequestExecutor
 import org.jetbrains.bazel.jvm.WorkRequestReaderWithoutDigest
@@ -17,7 +16,7 @@ object KotlinBuildWorker : WorkRequestExecutor<WorkRequest> {
     processRequests(startupArgs = startupArgs, executor = this, reader = WorkRequestReaderWithoutDigest(System.`in`), serviceName = "kotlin-builder")
   }
 
-  override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path, tracingContext: Context, tracer: Tracer): Int {
+  override suspend fun execute(request: WorkRequest, writer: Writer, baseDir: Path, tracer: Tracer): Int {
     val sources = request.inputPaths.asSequence()
       .filter { it.endsWith(".kt") || it.endsWith(".java") }
       .map { baseDir.resolve(it).normalize() }

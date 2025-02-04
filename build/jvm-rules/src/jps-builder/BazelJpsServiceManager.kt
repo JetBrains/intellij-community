@@ -13,7 +13,6 @@ import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.incremental.BuilderService
 import org.jetbrains.jps.incremental.ModuleLevelBuilder
 import org.jetbrains.jps.model.*
-import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.jetbrains.jps.service.JpsServiceManager
 import org.jetbrains.jps.service.SharedThreadPool
 import java.io.File
@@ -57,7 +56,7 @@ internal class BazelJpsServiceManager : JpsServiceManager() {
 
     // confine costly service initialization to single thread for defined startup profile
     return synchronized(services) {
-      return services.computeIfAbsent(serviceClass) {
+      services.computeIfAbsent(serviceClass) {
         doComputeService(it) as T
       } as T
     }

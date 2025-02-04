@@ -67,6 +67,7 @@ java_binary(
     data = [
         "@kotlinc//:kotlinc_dist",
         "@kotlin-serialization-compiler-plugin//file",
+        "@kotlin-compose-compiler-plugin//file",
     ],
     main_class = "org.jetbrains.bazel.jvm.jps.JpsBuildWorker",
     jvm_flags = get_jvm_flags([
@@ -74,6 +75,7 @@ java_binary(
         "-Djps.use.experimental.storage=true",
         "-Djps.kotlin.home=$(rlocationpath @kotlinc//:kotlinc_dist)",
         "-Dorg.jetbrains.kotlin.kotlin-serialization-compiler-plugin.path=$(rlocationpath @kotlin-serialization-compiler-plugin//file)",
+        "-Dorg.jetbrains.kotlin.kotlin-compose-compiler-plugin.path=$(rlocationpath @kotlin-serialization-compiler-plugin//file)",
     ]),
     visibility = ["//visibility:public"],
 )
