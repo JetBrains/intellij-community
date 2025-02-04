@@ -68,7 +68,7 @@ public class MavenSimpleConsoleEventsBuffer {
       }
       myBuilder.append(text);
       myOutputType = outputType;
-      if (myBuilder.length() >= MavenSpyOutputParser.PREFIX.length() || lastChunk) {
+      if (myBuilder.length() >= MavenSpyOutputParser.MAVEN4_PREFIX.length() || lastChunk) {
         if (!MavenSpyOutputParser.isSpyLog(getText())) {
           sendAndReset();
         } else {

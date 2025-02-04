@@ -42,6 +42,40 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
+
+  @Test
+  fun testMaven4SuccessRun() = runBlocking {
+    failOnWarns {
+      assertSameLines(
+        "org.example:untitled97:jar:1.0-SNAPSHOT\n" +
+        "  resources\n" +
+        "  compile\n" +
+        "  testResources\n" +
+        "  testCompile\n" +
+        "  test\n" +
+        "  jar",
+        testCase(* fromFile("org/jetbrains/maven/buildlogs/maven-4-success.log"))
+          .withSkippedOutput()
+          .runAndFormatToString()
+      )
+    }
+  }
+
+  @Test
+  fun testMaven4FailedRun() = runBlocking {
+    failOnWarns {
+      assertSameLines(
+        "error:Maven Run\n" +
+        " org.example:untitled97:jar:1.0-SNAPSHOT\n" +
+        "  resources\n" +
+        "  compile",
+        testCase(* fromFile("org/jetbrains/maven/buildlogs/maven-4-compile-error.log"))
+          .withSkippedOutput()
+          .runAndFormatToString()
+      )
+    }
+  }
+
   @Test fun testdependencyInSinleMojoFailed() = runBlocking {
     failOnWarns {
       assertSameLines("io.testproject:web-test-example:jar:1.1\n" +

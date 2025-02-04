@@ -6,6 +6,7 @@ import com.intellij.build.events.impl.*;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenSpyLoggedEventParser;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 public class MavenSpyOutputParser {
   public static final String PREFIX = "[IJ]-";
+  public static final String MAVEN4_PREFIX = "[INFO] [stdout]" + " " + PREFIX;
   private static final String SEPARATOR = "-[IJ]-";
   private static final String NEWLINE = "-[N]-";
   private static final String DOWNLOAD_DEPENDENCIES_NAME = "dependencies";
@@ -23,7 +25,7 @@ public class MavenSpyOutputParser {
   private final MavenParsingContext myContext;
 
   public static boolean isSpyLog(String s) {
-    return s != null && s.startsWith(PREFIX);
+    return s != null && (s.startsWith(PREFIX) || s.startsWith(MAVEN4_PREFIX));
   }
 
   public MavenSpyOutputParser(@NotNull MavenParsingContext context) {
@@ -33,7 +35,8 @@ public class MavenSpyOutputParser {
 
   public void processLine(@NotNull String spyLine,
                           @NotNull Consumer<? super BuildEvent> messageConsumer) {
-    String line = spyLine.substring(PREFIX.length());
+    String line = extractLine(spyLine);
+    if (line == null) return;
     try {
       int threadSeparatorIdx = line.indexOf('-');
       if (threadSeparatorIdx < 0) {
@@ -69,6 +72,18 @@ public class MavenSpyOutputParser {
     }
     catch (Exception e) {
       MavenLog.LOG.error("Error processing line " + spyLine, e);
+    }
+  }
+
+  private static @Nullable String extractLine(@NotNull String line) {
+    if (line.startsWith(PREFIX)) {
+      return line.substring(PREFIX.length());
+    }
+    else if (line.startsWith(MAVEN4_PREFIX)) {
+      return line.substring(MAVEN4_PREFIX.length());
+    }
+    else {
+      return null;
     }
   }
 
