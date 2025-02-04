@@ -32,6 +32,8 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.assertj.core.util.VisibleForTesting;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -1145,5 +1147,23 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       });
       assertThrows(ProcessCanceledException.class, () -> ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(indicator));
     }, indicator);
+  }
+
+  public void testEmptyProgressIndicatorPointsToTheCauseOfCancellation() {
+    EmptyProgressIndicator indicator = new EmptyProgressIndicator();
+    notableStacktrace(indicator);
+    try {
+      indicator.checkCanceled();
+      fail("Must throw");
+    }
+    catch (ProcessCanceledException e) {
+      StringWriter sw = new StringWriter();
+      e.printStackTrace(new PrintWriter(sw));
+      assertTrue(sw.toString().contains("notableStacktrace"));
+    }
+  }
+
+  public void notableStacktrace(ProgressIndicator indicator) {
+    indicator.cancel();
   }
 }
