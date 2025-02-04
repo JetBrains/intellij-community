@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.application.EDT
@@ -55,13 +55,21 @@ abstract class AsyncChangesTree : ChangesTree {
   constructor(project: Project,
               showCheckboxes: Boolean,
               highlightProblems: Boolean)
-    : this(project, showCheckboxes, highlightProblems, true)
+    : this(project, showCheckboxes, highlightProblems, true, false)
 
   constructor(project: Project,
               showCheckboxes: Boolean,
               highlightProblems: Boolean,
-              withSpeedSearch: Boolean)
-    : super(project, showCheckboxes, highlightProblems, withSpeedSearch) {
+              showConflictsNode: Boolean)
+    : this(project, showCheckboxes, highlightProblems, true, showConflictsNode)
+
+  internal constructor(
+    project: Project,
+    showCheckboxes: Boolean,
+    highlightProblems: Boolean,
+    withSpeedSearch: Boolean,
+    showConflictsNode: Boolean,
+  ) : super(project, showCheckboxes, highlightProblems, withSpeedSearch, showConflictsNode) {
     start()
   }
 

@@ -81,6 +81,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   public static final @NotNull TreeStateStrategy<?> KEEP_SELECTED_OBJECTS = new KeepSelectedObjectsStrategy();
 
   protected final @NotNull Project myProject;
+  protected final boolean myShowConflictsNode;
   private boolean myShowCheckboxes;
   private final boolean myHighlightProblems;
   private final int myCheckboxWidth;
@@ -115,14 +116,19 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   private final UpdateScaleHelper scaleHelper = new UpdateScaleHelper();
 
   public ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
-    this(project, showCheckboxes, highlightProblems, true);
+    this(project, showCheckboxes, highlightProblems, true, false);
   }
 
-  protected ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems, boolean withSpeedSearch) {
+  protected ChangesTree(@NotNull Project project,
+                        boolean showCheckboxes,
+                        boolean highlightProblems,
+                        boolean withSpeedSearch,
+                        boolean showConflictsNode) {
     super(ChangesBrowserNode.createRoot());
     myProject = project;
     myShowCheckboxes = showCheckboxes;
     myHighlightProblems = highlightProblems;
+    myShowConflictsNode = showConflictsNode;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
     myInclusionModel.addInclusionListener(myInclusionModelListener);
     myHandlers = new ChangesTreeHandlers(this);
@@ -251,7 +257,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
    * @see #installGroupingSupport(ChangesTree, ChangesGroupingSupport, Supplier, Consumer)
    */
   protected @NotNull ChangesGroupingSupport installGroupingSupport() {
-    ChangesGroupingSupport result = new ChangesGroupingSupport(myProject, this, true);
+    ChangesGroupingSupport result = new ChangesGroupingSupport(myProject, this, myShowConflictsNode);
 
     migrateShowFlattenSetting();
     installGroupingSupport(this, result, GROUPING_KEYS, DEFAULT_GROUPING_KEYS);

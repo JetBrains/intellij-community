@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.FileSelectInContext;
@@ -62,7 +62,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
   private boolean myBusy = false;
 
   public ChangesListView(@NotNull Project project, boolean showCheckboxes) {
-    super(project, showCheckboxes, true);
+    super(project, showCheckboxes, true, true, true);
     // setDragEnabled throws an exception in headless mode which leads to a memory leak
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       setDragEnabled(true);

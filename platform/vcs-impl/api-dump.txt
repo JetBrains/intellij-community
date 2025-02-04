@@ -2721,8 +2721,9 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesTree
 - sf:KEEP_NON_EMPTY:com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy
 - sf:KEEP_SELECTED_OBJECTS:com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy
 - pf:myProject:com.intellij.openapi.project.Project
+- pf:myShowConflictsNode:Z
 - <init>(com.intellij.openapi.project.Project,Z,Z):V
-- p:<init>(com.intellij.openapi.project.Project,Z,Z,Z):V
+- p:<init>(com.intellij.openapi.project.Project,Z,Z,Z,Z):V
 - addGroupingChangeListener(java.beans.PropertyChangeListener):V
 - addSelectionListener(java.lang.Runnable):V
 - addSelectionListener(java.lang.Runnable,com.intellij.openapi.Disposable):V
