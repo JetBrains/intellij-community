@@ -127,8 +127,7 @@ final class ExpressionChecker {
     if (lType == null || lType == PsiTypes.nullType()) {
       return;
     }
-    if (expression != null && IncompleteModelUtil.isIncompleteModel(expression) &&
-        IncompleteModelUtil.isPotentiallyConvertible(lType, expression)) {
+    if (expression != null && myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(lType, expression)) {
       return;
     }
     myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(elementToHighlight, new JavaIncompatibleTypeErrorContext(lType, rType)));
@@ -164,9 +163,7 @@ final class ExpressionChecker {
 
       PsiType type = expr.getType();
       if (!TypeConversionUtil.isBooleanType(type) && !PsiTreeUtil.hasErrorElements(expr)) {
-        if (type == null &&
-            IncompleteModelUtil.isIncompleteModel(expr) &&
-            IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(expr)) {
+        if (type == null && myVisitor.isIncompleteModel() && IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(expr)) {
           return;
         }
         myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(expr, new JavaIncompatibleTypeErrorContext(PsiTypes.booleanType(), type)));
@@ -186,9 +183,7 @@ final class ExpressionChecker {
                                                     @Nullable PsiType initializerType,
                                                     @NotNull PsiType componentType) {
     if (initializerType == null) {
-      if (IncompleteModelUtil.isIncompleteModel(initializer) && IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(initializer)) {
-        return;
-      }
+      if (myVisitor.isIncompleteModel() && IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(initializer)) return;
       myVisitor.report(JavaErrorKinds.ARRAY_ILLEGAL_INITIALIZER.create(initializer, componentType));
     } else {
       PsiExpression expression = initializer instanceof PsiArrayInitializerExpression ? null : initializer;
@@ -341,7 +336,7 @@ final class ExpressionChecker {
     if (PsiTreeUtil.hasErrorElements(list)) return;
     JavaMismatchedCallContext context = JavaMismatchedCallContext.create(list, candidateInfo);
     List<PsiExpression> mismatchedExpressions = context.mismatchedExpressions();
-    if (mismatchedExpressions.isEmpty() && IncompleteModelUtil.isIncompleteModel(list)) return;
+    if (mismatchedExpressions.isEmpty() && myVisitor.isIncompleteModel()) return;
 
     if (mismatchedExpressions.size() == list.getExpressions().length || mismatchedExpressions.isEmpty()) {
       PsiElement anchor = list.getTextRange().isEmpty() ? ObjectUtils.notNull(list.getPrevSibling(), list) : list;
@@ -379,9 +374,7 @@ final class ExpressionChecker {
     PsiElementFactory factory = myVisitor.factory();
     PsiClassType processorType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR, processor.getResolveScope());
     if (!TypeConversionUtil.isAssignable(processorType, type)) {
-      if (IncompleteModelUtil.isIncompleteModel(templateExpression) && IncompleteModelUtil.isPotentiallyConvertible(processorType, processor)) {
-        return;
-      }
+      if (myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(processorType, processor)) return;
       myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(processor, new JavaIncompatibleTypeErrorContext(processorType, type)));
       return;
     }
@@ -581,9 +574,7 @@ final class ExpressionChecker {
           TypeConversionUtil.areTypesConvertible(type, lType)) {
         return;
       }
-      if (IncompleteModelUtil.isIncompleteModel(assignment) && IncompleteModelUtil.isPotentiallyConvertible(lType, rExpr)) {
-        return;
-      }
+      if (myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(lType, rExpr)) return;
       myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(rExpr, new JavaIncompatibleTypeErrorContext(lType, type)));
     }
   }
@@ -627,8 +618,7 @@ final class ExpressionChecker {
       PsiType rType = operand.getType();
       if (lType instanceof PsiLambdaParameterType || rType instanceof PsiLambdaParameterType) return;
       if (!TypeConversionUtil.isBinaryOperatorApplicable(operationSign, lType, rType, false) &&
-          !(IncompleteModelUtil.isIncompleteModel(expression) &&
-            IncompleteModelUtil.isPotentiallyConvertible(lType, rType, expression))) {
+          !(myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(lType, rType, expression))) {
         PsiJavaToken token = expression.getTokenBeforeOperand(operand);
         assert token != null : expression;
         myVisitor.report(JavaErrorKinds.BINARY_OPERATOR_NOT_APPLICABLE.create(token, new JavaIncompatibleTypeErrorContext(lType, rType)));
@@ -715,7 +705,7 @@ final class ExpressionChecker {
       lValue = null;
     }
     if (lValue != null && !TypeConversionUtil.isLValue(lValue) && !PsiTreeUtil.hasErrorElements(expression) &&
-        !(IncompleteModelUtil.isIncompleteModel(expression) &&
+        !(myVisitor.isIncompleteModel() &&
           PsiUtil.skipParenthesizedExprDown(lValue) instanceof PsiReferenceExpression ref &&
           IncompleteModelUtil.canBePendingReference(ref))) {
       myVisitor.report(JavaErrorKinds.LVALUE_VARIABLE_EXPECTED.create(lValue));
@@ -734,9 +724,7 @@ final class ExpressionChecker {
     if (operandType != null &&
         !TypeConversionUtil.areTypesConvertible(operandType, castType, PsiUtil.getLanguageLevel(expression)) &&
         !PsiUtil.isInSignaturePolymorphicCall(expression)) {
-      if (IncompleteModelUtil.isIncompleteModel(expression) && IncompleteModelUtil.isPotentiallyConvertible(castType, operand)) {
-        return;
-      }
+      if (myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(castType, operand)) return;
       myVisitor.report(JavaErrorKinds.CAST_INCONVERTIBLE.create(
         expression, new JavaIncompatibleTypeErrorContext(operandType, castType)));
     }
@@ -895,8 +883,7 @@ final class ExpressionChecker {
       JavaResolveResult[] results = ref.multiResolve(true);
       if (results.length > 1) {
         if (ref instanceof PsiMethodReferenceExpression methodRef &&
-            IncompleteModelUtil.isIncompleteModel(ref) &&
-            IncompleteModelUtil.isUnresolvedClassType(methodRef.getFunctionalInterfaceType())) {
+            myVisitor.isIncompleteModel() && IncompleteModelUtil.isUnresolvedClassType(methodRef.getFunctionalInterfaceType())) {
           return;
         }
         myVisitor.report(JavaErrorKinds.REFERENCE_AMBIGUOUS.create(ref, Arrays.asList(results)));
@@ -917,7 +904,7 @@ final class ExpressionChecker {
           myVisitor.report(JavaErrorKinds.REFERENCE_IMPLICIT_CLASS.create(ref));
           return;
         }
-        if (!definitelyIncorrect && IncompleteModelUtil.isIncompleteModel(myVisitor.file()) && IncompleteModelUtil.canBePendingReference(ref)) {
+        if (!definitelyIncorrect && myVisitor.isIncompleteModel() && IncompleteModelUtil.canBePendingReference(ref)) {
           myVisitor.report(JavaErrorKinds.REFERENCE_PENDING.create(refName));
           return;
         }
@@ -1136,7 +1123,7 @@ final class ExpressionChecker {
     catch (IndexNotReadyException ignored) {
     }
     if (constructor == null) {
-      if (IncompleteModelUtil.isIncompleteModel(list) &&
+      if (myVisitor.isIncompleteModel() &&
           ContainerUtil.exists(results, r -> r instanceof MethodCandidateInfo info && info.isPotentiallyCompatible() == ThreeState.YES) &&
           ContainerUtil.exists(list.getExpressions(), e -> IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(e))) {
         return;
@@ -1211,7 +1198,7 @@ final class ExpressionChecker {
     PsiExpression[] expressions = list.getExpressions();
     if (PsiTreeUtil.hasErrorElements(list)) return;
     if (methodCandidate2 != null) {
-      if (IncompleteModelUtil.isIncompleteModel(list) &&
+      if (myVisitor.isIncompleteModel() &&
           ContainerUtil.exists(expressions, e -> IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(e))) {
         return;
       }
@@ -1221,7 +1208,7 @@ final class ExpressionChecker {
     else {
       if (resolveResult.getElement() != null && (!resolveResult.isAccessible() || !resolveResult.isStaticsScopeCorrect())) return;
       if (!ContainerUtil.exists(resolveResults, result -> result instanceof MethodCandidateInfo && result.isAccessible())) return;
-      if (IncompleteModelUtil.isIncompleteModel(list) &&
+      if (myVisitor.isIncompleteModel() &&
           ContainerUtil.exists(expressions, IncompleteModelUtil::mayHaveUnknownTypeDueToPendingReference)) {
         return;
       }
@@ -1260,8 +1247,7 @@ final class ExpressionChecker {
       PsiExpression qualifierExpression = referenceToMethod.getQualifierExpression();
 
       if (className != null) {
-        if (IncompleteModelUtil.isIncompleteModel(myVisitor.file()) &&
-            IncompleteModelUtil.canBePendingReference(referenceToMethod)) {
+        if (myVisitor.isIncompleteModel() && IncompleteModelUtil.canBePendingReference(referenceToMethod)) {
           myVisitor.report(JavaErrorKinds.REFERENCE_PENDING.create(anchor));
           return;
         }
@@ -1273,7 +1259,7 @@ final class ExpressionChecker {
         myVisitor.report(JavaErrorKinds.CALL_QUALIFIER_PRIMITIVE.create(methodCall, primitiveType));
       }
       else {
-        if (IncompleteModelUtil.isIncompleteModel(myVisitor.file()) && IncompleteModelUtil.canBePendingReference(referenceToMethod)) {
+        if (myVisitor.isIncompleteModel() && IncompleteModelUtil.canBePendingReference(referenceToMethod)) {
           myVisitor.report(JavaErrorKinds.REFERENCE_PENDING.create(anchor));
           return;
         }
@@ -1305,8 +1291,7 @@ final class ExpressionChecker {
     boolean convertible = TypeConversionUtil.areTypesConvertible(operandType, checkType);
     boolean primitiveInPatternsEnabled = PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, expression);
     if (((operandIsPrimitive || checkIsPrimitive) && !primitiveInPatternsEnabled) || !convertible) {
-      if (!convertible && IncompleteModelUtil.isIncompleteModel(expression) &&
-          IncompleteModelUtil.isPotentiallyConvertible(checkType, operand)) {
+      if (!convertible && myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(checkType, operand)) {
         return;
       }
       if (((operandIsPrimitive || checkIsPrimitive) && !primitiveInPatternsEnabled) && convertible) {

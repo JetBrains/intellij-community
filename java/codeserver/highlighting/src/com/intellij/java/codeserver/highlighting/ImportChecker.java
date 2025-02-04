@@ -5,7 +5,6 @@ import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +38,7 @@ final class ImportChecker {
     PsiElement referenceNameElement = ref.getReferenceNameElement();
     if (results.length == 0) {
       assert referenceNameElement != null : ref;
-      if (IncompleteModelUtil.isIncompleteModel(ref) && ref.getClassReference().resolve() == null) {
+      if (myVisitor.isIncompleteModel() && ref.getClassReference().resolve() == null) {
         myVisitor.report(JavaErrorKinds.REFERENCE_PENDING.create(referenceNameElement));
       } else {
         myVisitor.report(JavaErrorKinds.REFERENCE_UNRESOLVED.create(ref));

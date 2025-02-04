@@ -108,6 +108,11 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   boolean hasErrorResults() {
     return myHasError;
   }
+  
+  @Contract(pure = true)
+  boolean isIncompleteModel() {
+    return IncompleteModelUtil.isIncompleteModel(myFile);
+  }
 
   @Override
   public void visitElement(@NotNull PsiElement element) {
@@ -388,8 +393,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       if (!hasErrorResults()) myFunctionChecker.checkExtendsSealedClass(expression, functionalInterfaceType);
       boolean isFunctional = LambdaUtil.isFunctionalType(functionalInterfaceType);
       if (!hasErrorResults() && !isFunctional && 
-          !(IncompleteModelUtil.isIncompleteModel(expression) &&
-            IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType))) {
+          !(isIncompleteModel() && IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType))) {
         report(JavaErrorKinds.LAMBDA_NOT_FUNCTIONAL_INTERFACE.create(expression, functionalInterfaceType));
       }
       if (!hasErrorResults()) myFunctionChecker.checkMethodReferenceContext(expression, functionalInterfaceType);

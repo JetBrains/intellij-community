@@ -219,7 +219,7 @@ final class StatementChecker {
     PsiElementFactory factory = myVisitor.factory();
     PsiClassType autoCloseable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, resource.getResolveScope());
     if (TypeConversionUtil.isAssignable(autoCloseable, type)) return;
-    if (IncompleteModelUtil.isIncompleteModel(resource) && IncompleteModelUtil.isPotentiallyConvertible(autoCloseable, type, resource)) return;
+    if (myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(autoCloseable, type, resource)) return;
 
     myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
       resource, new JavaIncompatibleTypeErrorContext(autoCloseable, type)));

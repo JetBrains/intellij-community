@@ -54,7 +54,7 @@ final class MethodChecker {
       PsiElementFactory factory = myVisitor.factory();
       PsiClassType type = factory.createType(aClass);
       PsiClassType throwable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, context.getResolveScope());
-      if (IncompleteModelUtil.isIncompleteModel(context) && IncompleteModelUtil.isPotentiallyConvertible(throwable, type, context)) return;
+      if (myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(throwable, type, context)) return;
       myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(context, new JavaIncompatibleTypeErrorContext(throwable, type)));
     }
   }

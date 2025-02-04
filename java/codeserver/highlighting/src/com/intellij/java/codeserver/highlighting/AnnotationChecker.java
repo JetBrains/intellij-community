@@ -95,8 +95,7 @@ final class AnnotationChecker {
     PsiElement parent = expression.getParent();
     if (PsiUtil.isAnnotationMethod(parent) || parent instanceof PsiNameValuePair || parent instanceof PsiArrayInitializerMemberValue) {
       if (!PsiUtil.isConstantExpression(expression)) {
-        if (IncompleteModelUtil.isIncompleteModel(expression) &&
-            IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(expression)) {
+        if (myVisitor.isIncompleteModel() && IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(expression)) {
           return;
         }
         myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_NON_CONSTANT.create(expression));
@@ -564,7 +563,7 @@ final class AnnotationChecker {
         }
       }
       else if (superMethod == null) {
-        if (IncompleteModelUtil.isIncompleteModel(psiClass)) {
+        if (myVisitor.isIncompleteModel()) {
           if (!IncompleteModelUtil.isHierarchyResolved(psiClass)) {
             return;
           }

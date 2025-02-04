@@ -91,7 +91,7 @@ final class GenericsChecker {
 
     PsiType parameterType = parameter.getType();
     if (TypeConversionUtil.isAssignable(parameterType, itemType)) return;
-    if (IncompleteModelUtil.isIncompleteModel(statement) && IncompleteModelUtil.isPotentiallyConvertible(parameterType, itemType, expression)) {
+    if (myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(parameterType, itemType, expression)) {
       return;
     }
     myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(parameter, new JavaIncompatibleTypeErrorContext(itemType, parameterType)));

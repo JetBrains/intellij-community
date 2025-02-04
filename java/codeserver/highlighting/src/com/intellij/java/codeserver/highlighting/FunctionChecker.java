@@ -50,8 +50,7 @@ final class FunctionChecker {
     if (referenceNameElement instanceof PsiKeyword) {
       if (!PsiMethodReferenceUtil.isValidQualifier(expression) && qualifier != null) {
         boolean pending = qualifier instanceof PsiJavaCodeReferenceElement ref &&
-                          IncompleteModelUtil.isIncompleteModel(expression) &&
-                          IncompleteModelUtil.canBePendingReference(ref);
+                          myVisitor.isIncompleteModel() && IncompleteModelUtil.canBePendingReference(ref);
         if (!pending) {
           myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_QUALIFIER_CLASS_UNRESOLVED.create(qualifier));
         }
@@ -175,7 +174,7 @@ final class FunctionChecker {
     }
   }
 
-  private static @Nullable JavaCompilationError<?, ?> getFunctionalInterfaceError(
+  private @Nullable JavaCompilationError<?, ?> getFunctionalInterfaceError(
     @NotNull PsiFunctionalExpression context, PsiType functionalInterfaceType) {
     if (functionalInterfaceType instanceof PsiIntersectionType intersection) {
       Set<MethodSignature> signatures = new HashSet<>();
@@ -240,10 +239,7 @@ final class FunctionChecker {
         case MULTIPLE_ABSTRACT_METHODS -> JavaErrorKinds.LAMBDA_MULTIPLE_TARGET_METHODS.create(context, functionalInterfaceType);
       };
     }
-    if (IncompleteModelUtil.isIncompleteModel(context) &&
-        IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType)) {
-      return null;
-    }
+    if (myVisitor.isIncompleteModel() && IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType)) return null;
     return JavaErrorKinds.LAMBDA_NOT_FUNCTIONAL_INTERFACE.create(context, functionalInterfaceType);
   }
 
@@ -376,13 +372,12 @@ final class FunctionChecker {
         }
       }
       else if (results.length > 1) {
-        if (!IncompleteModelUtil.isIncompleteModel(expression) ||
-            !IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType)) {
+        if (!myVisitor.isIncompleteModel() || !IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType)) {
           myVisitor.report(JavaErrorKinds.REFERENCE_AMBIGUOUS.create(expression, Arrays.asList(results)));
         }
       }
       else {
-        if (IncompleteModelUtil.isIncompleteModel(expression) && IncompleteModelUtil.canBePendingReference(expression)) {
+        if (myVisitor.isIncompleteModel() && IncompleteModelUtil.canBePendingReference(expression)) {
           PsiElement referenceNameElement = expression.getReferenceNameElement();
           if (referenceNameElement != null) {
             myVisitor.report(JavaErrorKinds.REFERENCE_PENDING.create(referenceNameElement));
