@@ -260,10 +260,15 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   public void testUnboundTypeParameter() {
     doTestByText(
       """
-        from typing import Generic, TypeVar
+        from typing import Generic, TypeVar, TypeAlias
         
         T = TypeVar('T')
         S = TypeVar('S')
+        
+        Alias1 = T
+        Alias2 = dict[S, T]
+        Alias3: TypeAlias = list[T]
+        type Alias4[K, V] = dict[K, V]
         
         v1: <warning descr="Unbound type variable">T</warning>
         v2: list[<warning descr="Unbound type variable">T</warning>]
