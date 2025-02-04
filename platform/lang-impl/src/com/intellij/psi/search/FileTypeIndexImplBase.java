@@ -160,22 +160,22 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   }
 
   @Override
-  public @NotNull FileIndexingState getIndexingStateForFile(int fileId,
-                                                            @NotNull IndexedFile file) {
-    @NotNull FileIndexingState isIndexed = IndexingStamp.isFileIndexedStateCurrent(fileId, myIndexId);
-    if (isIndexed != FileIndexingState.UP_TO_DATE) return isIndexed;
+  public @NotNull FileIndexingStateWithExplanation getIndexingStateForFile(int fileId,
+                                                                           @NotNull IndexedFile file) {
+    @NotNull FileIndexingStateWithExplanation isIndexed = IndexingStamp.isFileIndexedStateCurrent(fileId, myIndexId);
+    if (isIndexed != FileIndexingStateWithExplanation.UP_TO_DATE) return isIndexed;
     try {
       int indexedFileTypeId = getIndexedFileTypeId(fileId);
-      if (indexedFileTypeId == 0) return FileIndexingState.NOT_INDEXED;
+      if (indexedFileTypeId == 0) return FileIndexingStateWithExplanation.NOT_INDEXED;
       int actualFileTypeId = getFileTypeId(file.getFileType());
 
       return indexedFileTypeId == actualFileTypeId
-             ? FileIndexingState.UP_TO_DATE
-             : FileIndexingState.OUT_DATED;
+             ? FileIndexingStateWithExplanation.UP_TO_DATE
+             : FileIndexingStateWithExplanation.OUT_DATED;
     }
     catch (StorageException e) {
       LOG.error(e);
-      return FileIndexingState.OUT_DATED;
+      return FileIndexingStateWithExplanation.OUT_DATED;
     }
   }
 

@@ -61,7 +61,7 @@ public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends In
   void setUnindexedStateForFile(int fileId);
 
   @NotNull
-  FileIndexingState getIndexingStateForFile(int fileId, @NotNull IndexedFile file);
+  FileIndexingStateWithExplanation getIndexingStateForFile(int fileId, @NotNull IndexedFile file);
 
   long getModificationStamp();
 

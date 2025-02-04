@@ -4,7 +4,7 @@ package com.intellij.util.indexing;
 import org.jetbrains.annotations.ApiStatus.Internal;
 
 @Internal
-public enum FileIndexingState {
+public enum FileIndexingStateWithExplanation {
   NOT_INDEXED,
   OUT_DATED,
   UP_TO_DATE;

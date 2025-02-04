@@ -88,15 +88,15 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
     return indexerId == 0 ? UNINDEXED_STATE : indexerId;
   }
 
-  public FileIndexingState getSubIndexerState(int fileId, @NotNull IndexedFile file) throws IOException {
+  public FileIndexingStateWithExplanation getSubIndexerState(int fileId, @NotNull IndexedFile file) throws IOException {
     int indexerId = myFileAttribute.readInt(fileId);
     if (indexerId == 0) {
-      return FileIndexingState.OUT_DATED;
+      return FileIndexingStateWithExplanation.OUT_DATED;
     } else if (indexerId == UNINDEXED_STATE) {
-      return FileIndexingState.NOT_INDEXED;
+      return FileIndexingStateWithExplanation.NOT_INDEXED;
     } else {
       int actualVersion = getFileIndexerId(file);
-      return actualVersion == indexerId ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
+      return actualVersion == indexerId ? FileIndexingStateWithExplanation.UP_TO_DATE : FileIndexingStateWithExplanation.OUT_DATED;
     }
   }
 

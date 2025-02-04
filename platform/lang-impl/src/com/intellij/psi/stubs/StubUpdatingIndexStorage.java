@@ -190,14 +190,14 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
   }
 
   @Override
-  protected FileIndexingState isIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) {
-    if (myCompositeBinaryBuilderMap == null) return FileIndexingState.UP_TO_DATE;
+  protected FileIndexingStateWithExplanation isIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) {
+    if (myCompositeBinaryBuilderMap == null) return FileIndexingStateWithExplanation.UP_TO_DATE;
     try {
       return myCompositeBinaryBuilderMap.isUpToDateState(fileId, file.getFile());
     }
     catch (IOException e) {
       LOG.error(e);
-      return FileIndexingState.OUT_DATED;
+      return FileIndexingStateWithExplanation.OUT_DATED;
     }
   }
 

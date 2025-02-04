@@ -2024,20 +2024,20 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @NotNull
-  FileIndexingState getIndexingState(@NotNull IndexedFile file,
-                                     @NotNull ID<?, ?> indexId,
-                                     @NotNull FileIndexingStamp indexingStamp) {
+  FileIndexingStateWithExplanation getIndexingState(@NotNull IndexedFile file,
+                                                    @NotNull ID<?, ?> indexId,
+                                                    @NotNull FileIndexingStamp indexingStamp) {
     return getIndexingState(file, getIndex(indexId), indexingStamp);
   }
 
   @NotNull
-  FileIndexingState getIndexingState(@NotNull IndexedFile file,
-                                     @NotNull UpdatableIndex<?, ?, ?, ?> index,
-                                     @NotNull FileIndexingStamp indexingStamp) {
+  FileIndexingStateWithExplanation getIndexingState(@NotNull IndexedFile file,
+                                                    @NotNull UpdatableIndex<?, ?, ?, ?> index,
+                                                    @NotNull FileIndexingStamp indexingStamp) {
     VirtualFile virtualFile = file.getFile();
-    if (isMock(virtualFile)) return FileIndexingState.NOT_INDEXED;
+    if (isMock(virtualFile)) return FileIndexingStateWithExplanation.NOT_INDEXED;
     if (IndexingFlag.isFileChanged(file.getFile(), indexingStamp) == IsFileChangedResult.YES) {
-      return FileIndexingState.OUT_DATED;
+      return FileIndexingStateWithExplanation.OUT_DATED;
     }
     return index.getIndexingStateForFile(((NewVirtualFile)virtualFile).getId(), file);
   }

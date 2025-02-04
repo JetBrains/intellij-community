@@ -39,17 +39,17 @@ public final class IndexingStamp {
 
   private IndexingStamp() { }
 
-  public static @NotNull FileIndexingState isFileIndexedStateCurrent(int fileId, @NotNull ID<?, ?> indexName) {
+  public static @NotNull FileIndexingStateWithExplanation isFileIndexedStateCurrent(int fileId, @NotNull ID<?, ?> indexName) {
     try {
       long stamp = getIndexStamp(fileId, indexName);
-      if (stamp == HAS_NO_INDEXED_DATA_STAMP) return FileIndexingState.NOT_INDEXED;
-      return stamp == IndexVersion.getIndexCreationStamp(indexName) ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
+      if (stamp == HAS_NO_INDEXED_DATA_STAMP) return FileIndexingStateWithExplanation.NOT_INDEXED;
+      return stamp == IndexVersion.getIndexCreationStamp(indexName) ? FileIndexingStateWithExplanation.UP_TO_DATE : FileIndexingStateWithExplanation.OUT_DATED;
     }
     catch (RuntimeException e) {
       Throwable cause = e.getCause();
       if (cause instanceof IOException) {
         // in case of IO exceptions, consider the file unindexed
-        return FileIndexingState.OUT_DATED;
+        return FileIndexingStateWithExplanation.OUT_DATED;
       }
       throw e;
     }
