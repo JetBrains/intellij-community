@@ -52,6 +52,8 @@ val Project.defaultDefinition: ScriptDefinition
         return BundledScriptDefinition(compilationConfiguration, evaluationConfiguration)
     }
 
+private const val BUNDLED_SCRIPT_DEFINITION_ID = "ideBundledScriptDefinition"
+
 class BundledScriptDefinition(
     compilationConfiguration: ScriptCompilationConfiguration,
     override val evaluationConfiguration: ScriptEvaluationConfiguration?
@@ -62,6 +64,8 @@ class BundledScriptDefinition(
 ) {
     override val canDefinitionBeSwitchedOff: Boolean = false
     override val isDefault: Boolean = true
+    override val definitionId: String
+        get() = BUNDLED_SCRIPT_DEFINITION_ID
 }
 
 @Suppress("unused")

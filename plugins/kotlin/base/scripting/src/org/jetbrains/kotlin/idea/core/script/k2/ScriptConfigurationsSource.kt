@@ -25,7 +25,11 @@ typealias ScriptConfiguration = ResultWithDiagnostics<ScriptCompilationConfigura
 
 open class BaseScriptModel(
     open val virtualFile: VirtualFile
-)
+) {
+    override fun toString(): String {
+        return "BaseScriptModel(virtualFile=$virtualFile)"
+    }
+}
 
 data class ScriptConfigurationWithSdk(
     val scriptConfiguration: ScriptConfiguration,
@@ -55,12 +59,12 @@ abstract class ScriptConfigurationsSource<T : BaseScriptModel>(open val project:
             project.analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
         }
 
+        ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
+        HighlightingSettingsPerFile.getInstance(project).incModificationCount()
+
         val filesInEditors = readAction {
             FileEditorManager.getInstance(project).allEditors.mapTo(hashSetOf(), FileEditor::getFile)
         }
-
-        ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
-        HighlightingSettingsPerFile.getInstance(project).incModificationCount()
 
         for (script in scripts) {
             val virtualFile = script.virtualFile

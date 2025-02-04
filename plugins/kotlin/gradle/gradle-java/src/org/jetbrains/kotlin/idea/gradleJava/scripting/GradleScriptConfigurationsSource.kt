@@ -46,7 +46,11 @@ internal class GradleScriptModel(
     val sourcePath: List<String> = listOf(),
     val imports: List<String> = listOf(),
     val javaHome: String? = null
-) : BaseScriptModel(virtualFile)
+) : BaseScriptModel(virtualFile) {
+    override fun toString(): String {
+        return "GradleScriptModel(virtualFile=$virtualFile)"
+    }
+}
 
 internal open class GradleScriptConfigurationsSource(override val project: Project) :
     ScriptConfigurationsSource<GradleScriptModel>(project) {
@@ -67,7 +71,7 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
         project.scriptDefinitionsSourceOfType<GradleScriptDefinitionsSource>()
 
     override suspend fun updateConfigurations(scripts: Iterable<GradleScriptModel>) {
-        val configurations = scripts.associate { it ->
+        val configurations = scripts.associate { it: GradleScriptModel ->
             val sourceCode = VirtualFileScriptSource(it.virtualFile)
             val definition = findScriptDefinition(project, sourceCode)
 
@@ -121,15 +125,11 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
 
             val allDependencies = buildList {
                 addIfNotNull(sdkDependency)
-                addAll(getDependenciesFromGradleLibs(classes, sources,
-                                                     WorkspaceModel.getInstance(project).getVirtualFileUrlManager(), project))
-                addAll(updatedStorage.createDependenciesWithSources(classes, sources, source,
-                                                                    WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
-                ))
-                add(updatedStorage.createDependencyWithKeyword(classes, sources, source,
-                                                               WorkspaceModel.getInstance(project).getVirtualFileUrlManager(), locationName, "accessors"))
-                add(updatedStorage.createDependencyWithKeyword(classes, sources, source,
-                                                               WorkspaceModel.getInstance(project).getVirtualFileUrlManager(), locationName, "groovy"))
+                val manager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
+                addAll(getDependenciesFromGradleLibs(classes, sources, manager, project))
+                addAll(updatedStorage.createDependenciesWithSources(classes, sources, source, manager))
+                add(updatedStorage.createDependencyWithKeyword(classes, sources, source, manager, locationName, "accessors"))
+                add(updatedStorage.createDependencyWithKeyword(classes, sources, source, manager, locationName, "groovy"))
                 addAll(classes.sortedBy { it.name }.map { updatedFactory.get(it, source) })
             }
             updatedStorage.addEntity(ModuleEntity("$definitionScriptModuleName.$locationName", allDependencies, source))

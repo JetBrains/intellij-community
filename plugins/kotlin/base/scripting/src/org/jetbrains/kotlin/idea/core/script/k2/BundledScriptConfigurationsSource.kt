@@ -50,7 +50,7 @@ open class BundledScriptConfigurationsSource(override val project: Project, val 
 
             val definition = findScriptDefinition(project, VirtualFileScriptSource(virtualFile))
             val suitableDefinitions = getScriptDefinitionsSource()?.definitions ?: return@launch
-            if (suitableDefinitions.none { it == definition }) return@launch
+            if (suitableDefinitions.none { it.definitionId == definition.definitionId }) return@launch
 
             updateDependenciesAndCreateModules(setOf(BaseScriptModel(virtualFile)))
         }
