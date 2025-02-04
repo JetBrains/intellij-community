@@ -55,7 +55,7 @@ val Module.kotlinSourceRootType: KotlinSourceRootType?
     }
 
 val Module.isMultiPlatformModule: Boolean
-    get() = facetSettings?.isMultiPlatformModule ?: false
+    get() = facetSettings.isMultiPlatformModule
 
 val Module.isNewMultiPlatformModule: Boolean
     get() {
@@ -75,8 +75,14 @@ var Module.refinesFragmentIds: Collection<String>
 val Module.isTestModule: Boolean
     get() = facetSettings?.isTestModule ?: false
 
-val IKotlinFacetSettings.isMultiPlatformModule: Boolean
-    get() = mppVersion != null
+val IKotlinFacetSettings?.isMultiPlatformModule: Boolean
+    get() = this?.mppVersion != null
+
+val IKotlinFacetSettings?.isNewMultiPlatformModule: Boolean
+    get() {
+        // TODO: review clients, correct them to use precise checks for MPP version
+        return this?.mppVersion.isNewMPP || this?.mppVersion.isHmpp
+    }
 
 private val Module.facetSettings: IKotlinFacetSettings?
     get() = KotlinFacet.get(this)?.configuration?.settings
