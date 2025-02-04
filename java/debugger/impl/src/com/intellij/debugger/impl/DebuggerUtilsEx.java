@@ -431,36 +431,14 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return reference;
   }
 
-  private static final int BATCH_SIZE = 4096;
-
-  private static void setChuckByChunk(@NotNull ArrayReference array, @NotNull List<? extends Value> values, boolean checkAssignable)
-    throws ClassNotLoadedException, InvalidTypeException {
-    int loaded = 0;
-    while (loaded < values.size()) {
-      int chunkSize = Math.min(BATCH_SIZE, values.size() - loaded);
-      if (array instanceof ArrayReferenceImpl) {
-        ((ArrayReferenceImpl)array).setValues(loaded, values, loaded, chunkSize, checkAssignable);
-      }
-      else {
-        array.setValues(loaded, values, loaded, chunkSize);
-      }
-      loaded += chunkSize;
-    }
-  }
-
   public static void setArrayValues(@NotNull ArrayReference array, @NotNull List<? extends Value> values, boolean checkAssignable)
     throws ClassNotLoadedException, InvalidTypeException {
-    if (isAndroidVM(array.virtualMachine())) {
-      // Android VM has a limited buffer size to receive JDWP data (see https://issuetracker.google.com/issues/73584940)
-      setChuckByChunk(array, values, checkAssignable);
+
+    if (array instanceof ArrayReferenceImpl) {
+      ((ArrayReferenceImpl)array).setValues(0, values, 0, -1, checkAssignable);
     }
     else {
-      if (array instanceof ArrayReferenceImpl) {
-        ((ArrayReferenceImpl)array).setValues(0, values, 0, -1, checkAssignable);
-      }
-      else {
-        array.setValues(values);
-      }
+      array.setValues(values);
     }
   }
 
