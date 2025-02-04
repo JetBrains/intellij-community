@@ -1,20 +1,25 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lang.xml;
+package com.intellij.lang.xml
 
-import com.intellij.lang.CompositeLanguage;
-import com.intellij.lang.Language;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.lang.CompositeLanguage
+import com.intellij.lang.Language
+import org.jetbrains.annotations.NonNls
 
-public class XMLLanguage extends CompositeLanguage {
+open class XMLLanguage :
+  CompositeLanguage {
 
-  public static final XMLLanguage INSTANCE = new XMLLanguage();
+  private constructor() :
+    super("XML", "application/xml", "text/xml")
 
-  private XMLLanguage() {
-    super("XML", "application/xml", "text/xml");
-  }
+  protected constructor(
+    baseLanguage: Language,
+    name: @NonNls String,
+    vararg mimeTypes: String,
+  ) :
+    super(baseLanguage, name, *mimeTypes)
 
-  protected XMLLanguage(@NotNull Language baseLanguage, @NonNls @NotNull String name, @NonNls @NotNull String @NotNull ... mime) {
-    super(baseLanguage, name, mime);
+  companion object {
+    @JvmField
+    val INSTANCE: XMLLanguage = XMLLanguage()
   }
 }
