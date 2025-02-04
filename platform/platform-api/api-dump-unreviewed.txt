@@ -1216,6 +1216,8 @@ f:com.intellij.ide.util.treeView.TreeState
 - s:createOn(javax.swing.JTree,javax.swing.tree.DefaultMutableTreeNode):com.intellij.ide.util.treeView.TreeState
 - s:createOn(javax.swing.JTree,javax.swing.tree.TreePath):com.intellij.ide.util.treeView.TreeState
 - s:createOn(javax.swing.JTree,Z,Z):com.intellij.ide.util.treeView.TreeState
+- s:defaultPathElementId(java.lang.Object):java.lang.String
+- s:defaultPathElementType(java.lang.Object):java.lang.String
 - s:expand(javax.swing.JTree,java.util.function.Consumer):V
 - isEmpty():Z
 - readExternal(org.jdom.Element):V

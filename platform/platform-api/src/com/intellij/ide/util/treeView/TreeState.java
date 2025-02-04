@@ -105,8 +105,8 @@ public final class TreeState implements JDOMExternalizable {
       if (this.userObject != null && this.userObject.equals(userObject)) {
         return Match.OBJECT;
       }
-      return Objects.equals(id, calcId(userObject)) &&
-             Objects.equals(type, calcType(userObject)) ? Match.ID_TYPE : null;
+      return Objects.equals(id, calcId(object)) &&
+             Objects.equals(type, calcType(object)) ? Match.ID_TYPE : null;
     }
 
     @Attribute("name")
@@ -129,6 +129,88 @@ public final class TreeState implements JDOMExternalizable {
     @Attribute("type")
     public String getType() {
       return type;
+    }
+  }
+
+  private static final class PathMatcher {
+    private final @NotNull PathElement @NotNull [] serializedPath;
+    private int matchedSoFar = 0;
+    private @Nullable TreePath matchedPath;
+
+    static @Nullable PathMatcher tryStart(@NotNull PathElement @NotNull [] serializedPath, @NotNull TreePath rootPath) {
+      if (serializedPath.length == 0) return null;
+      if (!serializedPath[0].matches(rootPath.getLastPathComponent())) return null;
+      var attempt = new PathMatcher(serializedPath, rootPath.getParentPath());
+      return attempt.tryAdvance(rootPath.getLastPathComponent()) ? attempt : null;
+    }
+
+    private PathMatcher(@NotNull PathElement @NotNull [] serializedPath, @Nullable TreePath parentPath) {
+      this.serializedPath = serializedPath;
+      this.matchedPath = parentPath;
+    }
+
+    @Nullable TreePath matchedPath() {
+      return matchedPath;
+    }
+
+    boolean fullyMatched() {
+      return matchedSoFar == serializedPath.length;
+    }
+
+    boolean tryAdvance(@NotNull Object node) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Trying to advance a matcher using " + node);
+        LOG.debug("The serialized path: " + Arrays.toString(serializedPath));
+        LOG.debug("Matched so far: " + matchedSoFar + " elements corresponding to " + matchedPath);
+      }
+      assert matchedSoFar <= serializedPath.length;
+      if (matchedSoFar == serializedPath.length) throw new IllegalStateException("Already matched all the path");
+      boolean flattenedSucceeded = false;
+      boolean plainSucceeded = false;
+      // The flattened case (a node represents several nested nodes).
+      var provider = getProvider(node);
+      if (provider != null) {
+        var flattened = provider.getFlattenedElements();
+        if (flattened != null && flattened.size() > 1 && matchedSoFar + flattened.size() <= serializedPath.length) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Unflattened elements: " + flattened);
+          }
+          var allMatch = true;
+          for (int i = 0; i < flattened.size(); ++i) {
+            var actualElement = flattened.get(i);
+            var serializedElement = serializedPath[matchedSoFar + i];
+            if (!serializedElement.id.equals(actualElement.id()) || !serializedElement.type.equals(actualElement.type())) {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Mismatched element at " + i + ": " + actualElement + " != " + serializedElement);
+              }
+              allMatch = false;
+              break;
+            }
+          }
+          if (allMatch) {
+            flattenedSucceeded = true;
+            matchedSoFar += flattened.size();
+          }
+        }
+      }
+      // The regular case (one-to-one match).
+      if (!flattenedSucceeded) {
+        if (serializedPath[matchedSoFar].isMatchTo(node)) {
+          plainSucceeded = true;
+          ++matchedSoFar;
+        }
+      }
+      if (flattenedSucceeded || plainSucceeded) {
+        matchedPath = matchedPath == null ? new CachingTreePath(node) : matchedPath.pathByAddingChild(node);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Advanced successfully to " + matchedSoFar + " elements corresponding to " + matchedPath);
+        }
+        return true;
+      }
+      else {
+        LOG.debug("Failed to advance");
+        return false;
+      }
     }
   }
 
@@ -302,6 +384,9 @@ public final class TreeState implements JDOMExternalizable {
     mySelectedPaths = selectedPaths;
     myPresentationData = presentationData;
     myScrollToSelection = true;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("TreeState created: " + this);
+    }
   }
 
   public boolean isEmpty() {
@@ -449,23 +534,79 @@ public final class TreeState implements JDOMExternalizable {
   private static PathElement[] createPath(@NotNull TreeModel model, @NotNull TreePath treePath) {
     Object prev = null;
     int count = treePath.getPathCount();
-    PathElement[] result = new PathElement[count];
+    ArrayList<PathElement> result = new ArrayList<>(count);
     for (int i = 0; i < count; i++) {
       Object cur = treePath.getPathComponent(i);
       Object userObject = TreeUtil.getUserObject(cur);
       int childIndex = prev == null ? 0 : model.getIndexOfChild(prev, cur);
-      result[i] = new PathElement(calcId(userObject), calcType(userObject), childIndex, userObject);
+      boolean isFlattened = false;
+      String id = null;
+      String type = null;
+      var provider = getProvider(cur);
+      if (provider != null) {
+        var flattened = provider.getFlattenedElements();
+        if (flattened != null && !flattened.isEmpty()) {
+          if (flattened.size() == 1) {
+            id = flattened.get(0).id();
+            type = flattened.get(0).type();
+          }
+          else {
+            isFlattened = true;
+            for (SerializablePathElement element : flattened) {
+              // No "user object" because the unflattened sequence elements aren't present in the tree at this moment.
+              result.add(new PathElement(element.id(), element.type(), childIndex, null));
+              // The first element of the unflattened sequence has the same child index as the flattened element.
+              // Every other element is the first and only child of its parent.
+              // For example, a directory "a/b/c" becomes a -> b -> c, where "a" has the same place in the tree as the flattened node.
+              childIndex = 0;
+            }
+          }
+        }
+      }
+      if (!isFlattened) {
+        // A special case: when flattened returns a list of one item, reuse that ID/type to avoid calculating them twice.
+        if (id == null) {
+          id = calcId(cur);
+        }
+        if (type == null) {
+          type = calcType(cur);
+        }
+        result.add(new PathElement(id, type, childIndex, userObject));
+      }
       prev = cur;
     }
-    return result;
+    return result.toArray(PathElement[]::new);
   }
 
-  static @NotNull String calcId(@Nullable Object userObject) {
-    if (userObject == null) return "";
+  private static @Nullable PathElementIdProvider getProvider(@Nullable Object node) {
+    if (node == null) return null;
+    if (node instanceof PathElementIdProvider provider) return provider;
+    var userObject = TreeUtil.getUserObject(node);
+    if (userObject instanceof PathElementIdProvider provider) return provider;
+    return null;
+  }
+
+  static @NotNull String calcId(@Nullable Object node) {
+    if (node == null) return "";
+    var provider = getProvider(node);
     // The easiest case: the node provides an ID explicitly.
-    if (userObject instanceof PathElementIdProvider userObjectWithPathId) {
-      return userObjectWithPathId.getPathElementId();
+    if (provider != null) {
+      return provider.getPathElementId();
     }
+    return defaultPathElementId(node);
+  }
+
+  /**
+   * The default ID calculation implementation
+   * <p>
+   *   Calculates the ID based on the value returned by the node's user object's {@code toString()}.
+   * </p>
+   * @param node a tree node or its user object (a node is unwrapped as needed)
+   * @return the default value representation of the node's user object
+   */
+  public static @NotNull String defaultPathElementId(@NotNull Object node) {
+    var userObject = TreeUtil.getUserObject(node);
+    if (userObject == null) return "";
     // There used to be a lot of code here that all started in 2005 with IDEA-29734 (back then IDEADEV-2150),
     // which later was modified many times, but in the end all it did was to invoke some slow operations on EDT
     // (IDEA-270843, IDEA-305055), and IDEA-29734 was still broken.
@@ -473,13 +614,28 @@ public final class TreeState implements JDOMExternalizable {
     return StringUtil.notNullize(userObject.toString());
   }
 
-  static @NotNull String calcType(@Nullable Object userObject) {
-    if (userObject == null) return "";
-    if (userObject instanceof PathElementIdProvider userObjectWithPathId) {
+  static @NotNull String calcType(@Nullable Object node) {
+    if (node == null) return "";
+    var provider = getProvider(node);
+    if (provider != null) {
       // A special override for unusual cases, for example, nodes with cached presentations.
-      var providedType = userObjectWithPathId.getPathElementType();
+      var providedType = provider.getPathElementType();
       if (providedType != null) return providedType;
     }
+    return defaultPathElementType(node);
+  }
+
+  /**
+   * The default type calculation implementation
+   * <p>
+   *   Calculates the type based on the actual class of the node's user object.
+   * </p>
+   * @param node a tree node or its user object (a node is unwrapped as needed)
+   * @return the default type representation of the node's user object
+   */
+  public static @NotNull String defaultPathElementType(@NotNull Object node) {
+    var userObject = TreeUtil.getUserObject(node);
+    if (userObject == null) return "";
     String name = userObject.getClass().getName();
     return Integer.toHexString(StringHash.murmur(name, 31)) + ":" + StringUtil.getShortName(name);
   }
@@ -489,7 +645,9 @@ public final class TreeState implements JDOMExternalizable {
   }
 
   public void applyTo(@NotNull JTree tree, @Nullable Object root) {
-    LOG.debug(new IllegalStateException("restore paths"));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("TreeState.applyTo: " + tree + "\n" + this);
+    }
     if (tree instanceof @NotNull Tree jbTree) {
       jbTree.fireTreeStateRestoreStarted();
     }
@@ -535,9 +693,9 @@ public final class TreeState implements JDOMExternalizable {
 
     for (PathElement[] path : myExpandedPaths) {
       if (path.length == 0) continue;
-      int index = rootPath.getPathCount() - 1;
-      if (!path[index].isMatchTo(rootPath.getPathComponent(index))) continue;
-      expandImpl(0, path, rootPath, tree, indicator);
+      var matcher = PathMatcher.tryStart(path, rootPath);
+      if (matcher == null) continue;
+      expandImpl(matcher, tree, indicator);
     }
 
     tree.finishExpanding();
@@ -588,26 +746,28 @@ public final class TreeState implements JDOMExternalizable {
     return treePath.pathByAddingChild(child);
   }
 
-  private static void expandImpl(int positionInPath,
-                                 PathElement[] path,
-                                 TreePath treePath,
-                                 TreeFacade tree,
-                                 ProgressIndicator indicator) {
-    tree.expand(treePath).doWhenDone(new TreeRunnable("TreeState.applyTo") {
+  private static void expandImpl(
+    @NotNull PathMatcher matcher,
+    TreeFacade tree,
+    ProgressIndicator indicator
+  ) {
+    var parentPath = matcher.matchedPath();
+    assert parentPath != null; // This function is only called after some initial match succeeds.
+    tree.expand(parentPath).doWhenDone(new TreeRunnable("TreeState.applyTo") {
       @Override
       public void perform() {
         indicator.checkCanceled();
 
-        PathElement next = positionInPath == path.length - 1 ? null : path[positionInPath + 1];
-        if (next == null) return;
+        if (matcher.fullyMatched()) return;
 
-        Object parent = treePath.getLastPathComponent();
+
+        Object parent = parentPath.getLastPathComponent();
         TreeModel model = tree.tree.getModel();
         int childCount = model.getChildCount(parent);
         for (int j = 0; j < childCount; j++) {
           Object child = tree.tree.getModel().getChild(parent, j);
-          if (next.isMatchTo(child)) {
-            expandImpl(positionInPath + 1, path, treePath.pathByAddingChild(child), tree, indicator);
+          if (matcher.tryAdvance(child)) {
+            expandImpl(matcher, tree, indicator);
             break;
           }
         }
@@ -770,10 +930,10 @@ public final class TreeState implements JDOMExternalizable {
   }
 
   private static final class SinglePathVisitor implements TreeVisitor {
-    private final PathElement[] elements;
+    private final @NotNull PathMatcher matcher;
 
     SinglePathVisitor(PathElement[] elements) {
-      this.elements = elements;
+      matcher = new PathMatcher(elements, null);
     }
 
     @Override
@@ -783,10 +943,12 @@ public final class TreeState implements JDOMExternalizable {
 
     @Override
     public @NotNull Action visit(@NotNull TreePath path) {
-      int count = path.getPathCount();
-      if (count > elements.length) return Action.SKIP_CHILDREN;
-      boolean matches = elements[count - 1].isMatchTo(path.getLastPathComponent());
-      return !matches ? Action.SKIP_CHILDREN : (count < elements.length ? Action.CONTINUE : Action.INTERRUPT);
+      if (matcher.tryAdvance(path.getLastPathComponent())) {
+        return matcher.fullyMatched() ? Action.INTERRUPT : Action.CONTINUE;
+      }
+      else {
+        return Action.SKIP_CHILDREN;
+      }
     }
   }
 
@@ -794,23 +956,14 @@ public final class TreeState implements JDOMExternalizable {
 
     private static final class PathMatchState {
 
-      private final PathElement[] elements;
-      private @Nullable TreePath matchSoFar = null;
+      private final @NotNull PathMatcher matcher;
 
-      private PathMatchState(PathElement[] elements) { this.elements = elements; }
+      private PathMatchState(PathElement[] elements) { this.matcher = new PathMatcher(elements, null); }
 
       @NotNull PathMatch match(@NotNull TreePath path) {
-        if (Objects.equals(path.getParentPath(), matchSoFar)) {
-          int count = path.getPathCount();
-          boolean matches = elements[count - 1].isMatchTo(path.getLastPathComponent());
-          if (matches) {
-            if (count == elements.length) {
-              return PathMatch.FULL;
-            }
-            else {
-              matchSoFar = path;
-              return PathMatch.PARTIAL;
-            }
+        if (Objects.equals(path.getParentPath(), matcher.matchedPath())) {
+          if (matcher.tryAdvance(path.getLastPathComponent())) {
+            return matcher.fullyMatched() ? PathMatch.FULL : PathMatch.PARTIAL;
           }
           else {
             return PathMatch.NONE;

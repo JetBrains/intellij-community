@@ -878,6 +878,7 @@ c:com.intellij.ide.util.treeView.NodeOptions$Immutable
 - isHideEmptyMiddlePackages():Z
 - isShowLibraryContents():Z
 com.intellij.ide.util.treeView.PathElementIdProvider
+- getFlattenedElements():java.util.List
 - a:getPathElementId():java.lang.String
 - getPathElementType():java.lang.String
 a:com.intellij.ide.util.treeView.PresentableNodeDescriptor
@@ -911,6 +912,13 @@ c:com.intellij.ide.util.treeView.PresentableNodeDescriptor$ColoredFragment
 - getText():java.lang.String
 - getToolTip():java.lang.String
 - hashCode():I
+f:com.intellij.ide.util.treeView.SerializablePathElement
+- java.lang.Record
+- <init>(java.lang.String,java.lang.String):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- id():java.lang.String
+- type():java.lang.String
 c:com.intellij.ide.util.treeView.TreeAnchorizer
 - s:anchorizeList(java.util.Collection):java.util.List
 - createAnchor(java.lang.Object):java.lang.Object
