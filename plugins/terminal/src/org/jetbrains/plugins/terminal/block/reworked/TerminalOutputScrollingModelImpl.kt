@@ -64,7 +64,7 @@ internal class TerminalOutputScrollingModelImpl(
           // The user has returned the scrollbar to the bottom, so we should stick to the bottom again.
           shouldScrollToCursor = true
         }
-        else if (e.oldRectangle.y != e.newRectangle.y) {
+        else if (e.oldRectangle != null && e.oldRectangle.y != e.newRectangle.y) {
           // The user has changed the scroll offset, so we should stop following the cursor.
           shouldScrollToCursor = false
         }
