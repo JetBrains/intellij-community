@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
@@ -25,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.tree.IElementType;
@@ -436,7 +436,7 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
   private static boolean blockAlwaysReturns(@Nullable PsiStatement statement) {
     if (statement == null) return false;
     try {
-      return ControlFlowUtil.returnPresent(HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(statement));
+      return ControlFlowUtil.returnPresent(ControlFlowFactory.getControlFlowNoConstantEvaluate(statement));
     }
     catch (AnalysisCanceledException e) {
       return false;

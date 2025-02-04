@@ -26,13 +26,10 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 
 import static java.util.Objects.*;
@@ -55,6 +52,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   final @NotNull TypeChecker myTypeChecker = new TypeChecker(this);
   final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
+  private final @NotNull ControlFlowChecker myControlFlowChecker = new ControlFlowChecker(this);
   private final @NotNull FunctionChecker myFunctionChecker = new FunctionChecker(this);
   final @NotNull PatternChecker myPatternChecker = new PatternChecker(this);
   final @NotNull ModifierChecker myModifierChecker = new ModifierChecker(this);
@@ -471,6 +469,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) {
       myImportChecker.checkExtraSemicolonBetweenImportStatements(token, type);
     }
+    if (!hasErrorResults() && type == JavaTokenType.RBRACE && token.getParent() instanceof PsiCodeBlock block) {
+      myControlFlowChecker.checkMissingReturn(block);
+    }
   }
 
   @Override
@@ -480,6 +481,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkIllegalInstanceMemberInRecord(initializer);
     if (!hasErrorResults()) myClassChecker.checkThingNotAllowedInInterface(initializer);
     if (!hasErrorResults()) myClassChecker.checkInitializersInImplicitClass(initializer);
+    if (!hasErrorResults()) myControlFlowChecker.checkUnreachableStatement(initializer.getBody());
   }
 
   @Override
@@ -803,31 +805,13 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       }
     }
     if (!hasErrorResults() && functionalInterfaceType != null) {
-      PsiCallExpression callExpression = parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression ?
-                                         (PsiCallExpression)parent.getParent() : null;
-      MethodCandidateInfo parentCallResolveResult =
-        callExpression != null ? ObjectUtils.tryCast(callExpression.resolveMethodGenerics(), MethodCandidateInfo.class) : null;
-      String parentInferenceErrorMessage = parentCallResolveResult != null ? parentCallResolveResult.getInferenceErrorMessage() : null;
-      PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
-      Map<PsiElement, @Nls String> returnErrors = null;
-      Set<PsiTypeParameter> parentTypeParameters =
-        parentCallResolveResult == null ? Set.of() : Set.of(parentCallResolveResult.getElement().getTypeParameters());
-      // If return type of the lambda was not fully inferred and lambda parameters don't mention the same type,
-      // it means that lambda is not responsible for inference failure and blaming it would be unreasonable.
-      boolean skipReturnCompatibility = parentCallResolveResult != null &&
-                                        PsiTypesUtil.mentionsTypeParameters(returnType, parentTypeParameters)
-                                        && !FunctionChecker.lambdaParametersMentionTypeParameter(functionalInterfaceType, parentTypeParameters);
-      if (!skipReturnCompatibility) {
-        returnErrors = LambdaUtil.checkReturnTypeCompatible(expression, returnType);
-      }
-      if (parentInferenceErrorMessage != null && (returnErrors == null || !returnErrors.containsValue(parentInferenceErrorMessage))) {
-        if (returnErrors == null) return;
-        myFunctionChecker.checkLambdaInferenceFailure(callExpression, parentCallResolveResult, expression);
-      }
-      else if (returnErrors != null && !PsiTreeUtil.hasErrorElements(expression)) {
-        returnErrors.forEach((expr, message) -> report(JavaErrorKinds.LAMBDA_RETURN_TYPE_ERROR.create(expr, message)));
-      }
-      if (!hasErrorResults()) myFunctionChecker.checkParametersCompatible(expression, functionalInterfaceType);
+      myFunctionChecker.checkLambdaTypeApplicability(expression, parent, functionalInterfaceType);
+    }
+    if (!hasErrorResults() && functionalInterfaceType != null) {
+      myFunctionChecker.checkParametersCompatible(expression, functionalInterfaceType);
+    }
+    if (!hasErrorResults() && expression.getBody() instanceof PsiCodeBlock block) {
+      myControlFlowChecker.checkUnreachableStatement(block);
     }
   }
 
@@ -1178,6 +1162,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myRecordChecker.checkRecordConstructorDeclaration(method);
     if (!hasErrorResults()) myMethodChecker.checkConstructorInImplicitClass(method);
     if (!hasErrorResults()) myMethodChecker.checkConstructorHandleSuperClassExceptions(method);
+    if (!hasErrorResults()) myControlFlowChecker.checkUnreachableStatement(method.getBody());
   }
 
   @Override

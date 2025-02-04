@@ -29,7 +29,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -261,18 +260,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (hasErrorResults() || toReportFunctionalExpressionProblemOnParent(parent)) return;
 
-    PsiType functionalInterfaceType = null;
     if (!hasErrorResults()) {
-      functionalInterfaceType = expression.getFunctionalInterfaceType();
+      PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
       if (functionalInterfaceType != null) {
         add(LambdaHighlightingUtil.checkFunctionalInterfaceTypeAccessible(myFile.getProject(), expression, functionalInterfaceType));
-      }
-    }
-
-    if (!hasErrorResults()) {
-      PsiElement body = expression.getBody();
-      if (body instanceof PsiCodeBlock block) {
-        add(HighlightControlFlowUtil.checkUnreachableStatement(block));
       }
     }
   }
@@ -288,34 +279,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
     super.visitClassInitializer(initializer);
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkInitializerCompleteNormally(initializer));
-    if (!hasErrorResults()) add(HighlightControlFlowUtil.checkUnreachableStatement(initializer.getBody()));
-  }
-
-  @Override
-  public void visitJavaToken(@NotNull PsiJavaToken token) {
-    super.visitJavaToken(token);
-
-    IElementType type = token.getTokenType();
-
-    if (!hasErrorResults() && type == JavaTokenType.RBRACE && token.getParent() instanceof PsiCodeBlock) {
-      PsiElement gParent = token.getParent().getParent();
-      PsiCodeBlock codeBlock;
-      PsiType returnType;
-      if (gParent instanceof PsiMethod method) {
-        codeBlock = method.getBody();
-        returnType = method.getReturnType();
-      }
-      else if (gParent instanceof PsiLambdaExpression lambdaExpression) {
-        PsiElement body = lambdaExpression.getBody();
-        if (!(body instanceof PsiCodeBlock)) return;
-        codeBlock = (PsiCodeBlock)body;
-        returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression);
-      }
-      else {
-        return;
-      }
-      add(HighlightControlFlowUtil.checkMissingReturnStatement(codeBlock, returnType));
-    }
   }
 
   @Override
@@ -373,12 +336,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitImportModuleStatement(statement);
     if (!hasErrorResults()) add(checkFeature(statement, JavaFeature.MODULE_IMPORT_DECLARATIONS));
     if (!hasErrorResults()) add(ModuleHighlightUtil.checkModuleReference(statement));
-  }
-
-  @Override
-  public void visitMethod(@NotNull PsiMethod method) {
-    super.visitMethod(method);
-    if (!hasErrorResults()) add(HighlightControlFlowUtil.checkUnreachableStatement(method.getBody()));
   }
 
   @Override

@@ -3,7 +3,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -18,6 +17,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -570,7 +570,7 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
               try {
                 final PsiCodeBlock constructorBody = method.getBody();
                 if (constructorBody != null) {
-                  final ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(constructorBody);
+                  final ControlFlow flow = ControlFlowFactory.getControlFlowNoConstantEvaluate(constructorBody);
                   final int startOffset = flow.getStartOffset(myAnonymousClass);
                   final Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, startOffset, false);
                   if (!writtenVariables.contains(resolved)) {

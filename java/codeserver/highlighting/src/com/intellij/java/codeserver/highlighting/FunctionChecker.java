@@ -11,6 +11,8 @@ import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -286,7 +288,36 @@ final class FunctionChecker {
     return false;
   }
 
-  void checkLambdaInferenceFailure(@NotNull PsiCall methodCall,
+  void checkLambdaTypeApplicability(@NotNull PsiLambdaExpression expression, 
+                                    PsiElement parent, 
+                                    @NotNull PsiType functionalInterfaceType) {
+    PsiCallExpression callExpression = parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression ?
+                                       (PsiCallExpression)parent.getParent() : null;
+    MethodCandidateInfo parentCallResolveResult =
+      callExpression != null ? ObjectUtils.tryCast(callExpression.resolveMethodGenerics(), MethodCandidateInfo.class) : null;
+    String parentInferenceErrorMessage = parentCallResolveResult != null ? parentCallResolveResult.getInferenceErrorMessage() : null;
+    PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+    Map<PsiElement, @Nls String> returnErrors = null;
+    Set<PsiTypeParameter> parentTypeParameters =
+      parentCallResolveResult == null ? Set.of() : Set.of(parentCallResolveResult.getElement().getTypeParameters());
+    // If return type of the lambda was not fully inferred and lambda parameters don't mention the same type,
+    // it means that lambda is not responsible for inference failure and blaming it would be unreasonable.
+    boolean skipReturnCompatibility = parentCallResolveResult != null &&
+                                      PsiTypesUtil.mentionsTypeParameters(returnType, parentTypeParameters)
+                                      && !FunctionChecker.lambdaParametersMentionTypeParameter(functionalInterfaceType, parentTypeParameters);
+    if (!skipReturnCompatibility) {
+      returnErrors = LambdaUtil.checkReturnTypeCompatible(expression, returnType);
+    }
+    if (parentInferenceErrorMessage != null && (returnErrors == null || !returnErrors.containsValue(parentInferenceErrorMessage))) {
+      if (returnErrors == null) return;
+      checkLambdaInferenceFailure(callExpression, parentCallResolveResult, expression);
+    }
+    else if (returnErrors != null && !PsiTreeUtil.hasErrorElements(expression)) {
+      returnErrors.forEach((expr, message) -> myVisitor.report(JavaErrorKinds.LAMBDA_RETURN_TYPE_ERROR.create(expr, message)));
+    }
+  }
+
+  private void checkLambdaInferenceFailure(@NotNull PsiCall methodCall,
                                    @NotNull MethodCandidateInfo resolveResult,
                                    @NotNull PsiLambdaExpression lambdaExpression) {
     String errorMessage = resolveResult.getInferenceErrorMessage();

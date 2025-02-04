@@ -182,7 +182,7 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
           boolean isDefinitely = HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, classInitializer.getBody());
           if (isDefinitely) {
             try {
-              ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(classInitializer.getBody());
+              ControlFlow flow = ControlFlowFactory.getControlFlowNoConstantEvaluate(classInitializer.getBody());
               if (ContainerUtil.exists(ControlFlowUtil.getReadBeforeWrite(flow),
                                        read -> (isStatic || ExpressionUtil.isEffectivelyUnqualified(read)) &&
                                                read.isReferenceTo(field))) {
@@ -233,7 +233,7 @@ public final class DefUseInspection extends AbstractBaseJavaLocalInspectionTool 
         return false;
       }
       try {
-        ControlFlow flow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(body);
+        ControlFlow flow = ControlFlowFactory.getControlFlowNoConstantEvaluate(body);
         if (ContainerUtil.exists(ControlFlowUtil.getReadBeforeWrite(flow),
                                  read -> ExpressionUtil.isEffectivelyUnqualified(read) && read.isReferenceTo(field))) {
           return false;

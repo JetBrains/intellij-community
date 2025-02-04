@@ -152,6 +152,9 @@ final class JavaErrorFixProvider {
     };
     fixes(RETURN_FROM_CONSTRUCTOR, fixReturnFromVoid);
     fixes(RETURN_FROM_VOID_METHOD, fixReturnFromVoid);
+    fix(RETURN_MISSING, error -> myFactory.createAddReturnFix(error.context()));
+    fix(RETURN_MISSING, error -> error.context() instanceof PsiMethod method ?
+                                 myFactory.createMethodReturnFix(method, PsiTypes.voidType(), true) : null);
     fixes(STATEMENT_BAD_EXPRESSION, (error, sink) -> {
       if (error.psi() instanceof PsiExpressionStatement expressionStatement) {
         HighlightFixUtil.registerFixesForExpressionStatement(expressionStatement, sink);
@@ -163,6 +166,9 @@ final class JavaErrorFixProvider {
         }
       }
     });
+    fix(STATEMENT_UNREACHABLE,
+        error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.unreachable.statement.fix.text")));
+    fix(STATEMENT_UNREACHABLE_LOOP_BODY, error -> myFactory.createSimplifyBooleanFix(error.psi(), false));
     fix(FOREACH_NOT_APPLICABLE, error -> myFactory.createNotIterableForEachLoopFix(error.psi()));
   }
 

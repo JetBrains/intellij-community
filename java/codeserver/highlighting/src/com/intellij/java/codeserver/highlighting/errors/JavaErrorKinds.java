@@ -989,6 +989,24 @@ public final class JavaErrorKinds {
   
   public static final Simple<PsiSwitchLabelStatementBase> STATEMENT_CASE_OUTSIDE_SWITCH = error("statement.case.outside.switch");
   public static final Simple<PsiStatement> STATEMENT_INVALID = error("statement.invalid");
+  public static final Simple<PsiExpression> STATEMENT_UNREACHABLE_LOOP_BODY = error("statement.unreachable.loop.body");
+  public static final Simple<PsiElement> STATEMENT_UNREACHABLE = error(PsiElement.class, "statement.unreachable")
+    .withAnchor(statement -> {
+      PsiElement keyword = null;
+      if (statement instanceof PsiIfStatement ||
+          statement instanceof PsiSwitchBlock ||
+          statement instanceof PsiLoopStatement ||
+          statement instanceof PsiThrowStatement ||
+          statement instanceof PsiReturnStatement ||
+          statement instanceof PsiYieldStatement ||
+          statement instanceof PsiTryStatement ||
+          statement instanceof PsiSynchronizedStatement ||
+          statement instanceof PsiAssertStatement ||
+          statement instanceof PsiLabeledStatement) {
+        keyword = statement.getFirstChild();
+      }
+      return keyword != null ? keyword : statement;
+    });
   public static final Simple<PsiStatement> STATEMENT_BAD_EXPRESSION = error("statement.bad.expression");
   public static final Simple<PsiStatement> STATEMENT_DECLARATION_NOT_ALLOWED = error("statement.declaration.not.allowed");
   
@@ -1191,6 +1209,8 @@ public final class JavaErrorKinds {
     parameterized(PsiReturnStatement.class, PsiMethod.class, "return.value.missing");
   public static final Parameterized<PsiReturnStatement, PsiMethod> RETURN_FROM_CONSTRUCTOR =
     parameterized(PsiReturnStatement.class, PsiMethod.class, "return.from.constructor");
+  public static final Parameterized<PsiElement, PsiParameterListOwner> RETURN_MISSING =
+    parameterized(PsiElement.class, PsiParameterListOwner.class, "return.missing");
   public static final Parameterized<PsiReturnStatement, PsiMethod> RETURN_FROM_VOID_METHOD =
     parameterized(PsiReturnStatement.class, PsiMethod.class, "return.from.void.method");
   public static final Parameterized<PsiReturnStatement, PsiMethodCallExpression> RETURN_BEFORE_EXPLICIT_CONSTRUCTOR_CALL =

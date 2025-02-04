@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -31,7 +30,6 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,101 +46,17 @@ public final class HighlightControlFlowUtil {
 
   private HighlightControlFlowUtil() { }
 
-  static HighlightInfo.Builder checkMissingReturnStatement(@Nullable PsiCodeBlock body, @Nullable PsiType returnType) {
-    if (body == null || returnType == null || PsiTypes.voidType().equals(returnType.getDeepComponentType())) {
-      return null;
-    }
-
-    // do not compute constant expressions for if() statement condition
-    // see JLS 14.20 Unreachable Statements
-    try {
-      ControlFlow controlFlow = getControlFlowNoConstantEvaluate(body);
-      if (!ControlFlowUtil.returnPresent(controlFlow)) {
-        PsiJavaToken rBrace = body.getRBrace();
-        PsiElement context = rBrace == null ? body.getLastChild() : rBrace;
-        String message = JavaErrorBundle.message("missing.return.statement");
-        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(message);
-        PsiElement parent = body.getParent();
-        if (parent instanceof PsiMethod method) {
-          IntentionAction action1 = getQuickFixFactory().createAddReturnFix(method);
-          info.registerFix(action1, null, null, null, null);
-          IntentionAction action = getQuickFixFactory().createMethodReturnFix(method, PsiTypes.voidType(), true);
-          info.registerFix(action, null, null, null, null);
-        }
-        if (parent instanceof PsiLambdaExpression lambda) {
-          IntentionAction action = getQuickFixFactory().createAddReturnFix(lambda);
-          info.registerFix(action, null, null, null, null);
-        }
-        return info;
-      }
-    }
-    catch (AnalysisCanceledException ignored) { }
-
-    return null;
-  }
-
+  /**
+   * @deprecated use {@link ControlFlowFactory#getControlFlowNoConstantEvaluate(PsiElement)}
+   */
+  @Deprecated
   public static @NotNull ControlFlow getControlFlowNoConstantEvaluate(@NotNull PsiElement body) throws AnalysisCanceledException {
-    LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
-    return ControlFlowFactory.getControlFlow(body, policy, ControlFlowOptions.NO_CONST_EVALUATE);
+    return ControlFlowFactory.getControlFlowNoConstantEvaluate(body);
   }
 
   private static @NotNull ControlFlow getControlFlow(@NotNull PsiElement context) throws AnalysisCanceledException {
     LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
     return ControlFlowFactory.getControlFlow(context, policy, ControlFlowOptions.create(true, true, true));
-  }
-
-  static HighlightInfo.Builder checkUnreachableStatement(@Nullable PsiCodeBlock codeBlock) {
-    if (codeBlock == null) return null;
-    // do not compute constant expressions for if() statement condition
-    // see JLS 14.20 Unreachable Statements
-    try {
-      AllVariablesControlFlowPolicy policy = AllVariablesControlFlowPolicy.getInstance();
-      ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeBlock, policy, ControlFlowOptions.NO_CONST_EVALUATE);
-      PsiElement unreachableStatement = ControlFlowUtil.getUnreachableStatement(controlFlow);
-      if (unreachableStatement != null) {
-        if (unreachableStatement instanceof PsiCodeBlock && unreachableStatement.getParent() instanceof PsiBlockStatement) {
-          unreachableStatement = unreachableStatement.getParent();
-        }
-        if (unreachableStatement instanceof PsiStatement) {
-          PsiElement parent = unreachableStatement.getParent();
-          if (parent instanceof PsiWhileStatement || parent instanceof PsiForStatement) {
-            PsiExpression condition = ((PsiConditionalLoopStatement)parent).getCondition();
-            if (Boolean.FALSE.equals(ExpressionUtils.computeConstantExpression(condition))) {
-              HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(condition)
-                .descriptionAndTooltip(JavaErrorBundle.message("unreachable.statement.false.condition"));
-              IntentionAction action = getQuickFixFactory().createSimplifyBooleanFix(condition, false);
-              info.registerFix(action, null, null, null, null);
-              return info;
-            }
-          }
-        }
-        String description = JavaErrorBundle.message("unreachable.statement");
-        PsiElement keyword = null;
-        if (unreachableStatement instanceof PsiIfStatement ||
-            unreachableStatement instanceof PsiSwitchBlock ||
-            unreachableStatement instanceof PsiLoopStatement ||
-            unreachableStatement instanceof PsiThrowStatement ||
-            unreachableStatement instanceof PsiReturnStatement ||
-            unreachableStatement instanceof PsiYieldStatement ||
-            unreachableStatement instanceof PsiTryStatement ||
-            unreachableStatement instanceof PsiSynchronizedStatement ||
-            unreachableStatement instanceof PsiAssertStatement ||
-            unreachableStatement instanceof PsiLabeledStatement) {
-          keyword = unreachableStatement.getFirstChild();
-        }
-        PsiElement element = keyword != null ? keyword : unreachableStatement;
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
-        IntentionAction action =
-          getQuickFixFactory().createDeleteFix(unreachableStatement, QuickFixBundle.message("delete.unreachable.statement.fix.text"));
-        info.registerFix(action, null, null, null, null);
-        return info;
-      }
-    }
-    catch (AnalysisCanceledException | IndexNotReadyException e) {
-      // incomplete code
-    }
-    return null;
   }
 
   public static boolean isFieldInitializedAfterObjectConstruction(@NotNull PsiField field) {
@@ -913,7 +827,7 @@ public final class HighlightControlFlowUtil {
     PsiCodeBlock body = initializer.getBody();
     // unhandled exceptions already reported
     try {
-      ControlFlow controlFlow = getControlFlowNoConstantEvaluate(body);
+      ControlFlow controlFlow = ControlFlowFactory.getControlFlowNoConstantEvaluate(body);
       int completionReasons = ControlFlowUtil.getCompletionReasons(controlFlow, 0, controlFlow.getSize());
       if (!BitUtil.isSet(completionReasons, ControlFlowUtil.NORMAL_COMPLETION_REASON)) {
         String description = JavaErrorBundle.message("initializer.must.be.able.to.complete.normally");
