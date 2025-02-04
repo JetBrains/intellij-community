@@ -5,12 +5,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * The service is intended to be used instead of a project/application as a parent disposable.
  */
 @Service(Service.Level.APP, Service.Level.PROJECT)
-class NotebookPluginDisposable : Disposable {
+class NotebookPluginDisposable(coroutineScope: CoroutineScope) : Disposable, CoroutineScope by coroutineScope {
   override fun dispose(): Unit = Unit
 
   companion object {

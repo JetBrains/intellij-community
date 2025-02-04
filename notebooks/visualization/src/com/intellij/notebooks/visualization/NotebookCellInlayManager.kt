@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.ex.FoldingModelEx
+import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.util.Disposer
@@ -49,8 +50,8 @@ class NotebookCellInlayManager private constructor(
 
   private val cellViewEventListeners = EventDispatcher.create(EditorCellViewEventListener::class.java)
 
-  private fun update(force: Boolean = false, block: (UpdateContext) -> Unit) {
-    editor.updateManager.update(force, block)
+  private fun update(force: Boolean = false, keepScrollingPosition: Boolean = false, block: (UpdateContext) -> Unit) {
+    editor.updateManager.update(force = force, keepScrollingPositon = keepScrollingPosition, block = block)
   }
 
   override fun dispose() {
@@ -278,10 +279,16 @@ class NotebookCellInlayManager private constructor(
     notebook.clear()
     val pointerFactory = NotebookIntervalPointerFactory.get(editor)
 
-    update {
+    update(keepScrollingPosition = false) {
       notebookCellLines.intervals.forEach { interval ->
         notebook.addCell(pointerFactory.create(interval))
       }
+    }
+    //Forcefully synchronize components and inlays height
+    update(keepScrollingPosition = false) {
+      editor.contentComponent.components
+        .filterIsInstance<EditorEmbeddedComponentManager.FullEditorWidthRenderer>()
+        .forEach { it.doLayout() }
     }
   }
 

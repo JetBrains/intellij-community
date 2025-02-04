@@ -13,7 +13,7 @@ import com.intellij.util.messages.MessageBusConnection
 @Service(Service.Level.APP)
 internal class NotebookEditorAppearanceManager {
 
-  private val connection: MessageBusConnection = ApplicationManager.getApplication().getMessageBus().connect(NotebookPluginDisposable.getInstance())
+  private val connection: MessageBusConnection = ApplicationManager.getApplication().getMessageBus().connect(NotebookPluginDisposable.getInstance() as Disposable)
 
   private val eventDispatcher = EventDispatcher.create<EditorColorsListener>(EditorColorsListener::class.java)
 
