@@ -87,8 +87,11 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
       val errorLogProcessor = PythonErrorLogProcessorFactory().createProcessor(testingFramework)
       val successRatio = errorLogProcessor.getTestExecutionSuccessRate(executionLog)
       collectedInfo.put(AIA_EXECUTION_SUCCESS_RATIO, successRatio)
+
       // Collect Coverage
-      val coverageProcessor = PythonTestCoverageProcessor(coverageFilePath)
+      val coverageFile = File(coverageFilePath)
+      val coverageData = if (coverageFile.exists()) coverageFile.readText(Charsets.UTF_8) else ""
+      val coverageProcessor = PythonTestCoverageProcessor(coverageData)
       val lineCoverage = coverageProcessor.getLineCoverage()
       collectedInfo.put(AIA_TEST_LINE_COVERAGE, lineCoverage)
       val branchCoverage = coverageProcessor.getBranchCoverage()
