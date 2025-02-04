@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class CodeStyleSettingsManager implements PersistentStateComponentWithModificationTracker<Element> {
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsManager.class);
@@ -101,15 +102,26 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
    */
   public void runWithLocalSettings(@NotNull CodeStyleSettings baseSettings,
                                    @NotNull Consumer<? super @NotNull CodeStyleSettings> localSettingsConsumer) {
-    CodeStyleSettings tempSettingsBefore = myLocalSettings.get();
+    computeWithLocalSettings(baseSettings, localSettings -> {
+      localSettingsConsumer.accept(localSettings);
+      return null;
+    });
+  }
+
+  /**
+   * @see CodeStyle#computeWithLocalSettings(Project, CodeStyleSettings, Function)
+   */
+  public <T> T computeWithLocalSettings(@NotNull CodeStyleSettings baseSettings,
+                                        @NotNull Function<? super @NotNull CodeStyleSettings, T> localSettingsFunction) {
+    CodeStyleSettings localSettingsBefore = myLocalSettings.get();
     try {
-      CodeStyleSettings tempSettings = new CodeStyleSettings(true, false);
-      tempSettings.copyFrom(baseSettings);
-      myLocalSettings.set(tempSettings);
-      localSettingsConsumer.accept(tempSettings);
+      CodeStyleSettings localSettings = new CodeStyleSettings(true, false);
+      localSettings.copyFrom(baseSettings);
+      myLocalSettings.set(localSettings);
+      return localSettingsFunction.apply(localSettings);
     }
     finally {
-      myLocalSettings.set(tempSettingsBefore);
+      myLocalSettings.set(localSettingsBefore);
     }
   }
 

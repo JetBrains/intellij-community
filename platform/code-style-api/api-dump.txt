@@ -1,5 +1,6 @@
 f:com.intellij.application.options.CodeStyle
 - sf:LOG:com.intellij.openapi.diagnostic.Logger
+- s:computeWithLocalSettings(com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings,java.util.function.Function):java.lang.Object
 - s:createTestSettings():com.intellij.psi.codeStyle.CodeStyleSettings
 - s:createTestSettings(com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.codeStyle.CodeStyleSettings
 - s:doWithTemporarySettings(com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings,java.lang.Runnable):V
@@ -623,6 +624,7 @@ c:com.intellij.psi.codeStyle.CodeStyleSettingsManager
 - USE_PER_PROJECT_SETTINGS:Z
 - <init>():V
 - f:cloneSettings(com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.codeStyle.CodeStyleSettings
+- computeWithLocalSettings(com.intellij.psi.codeStyle.CodeStyleSettings,java.util.function.Function):java.lang.Object
 - createSettings():com.intellij.psi.codeStyle.CodeStyleSettings
 - f:createTemporarySettings():com.intellij.psi.codeStyle.CodeStyleSettings
 - s:createTestSettings(com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.codeStyle.CodeStyleSettings
