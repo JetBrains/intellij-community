@@ -110,6 +110,11 @@ public final class HotSwapUIImpl extends HotSwapUI {
       statusListener.onCancel(sessions);
       return;
     }
+    if (isAutoRun && shouldAskBeforeHotswap && DebuggerSettings.RUN_HOTSWAP_ASK.equals(runHotswap)) {
+      // never show dialog for automatic runs
+      statusListener.onCancel(sessions);
+      return;
+    }
 
     List<DebuggerSession> toScan = new ArrayList<>(sessions); // by default scan all sessions
     List<DebuggerSession> toUseGenerated = new ArrayList<>();
