@@ -1629,10 +1629,11 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
           .findFirst(type -> name.equals(type.getName()))
           .orElse(null);
       }
-      else if (owner instanceof PyFunction) {
-        return StreamEx.of(((PyFunction)owner).getParameterList().getParameters())
+      else if (owner instanceof PyFunction function) {
+        return StreamEx.of(function.getParameterList().getParameters())
           .select(PyNamedParameter.class)
-          .map(parameter -> new PyTypingTypeProvider().getParameterType(parameter, (PyFunction)owner, context))
+          .map(parameter -> new PyTypingTypeProvider().getParameterType(parameter, function, context))
+          .append(new PyTypingTypeProvider().getReturnType(function, context))
           .map(Ref::deref)
           .map(paramType -> PyTypeChecker.collectGenerics(paramType, context.getTypeContext()))
           .flatMap(generics -> StreamEx.<PyTypeParameterType>of(generics.getTypeVars())

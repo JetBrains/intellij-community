@@ -270,7 +270,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
         
         list[<warning descr="Unbound type variable">T</warning>]()
         
-        def f(x: T) -> None:
+        def f1(x: T) -> None:
             a1: T
             a2: list[T] = []
             a3: <warning descr="Unbound type variable">S</warning>
@@ -278,6 +278,10 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
         
             list[T]()
             list[<warning descr="Unbound type variable">S</warning>]()
+        
+        def f2() -> T:
+            x: T
+            raise Exception()
         
         class Bar(Generic[T]):
             attr1: T
