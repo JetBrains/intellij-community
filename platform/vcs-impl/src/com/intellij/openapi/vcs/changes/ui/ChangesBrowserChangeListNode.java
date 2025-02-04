@@ -38,6 +38,10 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     myClManager = ChangeListManagerEx.getInstanceEx(project);
   }
 
+  Project getProject() {
+    return myProject;
+  }
+
   @Override
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     if (userObject instanceof LocalChangeList list) {

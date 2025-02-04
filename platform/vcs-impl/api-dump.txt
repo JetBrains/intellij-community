@@ -2215,12 +2215,15 @@ c:com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.openapi.vcs.changes.ui.AbstractChangesBrowserFilePathNode
 - com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+- com.intellij.ide.util.treeView.PathElementIdProvider
 - sf:Companion:com.intellij.openapi.vcs.changes.ui.AbstractChangesBrowserFilePathNode$Companion
 - <init>(java.lang.Object,com.intellij.openapi.vcs.FileStatus):V
 - compareUserObjects(java.lang.Object):I
 - pa:filePath(java.lang.Object):com.intellij.openapi.vcs.FilePath
 - getBackgroundColor(com.intellij.openapi.project.Project):java.awt.Color
+- getFlattenedElements():java.util.List
 - f:getOriginText():java.lang.String
+- getPathElementId():java.lang.String
 - f:getRelativeFilePath(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):java.lang.String
 - p:getRelativePath(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer,com.intellij.openapi.vcs.FilePath):java.lang.String
 - getSortWeight():I

@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.ide.util.treeView.PathElementIdProvider
+import com.intellij.ide.util.treeView.SerializablePathElement
+import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
@@ -18,7 +21,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.Color
 
 
-abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: FileStatus?) : ChangesBrowserNode<U>(userObject) {
+abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: FileStatus?) : ChangesBrowserNode<U>(userObject), PathElementIdProvider {
   private val filePath: FilePath get() = filePath(getUserObject())
   private val originInfo: OriginInfo? by lazy(LazyThreadSafetyMode.NONE) { buildOriginInfo() }
 
@@ -72,6 +75,45 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
     }
     else {
       return path.path
+    }
+  }
+
+  private fun getRelativePath(): @NlsSafe String? {
+    val path = filePath
+    val isLocal = !path.isNonLocal
+    val parentPath = safeCastToFilePath(getParent())
+    if (parentPath != null) {
+      val caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive
+      return FileUtil.getRelativePath(parentPath.path, path.path, '/', caseSensitive)
+    }
+    else if (isLocal) {
+      val project = guessProject()
+      if (project != null) {
+        return VcsUtil.getPresentablePath(project, path, true, false)
+      }
+      else {
+        return null;
+      }
+    }
+    else {
+      return null
+    }
+  }
+
+  private fun guessProject(): Project? =
+    when (val parent = getParent()) {
+      is ChangesBrowserChangeListNode -> parent.project
+      else -> null
+    }
+
+  override fun getPathElementId(): String = filePath.name
+
+  override fun getFlattenedElements(): List<SerializablePathElement?>? {
+    val relativePath = getRelativePath() ?: return null
+    if (!relativePath.contains('/')) return null
+    val components = FileUtil.splitPath(relativePath, '/')
+    return components.map {
+      SerializablePathElement(it, TreeState.defaultPathElementType(this@AbstractChangesBrowserFilePathNode))
     }
   }
 
