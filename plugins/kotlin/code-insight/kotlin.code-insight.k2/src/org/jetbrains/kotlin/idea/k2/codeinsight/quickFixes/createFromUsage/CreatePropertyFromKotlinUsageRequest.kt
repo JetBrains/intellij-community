@@ -7,16 +7,11 @@ import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.ExpectedType
 import com.intellij.lang.jvm.types.JvmSubstitutor
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.getExpectedKotlinType
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
-import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 /**
@@ -25,19 +20,9 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 internal class CreatePropertyFromKotlinUsageRequest (
     referenceExpression: KtNameReferenceExpression,
     private val modifiers: Collection<JvmModifier>,
-    receiverExpression: KtExpression?,
-    val receiverType: KaType?,
     val isExtension: Boolean
 ) : CreateFieldRequest {
     private val referencePointer = referenceExpression.createSmartPointer()
-
-    internal val targetClass: PsiElement? = initializeTargetClass(receiverExpression, referenceExpression)
-
-    private fun initializeTargetClass(receiverExpression: KtExpression?, referenceExpression: KtNameReferenceExpression): PsiElement? {
-        return analyze(referenceExpression) {
-            (receiverExpression?.resolveExpression() as? KaClassLikeSymbol)?.psi
-        }
-    }
 
     private val returnType: List<ExpectedType> = initializeReturnType(referenceExpression)
 

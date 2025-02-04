@@ -7530,6 +7530,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/valWithNullableType.kt");
                     }
 
+                    @TestMetadata("varOnLibType.kt")
+                    public void testVarOnLibType() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/varOnLibType.kt");
+                    }
+
+                    @TestMetadata("varOnTypeParameter.kt")
+                    public void testVarOnTypeParameter() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createVariable/property/varOnTypeParameter.kt");
+                    }
+
                     @TestMetadata("varOnUserType.kt")
                     public void testVarOnUserType() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createVariable/property/varOnUserType.kt");
