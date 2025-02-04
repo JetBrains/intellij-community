@@ -243,7 +243,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
   private static Set<VirtualFile> getPathsAsVirtualFiles(VirtualFilePointerContainer paths) {
-    Set<VirtualFile> ret = new HashSet<>();
+    Set<VirtualFile> ret = new LinkedHashSet<>();
     Collections.addAll(ret, paths.getFiles());
     return ret;
   }
