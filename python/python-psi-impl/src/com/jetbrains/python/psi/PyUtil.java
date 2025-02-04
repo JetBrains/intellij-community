@@ -1024,17 +1024,30 @@ public final class PyUtil {
       () -> {
         final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
         for (VirtualFile root : roots) {
-          boolean added = false;
           for (ContentEntry entry : model.getContentEntries()) {
             final VirtualFile file = entry.getFile();
             if (file != null && VfsUtilCore.isAncestor(file, root, true)) {
               entry.addSourceFolder(root.getUrl(), JavaSourceRootType.SOURCE, true);
-              added = true;
             }
           }
+        }
+        model.commit();
+      }
+    );
+  }
 
-          if (!added) {
-            model.addContentEntry(root).addSourceFolder(root.getUrl(), JavaSourceRootType.SOURCE, true);
+  @RequiresEdt
+  public static void addModuleDependencies(@NotNull Module module, @NotNull Collection<Module> dependencies) {
+    if (dependencies.isEmpty()) {
+      return;
+    }
+
+    ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        for (Module dependency : dependencies) {
+          if (dependency != module && model.findModuleOrderEntry(dependency) == null) {
+            model.addModuleOrderEntry(dependency);
           }
         }
         model.commit();
@@ -1057,9 +1070,25 @@ public final class PyUtil {
               entry.removeSourceFolder(folder);
             }
           }
+        }
+        model.commit();
+      }
+    );
+  }
 
-          if (roots.contains(entry.getFile()) && entry.getSourceFolders().length == 0) {
-            model.removeContentEntry(entry);
+  @RequiresEdt
+  public static void removeModuleDependencies(@NotNull Module module, @NotNull Collection<Module> dependencies) {
+    if (dependencies.isEmpty()) {
+      return;
+    }
+
+    ApplicationManager.getApplication().runWriteAction(
+      () -> {
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        for (Module dependency : dependencies) {
+          ModuleOrderEntry moduleOrderEntry = model.findModuleOrderEntry(dependency);
+          if (moduleOrderEntry != null) {
+            model.removeOrderEntry(moduleOrderEntry);
           }
         }
         model.commit();

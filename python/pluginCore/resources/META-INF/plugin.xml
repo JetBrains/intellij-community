@@ -646,6 +646,10 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
                  restartRequired="false"
                  description="Disables automatic updating of PyPI package cache and ranking on project startup."/>
 
+    <!-- Setting up cross-module dependencies -->
+    <registryKey key="python.detect.cross.module.dependencies" defaultValue="false"
+                 description="Try to detect and automatically set-up module dependencies in a multi-module project"/>
+
     <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PythonJobSurvey"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.statistics.feedback.PythonJobStatisticsCollector"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.statistics.feedback.PythonFirstLaunchChecker"/>

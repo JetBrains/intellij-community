@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -490,30 +491,39 @@ public final class PythonSdkUpdater {
     final List<VirtualFile> localSdkPaths = buildSdkPaths(sdk, sdkRoots.first, userAddedRoots.first);
     commitSdkPathsIfChanged(sdk, localSdkPaths, forceCommit);
 
-    final var pathsToTransfer = new HashSet<VirtualFile>();
-    pathsToTransfer.addAll(sdkRoots.second);
-    pathsToTransfer.addAll(userAddedRoots.second);
-    // Presumably source and content roots that were configured manually by user, not set up automatically as "transferred"
-    HashSet<VirtualFile> nonTransferredModuleRoots = new HashSet<>(moduleRoots);
-    nonTransferredModuleRoots.removeAll(PyTransferredSdkRootsKt.getPathsToTransfer(sdk));
-    pathsToTransfer.removeAll(nonTransferredModuleRoots);
-
-    /*
-    PyTransferredSdkRootsKt#transferRoots and PyTransferredSdkRootsKt#removeTransferredRoots skip sdks
-    that are not equal to module one (editable as well).
-
-    That's why roots changes were not applied but paths to transfer were successfully set.
-
-    When current method was executed for original sdk,
-    roots changes were not applied since there were no changes in paths to transfer (they were shared with editable copy).
-     */
-    if (!pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
+    if (Registry.is("python.detect.cross.module.dependencies")) {
+      final var transferredPathCandidates = new HashSet<VirtualFile>();
+      transferredPathCandidates.addAll(sdkRoots.second);
+      transferredPathCandidates.addAll(userAddedRoots.second);
       if (project != null) {
-        PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithSdk(project, sdk);
+        PyTransferredSdkRootsKt.updateTransferredRoots(project, sdk, transferredPathCandidates);
       }
-      PyTransferredSdkRootsKt.setPathsToTransfer(sdk, pathsToTransfer);
-      if (project != null) {
-        PyTransferredSdkRootsKt.transferRootsToModulesWithSdk(project, sdk);
+    }
+    else {
+      final var pathsToTransfer = new HashSet<VirtualFile>();
+      pathsToTransfer.addAll(sdkRoots.second);
+      pathsToTransfer.addAll(userAddedRoots.second);
+      // Presumably source and content roots that were configured manually by user, not set up automatically as "transferred"
+      HashSet<VirtualFile> nonTransferredModuleRoots = new HashSet<>(moduleRoots);
+      nonTransferredModuleRoots.removeAll(PyTransferredSdkRootsKt.getPathsToTransfer(sdk));
+      pathsToTransfer.removeAll(nonTransferredModuleRoots);
+      /*
+      PyTransferredSdkRootsKt#transferRoots and PyTransferredSdkRootsKt#removeTransferredRoots skip sdks
+      that are not equal to module one (editable as well).
+  
+      That's why roots changes were not applied but paths to transfer were successfully set.
+  
+      When current method was executed for original sdk,
+      roots changes were not applied since there were no changes in paths to transfer (they were shared with editable copy).
+      */
+      if (!pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
+        if (project != null) {
+          PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithSdk(project, sdk);
+        }
+        PyTransferredSdkRootsKt.setPathsToTransfer(sdk, pathsToTransfer);
+        if (project != null) {
+          PyTransferredSdkRootsKt.transferRootsToModulesWithSdk(project, sdk);
+        }
       }
     }
   }

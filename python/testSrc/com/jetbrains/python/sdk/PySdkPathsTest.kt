@@ -7,23 +7,26 @@ import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.PythonPluginDisposable
-import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyUtil
 import org.jetbrains.annotations.NotNull
-import org.junit.*
+import org.junit.Assume.assumeTrue
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 
 class PySdkPathsTest {
 
@@ -220,43 +223,52 @@ class PySdkPathsTest {
   }
 
   @Test
-  fun sysPathEntryOutsideSdkAndModule1ButInsideModule2() {
+  fun sysPathEntryInsideAnotherModuleDoesNotConfigureSourceRootThere() {
     val (module1, moduleRoot1) = createModule("m1")
-    val (module2, moduleRoot2) = createModule("m2")
-
-    val sdkDir = createVenvStructureInModule(moduleRoot1)
+    val (_, moduleRoot2) = createModule("m2")
 
     val entryPath1 = createSubdir(moduleRoot1)
     val entryPath2 = createSubdir(moduleRoot2)
 
-    val sdk = PythonMockSdk.create().let {
-      val properSdk = PythonMockSdk.create("Mock SDK without path", sdkDir.path, it.sdkType, LanguageLevel.getLatest())
-      registerSdk(properSdk)
-      module1.pythonSdk = properSdk
-      module2.pythonSdk = properSdk
-      return@let properSdk
+    val sdk = PythonMockSdk.create(createVenvStructureInModule(moduleRoot1).path).also {
+      registerSdk(it)
+      module1.pythonSdk = it
     }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath1.path, entryPath2.path))
 
     mockPythonPluginDisposable()
     updateSdkPaths(sdk)
 
-    checkRoots(sdk, module1, listOf(moduleRoot1, entryPath1, entryPath2), emptyList())
-    checkRoots(sdk, module2, listOf(moduleRoot2, entryPath1, entryPath2), emptyList())
+    checkRoots(sdk, module1, listOf(moduleRoot1, entryPath1), emptyList())
+  }
 
-    val simpleSdk = PythonMockSdk.create().also {
+  @Test
+  fun sysPathEntryPointingToAnotherModuleRootConfiguresModuleDependency() {
+    assumeTrue("The registry key 'python.detect.cross.module.dependencies' is not enabled", 
+               Registry.`is`("python.detect.cross.module.dependencies"))
+    
+    val (module1, moduleRoot1) = createModule("m1")
+    val (module2, moduleRoot2) = createModule("m2")
+
+    val sdk = PythonMockSdk.create(createVenvStructureInModule(moduleRoot1).path).also {
       registerSdk(it)
-      removeTransferredRoots(module1, sdk)
       module1.pythonSdk = it
-
-      removeTransferredRoots(module2, sdk)
-      module2.pythonSdk = it
     }
+    mockPythonPluginDisposable()
+    
+    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(moduleRoot2.path))
+    updateSdkPaths(sdk)
+    checkRoots(sdk, module1, 
+               moduleRoots = listOf(moduleRoot1), 
+               sdkRoots = listOf(), 
+               moduleDependencies = listOf(module2))
 
-    updateSdkPaths(simpleSdk)
-
-    checkRoots(simpleSdk, module1, listOf(moduleRoot1), emptyList())
-    checkRoots(simpleSdk, module2, listOf(moduleRoot2), emptyList())
+    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf())
+    updateSdkPaths(sdk)
+    checkRoots(sdk, module1,
+               moduleRoots = listOf(moduleRoot1),
+               sdkRoots = listOf(),
+               moduleDependencies = listOf())
   }
 
   private fun registerSdk(it: Sdk) {
@@ -310,7 +322,13 @@ class PySdkPathsTest {
     ApplicationManager.getApplication().invokeAndWait { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() }
   }
 
-  private fun checkRoots(sdk: Sdk, module: Module, moduleRoots: List<VirtualFile>, sdkRoots: List<VirtualFile>) {
+  private fun checkRoots(
+    sdk: Sdk,
+    module: Module,
+    moduleRoots: List<VirtualFile>,
+    sdkRoots: List<VirtualFile>,
+    moduleDependencies: List<Module> = emptyList<Module>(),
+  ) {
     assertThat(PyUtil.getSourceRoots(module)).containsExactlyInAnyOrder(*moduleRoots.toTypedArray())
 
     val rootProvider = sdk.rootProvider
@@ -318,6 +336,9 @@ class PySdkPathsTest {
     assertThat(classes).containsAll(sdkRoots)
     assertThat(classes).doesNotContain(*moduleRoots.toTypedArray())
     assertThat(rootProvider.getFiles(OrderRootType.SOURCES)).isEmpty()
+
+    val actualModuleDependencies = ModuleRootManager.getInstance(module).getModifiableModel().moduleDependencies
+    assertThat(actualModuleDependencies).isEqualTo(moduleDependencies.toTypedArray())
   }
 
   private fun createInSdkRoot(sdk: Sdk, relativePath: String): VirtualFile {
