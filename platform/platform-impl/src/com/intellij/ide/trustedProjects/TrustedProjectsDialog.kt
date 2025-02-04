@@ -75,9 +75,11 @@ object TrustedProjectsDialog {
 
     TrustedProjectsStatistics.NEW_PROJECT_OPEN_OR_IMPORT_CHOICE.log(openChoice)
 
-    if (pathsToExclude.isNotEmpty()) {
+    if (openChoice != OpenUntrustedProjectChoice.CANCEL && pathsToExclude.isNotEmpty()) {
+      val checker = serviceAsync<WindowsDefenderChecker>()
       val defenderTrustDir = dialog.getDefenderTrustFolder()
       if (openChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN && defenderTrustDir != null) {
+        checker.markProjectPath(projectRoot, /*skip =*/ false)
         WindowsDefenderStatisticsCollector.excludedFromTrustDialog(dialog.isTrustAll())
         if (defenderTrustDir != projectRoot) {
           (pathsToExclude as MutableList<Path>).apply {
@@ -85,19 +87,12 @@ object TrustedProjectsDialog {
             add(0, defenderTrustDir)
           }
         }
-        val checker = serviceAsync<WindowsDefenderChecker>()
-        if (project == null) {
-          checker.schedule(projectRoot, pathsToExclude)
-        }
-        else {
-          WindowsDefenderCheckerActivity.runAndNotify(project) {
-            checker.excludeProjectPaths(project, pathsToExclude)
-          }
+        WindowsDefenderCheckerActivity.runAndNotify(project) {
+          checker.excludeProjectPaths(project, projectRoot, pathsToExclude)
         }
       }
-      else if (openChoice != OpenUntrustedProjectChoice.CANCEL) {
-        val checker = serviceAsync<WindowsDefenderChecker>()
-        checker.schedule(projectRoot, emptyList())  // skipping Defender check if the checkbox was shown but ignored
+      else {
+        checker.markProjectPath(projectRoot, /*skip =*/ true)
       }
     }
 

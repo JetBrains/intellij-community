@@ -16,6 +16,8 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.sun.jna.Memory;
 import com.sun.jna.Structure;
 import com.sun.jna.platform.win32.COM.COMException;
@@ -60,7 +62,9 @@ public class WindowsDefenderChecker {
     return ApplicationManager.getApplication().getService(WindowsDefenderChecker.class);
   }
 
-  private final Map<Path, List<Path>> myScheduledTasks = Collections.synchronizedMap(new HashMap<>(1));
+  enum ProjectStatus {SKIPPED, SUCCEED, FAILED}
+
+  private final Map<Path, @Nullable ProjectStatus> myProjectPaths = Collections.synchronizedMap(new HashMap<>());
 
   public final boolean isStatusCheckIgnored(@Nullable Project project) {
     return
@@ -81,14 +85,24 @@ public class WindowsDefenderChecker {
   }
 
   @ApiStatus.Internal
-  public final void schedule(@NotNull Path projectPath, @NotNull List<Path> paths) {
-    myScheduledTasks.put(projectPath, paths);
+  public final void markProjectPath(@NotNull Path projectPath, boolean skip) {
+    myProjectPaths.put(projectPath, skip ? ProjectStatus.SKIPPED : null);
   }
 
   @ApiStatus.Internal
-  final @Nullable List<Path> popScheduledPaths(@NotNull Project project) {
+  @RequiresBackgroundThread
+  final @Nullable ProjectStatus isAlreadyProcessed(@NotNull Project project) {
     var projectPath = getProjectPath(project);
-    return projectPath != null ? myScheduledTasks.remove(projectPath) : null;
+    if (projectPath != null && myProjectPaths.containsKey(projectPath)) {
+      while (!project.isDisposed() && myProjectPaths.get(projectPath) == null) TimeoutUtil.sleep(100);
+      var status = myProjectPaths.remove(projectPath);
+      if (status == ProjectStatus.SUCCEED) {
+        PropertiesComponent.getInstance(project).setValue(IGNORE_STATUS_CHECK, true);
+      }
+      return status;
+    }
+
+    return null;
   }
 
   private static @Nullable Path getProjectPath(Project project) {
@@ -276,9 +290,20 @@ public class WindowsDefenderChecker {
     }
   }
 
-  public final boolean excludeProjectPaths(@NotNull Project project, @NotNull List<Path> paths) {
-    logCaller("paths=" + paths + " project=" + project);
 
+  public final boolean excludeProjectPaths(@NotNull Project project, @NotNull List<Path> paths) {
+    return doExcludeProjectPaths(project, null, paths);
+  }
+
+  @ApiStatus.Internal
+  public final boolean excludeProjectPaths(@Nullable Project project, @NotNull Path projectPath, @NotNull List<Path> paths) {
+    return doExcludeProjectPaths(project, projectPath, paths);
+  }
+
+  private boolean doExcludeProjectPaths(@Nullable Project project, @Nullable Path projectPath, List<Path> paths) {
+    logCaller("paths=" + paths + " project=" + (project != null ? project : projectPath));
+
+    var result = ProjectStatus.FAILED;
     try {
       var script = PathManager.findBinFile(HELPER_SCRIPT_NAME);
       if (script == null) {
@@ -329,13 +354,21 @@ public class WindowsDefenderChecker {
       }
       else {
         LOG.info("OK; script output:\n" + output.getStdout().trim());
-        PropertiesComponent.getInstance(project).setValue(IGNORE_STATUS_CHECK, true);
+        if (project != null) {
+          PropertiesComponent.getInstance(project).setValue(IGNORE_STATUS_CHECK, true);
+        }
+        result = ProjectStatus.SUCCEED;
         return true;
       }
     }
     catch (Exception e) {
       LOG.warn(e);
       return false;
+    }
+    finally {
+      if (project == null) {
+        myProjectPaths.put(projectPath, result);
+      }
     }
   }
 
