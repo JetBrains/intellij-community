@@ -326,7 +326,7 @@
     <registryKey key="maven.collect.local.stat" defaultValue="false"
                  description="Collect local maven statistics. Used in Internal mode. Does not affect FUS"/>
 
-    <registryKey key="maven.use.scripts" defaultValue="false"
+    <registryKey key="maven.use.scripts" defaultValue="true"
                  description="Run maven goals via mvn.sh/mvn.bat"/>
 
     <registryKey key="maven.dedicated.indexer.vmargs" defaultValue="-Xmx1024m"
