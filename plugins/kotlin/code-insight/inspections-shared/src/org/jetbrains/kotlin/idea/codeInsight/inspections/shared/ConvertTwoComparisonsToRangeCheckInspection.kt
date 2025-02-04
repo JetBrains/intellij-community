@@ -1,221 +1,352 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-package org.jetbrains.kotlin.idea.inspections
-
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.psi.tree.IElementType
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
+import com.intellij.util.applyIf
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ConvertTwoComparisonsToRangeCheckInspection.Context
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isOptInSatisfied
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isSimplifiableTo
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.renderAsEscapeSequence
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.binaryExpressionVisitor
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.util.getType
-import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.types.FlexibleType
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.typeUtil.builtIns
-import org.jetbrains.kotlin.types.typeUtil.isPrimitiveNumberType
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-class ConvertTwoComparisonsToRangeCheckInspection :
-    AbstractApplicabilityBasedInspection<KtBinaryExpression>(KtBinaryExpression::class.java) {
-    override fun inspectionText(element: KtBinaryExpression) = KotlinBundle.message("two.comparisons.should.be.converted.to.a.range.check")
+internal class ConvertTwoComparisonsToRangeCheckInspection : KotlinApplicableInspectionBase.Simple<KtBinaryExpression, Context>() {
+    override fun getProblemDescription(element: KtBinaryExpression, context: Context) =
+        KotlinBundle.message("two.comparisons.should.be.converted.to.a.range.check")
 
-    override val defaultFixText get() = KotlinBundle.message("convert.to.a.range.check")
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid =
+        binaryExpressionVisitor { visitTargetElement(it, holder, isOnTheFly) }
 
-    override fun isApplicable(element: KtBinaryExpression): Boolean {
-        val rangeData = generateRangeExpressionData(element) ?: return false
-        val function = element.getStrictParentOfType<KtNamedFunction>()
-        if (function != null && function.hasModifier(KtTokens.OPERATOR_KEYWORD) && function.nameAsName == OperatorNameConventions.CONTAINS) {
-            val context = element.analyze(BodyResolveMode.PARTIAL)
-            val functionDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, function]
-            val newExpression = rangeData.createExpression()
-            val newContext = newExpression.analyzeAsReplacement(element, context)
-            if (newExpression.operationReference.getResolvedCall(newContext)?.resultingDescriptor == functionDescriptor) return false
-        }
-        return true
+    private data class ComparisonData(
+        val lesser: KtExpression,
+        val greater: KtExpression,
+        val strict: Boolean,
+    ) {
+        /**
+         * Checks if this comparison forms the lower bound of a check pair, where the
+         * upper bound of the check pair is [other].
+         */
+        fun isLowBoundFor(other: ComparisonData): Boolean =
+            // b in a..c -> a <= b && b <= c
+            greater !is KtConstantExpression && greater.isSimplifiableTo(other.lesser)
+
+        fun inverted() = copy(
+            lesser = greater,
+            greater = lesser,
+            strict = !strict,
+        )
     }
 
-    override fun applyTo(element: KtBinaryExpression, project: Project, editor: Editor?) {
-        val rangeData = generateRangeExpressionData(element) ?: return
-        val replaced = element.replace(rangeData.createExpression())
-        (replaced as? KtBinaryExpression)?.right?.let {
-            AbstractReplaceRangeToWithRangeUntilInspection.applyFixIfApplicable(it)
-        }
-    }
-
-    private data class RangeExpressionData(val value: KtExpression, val min: String, val max: String) {
-        fun createExpression(): KtBinaryExpression {
-            val psiFactory = KtPsiFactory(value.project)
-            val minExpression = psiFactory.createExpression(min)
-            val maxExpression = psiFactory.createExpression(max)
-            return psiFactory.createExpressionByPattern("$0 in $1..$2", value, minExpression, maxExpression) as KtBinaryExpression
-        }
-    }
-
-    private fun generateRangeExpressionData(condition: KtBinaryExpression): RangeExpressionData? {
-        if (condition.operationToken != KtTokens.ANDAND) return null
-        val firstCondition = condition.left as? KtBinaryExpression ?: return null
-        val secondCondition = condition.right as? KtBinaryExpression ?: return null
-        val firstOpToken = firstCondition.operationToken
-        val secondOpToken = secondCondition.operationToken
-        val firstLeft = firstCondition.left ?: return null
-        val firstRight = firstCondition.right ?: return null
-        val secondLeft = secondCondition.left ?: return null
-        val secondRight = secondCondition.right ?: return null
-
-        fun IElementType.isStrictComparison() = this == KtTokens.GT || this == KtTokens.LT
-
-        val firstStrict = firstOpToken.isStrictComparison()
-        val secondStrict = secondOpToken.isStrictComparison()
-
-        fun IElementType.orderLessAndGreater(left: KtExpression, right: KtExpression): Pair<KtExpression, KtExpression>? = when (this) {
-            KtTokens.GTEQ, KtTokens.GT -> right to left
-            KtTokens.LTEQ, KtTokens.LT -> left to right
-            else -> null
+    private fun KtExpression.asComparison(): ComparisonData? {
+        if (this !is KtBinaryExpression) return null
+        val (lesser, greater) = when (operationToken) {
+            KtTokens.LT, KtTokens.LTEQ -> left to right
+            KtTokens.GT, KtTokens.GTEQ -> right to left
+            else -> return null
         }
 
-        val (firstLess, firstGreater) = firstOpToken.orderLessAndGreater(firstLeft, firstRight) ?: return null
-        val (secondLess, secondGreater) = secondOpToken.orderLessAndGreater(secondLeft, secondRight) ?: return null
-
-        return generateRangeExpressionData(firstLess, firstGreater, firstStrict, secondLess, secondGreater, secondStrict)
+        return ComparisonData(
+            lesser = lesser?.getSingleUnwrappedStatementOrThis() ?: return null,
+            greater = greater?.getSingleUnwrappedStatementOrThis() ?: return null,
+            strict = operationToken == KtTokens.LT || operationToken == KtTokens.GT,
+        )
     }
 
     private fun KtExpression.isSimple() = this is KtConstantExpression || this is KtNameReferenceExpression
 
-    private fun generateRangeExpressionData(
-        firstLess: KtExpression, firstGreater: KtExpression, firstStrict: Boolean,
-        secondLess: KtExpression, secondGreater: KtExpression, secondStrict: Boolean
-    ) = when {
-        firstGreater !is KtConstantExpression && firstGreater.isSimplifiableTo(secondLess) ->
-            generateRangeExpressionData(
-                firstGreater,
-                min = firstLess,
-                max = secondGreater,
-                incrementMinByOne = firstStrict,
-                decrementMaxByOne = secondStrict
-            )
-        firstLess !is KtConstantExpression && firstLess.isSimplifiableTo(secondGreater) ->
-            generateRangeExpressionData(
-                firstLess,
-                min = secondLess,
-                max = firstGreater,
-                incrementMinByOne = secondStrict,
-                decrementMaxByOne = firstStrict
-            )
-        else ->
-            null
-    }
+    private data class PsiContext(
+        val value: KtExpression,
+        val min: KtExpression,
+        val minExclusive: Boolean,
+        val max: KtExpression,
+        val maxExclusive: Boolean,
+        val isInverseCheck: Boolean,
+    )
 
-    private fun generateRangeExpressionData(
-        value: KtExpression, min: KtExpression, max: KtExpression, incrementMinByOne: Boolean, decrementMaxByOne: Boolean
-    ): RangeExpressionData? {
-        fun KtExpression.getChangeBy(context: BindingContext, number: Int): String? {
-            val type = getType(context) ?: return null
-            if (!type.isValidTypeForIncrementDecrementByOne()) return null
-
-            when (this) {
-                is KtConstantExpression -> {
-                    val constantValue = ConstantExpressionEvaluator.getConstant(this, context)?.getValue(type) ?: return null
-                    return when {
-                        KotlinBuiltIns.isInt(type) -> (constantValue as Int + number).let {
-                            val text = this.text
-                            when {
-                                text.startsWith("0x") -> "0x${it.toString(16)}"
-                                text.startsWith("0b") -> "0b${it.toString(2)}"
-                                else -> it.toString()
-                            }
-                        }
-                        KotlinBuiltIns.isLong(type) -> (constantValue as Long + number).let {
-                            val text = this.text
-                            when {
-                                text.startsWith("0x") -> "0x${it.toString(16)}"
-                                text.startsWith("0b") -> "0b${it.toString(2)}"
-                                else -> it.toString()
-                            }
-                        }
-                        KotlinBuiltIns.isChar(type) -> "'${constantValue as Char + number}'"
-                        else -> null
-                    }
-                }
-                else -> return if (number >= 0) "($text + $number)" else "($text - ${-number})"
-            }
+    private fun KtBinaryExpression.getPsiContext(): PsiContext? {
+        val isInverseCheck = when (operationToken) {
+            KtTokens.ANDAND -> false
+            KtTokens.OROR -> true
+            else -> return null
         }
 
-        // To avoid possible side effects
+        val leftComparison = left?.asComparison()?.applyIf(isInverseCheck) { inverted() } ?: return null
+        val rightComparison = right?.asComparison()?.applyIf(isInverseCheck) { inverted() } ?: return null
+
+        val (lowBound, highBound) = when {
+            leftComparison.isLowBoundFor(rightComparison) -> leftComparison to rightComparison
+            rightComparison.isLowBoundFor(leftComparison) -> rightComparison to leftComparison
+            else -> return null
+        }
+
+        val min = lowBound.lesser
+        val max = highBound.greater
         if (!min.isSimple() || !max.isSimple()) return null
 
-        val context = value.analyze()
 
-        fun KtExpression.type(): KotlinType? = getType(context)?.let { if (it is FlexibleType) it.lowerBound else it }
-        val valType = value.type()
-        val minType = min.type()
-        val maxType = max.type()
+        return PsiContext(
+            value = lowBound.greater,
+            min = min,
+            minExclusive = lowBound.strict,
+            max = max,
+            maxExclusive = highBound.strict,
+            isInverseCheck = isInverseCheck,
+        )
+    }
 
-        if (valType == null || minType == null || maxType == null) return null
+    override fun isApplicableByPsi(element: KtBinaryExpression): Boolean =
+        element.getPsiContext() != null
 
-        if (!valType.isComparable()) return null
+    internal data class Context(
+        val value: SmartPsiElementPointer<KtExpression>,
+        val minExpressionText: String,
+        val maxExpressionText: String,
+        val rangeOperator: String,
+        val inverted: Boolean,
+    ) {
 
-        var minVal = min
-        var maxVal = max
+        private val inOperator: String
+            get() = if (inverted) "!in" else "in"
 
-        if (minType != valType || maxType != valType) {
-            //numbers can be compared to numbers of different types
-            if (valType.isPrimitiveNumberType() && minType.isPrimitiveNumberType() && maxType.isPrimitiveNumberType()) {
-                //char is comparable to chars only
-                if (KotlinBuiltIns.isChar(valType) || KotlinBuiltIns.isChar(minType) || KotlinBuiltIns.isChar(maxType)) return null
-                //floating point ranges can't contain integer types and vise versa
-                if (valType.isInteger() && (minType.isFloatingPoint() || maxType.isFloatingPoint())) return null
+        fun createDisplayText(): String =
+            "${inOperator} ${minExpressionText}${rangeOperator}${maxExpressionText}"
+        fun createExpression(): KtBinaryExpression? {
+            val factory = KtPsiFactory(value.project)
+            val valuePsi = value.element?.copied() ?: return null
+            val minPsi = factory.createExpression(minExpressionText)
+            val maxPsi = factory.createExpression(maxExpressionText)
 
-                if (valType.isFloatingPoint()) {
-                    if (minType.isInteger())
-                        minVal = KtPsiFactory(minVal.project).createExpression(getDoubleConstant(min, minType, context) ?: return null)
-                    if (maxType.isInteger())
-                        maxVal = KtPsiFactory(maxVal.project).createExpression(getDoubleConstant(max, maxType, context) ?: return null)
+            return factory
+                .createExpressionByPattern("$0 $inOperator $1$rangeOperator$2", valuePsi, minPsi, maxPsi)
+                    as? KtBinaryExpression
+        }
+    }
+
+    context(KaSession)
+    private val KaType.isSignedIntegralType: Boolean
+        get() = isIntType || isLongType || isShortType || isByteType
+
+    context(KaSession)
+    private val KaType.isUnsignedIntegralType: Boolean
+        get() = isUIntType || isULongType || isUShortType || isUByteType
+
+    context(KaSession)
+    private val KaType.isIntegralType: Boolean
+        get() = isSignedIntegralType || isUnsignedIntegralType
+
+    context(KaSession)
+    private val KaType.isFloatingPointType: Boolean
+        get() = isFloatType || isDoubleType
+
+    context(KaSession)
+    private fun KtExpression.renderConstantPlusOne(expressionType: KaType): String? {
+        val constant = evaluate() ?: return null
+
+        if (constant is KaConstantValue.CharValue) {
+            return "'${(constant.value + 1).renderAsEscapeSequence()}'"
+        }
+
+        val text = this.text
+        val (prefix, radix) = when {
+            text.startsWith("0x") -> "0x" to 16
+            text.startsWith("0b") -> "0b" to 2
+            else -> "" to 10
+        }
+
+        return if (expressionType.isUnsignedIntegralType) {
+            val uLongValue: ULong = when (constant) {
+                is KaConstantValue.ULongValue -> constant.value
+                is KaConstantValue.UIntValue -> constant.value.toULong()
+                is KaConstantValue.UShortValue -> constant.value.toULong()
+                is KaConstantValue.UByteValue -> constant.value.toULong()
+                else -> return null
+            }
+
+            "${prefix}${(uLongValue + 1u).toString(radix)}u"
+        } else if (expressionType.isSignedIntegralType) {
+            val longValue = (constant.value as? Number)?.toLong() ?: return null
+            "${prefix}${(longValue + 1).toString(radix)}"
+        } else {
+            null
+        }
+    }
+
+    context(KaSession)
+    private fun KtExpression.adjustLowerBoundForExclusive(): String? {
+        val type = expressionType ?: return null
+        if (!type.isIntegralType && !type.isCharType) return null
+
+        // Try to render an incremented constant value.
+        renderConstantPlusOne(type)?.let { return it }
+
+        // If we can't render the value as a constant, create ($this + 1) as an
+        // expression instead.
+        return KtPsiFactory(this.project)
+            .createExpressionByPattern("($0 + 1)", this.copied())
+            .text
+    }
+
+    context(KaSession)
+    private fun KtExpression.asDoubleConstantExpression(): KtExpression? {
+        val constantVal = evaluate()?.value as? Number ?: return null
+        return KtPsiFactory(project).createExpression(constantVal.toDouble().toString())
+    }
+
+    context(KaSession)
+    private fun KtElement.canUseRangeUntil(): Boolean {
+        if (!languageVersionSettings.supportsFeature(LanguageFeature.RangeUntilOperator)) return false
+        return isOptInSatisfied(
+            symbol = findClassLike(OPEN_END_RANGE_CLASS_ID) ?: return false,
+            annotationClassId = EXPERIMENTAL_STDLIB_API_CLASS_ID
+        )
+    }
+
+    override fun KaSession.prepareContext(element: KtBinaryExpression): Context? {
+        val psiContext = element.getPsiContext() ?: return null
+
+        val valueType = psiContext.value.expressionType?.lowerBoundIfFlexible() ?: return null
+        if (!valueType.isSubtypeOf(StandardClassIds.Comparable)) return null
+
+        var min = psiContext.min
+        var max = psiContext.max
+
+        val minType = min.expressionType?.lowerBoundIfFlexible() ?: return null
+        val maxType = max.expressionType?.lowerBoundIfFlexible() ?: return null
+
+        if (!valueType.semanticallyEquals(minType) || !valueType.semanticallyEquals(maxType)) {
+            // Our expressions aren't all the same type. This is normally not allowed for a range check,
+            // but some numeric checks can be semantically equivalent.
+
+            val canCompare = when {
+                // Signed integral types can compare with any other signed integral type.
+                valueType.isSignedIntegralType -> minType.isSignedIntegralType && maxType.isSignedIntegralType
+                // Ditto unsigned.
+                valueType.isUnsignedIntegralType -> minType.isUnsignedIntegralType && maxType.isUnsignedIntegralType
+                // For floats, we can compare to other floats, or, as a special case for comparing to constants with
+                // a missing ".0" or "f" prefix, a version of that constant with the correct suffix added.
+                valueType.isFloatingPointType -> {
+                    val minCompatible =
+                        minType.isFloatingPointType ||
+                                (minType.isSignedIntegralType &&
+                                        min.asDoubleConstantExpression()?.also { min = it } != null)
+                    val maxCompatible =
+                        maxType.isFloatingPointType ||
+                                (maxType.isSignedIntegralType &&
+                                        max.asDoubleConstantExpression()?.also { max = it } != null)
+
+                    minCompatible && maxCompatible
                 }
+
+                else -> false
+            }
+
+            if (!canCompare) return null
+        }
+
+        val minText: String =
+            // If we're using an exclusive comparison, the lower bound has to be increased by 1.
+            if (psiContext.minExclusive) {
+                if (!valueType.isIntegralType && !valueType.isCharType) return null
+                min.adjustLowerBoundForExclusive() ?: return null
             } else {
-                return null
+                min.text
+            }
+
+        // For an exclusive upper bound of the range, we can use `..<` or `until`.
+        val rangeOp = when {
+            !psiContext.maxExclusive -> ".."
+            element.canUseRangeUntil() -> "..<"
+            valueType.isIntegralType || valueType.isCharType -> " until "
+            else -> return null
+        }
+
+        val context = Context(
+            psiContext.value.createSmartPointer(),
+            minExpressionText = minText,
+            maxExpressionText = max.text,
+            rangeOperator = rangeOp,
+            inverted = psiContext.isInverseCheck
+        )
+
+        // Final check - ensure that we don't accidentally create an infinite recursive loop by suggesting this fix within
+        // the actual `contains` implementation of a range!
+        val containingFunction = element.getStrictParentOfType<KtNamedFunction>()
+        if (containingFunction != null
+            && containingFunction.hasModifier(KtTokens.OPERATOR_KEYWORD)
+            && containingFunction.nameAsName == OperatorNameConventions.CONTAINS) {
+            val replacementExpression = context.createExpression() ?: return null
+            val fragment =
+                KtPsiFactory(containingFunction.project).createExpressionCodeFragment(replacementExpression.text, element)
+            val fragmentExpression = fragment.getContentElement() as? KtBinaryExpression ?: return null
+            analyze(fragment) {
+                val resolvedSymbol =
+                    fragmentExpression.operationReference.resolveToCall()?.singleFunctionCallOrNull()?.symbol
+                        ?: return null
+
+                if (resolvedSymbol == containingFunction.symbol) {
+                    return null
+                }
             }
         }
 
-        if (incrementMinByOne || decrementMaxByOne) {
-            if (!valType.isValidTypeForIncrementDecrementByOne()) return null
-        }
-
-        val minText = if (incrementMinByOne) minVal.getChangeBy(context, 1) else minVal.text
-        val maxText = if (decrementMaxByOne) maxVal.getChangeBy(context, -1) else maxVal.text
-        return RangeExpressionData(value, minText ?: return null, maxText ?: return null)
+        return context
     }
 
-    private fun getDoubleConstant(intExpr: KtExpression, type: KotlinType, context: BindingContext): String? {
-        val intConst = ConstantExpressionEvaluator.getConstant(intExpr, context)?.getValue(type) ?: return null
-        return (intConst as? Number)?.toDouble()?.toString()
+    override fun createQuickFix(
+        element: KtBinaryExpression,
+        context: Context
+    ): KotlinModCommandQuickFix<KtBinaryExpression> =
+        ConvertTwoComparisonsToRangeCheckQuickFix(context)
+
+    companion object {
+        val OPEN_END_RANGE_CLASS_ID = ClassId.fromString("kotlin/ranges/OpenEndRange")
+        val EXPERIMENTAL_STDLIB_API_CLASS_ID = ClassId.fromString("kotlin/ExperimentalStdlibApi")
     }
+}
 
-    private fun KotlinType.isComparable() = DescriptorUtils.isSubtypeOfClass(this, this.builtIns.comparable)
+internal class ConvertTwoComparisonsToRangeCheckQuickFix(private val context: Context) : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.to.a.range.check")
 
-    private fun KotlinType.isFloatingPoint(): Boolean {
-        return KotlinBuiltIns.isFloat(this) || KotlinBuiltIns.isDouble(this)
-    }
+    override fun getName(): String =
+        KotlinBundle.message("convert.comparisons.to.range.check", context.createDisplayText())
 
-    private fun KotlinType.isInteger(): Boolean {
-        return KotlinBuiltIns.isInt(this) ||
-                KotlinBuiltIns.isLong(this) ||
-                KotlinBuiltIns.isShort(this) ||
-                KotlinBuiltIns.isByte(this)
-    }
-
-    private fun KotlinType?.isValidTypeForIncrementDecrementByOne(): Boolean {
-        this ?: return false
-        return this.isInteger() || KotlinBuiltIns.isChar(this)
+    override fun applyFix(
+        project: Project,
+        element: KtBinaryExpression,
+        updater: ModPsiUpdater
+    ) {
+        val replacement = context.createExpression() ?: return
+        element.replace(replacement)
     }
 }
