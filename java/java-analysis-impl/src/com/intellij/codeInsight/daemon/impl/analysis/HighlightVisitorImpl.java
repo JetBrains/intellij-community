@@ -371,12 +371,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitRecordComponent(@NotNull PsiRecordComponent recordComponent) {
-    super.visitRecordComponent(recordComponent);
-    if (!hasErrorResults()) add(HighlightControlFlowUtil.checkRecordComponentInitialized(recordComponent));
-  }
-
-  @Override
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
     super.visitReferenceElement(ref);
     JavaResolveResult result = ref instanceof PsiExpression ? resolveOptimised(ref, myFile) : doVisitReferenceElement(ref);

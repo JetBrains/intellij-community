@@ -6,6 +6,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -187,5 +188,35 @@ final class ControlFlowChecker {
                        !hasWriteToFinalInsideLambda(variable, reference);
     if (canWrite) return;
     myVisitor.report(JavaErrorKinds.ASSIGNMENT_TO_FINAL_VARIABLE.create(reference, variable));
+  }
+
+  private static @NotNull ControlFlow getControlFlow(@NotNull PsiElement context) throws AnalysisCanceledException {
+    LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
+    return ControlFlowFactory.getControlFlow(context, policy, ControlFlowOptions.create(true, true, true));
+  }
+
+  private static boolean variableDefinitelyAssignedIn(@NotNull PsiVariable variable,
+                                                      @NotNull PsiElement context,
+                                                      boolean resultOnIncompleteCode) {
+    try {
+      return ControlFlowUtil.isVariableDefinitelyAssigned(variable, getControlFlow(context));
+    }
+    catch (AnalysisCanceledException e) {
+      return resultOnIncompleteCode;
+    }
+  }
+  
+  void checkRecordComponentInitialized(@NotNull PsiRecordComponent component) {
+    PsiClass aClass = component.getContainingClass();
+    if (aClass == null) return;
+    if (component.getNameIdentifier() == null) return;
+    PsiMethod canonicalConstructor = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
+    if (canonicalConstructor == null || canonicalConstructor instanceof LightRecordCanonicalConstructor) return;
+    if (JavaPsiRecordUtil.isCompactConstructor(canonicalConstructor)) return;
+    PsiCodeBlock body = canonicalConstructor.getBody();
+    if (body == null) return;
+    PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
+    if (field == null || variableDefinitelyAssignedIn(field, body, true)) return;
+    myVisitor.report(JavaErrorKinds.RECORD_COMPONENT_NOT_INITIALIZED.create(component));
   }
 }

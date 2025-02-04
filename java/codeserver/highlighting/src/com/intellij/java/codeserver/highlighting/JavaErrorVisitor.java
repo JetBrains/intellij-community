@@ -125,6 +125,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     super.visitRecordComponent(recordComponent);
     if (!hasErrorResults()) myRecordChecker.checkRecordComponentWellFormed(recordComponent);
     if (!hasErrorResults()) myRecordChecker.checkRecordAccessorReturnType(recordComponent);
+    if (!hasErrorResults()) myControlFlowChecker.checkRecordComponentInitialized(recordComponent);
   }
 
   @Override

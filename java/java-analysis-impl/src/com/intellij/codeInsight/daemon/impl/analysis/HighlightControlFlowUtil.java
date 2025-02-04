@@ -19,7 +19,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -194,22 +193,6 @@ public final class HighlightControlFlowUtil {
     catch (AnalysisCanceledException e) {
       return true;
     }
-  }
-
-  static HighlightInfo.Builder checkRecordComponentInitialized(@NotNull PsiRecordComponent component) {
-    PsiClass aClass = component.getContainingClass();
-    if (aClass == null) return null;
-    PsiIdentifier identifier = component.getNameIdentifier();
-    if (identifier == null) return null;
-    PsiMethod canonicalConstructor = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
-    if (canonicalConstructor == null || canonicalConstructor instanceof LightRecordCanonicalConstructor) return null;
-    if (JavaPsiRecordUtil.isCompactConstructor(canonicalConstructor)) return null;
-    PsiCodeBlock body = canonicalConstructor.getBody();
-    if (body == null) return null;
-    PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
-    if (field == null || variableDefinitelyAssignedIn(field, body, true)) return null;
-    String description = JavaErrorBundle.message("record.component.not.initialized", field.getName());
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(description);
   }
 
   static HighlightInfo.Builder checkFinalFieldInitialized(@NotNull PsiField field) {

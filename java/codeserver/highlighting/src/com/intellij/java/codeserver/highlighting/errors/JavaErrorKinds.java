@@ -418,6 +418,10 @@ public final class JavaErrorKinds {
     error(PsiRecordComponent.class, "record.component.restricted.name")
       .withAnchor(PsiRecordComponent::getNameIdentifier)
       .withRawDescription(component -> message("record.component.restricted.name", component.getName()));
+  public static final Simple<PsiRecordComponent> RECORD_COMPONENT_NOT_INITIALIZED = 
+    error(PsiRecordComponent.class, "record.component.not.initialized")
+      .withAnchor(PsiRecordComponent::getNameIdentifier)
+      .withRawDescription(component -> message("record.component.not.initialized", component.getName()));
   public static final Simple<PsiTypeParameterList> RECORD_SPECIAL_METHOD_TYPE_PARAMETERS =
     error(PsiTypeParameterList.class, "record.special.method.type.parameters")
       .withRawDescription(tpl -> message("record.special.method.type.parameters", getRecordMethodKind(((PsiMethod)tpl.getParent()))));
