@@ -32,12 +32,12 @@ final class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, V
   @Override
   public @NotNull FileIndexingStateWithExplanation getIndexingStateForFile(int fileId, @NotNull IndexedFile file) {
     @NotNull FileIndexingStateWithExplanation isIndexed = super.getIndexingStateForFile(fileId, file);
-    if (isIndexed != FileIndexingStateWithExplanation.UP_TO_DATE) return isIndexed;
+    if (isIndexed.updateRequired()) return isIndexed;
     try {
       Collection<FileType> inputData = ((MapInputDataDiffBuilder<FileType, Void>) getKeysDiffBuilder(fileId)).getKeys();
       FileType indexedFileType = ContainerUtil.getFirstItem(inputData);
       return getExtension().getKeyDescriptor().isEqual(indexedFileType, file.getFileType())
-             ? FileIndexingStateWithExplanation.UP_TO_DATE
+             ? FileIndexingStateWithExplanation.upToDate()
              : FileIndexingStateWithExplanation.OUT_DATED;
     } catch (IOException e) {
       LOG.error(e);

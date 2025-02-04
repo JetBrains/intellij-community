@@ -93,10 +93,10 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
     if (indexerId == 0) {
       return FileIndexingStateWithExplanation.OUT_DATED;
     } else if (indexerId == UNINDEXED_STATE) {
-      return FileIndexingStateWithExplanation.NOT_INDEXED;
+      return FileIndexingStateWithExplanation.notIndexed();
     } else {
       int actualVersion = getFileIndexerId(file);
-      return actualVersion == indexerId ? FileIndexingStateWithExplanation.UP_TO_DATE : FileIndexingStateWithExplanation.OUT_DATED;
+      return actualVersion == indexerId ? FileIndexingStateWithExplanation.upToDate() : FileIndexingStateWithExplanation.OUT_DATED;
     }
   }
 

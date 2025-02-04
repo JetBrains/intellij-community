@@ -75,11 +75,11 @@ final class CompositeBinaryBuilderMap {
     int indexedVersion = VERSION_STAMP.readInt(fileId);
 
     if (indexedVersion == 0) {
-      return FileIndexingStateWithExplanation.NOT_INDEXED;
+      return FileIndexingStateWithExplanation.notIndexed();
     }
 
     int actualVersion = getBuilderCumulativeVersion(file);
-    return actualVersion == indexedVersion ? FileIndexingStateWithExplanation.UP_TO_DATE : FileIndexingStateWithExplanation.OUT_DATED;
+    return actualVersion == indexedVersion ? FileIndexingStateWithExplanation.upToDate() : FileIndexingStateWithExplanation.OUT_DATED;
   }
 
   private int getBuilderCumulativeVersion(@NotNull VirtualFile file) {

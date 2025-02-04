@@ -42,8 +42,8 @@ public final class IndexingStamp {
   public static @NotNull FileIndexingStateWithExplanation isFileIndexedStateCurrent(int fileId, @NotNull ID<?, ?> indexName) {
     try {
       long stamp = getIndexStamp(fileId, indexName);
-      if (stamp == HAS_NO_INDEXED_DATA_STAMP) return FileIndexingStateWithExplanation.NOT_INDEXED;
-      return stamp == IndexVersion.getIndexCreationStamp(indexName) ? FileIndexingStateWithExplanation.UP_TO_DATE : FileIndexingStateWithExplanation.OUT_DATED;
+      if (stamp == HAS_NO_INDEXED_DATA_STAMP) return FileIndexingStateWithExplanation.notIndexed();
+      return stamp == IndexVersion.getIndexCreationStamp(indexName) ? FileIndexingStateWithExplanation.upToDate() : FileIndexingStateWithExplanation.OUT_DATED;
     }
     catch (RuntimeException e) {
       Throwable cause = e.getCause();

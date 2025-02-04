@@ -2035,7 +2035,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                                     @NotNull UpdatableIndex<?, ?, ?, ?> index,
                                                     @NotNull FileIndexingStamp indexingStamp) {
     VirtualFile virtualFile = file.getFile();
-    if (isMock(virtualFile)) return FileIndexingStateWithExplanation.NOT_INDEXED;
+    if (isMock(virtualFile)) return FileIndexingStateWithExplanation.notIndexed();
     if (IndexingFlag.isFileChanged(file.getFile(), indexingStamp) == IsFileChangedResult.YES) {
       return FileIndexingStateWithExplanation.OUT_DATED;
     }

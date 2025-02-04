@@ -329,7 +329,7 @@ final class UnindexedFilesFinder {
 
     try {
       FileIndexingStateWithExplanation fileIndexingState = myFileBasedIndex.getIndexingState(indexedFile, indexId, indexingStamp);
-      if (fileIndexingState == FileIndexingStateWithExplanation.UP_TO_DATE && myShouldProcessUpToDateFiles) {
+      if (fileIndexingState.isUpToDate() && myShouldProcessUpToDateFiles) {
         fileIndexingState = processUpToDateFileByInfrastructureExtensions(indexedFile, inputId, indexId, fileStatusBuilder, indexingStamp);
       }
       if (fileIndexingState.updateRequired()) {
@@ -368,11 +368,11 @@ final class UnindexedFilesFinder {
                                                                                          UnindexedFileStatusBuilder fileStatusBuilder,
                                                                                          @NotNull FileIndexingStamp indexingStamp) {
     // quick path: shared indexes do not have data for contentless indexes
-    if (!myFileBasedIndex.needsFileContentLoading(indexId)) return FileIndexingStateWithExplanation.UP_TO_DATE;
+    if (!myFileBasedIndex.needsFileContentLoading(indexId)) return FileIndexingStateWithExplanation.upToDate();
 
     long nowTime = System.nanoTime();
     try {
-      FileIndexingStateWithExplanation ret = FileIndexingStateWithExplanation.UP_TO_DATE;
+      FileIndexingStateWithExplanation ret = FileIndexingStateWithExplanation.upToDate();
       for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor p : myStateProcessors) {
         if (!p.processUpToDateFile(indexedFile, inputId, indexId)) {
           fileStatusBuilder.indexInfrastructureExtensionInvalidated = true;

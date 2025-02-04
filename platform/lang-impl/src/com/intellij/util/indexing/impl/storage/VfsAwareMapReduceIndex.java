@@ -206,31 +206,31 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
   @Override
   public @NotNull FileIndexingStateWithExplanation getIndexingStateForFile(int fileId, @NotNull IndexedFile file) {
     FileIndexingStateWithExplanation baseState = IndexingStamp.isFileIndexedStateCurrent(fileId, indexId());
-    if (baseState != FileIndexingStateWithExplanation.UP_TO_DATE) {
+    if (baseState.updateRequired()) {
       return baseState;
     }
 
-    if (mySubIndexerRetriever == null) return FileIndexingStateWithExplanation.UP_TO_DATE;
+    if (mySubIndexerRetriever == null) return FileIndexingStateWithExplanation.upToDate();
 
     if (!(file instanceof FileContent)) {
       if (((CompositeDataIndexer<?, ?, ?, ?>)indexer()).requiresContentForSubIndexerEvaluation(file)) {
         FileIndexingStateWithExplanation indexConfigurationState = isIndexConfigurationUpToDate(fileId, file);
         // baseState == UP_TO_DATE => no need to reindex this file
-        return indexConfigurationState == FileIndexingStateWithExplanation.OUT_DATED ? FileIndexingStateWithExplanation.OUT_DATED : FileIndexingStateWithExplanation.UP_TO_DATE;
+        return indexConfigurationState == FileIndexingStateWithExplanation.OUT_DATED ? FileIndexingStateWithExplanation.OUT_DATED : FileIndexingStateWithExplanation.upToDate();
       }
     }
 
     try {
       FileIndexingStateWithExplanation subIndexerState = mySubIndexerRetriever.getSubIndexerState(fileId, file);
-      if (subIndexerState == FileIndexingStateWithExplanation.UP_TO_DATE) {
+      if (subIndexerState.isUpToDate()) {
         if (file instanceof FileContent && ((CompositeDataIndexer<?, ?, ?, ?>)indexer()).requiresContentForSubIndexerEvaluation(file)) {
           setIndexConfigurationUpToDate(fileId, file);
         }
-        return FileIndexingStateWithExplanation.UP_TO_DATE;
+        return FileIndexingStateWithExplanation.upToDate();
       }
-      if (subIndexerState == FileIndexingStateWithExplanation.NOT_INDEXED) {
+      if (subIndexerState.isNotIndexed()) {
         // baseState == UP_TO_DATE => no need to reindex this file
-        return FileIndexingStateWithExplanation.UP_TO_DATE;
+        return FileIndexingStateWithExplanation.upToDate();
       }
       return subIndexerState;
     }
