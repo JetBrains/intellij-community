@@ -327,11 +327,6 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
   }
 
   @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     if (!EXCLUDE_ANNOS.isEmpty() || !IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS) {
       super.writeSettings(node);
