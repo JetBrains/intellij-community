@@ -96,7 +96,7 @@ class JarHttpDownloaderFileTest {
 
   @Test
   fun downloadFile_retry_recovery() {
-    val log = StringBuilder()
+    val log = StringBuffer()
 
     val retry = RetryProvider.withExponentialBackOff(1, 1, 3)
 
