@@ -7,6 +7,9 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
+import com.intellij.find.FindManager
+import com.intellij.find.impl.FindManagerImpl
+import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
@@ -293,7 +296,7 @@ object K2UnusedSymbolUtil {
 
       return (declaration is KtObjectDeclaration && declaration.isCompanion() &&
               declaration.body?.declarations?.isNotEmpty() == true) ||
-              hasReferences(declaration, declarationContainingClass, symbol, restrictedScope) ||
+              hasReferences(project, declaration, declarationContainingClass, symbol, restrictedScope) ||
               hasOverrides(declaration, restrictedScope) ||
               hasFakeOverrides(declaration, restrictedScope) ||
               hasPlatformImplementations(declaration)
@@ -302,8 +305,7 @@ object K2UnusedSymbolUtil {
   private val KtNamedDeclaration.isObjectOrEnum: Boolean get() = this is KtObjectDeclaration || this is KtClass && isEnum()
 
   context(KaSession)
-  private fun checkReference(ref: PsiReference, declaration: KtNamedDeclaration, originalDeclaration: KtNamedDeclaration?): Boolean {
-      val refElement = ref.element
+  private fun checkReference(refElement: PsiElement, declaration: KtNamedDeclaration, originalDeclaration: KtNamedDeclaration?): Boolean {
       if (declaration.isAncestor(refElement)) return true // usages inside element's declaration are not counted
 
       if (refElement.parent is KtValueArgumentName) return true // usage of parameter in the form of named argument is not counted
@@ -346,6 +348,7 @@ object K2UnusedSymbolUtil {
 
   context(KaSession)
   private fun hasReferences(
+      project: Project,
       declaration: KtNamedDeclaration,
       declarationContainingClass: KtClass?,
       symbol: KaDeclarationSymbol?,
@@ -364,10 +367,10 @@ object K2UnusedSymbolUtil {
               // when too many occurrences of this class, consider it used
               (isCheapEnoughToSearchUsages(declarationContainingClass) == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES ||
               ReferencesSearch.search(KotlinReferencesSearchParameters(declarationContainingClass, useScope)).any {
-                  it.element.getStrictParentOfType<KtTypeAlias>() != null || it.element.getStrictParentOfType<KtCallExpression>()
-                      ?.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbol
-              })
-          ) {
+                  val refElement = it.element
+                  refElement.getStrictParentOfType<KtTypeAlias>() != null // ignore unusedness of type aliased classes - they are too hard to trace
+                  || refElement.getStrictParentOfType<KtCallExpression>()?.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbol
+              })) {
               return true
           }
           if (declaration is KtCallableDeclaration && declaration.canBeHandledByLightMethods(symbol)) {
@@ -375,7 +378,7 @@ object K2UnusedSymbolUtil {
               if (lightMethods.isNotEmpty()) {
                   val lightMethodsUsed = lightMethods.any { method ->
                       !MethodReferencesSearch.search(method).forEach(Processor {
-                          checkReference(it, declaration, originalDeclaration)
+                          checkReference(it.element, declaration, originalDeclaration)
                       })
                   }
                   if (lightMethodsUsed) return true
@@ -389,12 +392,17 @@ object K2UnusedSymbolUtil {
           }
       }
 
-      if (ReferencesSearch.search(searchParameters).forEach(Processor {
-              checkReference(it, declaration, originalDeclaration)
-          })) {
-          return checkPrivateDeclaration(declaration, symbol, originalDeclaration)
+      val handler = (FindManager.getInstance(project) as FindManagerImpl).findUsagesManager.getFindUsagesHandler(declaration, true)
+      if (handler != null) {
+          val result = handler.processElementUsages(declaration, Processor {
+              val refElement = it.element
+              refElement == null || checkReference(refElement, declaration, originalDeclaration)
+          }, handler.findUsagesOptions)
+          if (!result) {
+              return true
+          }
       }
-      return true
+      return checkPrivateDeclaration(declaration, symbol, originalDeclaration)
   }
 
     /**
@@ -430,7 +438,7 @@ object K2UnusedSymbolUtil {
 
       return setOfImportedDeclarations.mapNotNull { it.referenceExpression() }
           .filter { symbol in it.mainReference.resolveToSymbols() }
-          .any { !checkReference(it.mainReference, declaration, originalDeclaration) }
+          .any { !checkReference(it.mainReference.element, declaration, originalDeclaration) }
   }
 
   context(KaSession)
@@ -723,5 +731,4 @@ object K2UnusedSymbolUtil {
 
       return isJavaEntryPoint.isEntryPoint(lightElement)
   }
-
 }

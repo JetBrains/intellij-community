@@ -220,14 +220,12 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
         val highlightInfos = collectHighlightInfos()
 
-        assertTrue(
-            if (!problemExpected)
-                "No problems should be detected at caret\n" +
-                        "Detected problems: ${highlightInfos.joinToString { it.description }}"
-            else
-                "Expected at least one problem at caret",
-            problemExpected == highlightInfos.isNotEmpty()
-        )
+        val message = if (problemExpected)
+            "Expected at least one problem at caret, but got none"
+        else
+            "No problems should have been detected at caret, but got ${highlightInfos.size} problems:\n " +
+                    "${highlightInfos.joinToString(separator = "\n")}"
+        assertTrue(message, problemExpected == highlightInfos.isNotEmpty())
 
         if (!problemExpected || highlightInfos.isEmpty()) return false
 

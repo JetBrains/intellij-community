@@ -577,6 +577,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/secondaryConstructorCalledByTypeAlias.kt");
         }
 
+        @TestMetadata("secondaryConstructorCalledFromSubclassSecondaryConstructor.kt")
+        public void testSecondaryConstructorCalledFromSubclassSecondaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/secondaryConstructorCalledFromSubclassSecondaryConstructor.kt");
+        }
+
         @TestMetadata("secondaryConstructorUnused.kt")
         public void testSecondaryConstructorUnused() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/secondaryConstructorUnused.kt");

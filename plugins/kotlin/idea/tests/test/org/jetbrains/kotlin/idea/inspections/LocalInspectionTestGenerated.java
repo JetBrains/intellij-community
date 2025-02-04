@@ -18302,6 +18302,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/secondaryConstructorCalledByTypeAlias.kt");
             }
 
+            @TestMetadata("secondaryConstructorCalledFromSubclassSecondaryConstructor.kt")
+            public void testSecondaryConstructorCalledFromSubclassSecondaryConstructor() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/secondaryConstructorCalledFromSubclassSecondaryConstructor.kt");
+            }
+
             @TestMetadata("secondaryConstructorUnused.kt")
             public void testSecondaryConstructorUnused() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/secondaryConstructorUnused.kt");
