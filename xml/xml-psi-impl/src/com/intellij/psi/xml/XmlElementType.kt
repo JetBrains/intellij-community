@@ -122,7 +122,7 @@ object XmlElementType {
 
   @JvmField
   val XHTML_FILE: IElementType =
-    IFileElementType(XHTMLLanguage.INSTANCE)
+    IFileElementType(XHTMLLanguage)
 
 
   @JvmField
