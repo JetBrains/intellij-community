@@ -133,23 +133,22 @@ public final class FileStatusMap implements Disposable {
       if (scope == WHOLE_FILE_TEXT_RANGE || old == WHOLE_FILE_DIRTY_MARKER) {
         return WHOLE_FILE_DIRTY_MARKER;
       }
-      if (old == null) {
-        return document.createRangeMarker(scope);
-      }
-      TextRange oldRange = old.getTextRange();
-      TextRange union = scope.union(oldRange);
-      if (old.isValid() && union.equals(oldRange)) {
+      TextRange oldRange = old == null ? null : old.getTextRange();
+      TextRange result = oldRange == null ? scope : scope.union(oldRange);
+      if (old != null && old.isValid() && result.equals(oldRange)) {
         return old;
       }
-      if (union.getEndOffset() > document.getTextLength()) {
-        if (union.getStartOffset() == 0) {
+      if (result.getEndOffset() > document.getTextLength()) {
+        if (result.getStartOffset() == 0) {
           return WHOLE_FILE_DIRTY_MARKER;
         }
-        union =  union.intersection(new TextRange(0, document.getTextLength()));
+        result =  result.intersection(new TextRange(0, document.getTextLength()));
       }
-      assert union != null;
-      old.dispose();
-      return document.createRangeMarker(union);
+      assert result != null;
+      if (old != null) {
+        old.dispose();
+      }
+      return document.createRangeMarker(result);
     }
 
     @Override
