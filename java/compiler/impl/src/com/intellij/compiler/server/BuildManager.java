@@ -77,6 +77,9 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache;
 import com.intellij.platform.backend.workspace.WorkspaceModelCache;
+import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.path.EelPath;
+import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
@@ -863,9 +866,27 @@ public final class BuildManager implements Disposable {
 
     final String projectPath = getProjectPath(project);
     final boolean isAutomake = messageHandler instanceof AutoMakeMessageHandler;
+    final EelDescriptor eelDescriptor = EelProviderUtil.getEelDescriptor(project);
     final WSLDistribution wslDistribution = findWSLDistribution(project);
-    final BuilderMessageHandler handler = new NotifyingMessageHandler(project, messageHandler, wslDistribution != null ? wslDistribution::getWindowsPath : null, isAutomake);
-    Function<String, String> pathMapper = wslDistribution != null ? wslDistribution::getWslPath : Function.identity();
+
+    Function<String, String> pathMapperBack;
+
+    if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+      pathMapperBack = e -> EelNioBridgeServiceKt.asNioPath(EelPath.parse(e, eelDescriptor)).toString();
+    }
+    else {
+      pathMapperBack = wslDistribution != null ? wslDistribution::getWindowsPath : null;
+    }
+
+    final BuilderMessageHandler handler = new NotifyingMessageHandler(project, messageHandler, pathMapperBack, isAutomake);
+    Function<String, String> pathMapper;
+
+    if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+      pathMapper = e -> EelNioBridgeServiceKt.asEelPath(Path.of(e)).toString();
+    }
+    else {
+      pathMapper = wslDistribution != null ? wslDistribution::getWslPath : Function.identity();
+    }
 
     final DelegateFuture _future = new DelegateFuture();
     // by using the same queue that processes events,
