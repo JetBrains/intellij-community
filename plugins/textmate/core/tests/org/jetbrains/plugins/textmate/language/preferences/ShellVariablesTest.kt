@@ -28,13 +28,13 @@ class ShellVariablesTest {
     private fun loadVariables(bundleName: String): ShellVariablesRegistry {
       val preferences = TestUtil.readBundle(bundleName).readPreferences().iterator()
       assertNotNull(preferences)
-      val variablesRegistry = ShellVariablesRegistryImpl(TextMateSelectorWeigherImpl())
+      val variablesRegistryBuilder = ShellVariablesRegistryBuilder(TextMateSelectorWeigherImpl())
       while (preferences.hasNext()) {
         for (variable in preferences.next().variables) {
-          variablesRegistry.addVariable(variable)
+          variablesRegistryBuilder.addVariable(variable)
         }
       }
-      return variablesRegistry
+      return variablesRegistryBuilder.build()
     }
   }
 }

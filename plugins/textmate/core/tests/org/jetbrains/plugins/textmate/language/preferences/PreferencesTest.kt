@@ -100,18 +100,18 @@ class PreferencesTest {
   private fun loadPreferences(bundleName: String): PreferencesRegistry {
     val preferences = TestUtil.readBundle(bundleName).readPreferences().iterator()
     assertNotNull(preferences)
-    val preferencesRegistry = PreferencesRegistryImpl(TextMateSelectorWeigherImpl())
+    val preferencesRegistryBuilder = PreferencesRegistryBuilder(TextMateSelectorWeigherImpl())
     while (preferences.hasNext()) {
       val next = preferences.next()
-      preferencesRegistry.addPreferences(Preferences(next.scopeName,
-                                                     next.highlightingPairs,
-                                                     next.smartTypingPairs,
-                                                     setOf<TextMateBracePair>(),
-                                                     null,
-                                                     next.indentationRules,
-                                                     next.onEnterRules))
+      preferencesRegistryBuilder.add(Preferences(next.scopeName,
+                                                 next.highlightingPairs,
+                                                 next.smartTypingPairs,
+                                                 setOf(),
+                                                 null,
+                                                 next.indentationRules,
+                                                 next.onEnterRules))
     }
-    return preferencesRegistry
+    return preferencesRegistryBuilder.build()
   }
 
   private fun mergeAll(preferences: List<Preferences>): Preferences {

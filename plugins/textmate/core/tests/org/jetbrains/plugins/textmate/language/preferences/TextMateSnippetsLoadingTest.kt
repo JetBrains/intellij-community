@@ -52,11 +52,11 @@ class TextMateSnippetsLoadingTest {
   companion object {
     private fun loadSnippets(bundleName: String): SnippetsRegistry {
       val snippets = readBundle(bundleName).readSnippets().iterator()
-      val snippetsRegistry = SnippetsRegistryImpl(TextMateSelectorWeigherImpl())
+      val snippetsRegistryBuilder = SnippetsRegistryBuilder(TextMateSelectorWeigherImpl())
       while (snippets.hasNext()) {
-        snippetsRegistry.register(snippets.next())
+        snippetsRegistryBuilder.register(snippets.next())
       }
-      return snippetsRegistry
+      return snippetsRegistryBuilder.build()
     }
   }
 }

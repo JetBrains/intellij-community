@@ -1,11 +1,12 @@
 package org.jetbrains.plugins.textmate.language.syntax
 
+import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.TextMateInterner
 import org.jetbrains.plugins.textmate.plist.PListValue
 import org.jetbrains.plugins.textmate.plist.Plist
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 
 private typealias RuleId = Int
@@ -14,7 +15,7 @@ private typealias ReferenceRuleId = Int
 class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
   // todo: import kotlinx.atomicfu.atomic
   private val currentRuleId = AtomicInteger(0)
-  private val syntaxNodes: MutableMap<CharSequence, SyntaxRawNode> = ConcurrentHashMap()
+  private val syntaxNodes = AtomicReference(persistentMapOf<CharSequence, SyntaxRawNode>())
 
   /**
    * Append table with new syntax rules to support the new language.
@@ -26,7 +27,9 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
     val topLevelNode = loadRealNode(plist, null)
     val scopeName = topLevelNode.scopeName
     if (scopeName != null) {
-      syntaxNodes[scopeName] = topLevelNode
+      syntaxNodes.updateAndGet {
+        it.put(scopeName, topLevelNode)
+      }
     }
     return scopeName
   }
@@ -37,6 +40,7 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
 
     val rules = mutableMapOf<CharSequence, SyntaxNodeDescriptor>()
     val syntaxTable = TextMateSyntaxTableCore(rules = rules)
+    val syntaxNodes = syntaxNodes.get()
     syntaxNodes.forEach { (scopeName, nodeBuilder) ->
       nodeBuilder.compile(syntaxNodes,
                           compiledRules,

@@ -2,21 +2,30 @@ package org.jetbrains.plugins.textmate.language.preferences
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparatorCore
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
 
-class ShellVariablesRegistryImpl(private val weigher: TextMateSelectorWeigher) : ShellVariablesRegistry {
-  private val myVariables: MutableMap<String?, PersistentList<TextMateShellVariable>> = ConcurrentHashMap<String?, PersistentList<TextMateShellVariable>>()
+class ShellVariablesRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
+  private val variables = AtomicReference(persistentMapOf<String, PersistentList<TextMateShellVariable>>())
 
   fun addVariable(variable: TextMateShellVariable) {
     if (variable.name.isNotEmpty()) {
-      myVariables.compute(variable.name) { k, v ->
-        v?.add(variable) ?: persistentListOf(variable)
+      variables.updateAndGet {
+        it.put(variable.name, it[variable.name]?.add(variable) ?: persistentListOf(variable))
       }
     }
   }
+
+  fun build(): ShellVariablesRegistry {
+    return ShellVariablesRegistryImpl(weigher, variables.get())
+  }
+}
+
+class ShellVariablesRegistryImpl(private val weigher: TextMateSelectorWeigher,
+                                 private val variables: Map<String, List<TextMateShellVariable>>) : ShellVariablesRegistry {
 
   /**
    * Returns variable value by scope selector.
@@ -29,11 +38,7 @@ class ShellVariablesRegistryImpl(private val weigher: TextMateSelectorWeigher) :
     if (scope == null) {
       return null
     }
-    val variables = myVariables[name] ?: return null
+    val variables = variables[name] ?: return null
     return TextMateScopeComparatorCore(weigher, scope, TextMateShellVariable::scopeSelector).max(variables)
-  }
-
-  fun clear() {
-    myVariables.clear()
   }
 }
