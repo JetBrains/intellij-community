@@ -9,7 +9,10 @@ import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DurableDataEnumerator;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,12 +39,16 @@ final class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, V
     try {
       Collection<FileType> inputData = ((MapInputDataDiffBuilder<FileType, Void>) getKeysDiffBuilder(fileId)).getKeys();
       FileType indexedFileType = ContainerUtil.getFirstItem(inputData);
-      return getExtension().getKeyDescriptor().isEqual(indexedFileType, file.getFileType())
+      IndexExtension<FileType, Void, FileContent> extension = getExtension();
+      FileType actualFileType = file.getFileType();
+      return extension.getKeyDescriptor().isEqual(indexedFileType, actualFileType)
              ? FileIndexingStateWithExplanation.upToDate()
-             : FileIndexingStateWithExplanation.OUT_DATED;
+             : FileIndexingStateWithExplanation.outdated(
+               () -> "indexedFileType(" + indexedFileType + ") != actualFileType(" + actualFileType + ") according to " +
+                     "getExtension(=" + extension + ").getKeyDescriptor().isEqual()");
     } catch (IOException e) {
       LOG.error(e);
-      return FileIndexingStateWithExplanation.OUT_DATED;
+      return FileIndexingStateWithExplanation.outdated("IOException");
     }
   }
 

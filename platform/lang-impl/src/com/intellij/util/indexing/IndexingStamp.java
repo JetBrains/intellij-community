@@ -43,13 +43,15 @@ public final class IndexingStamp {
     try {
       long stamp = getIndexStamp(fileId, indexName);
       if (stamp == HAS_NO_INDEXED_DATA_STAMP) return FileIndexingStateWithExplanation.notIndexed();
-      return stamp == IndexVersion.getIndexCreationStamp(indexName) ? FileIndexingStateWithExplanation.upToDate() : FileIndexingStateWithExplanation.OUT_DATED;
+      long indexCreationStamp = IndexVersion.getIndexCreationStamp(indexName);
+      return stamp == indexCreationStamp ? FileIndexingStateWithExplanation.upToDate() : FileIndexingStateWithExplanation.outdated(
+        () -> "stamp(" + stamp + ") != indexCreationStamp(" + indexCreationStamp + ")");
     }
     catch (RuntimeException e) {
       Throwable cause = e.getCause();
       if (cause instanceof IOException) {
         // in case of IO exceptions, consider the file unindexed
-        return FileIndexingStateWithExplanation.OUT_DATED;
+        return FileIndexingStateWithExplanation.outdated("RuntimeException caused by IOException");
       }
       throw e;
     }

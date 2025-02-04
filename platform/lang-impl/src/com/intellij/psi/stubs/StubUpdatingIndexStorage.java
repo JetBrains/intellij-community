@@ -197,7 +197,7 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
     }
     catch (IOException e) {
       LOG.error(e);
-      return FileIndexingStateWithExplanation.OUT_DATED;
+      return FileIndexingStateWithExplanation.outdated("IOException");
     }
   }
 

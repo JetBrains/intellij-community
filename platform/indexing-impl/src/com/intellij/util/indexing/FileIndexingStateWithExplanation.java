@@ -3,38 +3,65 @@ package com.intellij.util.indexing;
 
 import org.jetbrains.annotations.ApiStatus.Internal;
 
-import static com.intellij.util.indexing.FileIndexingStateWithExplanation.FileIndexingState.NOT_INDEXED;
-import static com.intellij.util.indexing.FileIndexingStateWithExplanation.FileIndexingState.UP_TO_DATE;
 
 @Internal
 public class FileIndexingStateWithExplanation {
-  private static final FileIndexingStateWithExplanation NOT_INDEXED_WITHOUT_EXPLANATION = new FileIndexingStateWithExplanation(NOT_INDEXED);
-  private static final FileIndexingStateWithExplanation UP_TO_DATE_WITHOUT_EXPLANATION = new FileIndexingStateWithExplanation(UP_TO_DATE);
+  @FunctionalInterface
+  public interface Explanation {
+    String explain();
+  }
 
-  // TODO:
-  public static final FileIndexingStateWithExplanation OUT_DATED = new FileIndexingStateWithExplanation(FileIndexingState.OUT_DATED);
+  private static final FileIndexingStateWithExplanation NOT_INDEXED_WITHOUT_EXPLANATION =
+    new FileIndexingStateWithExplanation(FileIndexingState.NOT_INDEXED, () -> "not indexed");
+
+  private static final FileIndexingStateWithExplanation UP_TO_DATE_WITHOUT_EXPLANATION =
+    new FileIndexingStateWithExplanation(FileIndexingState.UP_TO_DATE, () -> "up-to-date");
 
   private final FileIndexingState state;
+  private final Explanation explanation;
 
-  public FileIndexingStateWithExplanation(FileIndexingState state) { this.state = state; }
-
-  @Internal
-  public enum FileIndexingState {
+  private enum FileIndexingState {
     NOT_INDEXED,
     OUT_DATED,
     UP_TO_DATE
   }
 
+  private FileIndexingStateWithExplanation(FileIndexingState state, Explanation explanation) {
+    this.state = state;
+    this.explanation = explanation;
+  }
+
+  public String getExplanationAsString() {
+    return explanation.explain();
+  }
+
+  @Override
+  public String toString() {
+    return state + "(" + getExplanationAsString() + ")";
+  }
+
+  public boolean isIndexedButOutdated() {
+    return state == FileIndexingState.OUT_DATED;
+  }
+
   public boolean updateRequired() {
-    return state != UP_TO_DATE;
+    return state != FileIndexingState.UP_TO_DATE;
   }
 
   public boolean isUpToDate() {
-    return state == UP_TO_DATE;
+    return state == FileIndexingState.UP_TO_DATE;
   }
 
   public boolean isNotIndexed() {
-    return state == NOT_INDEXED;
+    return state == FileIndexingState.NOT_INDEXED;
+  }
+
+  public static FileIndexingStateWithExplanation outdated(String reason) {
+    return outdated(() -> reason);
+  }
+
+  public static FileIndexingStateWithExplanation outdated(Explanation explanation) {
+    return new FileIndexingStateWithExplanation(FileIndexingState.OUT_DATED, explanation);
   }
 
   public static FileIndexingStateWithExplanation notIndexed() {

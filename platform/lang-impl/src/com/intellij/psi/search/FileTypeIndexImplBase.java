@@ -171,11 +171,12 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
 
       return indexedFileTypeId == actualFileTypeId
              ? FileIndexingStateWithExplanation.upToDate()
-             : FileIndexingStateWithExplanation.OUT_DATED;
+             : FileIndexingStateWithExplanation.outdated(
+               () -> "indexedFileTypeId(" + indexedFileTypeId + ") != actualFileTypeId(" + actualFileTypeId + ")");
     }
     catch (StorageException e) {
       LOG.error(e);
-      return FileIndexingStateWithExplanation.OUT_DATED;
+      return FileIndexingStateWithExplanation.outdated("Storage exception");
     }
   }
 

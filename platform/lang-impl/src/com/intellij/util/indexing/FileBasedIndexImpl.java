@@ -2037,7 +2037,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     VirtualFile virtualFile = file.getFile();
     if (isMock(virtualFile)) return FileIndexingStateWithExplanation.notIndexed();
     if (IndexingFlag.isFileChanged(file.getFile(), indexingStamp) == IsFileChangedResult.YES) {
-      return FileIndexingStateWithExplanation.OUT_DATED;
+      return FileIndexingStateWithExplanation.outdated("File has changed according to IndexingFlag");
     }
     return index.getIndexingStateForFile(((NewVirtualFile)virtualFile).getId(), file);
   }
