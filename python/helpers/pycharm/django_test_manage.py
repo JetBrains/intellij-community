@@ -2,6 +2,7 @@
 
 import os
 import sys
+import traceback
 
 from django.core.management import ManagementUtility
 
@@ -20,7 +21,8 @@ try:
     from django.conf import settings
     apps = settings.INSTALLED_APPS
 except:
-    pass
+    print("Exception while installing apps: {}".format(str(e)))
+    traceback.print_tb(e.__traceback__)
 
 from django.core import management
 
