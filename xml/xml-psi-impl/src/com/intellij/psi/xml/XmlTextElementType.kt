@@ -17,13 +17,11 @@
 /*
  * @author max
  */
-package com.intellij.psi.xml;
+package com.intellij.psi.xml
 
-import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
-import com.intellij.psi.tree.xml.IXmlElementType;
+import com.intellij.psi.tree.IStrongWhitespaceHolderElementType
+import com.intellij.psi.tree.xml.IXmlElementType
 
-class XmlTextElementType extends IXmlElementType implements IStrongWhitespaceHolderElementType {
-  XmlTextElementType() {
-    super("XML_TEXT");
-  }
-}
+internal class XmlTextElementType :
+  IXmlElementType("XML_TEXT"),
+  IStrongWhitespaceHolderElementType
