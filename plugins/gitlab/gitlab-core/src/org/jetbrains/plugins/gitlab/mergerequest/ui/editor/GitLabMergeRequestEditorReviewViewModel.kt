@@ -29,6 +29,7 @@ import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.remote.hosting.localCommitsSyncStatus
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
@@ -41,7 +42,8 @@ import java.util.*
 
 private val LOG = logger<GitLabMergeRequestEditorReviewViewModel>()
 
-internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
+@ApiStatus.Internal
+class GitLabMergeRequestEditorReviewViewModel internal constructor(
   parentCs: CoroutineScope,
   private val project: Project,
   private val projectMapping: GitLabProjectMapping,

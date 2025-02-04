@@ -4,10 +4,12 @@ package org.jetbrains.plugins.gitlab.authentication.accounts
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.exception.GitLabHttpStatusErrorAction
 import javax.swing.Action
 
-internal interface GitLabAccountViewModel {
+@ApiStatus.Internal
+interface GitLabAccountViewModel {
   fun loginAction(): Action
 }
 

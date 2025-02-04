@@ -5,6 +5,7 @@ import com.intellij.collaboration.ui.toolwindow.dontHideOnEmptyContent
 import com.intellij.collaboration.ui.toolwindow.manageReviewToolwindowTabs
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -20,6 +21,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
@@ -75,6 +77,9 @@ private class GitLabMergeRequestsToolWindowController(private val project: Proje
     cs.launch {
       val vm = project.serviceAsync<GitLabToolWindowViewModel>()
       val componentFactory = GitLabReviewTabComponentFactory(project, vm)
+      toolWindow.contentManager.addDataProvider(EdtNoGetDataProvider { sink ->
+        sink[GitLabMergeRequestsActionKeys.CONNECTED_PROJECT_VM] = vm.projectVm.value
+      })
 
       manageReviewToolwindowTabs(this, toolWindow, vm, componentFactory, GitLabBundle.message("merge.request.toolwindow.tab.title"))
       awaitCancellation()

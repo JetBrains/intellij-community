@@ -20,6 +20,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.createSingleProjectAndAccountState
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabConnectedProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowConnectedProjectViewModel.Companion.GitLabToolWindowConnectedProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestsUtil.repoAndAccountState
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
@@ -100,7 +101,7 @@ internal class GitLabToolWindowViewModel(
     _activationRequests.tryEmit(Unit)
   }
 
-  internal fun activateAndAwaitProject(action: GitLabToolWindowConnectedProjectViewModel.() -> Unit) {
+  internal fun activateAndAwaitProject(action: GitLabConnectedProjectViewModel.() -> Unit) {
     cs.launch {
       _activationRequests.emit(Unit)
       projectVm.filterNotNull().first().action()
