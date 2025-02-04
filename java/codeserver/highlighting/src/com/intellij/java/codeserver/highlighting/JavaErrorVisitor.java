@@ -827,8 +827,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       else if (returnErrors != null && !PsiTreeUtil.hasErrorElements(expression)) {
         returnErrors.forEach((expr, message) -> report(JavaErrorKinds.LAMBDA_RETURN_TYPE_ERROR.create(expr, message)));
       }
+      if (!hasErrorResults()) myFunctionChecker.checkParametersCompatible(expression, functionalInterfaceType);
     }
-
   }
 
   /**

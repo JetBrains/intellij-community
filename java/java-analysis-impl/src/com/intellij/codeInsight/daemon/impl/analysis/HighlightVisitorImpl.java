@@ -269,16 +269,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
 
-    if (!hasErrorResults() && functionalInterfaceType != null) {
-      PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
-      PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
-      if (interfaceMethod != null) {
-        PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
-        add(LambdaHighlightingUtil.checkParametersCompatible(expression, parameters,
-                                                             LambdaUtil.getSubstitutor(interfaceMethod, resolveResult)));
-      }
-    }
-
     if (!hasErrorResults()) {
       PsiElement body = expression.getBody();
       if (body instanceof PsiCodeBlock block) {

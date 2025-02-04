@@ -142,6 +142,17 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiElement, String> LAMBDA_RETURN_TYPE_ERROR =
     parameterized(PsiElement.class, String.class, "lambda.return.type.error")
       .withRawDescription((psi, message) -> message("lambda.return.type.error", message));
+  public static final Parameterized<PsiLambdaExpression, PsiMethod> LAMBDA_WRONG_NUMBER_OF_PARAMETERS =
+    parameterized(PsiLambdaExpression.class, PsiMethod.class, "lambda.wrong.number.of.parameters")
+      .withAnchor((lambda, method) -> lambda.getParameterList())
+      .withRawDescription((lambda, method) -> message("lambda.wrong.number.of.parameters",
+                                                      method.getParameterList().getParametersCount(),
+                                                      lambda.getParameterList().getParametersCount()));
+  public static final Parameterized<PsiParameter, PsiType> LAMBDA_INCOMPATIBLE_PARAMETER_TYPES =
+    parameterized(PsiParameter.class, PsiType.class, "lambda.incompatible.parameter.types")
+      .withRawDescription((parameter, expectedType) -> message("lambda.incompatible.parameter.types",
+                                                      expectedType.getPresentableText(), parameter.getType().getPresentableText()));
+  
     
   public static final Simple<PsiMethodReferenceExpression> METHOD_REFERENCE_SEALED = error("method.reference.sealed");
   public static final Simple<PsiMethodReferenceExpression> METHOD_REFERENCE_NOT_EXPECTED = error("method.reference.not.expected");

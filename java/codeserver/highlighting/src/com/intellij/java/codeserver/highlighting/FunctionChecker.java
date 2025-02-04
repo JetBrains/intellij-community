@@ -16,6 +16,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static java.util.Objects.*;
+
 
 final class FunctionChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
@@ -143,6 +145,30 @@ final class FunctionChecker {
         if (outerClass != null && !InheritanceUtil.hasEnclosingInstanceInScope(outerClass, methodRef, true, false)) {
           myVisitor.report(JavaErrorKinds.METHOD_REFERENCE_ENCLOSING_INSTANCE_NOT_IN_SCOPE.create(methodRef, outerClass));
         }
+      }
+    }
+  }
+
+  void checkParametersCompatible(@NotNull PsiLambdaExpression expression, @Nullable PsiType functionalInterfaceType) {
+    PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+    PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
+    if (interfaceMethod == null) return;
+    PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
+    PsiParameter[] lambdaParameters = expression.getParameterList().getParameters();
+    if (lambdaParameters.length != parameters.length) {
+      myVisitor.report(JavaErrorKinds.LAMBDA_WRONG_NUMBER_OF_PARAMETERS.create(expression, interfaceMethod));
+      return;
+    }
+    boolean hasFormalParameterTypes = expression.hasFormalParameterTypes();
+    PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
+    for (int i = 0; i < lambdaParameters.length; i++) {
+      PsiParameter lambdaParameter = lambdaParameters[i];
+      PsiType lambdaParameterType = lambdaParameter.getType();
+      PsiType substitutedParamType = substitutor.substitute(parameters[i].getType());
+      if (hasFormalParameterTypes &&!PsiTypesUtil.compareTypes(lambdaParameterType, substitutedParamType, true) ||
+          !TypeConversionUtil.isAssignable(substitutedParamType, lambdaParameterType)) {
+        myVisitor.report(JavaErrorKinds.LAMBDA_INCOMPATIBLE_PARAMETER_TYPES.create(
+          lambdaParameter, requireNonNullElse(substitutedParamType, PsiTypes.nullType())));
       }
     }
   }
