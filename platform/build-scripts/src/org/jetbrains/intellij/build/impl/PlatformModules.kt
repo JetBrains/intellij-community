@@ -3,6 +3,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
+import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -579,12 +580,22 @@ private fun embedAndCollectProductModules(file: Path, xIncludePathResolver: XInc
 
 suspend fun embedContentModules(file: Path, xIncludePathResolver: XIncludePathResolver, xml: Element, layout: PluginLayout?, context: BuildContext) {
   val frontendModuleFilter = context.getFrontendModuleFilter()
+  val contentModuleFilter = context.getContentModuleFilter()
   resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver)
-  for (moduleElement in xml.getChildren("content").asSequence().flatMap { it.getChildren("module") }) {
+
+  val moduleElements = xml.getChildren("content").flatMap { it.getChildren("module") }
+  for (moduleElement in moduleElements) {
     val moduleName = moduleElement.getAttributeValue("name") ?: continue
     check(moduleElement.content.isEmpty())
 
     val jpsModuleName = moduleName.substringBeforeLast('/')
+    val loadingRule = moduleElement.getAttributeValue("loading")
+    if (loadingRule != "required" && loadingRule != "embedded" && !contentModuleFilter.isOptionalModuleIncluded(jpsModuleName, pluginMainModuleName = layout?.mainModule)) {
+      Span.current().addEvent("Tag for module '$moduleName' is removed from plugin.xml file for '${layout?.mainModule}' by $contentModuleFilter")
+      moduleElement.parent.removeContent(moduleElement)
+      continue
+    }
+    
     val descriptor = getModuleDescriptor(moduleName = moduleName, jpsModuleName = jpsModuleName, xIncludePathResolver = xIncludePathResolver, context = context)
     if (jpsModuleName == moduleName &&
         (context as BuildContextImpl).jarPackagerDependencyHelper.isPluginModulePackedIntoSeparateJar(context.findRequiredModule(jpsModuleName.removeSuffix("._test")), layout, frontendModuleFilter)) {

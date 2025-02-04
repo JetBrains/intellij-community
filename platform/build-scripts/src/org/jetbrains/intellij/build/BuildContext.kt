@@ -144,6 +144,8 @@ interface BuildContext : CompilationContext {
   }
 
   suspend fun getFrontendModuleFilter(): FrontendModuleFilter
+  
+  suspend fun getContentModuleFilter(): ContentModuleFilter
 
   val isEmbeddedFrontendEnabled: Boolean
 

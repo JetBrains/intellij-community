@@ -234,6 +234,20 @@ class BuildContextImpl internal constructor(
 
   override suspend fun getFrontendModuleFilter(): FrontendModuleFilter = _frontendModuleFilter.await()
 
+  private val contentModuleFilter = computeContentModuleFilter()
+
+  @OptIn(DelicateCoroutinesApi::class)
+  private fun computeContentModuleFilter(): Deferred<ContentModuleFilter> {
+    if (productProperties.productMode == ProductMode.MONOLITH) return CompletableDeferred(IncludeAllContentModuleFilter)
+    
+    return GlobalScope.async(Dispatchers.Unconfined + CoroutineName("Content Modules Filter"), start = CoroutineStart.LAZY) {
+      val bundledPluginModules = getBundledPluginModules()
+      ContentModuleByProductModeFilter(getOriginalModuleRepository().repository, bundledPluginModules, productProperties.productMode)
+    }
+  }
+
+  override suspend fun getContentModuleFilter(): ContentModuleFilter = contentModuleFilter.await()
+
   override val isEmbeddedFrontendEnabled: Boolean
     get() = productProperties.embeddedFrontendRootModule != null && options.enableEmbeddedFrontend
 
