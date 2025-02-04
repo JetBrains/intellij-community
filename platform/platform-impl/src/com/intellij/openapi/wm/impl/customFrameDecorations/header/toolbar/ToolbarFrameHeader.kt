@@ -67,7 +67,7 @@ internal class ToolbarFrameHeader(
   private val mainMenuButtonComponent = mainMenuWithButton.mainMenuButton.button
   private var toolbar: MainToolbar? = null
   private val selfDisposable = Disposer.newCheckedDisposable()
-  private var toolbarDisposable: Disposable? =  null
+  private var toolbarDisposable: Disposable? = null
   private val toolbarPlaceholder = createToolbarPlaceholder()
   private val headerContent = createHeaderContent()
   private val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope.childScope("ExpandableMenu"), frame) { !isCompactHeader && !ShowMode.isMergedMainMenu() }
@@ -193,8 +193,8 @@ internal class ToolbarFrameHeader(
     super.removeNotify()
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       coroutineScope.cancel()
+      Disposer.dispose(selfDisposable)
     }
-    Disposer.dispose(selfDisposable)
   }
 
   private fun fillContent(state: WindowButtonsConfiguration.State?) {
