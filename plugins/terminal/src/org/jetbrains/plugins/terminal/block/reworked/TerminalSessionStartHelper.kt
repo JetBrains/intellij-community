@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.session.FrontendTerminalSession
-import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionsManagerApi
+import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi
 import org.jetbrains.plugins.terminal.block.reworked.session.toDto
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 
@@ -70,7 +70,7 @@ internal object TerminalSessionStartHelper {
   }
 
   private suspend fun startTerminalSession(project: Project, options: ShellStartupOptions): TerminalSession {
-    val api = TerminalSessionsManagerApi.getInstance()
+    val api = TerminalTabsManagerApi.getInstance()
     val sessionId = api.startTerminalSession(project.projectId(), options.toDto())
     return FrontendTerminalSession(sessionId)
   }

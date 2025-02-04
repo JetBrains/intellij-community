@@ -11,13 +11,13 @@ import org.jetbrains.plugins.terminal.block.reworked.session.ShellStartupOptions
 
 @ApiStatus.Internal
 @Rpc
-interface TerminalSessionsManagerApi : RemoteApi<Unit> {
+interface TerminalTabsManagerApi : RemoteApi<Unit> {
   suspend fun startTerminalSession(projectId: ProjectId, options: ShellStartupOptionsDto): TerminalSessionId
 
   companion object {
     @JvmStatic
-    suspend fun getInstance(): TerminalSessionsManagerApi {
-      return RemoteApiProviderService.resolve(remoteApiDescriptor<TerminalSessionsManagerApi>())
+    suspend fun getInstance(): TerminalTabsManagerApi {
+      return RemoteApiProviderService.resolve(remoteApiDescriptor<TerminalTabsManagerApi>())
     }
   }
 }

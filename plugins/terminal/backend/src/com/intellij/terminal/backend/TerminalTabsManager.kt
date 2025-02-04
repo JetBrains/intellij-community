@@ -15,7 +15,7 @@ import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSession
 
 @OptIn(AwaitCancellationAndInvoke::class)
 @Service(Service.Level.PROJECT)
-internal class TerminalSessionsManager(private val project: Project, private val coroutineScope: CoroutineScope) {
+internal class TerminalTabsManager(private val project: Project, private val coroutineScope: CoroutineScope) {
   suspend fun startTerminalSession(options: ShellStartupOptions): TerminalSessionId {
     val scope = coroutineScope.childScope("TerminalSession")
     val session = startTerminalSession(project, options, JBTerminalSystemSettingsProvider(), scope)
@@ -30,7 +30,7 @@ internal class TerminalSessionsManager(private val project: Project, private val
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): TerminalSessionsManager {
+    fun getInstance(project: Project): TerminalTabsManager {
       return project.service()
     }
   }
