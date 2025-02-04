@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -43,14 +44,11 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
   public final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
   public boolean IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS = true;
 
-  private void doCheckClass(PsiClass aClass,
-                            ProblemsHolder holder,
-                            List<String> excludeAnnos,
-                            boolean ignoreFieldsUsedInMultipleMethods) {
+  private void doCheckClass(PsiClass aClass, ProblemsHolder holder) {
     if (aClass.isInterface()) return;
-    final Set<PsiField> candidates = new LinkedHashSet<>();
+    final Set<PsiField> candidates = new HashSet<>();
     for (PsiField field : aClass.getFields()) {
-      if (!field.isPhysical() || AnnotationUtil.isAnnotated(field, excludeAnnos, 0)) {
+      if (!field.isPhysical() || AnnotationUtil.isAnnotated(field, EXCLUDE_ANNOS, 0)) {
         continue;
       }
       if (field.hasModifierProperty(PsiModifier.VOLATILE)) {
@@ -63,16 +61,16 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
         candidates.add(field);
       }
     }
+    if (candidates.isEmpty()) return;
 
     removeFieldsReferencedFromInitializers(aClass, aClass, candidates);
     if (candidates.isEmpty()) return;
 
     final Set<PsiField> usedFields = new HashSet<>();
-    removeReadFields(aClass, candidates, usedFields, ignoreFieldsUsedInMultipleMethods);
-
+    removeReadFields(aClass, candidates, usedFields, IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS);
     if (candidates.isEmpty()) return;
-    final List<ImplicitUsageProvider> implicitUsageProviders = ImplicitUsageProvider.EP_NAME.getExtensionList();
 
+    final List<ImplicitUsageProvider> implicitUsageProviders = ImplicitUsageProvider.EP_NAME.getExtensionList();
     final PsiClass scope = findVariableScope(aClass);
 
     FieldLoop:
@@ -120,8 +118,7 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
     root.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitMethod(@NotNull PsiMethod method) {
-
-        if (method.isConstructor()) {
+        if (method.isConstructor() && !PsiUtil.isAvailable(JavaFeature.STATEMENTS_BEFORE_SUPER, method)) {
           final PsiCodeBlock body = method.getBody();
           if (body != null) {
             final PsiStatement[] statements = body.getStatements();
@@ -156,7 +153,6 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
       @Override
       public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         excludeFieldCandidate(expression);
-
         super.visitReferenceExpression(expression);
       }
 
@@ -167,9 +163,7 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
       }
 
       private void excludeFieldCandidate(PsiReference ref) {
-        if (ref == null) return;
-        final PsiElement resolved = ref.resolve();
-        if (resolved instanceof PsiField field && aClass.equals(field.getContainingClass())) {
+        if (ref != null && ref.resolve() instanceof PsiField field && aClass.equals(field.getContainingClass())) {
           candidates.remove(field);
         }
       }
@@ -339,7 +333,7 @@ public final class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspec
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
         super.visitClass(aClass);
-        doCheckClass(aClass, holder, EXCLUDE_ANNOS, IGNORE_FIELDS_USED_IN_MULTIPLE_METHODS);
+        doCheckClass(aClass, holder);
       }
     };
   }

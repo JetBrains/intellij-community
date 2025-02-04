@@ -4,6 +4,8 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +62,11 @@ public class FieldCanBeLocalTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testConstructorThisRef() {
+    doTest();
+  }
+
+  public void testConstructorThisRef2() {
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_23_PREVIEW, myFixture.getTestRootDisposable());
     doTest();
   }
 
