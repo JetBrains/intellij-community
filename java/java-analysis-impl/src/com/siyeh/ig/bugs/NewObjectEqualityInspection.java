@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
@@ -88,7 +87,7 @@ public final class NewObjectEqualityInspection extends BaseInspection {
       PsiElement block = ControlFlowUtil.findCodeFragment(variable);
       PsiElement expressionContext = PsiTreeUtil.getParentOfType(expression, PsiMember.class, PsiLambdaExpression.class);
       if (expressionContext == null || PsiTreeUtil.isAncestor(block, expressionContext, true)) return expression;
-      if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, block, null)) return expression;
+      if (!ControlFlowUtil.isEffectivelyFinal(variable, block)) return expression;
       ControlFlow flow;
       try {
         flow = ControlFlowFactory.getInstance(block.getProject()).getControlFlow(block, new LocalsControlFlowPolicy(block), false);

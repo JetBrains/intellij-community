@@ -390,6 +390,8 @@ public final class JavaErrorKinds {
     parameterized(PsiElement.class, PsiClass.class, "class.not.accessible")
       .withRange((psi, cls) -> psi instanceof PsiMember member ? getMemberDeclarationTextRange(member) : null)
       .withRawDescription((psi, cls) -> message("class.not.accessible", formatClass(cls)));
+  public static final Simple<PsiCodeBlock> CLASS_INITIALIZER_MUST_COMPLETE_NORMALLY =
+    error("class.initializer.must.complete.normally");
 
   public static final Simple<PsiJavaCodeReferenceElement> VALUE_CLASS_EXTENDS_NON_ABSTRACT = error("value.class.extends.non.abstract");
   
@@ -864,6 +866,9 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiExpression, PsiVariable> ASSIGNMENT_DECLARED_OUTSIDE_GUARD =
     parameterized(PsiExpression.class, PsiVariable.class, "assignment.declared.outside.guard")
       .withRawDescription((expr, variable) -> message("assignment.declared.outside.guard", variable.getName()));
+  public static final Parameterized<PsiReferenceExpression, PsiVariable> ASSIGNMENT_TO_FINAL_VARIABLE =
+    parameterized(PsiReferenceExpression.class, PsiVariable.class, "assignment.to.final.variable")
+      .withRawDescription((expr, variable) -> message("assignment.to.final.variable", variable.getName()));
   public static final Simple<PsiExpression> LVALUE_VARIABLE_EXPECTED = error("lvalue.variable.expected"); 
   
   public static final Parameterized<PsiJavaToken, JavaIncompatibleTypeErrorContext> BINARY_OPERATOR_NOT_APPLICABLE =

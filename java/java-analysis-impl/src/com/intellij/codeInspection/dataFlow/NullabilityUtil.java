@@ -5,12 +5,12 @@ import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -141,7 +141,7 @@ public final class NullabilityUtil {
         PsiElement block = PsiUtil.getVariableCodeBlock((PsiVariable)target, null);
         // Do not trust the declared nullability of local variable/parameter if it's reassigned as nullability designates
         // only initial nullability
-        if (block == null || !HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)target, block, ref)) return Nullability.UNKNOWN;
+        if (block == null || !ControlFlowUtil.isEffectivelyFinal((PsiVariable)target, block)) return Nullability.UNKNOWN;
       }
       return DfaPsiUtil.getElementNullabilityIgnoringParameterInference(expression.getType(), (PsiModifierListOwner)target);
     }

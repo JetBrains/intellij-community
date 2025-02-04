@@ -2,7 +2,6 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -18,6 +17,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyStatementImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
@@ -257,7 +257,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     if (initializer != castExpression) return null;
     PsiElement scope = PsiUtil.getVariableCodeBlock(variable, null);
     if (scope == null) return null;
-    if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) return null;
+    if (!ControlFlowUtil.isEffectivelyFinal(variable, scope)) return null;
     return variable;
   }
 

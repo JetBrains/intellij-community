@@ -4,7 +4,13 @@ package com.intellij.java.codeserver.highlighting;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.util.JavaPsiRecordUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.BitUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,5 +76,116 @@ final class ControlFlowChecker {
     catch (AnalysisCanceledException | IndexNotReadyException e) {
       // incomplete code
     }
+  }
+
+  void checkInitializerCompleteNormally(@NotNull PsiClassInitializer initializer) {
+    PsiCodeBlock body = initializer.getBody();
+    // unhandled exceptions already reported
+    try {
+      ControlFlow controlFlow = ControlFlowFactory.getControlFlowNoConstantEvaluate(body);
+      int completionReasons = ControlFlowUtil.getCompletionReasons(controlFlow, 0, controlFlow.getSize());
+      if (!BitUtil.isSet(completionReasons, ControlFlowUtil.NORMAL_COMPLETION_REASON)) {
+        myVisitor.report(JavaErrorKinds.CLASS_INITIALIZER_MUST_COMPLETE_NORMALLY.create(body));
+      }
+    }
+    catch (AnalysisCanceledException e) {
+      // incomplete code
+    }
+  }
+
+  /**
+   * @return field that has initializer with this element as subexpression or null if not found
+   */
+  static PsiField findEnclosingFieldInitializer(@NotNull PsiElement entry) {
+    PsiElement element = entry;
+    while (element != null) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiField field) {
+        if (element == field.getInitializer()) return field;
+        if (field instanceof PsiEnumConstant enumConstant && element == enumConstant.getArgumentList()) return field;
+      }
+      if (element instanceof PsiClass || element instanceof PsiMethod) return null;
+      element = parent;
+    }
+    return null;
+  }
+
+  private static boolean isSameField(@NotNull PsiMember enclosingCtrOrInitializer,
+                                     @NotNull PsiField field,
+                                     @NotNull PsiReferenceExpression reference,
+                                     @NotNull PsiFile containingFile) {
+    if (!containingFile.getManager().areElementsEquivalent(enclosingCtrOrInitializer.getContainingClass(), field.getContainingClass())) return false;
+    return LocalsOrMyInstanceFieldsControlFlowPolicy.isLocalOrMyInstanceReference(reference);
+  }
+
+  private static boolean canWriteToFinal(@NotNull PsiVariable variable,
+                                         @NotNull PsiExpression expression,
+                                         @NotNull PsiReferenceExpression reference,
+                                         @NotNull PsiFile containingFile) {
+    if (variable.hasInitializer()) {
+      return variable instanceof PsiField field && !PsiAugmentProvider.canTrustFieldInitializer(field);
+    }
+    if (variable instanceof PsiParameter) return false;
+    PsiElement scope = ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, expression);
+    if (variable instanceof PsiField field) {
+      // if inside some field initializer
+      if (findEnclosingFieldInitializer(expression) != null) return true;
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null) return true;
+      // assignment from within inner class is illegal always
+      if (scope != null && !containingFile.getManager().areElementsEquivalent(scope, containingClass)) return false;
+      PsiMember enclosingCtrOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
+      return enclosingCtrOrInitializer != null &&
+             !(enclosingCtrOrInitializer instanceof PsiMethod method &&
+               JavaPsiRecordUtil.isCompactConstructor(method) &&
+               containingClass.isRecord()) &&
+             isSameField(enclosingCtrOrInitializer, field, reference, containingFile);
+    }
+    if (variable instanceof PsiLocalVariable) {
+      boolean isAccessedFromOtherClass = scope != null;
+      return !isAccessedFromOtherClass;
+    }
+    return true;
+  }
+
+  private static boolean hasWriteToFinalInsideLambda(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
+    return hasWriteToFinalInsideLambda(variable, PsiTreeUtil.getParentOfType(context, PsiLambdaExpression.class), context);
+  }
+
+  @Contract("_, null, _ -> false")
+  private static boolean hasWriteToFinalInsideLambda(@NotNull PsiVariable variable,
+                                                     @Nullable PsiLambdaExpression lambdaExpression,
+                                                     @NotNull PsiJavaCodeReferenceElement context) {
+    if (lambdaExpression == null) return false;
+    if (!PsiTreeUtil.isAncestor(lambdaExpression, variable, true)) {
+      PsiElement parent = variable.getParent();
+      if (parent instanceof PsiParameterList && parent.getParent() == lambdaExpression) {
+        return false;
+      }
+      PsiSwitchLabelStatementBase label =
+        PsiTreeUtil.getParentOfType(context, PsiSwitchLabelStatementBase.class, true, PsiLambdaExpression.class);
+      if (label != null && PsiTreeUtil.isAncestor(label.getGuardExpression(), context, false)) {
+        return false;
+      }
+      return !ControlFlowUtil.isEffectivelyFinal(variable, lambdaExpression, context);
+    }
+    return false;
+  }
+
+  void checkCannotWriteToFinal(@NotNull PsiExpression expression) {
+    PsiExpression operand = null;
+    if (expression instanceof PsiAssignmentExpression assignment) {
+      operand = assignment.getLExpression();
+    }
+    else if (PsiUtil.isIncrementDecrementOperation(expression)) {
+      operand = ((PsiUnaryExpression)expression).getOperand();
+    }
+    if (!(PsiUtil.skipParenthesizedExprDown(operand) instanceof PsiReferenceExpression reference)) return;
+    if (!(reference.resolve() instanceof PsiVariable variable)) return;
+    if (!variable.hasModifierProperty(PsiModifier.FINAL)) return;
+    boolean canWrite = canWriteToFinal(variable, expression, reference, myVisitor.file()) && 
+                       !hasWriteToFinalInsideLambda(variable, reference);
+    if (canWrite) return;
+    myVisitor.report(JavaErrorKinds.ASSIGNMENT_TO_FINAL_VARIABLE.create(reference, variable));
   }
 }

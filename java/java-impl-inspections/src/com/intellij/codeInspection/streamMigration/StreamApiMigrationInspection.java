@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
@@ -285,7 +284,7 @@ public final class StreamApiMigrationInspection extends AbstractBaseJavaLocalIns
                                                    tb.operations().noneMatch(op -> op.isWriteAllowed(variable, ref));
       if (PsiTreeUtil.processElements(block, notAllowedWrite.negate()::test)) return true;
     }
-    return HighlightControlFlowUtil.isEffectivelyFinal(variable, statement, null);
+    return ControlFlowUtil.isEffectivelyFinal(variable, statement);
   }
 
   static String tryUnbox(PsiVariable variable) {

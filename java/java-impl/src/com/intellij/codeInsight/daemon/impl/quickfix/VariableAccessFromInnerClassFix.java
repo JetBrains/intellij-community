@@ -293,7 +293,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     int type = MAKE_FINAL;
     for (PsiReferenceExpression expression : outerReferences) {
       // if it happens that variable referenced from another inner class, make sure it can be make final from there
-      PsiElement innerScope = HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, expression);
+      PsiElement innerScope = ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, expression);
 
       if (innerScope != null) {
         @FixType int thisType = MAKE_FINAL;

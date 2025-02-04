@@ -2,7 +2,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -12,6 +11,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -158,8 +158,7 @@ public final class BulkFileAttributesReadInspection extends AbstractBaseJavaLoca
       super.visitMethodCallExpression(call);
       if (!FILE_ATTR_CALL_MATCHER.test(call)) return;
       PsiVariable variable = getFileVariable(call);
-      if (variable == null) return;
-      if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, myScope, null)) return;
+      if (variable == null || !ControlFlowUtil.isEffectivelyFinal(variable, myScope)) return;
       List<PsiMethodCallExpression> varCalls = myCalls.computeIfAbsent(variable, __ -> new SmartList<>());
       varCalls.add(call);
     }

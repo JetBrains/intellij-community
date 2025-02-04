@@ -27,6 +27,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -550,6 +551,13 @@ final class JavaErrorFixProvider {
     fix(METHOD_REFERENCE_STATIC_METHOD_NON_STATIC_QUALIFIER, error -> removeModifierFix(error.context(), PsiModifier.STATIC));
     fix(METHOD_REFERENCE_STATIC_METHOD_RECEIVER, error -> removeModifierFix(error.context(), PsiModifier.STATIC));
     fix(METHOD_REFERENCE_NON_STATIC_METHOD_IN_STATIC_CONTEXT, error -> addModifierFix(error.context(), PsiModifier.STATIC));
+    fix(ASSIGNMENT_TO_FINAL_VARIABLE, error -> {
+      PsiVariable variable = error.context();
+      PsiElement scope = ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, error.psi());
+      return scope == null || variable instanceof PsiField
+             ? removeModifierFix(variable, PsiModifier.FINAL)
+             : myFactory.createVariableAccessFromInnerClassFix(variable, scope);
+    });
   }
 
   private void createAccessFixes() {

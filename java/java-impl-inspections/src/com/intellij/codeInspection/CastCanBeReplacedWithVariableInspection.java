@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -163,9 +162,7 @@ public final class CastCanBeReplacedWithVariableInspection extends AbstractBaseJ
                                          final @NotNull PsiElement scope,
                                          final @NotNull PsiElement start,
                                          final @NotNull PsiElement end) {
-    if (variable.hasModifierProperty(PsiModifier.FINAL) || HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) {
-      return false;
-    }
+    if (variable.hasModifierProperty(PsiModifier.FINAL) || ControlFlowUtil.isEffectivelyFinal(variable, scope)) return false;
 
     PsiElement broadEnd = getBroadEnd(scope, start, end);
 

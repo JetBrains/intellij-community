@@ -26,9 +26,9 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil.isEffectivelyFinal;
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.isCallOf;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHAR_SEQUENCE;
+import static com.intellij.psi.controlFlow.ControlFlowUtil.isEffectivelyFinal;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.getInitializerUsageStatus;
 import static com.siyeh.ig.psiutils.ExpressionUtils.resolveLocalVariable;
@@ -276,7 +276,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
         PsiElement parent = variable.getParent();
         PsiExpression initializer = variable.getInitializer();
         if(parent == null || initializer == null) return null;
-        if(!isEffectivelyFinal(variable, parent, null)) return null;
+        if(!isEffectivelyFinal(variable, parent)) return null;
         Object initializerConstant = ExpressionUtils.computeConstantExpression(initializer);
         if(initializerConstant == null) return null;
         return String.valueOf(initializerConstant);

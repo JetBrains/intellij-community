@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.SuppressionUtilCore;
@@ -13,6 +12,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
@@ -318,7 +318,7 @@ public final class TryWithIdenticalCatchesInspection extends BaseInspection {
       final PsiCodeBlock codeBlock = catchSection.getCatchBlock();
       if (parameter != null && codeBlock != null) {
         final List<PsiClassType> types = getClassTypes(parameter.getType());
-        if (types != null && HighlightControlFlowUtil.isEffectivelyFinal(parameter, codeBlock, null)) {
+        if (types != null && ControlFlowUtil.isEffectivelyFinal(parameter, codeBlock)) {
           final DuplicatesFinder finder = buildDuplicatesFinder(codeBlock, parameter);
           return new CatchSectionWrapper(catchSection, codeBlock, parameter, types, finder);
         }

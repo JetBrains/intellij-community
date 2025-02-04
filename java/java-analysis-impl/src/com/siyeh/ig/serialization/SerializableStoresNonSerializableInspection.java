@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -94,7 +94,7 @@ public final class SerializableStoresNonSerializableInspection extends BaseInspe
         final PsiVariable variable = (PsiVariable)target;
         if (!variable.hasModifierProperty(PsiModifier.FINAL)) {
           if (!PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, variable) ||
-              !HighlightControlFlowUtil.isEffectivelyFinal(variable, myClassOrLambda, expression)) {
+              !ControlFlowUtil.isEffectivelyFinal(variable, myClassOrLambda)) {
             // don't warn on uncompilable code.
             return;
           }

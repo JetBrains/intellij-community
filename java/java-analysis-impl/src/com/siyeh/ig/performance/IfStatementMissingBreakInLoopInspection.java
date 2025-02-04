@@ -2,7 +2,6 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -10,6 +9,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -184,7 +184,7 @@ public final class IfStatementMissingBreakInLoopInspection extends BaseInspectio
       for (PsiElement element : declaration.getDeclaredElements()) {
         if (!(element instanceof PsiVariable variable)) continue;
         declaredVariables.add(variable);
-        if (hasNonFinalVariables || !HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) {
+        if (hasNonFinalVariables || !ControlFlowUtil.isEffectivelyFinal(variable, scope)) {
           nonFinalVariables.add(variable);
         }
       }

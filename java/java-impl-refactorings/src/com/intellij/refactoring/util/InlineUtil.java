@@ -3,7 +3,6 @@ package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
@@ -848,7 +847,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     if (declaration == null || declaration.getDeclaredElements().length != 1) return;
     PsiModifierList modifiers = target.getModifierList();
     if (modifiers != null && modifiers.getAnnotations().length != 0) return;
-    boolean effectivelyFinal = HighlightControlFlowUtil.isEffectivelyFinal(variable, context, null);
+    boolean effectivelyFinal = ControlFlowUtil.isEffectivelyFinal(variable, context);
     if (!effectivelyFinal && !VariableAccessUtils.canUseAsNonFinal(target)) return;
 
     for (PsiReferenceExpression reference : references) {

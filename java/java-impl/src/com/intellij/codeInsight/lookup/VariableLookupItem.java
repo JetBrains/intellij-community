@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -304,7 +305,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       return;
     }
 
-    if (HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, place) != null &&
+    if (ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, place) != null &&
         !HighlightControlFlowUtil.isReassigned(variable, new HashMap<>())) {
       PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
     }

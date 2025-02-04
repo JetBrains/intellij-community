@@ -276,18 +276,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
-    super.visitClassInitializer(initializer);
-    if (!hasErrorResults()) add(HighlightControlFlowUtil.checkInitializerCompleteNormally(initializer));
-  }
-
-  @Override
-  public void visitExpression(@NotNull PsiExpression expression) {
-    super.visitExpression(expression);
-    if (!hasErrorResults()) add(HighlightControlFlowUtil.checkCannotWriteToFinal(expression, myFile));
-  }
-
-  @Override
   public void visitField(@NotNull PsiField field) {
     super.visitField(field);
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkFinalFieldInitialized(field));

@@ -65,7 +65,7 @@ public final class FinalUtils {
     if (ControlFlowUtil.isVariableAssignedInLoop(ref, variable)) return false;
     if (variable instanceof PsiField) {
       if (PsiUtil.findEnclosingConstructorOrInitializer(ref) == null) return false;
-      PsiElement innerScope = HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, ref);
+      PsiElement innerScope = ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, ref);
       if (innerScope != null && innerScope != ((PsiField)variable).getContainingClass()) return false;
     }
     HighlightInfo.Builder random =

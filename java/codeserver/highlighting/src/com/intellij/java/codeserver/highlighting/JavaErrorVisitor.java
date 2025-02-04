@@ -486,6 +486,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkThingNotAllowedInInterface(initializer);
     if (!hasErrorResults()) myClassChecker.checkInitializersInImplicitClass(initializer);
     if (!hasErrorResults()) myControlFlowChecker.checkUnreachableStatement(initializer.getBody());
+    if (!hasErrorResults()) myControlFlowChecker.checkInitializerCompleteNormally(initializer);
   }
 
   @Override
@@ -1059,6 +1060,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myStatementChecker.checkForeachExpressionTypeIsIterable(expression);
     if (!hasErrorResults()) myExpressionChecker.checkVariableExpected(expression);
     if (!hasErrorResults()) myExpressionChecker.checkConditionalExpressionBranchTypesMatch(expression, type);
+    if (!hasErrorResults()) myControlFlowChecker.checkCannotWriteToFinal(expression);
   }
 
   @Override

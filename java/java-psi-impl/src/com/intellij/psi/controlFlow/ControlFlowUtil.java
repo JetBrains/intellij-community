@@ -4,16 +4,14 @@ package com.intellij.psi.controlFlow;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +21,123 @@ import java.util.function.IntFunction;
 public final class ControlFlowUtil {
   private static final Logger LOG = Logger.getInstance(ControlFlowUtil.class);
 
-  private static class SSAInstructionState implements Cloneable {
+  /**
+   * @param variable variable
+   * @param context the context that references to the variable
+   * @return the scope around context that enforces variable to be effectively final. Currently, it could be
+   * an inner class, lambda expression, or switch guard. Returns null if there's no such scope, 
+   * or the variable declaration is within the same scope, so it should not be effectively final.
+   * Note that if null is returned, it doesn't mean that the variable could be modified, as another reference from 
+   * another place might exist.
+   */
+  public static @Nullable PsiElement getScopeEnforcingEffectiveFinality(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+    PsiElement[] scope;
+    if (variable instanceof PsiResourceVariable) {
+      scope = ((PsiResourceVariable)variable).getDeclarationScope();
+    }
+    else if (variable instanceof PsiLocalVariable) {
+      PsiElement parent = variable.getParent();
+      scope = new PsiElement[]{parent != null ? parent.getParent() : null}; // code block or for statement
+    }
+    else if (variable instanceof PsiParameter) {
+      scope = new PsiElement[]{((PsiParameter)variable).getDeclarationScope()};
+    }
+    else {
+      scope = new PsiElement[]{variable.getParent()};
+    }
+    if (scope.length < 1 || scope[0] == null || scope[0].getContainingFile() != context.getContainingFile()) return null;
+    PsiElement parent = context.getParent();
+    PsiElement prevParent = context;
+    outer:
+    while (parent != null) {
+      for (PsiElement scopeElement : scope) {
+        if (parent.equals(scopeElement)) break outer;
+      }
+      if (parent instanceof PsiClass && !(prevParent instanceof PsiExpressionList && parent instanceof PsiAnonymousClass)) {
+        return parent;
+      }
+      if (parent instanceof PsiLambdaExpression) {
+        return parent;
+      }
+      if (parent instanceof PsiSwitchLabelStatementBase && ((PsiSwitchLabelStatementBase)parent).getGuardExpression() == prevParent) {
+        return parent;
+      }
+      prevParent = parent;
+      parent = parent.getParent();
+    }
+    return null;
+  }
+
+  /**
+   * @param variable variable to check
+   * @param scope variable scope
+   * @return true if the variable is effectively final
+   */
+  public static boolean isEffectivelyFinal(@NotNull PsiVariable variable, @NotNull PsiElement scope) {
+    return isEffectivelyFinal(variable, scope, null);
+  }
+
+  /**
+   * @param variable variable to check
+   * @param scope variable scope
+   * @param context context element (actual for fields, ignored for local variables and parameters)
+   * @return true if the variable is effectively final
+   */
+  public static boolean isEffectivelyFinal(@NotNull PsiVariable variable, @NotNull PsiElement scope, @Nullable PsiJavaCodeReferenceElement context) {
+    boolean effectivelyFinal;
+    if (variable instanceof PsiParameter) {
+      effectivelyFinal = !variableIsAssigned(variable, ((PsiParameter)variable).getDeclarationScope());
+    }
+    else {
+      PsiElement codeBlock = PsiUtil.getVariableCodeBlock(variable, context);
+      ControlFlow controlFlow;
+      try {
+        if (codeBlock == null) return true;
+        LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
+        controlFlow = ControlFlowFactory.getControlFlow(
+          codeBlock, policy, ControlFlowOptions.create(true, true, true));
+      }
+      catch (AnalysisCanceledException e) {
+        return true;
+      }
+
+      Collection<VariableInfo> initializedTwice = getInitializedTwice(controlFlow);
+      effectivelyFinal = !initializedTwice.contains(new VariableInfo(variable, null));
+      if (effectivelyFinal) {
+        for (PsiReferenceExpression expression : getReadBeforeWriteLocals(controlFlow)) {
+          if (expression.resolve() == variable) {
+            return PsiUtil.isAccessedForReading(expression);
+          }
+        }
+        effectivelyFinal = !variableIsAssigned(variable, scope);
+        if (effectivelyFinal) {
+          // TODO: check; probably this traversal is redundant
+          Ref<Boolean> stopped = new Ref<>(false);
+          codeBlock.accept(new JavaRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+              if (expression.isReferenceTo(variable) &&
+                  PsiUtil.isAccessedForWriting(expression) &&
+                  isVariableAssignedInLoop(expression, variable)) {
+                stopWalking();
+                stopped.set(true);
+              }
+            }
+          });
+          return !stopped.get();
+        }
+      }
+    }
+    return effectivelyFinal;
+  }
+
+  private static boolean variableIsAssigned(@NotNull PsiVariable variable, @NotNull PsiElement scope) {
+    return !PsiTreeUtil.processElements(scope, PsiReferenceExpression.class, e -> {
+      return !(PsiUtil.isAccessedForWriting(e) && e.isReferenceTo(variable));
+    });
+  }
+
+  private static class SSAInstructionState {
     private final int myWriteCount;
     private final int myInstructionIdx;
 
@@ -476,10 +590,10 @@ public final class ControlFlowUtil {
 
   /**
    * Detect throw instructions which might affect observable control flow via side effects with local variables.
-   *
-   * The side effect of exception thrown occurs when a local variable is written in the try block, and then accessed
-   * in the finally section or in/after a catch section.
-   *
+   * <p>
+   * The side effect of exception thrown occurs when a local variable is written in the try block and then accessed
+   * in the {@code finally} section or in/after a catch section.
+   * <p>
    * Example:
    * <pre>
    * { // --- start of theOuterBlock ---
@@ -492,9 +606,13 @@ public final class ControlFlowUtil {
    *     status = FINISHED;
    *   } // --- end of theTryBlock ---
    *   catch (Exception e) {
-   *      LOG.error("Failed when " + status, e); // can get PREPARING or WORKING here
+   *      // can get PREPARING or WORKING here
+   *      LOG.error("Failed when " + status, e); 
    *   }
-   *   if (status == FINISHED) LOG.info("Finished"); // can get PREPARING or WORKING here in the case of exception
+   *   // can get PREPARING or WORKING here in the case of exception
+   *   if (status == FINISHED) {
+   *     LOG.info("Finished");
+   *   }
    * } // --- end of theOuterBlock ---
    * </pre>
    * In the example above {@code hasObservableThrowExitPoints(theTryBlock) == true},
@@ -751,11 +869,11 @@ public final class ControlFlowUtil {
         parent = resolveResult.getCurrentFileResolveScope();
       }
       if (parent instanceof PsiClass) {
-        final PsiClass clss = (PsiClass)parent;
-        if (PsiTreeUtil.isAncestor(targetClassMember, clss, false)) return false;
+        final PsiClass psiClass = (PsiClass)parent;
+        if (PsiTreeUtil.isAncestor(targetClassMember, psiClass, false)) return false;
         PsiClass containingClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
         while (containingClass != null) {
-          if (containingClass.isInheritor(clss, true) &&
+          if (containingClass.isInheritor(psiClass, true) &&
               PsiTreeUtil.isAncestor(targetClassMember, containingClass, false)) {
             return false;
           }
@@ -775,7 +893,7 @@ public final class ControlFlowUtil {
    * @param scope             scope to be scanned (part of code fragment to be extracted)
    * @param member            member containing the code to be extracted
    * @param targetClassMember member in target class containing code fragment
-   * @return true if code fragment can be extracted outside
+   * @return true if a code fragment can be extracted outside
    */
   public static boolean collectOuterLocals(@NotNull List<? super PsiVariable> array, @NotNull PsiElement scope, @NotNull PsiElement member,
                                            @NotNull PsiElement targetClassMember) {
@@ -845,7 +963,7 @@ public final class ControlFlowUtil {
 
 
   /**
-   * @return true if each control flow path results in return statement or exception thrown
+   * @return true if each control flow path results in reaching a return statement or exception thrown
    */
   public static boolean returnPresent(@NotNull ControlFlow flow) {
     InstructionClientVisitor<Boolean> visitor = new ReturnPresentClientVisitor(flow);
@@ -1904,16 +2022,12 @@ public final class ControlFlowUtil {
   }
 
   public static @NotNull List<PsiReferenceExpression> getReadBeforeWrite(@NotNull ControlFlow flow) {
-    return getReadBeforeWrite(flow, 0);
-  }
-
-  private static @NotNull List<PsiReferenceExpression> getReadBeforeWrite(@NotNull ControlFlow flow, int startOffset) {
-    if (startOffset < 0 || startOffset >= flow.getSize()) {
+    if (flow.getSize() == 0) {
       return Collections.emptyList();
     }
     final ReadBeforeWriteClientVisitor visitor = new ReadBeforeWriteClientVisitor(flow, false);
     depthFirstSearch(flow, visitor);
-    return visitor.getResult(startOffset);
+    return visitor.getResult(0);
   }
 
   private static class ReadBeforeWriteClientVisitor extends InstructionClientVisitor<List<PsiReferenceExpression>> {
@@ -2314,7 +2428,7 @@ public final class ControlFlowUtil {
 
     boolean depthFirstSearch(final int startOffset, @NotNull BitSet visitedOffsets) {
       // traverse the graph starting with the startOffset
-      IntArrayList walkThroughStack = new IntArrayList(Math.max(size() / 2, 2));
+      IntStack walkThroughStack = new IntArrayList(Math.max(size() / 2, 2));
       visitedOffsets.clear();
       walkThroughStack.push(startOffset);
       while (!walkThroughStack.isEmpty()) {

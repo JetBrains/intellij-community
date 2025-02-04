@@ -15,11 +15,11 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LocalRefUseInfo;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -526,8 +526,8 @@ public final class VariableAccessUtils {
     final boolean finalVariableIntroduction =
       !initialization.hasModifierProperty(PsiModifier.FINAL) && variable.hasModifierProperty(PsiModifier.FINAL) ||
       PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, initialization) &&
-      !HighlightControlFlowUtil.isEffectivelyFinal(initialization, containingScope, null) &&
-      HighlightControlFlowUtil.isEffectivelyFinal(variable, containingScope, null);
+      !ControlFlowUtil.isEffectivelyFinal(initialization, containingScope) &&
+      ControlFlowUtil.isEffectivelyFinal(variable, containingScope);
     final boolean canCaptureThis = initialization instanceof PsiField && !initialization.hasModifierProperty(PsiModifier.STATIC);
 
     final PsiType variableType = variable.getType();
