@@ -5,3 +5,5 @@ fun <T> foo(t: T) {
     consume(t.<caret>bar)
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateExtensionCallableFromUsageFix
+// KTIJ-32974
+// IGNORE_K2

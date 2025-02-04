@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.hasApplicableAllowedTar
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isApplicableTargetSet
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
@@ -109,26 +110,37 @@ object K2CreatePropertyFromUsageBuilder {
           else -> return emptyList()
         }
 
+        val receiverType = receiverExpression?.expressionType
+
         val lightClass = (defaultContainerPsi as? KtClassOrObject)?.toLightClass() ?: defaultContainerPsi as? PsiClass
         val isAbstract = lightClass?.hasModifier(JvmModifier.ABSTRACT)
+        val containingKtFile = ref.containingKtFile
+        val wrapperForKtFile = JvmClassWrapperForKtClass(containingKtFile)
         if (defaultContainerPsi != null) {
             if (defaultContainerPsi.manager.isInProject(defaultContainerPsi)) {
-                val jvmModifiers = createModifiers(ref, defaultContainerPsi, isExtension = false, static, isAbstract == true)
                 if (lightClass != null) {
+                    val jvmModifiers = createModifiers(ref, defaultContainerPsi, isExtension = false, static = static, isAbstract = isAbstract == true)
                     if (static || isAbstract!!.not()) {
-                        requests.add(lightClass to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, false))
+                        requests.add(lightClass to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, receiverType, isExtension = false))
                     }
                     if (lightClass.hasModifier(JvmModifier.ABSTRACT)) {
-                        requests.add(lightClass to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers + JvmModifier.ABSTRACT, false))
+                        requests.add(lightClass to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers + JvmModifier.ABSTRACT, receiverType, isExtension = false))
                     }
                 }
+                val jvmModifiers = createModifiers(ref, containingKtFile, isExtension = true, static = true, false)
+                val classId =
+                    (defaultContainerPsi as? KtClassOrObject)?.classIdIfNonLocal ?: (defaultContainerPsi as? PsiClass)?.classIdIfNonLocal
+                if (classId != null) {
+                    val targetClassType = buildClassType(if (static) ClassId.fromString(classId.asFqNameString() + ".Companion") else classId)
+                    requests.add(wrapperForKtFile to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, targetClassType, isExtension = true))
+                }
+            } else {
+                val jvmModifiers = createModifiers(ref, containingKtFile, isExtension = true, static = true, false)
+                requests.add(wrapperForKtFile to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, receiverType, isExtension = true))
             }
         } else {
-            val containingKtFile = ref.containingKtFile
-            val jvmModifiers = createModifiers(ref, containingKtFile, isExtension = receiverExpression != null, static, false)
-            containingKtFile.toLightElements().firstOrNull()?.let { lightElement ->
-                if (lightElement is JvmClass) requests.add(lightElement to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, receiverExpression != null))
-            }
+            val jvmModifiers = createModifiers(ref, containingKtFile, isExtension = receiverExpression != null, static = true, isAbstract = false)
+            requests.add(wrapperForKtFile to CreatePropertyFromKotlinUsageRequest(ref, jvmModifiers, receiverType, isExtension = receiverExpression != null))
         }
         return requests
     }
@@ -184,7 +196,7 @@ object K2CreatePropertyFromUsageBuilder {
                         .filter { it != JvmModifier.PUBLIC && it != JvmModifier.ABSTRACT }
                         .mapNotNullTo(this, CreateFromUsageUtil::jvmModifierToKotlin)
 
-                    if (lateinit) {
+                    if (lateinit && !(request is CreatePropertyFromKotlinUsageRequest && request.isExtension)) {
                         this += KtTokens.LATEINIT_KEYWORD
                     } else if (request.isConstant) {
                         this += KtTokens.CONST_KEYWORD
@@ -193,8 +205,9 @@ object K2CreatePropertyFromUsageBuilder {
 
         override fun getText(): String {
             return if (request is CreatePropertyFromKotlinUsageRequest) {
-                if (request.isExtension && false) {
-                    KotlinBundle.message("fix.create.from.usage.extension.property", """$classOrFileName.${request.fieldName}""")
+                if (request.isExtension) {
+                    val receiverType = request.receiverTypeNameString?.let { "$it." } ?: ""
+                    KotlinBundle.message("fix.create.from.usage.extension.property", """$receiverType${request.fieldName}""")
                 } else {
                     val key = if (JvmModifier.ABSTRACT in request.modifiers) {
                         "fix.create.from.usage.abstract.property"
@@ -233,12 +246,18 @@ object K2CreatePropertyFromUsageBuilder {
 
                 append(varVal)
                 append(" ")
+                if (request is CreatePropertyFromKotlinUsageRequest && request.isExtension) {
+                    (request.receiverTypeString)?.let { append(it).append(".") }
+                }
                 append(request.fieldName.quoteIfNeeded())
                 append(": ")
 
                 analyze(container) {
-                    val psiType = request.fieldType.firstOrNull()?.theType as? PsiType
-                    val type = psiType?.asKaType(container)
+                    val expectedType = request.fieldType.firstOrNull()
+                    val type = when (expectedType) {
+                        is ExpectedKotlinType -> expectedType.ktType
+                        else -> (expectedType?.theType as? PsiType)?.asKaType(container)
+                    }
                     type?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.IN_VARIANCE)
                 }?.let { append(it) }
 

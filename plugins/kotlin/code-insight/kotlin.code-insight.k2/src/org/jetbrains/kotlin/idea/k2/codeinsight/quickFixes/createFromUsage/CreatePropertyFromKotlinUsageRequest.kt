@@ -10,9 +10,15 @@ import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToJvmType
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.getExpectedKotlinType
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.types.Variance
 
 /**
  * A request to create Kotlin property from the usage in Kotlin.
@@ -20,16 +26,35 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 internal class CreatePropertyFromKotlinUsageRequest (
     referenceExpression: KtNameReferenceExpression,
     private val modifiers: Collection<JvmModifier>,
+    private val receiverType: KaType?,
     val isExtension: Boolean
 ) : CreateFieldRequest {
     private val referencePointer = referenceExpression.createSmartPointer()
-
     private val returnType: List<ExpectedType> = initializeReturnType(referenceExpression)
+    @OptIn(KaExperimentalApi::class)
+    val receiverTypeString: String? = getReceiverTypeString(referenceExpression, K2CreateFunctionFromUsageUtil.WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS)
+
+    @OptIn(KaExperimentalApi::class)
+    val receiverTypeNameString: String? = getReceiverTypeString(referenceExpression, KaTypeRendererForSource.WITH_SHORT_NAMES)
 
     private fun initializeReturnType(referenceExpression: KtNameReferenceExpression): List<ExpectedType> {
         return analyze(referenceExpression) {
-            val returnJvmType = referenceExpression.getExpectedKotlinType() ?: return emptyList()
+            val returnJvmType = referenceExpression.getExpectedKotlinType()
+            if (returnJvmType == null) {
+                val expectedType = builtinTypes.any
+                val jvmType = expectedType.convertToJvmType(referenceExpression) ?: return emptyList()
+                return listOf(ExpectedKotlinType(expectedType, jvmType))
+            }
             listOf(returnJvmType)
+        }
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    private fun getReceiverTypeString(
+        referenceExpression: KtNameReferenceExpression, renderer: KaTypeRenderer
+    ): String? {
+        return analyze(referenceExpression) {
+            receiverType?.render(renderer, position = Variance.IN_VARIANCE)
         }
     }
 
