@@ -97,7 +97,7 @@ public final class SemServiceImpl extends SemService implements Disposable {
         return Unit.INSTANCE;
       }
 
-      if (semContributor.isAvailable(myProject)) {
+      if (SemContributor.SemContributorHelper.isAvailable(semContributor, myProject)) {
         semContributor.registerSemProviders(registrar, myProject);
       }
       return Unit.INSTANCE;
