@@ -298,7 +298,8 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
       .sortedWith(comparator)
       .limitResultAndFilterOutInstalled(repository, skipItems)
     val exactMatch = shownPackages.indexOfFirst { StringUtil.equalsIgnoreCase(it.name, query) }
-    return PyPackagesViewData(repository, shownPackages, exactMatch, packageNames.size - shownPackages.size)
+    val moreItems = (packageNames.size - (skipItems + PACKAGES_LIMIT)).takeIf { it > 0 } ?: 0
+    return PyPackagesViewData(repository, shownPackages, exactMatch, moreItems)
   }
 
 
