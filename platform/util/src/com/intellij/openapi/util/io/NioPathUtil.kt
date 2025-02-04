@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.util.io
 
+import com.intellij.openapi.util.io.CanonicalPathPrefixTree.CanonicalPathElement
 import com.intellij.util.containers.prefixTree.PrefixTreeFactory
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -101,17 +102,26 @@ fun String.toNioPathOrNull(): Path? {
 }
 
 @ApiStatus.Internal
-object PathPrefixTree : PrefixTreeFactory<Path, String> {
-
-  override fun convertToList(element: Path): List<String> {
-    return element.map { it.pathString }
+object PathPrefixTree : PrefixTreeFactory<Path, Path> {
+  override fun convertToList(element: Path): List<Path> {
+    return element.toList()
   }
 }
 
 @ApiStatus.Internal
-object CanonicalPathPrefixTree : PrefixTreeFactory<String, String> {
+object CanonicalPathPrefixTree : PrefixTreeFactory<String, CanonicalPathElement> {
 
-  override fun convertToList(element: String): List<String> {
-    return element.removeSuffix("/").split("/")
+  override fun convertToList(element: String): List<CanonicalPathElement> {
+    return element.removeSuffix("/").split("/").map(::CanonicalPathElement)
+  }
+
+  @ApiStatus.Internal
+  class CanonicalPathElement(private val keyElement: String) {
+
+    override fun equals(other: Any?): Boolean =
+      FileUtil.pathsEqual(keyElement, (other as? CanonicalPathElement)?.keyElement)
+
+    override fun hashCode(): Int =
+      FileUtil.pathHashCode(keyElement)
   }
 }

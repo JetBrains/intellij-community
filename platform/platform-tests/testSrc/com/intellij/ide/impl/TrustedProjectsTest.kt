@@ -2,24 +2,19 @@
 package com.intellij.ide.impl
 
 import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.ThreeState
 import org.junit.Assert.assertEquals
 import org.junit.ClassRule
-import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
-import kotlin.io.path.div
 
 class TrustedProjectsTest {
 
-  @JvmField @Rule val memoryFs = InMemoryFsRule()
-
   @Test
   fun `prefer closest ancestor to determine the trusted state`() {
-    val projects = memoryFs.fs.getPath("~/projects/")
-    val outerDir = (projects / "outer")
-    val innerDir = (outerDir / "inner")
+    val projects = Path.of("projects/")
+    val outerDir = Path.of("projects/outer")
+    val innerDir = Path.of("projects/outer/inner")
 
     TrustedPaths.getInstance().setProjectPathTrusted(projects, true)
     assertTrusted(innerDir)
@@ -31,10 +26,10 @@ class TrustedProjectsTest {
 
   @Test
   fun `return unsure if there are no information about ancestors`() {
-    val projects = memoryFs.fs.getPath("~/projects/")
+    val projects = Path.of("projects/")
     TrustedPaths.getInstance().setProjectPathTrusted(projects, true)
 
-    val path = memoryFs.fs.getPath("~/path/")
+    val path = Path.of("path/")
     assertEquals(ThreeState.UNSURE, TrustedPaths.getInstance().getProjectPathTrustedState(path))
   }
 

@@ -11,7 +11,10 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.CanonicalPathPrefixTree
+import com.intellij.openapi.util.io.CanonicalPathPrefixTree.CanonicalPathElement
+import com.intellij.openapi.util.io.PathPrefixTree
 import com.intellij.openapi.util.io.relativizeToClosestAncestor
+import com.intellij.openapi.vfs.VirtualFilePrefixTree.VirtualFileElement
 import com.intellij.openapi.vfs.limits.FileSizeLimit
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -218,10 +221,16 @@ fun Path.refreshAndFindVirtualDirectory(): VirtualFile? {
 }
 
 @ApiStatus.Internal
-object VirtualFilePrefixTree : PrefixTreeFactory<VirtualFile, String> {
+object VirtualFilePrefixTree : PrefixTreeFactory<VirtualFile, VirtualFileElement> {
+  override fun convertToList(element: VirtualFile): List<VirtualFileElement> {
+    return element.toNioPathOrNull()?.let(PathPrefixTree::convertToList)?.map(VirtualFileElement::NioPath)
+           ?: CanonicalPathPrefixTree.convertToList(element.path).map(VirtualFileElement::CanonicalPath)
+  }
 
-  override fun convertToList(element: VirtualFile): List<String> {
-    return CanonicalPathPrefixTree.convertToList(element.path)
+  @ApiStatus.Internal
+  sealed interface VirtualFileElement {
+    data class NioPath(private val keyElement: Path) : VirtualFileElement
+    data class CanonicalPath(private val keyElement: CanonicalPathElement) : VirtualFileElement
   }
 }
 
