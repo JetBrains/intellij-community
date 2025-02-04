@@ -501,6 +501,24 @@ public final class FSOperations {
     return 0L;
   }
 
+  @ApiStatus.Internal
+  public static long lastModified(Path path, BasicFileAttributes attribs) {
+    return attribs != null && attribs.isRegularFile()? attribs.lastModifiedTime().toMillis() : lastModified(path);
+  }
+
+  @ApiStatus.Internal
+  public static BasicFileAttributes getAttributes(Path path) {
+    try {
+      return Files.readAttributes(path, BasicFileAttributes.class);
+    }
+    catch (NoSuchFileException ignored) {
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+    return null;
+  }
+
   public static void copy(File fromFile, File toFile) throws IOException {
     Path from = fromFile.toPath();
     Path to = toFile.toPath();

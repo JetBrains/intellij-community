@@ -29,7 +29,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
 
   @Override
   public boolean processAddedClasses(DifferentiateContext context, Iterable<JvmClass> addedClasses, Utils future, Utils present) {
-    for (JvmNodeReferenceID sealedSuperClass : unique(map(filter(flat(map(addedClasses, added -> future.allDirectSupertypes(added))), KJvmUtils::isSealed), JVMClassNode::getReferenceID))) {
+    for (JvmNodeReferenceID sealedSuperClass : unique(map(filter(flat(map(filter(addedClasses, cl -> !cl.isLibrary()), future::allDirectSupertypes)), KJvmUtils::isSealed), JVMClassNode::getReferenceID))) {
       affectSealedClass(context, sealedSuperClass, "Subclass of a sealed class was added, affecting ", future, true /*affectUsages*/);
     }
     return super.processAddedClasses(context, addedClasses, future, present);
@@ -62,8 +62,10 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
 
   @Override
   public boolean processRemovedClass(DifferentiateContext context, JvmClass removedClass, Utils future, Utils present) {
-    for (JvmClass superClass : filter(future.allDirectSupertypes(removedClass), KJvmUtils::isSealed)) {
-      affectSealedClass(context, superClass.getReferenceID(), "Subclass of a sealed class was removed, affecting ", future, true /*affectUsages*/);
+    if (!removedClass.isLibrary()) {
+      for (JvmClass superClass : filter(future.allDirectSupertypes(removedClass), KJvmUtils::isSealed)) {
+        affectSealedClass(context, superClass.getReferenceID(), "Subclass of a sealed class was removed, affecting ", future, true /*affectUsages*/);
+      }
     }
 
     if (!removedClass.isInnerClass()) {
@@ -113,7 +115,7 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
     }
     
     if (KJvmUtils.isKotlinNode(changedClass)) {
-      if (hierarchyChanged) {
+      if (hierarchyChanged && !changedClass.isLibrary()) {
         Difference.Specifier<JvmNodeReferenceID, ?> sealedDiff = Difference.diff(
           map(filter(present.allDirectSupertypes(change.getPast()), KJvmUtils::isSealed), JVMClassNode::getReferenceID),
           map(filter(future.allDirectSupertypes(change.getNow()), KJvmUtils::isSealed), JVMClassNode::getReferenceID)

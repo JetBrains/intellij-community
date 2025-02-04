@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.api;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -18,6 +18,14 @@ public interface GlobalOptions {
   String REPORT_BUILD_STATISTICS = "jps.report.build.statistics";
   String JPS_IN_WSL_OPTION = "jps.in.wsl";
   String DEPENDENCY_GRAPH_ENABLED = "jps.use.dependency.graph";
+
+  /**
+   * Whether to track changes in binary dependencies (libraries) during incremental analysis
+   * instead of relying on changes in module dependency list and rebuilding whole module on any dependency list change.
+   * This makes the whole incremental analysis much more precise, but requires more data to be parsed from library jars and stored on disk
+   */
+  @ApiStatus.Internal
+  String TRACK_LIBRARY_DEPENDENCIES_ENABLED = "jps.track.library.dependencies";
 
   /**
    * Set this property to 'false' to disable default logging. By default the log is written to build.log file in the directory specified by {@link #LOG_DIR_OPTION}.

@@ -43,8 +43,7 @@ final class FileTimestampStorage extends AbstractStateStorage<File, TimestampPer
     for (TimestampPerTarget timestampPerTarget : state) {
       if (timestampPerTarget.targetId == targetId) {
         long current = timestampPerTarget.timestamp;
-        long timestamp = (attrs == null || !attrs.isRegularFile()) ? FSOperations.lastModified(file) : attrs.lastModifiedTime().toMillis();
-        return current == timestamp ? FileTimestamp.fromLong(current) : null;
+        return current == FSOperations.lastModified(file, attrs)? FileTimestamp.fromLong(current) : null;
       }
     }
     return null;

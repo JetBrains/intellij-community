@@ -26,7 +26,7 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
 
     Graph graph = context.getGraph();
     Set<NodeSource> baseSources = delta.getBaseSources();
-    Utils present = new Utils(context.getGraph(), context.getParams().belongsToCurrentCompilationChunk());
+    Utils present = new Utils(context.getGraph(), DifferentiateParameters.affectableInCurrentChunk(context.getParams()));
     Set<Usage> affectedUsages = new HashSet<>();
     Set<JvmNodeReferenceID> affectedSealedClasses = new HashSet<>();
     Set<JvmNodeReferenceID> baseNodes = new HashSet<>();

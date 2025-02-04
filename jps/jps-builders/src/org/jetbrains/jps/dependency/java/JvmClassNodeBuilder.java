@@ -217,7 +217,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       }
       if (methodName != null) {
         addUsage(new MethodUsage(myType.getJvmName(), methodName, methodDescr.get()));
-        myUsedArguments.add(methodName);
+      myUsedArguments.add(methodName);
         myHashBuilder.update(methodName);
       }
       myHashBuilder.update(value);
@@ -398,6 +398,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   private boolean myIsModule = false;
   private final String myFileName;
   private final boolean myIsGenerated;
+  private final boolean myIsLibraryMode;
   private int myAccess;
   private String myName;
   private String myVersion; // for class contains a class bytecode version, for module contains a module version
@@ -426,16 +427,28 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
   private final List<JvmMetadata<?, ?>> myMetadata = new SmartList<>();
 
-  private JvmClassNodeBuilder(final String fn, boolean isGenerated) {
+  private JvmClassNodeBuilder(final String fn, boolean isGenerated, boolean isLibraryMode) {
     super(ASM_API_VERSION);
     myFileName = fn;
     myIsGenerated = isGenerated;
+    myIsLibraryMode = isLibraryMode;
   }
 
   public static JvmClassNodeBuilder create(String filePath, ClassReader cr, boolean isGenerated) {
-    JvmClassNodeBuilder builder = new JvmClassNodeBuilder(filePath, isGenerated);
+    JvmClassNodeBuilder builder = new JvmClassNodeBuilder(filePath, isGenerated, false);
     try {
       cr.accept(builder, ClassReader.SKIP_FRAMES);
+    }
+    catch (RuntimeException e) {
+      throw new RuntimeException("Corrupted .class file: " + filePath, e);
+    }
+    return builder;
+  }
+
+  public static JvmClassNodeBuilder createForLibrary(String filePath, ClassReader cr) {
+    JvmClassNodeBuilder builder = new JvmClassNodeBuilder(filePath, false, true);
+    try {
+      cr.accept(builder, ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG);
     }
     catch (RuntimeException e) {
       throw new RuntimeException("Corrupted .class file: " + filePath, e);
@@ -471,33 +484,45 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     if (myIsGenerated) {
       flags = flags.deriveIsGenerated();
     }
-    
+
     if (myIsModule) {
-      for (ModuleUsage usage : Iterators.map(Iterators.filter(myModuleRequires, r -> !Objects.equals(myName, r.getName())), r -> new ModuleUsage(r.getName()))) {
-        addUsage(usage);
+      if (!myIsLibraryMode) {
+        for (ModuleUsage usage : Iterators.map(Iterators.filter(myModuleRequires, r -> !Objects.equals(myName, r.getName())), r -> new ModuleUsage(r.getName()))) {
+          addUsage(usage);
+        }
       }
-      return new JvmModule(flags, myName, myFileName, myVersion, myModuleRequires, myModuleExports, myUsages, myMetadata);
+      return new JvmModule(flags, myName, myFileName, myVersion, myModuleRequires, myModuleExports, myIsLibraryMode? Set.of() : myUsages, myMetadata);
     }
 
-    for (Usage usage : Iterators.flat(new TypeRepr.ClassType(mySuperClass).getUsages(), Iterators.flat(Iterators.map(myInterfaces, s -> new TypeRepr.ClassType(s).getUsages())))) {
-      addUsage(usage);
-    }
-    for (Usage usage : Iterators.flat(Iterators.map(myFields, f -> f.getType().getUsages()))) {
-      addUsage(usage);
-    }
-    for (JvmMethod jvmMethod : myMethods) {
-      for (Usage usage : jvmMethod.getType().getUsages()) {
+    if (!myIsLibraryMode) {
+      for (Usage usage : Iterators.flat(new TypeRepr.ClassType(mySuperClass).getUsages(), Iterators.flat(Iterators.map(myInterfaces, s -> new TypeRepr.ClassType(s).getUsages())))) {
         addUsage(usage);
       }
-      for (Usage usage : Iterators.flat(Iterators.map(jvmMethod.getArgTypes(), t -> t.getUsages()))) {
+      for (Usage usage : Iterators.flat(Iterators.map(myFields, f -> f.getType().getUsages()))) {
         addUsage(usage);
       }
-      for (Usage usage : Iterators.flat(Iterators.map(jvmMethod.getExceptions(), t -> t.getUsages()))) {
-        addUsage(usage);
+      for (JvmMethod jvmMethod : myMethods) {
+        for (Usage usage : jvmMethod.getType().getUsages()) {
+          addUsage(usage);
+        }
+        for (Usage usage : Iterators.flat(Iterators.map(jvmMethod.getArgTypes(), TypeRepr::getUsages))) {
+          addUsage(usage);
+        }
+        for (Usage usage : Iterators.flat(Iterators.map(jvmMethod.getExceptions(), TypeRepr.ClassType::getUsages))) {
+          addUsage(usage);
+        }
       }
     }
-    
-    return new JvmClass(flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, myFields, myMethods, myAnnotations, myTargets, myRetentionPolicy, myUsages, myMetadata);
+    else {
+      flags = flags.deriveIsLibrary();
+    }
+
+    var fields = myIsLibraryMode? Iterators.filter(myFields, f -> !f.isPrivate()) : myFields;
+    var methods = myIsLibraryMode? Iterators.filter(myMethods, m -> !m.isPrivate()) : myMethods;
+    var usages = myIsLibraryMode? Set.<Usage>of() : myUsages;
+    return new JvmClass(
+      flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, fields, methods, myAnnotations, myTargets, myRetentionPolicy, usages, myMetadata
+    );
   }
 
   @Override

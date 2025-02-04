@@ -19,6 +19,8 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.dependencies.LibraryDef;
+import org.jetbrains.jps.incremental.dependencies.LibraryDependenciesUpdater;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -57,11 +59,17 @@ public final class JavaBuilderUtil {
   private static final Key<Pair<Mappings, Callbacks.Backend>> MAPPINGS_DELTA_KEY = Key.create("_mappings_delta_");
   private static final Key<BackendCallbackToGraphDeltaAdapter> GRAPH_DELTA_CALLBACK_KEY = Key.create("_graph_delta_");
   private static final Key<Set<NodeSource>> ALL_AFFECTED_NODE_SOURCES_KEY = Key.create("_all_compiled_node_sources_");
+  private static final GlobalContextKey<LibraryDependenciesUpdater> LIBRARIES_STATE_UPDATER_KEY = GlobalContextKey.create("_libraries_state_updater_");
 
   private static final String MODULE_INFO_FILE = "module-info.java";
 
-  public static  boolean isDepGraphEnabled() {
+  public static boolean isDepGraphEnabled() {
     return Boolean.parseBoolean(System.getProperty(GlobalOptions.DEPENDENCY_GRAPH_ENABLED, "false"));
+  }
+  
+  @ApiStatus.Internal
+  public static boolean isTrackLibraryDependenciesEnabled() {
+    return isDepGraphEnabled() && Boolean.parseBoolean(System.getProperty(GlobalOptions.TRACK_LIBRARY_DEPENDENCIES_ENABLED, "false"));
   }
 
   public static void registerFileToCompile(CompileContext context, File file) {
@@ -204,6 +212,14 @@ public final class JavaBuilderUtil {
     GraphConfiguration graphConfig = dataManager.getDependencyGraph();
     if (isDepGraphEnabled() && graphConfig != null) {
       NodeSourcePathMapper mapper = graphConfig.getPathMapper();
+
+      ModulesBasedFileFilter mbf = new ModulesBasedFileFilter(context, chunk);
+      boolean incremental = LIBRARIES_STATE_UPDATER_KEY.getOrCreate(context, LibraryDependenciesUpdater::new).update(context, chunk, src -> mbf.belongsToCurrentTargetChunk(mapper.toPath(src).toFile()));
+      if (!incremental) {
+        // for now conservative approach; no reaction
+        LOG.warn("Libraries update for " + chunk.getPresentableShortName() + " returned non-incremental exitcode");
+      }
+
       Set<NodeSource> toCompile = new HashSet<>();
       dfh.processDirtyFiles((target, file, root) -> toCompile.add(mapper.toNodeSource(file)));
       if (!toCompile.isEmpty() || hasRemovedPaths(chunk, dfh)) {
@@ -428,7 +444,7 @@ public final class JavaBuilderUtil {
     DifferentiateParametersBuilder params = DifferentiateParametersBuilder.create(chunk.getPresentableShortName())
       .calculateAffected(context.shouldDifferentiate(chunk) && !isForcedRecompilationAllJavaModules(context))
       .processConstantsIncrementally(dataManager.isProcessConstantsIncrementally())
-      .withAffectionFilter(s -> moduleBasedFilter.accept(pathMapper.toPath(s).toFile()))
+      .withAffectionFilter(s -> moduleBasedFilter.accept(pathMapper.toPath(s).toFile()) && !LibraryDef.isLibraryPath(s))
       .withChunkStructureFilter(s -> moduleBasedFilter.belongsToCurrentTargetChunk(pathMapper.toPath(s).toFile()));
     DifferentiateParameters differentiateParams = params.get();
     DifferentiateResult diffResult = dependencyGraph.differentiate(delta, differentiateParams);

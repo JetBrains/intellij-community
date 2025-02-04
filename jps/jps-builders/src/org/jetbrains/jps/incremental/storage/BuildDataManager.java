@@ -24,6 +24,7 @@ import org.jetbrains.jps.dependency.impl.LoggingDependencyGraph;
 import org.jetbrains.jps.dependency.impl.PathSourceMapper;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
+import org.jetbrains.jps.incremental.storage.dataTypes.LibraryRoots;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.io.IOException;
@@ -53,6 +54,7 @@ public final class BuildDataManager {
   private final @Nullable BuildDataProvider newDataManager;
 
   private @Nullable ProjectStamps myFileStampService;
+  private final LibraryRoots myLibraryRoots;
 
   private final @Nullable OneToManyPathsMapping sourceToFormMap;
   private final Mappings myMappings;
@@ -109,6 +111,7 @@ public final class BuildDataManager {
     myDataPaths = dataPaths;
     targetStateManager = targetsState;
     myFileStampService = projectStamps;
+    myLibraryRoots = new LibraryRoots(dataPaths, relativizer);
     Path dataStorageRoot = dataPaths.getDataStorageDir();
     try {
       if (buildDataProvider == null) {
@@ -148,6 +151,11 @@ public final class BuildDataManager {
     this.versionManager = versionManager == null ? new BuildDataVersionManagerImpl(dataStorageRoot.resolve("version.dat")) : versionManager;
     myDepGraphPathMapper = new PathSourceMapper(relativizer::toFull, relativizer::toRelative);
     myRelativizer = relativizer;
+  }
+
+  @ApiStatus.Internal
+  public LibraryRoots getLibraryRoots() {
+    return myLibraryRoots;
   }
 
   @ApiStatus.Internal
@@ -344,6 +352,13 @@ public final class BuildDataManager {
     }
 
     try {
+      myLibraryRoots.clean();
+    }
+    catch (Throwable e) {
+      LOG.error(new ProjectBuildException(JpsBuildBundle.message("build.message.error.cleaning.library.roots.storage"), e));
+    }
+
+    try {
       allTargetStorages(asyncTaskCollector).clean();
       myTargetStorages.clear();
       if (newDataManager == null) {
@@ -430,6 +445,8 @@ public final class BuildDataManager {
       myFileStampService.flush(memoryCachesOnly);
     }
 
+    myLibraryRoots.flush(memoryCachesOnly);
+    
     if (outputToTargetMapping != null) {
       outputToTargetMapping.flush(memoryCachesOnly);
     }
@@ -458,6 +475,7 @@ public final class BuildDataManager {
       },
       IOOperation.adapt(newDataManager, BuildDataProvider::close),
       IOOperation.adapt(myFileStampService, StorageOwner::close),
+      IOOperation.adapt(myLibraryRoots, StorageOwner::close),
       IOOperation.adapt(outputToTargetMapping, StorageOwner::close),
 
       () -> {

@@ -10,6 +10,7 @@ import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -266,6 +267,10 @@ public class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescri
     }
     if (ProjectStamps.PORTABLE_CACHES) {
       enumerator = enumerator.withoutSdk();
+    }
+    if (JavaBuilderUtil.isTrackLibraryDependenciesEnabled()) {
+      // when enabled, libraries are tracked by DepGraph
+      enumerator = enumerator.withoutLibraries();
     }
 
     Collection<Path> roots = enumerator.classes().getPaths();
