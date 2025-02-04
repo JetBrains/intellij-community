@@ -382,7 +382,7 @@ pub fn get_caches_home() -> Result<PathBuf> {
 #[cfg(target_os = "windows")]
 fn get_known_folder_path(rfid: &GUID, rfid_debug_name: &str) -> Result<PathBuf> {
     debug!("Calling SHGetKnownFolderPath({})", rfid_debug_name);
-    let result: PWSTR = unsafe { Shell::SHGetKnownFolderPath(rfid, Shell::KF_FLAG_CREATE, HANDLE::default()) }?;
+    let result: PWSTR = unsafe { Shell::SHGetKnownFolderPath(rfid, Shell::KF_FLAG_CREATE, None) }?;
     let result_str = unsafe { result.to_string() }?;
     debug!("  result: {}", result_str);
     Ok(PathBuf::from(result_str))
@@ -436,7 +436,7 @@ fn win_user_profile_dir() -> Result<String> {
     let mut size = buf.len() as u32;
     debug!("Calling GetUserProfileDirectoryW({:?})", token);
     let result = unsafe {
-        Shell::GetUserProfileDirectoryW(token, PWSTR::from_raw(buf.as_mut_ptr()), std::ptr::addr_of_mut!(size))
+        Shell::GetUserProfileDirectoryW(token, Some(PWSTR::from_raw(buf.as_mut_ptr())), std::ptr::addr_of_mut!(size))
     };
     debug!("  result: {:?}, size: {}", result, size);
     if result.is_ok() {
