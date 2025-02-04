@@ -517,6 +517,7 @@ fun CodeInsightTestFixture.getParameterInfoAtCaret(): String? {
     return hintFixture.currentHintText
       ?.removePrefix("<html>")
       ?.removeSuffix("</html>")
+      ?.replace(Regex("</?span[^>]*>"), "")
   } finally {
     Disposer.dispose(disposable)
   }
