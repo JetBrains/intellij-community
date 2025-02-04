@@ -26,6 +26,7 @@ import com.intellij.codeInsight.inline.completion.logs.StartingLogs.REQUEST_ID
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionInvalidationListener
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
@@ -54,6 +55,9 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     var totalInsertedLines: Int = 0
     var potentiallySelectedIndex: Int? = null
     val variantStates = mutableMapOf<Int, VariantState>()
+    var trackedStartOffset: Int? = null
+    var trackedEndOffset: Int? = null
+    var trackedLanguage: Language? = null
   }
 
   override fun isApplicable(requestEvent: InlineCompletionEventType.Request): Boolean {
@@ -105,11 +109,15 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     holder.totalInsertedLength += textToInsert.length
     holder.totalInsertedLines += textToInsert.lines().size
     holder.fullInsertActions++
+    holder.trackedStartOffset = context.startOffset()
+    holder.trackedEndOffset = context.endOffset()
+    holder.trackedLanguage = context.language
   }
 
   override fun onAfterInsert(event: InlineCompletionEventType.AfterInsert) {
-    val context = InlineCompletionContext.getOrNull(editor) ?: return
-    startTracking(context)
+    startTracking()
+    // we can clean up now
+    holder = Holder()
   }
 
   override fun onChange(event: InlineCompletionEventType.Change) {
@@ -162,6 +170,11 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
       }
     }
     container.logCurrent() // see doc of this function, it's very fast, and we should wait for its completion
+
+    // `SELECTED` case is handled in the afterInsert case
+    if (event.finishType != InlineCompletionUsageTracker.ShownEvents.FinishType.SELECTED) {
+      holder = Holder()
+    }
   }
 
   private class VariantState {
@@ -169,14 +182,14 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     var finalSuggestion: String = ""
   }
 
-  private fun startTracking(context: InlineCompletionContext) {
+  private fun startTracking() {
     val selectedIndex = holder.potentiallySelectedIndex ?: return
     val selectedVariant = holder.variantStates[selectedIndex] ?: return
-    val insertOffset = context.startOffset() ?: return
-    val endOffset = context.endOffset() ?: return
+    val insertOffset = holder.trackedStartOffset ?: return
+    val endOffset = holder.trackedEndOffset ?: return
     service<InsertedStateTracker>().trackV2(
       holder.requestId,
-      context.language,
+      holder.trackedLanguage,
       editor,
       endOffset,
       insertOffset,
