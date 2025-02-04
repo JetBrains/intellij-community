@@ -1176,6 +1176,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
     if (!hasErrorResults()) myRecordChecker.checkRecordAccessorDeclaration(method);
     if (!hasErrorResults()) myRecordChecker.checkRecordConstructorDeclaration(method);
+    if (!hasErrorResults()) myMethodChecker.checkConstructorInImplicitClass(method);
+    if (!hasErrorResults()) myMethodChecker.checkConstructorHandleSuperClassExceptions(method);
   }
 
   @Override

@@ -104,7 +104,8 @@ final class JavaErrorFixProvider {
                                             NEW_EXPRESSION_ANONYMOUS_IMPLEMENTS_INTERFACE_WITH_TYPE_ARGUMENTS,
                                             CALL_DIRECT_ABSTRACT_METHOD_ACCESS, RECORD_SPECIAL_METHOD_TYPE_PARAMETERS,
                                             RECORD_SPECIAL_METHOD_THROWS, ARRAY_TYPE_ARGUMENTS, ARRAY_EMPTY_DIAMOND,
-                                            IMPORT_LIST_EXTRA_SEMICOLON, ENUM_CONSTANT_MODIFIER, METHOD_REFERENCE_PARAMETERIZED_QUALIFIER)) {
+                                            IMPORT_LIST_EXTRA_SEMICOLON, ENUM_CONSTANT_MODIFIER, METHOD_REFERENCE_PARAMETERIZED_QUALIFIER,
+                                            CONSTRUCTOR_IN_IMPLICIT_CLASS)) {
       fix(kind, genericRemover);
     }
 

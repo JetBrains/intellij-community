@@ -27,7 +27,6 @@ import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
@@ -55,7 +54,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -125,14 +123,6 @@ public final class HighlightUtil {
         highlightInfo.registerFix(fix.asIntention(), null, null, null, null);
       }
     };
-  }
-
-  public static @NotNull @NlsContexts.DetailedDescription String getUnhandledExceptionsDescriptor(@NotNull Collection<? extends PsiClassType> unhandled) {
-    return JavaErrorBundle.message("unhandled.exceptions", formatTypes(unhandled), unhandled.size());
-  }
-
-  private static @NotNull String formatTypes(@NotNull Collection<? extends PsiClassType> unhandled) {
-    return StringUtil.join(unhandled, JavaHighlightUtil::formatType, ", ");
   }
 
   public static HighlightInfo.Builder checkVariableAlreadyDefined(@NotNull PsiVariable variable) {

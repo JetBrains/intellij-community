@@ -20,6 +20,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -149,7 +151,7 @@ public final class GenericsHighlightUtil {
         }
         if (aClass instanceof PsiTypeParameter) {
           HighlightInfo.Builder info =
-            HighlightMethodUtil.checkMethodIncompatibleReturnType(signature, signature.getSuperSignatures(), true,
+            checkMethodIncompatibleReturnType(signature, signature.getSuperSignatures(), true,
                                                                   HighlightNamesUtil.getClassDeclarationTextRange(aClass)
             );
           if (info != null) {
@@ -398,7 +400,7 @@ public final class GenericsHighlightUtil {
                          method.hasModifierProperty(PsiModifier.STATIC) ?
                          "generics.methods.have.same.erasure.hide" :
                          "generics.methods.have.same.erasure.override";
-    String description = JavaErrorBundle.message(key, HighlightMethodUtil.createClashMethodMessage(method, superMethod, !sameClass));
+    String description = JavaErrorBundle.message(key, createClashMethodMessage(method, superMethod, !sameClass));
     HighlightInfo.Builder info =
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description);
     if (!(method instanceof SyntheticElement)) {
@@ -518,5 +520,138 @@ public final class GenericsHighlightUtil {
         errorSink.accept(overrideEquivalentMethodsErrors.get(typeParameter));
       }
     }
+  }
+
+  private static @NotNull @NlsContexts.DetailedDescription String createClashMethodMessage(@NotNull PsiMethod method1,
+                                                                                           @NotNull PsiMethod method2,
+                                                                                           boolean showContainingClasses) {
+    if (showContainingClasses) {
+      PsiClass class1 = method1.getContainingClass();
+      PsiClass class2 = method2.getContainingClass();
+      if (class1 != null && class2 != null) {
+        return JavaErrorBundle.message("clash.methods.message.show.classes",
+                                       JavaHighlightUtil.formatMethod(method1),
+                                       JavaHighlightUtil.formatMethod(method2),
+                                       HighlightUtil.formatClass(class1),
+                                       HighlightUtil.formatClass(class2));
+      }
+    }
+
+    return JavaErrorBundle.message("clash.methods.message",
+                                   JavaHighlightUtil.formatMethod(method1),
+                                   JavaHighlightUtil.formatMethod(method2));
+  }
+
+  private static HighlightInfo.Builder checkMethodIncompatibleReturnType(@NotNull MethodSignatureBackedByPsiMethod methodSignature,
+                                                                         @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures,
+                                                                         boolean includeRealPositionInfo,
+                                                                         @Nullable TextRange textRange) {
+    PsiMethod method = methodSignature.getMethod();
+    PsiType returnType = methodSignature.getSubstitutor().substitute(method.getReturnType());
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return null;
+    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
+      PsiMethod superMethod = superMethodSignature.getMethod();
+      PsiType declaredReturnType = superMethod.getReturnType();
+      PsiType superReturnType = declaredReturnType;
+      if (superMethodSignature.isRaw()) superReturnType = TypeConversionUtil.erasure(declaredReturnType);
+      if (returnType == null || superReturnType == null || method == superMethod) continue;
+      PsiClass superClass = superMethod.getContainingClass();
+      if (superClass == null) continue;
+      if (textRange == null && includeRealPositionInfo) {
+        PsiTypeElement typeElement = method.getReturnTypeElement();
+        if (typeElement != null) {
+          textRange = typeElement.getTextRange();
+        }
+      }
+      if (textRange == null) {
+        textRange = TextRange.EMPTY_RANGE;
+      }
+      HighlightInfo.Builder info = checkSuperMethodSignature(
+        superMethod, superMethodSignature, superReturnType, method, methodSignature, returnType,
+        textRange, PsiUtil.getLanguageLevel(aClass));
+      if (info != null) {
+        return info;
+      }
+    }
+
+    return null;
+  }
+
+  private static HighlightInfo.Builder checkSuperMethodSignature(@NotNull PsiMethod superMethod,
+                                                                 @NotNull MethodSignatureBackedByPsiMethod superMethodSignature,
+                                                                 @NotNull PsiType superReturnType,
+                                                                 @NotNull PsiMethod method,
+                                                                 @NotNull MethodSignatureBackedByPsiMethod methodSignature,
+                                                                 @NotNull PsiType returnType,
+                                                                 @NotNull TextRange range,
+                                                                 @NotNull LanguageLevel languageLevel) {
+    PsiClass superContainingClass = superMethod.getContainingClass();
+    if (superContainingClass != null &&
+        CommonClassNames.JAVA_LANG_OBJECT.equals(superContainingClass.getQualifiedName()) &&
+        !superMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null && containingClass.isInterface() && !superContainingClass.isInterface()) {
+        return null;
+      }
+    }
+
+    PsiType substitutedSuperReturnType;
+    boolean hasGenerics = JavaFeature.GENERICS.isSufficient(languageLevel);
+    if (hasGenerics && !superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
+      PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature,
+                                                                                                  superMethodSignature);
+      substitutedSuperReturnType = unifyingSubstitutor == null
+                                   ? superReturnType
+                                   : unifyingSubstitutor.substitute(superReturnType);
+    }
+    else {
+      substitutedSuperReturnType = TypeConversionUtil.erasure(superMethodSignature.getSubstitutor().substitute(superReturnType));
+    }
+
+    if (returnType.equals(substitutedSuperReturnType)) return null;
+    if (!(returnType instanceof PsiPrimitiveType) && substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) {
+      if (hasGenerics && LambdaUtil.performWithSubstitutedParameterBounds(methodSignature.getTypeParameters(),
+                                                                          methodSignature.getSubstitutor(),
+                                                                          () -> TypeConversionUtil.isAssignable(substitutedSuperReturnType,
+                                                                                                                returnType))) {
+        return null;
+      }
+    }
+
+    return createIncompatibleReturnTypeMessage(method, superMethod, substitutedSuperReturnType, returnType,
+                                               JavaErrorBundle.message("incompatible.return.type"), range
+    );
+  }
+
+  private static HighlightInfo.@NotNull Builder createIncompatibleReturnTypeMessage(@NotNull PsiMethod method,
+                                                                                    @NotNull PsiMethod superMethod,
+                                                                                    @NotNull PsiType substitutedSuperReturnType,
+                                                                                    @NotNull PsiType returnType,
+                                                                                    @NotNull @Nls String detailMessage,
+                                                                                    @NotNull TextRange textRange) {
+    String description = MessageFormat.format("{0}; {1}", createClashMethodMessage(method, superMethod, true), detailMessage);
+    HighlightInfo.Builder errorResult =
+      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description);
+    if (method instanceof LightRecordMethod recordMethod) {
+      for (IntentionAction fix :
+        HighlightFixUtil.getChangeVariableTypeFixes(recordMethod.getRecordComponent(), substitutedSuperReturnType)) {
+        errorResult.registerFix(fix, null, null, null, null);
+      }
+    }
+    else {
+      IntentionAction action = QuickFixFactory.getInstance().createMethodReturnFix(method, substitutedSuperReturnType, false);
+      errorResult.registerFix(action, null, null, null, null);
+    }
+    IntentionAction action1 = QuickFixFactory.getInstance().createSuperMethodReturnFix(superMethod, returnType);
+    errorResult.registerFix(action1, null, null, null, null);
+    PsiClass returnClass = PsiUtil.resolveClassInClassTypeOnly(returnType);
+    if (returnClass != null && substitutedSuperReturnType instanceof PsiClassType) {
+      IntentionAction action =
+        QuickFixFactory.getInstance().createChangeParameterClassFix(returnClass, (PsiClassType)substitutedSuperReturnType);
+      errorResult.registerFix(action, null, null, null, null);
+    }
+
+    return errorResult;
   }
 }

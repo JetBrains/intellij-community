@@ -650,6 +650,9 @@ public final class JavaErrorKinds {
     parameterized(PsiMember.class, PsiClass.class, "constructor.no.default")
       .withRawDescription((member, cls) -> message("constructor.no.default", formatClass(requireNonNull(cls))))
       .withRange((member, ctx) -> getMemberDeclarationTextRange(member));
+  public static final Simple<PsiMethod> CONSTRUCTOR_IN_IMPLICIT_CLASS =
+    error(PsiMethod.class, "constructor.in.implicit.class")
+      .withRange(JavaErrorFormatUtil::getMemberDeclarationTextRange);
 
   public static final Parameterized<PsiElement, Collection<PsiClassType>> EXCEPTION_UNHANDLED =
     error(PsiElement.class, "exception.unhandled")

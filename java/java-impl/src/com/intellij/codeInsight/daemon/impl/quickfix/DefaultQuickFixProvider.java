@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
@@ -51,7 +51,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     MoveClassToModuleFix.registerFixes(registrar, ref);
 
     if (ref instanceof PsiReferenceExpression refExpr) {
-      TextRange fixRange = HighlightMethodUtil.getFixRange(ref);
+      TextRange fixRange = HighlightControlFlowUtil.getFixRange(ref);
       registrar.register(fixRange, new RenameWrongRefFix(refExpr), null);
       PsiExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier != null) {

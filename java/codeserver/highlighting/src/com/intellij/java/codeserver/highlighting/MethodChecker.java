@@ -429,6 +429,24 @@ final class MethodChecker {
     }
   }
 
+  void checkConstructorInImplicitClass(@NotNull PsiMethod method) {
+    if (!method.isConstructor() || !(method.getContainingClass() instanceof PsiImplicitClass)) return;
+    myVisitor.report(JavaErrorKinds.CONSTRUCTOR_IN_IMPLICIT_CLASS.create(method));
+  }
+
+  void checkConstructorHandleSuperClassExceptions(@NotNull PsiMethod method) {
+    if (!method.isConstructor()) return;
+    PsiCodeBlock body = method.getBody();
+    PsiStatement[] statements = body == null ? null : body.getStatements();
+    if (statements == null) return;
+
+    // if we have unhandled exception inside the method body, we could not have been called here,
+    // so the only problem it can catch here is with super ctr only
+    Collection<PsiClassType> unhandled = ExceptionUtil.collectUnhandledExceptions(method, method.getContainingClass());
+    if (unhandled.isEmpty()) return;
+    myVisitor.report(JavaErrorKinds.EXCEPTION_UNHANDLED.create(method, unhandled));
+  }
+
   static @Nullable TextRange getCStyleDeclarationRange(@NotNull PsiVariable variable) {
     PsiIdentifier identifier = variable.getNameIdentifier();
     TextRange range = null;

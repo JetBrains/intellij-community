@@ -231,6 +231,15 @@ public final class HighlightControlFlowUtil {
     return null;
   }
 
+  public static @NotNull TextRange getFixRange(@NotNull PsiElement element) {
+    PsiElement nextSibling = element.getNextSibling();
+    TextRange range = element.getTextRange();
+    if (PsiUtil.isJavaToken(nextSibling, JavaTokenType.SEMICOLON)) {
+      return range.grown(1);
+    }
+    return range;
+  }
+
   private static class ParamWriteProcessor implements Processor<PsiReference> {
     private volatile boolean myIsWriteRefFound;
     @Override
@@ -300,9 +309,9 @@ public final class HighlightControlFlowUtil {
     TextRange range = HighlightNamesUtil.getFieldDeclarationTextRange(field);
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(description);
     IntentionAction action3 = getQuickFixFactory().createCreateConstructorParameterFromFieldFix(field);
-    builder.registerFix(action3, null, null, HighlightMethodUtil.getFixRange(field), null);
+    builder.registerFix(action3, null, null, getFixRange(field), null);
     IntentionAction action2 = getQuickFixFactory().createInitializeFinalFieldInConstructorFix(field);
-    builder.registerFix(action2, null, null, HighlightMethodUtil.getFixRange(field), null);
+    builder.registerFix(action2, null, null, getFixRange(field), null);
     IntentionAction action1 = getQuickFixFactory().createAddVariableInitializerFix(field);
     builder.registerFix(action1, null, null, null, null);
     PsiClass containingClass = field.getContainingClass();
