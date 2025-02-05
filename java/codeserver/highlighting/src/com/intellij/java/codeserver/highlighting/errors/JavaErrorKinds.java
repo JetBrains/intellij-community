@@ -11,7 +11,10 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.HtmlChunk.Element;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -1245,6 +1248,18 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_NOT_INITIALIZED =
     parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.not.initialized")
       .withRawDescription((ref, var) -> message("variable.not.initialized", var.getName()));
+  public static final Parameterized<PsiVariable, PsiVariable> VARIABLE_ALREADY_DEFINED =
+    parameterized(PsiVariable.class, PsiVariable.class, "variable.already.defined")
+      .withAnchor((var, oldVar) -> requireNonNullElse(var.getNameIdentifier(), var))
+      .withRawDescription((var, oldVar) -> message("variable.already.defined", var.getName()))
+      .withTooltip((variable, oldVariable) -> {
+        VirtualFile vFile = PsiUtilCore.getVirtualFile(variable);
+        if (vFile == null) return HtmlChunk.empty();
+        String path = FileUtil.toSystemIndependentName(vFile.getPath());
+        Element link = HtmlChunk.link(
+          "#navigation/" + path + ":" + oldVariable.getTextOffset(), requireNonNull(variable.getName()));
+        return HtmlChunk.raw(message("variable.already.defined", link)).wrapWith(HtmlChunk.html());
+      });
   public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_ALREADY_ASSIGNED =
     parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.already.assigned")
       .withRawDescription((ref, var) -> message("variable.already.assigned", var.getName()));

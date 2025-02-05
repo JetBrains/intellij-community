@@ -396,4 +396,11 @@ final class StatementChecker {
       myVisitor.report(JavaErrorKinds.YIELD_VOID.create(expression));
     }
   }
+
+  void checkVariableAlreadyDefined(@NotNull PsiVariable variable) {
+    PsiVariable oldVariable = JavaPsiVariableUtil.findPreviousVariableDeclaration(variable);
+    if (oldVariable != null) {
+      myVisitor.report(JavaErrorKinds.VARIABLE_ALREADY_DEFINED.create(variable, oldVariable));
+    }
+  }
 }

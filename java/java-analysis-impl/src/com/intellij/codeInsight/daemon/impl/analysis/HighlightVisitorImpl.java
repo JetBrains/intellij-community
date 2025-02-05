@@ -271,10 +271,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitIdentifier(@NotNull PsiIdentifier identifier) {
     PsiElement parent = identifier.getParent();
-    if (parent instanceof PsiVariable variable) {
-      add(HighlightUtil.checkVariableAlreadyDefined(variable));
-    }
-    else if (parent instanceof PsiClass aClass) {
+    if (parent instanceof PsiClass aClass) {
       if (!hasErrorResults() && JavaFeature.EXTENSION_METHODS.isSufficient(myLanguageLevel)) {
         add(GenericsHighlightUtil.checkUnrelatedDefaultMethods(aClass, identifier));
       }
@@ -296,7 +293,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitImportStaticReferenceElement(ref);
     JavaResolveResult[] results = ref.multiResolve(false);
     if (!hasErrorResults() && results.length == 1) {
-      add(HighlightUtil.checkReference(ref, results[0], myFile, myLanguageLevel));
+      add(HighlightUtil.checkReference(ref, results[0]));
     }
   }
 
@@ -370,7 +367,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiElement resolved = result.getElement();
     PsiElement parent = ref.getParent();
 
-    add(HighlightUtil.checkReference(ref, result, myFile, myLanguageLevel));
+    add(HighlightUtil.checkReference(ref, result));
 
     if (resolved != null && parent instanceof PsiReferenceList referenceList && !hasErrorResults()) {
       add(HighlightUtil.checkElementInReferenceList(ref, referenceList, result));

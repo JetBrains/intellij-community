@@ -25,26 +25,19 @@ import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.scope.PatternResolveState;
-import com.intellij.psi.scope.processor.VariablesNotProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
@@ -56,7 +49,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -124,143 +116,6 @@ public final class HighlightUtil {
         highlightInfo.registerFix(fix.asIntention(), null, null, null, null);
       }
     };
-  }
-
-  public static HighlightInfo.Builder checkVariableAlreadyDefined(@NotNull PsiVariable variable) {
-    if (variable instanceof ExternallyDefinedPsiElement || variable.isUnnamed()) return null;
-    PsiVariable oldVariable = null;
-    PsiElement declarationScope = null;
-    if (variable instanceof PsiLocalVariable || variable instanceof PsiPatternVariable ||
-        variable instanceof PsiParameter parameter &&
-        ((declarationScope = parameter.getDeclarationScope()) instanceof PsiCatchSection ||
-         declarationScope instanceof PsiForeachStatement ||
-         declarationScope instanceof PsiLambdaExpression)) {
-      PsiElement scope =
-        PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class, PsiResourceList.class);
-      VariablesNotProcessor proc = new VariablesNotProcessor(variable, false) {
-        @Override
-        protected boolean check(PsiVariable var, ResolveState state) {
-          return PsiUtil.isJvmLocalVariable(var) && super.check(var, state);
-        }
-      };
-      PsiIdentifier identifier = variable.getNameIdentifier();
-      assert identifier != null : variable;
-      PsiScopesUtil.treeWalkUp(proc, identifier, scope);
-      if (scope instanceof PsiResourceList && proc.size() == 0) {
-        scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class);
-        PsiScopesUtil.treeWalkUp(proc, identifier, scope);
-      }
-      if (proc.size() > 0) {
-        oldVariable = proc.getResult(0);
-      }
-      else if (declarationScope instanceof PsiLambdaExpression) {
-        oldVariable = findSameNameSibling(variable);
-      }
-      else if (variable instanceof PsiPatternVariable patternVariable) {
-        oldVariable = findSamePatternVariableInBranches(patternVariable);
-      }
-    }
-    else if (variable instanceof PsiField field) {
-      PsiClass aClass = field.getContainingClass();
-      if (aClass == null) return null;
-      PsiField fieldByName = aClass.findFieldByName(variable.getName(), false);
-      if (fieldByName != null && fieldByName != field) {
-        oldVariable = fieldByName;
-      }
-      else {
-        oldVariable = ContainerUtil.find(aClass.getRecordComponents(), c -> field.getName().equals(c.getName()));
-      }
-    }
-    else {
-      oldVariable = findSameNameSibling(variable);
-    }
-
-    if (oldVariable != null) {
-      String description = JavaErrorBundle.message("variable.already.defined", variable.getName());
-      PsiIdentifier identifier = variable.getNameIdentifier();
-      assert identifier != null : variable;
-      VirtualFile vFile = PsiUtilCore.getVirtualFile(identifier);
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier);
-      if (vFile != null) {
-        String path = FileUtil.toSystemIndependentName(vFile.getPath());
-        String linkText = "<a href=\"#navigation/" + path + ":" + oldVariable.getTextOffset() + "\">" + variable.getName() + "</a>";
-        builder = builder.description(description)
-          .escapedToolTip("<html>" + JavaErrorBundle.message("variable.already.defined", linkText) + "</html>");
-      }
-      else {
-        builder = builder.descriptionAndTooltip(description);
-      }
-      IntentionAction action1 = getFixFactory().createNavigateToAlreadyDeclaredVariableFix(oldVariable);
-      builder.registerFix(action1, null, null, null, null);
-      if (variable instanceof PsiLocalVariable localVariable) {
-        IntentionAction action = getFixFactory().createReuseVariableDeclarationFix(localVariable);
-        builder.registerFix(action, null, null, null, null);
-      }
-      return builder;
-    }
-    return null;
-  }
-
-  private static PsiPatternVariable findSamePatternVariableInBranches(@NotNull PsiPatternVariable variable) {
-    PsiPattern pattern = variable.getPattern();
-    PatternResolveState hint = PatternResolveState.WHEN_TRUE;
-    VariablesNotProcessor proc = new VariablesNotProcessor(variable, false) {
-      @Override
-      protected boolean check(PsiVariable var, ResolveState state) {
-        return var instanceof PsiPatternVariable && super.check(var, state);
-      }
-    };
-    PsiElement lastParent = pattern;
-    for (PsiElement parent = lastParent.getParent(); parent != null; lastParent = parent, parent = parent.getParent()) {
-      if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiParenthesizedExpression) continue;
-      if (parent instanceof PsiPrefixExpression expression && expression.getOperationTokenType().equals(JavaTokenType.EXCL)) {
-        hint = hint.invert();
-        continue;
-      }
-      if (parent instanceof PsiPolyadicExpression expression) {
-        IElementType tokenType = expression.getOperationTokenType();
-        if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
-          PatternResolveState targetHint = PatternResolveState.fromBoolean(tokenType.equals(JavaTokenType.OROR));
-          if (hint == targetHint) {
-            for (PsiExpression operand : expression.getOperands()) {
-              if (operand == lastParent) break;
-              operand.processDeclarations(proc, hint.putInto(ResolveState.initial()), null, pattern);
-            }
-          }
-          continue;
-        }
-      }
-      if (parent instanceof PsiConditionalExpression conditional) {
-        PsiExpression thenExpression = conditional.getThenExpression();
-        if (lastParent == thenExpression) {
-          conditional.getCondition()
-            .processDeclarations(proc, PatternResolveState.WHEN_FALSE.putInto(ResolveState.initial()), null, pattern);
-        }
-        else if (lastParent == conditional.getElseExpression()) {
-          conditional.getCondition()
-            .processDeclarations(proc, PatternResolveState.WHEN_TRUE.putInto(ResolveState.initial()), null, pattern);
-          if (thenExpression != null) {
-            thenExpression.processDeclarations(proc, hint.putInto(ResolveState.initial()), null, pattern);
-          }
-        }
-      }
-      break;
-    }
-    return proc.size() > 0 ? (PsiPatternVariable)proc.getResult(0) : null;
-  }
-
-  private static PsiVariable findSameNameSibling(@NotNull PsiVariable variable) {
-    PsiElement scope = variable.getParent();
-    PsiElement[] children = scope.getChildren();
-    for (PsiElement child : children) {
-      if (child instanceof PsiVariable psiVariable) {
-        if (child.equals(variable)) continue;
-        if (Objects.equals(variable.getName(), psiVariable.getName())) {
-          return psiVariable;
-        }
-      }
-    }
-    return null;
   }
 
   public static @NotNull @NlsSafe String formatClass(@NotNull PsiClass aClass) {
@@ -901,10 +756,7 @@ public final class HighlightUtil {
   }
 
 
-  static HighlightInfo.Builder checkReference(@NotNull PsiJavaCodeReferenceElement ref,
-                                              @NotNull JavaResolveResult result,
-                                              @NotNull PsiFile containingFile,
-                                              @NotNull LanguageLevel languageLevel) {
+  static HighlightInfo.Builder checkReference(@NotNull PsiJavaCodeReferenceElement ref, @NotNull JavaResolveResult result) {
     PsiElement refName = ref.getReferenceNameElement();
     if (!(refName instanceof PsiIdentifier) && !(refName instanceof PsiKeyword)) return null;
     PsiElement resolved = result.getElement();

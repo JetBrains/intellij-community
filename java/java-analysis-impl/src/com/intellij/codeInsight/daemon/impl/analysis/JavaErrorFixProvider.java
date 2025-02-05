@@ -394,6 +394,9 @@ final class JavaErrorFixProvider {
     fix(VARIABLE_ALREADY_ASSIGNED_CONSTRUCTOR, error -> removeModifierFix(error.context(), PsiModifier.FINAL));
     fix(VARIABLE_ALREADY_ASSIGNED_INITIALIZER, error -> removeModifierFix(error.context(), PsiModifier.FINAL));
     fix(VARIABLE_ASSIGNED_IN_LOOP, error -> removeModifierFix(error.context(), PsiModifier.FINAL));
+    fix(VARIABLE_ALREADY_DEFINED, error -> myFactory.createNavigateToAlreadyDeclaredVariableFix(error.context()));
+    fix(VARIABLE_ALREADY_DEFINED,
+        error -> error.psi() instanceof PsiLocalVariable local ? myFactory.createReuseVariableDeclarationFix(local) : null);
 
     fixes(FIELD_NOT_INITIALIZED, (error, sink) -> {
       PsiField field = error.psi();

@@ -545,6 +545,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitIdentifier(@NotNull PsiIdentifier identifier) {
     PsiElement parent = identifier.getParent();
     if (parent instanceof PsiVariable variable) {
+      myStatementChecker.checkVariableAlreadyDefined(variable);
       if (variable.isUnnamed()) {
         checkFeature(variable, JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES);
         if (!hasErrorResults()) {
