@@ -54,10 +54,6 @@ open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
 
   val rightToolWindowToolbar: ToolWindowRightToolbarUi = x(ToolWindowRightToolbarUi::class.java) { byClass("ToolWindowRightToolbar") }
 
-  val settingsButton = x("//div[@myicon='settings.svg']")
-
-  val runActionButton = x("//div[@myicon='run.svg']")
-
   fun maximize() = driver.withContext(OnDispatcher.EDT) {
     ideaFrameComponent.setExtendedState(ideaFrameComponent.getExtendedState().or(JFrame.MAXIMIZED_BOTH))
   }
