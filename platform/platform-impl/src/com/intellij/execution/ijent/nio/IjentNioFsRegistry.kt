@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ijent.nio
 
+import com.intellij.openapi.diagnostic.currentClassLogger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.platform.eel.provider.EelNioBridgeService
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.ijent.IjentApi
@@ -55,7 +57,8 @@ fun CoroutineScope.registerIjentNioFs(ijent: IjentApi, root: String, internalNam
   }
 
   this.awaitCancellationAndInvoke {
-    service.deregister(ijent.descriptor)
+    runCatching { service.deregister(ijent.descriptor) }
+      .getOrLogException { currentClassLogger().warn("Unable to deregister eel descriptor ${ijent.descriptor}", it) }
   }
 
   // Compute a path after registration
