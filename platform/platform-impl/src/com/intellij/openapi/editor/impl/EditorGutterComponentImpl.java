@@ -689,6 +689,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       // suppress the gutter caret row background on the sticky lines panel
       return null;
     }
+    if (myEditor.getSettings().isLineNumbersAfterIcons()) {
+      // don't show for jupyter notebooks
+      return null;
+    }
     return myEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
   }
 
