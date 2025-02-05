@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
@@ -181,8 +182,8 @@ class IdeaPluginDescriptorImpl(
   @JvmField
   val packagePrefix: String? = raw.`package`
 
-  private val sinceBuild = raw.sinceBuild
-  private val untilBuild = raw.untilBuild
+  private val sinceBuild: String? = raw.sinceBuild
+  private val untilBuild: String? = raw.untilBuild?.nullizeIfTargets243OrLater(raw.name ?: raw.id)
   private var isEnabled = true
 
   var isDeleted: Boolean = false
@@ -639,6 +640,21 @@ class IdeaPluginDescriptorImpl(
       i++
     }
   }
+}
+
+private fun String.nullizeIfTargets243OrLater(diagnosticId: String?): String? {
+  try {
+    val buildNumber = BuildNumber.fromStringOrNull(this)
+    if (buildNumber != null && buildNumber.baselineVersion >= 243) {
+      LOG.info("Plugin ${diagnosticId ?: "<no name>"} has until-build set to $this. " +
+               "Until-build _from plugin configuration file (plugin.xml)_ for plugins targeting 243+ is ignored." +
+               "Effective until-build value can be set via the Marketplace.")
+      return null
+    }
+  } catch (e: Throwable) {
+    LOG.warn("failed to parse build number", e)
+  }
+  return this
 }
 
 internal val IdeaPluginDescriptorImpl.isRequiredContentModule: Boolean
