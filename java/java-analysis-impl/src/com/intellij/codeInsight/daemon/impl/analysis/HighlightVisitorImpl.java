@@ -19,22 +19,17 @@ import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
@@ -42,7 +37,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -59,16 +57,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     ));
   private @NotNull HighlightInfoHolder myHolder;
   private @NotNull LanguageLevel myLanguageLevel;
-  private JavaSdkVersion myJavaSdkVersion;
 
   private @NotNull PsiFile myFile;
   private PsiJavaModule myJavaModule;
   private JavaErrorCollector myCollector;
 
   private PreviewFeatureUtil.PreviewFeatureVisitor myPreviewFeatureVisitor;
-
-  // map codeBlock->List of PsiReferenceExpression of extra initialization of final variable
-  private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new HashMap<>();
 
   private final @NotNull Consumer<? super HighlightInfo.Builder> myErrorSink = builder -> add(builder);
 
@@ -157,7 +151,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
     finally {
-      myFinalVarProblems.clear();
       myJavaModule = null;
       myFile = null;
       myHolder = null;
@@ -179,8 +172,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myHolder = holder;
     myFile = file;
     myLanguageLevel = PsiUtil.getLanguageLevel(file);
-    myJavaSdkVersion = ObjectUtils
-      .notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
     myJavaModule = JavaFeature.MODULES.isSufficient(myLanguageLevel) ? JavaModuleGraphUtil.findDescriptorByElement(file) : null;
     myPreviewFeatureVisitor = myLanguageLevel.isPreview() ? null : new PreviewFeatureUtil.PreviewFeatureVisitor(myLanguageLevel, myErrorSink);
     JavaErrorFixProvider errorFixProvider = JavaErrorFixProvider.getInstance();
@@ -381,25 +372,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     add(HighlightUtil.checkReference(ref, result, myFile, myLanguageLevel));
 
-    if ((parent instanceof PsiJavaCodeReferenceElement || ref.isQualified()) &&
-        !hasErrorResults() &&
-        resolved instanceof PsiTypeParameter) {
-      boolean canSelectFromTypeParameter = myJavaSdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7);
-      if (canSelectFromTypeParameter) {
-        PsiClass containingClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
-        if (containingClass != null) {
-          if (PsiTreeUtil.isAncestor(containingClass.getExtendsList(), ref, false) ||
-              PsiTreeUtil.isAncestor(containingClass.getImplementsList(), ref, false)) {
-            canSelectFromTypeParameter = false;
-          }
-        }
-      }
-      if (!canSelectFromTypeParameter) {
-        add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(
-          JavaErrorBundle.message("cannot.select.from.a.type.parameter")).range(ref));
-      }
-    }
-
     if (resolved != null && parent instanceof PsiReferenceList referenceList && !hasErrorResults()) {
       add(HighlightUtil.checkElementInReferenceList(ref, referenceList, result));
     }
@@ -466,7 +438,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     doVisitReferenceElement(expression);
 
     if (!hasErrorResults()) {
-      visitExpression(expression);
+      visitElement(expression);
       if (hasErrorResults()) return;
     }
 

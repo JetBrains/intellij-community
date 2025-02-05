@@ -897,6 +897,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (resolved != null && parent instanceof PsiReferenceList referenceList && !hasErrorResults()) {
       checkElementInReferenceList(ref, referenceList, result);
     }
+    if (!hasErrorResults()) myExpressionChecker.checkSelectFromTypeParameter(ref, resolved);
     if (!hasErrorResults()) myClassChecker.checkAbstractInstantiation(ref);
     if (!hasErrorResults()) myClassChecker.checkExtendsDuplicate(ref, resolved);
     if (!hasErrorResults()) myClassChecker.checkClassExtendsForeignInnerClass(ref, resolved);

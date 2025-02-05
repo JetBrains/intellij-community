@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.*;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.JavaFeature;
@@ -1327,6 +1328,25 @@ final class ExpressionChecker {
       // cannot derive type of conditional expression
       // elseType will never be cast-able to thenType, so no quick fix here
       myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(expression, new JavaIncompatibleTypeErrorContext(thenType, type)));
+    }
+  }
+
+  void checkSelectFromTypeParameter(@NotNull PsiJavaCodeReferenceElement ref, @Nullable PsiElement resolved) {
+    if ((ref.getParent() instanceof PsiJavaCodeReferenceElement || ref.isQualified()) &&
+        resolved instanceof PsiTypeParameter) {
+      boolean canSelectFromTypeParameter = myVisitor.sdkVersion().isAtLeast(JavaSdkVersion.JDK_1_7);
+      if (canSelectFromTypeParameter) {
+        PsiClass containingClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
+        if (containingClass != null) {
+          if (PsiTreeUtil.isAncestor(containingClass.getExtendsList(), ref, false) ||
+              PsiTreeUtil.isAncestor(containingClass.getImplementsList(), ref, false)) {
+            canSelectFromTypeParameter = false;
+          }
+        }
+      }
+      if (!canSelectFromTypeParameter) {
+        myVisitor.report(JavaErrorKinds.REFERENCE_SELECT_FROM_TYPE_PARAMETER.create(ref));
+      }
     }
   }
 }

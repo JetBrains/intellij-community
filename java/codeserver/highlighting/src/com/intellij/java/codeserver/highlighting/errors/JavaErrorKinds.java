@@ -1005,6 +1005,8 @@ public final class JavaErrorKinds {
     parameterized(PsiJavaCodeReferenceElement.class, PsiTypeParameter.class, "reference.outer.type.parameter.from.static.context")
       .withHighlightType((ref, refElement) -> JavaErrorHighlightType.WRONG_REF)
       .withRawDescription((ref, refElement) -> message("reference.outer.type.parameter.from.static.context", refElement.getName()));
+  public static final Simple<PsiJavaCodeReferenceElement> REFERENCE_SELECT_FROM_TYPE_PARAMETER =
+    error(PsiJavaCodeReferenceElement.class, "reference.select.from.type.parameter");
   
   public static final Simple<PsiSwitchLabelStatementBase> STATEMENT_CASE_OUTSIDE_SWITCH = error("statement.case.outside.switch");
   public static final Simple<PsiStatement> STATEMENT_INVALID = error("statement.invalid");
