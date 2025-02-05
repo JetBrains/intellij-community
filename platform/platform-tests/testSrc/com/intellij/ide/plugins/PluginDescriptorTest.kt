@@ -4,7 +4,6 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -24,9 +23,7 @@ import org.junit.Test
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.function.Function
@@ -101,47 +98,6 @@ class PluginDescriptorTest {
       Path.of(testDataPath, "duplicate2.jar").toUri().toURL()
     )
     assertThat(testLoadDescriptorsFromClassPath(URLClassLoader(urls, null))).hasSize(1)
-  }
-
-  @Test
-  fun testProductionPlugins() {
-    IoTestUtil.assumeMacOS()
-    assumeNotUnderTeamcity()
-    val descriptors = PluginSetTestBuilder(path = Paths.get("/Applications/Idea.app/Contents/plugins"))
-      .build()
-      .allPlugins
-    assertThat(descriptors).isNotEmpty()
-    assertThat(descriptors.find { it.pluginId.idString == "com.intellij.java" }).isNotNull
-  }
-
-  @Test
-  fun testProductionProductLib() {
-    IoTestUtil.assumeMacOS()
-    assumeNotUnderTeamcity()
-    val dir = Path.of("/Applications/Idea.app/Contents/lib")
-    assumeTrue(Files.exists(dir))
-
-    val urls = Files.newDirectoryStream(dir).use { stream ->
-      stream.map { it.toUri().toURL() }
-    }
-    val descriptors = testLoadDescriptorsFromClassPath(URLClassLoader(urls.toTypedArray(), null))
-    // core and com.intellij.workspace
-    assertThat(descriptors).hasSize(1)
-  }
-
-  @Test
-  fun testProduction2() {
-    IoTestUtil.assumeMacOS()
-
-    assumeNotUnderTeamcity()
-    val descriptors = PluginSetTestBuilder(path = Paths.get("/Volumes/data/plugins"))
-      .build()
-      .allPlugins
-    assertThat(descriptors).isNotEmpty()
-  }
-
-  private fun assumeNotUnderTeamcity() {
-    assumeTrue("Must not be run under TeamCity", !UsefulTestCase.IS_UNDER_TEAMCITY)
   }
 
   @Test
@@ -448,6 +404,12 @@ class PluginDescriptorTest {
     pluginDirPath.resolve(id)
       .resolve(PluginManagerCore.PLUGIN_XML_PATH)
       .write(data.trimIndent())
+  }
+
+  companion object {
+    internal fun assumeNotUnderTeamcity() {
+      assumeTrue("Must not be run under TeamCity", !UsefulTestCase.IS_UNDER_TEAMCITY)
+    }
   }
 }
 
