@@ -154,7 +154,7 @@ public class HighlightInfo implements Segment {
    */
   @Deprecated
   @ApiStatus.Internal
-  public HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
+  protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
                           @Nullable TextAttributesKey forcedTextAttributesKey,
                           @NotNull HighlightInfoType type,
                           int startOffset,

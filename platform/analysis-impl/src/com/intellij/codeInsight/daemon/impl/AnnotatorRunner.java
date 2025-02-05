@@ -56,7 +56,7 @@ public final class AnnotatorRunner {
 
   // run annotators on PSI elements inside/outside while running `runnable` in parallel
   @ApiStatus.Internal
-  public boolean runAnnotatorsAsync(@NotNull List<? extends PsiElement> inside,
+  boolean runAnnotatorsAsync(@NotNull List<? extends PsiElement> inside,
                              @NotNull List<? extends PsiElement> outside,
                              @NotNull Runnable runnable,
                              @NotNull ResultSink resultSink) {
