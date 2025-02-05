@@ -12,9 +12,9 @@ import org.jetbrains.plugins.terminal.block.output.CommandBlock
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.output.withOutput
 
-internal class TerminalHyperlinkHighlighter(project: Project,
-                                            private val outputModel: TerminalOutputModel,
-                                            parentDisposable: Disposable) {
+internal class Gen1TerminalHyperlinkHighlighter(project: Project,
+                                                private val outputModel: TerminalOutputModel,
+                                                parentDisposable: Disposable) {
 
   private val filterWrapper: CompositeFilterWrapper = CompositeFilterWrapper(project, parentDisposable)
   private var lastUpdatedBlockInfo: Pair<CommandBlock, ExpirableTokenProvider>? = null

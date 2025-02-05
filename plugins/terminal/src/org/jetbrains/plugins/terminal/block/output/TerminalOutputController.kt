@@ -16,7 +16,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.TextStyle
 import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.terminal.block.TerminalFocusModel
-import org.jetbrains.plugins.terminal.block.hyperlinks.TerminalHyperlinkHighlighter
+import org.jetbrains.plugins.terminal.block.hyperlinks.Gen1TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.output.highlighting.CompositeTerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
 import org.jetbrains.plugins.terminal.block.session.*
@@ -55,7 +55,7 @@ internal class TerminalOutputController(
   @Volatile
   private var runningCommandInteractivity: RunningCommandInteractivity? = null
 
-  private val hyperlinkHighlighter: TerminalHyperlinkHighlighter = TerminalHyperlinkHighlighter(project, outputModel, session)
+  private val hyperlinkHighlighter: Gen1TerminalHyperlinkHighlighter = Gen1TerminalHyperlinkHighlighter(project, outputModel, session)
 
   private val nextBlockCanBeStartedQueue: Queue<() -> Unit> = LinkedList()
 
