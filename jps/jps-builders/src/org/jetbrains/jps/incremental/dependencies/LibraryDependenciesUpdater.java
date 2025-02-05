@@ -131,7 +131,7 @@ public final class LibraryDependenciesUpdater {
       JpsBuildBundle.message("progress.message.updating.library.state", libsToUpdate.size(), count(deletedLibRoots), chunk.getPresentableShortName()))
     );
 
-    Delta delta = graph.createDelta(map(filter(libsToUpdate.keySet(), p -> !myProcessedSources.contains(p)), p -> p.getSecond()), deletedLibRoots, false);
+    Delta delta = graph.createDelta(collect(map(filter(libsToUpdate.keySet(), p -> !myProcessedSources.contains(p)), p -> p.getSecond()), new HashSet<>()), deletedLibRoots, false);
     LibraryNodesBuilder nodesBuilder = new LibraryNodesBuilder(graphConfig);
     for (Map.Entry<Pair<String, NodeSource>, Long> entry : libsToUpdate.entrySet()) {
       Pair<String, NodeSource> nameRoot = entry.getKey();
