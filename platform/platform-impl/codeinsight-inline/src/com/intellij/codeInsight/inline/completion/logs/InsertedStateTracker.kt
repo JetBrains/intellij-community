@@ -79,7 +79,7 @@ class InsertedStateTracker(private val cs: CoroutineScope) {
     ThreadingAssertions.assertReadAccess()
     val actualInitialOffset = minOf(initialOffset, insertOffset)
     val suggestion = editor.document.getText(TextRange(actualInitialOffset, insertOffset)) + finalSuggestion
-    val rangeMarker = editor.document.createRangeMarker(actualInitialOffset, actualInitialOffset + suggestion.length)
+    val rangeMarker = editor.document.createRangeMarker(actualInitialOffset, minOf(actualInitialOffset + suggestion. length, editor.document.textLength))
     cs.launch {
       coroutineScope {
         durations.forEach {
