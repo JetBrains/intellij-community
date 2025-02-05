@@ -399,13 +399,68 @@ class PluginDescriptorTest {
     assertEquals("This is a disabled plugin", descriptor.description)
     assertThat(descriptor.pluginDependencies.map { it.pluginId.idString }).containsExactly("com.intellij.modules.lang")
   }
+  
+  @Test
+  fun testUntilBuildIsHonoredOnlyIfItTargets242AndEarlier() {
+    fun addDescriptor(build: String) = writeDescriptor("p$build", """
+      <idea-plugin>
+      <id>p$build</id>
+      <version>1.0</version>
+      <idea-version since-build="$build" until-build="$build.100"/>
+      </idea-plugin>
+    """.trimIndent())
+    addDescriptor("242")
+    addDescriptor("243")
+    addDescriptor("251")
+    addDescriptor("261")
+
+    assertEnabledPluginsSetEquals(listOf("p242")) { buildNumber = "242.10" }
+    assertEnabledPluginsSetEquals(listOf("p243")) { buildNumber = "243.10" }
+    assertEnabledPluginsSetEquals(listOf("p243", "p251")) { buildNumber = "251.200" }
+    assertEnabledPluginsSetEquals(listOf("p243", "p251", "p261")) { buildNumber = "261.200" }
+  }
+
+  @Test
+  fun testBrokenPluginsIsHonoredWhileUntilBuildIsNot() {
+    writeDescriptor("p243", """
+      <idea-plugin>
+      <id>p243</id>
+      <version>1.0</version>
+      <idea-version since-build="243" until-build="243.100"/>
+      </idea-plugin>
+    """.trimIndent())
+    writeDescriptor("p251", """
+      <idea-plugin>
+      <id>p251</id>
+      <version>1.0</version>
+      <idea-version since-build="251" until-build="251.100"/>
+      </idea-plugin>
+    """.trimIndent())
+
+    assertEnabledPluginsSetEquals(listOf("p243", "p251")) { buildNumber = "251.200" }
+    assertEnabledPluginsSetEquals(listOf("p251")) {
+      buildNumber = "251.200"
+      withBrokenPlugin(PluginId.getId("p243"), "1.0")
+    }
+    assertEnabledPluginsSetEquals(listOf("p243")) {
+      buildNumber = "251.200"
+      withBrokenPlugin(PluginId.getId("p251"), "1.0")
+    }
+  }
 
   private fun writeDescriptor(id: String, @Language("xml") data: String) {
     pluginDirPath.resolve(id)
       .resolve(PluginManagerCore.PLUGIN_XML_PATH)
       .write(data.trimIndent())
   }
-
+  
+  private fun assertEnabledPluginsSetEquals(enabledIds: List<String>, builder: PluginSetTestBuilder.() -> Unit) {
+    val pluginSet = PluginSetTestBuilder(pluginDirPath).apply(builder).build()
+    assertThat(pluginSet.enabledPlugins)
+      .hasSize(enabledIds.size)
+    assertThat(pluginSet.enabledPlugins.map { it.pluginId.idString }).containsExactlyInAnyOrderElementsOf(enabledIds)
+  }
+  
   companion object {
     internal fun assumeNotUnderTeamcity() {
       assumeTrue("Must not be run under TeamCity", !UsefulTestCase.IS_UNDER_TEAMCITY)
