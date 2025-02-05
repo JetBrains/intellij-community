@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list;
 
+import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -193,7 +194,9 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
       //noinspection unchecked
       Component component = myContext.getRenderer().getListCellRendererComponent(list, (T)value, index, isSelected, cellHasFocus);
       if (component instanceof JComponent jComponent && !(component instanceof JSeparator || component instanceof TitledSeparator)) {
-        if (!(component instanceof GroupedElementsRenderer.MyComponent) && !(component instanceof KotlinUIDslRendererComponent)) {
+        if (!(component instanceof GroupedElementsRenderer.MyComponent)
+            && !(component instanceof KotlinUIDslRendererComponent)
+            && !(component instanceof DarculaComboBoxRenderer)) {
           jComponent.setBorder(COMBO_ITEM_BORDER);
         }
         myContext.customizeListRendererComponent(jComponent);

@@ -4652,6 +4652,7 @@ c:com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
 - p:createLayoutManager():java.awt.LayoutManager
 - p:createPopup():javax.swing.plaf.basic.ComboPopup
 - p:createPropertyListener():java.beans.PropertyChangeListener
+- p:createRenderer():javax.swing.ListCellRenderer
 - s:createUI(javax.swing.JComponent):javax.swing.plaf.ComponentUI
 - p:getArrowButtonFillColor(java.awt.Color):java.awt.Color
 - getBorderInsets(java.awt.Component):java.awt.Insets

@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -132,6 +133,15 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     if (comboBox.getBorder() == null) {
       comboBox.setBorder(this);
     }
+  }
+
+  @Override
+  protected ListCellRenderer<Object> createRenderer() {
+    if (ExperimentalUI.isNewUI() && Registry.is("ui.combobox.round.selection", false)) {
+      return new DarculaComboBoxRenderer();
+    }
+
+    return super.createRenderer();
   }
 
   @Override
@@ -910,7 +920,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
 
     protected void customizeListRendererComponent(JComponent component) {
-      component.setBorder(JBUI.Borders.empty(2, 8));
+      if (!(component instanceof DarculaComboBoxRenderer)) {
+        component.setBorder(JBUI.Borders.empty(2, 8));
+      }
     }
 
     @Override

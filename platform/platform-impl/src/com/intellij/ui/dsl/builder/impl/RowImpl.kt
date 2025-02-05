@@ -402,7 +402,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   private fun <T> createDefaultComboBoxRenderer(): ListCellRenderer<in T?> {
-    // todo turn on useComboBoxNewRenderer by default and remove useComboBoxNewRenderer related code
+    // todo remove useComboBoxNewRenderer and related code. Use default ComboBox renderer, which should support round selection etc
     return if (dialogPanelConfig.useComboBoxNewRenderer) textListCellRenderer("") { it.toString() }
     else SimpleListCellRenderer.create("") { it.toString() }
   }
