@@ -96,6 +96,8 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
   fun turnOn(beforeIndexTasksStarted: Runnable? = null) {
     LOG.assertTrue(ApplicationManager.getApplication().isWriteIntentLockAcquired)
     nestedLevelCount--
+    LOG.assertTrue(nestedLevelCount >= 0, "nestedLevelCount is less than 0: $nestedLevelCount. " +
+                                          "This probably means that DynamicPluginListener.plugin[Un]Loaded event was fired without corresponding 'before' event")
     if (nestedLevelCount == 0) {
       try {
         fileBasedIndex.loadIndexes()
