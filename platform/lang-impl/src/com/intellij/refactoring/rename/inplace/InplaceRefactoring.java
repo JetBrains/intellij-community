@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -671,7 +671,7 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  protected void showDialogAdvertisement(@NonNls @Nullable String actionId) {
+  protected void showDialogAdvertisement(@org.intellij.lang.annotations.Language("devkit-action-id") @NonNls @Nullable String actionId) {
     Shortcut shortcut = KeymapUtil.getPrimaryShortcut(actionId);
     if (shortcut != null) {
       setAdvertisementText(RefactoringBundle.message("inplace.refactoring.advertisement.text", KeymapUtil.getShortcutText(shortcut)));

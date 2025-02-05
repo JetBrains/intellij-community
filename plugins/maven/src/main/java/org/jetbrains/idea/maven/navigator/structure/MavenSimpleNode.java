@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -14,6 +14,7 @@ import com.intellij.ui.treeStructure.CachingSimpleNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ObjectUtils;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -185,6 +186,7 @@ abstract class MavenSimpleNode extends CachingSimpleNode implements MavenNode {
     return new SimpleTextAttributes(from.getBgColor(), from.getFgColor(), waveColor, style);
   }
 
+  @Language("devkit-action-id")
   @Nullable
   @NonNls
   String getActionId() {
