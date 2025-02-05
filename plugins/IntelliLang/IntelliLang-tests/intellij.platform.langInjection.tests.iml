@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="intellij.java.langInjection" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
-    <orderEntry type="module" module-name="intellij.yaml.editing" />
+    <orderEntry type="module" module-name="intellij.yaml" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" />
     <orderEntry type="library" name="assertJ" level="project" />

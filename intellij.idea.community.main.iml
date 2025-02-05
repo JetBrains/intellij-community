@@ -219,7 +219,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.progress.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.jimfs" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.yaml.editing" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.yaml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.whatsNew" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.compiler.charts" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.compose" scope="RUNTIME" />

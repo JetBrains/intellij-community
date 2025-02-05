@@ -2,7 +2,7 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="com.intellij.modules.json"/>
-    <module name="intellij.yaml.editing"/>
+    <module name="intellij.yaml"/>
   </dependencies>
   
   <extensions defaultExtensionNs="com.intellij">

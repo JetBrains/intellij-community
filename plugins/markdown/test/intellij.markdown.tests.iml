@@ -20,7 +20,7 @@
     <orderEntry type="module" module-name="intellij.markdown.xml" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
-    <orderEntry type="module" module-name="intellij.yaml.editing" />
+    <orderEntry type="module" module-name="intellij.yaml" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />

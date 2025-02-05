@@ -13,6 +13,6 @@
   </dependencies>
   <content>
     <module name="intellij.yaml.backend" loading="embedded"/>
-    <module name="intellij.yaml.editing" loading="required"/>
+    <module name="intellij.yaml" loading="required"/>
   </content>
 </idea-plugin>
