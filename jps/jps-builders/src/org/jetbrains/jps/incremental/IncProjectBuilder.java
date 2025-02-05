@@ -74,6 +74,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.jps.builders.java.JavaBuilderUtil.isDepGraphEnabled;
+import static org.jetbrains.jps.builders.java.JavaBuilderUtil.isTrackLibraryDependenciesEnabled;
 
 @SuppressWarnings("BoundedWildcard")
 @ApiStatus.Internal
@@ -473,14 +474,18 @@ public final class IncProjectBuilder {
   private void runBuild(@NotNull CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);
 
-    LOG.info("Building project; isRebuild:" +
-             JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) +
-             "; isMake:" +
-             context.isMake() +
-             " parallel compilation:" +
-             isParallelBuild() +
-             "; dependency graph enabled:" +
-             isDepGraphEnabled());
+    LOG.info(
+      "Building project; isRebuild:" +
+        JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) +
+        "; isMake:" +
+        context.isMake() +
+        " parallel compilation:" +
+        isParallelBuild() +
+        "; dependency graph enabled:" +
+        isDepGraphEnabled() +
+        "; library dependencies tracking enabled:" +
+        isTrackLibraryDependenciesEnabled()
+    );
 
     context.addBuildListener(new ChainedTargetsBuildListener(context));
 
