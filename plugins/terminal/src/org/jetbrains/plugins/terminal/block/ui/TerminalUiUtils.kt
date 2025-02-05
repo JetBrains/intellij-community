@@ -103,7 +103,7 @@ internal object TerminalUiUtils {
       isAdditionalPageAtBottom = false
       isBlockCursor = true
       isWhitespacesShown = false
-      characterGridWidth = editor.getCharSize().width.toFloat()
+      characterGridWidthMultiplier = 1.0f
     }
 
     if (installContextMenu) {

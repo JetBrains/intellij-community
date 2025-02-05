@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.impl.FontInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,11 +17,11 @@ final class SimpleTextFragment extends TextFragment {
   private final @NotNull Font myFont;
   private float @Nullable [] myCharAlignment = null;
 
-  SimpleTextFragment(char @NotNull [] lineChars, int start, int end, @NotNull FontInfo fontInfo, @Nullable EditorSettings settings) {
+  SimpleTextFragment(char @NotNull [] lineChars, int start, int end, @NotNull FontInfo fontInfo, @Nullable EditorView view) {
     super(end - start);
     myText = Arrays.copyOfRange(lineChars, start, end);
     myFont = fontInfo.getFont();
-    var gridWidth = settings != null ? settings.getCharacterGridWidth() : null;
+    var gridWidth = getGridCellWidth(view);
     float x = 0;
     for (int i = 0; i < myText.length; i++) {
       var charWidth = fontInfo.charWidth2D(myText[i]);

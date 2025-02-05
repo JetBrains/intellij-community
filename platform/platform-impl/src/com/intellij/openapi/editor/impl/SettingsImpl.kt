@@ -655,11 +655,11 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     return state.myStickyLinesLimit
   }
 
-  override fun getCharacterGridWidth(): Float? {
+  override fun getCharacterGridWidthMultiplier(): Float? {
     return state.characterGridWidth
   }
 
-  override fun setCharacterGridWidth(value: Float?) {
+  override fun setCharacterGridWidthMultiplier(value: Float?) {
     state.characterGridWidth = value
   }
 

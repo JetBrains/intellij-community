@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.view;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.function.Consumer;
@@ -52,6 +53,12 @@ abstract class TextFragment implements LineFragment {
   @Override
   public int visualToLogicalColumn(float startX, int startColumn, int column) {
     return column;
+  }
+
+  @Nullable Float getGridCellWidth(@Nullable EditorView view) {
+    if (view == null) return null;
+    var multiplier = view.getEditor().getSettings().getCharacterGridWidthMultiplier();
+    return multiplier == null ? null : multiplier * view.getMaxCharWidth();
   }
 
   private final class TextFragmentWindow implements LineFragment {

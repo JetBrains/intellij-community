@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +25,7 @@ final class ComplexTextFragment extends TextFragment {
                                             // (null if each code point takes one char).
                                             // We expect no more than 1025 chars in a fragment, so 'short' should be enough.
 
-  ComplexTextFragment(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo, @Nullable EditorSettings settings) {
+  ComplexTextFragment(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo, EditorView view) {
     super(end - start);
     assert start >= 0              : assertMessage(lineChars, start, end, isRtl, fontInfo);
     assert end <= lineChars.length : assertMessage(lineChars, start, end, isRtl, fontInfo);
@@ -40,7 +39,7 @@ final class ComplexTextFragment extends TextFragment {
       end,
       isRtl
     );
-    var gridWidth = settings != null ? settings.getCharacterGridWidth() : null;
+    var gridWidth = getGridCellWidth(view);
     if (gridWidth != null) {
       // This thing assumes that one glyph = one character.
       // This seems to work "well enough" for the terminal
