@@ -94,6 +94,7 @@
               use-shortcut-of="EditorPageDownWithSelection"/>
       <action id="Tree-selectNextSibling" class="com.intellij.ui.TreeActions$NextSibling"/>
       <action id="Tree-selectPreviousSibling" class="com.intellij.ui.TreeActions$PreviousSibling"/>
+      <action id="Tree-selectAll" class="com.intellij.ui.TreeActions$SelectAll" use-shortcut-of="$SelectAll"/>
       <action id="Tree-startEditing" icon="AllIcons.Actions.Edit" class="com.intellij.ide.actions.tree.StartEditingAction">
         <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
       </action>

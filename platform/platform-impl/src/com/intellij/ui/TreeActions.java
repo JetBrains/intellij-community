@@ -171,4 +171,12 @@ public abstract class TreeActions extends SwingActionDelegate {
       super(ID);
     }
   }
+
+  public static final class SelectAll extends TreeActions {
+    public static final @NonNls String ID = "selectAll";
+
+    public SelectAll() {
+      super(ID);
+    }
+  }
 }
