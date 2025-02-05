@@ -192,8 +192,8 @@ class _NpTable:
         if self.array.dtype.names is not None:
             np_array_without_nones = np.copy(self.array)
             for field in self.array.dtype.names:
-                np_array_without_nones[field] = np.where(self.array[field] == None, np.nan, self.array[field])
-            np_array_without_nones = np.column_stack([np_array_without_nones[field] for field in self.array.dtype.names])
+                np_array_without_nones[str(field)] = np.where(self.array[str(field)] == None, np.nan, self.array[str(field)])
+            np_array_without_nones = np.column_stack([np_array_without_nones[str(field)] for field in self.array.dtype.names])
         else:
             np_array_without_nones = np.where(self.array == None, np.nan, self.array)
         if float_format is None or float_format == 'null':
