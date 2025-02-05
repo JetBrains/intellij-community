@@ -2,8 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -321,9 +319,10 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
         expression, variable, uninitializedVarProblems, false)) {
         return false;
       }
-      HighlightInfo.Builder highlightInfo =
-        HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression, finalVarProblems);
-      if (highlightInfo != null) return false;
+      if (ControlFlowUtil.findFinalVariableAlreadyInitializedProblem(variable, expression, finalVarProblems) !=
+          ControlFlowUtil.DoubleInitializationProblem.NO_PROBLEM) {
+        return false;
+      }
       if (variable instanceof PsiParameter && PsiUtil.isAccessedForWriting(expression)) return false;
     }
     return true;

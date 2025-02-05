@@ -706,7 +706,11 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       if (!hasErrorResults() && resolved instanceof PsiLocalVariable localVariable) {
         myExpressionChecker.checkVarTypeSelfReferencing(localVariable, expression);
       }
-      if (!hasErrorResults()) myControlFlowChecker.checkVariableInitializedBeforeUsage(expression, variable);
+      boolean isFinal = variable.hasModifierProperty(PsiModifier.FINAL);
+      if (isFinal && !variable.hasInitializer() && !(variable instanceof PsiPatternVariable)) {
+        if (!hasErrorResults()) myControlFlowChecker.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression);
+      }
+      if (!hasErrorResults()) myControlFlowChecker.checkVariableInitializedBeforeUsage(variable, expression);
     }
     if (parent instanceof PsiMethodCallExpression methodCallExpression &&
         methodCallExpression.getMethodExpression() == expression &&

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
@@ -37,6 +36,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -231,7 +231,7 @@ public final class DfaPsiUtil {
         refExpr.resolve() instanceof PsiParameter parameter &&
         parameter.getParent() instanceof PsiForeachStatement targetLoop &&
         PsiTreeUtil.isAncestor(targetLoop, loop, true) &&
-        !HighlightControlFlowUtil.isReassigned(parameter, new HashMap<>())) {
+        !ControlFlowUtil.isReassigned(parameter, new HashMap<>())) {
       iteratedType = inferLoopParameterTypeWithNullability(targetLoop);
     }
     return JavaGenericsUtil.getCollectionItemType(iteratedType, iteratedValue.getResolveScope());

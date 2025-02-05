@@ -475,15 +475,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     JavaResolveResult result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
 
     PsiElement resolved = result.getElement();
-    if (resolved instanceof PsiVariable variable && resolved.getContainingFile() == expression.getContainingFile()) {
-      boolean isFinal = variable.hasModifierProperty(PsiModifier.FINAL);
-      if (isFinal && !variable.hasInitializer() && !(variable instanceof PsiPatternVariable)) {
-        if (!hasErrorResults()) {
-          add(HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression, myFinalVarProblems));
-        }
-      }
-    }
-
     if (!hasErrorResults()) add(HighlightUtil.checkClassReferenceAfterQualifier(expression, resolved));
     PsiExpression qualifierExpression = expression.getQualifierExpression();
     if (!hasErrorResults() && myJavaModule == null && qualifierExpression != null) {

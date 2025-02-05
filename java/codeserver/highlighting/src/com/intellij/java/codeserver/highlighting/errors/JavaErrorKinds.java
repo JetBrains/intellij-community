@@ -1243,6 +1243,21 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_NOT_INITIALIZED =
     parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.not.initialized")
       .withRawDescription((ref, var) -> message("variable.not.initialized", var.getName()));
+  public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_ALREADY_ASSIGNED =
+    parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.already.assigned")
+      .withRawDescription((ref, var) -> message("variable.already.assigned", var.getName()));
+  public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_ALREADY_ASSIGNED_CONSTRUCTOR =
+    parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.already.assigned.constructor")
+      .withRawDescription((ref, var) -> message("variable.already.assigned.constructor", var.getName()));
+  public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_ALREADY_ASSIGNED_FIELD =
+    parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.already.assigned.field")
+      .withRawDescription((ref, var) -> message("variable.already.assigned.field", var.getName()));
+  public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_ALREADY_ASSIGNED_INITIALIZER =
+    parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.already.assigned.initializer")
+      .withRawDescription((ref, var) -> message("variable.already.assigned.initializer", var.getName()));
+  public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_ASSIGNED_IN_LOOP =
+    parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.assigned.in.loop")
+      .withRawDescription((ref, var) -> message("variable.assigned.in.loop", var.getName()));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiVariable> VARIABLE_MUST_BE_FINAL =
     parameterized(PsiJavaCodeReferenceElement.class, PsiVariable.class, "variable.must.be.final")
       .withRawDescription((ref, var) -> message("variable.must.be.final", var.getName()));

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.daemon.impl.JavaColorProvider;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
@@ -306,7 +305,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     }
 
     if (ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, place) != null &&
-        !HighlightControlFlowUtil.isReassigned(variable, new HashMap<>())) {
+        !ControlFlowUtil.isReassigned(variable, new HashMap<>())) {
       PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
     }
   }

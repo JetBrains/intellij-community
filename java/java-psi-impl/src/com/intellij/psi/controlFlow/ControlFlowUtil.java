@@ -435,6 +435,172 @@ public final class ControlFlowUtil {
     return false;
   }
 
+  private static boolean variableDefinitelyNotAssignedIn(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+    ControlFlow flow = getControlFlow(context);
+    return flow == null || isVariableDefinitelyNotAssigned(variable, flow);
+  }
+
+  /**
+   * Kind of double initialization problem
+   *
+   * @see #findFinalVariableAlreadyInitializedProblem(PsiVariable, PsiReferenceExpression, Map)
+   */
+  public enum DoubleInitializationProblem {
+    NO_PROBLEM,
+    /**
+     * Final variable is reassigned normally
+     */
+    NORMAL,
+    /**
+     * Final variable is reassigned in loop
+     */
+    IN_LOOP,
+    /**
+     * Double initialization of a final field due to chained constructor call
+     */
+    IN_CONSTRUCTOR,
+    /**
+     * Double initialization of a final field in other initializer
+     */
+    IN_INITIALIZER,
+    /**
+     * Double initialization of a final field in other field initializer
+     */
+    IN_FIELD_INITIALIZER
+  }
+
+  /**
+   * @param variable         final variable to check
+   * @param expression       variable reference (write location)
+   * @param finalVarProblems a map to cache the results
+   * @return DoubleInitializationProblem object that depicts the problem kind
+   */
+  public static @NotNull DoubleInitializationProblem findFinalVariableAlreadyInitializedProblem(@NotNull PsiVariable variable,
+                                                                                                @NotNull PsiReferenceExpression expression,
+                                                                                                @NotNull Map<PsiElement, Collection<VariableInfo>> finalVarProblems) {
+    if (!PsiUtil.isAccessedForWriting(expression)) return DoubleInitializationProblem.NO_PROBLEM;
+
+    PsiElement scope = variable instanceof PsiField
+                       ? variable.getParent()
+                       : variable.getParent() == null ? null : variable.getParent().getParent();
+    PsiElement codeBlock = PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
+    if (codeBlock == null) return DoubleInitializationProblem.NO_PROBLEM;
+    Collection<VariableInfo> codeBlockProblems = getFinalVariableProblemsInBlock(finalVarProblems, codeBlock);
+
+    VariableInfo variableInfo = ContainerUtil.find(codeBlockProblems, vi -> vi.expression == expression);
+    if (variableInfo == null) {
+      if (variable instanceof PsiField) {
+        DoubleInitializationProblem problem = isFieldInitializedInAnotherMember((PsiField)variable, expression, codeBlock);
+        if (problem != null) {
+          return problem;
+        }
+      }
+      return DoubleInitializationProblem.NO_PROBLEM;
+    }
+    return variableInfo instanceof InitializedInLoopProblemInfo ? DoubleInitializationProblem.IN_LOOP : DoubleInitializationProblem.NORMAL;
+  }
+
+  private static DoubleInitializationProblem isFieldInitializedInAnotherMember(@NotNull PsiField field,
+                                                                               @NotNull PsiReferenceExpression expression,
+                                                                               @NotNull PsiElement codeBlock) {
+    PsiClass aClass = field.getContainingClass();
+    if (aClass == null) return null;
+    boolean isFieldStatic = field.hasModifierProperty(PsiModifier.STATIC);
+    PsiMember enclosingConstructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expression);
+
+    if (!isFieldStatic) {
+      // constructor that delegates to another constructor cannot assign final fields
+      if (enclosingConstructorOrInitializer instanceof PsiMethod) {
+        PsiMethodCallExpression chainedCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(
+          (PsiMethod)enclosingConstructorOrInitializer);
+        if (JavaPsiConstructorUtil.isChainedConstructorCall(chainedCall)) {
+          return DoubleInitializationProblem.IN_CONSTRUCTOR;
+        }
+      }
+    }
+
+    // field can get assigned in other field initializers or in class initializers
+    List<PsiMember> members = new ArrayList<>(Arrays.asList(aClass.getFields()));
+    if (enclosingConstructorOrInitializer != null
+        && aClass.getManager().areElementsEquivalent(enclosingConstructorOrInitializer.getContainingClass(), aClass)) {
+      members.addAll(Arrays.asList(aClass.getInitializers()));
+      members.sort(PsiUtil.BY_POSITION);
+    }
+
+    for (PsiMember member : members) {
+      if (member == field) continue;
+      PsiElement context = member instanceof PsiField ? ((PsiField)member).getInitializer() : ((PsiClassInitializer)member).getBody();
+
+      if (context != null
+          && member.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
+          && !variableDefinitelyNotAssignedIn(field, context)) {
+        return context == codeBlock ? null :
+               member instanceof PsiField ? DoubleInitializationProblem.IN_FIELD_INITIALIZER :
+               DoubleInitializationProblem.IN_INITIALIZER;
+      }
+    }
+    return null;
+  }
+
+  private static @NotNull Collection<VariableInfo> getFinalVariableProblemsInBlock(
+    @NotNull Map<PsiElement, Collection<VariableInfo>> finalVarProblems, @NotNull PsiElement codeBlock) {
+    Collection<VariableInfo> codeBlockProblems =
+      finalVarProblems.computeIfAbsent(codeBlock, cb -> {
+        ControlFlow controlFlow = getControlFlow(codeBlock);
+        return controlFlow == null ? Collections.emptyList() : addReassignedInLoopProblems(getInitializedTwice(controlFlow), controlFlow);
+      });
+    return codeBlockProblems;
+  }
+
+  private static Collection<VariableInfo> addReassignedInLoopProblems(
+    @NotNull Collection<VariableInfo> codeBlockProblems,
+    @NotNull ControlFlow controlFlow) {
+    List<Instruction> instructions = controlFlow.getInstructions();
+    for (int index = 0; index < instructions.size(); index++) {
+      Instruction instruction = instructions.get(index);
+      if (instruction instanceof WriteVariableInstruction) {
+        PsiVariable variable = ((WriteVariableInstruction)instruction).variable;
+        if (variable instanceof PsiLocalVariable || variable instanceof PsiField) {
+          PsiElement anchor = controlFlow.getElement(index);
+          if (anchor instanceof PsiAssignmentExpression) {
+            PsiExpression ref = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)anchor).getLExpression());
+            if (ref instanceof PsiReferenceExpression) {
+              VariableInfo varInfo = new InitializedInLoopProblemInfo(variable, ref);
+              if (!codeBlockProblems.contains(varInfo) && isInstructionReachable(controlFlow, index, index)) {
+                if (!(codeBlockProblems instanceof HashSet)) {
+                  codeBlockProblems = new HashSet<>(codeBlockProblems);
+                }
+                codeBlockProblems.add(varInfo);
+              }
+            }
+          }
+        }
+      }
+    }
+    return codeBlockProblems;
+  }
+
+  /**
+   * @param variable         variable to check (local variable or parameter)
+   * @param finalVarProblems cache map to reuse information
+   * @return true if the variable is reassigned
+   */
+  public static boolean isReassigned(@NotNull PsiVariable variable, @NotNull Map<PsiElement, Collection<VariableInfo>> finalVarProblems) {
+    if (variable instanceof PsiLocalVariable) {
+      PsiElement parent = variable.getParent();
+      if (parent == null) return false;
+      PsiElement declarationScope = parent.getParent();
+      if (declarationScope == null) return false;
+      Collection<VariableInfo> codeBlockProblems = getFinalVariableProblemsInBlock(finalVarProblems, declarationScope);
+      return codeBlockProblems.contains(new VariableInfo(variable, null));
+    }
+    if (variable instanceof PsiParameter) {
+      PsiParameter parameter = (PsiParameter)variable;
+      return variableIsAssigned(parameter, parameter.getDeclarationScope());
+    }
+    return false;
+  }
+
   private static class SSAInstructionState {
     private final int myWriteCount;
     private final int myInstructionIdx;
@@ -2300,6 +2466,16 @@ public final class ControlFlowUtil {
     @Override
     public int hashCode() {
       return variable.hashCode();
+    }
+  }
+
+  /**
+   * A kind of final variable problem returned from {@link #getFinalVariableProblemsInBlock(Map, PsiElement)}
+   * which designates a final variable which is initialized in a loop.
+   */
+  private static class InitializedInLoopProblemInfo extends VariableInfo {
+    InitializedInLoopProblemInfo(@NotNull PsiVariable variable, @Nullable PsiElement expression) {
+      super(variable, expression);
     }
   }
 

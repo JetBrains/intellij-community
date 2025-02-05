@@ -120,7 +120,6 @@ final class ControlFlowChecker {
       if (isToBeEffectivelyFinal && ControlFlowUtil.isEffectivelyFinal(variable, scope, context)) return;
       var kind = isToBeEffectivelyFinal ? JavaErrorKinds.VARIABLE_MUST_BE_EFFECTIVELY_FINAL : JavaErrorKinds.VARIABLE_MUST_BE_FINAL;
       myVisitor.report(kind.create(context, variable));
-      return;
     } else if (scope instanceof PsiLambdaExpression) {
       if (ControlFlowUtil.isEffectivelyFinal(variable, scope, context)) return;
       myVisitor.report(JavaErrorKinds.VARIABLE_MUST_BE_EFFECTIVELY_FINAL_LAMBDA.create(context, variable));
@@ -139,11 +138,26 @@ final class ControlFlowChecker {
     myVisitor.report(JavaErrorKinds.FIELD_NOT_INITIALIZED.create(field));
   }
 
-  void checkVariableInitializedBeforeUsage(@NotNull PsiReferenceExpression expression, @NotNull PsiVariable variable) {
+  void checkVariableInitializedBeforeUsage(@NotNull PsiVariable variable, @NotNull PsiReferenceExpression expression) {
     if (ControlFlowUtil.isInitializedBeforeUsage(expression, variable, myUninitializedVarProblems, false)) {
       return;
     }
     myVisitor.report(JavaErrorKinds.VARIABLE_NOT_INITIALIZED.create(expression, variable));
+  }
+
+  void checkFinalVariableMightAlreadyHaveBeenAssignedTo(@NotNull PsiVariable variable, @NotNull PsiReferenceExpression expression) {
+    ControlFlowUtil.DoubleInitializationProblem
+      problem = ControlFlowUtil.findFinalVariableAlreadyInitializedProblem(variable, expression, myFinalVarProblems);
+    var kind = switch (problem) {
+      case NORMAL -> JavaErrorKinds.VARIABLE_ALREADY_ASSIGNED;
+      case IN_LOOP -> JavaErrorKinds.VARIABLE_ASSIGNED_IN_LOOP;
+      case IN_CONSTRUCTOR -> JavaErrorKinds.VARIABLE_ALREADY_ASSIGNED_CONSTRUCTOR;
+      case IN_FIELD_INITIALIZER -> JavaErrorKinds.VARIABLE_ALREADY_ASSIGNED_FIELD;
+      case IN_INITIALIZER -> JavaErrorKinds.VARIABLE_ALREADY_ASSIGNED_INITIALIZER;
+      case NO_PROBLEM -> null;
+    };
+    if (kind == null) return;
+    myVisitor.report(kind.create(expression, variable));
   }
 
   /**

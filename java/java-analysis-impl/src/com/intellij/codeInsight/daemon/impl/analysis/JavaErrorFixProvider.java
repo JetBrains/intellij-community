@@ -388,6 +388,13 @@ final class JavaErrorFixProvider {
     fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL, error -> myFactory.createMakeVariableEffectivelyFinalFix(error.context()));
     fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL_LAMBDA, error -> myFactory.createMakeVariableEffectivelyFinalFix(error.context()));
     fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL_GUARD, error -> myFactory.createMakeVariableEffectivelyFinalFix(error.context()));
+    fix(VARIABLE_ALREADY_ASSIGNED, error -> myFactory.createDeferFinalAssignmentFix(error.context(), error.psi()));
+    fix(VARIABLE_ALREADY_ASSIGNED, error -> removeModifierFix(error.context(), PsiModifier.FINAL));
+    fix(VARIABLE_ALREADY_ASSIGNED_FIELD, error -> removeModifierFix(error.context(), PsiModifier.FINAL));
+    fix(VARIABLE_ALREADY_ASSIGNED_CONSTRUCTOR, error -> removeModifierFix(error.context(), PsiModifier.FINAL));
+    fix(VARIABLE_ALREADY_ASSIGNED_INITIALIZER, error -> removeModifierFix(error.context(), PsiModifier.FINAL));
+    fix(VARIABLE_ASSIGNED_IN_LOOP, error -> removeModifierFix(error.context(), PsiModifier.FINAL));
+
     fixes(FIELD_NOT_INITIALIZED, (error, sink) -> {
       PsiField field = error.psi();
       sink.accept(myFactory.createCreateConstructorParameterFromFieldFix(field));

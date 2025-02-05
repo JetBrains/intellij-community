@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -41,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static java.util.Objects.*;
+import static java.util.Objects.requireNonNullElse;
 
 public final class HighlightFixUtil {
   private static final Logger LOG = Logger.getInstance(HighlightFixUtil.class);
@@ -182,12 +181,6 @@ public final class HighlightFixUtil {
     if (q != null) return true;
     String qname = ((PsiJavaCodeReferenceElement)qualifier).getQualifiedName();
     return qname == null || !Character.isLowerCase(qname.charAt(0));
-  }
-
-  static void registerChangeVariableTypeFixes(@NotNull PsiVariable parameter,
-                                              @Nullable PsiType itemType,
-                                              @Nullable HighlightInfo.Builder highlightInfo) {
-    registerChangeVariableTypeFixes(parameter, itemType, HighlightUtil.asConsumer(highlightInfo));
   }
 
   static void registerChangeVariableTypeFixes(@NotNull PsiVariable parameter,
@@ -349,21 +342,6 @@ public final class HighlightFixUtil {
       return QuickFixFactory.getInstance().createAddSwitchDefaultFix(switchStatement, message);
     }
     return null;
-  }
-
-  static void registerMakeNotFinalAction(@NotNull PsiVariable var, @Nullable HighlightInfo.Builder highlightInfo) {
-    if (var instanceof PsiField) {
-      QuickFixAction.registerQuickFixActions(
-        highlightInfo, null,
-        JvmElementActionFactories.createModifierActions((PsiField)var, MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false))
-      );
-    }
-    else {
-      IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(var, PsiModifier.FINAL, false, false);
-      if (highlightInfo != null) {
-        highlightInfo.registerFix(action, null, null, null, null);
-      }
-    }
   }
 
   public static void registerFixesForExpressionStatement(@NotNull PsiElement statement, @NotNull Consumer<? super CommonIntentionAction> info) {

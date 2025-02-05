@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
@@ -69,8 +67,7 @@ public final class FinalUtils {
       PsiElement innerScope = ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, ref);
       if (innerScope != null && innerScope != ((PsiField)variable).getContainingClass()) return false;
     }
-    HighlightInfo.Builder random =
-      HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, ref, finalVarProblems);
-    return random == null;
+    return ControlFlowUtil.findFinalVariableAlreadyInitializedProblem(variable, ref, finalVarProblems) == 
+           ControlFlowUtil.DoubleInitializationProblem.NO_PROBLEM;
   }
 }
