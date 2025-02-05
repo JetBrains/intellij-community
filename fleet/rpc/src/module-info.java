@@ -13,6 +13,7 @@ module fleet.rpc {
   requires fleet.preferences;
   requires fleet.reporting.api;
   requires fleet.multiplatform.shims;
+  requires kotlinx.datetime;
 
   exports fleet.rpc;
   exports fleet.rpc.core;
