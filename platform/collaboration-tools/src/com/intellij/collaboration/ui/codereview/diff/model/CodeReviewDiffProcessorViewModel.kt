@@ -106,9 +106,4 @@ private class PreLoadingCodeReviewAsyncDiffViewModelDelegateImpl<D : Any, C : An
   override fun showChange(change: C, scrollRequest: DiffViewerScrollRequest?) = delegate.showChange(change, scrollRequest)
 
   override suspend fun handleSelection(listener: ChangesSelectionListener<C>): Nothing = delegate.handleSelection(listener)
-
-  private data class ViewModelsState<CVM : Any>(
-    override val selectedChanges: ListSelection<CVM>,
-    override val scrollRequests: Flow<DiffViewerScrollRequest>,
-  ) : CodeReviewDiffProcessorViewModel.State<CVM>, DiffViewerScrollRequestProducer
 }

@@ -2413,6 +2413,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 - p:createToolbarComponent():javax.swing.JComponent
 - p:createTreeList(com.intellij.openapi.project.Project,Z,Z):com.intellij.openapi.vcs.changes.ui.ChangesTree
 - p:createViewerBorder():javax.swing.border.Border
+- s:findPathToObjectWithTag(com.intellij.openapi.vcs.changes.ui.ChangesTree,java.lang.Object,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag):javax.swing.tree.TreePath
 - getDiffAction():com.intellij.openapi.actionSystem.AnAction
 - p:getDiffRequestProducer(java.lang.Object):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
 - getGrouping():com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
