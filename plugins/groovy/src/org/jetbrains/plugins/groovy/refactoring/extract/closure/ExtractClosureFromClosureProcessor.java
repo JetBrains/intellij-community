@@ -63,7 +63,7 @@ public class ExtractClosureFromClosureProcessor extends ExtractClosureProcessorB
     final GrVariable var = (GrVariable)myHelper.getToSearchFor();
     if (var != null) {
       final List<UsageInfo> result = new ArrayList<>();
-      for (PsiReference ref : ReferencesSearch.search(var)) {
+      for (PsiReference ref : ReferencesSearch.search(var).asIterable()) {
         final PsiElement element = ref.getElement();
         if (element.getLanguage() != GroovyLanguage.INSTANCE) {
           result.add(new OtherLanguageUsageInfo(ref));

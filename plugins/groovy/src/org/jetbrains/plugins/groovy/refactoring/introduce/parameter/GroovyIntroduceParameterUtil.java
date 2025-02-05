@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -289,7 +289,7 @@ public final class GroovyIntroduceParameterUtil {
   }
 
   private static boolean shouldRemove(GrParameter parameter, int start, int end) {
-    for (PsiReference reference : ReferencesSearch.search(parameter)) {
+    for (PsiReference reference : ReferencesSearch.search(parameter).asIterable()) {
       final PsiElement element = reference.getElement();
 
       final int offset = element.getTextRange().getStartOffset();

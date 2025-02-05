@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,7 +46,7 @@ public class FieldConflictsResolver {
     if (!(oldVariable instanceof PsiField)) return;
 
     myReferenceExpressions = new ArrayList<>();
-    for (PsiReference reference : ReferencesSearch.search(myField, new LocalSearchScope(myScope), false)) {
+    for (PsiReference reference : ReferencesSearch.search(myField, new LocalSearchScope(myScope), false).asIterable()) {
       final PsiElement element = reference.getElement();
       if (element instanceof GrReferenceExpression referenceExpression) {
         if (referenceExpression.getQualifier() == null) {

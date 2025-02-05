@@ -115,7 +115,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
 
     final PsiMethod toSearchFor = (PsiMethod)myHelper.getToSearchFor();
 
-    for (PsiReference ref1 : MethodReferencesSearch.search(toSearchFor, GlobalSearchScope.projectScope(myProject), true)) {
+    for (PsiReference ref1 : MethodReferencesSearch.search(toSearchFor, GlobalSearchScope.projectScope(myProject), true).asIterable()) {
       PsiElement ref = ref1.getElement();
       if (ref.getLanguage() != GroovyLanguage.INSTANCE) {
         result.add(new OtherLanguageUsageInfo(ref1));

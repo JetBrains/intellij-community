@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style;
 
 import com.intellij.modcommand.ActionContext;
@@ -39,7 +39,7 @@ public final class ImportOnDemandIntention extends GrPsiUpdateIntention {
     if (!(containingFile instanceof GroovyFile)) return;
     ((GroovyFile)containingFile).addImport(importStatement);
 
-    for (PsiReference reference : ReferencesSearch.search(resolved, new LocalSearchScope(containingFile))) {
+    for (PsiReference reference : ReferencesSearch.search(resolved, new LocalSearchScope(containingFile)).asIterable()) {
       final PsiElement refElement = reference.getElement();
       final PsiElement parent = refElement.getParent();
       if (parent instanceof GrQualifiedReference<?>) {

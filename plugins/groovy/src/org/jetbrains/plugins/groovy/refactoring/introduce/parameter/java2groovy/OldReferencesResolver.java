@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter.java2groovy;
 
@@ -250,7 +250,7 @@ public class OldReferencesResolver {
 
     if (myExpr instanceof GrClosableBlock) {
       int count = 0;
-      for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(myParameterInitializer))) {
+      for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(myParameterInitializer)).asIterable()) {
         count++;
         if (count > 1) break;
       }

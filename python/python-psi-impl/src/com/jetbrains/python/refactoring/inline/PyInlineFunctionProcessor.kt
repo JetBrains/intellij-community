@@ -101,9 +101,9 @@ class PyInlineFunctionProcessor(project: Project,
     }
 
     // TODO: replace with PyRefactoringUtil#findUsages after PY-26881 and PY-36493 are fixed
-    var references = ReferencesSearch.search(myFunction, myRefactoringScope).findAll().asSequence()
+    var references = ReferencesSearch.search(myFunction, myRefactoringScope).asIterable().asSequence()
     PyiUtil.getPythonStub(myFunction)?.let { stub ->
-      references += ReferencesSearch.search(stub, myRefactoringScope).asSequence()
+      references += ReferencesSearch.search(stub, myRefactoringScope).asIterable().asSequence()
     }
     return references
       .distinct()

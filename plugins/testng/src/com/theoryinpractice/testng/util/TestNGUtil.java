@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -357,7 +357,7 @@ public final class TestNGUtil {
       final PsiManager manager = PsiManager.getInstance(filter.getProject());
       final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
       final GlobalSearchScope scope = projectScope.intersectWith(filter.getScope());
-      for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
+      for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject()).asIterable()) {
         if (filter.isAccepted(psiClass)) {
           if (indicator != null) {
             indicator.setText2(TestngBundle.message("testng.util.found.test.class", ReadAction.compute(psiClass::getQualifiedName)));

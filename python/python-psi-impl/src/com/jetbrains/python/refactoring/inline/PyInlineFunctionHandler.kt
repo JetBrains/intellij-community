@@ -136,11 +136,11 @@ class PyInlineFunctionHandler : InlineActionHandler() {
 
   private fun overridesMethod(function: PyFunction, project: Project): Boolean {
     return function.containingClass != null
-           && PySuperMethodsSearch.search(function, TypeEvalContext.codeAnalysis(project, function.containingFile)).any()
+           && PySuperMethodsSearch.search(function, TypeEvalContext.codeAnalysis(project, function.containingFile)).asIterable().any()
   }
 
   private fun isOverridden(function: PyFunction): Boolean {
-    return function.containingClass != null && PyOverridingMethodsSearch.search(function, true).any()
+    return function.containingClass != null && PyOverridingMethodsSearch.search(function, true).asIterable().any()
   }
 
   private fun hasStarArgs(function: PyFunction): Boolean {

@@ -77,7 +77,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
 
   private void processUsagesForMethod(final boolean deleteMethodHierarchy, PsiMethod method, int[] paramPermutation, String getterName, PsiMethod delegatedMethod,
                                       List<? super FixableUsageInfo> usages) {
-    for (PsiReference reference : ReferencesSearch.search(method)) {
+    for (PsiReference reference : ReferencesSearch.search(method).asIterable()) {
       final PsiElement referenceElement = reference.getElement();
       final PsiMethodCallExpression call = (PsiMethodCallExpression)referenceElement.getParent();
       final String access;

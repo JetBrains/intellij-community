@@ -42,7 +42,7 @@ public final class PyMethodOverridingInspection extends PyInspection {
         return;
       }
 
-      for (PsiElement psiElement : PySuperMethodsSearch.search(function, myTypeEvalContext)) {
+      for (PsiElement psiElement : PySuperMethodsSearch.search(function, myTypeEvalContext).asIterable()) {
         if (psiElement instanceof PyFunction baseMethod) {
           if (!PyUtil.isSignatureCompatibleTo(function, baseMethod, myTypeEvalContext)) {
             final PyClass baseClass = baseMethod.getContainingClass();

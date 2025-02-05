@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -149,7 +149,7 @@ final class ComponentNotRegisteredInspection extends DevKitJvmInspection.ForClas
     }
 
     final Query<PsiReference> search = ReferencesSearch.search(actionClass, actionClass.getUseScope());
-    for (PsiReference reference : search) {
+    for (PsiReference reference : search.asIterable()) {
       if (!(reference instanceof PsiJavaCodeReferenceElement)) continue;
 
       final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(reference.getElement(), PsiNewExpression.class);

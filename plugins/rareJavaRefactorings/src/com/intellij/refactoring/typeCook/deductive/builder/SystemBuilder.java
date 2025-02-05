@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook.deductive.builder;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -638,7 +638,7 @@ public class SystemBuilder {
           final PsiSearchHelper helper = PsiSearchHelper.getInstance(myManager.getProject());
           SearchScope scope = getScope(helper, method);
 
-          for (PsiReference ref : ReferencesSearch.search(method, scope, true)) {
+          for (PsiReference ref : ReferencesSearch.search(method, scope, true).asIterable()) {
             final PsiElement elt = ref.getElement();
 
             final PsiCallExpression call = PsiTreeUtil.getParentOfType(elt, PsiCallExpression.class);
@@ -950,7 +950,7 @@ public class SystemBuilder {
 
       if (!(element instanceof PsiExpression)) {
 
-        for (PsiReference ref : ReferencesSearch.search(element, getScope(helper, element), true)) {
+        for (PsiReference ref : ReferencesSearch.search(element, getScope(helper, element), true).asIterable()) {
           addUsage(system, ref.getElement());
         }
       }

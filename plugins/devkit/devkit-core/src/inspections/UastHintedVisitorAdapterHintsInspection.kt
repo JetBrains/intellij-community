@@ -1,31 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.registerUProblem
 import com.intellij.openapi.project.Project
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.*
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UClass
-import org.jetbrains.uast.UClassLiteralExpression
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UField
-import org.jetbrains.uast.UMethod
-import org.jetbrains.uast.UObjectLiteralExpression
-import org.jetbrains.uast.UParameter
-import org.jetbrains.uast.UQualifiedReferenceExpression
-import org.jetbrains.uast.USimpleNameReferenceExpression
-import org.jetbrains.uast.UVariable
-import org.jetbrains.uast.resolveToUElement
-import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.*
 import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.util.isNewArrayWithInitializer
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
@@ -120,6 +103,7 @@ internal class UastHintedVisitorAdapterHintsInspection : DevKitUastInspectionBas
 
   private fun PsiClass.collectUElementInterfaces(uElementClass: PsiClass): Iterable<PsiClass> {
     return ClassInheritorsSearch.search(this, this.useScope, true, true, false)
+             .asIterable()
              .filter { it.isInterface }
              .filter { it.isInheritor(uElementClass, true) } + this
   }

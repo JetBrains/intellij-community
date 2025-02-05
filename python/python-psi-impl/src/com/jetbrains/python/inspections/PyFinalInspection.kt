@@ -73,6 +73,7 @@ class PyFinalInspection : PyInspection() {
       if (cls != null) {
         PySuperMethodsSearch
           .search(node, myTypeEvalContext)
+          .asIterable()
           .asSequence()
           .filterIsInstance<PyFunction>()
           .firstOrNull { isFinal(it) }

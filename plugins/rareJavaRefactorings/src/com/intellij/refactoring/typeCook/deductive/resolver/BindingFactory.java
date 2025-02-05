@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook.deductive.resolver;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +50,7 @@ public class BindingFactory {
           descendants.add(aClass);
         }
         else {
-          for (PsiClass bInheritor : ClassInheritorsSearch.search(bClass, false)) {
+          for (PsiClass bInheritor : ClassInheritorsSearch.search(bClass, false).asIterable()) {
             getGreatestLowerClasses(bInheritor, aClass, descendants);
           }
         }

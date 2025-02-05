@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.metaModel.impl.extensions
 
 import com.intellij.devkit.workspaceModel.metaModel.impl.*
@@ -47,7 +47,7 @@ internal fun ClassDescriptor.inheritors(
 }
 
 private fun PsiClass.inheritors(scope: SearchScope): List<PsiClass> {
-  val inheritors = ClassInheritorsSearch.search(this, scope, true, true, false).filterNot { it.isAnonymous }
+  val inheritors = ClassInheritorsSearch.search(this, scope, true, true, false).asIterable().filterNot { it.isAnonymous }
   return inheritors.sortedBy { it.qualifiedName } //Sorting is needed for consistency in case of regeneration
 }
 
