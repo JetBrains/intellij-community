@@ -11,11 +11,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 
-enum class EndpointKind {
-  Client,
-  Provider
-}
-
 interface RequestDispatcher {
   suspend fun handleConnection(
     route: UID,
