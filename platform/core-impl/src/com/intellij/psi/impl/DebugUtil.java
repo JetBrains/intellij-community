@@ -661,6 +661,7 @@ public final class DebugUtil {
 
       return "file/doc text length different, " + fileDiagnostics +
                       " file.length=" + fileLength +
+                      "; file.isPhysical=" + file.isPhysical() +
                       "; doc.length=" + docLength +
                       "\nfile.text:\n" + fileText +
                       "\ndocument.text:\n" + docText;
