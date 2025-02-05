@@ -66,7 +66,7 @@ private class StubElementFactoryAdapter<Stub, Psi>(
   override fun createStub(psi: Psi, parentStub: StubElement<out PsiElement>?): Stub =
     type.createStub(psi, parentStub)
 
-  override fun shouldCreateStub(node: ASTNode?): Boolean =
+  override fun shouldCreateStub(node: ASTNode): Boolean =
     type.shouldCreateStub(node)
 
   override fun equals(other: Any?): Boolean =
@@ -84,7 +84,7 @@ private class LightStubElementFactoryAdapter<Stub, Psi>(
   override fun createStub(psi: Psi, parentStub: StubElement<out PsiElement>?): Stub =
     type.createStub(psi, parentStub)
 
-  override fun shouldCreateStub(node: ASTNode?): Boolean =
+  override fun shouldCreateStub(node: ASTNode): Boolean =
     type.shouldCreateStub(node)
 
   override fun createPsi(stub: Stub): Psi? =
