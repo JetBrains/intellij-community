@@ -3,11 +3,14 @@ package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.kernel.backend.newValueEntity
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.xdebugger.Obsolescent
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCallback
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.frame.presentation.XValuePresentation.XValueTextRenderer
 import com.intellij.xdebugger.impl.rhizome.XValueEntity
@@ -24,6 +27,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.NonNls
+import java.awt.Font
 import javax.swing.Icon
 
 internal class BackendXValueApi : XValueApi {
@@ -61,14 +65,17 @@ internal class BackendXValueApi : XValueApi {
             return
           }
 
+          // TODO[IJPL-160146]: data race with multiple setFullValueEvaluator calls
           channelCs.launch {
-            // TODO[IJPL-160146]: dispose full value evaluator
-            val fullValueEvaluatorEntity = newValueEntity(fullValueEvaluator)
+            change {
+              xValueEntity.update {
+                it[XValueEntity.FullValueEvaluator] = fullValueEvaluator
+              }
+            }
 
             presentations.trySend(
               XValuePresentationEvent.SetFullValueEvaluator(
                 XFullValueEvaluatorDto(
-                  XFullValueEvaluatorId(fullValueEvaluatorEntity.id),
                   fullValueEvaluator.linkText,
                   fullValueEvaluator.isEnabled,
                   fullValueEvaluator.isShowValuePopup,
@@ -86,7 +93,14 @@ internal class BackendXValueApi : XValueApi {
 
         override fun clearFullValueEvaluator() {
           // TODO[IJPL-160146]: data race with setFullValueEvaluator
-          presentations.trySend(XValuePresentationEvent.ClearFullValueEvaluator)
+          channelCs.launch {
+            change {
+              xValueEntity.update {
+                it[XValueEntity.FullValueEvaluator] = null
+              }
+            }
+            presentations.send(XValuePresentationEvent.ClearFullValueEvaluator)
+          }
         }
       }
       xValue.computePresentation(valueNode, xValuePlace)
@@ -175,6 +189,41 @@ internal class BackendXValueApi : XValueApi {
         xValueEntity.delete()
       }
     }
+  }
+
+  override suspend fun evaluateFullValue(xValueId: XValueId): Deferred<XFullValueEvaluatorResult> {
+    val xFullValueEvaluator = entity(XValueEntity.XValueId, xValueId)?.fullValueEvaluator
+                              ?: return CompletableDeferred(XFullValueEvaluatorResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.full.value.evaluator.not.available")))
+
+    val result = CompletableDeferred<XFullValueEvaluatorResult>()
+    var isObsolete = false
+
+    val callback = object : XFullValueEvaluationCallback, Obsolescent {
+      override fun isObsolete(): Boolean {
+        return isObsolete
+      }
+
+      override fun evaluated(fullValue: String) {
+        result.complete(XFullValueEvaluatorResult.Evaluated(fullValue))
+      }
+
+      override fun evaluated(fullValue: String, font: Font?) {
+        // TODO[IJPL-160146]: support Font?
+        result.complete(XFullValueEvaluatorResult.Evaluated(fullValue))
+      }
+
+      override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
+        result.complete(XFullValueEvaluatorResult.EvaluationError(errorMessage))
+      }
+    }
+
+    result.invokeOnCompletion {
+      isObsolete = true
+    }
+
+    xFullValueEvaluator.startEvaluation(callback)
+
+    return result
   }
 
 

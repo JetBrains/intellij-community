@@ -6,6 +6,7 @@ import com.intellij.xdebugger.frame.XValuePlace
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
@@ -17,6 +18,8 @@ interface XValueApi : RemoteApi<Unit> {
   suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>?
 
   suspend fun disposeXValue(xValueId: XValueId)
+
+  suspend fun evaluateFullValue(xValueId: XValueId): Deferred<XFullValueEvaluatorResult>
 
   companion object {
     @JvmStatic

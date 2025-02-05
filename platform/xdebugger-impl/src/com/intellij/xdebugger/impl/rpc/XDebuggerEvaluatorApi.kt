@@ -11,7 +11,6 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
-import com.jetbrains.rhizomedb.EID
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.DeferredSerializer
@@ -33,8 +32,6 @@ interface XDebuggerEvaluatorApi : RemoteApi<Unit> {
   suspend fun evaluateXExpression(evaluatorId: XDebuggerEvaluatorId, xExpressionDto: XExpressionDto, position: XSourcePositionDto?): Deferred<XEvaluationResult>
 
   suspend fun evaluateInDocument(evaluatorId: XDebuggerEvaluatorId, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult>
-
-  suspend fun evaluateFullValue(fullValueEvaluatorId: XFullValueEvaluatorId): Deferred<XFullValueEvaluatorResult>
 
   companion object {
     @JvmStatic
@@ -148,7 +145,6 @@ sealed interface XValuePresentationEvent {
 @ApiStatus.Internal
 @Serializable
 data class XFullValueEvaluatorDto(
-  @JvmField val xFullValueEvaluatorId: XFullValueEvaluatorId,
   @NlsSafe @JvmField val linkText: String,
   @JvmField val isEnabled: Boolean,
   @JvmField val isShowValuePopup: Boolean,
@@ -162,10 +158,6 @@ data class XFullValueEvaluatorDto(
     @JvmField val shortcut: String?,
   )
 }
-
-@ApiStatus.Internal
-@Serializable
-data class XFullValueEvaluatorId(val eid: EID)
 
 @ApiStatus.Internal
 @Serializable

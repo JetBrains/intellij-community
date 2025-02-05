@@ -61,41 +61,6 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
     }
   }
 
-  override suspend fun evaluateFullValue(fullValueEvaluatorId: XFullValueEvaluatorId): Deferred<XFullValueEvaluatorResult> {
-    val xFullValueEvaluator = fullValueEvaluatorId.eid.findValueEntity<XFullValueEvaluator>()?.value
-                              ?: return CompletableDeferred(XFullValueEvaluatorResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.full.value.evaluator.not.available")))
-
-    val result = CompletableDeferred<XFullValueEvaluatorResult>()
-    var isObsolete = false
-
-    val callback = object : XFullValueEvaluationCallback, Obsolescent {
-      override fun isObsolete(): Boolean {
-        return isObsolete
-      }
-
-      override fun evaluated(fullValue: String) {
-        result.complete(XFullValueEvaluatorResult.Evaluated(fullValue))
-      }
-
-      override fun evaluated(fullValue: String, font: Font?) {
-        // TODO[IJPL-160146]: support Font?
-        result.complete(XFullValueEvaluatorResult.Evaluated(fullValue))
-      }
-
-      override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-        result.complete(XFullValueEvaluatorResult.EvaluationError(errorMessage))
-      }
-    }
-
-    result.invokeOnCompletion {
-      isObsolete = true
-    }
-
-    xFullValueEvaluator.startEvaluation(callback)
-
-    return result
-  }
-
   private suspend fun evaluate(
     evaluatorId: XDebuggerEvaluatorId,
     evaluateFun: suspend (XDebuggerEvaluator, XEvaluationCallback) -> Unit,

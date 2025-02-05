@@ -100,7 +100,7 @@ internal class FrontendXValue(
             node.setPresentation(presentationEvent.icon?.icon(), FrontendXValuePresentation(presentationEvent), presentationEvent.hasChildren)
           }
           is XValuePresentationEvent.SetFullValueEvaluator -> {
-            node.setFullValueEvaluator(FrontendXFullValueEvaluator(cs, presentationEvent.fullValueEvaluatorDto))
+            node.setFullValueEvaluator(FrontendXFullValueEvaluator(cs, xValueDto.id, presentationEvent.fullValueEvaluatorDto))
           }
           XValuePresentationEvent.ClearFullValueEvaluator -> {
             if (node is XValueNodeEx) {
