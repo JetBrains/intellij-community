@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInsight.FileModificationService
@@ -200,7 +200,7 @@ private fun typeParameters(typeReference: KtTypeReference): List<KtTypeParameter
  */
 private fun removeUnusedTypeParameters(typeParameters: List<KtTypeParameter>) {
     val unusedTypeParams = typeParameters.filter { typeParameter ->
-        ReferencesSearch.search(typeParameter).none { (it as? KtSimpleNameReference)?.expression?.parent !is KtTypeConstraint }
+        ReferencesSearch.search(typeParameter).asIterable().none { (it as? KtSimpleNameReference)?.expression?.parent !is KtTypeConstraint }
     }
     if (unusedTypeParams.isEmpty()) return
     runWriteAction {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -116,7 +116,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
             val restoredElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(declaration) ?: return
             val restoredParam = restoredElement.getValueParameters().first()
 
-            val paramRefs = ReferencesSearch.search(restoredParam, LocalSearchScope(restoredElement)).toList()
+            val paramRefs = ReferencesSearch.search(restoredParam, LocalSearchScope(restoredElement)).asIterable().toList()
 
             editor.caretModel.moveToOffset(restoredElement.startOffset)
 
@@ -159,7 +159,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
         val description = RefactoringUIUtil.getDescription(element, false)
             .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 
-        if (HierarchySearchRequest(element, element.useScope, false).searchOverriders().any()) {
+        if (HierarchySearchRequest(element, element.useScope, false).searchOverriders().asIterable().any()) {
             CommonRefactoringUtil.showErrorHint(
                 project, editor, KotlinBundle.message("0.is.overridden.by.declaration.s.in.a.subclass", description), text, null
             )
@@ -207,7 +207,7 @@ class MoveMemberToCompanionObjectIntention : SelfTargetingRangeIntention<KtNamed
 
         project.runSynchronouslyWithProgress(KotlinBundle.message("searching.for.0", element.name.toString()), true) {
             runReadAction {
-                ReferencesSearch.search(element, element.useScope).mapNotNullTo(externalUsages) { ref ->
+                ReferencesSearch.search(element, element.useScope).asIterable().mapNotNullTo(externalUsages) { ref ->
                     ProgressManager.checkCanceled()
                     when (ref) {
                         is PsiReferenceExpression -> JavaUsageInfo(ref)

@@ -124,7 +124,7 @@ class KotlinFindClassUsagesHandler(
                     val ktClass = element as? KtClass
                     val psiClass = runReadAction { (ktClass?.toLightClass() ?: ktClass?.toFakeLightClass())?.takeIf { LambdaUtil.isFunctionalClass(it) } }
                     if (psiClass != null) {
-                        FunctionalExpressionSearch.search(psiClass, options.searchScope).all(processor)
+                        FunctionalExpressionSearch.search(psiClass, options.searchScope).asIterable().all(processor)
                     } else {
                         true
                     }

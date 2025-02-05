@@ -75,12 +75,12 @@ class MoveKotlinMethodProcessor(
         val internalUsages = mutableSetOf<UsageInfo>()
         val methodCallUsages = mutableSetOf<UsageInfo>()
 
-        methodCallUsages += ReferencesSearch.search(method, searchScope).mapNotNull { ref ->
+        methodCallUsages += ReferencesSearch.search(method, searchScope).asIterable().mapNotNull { ref ->
             KotlinMoveRenameUsage.createIfPossible(ref, method, addImportToOriginalFile = true, isInternal = method.isAncestor(ref.element))
         }
 
         if (targetVariableIsMethodParameter()) {
-            internalUsages += ReferencesSearch.search(targetVariable, searchScope).mapNotNull { ref ->
+            internalUsages += ReferencesSearch.search(targetVariable, searchScope).asIterable().mapNotNull { ref ->
                 KotlinMoveRenameUsage.createIfPossible(ref, targetVariable, addImportToOriginalFile = false, isInternal = true)
             }
         }

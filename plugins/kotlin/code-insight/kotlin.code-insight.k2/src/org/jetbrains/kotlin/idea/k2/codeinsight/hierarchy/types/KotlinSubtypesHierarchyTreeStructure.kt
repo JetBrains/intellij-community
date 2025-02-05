@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor
@@ -71,6 +71,7 @@ open class KotlinSubtypesHierarchyTreeStructure : HierarchyTreeStructure {
             if (klass is KtClass && klass.isAnnotation()) {
                 val javaAnnotations = if (psiClass != null) {
                     AnnotatedElementsSearch.searchPsiClasses(psiClass, searchScope.excludeKotlinSources(klass.project))
+                        .asIterable()
                         .filter { it.isAnnotationType }.asSequence()
                 } else emptySequence()
 
@@ -91,7 +92,7 @@ open class KotlinSubtypesHierarchyTreeStructure : HierarchyTreeStructure {
             }
 
             if (klass is PsiClass && klass.isAnnotationType) {
-                return AnnotatedElementsSearch.searchPsiClasses(klass, searchScope).filter { it.isAnnotationType }.asSequence()
+                return AnnotatedElementsSearch.searchPsiClasses(klass, searchScope).asIterable().filter { it.isAnnotationType }.asSequence()
             }
 
             val inheritors = KotlinFindUsagesSupport.searchInheritors(klass, searchScope, searchDeeply = false)
@@ -100,7 +101,7 @@ open class KotlinSubtypesHierarchyTreeStructure : HierarchyTreeStructure {
                 return inheritors
             }
 
-            return inheritors + FunctionalExpressionSearch.search(psiClass, searchScope)
+            return inheritors + FunctionalExpressionSearch.search(psiClass, searchScope).asIterable()
         }
     }
 }

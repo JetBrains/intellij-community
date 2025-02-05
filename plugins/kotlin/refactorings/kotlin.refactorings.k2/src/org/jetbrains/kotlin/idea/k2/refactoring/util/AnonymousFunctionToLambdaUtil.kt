@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.util
 
 import com.intellij.openapi.util.Key
@@ -95,7 +95,7 @@ object AnonymousFunctionToLambdaUtil {
             val needParameters = callElement == null
                     || typeParameterIndexes.isNotEmpty()
                     || parameters.count() > 1
-                    || parameters.any { parameter -> ReferencesSearch.search(parameter, LocalSearchScope(body)).any() }
+                    || parameters.any { parameter -> ReferencesSearch.search(parameter, LocalSearchScope(body)).asIterable().any() }
 
             if (needParameters) {
                 parameters.forEachIndexed { index, parameter ->

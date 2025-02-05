@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.nj2k;
 
 import com.intellij.codeInsight.Nullability;
@@ -664,7 +664,7 @@ class J2KNullityInferrer {
                     }
                 }
             } else if (grandParent instanceof PsiForeachStatement foreachStatement) {
-                for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(foreachStatement))) {
+                for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(foreachStatement)).asIterable()) {
                     final PsiElement place = reference.getElement();
                     if (place instanceof PsiReferenceExpression expr) {
                         final PsiElement parent =

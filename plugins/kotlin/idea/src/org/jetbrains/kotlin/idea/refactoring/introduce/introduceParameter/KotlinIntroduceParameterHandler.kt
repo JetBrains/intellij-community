@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter
 
@@ -169,7 +169,7 @@ open class KotlinIntroduceParameterHandler(
             ?: Collections.emptyList()
 
         val occurrencesToReplace = if (expression is KtProperty) {
-            ReferencesSearch.search(expression).mapNotNullTo(SmartList(expression.toRange())) { it.element.toRange() }
+            ReferencesSearch.search(expression).asIterable().mapNotNullTo(SmartList(expression.toRange())) { it.element.toRange() }
         } else {
             expression.toRange()
                 .match(targetParent, KotlinPsiUnifier.DEFAULT)
@@ -336,7 +336,7 @@ private fun findInternalUsagesOfParametersAndReceiver(
             targetParent.getValueParameters()
                 .filter { !it.hasValOrVar() }
                 .forEach {
-                    val paramUsages = ReferencesSearch.search(it).map { reference -> reference.element as KtElement }
+                    val paramUsages = ReferencesSearch.search(it).asIterable().map { reference -> reference.element as KtElement }
                     if (paramUsages.isNotEmpty()) {
                         usages.put(it, paramUsages)
                     }

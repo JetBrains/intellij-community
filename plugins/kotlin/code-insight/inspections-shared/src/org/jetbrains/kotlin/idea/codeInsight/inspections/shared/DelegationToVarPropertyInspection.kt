@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.*
@@ -26,7 +26,7 @@ internal class DelegationToVarPropertyInspection : AbstractKotlinInspection() {
             val containingClass = parameter.containingClassOrObject as? KtClass ?: return
             val isUsedForOtherClass = containingClass != delegatedSuperTypeEntry.getStrictParentOfType<KtClass>()
 
-            val canChangeToVal = ReferencesSearch.search(parameter, LocalSearchScope(containingClass)).none {
+            val canChangeToVal = ReferencesSearch.search(parameter, LocalSearchScope(containingClass)).asIterable().none {
                 val element = it.element
                 element != delegateExpression && !element.isMemberPropertyInitializer(containingClass) && element.hasAssignment()
             }

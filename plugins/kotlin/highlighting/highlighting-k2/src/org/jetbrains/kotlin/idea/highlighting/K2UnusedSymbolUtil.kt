@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
@@ -272,7 +272,7 @@ object K2UnusedSymbolUtil {
 
               val containingClassSearchScope = GlobalSearchScope.projectScope(project)
               val isRequiredToCallFunction =
-                  ReferencesSearch.search(KotlinReferencesSearchParameters(declarationContainingClass, containingClassSearchScope)).any { ref ->
+                  ReferencesSearch.search(KotlinReferencesSearchParameters(declarationContainingClass, containingClassSearchScope)).asIterable().any { ref ->
                       val userType = ref.element.parent as? KtUserType ?: return@any false
                       val typeArguments = userType.typeArguments
                       if (typeArguments.isEmpty()) return@any false
@@ -285,7 +285,7 @@ object K2UnusedSymbolUtil {
                       if (typeParameters.isEmpty()) return@any false
                       if (typeArguments.none { it.text in typeParameters }) return@any false
 
-                      ReferencesSearch.search(KotlinReferencesSearchParameters(callableDeclaration, containingClassSearchScope)).any {
+                      ReferencesSearch.search(KotlinReferencesSearchParameters(callableDeclaration, containingClassSearchScope)).asIterable().any {
                           val callElement = it.element.parent as? KtCallElement
                           callElement != null && callElement.typeArgumentList == null
                       }
@@ -366,7 +366,7 @@ object K2UnusedSymbolUtil {
               declarationContainingClass != null &&
               // when too many occurrences of this class, consider it used
               (isCheapEnoughToSearchUsages(declarationContainingClass) == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES ||
-              ReferencesSearch.search(KotlinReferencesSearchParameters(declarationContainingClass, useScope)).any {
+              ReferencesSearch.search(KotlinReferencesSearchParameters(declarationContainingClass, useScope)).asIterable().any {
                   val refElement = it.element
                   refElement.getStrictParentOfType<KtTypeAlias>() != null // ignore unusedness of type aliased classes - they are too hard to trace
                   || refElement.getStrictParentOfType<KtCallExpression>()?.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbol
@@ -445,6 +445,7 @@ object K2UnusedSymbolUtil {
   private fun hasBuiltInEnumFunctionReference(enumClass: KtClass?, useScope: SearchScope): Boolean {
       if (enumClass == null) return false
       val isFoundEnumFunctionReferenceViaSearch = ReferencesSearch.search(KotlinReferencesSearchParameters(enumClass, useScope))
+          .asIterable()
           .any { hasBuiltInEnumFunctionReference(it, enumClass) }
 
       return isFoundEnumFunctionReferenceViaSearch || hasEnumFunctionReferenceInEnumClass(enumClass)

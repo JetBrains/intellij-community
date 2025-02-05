@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
@@ -272,7 +272,7 @@ internal fun checkNewNameUsagesRetargeting(
             kotlinOptions = KotlinReferencesSearchOptions(searchForOperatorConventions = operator)
         )
 
-        val usages = ReferencesSearch.search(searchParameters).mapTo(SmartList<UsageInfo>()) { MoveRenameUsageInfo(it, candidate) }
+        val usages = ReferencesSearch.search(searchParameters).asIterable().mapTo(SmartList<UsageInfo>()) { MoveRenameUsageInfo(it, candidate) }
         checkUsagesRetargeting(candidate, declaration, currentName, false, listOf(descriptor), usages, newUsages)
         usages.filterIsInstanceTo<KtResolvableCollisionUsageInfo, MutableList<UsageInfo>>(newUsages)
     }

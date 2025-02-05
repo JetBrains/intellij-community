@@ -151,6 +151,7 @@ open class MoveKotlinDeclarationsProcessor(
                 val foundReferences = HashSet<PsiReference>()
                 val results = ReferencesSearch
                     .search(lightElement, searchScope)
+                    .asIterable()
                     .mapNotNullTo(ArrayList()) { ref ->
                         if (foundReferences.add(ref) && elementsToMove.none { it.isAncestor(ref.element) }) {
                             KotlinMoveRenameUsage.createIfPossible(ref, lightElement, addImportToOriginalFile = true, isInternal = false)

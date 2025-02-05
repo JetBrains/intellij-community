@@ -27,7 +27,7 @@ class ValToObjectIntention: KotlinApplicableModCommandAction<KtProperty, Unit>(K
 
     override fun KaSession.prepareContext(element: KtProperty): Unit? {
         // disable if has non-Kotlin usages
-        return if (ReferencesSearch.search(element).all { it is KtReference && it.element.parent !is KtCallableReferenceExpression }) {
+        return if (ReferencesSearch.search(element).asIterable().all { it is KtReference && it.element.parent !is KtCallableReferenceExpression }) {
             Unit
         } else {
             null

@@ -41,6 +41,7 @@ fun UsageReplacementStrategy.replaceUsagesInWholeProject(
         runReadAction {
             val searchScope = KotlinSourceFilterScope.projectSources(GlobalSearchScope.projectScope(project), project)
             ReferencesSearch.search(targetPsiElement, searchScope)
+                .asIterable()
                 .filterIsInstance<KtSimpleReference<KtReferenceExpression>>()
                 .map { ref -> ref.expression }
         }

@@ -363,7 +363,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                         }
 
                         if (psiClass != null) {
-                            FunctionalExpressionSearch.search(psiClass, options.searchScope).all(processor)
+                            FunctionalExpressionSearch.search(psiClass, options.searchScope).asIterable().all(processor)
                         } else {
                             true
                         }

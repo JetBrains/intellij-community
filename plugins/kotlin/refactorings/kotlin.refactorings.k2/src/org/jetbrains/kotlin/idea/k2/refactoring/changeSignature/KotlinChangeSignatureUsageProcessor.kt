@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.openapi.project.Project
@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
@@ -43,6 +42,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.types.Variance
@@ -56,7 +56,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             val psiMethod = changeInfo.method
             val containingClass = psiMethod.containingClass
             if (containingClass != null && LambdaUtil.isFunctionalClass(containingClass)) {
-                return ReferencesSearch.search(containingClass).mapNotNull {ref ->
+                return ReferencesSearch.search(containingClass).asIterable().mapNotNull {ref ->
                     val ktElement = ref.element as? KtElement ?: return@mapNotNull null
                     val ktCallExpression = ktElement.parent as? KtCallExpression ?: return@mapNotNull null
                     if (ktCallExpression.calleeExpression == ktElement && ktCallExpression.lambdaArguments.size == 1) {
@@ -74,7 +74,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
         if (ktCallableDeclaration is KtNamedFunction && !ktCallableDeclaration.hasBody()) {
             ktCallableDeclaration.toLightMethods().forEach { lightMethod ->
-                FunctionalExpressionSearch.search(lightMethod).forEach { functionalExpression ->
+                FunctionalExpressionSearch.search(lightMethod).asIterable().forEach { functionalExpression ->
                     val provider = ChangeSignatureUsageProviders.findProvider(functionalExpression.language)
                     if (provider != null) {
                         val usageInfo = provider.createOverrideUsageInfo(

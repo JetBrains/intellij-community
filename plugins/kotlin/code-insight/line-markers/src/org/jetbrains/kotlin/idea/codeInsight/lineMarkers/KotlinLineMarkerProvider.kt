@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.lineMarkers
 
@@ -220,7 +220,7 @@ object ClassInheritorsTooltip : Function<PsiElement, String> {
 private fun findFunctionalExpressions(ktClass: KtClass): List<PsiElement> {
     val lightClass = ktClass.toLightClass()
     if (lightClass != null && LambdaUtil.isFunctionalClass(lightClass)) {
-        return FunctionalExpressionSearch.search(lightClass, ktClass.useScope).asSequence().take(5).toList()
+        return FunctionalExpressionSearch.search(lightClass, ktClass.useScope).asIterable().asSequence().take(5).toList()
     }
     return emptyList()
 }

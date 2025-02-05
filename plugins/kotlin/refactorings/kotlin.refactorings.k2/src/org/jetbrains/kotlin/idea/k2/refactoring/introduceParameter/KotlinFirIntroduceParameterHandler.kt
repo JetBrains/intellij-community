@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter
 
 import com.intellij.CommonBundle
@@ -85,7 +85,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
         targetParent.getValueParameters()
             .filter { !it.hasValOrVar() }
             .forEach {
-                val paramUsages = ReferencesSearch.search(it).map { reference -> reference.element as KtElement }
+                val paramUsages = ReferencesSearch.search(it).asIterable().map { reference -> reference.element as KtElement }
                 if (paramUsages.isNotEmpty()) {
                     usages.put(it, paramUsages)
                 }
@@ -213,7 +213,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
                 ?: Collections.emptyList()
 
             val occurrencesToReplace = if (expression is KtProperty) {
-                ReferencesSearch.search(expression).mapNotNullTo(SmartList(expression.toRange())) { it.element.toRange() }
+                ReferencesSearch.search(expression).asIterable().mapNotNullTo(SmartList(expression.toRange())) { it.element.toRange() }
             } else {
                 K2SemanticMatcher.findMatches(patternElement = expression, scopeElement = targetParent)
                     .filterNot {
