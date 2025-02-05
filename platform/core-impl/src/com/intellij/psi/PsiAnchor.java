@@ -126,7 +126,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
       IElementType elementType = elt.getIElementType();
       StubElementFactory<?, ?> factory = StubElementRegistryService.getInstance().getStubFactory(elementType);
       if (factory == null) return null;
-      if (elt.getStub() != null || factory.shouldCreateStub(element.getNode())) {
+      if (elt.getStub() != null || StubElementUtil.shouldCreateStubForPsi(factory, element)) {
         int index = calcStubIndex((StubBasedPsiElement<?>)element);
         if (index != -1) {
           return new StubIndexReference(containingFile, index, containingFile.getLanguage(), elementType);

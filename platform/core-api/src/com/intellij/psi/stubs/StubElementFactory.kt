@@ -14,5 +14,5 @@ interface StubElementFactory<Stub, Psi> where Psi : PsiElement, Stub : StubEleme
 
   fun createPsi(stub: Stub): Psi?
 
-  fun shouldCreateStub(node: ASTNode?): Boolean = true
+  fun shouldCreateStub(node: ASTNode): Boolean = true
 }

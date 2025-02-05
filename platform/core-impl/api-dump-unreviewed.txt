@@ -4273,6 +4273,8 @@ c:com.intellij.psi.stubs.PsiFileStubImpl
 - rootsAreSet():Z
 - setPsi(com.intellij.psi.PsiFile):V
 - setStubRoots(com.intellij.psi.stubs.PsiFileStub[]):V
+*f:com.intellij.psi.stubs.StubElementUtil
+- sf:shouldCreateStubForPsi(com.intellij.psi.stubs.StubElementFactory,com.intellij.psi.PsiElement):Z
 f:com.intellij.psi.stubs.StubTextInconsistencyException
 - java.lang.RuntimeException
 - com.intellij.openapi.diagnostic.ExceptionWithAttachments
