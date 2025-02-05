@@ -15,17 +15,17 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class GitHubAlertBlockExtensionTest {
+public class GitHubAlertBlockExtensionTest {
     private val parser = Parser.builder().extensions(listOf(GitHubAlertProcessorExtension.parserExtension)).build()
 
     private val renderer =
         TextContentRenderer.builder().extensions(listOf(GitHubAlertProcessorExtension.textRendererExtension)).build()
 
     @Test
-    fun `should parse note alert`() {
+    public fun `should parse note alert`() {
         val rawMarkdown =
             """
-            |> [!NOTE]  
+            |> [!NOTE]
             |> Highlights information that users should take into account, even when skimming.
             """
                 .trimMargin()
@@ -56,11 +56,11 @@ class GitHubAlertBlockExtensionTest {
     }
 
     @Test
-    fun `should parse tip alert`() {
+    public fun `should parse tip alert`() {
         val parsed =
             parser.parse(
                 """
-            |> [!TIP]  
+            |> [!TIP]
             |> Optional information to help a user be more successful.
             """
                     .trimMargin()
@@ -90,11 +90,11 @@ class GitHubAlertBlockExtensionTest {
     }
 
     @Test
-    fun `should parse important alert`() {
+    public fun `should parse important alert`() {
         val parsed =
             parser.parse(
                 """
-            |> [!IMPORTANT]  
+            |> [!IMPORTANT]
             |> Crucial information necessary for users to succeed.
             """
                     .trimMargin()
@@ -127,11 +127,11 @@ class GitHubAlertBlockExtensionTest {
     }
 
     @Test
-    fun `should parse warning alert`() {
+    public fun `should parse warning alert`() {
         val parsed =
             parser.parse(
                 """
-            |> [!WARNING]  
+            |> [!WARNING]
             |> Critical content demanding immediate user attention due to potential risks.
             """
                     .trimMargin()
@@ -161,11 +161,11 @@ class GitHubAlertBlockExtensionTest {
     }
 
     @Test
-    fun `should parse caution alert`() {
+    public fun `should parse caution alert`() {
         val parsed =
             parser.parse(
                 """
-            |> [!CAUTION]  
+            |> [!CAUTION]
             |> Negative potential consequences of an action.
             """
                     .trimMargin()
@@ -195,11 +195,11 @@ class GitHubAlertBlockExtensionTest {
     }
 
     @Test
-    fun `should parse lowercase note alert`() {
+    public fun `should parse lowercase note alert`() {
         val parsed =
             parser.parse(
                 """
-            |> [!note]  
+            |> [!note]
             |> Highlights information that users should take into account, even when skimming.
             """
                     .trimMargin()
@@ -229,11 +229,11 @@ class GitHubAlertBlockExtensionTest {
     }
 
     @Test
-    fun `should parse lowercase tip alert`() {
+    public fun `should parse lowercase tip alert`() {
         val parsed =
             parser.parse(
                 """
-            |> [!tip]  
+            |> [!tip]
             |> Optional information to help a user be more successful.
             """
                     .trimMargin()
@@ -263,11 +263,11 @@ class GitHubAlertBlockExtensionTest {
     }
 
     @Test
-    fun `should parse lowercase important alert`() {
+    public fun `should parse lowercase important alert`() {
         val parsed =
             parser.parse(
                 """
-            |> [!important]  
+            |> [!important]
             |> Crucial information necessary for users to succeed.
             """
                     .trimMargin()
@@ -300,11 +300,11 @@ class GitHubAlertBlockExtensionTest {
     }
 
     @Test
-    fun `should parse lowercase warning alert`() {
+    public fun `should parse lowercase warning alert`() {
         val parsed =
             parser.parse(
                 """
-            |> [!warning]  
+            |> [!warning]
             |> Critical content demanding immediate user attention due to potential risks.
             """
                     .trimMargin()
@@ -334,11 +334,11 @@ class GitHubAlertBlockExtensionTest {
     }
 
     @Test
-    fun `should parse lowercase caution alert`() {
+    public fun `should parse lowercase caution alert`() {
         val parsed =
             parser.parse(
                 """
-            |> [!caution]  
+            |> [!caution]
             |> Negative potential consequences of an action.
             """
                     .trimMargin()
@@ -368,11 +368,11 @@ class GitHubAlertBlockExtensionTest {
     }
 
     @Test
-    fun `should trim trailing and leading empty lines`() {
+    public fun `should trim trailing and leading empty lines`() {
         val parsed =
             parser.parse(
                 """
-            |> [!CAUTION] 
+            |> [!CAUTION]
             |>
             |> Negative potential consequences of an action.
             |>
@@ -404,11 +404,11 @@ class GitHubAlertBlockExtensionTest {
     }
 
     @Test
-    fun `should parse malformed entry as blockquote - space after exclamation mark`() {
+    public fun `should parse malformed entry as blockquote - space after exclamation mark`() {
         val parsed =
             parser.parse(
                 """
-            |> [! CAUTION]  
+            |> [! CAUTION]
             |> Negative potential consequences of an action.
             """
                     .trimMargin()
@@ -427,12 +427,12 @@ class GitHubAlertBlockExtensionTest {
     }
 
     @Test
-    fun `should parse malformed entry as blockquote - type not on first line`() {
+    public fun `should parse malformed entry as blockquote - type not on first line`() {
         val parsed =
             parser.parse(
                 """
             |>
-            |> [! CAUTION]  
+            |> [! CAUTION]
             |> Negative potential consequences of an action.
             """
                     .trimMargin()
@@ -451,11 +451,11 @@ class GitHubAlertBlockExtensionTest {
     }
 
     @Test
-    fun `should parse malformed entry as blockquote - space before exclamation mark`() {
+    public fun `should parse malformed entry as blockquote - space before exclamation mark`() {
         val parsed =
             parser.parse(
                 """
-            |> [ !CAUTION]  
+            |> [ !CAUTION]
             |> Negative potential consequences of an action.
             """
                     .trimMargin()
@@ -474,11 +474,11 @@ class GitHubAlertBlockExtensionTest {
     }
 
     @Test
-    fun `should parse malformed entry as blockquote - space after type`() {
+    public fun `should parse malformed entry as blockquote - space after type`() {
         val parsed =
             parser.parse(
                 """
-            |> [!CAUTION ]  
+            |> [!CAUTION ]
             |> Negative potential consequences of an action.
             """
                     .trimMargin()
@@ -497,7 +497,7 @@ class GitHubAlertBlockExtensionTest {
     }
 
     @Test
-    fun `should parse malformed entry as blockquote - missing newline`() {
+    public fun `should parse malformed entry as blockquote - missing newline`() {
         val parsed =
             parser.parse(
                 """
