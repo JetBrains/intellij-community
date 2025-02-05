@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -280,7 +280,7 @@ public final class MethodUtils {
       return false;
     }
     final Query<PsiClass> search = ClassInheritorsSearch.search(baseClass, baseClass.getUseScope(), true, true, true);
-    for (PsiClass inheritor : search) {
+    for (PsiClass inheritor : search.asIterable()) {
       final PsiMethod overridingMethod = inheritor.findMethodBySignature(method, false);
       if (overridingMethod != null) {
         return true;

@@ -92,7 +92,7 @@ public final class ReuseOfLocalVariableInspection extends BaseInspection {
       final Query<PsiReference> query = ReferencesSearch.search(variable, scope, false);
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();
-      for (PsiReference reference : query) {
+      for (PsiReference reference : query.asIterable()) {
         final PsiElement referenceElement = reference.getElement();
         final TextRange textRange = assignmentStatement.getTextRange();
         if (referenceElement.getTextOffset() <= textRange.getEndOffset()) {

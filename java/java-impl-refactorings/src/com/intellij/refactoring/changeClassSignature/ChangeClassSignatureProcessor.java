@@ -80,7 +80,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     List<UsageInfo> result = new ArrayList<>();
 
     boolean hadTypeParameters = myClass.hasTypeParameters();
-    for (final PsiReference reference : ReferencesSearch.search(myClass, projectScope, false)) {
+    for (final PsiReference reference : ReferencesSearch.search(myClass, projectScope, false).asIterable()) {
       if (reference.getElement() instanceof PsiJavaCodeReferenceElement referenceElement) {
         PsiElement parent = referenceElement.getParent();
         if (parent instanceof PsiTypeElement && (parent.getParent() instanceof PsiInstanceOfExpression ||

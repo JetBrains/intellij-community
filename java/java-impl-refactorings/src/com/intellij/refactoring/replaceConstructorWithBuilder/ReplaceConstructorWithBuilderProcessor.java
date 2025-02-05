@@ -88,7 +88,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
       JavaPsiFacade.getInstance(myProject).findClass(builderQualifiedName, GlobalSearchScope.projectScope(myProject));
 
     for (PsiMethod constructor : myConstructors) {
-      for (PsiReference reference : ReferencesSearch.search(constructor)) {
+      for (PsiReference reference : ReferencesSearch.search(constructor).asIterable()) {
         final PsiElement element = reference.getElement();
         final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
         if (newExpression != null && !PsiTreeUtil.isAncestor(builderClass, element, false) && newExpression.getAnonymousClass() == null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete.impl
 
 import com.intellij.model.Pointer
@@ -50,7 +50,7 @@ private fun findDependentTargets(rootTarget: SafeDeleteTarget, targets: MutableS
   if (targets.add(rootTarget.createPointer())) {
     SearchService.getInstance().searchParameters(
       SafeDeleteAdditionalTargetsSearchParameters(rootTarget, project)
-    ).forEach {
+    ).asIterable().forEach {
       findDependentTargets(it, targets, project)
     }
   }

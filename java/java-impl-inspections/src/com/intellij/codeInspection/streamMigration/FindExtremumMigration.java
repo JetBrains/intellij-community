@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 
@@ -182,7 +182,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
                                     @NotNull String firstExprVarName,
                                     @NotNull PsiVariable secondExprVariable) {
     PsiExpression secondCopy = (PsiExpression)second.copy();
-    for (PsiReference ref : ReferencesSearch.search(secondExprVariable, new LocalSearchScope(secondCopy))) {
+    for (PsiReference ref : ReferencesSearch.search(secondExprVariable, new LocalSearchScope(secondCopy)).asIterable()) {
       if (ref instanceof PsiReferenceExpression) ExpressionUtils.bindReferenceTo((PsiReferenceExpression)ref, firstExprVarName);
     }
     return ourEquivalence.expressionsAreEquivalent(first, secondCopy);

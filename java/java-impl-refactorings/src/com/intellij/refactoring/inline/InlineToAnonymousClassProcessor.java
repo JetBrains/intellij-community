@@ -66,7 +66,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       return new UsageInfo[] { new UsageInfo(myCallToInline) };
     }
     Set<UsageInfo> usages = new HashSet<>();
-    for (PsiReference reference : ReferencesSearch.search(myClass, myRefactoringScope)) {
+    for (PsiReference reference : ReferencesSearch.search(myClass, myRefactoringScope).asIterable()) {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
@@ -159,7 +159,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         super.visitParameter(parameter);
         if (!myClass.isEquivalentTo(PsiUtil.resolveClassInType(parameter.getType()))) return;
 
-        for (PsiReference psiReference : ReferencesSearch.search(parameter)) {
+        for (PsiReference psiReference : ReferencesSearch.search(parameter).asIterable()) {
           final PsiElement refElement = psiReference.getElement();
           if (refElement instanceof PsiExpression) {
             final PsiReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(refElement, PsiReferenceExpression.class);

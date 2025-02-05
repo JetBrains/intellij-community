@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -203,7 +203,7 @@ public final class RefactoringUtil {
                                               String newName,
                                               SearchScope scope,
                                               final boolean ignoreAccessScope) throws IncorrectOperationException {
-    for (PsiReference reference : ReferencesSearch.search(variable, scope, ignoreAccessScope)) {
+    for (PsiReference reference : ReferencesSearch.search(variable, scope, ignoreAccessScope).asIterable()) {
       reference.handleElementRename(newName);
     }
   }
@@ -518,7 +518,7 @@ public final class RefactoringUtil {
       final PsiType substitutedType = substitutor.substitute(parameter);
       final PsiType erasedType = substitutedType == null ? TypeConversionUtil.erasure(factory.createType(parameter))
                                                          : substitutedType;
-      for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(member))) {
+      for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(member)).asIterable()) {
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiTypeElement) {
@@ -707,7 +707,7 @@ public final class RefactoringUtil {
   }
 
   public static boolean isModifiedInScope(PsiVariable variable, PsiElement scope) {
-    for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(scope), false)) {
+    for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(scope), false).asIterable()) {
       if (isAssignmentLHS(reference.getElement())) return true;
     }
     return false;

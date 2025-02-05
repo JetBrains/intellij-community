@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.application.options.CodeStyle;
@@ -1057,7 +1057,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (!data.passAsParameter) continue;
       final PsiParameter psiParameter = newMethod.getParameterList().getParameters()[i++];
       final PsiType paramType = psiParameter.getType();
-      for (PsiReference reference : ReferencesSearch.search(psiParameter, new LocalSearchScope(body))){
+      for (PsiReference reference : ReferencesSearch.search(psiParameter, new LocalSearchScope(body)).asIterable()){
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiTypeCastExpression typeCastExpression) {
@@ -1553,7 +1553,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           localSearchScope = new LocalSearchScope(myElements);
         }
 
-        for (PsiReference reference : ReferencesSearch.search(variable, localSearchScope)) {
+        for (PsiReference reference : ReferencesSearch.search(variable, localSearchScope).asIterable()) {
           reference.handleElementRename(data.name);
 
           final PsiElement element = reference.getElement();

@@ -94,7 +94,7 @@ public final class TypeParameterExtendsFinalClassInspection extends BaseInspecti
       final Project project = typeParameter.getProject();
       final PsiJavaCodeReferenceElement classReference = JavaPsiFacade.getElementFactory(project).createReferenceElementByType(types[0]);
       final Query<PsiReference> query = ReferencesSearch.search(typeParameter, typeParameter.getUseScope());
-      for (PsiReference reference : query) {
+      for (PsiReference reference : query.asIterable()) {
         final PsiElement referenceElement = reference.getElement();
         referenceElement.replace(classReference);
       }

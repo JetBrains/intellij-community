@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -62,7 +62,7 @@ public class RemoveAnnotationQuickFix extends ModCommandQuickFix {
 
     if (myRemoveInheritors && qualifiedName != null && !IntentionPreviewUtils.isIntentionPreviewActive()) {
       if (listOwner instanceof PsiMethod method) {
-        for (PsiMethod psiMethod : OverridingMethodsSearch.search(method)) {
+        for (PsiMethod psiMethod : OverridingMethodsSearch.search(method).asIterable()) {
           if (psiMethod.isPhysical() && !NullableStuffInspectionBase.shouldSkipOverriderAsGenerated(psiMethod)) {
             registerAnnotation(AnnotationUtil.findAnnotation(psiMethod, qualifiedName), psiMethod, physical, externalOwners);
           }
@@ -74,7 +74,7 @@ public class RemoveAnnotationQuickFix extends ModCommandQuickFix {
         int index = method.getParameterList().getParameterIndex(parameter);
         if (index < 0) return ModCommand.nop();
 
-        for (PsiMethod psiMethod : OverridingMethodsSearch.search(method)) {
+        for (PsiMethod psiMethod : OverridingMethodsSearch.search(method).asIterable()) {
           if (psiMethod.isPhysical() && !NullableStuffInspectionBase.shouldSkipOverriderAsGenerated(psiMethod)) {
             PsiParameter subParameter = psiMethod.getParameterList().getParameter(index);
             if (subParameter != null) {

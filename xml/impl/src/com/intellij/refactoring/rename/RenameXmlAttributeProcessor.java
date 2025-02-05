@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.lang.xml.XMLLanguage;
@@ -92,7 +92,7 @@ public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
       if (!oldElement.isValid() || oldElement == originalElement) continue;
       final PsiElement newElement = reference.handleElementRename(newName);
       if (!oldElement.isValid()) {
-        for (PsiReference psiReference : ReferencesSearch.search(originalElement, new LocalSearchScope(newElement), false)) {
+        for (PsiReference psiReference : ReferencesSearch.search(originalElement, new LocalSearchScope(newElement), false).asIterable()) {
           queue.addLast(psiReference);
         }
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -399,7 +399,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
   }
 
   private void findDefaultConstructorReferences(final ArrayList<UsageInfo> result) {
-    for (PsiReference ref : ReferencesSearch.search(myMember)) {
+    for (PsiReference ref : ReferencesSearch.search(myMember).asIterable()) {
       PsiElement element = ref.getElement();
       if (element.getParent() instanceof PsiNewExpression newExpression) {
         PsiElement qualifier = newExpression.getQualifier();

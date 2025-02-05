@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.anonymousToInner;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -659,7 +659,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
   private void renameReferences(PsiElement scope) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(myManager.getProject());
     for (VariableInfo info : myVariableInfos) {
-      for (PsiReference reference : ReferencesSearch.search(info.variable, new LocalSearchScope(scope))) {
+      for (PsiReference reference : ReferencesSearch.search(info.variable, new LocalSearchScope(scope)).asIterable()) {
         PsiElement ref = reference.getElement();
         PsiIdentifier identifier = (PsiIdentifier)((PsiJavaCodeReferenceElement)ref).getReferenceNameElement();
         assert identifier != null;

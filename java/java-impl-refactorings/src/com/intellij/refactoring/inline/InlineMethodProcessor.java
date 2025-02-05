@@ -141,7 +141,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (myReference != null) {
       usages.add(new UsageInfo(myReference.getElement()));
     }
-    for (PsiReference reference : MethodReferencesSearch.search(myMethod, myRefactoringScope, true)) {
+    for (PsiReference reference : MethodReferencesSearch.search(myMethod, myRefactoringScope, true).asIterable()) {
       usages.add(new UsageInfo(reference.getElement()));
     }
 

@@ -162,7 +162,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     final PsiManager manager = myMethod.getManager();
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(manager.getProject());
     final List<UsageInfo> usages = new ArrayList<>();
-    for (PsiReference ref : ReferencesSearch.search(myMethod, searchScope, false)) {
+    for (PsiReference ref : ReferencesSearch.search(myMethod, searchScope, false).asIterable()) {
       final PsiElement element = ref.getElement();
       if (element instanceof PsiReferenceExpression) {
         boolean isInternal = PsiTreeUtil.isAncestor(myMethod, element, true);

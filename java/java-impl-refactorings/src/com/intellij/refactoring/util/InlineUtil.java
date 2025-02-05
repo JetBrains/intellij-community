@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -330,7 +330,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
           name = newName;
         }
         if (!name.equals(oldName)) {
-          for (PsiReference reference : ReferencesSearch.search(named, new LocalSearchScope(renameScope), true)) {
+          for (PsiReference reference : ReferencesSearch.search(named, new LocalSearchScope(renameScope), true).asIterable()) {
             reference.handleElementRename(name);
           }
           PsiElementFactory factory = JavaPsiFacade.getElementFactory(scope.getProject());

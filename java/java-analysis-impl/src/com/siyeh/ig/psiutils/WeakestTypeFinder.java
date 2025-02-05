@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -80,7 +80,7 @@ public final class WeakestTypeFinder {
 
     final Query<PsiReference> query = ReferencesSearch.search(variableOrMethod, variableOrMethod.getUseScope());
     boolean hasUsages = false;
-    for (PsiReference reference : query) {
+    for (PsiReference reference : query.asIterable()) {
       ProgressManager.checkCanceled();
       hasUsages = true;
       PsiElement referenceElement = reference.getElement();
@@ -532,7 +532,7 @@ public final class WeakestTypeFinder {
   private static @Nullable PsiClass getVisibleInheritor(@NotNull PsiClass superClass, PsiClass upperBound, PsiElement context) {
     final Query<PsiClass> search = DirectClassInheritorsSearch.search(superClass, context.getResolveScope());
     final Project project = superClass.getProject();
-    for (PsiClass aClass : search) {
+    for (PsiClass aClass : search.asIterable()) {
       ProgressManager.checkCanceled();
       if (aClass.isInheritor(superClass, true) && upperBound.isInheritor(aClass, true)) {
         if (PsiUtil.isAccessible(project, aClass, context, null)) {

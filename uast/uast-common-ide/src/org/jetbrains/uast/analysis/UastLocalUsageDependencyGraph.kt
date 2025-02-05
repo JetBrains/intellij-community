@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.analysis
 
 import com.intellij.openapi.diagnostic.debug
@@ -111,7 +111,7 @@ class UastLocalUsageDependencyGraph private constructor(
       val searchScope = LocalSearchScope(method.sourcePsi!!)
       for ((parameter, value) in argumentValues) {
         val parameterValueAsDependency = Dependency.ConnectionDependency(value.extractBranchesResultAsDependency(), callerGraph)
-        for (reference in ReferencesSearch.search(parameter.sourcePsi!!, searchScope).asSequence().mapNotNull { it.element.toUElement() }) {
+        for (reference in ReferencesSearch.search(parameter.sourcePsi!!, searchScope).asIterable().asSequence().mapNotNull { it.element.toUElement() }) {
           parameterUsagesDependencies[reference] = mutableSetOf(parameterValueAsDependency)
           val referenceAsDependent = Dependent.CommonDependent(reference)
           for (valueElement in parameterValueAsDependency.elements) {

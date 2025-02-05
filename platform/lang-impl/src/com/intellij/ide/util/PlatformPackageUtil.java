@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -90,7 +90,7 @@ public final class PlatformPackageUtil {
   private static @Nullable PsiDirectory getWritableModuleDirectory(@NotNull Query<? extends VirtualFile> vFiles,
                                                                    GlobalSearchScope scope,
                                                                    PsiManager manager) {
-    for (VirtualFile vFile : vFiles) {
+    for (VirtualFile vFile : vFiles.asIterable()) {
       if (!scope.contains(vFile)) continue;
       PsiDirectory directory = manager.findDirectory(vFile);
       if (directory != null && directory.isValid() && directory.isWritable()) {

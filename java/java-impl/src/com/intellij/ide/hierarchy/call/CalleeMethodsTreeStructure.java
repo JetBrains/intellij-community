@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -47,7 +47,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     List<CallHierarchyNodeDescriptor> result = new ArrayList<>();
 
     // also add overriding methods as children when possible
-    Iterable<PsiMethod> allMethods = (baseClass == null) ? methods : ContainerUtil.concat(methods, OverridingMethodsSearch.search(method));
+    Iterable<PsiMethod> allMethods = (baseClass == null) ? methods : ContainerUtil.concat(methods, OverridingMethodsSearch.search(method).asIterable());
     for (PsiMethod callee : allMethods) {
       if (baseClass != null && !isInScope(baseClass, callee, myScopeType)
           || JavaCallReferenceProcessor.isRecursiveNode(callee, descriptor)) {

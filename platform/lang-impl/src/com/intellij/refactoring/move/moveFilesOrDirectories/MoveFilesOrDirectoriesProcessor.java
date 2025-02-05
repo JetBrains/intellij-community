@@ -92,7 +92,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     List<UsageInfo> result = new ArrayList<>();
     for (PsiElement element : myElementsToMove) {
       if (mySearchForReferences) {
-        for (PsiReference reference : ReferencesSearch.search(element, GlobalSearchScope.projectScope(myProject))) {
+        for (PsiReference reference : ReferencesSearch.search(element, GlobalSearchScope.projectScope(myProject)).asIterable()) {
           result.add(new MovedFileOrDirectoryUsageInfo(reference, element));
         }
       }

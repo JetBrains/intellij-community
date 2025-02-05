@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.*;
@@ -105,7 +105,7 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
 
   public static boolean processModifiableInheritorsUnderProgress(@NotNull PsiMethod method, @NotNull Consumer<? super PsiMethod> consumer) {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      for (PsiMethod psiMethod : OverridingMethodsSearch.search(method)) {
+      for (PsiMethod psiMethod : OverridingMethodsSearch.search(method).asIterable()) {
         ReadAction.run(() -> {
           if (psiMethod.isPhysical() && !NullableStuffInspectionBase.shouldSkipOverriderAsGenerated(psiMethod)) {
             consumer.accept(psiMethod);

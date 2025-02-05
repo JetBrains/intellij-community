@@ -99,7 +99,7 @@ final class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     List<UsageInfo> usages = new SmartList<>();
     for (var psiField : myRecordCandidate.getFieldAccessors().keySet()) {
       if (!psiField.hasModifierProperty(PsiModifier.PRIVATE)) {
-        for (PsiReference reference : ReferencesSearch.search(psiField)) {
+        for (PsiReference reference : ReferencesSearch.search(psiField).asIterable()) {
           usages.add(new FieldUsageInfo(psiField, reference));
         }
       }

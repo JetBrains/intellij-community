@@ -151,7 +151,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
       for (MemberInfo memberInfo : myMemberInfos) {
         final PsiMember member = memberInfo.getMember();
-        for (PsiReference reference : ReferencesSearch.search(member, member.getUseScope(), true)) {
+        for (PsiReference reference : ReferencesSearch.search(member, member.getUseScope(), true).asIterable()) {
           final PsiElement element = reference.getElement();
           if (element instanceof PsiReferenceExpression &&
               ((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression &&

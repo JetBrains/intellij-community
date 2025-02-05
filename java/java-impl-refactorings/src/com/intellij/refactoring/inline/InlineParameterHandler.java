@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -174,7 +174,7 @@ public final class InlineParameterHandler extends JavaInlineActionHandler {
       return;
     }
 
-    for (PsiReference psiReference : ReferencesSearch.search(psiParameter)) {
+    for (PsiReference psiReference : ReferencesSearch.search(psiParameter).asIterable()) {
       final PsiElement element = psiReference.getElement();
       if (element instanceof PsiExpression exp && PsiUtil.isAccessedForWriting(exp)) {
         CommonRefactoringUtil.showErrorHint(project, editor, JavaRefactoringBundle.message("inline.parameter.write.usages.warning.message"),

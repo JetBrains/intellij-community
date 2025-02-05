@@ -105,7 +105,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       findParameterUsages(parameter, allElementsToDelete, usages);
     }
     else if (element instanceof PsiLocalVariable) {
-      for (PsiReference reference : ReferencesSearch.search(element)) {
+      for (PsiReference reference : ReferencesSearch.search(element).asIterable()) {
         PsiReferenceExpression referencedElement = (PsiReferenceExpression)reference.getElement();
         PsiElement statementOrExprInList = PsiTreeUtil.getParentOfType(referencedElement, PsiStatement.class);
         if (statementOrExprInList instanceof PsiExpressionListStatement) {

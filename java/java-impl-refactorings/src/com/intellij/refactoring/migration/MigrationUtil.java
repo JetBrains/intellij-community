@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.migration;
 
 import com.intellij.openapi.application.WriteAction;
@@ -61,7 +61,7 @@ public final class MigrationUtil {
 
   private static List<UsageInfo> findRefs(final PsiElement aClass, GlobalSearchScope searchScope) {
     List<UsageInfo> results = new ArrayList<>();
-    for (PsiReference usage : ReferencesSearch.search(aClass, searchScope, false)) {
+    for (PsiReference usage : ReferencesSearch.search(aClass, searchScope, false).asIterable()) {
       results.add(new UsageInfo(usage));
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -44,8 +44,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner, E extends PsiElement> extends
                                                                                                         InplaceVariableIntroducer<E> {
@@ -371,7 +371,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected void addReferenceAtCaret(Collection<? super PsiReference> refs) {
     final V variable = ApplicationManager.getApplication().runReadAction((Computable<V>)() -> getLocalVariable());
     if (variable != null) {
-      for (PsiReference reference : ReferencesSearch.search(variable)) {
+      for (PsiReference reference : ReferencesSearch.search(variable).asIterable()) {
         ProgressManager.checkCanceled();
         refs.add(reference);
       }

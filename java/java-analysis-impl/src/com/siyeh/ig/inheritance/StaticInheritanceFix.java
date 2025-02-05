@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -86,7 +86,7 @@ class StaticInheritanceFix extends ModCommandQuickFix {
     for (final PsiField field : allFields) {
       SearchScope scope = implementingClass.getUseScope();
       final Query<PsiReference> search = ReferencesSearch.search(field, scope, false);
-      for (PsiReference reference : search) {
+      for (PsiReference reference : search.asIterable()) {
         if (!(reference instanceof PsiReferenceExpression referenceExpression)) {
           continue;
         }

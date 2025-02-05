@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.extractMethod;
 
@@ -92,7 +92,7 @@ public class InputVariables {
       String name = nameGenerator.generateUniqueName(defaultName);
       PsiType type = GenericsUtil.getVariableTypeByExpressionType(var.getType());
       final Map<PsiCodeBlock, PsiType> casts = new HashMap<>();
-      for (PsiReference reference : ReferencesSearch.search(var, myScope)) {
+      for (PsiReference reference : ReferencesSearch.search(var, myScope).asIterable()) {
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
         final PsiCodeBlock block = PsiTreeUtil.getParentOfType(parent, PsiCodeBlock.class);
@@ -250,7 +250,7 @@ public class InputVariables {
     Variables:
     for (Iterator<VariableData> iterator = myInputVariables.iterator(); iterator.hasNext();) {
       final VariableData data = iterator.next();
-      for (PsiReference ref : ReferencesSearch.search(data.variable, scope)) {
+      for (PsiReference ref : ReferencesSearch.search(data.variable, scope).asIterable()) {
         PsiElement element = ref.getElement();
         int elementOffset = controlFlow.getStartOffset(element);
         if (elementOffset >= startOffset && elementOffset <= endOffset) {

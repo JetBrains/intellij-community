@@ -99,7 +99,7 @@ public class UnusedDefineInspection extends BaseInspection {
 
     private static boolean processRncUsages(PsiElement tag, LocalSearchScope scope) {
       final Query<PsiReference> query = ReferencesSearch.search(tag, scope);
-      for (PsiReference reference : query) {
+      for (PsiReference reference : query.asIterable()) {
         final PsiElement e = reference.getElement();
         final RncDefine t = PsiTreeUtil.getParentOfType(e, RncDefine.class, false);
         if (t == null || !PsiTreeUtil.isAncestor(tag, t, true)) {
@@ -168,7 +168,7 @@ public class UnusedDefineInspection extends BaseInspection {
 
     private static boolean processUsages(PsiElement tag, XmlAttributeValue value, LocalSearchScope scope) {
       final Query<PsiReference> query = ReferencesSearch.search(tag, scope, true);
-      for (PsiReference reference : query) {
+      for (PsiReference reference : query.asIterable()) {
         final PsiElement e = reference.getElement();
         if (e != value) {
           final XmlTag t = PsiTreeUtil.getParentOfType(e, XmlTag.class);

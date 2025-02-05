@@ -509,7 +509,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final PsiManager psiManager = innerClass.getManager();
     final Project project = psiManager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final Iterable<PsiReference> calls = ReferencesSearch.search(innerClass, scope);
+    final Iterable<PsiReference> calls = ReferencesSearch.search(innerClass, scope).asIterable();
     final String innerName = innerClass.getQualifiedName();
     assert innerName != null;
     final String sourceClassQualifiedName = sourceClass.getQualifiedName();
@@ -534,7 +534,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final PsiManager psiManager = method.getManager();
     final Project project = psiManager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final Iterable<PsiReference> calls = ReferencesSearch.search(method, scope);
+    final Iterable<PsiReference> calls = ReferencesSearch.search(method, scope).asIterable();
     for (PsiReference reference : calls) {
       final PsiElement referenceElement = reference.getElement();
       final PsiElement parent = referenceElement.getParent();
@@ -567,7 +567,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final PsiManager psiManager = method.getManager();
     final Project project = psiManager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final Iterable<PsiReference> calls = ReferencesSearch.search(method, scope);
+    final Iterable<PsiReference> calls = ReferencesSearch.search(method, scope).asIterable();
     final String fullyQualifiedName = getQualifiedName();
     for (PsiReference reference : calls) {
       final PsiElement referenceElement = reference.getElement();
@@ -628,7 +628,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     }
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
 
-    for (PsiReference reference : ReferencesSearch.search(field, scope)) {
+    for (PsiReference reference : ReferencesSearch.search(field, scope).asIterable()) {
       final PsiElement element = reference.getElement();
       if (isInMovedElement(element)) {
         continue;

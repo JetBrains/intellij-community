@@ -108,7 +108,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
                                                            @NotNull Set<? extends PsiMember> membersToMove,
                                                            @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                                            @NotNull Condition<? super PsiReference> ignorePredicate) {
-    for (PsiReference psiReference : ReferencesSearch.search(member)) {
+    for (PsiReference psiReference : ReferencesSearch.search(member).asIterable()) {
       if (ignorePredicate.value(psiReference)) {
         checkAccessibilityConflictsAfterMove(psiReference, member, modifierListCopy, targetClass, membersToMove, conflicts);
       }

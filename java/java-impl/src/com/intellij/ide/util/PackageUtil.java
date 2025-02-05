@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.actions.CreateFileAction;
@@ -318,7 +318,7 @@ public final class PackageUtil {
 
   private static PsiDirectory getWritableModuleDirectory(@NotNull Module module, @NotNull Query<? extends VirtualFile> vFiles) {
     PsiManager manager = PsiManager.getInstance(module.getProject());
-    for (VirtualFile vFile : vFiles) {
+    for (VirtualFile vFile : vFiles.asIterable()) {
       if (ModuleUtilCore.findModuleForFile(vFile, module.getProject()) != module) continue;
       PsiDirectory directory = manager.findDirectory(vFile);
       if (directory != null && directory.isValid() && directory.isWritable()) {

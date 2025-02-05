@@ -57,7 +57,7 @@ final class JavaChangeSignatureUsageSearcher {
     methods.add(method);
 
     for (PsiMethod psiMethod : methods) {
-      for (PsiFunctionalExpression functionalExpression : FunctionalExpressionSearch.search(psiMethod)) {
+      for (PsiFunctionalExpression functionalExpression : FunctionalExpressionSearch.search(psiMethod).asIterable()) {
         result.add(new FunctionalInterfaceChangedUsageInfo(functionalExpression, method));
       }
     }
@@ -81,7 +81,7 @@ final class JavaChangeSignatureUsageSearcher {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     List<PsiDeconstructionPattern> deconstructions = new ArrayList<>();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(method.getProject());
-    for (PsiReference reference : ReferencesSearch.search(aClass, projectScope)) {
+    for (PsiReference reference : ReferencesSearch.search(aClass, projectScope).asIterable()) {
       PsiElement element = reference.getElement();
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiTypeElement)) {
@@ -306,7 +306,7 @@ final class JavaChangeSignatureUsageSearcher {
   private static void addParameterUsages(PsiNamedElement parameter, ArrayList<? super UsageInfo> results, ParameterInfo info) {
     PsiManager manager = parameter.getManager();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-    for (PsiReference psiReference : ReferencesSearch.search(parameter, projectScope, false)) {
+    for (PsiReference psiReference : ReferencesSearch.search(parameter, projectScope, false).asIterable()) {
       PsiElement parmRef = psiReference.getElement();
       UsageInfo usageInfo = new ChangeSignatureParameterUsageInfo(parmRef, parameter.getName(), info.getName());
       results.add(usageInfo);

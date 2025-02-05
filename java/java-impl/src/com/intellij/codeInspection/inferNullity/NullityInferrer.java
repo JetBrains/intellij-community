@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inferNullity;
 
 import com.intellij.codeInsight.Nullability;
@@ -85,7 +85,7 @@ public class NullityInferrer {
     }
 
     final Query<PsiReference> references = ReferencesSearch.search(variable);
-    for (final PsiReference reference : references) {
+    for (final PsiReference reference : references.asIterable()) {
       final PsiElement element = reference.getElement();
       if (!(element instanceof PsiReferenceExpression)) {
         continue;
@@ -111,7 +111,7 @@ public class NullityInferrer {
     }
 
     final Query<PsiReference> references = ReferencesSearch.search(variable);
-    for (final PsiReference reference : references) {
+    for (final PsiReference reference : references.asIterable()) {
       final PsiElement element = reference.getElement();
       if (!(element instanceof PsiReferenceExpression)) {
         continue;
@@ -376,7 +376,7 @@ public class NullityInferrer {
         }
       }
       else if (grandParent instanceof PsiForeachStatement) {
-        for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(grandParent))) {
+        for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(grandParent)).asIterable()) {
           final PsiElement place = reference.getElement();
           if (place instanceof PsiReferenceExpression expr) {
             final PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class, PsiTypeCastExpression.class);

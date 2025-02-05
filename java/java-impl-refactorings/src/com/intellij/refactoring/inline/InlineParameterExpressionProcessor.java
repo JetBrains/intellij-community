@@ -131,7 +131,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     });
 
     if (!myCreateLocal) {
-      for (PsiReference ref : ReferencesSearch.search(myParameter).findAll()) {
+      for (PsiReference ref : ReferencesSearch.search(myParameter).asIterable()) {
         result.add(new UsageInfo(ref));
       }
     }
@@ -205,7 +205,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       }
     }
     for (PsiVariable var : vars) {
-      for (PsiReference ref : ReferencesSearch.search(var)) {
+      for (PsiReference ref : ReferencesSearch.search(var).asIterable()) {
         final PsiElement element = ref.getElement();
         if (element instanceof PsiExpression exp && isAccessedForWriting(exp)) {
           conflicts.putValue(element, JavaRefactoringBundle.message("inline.parameter.initializer.depends.on.inaccessible.value"));

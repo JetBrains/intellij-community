@@ -121,7 +121,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
     final List<UsageInfo> usagesList = new ArrayList<>();
     for (PsiMember member : myMembersToMove) {
-      for (PsiReference psiReference : ReferencesSearch.search(member)) {
+      for (PsiReference psiReference : ReferencesSearch.search(member).asIterable()) {
         PsiElement ref = psiReference.getElement();
         final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(ref.getLanguage());
         MoveMembersUsageInfo usage = null;

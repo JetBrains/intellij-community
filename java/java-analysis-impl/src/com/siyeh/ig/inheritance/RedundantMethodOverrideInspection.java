@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -328,7 +328,7 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
         }
         final Query<PsiReference> search = ReferencesSearch.search(method, scope);
         final PsiClass containingClass = method.getContainingClass();
-        for (PsiReference reference : search) {
+        for (PsiReference reference : search.asIterable()) {
           if (!PsiTreeUtil.isAncestor(containingClass, reference.getElement(), true)) {
             return false;
           }
