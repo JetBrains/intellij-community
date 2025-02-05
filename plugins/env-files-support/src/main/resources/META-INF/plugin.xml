@@ -153,6 +153,13 @@
                                  groupId="language"
         />
 
+        <completion.contributor
+            language="DotEnv"
+            implementationClass="ru.adelf.idea.dotenv.completion.NestedEnvVariableCompletionContributor"
+        />
+
+        <typedHandler implementation="ru.adelf.idea.dotenv.completion.NestedVariableTypedHandlerDelegate"/>
+
     </extensions>
 
     <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
