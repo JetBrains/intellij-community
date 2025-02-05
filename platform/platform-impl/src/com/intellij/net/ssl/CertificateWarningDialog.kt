@@ -454,6 +454,7 @@ internal class CertificateWarningDialog(
         }
       }
     }
+    if (result.flatMap { it.value }.isEmpty()) result.put(certificates.first(), mutableListOf(CertificateError.UNTRUSTED_AUTHORITY))
     return result
   }
 }
