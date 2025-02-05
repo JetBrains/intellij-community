@@ -144,7 +144,7 @@ private fun sortCommits(commits: Collection<GHCommit>, lastCommitSha: String): L
 
   val processedCommits = mutableSetOf<String>()
   fun ImmutableGraph.Builder<GHCommit>.addCommits(commit: GHCommit) {
-    val alreadyProcessed = processedCommits.add(commit.oid)
+    val alreadyProcessed = !processedCommits.add(commit.oid)
     if (alreadyProcessed) return
     addNode(commit)
     for (parent in commit.parents) {
