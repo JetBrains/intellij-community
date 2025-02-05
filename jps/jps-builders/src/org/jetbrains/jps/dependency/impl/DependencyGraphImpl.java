@@ -7,7 +7,6 @@ import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy;
-import org.jetbrains.jps.dependency.java.JVMClassNode;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy;
 
@@ -52,7 +51,14 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     String sessionName = params.getSessionName();
     Iterable<NodeSource> deltaSources = delta.getSources();
     Set<NodeSource> allProcessedSources = delta.isSourceOnly()? delta.getDeletedSources() : collect(flat(List.of(delta.getBaseSources(), deltaSources, delta.getDeletedSources())), new HashSet<>());
-    Set<Node<?, ?>> nodesBefore = collect(flat(map(allProcessedSources, this::getNodes)), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
+    Set<Node<?, ?>> nodesWithErrors = params.isCompiledWithErrors()? collect(flat(map(filter(delta.getBaseSources(), s -> !contains(deltaSources, s)), this::getNodes)), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode)) : Set.of();
+
+    // Important: in case of errors some sources sent to recompilation ('baseSources') might not have corresponding output classes either because a source has compilation errors
+    // or because compiler stopped compilation and has not managed to compile some sources (=> produced no output for these sources).
+    // In this case ignore 'baseSources' when building the set of previously available nodes, so that only successfully recompiled and deleted sources will take part in dependency analysis and affection of additional files.
+    // This will also affect the contents of 'deletedNodes' set: it will be based only on those sources which were deleted or processed without errors => the current set of nodes for such files is known.
+    // Nodes in the graph corresponding to those 'baseSources', for which compiler has not produced any output, are available in the 'nodeWithErrors' set and can be analysed separately.
+    Set<Node<?, ?>> nodesBefore = collect(flat(map(params.isCompiledWithErrors()? flat(List.of(deltaSources, delta.getDeletedSources())) : allProcessedSources, this::getNodes)), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
     Set<Node<?, ?>> nodesAfter = delta.isSourceOnly()? Collections.emptySet() : collect(flat(map(deltaSources, delta::getNodes)), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
 
     // do not process 'removed' per-source file. This works when a class comes from exactly one source, but might not work, if a class can be associated with several sources
@@ -173,7 +179,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
     boolean incremental = true;
     for (DifferentiateStrategy diffStrategy : ourDifferentiateStrategies) {
-      if (!diffStrategy.differentiate(diffContext, nodesBefore, nodesAfter)) {
+      if (!diffStrategy.differentiate(diffContext, nodesBefore, nodesAfter, nodesWithErrors)) {
         incremental = false;
         break;
       }
@@ -247,7 +253,8 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
     if (!delta.isSourceOnly()) {
       // complete affected file set with source-delta dependencies
-      collect(differentiate(createDelta(affectedSources, Collections.emptyList(), true), params).getAffectedSources(), affectedSources);
+      var srcDeltaParams = DifferentiateParametersBuilder.create(params).compiledWithErrors(false).get();
+      collect(differentiate(createDelta(affectedSources, Collections.emptyList(), true), srcDeltaParams).getAffectedSources(), affectedSources);
     }
 
     return new DifferentiateResult() {
@@ -280,11 +287,12 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
   @Override
   public void integrate(@NotNull DifferentiateResult diffResult) {
+    DifferentiateParameters params = diffResult.getParameters();
     final Delta delta = diffResult.getDelta();
 
     // handle deleted nodes and sources
     if (!isEmpty(diffResult.getDeletedNodes())) {
-      Set<NodeSource> differentiatedSources = collect(flat(List.of(delta.getBaseSources(), delta.getSources(), delta.getDeletedSources())), new HashSet<>());
+      Set<NodeSource> differentiatedSources = collect(flat(List.of(params.isCompiledWithErrors()? List.of() : delta.getBaseSources(), delta.getSources(), delta.getDeletedSources())), new HashSet<>());
       for (var deletedNode : diffResult.getDeletedNodes()) { // the set of deleted nodes includes ones corresponding to deleted sources
         Set<NodeSource> nodeSources = collect(myNodeToSourcesMap.get(deletedNode.getReferenceID()), new HashSet<>());
         nodeSources.removeAll(differentiatedSources);

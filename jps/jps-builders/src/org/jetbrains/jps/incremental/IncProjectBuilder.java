@@ -1504,14 +1504,12 @@ public final class IncProjectBuilder {
                 long start = System.nanoTime();
                 int processedSourcesBefore = outputConsumer.getNumberOfProcessedSources();
                 final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder, outputConsumer);
-                storeBuilderStatistics(builder, System.nanoTime() - start,
-                                       outputConsumer.getNumberOfProcessedSources() - processedSourcesBefore);
+                storeBuilderStatistics(builder, System.nanoTime() - start, outputConsumer.getNumberOfProcessedSources() - processedSourcesBefore);
 
                 doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
 
                 if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
-                  throw new StopBuildException(
-                    JpsBuildBundle.message("build.message.builder.0.requested.build.stop", builder.getPresentableName()));
+                  throw new StopBuildException(JpsBuildBundle.message("build.message.builder.0.requested.build.stop", builder.getPresentableName()));
                 }
                 context.checkCanceled();
                 if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {

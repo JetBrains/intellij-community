@@ -1954,6 +1954,7 @@ org.jetbrains.jps.dependency.DifferentiateParameters
 - a:belongsToCurrentCompilationChunk():java.util.function.Predicate
 - getSessionName():java.lang.String
 - a:isCalculateAffected():Z
+- a:isCompiledWithErrors():Z
 - a:isProcessConstantsIncrementally():Z
 org.jetbrains.jps.dependency.DifferentiateResult
 - s:createNonIncremental(java.lang.String,org.jetbrains.jps.dependency.DifferentiateParameters,org.jetbrains.jps.dependency.Delta,java.lang.Iterable):org.jetbrains.jps.dependency.DifferentiateResult
@@ -1964,7 +1965,7 @@ org.jetbrains.jps.dependency.DifferentiateResult
 - getSessionName():java.lang.String
 - isIncremental():Z
 org.jetbrains.jps.dependency.DifferentiateStrategy
-- a:differentiate(org.jetbrains.jps.dependency.DifferentiateContext,java.lang.Iterable,java.lang.Iterable):Z
+- a:differentiate(org.jetbrains.jps.dependency.DifferentiateContext,java.lang.Iterable,java.lang.Iterable,java.lang.Iterable):Z
 - isIncremental(org.jetbrains.jps.dependency.DifferentiateContext,org.jetbrains.jps.dependency.Node):Z
 org.jetbrains.jps.dependency.Enumerator
 org.jetbrains.jps.dependency.ExternalizableGraphElement

@@ -6,9 +6,7 @@ import com.intellij.util.SmartList;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.Difference;
 
-import java.util.Collections;
-import java.util.ServiceLoader;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static org.jetbrains.jps.javac.Iterators.*;
@@ -33,7 +31,7 @@ public final class GeneralJvmDifferentiateStrategy implements DifferentiateStrat
 
   @Override
   public boolean
-  differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter) {
+  differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter, Iterable<Node<?, ?>> nodesWithErrors) {
     Utils future = new Utils(context, true);
     Utils present = new Utils(context, false);
 
@@ -107,6 +105,15 @@ public final class GeneralJvmDifferentiateStrategy implements DifferentiateStrat
           return false;
         }
         if (!strategy.processChangedModules(context, modulesDiff.changed(), future, present)) {
+          return false;
+        }
+      }
+    }
+
+    List<JVMClassNode<?, ?>> errNodes = collect(filter(map(nodesWithErrors, n -> n instanceof JVMClassNode? (JVMClassNode<?, ?>)n : null), Objects::nonNull), new ArrayList<>());
+    if (!errNodes.isEmpty()) {
+      for (JvmDifferentiateStrategy strategy : ourExtensions) {
+        if (!strategy.processNodesWithErrors(context, errNodes, present)) {
           return false;
         }
       }

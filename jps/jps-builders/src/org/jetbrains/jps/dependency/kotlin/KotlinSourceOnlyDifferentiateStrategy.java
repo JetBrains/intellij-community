@@ -18,7 +18,7 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy");
 
   @Override
-  public boolean differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter) {
+  public boolean differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter, Iterable<Node<?, ?>> nodesWithErrors) {
     Delta delta = context.getDelta();
     if (!delta.isSourceOnly()) {
       return true;

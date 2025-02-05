@@ -14,6 +14,13 @@ public interface DifferentiateParameters {
 
   boolean isProcessConstantsIncrementally();
 
+  /**
+   * @return true, if compiler reported compilation errors while compiling a set of Delta's base sources
+   * (=> the compiler might fail to produce any output for these sources and therefore no nodes were registered for such sources).
+   * In this case nodes, corresponding to Delta's base sources will be treated differently: for example, they won't be automatically considered as "deleted"
+   */
+  boolean isCompiledWithErrors();
+
   @NotNull
   Predicate<? super NodeSource> affectionFilter();
 
