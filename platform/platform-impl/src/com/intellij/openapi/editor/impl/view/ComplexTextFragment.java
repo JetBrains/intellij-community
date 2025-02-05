@@ -71,6 +71,7 @@ final class ComplexTextFragment extends TextFragment {
           var prevPos = myGlyphVector.getGlyphPosition(i - 1);
           var actualPrevX = prevPos.getX();
           nextPos.setLocation(nextX + (actualPrevX - prevX), nextPos.getY());
+          myGlyphVector.setGlyphPosition(i, nextPos);
         }
         prevX = nextX; // important to have the non-modified value here to keep calculating non-modified widths correctly
       }
