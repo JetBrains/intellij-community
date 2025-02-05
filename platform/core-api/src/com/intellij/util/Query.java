@@ -12,6 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Spliterator;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -132,9 +134,37 @@ public interface Query<Result> extends Iterable<Result> {
     return findAll();
   }
 
+  /**
+   * @see Iterable#iterator
+   * @deprecated don't use Query as Iterable, the results are computed eagerly, which defeats the purpose
+   */
+  @ScheduledForRemoval
+  @Deprecated
   @Override
   default @NotNull Iterator<Result> iterator() {
-    return findAll().iterator();
+    return asIterable().iterator();
+  }
+
+  /**
+   * @see Iterable#forEach
+   * @deprecated don't use Query as Iterable, the results are computed eagerly, which defeats the purpose
+   */
+  @ScheduledForRemoval
+  @Deprecated
+  @Override
+  default void forEach(Consumer<? super Result> action) {
+    asIterable().forEach(action);
+  }
+
+  /**
+   * @see Iterable#spliterator
+   * @deprecated don't use Query as Iterable, the results are computed eagerly, which defeats the purpose
+   */
+  @ScheduledForRemoval
+  @Deprecated
+  @Override
+  default Spliterator<Result> spliterator() {
+    return asIterable().spliterator();
   }
 
   @Experimental

@@ -5633,8 +5633,10 @@ com.intellij.util.Query
 - a:findAll():java.util.Collection
 - a:findFirst():java.lang.Object
 - a:forEach(com.intellij.util.Processor):Z
+- forEach(java.util.function.Consumer):V
 - forEachAsync(com.intellij.util.Processor):com.intellij.concurrency.AsyncFuture
 - iterator():java.util.Iterator
+- spliterator():java.util.Spliterator
 - toArray(java.lang.Object[]):java.lang.Object[]
 com.intellij.util.QueryExecutor
 - a:execute(java.lang.Object,com.intellij.util.Processor):Z
