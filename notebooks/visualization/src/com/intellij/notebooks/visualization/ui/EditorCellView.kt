@@ -87,7 +87,7 @@ class EditorCellView(
       updateRunButtonVisibility()
       updateCellHighlight()
       updateCellActionsToolbarVisibility()
-      myEditorCellFrameManager?.updateCellFrameShow(mouseOver || value)
+      myEditorCellFrameManager?.updateCellFrameShow(value, mouseOver)
     }
 
   private var mouseOver = false
@@ -270,7 +270,7 @@ class EditorCellView(
     mouseOver = false
     updateFolding()
     updateRunButtonVisibility()
-    myEditorCellFrameManager?.updateCellFrameShow(mouseOver || selected)
+    myEditorCellFrameManager?.updateCellFrameShow(selected, mouseOver)
     updateCellActionsToolbarVisibility()
   }
 
@@ -278,7 +278,7 @@ class EditorCellView(
     mouseOver = true
     updateFolding()
     updateRunButtonVisibility()
-    myEditorCellFrameManager?.updateCellFrameShow(mouseOver || selected)
+    myEditorCellFrameManager?.updateCellFrameShow(selected, mouseOver)
     updateCellActionsToolbarVisibility()
   }
 
@@ -360,7 +360,7 @@ class EditorCellView(
     selected = value
     updateFolding()
     updateCellHighlight()
-    myEditorCellFrameManager?.updateCellFrameShow(mouseOver || selected)
+    myEditorCellFrameManager?.updateCellFrameShow(selected, mouseOver)
   }
 
   private fun updateFolding() {

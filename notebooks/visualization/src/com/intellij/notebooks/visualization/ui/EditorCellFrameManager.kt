@@ -25,11 +25,13 @@ class EditorCellFrameManager(
   private var leftBorderHighlighter: RangeHighlighter? = null
   private var rightBorderLine: Line2D? = null
 
-  private val defaultFrameColor = JBColor.LIGHT_GRAY
+  private val defaultFrameColor = JBColor.namedColor("Editor.Toolbar.borderColor", JBColor.border())
   private val highlightedFrameColor = editor.notebookAppearance.cellStripeSelectedColor.get()
+
   private var currentColor: Color = defaultFrameColor
 
   private var isSelected = false
+  private var isHovered = false
 
   private val boundsChangeListener = object : JupyterBoundsChangeListener {
     override fun boundsChanged() {
@@ -42,8 +44,9 @@ class EditorCellFrameManager(
     if (cellType == NotebookCellLines.CellType.CODE) redrawBorders(defaultFrameColor)
   }
 
-  fun updateCellFrameShow(selected: Boolean) {
+  fun updateCellFrameShow(selected: Boolean, hovered: Boolean) {
     isSelected = selected
+    isHovered = hovered
 
     when (cellType) {
       NotebookCellLines.CellType.MARKDOWN -> updateCellFrameShowMarkdown()
@@ -53,7 +56,7 @@ class EditorCellFrameManager(
   }
 
   private fun updateCellFrameShowMarkdown() {
-    when (isSelected) {
+    when (isSelected || isHovered) {
       true -> redrawBorders(defaultFrameColor)
       else -> clearFrame()
     }
