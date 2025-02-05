@@ -12,10 +12,12 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.asDisposable
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -27,9 +29,13 @@ internal class CompositeFilterWrapper(private val project: Project, private val 
   @Volatile
   private var cachedFilter: CompositeFilter? = null
 
+  @Volatile
+  private var filtersComputed: CompletableDeferred<Unit> = CompletableDeferred()
+
   init {
     ConsoleFilterProvider.FILTER_PROVIDERS.addChangeListener({
                                                                cachedFilter = null
+                                                               filtersComputed = CompletableDeferred()
                                                                scheduleFiltersComputation()
                                                              }, coroutineScope.asDisposable())
     scheduleFiltersComputation()
@@ -47,6 +53,7 @@ internal class CompositeFilterWrapper(private val project: Project, private val 
         }
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           fireFiltersUpdated()
+          filtersComputed.complete(Unit)
         }
       }
     }
@@ -72,5 +79,10 @@ internal class CompositeFilterWrapper(private val project: Project, private val 
     }
     scheduleFiltersComputation()
     return null
+  }
+
+  @TestOnly
+  internal suspend fun awaitFiltersComputed() {
+    filtersComputed.await()
   }
 }

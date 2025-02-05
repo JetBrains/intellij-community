@@ -3,8 +3,6 @@ package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.EventDispatcher
@@ -106,11 +104,7 @@ internal class TerminalSessionController(
 
   private suspend fun updateOutputModel(block: (TerminalOutputModel) -> Unit) {
     withContext(Dispatchers.EDT) {
-      writeAction {
-        CommandProcessor.getInstance().runUndoTransparentAction {
-          block(getCurrentOutputModel())
-        }
-      }
+      block(getCurrentOutputModel())
     }
   }
 

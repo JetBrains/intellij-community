@@ -32,6 +32,7 @@ import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.output.NEW_TERMINAL_OUTPUT_CAPACITY_KB
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
+import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputFileType
 import org.jetbrains.plugins.terminal.block.reworked.session.*
 import org.jetbrains.plugins.terminal.block.ui.*
@@ -85,6 +86,7 @@ internal class ReworkedTerminalView(
 
     outputEditor = createOutputEditor(settings, parentDisposable = this)
     val outputModel = createOutputModel(
+      project,
       editor = outputEditor,
       maxOutputLength = AdvancedSettings.getInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB).coerceIn(1, 10 * 1024) * 1024,
       settings,
@@ -100,6 +102,7 @@ internal class ReworkedTerminalView(
 
     alternateBufferEditor = createAlternateBufferEditor(settings, parentDisposable = this)
     val alternateBufferModel = createOutputModel(
+      project,
       editor = alternateBufferEditor,
       maxOutputLength = 0,
       settings,
@@ -209,6 +212,7 @@ internal class ReworkedTerminalView(
   }
 
   private fun createOutputModel(
+    project: Project,
     editor: EditorEx,
     maxOutputLength: Int,
     settings: JBTerminalSystemSettingsProviderBase,
@@ -239,6 +243,8 @@ internal class ReworkedTerminalView(
     })
 
     editor.highlighter = TerminalTextHighlighter { model.getHighlightings() }
+
+    TerminalHyperlinkHighlighter.install(project, model, editor, coroutineScope)
 
     TerminalCursorPainter.install(editor, model, sessionModel, coroutineScope.childScope("TerminalCursorPainter"))
 

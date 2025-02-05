@@ -151,6 +151,12 @@ public final class EditorHyperlinkSupport {
     return myEditor.getInlayModel().getInlineElementsInRange(startOffset, endOffset).stream().filter(INLAY::isIn).toList();
   }
 
+  @ApiStatus.Internal
+  @TestOnly
+  public List<Inlay<?>> collectAllInlays() {
+    return getInlays(0, myEditor.getDocument().getTextLength());
+  }
+
   @TestOnly
   public void waitForPendingFilters(long timeoutMs) {
     myFilterRunner.waitForPendingFilters(timeoutMs);

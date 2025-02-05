@@ -2,7 +2,10 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.Computable
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,9 +21,7 @@ import kotlin.math.max
 /**
  * [maxOutputLength] limits the length of the document. Zero means unlimited length.
  *
- * Note that this implementation is not thread-safe, and it does not acquire write action
- * or [CommandProcessor][com.intellij.openapi.command.CommandProcessor]'s command during document modification.
- * So, it is client responsibility to ensure that for [updateContent] call.
+ * Note that this implementation acquires the write lock, so [updateContent] should be called on EDT.
  */
 internal class TerminalOutputModelImpl(
   override val document: Document,
@@ -125,12 +126,18 @@ internal class TerminalOutputModelImpl(
    * Document changes in this model are allowed only inside [block] of this function.
    * [block] should return an offset from which document content was changed.
    */
-  private inline fun changeDocumentContent(block: () -> Int) {
+  private fun changeDocumentContent(block: () -> Int) {
     dispatcher.multicaster.beforeContentChanged()
 
     contentUpdateInProgress = true
     val changeStartOffset = try {
-      block()
+      ApplicationManager.getApplication().runWriteAction(Computable {
+        var result = 0
+        CommandProcessor.getInstance().runUndoTransparentAction {
+          result = block()
+        }
+        result
+      })
     }
     finally {
       contentUpdateInProgress = false

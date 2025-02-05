@@ -63,12 +63,8 @@ internal object TerminalSessionTestUtil {
     return TerminalOutputModelImpl(document, maxLength)
   }
 
-  suspend fun TerminalOutputModel.update(absoluteLineIndex: Int, text: String, styles: List<StyleRange> = emptyList()) {
-    writeAction {
-      CommandProcessor.getInstance().runUndoTransparentAction {
-        updateContent(absoluteLineIndex, text, styles)
-      }
-    }
+  fun TerminalOutputModel.update(absoluteLineIndex: Int, text: String, styles: List<StyleRange> = emptyList()) {
+    updateContent(absoluteLineIndex, text, styles)
   }
 
   suspend fun TerminalOutputModel.updateCursor(absoluteLineIndex: Int, column: Int) {
