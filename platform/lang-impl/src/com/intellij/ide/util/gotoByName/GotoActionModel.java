@@ -56,8 +56,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.lang.ref.WeakReference;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -90,9 +90,17 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     });
 
   public GotoActionModel(@Nullable Project project, @Nullable Component component, @Nullable Editor editor) {
+    this(project, component, editor, null);
+  }
+
+  /**
+   * In case of Remote Development the component doesn't contain the full DataContext, and we have to explicitly provide the context.
+   */
+  @ApiStatus.Internal
+  public GotoActionModel(@Nullable Project project, @Nullable Component component, @Nullable Editor editor, @Nullable DataContext dataContext) {
     myProject = project;
     myEditor = new WeakReference<>(editor);
-    myDataContext = Utils.createAsyncDataContext(DataManager.getInstance().getDataContext(component));
+    myDataContext = dataContext == null ? Utils.createAsyncDataContext(DataManager.getInstance().getDataContext(component)) : dataContext;
     myUpdateSession = newUpdateSession();
   }
 

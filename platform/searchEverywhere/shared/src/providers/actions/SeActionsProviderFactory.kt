@@ -26,7 +26,8 @@ class SeActionsProviderFactory: SeItemsProviderFactory {
         // TODO: Provide proper context
         SeActionsAdaptedProvider(project, ActionSearchEverywhereContributor(project,
                                                                             dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT),
-                                                                            dataContext.getData(CommonDataKeys.EDITOR)))
+                                                                            dataContext.getData(CommonDataKeys.EDITOR),
+                                                                            dataContext))
       }
     }
   }

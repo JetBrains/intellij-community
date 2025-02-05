@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.GotoActionAction
 import com.intellij.ide.actions.SetShortcutAction
@@ -50,6 +51,7 @@ private val LOG = logger<ActionSearchEverywhereContributor>()
 open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContributor<MatchedValue>, LightEditCompatible, SearchEverywhereExtendedInfoProvider {
   private val myProject: Project?
   private val myContextComponent: WeakReference<Component?>
+  private val myDataContextProvider: () -> DataContext?
   protected val model: GotoActionModel
   private val provider: ActionAsyncProvider
   protected var myDisabledActions: Boolean = false
@@ -64,13 +66,23 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
     model = other.model
     provider = other.provider
     myDisabledActions = other.myDisabledActions
+    myDataContextProvider = other.myDataContextProvider
   }
 
-  constructor(project: Project?, contextComponent: Component?, editor: Editor?) {
+  constructor(project: Project?, contextComponent: Component?, editor: Editor?): this(project, contextComponent, editor, null)
+
+  @Internal
+  constructor(project: Project?, contextComponent: Component?, editor: Editor?, dataContext: DataContext?) {
     myProject = project
     myContextComponent = WeakReference(contextComponent)
-    model = GotoActionModel(project, contextComponent, editor)
+    model = GotoActionModel(project, contextComponent, editor, dataContext)
     provider = ActionAsyncProvider(model)
+
+    val dataContextRef = WeakReference(dataContext)
+    myDataContextProvider = {
+      dataContextRef.get()
+      ?: myContextComponent.get()?.let { DataManager.getInstance().getDataContext(it) }
+    }
   }
 
   override fun getGroupName(): String = IdeBundle.message("search.everywhere.group.name.actions")
@@ -179,7 +191,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
       saveRecentAction(item)
     }
 
-    GotoActionAction.openOptionOrPerformAction(selected, text, myProject, myContextComponent.get(), modifiers)
+    GotoActionAction.openOptionOrPerformAction(selected, text, myProject, myContextComponent.get(), modifiers, myDataContextProvider)
     val inplaceChange = (selected is GotoActionModel.ActionWrapper && selected.action is ToggleAction)
     return !inplaceChange
   }

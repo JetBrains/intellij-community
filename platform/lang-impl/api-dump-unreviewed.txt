@@ -8277,7 +8277,7 @@ c:com.intellij.ide.actions.GotoActionAction
 - com.intellij.openapi.project.DumbAware
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- s:openOptionOrPerformAction(java.lang.Object,java.lang.String,com.intellij.openapi.project.Project,java.awt.Component,I):V
+- s:openOptionOrPerformAction(java.lang.Object,java.lang.String,com.intellij.openapi.project.Project,java.awt.Component,I,com.intellij.openapi.util.Computable):V
 - s:performAction(java.lang.Object,java.awt.Component,com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:requiresProject():Z
 a:com.intellij.ide.actions.GotoActionBase

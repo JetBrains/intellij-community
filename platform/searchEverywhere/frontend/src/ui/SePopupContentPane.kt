@@ -159,8 +159,6 @@ class SePopupContentPane(private val vm: SePopupVm, private val popupManager: Se
       }
       if (newShortcuts.isEmpty()) continue
 
-
-
       val newShortcutSet: ShortcutSet = CustomShortcutSet(*newShortcuts.toTypedArray())
       DumbAwareAction.create { _: AnActionEvent? ->
         val indices: IntArray = resultList.selectedIndices

@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,8 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
                                                String enteredText,
                                                @Nullable Project project,
                                                @Nullable Component component,
-                                               @JdkConstants.InputEventMask int modifiers) {
+                                               @JdkConstants.InputEventMask int modifiers,
+                                               @Nullable Computable<DataContext> dataContextProvider) {
     // invoke later to let the Goto Action popup close completely before the action is performed
     // and avoid focus issues if the action shows complicated popups itself
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -48,7 +50,7 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
         }
       }
       else {
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> performAction(element, component, null, modifiers));
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> performAction(element, component, null, modifiers, dataContextProvider));
       }
     });
   }
@@ -56,29 +58,34 @@ public class GotoActionAction extends SearchEverywhereBaseAction implements Dumb
   /** @deprecated Use {@link ActionManager#tryToExecute(AnAction, InputEvent, Component, String, boolean)} instead */
   @Deprecated(forRemoval = true)
   public static void performAction(@NotNull Object element, @Nullable Component component, @Nullable AnActionEvent e) {
-    performAction(element, component, e, 0);
+    performAction(element, component, e, 0, null);
   }
 
   private static void performAction(@NotNull Object element,
                                     @Nullable Component component,
                                     @Nullable AnActionEvent e,
-                                    @JdkConstants.InputEventMask int modifiers) {
+                                    @JdkConstants.InputEventMask int modifiers,
+                                    @Nullable Computable<DataContext> dataContextProvider) {
     // element could be AnAction (SearchEverywhere)
     if (component == null) return;
-    ApplicationManager.getApplication().invokeLater(() -> performActionImpl(element, component, e, modifiers));
+    ApplicationManager.getApplication().invokeLater(() -> performActionImpl(element, component, e, modifiers, dataContextProvider));
   }
 
   private static void performActionImpl(@NotNull Object element,
                                         @NotNull Component component,
                                         @Nullable AnActionEvent e,
-                                        @JdkConstants.InputEventMask int modifiers) {
+                                        @JdkConstants.InputEventMask int modifiers,
+                                        @Nullable Computable<DataContext> dataContextProvider) {
     GotoActionModel.ActionWrapper wrapper = element instanceof AnAction ? null : (GotoActionModel.ActionWrapper)element;
     AnAction action = element instanceof AnAction ? (AnAction)element : wrapper.getAction();
     Presentation presentation = wrapper != null ? wrapper.getPresentation() :
                                 action.getTemplatePresentation().clone();
     InputEvent inputEvent = e != null ? e.getInputEvent() : null;
-    DataManager dataManager = DataManager.getInstance();
-    DataContext context = dataManager != null ? dataManager.getDataContext(component) : DataContext.EMPTY_CONTEXT;
+    DataContext context = dataContextProvider == null ? null : dataContextProvider.get();
+    if (context == null) {
+      DataManager dataManager = DataManager.getInstance();
+      context = dataManager != null ? dataManager.getDataContext(component) : DataContext.EMPTY_CONTEXT;
+    }
     AnActionEvent event = new AnActionEvent(
       context, presentation, ActionPlaces.ACTION_SEARCH,
       ActionUiKind.SEARCH_POPUP, inputEvent, modifiers, ActionManager.getInstance());
