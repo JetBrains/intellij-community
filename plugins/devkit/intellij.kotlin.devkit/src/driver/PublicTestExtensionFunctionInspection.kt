@@ -51,7 +51,8 @@ class PublicTestExtensionFunctionInspection : LocalInspectionTool() {
     if (function.isLocal) return false
 
     //optimization to avoid resolve
-    if (receiverTypeRef.text != "Driver" && receiverTypeRef.text != "Finder" && receiverTypeRef.text != "IdeaFrameUI") return false
+    if (receiverTypeRef.text != "Driver" && receiverTypeRef.text != "Finder" && receiverTypeRef.text != "IdeaFrameUI"
+        && receiverTypeRef.text != "UIComponent") return false
 
     // Check if it's public (no visibility modifier means public in Kotlin)
     val visibilityModifier = function.visibilityModifier()?.text
