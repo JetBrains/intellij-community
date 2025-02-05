@@ -17,6 +17,9 @@ import com.intellij.openapi.fileChooser.actions.NewFolderAction;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
+import com.intellij.openapi.options.newEditor.AbstractEditor;
+import com.intellij.openapi.options.newEditor.SettingsDialog;
+import com.intellij.openapi.options.newEditor.SingleSettingEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -317,9 +320,9 @@ public class ContentEntryTreeEditor {
       Window window = UIUtil.getWindow(component);
       if (window instanceof DialogWrapperDialog wrapper) {
         DialogWrapper dialogWrapper = wrapper.getDialogWrapper();
-        if (dialogWrapper instanceof SingleConfigurableEditor settingsDialog) {
-          Configurable configurable = settingsDialog.getConfigurable();
-          if (configurable.isModified()) {
+        Configurable singleConfigurable = getSingleConfigurable(dialogWrapper);
+        if (singleConfigurable != null) {
+          if (singleConfigurable.isModified()) {
             boolean proceed = MessageDialogBuilder.yesNo(ProjectBundle.message("project.structure.unsaved.on.navigation.title"),
                                                          ProjectBundle.message("project.structure.unsaved.on.navigation.message"))
               .yesText(ProjectBundle.message("project.structure.unsaved.on.navigation.discard.action"))
@@ -330,6 +333,19 @@ public class ContentEntryTreeEditor {
           dialogWrapper.doCancelAction();
         }
       }
+    }
+
+    private static @Nullable Configurable getSingleConfigurable(@NotNull DialogWrapper dialogWrapper) {
+      if (dialogWrapper instanceof SingleConfigurableEditor settingsDialog) {
+        return settingsDialog.getConfigurable();
+      }
+      if (dialogWrapper instanceof SettingsDialog settingsDialog) {
+        AbstractEditor editor = settingsDialog.getEditor();
+        if (editor instanceof SingleSettingEditor settingEditor) {
+          return settingEditor.getConfigurable();
+        }
+      }
+      return null;
     }
   }
 
