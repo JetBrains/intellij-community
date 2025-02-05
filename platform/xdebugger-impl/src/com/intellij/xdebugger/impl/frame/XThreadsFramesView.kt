@@ -80,6 +80,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
   private val myCurrentThreadDescriptionComponent = StyledTextPane().apply {
     Disposer.register(this@XThreadsFramesView, this)
+    background = JBUI.CurrentTheme.List.BACKGROUND
   }
 
   private val mySplitter: NonProportionalOnePixelSplitter
@@ -206,7 +207,9 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
             myThreadsList.model.removeListDataListener(requester)
             threadsScrollPane.viewport.removeChangeListener(requester)
             stackInfoDescriptionRequester = null
-            myCurrentThreadDescriptionComponent.clear()
+            myCurrentThreadDescriptionComponent.paragraphs = emptyList<TextParagraph>()
+            myCurrentThreadDescriptionComponent.revalidate()
+            myCurrentThreadDescriptionComponent.repaint()
           }
         })
         requester
@@ -291,6 +294,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     myCurrentThreadDescriptionComponent.paragraphs = listOf(TextParagraph(listOf(RegularTextPart(text).apply {
       this.editAttributes {
         StyleConstants.setForeground(this, NamedColorUtil.getInactiveTextColor())
+        StyleConstants.setBackground(this, JBUI.CurrentTheme.List.BACKGROUND)
       }
     })))
     myCurrentThreadDescriptionComponent.revalidate()
@@ -394,7 +398,9 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     myThreadsContainer.clear()
     myFramesPresentationCache.clear()
     stackInfoDescriptionRequester?.clear()
-    myCurrentThreadDescriptionComponent.clear()
+    myCurrentThreadDescriptionComponent.paragraphs = emptyList<TextParagraph>()
+    myCurrentThreadDescriptionComponent.revalidate()
+    myCurrentThreadDescriptionComponent.repaint()
   }
 
   override fun dispose() {}
