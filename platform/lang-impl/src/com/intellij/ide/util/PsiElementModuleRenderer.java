@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.util.TextWithIcon;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -46,23 +43,20 @@ public /*final*/ class PsiElementModuleRenderer extends DefaultListCellRenderer 
 
   private void customizeCellRenderer(Object value, boolean selected) {
     myText = "";
-    ReadAction.nonBlocking(() -> {
-      return myTextWithIconProvider.apply(value);
-    }).finishOnUiThread(ModalityState.current(), textWithIcon -> {
-      if (textWithIcon != null) {
-        myText = textWithIcon.getText();
-        setIcon(textWithIcon.getIcon());
-      }
-      else {
-        myText = "";
-      }
+    TextWithIcon textWithIcon = myTextWithIconProvider.apply(value);
+    if (textWithIcon != null) {
+      myText = textWithIcon.getText();
+      setIcon(textWithIcon.getIcon());
+    }
+    else {
+      myText = "";
+    }
 
-      setText(myText);
-      setBorder(BorderFactory.createEmptyBorder(0, 0, 0, UIUtil.getListCellHPadding()));
-      setHorizontalTextPosition(SwingConstants.LEFT);
-      setHorizontalAlignment(SwingConstants.RIGHT); // align icon to the right
-      setBackground(selected ? UIUtil.getListSelectionBackground(true) : UIUtil.getListBackground());
-      setForeground(selected ? NamedColorUtil.getListSelectionForeground(true) : NamedColorUtil.getInactiveTextColor());
-    }).submit(AppExecutorUtil.getAppExecutorService());
+    setText(myText);
+    setBorder(BorderFactory.createEmptyBorder(0, 0, 0, UIUtil.getListCellHPadding()));
+    setHorizontalTextPosition(SwingConstants.LEFT);
+    setHorizontalAlignment(SwingConstants.RIGHT); // align icon to the right
+    setBackground(selected ? UIUtil.getListSelectionBackground(true) : UIUtil.getListBackground());
+    setForeground(selected ? NamedColorUtil.getListSelectionForeground(true) : NamedColorUtil.getInactiveTextColor());
   }
 }
