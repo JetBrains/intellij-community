@@ -47,8 +47,10 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   var text: String
     get() = document.getText()
     set(value) {
-      driver.withWriteAction {
-        document.setText(value)
+      step("Set text '$value'") {
+        driver.withWriteAction {
+          document.setText(value)
+        }
       }
     }
 
