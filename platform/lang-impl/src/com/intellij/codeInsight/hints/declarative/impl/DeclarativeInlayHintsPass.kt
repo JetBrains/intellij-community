@@ -84,7 +84,7 @@ class DeclarativeInlayHintsPass(
     internal val aboveLine: List<AboveLineIndentedPositionDetail>,
   ) {
     companion object {
-      val EMPTY = PreprocessedInlayData(emptyList(), emptyList(), emptyList())
+      val EMPTY: PreprocessedInlayData = PreprocessedInlayData(emptyList(), emptyList(), emptyList())
     }
   }
 
