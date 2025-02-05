@@ -125,30 +125,32 @@ fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEd
   }
 }
 
-fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true) = withContext {
-  val openedFile = if (!isRemoteIdeMode) {
-    val fileToOpen = findFile(relativePath = relativePath, project = project)
-    if (fileToOpen == null) {
-      throw IllegalArgumentException("Fail to find file $relativePath")
+fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true) = step("Open file $relativePath") {
+  withContext {
+    val openedFile = if (!isRemoteIdeMode) {
+      val fileToOpen = findFile(relativePath = relativePath, project = project)
+      if (fileToOpen == null) {
+        throw IllegalArgumentException("Fail to find file $relativePath")
+      }
+      openEditor(fileToOpen, project)
+      fileToOpen
     }
-    openEditor(fileToOpen, project)
-    fileToOpen
-  }
-  else {
-    val service = service(GuestNavigationService::class, project)
-    withContext(OnDispatcher.EDT) {
-      service.navigateViaBackend(relativePath, 0)
-      waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,
-              getter = {
-                service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
-              },
-              checker = { virtualFile ->
-                virtualFile != null &&
-                virtualFile.getPath().contains(relativePath)
-              })!!
+    else {
+      val service = service(GuestNavigationService::class, project)
+      withContext(OnDispatcher.EDT) {
+        service.navigateViaBackend(relativePath, 0)
+        waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,
+                getter = {
+                  service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
+                },
+                checker = { virtualFile ->
+                  virtualFile != null &&
+                  virtualFile.getPath().contains(relativePath)
+                })!!
+      }
     }
-  }
-  if (waitForCodeAnalysis) {
-    waitForCodeAnalysis(project, openedFile)
+    if (waitForCodeAnalysis) {
+      waitForCodeAnalysis(project, openedFile)
+    }
   }
 }
