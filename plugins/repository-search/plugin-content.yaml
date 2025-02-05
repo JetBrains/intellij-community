@@ -2,7 +2,7 @@
   projectLibraries:
   - name: ktor-client-logging
     files:
-    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/2/ktor-client-logging-jvm-2.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-client-logging-jvm/3/ktor-client-logging-jvm-3.jar
     reason: <- intellij.repository.search
   - name: package-search-api-client
     files:
