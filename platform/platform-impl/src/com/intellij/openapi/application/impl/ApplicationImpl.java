@@ -76,7 +76,8 @@ import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
 import static com.intellij.util.concurrency.Propagation.isContextAwareComputation;
 
 @ApiStatus.Internal
-public final class ApplicationImpl extends ClientAwareComponentManager implements ApplicationEx, ReadActionListener, WriteActionListener {
+public final class ApplicationImpl extends ClientAwareComponentManager
+  implements ApplicationEx, ReadActionListener, WriteActionListener, WriteIntentReadActionListener {
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(ApplicationImpl.class);
   }
@@ -86,6 +87,11 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   private final ModalityInvokator myInvokator = new ModalityInvokatorImpl();
 
   private final EventDispatcher<ApplicationListener> myDispatcher = EventDispatcher.create(ApplicationListener.class);
+
+  private final EventDispatcher<ReadActionListener> myReadActionListenerDispatcher = EventDispatcher.create(ReadActionListener.class);
+
+  private final EventDispatcher<WriteIntentReadActionListener> myWriteIntentReadActionListenerDispatcher =
+    EventDispatcher.create(WriteIntentReadActionListener.class);
 
   private final boolean myTestModeFlag;
   private final boolean myHeadlessMode;
@@ -1185,6 +1191,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
     getThreadingSupport().setReadActionListener(app);
     getThreadingSupport().setWriteActionListener(app);
+    getThreadingSupport().setWriteIntentReadActionListener(app);
 
     app.addApplicationListener(new ApplicationListener() {
       @Override
@@ -1206,6 +1213,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   @Override
   public void readActionFinished(@NotNull Class<?> action) {
     myReadActionCacheImpl.clear();
+    myReadActionListenerDispatcher.getMulticaster().readActionFinished(action);
     otelMonitor.get().readActionExecuted();
   }
 
@@ -1218,6 +1226,51 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   @Override
   public void writeActionStarted(@NotNull Class<?> action) {
     fireWriteActionStarted(action);
+  }
+
+  @Override
+  public void addReadActionListener(@NotNull ReadActionListener listener, @NotNull Disposable parentDisposable) {
+    myReadActionListenerDispatcher.addListener(listener, parentDisposable);
+  }
+
+  @Override
+  public void readActionStarted(@NotNull Class<?> action) {
+    myReadActionListenerDispatcher.getMulticaster().readActionStarted(action);
+  }
+
+  @Override
+  public void beforeReadActionStart(@NotNull Class<?> action) {
+    myReadActionListenerDispatcher.getMulticaster().beforeReadActionStart(action);
+  }
+
+  @Override
+  public void afterReadActionFinished(@NotNull Class<?> action) {
+    myReadActionListenerDispatcher.getMulticaster().afterReadActionFinished(action);
+  }
+
+  @Override
+  public void addWriteIntentReadActionListener(@NotNull WriteIntentReadActionListener listener, @NotNull Disposable parentDisposable) {
+    myWriteIntentReadActionListenerDispatcher.addListener(listener, parentDisposable);
+  }
+
+  @Override
+  public void writeIntentReadActionStarted(@NotNull Class<?> action) {
+    myWriteIntentReadActionListenerDispatcher.getMulticaster().writeIntentReadActionStarted(action);
+  }
+
+  @Override
+  public void writeIntentReadActionFinished(@NotNull Class<?> action) {
+    myWriteIntentReadActionListenerDispatcher.getMulticaster().writeIntentReadActionFinished(action);
+  }
+
+  @Override
+  public void beforeWriteIntentReadActionStart(@NotNull Class<?> action) {
+    myWriteIntentReadActionListenerDispatcher.getMulticaster().beforeWriteIntentReadActionStart(action);
+  }
+
+  @Override
+  public void afterWriteIntentReadActionFinished(@NotNull Class<?> action) {
+    myWriteIntentReadActionListenerDispatcher.getMulticaster().afterWriteIntentReadActionFinished(action);
   }
 
   @Override

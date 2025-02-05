@@ -189,6 +189,15 @@ interface ThreadingSupport {
   fun setWriteActionListener(listener: WriteActionListener)
 
   /**
+   * Adds a [WriteIntentReadActionListener].
+   *
+   * Only one listener can be set. It is an error to set the second listener.
+   *
+   * @param listener the listener to set
+   */
+  fun setWriteIntentReadActionListener(listener: WriteIntentReadActionListener)
+
+  /**
    * Removes a [WriteActionListener].
    *
    * It is error to remove listener which was not set early.

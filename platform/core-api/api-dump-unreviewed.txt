@@ -1213,6 +1213,12 @@ com.intellij.openapi.application.WriteActionListener
 - beforeWriteActionStart(java.lang.Class):V
 - writeActionFinished(java.lang.Class):V
 - writeActionStarted(java.lang.Class):V
+com.intellij.openapi.application.WriteIntentReadActionListener
+- java.util.EventListener
+- afterWriteIntentReadActionFinished(java.lang.Class):V
+- beforeWriteIntentReadActionStart(java.lang.Class):V
+- writeIntentReadActionFinished(java.lang.Class):V
+- writeIntentReadActionStarted(java.lang.Class):V
 f:com.intellij.openapi.client.ClientSessionsUtil
 - sf:forEachSession(com.intellij.openapi.application.Application,com.intellij.openapi.client.ClientKind,kotlin.jvm.functions.Function1):V
 - sf:forEachSession(com.intellij.openapi.project.Project,com.intellij.openapi.client.ClientKind,kotlin.jvm.functions.Function1):V

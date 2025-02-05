@@ -123,6 +123,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
   private var myReadActionListener: ReadActionListener? = null
   private var myWriteActionListener: WriteActionListener? = null
+  private var myWriteIntentActionListener: WriteIntentReadActionListener? = null
 
   private val myWriteActionsStack = Stack<Class<*>>()
   private var myWriteStackBase = 0
@@ -214,6 +215,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
   // @Throws(E::class)
   override fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
+    fireBeforeWriteIntentReadActionStart(computation.javaClass)
     val ts = getThreadState()
     var release = true
     var releaseSecondary = false
@@ -250,9 +252,11 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     val prevImplicitLock = ThreadingAssertions.isImplicitLockOnEDT()
     try {
       ThreadingAssertions.setImplicitLockOnEDT(false)
+      fireWriteIntentActionStarted(computation.javaClass)
       return runWithTemporaryThreadLocal(ts) { computation.compute() }
     }
     finally {
+      fireWriteIntentActionFinished(computation.javaClass)
       ThreadingAssertions.setImplicitLockOnEDT(prevImplicitLock)
       if (release) {
         ts.release()
@@ -260,6 +264,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       if (releaseSecondary) {
         mySecondaryPermits.get().removeLast().release()
       }
+      afterWriteIntentReadActionFinished(computation.javaClass)
     }
   }
 
@@ -544,6 +549,13 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     if (myWriteActionListener != null)
       error("WriteActionListener already registered")
     myWriteActionListener = listener
+  }
+
+  @ApiStatus.Internal
+  override fun setWriteIntentReadActionListener(listener: WriteIntentReadActionListener) {
+    if (myWriteIntentActionListener != null)
+      error("WriteActionListener already registered")
+    myWriteIntentActionListener = listener
   }
 
   @ApiStatus.Internal
@@ -872,6 +884,22 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     finally {
       ts.inListener = false
     }
+  }
+
+  private fun fireBeforeWriteIntentReadActionStart(clazz: Class<*>) {
+    myWriteIntentActionListener?.beforeWriteIntentReadActionStart(clazz)
+  }
+
+  private fun fireWriteIntentActionStarted(clazz: Class<*>) {
+    myWriteIntentActionListener?.writeIntentReadActionStarted(clazz)
+  }
+
+  private fun fireWriteIntentActionFinished(clazz: Class<*>) {
+    myWriteIntentActionListener?.writeIntentReadActionFinished(clazz)
+  }
+
+  private fun afterWriteIntentReadActionFinished(clazz: Class<*>) {
+    myWriteIntentActionListener?.afterWriteIntentReadActionFinished(clazz)
   }
 
   private fun getWriteIntentPermit(lock: RWMutexIdea): WriteIntentPermit {
