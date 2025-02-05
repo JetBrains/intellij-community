@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.newStructureView;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.*;
@@ -376,16 +375,13 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   @ApiStatus.Internal
-  public final DefaultActionGroup getViewActions() {
-    DefaultActionGroup result = new DefaultActionGroup(IdeBundle.message("group.view.options"), null, AllIcons.Actions.GroupBy);
-    result.setPopup(true);
+  public final void getViewActions(@NotNull DefaultActionGroup result) {
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.sort"));
     result.addAll(sortActionsByName(getSortActions()));
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.filter"));
     result.addAll(sortActionsByName(getFilterActions()));
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.group"));
     addGroupByActions(result);
-    return result;
   }
 
   private @NotNull List<AnAction> getSortActions() {

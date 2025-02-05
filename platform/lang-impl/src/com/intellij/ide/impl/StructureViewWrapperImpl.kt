@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
@@ -36,6 +37,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isTooLargeForIntellijSense
@@ -71,6 +73,7 @@ import java.awt.event.HierarchyEvent
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
@@ -90,10 +93,12 @@ class StructureViewWrapperImpl(
   private var myFirstRun = true
   private var myActivityCount = 0
   private val pendingRebuild = AtomicBoolean(false)
+  private val myActionGroup: DefaultActionGroup = ActionManager.getInstance().getAction(STRUCTURE_VIEW_ACTION_GROUP_ID) as DefaultActionGroup
 
   private val rebuildRequests = MutableSharedFlow<RebuildDelay>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
+    myToolWindow.setTitleActions(listOf(myActionGroup))
     val component = myToolWindow.component
 
     @Suppress("TestOnlyProblems")
@@ -502,9 +507,11 @@ class StructureViewWrapperImpl(
   }
 
   private suspend fun updateHeaderActions(structureView: StructureView?) {
+    myActionGroup.removeAll()
     val titleActions: List<AnAction> = if (structureView is StructureViewComponent) {
       if (ExperimentalUI.isNewUI()) {
-        readAction { listOf(structureView.viewActions) }
+        readAction { structureView.getViewActions(myActionGroup) }
+        listOf(myActionGroup)
       }
       else {
         withContext(Dispatchers.EDT) { structureView.addExpandCollapseActions() }
@@ -571,6 +578,7 @@ class StructureViewWrapperImpl(
     @JvmField
     val STRUCTURE_VIEW_TARGET_FILE_KEY: DataKey<Optional<VirtualFile?>> = DataKey.create("STRUCTURE_VIEW_TARGET_FILE_KEY")
     private val STRUCTURE_VIEW_SELECTED_TAB_KEY: Key<String> = Key.create("STRUCTURE_VIEW_SELECTED_TAB")
+    private const val STRUCTURE_VIEW_ACTION_GROUP_ID: String = "Structure.ViewOptions"
 
     private val LOG = Logger.getInstance(StructureViewWrapperImpl::class.java)
     private val WRAPPER_DATA_KEY = DataKey.create<StructureViewWrapper>("WRAPPER_DATA_KEY")

@@ -1882,4 +1882,7 @@
     <listener class="com.intellij.codeInsight.completion.command.CommandCompletionListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
   </projectListeners>
+  <actions>
+    <group id="Structure.ViewOptions" searchable="false" popup="true" icon="AllIcons.Actions.GroupBy"/>
+  </actions>
 </idea-plugin>
