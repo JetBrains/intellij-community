@@ -40,6 +40,7 @@ final class ComplexTextFragment extends TextFragment {
       isRtl
     );
     var gridWidth = getGridCellWidth(view);
+    float[] alignments = null;
     if (gridWidth != null) {
       // This thing assumes that one glyph = one character.
       // This seems to work "well enough" for the terminal
@@ -47,6 +48,7 @@ final class ComplexTextFragment extends TextFragment {
       // but may need to be updated as unusual edge cases are discovered.
       // PASS 1: store the original widths.
       var originalWidths = new double[myGlyphVector.getNumGlyphs()];
+      alignments = new float[myGlyphVector.getNumGlyphs()];
       for (int i = 1; i <= myGlyphVector.getNumGlyphs(); i++) {
         originalWidths[i - 1] = myGlyphVector.getGlyphPosition(i).getX() - myGlyphVector.getGlyphPosition(i - 1).getX();
       }
@@ -75,7 +77,9 @@ final class ComplexTextFragment extends TextFragment {
         var nextPos = myGlyphVector.getGlyphPosition(i + 1);
         var newWidth = nextPos.getX() - prevPos.getX();
         if (Math.abs(newWidth - originalWidth) < 0.001) continue;
-        prevPos.setLocation(prevPos.getX() + (newWidth - originalWidth) / 2, prevPos.getY());
+        var alignment = (newWidth - originalWidth) / 2;
+        alignments[i] = (float)alignment;
+        prevPos.setLocation(prevPos.getX() + alignment, prevPos.getY());
         myGlyphVector.setGlyphPosition(i, prevPos);
       }
     }
@@ -108,6 +112,9 @@ final class ComplexTextFragment extends TextFragment {
             }
           }
           float newX = isRtl ? Math.min(lastX, (float)bounds.getMinX()) : Math.max(lastX, (float)bounds.getMaxX());
+          if (alignments != null) {
+            newX = isRtl ? newX - alignments[visualGlyphIndex] : newX + alignments[visualGlyphIndex];
+          }
           newX = Math.max(0, Math.min(totalWidth, newX));
           setCharPosition(charIndex, newX, isRtl, numChars);
           prevX = lastX;
