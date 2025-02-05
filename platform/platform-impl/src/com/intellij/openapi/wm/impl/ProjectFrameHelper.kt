@@ -248,6 +248,8 @@ abstract class ProjectFrameHelper internal constructor(
   }
 
   private fun createAndConfigureStatusBar() {
+    LOG.info("Creating status bar")
+
     val statusBar = createStatusBar()
     this.statusBar = statusBar
 
@@ -264,6 +266,8 @@ abstract class ProjectFrameHelper internal constructor(
         contentPane.add(it, BorderLayout.SOUTH)
       }
     }
+
+    LOG.info("Status bar created")
   }
 
   @Internal
@@ -376,7 +380,10 @@ abstract class ProjectFrameHelper internal constructor(
 
   // any activities that will not access a workspace model
   internal suspend fun setRawProject(project: Project) {
+    LOG.info("Setting project frame to $project")
+
     if (this.project === project) {
+      LOG.info("Project is already set for the frame $this")
       return
     }
 
@@ -384,9 +391,15 @@ abstract class ProjectFrameHelper internal constructor(
 
     withContext(Dispatchers.EDT) {
       applyInitBounds()
+
+      if (statusBar == null) {
+        LOG.error("Status bar is null, so it won't be initialized")
+      }
       statusBar?.initialize()
     }
     frameDecorator?.setProject()
+
+    LOG.info("Project frame set to $project")
   }
 
   internal open suspend fun setProject(project: Project) {

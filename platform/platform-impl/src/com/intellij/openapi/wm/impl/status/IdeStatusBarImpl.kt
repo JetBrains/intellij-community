@@ -216,6 +216,8 @@ open class IdeStatusBarImpl @ApiStatus.Internal constructor(
   }
 
   internal fun initialize() {
+    LOG.info("Initializing status bar")
+
     registerCloneTasks()
     project?.service<PerProjectTaskInfoEntityCollector>()?.startCollectingActiveTasks()
   }
