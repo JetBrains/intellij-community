@@ -123,4 +123,6 @@ private class LanguageStubDescriptorImpl(
   override val fileElementType: IFileElementType,
   override val stubDefinition: LanguageStubDefinition,
   override val fileElementSerializer: ObjectStubSerializer<*, *>,
-) : LanguageStubDescriptor
+) : LanguageStubDescriptor {
+  override fun toString(): String = "LanguageStubDescriptorImpl(language=$language)"
+}
