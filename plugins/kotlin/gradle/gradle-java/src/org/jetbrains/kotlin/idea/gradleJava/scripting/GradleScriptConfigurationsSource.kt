@@ -17,11 +17,11 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.idea.core.script.KOTLIN_SCRIPTS_MODULE_NAME
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.LibraryDependencyFactory
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
+import org.jetbrains.kotlin.idea.core.script.dependencies.indexSourceRootsEagerly
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationWithSdk
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsSource
@@ -121,17 +121,19 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
             val sdkDependency = configurationWithSdk.sdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
 
             val classes = toVfsRoots(configuration.dependenciesClassPath).toMutableSet()
-            val sources = toVfsRoots(configuration.dependenciesSources).toMutableSet()
 
-            val allDependencies = buildList {
-                addIfNotNull(sdkDependency)
-                val manager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
-                addAll(getDependenciesFromGradleLibs(classes, sources, manager, project))
-                addAll(updatedStorage.createDependenciesWithSources(classes, sources, source, manager))
-                add(updatedStorage.createDependencyWithKeyword(classes, sources, source, manager, locationName, "accessors"))
-                add(updatedStorage.createDependencyWithKeyword(classes, sources, source, manager, locationName, "groovy"))
-                addAll(classes.sortedBy { it.name }.map { updatedFactory.get(it, source) })
-            }
+            val allDependencies = listOfNotNull(sdkDependency) + buildList {
+                if (indexSourceRootsEagerly()) {
+                    val sources = toVfsRoots(configuration.dependenciesSources).toMutableSet()
+                    addAll(getDependenciesFromGradleLibs(classes, sources, fileUrlManager, project))
+                    addAll(updatedStorage.createDependenciesWithSources(classes, sources, source, fileUrlManager))
+                    add(updatedStorage.createDependencyWithKeyword(classes, sources, source, fileUrlManager, locationName, "accessors"))
+                    add(updatedStorage.createDependencyWithKeyword(classes, sources, source, fileUrlManager, locationName, "groovy"))
+                }
+
+                addAll(classes.map { updatedFactory.get(it, source) })
+            }.sortedBy { it.library.name }
+
             updatedStorage.addEntity(ModuleEntity("$definitionScriptModuleName.$locationName", allDependencies, source))
         }
 
@@ -185,11 +187,11 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
     ): List<LibraryDependency> {
 
         val dependencies: MutableList<LibraryDependency> = mutableListOf()
-        val sourcesNames = sources.associate { it.name to it }
+        val sourcesNames = sources.associateBy { it.name }
 
-        val pairs = classes.associate {
+        val pairs = classes.associateWith {
             val sourcesName = it.name.replace(".jar", "-sources.jar")
-            it to sourcesNames[sourcesName]
+            sourcesNames[sourcesName]
         }.filterValues { it != null }
 
         for ((left, right) in pairs) {
