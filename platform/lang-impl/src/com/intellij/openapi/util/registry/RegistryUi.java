@@ -371,6 +371,10 @@ public class RegistryUi implements Disposable {
         myCloseAction = new AbstractAction(IdeBundle.message("registry.close.action.text")) {
           @Override
           public void actionPerformed(@NotNull ActionEvent e) {
+            final TableCellEditor cellEditor = myTable.getCellEditor();
+            if (cellEditor != null) {
+              cellEditor.stopCellEditing();
+            }
             processClose();
             doOKAction();
           }
@@ -382,7 +386,7 @@ public class RegistryUi implements Disposable {
       public void doCancelAction() {
         final TableCellEditor cellEditor = myTable.getCellEditor();
         if (cellEditor != null) {
-          cellEditor.stopCellEditing();
+          cellEditor.cancelCellEditing();
         }
         processClose();
         super.doCancelAction();
