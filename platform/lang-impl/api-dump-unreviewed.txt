@@ -11773,7 +11773,7 @@ f:com.intellij.ide.util.gotoByName.GotoActionModel
 - getElementsByName(java.lang.String,Z,java.lang.String):java.lang.Object[]
 - getFullName(java.lang.Object):java.lang.String
 - getGroupMapping(com.intellij.openapi.actionSystem.AnAction):com.intellij.ide.util.gotoByName.GroupMapping
-- getGroupName(com.intellij.ide.ui.search.OptionDescription):java.lang.String
+- s:getGroupName(com.intellij.ide.ui.search.OptionDescription):java.lang.String
 - getHelpId():java.lang.String
 - getListCellRenderer():javax.swing.ListCellRenderer
 - getNames(Z):java.lang.String[]
@@ -11802,8 +11802,8 @@ c:com.intellij.ide.util.gotoByName.GotoActionModel$ActionWrapper
 f:com.intellij.ide.util.gotoByName.GotoActionModel$GotoActionListCellRenderer
 - javax.swing.DefaultListCellRenderer
 - sf:TOGGLE_BUTTON_BORDER:javax.swing.border.Border
-- <init>(com.intellij.util.Function):V
-- <init>(com.intellij.util.Function,Z):V
+- <init>():V
+- <init>(Z):V
 - s:calcHit(com.intellij.ide.ui.search.OptionDescription):java.lang.String
 - getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
 c:com.intellij.ide.util.gotoByName.GotoActionModel$MatchedValue

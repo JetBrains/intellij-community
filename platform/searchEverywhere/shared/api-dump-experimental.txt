@@ -4,5 +4,5 @@
 *f:com.intellij.platform.searchEverywhere.SeItemPresentation$Companion
 - f:serializer():kotlinx.serialization.KSerializer
 *:com.intellij.platform.searchEverywhere.api.SeItem
-- a:presentation():com.intellij.platform.searchEverywhere.SeItemPresentation
+- a:presentation(kotlin.coroutines.Continuation):java.lang.Object
 - a:weight():I

@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 class SeFileItem(val legacyItem: ItemWithPresentation<*>) : SeItem {
   override fun weight(): Int = 0
-  override fun presentation(): SeItemPresentation = SeTextItemPresentation(legacyItem.presentation.presentableText)
+  override suspend fun presentation(): SeItemPresentation = SeTextItemPresentation(legacyItem.presentation.presentableText)
 }
 
 @Internal

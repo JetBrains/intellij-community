@@ -7,6 +7,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface SeItem {
   fun weight(): Int
-  fun presentation(): SeItemPresentation
+  suspend fun presentation(): SeItemPresentation
   //fun provideData(dataSink: DataSink)
 }

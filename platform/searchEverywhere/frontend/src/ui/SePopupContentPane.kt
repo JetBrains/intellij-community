@@ -7,6 +7,10 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.platform.searchEverywhere.SeActionItemPresentation
+import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
+import com.intellij.platform.searchEverywhere.SeTextItemPresentation
+import com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.vm.SeListItemData
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.ui.ScrollingUtil
@@ -45,10 +49,26 @@ class SePopupContentPane(private val vm: SePopupVm, private val popupManager: Se
   init {
     layout = GridLayout()
 
-    resultList.setCellRenderer(listCellRenderer {
+    val actionListCellRenderer = SeActionItemPresentationRenderer(resultList).get { textField.text ?: "" }
+    val defaultRenderer = listCellRenderer<SeResultListRow> {
       when (val value = value) {
-        is SeResultListItemRow -> text(value.item.presentation.text)
+        is SeResultListItemRow -> {
+          when (val presentation = value.item.presentation) {
+            is SeActionItemPresentation -> throw IllegalStateException("Action item should be handled by actionListCellRenderer")
+            is SeTargetItemPresentation -> text(presentation.text)
+            is SeTextItemPresentation -> text(presentation.text)
+          }
+        }
         is SeResultListMoreRow -> text(IdeBundle.message("search.everywhere.points.loading"))
+      }
+    }
+
+    resultList.setCellRenderer(ListCellRenderer { list, value, index, isSelected, cellHasFocus ->
+      if (value is SeResultListItemRow && value.item.presentation is SeActionItemPresentation) {
+        actionListCellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+      }
+      else {
+        defaultRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
       }
     })
 

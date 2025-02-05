@@ -84,5 +84,5 @@ class SeActionsProvider(project: Project? = null, contextComponent: Component? =
 @ApiStatus.Internal
 class SeActionItem(val matchedValue: MatchedValue): SeItem {
   override fun weight(): Int = matchedValue.matchingDegree
-  override fun presentation(): SeItemPresentation = SeActionPresentationProvider.invoke(matchedValue)
+  override suspend fun presentation(): SeItemPresentation = SeActionPresentationProvider.get(matchedValue)
 }

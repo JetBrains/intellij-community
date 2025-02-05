@@ -11,7 +11,6 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.BooleanOptionDescription.RequiresRebuild
-import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.ActionAsyncProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.GotoActionListCellRenderer
@@ -142,11 +141,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
   }
 
   override fun getElementsRenderer(): ListCellRenderer<in MatchedValue> {
-    return GotoActionListCellRenderer(
-      { description: OptionDescription? ->
-        model.getGroupName(
-          description!!)
-      }, true)
+    return GotoActionListCellRenderer(true)
   }
 
   override fun showInFindResults(): Boolean = false

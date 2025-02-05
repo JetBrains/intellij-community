@@ -2,6 +2,9 @@
 package com.intellij.platform.searchEverywhere.providers.actions
 
 import com.intellij.ide.actions.ApplyIntentionAction
+import com.intellij.ide.actions.searcheverywhere.PromoAction
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel
@@ -9,68 +12,97 @@ import com.intellij.ide.util.gotoByName.getGroupName
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeItemPresentation
+import com.intellij.platform.searchEverywhere.SeOptionActionItemPresentation
+import com.intellij.platform.searchEverywhere.SeRunnableActionItemPresentation
+import com.intellij.platform.searchEverywhere.SeRunnableActionItemPresentation.Promo
 import com.intellij.util.text.nullize
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object SeActionPresentationProvider: (GotoActionModel.MatchedValue) -> SeItemPresentation {
-  override fun invoke(matchedValue: GotoActionModel.MatchedValue): SeItemPresentation {
+object SeActionPresentationProvider {
+  suspend fun get(matchedValue: GotoActionModel.MatchedValue): SeItemPresentation {
     val value = matchedValue.value
     if (value is GotoActionModel.ActionWrapper) {
-      var presentation = SeActionItemPresentation(text = "")
+      var presentation = SeRunnableActionItemPresentation(commonData = SeActionItemPresentation.Common(text = ""))
 
       val anAction = value.action
       val actionPresentation = value.presentation
 
       val toggle = anAction is ToggleAction
       if (toggle) {
-        presentation = presentation.run { copy(switcherState = Toggleable.isSelected(actionPresentation)) }
+        presentation = presentation.run {
+          copy(commonData = commonData.copy(switcherState = Toggleable.isSelected(actionPresentation)))
+        }
       }
 
       val groupName = if (anAction is ApplyIntentionAction) null else value.getGroupName()
       if (groupName != null) {
-        presentation = presentation.run { copy(location = groupName) }
+        presentation = presentation.run {
+          copy(commonData = commonData.copy(location = groupName))
+        }
       }
 
-      //if (UISettings.getInstance().showIconsInMenus) {
-      //  presentation = presentation.run { copy(icon = actionPresentation.icon) }
-      //  //if (isSelected && presentation.getSelectedIcon() != null) {
-      //  //  icon = presentation.getSelectedIcon();
-      //  //}
-      //}
+      if (UISettings.getInstance().showIconsInMenus) {
+        presentation = presentation.run {
+          copy(iconId = actionPresentation.icon?.rpcId(),
+               selectedIconId = actionPresentation.selectedIcon?.rpcId())
+        }
+      }
 
-      //if (anAction instanceof PromoAction promoAction) {
-      //  customizePromoAction(promoAction, bg, eastBorder, groupFg, panel);
-      //}
+      if (anAction is PromoAction) {
+        presentation = presentation.run {
+          copy(promo = Promo(productIconId = anAction.promotedProductIcon?.rpcId(),
+                             callToActionText = anAction.callToAction))
+        }
+      }
+
+      presentation = presentation.run {
+        copy(toolTip = actionPresentation.description)
+      }
 
       @NlsSafe val actionId = ActionManager.getInstance().getId(anAction)
       val shortcuts = KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts()
-      val shortcutText = KeymapUtil.getPreferredShortcutText(shortcuts).nullize(true)?.let {
+      KeymapUtil.getPreferredShortcutText(shortcuts).nullize(true)?.takeIf { it.isNotEmpty() }?.let {
         presentation = presentation.run { copy(shortcut = it) }
       }
 
-      //val text = ActionPresentationDecorator.decorateTextIfNeeded(anAction, actionPresentation.text)
-      val text = actionPresentation.text
-      presentation = presentation.run { copy(text = text) }
+      val decoratedText = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        ActionPresentationDecorator.decorateTextIfNeeded(anAction, actionPresentation.text)
+      }
+
+      presentation = presentation.run {
+        copy(commonData = commonData.copy(text = decoratedText))
+      }
 
       return presentation
     }
     else if (value is OptionDescription) {
       val hit = GotoActionModel.GotoActionListCellRenderer.calcHit(value)
-      var presentation = SeActionItemPresentation(text = hit)
+      var presentation = SeOptionActionItemPresentation(commonData = SeActionItemPresentation.Common(text = hit))
 
       (value as? BooleanOptionDescription)?.isOptionEnabled.let {
-        presentation = presentation.run { copy(switcherState = it) }
+        presentation = presentation.run {
+          copy(commonData = commonData.copy(switcherState = it))
+        }
       }
 
-      presentation = presentation.run { copy(location = getGroupName(value)) }
+      presentation = presentation.run {
+        copy(commonData = commonData.copy(location = getGroupName(value)))
+      }
+
       return presentation
     }
 
-    return SeActionItemPresentation(text = "Unknown item")
+    return SeRunnableActionItemPresentation(SeActionItemPresentation.Common(text = "Unknown item"))
   }
 }
