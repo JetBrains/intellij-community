@@ -73,5 +73,7 @@ c:com.intellij.psi.stubs.PsiFileStubImpl
 - com.intellij.psi.stubs.PsiFileStub
 - *:getElementType():com.intellij.psi.tree.IElementType
 - *:getStubSerializer():com.intellij.psi.stubs.ObjectStubSerializer
+*f:com.intellij.psi.stubs.StubElementUtil
+- sf:shouldCreateStubForPsi(com.intellij.psi.stubs.StubElementFactory,com.intellij.psi.PsiElement):Z
 f:com.intellij.psi.stubs.StubTreeBuilder
 - *s:getStubbedRootDescriptors(com.intellij.psi.FileViewProvider):java.util.List

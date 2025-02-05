@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi;
 
@@ -126,7 +126,7 @@ public abstract class PsiAnchor implements Pointer<PsiElement> {
       IElementType elementType = elt.getIElementType();
       StubElementFactory<?, ?> factory = StubElementRegistryService.getInstance().getStubFactory(elementType);
       if (factory == null) return null;
-      if (elt.getStub() != null || factory.shouldCreateStub(element.getNode())) {
+      if (elt.getStub() != null || StubElementUtil.shouldCreateStubForPsi(factory, element)) {
         int index = calcStubIndex((StubBasedPsiElement<?>)element);
         if (index != -1) {
           return new StubIndexReference(containingFile, index, containingFile.getLanguage(), elementType);

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs
 
 import com.intellij.lang.*
@@ -66,7 +66,7 @@ private class StubElementFactoryAdapter<Stub, Psi>(
   override fun createStub(psi: Psi, parentStub: StubElement<out PsiElement>?): Stub =
     type.createStub(psi, parentStub)
 
-  override fun shouldCreateStub(node: ASTNode?): Boolean =
+  override fun shouldCreateStub(node: ASTNode): Boolean =
     type.shouldCreateStub(node)
 
   override fun equals(other: Any?): Boolean =
@@ -84,7 +84,7 @@ private class LightStubElementFactoryAdapter<Stub, Psi>(
   override fun createStub(psi: Psi, parentStub: StubElement<out PsiElement>?): Stub =
     type.createStub(psi, parentStub)
 
-  override fun shouldCreateStub(node: ASTNode?): Boolean =
+  override fun shouldCreateStub(node: ASTNode): Boolean =
     type.shouldCreateStub(node)
 
   override fun createPsi(stub: Stub): Psi? =

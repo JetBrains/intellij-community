@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs
 
 import com.intellij.lang.ASTNode
@@ -14,5 +14,5 @@ interface StubElementFactory<Stub, Psi> where Psi : PsiElement, Stub : StubEleme
 
   fun createPsi(stub: Stub): Psi?
 
-  fun shouldCreateStub(node: ASTNode?): Boolean = true
+  fun shouldCreateStub(node: ASTNode): Boolean = true
 }
