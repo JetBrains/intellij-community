@@ -67,7 +67,9 @@ fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Compon
     }
     else {
       fileLogger().info("Invoking action $actionId on $target")
-      actionManager.tryToExecute(action, null, component, place, now)
+      step("Invoke action ${action.getTemplateText()}") {
+        actionManager.tryToExecute(action, null, component, place, now)
+      }
     }
   }
   withContext(OnDispatcher.DEFAULT) {
