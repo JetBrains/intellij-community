@@ -104,7 +104,7 @@
     <orderEntry type="module" module-name="intellij.javaFX.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.langInjection.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.manifest" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.yaml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.yaml.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tasks.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization.tests" scope="TEST" />

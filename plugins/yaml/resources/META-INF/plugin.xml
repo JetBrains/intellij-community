@@ -12,7 +12,7 @@
     <plugin id="com.intellij.modules.json"/>
   </dependencies>
   <content>
-    <module name="intellij.yaml" loading="embedded"/>
+    <module name="intellij.yaml.backend" loading="embedded"/>
     <module name="intellij.yaml.editing" loading="required"/>
   </content>
 </idea-plugin>
