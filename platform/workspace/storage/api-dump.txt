@@ -156,6 +156,12 @@ com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 - java.lang.annotation.Annotation
 @:com.intellij.platform.workspace.storage.annotations.Open
 - java.lang.annotation.Annotation
+f:com.intellij.platform.workspace.storage.impl.indices.WrongProperty2VfuInfoTypeException
+- java.lang.RuntimeException
+- <init>(java.lang.String):V
+f:com.intellij.platform.workspace.storage.impl.indices.WrongVfuInfoTypeException
+- java.lang.RuntimeException
+- <init>(java.lang.String):V
 f:com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImplKt
 - sf:toVirtualFileUrl(java.io.File,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager):com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - sf:toVirtualFileUrl(java.nio.file.Path,com.intellij.platform.workspace.storage.url.VirtualFileUrlManager):com.intellij.platform.workspace.storage.url.VirtualFileUrl
