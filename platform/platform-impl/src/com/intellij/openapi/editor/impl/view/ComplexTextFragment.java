@@ -64,6 +64,7 @@ final class ComplexTextFragment extends TextFragment {
           // centering the previous character
           if (actualWidth - width > 0.0) {
             prevPos.setLocation(actualPrevX + (actualWidth - width) / 2.0, prevPos.getY());
+            myGlyphVector.setGlyphPosition(i - 1, prevPos);
           }
         }
         else { // no width adjustments for this glyph, but we must account for the previous ones
