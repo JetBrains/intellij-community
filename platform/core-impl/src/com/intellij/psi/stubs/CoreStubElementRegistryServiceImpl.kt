@@ -107,6 +107,8 @@ private class LanguageStubDescriptorAdapter(
 
   override val fileElementSerializer: IStubFileElementType<*>
     get() = fileElementType
+
+  override fun toString(): String = "LanguageStubDescriptorAdapter(language=$language)"
 }
 
 private class LanguageStubDefinitionAdapter(
@@ -121,6 +123,8 @@ private class LanguageStubDefinitionAdapter(
 
   override fun shouldBuildStubFor(file: VirtualFile): Boolean =
     fileElementType.shouldBuildStubFor(file)
+
+  override fun toString(): String = "LanguageStubDefinitionAdapter(language=${fileElementType.language})"
 }
 
 private class LightLanguageStubDefinitionAdapter(
@@ -138,6 +142,8 @@ private class LightLanguageStubDefinitionAdapter(
 
   override fun parseContentsLight(chameleon: ASTNode): FlyweightCapableTreeStructure<LighterASTNode> =
     fileElementType.parseContentsLight(chameleon)
+
+  override fun toString(): String = "LightLanguageStubDefinitionAdapter(language=${fileElementType.language})"
 }
 
 @ApiStatus.Internal
