@@ -7,8 +7,10 @@ import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
 import com.intellij.driver.sdk.remoteDev.*
+import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
 import com.intellij.driver.sdk.ui.CellRendererReader
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.Component
@@ -24,6 +26,11 @@ import kotlin.time.Duration.Companion.seconds
 
 fun Finder.tree(@Language("xpath") xpath: String? = null) =
   x(xpath ?: xQuery { byType(JTree::class.java) }, JTreeUiComponent::class.java)
+
+fun Finder.accessibleTree(locator: QueryBuilder.() -> String = { byType(JTree::class.java) }) =
+  x(xQuery { locator() }, JTreeUiComponent::class.java).apply {
+    replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class))
+  }
 
 open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   private val treeComponent get() = driver.cast(component, JTreeComponent::class)
