@@ -70,10 +70,14 @@ internal fun generateProductInfoJson(
 }
 
 private fun generateGitRevisionProperty(context: BuildContext): CustomProperty? {
-  val gitRoot = context.paths.projectHome
-  if (!gitRoot.resolve(".git").isDirectory) {
+  if (!context.options.storeGitRevision) {
+    return null
+  }
+  
+  val gitRoot = findGitRoot(context)
+  if (gitRoot == null) {
     if (!context.options.isInDevelopmentMode && !context.options.isTestBuild) {
-      context.messages.error("Cannot find Git repository root in '$gitRoot'")
+      context.messages.error("Cannot find Git repository root for '${context.paths.projectHome}'")
     }
     return null
   }
@@ -85,6 +89,14 @@ private fun generateGitRevisionProperty(context: BuildContext): CustomProperty? 
     context.messages.error("Cannot determine Git revision to store in product-info.json: ${e.message}", e)
     return null
   }
+}
+
+private fun findGitRoot(context: BuildContext): Path? {
+  var projectHome = context.paths.projectHome
+  while (projectHome != null && !projectHome.resolve(".git").isDirectory) {
+    projectHome = projectHome.parent
+  }
+  return projectHome
 }
 
 internal fun writeProductInfoJson(targetFile: Path, json: String, context: BuildContext) {
