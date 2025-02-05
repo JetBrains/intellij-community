@@ -131,17 +131,20 @@ public final class JavaBuilderUtil {
     BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     GraphConfiguration graphConfig = dataManager.getDependencyGraph();
     if(isDepGraphEnabled() && graphConfig != null) {
+      Delta delta = null;
       Set<File> inputFiles = getFilesContainer(context, FILES_TO_COMPILE_KEY);
       Set<String> deletedFiles = getRemovedPaths(chunk, dirtyFilesHolder);
-      Delta delta = graphConfig.getGraph().createDelta(
-        Iterators.map(inputFiles, graphConfig.getPathMapper()::toNodeSource),
-        Iterators.map(deletedFiles, graphConfig.getPathMapper()::toNodeSource),
-        false
-      );
       BackendCallbackToGraphDeltaAdapter callback = GRAPH_DELTA_CALLBACK_KEY.get(context);
-      if (callback != null) {
-        for (var nodeData : callback.getNodes()) {
-          delta.associate(nodeData.getFirst(), nodeData.getSecond());
+      if (callback != null || !inputFiles.isEmpty() || !deletedFiles.isEmpty()) {
+        delta = graphConfig.getGraph().createDelta(
+          Iterators.map(inputFiles, graphConfig.getPathMapper()::toNodeSource),
+          Iterators.map(deletedFiles, graphConfig.getPathMapper()::toNodeSource),
+          false
+        );
+        if (callback != null) {
+          for (var nodeData : callback.getNodes()) {
+            delta.associate(nodeData.getFirst(), nodeData.getSecond());
+          }
         }
       }
 
@@ -549,9 +552,7 @@ public final class JavaBuilderUtil {
     }
 
     if (performIntegrate) {
-      if (!Iterators.isEmpty(diffResult.getAffectedSources()) || !Iterators.isEmpty(diffResult.getDeletedNodes())) { // avoid excessive messaging
-        context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.updating.dependency.information.0", chunk.getPresentableShortName())));
-      }
+      context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.updating.dependency.information.0", chunk.getPresentableShortName())));
       dependencyGraph.integrate(diffResult);
     }
 

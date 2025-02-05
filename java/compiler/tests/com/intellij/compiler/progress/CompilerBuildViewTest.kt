@@ -83,6 +83,7 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
           Running 'before' tasks
           Checking sources
           Copying resources… [a]
+          Updating dependency information… [a]
           Parsing java… [a]
           Writing classes… [a]
           Adding nullability assertions… [a]
@@ -118,6 +119,7 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
         Running 'before' tasks
         Checking sources
         Copying resources… [a]
+        Updating dependency information… [a]
         Parsing java… [a]
         Writing classes… [a]
         Adding nullability assertions… [a]
