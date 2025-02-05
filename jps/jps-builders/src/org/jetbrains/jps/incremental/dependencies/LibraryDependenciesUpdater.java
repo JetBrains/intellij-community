@@ -162,12 +162,7 @@ public final class LibraryDependenciesUpdater {
       }
     }
     else if (diffParams.isCalculateAffected()) {
-      Iterable<NodeSource> affectedSources = diffResult.getAffectedSources();
-      final String infoMessage = JpsBuildBundle.message("progress.message.dependency.analysis.found.0.affected.files", count(affectedSources));
-      LOG.info(infoMessage);
-      context.processMessage(new ProgressMessage(infoMessage));
-
-      markAffectedFilesDirty(context, map(affectedSources, ns -> pathMapper.toPath(ns)));
+      markAffectedFilesDirty(context, map(diffResult.getAffectedSources(), ns -> pathMapper.toPath(ns)));
     }
 
     graph.integrate(diffResult);
@@ -184,6 +179,11 @@ public final class LibraryDependenciesUpdater {
     if (isEmpty(affectedFiles)) {
       return;
     }
+
+    final String infoMessage = JpsBuildBundle.message("progress.message.dependency.analysis.found.0.affected.files", count(affectedFiles));
+    LOG.info(infoMessage);
+    context.processMessage(new ProgressMessage(infoMessage));
+
     ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     BuildRootIndex buildRootIndex = projectDescriptor.getBuildRootIndex();
     JavaModuleIndex moduleIndex = JpsJavaExtensionService.getInstance().getJavaModuleIndex(projectDescriptor.getProject());
