@@ -3,9 +3,11 @@ package com.intellij.xdebugger.impl.mixedmode
 
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 val XDebugSession.mixedModeExecutionStack: XMixedModeExecutionStack?
   get() = suspendContext?.activeExecutionStack as? XMixedModeExecutionStack
@@ -58,3 +60,10 @@ val XSuspendContext.highLevel : XSuspendContext?
 
 val XSuspendContext.lowLevel : XSuspendContext?
   get() = (this as? XMixedModeSuspendContext)?.lowLevelDebugSuspendContext
+
+@OptIn(ExperimentalCoroutinesApi::class)
+fun XDebugSession.getLowLevelFrame() : XStackFrame? {
+  val stack = this.mixedModeExecutionStack ?: return null
+  if (!stack.computedFramesMap.isCompleted) return null
+  return stack.computedFramesMap.getCompleted().entries.firstOrNull { it.value == currentStackFrame }?.key
+}
