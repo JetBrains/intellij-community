@@ -10995,6 +10995,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/functionInCompanion.kt");
         }
 
+        @TestMetadata("functionInstanceParamWithDefaultValue.kt")
+        public void testFunctionInstanceParamWithDefaultValue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/functionInstanceParamWithDefaultValue.kt");
+        }
+
+        @TestMetadata("innerClassExistingArgument.kt")
+        public void testInnerClassExistingArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/innerClassExistingArgument.kt");
+        }
+
+        @TestMetadata("innerClassParamWithDefaultValue.kt")
+        public void testInnerClassParamWithDefaultValue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/innerClassParamWithDefaultValue.kt");
+        }
+
         @TestMetadata("property.kt")
         public void testProperty() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/property.kt");

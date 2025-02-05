@@ -15202,6 +15202,21 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/moveMemberToTopLevel/functionInCompanion.kt");
         }
 
+        @TestMetadata("functionInstanceParamWithDefaultValue.kt")
+        public void testFunctionInstanceParamWithDefaultValue() throws Exception {
+            runTest("testData/intentions/moveMemberToTopLevel/functionInstanceParamWithDefaultValue.kt");
+        }
+
+        @TestMetadata("innerClassExistingArgument.kt")
+        public void testInnerClassExistingArgument() throws Exception {
+            runTest("testData/intentions/moveMemberToTopLevel/innerClassExistingArgument.kt");
+        }
+
+        @TestMetadata("innerClassParamWithDefaultValue.kt")
+        public void testInnerClassParamWithDefaultValue() throws Exception {
+            runTest("testData/intentions/moveMemberToTopLevel/innerClassParamWithDefaultValue.kt");
+        }
+
         @TestMetadata("property.kt")
         public void testProperty() throws Exception {
             runTest("testData/intentions/moveMemberToTopLevel/property.kt");

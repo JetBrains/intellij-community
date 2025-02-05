@@ -376,7 +376,8 @@ open class K2MoveDeclarationsRefactoringProcessor(
                             ) ?: return
                             val possiblyQuotedName = quoteNameIfNeeded(outerInstanceParameterName)
                             val parameter = KtPsiFactory(project).createParameter("private val $possiblyQuotedName: $type")
-                            createPrimaryConstructorParameterListIfAbsent().addParameter(parameter)
+                            val constructorParameterList = createPrimaryConstructorParameterListIfAbsent()
+                            constructorParameterList.addParameterBefore(parameter, constructorParameterList.parameters.firstOrNull())
                         }
                     }
                 }
