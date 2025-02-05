@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -19,14 +20,16 @@ class SdkEntityFileIndexContributor : WorkspaceFileIndexContributor<SdkEntity>, 
     get() = SdkEntity::class.java
 
   override fun registerFileSets(entity: SdkEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-    val compiledRootsData = SdkRootFileSetData(entity.symbolicId)
-    val sourceRootFileSetData = SdkSourceRootFileSetData(entity.symbolicId)
-    for (root in entity.roots) {
-      when (root.type.name) {
-        OrderRootType.CLASSES.customName -> registrar.registerFileSet(root.url, WorkspaceFileKind.EXTERNAL, entity, compiledRootsData)
-        OrderRootType.SOURCES.customName -> registrar.registerFileSet(root.url, WorkspaceFileKind.EXTERNAL_SOURCE, entity,
-                                                                      sourceRootFileSetData)
-        else -> {}
+    if (Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")) {
+      val compiledRootsData = SdkRootFileSetData(entity.symbolicId)
+      val sourceRootFileSetData = SdkSourceRootFileSetData(entity.symbolicId)
+      for (root in entity.roots) {
+        when (root.type.name) {
+          OrderRootType.CLASSES.customName -> registrar.registerFileSet(root.url, WorkspaceFileKind.EXTERNAL, entity, compiledRootsData)
+          OrderRootType.SOURCES.customName -> registrar.registerFileSet(root.url, WorkspaceFileKind.EXTERNAL_SOURCE, entity,
+                                                                        sourceRootFileSetData)
+          else -> {}
+        }
       }
     }
   }

@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
@@ -26,7 +25,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.config.KOTLIN_SOURCE_ROOT_TYPE_ID
@@ -45,7 +43,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaSourceModuleForOutsider
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
@@ -107,6 +104,7 @@ internal class K2IDEProjectStructureProvider(private val project: Project) : IDE
             )
         }
 
+        is ModuleCandidate.Sdk -> listOf(KaLibrarySdkModuleImpl(project, data.sdkId))
         is ModuleCandidate.FixedModule -> listOf(data.module)
     }
 

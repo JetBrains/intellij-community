@@ -93,6 +93,8 @@
                  description="Enable workspace model checking for listeners that execute more than 200ms"/>
     <registryKey key="ide.workspace.model.assertions.bridges.usage" defaultValue="false" restartRequired="true"
                  description="Enable workspace model checking for accessing bridges from WSM listeners"/>
+    <registryKey key="ide.workspace.model.sdk.remove.custom.processing" defaultValue="true" restartRequired="true"
+                 description="Removes custom processing of Global Libraries and SDKs in the Workspace Model"/>
 
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceEntitiesLifecycleActivity"/>
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.OrphanageActivity"/>

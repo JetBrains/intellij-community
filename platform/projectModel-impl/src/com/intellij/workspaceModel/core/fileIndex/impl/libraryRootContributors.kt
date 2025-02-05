@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -13,6 +14,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryRoot.InclusionOptions.*
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.asSafely
@@ -24,7 +26,12 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
   override val entityClass: Class<LibraryEntity> get() = LibraryEntity::class.java
 
   override fun registerFileSets(entity: LibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-    val libraryId = entity.symbolicId
+    val libraryId = if (Registry.`is`("ide.workspace.model.sdk.remove.custom.processing")) {
+      entity.symbolicId
+    } else {
+      if (entity.symbolicId.tableId is LibraryTableId.GlobalLibraryTableId) return
+      entity.symbolicId.takeIf { it.tableId == LibraryTableId.ProjectLibraryTableId }
+    }
     val compiledRootsData = LibraryRootFileSetData(libraryId)
     val sourceRootFileSetData = LibrarySourceRootFileSetData(libraryId)
     for (root in entity.roots) {

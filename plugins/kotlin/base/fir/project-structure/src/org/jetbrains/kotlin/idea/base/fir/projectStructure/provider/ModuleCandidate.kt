@@ -19,6 +19,10 @@ internal sealed class ModuleCandidate {
       val originalVirtualFile: VirtualFile
     ) : ModuleCandidate()
 
+    data class Sdk(
+        val sdkId: com.intellij.platform.workspace.jps.entities.SdkId
+    ) : ModuleCandidate()
+
     data class FixedModule(
         val module: KaModule
     ) : ModuleCandidate()
