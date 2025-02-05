@@ -4,7 +4,6 @@ package com.intellij.ide.util;
 import com.intellij.icons.AllIcons;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -42,7 +41,7 @@ public class DefaultModuleRendererFactory extends ModuleRendererFactory {
   public final @Nullable TextWithIcon getModuleTextWithIcon(Object element) {
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-334335, EA-841334")) {
       if (element instanceof PsiElement && ((PsiElement)element).isValid()) {
-        return ReadAction.compute(()->elementLocation((PsiElement)element)) ;
+        return elementLocation((PsiElement)element);
       }
       else {
         return null;
