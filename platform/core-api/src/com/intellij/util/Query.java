@@ -123,6 +123,15 @@ public interface Query<Result> extends Iterable<Result> {
     return this;
   }
 
+  /**
+   * @deprecated don't use Query as Iterable. Call {@link #findAll} explicitly, but first,
+   * consider whether it's necessary to find all results at once, e.g., use {@link #anyMatch} or {@link #allMatch}
+   */
+  @Deprecated
+  default Iterable<Result> asIterable() {
+    return findAll();
+  }
+
   @Override
   default @NotNull Iterator<Result> iterator() {
     return findAll().iterator();

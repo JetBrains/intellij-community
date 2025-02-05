@@ -5629,6 +5629,7 @@ com.intellij.util.Query
 - allMatch(java.util.function.Predicate):Z
 - allowParallelProcessing():com.intellij.util.Query
 - anyMatch(java.util.function.Predicate):Z
+- asIterable():java.lang.Iterable
 - a:findAll():java.util.Collection
 - a:findFirst():java.lang.Object
 - a:forEach(com.intellij.util.Processor):Z
