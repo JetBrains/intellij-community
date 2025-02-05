@@ -46,15 +46,6 @@ private const val thresholdPercentage = 0.5
 // Please note: for performance reasons, we do not set `jps.new.storage.compact.on.close` to true.
 // As a result, the database file on disk may grow to some extent.
 
-// kotlin.serialization.plugin.path
-private fun configureKotlincHome() {
-  val relativePath = requireNotNull(System.getProperty("jps.kotlin.home"))
-  // todo a more robust solution to avoid `toRealPath`
-  // resolve symlink to real dir
-  val singleFile = Path.of(runFiles.rlocation(relativePath)).toRealPath()
-  System.setProperty("jps.kotlin.home", singleFile.parent.toString())
-}
-
 fun configureGlobalJps(tracer: Tracer, scope: CoroutineScope) {
   val globalSpanForIJLogger = tracer.spanBuilder("global").startSpan()
   scope.coroutineContext.job.invokeOnCompletion { globalSpanForIJLogger.end() }
@@ -68,7 +59,6 @@ fun configureGlobalJps(tracer: Tracer, scope: CoroutineScope) {
   System.setProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION, "true")
   System.setProperty("idea.compression.enabled", "false")
   System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY, "true")
-  configureKotlincHome()
 }
 
 internal class JpsBuildWorker private constructor(private val allocator: RootAllocator) : WorkRequestExecutor<WorkRequestWithDigests> {
@@ -360,7 +350,6 @@ private suspend fun initAndBuild(
   }
   try {
     val projectDescriptor = storageInitializer.createProjectDescriptor(
-      messageHandler = messageHandler,
       jpsModel = jpsModel,
       moduleTarget = moduleTarget,
       relativizer = relativizer,

@@ -12,7 +12,6 @@ import kotlinx.coroutines.ensureActive
 import org.h2.mvstore.MVStore
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
-import org.jetbrains.bazel.jvm.jps.impl.RequestLog
 import org.jetbrains.bazel.jvm.jps.impl.loadJpsProject
 import org.jetbrains.jps.cmdline.ProjectDescriptor
 import org.jetbrains.jps.incremental.fs.BuildFSState
@@ -98,7 +97,6 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
   }
 
   fun createProjectDescriptor(
-    messageHandler: RequestLog,
     jpsModel: JpsModel,
     moduleTarget: BazelModuleBuildTarget,
     relativizer: PathRelativizerService,
@@ -130,7 +128,6 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
     }
 
     return createProjectDescriptor(
-      messageHandler = messageHandler,
       jpsModel = jpsModel,
       moduleTarget = moduleTarget,
       relativizer = relativizer,

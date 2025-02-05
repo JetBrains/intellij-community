@@ -67,6 +67,7 @@ fun configureCommonCompilerArgs(kotlinArgs: K2JVMCompilerArguments, args: ArgMap
   kotlinArgs.allowUnstableDependencies = true
 
   kotlinArgs.noStdlib = true
+  kotlinArgs.noReflect = true
   kotlinArgs.disableStandardScript = true
 
   kotlinArgs.apiVersion = args.optionalSingle(JvmBuilderFlags.API_VERSION)

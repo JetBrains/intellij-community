@@ -59,9 +59,9 @@
     "fef93d25defc9c63fc2d8a85914282ccf18bd4fdf4a757d00417e82c4fe30d75",
     "8f8f11d1078d1a4ee7c5c3a61c3df74e0b3c1820e97a95b9e3a81ea4f70f6101"
   ],
-  "org.jetbrains.kotlin:kotlin-compiler:2.1.20-Beta2": [
-    "367c4d9e0ba8c4e1f5ee52552bb4c63ca1422fc8543333378480031eda5010eb",
-    "84652229286b1136776b0d739993c48d5a963343a9dbd240a7a41da99c68556d"
+  "org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.20-Beta2": [
+    "3997081b2e2172155a042e58b179f7e7e53caa012d43a9ba7c0c1a654ef0bdb6",
+    "471080a3e0323d16c76385da8642eaea947632e45a59273533183c37adc80116"
   ],
   "org.jetbrains.kotlin:kotlin-compose-compiler-plugin:2.1.20-Beta2": [
     "516e93281f577203335d0aaafcd63a5ffa23082d674c3d78159d5000b1c40f61",

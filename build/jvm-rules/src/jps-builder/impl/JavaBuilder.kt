@@ -14,7 +14,7 @@ import com.intellij.util.lang.JavaVersion
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.bazel.jvm.jps.hashMap
+import org.jetbrains.bazel.jvm.jps.ClasspathHolder
 import org.jetbrains.bazel.jvm.jps.hashSet
 import org.jetbrains.bazel.jvm.jps.impl.JavaBuilder.Companion.builderName
 import org.jetbrains.bazel.jvm.jps.linkedSet
@@ -112,6 +112,8 @@ private val FILTERED_SINGLE_OPTIONS: MutableSet<String?> = java.util.Set.of(
 private val POSSIBLY_CONFLICTING_OPTIONS = java.util.Set.of(
   SOURCE_OPTION, SYSTEM_OPTION, "--boot-class-path", "-bootclasspath", "--class-path", "-classpath", "-cp", PROCESSORPATH_OPTION, "-sourcepath", "--module-path", "-p", "--module-source-path"
 )
+
+private val USER_DEFINED_BYTECODE_TARGET = Key.create<String>("_user_defined_bytecode_target_")
 
 internal class JavaBuilder(
   private val span: Span,
@@ -300,8 +302,6 @@ internal class JavaBuilder(
       }
     }
 
-    private val USER_DEFINED_BYTECODE_TARGET = Key.create<String?>("_user_defined_bytecode_target_")
-
     private fun getCompilationOptions(
       compilerSdkVersion: Int,
       context: CompileContext,
@@ -390,7 +390,7 @@ internal class JavaBuilder(
         }
       }
 
-      for (extension in JpsServiceManager.getInstance().getExtensions<ExternalJavacOptionsProvider?>(ExternalJavacOptionsProvider::class.java)) {
+      for (extension in JpsServiceManager.getInstance().getExtensions(ExternalJavacOptionsProvider::class.java)) {
         vmOptions.addAll(extension.getOptions(compilingTool, compilerSdkVersion))
       }
 
@@ -612,7 +612,7 @@ internal class JavaBuilder(
     private fun getChunkSdkVersion(chunk: ModuleChunk): Int {
       var chunkSdkVersion = -1
       for (module in chunk.modules) {
-        val sdk = module.getSdk<JpsDummyElement?>(JpsJavaSdkType.INSTANCE)
+        val sdk = module.getSdk(JpsJavaSdkType.INSTANCE)
         if (sdk != null) {
           val moduleSdkVersion = JpsJavaSdkType.getJavaVersion(sdk)
           if (moduleSdkVersion != 0 /*could determine the version*/ && (chunkSdkVersion < 0 || chunkSdkVersion > moduleSdkVersion)) {
@@ -699,19 +699,6 @@ internal class JavaBuilder(
       // this constraint should be validated on build start
       val sdk = chunk.representativeTarget().module.getSdk(JpsJavaSdkType.INSTANCE) ?: return null
       return Pair(sdk, JpsJavaSdkType.getJavaVersion(sdk))
-    }
-
-    private fun buildOutputDirectoriesMap(context: CompileContext, chunk: ModuleChunk): Map<File, Set<File>> {
-      val map = hashMap<File, MutableSet<File>>()
-      for (target in chunk.targets) {
-        val outputDir = target.outputDir ?: continue
-        val roots = hashSet<File>()
-        for (descriptor in context.projectDescriptor.buildRootIndex.getTargetRoots(target, context)) {
-          roots.add(descriptor.root)
-        }
-        map.put(outputDir, roots)
-      }
-      return map
     }
   }
 
@@ -836,15 +823,13 @@ internal class JavaBuilder(
     compilingTool: JavaCompilingTool,
     moduleInfoFile: File?,
   ): ExitCode {
-    var exitCode = ExitCode.NOTHING_DONE
-
     val hasSourcesToCompile = !files.isEmpty()
     if (!hasSourcesToCompile && !dirtyFilesHolder.hasRemovedFiles()) {
-      return exitCode
+      return ExitCode.NOTHING_DONE
     }
 
     JavaBuilderUtil.ensureModuleHasJdk(chunk.representativeTarget().module, context, builderName)
-    val classpath = ProjectPaths.getCompilationClasspath(chunk, false).map { it.toPath() }
+    val classpath = chunk.modules.single().container.getChild(ClasspathHolder.KIND).classPath
 
     // begin compilation round
     val outputSink = OutputFilesSink(
@@ -857,8 +842,6 @@ internal class JavaBuilder(
     var filesWithErrors: Collection<File>? = null
     try {
       if (hasSourcesToCompile) {
-        exitCode = ExitCode.OK
-
         val diagnosticSink = DiagnosticSink(context = context, registrars = refRegistrars, out = out)
         val chunkName = chunk.name
 
@@ -899,13 +882,11 @@ internal class JavaBuilder(
 
         if (!compiledOk && diagnosticSink.errorCount == 0) {
           // unexpected exception occurred or compiler did not output any errors for some reason
-          diagnosticSink.report(PlainMessageDiagnostic(Diagnostic.Kind.ERROR, JpsBuildBundle.message("build.message.compilation.failed.internal.java.compiler.error")))
+          diagnosticSink.report(PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"))
         }
 
         if (diagnosticSink.errorCount > 0 && !Utils.PROCEED_ON_ERROR_KEY.get(context, false)) {
-          throw StopBuildException(
-            JpsBuildBundle.message("build.message.compilation.failed.errors.0.warnings.1", diagnosticSink.errorCount, diagnosticSink.warningCount)
-          )
+          throw StopBuildException("Compilation failed: errors: ${diagnosticSink.errorCount}; warnings: ${diagnosticSink.warningCount}")
         }
       }
     }
@@ -916,15 +897,14 @@ internal class JavaBuilder(
       }
       JavaBuilderUtil.registerSuccessfullyCompiled(context, outputSink.successfullyCompiled)
     }
-
-    return exitCode
+    return if (hasSourcesToCompile) ExitCode.OK else ExitCode.NOTHING_DONE
   }
 
   private fun compileJava(
     context: CompileContext,
     chunk: ModuleChunk,
     files: Collection<File>,
-    originalClassPath: Collection<Path>,
+    originalClassPath: Array<Path>,
     sourcePath: Collection<File>,
     diagnosticSink: DiagnosticOutputConsumer,
     outputSink: OutputFileConsumer,
@@ -941,9 +921,8 @@ internal class JavaBuilder(
     if (modules.size == 1) {
       profile = compilerConfig.getAnnotationProcessingProfile(modules.iterator().next())
     }
-    val outs = buildOutputDirectoriesMap(context, chunk)
     val targetLanguageLevel = getTargetPlatformLanguageVersion(chunk.representativeTarget().module)
-    // when, forking external javac, compilers from SDK 1.7 and higher are supported
+    // when forking external javac, compilers from SDK 1.7 and higher are supported
     val forkSdk: Pair<String, Int>?
     if (shouldForkCompilerProcess(context, chunk, targetLanguageLevel)) {
       forkSdk = getForkedJavacSdk(diagnostic = diagnosticSink, chunk = chunk, targetLanguageLevel = targetLanguageLevel, span = span)
@@ -966,16 +945,13 @@ internal class JavaBuilder(
     )
     val vmOptions = vm_compilerOptions.first
     val options = vm_compilerOptions.second
+    val outs = buildOutputDirectoriesMap(chunk)
 
-    val platformCp: Iterable<Path>?
-    val classPath: Iterable<Path>?
+    val classPath: Sequence<Path>?
     val modulePath: ModulePath
-    val upgradeModulePath: Iterable<Path>?
     if (moduleInfoFile == null) {
       modulePath = ModulePath.EMPTY
-      upgradeModulePath = emptyList<Path>()
-      platformCp = emptyList<Path>()
-      classPath = originalClassPath
+      classPath = originalClassPath.asSequence()
     }
     else {
       // has modules
@@ -992,25 +968,21 @@ internal class JavaBuilder(
           mpBuilder.add(pair.first.getModuleName(file), file)
         }
         modulePath = mpBuilder.create()
-        classPath = mutableListOf<Path>()
+        classPath = emptySequence<Path>()
       }
       else {
-        // placing only explicitly referenced modules into the module path and the rest of deps to classpath
+        // placing only explicitly referenced modules into the module path and the rest of dependencies to classpath
         modulePath = pair.first
-        classPath = pair.second.map { it.toPath() }
+        classPath = pair.second.asSequence().map { it.toPath() }
       }
-
-      // modules above the JDK in the order entry list make a module upgrade path
-      upgradeModulePath = emptyList()
-      platformCp = emptyList<Path>()
     }
 
     if (forkSdk != null) {
       val server = ensureJavacServerStarted(context)
       val paths = CompilationPaths.create(
-        platformCp.map { it.toFile() },
-        classPath.map { it.toFile() },
-        upgradeModulePath.map { it.toFile() },
+        emptyList(),
+        classPath.map { it.toFile() }.toList(),
+        emptyList(),
         modulePath,
         sourcePath
       )
@@ -1053,18 +1025,18 @@ internal class JavaBuilder(
       javacCall = JavacCaller { options, files, outSink ->
         logJavacCall(options = options, mode = "in-process", span = span)
         JavacMain.compile(
-          options,
-          files,
-          classPath.map { it.toFile() },
-          platformCp.map { it.toFile() },
-          modulePath,
-          upgradeModulePath.map { it.toFile() },
-          sourcePath,
-          outs,
-          diagnosticSink,
-          outSink,
-          context.cancelStatus,
-          compilingTool,
+          /* options = */ options,
+          /* sources = */ files,
+          /* classpath = */ classPath.map { it.toFile() }.toList(),
+          /* platformClasspath = */ emptyList(),
+          /* modulePath = */ modulePath,
+          /* upgradeModulePath = */ emptyList(),
+          /* sourcePath = */ sourcePath,
+          /* outputDirToRoots = */ outs,
+          /* diagnosticConsumer = */ diagnosticSink,
+          /* outputSink = */ outSink,
+          /* canceledStatus = */ context.cancelStatus,
+          /* compilingTool = */ compilingTool,
         )
       }
     )
@@ -1261,7 +1233,7 @@ private class DiagnosticSink(
       registerJavacFileData(JavacFileData.fromBytes(data))
     }
     else {
-      for (listener in JpsServiceManager.getInstance().getExtensions<CustomOutputDataListener?>(CustomOutputDataListener::class.java)) {
+      for (listener in JpsServiceManager.getInstance().getExtensions(CustomOutputDataListener::class.java)) {
         if (pluginId == listener.id) {
           listener.processData(context, dataName, data)
           return
@@ -1366,4 +1338,12 @@ private fun collectAdditionalRequires(options: Iterable<String>): Collection<Str
 
 private fun interface JavacCaller {
   fun invoke(options: Iterable<String>, files: Iterable<File>, outSink: OutputFileConsumer): Boolean
+}
+
+private fun buildOutputDirectoriesMap(chunk: ModuleChunk): Map<File, Set<File>> {
+  val target = chunk.targets.single() as BazelModuleBuildTarget
+  val roots = HashSet<File>(target.sources.size)
+  target.sources.mapTo(roots) { it.toFile() }
+  @Suppress("RemoveRedundantQualifierName")
+  return java.util.Map.of(target.outputDir, roots)
 }

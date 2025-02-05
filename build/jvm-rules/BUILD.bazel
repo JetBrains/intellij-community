@@ -1,7 +1,7 @@
 load("@rules_java//java:defs.bzl", "java_import")
 load("@rules_kotlin//kotlin:core.bzl", _kt_kotlinc_options = "kt_kotlinc_options")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import", "kt_jvm_library")
-load("//:jvm.bzl", "jvm_import", "kt_kotlinc_options")
+load("//:jvm.bzl", "jvm_import", "kt_kotlinc_options", "jvm_provided_library")
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "int_flag")
 
 label_flag(
@@ -37,6 +37,12 @@ _kt_kotlinc_options(
     name = "rules_jvm_bootstrap_kotlinc_options",
     include_stdlibs = "none",
     visibility = ["//src:__subpackages__", "//zip:__pkg__"],
+)
+
+jvm_provided_library(
+  name = "kotlin-compiler-provided",
+  lib = "//:kotlin-compiler-embeddable",
+  visibility = ["//visibility:public"],
 )
 
 ### auto-generated section `libraries` start
@@ -76,9 +82,9 @@ jvm_import(
 )
 
 jvm_import(
-    name = "kotlin-compiler",
-    jar = "@kotlin-compiler//file",
-    source_jar = "@kotlin-compiler-sources//file",
+    name = "kotlin-compiler-embeddable",
+    jar = "@kotlin-compiler-embeddable//file",
+    source_jar = "@kotlin-compiler-embeddable-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
         "@lib//:jetbrains-annotations",

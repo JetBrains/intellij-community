@@ -13,7 +13,7 @@
     # kotlin compiler
     - id: org.jetbrains.kotlin:kotlin-build-tools-impl
       version: 2.1.20-Beta2
-    - id: org.jetbrains.kotlin:kotlin-compiler
+    - id: org.jetbrains.kotlin:kotlin-compiler-embeddable
       version: 2.1.20-Beta2
       runtimeDeps:
         - "@lib//:jetbrains-annotations"

@@ -14,6 +14,8 @@ import org.jetbrains.bazel.jvm.kotlin.ArgMap
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.configureCommonCompilerArgs
 import org.jetbrains.jps.model.*
+import org.jetbrains.jps.model.ex.JpsElementBase
+import org.jetbrains.jps.model.ex.JpsElementChildRoleBase
 import org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase
 import org.jetbrains.jps.model.impl.JpsElementCollectionImpl
 import org.jetbrains.jps.model.java.*
@@ -77,16 +79,14 @@ internal fun loadJpsModel(
   // version
   configHash.putInt(1)
   configHash.putInt(langLevel.ordinal)
-  configureKotlinCompiler(module = module, args = args, classPathRootDir = classPathRootDir, configHash = configHash)
-  configHash.putUnorderedIterable(args.optionalList(JvmBuilderFlags.ADD_EXPORT), HashFunnel.forString(), Hashing.xxh3_64())
-  digests.set(TargetConfigurationDigestProperty.COMPILER, configHash.asLong)
 
   val dependencyList = module.dependenciesList
   dependencyList.clear()
-  configureJdk(model = model, module = module, dependencyList = dependencyList)
   dependencyList.addModuleSourceDependency()
 
-  configureClasspath(
+  configureJdk(model = model, module = module, dependencyList = dependencyList)
+
+  val classPathFiles = configureClasspath(
     module = module,
     dependencyList = dependencyList,
     args = args,
@@ -94,6 +94,16 @@ internal fun loadJpsModel(
     dependencyFileToDigest = dependencyFileToDigest,
     digests = digests,
   )
+
+  configureKotlinCompiler(
+    module = module,
+    args = args,
+    classPathRootDir = classPathRootDir,
+    configHash = configHash,
+    classPathFiles = classPathFiles,
+  )
+  configHash.putUnorderedIterable(args.optionalList(JvmBuilderFlags.ADD_EXPORT), HashFunnel.forString(), Hashing.xxh3_64())
+  digests.set(TargetConfigurationDigestProperty.COMPILER, configHash.asLong)
 
   val project = model.project
   project.addModule(module)
@@ -123,10 +133,13 @@ private fun configureKotlinCompiler(
   args: ArgMap<JvmBuilderFlags>,
   classPathRootDir: Path,
   configHash: HashStream64,
+  classPathFiles: Array<Path>,
 ) {
   val kotlinFacetSettings = KotlinFacetSettings()
   kotlinFacetSettings.useProjectSettings = false
   val kotlinArgs = K2JVMCompilerArguments()
+  val moduleName = args.mandatorySingle(JvmBuilderFlags.KOTLIN_MODULE_NAME)
+  kotlinArgs.moduleName = moduleName
   kotlinFacetSettings.compilerArguments = kotlinArgs
   configureCommonCompilerArgs(kotlinArgs = kotlinArgs, args = args, workingDir = classPathRootDir)
 
@@ -137,6 +150,7 @@ private fun configureKotlinCompiler(
   configHash.putString(kotlinArgs.jvmDefault)
   configHash.putBoolean(kotlinArgs.inlineClasses)
   configHash.putBoolean(kotlinArgs.allowKotlinPackage)
+  configHash.putString(moduleName)
 
   val plugins = args.optionalList(JvmBuilderFlags.PLUGIN_ID).zip(args.optionalList(JvmBuilderFlags.PLUGIN_CLASSPATH))
   configHash.putInt(plugins.size)
@@ -156,7 +170,16 @@ private fun configureKotlinCompiler(
     kotlinArgs.pluginClasspaths = pluginClassPaths.toTypedArray()
   }
 
+  kotlinArgs.classpath = classPathFiles.joinToString(separator = File.pathSeparator, transform = { it.toString() })
+
+  module.container.setChild(ClasspathHolder.KIND, ClasspathHolder(classPathFiles))
   module.container.setChild(JpsKotlinFacetModuleExtension.KIND, JpsKotlinFacetModuleExtension(kotlinFacetSettings))
+}
+
+internal class ClasspathHolder(@JvmField val classPath: Array<Path>) : JpsElementBase<ClasspathHolder>() {
+  companion object {
+    @JvmField val KIND: JpsElementChildRoleBase<ClasspathHolder> = JpsElementChildRoleBase.create<ClasspathHolder>("kotlin facet extension")
+  }
 }
 
 private fun configureJdk(
@@ -184,7 +207,7 @@ private fun configureClasspath(
   baseDir: Path,
   dependencyFileToDigest: Map<Path, ByteArray>,
   digests: TargetConfigurationDigestContainer,
-) {
+): Array<Path> {
   // no classpath if no source file (jvm_test without own sources)
   val classPathRaw = args.optionalList(JvmBuilderFlags.CP)
   val files = Array<Path>(classPathRaw.size) {
@@ -210,6 +233,8 @@ private fun configureClasspath(
 
   digests.set(TargetConfigurationDigestProperty.DEPENDENCY_DIGEST_LIST, hash.asLong)
   hash.reset()
+
+  return files
 }
 
 @Suppress("SameParameterValue")

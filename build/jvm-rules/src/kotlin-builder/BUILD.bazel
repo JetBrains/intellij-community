@@ -7,7 +7,7 @@ kt_jvm_library(
     name = "worker-lib",
     srcs = glob(["**/*.kt"]),
     deps = [
-        "//:kotlin-compiler",
+        "//:kotlin-compiler-embeddable",
         "//:kotlin-build-tools-impl",
         "//src/worker-framework",
         "//src/jar",

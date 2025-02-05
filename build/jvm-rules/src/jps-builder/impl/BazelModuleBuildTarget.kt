@@ -24,7 +24,7 @@ import java.nio.file.Path
 internal class BazelModuleBuildTarget(
   @JvmField val outDir: Path,
   module: JpsModule,
-  private val sources: List<Path>,
+  @JvmField val sources: List<Path>,
 ) : ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION) {
   private val outDirFile = outDir.toFile()
   private val outRoots = java.util.List.of(outDirFile)

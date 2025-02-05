@@ -3,8 +3,6 @@ package org.jetbrains.bazel.jvm.kotlin
 
 import com.google.devtools.build.lib.view.proto.Deps
 import com.google.devtools.build.lib.view.proto.Deps.Dependencies
-import com.intellij.openapi.util.Disposer
-import com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.ExitCode
@@ -24,6 +22,8 @@ import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
 import org.jetbrains.kotlin.cli.jvm.config.JvmModulePathRoot
 import org.jetbrains.kotlin.cli.jvm.config.addJavaSourceRoot
 import org.jetbrains.kotlin.cli.jvm.setupJvmSpecificArguments
+import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
+import org.jetbrains.kotlin.com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.config.messageCollector

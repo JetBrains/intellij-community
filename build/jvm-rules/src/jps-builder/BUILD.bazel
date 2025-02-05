@@ -15,6 +15,8 @@ kt_jvm_library(
         "//src/worker-framework",
         "@rules_java//java/runfiles",
         ":jps-standalone",
+        # before kotlin-jps-plugin
+        "//:kotlin-compiler-embeddable",
         "//:kotlin-jps-plugin",
         "//src/jps-builder/packager",
         "@lib//:hash4j",
@@ -39,12 +41,12 @@ kt_jvm_library(
         "@lib//:aalto-xml",
         "@lib//:caffeine",
         "@lib//:platform-jps-build-qdox-java-parser",
-        # JPS plugin to compile Kotlin requires it
-        "@lib//:kotlin-reflect",
         "//:kotlin-build-tools-api",
         "//:kotlin-metadata",
         "//:kotlin-util-klib",
         "//:kotlin-util-klib-metadata",
+        # kotlin compilers uses Guava :(
+        "@lib//:guava",
     ],
     visibility = ["//visibility:public"],
 )
@@ -65,7 +67,6 @@ java_binary(
     name = "worker-jvm",
     runtime_deps = [":worker-lib"],
     data = [
-        "@kotlinc//:kotlinc_dist",
         "@kotlin-serialization-compiler-plugin//file",
         "@kotlin-compose-compiler-plugin//file",
     ],
@@ -73,7 +74,6 @@ java_binary(
     jvm_flags = get_jvm_flags([
         "-Dkotlin.environment.keepalive=true",
         "-Djps.use.experimental.storage=true",
-        "-Djps.kotlin.home=$(rlocationpath @kotlinc//:kotlinc_dist)",
         "-Dorg.jetbrains.kotlin.kotlin-serialization-compiler-plugin.path=$(rlocationpath @kotlin-serialization-compiler-plugin//file)",
         "-Dorg.jetbrains.kotlin.kotlin-compose-compiler-plugin.path=$(rlocationpath @kotlin-serialization-compiler-plugin//file)",
     ]),
