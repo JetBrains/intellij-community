@@ -48,7 +48,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
-    <orderEntry type="module" module-name="intellij.rd.client" />
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
   </component>
 </module>
