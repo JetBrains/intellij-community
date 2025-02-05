@@ -324,6 +324,8 @@ internal class ToolbarFrameHeader(
       toolbarPlaceholder.revalidate()
       toolbarPlaceholder.repaint()
       mainMenuWithButton.recalculateWidth(toolbar)
+      this@ToolbarFrameHeader.revalidate()
+      this@ToolbarFrameHeader.repaint()
     }
   }
 
@@ -360,6 +362,8 @@ internal class ToolbarFrameHeader(
   private fun initListenerToResizeMenu(): ComponentListener = object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
       mainMenuWithButton.recalculateWidth(toolbar)
+      this@ToolbarFrameHeader.revalidate()
+      this@ToolbarFrameHeader.repaint()
     }
   }
 
