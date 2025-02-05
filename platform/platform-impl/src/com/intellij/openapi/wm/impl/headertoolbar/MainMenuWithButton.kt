@@ -69,7 +69,7 @@ class MainMenuWithButton(
       if (availableWidth < 0) {
         var widthToFree = -(availableWidth - widthLimit)
         for (i in rootMenuItems.indices.reversed()) {
-          if (rootMenuItems.size <= 1 || widthToFree <= 0) break
+          if (toolbarMainMenu.rootMenuItems.size <= 1 || widthToFree <= 0) break
 
           val item = rootMenuItems[i]
           removedItems.offerLast(item) // Add to removed items (LIFO behavior)
