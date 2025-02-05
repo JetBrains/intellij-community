@@ -7689,6 +7689,170 @@ java_import(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-api",
+  exports = [
+    ":detekt-api-1_23_7_http_import",
+    ":kotlin-compiler-embeddable-2_0_10_http_import",
+    ":kotlin-script-runtime-2_0_10_http_import",
+    ":kotlin-reflect-1_6_10_http_import",
+    ":kotlin-daemon-embeddable-2_0_10_http_import",
+    ":trove4j-1_0_20200330_http_import",
+    ":detekt-psi-utils-1_23_7_http_import",
+    ":detekt-utils-1_23_7_http_import",
+    ":poko-annotations-jvm-0_16_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "detekt-api-1_23_7_http_import",
+  jar = "@detekt-api-1_23_7_http//file",
+  srcjar = "@detekt-api-1_23_7-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "kotlin-compiler-embeddable-2_0_10_http_import",
+  jar = "@kotlin-compiler-embeddable-2_0_10_http//file",
+  srcjar = "@kotlin-compiler-embeddable-2_0_10-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "kotlin-script-runtime-2_0_10_http_import",
+  jar = "@kotlin-script-runtime-2_0_10_http//file",
+  srcjar = "@kotlin-script-runtime-2_0_10-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "kotlin-reflect-1_6_10_http_import",
+  jar = "@kotlin-reflect-1_6_10_http//file",
+  srcjar = "@kotlin-reflect-1_6_10-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "kotlin-daemon-embeddable-2_0_10_http_import",
+  jar = "@kotlin-daemon-embeddable-2_0_10_http//file",
+  srcjar = "@kotlin-daemon-embeddable-2_0_10-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "trove4j-1_0_20200330_http_import",
+  jar = "@trove4j-1_0_20200330_http//file",
+  srcjar = "@trove4j-1_0_20200330-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "detekt-psi-utils-1_23_7_http_import",
+  jar = "@detekt-psi-utils-1_23_7_http//file",
+  srcjar = "@detekt-psi-utils-1_23_7-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "detekt-utils-1_23_7_http_import",
+  jar = "@detekt-utils-1_23_7_http//file",
+  srcjar = "@detekt-utils-1_23_7-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "poko-annotations-jvm-0_16_0_http_import",
+  jar = "@poko-annotations-jvm-0_16_0_http//file",
+  srcjar = "@poko-annotations-jvm-0_16_0-sources_http//file"
+)
+
+java_library(
+  name = "platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-test",
+  exports = [
+    ":detekt-test-1_23_7_http_import",
+    ":detekt-api-1_23_7_http_import",
+    ":kotlin-compiler-embeddable-2_0_10_http_import",
+    ":kotlin-script-runtime-2_0_10_http_import",
+    ":kotlin-daemon-embeddable-2_0_10_http_import",
+    ":trove4j-1_0_20200330_http_import",
+    ":detekt-psi-utils-1_23_7_http_import",
+    ":poko-annotations-jvm-0_16_0_http_import",
+    ":detekt-test-utils-1_23_7_http_import",
+    ":junit-jupiter-api-5_10_2_http_import",
+    ":opentest4j-1_3_0_http_import",
+    ":junit-platform-commons-1_10_2_http_import",
+    ":apiguardian-api-1_1_2_http_import",
+    ":detekt-parser-1_23_7_http_import",
+    ":contester-breakpoint-0_2_0_http_import",
+    ":kotlin-main-kts-2_0_10_http_import",
+    ":kotlin-scripting-compiler-embeddable-2_0_10_http_import",
+    ":kotlin-scripting-compiler-impl-embeddable-2_0_10_http_import",
+    ":kotlin-scripting-common-2_0_10_http_import",
+    ":kotlin-scripting-jvm-2_0_10_http_import",
+    ":detekt-utils-1_23_7_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "detekt-test-1_23_7_http_import",
+  jar = "@detekt-test-1_23_7_http//file",
+  srcjar = "@detekt-test-1_23_7-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "detekt-test-utils-1_23_7_http_import",
+  jar = "@detekt-test-utils-1_23_7_http//file",
+  srcjar = "@detekt-test-utils-1_23_7-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "junit-jupiter-api-5_10_2_http_import",
+  jar = "@junit-jupiter-api-5_10_2_http//file",
+  srcjar = "@junit-jupiter-api-5_10_2-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "junit-platform-commons-1_10_2_http_import",
+  jar = "@junit-platform-commons-1_10_2_http//file",
+  srcjar = "@junit-platform-commons-1_10_2-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "detekt-parser-1_23_7_http_import",
+  jar = "@detekt-parser-1_23_7_http//file",
+  srcjar = "@detekt-parser-1_23_7-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "contester-breakpoint-0_2_0_http_import",
+  jar = "@contester-breakpoint-0_2_0_http//file",
+  srcjar = "@contester-breakpoint-0_2_0-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "kotlin-main-kts-2_0_10_http_import",
+  jar = "@kotlin-main-kts-2_0_10_http//file",
+  srcjar = "@kotlin-main-kts-2_0_10-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "kotlin-scripting-compiler-embeddable-2_0_10_http_import",
+  jar = "@kotlin-scripting-compiler-embeddable-2_0_10_http//file",
+  srcjar = "@kotlin-scripting-compiler-embeddable-2_0_10-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "kotlin-scripting-compiler-impl-embeddable-2_0_10_http_import",
+  jar = "@kotlin-scripting-compiler-impl-embeddable-2_0_10_http//file",
+  srcjar = "@kotlin-scripting-compiler-impl-embeddable-2_0_10-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "kotlin-scripting-common-2_0_10_http_import",
+  jar = "@kotlin-scripting-common-2_0_10_http//file",
+  srcjar = "@kotlin-scripting-common-2_0_10-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "kotlin-scripting-jvm-2_0_10_http_import",
+  jar = "@kotlin-scripting-jvm-2_0_10_http//file",
+  srcjar = "@kotlin-scripting-jvm-2_0_10-sources_http//file"
+)
+
 java_import(
   name = "platform-jewel-foundation-org-hamcrest-hamcrest-core",
   jars = ["@hamcrest-core-1_3_http//file"],
@@ -8314,6 +8478,140 @@ java_import(
 
 java_import(
   name = "platform-jewel-markdown-extension-gfm_alerts-org-jetbrains-compose-ui-ui2",
+  jars = ["@ui-1_7_1_http//file"],
+  srcjar = "@ui-1_7_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "platform-jewel-markdown-extension-gfm_tables-commonmark-ext-gfm-tables",
+  exports = [
+    ":commonmark-ext-gfm-tables-0_24_0_http_import",
+    ":commonmark-0_24_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "commonmark-ext-gfm-tables-0_24_0_http_import",
+  jars = ["@commonmark-ext-gfm-tables-0_24_0_http//file"],
+  srcjar = "@commonmark-ext-gfm-tables-0_24_0-sources_http//file"
+)
+
+java_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-hamcrest-hamcrest-core",
+  jars = ["@hamcrest-core-1_3_http//file"],
+  srcjar = "@hamcrest-core-1_3-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-annotations",
+  jars = ["@annotations-23_0_0_http//file"],
+  srcjar = "@annotations-23_0_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-desktop-desktop",
+  jars = ["@desktop-1_7_1_http//file"],
+  srcjar = "@desktop-1_7_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-desktop-desktop-jvm",
+  jar = "@desktop-jvm-1_7_1_http//file",
+  srcjar = "@desktop-jvm-1_7_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-runtime-runtime",
+  jars = ["@runtime-1_7_1_http//file"],
+  srcjar = "@runtime-1_7_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-runtime-runtime2",
+  jars = ["@runtime-1_7_1_http//file"],
+  srcjar = "@runtime-1_7_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-runtime-runtime3",
+  jars = ["@runtime-1_7_1_http//file"],
+  srcjar = "@runtime-1_7_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui",
+  jars = ["@ui-1_7_1_http//file"],
+  srcjar = "@ui-1_7_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui-test",
+  jars = ["@ui-test-1_7_1_http//file"],
+  srcjar = "@ui-test-1_7_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui-test-desktop",
+  jar = "@ui-test-desktop-1_7_1_http//file",
+  srcjar = "@ui-test-desktop-1_7_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui-test-junit4",
+  jars = ["@ui-test-junit4-1_7_1_http//file"],
+  srcjar = "@ui-test-junit4-1_7_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui-test-junit4-desktop",
+  jar = "@ui-test-junit4-desktop-1_7_1_http//file",
+  srcjar = "@ui-test-junit4-desktop-1_7_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui-text",
+  jars = ["@ui-text-1_7_1_http//file"],
+  srcjar = "@ui-text-1_7_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui-tooling-preview",
+  jars = ["@ui-tooling-preview-1_7_1_http//file"],
+  srcjar = "@ui-tooling-preview-1_7_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui-tooling-preview-desktop",
+  jar = "@ui-tooling-preview-desktop-1_7_1_http//file",
+  srcjar = "@ui-tooling-preview-desktop-1_7_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui-unit",
+  jars = ["@ui-unit-1_7_1_http//file"],
+  srcjar = "@ui-unit-1_7_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "platform-jewel-markdown-extension-gfm_tables-org-jetbrains-compose-ui-ui2",
   jars = ["@ui-1_7_1_http//file"],
   srcjar = "@ui-1_7_1-sources_http//file",
   visibility = ["//visibility:public"]
@@ -9162,36 +9460,36 @@ java_import(
 
 kt_jvm_import(
   name = "rd-core",
-  jar = "@rd-core-2024_3_1_http//file",
-  srcjar = "@rd-core-2024_3_1-sources_http//file",
+  jar = "@rd-core-2025_1_1_http//file",
+  srcjar = "@rd-core-2025_1_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "rd-framework",
-  jar = "@rd-framework-2024_3_1_http//file",
-  srcjar = "@rd-framework-2024_3_1-sources_http//file",
+  jar = "@rd-framework-2025_1_1_http//file",
+  srcjar = "@rd-framework-2025_1_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "rd-gen",
-  jar = "@rd-gen-2024_3_1_http//file",
-  srcjar = "@rd-gen-2024_3_1-sources_http//file",
+  jar = "@rd-gen-2025_1_1_http//file",
+  srcjar = "@rd-gen-2025_1_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "rd-swing",
-  jar = "@rd-swing-2024_3_1_http//file",
-  srcjar = "@rd-swing-2024_3_1-sources_http//file",
+  jar = "@rd-swing-2025_1_1_http//file",
+  srcjar = "@rd-swing-2025_1_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "rd-text",
-  jar = "@rd-text-2024_3_1_http//file",
-  srcjar = "@rd-text-2024_3_1-sources_http//file",
+  jar = "@rd-text-2025_1_1_http//file",
+  srcjar = "@rd-text-2025_1_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

@@ -21,7 +21,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/analysis-impl",
     "//platform/core-ui",
-    "//xml/xml-frontback:frontback",
+    "//xml/xml-parser:parser",
     "//platform/core-api:core",
     "//platform/util/jdom",
   ],
@@ -29,7 +29,7 @@ jvm_library(
     "//java/java-frontback-psi-api:frontback-psi",
     "//java/java-frontback-psi-impl:frontback-psi-impl",
     "//platform/core-impl",
-    "//xml/xml-frontback:frontback",
+    "//xml/xml-parser:parser",
   ],
   runtime_deps = [":frontback-impl_resources"]
 )

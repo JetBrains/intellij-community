@@ -28,7 +28,7 @@ jvm_library(
     "//platform/core-ui",
     "@lib//:fastutil-min",
     "//platform/diff-api:diff",
-    "//xml/xml-frontback:frontback",
+    "//xml/xml-parser:parser",
     "//platform/ide-core-impl",
     "//platform/refactoring",
     "//platform/code-style-impl:codeStyle-impl",

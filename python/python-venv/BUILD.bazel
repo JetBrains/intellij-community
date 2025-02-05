@@ -47,6 +47,7 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:junit5",
     "//platform/ide-core-impl",
+    "//platform/execution",
   ],
   runtime_deps = [":community-impl-venv_resources"]
 )

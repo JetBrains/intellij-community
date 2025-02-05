@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.platform.jewel.detektPlugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "detektPlugin_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "detektPlugin",
+  module_name = "intellij.platform.jewel.detektPlugin",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-api",
+  ],
+  runtime_deps = [":detektPlugin_resources"]
+)
+
+jvm_test(
+  name = "detektPlugin_test",
+  srcs = glob(["src/test/kotlin/**/*.kt", "src/test/kotlin/**/*.java"], allow_empty = True),
+  associates = [":detektPlugin"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jetbrains-annotations",
+    "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-api",
+    "//libraries/junit5",
+    "@lib//:assert_j",
+    "@lib//:platform-jewel-detekt_plugin-io-gitlab-arturbosch-detekt-test",
+  ],
+  runtime_deps = [":detektPlugin_resources"]
+)
+### auto-generated section `build intellij.platform.jewel.detektPlugin` end

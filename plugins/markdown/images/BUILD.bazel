@@ -19,7 +19,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//images",
-    "//xml/xml-frontback:frontback",
+    "//xml/xml-parser:parser",
     "//platform/backend",
     "@lib//:kotlin-stdlib",
   ],

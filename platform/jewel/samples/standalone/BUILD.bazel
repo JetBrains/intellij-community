@@ -44,6 +44,7 @@ jvm_library(
     "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
     "//libraries/compose-foundation-desktop",
     "//platform/jewel/samples/showcase:jewel-samples-showcase",
+    "//platform/jewel/markdown/extension/gfm-tables:jewel-markdown-extension-gfmTables",
   ],
   runtime_deps = [
     ":jewel-samples-standalone_resources",

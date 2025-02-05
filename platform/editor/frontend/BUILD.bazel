@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.platform.editor.frontend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "frontend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "frontend",
+  module_name = "intellij.platform.editor.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//fleet/kernel",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/editor/shared:editor",
+    "//platform/platform-impl:ide-impl",
+  ],
+  runtime_deps = [
+    ":frontend_resources",
+    "//platform/platform-frontend:frontend",
+  ]
+)
+### auto-generated section `build intellij.platform.editor.frontend` end

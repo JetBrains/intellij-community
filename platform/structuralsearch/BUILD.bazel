@@ -21,7 +21,7 @@ jvm_library(
     "//platform/usageView",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
-    "//xml/xml-frontback:frontback",
+    "//xml/xml-parser:parser",
     "//RegExpSupport:regexp",
     "//platform/refactoring",
     "//platform/duplicates-analysis",

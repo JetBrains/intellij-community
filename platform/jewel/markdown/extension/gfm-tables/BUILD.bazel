@@ -1,4 +1,4 @@
-### auto-generated section `build intellij.platform.jewel.markdown.intUiStandaloneStyling` start
+### auto-generated section `build intellij.platform.jewel.markdown.extension.gfmTables` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
@@ -15,14 +15,14 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "jewel-markdown-intUiStandaloneStyling_resources",
+  name = "jewel-markdown-extension-gfmTables_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "jewel-markdown-intUiStandaloneStyling",
-  module_name = "intellij.platform.jewel.markdown.intUiStandaloneStyling",
+  name = "jewel-markdown-extension-gfmTables",
+  module_name = "intellij.platform.jewel.markdown.extension.gfmTables",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
@@ -33,12 +33,10 @@ jvm_library(
     "//platform/jewel/markdown/core:jewel-markdown-core",
     "//platform/jewel/ui",
     "//platform/jewel/foundation",
-    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
-    "//platform/jewel/markdown/extension/gfm-alerts:jewel-markdown-extension-gfmAlerts",
-    "//platform/jewel/markdown/extension/gfm-tables:jewel-markdown-extension-gfmTables",
     "//libraries/compose-foundation-desktop",
+    "@lib//:platform-jewel-markdown-extension-gfm_tables-commonmark-ext-gfm-tables",
   ],
-  runtime_deps = [":jewel-markdown-intUiStandaloneStyling_resources"],
+  runtime_deps = [":jewel-markdown-extension-gfmTables_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
-### auto-generated section `build intellij.platform.jewel.markdown.intUiStandaloneStyling` end
+### auto-generated section `build intellij.platform.jewel.markdown.extension.gfmTables` end

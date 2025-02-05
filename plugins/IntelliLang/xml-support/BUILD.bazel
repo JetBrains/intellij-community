@@ -25,7 +25,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "@lib//:jaxen",
     "//plugins/IntelliLang:langInjection",
-    "//xml/xml-frontback:frontback",
+    "//xml/xml-parser:parser",
     "//platform/core-ui",
     "//platform/util/jdom",
     ":xpath_provided",

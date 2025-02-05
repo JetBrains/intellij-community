@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.java.remoteServers.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "java-remoteServers-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "java-remoteServers-impl",
@@ -22,6 +28,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/util/jdom",
-  ]
+  ],
+  runtime_deps = [":java-remoteServers-impl_resources"]
 )
 ### auto-generated section `build intellij.java.remoteServers.impl` end

@@ -1,15 +1,16 @@
-### auto-generated section `build intellij.xml.frontback` start
+### auto-generated section `build intellij.xml.parser` start
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "frontback",
-  module_name = "intellij.xml.frontback",
+  name = "parser",
+  module_name = "intellij.xml.parser",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/util",
     "//platform/editor-ui-api:editor-ui",
   ]
 )
-### auto-generated section `build intellij.xml.frontback` end
+### auto-generated section `build intellij.xml.parser` end

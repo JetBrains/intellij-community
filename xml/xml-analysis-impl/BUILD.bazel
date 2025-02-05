@@ -19,7 +19,7 @@ jvm_library(
     "//xml/xml-analysis-api:analysis",
     "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
-    "//xml/xml-frontback:frontback",
+    "//xml/xml-parser:parser",
     "//platform/editor-ui-api:editor-ui",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/lang-impl",

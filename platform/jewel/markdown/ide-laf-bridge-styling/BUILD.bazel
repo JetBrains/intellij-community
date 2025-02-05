@@ -35,6 +35,7 @@ jvm_library(
     "//platform/jewel/foundation",
     "//platform/jewel/ide-laf-bridge:ideLafBridge",
     "//platform/jewel/markdown/extension/gfm-alerts:jewel-markdown-extension-gfmAlerts",
+    "//platform/jewel/markdown/extension/gfm-tables:jewel-markdown-extension-gfmTables",
     "//platform/platform-api:ide",
     "//platform/ide-core",
     "//platform/ide-core-impl",

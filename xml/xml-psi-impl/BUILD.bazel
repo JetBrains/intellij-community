@@ -24,7 +24,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/analysis-impl",
-    "//xml/xml-frontback:frontback",
+    "//xml/xml-parser:parser",
     "//platform/projectModel-impl",
     "//platform/indexing-impl",
     "@lib//:xerces",

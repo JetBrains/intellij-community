@@ -10,8 +10,8 @@ create_kotlinc_options(
 
 jvm_resources(
   name = "toolingExtension-impl_resources",
-  files = glob(["src/META-INF/**/*"]),
-  strip_prefix = "src"
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
 )
 
 jvm_library(

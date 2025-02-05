@@ -21,7 +21,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",
-    "//xml/xml-frontback:frontback",
+    "//xml/xml-parser:parser",
     "@lib//:fastutil-min",
     "//platform/util/jdom",
     "//platform/analysis-impl",

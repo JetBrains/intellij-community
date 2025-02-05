@@ -248,8 +248,12 @@ jvm_library(
     "@lib//:ap-validation",
     "//python/poetry:community-impl-poetry",
     "//python/installer:community-impl-installer",
+    "//platform/eel",
+    "//platform/eel-provider",
     "//python/python-venv:community-impl-venv",
     "//python/python-exec-service:community-execService",
+    "//python/services/system-python:python-community-services-systemPython",
+    "//python/services/internal-impl:python-community-services-internal-impl",
   ],
   exports = [
     "//python/openapi:community",

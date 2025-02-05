@@ -20,7 +20,7 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/icons",
     "//platform/vcs-api:vcs",
-    "//xml/xml-frontback:frontback",
+    "//xml/xml-parser:parser",
     "//platform/refactoring",
     "//platform/indexing-impl",
     "//platform/usageView",

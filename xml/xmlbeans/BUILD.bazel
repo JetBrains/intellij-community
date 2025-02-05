@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.xml.xmlbeans` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "xmlbeans_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "xmlbeans",
@@ -16,10 +22,11 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/ide-core",
     "//platform/core-ui",
-    "//xml/xml-frontback:frontback",
+    "//xml/xml-parser:parser",
     "//platform/util:util-ui",
     "//platform/lang-impl",
-  ]
+  ],
+  runtime_deps = [":xmlbeans_resources"]
 )
 
 jvm_library(
@@ -39,12 +46,13 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/ide-core",
     "//platform/core-ui",
-    "//xml/xml-frontback:frontback",
+    "//xml/xml-parser:parser",
     "//platform/util:util-ui",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/lang-impl",
-  ]
+  ],
+  runtime_deps = [":xmlbeans_resources"]
 )
 
 jvm_test(
