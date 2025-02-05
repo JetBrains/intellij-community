@@ -185,10 +185,8 @@ open class K2MoveDeclarationsRefactoringProcessor(
             }
         }
 
-        if (MoveFilesOrDirectoriesDialog.isOpenInEditorProperty()) { // for simplicity, we re-use logic from move files
-            ApplicationManager.getApplication().invokeLater {
-                EditorHelper.openFilesInEditor(movedElements.toTypedArray())
-            }
+        ApplicationManager.getApplication().invokeLater {
+            openFilesAfterMoving(movedElements)
         }
     }
 
@@ -482,4 +480,15 @@ open class K2MoveDeclarationsRefactoringProcessor(
      * Note: The [originalDeclaration] is usually not valid anymore at this point because it was moved.
      */
     open fun postDeclarationMoved(originalDeclaration: KtNamedDeclaration, newDeclaration: KtNamedDeclaration) {}
+
+    /**
+     * Called after the move is completed to open the [movedElements] in the editor in their respective new files.
+     * Can be overridden to not open the files or to invoke other operations like rename.
+     * Note: this is invoked in an `invokeLater` so it does not happen immediately after the move is completed.
+     */
+    open fun openFilesAfterMoving(movedElements: List<KtNamedDeclaration>) {
+        if (MoveFilesOrDirectoriesDialog.isOpenInEditorProperty()) { // for simplicity, we re-use logic from move files
+            EditorHelper.openFilesInEditor(movedElements.toTypedArray())
+        }
+    }
 }
