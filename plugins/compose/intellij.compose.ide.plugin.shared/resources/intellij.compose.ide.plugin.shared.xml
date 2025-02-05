@@ -1,0 +1,10 @@
+<intellij-plugin package="com.intellij.compose.ide.plugin.shared">
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.inspectionSuppressor language="kotlin"
+                               implementationClass="com.intellij.compose.ide.plugin.shared.ComposableNamingInspectionSuppressor"/>
+
+    <overrideImplementsAnnotationsFilter id="ComposeOverrideImplementsAnnotationsFilter"
+                                         implementation="com.intellij.compose.ide.plugin.shared.ComposeOverrideImplementsAnnotationsFilter" />
+
+  </extensions>
+</intellij-plugin>

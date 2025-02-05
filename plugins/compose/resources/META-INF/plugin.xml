@@ -13,12 +13,13 @@
     <plugin id="org.jetbrains.kotlin" />
   </dependencies>
 
+  <content>
+    <module name="intellij.compose.ide.plugin.shared"/>
+    <module name="intellij.compose.ide.plugin.k1"/>
+    <module name="intellij.compose.ide.plugin.k2"/>
+  </content>
+
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <supportsKotlinPluginMode supportsK2="true"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <lang.inspectionSuppressor language="kotlin" implementationClass="com.intellij.compose.ide.plugin.ComposableNamingInspectionSuppressor" />
-    <overrideImplementsAnnotationsFilter id="ComposeOverrideImplementsAnnotationsFilter" implementation="com.intellij.compose.ide.plugin.ComposeOverrideImplementsAnnotationsFilter" />
   </extensions>
 </idea-plugin>

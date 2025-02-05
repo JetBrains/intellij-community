@@ -1,0 +1,6 @@
+<intellij-plugin package="com.intellij.compose.ide.plugin.k2">
+  <dependencies>
+    <plugin id="com.intellij.modules.kotlin.k2"/>
+    <module name="intellij.compose.ide.plugin.shared" />
+  </dependencies>
+</intellij-plugin>

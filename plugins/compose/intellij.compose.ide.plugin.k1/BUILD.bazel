@@ -1,0 +1,43 @@
+### auto-generated section `build intellij.compose.ide.plugin.k1` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "ide-plugin-k1_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "ide-plugin-k1",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    ":ide-plugin-k1_resources",
+    "@lib//:kotlin-stdlib",
+    "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
+  ]
+)
+### auto-generated section `build intellij.compose.ide.plugin.k1` end
+
+### auto-generated section `build intellij.compose.ide.plugin.k1.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
+
+jvm_test(
+  name = "ide-plugin-k1-tests_test",
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = ["//plugins/compose/intellij.compose.ide.plugin.k1:ide-plugin-k1"],
+  deps = [
+    "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests_test_lib",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/core",
+  ]
+)
+### auto-generated section `build intellij.compose.ide.plugin.k1.tests` end
