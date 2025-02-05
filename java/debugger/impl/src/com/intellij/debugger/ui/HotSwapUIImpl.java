@@ -90,7 +90,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
    * decide which sessions and classes participate in the hotswap and reload them.
    *
    * @param generatedPaths the relative paths of the {@code .class} files that were compiled, grouped by their content root
-   * @param isAutoRun marks this update as automatic, meaning not explicitly called by a user
+   * @param isAutoRun      marks this update as automatic, meaning not explicitly called by a user
    */
   private void hotSwapSessions(@NotNull List<DebuggerSession> sessions,
                                @Nullable Map<String, Collection<String>> generatedPaths,
@@ -168,7 +168,6 @@ public final class HotSwapUIImpl extends HotSwapUI {
 
       ApplicationManager.getApplication().invokeLater(() -> {
         if (shouldAskBeforeHotswap && !DebuggerSettings.RUN_HOTSWAP_ALWAYS.equals(runHotswap)) {
-          // TODO Do not show dialog in case of `isAutoRun == true`: activate hotswap button instead
           RunHotswapDialog dialog = new RunHotswapDialog(myProject, sessions, shouldDisplayHangWarning);
           if (!dialog.showAndGet()) {
             for (DebuggerSession session : modifiedClasses.keySet()) {
@@ -327,7 +326,8 @@ public final class HotSwapUIImpl extends HotSwapUI {
     HotSwapStatusListener callback = HotSwapDebugSessionManager.getInstance(project).createSessionListenerOrNull(session);
     if (callback == null) {
       ProjectTaskManager.getInstance(project).compile(files);
-    } else {
+    }
+    else {
       ProjectTaskManagerImpl taskManager = (ProjectTaskManagerImpl)ProjectTaskManager.getInstance(project);
       ProjectTask task = ReadAction.compute(() -> taskManager.createModulesFilesTask(files));
       taskManager.run(createContext(callback), task);
@@ -339,7 +339,8 @@ public final class HotSwapUIImpl extends HotSwapUI {
     return new ProjectTaskContext(callback).withUserData(HOT_SWAP_CALLBACK_KEY, callback);
   }
 
-  private static @Nullable HotSwapStatusListener mergeCallbacksIfNeeded(@Nullable HotSwapStatusListener callback1, @Nullable HotSwapStatusListener callback2) {
+  private static @Nullable HotSwapStatusListener mergeCallbacksIfNeeded(@Nullable HotSwapStatusListener callback1,
+                                                                        @Nullable HotSwapStatusListener callback2) {
     if (callback1 == null) return callback2;
     if (callback2 == null) return callback1;
     return new HotSwapStatusListener() {
