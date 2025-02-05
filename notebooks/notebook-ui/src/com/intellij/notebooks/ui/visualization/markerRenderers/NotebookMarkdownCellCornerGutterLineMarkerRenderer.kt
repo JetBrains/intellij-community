@@ -29,7 +29,7 @@ class NotebookMarkdownCellCornerGutterLineMarkerRenderer(
   inlayId: Long
 ) : NotebookLineMarkerRenderer(inlayId) {
 
-  enum class Position { TOP, BOTTOM }
+  enum class Position { BOTTOM, MIDDLE, TOP }
 
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
     editor as EditorImpl
@@ -49,9 +49,9 @@ class NotebookMarkdownCellCornerGutterLineMarkerRenderer(
           editor, g, r, topPosition, bottomRectHeight, Position.TOP
         )
       }
-      Position.BOTTOM -> {
+      Position.MIDDLE, Position.BOTTOM -> {
         paintNotebookCellBorderGutter(
-          editor, g, r, inlayBounds.y, inlayBounds.height, Position.BOTTOM
+          editor, g, r, inlayBounds.y, inlayBounds.height, position
         )
       }
     }
@@ -86,6 +86,9 @@ class NotebookMarkdownCellCornerGutterLineMarkerRenderer(
       Position.TOP -> {
         g2d.draw(Line2D.Float(leftBorderX, topY, rightBorderX, topY))
         g2d.draw(Line2D.Float(leftBorderX, topY, leftBorderX, bottomY))
+      }
+      Position.MIDDLE -> {
+        g2d.draw(Line2D.Float(leftBorderX, topY, leftBorderX, bottomY - 1))
       }
       Position.BOTTOM -> {
         g2d.draw(Line2D.Float(leftBorderX, bottomY - 1, rightBorderX, bottomY - 1))
