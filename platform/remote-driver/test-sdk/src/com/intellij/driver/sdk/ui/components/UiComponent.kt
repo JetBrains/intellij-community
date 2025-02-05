@@ -186,16 +186,6 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   /**
-   * Waits for a non-empty list of UiText's.
-   */
-  fun waitAnyTexts(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> {
-    return waitAny(message = message ?: "Finding at least some texts in $this",
-                   timeout = timeout,
-                   getter = { getAllTexts() }
-    )
-  }
-
-  /**
    * Waits for a non-empty list of UiText's matching predicate.
    */
   fun waitAnyTexts(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT, predicate: (UiText) -> Boolean = { true }): List<UiText> {
@@ -220,19 +210,12 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   /**
    * Waits for one UiText with text '$text'.
    */
-  fun waitOneText(text: String, message: String, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
-    return waitForOne(message = message,
+  fun waitOneText(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
+    return waitForOne(message = message ?: "Finding text '$text' in $this",
                       timeout = timeout,
                       getter = { getAllTexts() },
                       checker = { it.text == text }
     )
-  }
-
-  /**
-   * Waits for one UiText with text '$text'.
-   */
-  fun waitOneText(text: String, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
-    return waitOneText(message = "Finding text '$text' in $this", timeout = timeout, text = text)
   }
 
   /**
@@ -243,17 +226,6 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
                       timeout = timeout,
                       getter = { getAllTexts() },
                       checker = { predicate(it) }
-    )
-  }
-
-  /**
-   * Waits until there is no UiText's.
-   */
-  fun waitNoTexts(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT) {
-    waitFor(message = message ?: "Finding no texts in $this",
-            timeout = timeout,
-            getter = { getAllTexts() },
-            checker = { it.isEmpty() }
     )
   }
 
@@ -282,38 +254,24 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   /**
    * Waits until there is one UiText's with substring '$text'.
    */
-  fun waitOneContainsText(text: String, message: String, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
-    return waitForOne(message = message,
+  fun waitOneContainsText(text: String, message: String? = null, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
+    return waitForOne(message = message ?: "Finding the text containing '$text' in $this",
                       timeout = timeout,
                       getter = { getAllTexts() },
-                      checker = { it.text.contains(text, ignoreCase = ignoreCase) }
+                      checker = { it.text.contains(other = text, ignoreCase = ignoreCase) }
     )
-  }
-
-  /**
-   * Waits until there is one UiText's with substring '$text'.
-   */
-  fun waitOneContainsText(text: String, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
-    return waitOneContainsText(message = "Finding the text containing '$text' in $this",
-                               timeout = timeout, text = text, ignoreCase = ignoreCase)
   }
 
   /**
    * Waits until all text contains 'text'.
    */
-  fun waitContainsText(text: String, message: String, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT) {
-    waitFor(message = message,
+  fun waitContainsText(text: String, message: String? = null, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT) {
+    waitFor(message = message ?: "Finding the text containing '$text' in $this",
             timeout = timeout,
             getter = { getAllTexts().allText() },
             checker = { it.contains(text, ignoreCase = ignoreCase) }
     )
   }
-
-  /**
-   * Waits until all text contains 'text'.
-   */
-  fun waitContainsText(text: String, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT) =
-    waitContainsText(message = "Finding the text containing '$text' in $this", timeout = timeout, text = text, ignoreCase = ignoreCase)
 
   fun hasText(text: String): Boolean {
     return getAllTexts(text).isNotEmpty()
