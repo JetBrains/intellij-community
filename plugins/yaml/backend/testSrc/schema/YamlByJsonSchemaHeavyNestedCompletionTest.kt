@@ -1,121 +1,88 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.jsonSchema.impl
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.yaml.schema
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.jetbrains.jsonSchema.impl.JsonBySchemaHeavyCompletionTestBase
+import com.jetbrains.jsonSchema.impl.assertThatSchema
 import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsTree
+import com.jetbrains.jsonSchema.impl.testNestedCompletionsWithPredefinedCompletionsRoot
+import com.jetbrains.jsonSchema.impl.withConfiguration
 import org.intellij.lang.annotations.Language
 import java.io.File
 
-class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBase() {
+class YamlByJsonSchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBase() {
   fun `test nested completion into property that does not exist yet`() {
     open1ThenOpen2Then3Schema
-      .appliedToJsonFile("""
-        {
-          "one": {
-            thr<caret>
-          }
-        }
+      .appliedToYamlFile("""
+        one:
+          thr<caret>
       """.trimIndent())
       .completesTo("""
-        {
-          "one": {
-            "two": {
-              "three": <selection>false<caret></selection>
-            }
-          }
-        }
+        one:
+          two:
+            three: <selection>false<caret></selection>
       """.trimIndent())
   }
 
   fun `test nested completion from empty file`() {
     open1ThenOpen2Then3Schema
-      .appliedToJsonFile("""
-        {
-          thr<caret>
-        }
+      .appliedToYamlFile("""
+        thr<caret>
       """.trimIndent())
       .completesTo("""
-        {
-          "one": {
-            "two": {
-              "three": <selection>false<caret></selection>
-            }
-          }
-        }
+        one:
+          two:
+            three: <selection>false<caret></selection>
       """.trimIndent())
   }
 
   fun `test nested completion between properties`() {
     open1ThenOpen2Then3Schema
-      .appliedToJsonFile("""
-       {
-          "one": {
-            "four": 4
-          },
-          thr<caret>
-          "five": {
-            "six": 6
-          }
-       }
+      .appliedToYamlFile("""
+        one:
+          four: 4
+        thr<caret>
+        five:
+          six: 6
       """.trimIndent())
       .completesTo("""
-        {
-           "one": {
-             "four": 4,
-             "two": {
-               "three": <selection>false<caret></selection>
-             }
-           },
-          "five": {
-             "six": 6
-           }
-        }
+        one:
+          four: 4
+          two:
+            three: <selection>false<caret></selection>
+        five:
+          six: 6
       """.trimIndent())
   }
 
   fun `test nested completion into existing property`() {
     open1ThenOpen2Then3Schema
-      .appliedToJsonFile("""
-        {
-          "one": {
-            thr<caret>
-            "two": {
-              "foo": "bar"
-            }
-          }
-        }
+      .appliedToYamlFile("""
+        one:
+          thr<caret>
+          two:
+            foo: bar
       """.trimIndent())
       .completesTo("""
-        {
-          "one": {
-            "two": {
-              "three": <selection>false<caret></selection>,
-              "foo": "bar"
-            }
-          }
-        }
+        one:
+          two:
+            three: <selection>false<caret></selection>
+            foo: bar
       """.trimIndent())
   }
 
   fun `test nested completion into property already exists with sub-property that does not exist yet`() {
     open1ThenOpen2Then3Schema
-      .appliedToJsonFile("""
-        {
-          thr<caret>
-          "one": {
-            "foo": "bar"
-          }
-        }
+      .appliedToYamlFile("""
+        thr<caret>
+        one:
+          foo: bar
       """.trimIndent())
       .completesTo("""
-        {
-          "one": {
-            "two": {
-              "three": <selection>false<caret></selection>
-            },
-            "foo": "bar"
-          }
-        }
+        one:
+          two:
+            three: <selection>false<caret></selection>
+          foo: bar
       """.trimIndent())
   }
 
@@ -138,21 +105,16 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
           open("foo")
         }
       )
-      .appliedToJsonFile("""
-        {
-          arr<caret>
-          "foo": {
-            "bar": "baz"
-          }
-        }
+      .appliedToYamlFile("""
+        arr<caret>
+        foo:
+          bar: baz
       """.trimIndent())
       .completesTo("""
-        {
-          "foo": {
-            "arr": [<caret>],
-            "bar": "baz"
-          }
-        }
+        foo:
+          arr:
+            - <caret>
+          bar: baz
       """.trimIndent())
   }
 
@@ -181,23 +143,17 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
           }
         }
       )
-      .appliedToJsonFile("""
-        {
-          arr<caret>
-          "foo": {
-            "baz": 42
-          }
-        }
+      .appliedToYamlFile("""
+        arr<caret>
+        foo:
+          baz: 42
       """.trimIndent())
       .completesTo("""
-        {
-          "foo": {
-            "bar": {
-              "arr": [<caret>]
-            },
-            "baz": 42
-          }
-        }
+        foo:
+          bar:
+            arr:
+              - <caret>
+          baz: 42
       """.trimIndent())
   }
 
@@ -226,130 +182,92 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
           }
         }
       )
-      .appliedToJsonFile("""
-        {
-          "nested": {
-            arr<caret>
-            "foo": {
-              "bar": "baz"
-            }
-          }
-        }
+      .appliedToYamlFile("""
+        nested:
+          arr<caret>
+          foo:
+            bar: baz
       """.trimIndent())
       .completesTo("""
-        {
-          "nested": {
-            "foo": {
-              "arr": [<caret>],
-              "bar": "baz"
-            }
-          }
-        }
+        nested:
+          foo:
+            arr:
+              - <caret>
+            bar: baz
       """.trimIndent())
   }
 
   fun `test that completing while being below the destination, inserts the completion at the bottom`() {
     open1ThenOpen2Then3Schema
-      .appliedToJsonFile("""
-        {
-          "one": {
-            "two": {
-              "foo": false
-            }
-          }
-          thr<caret>
-        }
+      .appliedToYamlFile("""
+        one:
+          two:
+            foo: false
+        thr<caret>
       """.trimIndent())
       .completesTo("""
-        {
-          "one": {
-            "two": {
-              "foo": false,
-              "three": <selection>false<caret></selection>
-            }
-          }
-        }
+        one:
+          two:
+            foo: false
+            three: <selection>false<caret></selection>
       """.trimIndent())
 
     open1ThenOpen2Then3Schema
-      .appliedToJsonFile("""
-        {
-          "one": {
-            "two": {
-              "foo": false
-            },
-            "twosBrother": 4
-          },
-          "onesBrother": 2
-          thr<caret>
-        }
+      .appliedToYamlFile("""
+        one:
+          two:
+            foo: false
+          twosBrother: 4
+        onesBrother: 2
+        thr<caret>
       """.trimIndent())
       .completesTo("""
-        {
-          "one": {
-            "two": {
-              "foo": false,
-              "three": <selection>false<caret></selection>
-            },
-            "twosBrother": 4
-          },
-          "onesBrother": 2
-        }
+        one:
+          two:
+            foo: false
+            three: <selection>false<caret></selection>
+          twosBrother: 4
+        onesBrother: 2
       """.trimIndent())
 
     open1ThenOpen2Then3Schema
-      .appliedToJsonFile("""
-        {
-          "one": {
-            "two": {
-              "foo": false
-            },
-            "twosBrother": 4
-            thr<caret>
-          },
-          "onesBrother": 2
-        }
+      .appliedToYamlFile("""
+        one:
+          two:
+            foo: false
+          twosBrother: 4
+          thr<caret>
+        onesBrother: 2
       """.trimIndent())
       .completesTo("""
-        {
-          "one": {
-            "two": {
-              "foo": false,
-              "three": <selection>false<caret></selection>
-            },
-            "twosBrother": 4
-          },
-          "onesBrother": 2
-        }
+        one:
+          two:
+            foo: false
+            three: <selection>false<caret></selection>
+          twosBrother: 4
+        onesBrother: 2
       """.trimIndent())
 
     open1ThenOpen2Then3Schema
-      .appliedToJsonFile("""
-        {
-          "one": {
-            "twosBrother": 4
-          },
-          "onesBrother": 2
-          thr<caret>
-        }
+      .appliedToYamlFile("""
+        one:
+          twosBrother: 4
+        onesBrother: 2
+        thr<caret>
       """.trimIndent())
       .completesTo("""
-        {
-          "one": {
-            "twosBrother": 4,
-            "two": {
-              "three": <selection>false<caret></selection>
-            }
-          },
-          "onesBrother": 2
-        }
+        one:
+          twosBrother: 4
+          two:
+            three: <selection>false<caret></selection>
+        onesBrother: 2
       """.trimIndent())
   }
 
-  private fun JsonSchemaAppliedToJsonSetup.completesTo(@Language("YAML") expectedResult: String) {
+  private fun JsonSchemaYamlSetup.completesTo(@Language("YAML") expectedResult: String) {
     workingFolder.resolve("Schema.json").createTemporarilyWithContent(schemaSetup.schemaJson) {
-      workingFolder.resolve("test.json").createTemporarilyWithContent(json) {
-        workingFolder.resolve("test_after.json").createTemporarilyWithContent(expectedResult) {
+      workingFolder.resolve("test.yml").createTemporarilyWithContent(yaml) {
+        workingFolder.resolve("test_after.yml").createTemporarilyWithContent(expectedResult) {
           testNestedCompletionsWithPredefinedCompletionsRoot(schemaSetup.predefinedNestedCompletionsRoot) {
             baseInsertTest(".", "test")
           }
@@ -368,7 +286,7 @@ class JsonBySchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTestBas
     workingFolder.mkdirs()
   }
 
-  override fun getExtensionWithoutDot(): String = "json"
+  override fun getExtensionWithoutDot(): String = "yml"
 
   override fun tearDown() {
     try {
@@ -396,7 +314,7 @@ private inline fun File.createTemporarilyWithContent(content: String, block: () 
 }
 
 
-val open1ThenOpen2Then3Schema
+internal val open1ThenOpen2Then3Schema
   get() = assertThatSchema("""
      {
        "properties": {
