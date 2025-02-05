@@ -268,6 +268,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     return EventHandler.getShortcuts(ACTION_FIND);
   }
 
+  @ApiStatus.Internal
   static public boolean isNonModal() {
     if (System.getProperty("ide.ui.non.modal.settings.window") != null) {
       return Boolean.parseBoolean(System.getProperty("ide.ui.non.modal.settings.window"));

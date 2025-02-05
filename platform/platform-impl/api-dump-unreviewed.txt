@@ -9699,6 +9699,8 @@ c:com.intellij.openapi.options.newEditor.SettingsDialog
 - p:createActions():javax.swing.Action[]
 - p:createCenterPanel():javax.swing.JComponent
 - p:createSouthAdditionalPanel():javax.swing.JPanel
+- p:createSouthPanel():javax.swing.JComponent
+- p:createTitlePane():javax.swing.JComponent
 - doCancelAction(java.awt.AWTEvent):V
 - doOKAction():V
 - p:getDimensionServiceKey():java.lang.String
