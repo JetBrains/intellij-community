@@ -13,7 +13,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.LocalEelApi
+import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.service.execution.loadDownloadArtifactInitScript
@@ -25,7 +32,6 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import kotlin.io.path.createTempFile
 import kotlin.io.path.readText
 
 object GradleArtifactDownloader {
@@ -41,7 +47,7 @@ object GradleArtifactDownloader {
    * @param externalProjectPath path to the directory with the Gradle module that should be used to execute the task.
    */
   @JvmStatic
-  fun downloadArtifact(
+  suspend fun downloadArtifact(
     project: Project,
     executionName: @Nls String,
     artifactNotation: String,
@@ -55,13 +61,21 @@ object GradleArtifactDownloader {
       it.vmOptions = GradleSettings.getInstance(project).gradleVmOptions
       it.externalSystemIdString = GradleConstants.SYSTEM_ID.id
     }
-    val taskOutputFile = createTempFile("ijDownloadArtifactOut")
-    val userData = prepareUserData(artifactNotation, taskName, taskOutputFile, externalProjectPath)
+    val eelDescriptor = project.getEelDescriptor()
+    val eel = eelDescriptor.upgrade()
+    val absoluteTaskOutputFileEelPath = createTaskOutputFile(eel)
+    val userData = prepareUserData(
+      artifactNotation,
+      taskName,
+      absoluteTaskOutputFileEelPath.asCanonicalResolvedPath(eel),
+      externalProjectPath
+    )
     val resultWrapper = CompletableFuture<Path>()
+    val taskOutputFile = absoluteTaskOutputFileEelPath.asNioPath()
     val listener = object : ExternalSystemTaskNotificationListener {
       override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
         try {
-          val downloadedArtifactPath = Path.of(taskOutputFile.readText())
+          val downloadedArtifactPath = taskOutputFile.readText().asResolvedAbsolutePath(eel)
           if (!isValidJar(downloadedArtifactPath)) {
             GradleLog.LOG.warn("Incorrect file header: $downloadedArtifactPath. Unable to process downloaded file as a JAR file")
             FileUtil.delete(taskOutputFile)
@@ -120,7 +134,35 @@ object GradleArtifactDownloader {
   private fun String.asSystemDependentGradleProjectPath(): String {
     val wslPath = parseWindowsUncPath(this)
     val pathToNormalize = wslPath?.linuxPath ?: this
-    return pathToNormalize.toNioPathOrNull()?.toCanonicalPath()
-           ?: throw IllegalStateException("Unable to convert $this to canonical path")
+    return Path.of(pathToNormalize).toCanonicalPath()
+  }
+
+  private suspend fun createTaskOutputFile(eel: EelApi): EelPath {
+    val options = EelFileSystemApi.CreateTemporaryEntryOptions.Builder()
+      .prefix("ijDownloadArtifactOut")
+      .build()
+    return eel.fs.createTemporaryFile(options)
+      .getOrThrow { IllegalStateException("Unable to create the task output file: ${it.message}") }
+  }
+
+  private suspend fun EelPath.asCanonicalResolvedPath(eel: EelApi): Path {
+    // if the execution is taking place on a local machine, we could use the path as is
+    if (eel is LocalEelApi) {
+      return this.asNioPath()
+    }
+    // in the case of executing on a WSL, we have to operate both local and relative WSL paths to be able to use the path inside the
+    // Gradle task
+    val resolvedPath = eel.fs.canonicalize(this)
+      .getOrThrow { java.lang.IllegalStateException("Unable to canonicalize the task output file path: ${it.message}") }
+
+    // We have to use `toString()` to prevent the path from being converted into an absolute one:
+    //  - resolvedPath.asNioPath() - nio.Path: `\\wsl$\something\something`;
+    //  - Path.of(resolvedPath.toString()) - nio.Path: `/something/something`;
+    return Path.of(resolvedPath.toString())
+  }
+
+  private fun String.asResolvedAbsolutePath(eel: EelApi): Path {
+    val eelPath = eel.fs.getPath(this)
+    return eelPath.asNioPath()
   }
 }
