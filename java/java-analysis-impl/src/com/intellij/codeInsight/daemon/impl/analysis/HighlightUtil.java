@@ -958,10 +958,6 @@ public final class HighlightUtil {
       }
     }
 
-    if ((resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) && !(resolved instanceof ImplicitVariable)) {
-      return HighlightControlFlowUtil.checkVariableMustBeFinal((PsiVariable)resolved, ref, languageLevel);
-    }
-
     return null;
   }
 

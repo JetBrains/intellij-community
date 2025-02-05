@@ -170,7 +170,7 @@ public final class BringVariableIntoScopeFix implements ModCommandAction {
       outOfScopeVariable.delete();
     }
 
-    if (HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(reference, addedVar, new HashMap<>(), file) != null) {
+    if (!HighlightControlFlowUtil.isInitializedBeforeUsage(reference, addedVar, new HashMap<>(), false)) {
       initialize(addedVar);
     }
   }

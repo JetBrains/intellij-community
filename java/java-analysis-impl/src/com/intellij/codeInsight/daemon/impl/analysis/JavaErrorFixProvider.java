@@ -47,7 +47,8 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
-import static java.util.Objects.*;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 
 /**
  * Fixes attached to error messages provided by {@link JavaErrorCollector}.
@@ -277,7 +278,6 @@ final class JavaErrorFixProvider {
       else if (element instanceof PsiClass cls) {
         sink.accept(myFactory.createCreateConstructorMatchingSuperFix(cls));
       }
-      ErrorFixExtensionPoint.registerFixes(sink, element, "unhandled.exceptions");
     });
     fixes(EXCEPTION_UNHANDLED_CLOSE, (error, sink) -> HighlightFixUtil.registerUnhandledExceptionFixes(error.psi(), sink));
   }
@@ -375,6 +375,18 @@ final class JavaErrorFixProvider {
     fix(UNNAMED_VARIABLE_WITHOUT_INITIALIZER, error -> myFactory.createAddVariableInitializerFix(error.psi()));
     fixes(LVTI_NO_INITIALIZER, (error, sink) -> HighlightFixUtil.registerSpecifyVarTypeFix(error.psi(), sink));
     fixes(LVTI_NULL, (error, sink) -> HighlightFixUtil.registerSpecifyVarTypeFix(error.psi(), sink));
+    JavaFixProvider<PsiJavaCodeReferenceElement, PsiVariable> innerClassAccessFix = error -> {
+      PsiVariable variable = error.context();
+      PsiElement scope = requireNonNull(ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, error.psi()));
+      return myFactory.createVariableAccessFromInnerClassFix(variable, scope);
+    };
+    fix(VARIABLE_MUST_BE_FINAL, innerClassAccessFix);
+    fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL, innerClassAccessFix);
+    fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL_LAMBDA, innerClassAccessFix);
+    fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL_GUARD, innerClassAccessFix);
+    fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL, error -> myFactory.createMakeVariableEffectivelyFinalFix(error.context()));
+    fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL_LAMBDA, error -> myFactory.createMakeVariableEffectivelyFinalFix(error.context()));
+    fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL_GUARD, error -> myFactory.createMakeVariableEffectivelyFinalFix(error.context()));
   }
 
   private void createExpressionFixes() {

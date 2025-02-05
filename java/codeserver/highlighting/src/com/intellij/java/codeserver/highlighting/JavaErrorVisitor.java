@@ -53,7 +53,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   final @NotNull TypeChecker myTypeChecker = new TypeChecker(this);
   final @NotNull MethodChecker myMethodChecker = new MethodChecker(this);
   private final @NotNull ReceiverChecker myReceiverChecker = new ReceiverChecker(this);
-  private final @NotNull ControlFlowChecker myControlFlowChecker = new ControlFlowChecker(this);
+  final @NotNull ControlFlowChecker myControlFlowChecker = new ControlFlowChecker(this);
   private final @NotNull FunctionChecker myFunctionChecker = new FunctionChecker(this);
   final @NotNull PatternChecker myPatternChecker = new PatternChecker(this);
   final @NotNull ModifierChecker myModifierChecker = new ModifierChecker(this);

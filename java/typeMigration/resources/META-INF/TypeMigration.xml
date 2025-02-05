@@ -47,6 +47,7 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.refactoring.typeMigration.inspections.GuavaInspection"
                      bundle="messages.TypeMigrationBundle" key="inspection.guava.name"/>
-    <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention$ConvertNonFinalLocalToAtomicFix"/>
+    <java.error.fix errorCode="variable.must.be.effectively.final.lambda" 
+                    implementationClass="com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention$ConvertNonFinalLocalToAtomicFix"/>
   </extensions>
 </idea-plugin>

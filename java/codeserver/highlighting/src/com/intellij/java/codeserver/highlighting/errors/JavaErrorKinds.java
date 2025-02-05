@@ -1235,6 +1235,17 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiReturnStatement, PsiMethodCallExpression> RETURN_BEFORE_EXPLICIT_CONSTRUCTOR_CALL =
     parameterized(PsiReturnStatement.class, PsiMethodCallExpression.class, "return.before.explicit.constructor.call")
       .withRawDescription((psi, call) -> message("return.before.explicit.constructor.call", call.getMethodExpression().getText() + "()"));
+  
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiVariable> VARIABLE_MUST_BE_FINAL =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiVariable.class, "variable.must.be.final")
+      .withRawDescription((ref, var) -> message("variable.must.be.final", var.getName()));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiVariable> VARIABLE_MUST_BE_EFFECTIVELY_FINAL =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiVariable.class, "variable.must.be.effectively.final")
+      .withRawDescription((ref, var) -> message("variable.must.be.effectively.final", var.getName()));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiVariable> VARIABLE_MUST_BE_EFFECTIVELY_FINAL_LAMBDA =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiVariable.class, "variable.must.be.effectively.final.lambda");
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiVariable> VARIABLE_MUST_BE_EFFECTIVELY_FINAL_GUARD =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiVariable.class, "variable.must.be.effectively.final.guard");
 
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(
     @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {

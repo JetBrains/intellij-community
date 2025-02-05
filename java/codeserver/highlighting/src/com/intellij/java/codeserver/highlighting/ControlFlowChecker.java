@@ -3,6 +3,7 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.controlFlow.*;
@@ -91,6 +92,34 @@ final class ControlFlowChecker {
     }
     catch (AnalysisCanceledException e) {
       // incomplete code
+    }
+  }
+
+  void checkVariableMustBeFinal(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
+    if (variable.hasModifierProperty(PsiModifier.FINAL)) return;
+    PsiElement scope = ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, context);
+    if (scope == null) return;
+    if (scope instanceof PsiClass) {
+      if (variable instanceof PsiParameter parameter) {
+        PsiElement parent = variable.getParent();
+        if (parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression &&
+            ControlFlowUtil.isEffectivelyFinal(variable, parameter.getDeclarationScope())) {
+          return;
+        }
+      }
+      boolean isToBeEffectivelyFinal = myVisitor.isApplicable(JavaFeature.EFFECTIVELY_FINAL);
+      if (isToBeEffectivelyFinal && ControlFlowUtil.isEffectivelyFinal(variable, scope, context)) return;
+      var kind = isToBeEffectivelyFinal ? JavaErrorKinds.VARIABLE_MUST_BE_EFFECTIVELY_FINAL : JavaErrorKinds.VARIABLE_MUST_BE_FINAL;
+      myVisitor.report(kind.create(context, variable));
+      return;
+    } else if (scope instanceof PsiLambdaExpression) {
+      if (ControlFlowUtil.isEffectivelyFinal(variable, scope, context)) return;
+      myVisitor.report(JavaErrorKinds.VARIABLE_MUST_BE_EFFECTIVELY_FINAL_LAMBDA.create(context, variable));
+    } else if (scope instanceof PsiSwitchLabelStatementBase) {
+      // Reported separately in ExpressionChecker.checkOutsideDeclaredCantBeAssignmentInGuard
+      if (context instanceof PsiReferenceExpression ref && PsiUtil.isAccessedForWriting(ref)) return;
+      if (ControlFlowUtil.isEffectivelyFinal(variable, scope, context)) return;
+      myVisitor.report(JavaErrorKinds.VARIABLE_MUST_BE_EFFECTIVELY_FINAL_GUARD.create(context, variable));
     }
   }
 

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
@@ -27,6 +28,7 @@ public final class ErrorFixExtensionPoint implements PluginAware {
     new ExtensionPointName<>("com.intellij.java.error.fix");
 
   @Attribute("errorCode")
+  @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE)
   public String errorCode;
 
   @Attribute("implementationClass")

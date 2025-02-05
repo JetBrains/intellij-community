@@ -14,8 +14,6 @@ import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.JavaFeature;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.controlFlow.*;
@@ -26,10 +24,8 @@ import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -217,78 +213,65 @@ public final class HighlightControlFlowUtil {
   }
 
 
-  public static HighlightInfo.Builder checkVariableInitializedBeforeUsage(@NotNull PsiReferenceExpression expression,
-                                                                          @NotNull PsiVariable variable,
-                                                                          @NotNull Map<? super PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems,
-                                                                          @NotNull PsiFile containingFile) {
-    return checkVariableInitializedBeforeUsage(expression, variable, uninitializedVarProblems, containingFile, false);
+  static HighlightInfo.Builder checkVariableInitializedBeforeUsage(@NotNull PsiReferenceExpression expression,
+                                                                   @NotNull PsiVariable variable,
+                                                                   @NotNull Map<? super PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems) {
+    if (isInitializedBeforeUsage(expression, variable, uninitializedVarProblems, false)) return null;
+    return createNotInitializedError(expression, variable);
   }
 
-  public static HighlightInfo.Builder checkVariableInitializedBeforeUsage(@NotNull PsiReferenceExpression expression,
-                                                                          @NotNull PsiVariable variable,
-                                                                          @NotNull Map<? super PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems,
-                                                                          @NotNull PsiFile containingFile,
-                                                                          boolean ignoreFinality) {
-    if (variable instanceof ImplicitVariable) return null;
-    if (!PsiUtil.isAccessedForReading(expression)) return null;
+  public static boolean isInitializedBeforeUsage(@NotNull PsiReferenceExpression expression,
+                                                 @NotNull PsiVariable variable,
+                                                 @NotNull Map<? super PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems,
+                                                 boolean ignoreFinality) {
+    if (variable instanceof ImplicitVariable) return true;
+    if (!PsiUtil.isAccessedForReading(expression)) return true;
     int startOffset = expression.getTextRange().getStartOffset();
-    PsiElement topBlock;
-    if (variable.hasInitializer()) {
-      topBlock = PsiUtil.getVariableCodeBlock(variable, variable);
-      if (topBlock == null) return null;
-    }
-    else {
-      PsiElement scope = variable instanceof PsiField field
-                         ? field.getContainingClass()
-                         : variable.getParent() != null ? variable.getParent().getParent() : null;
-      while (scope instanceof PsiCodeBlock && scope.getParent() instanceof PsiSwitchBlock) {
-        scope = PsiTreeUtil.getParentOfType(scope, PsiCodeBlock.class);
-      }
-
-      topBlock = FileTypeUtils.isInServerPageFile(scope) && scope instanceof PsiFile ? scope : PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
+    PsiElement topBlock = getTopBlock(expression, variable);
+    if (topBlock == null) return true;
+    if (!variable.hasInitializer()) {
       if (variable instanceof PsiField field) {
         // non-final field already initialized with default value
-        if (!ignoreFinality && !variable.hasModifierProperty(PsiModifier.FINAL)) return null;
+        if (!ignoreFinality && !variable.hasModifierProperty(PsiModifier.FINAL)) return true;
         // a final field may be initialized in ctor or class initializer only
         // if we're inside non-ctr method, skip it
         if (PsiUtil.findEnclosingConstructorOrInitializer(expression) == null
             && findEnclosingFieldInitializer(expression) == null) {
-          return null;
+          return true;
         }
-        if (topBlock == null) return null;
         PsiElement parent = topBlock.getParent();
         // access to final fields from inner classes always allowed
-        if (inInnerClass(expression, field.getContainingClass())) return null;
+        if (inInnerClass(expression, field.getContainingClass())) return true;
         PsiCodeBlock block;
         PsiClass aClass;
         if (parent instanceof PsiMethod constructor) {
-          if (!containingFile.getManager().areElementsEquivalent(constructor.getContainingClass(), field.getContainingClass())) return null;
+          if (!constructor.getManager().areElementsEquivalent(constructor.getContainingClass(), field.getContainingClass())) return true;
           // static variables already initialized in class initializers
-          if (variable.hasModifierProperty(PsiModifier.STATIC)) return null;
+          if (variable.hasModifierProperty(PsiModifier.STATIC)) return true;
           // as a last chance, field may be initialized in this() call
           for (PsiMethod redirectedConstructor : JavaPsiConstructorUtil.getChainedConstructors(constructor)) {
             // variable must be initialized before its usage
             //???
             //if (startOffset < redirectedConstructor.getTextRange().getStartOffset()) continue;
-            if (JavaPsiRecordUtil.isCompactConstructor(redirectedConstructor)) return null;
+            if (JavaPsiRecordUtil.isCompactConstructor(redirectedConstructor)) return true;
             PsiCodeBlock body = redirectedConstructor.getBody();
             if (body != null && variableDefinitelyAssignedIn(variable, body, true)) {
-              return null;
+              return true;
             }
           }
           block = constructor.getBody();
           aClass = constructor.getContainingClass();
         }
         else if (parent instanceof PsiClassInitializer classInitializer) {
-          if (!containingFile.getManager().areElementsEquivalent(classInitializer.getContainingClass(), field.getContainingClass())) {
-            return null;
+          if (!classInitializer.getManager().areElementsEquivalent(classInitializer.getContainingClass(), field.getContainingClass())) {
+            return true;
           }
           block = classInitializer.getBody();
           aClass = classInitializer.getContainingClass();
 
           if (aClass == null || isFieldInitializedInOtherFieldInitializer(aClass, field, variable.hasModifierProperty(PsiModifier.STATIC),
                                                                           f -> startOffset > f.getTextOffset())) {
-            return null;
+            return true;
           }
         }
         else {
@@ -299,16 +282,16 @@ public final class HighlightControlFlowUtil {
           if (aClass == null ||
               isFieldInitializedInOtherFieldInitializer(aClass, field, field.hasModifierProperty(PsiModifier.STATIC),
                                                         f -> f != anotherField && startOffset > f.getTextOffset())) {
-            return null;
+            return true;
           }
           if (anotherField != null
               && !anotherField.hasModifierProperty(PsiModifier.STATIC)
               && field.hasModifierProperty(PsiModifier.STATIC)
               && isFieldInitializedInClassInitializer(field, true, aClass.getInitializers())) {
-            return null;
+            return true;
           }
           if (anotherField != null && anotherField.hasInitializer() && !PsiAugmentProvider.canTrustFieldInitializer(anotherField)) {
-            return null;
+            return true;
           }
 
           int offset = startOffset;
@@ -322,7 +305,7 @@ public final class HighlightControlFlowUtil {
             if (offset < constructor.getTextRange().getStartOffset()) continue;
             PsiCodeBlock body = constructor.getBody();
             if (body != null && variableDefinitelyAssignedIn(variable, body)) {
-              return null;
+              return true;
             }
             // as a last chance, field may be initialized in this() call
             for (PsiMethod redirectedConstructor : JavaPsiConstructorUtil.getChainedConstructors(constructor)) {
@@ -330,7 +313,7 @@ public final class HighlightControlFlowUtil {
               if (offset < redirectedConstructor.getTextRange().getStartOffset()) continue;
               PsiCodeBlock redirectedBody = redirectedConstructor.getBody();
               if (redirectedBody != null && variableDefinitelyAssignedIn(variable, redirectedBody)) {
-                return null;
+                return true;
               }
             }
           }
@@ -346,13 +329,12 @@ public final class HighlightControlFlowUtil {
             boolean shouldCheckInitializerOrder = block == null || block.getParent() instanceof PsiClassInitializer;
             if (shouldCheckInitializerOrder && startOffset < initializer.getTextRange().getStartOffset()) continue;
             if (initializer.hasModifierProperty(PsiModifier.STATIC) == variable.hasModifierProperty(PsiModifier.STATIC)) {
-              if (variableDefinitelyAssignedIn(variable, body)) return null;
+              if (variableDefinitelyAssignedIn(variable, body)) return true;
             }
           }
         }
       }
     }
-    if (topBlock == null) return null;
     Collection<PsiReferenceExpression> codeBlockProblems = uninitializedVarProblems.get(topBlock);
     if (codeBlockProblems == null) {
       try {
@@ -364,29 +346,54 @@ public final class HighlightControlFlowUtil {
       }
       uninitializedVarProblems.put(topBlock, codeBlockProblems);
     }
-    if (codeBlockProblems.contains(expression)) {
-      String name = expression.getElement().getText();
-      String description = JavaErrorBundle.message("variable.not.initialized", name);
-      HighlightInfo.Builder builder =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description);
-      if (!(variable instanceof LightRecordField)) {
-        IntentionAction action1 = getQuickFixFactory().createAddVariableInitializerFix(variable);
-        builder.registerFix(action1, null, null, null, null);
+    return !codeBlockProblems.contains(expression);
+  }
+
+  private static @Nullable PsiElement getTopBlock(@NotNull PsiReferenceExpression expression, @NotNull PsiVariable variable) {
+    PsiElement topBlock;
+    if (variable.hasInitializer()) {
+      topBlock = PsiUtil.getVariableCodeBlock(variable, variable);
+      if (topBlock == null) return null;
+    }
+    else {
+      PsiElement scope = variable instanceof PsiField field
+                         ? field.getContainingClass()
+                         : variable.getParent() != null ? variable.getParent().getParent() : null;
+      while (scope instanceof PsiCodeBlock && scope.getParent() instanceof PsiSwitchBlock) {
+        scope = PsiTreeUtil.getParentOfType(scope, PsiCodeBlock.class);
       }
-      if (variable instanceof PsiLocalVariable) {
+
+      topBlock = FileTypeUtils.isInServerPageFile(scope) && scope instanceof PsiFile
+                 ? scope
+                 : PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
+    }
+    return topBlock;
+  }
+
+  private static HighlightInfo.@NotNull Builder createNotInitializedError(@NotNull PsiReferenceExpression expression, 
+                                                                          @NotNull PsiVariable variable) {
+    String name = expression.getElement().getText();
+    String description = JavaErrorBundle.message("variable.not.initialized", name);
+    HighlightInfo.Builder builder =
+      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description);
+    if (!(variable instanceof LightRecordField)) {
+      IntentionAction action1 = getQuickFixFactory().createAddVariableInitializerFix(variable);
+      builder.registerFix(action1, null, null, null, null);
+    }
+    if (variable instanceof PsiLocalVariable) {
+      PsiElement topBlock = getTopBlock(expression, variable);
+      if (topBlock != null) {
         IntentionAction action = HighlightFixUtil.createInsertSwitchDefaultFix(variable, topBlock, expression);
         if (action != null) {
           builder.registerFix(action, null, null, null, null);
         }
       }
-      if (variable instanceof PsiField field) {
-        ChangeModifierRequest request = MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false);
-        QuickFixAction.registerQuickFixActions(builder, null, JvmElementActionFactories.createModifierActions(field, request));
-      }
-      return builder;
     }
-
-    return null;
+    if (variable instanceof PsiField field) {
+      ChangeModifierRequest request = MemberRequestsKt.modifierRequest(JvmModifier.FINAL, false);
+      QuickFixAction.registerQuickFixActions(builder, null, JvmElementActionFactories.createModifierActions(field, request));
+    }
+    return builder;
   }
 
   private static boolean inInnerClass(@NotNull PsiElement psiElement, @Nullable PsiClass containingClass) {
@@ -556,96 +563,6 @@ public final class HighlightControlFlowUtil {
       }
     }
     return codeBlockProblems;
-  }
-
-
-  static HighlightInfo.Builder checkVariableMustBeFinal(@NotNull PsiVariable variable,
-                                                @NotNull PsiJavaCodeReferenceElement context,
-                                                @NotNull LanguageLevel languageLevel) {
-    if (variable.hasModifierProperty(PsiModifier.FINAL)) return null;
-    PsiElement scope = ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, context);
-    if (scope instanceof PsiClass) {
-      if (variable instanceof PsiParameter parameter) {
-        PsiElement parent = variable.getParent();
-        if (parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression &&
-            !VariableAccessUtils.variableIsAssigned(variable, parameter.getDeclarationScope())) {
-          return null;
-        }
-      }
-      boolean isToBeEffectivelyFinal = JavaFeature.EFFECTIVELY_FINAL.isSufficient(languageLevel);
-      if (isToBeEffectivelyFinal && ControlFlowUtil.isEffectivelyFinal(variable, scope, context)) {
-        return null;
-      }
-      String description = JavaErrorBundle
-        .message(isToBeEffectivelyFinal ? "variable.must.be.final.or.effectively.final" : "variable.must.be.final", context.getText());
-
-      HighlightInfo.Builder highlightInfo =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(description);
-      IntentionAction action = getQuickFixFactory().createVariableAccessFromInnerClassFix(variable, scope);
-      highlightInfo.registerFix(action, null, null, null, null);
-      return highlightInfo;
-    }
-    HighlightInfo.Builder finalInsideLambdaInfo = checkWriteToFinalInsideLambda(variable, context);
-    if (finalInsideLambdaInfo != null) {
-      return finalInsideLambdaInfo;
-    }
-    return checkFinalUsageInsideGuardedPattern(variable, context);
-  }
-
-  private static @Nullable HighlightInfo.Builder checkWriteToFinalInsideLambda(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
-    PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(context, PsiLambdaExpression.class);
-    if (lambdaExpression != null && !PsiTreeUtil.isAncestor(lambdaExpression, variable, true)) {
-      PsiElement parent = variable.getParent();
-      if (parent instanceof PsiParameterList && parent.getParent() == lambdaExpression) {
-        return null;
-      }
-      PsiSwitchLabelStatementBase label =
-        PsiTreeUtil.getParentOfType(context, PsiSwitchLabelStatementBase.class, true, PsiLambdaExpression.class);
-      if (label != null && PsiTreeUtil.isAncestor(label.getGuardExpression(), context, false)) {
-        return null;
-      }
-      HighlightInfo.Builder builder = checkVariableMustBeEffectivelyFinal(variable, context, lambdaExpression, "lambda.variable.must.be.final");
-      if (builder != null) return builder;
-    }
-    return null;
-  }
-
-  private static HighlightInfo.Builder checkVariableMustBeEffectivelyFinal(@NotNull PsiVariable variable,
-                                                                           @NotNull PsiJavaCodeReferenceElement context,
-                                                                           @NotNull PsiElement scope,
-                                                                           @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String messageKey) {
-    if (!ControlFlowUtil.isEffectivelyFinal(variable, scope, context)) {
-      String text = JavaErrorBundle.message(messageKey);
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(text);
-      IntentionAction action1 = getQuickFixFactory().createVariableAccessFromInnerClassFix(variable, scope);
-      builder.registerFix(action1, null, null, null, null);
-      IntentionAction action2 = getQuickFixFactory().createMakeVariableEffectivelyFinalFix(variable);
-      if (action2 != null) {
-        builder.registerFix(action2, null, null, null, null);
-      }
-      ErrorFixExtensionPoint.registerFixes(builder, context, messageKey);
-      return builder;
-    }
-    return null;
-  }
-
-  /**
-   * 14.30.1 Kinds of Patterns
-   * <p>Any variable that is used but not declared in the guarding expression of a guarded pattern must either be final or effectively final.
-   */
-  private static @Nullable HighlightInfo.Builder checkFinalUsageInsideGuardedPattern(@NotNull PsiVariable variable, @NotNull PsiJavaCodeReferenceElement context) {
-    PsiSwitchLabelStatementBase refLabel = PsiTreeUtil.getParentOfType(context, PsiSwitchLabelStatementBase.class);
-
-    if (refLabel == null) return null;
-    PsiExpression guardExpression = refLabel.getGuardExpression();
-    if (!PsiTreeUtil.isAncestor(guardExpression, context, false)) return null;
-    //this assignment is covered by com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil.checkOutsideDeclaredCantBeAssignmentInGuard
-    boolean isAssignment = context instanceof PsiReferenceExpression ref && PsiUtil.isAccessedForWriting(ref);
-    if (!isAssignment && !PsiTreeUtil.isAncestor(guardExpression, variable, false)) {
-      HighlightInfo.Builder builder = checkVariableMustBeEffectivelyFinal(variable, context, refLabel, "guarded.pattern.variable.must.be.final");
-      if (builder != null) return builder;
-    }
-    return null;
   }
 
   /**

@@ -25,7 +25,7 @@ public final class ControlFlowUtil {
    * @param variable variable
    * @param context the context that references to the variable
    * @return the scope around context that enforces variable to be effectively final. Currently, it could be
-   * an inner class, lambda expression, or switch guard. Returns null if there's no such scope, 
+   * an inner class, lambda expression, or {@link PsiSwitchLabelStatementBase} for switch guard. Returns null if there's no such scope, 
    * or the variable declaration is within the same scope, so it should not be effectively final.
    * Note that if null is returned, it doesn't mean that the variable could be modified, as another reference from 
    * another place might exist.

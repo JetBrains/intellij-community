@@ -3,20 +3,20 @@ import java.util.function.*;
 class Test {
   void test1(Object o, int mode) {
     switch (o) {
-      case Integer i when i == <error descr="Variable used in guarded pattern should be final or effectively final">mode</error> -> System.out.println();
+      case Integer i when i == <error descr="Variable used in guard expression should be final or effectively final">mode</error> -> System.out.println();
       default -> {}
     }
 
     switch (o) {
       case Integer i when (switch (o) {
-        case Integer ii when ii != <error descr="Variable used in guarded pattern should be final or effectively final">mode</error> -> 2;
+        case Integer ii when ii != <error descr="Variable used in guard expression should be final or effectively final">mode</error> -> 2;
         default -> 1;
-      }) == <error descr="Variable used in guarded pattern should be final or effectively final">mode</error> -> System.out.println();
+      }) == <error descr="Variable used in guard expression should be final or effectively final">mode</error> -> System.out.println();
       default -> {}
     }
 
     switch (o) {
-      case Integer i when (i = <error descr="Variable used in guarded pattern should be final or effectively final">mode</error>) > 0 -> System.out.println();
+      case Integer i when (i = <error descr="Variable used in guard expression should be final or effectively final">mode</error>) > 0 -> System.out.println();
       default -> {}
     }
     mode = 0;
@@ -24,7 +24,7 @@ class Test {
 
   void test2(Object o, final int mode) {
     switch (o) {
-      case Integer i when (switch (<error descr="Variable used in guarded pattern should be final or effectively final">o</error>) {
+      case Integer i when (switch (<error descr="Variable used in guard expression should be final or effectively final">o</error>) {
         case Integer ii when ii != mode -> 2;
         default -> 1;
       }) == mode -> o = null;
@@ -60,7 +60,7 @@ class Test {
     switch (o) {
       case Integer mode when (<error descr="Cannot assign a value to variable 'mode', because it is declared outside the guard">mode</error> = 42) > 9:
         switch (o) {
-          case Integer i when (i = <error descr="Variable used in guarded pattern should be final or effectively final">mode</error>) > 0 -> System.out.println();
+          case Integer i when (i = <error descr="Variable used in guard expression should be final or effectively final">mode</error>) > 0 -> System.out.println();
           default -> System.out.println();
         }
       default : break;
@@ -69,7 +69,7 @@ class Test {
     str = switch (o) {
       case Integer mode when (<error descr="Cannot assign a value to variable 'mode', because it is declared outside the guard">mode</error> = 42) > 9 ->
         switch (o) {
-          case Integer i when (i = <error descr="Variable used in guarded pattern should be final or effectively final">mode</error>) > 0 -> "";
+          case Integer i when (i = <error descr="Variable used in guard expression should be final or effectively final">mode</error>) > 0 -> "";
           default -> "";
         };
       default -> "";
@@ -77,21 +77,21 @@ class Test {
     str = switch (o) {
       case Integer mode when (<error descr="Cannot assign a value to variable 'mode', because it is declared outside the guard">mode</error> = 42) > 9:
         yield switch (o) {
-          case Integer i when (i = <error descr="Variable used in guarded pattern should be final or effectively final">mode</error>) > 0 -> "";
+          case Integer i when (i = <error descr="Variable used in guard expression should be final or effectively final">mode</error>) > 0 -> "";
           default -> "";
         };
       default: yield "";
     };
     // lambdas
     str = switch (o) {
-      case Integer i when (i = <error descr="Variable used in guarded pattern should be final or effectively final">in</error>) > 0:
+      case Integer i when (i = <error descr="Variable used in guard expression should be final or effectively final">in</error>) > 0:
         yield ((Function<Integer, String>)(x) -> (<error descr="Variable used in lambda expression should be final or effectively final">in</error> = 5) > 0 ? "" : null).apply(in);
       default:
         yield "";
     };
     Consumer<Integer> c = (mode) -> {
       switch (o) {
-        case Integer i when (i = <error descr="Variable used in guarded pattern should be final or effectively final">in</error>) > 0 -> System.out.println();
+        case Integer i when (i = <error descr="Variable used in guard expression should be final or effectively final">in</error>) > 0 -> System.out.println();
         default -> System.out.println();
       }
       <error descr="Variable used in lambda expression should be final or effectively final">in</error> = 1;
@@ -110,7 +110,7 @@ class Test {
         switch (o) {
           case Integer i -> {
             switch (o) {
-              case Integer ii when ii > <error descr="Variable used in guarded pattern should be final or effectively final">mode</error>:
+              case Integer ii when ii > <error descr="Variable used in guard expression should be final or effectively final">mode</error>:
                 break;
               default:
                 break;
@@ -174,7 +174,7 @@ class Test {
   public static void testWhenReassigned() {
     Object object = "1234";
     switch (object) {
-      case String s when <error descr="Variable used in guarded pattern should be final or effectively final">s</error>.length()==2 -> {
+      case String s when <error descr="Variable used in guard expression should be final or effectively final">s</error>.length()==2 -> {
         s = null;
       }
       default -> {

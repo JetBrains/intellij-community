@@ -57,9 +57,10 @@ public final class FinalUtils {
                                                             Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems) {
     if (!(e instanceof PsiReferenceExpression ref)) return true;
     if (!ref.isReferenceTo(variable)) return true;
-    HighlightInfo.Builder highlightInfo = HighlightControlFlowUtil
-      .checkVariableInitializedBeforeUsage(ref, variable, uninitializedVarProblems, variable.getContainingFile(), true);
-    if (highlightInfo != null) return false;
+    if (!HighlightControlFlowUtil.isInitializedBeforeUsage(
+      ref, variable, uninitializedVarProblems, true)) {
+      return false;
+    }
     if (!PsiUtil.isAccessedForWriting(ref)) return true;
     if (!LocalsOrMyInstanceFieldsControlFlowPolicy.isLocalOrMyInstanceReference(ref)) return false;
     if (ControlFlowUtil.isVariableAssignedInLoop(ref, variable)) return false;

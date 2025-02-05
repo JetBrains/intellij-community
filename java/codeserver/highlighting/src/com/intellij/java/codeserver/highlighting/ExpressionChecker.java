@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static java.util.Objects.*;
+import static java.util.Objects.requireNonNullElse;
 
 final class ExpressionChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
@@ -918,6 +918,9 @@ final class ExpressionChecker {
          PsiUtil.isModuleFile(myVisitor.file()) ||
          !PsiUtil.isFromDefaultPackage(myVisitor.file()))) {
       myVisitor.report(JavaErrorKinds.REFERENCE_CLASS_IN_DEFAULT_PACKAGE.create(ref, psiClass));
+    }
+    if ((resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) && !(resolved instanceof ImplicitVariable)) {
+      myVisitor.myControlFlowChecker.checkVariableMustBeFinal((PsiVariable)resolved, ref);
     }
   }
 

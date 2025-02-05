@@ -317,10 +317,12 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new HashMap<>();
     for (PsiReferenceExpression expression : references) {
       if (ControlFlowUtil.isVariableAssignedInLoop(expression, variable)) return false;
-      HighlightInfo.Builder highlightInfo = HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, variable, uninitializedVarProblems,
-                                                                                                 variable.getContainingFile());
-      if (highlightInfo != null) return false;
-      highlightInfo = HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression, finalVarProblems);
+      if (!HighlightControlFlowUtil.isInitializedBeforeUsage(
+        expression, variable, uninitializedVarProblems, false)) {
+        return false;
+      }
+      HighlightInfo.Builder highlightInfo =
+        HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression, finalVarProblems);
       if (highlightInfo != null) return false;
       if (variable instanceof PsiParameter && PsiUtil.isAccessedForWriting(expression)) return false;
     }
