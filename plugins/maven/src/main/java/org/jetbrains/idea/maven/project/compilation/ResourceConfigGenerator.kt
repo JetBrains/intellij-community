@@ -94,12 +94,18 @@ internal class ResourceConfigGenerator(
     resourceConfig.testOutputDirectory =
       transformer.toRemotePathOrSelf(getResourcesPluginGoalOutputDirectory(mavenProject, pluginConfiguration, "testResources"))
 
-    if (moduleType != StandardMavenModuleType.TEST_ONLY) {
-      addResources(transformer, resourceConfig.resources, mavenProject.resources)
-    }
-
-    if (moduleType != StandardMavenModuleType.MAIN_ONLY) {
-      addResources(transformer, resourceConfig.testResources, mavenProject.testResources)
+    when (moduleType) {
+      StandardMavenModuleType.SINGLE_MODULE -> {
+        addResources(transformer, resourceConfig.resources, mavenProject.resources)
+        addResources(transformer, resourceConfig.testResources, mavenProject.testResources)
+      }
+      StandardMavenModuleType.MAIN_ONLY -> {
+        addResources(transformer, resourceConfig.resources, mavenProject.resources)
+      }
+      StandardMavenModuleType.TEST_ONLY -> {
+        addResources(transformer, resourceConfig.testResources, mavenProject.testResources)
+      }
+      else -> {}
     }
 
     addWebResources(transformer, moduleName, projectConfig, mavenProject)
