@@ -12,6 +12,7 @@ import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
+import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.RemoteConnection
 import com.intellij.execution.configurations.RemoteState
 import com.intellij.execution.configurations.RunProfileState
@@ -165,23 +166,20 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
 
   private fun getArgs(): List<String> {
-    val args = ArrayList<String>()
+    val args = ParametersList()
     args.add(getScriptPath())
     addIdeaParameters(args)
     args.addAll(myConfiguration.runnerParameters.options)
     args.addAll(myConfiguration.runnerParameters.goals)
-
-
-    return args
+    myConfiguration.runnerSettings?.mavenProperties?.forEach {
+      args.addProperty(it.key, it.value)
+    }
+    return args.list
   }
 
-  private fun addIdeaParameters(args: ArrayList<String>) {
-    args.add("-Didea.version=${MavenUtil.getIdeaVersionToPassToMavenProcess()}")
-    val path = MavenServerManager.getInstance().getMavenEventListener().absolutePath
-    val escapedPath = getEscapedPath(path)
-    args.add("-D${MavenServerEmbedder.MAVEN_EXT_CLASS_PATH}=$escapedPath")
-
-
+  private fun addIdeaParameters(args: ParametersList) {
+    args.addProperty("idea.version", MavenUtil.getIdeaVersionToPassToMavenProcess())
+    args.addProperty(MavenServerEmbedder.MAVEN_EXT_CLASS_PATH, MavenServerManager.getInstance().getMavenEventListener().absolutePath)
   }
 
   private fun getEnv(existingEnv: Map<String, String>, debug: Boolean): Map<String, String> {
