@@ -148,5 +148,7 @@
     <orderEntry type="module" module-name="intellij.platform.resources.en" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.platform.buildData" />
+    <orderEntry type="module" module-name="intellij.platform.syntax" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.syntax.psi" scope="RUNTIME" />
   </component>
 </module>

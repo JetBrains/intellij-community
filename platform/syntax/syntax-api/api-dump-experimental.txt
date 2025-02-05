@@ -1,0 +1,141 @@
+*f:com.intellij.platform.syntax.SyntaxElementType
+- <init>(java.lang.String):V
+*f:com.intellij.platform.syntax.element.SyntaxTokenTypes
+- sf:INSTANCE:com.intellij.platform.syntax.element.SyntaxTokenTypes
+- sf:getBAD_CHARACTER():com.intellij.platform.syntax.SyntaxElementType
+- sf:getERROR_ELEMENT():com.intellij.platform.syntax.SyntaxElementType
+- sf:getWHITE_SPACE():com.intellij.platform.syntax.SyntaxElementType
+*:com.intellij.platform.syntax.lexer.Lexer
+- a:advance():V
+- a:getBufferEnd():I
+- a:getBufferSequence():java.lang.CharSequence
+- a:getCurrentPosition():com.intellij.platform.syntax.lexer.LexerPosition
+- a:getState():I
+- a:getTokenEnd():I
+- getTokenSequence():java.lang.CharSequence
+- a:getTokenStart():I
+- getTokenText():java.lang.String
+- a:getTokenType():com.intellij.platform.syntax.SyntaxElementType
+- a:restore(com.intellij.platform.syntax.lexer.LexerPosition):V
+- a:start(java.lang.CharSequence):V
+- a:start(java.lang.CharSequence,I,I):V
+- a:start(java.lang.CharSequence,I,I,I):V
+*:com.intellij.platform.syntax.lexer.LexerPosition
+- a:getOffset():I
+- a:getState():I
+*:com.intellij.platform.syntax.lexer.TokenList
+- backWhile(I,java.util.Set):I
+- backWithBraceMatching(I,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType):I
+- forwardWhile(I,java.util.Set):I
+- a:getTokenCount():I
+- a:getTokenEnd(I):I
+- a:getTokenStart(I):I
+- getTokenText(I):java.lang.CharSequence
+- a:getTokenType(I):com.intellij.platform.syntax.SyntaxElementType
+- a:getTokenizedText():java.lang.CharSequence
+- hasType(I,com.intellij.platform.syntax.SyntaxElementType):Z
+- hasType(I,java.util.Set):Z
+- hasType(I,com.intellij.platform.syntax.SyntaxElementType[]):Z
+*f:com.intellij.platform.syntax.lexer.TokenListKt
+- sf:TokenList(I[],com.intellij.platform.syntax.SyntaxElementType[],I,java.lang.CharSequence):com.intellij.platform.syntax.lexer.TokenList
+- sf:performLexing(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.util.CancellationProvider):com.intellij.platform.syntax.lexer.TokenList
+- bs:performLexing$default(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.util.CancellationProvider,I,java.lang.Object):com.intellij.platform.syntax.lexer.TokenList
+- sf:tokenListLexer(com.intellij.platform.syntax.lexer.TokenList):com.intellij.platform.syntax.lexer.Lexer
+*:com.intellij.platform.syntax.parser.OpaqueElementPolicy
+- a:getTextOfOpaqueElement(com.intellij.platform.syntax.SyntaxElementType):java.lang.String
+*:com.intellij.platform.syntax.parser.ProductionMarkerList
+- a:getMarker(I):com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Production
+- a:getSize():I
+- a:isDoneMarker(I):Z
+*:com.intellij.platform.syntax.parser.ProductionResult
+- a:copyTokenStartsToArray(I[],I,I,I):V
+- a:copyTokenTypesToArray(java.lang.Object[],I,I,I):V
+- a:getProductionMarkers():com.intellij.platform.syntax.parser.ProductionMarkerList
+- a:getTokenSequence():com.intellij.platform.syntax.lexer.TokenList
+*:com.intellij.platform.syntax.parser.SyntaxElementTypeRemapper
+- a:remap(com.intellij.platform.syntax.SyntaxElementType,I,I,java.lang.CharSequence):com.intellij.platform.syntax.SyntaxElementType
+*:com.intellij.platform.syntax.parser.SyntaxTreeBuilder
+- a:advanceLexer():V
+- a:enforceCommentTokens(java.util.Set):V
+- a:eof():Z
+- a:error(java.lang.String):V
+- a:getCurrentOffset():I
+- a:getLastDoneMarker():com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
+- a:getLexemes():com.intellij.platform.syntax.lexer.TokenList
+- a:getProductions():java.util.List
+- a:getText():java.lang.CharSequence
+- a:getTokenText():java.lang.String
+- a:getTokenType():com.intellij.platform.syntax.SyntaxElementType
+- a:hasErrorsAfter(com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker):Z
+- isWhitespaceOrComment(com.intellij.platform.syntax.SyntaxElementType):Z
+- a:lookAhead(I):com.intellij.platform.syntax.SyntaxElementType
+- a:mark():com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
+- rawAdvanceLexer(I):V
+- a:rawLookup(I):com.intellij.platform.syntax.SyntaxElementType
+- a:rawTokenIndex():I
+- a:rawTokenTypeStart(I):I
+- a:remapCurrentToken(com.intellij.platform.syntax.SyntaxElementType):V
+- a:setDebugMode(Z):V
+- a:setTokenTypeRemapper(com.intellij.platform.syntax.parser.SyntaxElementTypeRemapper):V
+- a:setWhitespaceSkippedCallback(com.intellij.platform.syntax.parser.WhitespaceSkippedCallback):V
+*:com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
+- com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Production
+- a:collapse(com.intellij.platform.syntax.SyntaxElementType):V
+- a:done(com.intellij.platform.syntax.SyntaxElementType):V
+- a:doneBefore(com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker):V
+- a:doneBefore(com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker,java.lang.String):V
+- a:drop():V
+- a:error(java.lang.String):V
+- a:errorBefore(java.lang.String,com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker):V
+- a:precede():com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
+- a:rollbackTo():V
+- a:setCustomEdgeTokenBinders(com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder,com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder):V
+*:com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Production
+- a:getEndIndex():I
+- a:getEndOffset():I
+- a:getErrorMessage():java.lang.String
+- a:getStartIndex():I
+- a:getStartOffset():I
+- a:getTokenType():com.intellij.platform.syntax.SyntaxElementType
+- a:isCollapsed():Z
+- a:isErrorMarker():Z
+*f:com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory
+- sf:INSTANCE:com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory
+- sf:builder(java.lang.CharSequence,java.util.Set,java.util.Set,com.intellij.platform.syntax.lexer.Lexer):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
+*:com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
+- a:build():com.intellij.platform.syntax.parser.SyntaxTreeBuilder
+- a:withCachedLexemes(com.intellij.platform.syntax.lexer.TokenList):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
+- a:withCancellationProvider(com.intellij.platform.syntax.util.CancellationProvider):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
+- a:withDebugMode(Z):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
+- a:withLanguage(java.lang.String):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
+- a:withLogger(com.intellij.platform.syntax.util.Logger):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
+- a:withOpaquePolicy(com.intellij.platform.syntax.parser.OpaqueElementPolicy):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
+- a:withStartOffset(I):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
+- a:withWhitespaceOrCommentBindingPolicy(com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
+- a:withWhitespaceSkippedCallback(com.intellij.platform.syntax.parser.WhitespaceSkippedCallback):com.intellij.platform.syntax.parser.SyntaxTreeBuilderFactory$Builder
+*:com.intellij.platform.syntax.parser.WhitespaceOrCommentBindingPolicy
+- a:isLeftBound(com.intellij.platform.syntax.SyntaxElementType):Z
+*:com.intellij.platform.syntax.parser.WhitespaceSkippedCallback
+- a:onSkip(com.intellij.platform.syntax.SyntaxElementType,I,I):V
+*:com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
+- a:getEdgePosition(java.util.List,Z,com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder$TokenTextGetter):I
+- isRecursive():Z
+*:com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder$TokenTextGetter
+- a:get(I):java.lang.CharSequence
+*f:com.intellij.platform.syntax.parser.WhitespacesBinders
+- sf:INSTANCE:com.intellij.platform.syntax.parser.WhitespacesBinders
+- f:defaultLeftBinder():com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
+- f:defaultRightBinder():com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
+- f:greedyLeftBinder():com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
+- f:greedyRightBinder():com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
+*:com.intellij.platform.syntax.util.CancellationProvider
+- a:checkCancelled():V
+*:com.intellij.platform.syntax.util.Logger
+- a:error(java.lang.String):V
+- a:error(java.lang.String,com.intellij.platform.syntax.util.Logger$Attachment[]):V
+- a:warn(java.lang.String,java.lang.RuntimeException):V
+- bs:warn$default(com.intellij.platform.syntax.util.Logger,java.lang.String,java.lang.RuntimeException,I,java.lang.Object):V
+*f:com.intellij.platform.syntax.util.Logger$Attachment
+- <init>(java.lang.String,java.lang.String):V
+- f:getContent():java.lang.String
+- f:getName():java.lang.String

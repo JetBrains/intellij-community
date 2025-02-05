@@ -71,6 +71,10 @@
 
   <xi:include href="intellij.platform.todo.xml"/>
 
+  <xi:include href="/META-INF/intellij.platform.syntax.psi.xml">
+    <xi:fallback/>
+  </xi:include>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>

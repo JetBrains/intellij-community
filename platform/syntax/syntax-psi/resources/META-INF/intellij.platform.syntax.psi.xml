@@ -1,0 +1,10 @@
+<idea-plugin package="com.intellij.platform.syntax.psi">
+  <extensionPoints>
+    <extensionPoint name="syntax.elementTypeConverter" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.platform.syntax.psi.ElementTypeConverter"/>
+    </extensionPoint>
+    <extensionPoint name="syntax.syntaxDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.platform.syntax.psi.LanguageSyntaxDefinition"/>
+    </extensionPoint>
+  </extensionPoints>
+</idea-plugin>

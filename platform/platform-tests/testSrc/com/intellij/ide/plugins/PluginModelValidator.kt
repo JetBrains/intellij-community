@@ -41,6 +41,7 @@ private val moduleSkipList = java.util.Set.of(
   "intellij.android.device-explorer", /* android plugin doesn't follow new plugin model yet, $modulename$.xml is not a module descriptor */
   "intellij.bigdatatools.plugin.spark", /* Spark Scala depends on Scala, Scala is not in monorepo*/
   "kotlin.highlighting.shared",
+  "intellij.platform.syntax.psi", /* syntax.psi is not yet a real module because it's a part of Core */
 )
 
 class PluginModelValidator(sourceModules: List<Module>) {
