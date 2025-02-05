@@ -1,7 +1,6 @@
 package com.intellij.notebooks.visualization.ui.cellsDnD
 
 import com.intellij.icons.AllIcons
-import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
 import com.intellij.notebooks.visualization.getCell
@@ -12,7 +11,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Cursor
@@ -42,8 +40,15 @@ class EditorCellDraggableBar(
   private val inlayManager = NotebookCellInlayManager.get(editor)
 
   init {
-    if (Registry.`is`("jupyter.editor.dnd.cells")) createAndAddDraggableBar()
+    JupyterBoundsChangeHandler.get(editor).subscribe(boundsChangeListener)
   }
+
+  var visible: Boolean = false
+    set(value) {
+      if (value) createAndAddDraggableBar()
+      else removeDraggableBar()
+      field = value
+    }
 
   fun updateBounds() {
     panel?.let {
@@ -65,13 +70,17 @@ class EditorCellDraggableBar(
   }
 
   private fun createAndAddDraggableBar() {
-    if (!editor.isOrdinaryNotebookEditor()) return
-
     val panel = DraggableBarComponent()
     editor.gutterComponentEx.add(panel)
     this.panel = panel
-    JupyterBoundsChangeHandler.get(editor).subscribe(boundsChangeListener)
     updateBounds()
+  }
+
+  private fun removeDraggableBar() {
+    panel?.let {
+      editor.gutterComponentEx.remove(it)
+      panel = null
+    }
   }
 
   override fun dispose() {

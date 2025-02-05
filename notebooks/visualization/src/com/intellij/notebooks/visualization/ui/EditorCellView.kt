@@ -4,6 +4,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isDiffKind
+import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookCellHighlighterRenderer
 import com.intellij.notebooks.ui.visualization.markerRenderers.NotebookCodeCellBackgroundLineMarkerRenderer
@@ -85,6 +86,7 @@ class EditorCellView(
       field = value
       updateFolding()
       updateRunButtonVisibility()
+      updateDraggableBarVisibility()
       updateCellHighlight()
       updateCellActionsToolbarVisibility()
       myEditorCellFrameManager?.updateCellFrameShow(value, mouseOver)
@@ -100,6 +102,7 @@ class EditorCellView(
       if (field == value) return
       field = value
       updateRunButtonVisibility()
+      updateDraggableBarVisibility()
     }
 
   init {
@@ -120,6 +123,7 @@ class EditorCellView(
     }
     editor.notebook?.readOnly?.afterChange(this) {
       updateRunButtonVisibility()
+      updateDraggableBarVisibility()
     }
     recreateControllers()
     updateSelection(false)
@@ -270,6 +274,7 @@ class EditorCellView(
     mouseOver = false
     updateFolding()
     updateRunButtonVisibility()
+    updateDraggableBarVisibility()
     myEditorCellFrameManager?.updateCellFrameShow(selected, mouseOver)
     updateCellActionsToolbarVisibility()
   }
@@ -278,6 +283,7 @@ class EditorCellView(
     mouseOver = true
     updateFolding()
     updateRunButtonVisibility()
+    updateDraggableBarVisibility()
     myEditorCellFrameManager?.updateCellFrameShow(selected, mouseOver)
     updateCellActionsToolbarVisibility()
   }
@@ -372,12 +378,25 @@ class EditorCellView(
 
   private fun updateRunButtonVisibility() {
     input.runCellButton ?: return
-    val isReadOnlyNotebook = editor.notebook?.readOnly?.get() ?: false
+    val isReadOnlyNotebook = editor.notebook?.readOnly?.get() == true
     val shouldBeVisible = !isReadOnlyNotebook && !disableActions && (mouseOver || selected)
     if (input.runCellButton.lastRunButtonVisibility == shouldBeVisible) return
 
     input.runCellButton.visible = shouldBeVisible
     input.runCellButton.lastRunButtonVisibility = shouldBeVisible
+  }
+
+  private fun updateDraggableBarVisibility() {
+    val isReadOnlyNotebook = editor.notebook?.readOnly?.get() == true
+    val shouldBeVisible =
+      Registry.`is`("jupyter.editor.dnd.cells")
+      && !isReadOnlyNotebook
+      && !disableActions
+      && (mouseOver || selected)
+      && editor.isOrdinaryNotebookEditor()
+
+    if (input.draggableBar.visible == shouldBeVisible) return
+    input.draggableBar.visible = shouldBeVisible
   }
 
   private fun updateCellActionsToolbarVisibility() {
