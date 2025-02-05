@@ -1,0 +1,23 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.base.analysisApiPlatform
+
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KotlinRestrictedAnalysisService
+
+internal class IdeKotlinRestrictedAnalysisService(private val project: Project) : KotlinRestrictedAnalysisService {
+    override val isAnalysisRestricted: Boolean
+        get() = DumbService.isDumb(project)
+
+    override val isRestrictedAnalysisAllowed: Boolean
+        get() {
+            // The flag should not be cached by the service because it can be changed without a restart.
+            return Registry.`is`("kotlin.analysis.allowRestrictedAnalysis", false)
+        }
+
+    override fun rejectRestrictedAnalysis(): Nothing {
+        throw IndexNotReadyException.create()
+    }
+}
