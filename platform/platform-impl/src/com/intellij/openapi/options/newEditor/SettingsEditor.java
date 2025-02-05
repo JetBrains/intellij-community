@@ -389,6 +389,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   }
 
   private JComponent withHistoryToolbar(JComponent component) {
+    if (SettingsDialog.isNonModal())
+      return component;
+
     ActionGroup group = ActionUtil.getActionGroup("Back", "Forward");
     if (group == null) return component;
     JComponent toolbar = ActionUtil.createToolbarComponent(this, ActionPlaces.SETTINGS_HISTORY, group, true);
