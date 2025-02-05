@@ -145,6 +145,7 @@ a:com.intellij.webSymbols.utils.WebSymbolsStructuredScope
 - p:build(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,kotlin.jvm.functions.Function1):V
 - equals(java.lang.Object):Z
 - p:findBestMatchingScope(com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope):com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
+- pf:getCurrentScope():com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
 - pf:getLocation():com.intellij.psi.PsiElement
 - pa:getProvidedSymbolKinds():java.util.Set
 - pa:getRootPsiElement():com.intellij.psi.PsiElement
@@ -153,11 +154,12 @@ a:com.intellij.webSymbols.utils.WebSymbolsStructuredScope
 - hashCode():I
 p:com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
 - com.intellij.webSymbols.WebSymbolsScope
+- a:getAllSymbols(com.intellij.webSymbols.WebSymbolQualifiedKind):java.util.List
 - a:getChildren():java.util.List
+- a:getLocalSymbols():java.util.List
 - a:getParent():com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
 - a:getProperties():java.util.Map
 - a:getSource():com.intellij.psi.PsiElement
-- a:getSymbols():java.util.List
 pf:com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScopesHolder
 - <init>(com.intellij.psi.PsiElement,java.util.Set):V
 - f:currentScope():com.intellij.webSymbols.WebSymbolsScope

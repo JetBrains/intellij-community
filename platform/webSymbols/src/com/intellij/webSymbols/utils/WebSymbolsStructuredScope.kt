@@ -26,10 +26,13 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
   protected abstract val providedSymbolKinds: Set<WebSymbolQualifiedKind>
 
   override fun build(queryExecutor: WebSymbolsQueryExecutor, consumer: (WebSymbolsScope) -> Unit) {
-    getRootScope()
-      ?.let { findBestMatchingScope(it) }
+    getCurrentScope()
       ?.let { consumer(it) }
   }
+
+  protected fun getCurrentScope(): WebSymbolsPsiScope? =
+    getRootScope()
+      ?.let { findBestMatchingScope(it) }
 
   protected fun getRootScope(): WebSymbolsPsiScope? {
     val manager = CachedValuesManager.getManager(location.project)
@@ -123,7 +126,8 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
     val parent: WebSymbolsPsiScope?
     val properties: Map<String, Any>
     val children: List<WebSymbolsPsiScope>
-    val symbols: List<WebSymbol>
+    val localSymbols: List<WebSymbol>
+    fun getAllSymbols(qualifiedKind: WebSymbolQualifiedKind): List<WebSymbol>
   }
 
   private class WebSymbolsPsiScopeImpl(
@@ -135,7 +139,7 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
   ) : WebSymbolsPsiScope {
 
     override val children = ArrayList<WebSymbolsPsiScopeImpl>()
-    override val symbols = SmartList<WebSymbol>()
+    override val localSymbols = SmartList<WebSymbol>()
 
     private val textRange: TextRange get() = source.textRange
     private val scopesInHierarchy get() = generateSequence(this) { it.parent }
@@ -172,11 +176,14 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
       params: WebSymbolsListSymbolsQueryParams,
       scope: Stack<WebSymbolsScope>,
     ): List<WebSymbolsScope> =
+      getAllSymbols(qualifiedKind)
+
+    override fun getAllSymbols(qualifiedKind: WebSymbolQualifiedKind): List<WebSymbol> =
       if (qualifiedKind in providedSymbolKinds)
       // TODO - consider optimizing in case there are many symbols in the scope
         scopesInHierarchy
           .takeWhileInclusive { !it.isExclusiveFor(qualifiedKind) }
-          .flatMap { it.symbols }
+          .flatMap { it.localSymbols }
           .filter { it.qualifiedKind == qualifiedKind }
           .distinctBy { it.name }
           .toList()
@@ -184,7 +191,7 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
         emptyList()
 
     fun add(symbol: WebSymbol) {
-      symbols.add(symbol)
+      localSymbols.add(symbol)
     }
 
     private fun add(scope: WebSymbolsPsiScopeImpl) {
