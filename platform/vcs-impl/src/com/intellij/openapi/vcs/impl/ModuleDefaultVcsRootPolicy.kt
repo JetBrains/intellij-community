@@ -18,7 +18,7 @@ open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(p
     project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, MyModulesListener())
   }
 
-  override fun getDefaultVcsRoots(): Collection<VirtualFile> {
+  override fun getDefaultVcsRootsCandidates(): Collection<VirtualFile> {
     val result = mutableSetOf<VirtualFile>()
 
     val baseDir = myProject.baseDir

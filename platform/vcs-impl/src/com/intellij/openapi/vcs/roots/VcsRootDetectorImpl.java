@@ -75,8 +75,12 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
     Set<VcsRoot> detectedRoots = new HashSet<>();
     Map<VirtualFile, Boolean> scannedDirs = new HashMap<>();
 
-    detectedRoots.addAll(scanForRootsInsideDir(myProject, dirToScan, null, scannedDirs));
-    detectedRoots.addAll(scanForRootsAboveDirs(Collections.singletonList(dirToScan), scannedDirs, detectedRoots));
+    VirtualFile resolvedDir = dirToScan.getCanonicalFile();
+    if (resolvedDir == null) {
+      return Collections.emptySet();
+    }
+    detectedRoots.addAll(scanForRootsInsideDir(myProject, resolvedDir, null, scannedDirs));
+    detectedRoots.addAll(scanForRootsAboveDirs(Collections.singletonList(resolvedDir), scannedDirs, detectedRoots));
     return detectedRoots;
   }
 
