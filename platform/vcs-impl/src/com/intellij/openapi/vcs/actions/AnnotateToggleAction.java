@@ -65,7 +65,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     super.update(e);
     Provider provider = getProvider(e);
     Presentation presentation = e.getPresentation();
-    presentation.setEnabled(provider != null);
+    presentation.setEnabledAndVisible(provider != null);
     if (provider != null) {
       presentation.setText(provider.getActionName(e));
     }
