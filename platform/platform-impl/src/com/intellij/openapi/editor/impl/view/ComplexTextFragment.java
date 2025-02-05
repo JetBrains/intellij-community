@@ -45,35 +45,38 @@ final class ComplexTextFragment extends TextFragment {
       // This seems to work "well enough" for the terminal
       // (the only place where it's used at the moment of writing),
       // but may need to be updated as unusual edge cases are discovered.
-      var prevX = myGlyphVector.getGlyphPosition(0).getX();
+      // PASS 1: store the original widths.
+      var originalWidths = new double[myGlyphVector.getNumGlyphs()];
       for (int i = 1; i <= myGlyphVector.getNumGlyphs(); i++) {
-        var nextPos = myGlyphVector.getGlyphPosition(i);
-        var nextX = nextPos.getX();
-        var width = nextX - prevX;
-        var slots = width / gridWidth;
+        originalWidths[i - 1] = myGlyphVector.getGlyphPosition(i).getX() - myGlyphVector.getGlyphPosition(i - 1).getX();
+      }
+      // PASS 2: use the original widths to calculate the new widths, update the positions to match the new widths.
+      var x = myGlyphVector.getGlyphPosition(0).getX();
+      for (int i = 1; i <= myGlyphVector.getNumGlyphs(); i++) {
+        var prevOriginalWidth = originalWidths[i - 1];
+        var slots = prevOriginalWidth / gridWidth;
         if (Math.abs(slots - Math.round(slots)) > 0.001) {
           // allow for 20% overflow for chars with unusual widths
           var actualSlots = Math.min(Math.max(1, Math.ceil(slots - 0.2)), 2);
-          // To calculate the width above, we use non-modified values,
-          // but to calculate the new position, we need to use the modified one.
-          var prevPos = myGlyphVector.getGlyphPosition(i - 1);
-          var actualPrevX = prevPos.getX();
           var actualWidth = actualSlots * gridWidth;
-          nextPos.setLocation(actualPrevX + actualWidth, nextPos.getY());
-          myGlyphVector.setGlyphPosition(i, nextPos);
-          // centering the previous character
-          if (actualWidth - width > 0.0) {
-            prevPos.setLocation(actualPrevX + (actualWidth - width) / 2.0, prevPos.getY());
-            myGlyphVector.setGlyphPosition(i - 1, prevPos);
-          }
+          x += actualWidth;
         }
-        else { // no width adjustments for this glyph, but we must account for the previous ones
-          var prevPos = myGlyphVector.getGlyphPosition(i - 1);
-          var actualPrevX = prevPos.getX();
-          nextPos.setLocation(nextX + (actualPrevX - prevX), nextPos.getY());
-          myGlyphVector.setGlyphPosition(i, nextPos);
+        else { // no width adjustment, use the original width as-is
+          x += prevOriginalWidth;
         }
-        prevX = nextX; // important to have the non-modified value here to keep calculating non-modified widths correctly
+        var nextPos = myGlyphVector.getGlyphPosition(i);
+        nextPos.setLocation(x, nextPos.getY());
+        myGlyphVector.setGlyphPosition(i, nextPos);
+      }
+      // PASS 3: use the differences between the original and the new widths to center the characters.
+      for (int i = 0; i < myGlyphVector.getNumGlyphs(); i++) {
+        var originalWidth = originalWidths[i];
+        var prevPos = myGlyphVector.getGlyphPosition(i);
+        var nextPos = myGlyphVector.getGlyphPosition(i + 1);
+        var newWidth = nextPos.getX() - prevPos.getX();
+        if (Math.abs(newWidth - originalWidth) < 0.001) continue;
+        prevPos.setLocation(prevPos.getX() + (newWidth - originalWidth) / 2, prevPos.getY());
+        myGlyphVector.setGlyphPosition(i, prevPos);
       }
     }
     int numChars = end - start;
