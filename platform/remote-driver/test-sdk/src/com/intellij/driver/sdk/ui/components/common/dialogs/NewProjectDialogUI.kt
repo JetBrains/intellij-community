@@ -40,7 +40,6 @@ open class NewProjectDialogUI(data: ComponentData) : UiComponent(data) {
   open val createButton = x("//div[@text='Create']")
   private val projectTypeList = x("//div[@class='JBList']")
   val sampleCodeLabel = x("//div[@text='Add sample code']")
-  val onboardingTipsLabel = x("//div[@text='Generate code with onboarding tips']")
 
 
 }
