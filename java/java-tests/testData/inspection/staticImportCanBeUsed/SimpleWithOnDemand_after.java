@@ -1,6 +1,6 @@
 package staticImportCanBeUsed;
 
-import static java.util.Arrays.sort;
+import static java.util.Arrays.*;
 
 class Foo {
     void test(String[] baz) {

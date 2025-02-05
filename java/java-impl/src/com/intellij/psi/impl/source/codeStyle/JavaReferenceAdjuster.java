@@ -137,19 +137,17 @@ public final class JavaReferenceAdjuster implements ReferenceAdjuster {
   }
 
   private static boolean tryAutoStaticallyImport(@NotNull PsiReferenceExpression reference) {
-    StaticImportCanBeUsedInspection.OnDemandStaticImportContext context =
+    StaticImportCanBeUsedInspection.StaticImportContext context =
       StaticImportCanBeUsedInspection.findOnDemandImportContext(reference);
     if (context == null) return false;
     PsiClass qualifierClass = context.psiClass();
-    String qualifiedName = qualifierClass.getQualifiedName();
-    List<PsiJavaCodeReferenceElement> refs = PsiReferenceExpressionImpl.getImportsFromClass(context.importList(), qualifiedName);
-    for (PsiJavaCodeReferenceElement ref : refs) {
-      PsiImportStaticStatement importStatement = PsiTreeUtil.getParentOfType(ref, PsiImportStaticStatement.class);
-      if (importStatement != null) {
-        importStatement.delete();
-      }
-    }
-    context.importList().add(JavaPsiFacade.getElementFactory(qualifierClass.getProject()).createImportStaticStatement(qualifierClass, "*"));
+    PsiFile file = reference.getContainingFile();
+    if (!(file instanceof PsiJavaFile javaFile)) return false;
+    PsiImportList importList = javaFile.getImportList();
+    if (importList == null) return false;
+    String referenceName = reference.getReferenceName();
+    if (referenceName == null) return false;
+    PsiReferenceExpressionImpl.bindToElementViaStaticImport(qualifierClass, referenceName, importList);
     return true;
   }
 
