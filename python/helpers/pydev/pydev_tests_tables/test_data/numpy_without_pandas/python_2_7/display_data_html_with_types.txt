@@ -25,7 +25,7 @@
 </tr>
 <tr>
 <th>2</th>
-td>3</td>
+<td>3</td>
 <td>Charlie</td>
 <td>22</td>
 <td>67</td>

@@ -41,6 +41,16 @@ def setup_np_array_with_nones():
     return array_with_nones
 
 
+@pytest.fixture
+def setup_np_array_with_types():
+    dtype = [('id', 'i4'), ('name', 'U10'), ('age', 'i4'), ('score', 'i4')]
+    data = [(1, 'Alice', 23, 85),
+            (2, 'Bob', 25, 92),
+            (3, 'Charlie', 22, 67),
+            (4, 'Daniel', 24, 75)]
+    return np.array(data, dtype=dtype)
+
+
 # 1
 def test_simple_array():
     arr = np.array([1, 2, 3])
@@ -201,6 +211,24 @@ def test_display_data_html_none_values(mocker, setup_np_array_with_nones):
 
 
 # 15
+def test_display_data_html_with_types(mocker, setup_np_array_with_types):
+    np_array = setup_np_array_with_types
+
+    # Mock the HTML and display functions
+    mock_display = mocker.patch('IPython.display.display')
+
+    numpy_tables_helpers.display_data_html(np_array, 0, 3)
+
+    called_args, called_kwargs = mock_display.call_args
+    displayed_html = called_args[0]
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=displayed_html.data,
+        expected_file='test_data/numpy_without_pandas/' + test_data_directory + '/display_data_html_with_types.txt'
+    )
+
+
+# 16
 def test_display_data_csv_float_values(mocker, setup_np_array_with_floats):
     np_array = setup_np_array_with_floats
 
@@ -215,7 +243,7 @@ def test_display_data_csv_float_values(mocker, setup_np_array_with_floats):
     )
 
 
-# 16
+# 17
 def test_display_data_csv_none_values(mocker, setup_np_array_with_nones):
     np_array = setup_np_array_with_nones
 
@@ -227,6 +255,21 @@ def test_display_data_csv_none_values(mocker, setup_np_array_with_nones):
     __read_expected_from_file_and_compare_with_actual(
         actual=displayed_csv,
         expected_file='test_data/numpy_without_pandas/' + test_data_directory + '/display_data_csv_none_values.txt'
+    )
+
+
+# 18
+def test_display_data_csv_with_types(mocker, setup_np_array_with_types):
+    np_array = setup_np_array_with_types
+
+    # Mock the CSV and display functions
+    mock_print = mocker.patch('sys.stdout', new_callable=StringIO)
+    numpy_tables_helpers.display_data_csv(np_array, 0, 3)
+    displayed_csv = mock_print.getvalue()
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=displayed_csv,
+        expected_file='test_data/numpy_without_pandas/' + test_data_directory + '/display_data_csv_with_types.txt'
     )
 
 

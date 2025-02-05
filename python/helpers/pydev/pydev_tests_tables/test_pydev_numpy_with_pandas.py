@@ -43,12 +43,12 @@ def setup_np_array_with_nones():
 
 @pytest.fixture
 def setup_np_array_with_types():
-    dtype = [('id', 'i4'), ('name', 'U10'), ('age', 'i4'), ('score', 'f4')]
-    data = [(1, 'Alice', 23, 85.5),
-    (2, 'Bob', 25, 92.3),
-    (3, 'Charlie', 22, 67.2)]
+    dtype = [('id', 'i4'), ('name', 'U10'), ('age', 'i4'), ('score', 'i4')]
+    data = [(1, 'Alice', 23, 85),
+    (2, 'Bob', 25, 92),
+    (3, 'Charlie', 22, 67),
+    (4, 'Daniel', 24, 75)]
     return np.array(data, dtype=dtype)
-
 
 
 # 1
