@@ -19,7 +19,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <refactoring.elementListenerProvider implementation="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectListenerProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectUsageCollector"/>
-    <experiment.abExperimentOption implementation="com.intellij.pycharm.community.ide.impl.miscProject.impl.PyMiscProjectExperimentOption"/>
     <registryKey defaultValue="5" description="Number of primary buttons on welcome screen (other go to 'more actions')"
                  key="welcome.screen.primaryButtonsCount" restartRequired="true" overrides="true"/>
     <applicationInitializedListener implementation="com.intellij.pycharm.community.ide.impl.PyCharmCorePluginConfigurator"/>

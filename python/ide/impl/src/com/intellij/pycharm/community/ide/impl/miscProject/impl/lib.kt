@@ -20,7 +20,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -53,7 +52,6 @@ import kotlin.time.Duration.Companion.milliseconds
 private val logger = fileLogger()
 
 internal val miscProjectDefaultPath: Lazy<Path> = lazy { Path.of(SystemProperties.getUserHome()).resolve("PyCharmMiscProject") }
-internal val miscProjectEnabled: Lazy<Boolean> = lazy { ABExperiment.getABExperimentInstance().isExperimentOptionEnabled(PyMiscProjectExperimentOption::class.java) }
 
 /**
  * Creates a project in [projectPath] in a modal window.
