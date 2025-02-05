@@ -4,6 +4,7 @@ package com.intellij.java.codeserver.highlighting;
 import com.intellij.codeInsight.UnhandledExceptions;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static java.util.Objects.*;
+import static java.util.Objects.requireNonNull;
 
 /**
  * An internal visitor to gather error messages for Java sources. Should not be used directly.
@@ -117,7 +118,18 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   @Override
   public void visitElement(@NotNull PsiElement element) {
     super.visitElement(element);
+    if (!(myFile instanceof ServerPageFile)) {
+      checkUnicodeBadCharacter(element);
+    }
     myHasError = false;
+  }
+
+  private void checkUnicodeBadCharacter(@NotNull PsiElement element) {
+    ASTNode node = element.getNode();
+    if (node != null && node.getElementType() == TokenType.BAD_CHARACTER) {
+      char c = element.textToCharArray()[0];
+      report(JavaErrorKinds.ILLEGAL_CHARACTER.create(element, c));
+    }
   }
 
   @Override

@@ -8,8 +8,10 @@ import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Parameterized;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Simple;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -29,7 +31,8 @@ import java.util.stream.Stream;
 
 import static com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle.message;
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorFormatUtil.*;
-import static java.util.Objects.*;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 
 /**
  * All possible Java error kinds
@@ -53,6 +56,13 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiElement, @NotNull TextRange> ILLEGAL_UNICODE_ESCAPE =
     parameterized(PsiElement.class, TextRange.class, "illegal.unicode.escape")
       .withRange((psi, range) -> range);
+  public static final Parameterized<PsiElement, @NotNull Character> ILLEGAL_CHARACTER =
+    parameterized(PsiElement.class, Character.class, "illegal.character")
+      .withRawDescription((e, c) -> {
+        boolean printable = StringUtil.isPrintableUnicode(c) && !Character.isSpaceChar(c);
+        @NlsSafe String hex = String.format("U+%04X", (int)c);
+        return message("illegal.character", printable ? c + " (" + hex + ")" : hex);
+      });
 
   public static final Simple<PsiAnnotation> ANNOTATION_NOT_ALLOWED_HERE = error("annotation.not.allowed.here");
   public static final Simple<PsiPackageStatement> ANNOTATION_NOT_ALLOWED_ON_PACKAGE =

@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.impl.DefaultHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
@@ -234,9 +233,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitElement(@NotNull PsiElement element) {
     myCollector.processElement(element);
-    if (!(myFile instanceof ServerPageFile)) {
-      add(DefaultHighlightUtil.checkUnicodeBadCharacter(element));
-    }
   }
 
   public static @Nullable JavaResolveResult resolveJavaReference(@NotNull PsiReference reference) {
