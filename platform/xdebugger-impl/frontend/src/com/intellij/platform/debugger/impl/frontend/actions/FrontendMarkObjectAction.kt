@@ -12,6 +12,8 @@ import com.intellij.xdebugger.impl.actions.areFrontendDebuggerActionsEnabled
 import com.intellij.xdebugger.impl.actions.handlers.XMarkObjectActionHandler.Companion.performMarkObject
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.rpc.XValueMarkerId
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import org.jetbrains.annotations.ApiStatus
 
@@ -62,8 +64,12 @@ private class FrontendMarkObjectAction : AnAction(), ActionRemoteBehaviorSpecifi
       return
     }
 
+    val treeState = XDebuggerTreeState.saveState(node.tree)
+
     performMarkObject(e, node, markers, onSuccess = {
-      // TODO: should we update tree state here?
+      if (DebuggerUIUtil.isInDetachedTree(e)) {
+        node.tree.rebuildAndRestore(treeState)
+      }
     })
   }
 
