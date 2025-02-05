@@ -18,7 +18,11 @@ apiValidation {
 
 poko { pokoAnnotation = "org/jetbrains/jewel/foundation/GenerateDataFunctions" }
 
-kotlin { explicitApi() }
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xexplicit-api=strict")
+    }
+}
 
 val extension = project.extensions.create("publicApiValidation", ApiValidationExtension::class.java)
 

@@ -26,10 +26,9 @@ import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-@Suppress("ImplicitUnitReturnType")
 public class PainterHintTest : BasicJewelUiTest() {
     @Test
-    public fun `empty hint should be ignored`(): Unit =
+    public fun `empty hint should be ignored`() {
         runComposeTest({
             OverrideDarkMode(isDark = false) {
                 val provider = rememberResourcePainterProvider("icons/github.svg", PainterHintTest::class.java)
@@ -46,6 +45,7 @@ public class PainterHintTest : BasicJewelUiTest() {
         }) {
             awaitIdle()
         }
+    }
 
     private class TestPainterProviderScope(
         density: Density,
