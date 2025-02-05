@@ -13,12 +13,10 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.xdebugger.XDebugSession
-import junit.framework.TestCase
 import one.util.streamex.StreamEx
-import org.junit.Assert
 import java.util.function.Function
+import kotlin.test.*
 
 abstract class TraceExecutionTestHelper(
   private val session: XDebugSession,
@@ -86,13 +84,13 @@ abstract class TraceExecutionTestHelper(
   ) {
     try {
       if (error != null) {
-        Assert.assertNotNull(errorReason)
-        Assert.assertNotNull(chain)
+        assertNotNull(errorReason)
+        assertNotNull(chain)
         handleError(chain!!, error, errorReason!!)
       }
       else {
-        Assert.assertNull(errorReason)
-        Assert.assertNotNull(chain)
+        assertNull(errorReason)
+        assertNotNull(chain)
 
         handleSuccess(chain!!, result!!, resultMustBeNull)
       }
@@ -113,10 +111,10 @@ abstract class TraceExecutionTestHelper(
 
   protected open fun handleResultValue(result: Value?, mustBeNull: Boolean) {
     if (mustBeNull) {
-      Assert.assertNull(result)
+      assertNull(result)
     }
     else {
-      Assert.assertNotNull(result)
+      assertNotNull(result)
     }
   }
 
@@ -125,7 +123,7 @@ abstract class TraceExecutionTestHelper(
   protected abstract fun print(s: String, processOutputType: Key<*>)
 
   protected open fun handleError(chain: StreamChain, error: String, reason: FailureReason) {
-    Assert.fail(error)
+    fail(error)
   }
 
   protected open fun handleSuccess(
@@ -133,8 +131,8 @@ abstract class TraceExecutionTestHelper(
     result: TracingResult,
     resultMustBeNull: Boolean?,
   ) {
-    TestCase.assertNotNull(chain)
-    TestCase.assertNotNull(result)
+    assertNotNull(chain)
+    assertNotNull(result)
 
     println(chain.text, ProcessOutputTypes.SYSTEM)
 
@@ -177,9 +175,9 @@ abstract class TraceExecutionTestHelper(
   }
 
   private fun printBeforeAndAfterValues(before: NextAwareState?, after: PrevAwareState?) {
-    Assert.assertFalse(before == null && after == null)
+    assertFalse(before == null && after == null)
     val call = before?.nextCall ?: after!!.prevCall
-    Assert.assertNotNull(call)
+    assertNotNull(call)
     println("mappings for " + call!!.name, ProcessOutputTypes.SYSTEM)
     println("  direct:", ProcessOutputTypes.SYSTEM)
     if (before != null) {
@@ -222,24 +220,24 @@ abstract class TraceExecutionTestHelper(
     val intermediates = chain.intermediateCalls
     val terminator = chain.terminator
     if (intermediates.isEmpty()) {
-      Assert.assertFalse(terminator.stateBefore is PrevAwareState)
+      assertFalse(terminator.stateBefore is PrevAwareState)
     }
 
     checkIntermediates(chain.intermediateCalls)
 
-    Assert.assertEquals(terminator.call.name, terminator.stateBefore.nextCall.name)
+    assertEquals(terminator.call.name, terminator.stateBefore.nextCall.name)
     val after = terminator.stateAfter
     if (after != null) {
       val terminatorCall = after.prevCall
-      Assert.assertNotNull(terminatorCall)
-      Assert.assertEquals(terminator.call.name, terminatorCall!!.name)
+      assertNotNull(terminatorCall)
+      assertEquals(terminator.call.name, terminatorCall!!.name)
     }
 
     if (!intermediates.isEmpty()) {
       val lastIntermediate = intermediates[intermediates.size - 1]
       val stateAfterIntermediates = lastIntermediate.stateAfter
-      UsefulTestCase.assertInstanceOf(stateAfterIntermediates, NextAwareState::class.java)
-      Assert.assertEquals(terminator.call.name, (stateAfterIntermediates as NextAwareState).nextCall.name)
+      assertIs<NextAwareState>(stateAfterIntermediates)
+      assertEquals(terminator.call.name, (stateAfterIntermediates as NextAwareState).nextCall.name)
     }
   }
 
@@ -247,11 +245,11 @@ abstract class TraceExecutionTestHelper(
     for (i in 0 until intermediates.size - 1) {
       val prev = intermediates[i]
       val next = intermediates[i + 1]
-      Assert.assertSame(prev.stateAfter, next.stateBefore)
+      assertSame<Any?>(prev.stateAfter, next.stateBefore)
       val prevCall = prev.stateAfter.prevCall
-      Assert.assertNotNull(prevCall)
-      Assert.assertEquals(prev.call.name, prevCall!!.name)
-      Assert.assertEquals(next.call.name, next.stateBefore.nextCall.name)
+      assertNotNull(prevCall)
+      assertEquals(prev.call.name, prevCall!!.name)
+      assertEquals(next.call.name, next.stateBefore.nextCall.name)
     }
   }
 
@@ -284,8 +282,8 @@ abstract class TraceExecutionTestHelper(
     for (leftElement in prev) {
       val mapToRight = toNext.apply(leftElement)
       for (rightElement in mapToRight) {
-        Assert.assertTrue(next.contains(rightElement))
-        Assert.assertTrue(toPrev.apply(rightElement).contains(leftElement))
+        assertTrue(next.contains(rightElement))
+        assertTrue(toPrev.apply(rightElement).contains(leftElement))
       }
     }
   }
