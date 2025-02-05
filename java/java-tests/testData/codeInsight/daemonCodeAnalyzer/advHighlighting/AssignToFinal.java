@@ -223,7 +223,7 @@ class AssignmentInUnreachablePolyadic {
     if (true && (<error descr="Variable 'b' might already have been assigned to">b</error> = false)) ;
   }
 
-  <error descr="Variable 'bb' might not have been initialized">private final boolean bb</error>;
+  <error descr="Field 'bb' might not have been initialized">private final boolean bb</error>;
   {
     if (false && (bb = false) && (<error descr="Variable 'bb' might already have been assigned to">bb</error> = true)) ;
   }
@@ -255,7 +255,7 @@ class QualifiedThis {
 
 class ParenthesizedThis {
   final int x;
-  final int y = <error descr="Variable '(this).x' might not have been initialized">(this).x</error> + 1;
+  final int y = <error descr="Variable 'x' might not have been initialized">(this).x</error> + 1;
 
   ParenthesizedThis() {
     (this).x = 5; // javac disallows this -- probably a bug in javac

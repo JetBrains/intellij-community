@@ -506,6 +506,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitField(@NotNull PsiField field) {
     super.visitField(field);
     if (!hasErrorResults()) myClassChecker.checkIllegalInstanceMemberInRecord(field);
+    if (!hasErrorResults()) myControlFlowChecker.checkFinalFieldInitialized(field);
   }
 
   @Override
@@ -701,10 +702,11 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     PsiElement resolved = result.getElement();
     PsiElement parent = expression.getParent();
     PsiExpression qualifierExpression = expression.getQualifierExpression();
-    if (resolved instanceof PsiVariable && resolved.getContainingFile() == expression.getContainingFile()) {
+    if (resolved instanceof PsiVariable variable && resolved.getContainingFile() == expression.getContainingFile()) {
       if (!hasErrorResults() && resolved instanceof PsiLocalVariable localVariable) {
         myExpressionChecker.checkVarTypeSelfReferencing(localVariable, expression);
       }
+      if (!hasErrorResults()) myControlFlowChecker.checkVariableInitializedBeforeUsage(expression, variable);
     }
     if (parent instanceof PsiMethodCallExpression methodCallExpression &&
         methodCallExpression.getMethodExpression() == expression &&

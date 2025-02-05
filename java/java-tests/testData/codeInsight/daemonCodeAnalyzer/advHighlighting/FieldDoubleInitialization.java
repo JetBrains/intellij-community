@@ -54,7 +54,7 @@ class c4 {
 }
 // redirected ctrs
 class c5 {
-    <error descr="Variable 'k' might not have been initialized">final int k</error>;
+    <error descr="Field 'k' might not have been initialized">final int k</error>;
     c5(int i) {
       k =1;
     }

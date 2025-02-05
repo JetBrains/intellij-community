@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.nj2k
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal
 import com.intellij.psi.*
 import com.intellij.psi.controlFlow.ControlFlowUtil
@@ -186,7 +185,7 @@ private fun fieldConstructionImpliesMutable(field: PsiField): Boolean {
         val usefulRedirectedConstructors: MutableList<PsiMethod> = ArrayList()
         for (redirectedConstructor in redirectedConstructors) {
             val body = redirectedConstructor.getBody()
-            if (body != null && (HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, body) || isValidThisMethodInConstructor(
+            if (body != null && (ControlFlowUtil.variableDefinitelyAssignedIn(field, body) || isValidThisMethodInConstructor(
                     redirectedConstructor
                 ))
             ) {
@@ -194,7 +193,7 @@ private fun fieldConstructionImpliesMutable(field: PsiField): Boolean {
             }
         }
         if (usefulRedirectedConstructors.isNotEmpty() && usefulRedirectedConstructors.size != redirectedConstructors.size) return true
-        if (ctrBody.isValid() && (HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, ctrBody) || isValidThisMethodInConstructor(
+        if (ctrBody.isValid() && (ControlFlowUtil.variableDefinitelyAssignedIn(field, ctrBody) || isValidThisMethodInConstructor(
                 constructor
             ))
         ) {

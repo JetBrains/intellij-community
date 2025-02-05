@@ -67,8 +67,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private PreviewFeatureUtil.PreviewFeatureVisitor myPreviewFeatureVisitor;
 
-  // map codeBlock->List of PsiReferenceExpression of uninitialized final variables
-  private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new HashMap<>();
   // map codeBlock->List of PsiReferenceExpression of extra initialization of final variable
   private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new HashMap<>();
 
@@ -159,7 +157,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
     finally {
-      myUninitializedVarProblems.clear();
       myFinalVarProblems.clear();
       myJavaModule = null;
       myFile = null;
@@ -272,12 +269,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitClass(aClass);
     if (aClass instanceof PsiSyntheticClass) return;
     if (!hasErrorResults()) GenericsHighlightUtil.checkTypeParameterOverrideEquivalentMethods(aClass, myLanguageLevel, myErrorSink, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
-  }
-
-  @Override
-  public void visitField(@NotNull PsiField field) {
-    super.visitField(field);
-    if (!hasErrorResults()) add(HighlightControlFlowUtil.checkFinalFieldInitialized(field));
   }
 
   @Override
@@ -489,13 +480,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (isFinal && !variable.hasInitializer() && !(variable instanceof PsiPatternVariable)) {
         if (!hasErrorResults()) {
           add(HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression, myFinalVarProblems));
-        }
-      }
-      if (!hasErrorResults()) {
-        try {
-          add(HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, variable, myUninitializedVarProblems));
-        }
-        catch (IndexNotReadyException ignored) {
         }
       }
     }

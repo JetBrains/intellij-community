@@ -11,13 +11,22 @@ import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 final class ControlFlowChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
+  // map codeBlock->List of PsiReferenceExpression of uninitialized final variables
+  private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new HashMap<>();
+  // map codeBlock->List of PsiReferenceExpression of extra initialization of final variable
+  private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myFinalVarProblems = new HashMap<>();
 
   ControlFlowChecker(@NotNull JavaErrorVisitor visitor) { myVisitor = visitor; }
 
@@ -121,6 +130,20 @@ final class ControlFlowChecker {
       if (ControlFlowUtil.isEffectivelyFinal(variable, scope, context)) return;
       myVisitor.report(JavaErrorKinds.VARIABLE_MUST_BE_EFFECTIVELY_FINAL_GUARD.create(context, variable));
     }
+  }
+
+  void checkFinalFieldInitialized(@NotNull PsiField field) {
+    if (!field.hasModifierProperty(PsiModifier.FINAL)) return;
+    if (ControlFlowUtil.isFieldInitializedAfterObjectConstruction(field)) return;
+    if (PsiUtilCore.hasErrorElementChild(field)) return;
+    myVisitor.report(JavaErrorKinds.FIELD_NOT_INITIALIZED.create(field));
+  }
+
+  void checkVariableInitializedBeforeUsage(@NotNull PsiReferenceExpression expression, @NotNull PsiVariable variable) {
+    if (ControlFlowUtil.isInitializedBeforeUsage(expression, variable, myUninitializedVarProblems, false)) {
+      return;
+    }
+    myVisitor.report(JavaErrorKinds.VARIABLE_NOT_INITIALIZED.create(expression, variable));
   }
 
   /**

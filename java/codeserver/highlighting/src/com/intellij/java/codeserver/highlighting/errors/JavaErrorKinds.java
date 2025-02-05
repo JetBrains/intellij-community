@@ -1236,6 +1236,13 @@ public final class JavaErrorKinds {
     parameterized(PsiReturnStatement.class, PsiMethodCallExpression.class, "return.before.explicit.constructor.call")
       .withRawDescription((psi, call) -> message("return.before.explicit.constructor.call", call.getMethodExpression().getText() + "()"));
   
+  public static final Simple<PsiField> FIELD_NOT_INITIALIZED =
+    error(PsiField.class, "field.not.initialized")
+      .withRange(JavaErrorFormatUtil::getFieldDeclarationTextRange)
+      .withRawDescription(var -> message("field.not.initialized", var.getName()));
+  public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_NOT_INITIALIZED =
+    parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.not.initialized")
+      .withRawDescription((ref, var) -> message("variable.not.initialized", var.getName()));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiVariable> VARIABLE_MUST_BE_FINAL =
     parameterized(PsiJavaCodeReferenceElement.class, PsiVariable.class, "variable.must.be.final")
       .withRawDescription((ref, var) -> message("variable.must.be.final", var.getName()));

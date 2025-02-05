@@ -23,7 +23,7 @@ public final class FinalUtils {
       // parameters have an implicit initializer
       return !VariableAccessUtils.variableIsAssigned(variable);
     }
-    if (variable instanceof PsiField && !HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction((PsiField)variable)) {
+    if (variable instanceof PsiField && !ControlFlowUtil.isFieldInitializedAfterObjectConstruction((PsiField)variable)) {
       return false;
     }
     return checkIfElementViolatesFinality(variable);
@@ -57,7 +57,7 @@ public final class FinalUtils {
                                                             Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems) {
     if (!(e instanceof PsiReferenceExpression ref)) return true;
     if (!ref.isReferenceTo(variable)) return true;
-    if (!HighlightControlFlowUtil.isInitializedBeforeUsage(
+    if (!ControlFlowUtil.isInitializedBeforeUsage(
       ref, variable, uninitializedVarProblems, true)) {
       return false;
     }

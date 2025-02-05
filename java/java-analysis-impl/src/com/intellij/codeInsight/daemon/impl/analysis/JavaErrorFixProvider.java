@@ -28,6 +28,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -387,6 +388,31 @@ final class JavaErrorFixProvider {
     fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL, error -> myFactory.createMakeVariableEffectivelyFinalFix(error.context()));
     fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL_LAMBDA, error -> myFactory.createMakeVariableEffectivelyFinalFix(error.context()));
     fix(VARIABLE_MUST_BE_EFFECTIVELY_FINAL_GUARD, error -> myFactory.createMakeVariableEffectivelyFinalFix(error.context()));
+    fixes(FIELD_NOT_INITIALIZED, (error, sink) -> {
+      PsiField field = error.psi();
+      sink.accept(myFactory.createCreateConstructorParameterFromFieldFix(field));
+      sink.accept(myFactory.createInitializeFinalFieldInConstructorFix(field));
+      sink.accept(myFactory.createAddVariableInitializerFix(field));
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass != null && !containingClass.isInterface()) {
+        sink.accept(removeModifierFix(field, PsiModifier.FINAL));
+      }
+    });
+    fixes(VARIABLE_NOT_INITIALIZED, (error, sink) -> {
+      PsiVariable variable = error.context();
+      if (!(variable instanceof LightRecordField)) {
+        sink.accept(myFactory.createAddVariableInitializerFix(variable));
+      }
+      if (variable instanceof PsiLocalVariable) {
+        PsiElement topBlock = PsiUtil.getVariableCodeBlock(variable, null);
+        if (topBlock != null) {
+          sink.accept(HighlightFixUtil.createInsertSwitchDefaultFix(variable, topBlock, error.psi()));
+        }
+      }
+      if (variable instanceof PsiField field) {
+        sink.accept(removeModifierFix(field, PsiModifier.FINAL));
+      }
+    });
   }
 
   private void createExpressionFixes() {
