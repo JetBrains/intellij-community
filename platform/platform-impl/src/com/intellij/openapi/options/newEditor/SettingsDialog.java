@@ -120,7 +120,8 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     if (!isNonModal())
       return null;
     ApplyActionWrapper applyActionWrapper = new ApplyActionWrapper(editor.getApplyAction());
-    applyActionWrapper.putValue(DEFAULT_ACTION, "true");
+    applyActionWrapper.putValue(DEFAULT_ACTION, Boolean.toString(true));
+    applyActionWrapper.putValue(Action.NAME, ActionsBundle.message("action.SettingsEditor.SaveChanges.text"));
     Action resetAction = editor.getResetAction();
 
     List<Action> actions = List.of(resetAction, applyActionWrapper);

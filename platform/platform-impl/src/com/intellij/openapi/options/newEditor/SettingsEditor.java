@@ -261,6 +261,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     JComponent left = new JPanel(new BorderLayout());
     left.add(BorderLayout.NORTH, searchPanel);
     left.add(BorderLayout.CENTER, treeView);
+    left.setMinimumSize(new Dimension(96, 0));
+    left.setPreferredSize(new Dimension(256, 1024));
+    left.setMaximumSize(new Dimension(300, 32767));
     JComponent right = new JPanel(new BorderLayout());
     right.add(BorderLayout.NORTH, withHistoryToolbar(myBanner));
     right.add(BorderLayout.CENTER, loadingDecorator.getComponent());
@@ -313,6 +316,14 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     treeView.select(configurable);
     editor.select(configurable);
     updateController(configurable);
+  }
+
+  boolean isSidebarVisible() {
+    return mySplitter.getFirstComponent().isVisible();
+  }
+
+  void setSidebarVisible(boolean visible) {
+    mySplitter.getFirstComponent().setVisible(visible);
   }
 
   @ApiStatus.Internal
