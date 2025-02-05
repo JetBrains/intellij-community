@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.Ref;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,5 +17,15 @@ public final class PyTypeVarTypeImpl extends PyGenericType {
                            @Nullable PyType bound,
                            @Nullable Ref<PyType> defaultType) {
     super(name, constraints, bound, defaultType);
+  }
+
+  PyTypeVarTypeImpl(@NotNull String name,
+                    @NotNull List<@Nullable PyType> constraints,
+                    @Nullable PyType bound,
+                    @Nullable Ref<PyType> defaultType,
+                    boolean isDefinition,
+                    @Nullable PyQualifiedNameOwner declarationElement,
+                    @Nullable PyQualifiedNameOwner scopeOwner) {
+    super(name, constraints, bound, defaultType, isDefinition, declarationElement, scopeOwner);
   }
 }
