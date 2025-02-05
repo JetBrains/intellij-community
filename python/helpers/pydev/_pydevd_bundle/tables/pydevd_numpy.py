@@ -28,16 +28,10 @@ def get_type(table):
     return str(type(table))
 
 
-def __get_structured_shape(arr):
-    if len(arr.dtype) > 0:
-        return tuple(list(arr.shape) + [len(arr.dtype)])
-    return tuple(arr.shape)
-
-
 def get_shape(table):
     # type: (np.ndarray) -> str
     if table.dtype.names is not None:
-        return str(__get_structured_shape(table))
+        return str((table.shape[0], len(table.dtype.names)))
     if table.ndim == 1:
         return str((table.shape[0], 1))
     else:

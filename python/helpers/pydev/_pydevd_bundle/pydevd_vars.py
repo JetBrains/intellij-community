@@ -606,6 +606,14 @@ def array_to_meta_xml(array, name, format):
     slice = name
     l = len(array.shape)
 
+    try:
+        import numpy as np
+        if isinstance(array, np.recarray):
+            slice = "{}['{}']".format(slice, array.dtype.names[0])
+            array = array[array.dtype.names[0]]
+    except ImportError:
+        pass
+
     # initial load, compute slice
     if format == '%':
         if l > 2:
