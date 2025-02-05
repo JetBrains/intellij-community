@@ -122,7 +122,7 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     robot.click(component, point, button, times)
   }
 
-  fun setCaretPosition(line: Int, column: Int) {
+  fun goToPosition(line: Int, column: Int) = step("Go to position $line line $column column") {
     click()
     interact {
       getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, column - 1, (this as? RefWrapper)?.getRef()?.rdTarget ?: RdTarget.DEFAULT))
