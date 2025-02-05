@@ -59,9 +59,16 @@ internal class ActionOrGroupIdReferenceContributor : PsiReferenceContributor() {
       registerMethodCallParameter("com.intellij.ui.EditorNotificationPanel", 1,
                                   "createActionLabel"),
 
+      registerMethodCallParameter("com.intellij.openapi.editor.actionSystem.EditorActionManager", 0,
+                                  "getActionHandler", "setActionHandler"),
+      registerMethodCallParameter("com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter", 0,
+                                  "getActionShortcutText"),
+
+      // testing
       registerMethodCallParameter("com.intellij.driver.sdk.ActionManagerKt", 1,
-                                  "invokeAction", "invokeGlobalBackendAction")
-    )
+                                  "invokeAction", "invokeGlobalBackendAction"),
+
+      )
 
     // Group
     registerReference(
@@ -69,6 +76,9 @@ internal class ActionOrGroupIdReferenceContributor : PsiReferenceContributor() {
 
       registerMethodCallParameter("com.intellij.openapi.actionSystem.ex.ActionUtil", 0,
                                   "getActionGroup"),
+
+      registerMethodCallParameter("com.intellij.idea.ActionsBundle", 0,
+                                  "groupText"),
 
       uExpression().inside(false, UDeclarationPattern(UField::class.java).filter {
         val name = it.getAsJavaPsiElement(PsiField::class.java)?.name ?: return@filter false
@@ -79,6 +89,21 @@ internal class ActionOrGroupIdReferenceContributor : PsiReferenceContributor() {
     // Action
     registerReference(
       registrar, ThreeState.YES,
+
+      registerMethodCallParameter("com.intellij.idea.ActionsBundle", 0,
+                                  "actionText", "actionDescription"),
+
+      registerMethodCallParameter("com.intellij.testFramework.fixtures.EditorTestFixture", 0,
+                                  "performEditorAction"),
+      registerMethodCallParameter("com.intellij.testFramework.fixtures.CodeInsightTestFixture", 0,
+                                  "performEditorAction"),
+      registerMethodCallParameter("com.intellij.testFramework.EditorTestUtil", 1,
+                                  "executeAction"),
+      registerMethodCallParameter("com.intellij.testFramework.LightPlatformCodeInsightTestCase",0,
+                                  "executeAction"),
+      registerMethodCallParameter("com.intellij.testFramework.PlatformTestUtil",0,
+                                  "invokeNamedAction"),
+
       uExpression().inside(false, UDeclarationPattern(UField::class.java).filter {
         val name = it.getAsJavaPsiElement(PsiField::class.java)?.name ?: return@filter false
         return@filter name.startsWith("ACTION_") && it.getContainingUClass()?.qualifiedName == "com.intellij.openapi.actionSystem.IdeActions"

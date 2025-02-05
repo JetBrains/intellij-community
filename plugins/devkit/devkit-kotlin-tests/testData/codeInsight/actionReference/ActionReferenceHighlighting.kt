@@ -1,3 +1,5 @@
+@file:Suppress("MISSING_DEPENDENCY_SUPERCLASS") // avoid test library deps
+
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.EmptyAction
 import com.intellij.openapi.actionSystem.Shortcut
@@ -10,6 +12,15 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.openapi.editor.actionSystem.EditorActionManager
+import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
+import com.intellij.idea.ActionsBundle
+
+import com.intellij.testFramework.fixtures.EditorTestFixture
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.PlatformTestUtil
 
 import java.awt.Component
 import java.awt.event.KeyEvent
@@ -159,6 +170,67 @@ object ActionReferenceHighlighting {
 
     abbreviationManager.remove("text", "myAction")
     abbreviationManager.remove("text", "<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>")
+  }
+
+  fun testEditorActionManager(editorActionManager : EditorActionManager, handler : com.intellij.openapi.editor.actionSystem.EditorActionHandler) {
+    editorActionManager.getActionHandler("myAction")
+    editorActionManager.getActionHandler("<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>")
+
+    editorActionManager.setActionHandler("myAction", handler)
+    editorActionManager.setActionHandler("<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>", handler)
+  }
+
+  object MyEditorEmptyTextPainter : EditorEmptyTextPainter() {
+    fun test() {
+      getActionShortcutText("myAction")
+      getActionShortcutText("<error descr="Cannot resolve action or group 'INVALID_VALUE'">INVALID_VALUE</error>")
+    }
+  }
+
+  fun testActionsBundle() {
+    ActionsBundle.actionText("myAction")
+    ActionsBundle.actionText("<error descr="Cannot resolve action 'myGroup'">myGroup</error>")
+    ActionsBundle.actionText("<error descr="Cannot resolve action 'INVALID_VALUE'">INVALID_VALUE</error>")
+
+    ActionsBundle.actionDescription("myAction")
+    ActionsBundle.actionDescription("<error descr="Cannot resolve action 'myGroup'">myGroup</error>")
+    ActionsBundle.actionDescription("<error descr="Cannot resolve action 'INVALID_VALUE'">INVALID_VALUE</error>")
+
+    ActionsBundle.groupText("myGroup")
+    ActionsBundle.groupText("<error descr="Cannot resolve group 'myAction'">myAction</error>")
+    ActionsBundle.groupText("<error descr="Cannot resolve group 'INVALID_VALUE'">INVALID_VALUE</error>")
+  }
+
+  fun testEditorTestFixture(editorTestFixture: EditorTestFixture) {
+    editorTestFixture.performEditorAction("myAction")
+    editorTestFixture.performEditorAction("<error descr="Cannot resolve action 'myGroup'">myGroup</error>")
+    editorTestFixture.performEditorAction("<error descr="Cannot resolve action 'INVALID_VALUE'">INVALID_VALUE</error>")
+  }
+
+  fun testCodeInsightTestFixture(codeInsightTestFixture: CodeInsightTestFixture) {
+    codeInsightTestFixture.performEditorAction("myAction")
+    codeInsightTestFixture.performEditorAction("<error descr="Cannot resolve action 'myGroup'">myGroup</error>")
+    codeInsightTestFixture.performEditorAction("<error descr="Cannot resolve action 'INVALID_VALUE'">INVALID_VALUE</error>")
+  }
+
+  fun testEditorTestUtil(editor : com.intellij.openapi.editor.Editor) {
+    EditorTestUtil.executeAction(editor, "myAction")
+    EditorTestUtil.executeAction(editor, "<error descr="Cannot resolve action 'myGroup'">myGroup</error>")
+    EditorTestUtil.executeAction(editor, "<error descr=¨"Cannot resolve action 'INVALID_VALUE'">INVALID_VALUE</error>")
+  }
+
+  object MyLightPlatformCodeInsightTestCase : LightPlatformCodeInsightTestCase() {
+    fun test() {
+      executeAction("myAction")
+      executeAction("<error descr="Cannot resolve action 'myGroup'">myGroup</error>")
+      executeAction("<error descr="Cannot resolve action 'INVALID_VALUE'">INVALID_VALUE</error>")
+    }
+  }
+
+  fun testPlatformTestUtil() {
+    PlatformTestUtil.invokeNamedAction("myAction")
+    PlatformTestUtil.invokeNamedAction("<error descr="Cannot resolve action 'myGroup'">myGroup</error>")
+    PlatformTestUtil.invokeNamedAction("<error descr="Cannot resolve action 'INVALID_VALUE'">INVALID_VALUE</error>")
   }
 
   fun testExecutorActions() {

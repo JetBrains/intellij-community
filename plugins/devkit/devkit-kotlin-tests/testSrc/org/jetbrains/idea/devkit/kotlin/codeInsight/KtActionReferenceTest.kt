@@ -7,9 +7,11 @@ import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 import com.intellij.openapi.options.Scheme
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.ui.components.JBList
 import com.intellij.util.PathUtil
@@ -26,9 +28,11 @@ class KtActionReferenceTest : JavaCodeInsightFixtureTestCase() {
   override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
     moduleBuilder.addLibrary("platform-core", PathUtil.getJarPathForClass(Scheme::class.java))
     moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList::class.java))
+    moduleBuilder.addLibrary("platform-impl", PathUtil.getJarPathForClass(EditorEmptyTextPainter::class.java))
     moduleBuilder.addLibrary("platform-editor", PathUtil.getJarPathForClass(ActionManager::class.java))
     moduleBuilder.addLibrary("execution", PathUtil.getJarPathForClass(DefaultRunExecutor::class.java))
     moduleBuilder.addLibrary("platform-resources", PathManager.getResourceRoot(LocalInspectionEP::class.java, "/idea/PlatformActions.xml")!!)
+    moduleBuilder.addLibrary("testFramework", PathUtil.getJarPathForClass(CodeInsightTestFixture::class.java))
   }
 
   private fun pluginXmlActions(actionsText: String): String {
