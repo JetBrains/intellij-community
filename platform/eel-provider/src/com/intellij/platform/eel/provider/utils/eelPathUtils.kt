@@ -309,108 +309,121 @@ object EelPathUtils {
 
   @RequiresBackgroundThread
   fun walkingTransfer(sourceRoot: Path, targetRoot: Path, removeSource: Boolean, copyAttributes: Boolean) {
-    val sourceStack = ArrayDeque<Path>()
-    sourceStack.add(sourceRoot)
-
-    class LastDirectoryInfo(
-      val parent: LastDirectoryInfo?,
-      val source: Path,
-      val target: Path,
-      val sourceAttrs: BasicFileAttributes,
-    )
-
-    var lastDirectory: LastDirectoryInfo? = null
+    val traversalStack = ArrayDeque<TraversalRecord>()
+    traversalStack.add(TraversalRecord.Pending(sourceRoot, isRoot = true))
 
     while (true) {
-      val source = try {
-        sourceStack.removeLast()
+      val currentTraverseItem = try {
+        traversalStack.removeLast()
       }
       catch (_: NoSuchElementException) {
         break
       }
-
-      if (removeSource || copyAttributes) {
-        while (lastDirectory != null && lastDirectory.source != sourceRoot && source.parent != lastDirectory.source) {
-          if (removeSource) {
-            Files.delete(lastDirectory.source)
+      when (currentTraverseItem) {
+        is TraversalRecord.Pending -> {
+          val source = currentTraverseItem.sourcePath
+          // WindowsPath doesn't support resolve() from paths of different class.
+          val target = source.relativeTo(sourceRoot).fold(targetRoot) { parent, file ->
+            parent.resolve(file.toString())
           }
-          if (copyAttributes) {
-            copyAttributes(lastDirectory.source, lastDirectory.target, lastDirectory.sourceAttrs)
-          }
-          lastDirectory = lastDirectory.parent
-        }
-      }
 
-      // WindowsPath doesn't support resolve() from paths of different class.
-      val target = source.relativeTo(sourceRoot).fold(targetRoot) { parent, file ->
-        parent.resolve(file.toString())
-      }
+          val sourceAttrs: BasicFileAttributes = readSourceAttrs(source, target, withExtendedAttributes = copyAttributes)
 
-      val sourceAttrs: BasicFileAttributes = readSourceAttrs(source, target, withExtendedAttributes = copyAttributes)
+          when {
+            sourceAttrs.isDirectory -> {
+              traversalStack.add(currentTraverseItem.asListedDirectory(target, sourceAttrs))
+              try {
+                target.createDirectories()
+              }
+              catch (err: FileAlreadyExistsException) {
+                if (!Files.isDirectory(target)) {
+                  throw err
+                }
+              }
+              source.fileSystem.provider().newDirectoryStream(source, { true }).use { children ->
+                traversalStack.addAll(children.toList().asReversed().map { TraversalRecord.Pending(it) })
+              }
+            }
 
-      when {
-        sourceAttrs.isDirectory -> {
-          lastDirectory = LastDirectoryInfo(lastDirectory, source, target, sourceAttrs)
-          try {
-            target.createDirectories()
-          }
-          catch (err: FileAlreadyExistsException) {
-            if (!Files.isDirectory(target)) {
-              throw err
+            sourceAttrs.isRegularFile -> {
+              Files.newInputStream(source, READ).use { reader ->
+                Files.newOutputStream(target, CREATE, TRUNCATE_EXISTING, WRITE).use { writer ->
+                  reader.copyTo(writer, bufferSize = 4 * 1024 * 1024)
+                }
+              }
+              if (removeSource) {
+                Files.delete(source)
+              }
+              if (copyAttributes) {
+                copyAttributes(source, target, sourceAttrs)
+              }
+            }
+
+            sourceAttrs.isSymbolicLink -> {
+              Files.copy(source, target, LinkOption.NOFOLLOW_LINKS)
+              if (copyAttributes) {
+                copyAttributes(source, target, sourceAttrs)
+              }
+              if (removeSource) {
+                Files.delete(source)
+              }
+              if (copyAttributes) {
+                copyAttributes(source, target, sourceAttrs)
+              }
+            }
+
+            else -> {
+              LOG.info("Not copying $source to $target because the source file is neither a regular file nor a directory")
+              if (removeSource) {
+                Files.delete(source)
+              }
             }
           }
-          source.fileSystem.provider().newDirectoryStream(source, { true }).use { children ->
-            sourceStack.addAll(children.toList().asReversed())
-          }
         }
-
-        sourceAttrs.isRegularFile -> {
-          Files.newInputStream(source, READ).use { reader ->
-            Files.newOutputStream(target, CREATE, TRUNCATE_EXISTING, WRITE).use { writer ->
-              reader.copyTo(writer, bufferSize = 4 * 1024 * 1024)
+        is TraversalRecord.ListedDirectory -> {
+          if (!currentTraverseItem.isRoot) {
+            if (removeSource) {
+              Files.delete(currentTraverseItem.sourcePath)
             }
-          }
-          if (removeSource) {
-            Files.delete(source)
-          }
-          if (copyAttributes) {
-            copyAttributes(source, target, sourceAttrs)
-          }
-        }
-
-        sourceAttrs.isSymbolicLink -> {
-          Files.copy(source, target, LinkOption.NOFOLLOW_LINKS)
-          if (copyAttributes) {
-            copyAttributes(source, target, sourceAttrs)
-          }
-          if (removeSource) {
-            Files.delete(source)
-          }
-          if (copyAttributes) {
-            copyAttributes(source, target, sourceAttrs)
-          }
-        }
-
-        else -> {
-          LOG.info("Not copying $source to $target because the source file is neither a regular file nor a directory")
-          if (removeSource) {
-            Files.delete(source)
+            if (copyAttributes) {
+              copyAttributes(currentTraverseItem.sourcePath, currentTraverseItem.targetPath, currentTraverseItem.sourceAttrs)
+            }
           }
         }
       }
     }
+  }
 
-    if (removeSource || copyAttributes) {
-      while (lastDirectory != null && lastDirectory.source != sourceRoot) {
-        if (removeSource) {
-          Files.delete(lastDirectory.source)
-        }
-        if (copyAttributes) {
-          copyAttributes(lastDirectory.source, lastDirectory.target, lastDirectory.sourceAttrs)
-        }
-        lastDirectory = lastDirectory.parent
-      }
+  /**
+   * Corresponds to a path stored in the stack during the depth-first search traversing the file tree.
+   */
+  private sealed interface TraversalRecord {
+    /**
+     * Describes a file or a directory that has been listed and is pending for further processing.
+     *
+     * Stored in this state in the stack, the corresponding [sourcePath] has neither been copied, nor listed as a directory,
+     * nor even had its attributes acquired.
+     */
+    data class Pending(
+      val sourcePath: Path,
+      val isRoot: Boolean = false,
+    ) : TraversalRecord {
+      fun asListedDirectory(targetPath: Path, sourceAttrs: BasicFileAttributes): ListedDirectory =
+        ListedDirectory(sourcePath, targetPath, sourceAttrs, isRoot)
     }
+
+    /**
+     * Describes a directory with its direct children being listed and put right after this record in the stack.
+     *
+     * Taking this element from the stack means that all its direct and indirect descendants have been processed,
+     * and we are now ready to copy the source directory's attributes and/or remove it.
+     */
+    data class ListedDirectory(
+      val sourcePath: Path,
+      val targetPath: Path,
+      val sourceAttrs: BasicFileAttributes,
+      val isRoot: Boolean = false,
+    ) : TraversalRecord
   }
 
   private fun readSourceAttrs(
