@@ -4,19 +4,28 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.psi.KtElement
 
 internal class UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQuickFixFactory() {
     override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): Pair<KtElement, KotlinRawPositionContext>? {
-        val diagnosticPsi = diagnostic.psi
-        val position = diagnosticPsi.containingFile.findElementAt(diagnosticPsi.startOffset)
-        val positionContext = position?.let { KotlinPositionContextDetector.detect(it) } as? KotlinNameReferencePositionContext
-            ?: return null
-        return positionContext.nameExpression to positionContext
-    }
+        return when (diagnostic) {
+            is KaFirDiagnostic.UnresolvedImport,
+            is KaFirDiagnostic.UnresolvedReference,
+            is KaFirDiagnostic.UnresolvedReferenceWrongReceiver,
+            is KaFirDiagnostic.InvisibleReference -> {
+                val diagnosticPsi = diagnostic.psi
+                val position = diagnosticPsi.containingFile.findElementAt(diagnosticPsi.startOffset)
+                val positionContext = position?.let { KotlinPositionContextDetector.detect(it) } as? KotlinNameReferencePositionContext
+                    ?: return null
+                return positionContext.nameExpression to positionContext
+            }
 
+            else -> null
+        }
+    }
 
     override fun KaSession.provideImportCandidates(
         diagnostic: KaDiagnosticWithPsi<*>,
