@@ -157,7 +157,7 @@ public class GitRebaseProcess {
         indicator.nextStep();
         repository.update(); // make the repo state info actual ASAP
         if (customMode == GitRebaseResumeMode.CONTINUE) {
-          myDirtyScopeManager.dirDirtyRecursively(repository.getRoot());
+          myDirtyScopeManager.rootDirty(repository.getRoot());
         }
 
         latestRepository = repository;

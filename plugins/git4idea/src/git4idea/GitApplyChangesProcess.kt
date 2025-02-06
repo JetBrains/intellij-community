@@ -14,12 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.AbstractVcsHelper
-import com.intellij.openapi.vcs.VcsApplicationSettings
-import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.VcsNotificationIdsHolder
-import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import com.intellij.openapi.vfs.VirtualFile
@@ -187,7 +182,7 @@ internal abstract class GitApplyChangesProcess(
                                               operationName).merge()
 
         refreshStagedVfs(repository.root) // `ConflictResolver` only refreshes conflicted files
-        VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
+        VcsDirtyScopeManager.getInstance(project).rootDirty(repository.root)
         changeListManager.waitForUpdate()
         strategy.afterChangesRefreshed()
 
