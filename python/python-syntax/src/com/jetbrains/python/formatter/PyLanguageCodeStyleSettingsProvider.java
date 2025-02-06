@@ -144,6 +144,15 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
       consumer.showCustomOption(PyCodeStyleSettings.class, "SET_NEW_LINE_BEFORE_RIGHT_BRACE",
                                 ApplicationBundle.message("wrapping.rbrace.on.new.line"), PySyntaxBundle.message("formatter.set.literals"));
 
+      consumer.showCustomOption(PyCodeStyleSettings.class, "TUPLE_WRAPPING",
+                                PySyntaxBundle.message("formatter.parenthesized.tuples"), null, getInstance().WRAP_OPTIONS, WRAP_VALUES);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS",
+                                ApplicationBundle.message("wrapping.new.line.after.lpar"), PySyntaxBundle.message(
+          "formatter.parenthesized.tuples"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS",
+                                ApplicationBundle.message("wrapping.rpar.on.new.line"), PySyntaxBundle.message(
+          "formatter.parenthesized.tuples"));
+
 
       consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_WRAPPING",
                                 PySyntaxBundle.message("formatter.dictionary.literals"), null, getInstance().WRAP_OPTIONS, WRAP_VALUES);
@@ -243,6 +252,8 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
     colors = ['red', 'green', 'blue', 'black', 'white', 'gray']
     
     star_names = {"Sirius", "Betelgeuse", "Polaris", "Vega", "Arcturus", "Aldebaran"}
+    
+    planets = ("Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune")
 
     ingredients = [
         'green',

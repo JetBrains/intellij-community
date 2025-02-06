@@ -89,6 +89,11 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       .afterInside(LBRACE, SET_LITERAL_EXPRESSION)
       .spaceIf(pySettings.SPACE_WITHIN_BRACES, pySettings.SET_NEW_LINE_AFTER_LEFT_BRACE)
 
+      .betweenInside(LPAR, TUPLE_EXPRESSION, PARENTHESIZED_EXPRESSION)
+      .spaceIf(commonSettings.SPACE_WITHIN_PARENTHESES, pySettings.TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS)
+      .betweenInside(TUPLE_EXPRESSION, RPAR, PARENTHESIZED_EXPRESSION)
+      .spaceIf(commonSettings.SPACE_WITHIN_PARENTHESES, pySettings.TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS)
+
       .between(COMMA, RBRACE).spaceIf(pySettings.SPACE_WITHIN_BRACES || commonSettings.SPACE_AFTER_COMMA)
       .withinPair(LBRACE, RBRACE).spaceIf(pySettings.SPACE_WITHIN_BRACES)
 

@@ -1470,4 +1470,94 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
     getPythonCodeStyleSettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = false;
     doTest();
   }
+
+  // PY-31689
+  public void testTupleWrappingParenthesesOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleWrappingParenthesesOnNewLineWithContinuationIndent() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleNoWrapping() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.DO_NOT_WRAP;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleChopDownParenthesesOnSameLine() {
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleWrappingFirstParenthesisOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleWrappingFirstParenthesisOnNewLineWithContinuationIndent() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleWrappingLastParenthesisOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 40);
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleWrappingTupleOfTuples() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 88);
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleWrappingTupleOfTuplesParenthesesOnNewLine() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 50);
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleAlignWhenMultiline() {
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getPythonCodeStyleSettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = true;
+    doTest();
+  }
+
+  // PY-31689
+  public void testTupleWrapHangClosingParenthesis() {
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = true;
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
 }

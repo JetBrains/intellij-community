@@ -84,6 +84,12 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean SET_NEW_LINE_AFTER_LEFT_BRACE = false;
   public boolean SET_NEW_LINE_BEFORE_RIGHT_BRACE = false;
 
+
+  @CommonCodeStyleSettings.WrapConstant
+  public int TUPLE_WRAPPING = WRAP_AS_NEEDED;
+  public boolean TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS = false;
+  public boolean TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS = false;
+
   public int BLANK_LINES_AFTER_LOCAL_IMPORTS = 0;
   /**
    * Code style for most languages use continuation indent both for parameters in function definition and for arguments in function calls.
