@@ -1,12 +1,11 @@
 package com.intellij.driver.sdk.ui.components.idea
 
 import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
-import com.intellij.driver.sdk.ui.components.elements.dialog
 import com.intellij.driver.sdk.ui.components.elements.tree
 import kotlin.time.Duration.Companion.seconds
 
 fun ProjectStructureUI.modulesTree(): ModulesTree {
-  return ModulesTree(dialog().tree("(//div[contains(@classhierarchy, 'javax.swing.JTree')])[1]"))
+  return ModulesTree(tree("(//div[contains(@classhierarchy, 'javax.swing.JTree')])[1]"))
 }
 
 class ModulesTree(private val tree: JTreeUiComponent) {
