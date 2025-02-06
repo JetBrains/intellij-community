@@ -1,474 +1,507 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.impl.source.parsing.xml;
+package com.intellij.psi.impl.source.parsing.xml
 
-import com.intellij.lang.PsiBuilder;
-import com.intellij.openapi.util.NlsContexts.ParsingError;
-import com.intellij.psi.TokenType;
-import com.intellij.psi.tree.ICustomParsingType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.ILazyParseableElementType;
-import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.containers.Stack;
-import com.intellij.xml.parsing.XmlParserBundle;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.psi.xml.XmlElementType.*;
-import static com.intellij.psi.xml.XmlTokenType.*;
+import com.intellij.lang.PsiBuilder
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.psi.TokenType
+import com.intellij.psi.tree.ICustomParsingType
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.ILazyParseableElementType
+import com.intellij.psi.xml.XmlElementType.XML_ATTRIBUTE
+import com.intellij.psi.xml.XmlElementType.XML_ATTRIBUTE_VALUE
+import com.intellij.psi.xml.XmlElementType.XML_CDATA
+import com.intellij.psi.xml.XmlElementType.XML_COMMENT
+import com.intellij.psi.xml.XmlElementType.XML_DOCTYPE
+import com.intellij.psi.xml.XmlElementType.XML_DOCUMENT
+import com.intellij.psi.xml.XmlElementType.XML_ENTITY_REF
+import com.intellij.psi.xml.XmlElementType.XML_PROCESSING_INSTRUCTION
+import com.intellij.psi.xml.XmlElementType.XML_PROLOG
+import com.intellij.psi.xml.XmlElementType.XML_TAG
+import com.intellij.psi.xml.XmlElementType.XML_TEXT
+import com.intellij.psi.xml.XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER
+import com.intellij.psi.xml.XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER
+import com.intellij.psi.xml.XmlTokenType.XML_BAD_CHARACTER
+import com.intellij.psi.xml.XmlTokenType.XML_CDATA_END
+import com.intellij.psi.xml.XmlTokenType.XML_CDATA_START
+import com.intellij.psi.xml.XmlTokenType.XML_CHAR_ENTITY_REF
+import com.intellij.psi.xml.XmlTokenType.XML_COMMENT_CHARACTERS
+import com.intellij.psi.xml.XmlTokenType.XML_COMMENT_END
+import com.intellij.psi.xml.XmlTokenType.XML_COMMENT_START
+import com.intellij.psi.xml.XmlTokenType.XML_CONDITIONAL_COMMENT_END
+import com.intellij.psi.xml.XmlTokenType.XML_CONDITIONAL_COMMENT_END_START
+import com.intellij.psi.xml.XmlTokenType.XML_CONDITIONAL_COMMENT_START
+import com.intellij.psi.xml.XmlTokenType.XML_CONDITIONAL_COMMENT_START_END
+import com.intellij.psi.xml.XmlTokenType.XML_DOCTYPE_END
+import com.intellij.psi.xml.XmlTokenType.XML_DOCTYPE_START
+import com.intellij.psi.xml.XmlTokenType.XML_EMPTY_ELEMENT_END
+import com.intellij.psi.xml.XmlTokenType.XML_END_TAG_START
+import com.intellij.psi.xml.XmlTokenType.XML_ENTITY_REF_TOKEN
+import com.intellij.psi.xml.XmlTokenType.XML_EQ
+import com.intellij.psi.xml.XmlTokenType.XML_NAME
+import com.intellij.psi.xml.XmlTokenType.XML_PI_END
+import com.intellij.psi.xml.XmlTokenType.XML_PI_START
+import com.intellij.psi.xml.XmlTokenType.XML_REAL_WHITE_SPACE
+import com.intellij.psi.xml.XmlTokenType.XML_START_TAG_START
+import com.intellij.psi.xml.XmlTokenType.XML_TAG_CHARACTERS
+import com.intellij.psi.xml.XmlTokenType.XML_TAG_END
+import com.intellij.util.containers.Stack
+import com.intellij.xml.parsing.XmlParserBundle.message
 
 /*
  * @author max
  */
-public class XmlParsing {
-  private static final int BALANCING_DEPTH_THRESHOLD = 1000;
+open class XmlParsing(
+  @JvmField
+  protected val myBuilder: PsiBuilder,
+) {
+  private val myTagNamesStack = Stack<String?>()
 
-  protected final PsiBuilder myBuilder;
-  private final Stack<String> myTagNamesStack = new Stack<>();
-
-  public XmlParsing(final PsiBuilder builder) {
-    myBuilder = builder;
-  }
-
-  public void parseDocument() {
-    final PsiBuilder.Marker document = mark();
+  fun parseDocument() {
+    val document = mark()
 
     while (isCommentToken(token())) {
-      parseComment();
+      parseComment()
     }
 
-    parseProlog();
+    parseProlog()
 
-    int rootTagCount = 0;
-    PsiBuilder.Marker error = null;
+    var rootTagCount = 0
+    var error: PsiBuilder.Marker? = null
     while (!eof()) {
-      final IElementType tt = token();
-      if (tt == XML_START_TAG_START) {
-        error = flushError(error);
-        rootTagCount++;
-        parseTag(rootTagCount > 1);
+      val tt = token()
+      if (tt === XML_START_TAG_START) {
+        error = flushError(error)
+        rootTagCount++
+        parseTag(rootTagCount > 1)
       }
       else if (isCommentToken(tt)) {
-        error = flushError(error);
-        parseComment();
+        error = flushError(error)
+        parseComment()
       }
-      else if (tt == XML_PI_START) {
-        error = flushError(error);
-        parseProcessingInstruction();
+      else if (tt === XML_PI_START) {
+        error = flushError(error)
+        parseProcessingInstruction()
       }
-      else if (tt == XML_REAL_WHITE_SPACE) {
-        error = flushError(error);
-        advance();
+      else if (tt === XML_REAL_WHITE_SPACE) {
+        error = flushError(error)
+        advance()
       }
       else {
-        if (error == null) error = mark();
-        advance();
+        if (error == null) error = mark()
+        advance()
       }
     }
 
-    if (error != null) {
-      error.error(XmlParserBundle.message("xml.parsing.top.level.element.is.not.completed"));
-    }
+    error?.error(message("xml.parsing.top.level.element.is.not.completed"))
 
     if (rootTagCount == 0) {
-      final PsiBuilder.Marker rootTag = mark();
-      error = mark();
-      error.error(XmlParserBundle.message("xml.parsing.absent.root.tag"));
-      rootTag.done(XML_TAG);
+      val rootTag = mark()
+      error = mark()
+      error.error(message("xml.parsing.absent.root.tag"))
+      rootTag.done(XML_TAG)
     }
 
-    document.done(XML_DOCUMENT);
+    document.done(XML_DOCUMENT)
   }
 
-  private static @Nullable PsiBuilder.Marker flushError(PsiBuilder.Marker error) {
-    if (error != null) {
-      error.error(XmlParserBundle.message("xml.parsing.unexpected.tokens"));
-    }
-    return null;
-  }
+  private fun parseDoctype() {
+    assert(token() === XML_DOCTYPE_START) { "Doctype start expected" }
+    val doctype = mark()
+    advance()
 
-  private void parseDoctype() {
-    assert token() == XML_DOCTYPE_START : "Doctype start expected";
-    final PsiBuilder.Marker doctype = mark();
-    advance();
-
-    while (token() != XML_DOCTYPE_END && !eof()) advance();
+    while (token() !== XML_DOCTYPE_END && !eof()) advance()
     if (eof()) {
-      error(XmlParserBundle.message("xml.parsing.unexpected.end.of.file"));
+      error(message("xml.parsing.unexpected.end.of.file"))
     }
     else {
-      advance();
+      advance()
     }
 
-    doctype.done(XML_DOCTYPE);
+    doctype.done(XML_DOCTYPE)
   }
 
-  protected void parseTag(boolean multipleRootTagError) {
-    assert token() == XML_START_TAG_START : "Tag start expected";
-    final PsiBuilder.Marker tag = mark();
+  protected fun parseTag(multipleRootTagError: Boolean) {
+    assert(token() === XML_START_TAG_START) { "Tag start expected" }
+    val tag = mark()
 
-    final String tagName = parseTagHeader(multipleRootTagError, tag);
-    if (tagName == null) return;
+    val tagName = parseTagHeader(multipleRootTagError, tag)
+    if (tagName == null) return
 
-    final PsiBuilder.Marker content = mark();
-    parseTagContent();
+    val content = mark()
+    parseTagContent()
 
-    if (token() == XML_END_TAG_START) {
-      final PsiBuilder.Marker footer = mark();
-      advance();
+    if (token() === XML_END_TAG_START) {
+      val footer = mark()
+      advance()
 
-      if (token() == XML_NAME) {
-        String endName = myBuilder.getTokenText();
-        if (!tagName.equals(endName) && myTagNamesStack.contains(endName)) {
-          footer.rollbackTo();
-          myTagNamesStack.pop();
-          tag.doneBefore(XML_TAG, content, XmlParserBundle.message("xml.parsing.named.element.is.not.closed", tagName));
-          content.drop();
-          return;
+      if (token() === XML_NAME) {
+        val endName = myBuilder.tokenText
+        if (tagName != endName && myTagNamesStack.contains(endName)) {
+          footer.rollbackTo()
+          myTagNamesStack.pop()
+          tag.doneBefore(XML_TAG, content, message("xml.parsing.named.element.is.not.closed", tagName))
+          content.drop()
+          return
         }
 
-        advance();
+        advance()
       }
       else {
-        error(XmlParserBundle.message("xml.parsing.closing.tag.name.missing"));
+        error(message("xml.parsing.closing.tag.name.missing"))
       }
-      footer.drop();
+      footer.drop()
 
-      while (token() != XML_TAG_END && token() != XML_START_TAG_START && token() != XML_END_TAG_START && !eof()) {
-        error(XmlParserBundle.message("xml.parsing.unexpected.token"));
-        advance();
+      while (token() !== XML_TAG_END
+             && token() !== XML_START_TAG_START
+             && token() !== XML_END_TAG_START
+             && !eof()
+      ) {
+        error(message("xml.parsing.unexpected.token"))
+        advance()
       }
 
-      if (token() == XML_TAG_END) {
-        advance();
+      if (token() === XML_TAG_END) {
+        advance()
       }
       else {
-        error(XmlParserBundle.message("xml.parsing.closing.tag.is.not.done"));
+        error(message("xml.parsing.closing.tag.is.not.done"))
       }
     }
     else {
-      error(XmlParserBundle.message("xml.parsing.unexpected.end.of.file"));
+      error(message("xml.parsing.unexpected.end.of.file"))
     }
 
-    content.drop();
-    myTagNamesStack.pop();
-    tag.done(XML_TAG);
+    content.drop()
+    myTagNamesStack.pop()
+    tag.done(XML_TAG)
   }
 
-  private @Nullable String parseTagHeader(final boolean multipleRootTagError, final PsiBuilder.Marker tag) {
+  private fun parseTagHeader(multipleRootTagError: Boolean, tag: PsiBuilder.Marker): String? {
     if (multipleRootTagError) {
-      final PsiBuilder.Marker error = mark();
-      advance();
-      error.error(XmlParserBundle.message("xml.parsing.multiple.root.tags"));
+      val error = mark()
+      advance()
+      error.error(message("xml.parsing.multiple.root.tags"))
     }
     else {
-      advance();
+      advance()
     }
 
-    final String tagName;
-    if (token() != XML_NAME || myBuilder.rawLookup(-1) == TokenType.WHITE_SPACE) {
-      error(XmlParserBundle.message("xml.parsing.tag.name.expected"));
-      tagName = "";
+    val tagName: String?
+    if (token() !== XML_NAME || myBuilder.rawLookup(-1) === TokenType.WHITE_SPACE) {
+      error(message("xml.parsing.tag.name.expected"))
+      tagName = ""
     }
     else {
-      tagName = myBuilder.getTokenText();
-      assert tagName != null;
-      advance();
+      tagName = myBuilder.tokenText
+      checkNotNull(tagName)
+      advance()
     }
-    myTagNamesStack.push(tagName);
+    myTagNamesStack.push(tagName)
 
     do {
-      final IElementType tt = token();
-      if (tt == XML_NAME) {
-        parseAttribute();
+      val tt = token()
+      if (tt === XML_NAME) {
+        parseAttribute()
       }
-      else if (tt == XML_CHAR_ENTITY_REF || tt == XML_ENTITY_REF_TOKEN) {
-        parseReference();
+      else if (tt === XML_CHAR_ENTITY_REF || tt === XML_ENTITY_REF_TOKEN) {
+        parseReference()
       }
       else {
-        break;
+        break
       }
     }
-    while (true);
+    while (true)
 
-    if (token() == XML_EMPTY_ELEMENT_END) {
-      advance();
-      myTagNamesStack.pop();
-      tag.done(XML_TAG);
-      return null;
+    if (token() === XML_EMPTY_ELEMENT_END) {
+      advance()
+      myTagNamesStack.pop()
+      tag.done(XML_TAG)
+      return null
     }
 
-    if (token() == XML_TAG_END) {
-      advance();
+    if (token() === XML_TAG_END) {
+      advance()
     }
     else {
-      error(XmlParserBundle.message("xml.parsing.tag.start.is.not.closed"));
-      myTagNamesStack.pop();
-      tag.done(XML_TAG);
-      return null;
+      error(message("xml.parsing.tag.start.is.not.closed"))
+      myTagNamesStack.pop()
+      tag.done(XML_TAG)
+      return null
     }
 
-    if (myTagNamesStack.size() > BALANCING_DEPTH_THRESHOLD) {
-      error(XmlParserBundle.message("xml.parsing.way.too.unbalanced"));
-      tag.done(XML_TAG);
-      return null;
+    if (myTagNamesStack.size > BALANCING_DEPTH_THRESHOLD) {
+      error(message("xml.parsing.way.too.unbalanced"))
+      tag.done(XML_TAG)
+      return null
     }
 
-    return tagName;
+    return tagName
   }
 
-  public void parseTagContent() {
-    PsiBuilder.Marker xmlText = null;
+  fun parseTagContent() {
+    var xmlText: PsiBuilder.Marker? = null
     while (true) {
-      final IElementType tt = token();
-      if (tt == null || tt == XML_END_TAG_START) {
-        break;
+      val tt = token()
+      if (tt == null || tt === XML_END_TAG_START) {
+        break
       }
 
-      if (tt == XML_START_TAG_START) {
-        xmlText = terminateText(xmlText);
-        parseTag(false);
+      if (tt === XML_START_TAG_START) {
+        xmlText = terminateText(xmlText)
+        parseTag(false)
       }
-      else if (tt == XML_PI_START) {
-        xmlText = terminateText(xmlText);
-        parseProcessingInstruction();
+      else if (tt === XML_PI_START) {
+        xmlText = terminateText(xmlText)
+        parseProcessingInstruction()
       }
-      else if (tt == XML_ENTITY_REF_TOKEN) {
-        xmlText = terminateText(xmlText);
-        parseReference();
+      else if (tt === XML_ENTITY_REF_TOKEN) {
+        xmlText = terminateText(xmlText)
+        parseReference()
       }
-      else if (tt == XML_CHAR_ENTITY_REF) {
-        xmlText = startText(xmlText);
-        parseReference();
+      else if (tt === XML_CHAR_ENTITY_REF) {
+        xmlText = startText(xmlText)
+        parseReference()
       }
-      else if (tt == XML_CDATA_START) {
-        xmlText = startText(xmlText);
-        parseCData();
+      else if (tt === XML_CDATA_START) {
+        xmlText = startText(xmlText)
+        parseCData()
       }
       else if (isCommentToken(tt)) {
-        xmlText = terminateText(xmlText);
-        parseComment();
+        xmlText = terminateText(xmlText)
+        parseComment()
       }
-      else if (tt == XML_BAD_CHARACTER) {
-        xmlText = startText(xmlText);
-        final PsiBuilder.Marker error = mark();
-        advance();
-        error.error(XmlParserBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"));
+      else if (tt === XML_BAD_CHARACTER) {
+        xmlText = startText(xmlText)
+        val error = mark()
+        advance()
+        error.error(message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"))
       }
-      else if (tt instanceof ICustomParsingType || tt instanceof ILazyParseableElementType) {
-        xmlText = terminateText(xmlText);
-        advance();
+      else if (tt is ICustomParsingType || tt is ILazyParseableElementType) {
+        xmlText = terminateText(xmlText)
+        advance()
       }
       else {
-        xmlText = startText(xmlText);
-        advance();
+        xmlText = startText(xmlText)
+        advance()
       }
     }
 
-    terminateText(xmlText);
+    terminateText(xmlText)
   }
 
-  protected boolean isCommentToken(final IElementType tt) {
-    return tt == XML_COMMENT_START;
+  protected open fun isCommentToken(tt: IElementType?): Boolean {
+    return tt === XML_COMMENT_START
   }
 
-  private @NotNull PsiBuilder.Marker startText(@Nullable PsiBuilder.Marker xmlText) {
-    if (xmlText == null) {
-      xmlText = mark();
-    }
-    return xmlText;
+  private fun startText(xmlText: PsiBuilder.Marker?): PsiBuilder.Marker {
+    return xmlText ?: mark()
   }
 
-  protected final PsiBuilder.Marker mark() {
-    return myBuilder.mark();
+  protected fun mark(): PsiBuilder.Marker {
+    return myBuilder.mark()
   }
 
-  private static @Nullable PsiBuilder.Marker terminateText(@Nullable PsiBuilder.Marker xmlText) {
-    if (xmlText != null) {
-      xmlText.done(XML_TEXT);
-    }
-    return null;
-  }
-
-  private void parseCData() {
-    assert token() == XML_CDATA_START;
-    final PsiBuilder.Marker cdata = mark();
-    while (token() != XML_CDATA_END && !eof()) {
-      advance();
+  private fun parseCData() {
+    assert(token() === XML_CDATA_START)
+    val cdata = mark()
+    while (token() !== XML_CDATA_END && !eof()) {
+      advance()
     }
 
     if (!eof()) {
-      advance();
+      advance()
     }
 
-    cdata.done(XML_CDATA);
+    cdata.done(XML_CDATA)
   }
 
-  protected void parseComment() {
-    final PsiBuilder.Marker comment = mark();
-    advance();
+  protected open fun parseComment() {
+    val comment = mark()
+    advance()
     while (true) {
-      final IElementType tt = token();
-      if (tt == XML_COMMENT_CHARACTERS || tt == XML_CONDITIONAL_COMMENT_START
-          || tt == XML_CONDITIONAL_COMMENT_START_END || tt == XML_CONDITIONAL_COMMENT_END_START
-          || tt == XML_CONDITIONAL_COMMENT_END) {
-        advance();
-        continue;
+      val tt = token()
+      if (tt === XML_COMMENT_CHARACTERS
+          || tt === XML_CONDITIONAL_COMMENT_START
+          || tt === XML_CONDITIONAL_COMMENT_START_END
+          || tt === XML_CONDITIONAL_COMMENT_END_START
+          || tt === XML_CONDITIONAL_COMMENT_END
+      ) {
+        advance()
+        continue
       }
-      else if (tt == XML_BAD_CHARACTER) {
-        final PsiBuilder.Marker error = mark();
-        advance();
-        error.error(XmlParserBundle.message("xml.parsing.bad.character"));
-        continue;
+      else if (tt === XML_BAD_CHARACTER) {
+        val error = mark()
+        advance()
+        error.error(message("xml.parsing.bad.character"))
+        continue
       }
-      if (tt == XML_COMMENT_END) {
-        advance();
+      if (tt === XML_COMMENT_END) {
+        advance()
       }
-      break;
+      break
     }
-    comment.done(XML_COMMENT);
+    comment.done(XML_COMMENT)
   }
 
-  private void parseReference() {
-    if (token() == XML_CHAR_ENTITY_REF) {
-      advance();
+  private fun parseReference() {
+    if (token() === XML_CHAR_ENTITY_REF) {
+      advance()
     }
-    else if (token() == XML_ENTITY_REF_TOKEN) {
-      final PsiBuilder.Marker ref = mark();
-      advance();
-      ref.done(XML_ENTITY_REF);
+    else if (token() === XML_ENTITY_REF_TOKEN) {
+      val ref = mark()
+      advance()
+      ref.done(XML_ENTITY_REF)
     }
     else {
-      assert false : "Unexpected token";
+      assert(false) { "Unexpected token" }
     }
   }
 
-  private void parseAttribute() {
-    assert token() == XML_NAME;
-    final PsiBuilder.Marker att = mark();
-    advance();
-    if (token() == XML_EQ) {
-      advance();
-      parseAttributeValue();
+  private fun parseAttribute() {
+    assert(token() === XML_NAME)
+    val att = mark()
+    advance()
+    if (token() === XML_EQ) {
+      advance()
+      parseAttributeValue()
     }
     else {
-      error(XmlParserBundle.message("xml.parsing.expected.attribute.eq.sign"));
+      error(message("xml.parsing.expected.attribute.eq.sign"))
     }
-    att.done(XML_ATTRIBUTE);
+    att.done(XML_ATTRIBUTE)
   }
 
-  private void parseAttributeValue() {
-    final PsiBuilder.Marker attValue = mark();
-    if (token() == XML_ATTRIBUTE_VALUE_START_DELIMITER) {
+  private fun parseAttributeValue() {
+    val attValue = mark()
+    if (token() === XML_ATTRIBUTE_VALUE_START_DELIMITER) {
       while (true) {
-        final IElementType tt = token();
-        if (tt == null || tt == XML_ATTRIBUTE_VALUE_END_DELIMITER || tt == XML_END_TAG_START || tt == XML_EMPTY_ELEMENT_END ||
-            tt == XML_START_TAG_START) {
-          break;
+        val tt = token()
+        if (tt == null
+            || tt === XML_ATTRIBUTE_VALUE_END_DELIMITER
+            || tt === XML_END_TAG_START
+            || tt === XML_EMPTY_ELEMENT_END
+            || tt === XML_START_TAG_START
+        ) {
+          break
         }
 
-        if (tt == XML_BAD_CHARACTER) {
-          final PsiBuilder.Marker error = mark();
-          advance();
-          error.error(XmlParserBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"));
+        if (tt === XML_BAD_CHARACTER) {
+          val error = mark()
+          advance()
+          error.error(message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"))
         }
-        else if (tt == XML_ENTITY_REF_TOKEN) {
-          parseReference();
+        else if (tt === XML_ENTITY_REF_TOKEN) {
+          parseReference()
         }
         else {
-          advance();
+          advance()
         }
       }
 
-      if (token() == XML_ATTRIBUTE_VALUE_END_DELIMITER) {
-        advance();
+      if (token() === XML_ATTRIBUTE_VALUE_END_DELIMITER) {
+        advance()
       }
       else {
-        error(XmlParserBundle.message("xml.parsing.unclosed.attribute.value"));
+        error(message("xml.parsing.unclosed.attribute.value"))
       }
     }
     else {
-      error(XmlParserBundle.message("xml.parsing.attribute.value.expected"));
+      error(message("xml.parsing.attribute.value.expected"))
     }
 
-    attValue.done(XML_ATTRIBUTE_VALUE);
+    attValue.done(XML_ATTRIBUTE_VALUE)
   }
 
-  private void parseProlog() {
-    final PsiBuilder.Marker prolog = mark();
+  private fun parseProlog() {
+    val prolog = mark()
     while (true) {
-      final IElementType tt = token();
-      if (tt == XML_PI_START) {
-        parseProcessingInstruction();
+      val tt = token()
+      if (tt === XML_PI_START) {
+        parseProcessingInstruction()
       }
-      else if (tt == XML_DOCTYPE_START) {
-        parseDoctype();
+      else if (tt === XML_DOCTYPE_START) {
+        parseDoctype()
       }
       else if (isCommentToken(tt)) {
-        parseComment();
+        parseComment()
       }
-      else if (tt == XML_REAL_WHITE_SPACE) {
-        advance();
+      else if (tt === XML_REAL_WHITE_SPACE) {
+        advance()
       }
       else {
-        break;
+        break
       }
     }
-    prolog.done(XML_PROLOG);
+    prolog.done(XML_PROLOG)
   }
 
-  private void parseProcessingInstruction() {
-    assert token() == XML_PI_START;
-    final PsiBuilder.Marker pi = mark();
-    advance();
-    if (token() != XML_NAME) {
-      error(XmlParserBundle.message("xml.parsing.processing.instruction.name.expected"));
+  private fun parseProcessingInstruction() {
+    assert(token() === XML_PI_START)
+    val pi = mark()
+    advance()
+    if (token() !== XML_NAME) {
+      error(message("xml.parsing.processing.instruction.name.expected"))
     }
     else {
-      advance();
+      advance()
     }
 
-    final IElementType tokenType = token();
-    if (tokenType == XML_TAG_CHARACTERS) {
-      while (token() == XML_TAG_CHARACTERS) {
-        advance();
+    val tokenType = token()
+    if (tokenType === XML_TAG_CHARACTERS) {
+      while (token() === XML_TAG_CHARACTERS) {
+        advance()
       }
     }
     else {
-      while (token() == XML_NAME) {
-        advance();
-        if (token() == XML_EQ) {
-          advance();
+      while (token() === XML_NAME) {
+        advance()
+        if (token() === XML_EQ) {
+          advance()
         }
         else {
-          error(XmlParserBundle.message("xml.parsing.expected.attribute.eq.sign"));
+          error(message("xml.parsing.expected.attribute.eq.sign"))
         }
-        parseAttributeValue();
+        parseAttributeValue()
       }
     }
 
-    if (token() == XML_PI_END) {
-      advance();
+    if (token() === XML_PI_END) {
+      advance()
     }
     else {
-      error(XmlParserBundle.message("xml.parsing.unterminated.processing.instruction"));
+      error(message("xml.parsing.unterminated.processing.instruction"))
     }
 
-    pi.done(XML_PROCESSING_INSTRUCTION);
+    pi.done(XML_PROCESSING_INSTRUCTION)
   }
 
-  protected final @Nullable IElementType token() {
-    return myBuilder.getTokenType();
+  protected fun token(): IElementType? {
+    return myBuilder.tokenType
   }
 
-  protected final boolean eof() {
-    return myBuilder.eof();
+  protected fun eof(): Boolean {
+    return myBuilder.eof()
   }
 
-  protected final void advance() {
-    myBuilder.advanceLexer();
+  protected fun advance() {
+    myBuilder.advanceLexer()
   }
 
-  private void error(@NotNull @ParsingError String message) {
-    myBuilder.error(message);
+  private fun error(message: @NlsContexts.ParsingError String) {
+    myBuilder.error(message)
+  }
+
+  private companion object {
+    private const val BALANCING_DEPTH_THRESHOLD = 1000
+
+    private fun flushError(error: PsiBuilder.Marker?): PsiBuilder.Marker? {
+      error?.error(message("xml.parsing.unexpected.tokens"))
+      return null
+    }
+
+    private fun terminateText(xmlText: PsiBuilder.Marker?): PsiBuilder.Marker? {
+      xmlText?.done(XML_TEXT)
+      return null
+    }
   }
 }
