@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-coroutines-guava" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.intellij.platform:kotlinx-coroutines-guava:1.8.0-intellij-11">
+    <properties include-transitive-deps="false" maven-id="com.intellij.platform:kotlinx-coroutines-guava:1.8.0-intellij-12">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-guava/1.8.0-intellij-11/kotlinx-coroutines-guava-1.8.0-intellij-11.jar">
-          <sha256sum>28e9e136435e6d7fd99f9b15dba736f396c5f7252653cd2e557fff09fbfb38cc</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-guava/1.8.0-intellij-12/kotlinx-coroutines-guava-1.8.0-intellij-12.jar">
+          <sha256sum>40eb17eb2a28eeef4758cab46e1befa6964de9d0404f6bf28d055e03bccbacab</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-guava/1.8.0-intellij-11/kotlinx-coroutines-guava-1.8.0-intellij-11.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-guava/1.8.0-intellij-12/kotlinx-coroutines-guava-1.8.0-intellij-12.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-guava/1.8.0-intellij-11/kotlinx-coroutines-guava-1.8.0-intellij-11-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-guava/1.8.0-intellij-12/kotlinx-coroutines-guava-1.8.0-intellij-12-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
