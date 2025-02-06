@@ -9,10 +9,10 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
-    <plugin id="com.intellij.modules.json"/>
   </dependencies>
   <content>
-    <module name="intellij.yaml.backend" loading="embedded"/>
-    <module name="intellij.yaml" loading="required"/>
+    <module name="intellij.yaml.backend"/><!-- should be marked as 'required in backend mode' when IJPL-177060 is fixed -->
+    <module name="intellij.yaml" loading="embedded"/>
+    <module name="intellij.yaml.frontend.split"/><!-- should be marked as 'required in frontend mode' when IJPL-177060 is fixed -->
   </content>
 </idea-plugin>
