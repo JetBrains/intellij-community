@@ -5,11 +5,19 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.WrongMethodTypeException;
+import java.lang.ref.SoftReference;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 @SuppressWarnings({"SSBasedInspection", "unused"})
 public final class MethodInvoker {
-  // TODO: may leak objects here
-  static ThreadLocal<Object> keptValue = new ThreadLocal<>();
+  private static final ThreadLocal<List<Object>> keptValues = new ThreadLocal<List<Object>>() {
+    @Override
+    protected List<Object> initialValue() {
+      return new LinkedList<>(); // LinkedList for fast elements removal
+    }
+  };
 
   public static Object invoke0(MethodHandles.Lookup lookup, Class<?> cls, Object obj, String nameAndDescriptor, ClassLoader loader)
     throws Throwable {
@@ -211,17 +219,40 @@ public final class MethodInvoker {
       }
 
       Object result = method.invokeWithArguments(args);
-      keptValue.set(result);
-      return result;
+      return keepReference(result, false);
     }
     catch (WrongMethodTypeException | ClassCastException e) {
       e.printStackTrace();
-      keptValue.set(e);
+      keepReference(e, true);
       throw e;
     }
     catch (Throwable e) {
-      keptValue.set(e);
+      keepReference(e, true);
       throw e;
     }
+  }
+
+  private static Object keepReference(Object ref, boolean soft) {
+    List<Object> objects = keptValues.get();
+
+    // remove stale references first
+    Iterator<Object> iterator = objects.iterator();
+    while (iterator.hasNext()) {
+      Object object = iterator.next();
+      if (object instanceof Object[]) {
+        if (((Object[])object)[0] == null) {
+          iterator.remove();
+        }
+      }
+      else if (object instanceof SoftReference) {
+        if (((SoftReference<?>)object).get() == null) {
+          iterator.remove();
+        }
+      }
+    }
+
+    Object wrapper = soft ? new SoftReference<>(ref) : new Object[]{ref};
+    objects.add(wrapper);
+    return soft ? ref : wrapper;
   }
 }
