@@ -20,6 +20,7 @@
     <module name="intellij.platform.jewel.markdown.core"/>
     <module name="intellij.platform.diagnostic.freezeAnalyzer"/>
     <module name="intellij.platform.diagnostic.freezes"/>
+    <module name="intellij.settingsSync.core"/>
   </content>
 
   <xi:include href="/META-INF/grid-core-modules.xml"/>
