@@ -15,7 +15,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -52,7 +51,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 // generates HighlightInfoType.ERROR-like HighlightInfos
 public final class HighlightUtil {
-  private static final Logger LOG = Logger.getInstance(HighlightUtil.class);
 
   private static final @NlsSafe String ANONYMOUS = "anonymous ";
 
