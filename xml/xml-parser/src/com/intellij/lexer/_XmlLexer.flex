@@ -121,7 +121,7 @@ CONDITIONAL_COMMENT_CONDITION=({ALPHA})({ALPHA}|{S}|{DIGIT}|"."|"("|")"|"|"|"!"|
 <DOCTYPE> {NAME} { return XmlTokenType.XML_NAME;  }
 <DOCTYPE> "\"" [^\"]* "\""? { return XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;}
 <DOCTYPE> "'" [^']* "'"? { return XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN;}
-<DOCTYPE> "[" (([^\]\"]*)|(\"[^\"]*\"))* "]"? { return BasicXmlElementType.XML_MARKUP_DECL;}
+<DOCTYPE> "[" (([^\]\"]*)|(\"[^\"]*\"))* "]"? { return XmlElementType.XML_MARKUP_DECL;}
 <DOCTYPE> ">" { yybegin(YYINITIAL); return XmlTokenType.XML_DOCTYPE_END; }
 
 <YYINITIAL> "<?" { yybegin(PROCESSING_INSTRUCTION); return XmlTokenType.XML_PI_START; }
