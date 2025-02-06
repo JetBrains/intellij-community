@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -60,8 +61,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private @NotNull PsiFile myFile;
   private PsiJavaModule myJavaModule;
   private JavaErrorCollector myCollector;
-
-  private PreviewFeatureUtil.PreviewFeatureVisitor myPreviewFeatureVisitor;
 
   private final @NotNull Consumer<? super HighlightInfo.Builder> myErrorSink = builder -> add(builder);
 
@@ -131,7 +130,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myFile = null;
       myHolder = null;
       myCollector = null;
-      myPreviewFeatureVisitor = null;
       myOverrideEquivalentMethodsVisitedClasses.clear();
       myOverrideEquivalentMethodsErrors.clear();
     }
@@ -148,7 +146,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myFile = file;
     myLanguageLevel = PsiUtil.getLanguageLevel(file);
     myJavaModule = JavaFeature.MODULES.isSufficient(myLanguageLevel) ? JavaModuleGraphUtil.findDescriptorByElement(file) : null;
-    myPreviewFeatureVisitor = myLanguageLevel.isPreview() ? null : new PreviewFeatureUtil.PreviewFeatureVisitor(myLanguageLevel, myErrorSink);
     JavaErrorFixProvider errorFixProvider = JavaErrorFixProvider.getInstance();
     myCollector = new JavaErrorCollector(myFile, myJavaModule, error -> reportError(error, errorFixProvider));
   }
@@ -240,7 +237,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitImportStaticStatement(@NotNull PsiImportStaticStatement statement) {
     visitElement(statement);
-    if (!hasErrorResults()) PreviewFeatureUtil.checkPreviewFeature(statement, myPreviewFeatureVisitor);
+    if (!hasErrorResults()) checkPreviewFeature(statement);
   }
 
   @Override
@@ -259,7 +256,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitImportStatement(@NotNull PsiImportStatement statement) {
     super.visitImportStatement(statement);
     if (!hasErrorResults()) {
-      PreviewFeatureUtil.checkPreviewFeature(statement, myPreviewFeatureVisitor);
+      checkPreviewFeature(statement);
     }
   }
 
@@ -282,7 +279,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
     visitExpression(expression);
     if (!hasErrorResults()) {
-      PreviewFeatureUtil.checkPreviewFeature(expression, myPreviewFeatureVisitor);
+      checkPreviewFeature(expression);
     }
   }
 
@@ -310,7 +307,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) visitExpression(expression);
 
     if (!hasErrorResults()) {
-      PreviewFeatureUtil.checkPreviewFeature(expression, myPreviewFeatureVisitor);
+      checkPreviewFeature(expression);
     }
   }
 
@@ -329,7 +326,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (result != null) {
       PsiElement resolved = result.getElement();
       if (!hasErrorResults() && resolved instanceof PsiModifierListOwner) {
-        PreviewFeatureUtil.checkPreviewFeature(ref, myPreviewFeatureVisitor);
+        checkPreviewFeature(ref);
       }
     }
   }
@@ -420,7 +417,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));
     }
     if (!hasErrorResults() && resolved instanceof PsiModifierListOwner) {
-      PreviewFeatureUtil.checkPreviewFeature(expression, myPreviewFeatureVisitor);
+      checkPreviewFeature(expression);
     }
   }
 
@@ -443,7 +440,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     if (!hasErrorResults() && method instanceof PsiModifierListOwner) {
-      PreviewFeatureUtil.checkPreviewFeature(expression, myPreviewFeatureVisitor);
+      checkPreviewFeature(expression);
     }
   }
 
@@ -493,7 +490,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitTypeElement(@NotNull PsiTypeElement type) {
     super.visitTypeElement(type);
     if (!hasErrorResults()) {
-      PreviewFeatureUtil.checkPreviewFeature(type, myPreviewFeatureVisitor);
+      checkPreviewFeature(type);
     }
   }
 
@@ -512,7 +509,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitModuleStatement(@NotNull PsiStatement statement) {
     super.visitModuleStatement(statement);
     if (!hasErrorResults()) {
-      PreviewFeatureUtil.checkPreviewFeature(statement, myPreviewFeatureVisitor);
+      checkPreviewFeature(statement);
     }
   }
 
@@ -550,6 +547,22 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitProvidesStatement(statement);
     if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
       if (!hasErrorResults()) ModuleHighlightUtil.checkServiceImplementations(statement, myFile, myErrorSink);
+    }
+  }
+
+  private void checkPreviewFeature(@NotNull PsiElement element) {
+    if (myLanguageLevel.isPreview()) return;
+    JavaPreviewFeatureUtil.PreviewFeatureUsage usage = JavaPreviewFeatureUtil.getPreviewFeatureUsage(element);
+    if (usage != null) {
+      boolean isReflective = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(usage.annotation(), "reflective"));
+
+      HighlightInfoType type = isReflective ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
+
+      HighlightInfo.Builder highlightInfo =
+        HighlightUtil.checkFeature(element, usage.feature(), myLanguageLevel, element.getContainingFile(), usage.description(), type);
+      if (highlightInfo != null) {
+        myErrorSink.accept(highlightInfo);
+      }
     }
   }
 }
