@@ -3,6 +3,7 @@ package com.intellij.cce.report
 
 import com.intellij.cce.metric.MetricInfo
 import com.intellij.cce.metric.MetricValueType
+import com.intellij.cce.metric.generateJsonStructureForSankeyChart
 import com.intellij.cce.workspace.info.FileErrorInfo
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import kotlinx.html.*
@@ -31,6 +32,7 @@ class HtmlReportGenerator(
       "/pako.min.js",
       "/tabulator.min.js",
       "/chart.umd.min.js",
+      "/chartjs-chart-sankey.min.js",
       "/tabulator.min.css",
       "/tabulator.min.css.map",
       "/error.js",
@@ -101,6 +103,7 @@ class HtmlReportGenerator(
         meta { charset = "utf-8" }
         script { src = "res/tabulator.min.js" }
         script { src = "res/chart.umd.min.js" }
+        script { src = "res/chartjs-chart-sankey.min.js" }
         script { src = "res/chartBuilder.js" }
         link {
           href = "res/tabulator.min.css"
@@ -168,6 +171,7 @@ class HtmlReportGenerator(
     fun getReportRow(repRef: Map.Entry<String, ReferenceInfo>) =
       "{id:${rowId++},file:${getReportLink(repRef)},${formatMetrics(getReportMetrics(repRef.value))}}"
     return """
+        |let sankeyChartStructure = ${generateJsonStructureForSankeyChart()};
         |let tableData = [{id:0,file:'Summary',${formatMetrics(globalMetrics)}}
         |${with(errorReferences) { if (isNotEmpty()) map { getErrorRow(it) }.joinToString(",\n", ",") else "" }}
         |${with(fileGenerator.reportReferences) { if (isNotEmpty()) map { getReportRow(it) }.joinToString(",\n", ",") else "" }}];

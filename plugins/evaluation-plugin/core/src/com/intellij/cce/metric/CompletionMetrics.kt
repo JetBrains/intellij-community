@@ -20,7 +20,7 @@ fun createBaseCompletionMetrics(showByDefault: Boolean): List<Metric> =
     SuccessPercentileLatencyMetric(percentile = 50),
     SuccessPercentileLatencyMetric(percentile = 80),
     SuggestionsCountMetric(),
-  )
+  ) + SessionFilterReasonMetrics()
 
 
 fun createCompletionGolfMetrics(): List<Metric> =
