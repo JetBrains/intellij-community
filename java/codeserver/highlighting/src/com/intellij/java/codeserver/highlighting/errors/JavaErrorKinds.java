@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle.message;
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorFormatUtil.*;
+import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
@@ -855,6 +856,16 @@ public final class JavaErrorKinds {
 
   public static final Simple<PsiExpression> RESOURCE_DECLARATION_OR_VARIABLE_EXPECTED =
     error("resource.declaration.or.variable.expected");
+
+  public static final Simple<PsiSwitchLabeledRuleStatement> SWITCH_RULE_SHOULD_PRODUCE_RESULT =
+    error(PsiSwitchLabeledRuleStatement.class, "switch.rule.should.produce.result")
+      .withAnchor(rule -> requireNonNullElse(tryCast(rule.getFirstChild(), PsiKeyword.class), rule));
+  public static final Simple<PsiSwitchExpression> SWITCH_EXPRESSION_NO_RESULT = 
+    error(PsiSwitchExpression.class, "switch.expression.no.result")
+      .withAnchor(switchExpression -> requireNonNullElse(tryCast(switchExpression.getFirstChild(), PsiKeyword.class), switchExpression));
+  public static final Simple<PsiSwitchExpression> SWITCH_EXPRESSION_SHOULD_PRODUCE_RESULT = 
+    error(PsiSwitchExpression.class, "switch.expression.should.produce.result")
+      .withAnchor(switchExpression -> requireNonNullElse(tryCast(switchExpression.getFirstChild(), PsiKeyword.class), switchExpression));
   
   public static final Simple<PsiReferenceExpression> EXPRESSION_EXPECTED = error("expression.expected");
   public static final Parameterized<PsiReferenceExpression, PsiSuperExpression> EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD = 

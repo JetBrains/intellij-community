@@ -1635,6 +1635,12 @@ public final class ControlFlowUtil {
               isNormal = false;
             }
           }
+          else if (element instanceof PsiYieldStatement) {
+            PsiSwitchExpression exitedSwitch = ((PsiYieldStatement)element).findEnclosingExpression();
+            if (exitedSwitch == null || flow.getStartOffset(exitedSwitch) < startOffset) {
+              isNormal = false;
+            }
+          }
           else if (element instanceof PsiContinueStatement) {
             PsiStatement continuedStatement = ((PsiContinueStatement)element).findContinuedStatement();
             if (continuedStatement == null || flow.getStartOffset(continuedStatement) < startOffset) {

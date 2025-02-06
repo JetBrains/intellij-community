@@ -1,4 +1,23 @@
 class C {
+  void tryFinally(int n) {
+    int s = switch(n) {
+      case 2 -> {
+        System.out.println("hello");
+        yield 1;
+      }
+      case 3 -> {
+        try {
+          System.out.println("hello");
+          yield 1; // never happens
+        }
+        finally {
+          yield 2;
+        }
+      }
+      default -> 0;
+    };
+  }
+  
   void defaultBranchHasNoResult(int n) {
     String s = <error descr="Switch expression should produce result in all execution paths">switch</error> (n) {
       default:
@@ -145,5 +164,14 @@ class C {
         default -> "b";
       };
     }
+  }
+  
+  void systemExit(int x) {
+    int result = switch(x) {
+      <error descr="Switch expression rule should produce result in all execution paths">case</error> 1 -> {
+        System.exit(0);
+      }
+      default -> 0;
+    };
   }
 }

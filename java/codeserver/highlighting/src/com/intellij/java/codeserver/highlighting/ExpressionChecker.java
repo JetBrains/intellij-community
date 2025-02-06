@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
 final class ExpressionChecker {
@@ -331,7 +333,7 @@ final class ExpressionChecker {
                  ? JavaErrorKinds.TYPE_PARAMETER_INFERRED_TYPE_NOT_WITHIN_EXTEND_BOUND
                  : JavaErrorKinds.TYPE_PARAMETER_INFERRED_TYPE_NOT_WITHIN_IMPLEMENT_BOUND;
       myVisitor.report(kind.create(call, new JavaErrorKinds.TypeParameterBoundMismatchContext(
-        typeParameter, extendsType, Objects.requireNonNull(substitutor.substitute(typeParameter)))));
+        typeParameter, extendsType, requireNonNull(substitutor.substitute(typeParameter)))));
     }
   }
 
@@ -810,6 +812,85 @@ final class ExpressionChecker {
     }
 
     myVisitor.report(JavaErrorKinds.RESOURCE_DECLARATION_OR_VARIABLE_EXPECTED.create(expression));
+  }
+
+  void checkSwitchExpressionHasResult(@NotNull PsiSwitchExpression switchExpression) {
+    PsiCodeBlock switchBody = switchExpression.getBody();
+    if (switchBody != null) {
+      PsiStatement lastStatement = PsiTreeUtil.getPrevSiblingOfType(switchBody.getRBrace(), PsiStatement.class);
+      boolean hasResult = false;
+      if (lastStatement instanceof PsiSwitchLabeledRuleStatement rule) {
+        boolean reported = false;
+        for (;
+             rule != null;
+             rule = PsiTreeUtil.getPrevSiblingOfType(rule, PsiSwitchLabeledRuleStatement.class)) {
+          PsiStatement ruleBody = rule.getBody();
+          if (ruleBody instanceof PsiExpressionStatement) {
+            hasResult = true;
+          }
+          // the expression and throw statements are fine, only the block statement could be an issue
+          // 15.28.1 If the switch block consists of switch rules, then any switch rule block cannot complete normally
+          if (ruleBody instanceof PsiBlockStatement) {
+            ControlFlow flow = ControlFlowChecker.getControlFlow(ruleBody);
+            if (flow != null && ControlFlowUtil.canCompleteNormally(flow, 0, flow.getSize())) {
+              myVisitor.report(JavaErrorKinds.SWITCH_RULE_SHOULD_PRODUCE_RESULT.create(rule));
+              reported = true;
+            }
+            else if (!hasResult && hasYield(switchExpression, ruleBody)) {
+              hasResult = true;
+            }
+          }
+        }
+        if (reported) {
+          return;
+        }
+      }
+      else {
+        // previous statements may have no result as well, but in that case they fall through to the last one, which needs to be checked anyway
+        if (lastStatement != null) {
+          boolean canCompleteNormally;
+          if (lastStatement instanceof PsiSwitchLabelStatement) {
+            canCompleteNormally = true;
+          } else {
+            ControlFlow flow = ControlFlowChecker.getControlFlow(lastStatement);
+            canCompleteNormally = flow != null && ControlFlowUtil.canCompleteNormally(flow, 0, flow.getSize());
+          }
+          if (canCompleteNormally) {
+            myVisitor.report(JavaErrorKinds.SWITCH_EXPRESSION_SHOULD_PRODUCE_RESULT.create(switchExpression));
+            return;
+          }
+        }
+        hasResult = hasYield(switchExpression, switchBody);
+      }
+      if (!hasResult) {
+        myVisitor.report(JavaErrorKinds.SWITCH_EXPRESSION_NO_RESULT.create(switchExpression));
+      }
+    }
+  }
+
+  private static boolean hasYield(@NotNull PsiSwitchExpression switchExpression, @NotNull PsiElement scope) {
+    class YieldFinder extends JavaRecursiveElementWalkingVisitor {
+      private boolean hasYield;
+
+      @Override
+      public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
+        if (statement.findEnclosingExpression() == switchExpression) {
+          hasYield = true;
+          stopWalking();
+        }
+      }
+
+      // do not go inside to save time: declarations cannot contain yield that points to outer switch expression
+      @Override
+      public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {}
+
+      // do not go inside to save time: expressions cannot contain yield that points to outer switch expression
+      @Override
+      public void visitExpression(@NotNull PsiExpression expression) {}
+    }
+    YieldFinder finder = new YieldFinder();
+    scope.accept(finder);
+    return finder.hasYield;
   }
 
   private static boolean isIntersection(@NotNull PsiTypeElement castTypeElement, @NotNull PsiType castType) {

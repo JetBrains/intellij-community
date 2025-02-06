@@ -608,6 +608,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
     super.visitSwitchExpression(expression);
     if (!hasErrorResults()) checkFeature(expression, JavaFeature.SWITCH_EXPRESSION);
+    if (!hasErrorResults()) myExpressionChecker.checkSwitchExpressionHasResult(expression);
   }
 
   @Override

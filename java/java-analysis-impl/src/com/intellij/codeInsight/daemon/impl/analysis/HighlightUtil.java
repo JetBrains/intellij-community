@@ -33,11 +33,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -252,87 +250,6 @@ public final class HighlightUtil {
   private static String getContainerName(@NotNull PsiModifierListOwner refElement, @NotNull PsiSubstitutor substitutor) {
     PsiElement container = getContainer(refElement);
     return container == null ? "?" : HighlightMessageUtil.getSymbolName(container, substitutor);
-  }
-
-  static void checkSwitchExpressionHasResult(@NotNull PsiSwitchExpression switchExpression,
-                                             @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    PsiCodeBlock switchBody = switchExpression.getBody();
-    if (switchBody != null) {
-      PsiStatement lastStatement = PsiTreeUtil.getPrevSiblingOfType(switchBody.getRBrace(), PsiStatement.class);
-      boolean hasResult = false;
-      if (lastStatement instanceof PsiSwitchLabeledRuleStatement rule) {
-        boolean reported = false;
-        for (;
-             rule != null;
-             rule = PsiTreeUtil.getPrevSiblingOfType(rule, PsiSwitchLabeledRuleStatement.class)) {
-          PsiStatement ruleBody = rule.getBody();
-          if (ruleBody instanceof PsiExpressionStatement) {
-            hasResult = true;
-          }
-          // the expression and throw statements are fine, only the block statement could be an issue
-          // 15.28.1 If the switch block consists of switch rules, then any switch rule block cannot complete normally
-          if (ruleBody instanceof PsiBlockStatement) {
-            if (ControlFlowUtils.statementMayCompleteNormally(ruleBody)) {
-              PsiElement target = ObjectUtils.notNull(tryCast(rule.getFirstChild(), PsiKeyword.class), rule);
-              String message = JavaErrorBundle.message("switch.expr.rule.should.produce.result");
-              HighlightInfo.Builder info =
-                HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(target).descriptionAndTooltip(message);
-              errorSink.accept(info);
-              reported = true;
-            }
-            else if (!hasResult && hasYield(switchExpression, ruleBody)) {
-              hasResult = true;
-            }
-          }
-        }
-        if (reported) {
-          return;
-        }
-      }
-      else {
-        // previous statements may have no result as well, but in that case they fall through to the last one, which needs to be checked anyway
-        if (lastStatement != null && ControlFlowUtils.statementMayCompleteNormally(lastStatement)) {
-          PsiElement target =
-            ObjectUtils.notNull(tryCast(switchExpression.getFirstChild(), PsiKeyword.class), switchExpression);
-          String message = JavaErrorBundle.message("switch.expr.should.produce.result");
-          HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(target).descriptionAndTooltip(message);
-          errorSink.accept(info);
-          return;
-        }
-        hasResult = hasYield(switchExpression, switchBody);
-      }
-      if (!hasResult) {
-        PsiElement target = ObjectUtils.notNull(tryCast(switchExpression.getFirstChild(), PsiKeyword.class), switchExpression);
-        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(target)
-          .descriptionAndTooltip(JavaErrorBundle.message("switch.expr.no.result"));
-        errorSink.accept(info);
-      }
-    }
-  }
-
-  private static boolean hasYield(@NotNull PsiSwitchExpression switchExpression, @NotNull PsiElement scope) {
-    class YieldFinder extends JavaRecursiveElementWalkingVisitor {
-      private boolean hasYield;
-
-      @Override
-      public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
-        if (statement.findEnclosingExpression() == switchExpression) {
-          hasYield = true;
-          stopWalking();
-        }
-      }
-
-      // do not go inside to save time: declarations cannot contain yield that points to outer switch expression
-      @Override
-      public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {}
-
-      // do not go inside to save time: expressions cannot contain yield that points to outer switch expression
-      @Override
-      public void visitExpression(@NotNull PsiExpression expression) {}
-    }
-    YieldFinder finder = new YieldFinder();
-    scope.accept(finder);
-    return finder.hasYield;
   }
 
   static HighlightInfo.@NotNull Builder createIncompatibleTypeHighlightInfo(@NotNull PsiType lType,

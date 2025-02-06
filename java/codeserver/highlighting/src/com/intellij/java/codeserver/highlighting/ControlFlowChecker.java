@@ -163,7 +163,7 @@ final class ControlFlowChecker {
   /**
    * @return field that has initializer with this element as subexpression or null if not found
    */
-  static PsiField findEnclosingFieldInitializer(@NotNull PsiElement entry) {
+  private static PsiField findEnclosingFieldInitializer(@NotNull PsiElement entry) {
     PsiElement element = entry;
     while (element != null) {
       PsiElement parent = element.getParent();
@@ -256,22 +256,16 @@ final class ControlFlowChecker {
     myVisitor.report(JavaErrorKinds.ASSIGNMENT_TO_FINAL_VARIABLE.create(reference, variable));
   }
 
-  private static @NotNull ControlFlow getControlFlow(@NotNull PsiElement context) throws AnalysisCanceledException {
+  static @Nullable ControlFlow getControlFlow(@NotNull PsiElement context) {
     LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
-    return ControlFlowFactory.getControlFlow(context, policy, ControlFlowOptions.create(true, true, true));
-  }
-
-  private static boolean variableDefinitelyAssignedIn(@NotNull PsiVariable variable,
-                                                      @NotNull PsiElement context,
-                                                      boolean resultOnIncompleteCode) {
     try {
-      return ControlFlowUtil.isVariableDefinitelyAssigned(variable, getControlFlow(context));
+      return ControlFlowFactory.getControlFlow(context, policy, ControlFlowOptions.create(true, true, true));
     }
     catch (AnalysisCanceledException e) {
-      return resultOnIncompleteCode;
+      return null;
     }
   }
-  
+
   void checkRecordComponentInitialized(@NotNull PsiRecordComponent component) {
     PsiClass aClass = component.getContainingClass();
     if (aClass == null) return;
@@ -282,7 +276,9 @@ final class ControlFlowChecker {
     PsiCodeBlock body = canonicalConstructor.getBody();
     if (body == null) return;
     PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
-    if (field == null || variableDefinitelyAssignedIn(field, body, true)) return;
+    if (field == null) return;
+    ControlFlow flow = getControlFlow(body);
+    if (flow == null || ControlFlowUtil.isVariableDefinitelyAssigned(field, flow)) return;
     myVisitor.report(JavaErrorKinds.RECORD_COMPONENT_NOT_INITIALIZED.create(component));
   }
 }
