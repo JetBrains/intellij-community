@@ -324,7 +324,9 @@ object KotlinPluginBuilder {
       spec.withProjectLibrary("javax-inject")
       spec.withProjectLibrary("jackson-dataformat-toml")
 
-      withKotlincInPluginDirectory(spec)
+      withKotlincInPluginDirectory(spec = spec)
+      // TODO: KTIJ-32993
+      withKotlincInPluginDirectory(libName = "kotlin-ide-dist", target = "kotlinc.ide", spec = spec)
 
       spec.withCustomVersion(PluginVersionEvaluator { _, ideBuildVersion, _ ->
         // in kt-branches we have own since and until versions
@@ -430,7 +432,9 @@ object KotlinPluginBuilder {
       }
       withKotlincKotlinCompilerCommonLibrary(spec, mainModuleName)
       spec.withProjectLibrary("kotlinc.kotlin-compiler-fe10")
-      withKotlincInPluginDirectory(spec)
+      withKotlincInPluginDirectory(spec = spec)
+      // TODO: KTIJ-32993
+      withKotlincInPluginDirectory(libName = "kotlin-ide-dist", target = "kotlinc.ide", spec = spec)
 
       addition?.invoke(spec)
     }
@@ -467,14 +471,14 @@ private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayo
   }
 }
 
-private fun withKotlincInPluginDirectory(spec: PluginLayout.PluginLayoutSpec) {
+private fun withKotlincInPluginDirectory(libName: String = "kotlin-dist", target: String = "kotlinc", spec: PluginLayout.PluginLayoutSpec) {
   spec.withGeneratedResources { targetDir, context ->
-    val distLibName = "kotlinc.kotlin-dist"
+    val distLibName = "kotlinc.$libName"
     val library = context.project.libraryCollection.findLibrary(distLibName)!!
     val jars = library.getPaths(JpsOrderRootType.COMPILED)
     if (jars.size != 1) {
       throw IllegalStateException("$distLibName is expected to have only one jar")
     }
-    Decompressor.Zip(jars[0]).extract(targetDir.resolve("kotlinc"))
+    Decompressor.Zip(jars[0]).extract(targetDir.resolve(target))
   }
 }

@@ -37,19 +37,21 @@ import com.intellij.util.io.awaitExit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.script.KotlinScratchScript
-import org.jetbrains.kotlin.idea.core.script.scriptClassPath
 import org.jetbrains.kotlin.idea.scratch.actions.RunScratchAction.ExplainInfo
 import org.jetbrains.kotlin.idea.scratch.output.ScratchOutput
 import org.jetbrains.kotlin.idea.scratch.output.ScratchOutputHandler
 import org.jetbrains.kotlin.idea.util.JavaParametersBuilder
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.projectStructure.version
+import java.io.File
 import java.net.URLClassLoader
 import java.nio.file.Path
+import java.util.Locale.getDefault
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
@@ -128,40 +130,40 @@ class K2ScratchExecutor(val scratchFile: ScratchFile, val project: Project, val 
             }
         }
 
-        val compilationResult = runBlockingCancellable {
-            compileScript(scriptFile)
-        }
-
-        val infos = if (compilationResult != 0) {
-            val failed = ExplainInfo("", 0 to 0, "Compilation failed with code $compilationResult", 0)
-            listOf(failed)
-        } else {
-            runCompiledScript(scriptFile).map { (key, value) ->
-                val leftBracketIndex = key.indexOf("(")
-                val rightBracketIndex = key.indexOf(")")
-                val commaIndex = key.indexOf(",")
-
-                val offsets =
-                    key.substring(leftBracketIndex + 1, commaIndex).toInt() to key.substring(commaIndex + 2, rightBracketIndex).toInt()
-
-                ExplainInfo(
-                    key.substring(0, leftBracketIndex), offsets, value, scratchFile.getPsiFile()?.getLineNumber(offsets.second)
-                )
+        val infos = try {
+            val compilationResult = runBlockingCancellable {
+                getJavaCommandLine(scriptFile).createProcess().awaitExit()
             }
+
+            if (compilationResult != 0) {
+                val failed = ExplainInfo("", 0 to 0, "Compilation failed with code $compilationResult", 1)
+                listOf(failed)
+            } else {
+                runCompiledScript(scriptFile).map { (key, value) ->
+                    val leftBracketIndex = key.indexOf("(")
+                    val rightBracketIndex = key.indexOf(")")
+                    val commaIndex = key.indexOf(",")
+
+                    val offsets =
+                        key.substring(leftBracketIndex + 1, commaIndex).toInt() to key.substring(commaIndex + 2, rightBracketIndex).toInt()
+
+                    ExplainInfo(
+                        key.substring(0, leftBracketIndex), offsets, value, scratchFile.getPsiFile()?.getLineNumber(offsets.second)
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            listOf(ExplainInfo("", 0 to 0, "Failed to run scratch file: ${e.message}", 1))
         }
 
         handler.handle(scratchFile, infos, scope)
         handler.onFinish(file)
     }
 
-    private suspend fun compileScript(scriptFile: VirtualFile): Int {
-        val compileScriptCommand = getJavaCommandLine(scriptFile)
-        return compileScriptCommand.createProcess().awaitExit()
-    }
-
     private fun getJavaCommandLine(scriptFile: VirtualFile): GeneralCommandLine {
         val javaParameters = JavaParametersBuilder(project).withSdkFrom(ModuleUtilCore.findModuleForFile(scriptFile, project), true)
-            .withMainClassName("org.jetbrains.kotlin.cli.jvm.K2JVMCompiler").build()
+            .withMainClassName("org.jetbrains.kotlin.preloading.Preloader")
+            .build()
 
         javaParameters.charset = null
         with(javaParameters.vmParametersList) {
@@ -177,33 +179,49 @@ class K2ScratchExecutor(val scratchFile: ScratchFile, val project: Project, val 
 
         val ideScriptingClasses = PathUtil.getJarPathForClass(KotlinScratchScript::class.java)
 
+        // TODO: KTIJ-32993
+        val kotlincIdeLibDirectory = File(KotlinPluginLayout.kotlincIde, "lib")
+        val powerAssertLib = File(kotlincIdeLibDirectory, KotlinArtifactNames.POWER_ASSERT_COMPILER_PLUGIN)
 
+        // TODO: KTIJ-32993
         val classPath = buildSet {
-            val classPath = listOf( // KotlinPaths.ClassPaths.CompilerWithScripting + jetbrains-annotations
-                KotlinArtifacts.kotlinCompiler,
-                KotlinArtifacts.kotlinStdlib,
-                KotlinArtifacts.kotlinReflect,
-                KotlinArtifacts.kotlinScriptRuntime,
-                KotlinArtifacts.trove4j,
-                KotlinArtifacts.kotlinDaemon,
-                KotlinArtifacts.kotlinScriptingCompiler,
-                KotlinArtifacts.kotlinScriptingCompilerImpl,
-                KotlinArtifacts.kotlinScriptingCommon,
-                KotlinArtifacts.kotlinScriptingJvm,
+            this += ideScriptingClasses
+            listOf(
+                //KotlinArtifacts.kotlinCompiler,
+                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_COMPILER),
+                //KotlinArtifacts.kotlinStdlib,
+                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB),
+                //KotlinArtifacts.kotlinReflect,
+                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_REFLECT),
+                //KotlinArtifacts.kotlinScriptRuntime,
+                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPT_RUNTIME),
+                // KotlinArtifacts.trove4j,
+                File(kotlincIdeLibDirectory, KotlinArtifactNames.TROVE4J),
+                // KotlinArtifacts.kotlinDaemon,
+                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_DAEMON),
+                powerAssertLib,
+                //KotlinArtifacts.kotlinScriptingCompiler,
+                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_COMPILER),
+                //KotlinArtifacts.kotlinScriptingCompilerImpl,
+                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_COMPILER_IMPL),
+                //KotlinArtifacts.kotlinScriptingCommon,
+                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_COMMON),
+                //KotlinArtifacts.kotlinScriptingJvm,
+                File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_SCRIPTING_JVM),
                 KotlinArtifacts.jetbrainsAnnotations
-            ).map { it.toPath().absolutePathString() }
-
-            addAll(classPath)
-            add(ideScriptingClasses)
+            ).mapTo(this) { it.toPath().absolutePathString() }
             //addAll((scriptClassPath).map { it.toPath().absolutePathString() })
         }.toList()
 
-        javaParameters.classPath.addAll(classPath)
+        javaParameters.classPath.add(File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_PRELOADER).absolutePath)
         javaParameters.programParametersList.addAll(
-            "-kotlin-home", KotlinPluginLayout.kotlinc.toPath().absolutePathString(),
+            "-cp", File(kotlincIdeLibDirectory, KotlinArtifactNames.KOTLIN_COMPILER).absolutePath,
+            "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler",
+            "-cp", classPath.joinToString(File.pathSeparator),
+            "-kotlin-home", KotlinPluginLayout.kotlincIde.absolutePath,
             scriptFile.path,
             "-d", getPathToScriptJar(scriptFile).absolutePathString(),
-            "-Xplugin=${KotlinArtifacts.powerAssertPlugin.toPath().absolutePathString()}",
+            "-Xplugin=${powerAssertLib.absolutePath}",
             "-script-templates", KotlinScratchScript::class.java.name,
             "-Xuse-fir-lt=false",
             "-Xallow-any-scripts-in-source-roots",
@@ -215,23 +233,6 @@ class K2ScratchExecutor(val scratchFile: ScratchFile, val project: Project, val 
         return javaParameters.toCommandLine()
     }
 
-    private fun getKotlincCommandLine(scriptFile: VirtualFile): GeneralCommandLine {
-        val ideScriptingClasses = PathUtil.getJarPathForClass(KotlinScratchScript::class.java)
-        val classPath = listOf(ideScriptingClasses) + scriptClassPath.map { it.toPath() }
-
-        val compileScriptCommand = GeneralCommandLine().withExePath(KotlinArtifacts.kotlinc.absolutePath)
-            //.withParameters("-J-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5006").withParameters(scriptFile.path)
-            .withParameters("-d", getPathToScriptJar(scriptFile).absolutePathString())
-            .withParameters("-Xplugin=${KotlinArtifacts.powerAssertPlugin.absolutePath}")
-            .withParameters("-cp", classPath.joinToString(separator = ":"))
-            .withParameters("-script-templates", KotlinScratchScript::class.java.name).withParameters("-Xuse-fir-lt=false")
-            .withParameters("-Xallow-any-scripts-in-source-roots")
-            .withParameters("-P", "plugin:kotlin.scripting:disable-script-definitions-autoloading=true")
-            .withParameters("-P", "plugin:kotlin.scripting:disable-standard-script=true")
-            .withParameters("-P", "plugin:kotlin.scripting:enable-script-explanation=true")
-        return compileScriptCommand
-    }
-
     private fun runCompiledScript(scriptFile: VirtualFile): MutableMap<String, Any> {
         val pathToJar = getPathToScriptJar(scriptFile)
         val kotlinPluginJar = Path.of(PathUtil.getJarPathForClass(KotlinScratchScript::class.java))
@@ -241,16 +242,15 @@ class K2ScratchExecutor(val scratchFile: ScratchFile, val project: Project, val 
             pathToJar,
         ).map { it.toUri().toURL() }.toTypedArray()
 
-        val classFileName = scriptFile.nameWithoutExtension.capitalize()
+        val classFileName = scriptFile.nameWithoutExtension.run {
+            replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
+        }
         val classLoader = URLClassLoader.newInstance(urls)
 
         val results: MutableMap<String, Any> = mutableMapOf()
-        try {
-            val loadedClass = classLoader.loadClass(classFileName)
-            loadedClass.constructors.single().newInstance(results)
-        } catch (e: Exception) {
-            results.put("(0, 0)", e)
-        }
+
+        val loadedClass = classLoader.loadClass(classFileName)
+        loadedClass.constructors.single().newInstance(results)
 
         return results
     }
