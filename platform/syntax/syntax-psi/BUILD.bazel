@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.platform.syntax.psi` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "psi_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "psi",
+  module_name = "intellij.platform.syntax.psi",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//platform/util",
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
+    "@lib//:fastutil-min",
+  ],
+  exports = ["//platform/syntax/syntax-api:syntax"],
+  runtime_deps = [":psi_resources"]
+)
+### auto-generated section `build intellij.platform.syntax.psi` end

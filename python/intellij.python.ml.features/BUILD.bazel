@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.python.ml.features` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "ml-features_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "ml-features",
@@ -20,6 +26,7 @@ jvm_library(
     "//platform/ml-api:ml",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
     "@lib//:jetbrains-ml-models-python-imports-ranking-model",
-  ]
+  ],
+  runtime_deps = [":ml-features_resources"]
 )
 ### auto-generated section `build intellij.python.ml.features` end

@@ -155,6 +155,8 @@ jvm_library(
     "@lib//:bouncy-castle-provider",
     "//platform/platform-resources:resources",
     "//platform/platform-resources-en:resources-en",
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/syntax/syntax-psi:psi",
   ]
 )
 

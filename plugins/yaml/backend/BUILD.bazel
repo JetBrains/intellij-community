@@ -1,0 +1,83 @@
+### auto-generated section `build intellij.yaml.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.yaml.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//spellchecker",
+    "//platform/platform-impl:ide-impl",
+    "//xml/openapi:xml",
+    "//json",
+    "//platform/indexing-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "@lib//:stream_ex",
+    "//platform/ide-core-impl",
+    "@lib//:fastutil-min",
+    "//platform/refactoring",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/statistics",
+    "//plugins/yaml",
+  ],
+  runtime_deps = [
+    ":backend_resources",
+    "//platform/backend",
+  ]
+)
+
+jvm_library(
+  name = "backend_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [":backend"],
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//xml/openapi:xml",
+    "//json",
+    "//json/tests:tests_test_lib",
+    "//platform/indexing-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "@lib//:stream_ex",
+    "//platform/ide-core-impl",
+    "@lib//:fastutil-min",
+    "//platform/refactoring",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//plugins/IntelliLang:langInjection",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//RegExpSupport:regexp",
+    "//RegExpSupport:regexp_test_lib",
+    "//plugins/sh",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//plugins/yaml",
+  ],
+  runtime_deps = [":backend_resources"]
+)
+
+jvm_test(
+  name = "backend_test",
+  runtime_deps = [":backend_test_lib"]
+)
+### auto-generated section `build intellij.yaml.backend` end

@@ -25,6 +25,13 @@ jvm_library(
     "//java/java-runtime:rt",
     "//platform/platform-util-io:ide-util-io",
     "//java/execution/impl:java-execution-impl",
+    "//java/openapi:java",
+    "//java/java-tests:tests_test_lib",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/testFramework/extensions:testExtensions",
+    "@lib//:assert_j",
+    "//java/compiler/openapi:java-compiler",
+    "//java/java-impl-refactorings:impl-refactorings",
   ]
 )
 

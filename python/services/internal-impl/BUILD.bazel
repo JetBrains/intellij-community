@@ -13,6 +13,7 @@ jvm_library(
     "//platform/eel-provider",
     "@lib//:jetbrains-annotations",
     "//python/openapi:community",
+    "@lib//:kotlinx-coroutines-core",
     "//python/python-sdk:sdk",
   ]
 )

@@ -25,6 +25,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
   ],
   runtime_deps = [":searchEverywhere_resources"]
 )

@@ -21,6 +21,8 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/project/shared:project",
     "//platform/util",
+    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/core-ui",
   ],
   runtime_deps = [
     ":backend_resources",

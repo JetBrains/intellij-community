@@ -80,6 +80,7 @@ jvm_library(
     "//plugins/terminal/completion",
     "@lib//:http-client",
     "//platform/platform-impl/ui:ide-ui",
+    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
   ],
   exports = [
     "//platform/dvcs-api:vcs-dvcs",
@@ -178,6 +179,7 @@ jvm_library(
     "//plugins/terminal/completion:completion_test_lib",
     "@lib//:http-client",
     "//platform/platform-impl/ui:ide-ui",
+    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
   ],
   runtime_deps = [
     ":vcs-git_resources",

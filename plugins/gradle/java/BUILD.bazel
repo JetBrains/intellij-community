@@ -60,6 +60,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/platform-impl/ui:ide-ui",
     "//java/debugger/shared:java-debugger-impl-shared",
+    "//platform/eel-provider",
   ],
   exports = ["//plugins/gradle:gradle-common"],
   runtime_deps = [
