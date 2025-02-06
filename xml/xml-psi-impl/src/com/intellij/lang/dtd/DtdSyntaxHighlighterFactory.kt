@@ -1,14 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lang.dtd;
+package com.intellij.lang.dtd
 
-import com.intellij.ide.highlighter.XmlFileHighlighter;
-import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ide.highlighter.XmlFileHighlighter
+import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory
+import com.intellij.openapi.fileTypes.SyntaxHighlighter
 
-public class DtdSyntaxHighlighterFactory extends SingleLazyInstanceSyntaxHighlighterFactory {
-  @Override
-  protected @NotNull SyntaxHighlighter createHighlighter() {
-    return new XmlFileHighlighter(true);
-  }
+class DtdSyntaxHighlighterFactory :
+  SingleLazyInstanceSyntaxHighlighterFactory() {
+
+  override fun createHighlighter(): SyntaxHighlighter =
+    XmlFileHighlighter(true)
 }
