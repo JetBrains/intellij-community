@@ -40,8 +40,7 @@ object ImportQuickFixProvider {
             .mapNotNull { diagnostic ->
                 val (expression, positionContext) = detectPositionContext(diagnostic) ?: return@mapNotNull null
 
-                if (positionContext !is KotlinNameReferencePositionContext) return@mapNotNull null
-                val indexProvider = KtSymbolFromIndexProvider(positionContext.nameExpression.containingKtFile)
+                val indexProvider = KtSymbolFromIndexProvider(expression.containingKtFile)
 
                 val candidates = provideImportCandidates(diagnostic, positionContext, indexProvider)
                 val data = createImportData(expression, candidates) ?: return@mapNotNull null
@@ -62,19 +61,24 @@ object ImportQuickFixProvider {
 
     private fun KaSession.provideImportCandidates(
         diagnostic: KaDiagnosticWithPsi<*>,
-        positionContext: KotlinNameReferencePositionContext,
+        positionContext: KotlinRawPositionContext,
         indexProvider: KtSymbolFromIndexProvider
-    ): List<ImportCandidate> = when (diagnostic) {
-        is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable ->
-            sequenceOf(DelegateMethodImportCandidatesProvider(diagnostic.expectedFunctionSignature, positionContext))
+    ): List<ImportCandidate> {
+        if (positionContext !is KotlinNameReferencePositionContext) return emptyList()
 
-        is KaFirDiagnostic.DelegateSpecialFunctionMissing ->
-            sequenceOf(DelegateMethodImportCandidatesProvider(diagnostic.expectedFunctionSignature, positionContext))
+        val providers = when (diagnostic) {
+            is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable ->
+                sequenceOf(DelegateMethodImportCandidatesProvider(diagnostic.expectedFunctionSignature, positionContext))
 
-        else ->
-            getCandidateProvidersForUnresolvedNameReference(positionContext)
-    }.flatMap { it.collectCandidates(indexProvider) }
-        .toList()
+            is KaFirDiagnostic.DelegateSpecialFunctionMissing ->
+                sequenceOf(DelegateMethodImportCandidatesProvider(diagnostic.expectedFunctionSignature, positionContext))
+
+            else ->
+                getCandidateProvidersForUnresolvedNameReference(positionContext)
+        }
+
+        return providers.flatMap { it.collectCandidates(indexProvider) }.toList()
+    }
     
 
     context(KaSession)
