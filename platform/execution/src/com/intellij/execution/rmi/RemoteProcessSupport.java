@@ -209,7 +209,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return result;
   }
 
-  protected void onCreated(@NotNull Target target, @NotNull Parameters configuration, @NotNull EntryPoint result) {
+  protected void onCreated(@NotNull Target target, @NotNull Parameters configuration, @NotNull EntryPoint result) throws Exception {
   }
 
   private static void checkIndicator(@Nullable ProgressIndicator indicator) {
