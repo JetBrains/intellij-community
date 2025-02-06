@@ -33,6 +33,7 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
+import java.awt.Insets
 import java.awt.event.ActionEvent
 import java.awt.event.HierarchyEvent
 import java.awt.event.KeyEvent
@@ -277,6 +278,12 @@ private fun createMenuButton(action: AnAction): ActionButton {
                                      ActionPlaces.MAIN_MENU, { ActionToolbar.experimentalToolbarMinimumButtonSize() }) {
     override fun getDataContext(): DataContext {
       return runCatching { DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200) }.getOrNull() ?: super.getDataContext()
+    }
+
+    // Dynamically adjusts the insets of the component based on its height. This approach ensures alignment with the menu
+    override fun getInsets(): Insets? {
+      val ins = super.getInsets()
+      return JBUI.insets(this.height / 8,ins.left,  this.height / 8, ins.right)
     }
   }
 

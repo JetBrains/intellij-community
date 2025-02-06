@@ -11,7 +11,6 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMo
 import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.gridLayout.GridLayout
-import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.util.width
@@ -40,7 +39,7 @@ class MainMenuWithButton(
     RowsGridBuilder(this).defaultVerticalAlign(VerticalAlign.FILL)
       .row(resizable = true)
       .cell(component = toolbarMainMenu, resizableColumn = true)
-      .cell(component = mainMenuButton.button, gaps = UnscaledGaps(top = 5, bottom = 5))
+      .cell(component = mainMenuButton.button)
   }
 
   fun recalculateWidth(toolbar: MainToolbar?) {
