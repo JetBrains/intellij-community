@@ -10,6 +10,7 @@ import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.service.AsyncDocumentFormattingService;
 import com.intellij.formatting.service.AsyncFormattingRequest;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.eel.provider.utils.EelPathUtils.FileTransferAttributesStrategy;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.sh.ShFileType;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
@@ -75,8 +77,7 @@ public final class ShExternalFormatter extends AsyncDocumentFormattingService {
     ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
     if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(shFmtExecutable)) return null;
 
-    @SuppressWarnings("IO_FILE_USAGE")
-    final var path = Optional.ofNullable(request.getIOFile()).map(File::toPath).orElse(null);
+    @SuppressWarnings("IO_FILE_USAGE") final var path = Optional.ofNullable(request.getIOFile()).map(File::toPath).orElse(null);
     if (path == null) return null;
 
     @NonNls
@@ -106,9 +107,11 @@ public final class ShExternalFormatter extends AsyncDocumentFormattingService {
     final var eel = upgradeBlocking(getEelDescriptor(project));
 
     try {
+      FileTransferAttributesStrategy forceExecutePermission =
+        FileTransferAttributesStrategy.copyWithRequiredPosixPermissions(PosixFilePermission.OWNER_EXECUTE);
       GeneralCommandLine commandLine = new GeneralCommandLine()
         .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
-        .withExePath(transferLocalContentToRemoteTempIfNeeded(eel, Path.of(shFmtExecutable)).toString())
+        .withExePath(transferLocalContentToRemoteTempIfNeeded(eel, Path.of(shFmtExecutable), forceExecutePermission).toString())
         .withWorkingDirectory(path.getParent())
         .withParameters(params);
 

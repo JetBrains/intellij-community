@@ -200,7 +200,12 @@ object EelPathUtils {
    * - [MessageDigest]: For hash calculation.
    */
   @JvmStatic
-  fun transferLocalContentToRemoteTempIfNeeded(eel: EelApi, source: Path): EelPath {
+  @JvmOverloads
+  fun transferLocalContentToRemoteTempIfNeeded(
+    eel: EelApi,
+    source: Path,
+    fileAttributesStrategy: FileTransferAttributesStrategy = FileTransferAttributesStrategy.Copy,
+  ): EelPath {
     val sourceDescriptor = source.getEelDescriptor()
 
     check(sourceDescriptor is LocalEelDescriptor)
@@ -210,7 +215,7 @@ object EelPathUtils {
     }
 
     return runBlockingMaybeCancellable {
-      service<TransferredContentHolder>().transferIfNeeded(eel, source).asEelPath()
+      service<TransferredContentHolder>().transferIfNeeded(eel, source, fileAttributesStrategy).asEelPath()
     }
   }
 
@@ -243,7 +248,7 @@ object EelPathUtils {
 
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun transferIfNeeded(eel: EelApi, source: Path): Path {
+    suspend fun transferIfNeeded(eel: EelApi, source: Path, fileAttributesStrategy: FileTransferAttributesStrategy): Path {
       return cache.compute(eel.descriptor to source.toString()) { _, deferred ->
         if (deferred != null) {
           if (deferred.isCompleted) {
@@ -259,7 +264,7 @@ object EelPathUtils {
 
         scope.async {
           val temp = eel.createTempFor(source, true)
-          walkingTransfer(source, temp, false, true)
+          walkingTransfer(source, temp, false, fileAttributesStrategy)
           calculateFileHash(source) to temp
         }
       }!!.await().second
@@ -309,6 +314,51 @@ object EelPathUtils {
 
   @RequiresBackgroundThread
   fun walkingTransfer(sourceRoot: Path, targetRoot: Path, removeSource: Boolean, copyAttributes: Boolean) {
+    val fileAttributesStrategy = if (copyAttributes) FileTransferAttributesStrategy.Copy else FileTransferAttributesStrategy.Skip
+    return walkingTransfer(sourceRoot, targetRoot, removeSource, fileAttributesStrategy)
+  }
+
+  sealed interface FileTransferAttributesStrategy {
+    object Skip : FileTransferAttributesStrategy
+
+    interface SourceAware : FileTransferAttributesStrategy {
+      fun handleFileAttributes(source: Path, target: Path, sourceAttrs: BasicFileAttributes)
+    }
+
+    object Copy : SourceAware {
+      override fun handleFileAttributes(source: Path, target: Path, sourceAttrs: BasicFileAttributes) {
+        copyAttributes(sourceAttrs, target, sourcePathString = source.pathString)
+      }
+    }
+
+    data class RequirePosixPermissions(val requiredPermissions: Set<PosixFilePermission>) : SourceAware {
+      override fun handleFileAttributes(source: Path, target: Path, sourceAttrs: BasicFileAttributes) {
+        copyAttributes(sourceAttrs, target, sourcePathString = source.pathString,
+                       requirePosixPermissions = requiredPermissions)
+      }
+    }
+
+    companion object {
+      @JvmStatic
+      fun copyWithRequiredPosixPermissions(vararg requiredPermissions: PosixFilePermission): RequirePosixPermissions =
+        RequirePosixPermissions(setOf(elements = requiredPermissions))
+    }
+  }
+
+  @RequiresBackgroundThread
+  fun walkingTransfer(sourceRoot: Path, targetRoot: Path, removeSource: Boolean, fileAttributesStrategy: FileTransferAttributesStrategy) {
+    val shouldObtainExtendedAttributes = when (fileAttributesStrategy) {
+      FileTransferAttributesStrategy.Skip -> false
+      is FileTransferAttributesStrategy.SourceAware -> true
+    }
+
+    fun processFileAttributesOrSkip(source: Path, target: Path, sourceAttrs: BasicFileAttributes) {
+      when (fileAttributesStrategy) {
+        FileTransferAttributesStrategy.Skip -> Unit
+        is FileTransferAttributesStrategy.SourceAware -> fileAttributesStrategy.handleFileAttributes(source, target, sourceAttrs)
+      }
+    }
+
     val traversalStack = ArrayDeque<TraversalRecord>()
     traversalStack.add(TraversalRecord.Pending(sourceRoot, isRoot = true))
 
@@ -327,7 +377,7 @@ object EelPathUtils {
             parent.resolve(file.toString())
           }
 
-          val sourceAttrs: BasicFileAttributes = readSourceAttrs(source, target, withExtendedAttributes = copyAttributes)
+          val sourceAttrs: BasicFileAttributes = readSourceAttrs(source, target, withExtendedAttributes = shouldObtainExtendedAttributes)
 
           when {
             sourceAttrs.isDirectory -> {
@@ -354,21 +404,14 @@ object EelPathUtils {
               if (removeSource) {
                 Files.delete(source)
               }
-              if (copyAttributes) {
-                copyAttributes(source, target, sourceAttrs)
-              }
+              processFileAttributesOrSkip(source, target, sourceAttrs)
             }
 
             sourceAttrs.isSymbolicLink -> {
               Files.copy(source, target, LinkOption.NOFOLLOW_LINKS)
-              if (copyAttributes) {
-                copyAttributes(source, target, sourceAttrs)
-              }
+              processFileAttributesOrSkip(source, target, sourceAttrs)
               if (removeSource) {
                 Files.delete(source)
-              }
-              if (copyAttributes) {
-                copyAttributes(source, target, sourceAttrs)
               }
             }
 
@@ -385,9 +428,7 @@ object EelPathUtils {
             if (removeSource) {
               Files.delete(currentTraverseItem.sourcePath)
             }
-            if (copyAttributes) {
-              copyAttributes(currentTraverseItem.sourcePath, currentTraverseItem.targetPath, currentTraverseItem.sourceAttrs)
-            }
+            processFileAttributesOrSkip(currentTraverseItem.sourcePath, currentTraverseItem.targetPath, currentTraverseItem.sourceAttrs)
           }
         }
       }
@@ -456,49 +497,77 @@ object EelPathUtils {
     return osSpecific ?: source.fileAttributesView<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
   }
 
-  private fun copyAttributes(source: Path, target: Path, sourceAttrs: BasicFileAttributes) {
-    if (sourceAttrs is PosixFileAttributes) {
-      try {
-        val targetView = Files.getFileAttributeView(target, PosixFileAttributeView::class.java, LinkOption.NOFOLLOW_LINKS)
-        if (targetView != null) {
-          // TODO It's ineffective for IjentNioFS, because there are 6 consequential system calls.
-          targetView.setPermissions(sourceAttrs.permissions())
-          runCatching<UnsupportedOperationException>(
-            { targetView.setOwner(sourceAttrs.owner()) },
-            { targetView.setGroup(sourceAttrs.group()) }
-          )
-        }
-      }
-      catch (err: IOException) {
-        LOG.info("Failed to copy Posix file attributes from $source to $target: $err")
-      }
+  /**
+   * Copies file attributes from a source file to the target path, ensuring compatibility with different
+   * file systems such as POSIX and Windows.
+   *
+   * @param sourceAttrs             The file attributes of the source file from which the attributes will be copied.
+   * @param target                  The target path where the attributes will be applied.
+   * @param sourcePathString        The string representation of the source path, used for logging purposes.
+   * @param requirePosixPermissions A set of additional POSIX file permissions required to be merged
+   *                                into the copied attributes.
+   */
+  private fun copyAttributes(
+    sourceAttrs: BasicFileAttributes,
+    target: Path,
+    sourcePathString: String,
+    requirePosixPermissions: Set<PosixFilePermission> = emptySet(),
+  ) {
+    fun <T> Result<T>.logIOExceptionOrThrow(fileAttributeViewName: String): Result<T> =
+      handleIOExceptionOrThrow { LOG.info("Failed to copy $fileAttributeViewName file attributes from $sourcePathString to $target: $it") }
+
+    target.fileAttributesViewOrNull<PosixFileAttributeView>(LinkOption.NOFOLLOW_LINKS)?.let { posixView ->
+      runCatching { copyPosixOnlyFileAttributes(sourceAttrs, posixView, requirePosixPermissions) }
+        .logIOExceptionOrThrow(fileAttributeViewName = "Posix")
     }
 
-    if (sourceAttrs is DosFileAttributes) {
-      try {
-        val targetView = Files.getFileAttributeView(target, DosFileAttributeView::class.java, LinkOption.NOFOLLOW_LINKS)
-        if (targetView != null) {
-          targetView.setHidden(sourceAttrs.isHidden)
-          targetView.setSystem(sourceAttrs.isSystem)
-          targetView.setArchive(sourceAttrs.isArchive)
-          targetView.setReadOnly(sourceAttrs.isReadOnly)
-        }
-      }
-      catch (err: IOException) {
-        LOG.info("Failed to copy Windows file attributes from $source to $target: $err")
-      }
+    target.fileAttributesViewOrNull<DosFileAttributeView>(LinkOption.NOFOLLOW_LINKS)?.let { dosView ->
+      runCatching { copyDosOnlyFileAttributes(sourceAttrs, dosView) }
+        .logIOExceptionOrThrow(fileAttributeViewName = "Windows")
     }
 
-    try {
-      Files.getFileAttributeView(target, BasicFileAttributeView::class.java, LinkOption.NOFOLLOW_LINKS).setTimes(
-        sourceAttrs.lastModifiedTime(),
-        sourceAttrs.lastAccessTime(),
-        sourceAttrs.creationTime(),
+    target.fileAttributesViewOrNull<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS)?.let { basicView ->
+      runCatching { copyBasicFileAttributes(sourceAttrs, basicView) }
+        .logIOExceptionOrThrow(fileAttributeViewName = "basic")
+    }
+  }
+
+  private fun copyPosixOnlyFileAttributes(
+    from: BasicFileAttributes,
+    to: PosixFileAttributeView,
+    requirePermissions: Set<PosixFilePermission> = emptySet(),
+  ) {
+    if (from is PosixFileAttributes) {
+      // TODO It's ineffective for IjentNioFS, because there are 6 consequential system calls.
+      to.setPermissions(from.permissions() + requirePermissions)
+      runCatching<UnsupportedOperationException>(
+        { to.setOwner(from.owner()) },
+        { to.setGroup(from.group()) }
       )
     }
-    catch (err: IOException) {
-      LOG.info("Failed to copy basic file attributes from $source to $target: $err")
+    else {
+      if (requirePermissions.isNotEmpty()) {
+        to.setPermissions(to.readAttributes().permissions() + requirePermissions)
+      }
     }
+  }
+
+  private fun copyDosOnlyFileAttributes(from: BasicFileAttributes, to: DosFileAttributeView) {
+    if (from is DosFileAttributes) {
+      to.setHidden(from.isHidden)
+      to.setSystem(from.isSystem)
+      to.setArchive(from.isArchive)
+      to.setReadOnly(from.isReadOnly)
+    }
+    copyBasicFileAttributes(from, to)
+  }
+
+  private fun copyBasicFileAttributes(from: BasicFileAttributes, to: BasicFileAttributeView) {
+    to.setTimes(
+      from.lastModifiedTime(),
+      from.lastAccessTime(),
+      from.creationTime(),
+    )
   }
 
   suspend fun maybeUploadPath(scope: CoroutineScope, path: Path, target: EelDescriptor): EelPath {
@@ -532,6 +601,9 @@ object EelPathUtils {
     return referencedPath
   }
 }
+
+private inline fun <T> Result<T>.handleIOExceptionOrThrow(action: (exception: IOException) -> Unit): Result<T> =
+  onFailure { if (it is IOException) action(it) else throw it }
 
 private inline fun <reified T : Throwable> runCatching(vararg blocks: () -> Unit) {
   blocks.forEach {

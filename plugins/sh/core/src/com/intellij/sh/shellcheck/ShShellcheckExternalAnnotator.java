@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.provider.utils.EelPathUtils.FileTransferAttributesStrategy;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
@@ -45,6 +46,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -55,7 +57,8 @@ import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking
 import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemoteTempIfNeeded;
 import static java.util.Arrays.asList;
 
-public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellcheckExternalAnnotator.CollectedInfo, ShShellcheckExternalAnnotator.ShellcheckResponse> {
+public class ShShellcheckExternalAnnotator
+  extends ExternalAnnotator<ShShellcheckExternalAnnotator.CollectedInfo, ShShellcheckExternalAnnotator.ShellcheckResponse> {
   private static final Logger LOG = Logger.getInstance(ShShellcheckExternalAnnotator.class);
   private static final List<@NlsSafe String> KNOWN_SHELLS = asList("bash", "dash", "ksh", "sh"); //NON-NLS
   private static final @NlsSafe String DEFAULT_SHELL = "bash";
@@ -91,9 +94,11 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
     final var eel = upgradeBlocking(getEelDescriptor(fileInfo.project));
 
     try {
+      FileTransferAttributesStrategy forceExecutePermission =
+        FileTransferAttributesStrategy.copyWithRequiredPosixPermissions(PosixFilePermission.OWNER_EXECUTE);
       GeneralCommandLine commandLine = new GeneralCommandLine()
         .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
-        .withExePath(transferLocalContentToRemoteTempIfNeeded(eel, Path.of(shellcheckExecutable)).toString())
+        .withExePath(transferLocalContentToRemoteTempIfNeeded(eel, Path.of(shellcheckExecutable), forceExecutePermission).toString())
         .withParameters(fileInfo.executionParams);
       if (!ApplicationManager.getApplication().isUnitTestMode()) commandLine.withWorkDirectory(fileInfo.workDirectory);
       long timestamp = fileInfo.modificationStamp;
@@ -146,10 +151,10 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
       String message = result.message;
       @NonNls String scCode = "SC" + code;
       @NonNls String html =
-          "<html>" +
-              "<p>" + StringUtil.escapeXmlEntities(message) + "</p>" +
-              "<p>See <a href='https://github.com/koalaman/shellcheck/wiki/SC" + code + "'>" + scCode + "</a>.</p>" +
-          "</html>";
+        "<html>" +
+        "<p>" + StringUtil.escapeXmlEntities(message) + "</p>" +
+        "<p>See <a href='https://github.com/koalaman/shellcheck/wiki/SC" + code + "'>" + scCode + "</a>.</p>" +
+        "</html>";
       AnnotationBuilder builder = holder.newAnnotation(severity(result.level), message).range(range).tooltip(html);
 
       String formattedMessage = format(message);
@@ -159,7 +164,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
       }
       String quotedMessage = quote(formattedMessage);
       builder.withFix(new ShSuppressInspectionIntention(quotedMessage, scCode, startOffset))
-      .withFix(new ShDisableInspectionIntention(quotedMessage, scCode))
+        .withFix(new ShDisableInspectionIntention(quotedMessage, scCode))
         .create();
     }
   }
@@ -179,7 +184,8 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
     List<String> params = new SmartList<>();
     ShShellcheckInspection inspection = ShShellcheckInspection.findShShellcheckInspection(file);
 
-    Collections.addAll(params, "--color=never", "--format=json", "--severity=style", "--shell=" + interpreter, "--wiki-link-count=10", //NON-NLS
+    Collections.addAll(params, "--color=never", "--format=json", "--severity=style", "--shell=" + interpreter, "--wiki-link-count=10",
+                       //NON-NLS
                        "--exclude=SC1091", "-"); //NON-NLS
     inspection.getDisabledInspections().forEach(setting -> params.add("--exclude=" + setting));//NON-NLS
     return params;
