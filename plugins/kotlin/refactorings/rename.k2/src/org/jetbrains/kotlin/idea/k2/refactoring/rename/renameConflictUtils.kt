@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
 import com.intellij.codeInsight.CodeInsightUtilCore
@@ -72,7 +72,7 @@ fun checkClassLikeNameShadowing(declaration: KtNamedDeclaration, newName: String
             val klass = it.psi
             val newFqName = (klass as? KtClassOrObject)?.fqName ?: (klass as? PsiClass)?.qualifiedName?.let { FqName.fromSegments(it.split(".")) }
             if (newFqName != null && klass != null && processedClasses.add(klass)) {
-                for (ref in ReferencesSearch.search(klass, declaration.useScope)) {
+                for (ref in ReferencesSearch.search(klass, declaration.useScope).asIterable()) {
                     val refElement = ref.element as? KtSimpleNameExpression ?: continue //todo cross language conflicts
                     if (refElement.getStrictParentOfType<KtTypeReference>() != null) {
                         //constructor (also implicit) calls would be processed together with other callables

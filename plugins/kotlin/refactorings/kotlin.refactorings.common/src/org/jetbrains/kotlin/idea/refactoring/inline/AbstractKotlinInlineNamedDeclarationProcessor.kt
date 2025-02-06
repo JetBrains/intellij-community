@@ -59,7 +59,7 @@ abstract class AbstractKotlinInlineNamedDeclarationProcessor<TDeclaration : KtNa
     protected final override fun findUsages(): Array<UsageInfo> {
         if (inlineThisOnly && reference != null) return arrayOf(UsageInfo(reference))
         val usages = hashSetOf<UsageInfo>()
-        for (usage in ReferencesSearchScopeHelper.search(declaration, myRefactoringScope)) {
+        for (usage in ReferencesSearchScopeHelper.search(declaration, myRefactoringScope).asIterable()) {
             usages += UsageInfo(usage)
         }
 

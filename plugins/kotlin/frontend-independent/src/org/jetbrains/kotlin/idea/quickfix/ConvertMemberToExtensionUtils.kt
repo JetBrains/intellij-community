@@ -73,7 +73,7 @@ private fun processSingleDeclaration(
     val javaCallsToFix = SmartList<PsiMethodCallExpression>()
     runWithModalProgressBlocking(project, KotlinBundle.message("searching.for.0", element.name!!)) {
         readAction {
-            for (ref in ReferencesSearch.search(element)) {
+            for (ref in ReferencesSearch.search(element).asIterable()) {
                 when (ref) {
                     is KtReference -> {
                         val refFile = ref.element.containingKtFile

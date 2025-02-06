@@ -531,7 +531,7 @@ fun checkInternalMemberUsages(moveCheckerInfo: KotlinMoveConflictCheckerInfo): M
     moveCheckerInfo.elementsToMove.forEach { it.accept(memberCollector) }
 
     for (memberToCheck in membersToCheck) {
-        for (reference in ReferencesSearch.search(memberToCheck)) {
+        for (reference in ReferencesSearch.search(memberToCheck).asIterable()) {
             val element = reference.element
             val usageModule = ModuleUtilCore.findModuleForPsiElement(element) ?: continue
             if (usageModule != targetModule && targetModule !in usageModule.implementedModules && !moveCheckerInfo.isToBeMoved(element)) {

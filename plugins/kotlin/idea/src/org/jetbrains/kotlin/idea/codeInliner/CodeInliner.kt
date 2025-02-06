@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInliner
 
@@ -220,7 +220,7 @@ class CodeInliner (
             val oldName = declaration.name
             if (oldName != null && oldName.nameHasConflictsInScope(lexicalScope, languageVersionSettings)) {
                 val newName = KotlinNameSuggester.suggestNameByName(oldName, validator)
-                for (reference in ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent))) {
+                for (reference in ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent)).asIterable()) {
                     if (reference.element.startOffset < endOfScope) {
                         reference.handleElementRename(newName)
                     }

@@ -338,7 +338,7 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
 
             if (body != null) {
                 val functionParameter = callable.valueParameters.getOrNull(data.functionParameterIndex) ?: return
-                for (ref in ReferencesSearch.search(functionParameter, LocalSearchScope(body))) {
+                for (ref in ReferencesSearch.search(functionParameter, LocalSearchScope(body)).asIterable()) {
                     val element = ref.element as? KtSimpleNameExpression ?: continue
                     val callExpression = element.getParentOfTypeAndBranch<KtCallExpression> { calleeExpression }
                     if (callExpression != null) {

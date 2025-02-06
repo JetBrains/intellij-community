@@ -34,7 +34,7 @@ internal object ActionOrGroupIdResolveUtil {
     val executorClass = JavaPsiFacade.getInstance(project).findClass(Executor::class.java.getName(), scope)
     if (executorClass == null) return
 
-    for (inheritor in ClassInheritorsSearch.search(executorClass, scope, true)) {
+    for (inheritor in ClassInheritorsSearch.search(executorClass, scope, true).asIterable()) {
       val id = computeConstantReturnValue(inheritor, "getId")
       if (id != null && !processor.process(id, inheritor)) return
 

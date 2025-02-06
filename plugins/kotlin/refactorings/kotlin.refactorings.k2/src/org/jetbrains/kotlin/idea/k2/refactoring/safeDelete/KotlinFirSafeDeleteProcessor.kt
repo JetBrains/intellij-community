@@ -92,7 +92,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
             if (owner != null) {
                 val parameterList = owner.typeParameters
                 val parameterIndex = parameterList.indexOf(element)
-                for (reference in ReferencesSearch.search(owner)) {
+                for (reference in ReferencesSearch.search(owner).asIterable()) {
                     JavaSafeDeleteDelegate.EP.forLanguage(reference.element.language)?.createJavaTypeParameterUsageInfo(
                         reference,
                         result,

@@ -35,7 +35,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                     parameterInfo.oldName != parameterInfo.name ||
                     isDataClass && i != parameterInfo.oldIndex
                 ) {
-                    for (reference in ReferencesSearch.search(oldParam, oldParam.useScope())) {
+                    for (reference in ReferencesSearch.search(oldParam, oldParam.useScope()).asIterable()) {
                         val element = reference.element
                         if (isDataClass &&
                             element is KtSimpleNameExpression &&

@@ -132,7 +132,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                     val propagationTarget = functionUsageInfo is CallerUsageInfo ||
                             (functionUsageInfo is OverriderUsageInfo && !functionUsageInfo.isOriginalOverrider)
 
-                    for (reference in ReferencesSearch.search(callee, callee.codeUsageScopeRestrictedToKotlinSources())) {
+                    for (reference in ReferencesSearch.search(callee, callee.codeUsageScopeRestrictedToKotlinSources()).asIterable()) {
                         val callElement = reference.element.getParentOfTypeAndBranch<KtCallElement> { calleeExpression } ?: continue
                         val usage = if (propagationTarget) {
                             KotlinCallerCallUsage(callElement)
@@ -152,7 +152,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
         val element = callerUsage.element ?: return
 
-        for (ref in ReferencesSearch.search(element, element.useScope())) {
+        for (ref in ReferencesSearch.search(element, element.useScope()).asIterable()) {
             val callElement = ref.element.getParentOfTypeAndBranch<KtCallElement> { calleeExpression } ?: continue
             result.add(KotlinCallerCallUsage(callElement))
         }
@@ -283,7 +283,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                 val oldParamName = oldParam.name
 
                 if (parameterInfo == newReceiverInfo || (oldParamName != null && oldParamName != parameterInfo.name) || isDataClass && i != parameterInfo.oldIndex) {
-                    for (reference in ReferencesSearch.search(oldParam, oldParam.useScope())) {
+                    for (reference in ReferencesSearch.search(oldParam, oldParam.useScope()).asIterable()) {
                         val element = reference.element
 
                         if (isDataClass &&
@@ -452,7 +452,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         if (containingDescriptor.defaultFunctionTypeForSamInterface == null) return
         val samClass = method.containingClass ?: return
 
-        for (ref in ReferencesSearch.search(samClass)) {
+        for (ref in ReferencesSearch.search(samClass).asIterable()) {
             if (ref !is KtSimpleNameReference) continue
 
             val callee = ref.expression
@@ -483,7 +483,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
         val baseFunctionInfo = KotlinCallableDefinitionUsage<PsiElement>(method, methodDescriptor, null, null)
 
-        for (overridingMethod in OverridingMethodsSearch.search(method)) {
+        for (overridingMethod in OverridingMethodsSearch.search(method).asIterable()) {
             val unwrappedElement = overridingMethod.namedUnwrappedElement as? KtNamedFunction ?: continue
             val functionDescriptor = unwrappedElement.resolveToDescriptorIfAny() ?: continue
             result.add(DeferredJavaMethodOverrideOrSAMUsage(unwrappedElement, functionDescriptor, null))
@@ -497,7 +497,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
         for (primaryCaller in changeInfo.methodsToPropagateParameters) {
             addDeferredCallerIfPossible(result, primaryCaller)
-            for (overridingCaller in OverridingMethodsSearch.search(primaryCaller)) {
+            for (overridingCaller in OverridingMethodsSearch.search(primaryCaller).asIterable()) {
                 addDeferredCallerIfPossible(result, overridingCaller)
             }
         }
@@ -528,7 +528,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
             if (!(oldParamName != null && oldParamName != parameterInfo.name)) continue
 
-            for (reference in ReferencesSearch.search(oldParam, oldParam.useScope())) {
+            for (reference in ReferencesSearch.search(oldParam, oldParam.useScope()).asIterable()) {
                 val element = reference.element
                 // Usages in named arguments of the calls usage will be changed when the function call is changed
                 if (!((element is KtSimpleNameExpression || element is KDocName) && element.parent !is KtValueArgumentName)) continue

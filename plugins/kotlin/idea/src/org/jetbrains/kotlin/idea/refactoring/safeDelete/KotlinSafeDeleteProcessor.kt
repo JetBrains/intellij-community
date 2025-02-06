@@ -198,7 +198,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
             val parameterList = owner.typeParameters
             val parameterIndex = parameterList.indexOf(parameter)
 
-            for (reference in ReferencesSearch.search(owner)) {
+            for (reference in ReferencesSearch.search(owner).asIterable()) {
                 if (reference !is KtReference) continue
 
                 val referencedElement = reference.element
