@@ -144,7 +144,11 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
       throw new IllegalArgumentException("Invalid kind: " + kind);
     }
     final JavaFileObject fo = super.getJavaFileForInput(location, className, kind); // todo
-    if (fo == null && !"module-info".equals(className)) {
+    boolean isModuleInfo = "module-info".equals(className);
+    if (location == StandardLocation.CLASS_OUTPUT && isModuleInfo) {
+      return null;
+    }
+    if (fo == null && !isModuleInfo) {
       // workaround javac bug (missing null-check): throwing exception here instead of returning null
       throw new FileNotFoundException("Java resource does not exist : " + location + '/' + kind + '/' + className);
     }
