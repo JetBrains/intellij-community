@@ -11,9 +11,6 @@ fun IdeaFrameUI.buildToolWindow(action: UiComponent.() -> Unit = {}): UiComponen
 
 fun IdeaFrameUI.notificationsToolWindow(action: UiComponent.() -> Unit = {}): UiComponent = toolWindow("Notifications", action)
 
-fun IdeaFrameUI.projectToolWindow(action: UiComponent.() -> Unit = {}): UiComponent =
-  x { componentWithChild(byType(TOOL_WINDOW_ROOT_COMPONENT_CLASS), byType("com.intellij.ide.projectView.impl.ProjectViewTree")) }.apply(action)
-
 fun IdeaFrameUI.structureToolWindow(action: UiComponent.() -> Unit = {}): UiComponent = toolWindow("Structure", action)
 
 fun IdeaFrameUI.commitToolWindow(action: UiComponent.() -> Unit = {}): UiComponent = toolWindow("Commit", action)

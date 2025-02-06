@@ -1,28 +1,19 @@
 package com.intellij.driver.sdk.ui.components.common.toolwindows
 
-import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
-import com.intellij.driver.sdk.ui.components.UiComponent.Companion.waitFound
-import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
-import kotlin.time.Duration.Companion.seconds
+import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
+import com.intellij.driver.sdk.ui.components.elements.tree
+import com.intellij.driver.sdk.ui.xQuery
 
-fun Finder.projectViewToolWindow(): ProjectViewToolWindowUi =
-  x(ProjectViewToolWindowUi::class.java) {
-    byAccessibleName("Project Tool Window")
-  }
+fun IdeaFrameUI.projectView(
+  locator: QueryBuilder.() -> String = { componentWithChild(byType("com.intellij.toolWindow.InternalDecoratorImpl"), byType("com.intellij.ide.projectView.impl.ProjectViewTree")) },
+  action: ProjectViewToolWindowUi.() -> Unit = {},
+): ProjectViewToolWindowUi = x(ProjectViewToolWindowUi::class.java, locator).apply(action)
 
-fun Finder.showProjectViewButton() = x { and (byAccessibleName("Project"), byClass("SquareStripeButton")) }
+class ProjectViewToolWindowUi(data: ComponentData) : UiComponent(data) {
+  val projectViewTree = tree(xQuery { byType("com.intellij.ide.projectView.impl.ProjectViewTree") })
 
-fun Finder.openProjectViewToolWindow(): ProjectViewToolWindowUi {
-  return runCatching { projectViewToolWindow().waitFound(3.seconds) }.getOrElse {
-    showProjectViewButton().click()
-    projectViewToolWindow().waitFound(3.seconds)
-  }
-}
-
-class ProjectViewToolWindowUi(data: ComponentData) : JTreeUiComponent(data) {
   fun expandAll() = x("//div[@myicon='expandAll.svg']").waitVisible().click()
 }
-
-
-
