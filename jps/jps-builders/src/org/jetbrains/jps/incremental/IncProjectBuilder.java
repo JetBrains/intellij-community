@@ -1524,6 +1524,8 @@ public final class IncProjectBuilder {
                   doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
                 }
 
+                context.checkCanceled();
+
                 if (errCapture != null && (errCapture.hasErrors() || buildResult == ModuleLevelBuilder.ExitCode.ABORT)) {
                   // attempt recovery
                   if (JavaBuilderUtil.updateMappingsOnRoundCompletion(errCapture, dirtyFilesHolder, chunk)) {
@@ -1543,7 +1545,7 @@ public final class IncProjectBuilder {
                 if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
                   throw new StopBuildException(JpsBuildBundle.message("build.message.builder.0.requested.build.stop", builder.getPresentableName()));
                 }
-                context.checkCanceled();
+
                 if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
                   nextPassRequired = true;
                 }
@@ -1610,7 +1612,7 @@ public final class IncProjectBuilder {
 
   private interface ErrorsCapture extends CompileContext {
     boolean hasErrors();
-    
+
     boolean reportErrors();
 
     static ErrorsCapture wrap(CompileContext delegate) {
