@@ -120,12 +120,12 @@ class ImportQuickFix(
     private fun shouldBeImportedWithShortening(element: KtElement, importVariant: SymbolBasedAutoImportVariant): Boolean {
         if (element !is KtSimpleNameExpression) return false
 
-        // Declarations from root package cannot be imported by FQN, hence cannot be shortened
+        // Declarations from the root package cannot be imported by FQN, hence cannot be shortened
         if (importVariant.fqName.isOneSegmentFQN()) return false
         
         val restoredCandidate = importVariant.candidatePointer.restore() ?: return false
 
-        // for class or enum entry we use ShortenReferences because we not necessary insert an import but may want to
+        // for class or enum entry we use ShortenReferences because we do not necessarily add an import but may want to
         // insert a partially qualified name
         if (
             restoredCandidate.symbol !is KaClassLikeSymbol &&
@@ -138,5 +138,5 @@ class ImportQuickFix(
         if (element.parent is KtCallableReferenceExpression) return false
         
         return true
-    } 
+    }
 }
