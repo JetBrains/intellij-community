@@ -807,6 +807,9 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/Kotlin/kotlinx-datetime/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
+    LibraryLicense("kotlinx-document-store-mvstore", libraryName = "kotlinx-document-store-mvstore", url = "https://github.com/lamba92/kotlin.document.store")
+      .apache("https://github.com/lamba92/kotlin.document.store/blob/master/LICENSE"),
+
     LibraryLicense("kotlinx.html", libraryName = "kotlinx-html-jvm", url = "https://github.com/Kotlin/kotlinx.html")
       .apache("https://github.com/Kotlin/kotlinx.html/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),

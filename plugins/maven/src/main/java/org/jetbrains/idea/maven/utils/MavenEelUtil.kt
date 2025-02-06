@@ -42,7 +42,6 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.io.IOException
 import org.jetbrains.idea.maven.config.MavenConfig
 import org.jetbrains.idea.maven.config.MavenConfigSettings
 import org.jetbrains.idea.maven.execution.SyncBundle
@@ -63,6 +62,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil.isMavenUnitTestModeEnabled
 import org.jetbrains.idea.maven.utils.MavenUtil.isValidMavenHome
 import org.jetbrains.idea.maven.utils.MavenUtil.resolveGlobalSettingsFile
 import org.jetbrains.idea.maven.utils.MavenUtil.resolveUserSettingsPath
+import java.io.IOException
 import java.nio.file.Path
 import javax.swing.event.HyperlinkEvent
 
