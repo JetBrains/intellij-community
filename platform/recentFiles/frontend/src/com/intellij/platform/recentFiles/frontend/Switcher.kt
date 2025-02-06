@@ -143,11 +143,7 @@ object Switcher : BaseSwitcherAction(null) {
       cbShowOnlyEditedFiles = if (!recent) null else JCheckBox(IdeBundle.message("recent.files.checkbox.label"))
 
       val renderer = SwitcherListRenderer(this)
-      val windows = renderer.toolWindows
-      val showMnemonics = speedSearch == null || Registry.`is`("ide.recent.files.tool.window.mnemonics")
-      if (showMnemonics || Registry.`is`("ide.recent.files.tool.window.sort.by.mnemonics")) {
-        updateMnemonics(windows, showMnemonics)
-      }
+
       // register custom actions as soon as possible to block overridden actions
       if (pinned) {
         registerAction(ActionUtil.getShortcutSet("PopupMenu-return")) { navigate(it) }
@@ -167,11 +163,7 @@ object Switcher : BaseSwitcherAction(null) {
         registerSwingAction(ListActions.PageUp.ID, "PAGE_UP")
         registerSwingAction(ListActions.PageDown.ID, "PAGE_DOWN")
       }
-      if (speedSearch == null || Registry.`is`("ide.recent.files.tool.window.mnemonics")) {
-        for (window in windows) {
-          registerToolWindowAction(window)
-        }
-      }
+
       border = JBUI.Borders.empty()
       pathLabel.putClientProperty(SwingTextTrimmer.KEY, SwingTextTrimmer.THREE_DOTS_AT_LEFT)
       val header = JPanel(HorizontalLayout(5))
@@ -206,25 +198,12 @@ object Switcher : BaseSwitcherAction(null) {
         }
       }
 
-      val switcherListItems = mutableListOf<SwitcherListItem>()
-      for (element in windows.sortedWith { o1, o2 ->
-        val m1 = o1.mnemonic
-        val m2 = o2.mnemonic
-        if (m1 == null) (if (m2 == null) 0 else 1) else if (m2 == null) -1 else m1.compareTo(m2)
-      }) {
-        switcherListItems.add(element)
       }
       if (pinned && !windows.isEmpty()) {
         switcherListItems.add(SwitcherRecentLocations(this))
       }
 
-      if (!showMnemonics) {
-        for (window in windows) {
-          window.mnemonic = null
-        }
-      }
-
-      val twModel = CollectionListModel(switcherListItems, true)
+      val twModel = CollectionListModel(windows.toMutableList(), true)
       toolWindows = JBList(speedSearch?.wrap(twModel) ?: twModel)
       toolWindows.visibleRowCount = toolWindows.itemsCount
       toolWindows.border = JBUI.Borders.empty(5, 0)
@@ -278,8 +257,6 @@ object Switcher : BaseSwitcherAction(null) {
         }
       }
 
-      files = JBListWithOpenInRightSplit.createListWithOpenInRightSplitter(speedSearch?.wrap(filesModel) ?: filesModel, null)
-      files.visibleRowCount = files.itemsCount
       files.selectionMode = if (pinned) ListSelectionModel.MULTIPLE_INTERVAL_SELECTION else ListSelectionModel.SINGLE_SELECTION
       files.accessibleContext.accessibleName = IdeBundle.message("recent.files.accessible.file.list")
       files.setEmptyText(IdeBundle.message("recent.files.file.list.empty.text"))
@@ -292,13 +269,6 @@ object Switcher : BaseSwitcherAction(null) {
       ScrollingUtil.installActions(files)
       ListHoverListener.DEFAULT.addTo(files)
       clickListener.installOn(files)
-      if (filesModel.size > 0) {
-        val selectionIndex = getFilesSelectedIndex(project, files, forward)
-        files.setSelectedIndex(if (selectionIndex > -1) selectionIndex else 0)
-      }
-      else {
-        ScrollingUtil.ensureSelectionExists(toolWindows)
-      }
       addToTop(header)
       addToBottom(pathLabel)
       addToCenter(SwitcherScrollPane(files, true))
@@ -311,8 +281,7 @@ object Switcher : BaseSwitcherAction(null) {
         files.addKeyListener(listener)
         toolWindows.addKeyListener(listener)
       }
-      popup = JBPopupFactory.getInstance().createComponentPopupBuilder(this,
-                                                                       if (!files.isEmpty || toolWindows.isEmpty) files else toolWindows)
+      popup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, toolWindows)
         .setResizable(pinned)
         .setNormalWindowLevel(pinned && StartupUiUtil.isWaylandToolkit()) // On Wayland, only "normal" windows can be moved smoothly at the moment
         .setModalContext(false)
@@ -393,52 +362,6 @@ object Switcher : BaseSwitcherAction(null) {
       pathLabel.text = if (statusText.isNullOrEmpty()) " " else statusText
     }
 
-    private fun updateMnemonics(windows: List<SwitcherToolWindow>, showMnemonics: Boolean) {
-      val keymap: MutableMap<String?, SwitcherToolWindow?> = HashMap(windows.size)
-      keymap[onKeyRelease.forbiddenMnemonic] = null
-      addForbiddenMnemonics(keymap, "SwitcherForward")
-      addForbiddenMnemonics(keymap, "SwitcherBackward")
-      addForbiddenMnemonics(keymap, IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
-      addForbiddenMnemonics(keymap, IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
-      addForbiddenMnemonics(keymap, IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT)
-      addForbiddenMnemonics(keymap, IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT)
-      val otherTW: MutableList<SwitcherToolWindow> = ArrayList()
-      for (window in windows) {
-        val index = ActivateToolWindowAction.Manager.getMnemonicForToolWindow(window.window.id)
-        val indexShortcut = getIndexShortcut(index - '0'.code) // can never be null here in the current implementation
-        if (index < '0'.code || index > '9'.code || indexShortcut == null || !addShortcut(keymap, window, indexShortcut)) {
-          otherTW.add(window)
-        }
-      }
-      if (!showMnemonics && !Registry.`is`("ide.recent.files.tool.window.sort.by.automatic.mnemonics")) return
-      var i = 0
-      for (window in otherTW) {
-        if (addSmartShortcut(window, keymap)) {
-          continue
-        }
-        while (true) {
-          val indexShortcut = getIndexShortcut(i)
-          if (indexShortcut == null) {
-            break // ran out of shortcuts
-          }
-          else if (addShortcut(keymap, window, indexShortcut)) {
-            ++i // added successfully, should use the next shortcut for the next window
-            break
-          }
-          else {
-            ++i // shortcut not suitable, let's try the next one
-          }
-        }
-      }
-    }
-
-    private fun addForbiddenMnemonics(keymap: MutableMap<String?, SwitcherToolWindow?>, actionId: String) {
-      for (shortcut in ActionUtil.getShortcutSet(actionId).shortcuts) {
-        if (shortcut is KeyboardShortcut) {
-          keymap[onKeyRelease.getForbiddenMnemonic(shortcut.firstKeyStroke)] = null
-        }
-      }
-    }
 
     private fun closeTabOrToolWindow() {
       if (speedSearch != null && speedSearch.isPopupActive) {
@@ -513,14 +436,6 @@ object Switcher : BaseSwitcherAction(null) {
       }
     }
 
-    fun goForward() {
-      go(true)
-    }
-
-    fun goBack() {
-      go(false)
-    }
-
     private val selectedList: JBList<out SwitcherListItem>?
       get() = getSelectedList(files)
 
@@ -530,84 +445,7 @@ object Switcher : BaseSwitcherAction(null) {
 
     private fun updateFilesByCheckBox(event: ItemEvent) {
       val onlyEdited = ItemEvent.SELECTED == event.stateChange
-      val listWasSelected = files.selectedIndex != -1
-      val filesToShow = getFilesToShow(project, onlyEdited, toolWindows.itemsCount, recent)
-      resetListModelAndUpdateNames(
-        (files.model as FilteringListModel<SwitcherVirtualFile>).originalModel as CollectionListModel<SwitcherVirtualFile>, filesToShow)
-      val selectionIndex = getFilesSelectedIndex(project, files, true)
-      if (selectionIndex > -1 && listWasSelected) {
-        files.selectedIndex = selectionIndex
-      }
-      files.revalidate()
-      files.repaint()
-      // refresh the Recent Locations item
-      val toolWindowsModel = toolWindows.model
-      if (toolWindowsModel is NameFilteringListModel<*>) {
-        (toolWindowsModel as NameFilteringListModel<*>).refilter()
-      }
-      toolWindows.repaint()
-    }
-
-    private fun resetListModelAndUpdateNames(model: CollectionListModel<SwitcherVirtualFile>, items: List<SwitcherVirtualFile>) {
-      for (datum in items) {
-        datum.mainText = datum.file.presentableName
-      }
-      model.removeAll()
-      model.addAll(0, items)
-
-      class ListItemData(
-        val item: SwitcherVirtualFile,
-        val mainText: String,
-        val statusText: String,
-        val pathText: String,
-        val backgroundColor: Color?,
-        val foregroundTextColor: Color?,
-      )
-      ReadAction.nonBlocking<List<ListItemData>> {
-        items.map {
-          val parentPath = Path(it.file.presentableUrl).parent
-          val sameNameFiles = FilenameIndex.getVirtualFilesByName(it.file.name, GlobalSearchScope.projectScope(project))
-          val result = if (parentPath == null ||
-                           parentPath.nameCount == 0 ||
-                           sameNameFiles.size <= 1) ""
-          else {
-            val filePath = parentPath.pathString
-            val projectPath = project.basePath?.let { FileUtil.toSystemDependentName(it) }
-            if (projectPath != null && FileUtil.isAncestor(projectPath, filePath, true)) {
-              val locationRelativeToProjectDir = FileUtil.getRelativePath(projectPath, filePath, File.separatorChar)
-              if (locationRelativeToProjectDir != null && Path(locationRelativeToProjectDir).nameCount != 0) locationRelativeToProjectDir else filePath
-            }
-            else if (FileUtil.isAncestor(SystemProperties.getUserHome(), filePath, true)) {
-              val locationRelativeToUserHome = FileUtil.getLocationRelativeToUserHome(filePath)
-              if (Path(locationRelativeToUserHome).nameCount != 0) locationRelativeToUserHome else filePath
-            }
-            else {
-              filePath
-            }
-          }
-
-          ListItemData(item = it,
-                       mainText = getCustomEditorTabTitle(project, it.file) ?: it.mainText,
-                       statusText = FileUtil.getLocationRelativeToUserHome((it.file.parent ?: it.file).presentableUrl),
-                       pathText = result,
-                       backgroundColor = VfsPresentationUtil.getFileBackgroundColor(it.project, it.file),
-                       foregroundTextColor = FileStatusManager.getInstance(it.project).getStatus(it.file).color)
-        }
-      }
-        .expireWith(this)
-        .finishOnUiThread(ModalityState.any()) { list ->
-          for (data in list) {
-            data.item.mainText = data.mainText
-            data.item.statusText = data.statusText
-            data.item.pathText = data.pathText
-            data.item.backgroundColor = data.backgroundColor
-            data.item.foregroundTextColor = data.foregroundTextColor
-          }
-          files.invalidate()
-          files.repaint()
-          updatePathLabel()
-        }
-        .submit(AppExecutorUtil.getAppExecutorService())
+      scheduleBackendRecentFilesUpdate(RecentFilesBackendRequest.NewSearchWithParameters(onlyEdited, pinned, project.projectId()))
     }
 
     fun navigate(e: InputEvent?) {
@@ -621,56 +459,15 @@ object Switcher : BaseSwitcherAction(null) {
       if (values.isEmpty()) {
         tryToOpenFileSearch(e, searchQuery)
       }
-      else if (values[0] is SwitcherVirtualFile) {
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
-          {
-            val manager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
-            var splitWindow: EditorWindow? = null
-            for (value in values) {
-              if (value is SwitcherVirtualFile) {
-                val file = value.file
-                if (mode === FileEditorManagerImpl.OpenMode.RIGHT_SPLIT) {
-                  if (splitWindow == null) {
-                    splitWindow = openInRightSplit(project = project, file = file, element = null, requestFocus = true)
-                  }
-                  else {
-                    manager.openFile(file, splitWindow, FileEditorOpenOptions().withRequestFocus())
-                  }
-                }
-                else if (mode == FileEditorManagerImpl.OpenMode.NEW_WINDOW) {
-                  manager.openFileInNewWindow(file)
-                }
-                else if (value.window != null) {
-                  val editorWindow = findAppropriateWindow(value.window)
-                  if (editorWindow != null) {
-                    manager.openFileImpl2(window = editorWindow, file = file, options = FileEditorOpenOptions(requestFocus = true))
-                  }
-                }
-                else {
-                  val settings = UISettings.getInstance().state
-                  val oldValue = settings.reuseNotModifiedTabs
-                  settings.reuseNotModifiedTabs = false
-                  manager.openFile(
-                    file = file,
-                    window = null,
-                    options = FileEditorOpenOptions(requestFocus = true, reuseOpen = true),
-                  )
-                  if (LightEdit.owns(project)) {
-                    LightEditFeatureUsagesUtil.logFileOpen(project, OpenPlace.RecentFiles)
-                  }
-                  if (oldValue) {
-                    settings.reuseNotModifiedTabs = true
-                  }
-                }
-              }
-            }
-          },
-          ModalityState.current(),
-        )
+      else if (files.isNotEmpty()) {
+        openEditorForFile(files, mode, project)
       }
-      else if (values[0] is SwitcherListItem) {
-        val item = values[0] as SwitcherListItem
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown({ item.navigate(this, mode) }, ModalityState.current())
+      else if (toolWindow != null) {
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown({ openToolWindow(toolWindow, isSpeedSearchPopupActive, project) },
+                                                                    ModalityState.current())
+      }
+      else {
+        action?.perform()
       }
     }
 
@@ -743,151 +540,10 @@ object Switcher : BaseSwitcherAction(null) {
       }
     }
 
-    companion object {
-      fun getFilesSelectedIndex(project: Project, filesList: JList<*>, forward: Boolean): Int {
-        val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
-        val currentWindow = editorManager.currentWindow
-        val currentFile = currentWindow?.selectedFile
-        val model = filesList.model
-        if (forward) {
-          for (i in 0 until model.size) {
-            if (!isTheSameTab(currentWindow, currentFile, model.getElementAt(i))) {
-              return i
-            }
-          }
-        }
-        else {
-          for (i in model.size - 1 downTo 0) {
-            if (!isTheSameTab(currentWindow, currentFile, model.getElementAt(i))) {
-              return i
-            }
-          }
-        }
-        return -1
-      }
-
-      @TestOnly
-      @JvmStatic
-      fun getFilesToShowForTest(project: Project): List<VirtualFile> {
-        return getFilesToShow(project = project, onlyEdited = false, toolWindowsCount = 10, pinned = true).map(SwitcherVirtualFile::file)
-      }
-
-      @TestOnly
-      fun getFilesSelectedIndexForTest(project: Project, goForward: Boolean): Int {
-        return getFilesSelectedIndex(
-          project = project,
-          filesList = JBList(getFilesToShow(project = project, onlyEdited = false, toolWindowsCount = 10, pinned = true)),
-          forward = goForward,
-        )
-      }
-    }
   }
 }
 
-private const val SWITCHER_ELEMENTS_LIMIT: Int = 30
-
-private fun getFilesToShow(project: Project, onlyEdited: Boolean, toolWindowsCount: Int, pinned: Boolean): List<SwitcherVirtualFile> {
-  val filesData = ArrayList<SwitcherVirtualFile>()
-  val editors = ArrayList<SwitcherVirtualFile>()
-  val addedFiles = LinkedHashSet<VirtualFile>()
-  if (!pinned) {
-    for (pair in (FileEditorManager.getInstance(project) as FileEditorManagerImpl).getSelectionHistoryList()) {
-      editors.add(SwitcherVirtualFile(project = project, file = pair.first, window = pair.second))
-    }
-
-    for (editor in editors) {
-      addedFiles.add(editor.file)
-      filesData.add(editor)
-      if (filesData.size >= SWITCHER_ELEMENTS_LIMIT) {
-        break
-      }
-    }
-  }
-
-  if (filesData.size > 1) {
-    return filesData
-  }
-
-  val filesForInit = if (onlyEdited) IdeDocumentHistory.getInstance(project).changedFiles else getRecentFiles(project)
-  if (!filesForInit.isEmpty()) {
-    val editorFileCount = editors.asSequence().map { it.file }.distinct().count()
-    val maxFiles = max(editorFileCount, filesForInit.size)
-    val minIndex = if (pinned) 0 else filesForInit.size - toolWindowsCount.coerceAtMost(maxFiles)
-    for (i in filesForInit.size - 1 downTo minIndex) {
-      val info = SwitcherVirtualFile(project = project, file = filesForInit[i], window = null)
-      var add = true
-      if (pinned) {
-        for (fileInfo in filesData) {
-          if (fileInfo.file == info.file) {
-            add = false
-            break
-          }
-        }
-      }
-      if (add) {
-        if (addedFiles.add(info.file)) {
-          filesData.add(info)
-        }
-      }
-    }
-  }
-
-  if (editors.size == 1 && (filesData.isEmpty() || editors[0].file != filesData[0].file)) {
-    if (addedFiles.add(editors[0].file)) {
-      filesData.add(0, editors[0])
-    }
-  }
-  return filesData
-}
-
-private fun isTheSameTab(currentWindow: EditorWindow?, currentFile: VirtualFile?, element: Any): Boolean {
-  val svf = if (element is SwitcherVirtualFile) element else null
-  return svf != null && svf.file == currentFile && (svf.window == null || svf.window == currentWindow)
-}
-
-private fun getRecentFiles(project: Project): List<VirtualFile> {
-  val recentFiles = EditorHistoryManager.getInstance(project).fileList
-  val openFiles = FileEditorManager.getInstance(project).openFiles
-  val recentFilesSet = HashSet(recentFiles)
-  val openFilesSet = openFiles.toHashSet()
-
-  // add missing FileEditor tabs right after the last one, that is available via "Recent Files"
-  var index = 0
-  for (i in recentFiles.indices) {
-    if (openFilesSet.contains(recentFiles[i])) {
-      index = i
-      break
-    }
-  }
-  val result = ArrayList(recentFiles)
-  result.addAll(index, openFiles.filter { !recentFilesSet.contains(it) })
-  return result
-}
-
-private fun addShortcut(keymap: MutableMap<String?, SwitcherToolWindow?>, window: SwitcherToolWindow, shortcut: String): Boolean {
-  if (keymap.containsKey(shortcut)) return false
-  keymap[shortcut] = window
-  window.mnemonic = shortcut
-  return true
-}
-
-private fun addSmartShortcut(window: SwitcherToolWindow, keymap: MutableMap<String?, SwitcherToolWindow?>): Boolean {
-  val title = window.mainText
-  if (StringUtil.isEmpty(title)) return false
-  for (c in title) {
-    if (Character.isUpperCase(c) && addShortcut(keymap, window, c.toString())) {
-      return true
-    }
-  }
-  return false
-}
-
-private fun getIndexShortcut(index: Int): String? {
-  if (index !in 0..35) return null
-  return Strings.toUpperCase(index.toString(radix = (index + 1).coerceIn(2..36)))
-}
-
-private fun findAppropriateWindow(window: EditorWindow?): EditorWindow? {
+internal fun findAppropriateWindow(window: EditorWindow?): EditorWindow? {
   if (window == null) return null
   if (UISettings.getInstance().editorTabPlacement == UISettings.TABS_NONE) {
     return window.owner.currentWindow
