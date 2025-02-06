@@ -218,6 +218,12 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     )
   }
 
+  fun assertContainsText(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT) {
+    waitFor(message = message ?: "Finding one text '$text' in $this", timeout = timeout) {
+      allTextAsString().contains(text)
+    }
+  }
+
   /**
    * Waits for one UiText matching predicate.
    */
