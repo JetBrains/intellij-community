@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler
@@ -14,6 +15,24 @@ import com.intellij.xdebugger.frame.XDropFrameHandler
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.frame.XValueMarkerProvider
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.BothRunning
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.BothStopped
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.Exited
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.HighLevelDebuggerStepRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.HighLevelPositionReached
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.HighLevelRunToAddress
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.HighRun
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.HighStarted
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.LowLevelPositionReached
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.LowLevelRunToAddress
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.LowLevelStepRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.LowRun
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.MixedStepRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.MixedStepType
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.PauseRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.ResumeRequested
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.StepType
+import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.Stop
 import com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
 import com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizer
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
@@ -21,8 +40,12 @@ import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
 import com.intellij.xdebugger.mixedMode.XMixedModeProcessesConfiguration
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.ui.XDebugTabLayouter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.Promise
+import java.util.function.BiConsumer
 import javax.swing.event.HyperlinkListener
 
 private val LOG = logger<XMixedModeCombinedDebugProcess>()
@@ -30,16 +53,42 @@ private val LOG = logger<XMixedModeCombinedDebugProcess>()
 class XMixedModeCombinedDebugProcess(
   val low: XDebugProcess,
   val high: XDebugProcess,
-  session: XDebugSession,
+  val session: XDebugSessionImpl,
   val config: XMixedModeProcessesConfiguration,
 ) : XDebugProcess(session), XDebugSessionTabCustomizer {
   private val processes = listOf(low, high)
   private var myProcessHandler: XMixedModeProcessHandler? = null
   private var editorsProvider: XMixedModeDebuggersEditorProvider? = null
-  val extension: XDebugSessionMixedModeExtension = XDebugSessionMixedModeExtension((session as XDebugSessionImpl).coroutineScope,
-                                                                                   high as XMixedModeHighLevelDebugProcess,
-                                                                                   low as XMixedModeLowLevelDebugProcess,
-                                                                                   session::positionReachedInternal)
+  private val coroutineScope get() = session.coroutineScope
+  private val stateMachine = MixedModeProcessTransitionStateMachine(low as XMixedModeLowLevelDebugProcess, high as XMixedModeHighLevelDebugProcess, coroutineScope)
+  private var myAttract : Boolean = false // being accessed on EDT
+  private var highLevelDebugProcessReady : Boolean = false
+  private val positionReachedFn: BiConsumer<XSuspendContext, Boolean> = BiConsumer { context, attract -> session.positionReachedInternal(context, attract) }
+  private val lowAsExtension get() = low as XMixedModeLowLevelDebugProcess
+  private val highAsExtension get() = high as XMixedModeHighLevelDebugProcess
+  init {
+    coroutineScope.launch(Dispatchers.Default) {
+      while (true) {
+        when(val newState = stateMachine.stateChannel.receive()) {
+          is BothStopped -> {
+            val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, lowAsExtension, coroutineScope)
+            withContext(Dispatchers.EDT) { positionReachedFn.accept(ctx, myAttract).also { myAttract = false } }
+          }
+          is BothRunning -> {
+            highLevelDebugProcessReady = true
+            withContext(Dispatchers.EDT) { session.sessionResumed() }
+          }
+          is Exited -> break
+        }
+      }
+    }
+  }
+
+  fun positionReached(suspendContext: XSuspendContext, attract: Boolean) {
+    myAttract = myAttract || attract // if any of the processes requires attraction, we'll do it
+    val isHighSuspendContext = !lowAsExtension.belongsToMe(suspendContext)
+    stateMachine.set(if (isHighSuspendContext) HighLevelPositionReached(suspendContext) else LowLevelPositionReached(suspendContext))
+  }
 
   override fun getBreakpointHandlers(): Array<out XBreakpointHandler<*>?> = high.breakpointHandlers + low.breakpointHandlers
 
@@ -48,7 +97,7 @@ class XMixedModeCombinedDebugProcess(
   }
 
   override fun startPausing() {
-    extension.pause()
+    stateMachine.set(PauseRequested)
   }
 
   // not called from debug session
@@ -62,7 +111,7 @@ class XMixedModeCombinedDebugProcess(
       return
     }
 
-    extension.stepOver(context as XMixedModeSuspendContext)
+    mixedStepOver(context as XMixedModeSuspendContext)
   }
 
   // TODO
@@ -81,7 +130,7 @@ class XMixedModeCombinedDebugProcess(
       return
     }
 
-    extension.stepInto(context as XMixedModeSuspendContext)
+    mixedStepInto(context as XMixedModeSuspendContext)
   }
 
   // not called from debug session
@@ -95,7 +144,7 @@ class XMixedModeCombinedDebugProcess(
       return
     }
 
-    extension.stepOut(context as XMixedModeSuspendContext)
+    mixedStepOut(context as XMixedModeSuspendContext)
   }
 
   override fun getSmartStepIntoHandler(): XSmartStepIntoHandler<*>? = getIfOnlyOneExists { it.smartStepIntoHandler }
@@ -110,7 +159,7 @@ class XMixedModeCombinedDebugProcess(
   }
 
   override fun stopAsync(): Promise<in Any> {
-    extension.stop()
+    stateMachine.set(Stop)
     return high.stopAsync().thenAsync { low.stopAsync() }
   }
 
@@ -120,12 +169,12 @@ class XMixedModeCombinedDebugProcess(
   }
 
   override fun resume(context: XSuspendContext?) {
-    if (!session.isMixedModeHighProcessReady()) {
+    if (!session.isMixedModeHighProcessReady) {
       low.resume(context)
       return
     }
 
-    extension.resume()
+    stateMachine.set(ResumeRequested)
   }
 
   // not called from debug session
@@ -134,13 +183,29 @@ class XMixedModeCombinedDebugProcess(
   }
 
   override fun runToPosition(position: XSourcePosition, context: XSuspendContext?) {
-    if (!session.isMixedModeHighProcessReady()) {
+    if (!session.isMixedModeHighProcessReady) {
       low.runToPosition(position, context)
       return
     }
 
-    extension.runToPosition(position, context as XMixedModeSuspendContext)
+    mixedRunToPosition(position, context as XMixedModeSuspendContext)
   }
+
+  fun onResumed(isLowLevel: Boolean) {
+    if (!session.isMixedModeHighProcessReady) {
+      session.sessionResumed()
+      return
+    }
+
+    val event = if (isLowLevel) LowRun else HighRun
+    stateMachine.set(event)
+  }
+
+  fun signalMixedModeHighProcessReady() {
+    stateMachine.set(HighStarted)
+  }
+
+  fun isMixedModeHighProcessReady(): Boolean = highLevelDebugProcessReady
 
   override fun checkCanPerformCommands(): Boolean = processes.all { it.checkCanPerformCommands() }
 
@@ -187,7 +252,7 @@ class XMixedModeCombinedDebugProcess(
   override fun isLibraryFrameFilterSupported(): Boolean = processes.all { it.isLibraryFrameFilterSupported }
 
   override fun logStack(suspendContext: XSuspendContext, session: XDebugSession) {
-    if ((low as XMixedModeLowLevelDebugProcess).belongsToMe(suspendContext))
+    if (lowAsExtension.belongsToMe(suspendContext))
       low.logStack(suspendContext, session)
     else
       high.logStack(suspendContext, session)
@@ -219,4 +284,46 @@ class XMixedModeCombinedDebugProcess(
 
   private fun getTabCustomizer(): XDebugSessionTabCustomizer? = (high as? XDebugSessionTabCustomizer)
                                                                 ?: (low as? XDebugSessionTabCustomizer)
+
+  private fun mixedStepInto(suspendContext: XMixedModeSuspendContext) {
+    val isLowLevelStep = !highAsExtension.stoppedInManagedContext(suspendContext)
+    if (isLowLevelStep) {
+      stateMachine.set(LowLevelStepRequested(suspendContext, StepType.Into))
+    }
+    else {
+      val stepSuspendContext = suspendContext.highLevelDebugSuspendContext
+      coroutineScope.launch {
+        val newState =
+          if (highAsExtension.isStepWillBringIntoNativeCode(stepSuspendContext))
+            MixedStepRequested(stepSuspendContext, MixedStepType.IntoLowFromHigh)
+          else
+            HighLevelDebuggerStepRequested(stepSuspendContext, StepType.Into)
+
+        this@XMixedModeCombinedDebugProcess.stateMachine.set(newState)
+      }
+    }
+  }
+
+  private fun mixedStepOver(suspendContext: XMixedModeSuspendContext) {
+    val isLowLevelStep = !highAsExtension.stoppedInManagedContext(suspendContext)
+
+    val stepType = StepType.Over
+    val newState = if (isLowLevelStep) LowLevelStepRequested(suspendContext, stepType) else HighLevelDebuggerStepRequested(suspendContext.highLevelDebugSuspendContext, stepType)
+    this.stateMachine.set(newState)
+  }
+
+  private fun mixedStepOut(suspendContext: XMixedModeSuspendContext) {
+    val isLowLevelStep = !highAsExtension.stoppedInManagedContext(suspendContext)
+
+    val stepType = StepType.Out
+    val newState = if (isLowLevelStep) LowLevelStepRequested(suspendContext, stepType) else HighLevelDebuggerStepRequested(suspendContext.highLevelDebugSuspendContext, stepType)
+    this.stateMachine.set(newState)
+  }
+
+  private fun mixedRunToPosition(position: XSourcePosition, suspendContext: XMixedModeSuspendContext) {
+    val isLowLevelStep = lowAsExtension.belongsToMe(position.file)
+    val actionSuspendContext = if (isLowLevelStep) suspendContext.lowLevelDebugSuspendContext else suspendContext.highLevelDebugSuspendContext
+    val state = if (isLowLevelStep) LowLevelRunToAddress(position, actionSuspendContext) else HighLevelRunToAddress(position, actionSuspendContext)
+    this.stateMachine.set(state)
+  }
 }

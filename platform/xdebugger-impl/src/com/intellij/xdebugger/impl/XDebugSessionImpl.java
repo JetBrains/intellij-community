@@ -48,7 +48,6 @@ import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
-import com.intellij.xdebugger.impl.mixedmode.XDebugSessionMixedModeExtension;
 import com.intellij.xdebugger.impl.rhizome.XDebugSessionEntity;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
@@ -75,6 +74,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.xdebugger.impl.mixedmode.XMixedModeUtilsKt.isMixedModeHighProcessReady;
 import static com.intellij.xdebugger.impl.rhizome.XDebugSessionDbUtilsKt.storeXDebugSessionInDb;
 
 @ApiStatus.Internal
@@ -85,9 +85,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   // TODO[eldar] needed to workaround nullable myAlternativeSourceHandler.
   private static final StateFlow<Boolean> ALWAYS_FALSE_STATE = FlowKt.asStateFlow(StateFlowKt.MutableStateFlow(false));
 
-  // for mixed mode high level debug process is always here
   private XDebugProcess myDebugProcess;
-  private XDebugProcess myMixedModeLowLevelDebugProcess;
   private final Map<XBreakpoint<?>, CustomizedBreakpointPresentation> myRegisteredBreakpoints = new HashMap<>();
   private final Set<XBreakpoint<?>> myInactiveSlaveBreakpoints = Collections.synchronizedSet(new HashSet<>());
   private boolean myBreakpointsDisabled;
@@ -120,9 +118,6 @@ public final class XDebugSessionImpl implements XDebugSession {
   private final Icon myIcon;
   private final Deferred<@NotNull XDebugSessionEntity> myEntity;
   private final XDebugSessionCurrentStackFrameManager myCurrentStackFrameManager;
-
-  @Nullable
-  public XDebugSessionMixedModeExtension myMixedModeExtension;
 
   private volatile boolean breakpointsInitialized;
   private long myUserRequestStart;
@@ -391,6 +386,11 @@ public final class XDebugSessionImpl implements XDebugSession {
     assertSessionTabInitialized();
     assert mySessionTab != null;
     return mySessionTab.getUi();
+  }
+
+  @Override
+  public boolean isMixedMode() {
+    return myDebugProcess instanceof XMixedModeCombinedDebugProcess;
   }
 
   private void initSessionTab(@Nullable RunContentDescriptor contentToReuse) {
@@ -937,8 +937,8 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   private void positionReachedMixedModeAware(@NotNull XSuspendContext suspendContext, boolean attract) {
-    if (isMixedMode() && isMixedModeHighProcessReady()) {
-      myMixedModeExtension.positionReached(suspendContext, attract);
+    if (isMixedMode() && isMixedModeHighProcessReady(this)) {
+      ((XMixedModeCombinedDebugProcess)myDebugProcess).positionReached(suspendContext, attract);
       return;
     }
 
@@ -1015,27 +1015,6 @@ public final class XDebugSessionImpl implements XDebugSession {
   @Override
   public void sessionResumed() {
     doResume();
-  }
-
-  @Override
-  public void mixedModeSessionResumed(Boolean isLowLevelDebugger) {
-    var extension = Objects.requireNonNull(myMixedModeExtension);
-    extension.onResumed(isLowLevelDebugger);
-  }
-
-  @Override
-  public boolean isMixedMode() {
-    return myDebugProcess instanceof XMixedModeCombinedDebugProcess;
-  }
-
-  @Override
-  public void signalMixedModeHighProcessReady() {
-    Objects.requireNonNull(myMixedModeExtension).signalMixedModeHighProcessReady();
-  }
-
-  @Override
-  public boolean isMixedModeHighProcessReady() {
-    return Objects.requireNonNull(myMixedModeExtension).isMixedModeHighProcessReady();
   }
 
   @Override

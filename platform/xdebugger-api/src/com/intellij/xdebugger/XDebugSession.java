@@ -131,11 +131,6 @@ public interface XDebugSession extends AbstractDebuggerSession {
    */
   void sessionResumed();
 
-  void mixedModeSessionResumed(Boolean isLowLevelDebugger);
-  boolean isMixedMode();
-  void signalMixedModeHighProcessReady();
-  boolean isMixedModeHighProcessReady();
-
   void stop();
 
   void setBreakpointMuted(boolean muted);
@@ -178,4 +173,6 @@ public interface XDebugSession extends AbstractDebuggerSession {
   ConsoleView getConsoleView();
 
   RunnerLayoutUi getUI();
+
+  boolean isMixedMode();
 }

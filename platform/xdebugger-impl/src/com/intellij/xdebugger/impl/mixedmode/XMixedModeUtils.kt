@@ -22,48 +22,65 @@ val XDebugProcess.canFilterFramesMixedModeAware: Boolean
 val XDebugSession.mixedModeDebugProcessOrThrow: XMixedModeCombinedDebugProcess
   get() = debugProcess as XMixedModeCombinedDebugProcess
 
-val XDebugProcess.lowLevelProcessOrThrow : XDebugProcess
+val XDebugProcess.lowLevelProcessOrThrow: XDebugProcess
   get() = checkNotNull(lowLevelProcess)
 
-val XDebugProcess.lowLevelProcess : XDebugProcess?
+val XDebugProcess.lowLevelProcess: XDebugProcess?
   get() = (this as? XMixedModeCombinedDebugProcess)?.low
 
-val XDebugProcess.highLevelProcessOrThrow : XDebugProcess
+val XDebugProcess.highLevelProcessOrThrow: XDebugProcess
   get() = (this as XMixedModeCombinedDebugProcess).high
 
-val XDebugSession.lowLevelProcessOrThrow : XDebugProcess
+val XDebugSession.lowLevelProcessOrThrow: XDebugProcess
   get() = debugProcess.lowLevelProcessOrThrow
 
-val XDebugSession.highLevelProcessOrThrow : XDebugProcess
+val XDebugSession.highLevelProcessOrThrow: XDebugProcess
   get() = debugProcess.highLevelProcessOrThrow
 
-val XDebugProcess.lowLevelMixedModeExtensionOrThrow : XMixedModeLowLevelDebugProcess
+val XDebugProcess.lowLevelMixedModeExtensionOrThrow: XMixedModeLowLevelDebugProcess
   get() = lowLevelProcessOrThrow as XMixedModeLowLevelDebugProcess
 
-val XDebugProcess.highLevelMixedModeExtensionOrThrow : XMixedModeHighLevelDebugProcess
+val XDebugProcess.highLevelMixedModeExtensionOrThrow: XMixedModeHighLevelDebugProcess
   get() = highLevelProcessOrThrow as XMixedModeHighLevelDebugProcess
 
-val XDebugSession.lowLevelMixedModeExtensionOrThrow : XMixedModeLowLevelDebugProcess
+val XDebugSession.lowLevelMixedModeExtensionOrThrow: XMixedModeLowLevelDebugProcess
   get() = debugProcess.lowLevelMixedModeExtensionOrThrow
 
-val XDebugSession.highLevelMixedModeExtension : XMixedModeHighLevelDebugProcess
+val XDebugSession.highLevelMixedModeExtension: XMixedModeHighLevelDebugProcess
   get() = debugProcess.highLevelMixedModeExtensionOrThrow
 
-val XDebugSession.highLevelSuspendContext : XSuspendContext?
+val XDebugSession.highLevelSuspendContext: XSuspendContext?
   get() = suspendContext?.highLevel
 
-val XDebugSession.lowLevelSuspendContext : XSuspendContext?
+val XDebugSession.lowLevelSuspendContext: XSuspendContext?
   get() = suspendContext?.lowLevel
 
-val XSuspendContext.highLevel : XSuspendContext?
+val XSuspendContext.highLevel: XSuspendContext?
   get() = (this as? XMixedModeSuspendContext)?.highLevelDebugSuspendContext
 
-val XSuspendContext.lowLevel : XSuspendContext?
+val XSuspendContext.lowLevel: XSuspendContext?
   get() = (this as? XMixedModeSuspendContext)?.lowLevelDebugSuspendContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
-fun XDebugSession.getLowLevelFrame() : XStackFrame? {
+fun XDebugSession.getLowLevelFrame(): XStackFrame? {
+  assert(isMixedMode)
   val stack = this.mixedModeExecutionStack ?: return null
   if (!stack.computedFramesMap.isCompleted) return null
   return stack.computedFramesMap.getCompleted().entries.firstOrNull { it.value == currentStackFrame }?.key
+}
+
+fun XDebugSession.signalMixedModeHighProcessReady() {
+  assert(isMixedMode)
+  (debugProcess as XMixedModeCombinedDebugProcess).signalMixedModeHighProcessReady()
+}
+
+val XDebugSession.isMixedModeHighProcessReady: Boolean
+  get() = run {
+    assert(isMixedMode)
+    (debugProcess as XMixedModeCombinedDebugProcess).isMixedModeHighProcessReady()
+  }
+
+fun XDebugSession.mixedModeSessionResumed(isLowLevelDebugger: Boolean) {
+  assert(isMixedMode)
+  (debugProcess as XMixedModeCombinedDebugProcess).onResumed(isLowLevelDebugger)
 }
