@@ -268,7 +268,7 @@ internal class ReworkedTerminalView(
     }
 
     val eventsHandler = TerminalEventsHandlerImpl(sessionModel, editor, encodingManager, terminalInput, settings, scrollingModel)
-    setupKeyEventDispatcher(editor, eventsHandler, parentDisposable)
+    setupKeyEventDispatcher(editor, settings, eventsHandler, parentDisposable)
     setupMouseListener(editor, sessionModel, settings, eventsHandler, parentDisposable)
 
     TerminalOutputEditorInputMethodSupport(

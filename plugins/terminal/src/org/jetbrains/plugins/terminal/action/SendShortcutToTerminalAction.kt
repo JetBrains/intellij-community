@@ -27,21 +27,25 @@ internal class SendShortcutToTerminalAction(
   private val dispatcher: TerminalEventDispatcher,
 ) : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
 
+  private var actions: List<AnAction> = emptyList()
+
   init {
     templatePresentation.putClientProperty(KEY, Unit)
   }
 
-  internal fun register(component: JComponent) {
+  internal fun register(component: JComponent, actions: List<AnAction>) {
     val terminalShortcuts = CustomShortcutSet(
-      *TerminalEventDispatcher.getActionsToSkip()
+      *actions
         .flatMap { it.shortcutSet.shortcuts.toList() }
         .toTypedArray()
     )
     registerCustomShortcutSet(terminalShortcuts, component)
+    this.actions = actions
   }
 
   internal fun unregister(component: JComponent) {
     unregisterCustomShortcutSet(component)
+    this.actions = emptyList()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -52,7 +56,7 @@ internal class SendShortcutToTerminalAction(
       e.presentation.isEnabledAndVisible = false
       return
     }
-    for (action in TerminalEventDispatcher.getActionsToSkip()) {
+    for (action in actions) {
       if (action.shortcutSet.shortcuts.contains(shortcut)) {
         if (e.updateSession.presentation(action).isEnabled) {
           e.presentation.isEnabledAndVisible = false
