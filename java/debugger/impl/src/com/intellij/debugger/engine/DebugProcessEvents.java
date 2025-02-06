@@ -363,7 +363,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     DebuggerUtilsAsync.setEnabled(request, true);
   }
 
-  private static void enableNonSuspendingRequest(EventRequest request, Consumer<? super Event> handler) {
+  public static void enableNonSuspendingRequest(EventRequest request, Consumer<? super Event> handler) {
     request.setSuspendPolicy(EventRequest.SUSPEND_NONE);
     enableRequestWithHandler(request, handler);
   }
