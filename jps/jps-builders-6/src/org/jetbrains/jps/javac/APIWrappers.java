@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.Pair;
@@ -51,7 +51,7 @@ public final class APIWrappers {
   }
 
   @ApiStatus.Internal
-  public static class ProcessingContext {
+  public static final class ProcessingContext {
     private final JpsJavacFileManager myFileManager;
     private Iterable<Processor> myAllProcessors = Collections.emptyList();
     private final Map<ProcessingEnvironment, ProcessingEnvironment> myWrappers = new HashMap<>(); // procEnv -> wrappedProcEnv
@@ -145,7 +145,7 @@ public final class APIWrappers {
   }
 
   @SuppressWarnings("unchecked")
-  static class DiagnosticListenerWrapper<T extends FileObject> extends DynamicWrapper<DiagnosticOutputConsumer> implements DiagnosticListener<T>{
+  final static class DiagnosticListenerWrapper<T extends FileObject> extends DynamicWrapper<DiagnosticOutputConsumer> implements DiagnosticListener<T>{
     private final ProcessingContext myProcContext;
 
     DiagnosticListenerWrapper(ProcessingContext procContext, DiagnosticOutputConsumer delegate) {
@@ -277,7 +277,7 @@ public final class APIWrappers {
     }
   }
 
-  static class ProcessingEnvironmentWrapper extends DynamicWrapper<ProcessingEnvironment> {
+  final static class ProcessingEnvironmentWrapper extends DynamicWrapper<ProcessingEnvironment> {
     private final JpsJavacFileManager myFileManager;
     private Filer myFilerImpl;
 
@@ -296,7 +296,7 @@ public final class APIWrappers {
     }
   }
 
-  static class FilerWrapper extends DynamicWrapper<Filer> implements Filer {
+  final static class FilerWrapper extends DynamicWrapper<Filer> implements Filer {
     private final JpsJavacFileManager myFileManager;
     private final Function<Element, String> convertToClassName;
 
@@ -420,7 +420,7 @@ public final class APIWrappers {
     }));
   }
 
-  private static class ClassNameFinder implements Function<Element, String> {
+  private static final class ClassNameFinder implements Function<Element, String> {
     private static final Method ourGetQualifiedNameMethod;
     private final Name myEmptyName;
 

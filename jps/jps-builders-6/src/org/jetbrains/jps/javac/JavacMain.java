@@ -47,7 +47,7 @@ public final class JavacMain {
   public static final String TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY = "jps.track.ap.dependencies";
   public static final boolean TRACK_AP_GENERATED_DEPENDENCIES = Boolean.parseBoolean(System.getProperty(TRACK_AP_GENERATED_DEPENDENCIES_PROPERTY, "true"));
 
-  public static boolean compile(Iterable<? extends String> options,
+  public static boolean compile(Iterable<String> options,
                                 Iterable<? extends File> sources,
                                 Iterable<? extends File> classpath,
                                 Iterable<? extends File> platformClasspath,
@@ -57,7 +57,8 @@ public final class JavacMain {
                                 final Map<File, Set<File>> outputDirToRoots,
                                 final DiagnosticOutputConsumer diagnosticConsumer,
                                 final OutputFileConsumer outputSink,
-                                CanceledStatus canceledStatus, @NotNull JavaCompilingTool compilingTool) {
+                                CanceledStatus canceledStatus,
+                                @NotNull JavaCompilingTool compilingTool) {
     JavaCompiler compiler;
     try {
       compiler = compilingTool.createCompiler();
