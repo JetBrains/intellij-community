@@ -654,6 +654,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) checkFeature(resource, JavaFeature.REFS_AS_RESOURCE);
     if (!hasErrorResults()) myStatementChecker.checkTryResourceIsAutoCloseable(resource);
     if (!hasErrorResults()) myExpressionChecker.checkUnhandledCloserExceptions(resource);
+    if (!hasErrorResults()) myExpressionChecker.checkResourceVariableIsFinal(resource);
   }
 
 

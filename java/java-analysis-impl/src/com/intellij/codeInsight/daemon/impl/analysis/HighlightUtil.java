@@ -28,7 +28,6 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -256,33 +255,6 @@ public final class HighlightUtil {
     PsiElement container = getContainer(refElement);
     return container == null ? "?" : HighlightMessageUtil.getSymbolName(container, substitutor);
   }
-
-  static HighlightInfo.Builder checkResourceVariableIsFinal(@NotNull PsiResourceExpression resource) {
-    PsiExpression expression = resource.getExpression();
-
-    if (expression instanceof PsiThisExpression) return null;
-
-    if (expression instanceof PsiReferenceExpression ref) {
-      PsiElement target = ref.resolve();
-      if (target == null) return null;
-
-      if (target instanceof PsiVariable variable) {
-        PsiModifierList modifierList = variable.getModifierList();
-        if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.FINAL)) return null;
-
-        if (!(variable instanceof PsiField) && ControlFlowUtil.isEffectivelyFinal(variable, resource)) {
-          return null;
-        }
-      }
-
-      String text = JavaErrorBundle.message("resource.variable.must.be.final");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text);
-    }
-
-    String text = JavaErrorBundle.message("declaration.or.variable.expected");
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text);
-  }
-
 
   static void checkSwitchExpressionHasResult(@NotNull PsiSwitchExpression switchExpression,
                                              @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {

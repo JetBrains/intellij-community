@@ -853,6 +853,9 @@ public final class JavaErrorKinds {
                                                  requireNonNull(ctx.type1()).getPresentableText(),
                                                  requireNonNull(ctx.type2()).getPresentableText()));
 
+  public static final Simple<PsiExpression> RESOURCE_DECLARATION_OR_VARIABLE_EXPECTED =
+    error("resource.declaration.or.variable.expected");
+  
   public static final Simple<PsiReferenceExpression> EXPRESSION_EXPECTED = error("expression.expected");
   public static final Parameterized<PsiReferenceExpression, PsiSuperExpression> EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD = 
     parameterized("expression.super.unqualified.default.method");
@@ -1288,6 +1291,8 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiVariable> VARIABLE_MUST_BE_FINAL =
     parameterized(PsiJavaCodeReferenceElement.class, PsiVariable.class, "variable.must.be.final")
       .withRawDescription((ref, var) -> message("variable.must.be.final", var.getName()));
+  public static final Simple<PsiReferenceExpression> VARIABLE_MUST_BE_FINAL_RESOURCE =
+    error(PsiReferenceExpression.class, "variable.must.be.final.resource");
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiVariable> VARIABLE_MUST_BE_EFFECTIVELY_FINAL =
     parameterized(PsiJavaCodeReferenceElement.class, PsiVariable.class, "variable.must.be.effectively.final")
       .withRawDescription((ref, var) -> message("variable.must.be.effectively.final", var.getName()));

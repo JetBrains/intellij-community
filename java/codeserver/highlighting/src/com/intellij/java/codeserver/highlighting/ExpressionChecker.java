@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -786,6 +787,29 @@ final class ExpressionChecker {
         myVisitor.report(JavaErrorKinds.CAST_INTERSECTION_INHERITANCE_CLASH.create(expression, context));
       }
     }
+  }
+
+  void checkResourceVariableIsFinal(@NotNull PsiResourceExpression resource) {
+    PsiExpression expression = resource.getExpression();
+
+    if (expression instanceof PsiThisExpression) return;
+
+    if (expression instanceof PsiReferenceExpression ref) {
+      PsiElement target = ref.resolve();
+      if (target == null) return;
+
+      if (target instanceof PsiVariable variable) {
+        PsiModifierList modifierList = variable.getModifierList();
+        if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.FINAL)) return;
+
+        if (!(variable instanceof PsiField) && ControlFlowUtil.isEffectivelyFinal(variable, resource)) return;
+      }
+
+      myVisitor.report(JavaErrorKinds.VARIABLE_MUST_BE_FINAL_RESOURCE.create(ref));
+      return;
+    }
+
+    myVisitor.report(JavaErrorKinds.RESOURCE_DECLARATION_OR_VARIABLE_EXPECTED.create(expression));
   }
 
   private static boolean isIntersection(@NotNull PsiTypeElement castTypeElement, @NotNull PsiType castType) {

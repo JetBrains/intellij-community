@@ -490,12 +490,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitResourceExpression(@NotNull PsiResourceExpression resource) {
-    super.visitResourceExpression(resource);
-    if (!hasErrorResults()) add(HighlightUtil.checkResourceVariableIsFinal(resource));
-  }
-
-  @Override
   public void visitTypeElement(@NotNull PsiTypeElement type) {
     super.visitTypeElement(type);
     if (!hasErrorResults()) {
