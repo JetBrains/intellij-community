@@ -11,6 +11,22 @@ vvv stack trace vvv
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
+  ~~~!!! recognizableFrameWithEmitInAsyncStackTraceAssign 1 !!!~~~
+  invokeSuspend
+  <hidden frames>
+  main
+  main
+^^^ stack trace ^^^
+stateFlowDebounce.kt:19
+vvv stack trace vvv
+  emit
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
   ~~~!!! recognizableFrameWithEmitInAsyncStackTraceEmit 1 !!!~~~
   invokeSuspend
   <hidden frames>
@@ -27,7 +43,39 @@ vvv stack trace vvv
   <hidden frames>
 -- Async stack trace --
   <hidden frames>
+  ~~~!!! recognizableFrameWithEmitInAsyncStackTraceCas 1 !!!~~~
+  invokeSuspend
+  <hidden frames>
+  main
+  main
+^^^ stack trace ^^^
+stateFlowDebounce.kt:19
+vvv stack trace vvv
+  emit
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
   ~~~!!! recognizableFrameWithEmitInAsyncStackTraceAssign 2 !!!~~~
+  invokeSuspend
+  <hidden frames>
+  main
+  main
+^^^ stack trace ^^^
+stateFlowDebounce.kt:19
+vvv stack trace vvv
+  emit
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  ~~~!!! recognizableFrameWithEmitInAsyncStackTraceEmit 2 !!!~~~
   invokeSuspend
   <hidden frames>
   main
