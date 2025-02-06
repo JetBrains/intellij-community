@@ -95,4 +95,12 @@ public final class PyParamSpecType implements PyTypeParameterType, PyCallablePar
   public int hashCode() {
     return myName.hashCode();
   }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
+      return visitorExt.visitPyParamSpecType(this);
+    }
+    return visitor.visitPyTypeParameterType(this);
+  }
 }

@@ -568,4 +568,12 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   public int hashCode() {
     return Objects.hash(myModule);
   }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
+      return visitorExt.visitPyModuleType(this);
+    }
+    return visitor.visitPyType(this);
+  }
 }

@@ -46,4 +46,12 @@ public class PyNoneType implements PyType { // TODO must extend ClassType. It's 
   @Override
   public void assertValid(String message) {
   }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
+      return visitorExt.visitPyNoneType(this);
+    }
+    return visitor.visitPyType(this);
+  }
 }

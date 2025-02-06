@@ -129,7 +129,7 @@ public class PyUnionType implements PyType {
    * @see PyTypeUtil#toStream(PyType)
    * @see PyUnionType#map(Function)
    */
-  public @NotNull Collection<PyType> getMembers() {
+  public @NotNull Collection<@Nullable PyType> getMembers() {
     return Collections.unmodifiableCollection(myMembers);
   }
 
@@ -181,5 +181,14 @@ public class PyUnionType implements PyType {
   @Override
   public String toString() {
     return "PyUnionType: " + getName();
+  }
+
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
+      return visitorExt.visitPyUnionType(this);
+    }
+    return visitor.visitPyType(this);
   }
 }

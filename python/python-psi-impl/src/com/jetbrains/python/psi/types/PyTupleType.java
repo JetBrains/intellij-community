@@ -109,4 +109,12 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
   public @NotNull PyUnpackedTupleType asUnpackedTupleType() {
     return myUnpackedTupleType;
   }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
+      return visitorExt.visitPyTupleType(this);
+    }
+    return visitor.visitPyType(this);
+  }
 }

@@ -60,4 +60,9 @@ public interface PyCallableType extends PyType {
   default int getImplicitOffset() {
     return 0;
   }
+
+  @Override
+  default <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    return visitor.visitPyCallableType(this);
+  }
 }

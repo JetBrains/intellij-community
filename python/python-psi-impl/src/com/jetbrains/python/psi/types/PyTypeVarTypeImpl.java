@@ -28,4 +28,9 @@ public final class PyTypeVarTypeImpl extends PyGenericType {
                     @Nullable PyQualifiedNameOwner scopeOwner) {
     super(name, constraints, bound, defaultType, isDefinition, declarationElement, scopeOwner);
   }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    return visitor.visitPyTypeVarType(this);
+  }
 }
