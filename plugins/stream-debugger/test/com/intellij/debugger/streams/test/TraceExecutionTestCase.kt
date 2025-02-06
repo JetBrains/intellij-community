@@ -24,7 +24,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.Throws
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -67,12 +66,12 @@ abstract class TraceExecutionTestCase : DebuggerTestCase() {
   }
 
   protected fun doTest(isResultNull: Boolean) {
-    doTest(isResultNull, DEFAULT_CHAIN_SELECTOR)
+    val className = getTestName(false)
+    doTest(isResultNull, className, DEFAULT_CHAIN_SELECTOR)
   }
 
-  protected fun doTest(isResultNull: Boolean, chainSelector: ChainSelector = DEFAULT_CHAIN_SELECTOR) {
-    val className = getTestName(false)
-    doTest(isResultNull, className, chainSelector)
+  protected fun doTest(isResultNull: Boolean, className: String) {
+    doTest(isResultNull, className, DEFAULT_CHAIN_SELECTOR)
   }
 
   protected fun doTest(isResultNull: Boolean, className: String, chainSelector: ChainSelector = DEFAULT_CHAIN_SELECTOR) {
