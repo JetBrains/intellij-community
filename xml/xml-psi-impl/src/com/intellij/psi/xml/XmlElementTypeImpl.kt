@@ -6,7 +6,7 @@ import com.intellij.lang.html.HTMLParserDefinition
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 
-internal object XmlElementTypeImpl {
+private object XmlElementTypeImpl {
   @JvmField
   val HTML_FILE: IFileElementType =
     HTMLParserDefinition.FILE_ELEMENT_TYPE
