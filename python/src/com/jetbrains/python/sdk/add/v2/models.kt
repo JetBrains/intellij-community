@@ -143,17 +143,18 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
 
 
       // Venvs are not detected manually, but must migrate to VenvService or so
-      val venvs: List<PythonWithLanguageLevel> = VirtualEnvSdkFlavor.getInstance()
-        .suggestLocalHomePaths(null, null)
-        .mapNotNull { venv ->
-          return@mapNotNull when (val r = PythonWithLanguageLevelImpl.createByPythonBinary(venv)) {
-            is com.jetbrains.python.Result.Failure -> {
-              fileLogger().warn("Skipping $venv : ${r.error}")
-              null
-            }
-            is com.jetbrains.python.Result.Success -> r.result
+      val venvs: List<PythonWithLanguageLevel> = PythonWithLanguageLevelImpl.createByPythonBinaries(
+        VirtualEnvSdkFlavor.getInstance()
+          .suggestLocalHomePaths(null, null)
+      ).mapNotNull { (venv, r) ->
+        when (r) {
+          is com.jetbrains.python.Result.Failure -> {
+            fileLogger().warn("Skipping $venv : ${r.error}")
+            null
           }
+          is com.jetbrains.python.Result.Success -> r.result
         }
+      }
 
       // System (base) pythons
       val system: List<PythonWithLanguageLevel> = systemPythonService.findSystemPythons()

@@ -5,11 +5,18 @@ import com.intellij.platform.eel.fs.pathOs
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl.Companion.concurrentLimit
+import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl.Companion.createByPythonBinary
 import com.intellij.python.community.services.shared.PythonWithLanguageLevel
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.validatePythonAndGetVersion
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import kotlin.io.path.pathString
@@ -21,6 +28,23 @@ class PythonWithLanguageLevelImpl internal constructor(
   override val languageLevel: LanguageLevel,
 ) : PythonWithLanguageLevel, Comparable<PythonWithLanguageLevelImpl> {
   companion object {
+
+    private val concurrentLimit = Semaphore(permits = 4)
+
+    /**
+     * Like [createByPythonBinary] but runs in parallel up to [concurrentLimit]
+     */
+    suspend fun createByPythonBinaries(pythonBinaries: Collection<PythonBinary>): Collection<Pair<PythonBinary, Result<PythonWithLanguageLevelImpl, @Nls String>>> =
+      coroutineScope {
+        pythonBinaries.map {
+          async {
+            concurrentLimit.withPermit {
+              Pair(it, createByPythonBinary(it))
+            }
+          }
+        }.awaitAll()
+      }
+
     suspend fun createByPythonBinary(pythonBinary: PythonBinary): Result<PythonWithLanguageLevelImpl, @Nls String> {
       val languageLevel = pythonBinary.validatePythonAndGetVersion().getOr { return it }
       return Result.success(PythonWithLanguageLevelImpl(pythonBinary, languageLevel))

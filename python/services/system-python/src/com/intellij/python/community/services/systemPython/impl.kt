@@ -54,9 +54,9 @@ internal class SystemPythonServiceImpl : SystemPythonService, SimplePersistentSt
     val badPythons = mutableSetOf<PythonBinary>()
     val pythons = corePythons + pythonsFromExtensions + state.userProvidedPythons.filter { it.getEelDescriptor() == eelApi.descriptor }
 
-    val result = pythons.toSet()
-      .mapNotNull { python ->
-        when (val r = PythonWithLanguageLevelImpl.createByPythonBinary(python)) {
+    val result = PythonWithLanguageLevelImpl.createByPythonBinaries(pythons.toSet())
+      .mapNotNull { (python, r) ->
+        when (r) {
           is Result.Success -> SystemPython(r.result)
           is Result.Failure -> {
             fileLogger().info("Skipping $python : ${r.error}")
