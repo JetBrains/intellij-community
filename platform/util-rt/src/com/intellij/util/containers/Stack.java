@@ -1,19 +1,26 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 /**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * Use {@link ArrayDeque}.
+ * This implementation extends {@link ArrayList} which allows index access.
+ * It also allows the iteration, but it's in the reversed order compared to {@link ArrayDeque#iterator}.
+ * </p>
+ *
  * A drop-in replacement for {@link java.util.Stack} based on {@link ArrayList} (instead of {@link Vector})
  * and therefore is (1) not synchronized and (2) faster.
  *
  * @author max
- * @deprecated use {@link ArrayDeque}
  */
-@Deprecated
+@Obsolete
 public class Stack<T> extends ArrayList<T> {
   public Stack() { }
 
@@ -34,17 +41,17 @@ public class Stack<T> extends ArrayList<T> {
   }
 
   /**
-   * @deprecated use {@link Deque#push}
+   * Use {@link Deque#push}.
    */
-  @Deprecated
+  @Obsolete
   public void push(T t) {
     add(t);
   }
 
   /**
-   * @deprecated use {@link Deque#getFirst}
+   * Use {@link Deque#getFirst}.
    */
-  @Deprecated
+  @Obsolete
   public T peek() {
     final int size = size();
     if (size == 0) {
@@ -54,9 +61,9 @@ public class Stack<T> extends ArrayList<T> {
   }
 
   /**
-   * @deprecated use {@link Deque#pop}
+   * Use {@link Deque#pop}.
    */
-  @Deprecated
+  @Obsolete
   public T pop() {
     final int size = size();
     if (size == 0) throw new EmptyStackException();
@@ -73,18 +80,18 @@ public class Stack<T> extends ArrayList<T> {
   }
 
   /**
-   * @deprecated use {@link Deque#pollFirst}
+   * Use {@link Deque#pollFirst}.
    */
-  @Deprecated
+  @Obsolete
   @Nullable
   public T tryPop() {
     return isEmpty() ? null : pop();
   }
 
   /**
-   * @deprecated use {@link Deque#isEmpty}
+   * Use {@link Deque#isEmpty}.
    */
-  @Deprecated
+  @Obsolete
   public boolean empty() {
     return isEmpty();
   }
