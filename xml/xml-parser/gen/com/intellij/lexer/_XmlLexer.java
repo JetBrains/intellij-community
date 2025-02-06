@@ -25,7 +25,7 @@ public class _XmlLexer extends FlexAdapter {
   private static final int STATE_SHIFT = 5;
   private static final int STATE_MASK = (1 << STATE_SHIFT) - 1;
   static {
-    assert (STATE_MASK << 1) <= BaseHtmlLexer.BASE_STATE_MASK;
+    assert (STATE_MASK << 1) <= HtmlLexerConstants.BASE_STATE_MASK;
   }
 
   private int myState = __XmlLexer.YYINITIAL;

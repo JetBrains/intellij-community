@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 import static com.intellij.psi.xml.XmlTokenType.*;
 
 public abstract class BaseHtmlLexer extends DelegateLexer implements RestartableLexer {
-  protected static final int BASE_STATE_MASK = 0x3F;
+  protected static final int BASE_STATE_MASK = HtmlLexerConstants.BASE_STATE_MASK;
   private static final int CONTENT_PROVIDER_HAS_STATE = 0x40;
   private static final int IS_WITHIN_TAG_STATE = 0x80;
   protected static final int BASE_STATE_SHIFT = 9;
