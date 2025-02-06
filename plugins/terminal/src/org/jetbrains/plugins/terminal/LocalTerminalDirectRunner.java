@@ -60,8 +60,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     ShellStartupOptions updatedOptions = LocalOptionsConfigurer.configureStartupOptions(baseOptions, myProject);
     if (enableShellIntegration()) {
       updatedOptions = LocalShellIntegrationInjector.injectShellIntegration(updatedOptions,
-                                                                            isBlockTerminalEnabled(),
-                                                                            isBlockTerminalReworked());
+                                                                            isGenOneTerminalEnabled(),
+                                                                            isGenTwoTerminalEnabled());
     }
     return applyTerminalCustomizers(updatedOptions);
   }
@@ -95,10 +95,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     var shellIntegration = options.getShellIntegration();
-    boolean isBlockTerminal = isBlockTerminalEnabled() &&
-                              (isBlockTerminalReworked() ||
-                               shellIntegration != null &&
-                               shellIntegration.getCommandBlockIntegration() != null);
+    boolean isBlockTerminal =
+      (isGenOneTerminalEnabled() && shellIntegration != null && shellIntegration.getCommandBlockIntegration() != null)
+      || (isGenTwoTerminalEnabled() && !isGenOneTerminalEnabled());
     TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command, isBlockTerminal);
 
     if (isBlockTerminal) {
@@ -217,15 +216,15 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @ApiStatus.Internal
-  protected boolean isBlockTerminalEnabled() {
+  protected boolean isGenOneTerminalEnabled() {
     return false;
   }
 
   /**
-   * @return true if reworked block terminal (gen2) should be used instead of gen1 new terminal.
+   * @return true if reworked block terminal (gen2) should be used instead of the Classic Terminal.
    */
   @ApiStatus.Internal
-  protected boolean isBlockTerminalReworked() {
+  protected boolean isGenTwoTerminalEnabled() {
     return false;
   }
 
@@ -250,7 +249,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @NotNull ShellStartupOptions injectShellIntegration(@NotNull List<String> shellCommand,
                                                              @NotNull Map<String, String> envs) {
     ShellStartupOptions options = new ShellStartupOptions.Builder().shellCommand(shellCommand).envVariables(envs).build();
-    return LocalShellIntegrationInjector.injectShellIntegration(options, isBlockTerminalEnabled(), isBlockTerminalReworked());
+    return LocalShellIntegrationInjector.injectShellIntegration(options, isGenOneTerminalEnabled(), isGenTwoTerminalEnabled());
   }
 
   /**

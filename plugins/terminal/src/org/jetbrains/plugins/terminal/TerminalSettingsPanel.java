@@ -61,6 +61,7 @@ import java.util.function.Supplier;
 public final class TerminalSettingsPanel {
   private JPanel myWholePanel;
   private TextFieldWithHistoryWithBrowseButton myShellPathField;
+  private JBCheckBox myShowSeparatorsBetweenBlocksCheckbox;
   private JBCheckBox mySoundBellCheckBox;
   private JBCheckBox myCloseSessionCheckBox;
   private JBCheckBox myMouseReportCheckBox;
@@ -85,8 +86,6 @@ public final class TerminalSettingsPanel {
   private JBCheckBox myNewUiCheckbox;
   private JBLabel myBetaLabel;
   private JPanel myNewUiChildSettingsPanel;
-
-  private JBCheckBox myShowSeparatorsBetweenBlocksCheckbox;
 
   private JPanel myPromptStylePanel;
   private JPanel myPromptStyleButtonsPanel;
@@ -118,12 +117,11 @@ public final class TerminalSettingsPanel {
     myNewUiSettingsPanel.setVisible(ExperimentalUI.isNewUI());
     myBetaLabel.setIcon(AllIcons.General.Beta);
     myNewUiChildSettingsPanel.setBorder(JBUI.Borders.emptyLeft(28));
-    myNewUiCheckbox.setSelected(Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY));
+    myNewUiCheckbox.setSelected(isGenOneTerminalEnabled());
     myNewUiCheckbox.addChangeListener(__ -> updateNewUiPanelState());
 
-    myShowSeparatorsBetweenBlocksCheckbox.setVisible(Registry.is(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY));
+    myShowSeparatorsBetweenBlocksCheckbox.setVisible(isGenTwoTerminalEnabled() && !isGenOneTerminalEnabled());
 
-    myPromptStylePanel.setVisible(!Registry.is(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY));
     myPromptStyleButtonsPanel.setBorder(JBUI.Borders.empty(4, 20, 0, 0));
     // UI Designer is unable to create a ContextHelpLabel, because it doesn't have a default constructor.
     // So, I have to create and add it manually.
@@ -198,7 +196,7 @@ public final class TerminalSettingsPanel {
   }
 
   public boolean isModified() {
-    return myNewUiCheckbox.isSelected() != Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)
+    return myNewUiCheckbox.isSelected() != isGenOneTerminalEnabled()
            || (myBlockTerminalOptions.getShowSeparatorsBetweenBlocks() != myShowSeparatorsBetweenBlocksCheckbox.isSelected())
            || (myBlockTerminalOptions.getPromptStyle() != getSelectedPromptStyle())
            || !Objects.equals(myShellPathField.getText(), myProjectOptionsProvider.getShellPath())
@@ -262,7 +260,7 @@ public final class TerminalSettingsPanel {
   }
 
   public void reset() {
-    myNewUiCheckbox.setSelected(Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY));
+    myNewUiCheckbox.setSelected(isGenOneTerminalEnabled());
     myShowSeparatorsBetweenBlocksCheckbox.setSelected(myBlockTerminalOptions.getShowSeparatorsBetweenBlocks());
     var promptStyle = myBlockTerminalOptions.getPromptStyle();
     mySingleLineButton.setSelected(promptStyle == TerminalPromptStyle.SINGLE_LINE);
@@ -428,6 +426,14 @@ public final class TerminalSettingsPanel {
 
     assert c != null : "Can't find color for keys " + Arrays.toString(colorKeys);
     return c;
+  }
+
+  private static boolean isGenOneTerminalEnabled() {
+    return Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY, false);
+  }
+
+  private static boolean isGenTwoTerminalEnabled() {
+    return Registry.is(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY, false);
   }
 
   public Color getChangedValueColor() {

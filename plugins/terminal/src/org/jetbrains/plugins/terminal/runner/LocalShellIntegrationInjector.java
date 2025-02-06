@@ -51,8 +51,8 @@ public final class LocalShellIntegrationInjector {
 
   // todo: it would be great to extract block terminal configuration from here
   public static @NotNull ShellStartupOptions injectShellIntegration(@NotNull ShellStartupOptions options,
-                                                                    boolean blockTerminalEnabled,
-                                                                    boolean isBlockTerminalReworked) {
+                                                                    boolean isGenOneTerminal,
+                                                                    boolean isGenTwoTerminal) {
     List<String> shellCommand = options.getShellCommand();
     String shellExe = ContainerUtil.getFirstItem(shellCommand);
     if (shellCommand == null || shellExe == null) return options;
@@ -100,10 +100,12 @@ public final class LocalShellIntegrationInjector {
       }
     }
 
-    if (blockTerminalEnabled && integration != null && integration.getCommandBlockIntegration() != null) {
-      var commandBlocksOption = isBlockTerminalReworked
-                                ? "INTELLIJ_TERMINAL_COMMAND_BLOCKS_REWORKED"
-                                : "INTELLIJ_TERMINAL_COMMAND_BLOCKS";
+    if ((isGenOneTerminal || isGenTwoTerminal) && integration != null && integration.getCommandBlockIntegration() != null) {
+      // If Gen1 is enabled, use its integration even if Gen2 is enabled.
+      // So the Gen1 setting takes precedence over Gen2 setting.
+      var commandBlocksOption = isGenOneTerminal
+                                ? "INTELLIJ_TERMINAL_COMMAND_BLOCKS"
+                                : "INTELLIJ_TERMINAL_COMMAND_BLOCKS_REWORKED";
       envs.put(commandBlocksOption, "1");
       // Pretend to be Fig.io terminal to avoid it breaking IntelliJ shell integration:
       // at startup it runs a sub-shell without IntelliJ shell integration

@@ -32,7 +32,7 @@ import javax.swing.JPanel
 internal class TerminalWidgetImpl(
   private val project: Project,
   private val settings: JBTerminalSystemSettingsProvider,
-  private val isReworked: Boolean,
+  private val isGenOne: Boolean,
   parent: Disposable,
 ) : TerminalWidget {
   private val wrapper: Wrapper = Wrapper()
@@ -66,7 +66,9 @@ internal class TerminalWidgetImpl(
     val oldView = view
 
     view = when {
-      isReworked -> ReworkedTerminalView(project, settings)
+      // Gen1 setting takes precedence over Gen2. If Gen1 setting is enabled, its view will be used regardless of Gen2 setting.
+      // It is implied that if Gen1 setting is disabled, then Gen2 is enabled.
+      !isGenOne -> ReworkedTerminalView(project, settings)
       options.shellIntegration?.commandBlockIntegration != null -> createBlockTerminalView(options)
       else -> OldPlainTerminalView(project, settings, terminalTitle)
     }

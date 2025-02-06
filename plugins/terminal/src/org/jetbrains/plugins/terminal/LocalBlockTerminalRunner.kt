@@ -11,13 +11,13 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.TerminalWidgetImpl
 
 /**
- * Terminal runner that runs the terminal with the new block UI if [isBlockTerminalEnabled] is true.
+ * Terminal runner that runs the terminal with the new block UI if [isGenOneTerminalEnabled] or [isGenTwoTerminalEnabled] is true.
  * In other cases, the classic plain terminal UI is used.
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
 open class LocalBlockTerminalRunner(project: Project) : LocalTerminalDirectRunner(project) {
-  override fun isBlockTerminalEnabled(): Boolean {
+  override fun isGenOneTerminalEnabled(): Boolean {
     // The block terminal should be enabled in the New UI and when [BLOCK_TERMINAL_REGISTRY] is enabled.
     // But the New UI is disabled in tests by default, and the result of this method is always false.
     // So, we need to omit the requirement of the New UI for tests.
@@ -25,13 +25,14 @@ open class LocalBlockTerminalRunner(project: Project) : LocalTerminalDirectRunne
            && Registry.`is`(BLOCK_TERMINAL_REGISTRY, false)
   }
 
-  override fun isBlockTerminalReworked(): Boolean {
-    return Registry.`is`(REWORKED_BLOCK_TERMINAL_REGISTRY, false)
+  override fun isGenTwoTerminalEnabled(): Boolean {
+    return (ExperimentalUI.isNewUI() || ApplicationManager.getApplication().isUnitTestMode)
+           && Registry.`is`(REWORKED_BLOCK_TERMINAL_REGISTRY, false)
   }
 
   override fun createShellTerminalWidget(parent: Disposable, startupOptions: ShellStartupOptions): TerminalWidget {
-    if (isBlockTerminalEnabled) {
-      return TerminalWidgetImpl(myProject, settingsProvider, isBlockTerminalReworked, parent)
+    if (isGenOneTerminalEnabled || isGenTwoTerminalEnabled) {
+      return TerminalWidgetImpl(myProject, settingsProvider, isGenOneTerminalEnabled, parent)
     }
     return super.createShellTerminalWidget(parent, startupOptions)
   }
