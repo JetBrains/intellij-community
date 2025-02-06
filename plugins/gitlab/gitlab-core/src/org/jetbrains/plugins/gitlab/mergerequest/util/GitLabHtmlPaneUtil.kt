@@ -26,7 +26,7 @@ fun JEditorPane.addGitLabHyperlinkListener(project: Project?) {
 
     if (e.description.startsWith(GitLabUIUtil.OPEN_MR_LINK_PREFIX) && project != null) {
       val mrIid = e.description.removePrefix(GitLabUIUtil.OPEN_MR_LINK_PREFIX)
-      val projectVm = project.service<GitLabProjectViewModel>().projectVm.value ?: return@onHyperlinkActivated
+      val projectVm = project.service<GitLabProjectViewModel>().connectedProjectVm.value ?: return@onHyperlinkActivated
       projectVm.openMergeRequestDetails(mrIid, GitLabStatistics.ToolWindowOpenTabActionPlace.TIMELINE_LINK)
       projectVm.openMergeRequestTimeline(mrIid, false)
       return@onHyperlinkActivated

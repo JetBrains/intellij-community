@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 
+import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowViewModel
 import com.intellij.collaboration.ui.toolwindow.dontHideOnEmptyContent
 import com.intellij.collaboration.ui.toolwindow.manageReviewToolwindowTabs
 import com.intellij.openapi.actionSystem.CommonShortcuts
@@ -18,11 +19,15 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.coroutines.flow.mapStateIn
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowConnectedProjectViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
@@ -78,10 +83,16 @@ private class GitLabMergeRequestsToolWindowController(private val project: Proje
       val vm = project.serviceAsync<GitLabProjectViewModel>()
       val componentFactory = GitLabReviewTabComponentFactory(project, vm)
       toolWindow.contentManager.addDataProvider(EdtNoGetDataProvider { sink ->
-        sink[GitLabMergeRequestsActionKeys.CONNECTED_PROJECT_VM] = vm.projectVm.value
+        sink[GitLabMergeRequestsActionKeys.PROJECT_VM] = vm
+        sink[GitLabMergeRequestsActionKeys.CONNECTED_PROJECT_VM] = vm.connectedProjectVm.value
       })
 
-      manageReviewToolwindowTabs(this, toolWindow, vm, componentFactory, GitLabBundle.message("merge.request.toolwindow.tab.title"))
+      val reviewToolWindowVm = object : ReviewToolwindowViewModel<GitLabToolWindowConnectedProjectViewModel> {
+        override val projectVm: StateFlow<GitLabToolWindowConnectedProjectViewModel?> = vm.connectedProjectVm.mapStateIn(cs, SharingStarted.Lazily) {
+          it as GitLabToolWindowConnectedProjectViewModel?
+        }
+      }
+      manageReviewToolwindowTabs(this, toolWindow, reviewToolWindowVm, componentFactory, GitLabBundle.message("merge.request.toolwindow.tab.title"))
       awaitCancellation()
     }.cancelOnDispose(toolWindow.contentManager)
   }

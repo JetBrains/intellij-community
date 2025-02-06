@@ -48,7 +48,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
     }
 
     cs.launchNow(Dispatchers.Main) {
-      project.service<GitLabProjectViewModel>().projectVm
+      project.service<GitLabProjectViewModel>().connectedProjectVm
         .flatMapLatest {
           it?.currentMergeRequestReviewVm ?: flowOf(null)
         }.collectLatest { reviewVm ->

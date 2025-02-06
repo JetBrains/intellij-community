@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowViewModel
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -12,14 +11,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
@@ -28,7 +20,6 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.createSingleProjectAndAccountState
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabRepositoryAndAccountSelectorViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowConnectedProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowConnectedProjectViewModel.Companion.GitLabToolWindowConnectedProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestsUtil
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
@@ -37,7 +28,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 internal class GitLabProjectViewModel(
   private val project: Project,
   parentCs: CoroutineScope
-) : ReviewToolwindowViewModel<GitLabToolWindowConnectedProjectViewModel> {
+) {
   private val cs = parentCs.childScope(javaClass.name, Dispatchers.Default)
 
   private val connectionManager: GitLabProjectConnectionManager = project.service<GitLabProjectConnectionManager>()
@@ -48,7 +39,7 @@ internal class GitLabProjectViewModel(
     it.isNotEmpty()
   }
 
-  override val projectVm: StateFlow<GitLabToolWindowConnectedProjectViewModel?> =
+  val connectedProjectVm: StateFlow<GitLabConnectedProjectViewModel?> =
     connectionManager.connectionState.mapScoped { connection ->
       connection?.let { GitLabToolWindowConnectedProjectViewModel(project, accountManager, projectsManager, it, ::activate) }
     }.stateIn(cs, SharingStarted.Eagerly, null)
@@ -84,7 +75,7 @@ internal class GitLabProjectViewModel(
     createSingleProjectAndAccountState(cs, projectsManager, accountManager)
 
   val canSwitchProject: StateFlow<Boolean> =
-    combineState(cs, projectVm, singleProjectAndAccountState) { currentProjectContext, currentSingleRepoAndAccountState ->
+    combineState(cs, connectedProjectVm, singleProjectAndAccountState) { currentProjectContext, currentSingleRepoAndAccountState ->
       // project can be switched when any project is selected and there are no 1-1 mapping with project and account
       currentProjectContext != null && currentSingleRepoAndAccountState == null
     }
@@ -112,7 +103,7 @@ internal class GitLabProjectViewModel(
   internal fun activateAndAwaitProject(action: GitLabConnectedProjectViewModel.() -> Unit) {
     cs.launch {
       _activationRequests.emit(Unit)
-      projectVm.filterNotNull().first().action()
+      connectedProjectVm.filterNotNull().first().action()
     }
   }
 }

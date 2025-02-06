@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.action
 import com.intellij.openapi.actionSystem.DataKey
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabConnectedProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel
 
 internal object GitLabMergeRequestsActionKeys {
@@ -13,6 +14,9 @@ internal object GitLabMergeRequestsActionKeys {
   @JvmStatic
   val REVIEW_LIST_VM: DataKey<GitLabMergeRequestsListViewModel> =
     DataKey.create("org.jetbrains.plugins.gitlab.mergerequests.review.list.viewmodel")
+
+  @JvmStatic
+  val PROJECT_VM: DataKey<GitLabProjectViewModel> = DataKey.create("org.jetbrains.plugins.gitlab.mergerequest.project.vm")
 
   @JvmStatic
   val CONNECTED_PROJECT_VM: DataKey<GitLabConnectedProjectViewModel> = DataKey.create("org.jetbrains.plugins.gitlab.mergerequest.connected.project.vm")

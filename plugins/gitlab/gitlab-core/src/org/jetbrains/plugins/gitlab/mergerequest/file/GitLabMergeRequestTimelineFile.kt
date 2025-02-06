@@ -29,7 +29,7 @@ internal class GitLabMergeRequestTimelineFile(connectionId: String,
 
   private fun findDetails(): GitLabMergeRequestDetails? =
     project.serviceIfCreated<GitLabProjectViewModel>()
-      ?.projectVm?.value?.takeIf { it.connectionId == connectionId }?.findMergeRequestDetails(mergeRequestId)
+      ?.connectedProjectVm?.value?.takeIf { it.connectionId == connectionId }?.findMergeRequestDetails(mergeRequestId)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

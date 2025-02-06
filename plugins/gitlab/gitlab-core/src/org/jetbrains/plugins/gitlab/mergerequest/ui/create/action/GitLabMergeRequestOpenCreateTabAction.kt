@@ -27,7 +27,7 @@ internal class GitLabMergeRequestOpenCreateTabAction : DumbAwareAction() {
     }
     val vm = project.service<GitLabProjectViewModel>()
     val vmAvailable = vm.isAvailable.value
-    val vmProjectConnected = vm.projectVm.value != null
+    val vmProjectConnected = vm.connectedProjectVm.value != null
 
     if (e.place == ActionPlaces.TOOLWINDOW_TITLE) {
       e.presentation.isEnabledAndVisible = vmProjectConnected

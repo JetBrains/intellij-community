@@ -84,7 +84,7 @@ private class ComponentFactory(private val project: Project, parentCs: Coroutine
     })
 
     cs.launchNow {
-      project.serviceAsync<GitLabProjectViewModel>().projectVm.collectScoped { projectVm ->
+      project.serviceAsync<GitLabProjectViewModel>().connectedProjectVm.collectScoped { projectVm ->
         projectVm?.getTimelineViewModel(file.mergeRequestId)?.collectScoped {
           showTimelineOrError(projectVm, it, file.mergeRequestId, wrapper)
         }

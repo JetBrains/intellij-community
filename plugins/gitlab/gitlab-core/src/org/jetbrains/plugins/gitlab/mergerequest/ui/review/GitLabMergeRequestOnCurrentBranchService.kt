@@ -33,7 +33,7 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
   @OptIn(ExperimentalCoroutinesApi::class)
   internal val mergeRequestReviewVmState: StateFlow<GitLabMergeRequestEditorReviewViewModel?> by lazy {
     val toolWindowVm = project.service<GitLabProjectViewModel>()
-    toolWindowVm.projectVm.flatMapLatest {
+    toolWindowVm.connectedProjectVm.flatMapLatest {
       it?.currentMergeRequestReviewVm ?: flowOf(null)
     }.onStart {
       toolWindowVm.loginIfPossible()

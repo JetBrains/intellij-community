@@ -18,7 +18,7 @@ internal abstract class GitLabProjectVirtualFile(override val connectionId: Stri
   override fun getFileSystem(): ComplexPathVirtualFileSystem<*> = GitLabVirtualFileSystem.getInstance()
 
   override fun isValid(): Boolean = project.serviceIfCreated<GitLabProjectViewModel>()
-    ?.projectVm?.value?.takeIf { it.connectionId == connectionId } != null
+    ?.connectedProjectVm?.value?.takeIf { it.connectionId == connectionId } != null
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
