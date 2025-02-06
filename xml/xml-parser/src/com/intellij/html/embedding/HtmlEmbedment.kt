@@ -5,10 +5,15 @@ import com.intellij.lexer.Lexer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.tree.IElementType
 
-class HtmlEmbedment(private val htmlEmbedmentInfo: HtmlEmbedmentInfo,
-                    val range: TextRange,
-                    val baseLexerState: Int) {
+class HtmlEmbedment(
+  private val htmlEmbedmentInfo: HtmlEmbedmentInfo,
+  val range: TextRange,
+  val baseLexerState: Int,
+) {
 
-  fun getElementType(): IElementType? = htmlEmbedmentInfo.getElementType()
-  fun createHighlightingLexer(): Lexer? = htmlEmbedmentInfo.createHighlightingLexer()
+  fun getElementType(): IElementType? =
+    htmlEmbedmentInfo.getElementType()
+
+  fun createHighlightingLexer(): Lexer? =
+    htmlEmbedmentInfo.createHighlightingLexer()
 }
