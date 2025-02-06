@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.ContextProvider
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.getElementContext
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 abstract class KotlinApplicableInspectionBase<E : KtElement, C : Any> : LocalInspectionTool(),
                                                                   ApplicableRangesProvider<E>,
@@ -38,7 +39,13 @@ abstract class KotlinApplicableInspectionBase<E : KtElement, C : Any> : LocalIns
         }
         if (ranges.isEmpty()) return
 
-        val context = getElementContext(element) ?: return
+        val context = try {
+          getElementContext(element)
+        } catch (e: Exception) {
+            throw KotlinExceptionWithAttachments("Unable to get element context", e)
+                .withPsiAttachment("element.kt", element)
+                .withPsiAttachment("file.kt", element.containingFile)
+        } ?: return
         ranges.asSequence()
             .map { rangeInElement ->
                 holder.manager.createProblemDescriptor(

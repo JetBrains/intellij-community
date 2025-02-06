@@ -51,8 +51,9 @@ fun getLabelToBeReferencedByThis(symbol: KaSymbol): ExplicitReceiverInfo? {
         is KaAnonymousFunctionSymbol -> {
             val receiverPsi = symbol.psi
             val potentialLabeledPsi = receiverPsi?.parent?.parent
-            val label = if (potentialLabeledPsi is KtLabeledExpression) potentialLabeledPsi.getLabelNameAsName()
-            else {
+            val label = if (potentialLabeledPsi is KtLabeledExpression) {
+                potentialLabeledPsi.getLabelNameAsName()
+            } else {
                 val potentialCallExpression = potentialLabeledPsi?.parent as? KtCallExpression
                 val potentialCallNameReference = (potentialCallExpression?.calleeExpression as? KtNameReferenceExpression)
                 potentialCallNameReference?.getReferencedNameAsName()
@@ -63,7 +64,7 @@ fun getLabelToBeReferencedByThis(symbol: KaSymbol): ExplicitReceiverInfo? {
         is KaCallableSymbol -> symbol.psi to symbol.name
         else -> return null
     }
-    return ExplicitReceiverInfo( associatedTag, receiverProvidedBy as KtDeclaration)
+    return (receiverProvidedBy as? KtDeclaration)?.let { ExplicitReceiverInfo(associatedTag, it) }
 }
 
 context(KaSession)
