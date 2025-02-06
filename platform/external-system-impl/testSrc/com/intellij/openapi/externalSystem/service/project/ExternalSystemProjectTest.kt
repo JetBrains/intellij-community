@@ -9,11 +9,13 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
 import com.intellij.openapi.externalSystem.model.project.LibraryLevel
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
+import com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy
 import com.intellij.openapi.externalSystem.test.javaModule
 import com.intellij.openapi.externalSystem.test.javaProject
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.platform.externalSystem.testFramework.Module
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -38,10 +40,13 @@ import java.io.File
 class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
 
   @Test
-  fun `test module names deduplication`() {
+  fun `test module names deduplication with the default strategy`() {
     val projectModel = project {
       module("root", externalProjectPath = "root")
       module("root", externalProjectPath = "root/1")
+      module("root", externalProjectPath = "temp/root/1")
+      module("root", externalProjectPath = "dummy/temp/root/1")
+      module("root", externalProjectPath = "dummy/dummy/temp/root/1")
       module("root", externalProjectPath = "root/2")
       module("root", externalProjectPath = "root/3")
       module("root", externalProjectPath = "another/root")
@@ -59,8 +64,84 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
     applyProjectModel(projectModel)
 
     val expectedNames = arrayOf(
-      "root", "1.root", "2.root", "3.root", "another.root", "notRoot.root", "root.root", "root.root.root", "yetanother.root.root",
+      "root", "1.root",  "root.1.root", "temp.root.1.root", "root~1", "2.root", "3.root", "another.root", "notRoot.root", "root.root", "root.root.root", "yetanother.root.root",
       "group-root", "root.group-root", "group.root.group-root", "my-group.root.group-root"
+    )
+    assertOrderedEquals(modelsProvider.modules.map { it.name }, *expectedNames)
+
+    // check reimport with the same data
+    applyProjectModel(projectModel)
+    assertOrderedEquals(modelsProvider.modules.map { it.name }, *expectedNames)
+  }
+
+  @Test
+  fun `test module names deduplication with the path name strategy`() {
+    val projectModel = project {
+      val withPathNameStrategy: (String, String) -> Module = { name, externalProjectPath ->
+        module(name, externalProjectPath) {
+          moduleData.moduleNameDeduplicationStrategy = ModuleNameDeduplicationStrategy.PARENT_PATH_NAME
+        }
+      }
+
+      withPathNameStrategy("root", "root")
+      withPathNameStrategy("root", "root/1")
+      withPathNameStrategy("root", "temp/root/1")
+      withPathNameStrategy("root", "dummy/temp/root/1")
+      withPathNameStrategy("root", "dummy/dummy/temp/root/1")
+      withPathNameStrategy("root", "root/2")
+      withPathNameStrategy("root", "root/3")
+      withPathNameStrategy("root", "another/root")
+      withPathNameStrategy("root", "another/notRoot")
+      withPathNameStrategy("root", "root/root/root")
+      withPathNameStrategy("root", "root/root/root/root")
+      withPathNameStrategy("root", "yetanother/root/root")
+      withPathNameStrategy("group-root", "root")
+      withPathNameStrategy("group-root", "root/group/root")
+      withPathNameStrategy("group-root", "root/my/group/root")
+      withPathNameStrategy("group-root", "root/my-group/root")
+    }
+
+    val modelsProvider = IdeModelsProviderImpl(project)
+    applyProjectModel(projectModel)
+
+    val expectedNames = arrayOf(
+      "root", "1.root",  "root.1.root", "temp.root.1.root", "dummy.temp.root.1.root", "2.root", "3.root", "another.root", "notRoot.root", "root.root", "root.root.root", "yetanother.root.root",
+      "group-root", "root.group-root", "group.root.group-root", "my-group.root.group-root"
+    )
+    assertOrderedEquals(modelsProvider.modules.map { it.name }, *expectedNames)
+
+    // check reimport with the same data
+    applyProjectModel(projectModel)
+    assertOrderedEquals(modelsProvider.modules.map { it.name }, *expectedNames)
+  }
+
+  @Test
+  fun `test module names deduplication with the numeric strategy`() {
+    val projectModel = project {
+      val withNumericStrategy: (String, String) -> Module = { name, externalProjectPath ->
+        module(name, externalProjectPath) {
+          moduleData.moduleNameDeduplicationStrategy = ModuleNameDeduplicationStrategy.NUMBER_SUFFIX
+        }
+      }
+
+      withNumericStrategy("root", "root")
+      withNumericStrategy("root", "root/1")
+      withNumericStrategy("root", "temp/root/1")
+      withNumericStrategy("root", "dummy/temp/root/1")
+      withNumericStrategy("root", "dummy/dummy/temp/root/1")
+      withNumericStrategy("root", "yetanother/root/root")
+      withNumericStrategy("group-root", "root")
+      withNumericStrategy("group-root", "root/group/root")
+      withNumericStrategy("group-root", "root/my/group/root")
+      withNumericStrategy("group-root", "root/my-group/root")
+    }
+
+    val modelsProvider = IdeModelsProviderImpl(project)
+    applyProjectModel(projectModel)
+
+    val expectedNames = arrayOf(
+      "root", "root~1", "root~2", "root~3", "root~4", "root~5",
+      "group-root", "group-root~1", "group-root~2", "group-root~3"
     )
     assertOrderedEquals(modelsProvider.modules.map { it.name }, *expectedNames)
 

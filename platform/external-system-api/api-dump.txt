@@ -628,6 +628,7 @@ c:com.intellij.openapi.externalSystem.model.project.ModuleData
 - getLinkedExternalProjectPath():java.lang.String
 - getModuleFileDirectoryPath():java.lang.String
 - getModuleName():java.lang.String
+- getModuleNameDeduplicationStrategy():com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy
 - getModuleTypeId():java.lang.String
 - getProductionModuleId():java.lang.String
 - getProperty(java.lang.String):java.lang.String
@@ -643,6 +644,7 @@ c:com.intellij.openapi.externalSystem.model.project.ModuleData
 - setIdeModuleGroup(java.lang.String[]):V
 - setInheritProjectCompileOutputPath(Z):V
 - setModuleName(java.lang.String):V
+- setModuleNameDeduplicationStrategy(com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy):V
 - setProductionModuleId(java.lang.String):V
 - setProperty(java.lang.String,java.lang.String):V
 - setPublication(com.intellij.openapi.externalSystem.model.project.ProjectCoordinate):V
@@ -657,6 +659,13 @@ f:com.intellij.openapi.externalSystem.model.project.ModuleDependencyData
 - isProductionOnTestDependency():Z
 - setModuleDependencyArtifacts(java.util.Collection):V
 - setProductionOnTestDependency(Z):V
+e:com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy
+- java.lang.Enum
+- sf:DEFAULT:com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy
+- sf:NUMBER_SUFFIX:com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy
+- sf:PARENT_PATH_NAME:com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy
+- s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy
+- s:values():com.intellij.openapi.externalSystem.model.project.ModuleNameDeduplicationStrategy[]
 f:com.intellij.openapi.externalSystem.model.project.ModuleSdkData
 - com.intellij.openapi.externalSystem.model.project.SdkData
 - sf:Companion:com.intellij.openapi.externalSystem.model.project.ModuleSdkData$Companion
