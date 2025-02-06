@@ -20,7 +20,6 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.createSingleProjectAndAccountState
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabRepositoryAndAccountSelectorViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowConnectedProjectViewModel.Companion.GitLabToolWindowConnectedProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestsUtil
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
@@ -34,6 +33,7 @@ internal class GitLabProjectViewModel(
   private val connectionManager: GitLabProjectConnectionManager = project.service<GitLabProjectConnectionManager>()
   private val projectsManager: GitLabProjectsManager = project.service<GitLabProjectsManager>()
   private val accountManager: GitLabAccountManager = service<GitLabAccountManager>()
+  private val vmFactory = project.service<GitLabConnectedProjectViewModelFactory>()
 
   val isAvailable: StateFlow<Boolean> = projectsManager.knownRepositoriesState.mapState(cs) {
     it.isNotEmpty()
@@ -41,8 +41,8 @@ internal class GitLabProjectViewModel(
 
   val connectedProjectVm: StateFlow<GitLabConnectedProjectViewModel?> =
     connectionManager.connectionState.mapScoped { connection ->
-      connection?.let { GitLabToolWindowConnectedProjectViewModel(project, accountManager, projectsManager, it, ::activate) }
-    }.stateIn(cs, SharingStarted.Eagerly, null)
+      connection?.let { vmFactory.create(project, this, accountManager, projectsManager, it, ::activate) }
+    }.stateIn(cs, SharingStarted.Companion.Eagerly, null)
 
   val selectorVm: StateFlow<GitLabRepositoryAndAccountSelectorViewModel?> = isAvailable.mapScoped {
     val preferences = project.service<GitLabMergeRequestsPreferences>()

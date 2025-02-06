@@ -25,8 +25,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabConnectedProjectViewMo
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
-internal class GitLabToolWindowConnectedProjectViewModel
-private constructor(
+internal class GitLabToolWindowConnectedProjectViewModel(
   parentCs: CoroutineScope,
   private val project: Project,
   accountManager: GitLabAccountManager,
@@ -112,15 +111,6 @@ private constructor(
   }
 
   companion object {
-    internal fun CoroutineScope.GitLabToolWindowConnectedProjectViewModel(
-      project: Project,
-      accountManager: GitLabAccountManager,
-      projectsManager: GitLabProjectsManager,
-      connection: GitLabProjectConnection,
-      activate: () -> Unit,
-    ) =
-      GitLabToolWindowConnectedProjectViewModel(this, project, accountManager, projectsManager, connection, activate)
-
     private fun GitLabReviewTab.toStatistics(): GitLabStatistics.ToolWindowTabType {
       return when (this) {
         GitLabReviewTab.NewMergeRequest -> GitLabStatistics.ToolWindowTabType.CREATION

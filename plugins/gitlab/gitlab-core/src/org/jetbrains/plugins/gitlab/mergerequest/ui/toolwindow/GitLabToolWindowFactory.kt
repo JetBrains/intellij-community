@@ -88,7 +88,7 @@ private class GitLabMergeRequestsToolWindowController(private val project: Proje
       })
 
       val reviewToolWindowVm = object : ReviewToolwindowViewModel<GitLabToolWindowConnectedProjectViewModel> {
-        override val projectVm: StateFlow<GitLabToolWindowConnectedProjectViewModel?> = vm.connectedProjectVm.mapStateIn(cs, SharingStarted.Lazily) {
+        override val projectVm: StateFlow<GitLabToolWindowConnectedProjectViewModel?> = vm.connectedProjectVm.mapStateIn(cs, SharingStarted.Eagerly) {
           it as GitLabToolWindowConnectedProjectViewModel?
         }
       }
