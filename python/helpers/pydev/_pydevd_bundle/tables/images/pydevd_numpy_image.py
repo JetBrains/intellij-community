@@ -18,7 +18,7 @@ def get_bytes(arr):
         arr_to_convert = arr
 
         if not (np.issubdtype(arr_to_convert.dtype, np.floating) or np.issubdtype(arr_to_convert.dtype, np.integer)):
-            raise ValueError("Only numeric array types are supported.")
+            raise ValueError("Only non-complex numeric array types are supported.")
 
         if arr_to_convert.ndim == 1:
             arr_to_convert = np.expand_dims(arr_to_convert, axis=0)
