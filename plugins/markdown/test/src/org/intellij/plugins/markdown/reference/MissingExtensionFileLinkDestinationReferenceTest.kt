@@ -41,6 +41,8 @@ class MissingExtensionFileLinkDestinationReferenceTest : BaseLinkDestinationRefe
   // TODO: move this test to CommonLinkDestinationReferenceTest, since it is a common renaming behavior
   fun testRenameExtensionIntroduction() = testRenameFile(Path.of("stub_without_extension"), "renamed.md")
 
+  fun testRenameExtensionIntroductionTxt() = testRenameFile(Path.of("stub_without_extension"), "renamed.txt")
+
   fun testRenameDirectory() = testRenameFile(Path.of("topDir", "innerDir"), "renamed")
 
   fun testRenameNotRenamedBecauseOfFullMatchWithOtherFile() = testRenameFile(Path.of("topDir", "stub_in_top_dir.md.md"), "renamed")
