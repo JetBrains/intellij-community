@@ -4,7 +4,6 @@ import org.jetbrains.jewel.buildlogic.apivalidation.ApiValidationExtension
 
 plugins {
     id("org.jetbrains.kotlinx.binary-compatibility-validator")
-    id("dev.drewhamilton.poko")
     kotlin("jvm")
 }
 
@@ -15,8 +14,6 @@ apiValidation {
      */
     nonPublicMarkers.add("org.jetbrains.jewel.InternalJewelApi")
 }
-
-poko { pokoAnnotation = "org/jetbrains/jewel/foundation/GenerateDataFunctions" }
 
 kotlin { explicitApi() }
 

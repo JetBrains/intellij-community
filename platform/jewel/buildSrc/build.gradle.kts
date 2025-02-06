@@ -27,7 +27,6 @@ dependencies {
     implementation(libs.ktfmt.gradlePlugin)
     implementation(libs.kotlinx.binaryCompatValidator.gradlePlugin)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.poko.gradlePlugin)
 
     // Enables using type-safe accessors to reference plugins from the [plugins] block defined in
     // version catalogs.
