@@ -105,7 +105,9 @@ internal abstract class TerminalEventDispatcher(
         if (sc.isKeyboard && sc.startsWith(eventShortcut)) {
           if (!Registry.`is`("terminal.Ctrl-E.opens.RecentFiles.popup",
                              false) && IdeActions.ACTION_RECENT_FILES == ActionManager.getInstance().getId(action)) {
-            return e.modifiersEx == InputEvent.CTRL_DOWN_MASK && e.keyCode == KeyEvent.VK_E
+            if (e.modifiersEx == InputEvent.CTRL_DOWN_MASK && e.keyCode == KeyEvent.VK_E) {
+              return false
+            }
           }
           return true
         }
