@@ -7,4 +7,8 @@
       <with attribute="implementationClass" implements="com.intellij.platform.syntax.psi.LanguageSyntaxDefinition"/>
     </extensionPoint>
   </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <syntax.elementTypeConverter language="any" implementationClass="com.intellij.platform.syntax.psi.CommonElementTypeConverter"/>
+  </extensions>
 </idea-plugin>

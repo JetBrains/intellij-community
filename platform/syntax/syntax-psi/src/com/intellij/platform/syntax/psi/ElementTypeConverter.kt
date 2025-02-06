@@ -2,6 +2,7 @@
 package com.intellij.platform.syntax.psi
 
 import com.intellij.lang.LanguageExtension
+import com.intellij.lang.LanguageExtensionWithAny
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.annotations.ApiStatus
@@ -42,11 +43,7 @@ internal fun ElementTypeConverter.convertNotNull(type: SyntaxElementType): IElem
 }
 
 @ApiStatus.Internal
-class ElementTypeConverters : LanguageExtension<ElementTypeConverter>(
-  "com.intellij.syntax.elementTypeConverter",
-) {
-  companion object {
-    @JvmStatic
-    val instance: ElementTypeConverters = ElementTypeConverters()
-  }
+object ElementTypeConverters {
+  @JvmStatic
+  val instance: LanguageExtension<ElementTypeConverter> = LanguageExtensionWithAny("com.intellij.syntax.elementTypeConverter")
 }

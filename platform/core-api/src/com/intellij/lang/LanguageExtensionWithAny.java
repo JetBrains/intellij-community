@@ -1,9 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.completion;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.lang;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.MetaLanguage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,8 +9,8 @@ import java.util.List;
 import java.util.Set;
 
 @ApiStatus.Internal
-public final class CompletionExtension<T> extends LanguageExtension<T> {
-  public CompletionExtension(String epName) {
+public final class LanguageExtensionWithAny<T> extends LanguageExtension<T> {
+  public LanguageExtensionWithAny(String epName) {
     super(epName);
   }
 
