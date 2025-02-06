@@ -62,7 +62,7 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
   }
 
   fun getStyleSheet(paneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
-    styleSheetCache.get(Pair(paneBackgroundColor.rgb and 0xffffff, configuration))
+    styleSheetCache.get(Triple(paneBackgroundColor.rgb and 0xffffff, scale(1), configuration))
 
   private val inlineCodeStyling = ControlColorStyleBuilder(
     ElementKind.CodeInline,
@@ -90,9 +90,9 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
     fallbackToEditorBorder = true,
   )
 
-  private val styleSheetCache: LoadingCache<Pair<Int, JBHtmlPaneStyleConfiguration>, StyleSheet> = Caffeine.newBuilder()
+  private val styleSheetCache: LoadingCache<Triple<Int, Int, JBHtmlPaneStyleConfiguration>, StyleSheet> = Caffeine.newBuilder()
     .maximumSize(20)
-    .build { (bgColor, configuration) -> buildStyleSheet(Color(bgColor), configuration) }
+    .build { (bgColor, _, configuration) -> buildStyleSheet(Color(bgColor), configuration) }
 
   private fun buildStyleSheet(paneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
     StyleSheetUtil.loadStyleSheet(sequenceOf(

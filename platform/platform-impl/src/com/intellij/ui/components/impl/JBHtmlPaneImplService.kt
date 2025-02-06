@@ -13,9 +13,11 @@ import java.awt.Color
 import java.awt.Image
 import java.net.URL
 import java.util.*
+import javax.swing.text.View
+import javax.swing.text.html.BlockView
 import javax.swing.text.html.StyleSheet
 
-internal class JBHtmlPaneImplService: JBHtmlPane.ImplService {
+internal class JBHtmlPaneImplService : JBHtmlPane.ImplService {
 
   override fun transpileHtmlPaneInput(@Nls text: String): @Nls String =
     JBHtmlPaneInputTranspiler.transpileHtmlPaneInput(text)
@@ -31,5 +33,26 @@ internal class JBHtmlPaneImplService: JBHtmlPane.ImplService {
 
   override fun createDefaultImageResolver(pane: JBHtmlPane): Dictionary<URL, Image> =
     JBHtmlPaneImageResolver(pane, null)
+
+  override fun applyCssToView(pane: JBHtmlPane) {
+    applyCssToView(pane.ui.getRootView(pane))
+  }
+
+  private fun applyCssToView(view: View) {
+    // Recursively traverse child views
+    val childCount = view.viewCount
+    for (i in 0..<childCount) {
+      val childView = view.getView(i)
+      applyCssToView(childView)
+      (childView as? BlockView)?.setPropertiesFromAttributes()
+    }
+  }
+
+  private fun BlockView.setPropertiesFromAttributes() {
+    this::class.java.declaredMethods.find { it.name == "setPropertiesFromAttributes" }?.let {
+      it.isAccessible = true
+      it.invoke(this)
+    }
+  }
 
 }

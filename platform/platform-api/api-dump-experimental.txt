@@ -370,6 +370,7 @@ a:com.intellij.ui.ColoredTreeCellRenderer
 - getText():java.lang.String
 - p:paintComponent(java.awt.Graphics):V
 - p:processKeyEvent(java.awt.event.KeyEvent):V
+- f:reloadCssStylesheets():V
 - setDocument(javax.swing.text.Document):V
 - setEditorKit(javax.swing.text.EditorKit):V
 - setText(java.lang.String):V

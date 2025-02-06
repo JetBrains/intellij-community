@@ -191,19 +191,23 @@ open class JBHtmlPane(
   val backgroundFlow: StateFlow<Color>
     get() = mutableBackgroundFlow
 
+  fun reloadCssStylesheets() {
+    updateDocumentationPaneDefaultCssRules(editorKit as HTMLEditorKit)
+  }
+
   private fun updateDocumentationPaneDefaultCssRules(editorKit: HTMLEditorKit) {
     val editorStyleSheet = editorKit.styleSheet
     myCurrentDefaultStyleSheet
       ?.let { editorStyleSheet.removeStyleSheet(it) }
     val newStyleSheet = StyleSheet()
       .also { myCurrentDefaultStyleSheet = it }
-    val background = background
     newStyleSheet.addStyleSheet(service.getDefaultStyleSheet(background, myStyleConfiguration))
     newStyleSheet.addStyleSheet(service.getEditorColorsSchemeStyleSheet(myStyleConfiguration.colorScheme))
     myPaneConfiguration.customStyleSheetProviders.forEach {
-      newStyleSheet.addStyleSheet(it(background))
+      newStyleSheet.addStyleSheet(it(this))
     }
     editorStyleSheet.addStyleSheet(newStyleSheet)
+    service.applyCssToView(this)
   }
 
   override fun processKeyEvent(e: KeyEvent) {
@@ -244,6 +248,7 @@ open class JBHtmlPane(
 
     fun createDefaultImageResolver(pane: JBHtmlPane): Dictionary<URL, Image>
 
+    fun applyCssToView(pane: JBHtmlPane)
   }
 
 }
