@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
 import com.intellij.psi.PsiMember
-import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -10,11 +9,11 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvid
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForElement
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinInfixCallPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinPropertyDelegatePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtPropertyDelegate
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
@@ -108,7 +107,7 @@ internal class InfixCallableImportCandidatesProvider(
 
 internal class DelegateMethodImportCandidatesProvider(
     private val expectedDelegateFunctionSignature: String,
-    override val positionContext: KotlinNameReferencePositionContext,
+    override val positionContext: KotlinPropertyDelegatePositionContext,
 ) : AbstractImportCandidatesProvider() {
 
     private val expectedDelegateFunctionName: Name? = listOf(
@@ -132,7 +131,7 @@ internal class DelegateMethodImportCandidatesProvider(
     override fun collectCandidates(
         indexProvider: KtSymbolFromIndexProvider,
     ): List<CallableImportCandidate> {
-        val expressionType = positionContext.position.parentOfType<KtPropertyDelegate>()?.expression?.expressionType ?: return emptyList()
+        val expressionType = positionContext.propertyDelegate.expression?.expressionType ?: return emptyList()
         return indexProvider.getExtensionCallableSymbolsByNameFilter(
             nameFilter = { it in missingDelegateFunctionNames },
             receiverTypes = listOf(expressionType),

@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.quickfix.ImportPrioritizer
 import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtPropertyDelegate
 import org.jetbrains.kotlin.resolve.ImportPath
 import javax.swing.Icon
 
@@ -52,11 +53,23 @@ object ImportQuickFixProvider {
      * Returns the [KtElement] to put an auto-import on, and the detected [KotlinRawPositionContext] around it.
      */
     private fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): Pair<KtElement, KotlinRawPositionContext>? {
-        val diagnosticPsi = diagnostic.psi
-        val position = diagnosticPsi.containingFile.findElementAt(diagnosticPsi.startOffset)
-        val positionContext = position?.let { KotlinPositionContextDetector.detect(it) } as? KotlinNameReferencePositionContext 
-            ?: return null
-        return positionContext.nameExpression to positionContext
+        return when (diagnostic) {
+            is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable,
+            is KaFirDiagnostic.DelegateSpecialFunctionMissing -> {
+                val delegateExpression = diagnostic.psi
+                val propertyDelegate = delegateExpression.parent as? KtPropertyDelegate ?: return null
+                
+                delegateExpression to KotlinPropertyDelegatePositionContext(propertyDelegate)
+            }
+            
+            else -> {        
+                val diagnosticPsi = diagnostic.psi
+                val position = diagnosticPsi.containingFile.findElementAt(diagnosticPsi.startOffset)
+                val positionContext = position?.let { KotlinPositionContextDetector.detect(it) } as? KotlinNameReferencePositionContext
+                    ?: return null
+                positionContext.nameExpression to positionContext
+            }
+        }
     }
 
     private fun KaSession.provideImportCandidates(
@@ -64,22 +77,29 @@ object ImportQuickFixProvider {
         positionContext: KotlinRawPositionContext,
         indexProvider: KtSymbolFromIndexProvider
     ): List<ImportCandidate> {
-        if (positionContext !is KotlinNameReferencePositionContext) return emptyList()
-
-        val providers = when (diagnostic) {
-            is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable ->
-                sequenceOf(DelegateMethodImportCandidatesProvider(diagnostic.expectedFunctionSignature, positionContext))
-
-            is KaFirDiagnostic.DelegateSpecialFunctionMissing ->
-                sequenceOf(DelegateMethodImportCandidatesProvider(diagnostic.expectedFunctionSignature, positionContext))
-
-            else ->
-                getCandidateProvidersForUnresolvedNameReference(positionContext)
+        val providers = when (positionContext) {
+            is KotlinNameReferencePositionContext -> getCandidateProvidersForUnresolvedNameReference(positionContext)
+            is KotlinPropertyDelegatePositionContext -> getCandidateProvidersForDelegatedProperty(diagnostic, positionContext)
+            else -> emptySequence()
         }
 
         return providers.flatMap { it.collectCandidates(indexProvider) }.toList()
     }
-    
+
+    private fun getCandidateProvidersForDelegatedProperty(
+        diagnostic: KaDiagnosticWithPsi<*>,
+        positionContext: KotlinPropertyDelegatePositionContext,
+    ): Sequence<AbstractImportCandidatesProvider> {
+        val expectedFunctionSignature = when (diagnostic) {
+            is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable -> diagnostic.expectedFunctionSignature
+            is KaFirDiagnostic.DelegateSpecialFunctionMissing -> diagnostic.expectedFunctionSignature
+            else -> null
+        }
+        
+        if (expectedFunctionSignature == null) return emptySequence()
+
+        return sequenceOf(DelegateMethodImportCandidatesProvider(expectedFunctionSignature, positionContext))
+    }
 
     context(KaSession)
     private fun getCandidateProvidersForUnresolvedNameReference(

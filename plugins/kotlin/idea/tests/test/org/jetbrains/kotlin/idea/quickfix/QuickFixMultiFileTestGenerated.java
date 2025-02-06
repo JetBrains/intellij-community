@@ -521,6 +521,16 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/delegateNoOperator.test");
             }
 
+            @TestMetadata("delegateToBinaryExpression.test")
+            public void testDelegateToBinaryExpression() throws Exception {
+                runTest("testData/quickfix/autoImports/delegateToBinaryExpression.test");
+            }
+
+            @TestMetadata("delegateToStringLiteral.test")
+            public void testDelegateToStringLiteral() throws Exception {
+                runTest("testData/quickfix/autoImports/delegateToStringLiteral.test");
+            }
+
             @TestMetadata("divOperator.before.Main.kt")
             public void testDivOperator() throws Exception {
                 runTest("testData/quickfix/autoImports/divOperator.before.Main.kt");
