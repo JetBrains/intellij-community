@@ -605,6 +605,24 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
+    super.visitSwitchExpression(expression);
+    if (!hasErrorResults()) checkFeature(expression, JavaFeature.SWITCH_EXPRESSION);
+  }
+
+  @Override
+  public void visitModule(@NotNull PsiJavaModule module) {
+    super.visitModule(module);
+    if (!hasErrorResults()) checkFeature(module, JavaFeature.MODULES);
+  }
+  
+  @Override
+  public void visitImportModuleStatement(@NotNull PsiImportModuleStatement statement) {
+    super.visitImportModuleStatement(statement);
+    if (!hasErrorResults()) checkFeature(statement, JavaFeature.MODULE_IMPORT_DECLARATIONS);
+  }
+
+  @Override
   public void visitImportStaticReferenceElement(@NotNull PsiImportStaticReferenceElement ref) {
     myImportChecker.checkImportStaticReferenceElement(ref);
   }

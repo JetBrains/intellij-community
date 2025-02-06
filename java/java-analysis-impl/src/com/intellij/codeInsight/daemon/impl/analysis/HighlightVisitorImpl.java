@@ -300,7 +300,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitImportModuleStatement(@NotNull PsiImportModuleStatement statement) {
     super.visitImportModuleStatement(statement);
-    if (!hasErrorResults()) add(checkFeature(statement, JavaFeature.MODULE_IMPORT_DECLARATIONS));
     if (!hasErrorResults()) add(ModuleHighlightUtil.checkModuleReference(statement));
   }
 
@@ -506,7 +505,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
     super.visitSwitchExpression(expression);
-    if (!hasErrorResults()) add(checkFeature(expression, JavaFeature.SWITCH_EXPRESSION));
     checkSwitchBlock(expression);
     if (!hasErrorResults()) HighlightUtil.checkSwitchExpressionReturnTypeCompatible(expression, myErrorSink);
     if (!hasErrorResults()) HighlightUtil.checkSwitchExpressionHasResult(expression, myErrorSink);
@@ -551,7 +549,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitModule(@NotNull PsiJavaModule module) {
     super.visitModule(module);
-    if (!hasErrorResults()) add(checkFeature(module, JavaFeature.MODULES));
     if (!hasErrorResults()) add(ModuleHighlightUtil.checkFileName(module, myFile));
     if (!hasErrorResults()) add(ModuleHighlightUtil.checkFileDuplicates(module, myFile));
     if (!hasErrorResults()) ModuleHighlightUtil.checkDuplicateStatements(module, myErrorSink);
@@ -603,9 +600,5 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
       if (!hasErrorResults()) ModuleHighlightUtil.checkServiceImplementations(statement, myFile, myErrorSink);
     }
-  }
-
-  private @Nullable HighlightInfo.Builder checkFeature(@NotNull PsiElement element, @NotNull JavaFeature feature) {
-    return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
   }
 }
