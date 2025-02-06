@@ -1,25 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.actions
+package com.intellij.platform.recentFiles.frontend
 
 import com.intellij.ide.IdeBundle.message
+import com.intellij.ide.actions.ActivateToolWindowAction
+import com.intellij.ide.actions.RecentLocationsAction
+import com.intellij.ide.ui.colors.color
+import com.intellij.ide.ui.icons.icon
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.fileEditor.impl.EditorWindow
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OpenMode
 import com.intellij.openapi.keymap.KeymapUtil.getShortcutText
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Iconable.ICON_FLAG_READ_STATUS
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.NaturalComparator
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
-import com.intellij.problems.WolfTheProblemSolver
-import com.intellij.toolWindow.ToolWindowEventSource
+import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
 import com.intellij.ui.*
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.render.RenderingUtil
@@ -28,7 +22,6 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component

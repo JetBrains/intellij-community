@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.actions
+package com.intellij.platform.recentFiles.frontend
 
 import com.intellij.ide.IdeBundle.message
-import com.intellij.ide.actions.Switcher.SwitcherPanel
+import com.intellij.platform.recentFiles.frontend.Switcher.SwitcherPanel
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SpeedSearchBase
 import com.intellij.ui.SpeedSearchComparator

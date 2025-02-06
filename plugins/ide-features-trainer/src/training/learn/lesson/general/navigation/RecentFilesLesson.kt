@@ -3,7 +3,6 @@ package training.learn.lesson.general.navigation
 
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.Switcher
 import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -13,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.Messages
+import com.intellij.platform.recentFiles.frontend.Switcher
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBList

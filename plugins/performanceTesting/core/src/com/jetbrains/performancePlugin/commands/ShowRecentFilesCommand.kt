@@ -1,9 +1,10 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.Switcher
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.playback.PlaybackContext
+import com.intellij.platform.recentFiles.frontend.Switcher
+import com.intellij.platform.recentFiles.frontend.createAndShowNewSwitcherSuspend
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
