@@ -82,7 +82,7 @@
     <registryKey key="external.system.incomplete.dependencies.state.during.sync" defaultValue="true"
                  description="Indicates project state as incomplete during sync with external build system"/>
 
-    <registryKey key="external.system.substitute.library.dependencies" defaultValue="false"
+    <registryKey key="external.system.substitute.library.dependencies" defaultValue="true"
                  description="Replace library dependencies with module dependencies imported from external build systems like Maven/Gradle"/>
 
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataServiceImpl"/>
