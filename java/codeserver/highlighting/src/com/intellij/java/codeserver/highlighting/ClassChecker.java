@@ -808,13 +808,13 @@ final class ClassChecker {
     // 'this' can be used as an (implicit) super() qualifier
     PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length == 0) {
-      myVisitor.report(JavaErrorKinds.REFERENCE_MEMBER_BEFORE_CONSTRUCTOR.create(aClass, aClass));
+      myVisitor.report(JavaErrorKinds.REFERENCE_MEMBER_BEFORE_CONSTRUCTOR.create(aClass, aClass.getName() + ".this"));
       return;
     }
     for (PsiMethod constructor : constructors) {
       PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
       if (!JavaPsiConstructorUtil.isSuperConstructorCall(call)) {
-        myVisitor.report(JavaErrorKinds.REFERENCE_MEMBER_BEFORE_CONSTRUCTOR.create(constructor, aClass));
+        myVisitor.report(JavaErrorKinds.REFERENCE_MEMBER_BEFORE_CONSTRUCTOR.create(constructor, aClass.getName() + ".this"));
         return;
       }
     }

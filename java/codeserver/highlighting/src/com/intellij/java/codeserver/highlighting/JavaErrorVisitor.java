@@ -957,6 +957,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       if (!hasErrorResults()) myGenericsChecker.checkGenericCannotExtendException(psiAnonymousClass);
     }
     if (!hasErrorResults() && resolved instanceof PsiClass psiClass) myExpressionChecker.checkRestrictedIdentifierReference(ref, psiClass);
+    if (!hasErrorResults()) myExpressionChecker.checkMemberReferencedBeforeConstructorCalled(ref, resolved);
     return result;
   }
 
@@ -1177,6 +1178,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   @Override
   public void visitSuperExpression(@NotNull PsiSuperExpression expr) {
     myExpressionChecker.checkSuperExpressionInIllegalContext(expr);
+    if (!hasErrorResults()) myExpressionChecker.checkMemberReferencedBeforeConstructorCalled(expr, null);
     if (!hasErrorResults()) visitExpression(expr);
   }
 
@@ -1184,6 +1186,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitThisExpression(@NotNull PsiThisExpression expr) {
     if (!(expr.getParent() instanceof PsiReceiverParameter)) {
       myExpressionChecker.checkThisExpressionInIllegalContext(expr);
+      if (!hasErrorResults()) myExpressionChecker.checkMemberReferencedBeforeConstructorCalled(expr, null);
       if (!hasErrorResults()) visitExpression(expr);
     }
   }

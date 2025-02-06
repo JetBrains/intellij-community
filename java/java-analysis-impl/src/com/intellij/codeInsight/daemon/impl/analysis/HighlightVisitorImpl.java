@@ -42,7 +42,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
 
@@ -69,8 +68,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private final Set<PsiClass> myOverrideEquivalentMethodsVisitedClasses = new HashSet<>();
   // stored "clashing signatures" errors for the method (if the key is a PsiModifierList of the method), or the class (if the key is a PsiModifierList of the class)
   private final Map<PsiMember, HighlightInfo.Builder> myOverrideEquivalentMethodsErrors = new HashMap<>();
-  private final Function<? super PsiElement, ? extends PsiMethod> mySurroundingConstructor = entry -> findSurroundingConstructor(entry);
-  private final Map<PsiElement, PsiMethod> myInsideConstructorOfClassCache = new HashMap<>(); // null value means "cached but no corresponding ctr found"
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
   protected HighlightVisitorImpl() {
@@ -79,27 +76,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Contract(pure = true)
   private boolean hasErrorResults() {
     return myHasError;
-  }
-
-  // element -> a constructor inside which this element is contained
-  private PsiMethod findSurroundingConstructor(@NotNull PsiElement entry) {
-    PsiMethod result = null;
-    PsiElement element;
-    for (element = entry; element != null && !(element instanceof PsiFile); element = element.getParent()) {
-      result = myInsideConstructorOfClassCache.get(element);
-      if (result != null || myInsideConstructorOfClassCache.containsKey(element)) {
-        break;
-      }
-      if (element instanceof PsiMethod method && method.isConstructor()) {
-        result = method;
-        break;
-      }
-    }
-    for (PsiElement e = entry; e != null && !(e instanceof PsiFile); e = e.getParent()) {
-      myInsideConstructorOfClassCache.put(e, result);
-      if (e == element) break;
-    }
-    return result;
   }
 
   /**
@@ -158,7 +134,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myPreviewFeatureVisitor = null;
       myOverrideEquivalentMethodsVisitedClasses.clear();
       myOverrideEquivalentMethodsErrors.clear();
-      myInsideConstructorOfClassCache.clear();
     }
 
     return true;
@@ -393,10 +368,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) {
       add(HighlightUtil.checkPackageAndClassConflict(ref, myFile));
     }
-    if (!hasErrorResults()) {
-      add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(ref, resolved, mySurroundingConstructor));
-    }
-
     return result;
   }
 
@@ -516,20 +487,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) model.checkSwitchBlockStatements(myErrorSink);
     if (!hasErrorResults()) model.checkSwitchSelectorType(myErrorSink);
     if (!hasErrorResults()) model.checkSwitchLabelValues(myErrorSink);
-  }
-
-  @Override
-  public void visitThisExpression(@NotNull PsiThisExpression expr) {
-    if (!(expr.getParent() instanceof PsiReceiverParameter)) {
-      add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(expr, null, mySurroundingConstructor));
-      if (!hasErrorResults()) visitExpression(expr);
-    }
-  }
-
-  @Override
-  public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
-    add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(expression, null, mySurroundingConstructor));
-    if (!hasErrorResults()) visitExpression(expression);
   }
 
   @Override

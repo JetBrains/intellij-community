@@ -33,6 +33,7 @@ import static java.util.Objects.requireNonNullElse;
 
 final class ExpressionChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
+  private final Map<PsiElement, PsiMethod> myInsideConstructorOfClassCache = new HashMap<>(); // null value means "cached but no corresponding ctr found"
 
   ExpressionChecker(@NotNull JavaErrorVisitor visitor) { myVisitor = visitor; }
 
@@ -1348,5 +1349,217 @@ final class ExpressionChecker {
         myVisitor.report(JavaErrorKinds.REFERENCE_SELECT_FROM_TYPE_PARAMETER.create(ref));
       }
     }
+  }
+
+  // element -> a constructor inside which this element is contained
+  private PsiMethod findSurroundingConstructor(@NotNull PsiElement entry) {
+    PsiMethod result = null;
+    PsiElement element;
+    for (element = entry; element != null && !(element instanceof PsiFile); element = element.getParent()) {
+      result = myInsideConstructorOfClassCache.get(element);
+      if (result != null || myInsideConstructorOfClassCache.containsKey(element)) {
+        break;
+      }
+      if (element instanceof PsiMethod method && method.isConstructor()) {
+        result = method;
+        break;
+      }
+    }
+    for (PsiElement e = entry; e != null && !(e instanceof PsiFile); e = e.getParent()) {
+      myInsideConstructorOfClassCache.put(e, result);
+      if (e == element) break;
+    }
+    return result;
+  }
+
+  private static boolean isOnSimpleAssignmentLeftHand(@NotNull PsiElement expr) {
+    PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, PsiParenthesizedExpression.class);
+    return parent instanceof PsiAssignmentExpression assignment &&
+           JavaTokenType.EQ == assignment.getOperationTokenType() &&
+           PsiTreeUtil.isAncestor(assignment.getLExpression(), expr, false);
+  }
+
+  private static boolean isThisOrSuperReference(@Nullable PsiExpression qualifierExpression, @NotNull PsiClass aClass) {
+    if (qualifierExpression == null) return true;
+    if (!(qualifierExpression instanceof PsiQualifiedExpression expression)) return false;
+    PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
+    if (qualifier == null) return true;
+    PsiElement resolved = qualifier.resolve();
+    return resolved instanceof PsiClass && InheritanceUtil.isInheritorOrSelf(aClass, (PsiClass)resolved, true);
+  }
+  
+  void checkMemberReferencedBeforeConstructorCalled(@NotNull PsiElement expression, @Nullable PsiElement resolved) {
+    PsiMethod constructor = findSurroundingConstructor(expression);
+    // not inside expression inside constructor
+    if (constructor == null) return;
+    PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+    if (constructorCall == null) return;
+    if (expression.getTextOffset() > constructorCall.getTextOffset() + constructorCall.getTextLength()) return;
+    // is in or before this() or super() call
+
+    PsiClass referencedClass;
+    String resolvedName;
+    PsiElement parent = expression.getParent();
+    if (expression instanceof PsiJavaCodeReferenceElement referenceElement) {
+      // redirected ctr
+      if (PsiKeyword.THIS.equals(referenceElement.getReferenceName())
+          && resolved instanceof PsiMethod psiMethod
+          && psiMethod.isConstructor()) {
+        return;
+      }
+      PsiElement qualifier = referenceElement.getQualifier();
+      referencedClass = PsiUtil.resolveClassInType(qualifier instanceof PsiExpression psiExpression ? psiExpression.getType() : null);
+
+      boolean isSuperCall = JavaPsiConstructorUtil.isSuperConstructorCall(parent);
+      if (resolved == null && isSuperCall) {
+        if (qualifier instanceof PsiReferenceExpression referenceExpression) {
+          resolved = referenceExpression.resolve();
+          expression = qualifier;
+          referencedClass = PsiUtil.resolveClassInType(referenceExpression.getType());
+        }
+        else if (qualifier == null) {
+          resolved = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiMember.class);
+          if (resolved instanceof PsiMethod psiMethod) {
+            referencedClass = psiMethod.getContainingClass();
+          }
+        }
+        else if (qualifier instanceof PsiThisExpression thisExpression) {
+          referencedClass = PsiUtil.resolveClassInType(thisExpression.getType());
+        }
+      }
+      if (resolved instanceof PsiField field) {
+        if (field.hasModifierProperty(PsiModifier.STATIC)) return;
+        if (myVisitor.isApplicable(JavaFeature.STATEMENTS_BEFORE_SUPER) &&
+            myVisitor.languageLevel() != LanguageLevel.JDK_22_PREVIEW &&
+            isOnSimpleAssignmentLeftHand(expression) &&
+            field.getContainingClass() == PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiLambdaExpression.class)) {
+          if (field.hasInitializer()) {
+            myVisitor.report(JavaErrorKinds.FIELD_INITIALIZED_BEFORE_CONSTRUCTOR_CALL.create(expression, field));
+          }
+          return;
+        }
+        resolvedName =
+          PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
+        referencedClass = field.getContainingClass();
+      }
+      else if (resolved instanceof PsiMethod method) {
+        if (method.hasModifierProperty(PsiModifier.STATIC)) return;
+        PsiElement nameElement =
+          expression instanceof PsiThisExpression ? expression : ((PsiJavaCodeReferenceElement)expression).getReferenceNameElement();
+        String name = nameElement == null ? null : nameElement.getText();
+        if (isSuperCall) {
+          if (referencedClass == null) return;
+          if (qualifier == null) {
+            PsiClass superClass = referencedClass.getSuperClass();
+            if (superClass != null
+                && PsiUtil.isInnerClass(superClass)
+                && InheritanceUtil.isInheritorOrSelf(referencedClass, superClass.getContainingClass(), true)) {
+              // by default super() is considered "this"-qualified
+              resolvedName = PsiKeyword.THIS;
+            }
+            else {
+              return;
+            }
+          }
+          else {
+            resolvedName = qualifier.getText();
+          }
+        }
+        else if (PsiKeyword.THIS.equals(name)) {
+          resolvedName = PsiKeyword.THIS;
+        }
+        else {
+          resolvedName = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
+                                                    PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, 0);
+          if (referencedClass == null) referencedClass = method.getContainingClass();
+        }
+      }
+      else if (resolved instanceof PsiClass aClass) {
+        if (expression instanceof PsiReferenceExpression) return;
+        if (aClass.hasModifierProperty(PsiModifier.STATIC)) return;
+        referencedClass = aClass.getContainingClass();
+        if (referencedClass == null) return;
+        resolvedName = PsiFormatUtil.formatClass(aClass, PsiFormatUtilBase.SHOW_NAME);
+      }
+      else {
+        return;
+      }
+    }
+    else if (expression instanceof PsiQualifiedExpression qualifiedExpression) {
+      referencedClass = PsiUtil.resolveClassInType(qualifiedExpression.getType());
+      String keyword = expression instanceof PsiThisExpression ? PsiKeyword.THIS : PsiKeyword.SUPER;
+      PsiJavaCodeReferenceElement qualifier = qualifiedExpression.getQualifier();
+      resolvedName = qualifier != null && qualifier.resolve() instanceof PsiClass aClass
+                     ? PsiFormatUtil.formatClass(aClass, PsiFormatUtilBase.SHOW_NAME) + "." + keyword
+                     : keyword;
+    }
+    else {
+      return;
+    }
+
+    if (referencedClass == null ||
+        PsiTreeUtil.getParentOfType(expression, PsiReferenceParameterList.class, true, PsiExpression.class) != null) {
+      return;
+    }
+
+    PsiClass parentClass = constructor.getContainingClass();
+    if (parentClass == null) return;
+
+    // references to private methods from the outer class are not calls to super methods
+    // even if the outer class is the superclass
+    if (resolved instanceof PsiMember member && member.hasModifierProperty(PsiModifier.PRIVATE) && referencedClass != parentClass) return;
+    // field or method should be declared in this class or super
+    if (!InheritanceUtil.isInheritorOrSelf(parentClass, referencedClass, true)) return;
+    // and point to our instance
+    if (expression instanceof PsiReferenceExpression ref) {
+      PsiExpression qualifier = ref.getQualifierExpression();
+      if (!isThisOrSuperReference(qualifier, parentClass)) return;
+      else if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
+        if (((PsiQualifiedExpression)qualifier).getQualifier() != null) return;
+      }
+    }
+
+    if (expression instanceof PsiThisExpression && referencedClass != parentClass) return;
+
+    if (expression instanceof PsiJavaCodeReferenceElement) {
+      if (!parentClass.equals(PsiTreeUtil.getParentOfType(expression, PsiClass.class)) &&
+          PsiTreeUtil.getParentOfType(expression, PsiTypeElement.class) != null) {
+        return;
+      }
+
+      if (PsiTreeUtil.getParentOfType(expression, PsiClassObjectAccessExpression.class) != null) return;
+
+      if (parent instanceof PsiNewExpression newExpression &&
+          newExpression.isArrayCreation() &&
+          newExpression.getClassOrAnonymousClassReference() == expression) {
+        return;
+      }
+      if (parent instanceof PsiThisExpression || parent instanceof PsiSuperExpression) return;
+    }
+    if (!(expression instanceof PsiThisExpression) && !(expression instanceof PsiSuperExpression) ||
+        ((PsiQualifiedExpression)expression).getQualifier() == null) {
+      PsiClass expressionClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class, true);
+      while (expressionClass != null && parentClass != expressionClass) {
+        if (InheritanceUtil.isInheritorOrSelf(expressionClass, referencedClass, true)) return;
+        expressionClass = PsiTreeUtil.getParentOfType(expressionClass, PsiClass.class, true);
+      }
+    }
+
+    if (expression instanceof PsiThisExpression) {
+      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
+      if (JavaFeature.STATEMENTS_BEFORE_SUPER.isSufficient(languageLevel) && languageLevel != LanguageLevel.JDK_22_PREVIEW) {
+        parent = PsiUtil.skipParenthesizedExprUp(parent);
+        if (isOnSimpleAssignmentLeftHand(parent) &&
+            parent instanceof PsiReferenceExpression ref &&
+            ref.resolve() instanceof PsiField field &&
+            field.getContainingClass() == PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiLambdaExpression.class)) {
+          return;
+        }
+      }
+    }
+    var kind = resolved instanceof PsiMethod ? 
+               JavaErrorKinds.CALL_MEMBER_BEFORE_CONSTRUCTOR : 
+               JavaErrorKinds.REFERENCE_MEMBER_BEFORE_CONSTRUCTOR;
+    myVisitor.report(kind.create(expression, resolvedName));
   }
 }

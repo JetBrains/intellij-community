@@ -936,10 +936,10 @@ public final class JavaErrorKinds {
     parameterized(PsiJavaCodeReferenceElement.class, PsiTypeParameter.class, "new.expression.type.parameter")
       .withRawDescription((ref, typeParameter) -> message("new.expression.type.parameter", formatClass(typeParameter)));
 
-  public static final Parameterized<PsiMember, PsiClass> REFERENCE_MEMBER_BEFORE_CONSTRUCTOR =
-    parameterized(PsiMember.class, PsiClass.class, "reference.member.before.constructor")
-      .withRange((psi, cls) -> getMemberDeclarationTextRange(psi))
-      .withRawDescription((psi, cls) -> message("reference.member.before.constructor", cls.getName() + ".this"));
+  public static final Parameterized<PsiElement, String> REFERENCE_MEMBER_BEFORE_CONSTRUCTOR =
+    parameterized(PsiElement.class, String.class, "reference.member.before.constructor")
+      .withRange((psi, refName) -> getRange(psi))
+      .withRawDescription((psi, refName) -> message("reference.member.before.constructor", refName));
   public static final Parameterized<PsiReferenceParameterList, PsiClass> REFERENCE_TYPE_ARGUMENT_STATIC_CLASS =
     parameterized(PsiReferenceParameterList.class, PsiClass.class, "reference.type.argument.static.class")
       .withRawDescription((list, cls) -> message("reference.type.argument.static.class", formatClass(cls)));
@@ -1146,6 +1146,10 @@ public final class JavaErrorKinds {
     error(PsiMethodCallExpression.class, "call.constructor.recursive");
   public static final Simple<PsiMethodCallExpression> CALL_CONSTRUCTOR_RECORD_IN_CANONICAL =
     error(PsiMethodCallExpression.class, "call.constructor.record.in.canonical");
+  public static final Parameterized<PsiElement, String> CALL_MEMBER_BEFORE_CONSTRUCTOR =
+    parameterized(PsiElement.class, String.class, "call.member.before.constructor")
+      .withRange((psi, refName) -> getRange(psi))
+      .withRawDescription((psi, refName) -> message("call.member.before.constructor", refName));
 
   public static final Simple<PsiExpression> STRING_TEMPLATE_VOID_NOT_ALLOWED_IN_EMBEDDED =
     error("string.template.void.not.allowed.in.embedded");
@@ -1245,6 +1249,12 @@ public final class JavaErrorKinds {
     error(PsiField.class, "field.not.initialized")
       .withRange(JavaErrorFormatUtil::getFieldDeclarationTextRange)
       .withRawDescription(var -> message("field.not.initialized", var.getName()));
+  public static final Parameterized<PsiElement, PsiField> FIELD_INITIALIZED_BEFORE_CONSTRUCTOR_CALL =
+    parameterized(PsiElement.class, PsiField.class, "field.initialized.before.constructor.call")
+      .withRawDescription((psi, field) -> message(
+        "field.initialized.before.constructor.call",
+        PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY)));
+  
   public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_NOT_INITIALIZED =
     parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.not.initialized")
       .withRawDescription((ref, var) -> message("variable.not.initialized", var.getName()));

@@ -606,6 +606,17 @@ final class JavaErrorFixProvider {
              ? removeModifierFix(variable, PsiModifier.FINAL)
              : myFactory.createVariableAccessFromInnerClassFix(variable, scope);
     });
+    JavaFixProvider<PsiElement, Object> qualifyFix = error -> {
+      if (!(error.psi() instanceof PsiReferenceExpression ref)) return null;
+      PsiClass parentClass = PsiUtil.getContainingClass(ref);
+      if (parentClass == null || !PsiUtil.isInnerClass(parentClass)) return null;
+      String referenceName = ref.getReferenceName();
+      PsiClass containingClass = requireNonNull(parentClass.getContainingClass());
+      PsiField fieldInContainingClass = containingClass.findFieldByName(referenceName, true);
+      return fieldInContainingClass != null && ref.getQualifierExpression() == null ? new QualifyWithThisFix(containingClass, ref) : null;
+    };
+    fix(REFERENCE_MEMBER_BEFORE_CONSTRUCTOR, qualifyFix);
+    fix(CALL_MEMBER_BEFORE_CONSTRUCTOR, qualifyFix);
   }
 
   private void createAccessFixes() {
