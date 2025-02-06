@@ -29,7 +29,7 @@ class PhysicalAndLogicalStructureViewBuilder(
       if (physicalBuilder !is TreeBasedStructureViewBuilder) return physicalBuilder
       if (ApplicationManager.getApplication().isUnitTestMode()
           || !Registry.`is`("logical.structure.enabled", true)
-          || AppMode.isRemoteDevHost()) {
+          || (AppMode.isRemoteDevHost() && !Registry.`is`("remoteDev.toolwindow.structure.lux.enabled", false))) {
         return physicalBuilder
       }
       return PhysicalAndLogicalStructureViewBuilder(physicalBuilder, psiFile)
