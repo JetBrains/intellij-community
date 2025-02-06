@@ -108,8 +108,8 @@ internal class InfixCallableImportCandidatesProvider(
 
 internal class DelegateMethodImportCandidatesProvider(
     private val expectedDelegateFunctionSignature: String,
-    positionContext: KotlinNameReferencePositionContext,
-) : CallableImportCandidatesProvider(positionContext) {
+    override val positionContext: KotlinNameReferencePositionContext,
+) : AbstractImportCandidatesProvider() {
 
     private val expectedDelegateFunctionName: Name? = listOf(
         OperatorNameConventions.GET_VALUE,
@@ -122,8 +122,10 @@ internal class DelegateMethodImportCandidatesProvider(
             OperatorNameConventions.PROVIDE_DELEGATE,
         )
     
-    override fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean {
-        return kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD) && super.acceptsKotlinCallable(kotlinCallable)
+    private fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean {
+        if (!kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD)) return false
+
+        return !kotlinCallable.isImported() && kotlinCallable.canBeImported()
     }
 
     context(KaSession)
@@ -136,7 +138,6 @@ internal class DelegateMethodImportCandidatesProvider(
             receiverTypes = listOf(expressionType),
         ) { acceptsKotlinCallable(it) }
             .map { CallableImportCandidate.create(it) }
-            .filter { acceptsCallableCandidate(it) }
             .toList()
     }
 }
