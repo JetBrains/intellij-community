@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -39,7 +38,7 @@ object ImportQuickFixProvider {
     fun getFixes(diagnostics: Set<KaDiagnosticWithPsi<*>>): List<ImportQuickFix> {
         return diagnostics
             .mapNotNull { diagnostic ->
-                val (expression, positionContext) = detectPositionContext(diagnostic.psi) ?: return@mapNotNull null
+                val (expression, positionContext) = detectPositionContext(diagnostic) ?: return@mapNotNull null
 
                 if (positionContext !is KotlinNameReferencePositionContext) return@mapNotNull null
                 val indexProvider = KtSymbolFromIndexProvider(positionContext.nameExpression.containingKtFile)
@@ -53,7 +52,8 @@ object ImportQuickFixProvider {
     /**
      * Returns the [KtElement] to put an auto-import on, and the detected [KotlinRawPositionContext] around it.
      */
-    private fun detectPositionContext(diagnosticPsi: PsiElement): Pair<KtElement, KotlinRawPositionContext>? {
+    private fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): Pair<KtElement, KotlinRawPositionContext>? {
+        val diagnosticPsi = diagnostic.psi
         val position = diagnosticPsi.containingFile.findElementAt(diagnosticPsi.startOffset)
         val positionContext = position?.let { KotlinPositionContextDetector.detect(it) } as? KotlinNameReferencePositionContext 
             ?: return null
