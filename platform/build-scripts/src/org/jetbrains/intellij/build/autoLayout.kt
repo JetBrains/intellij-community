@@ -65,7 +65,7 @@ internal suspend fun computeModuleSourcesByContent(
   val frontendModuleFilter = context.getFrontendModuleFilter()
   val contentModuleFilter = context.getContentModuleFilter()
   for ((moduleName, loadingRule) in helper.readPluginContentFromDescriptor(context.findRequiredModule(layout.mainModule), jarPackager.moduleOutputPatcher)) {
-    if (loadingRule != "required" && loadingRule != "embedded" && !contentModuleFilter.isOptionalModuleIncluded(moduleName, pluginMainModuleName = layout.mainModule)) {
+    if (helper.isOptionalLoadingRule(loadingRule) && !contentModuleFilter.isOptionalModuleIncluded(moduleName, pluginMainModuleName = layout.mainModule)) {
       Span.current().addEvent("Module '$moduleName' is excluded from plugin '${layout.mainModule}' by $contentModuleFilter")
       continue
     }

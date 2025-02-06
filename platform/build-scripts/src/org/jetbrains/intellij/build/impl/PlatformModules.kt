@@ -590,7 +590,8 @@ suspend fun embedContentModules(file: Path, xIncludePathResolver: XIncludePathRe
 
     val jpsModuleName = moduleName.substringBeforeLast('/')
     val loadingRule = moduleElement.getAttributeValue("loading")
-    if (loadingRule != "required" && loadingRule != "embedded" && !contentModuleFilter.isOptionalModuleIncluded(jpsModuleName, pluginMainModuleName = layout?.mainModule)) {
+    val dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper
+    if (dependencyHelper.isOptionalLoadingRule(loadingRule) && !contentModuleFilter.isOptionalModuleIncluded(jpsModuleName, pluginMainModuleName = layout?.mainModule)) {
       Span.current().addEvent("Tag for module '$moduleName' is removed from plugin.xml file for '${layout?.mainModule}' by $contentModuleFilter")
       moduleElement.parent.removeContent(moduleElement)
       continue
@@ -598,7 +599,7 @@ suspend fun embedContentModules(file: Path, xIncludePathResolver: XIncludePathRe
     
     val descriptor = getModuleDescriptor(moduleName = moduleName, jpsModuleName = jpsModuleName, xIncludePathResolver = xIncludePathResolver, context = context)
     if (jpsModuleName == moduleName &&
-        (context as BuildContextImpl).jarPackagerDependencyHelper.isPluginModulePackedIntoSeparateJar(context.findRequiredModule(jpsModuleName.removeSuffix("._test")), layout, frontendModuleFilter)) {
+        dependencyHelper.isPluginModulePackedIntoSeparateJar(context.findRequiredModule(jpsModuleName.removeSuffix("._test")), layout, frontendModuleFilter)) {
       descriptor.setAttribute("separate-jar", "true")
     }
     moduleElement.setContent(CDATA(JDOMUtil.write(descriptor)))
