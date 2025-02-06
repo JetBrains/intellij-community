@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsRoot
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
 
 internal class DirtBuilder {
@@ -35,6 +36,17 @@ internal class DirtBuilder {
       for (filePath in dirs) {
         scope.addDirtyPathFast(root, filePath, true)
       }
+    }
+    return scopesByVcs.isNotEmpty()
+  }
+
+  fun addDirtyRoot(vcsRoot: VcsRoot, root: VirtualFile): Boolean {
+    if (isEverythingDirty) return true
+
+    val vcs = vcsRoot.vcs
+    if (vcs != null) {
+      val scope = scopesByVcs.computeIfAbsent(vcs) { key -> createDirtyScope(key) }
+      scope.markRootDirty(root)
     }
     return scopesByVcs.isNotEmpty()
   }

@@ -101,6 +101,33 @@ class GitChangeProviderNestedRepositoriesTest : GitPlatformTest() {
     assertFileStatus("b.txt", FileStatus.MODIFIED)
   }
 
+  fun `test marking root dirty`() {
+    val repo = createRepository(project, projectPath)
+    val subrepo = repo.createSubRepository("subrepo")
+
+    createFileStructure(repo.root, "a.txt")
+    createFileStructure(subrepo.root, "sub.txt")
+    repo.addCommit("commit in repo")
+    subrepo.addCommit("commit in subrepo")
+
+    changeListManager.ensureUpToDate()
+    dirtyScopeManager.rootDirty(repo.root)
+
+    val subRepoPath = VcsUtil.getFilePath(subrepo.root)
+    val sutTxtPath = VcsUtil.getFilePath(subrepo.root, "sub.txt")
+
+    var paths = dirtyScopeManager.whatFilesDirty(listOf(subRepoPath, sutTxtPath))
+
+    assertTrue(paths.isEmpty())
+
+    changeListManager.ensureUpToDate()
+    dirtyScopeManager.dirDirtyRecursively(repo.root)
+
+    paths = dirtyScopeManager.whatFilesDirty(listOf(subRepoPath, sutTxtPath))
+
+    assertEquals(2, paths.size)
+  }
+
   private fun assertFileStatus(relativePath: String, fileStatus: FileStatus) {
     if (fileStatus == FileStatus.UNKNOWN) {
       val vf = getVirtualFile(relativePath)

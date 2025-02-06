@@ -47,6 +47,13 @@ public abstract class VcsDirtyScopeManager {
 
   public abstract void dirDirtyRecursively(@NotNull FilePath path);
 
+  /**
+   * Requests an asynchronous file status update for all files under the specified root.
+   *
+   * @param root the root for which the file status update is requested.
+   */
+  public abstract void rootDirty(@NotNull VirtualFile root);
+
   public abstract @NotNull Collection<FilePath> whatFilesDirty(@NotNull Collection<? extends FilePath> files);
 
   /**
