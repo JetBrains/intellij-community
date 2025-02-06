@@ -102,15 +102,15 @@ object XmlElementType {
 
   @JvmField
   val HTML_FILE: IFileElementType =
-    HTMLParserDefinition.FILE_ELEMENT_TYPE
+    XmlElementTypeImpl.HTML_FILE
 
   @JvmField
   val HTML_EMBEDDED_CONTENT: IElementType =
-    EmbeddedHtmlContentElementType()
+    XmlElementTypeImpl.HTML_EMBEDDED_CONTENT
 
   @JvmField
   val HTML_RAW_TEXT: IElementType =
-    HtmlRawTextElementType
+    XmlElementTypeImpl.HTML_RAW_TEXT
 
   @JvmField
   val XML_TEXT: IElementType =
@@ -131,5 +131,5 @@ object XmlElementType {
 
   @JvmField
   val XML_MARKUP_DECL: IElementType =
-    XmlMarkupDeclElementType()
+    XmlElementTypeImpl.XML_MARKUP_DECL
 }
