@@ -6,74 +6,90 @@ import com.intellij.compiler.instrumentation.FailSafeClassReader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.util.io.BaseOutputReader
 import com.intellij.util.lang.JavaVersion
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.bazel.jvm.jps.ClasspathHolder
 import org.jetbrains.bazel.jvm.jps.hashSet
-import org.jetbrains.bazel.jvm.jps.impl.JavaBuilder.Companion.builderName
 import org.jetbrains.bazel.jvm.jps.linkedSet
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.ProjectPaths
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
-import org.jetbrains.jps.builders.*
+import org.jetbrains.jps.builders.DirtyFilesHolder
+import org.jetbrains.jps.builders.FileProcessor
+import org.jetbrains.jps.builders.JpsBuildBundle
+import org.jetbrains.jps.builders.ModuleBasedTarget
+import org.jetbrains.jps.builders.TargetOutputIndex
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase
 import org.jetbrains.jps.builders.impl.TargetOutputIndexImpl
-import org.jetbrains.jps.builders.java.*
+import org.jetbrains.jps.builders.impl.java.JavacCompilerTool
+import org.jetbrains.jps.builders.java.JavaBuilderUtil
+import org.jetbrains.jps.builders.java.JavaCompilingTool
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
+import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks.Backend
 import org.jetbrains.jps.cmdline.ClasspathBootstrap
-import org.jetbrains.jps.incremental.*
+import org.jetbrains.jps.incremental.BinaryContent
+import org.jetbrains.jps.incremental.BuilderCategory
+import org.jetbrains.jps.incremental.CompileContext
+import org.jetbrains.jps.incremental.CompiledClass
+import org.jetbrains.jps.incremental.GlobalContextKey
+import org.jetbrains.jps.incremental.ModuleBuildTarget
+import org.jetbrains.jps.incremental.ModuleLevelBuilder
 import org.jetbrains.jps.incremental.ModuleLevelBuilder.OutputConsumer
-import org.jetbrains.jps.incremental.java.*
+import org.jetbrains.jps.incremental.StopBuildException
+import org.jetbrains.jps.incremental.Utils
+import org.jetbrains.jps.incremental.java.CustomOutputDataListener
+import org.jetbrains.jps.incremental.java.ExternalJavacOptionsProvider
+import org.jetbrains.jps.incremental.java.ModulePathSplitter
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.CompilerMessage
-import org.jetbrains.jps.javac.*
+import org.jetbrains.jps.javac.CompilationPaths
+import org.jetbrains.jps.javac.DiagnosticOutputConsumer
+import org.jetbrains.jps.javac.ExternalJavacManager
+import org.jetbrains.jps.javac.ExternalJavacManagerKey
+import org.jetbrains.jps.javac.ExternalJavacProcess
+import org.jetbrains.jps.javac.Iterators
+import org.jetbrains.jps.javac.JavacFileReferencesRegistrar
+import org.jetbrains.jps.javac.JavacMain
+import org.jetbrains.jps.javac.JpsInfoDiagnostic
+import org.jetbrains.jps.javac.ModulePath
+import org.jetbrains.jps.javac.OutputFileConsumer
+import org.jetbrains.jps.javac.OutputFileObject
+import org.jetbrains.jps.javac.PlainMessageDiagnostic
 import org.jetbrains.jps.javac.ast.api.JavacFileData
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.java.LanguageLevel
-import org.jetbrains.jps.model.java.compiler.*
+import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration
+import org.jetbrains.jps.model.java.compiler.JavaCompilers
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.jps.model.library.sdk.JpsSdk
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.jetbrains.jps.service.JpsServiceManager
-import org.jetbrains.jps.service.SharedThreadPool
 import java.io.EOFException
 import java.io.File
 import java.io.IOException
-import java.net.ServerSocket
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.*
-import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BiConsumer
 import java.util.function.Function
 import javax.tools.Diagnostic
 import javax.tools.DiagnosticListener
 import javax.tools.JavaFileObject
-import kotlin.Any
-import kotlin.ByteArray
-import kotlin.Int
-import kotlin.Long
-import kotlin.String
-import kotlin.Suppress
-import kotlin.Throwable
-import kotlin.checkNotNull
-import kotlin.let
-import kotlin.synchronized
 
 private const val JAVA_EXTENSION = "java"
 private const val USE_MODULE_PATH_ONLY_OPTION = "compiler.force.module.path"
@@ -83,7 +99,6 @@ internal val javaModuleTypes = java.util.Set.of(JpsJavaModuleType.INSTANCE)
 
 private val PREFER_TARGET_JDK_COMPILER: Key<Boolean> = GlobalContextKey.create("_prefer_target_jdk_javac_")
 private val SHOWN_NOTIFICATIONS: Key<MutableSet<String>> = GlobalContextKey.create("_shown_notifications_")
-private val COMPILING_TOOL = Key.create<JavaCompilingTool>("_java_compiling_tool_")
 private val MODULE_PATH_SPLITTER: Key<ModulePathSplitter> = GlobalContextKey.create("_module_path_splitter_")
 private val COMPILABLE_EXTENSIONS = mutableListOf(JAVA_EXTENSION)
 
@@ -116,14 +131,13 @@ private val POSSIBLY_CONFLICTING_OPTIONS = java.util.Set.of(
 private val USER_DEFINED_BYTECODE_TARGET = Key.create<String>("_user_defined_bytecode_target_")
 
 internal class JavaBuilder(
+  private val isIncremental: Boolean,
   private val span: Span,
   private val out: Appendable,
 ) : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
   private val refRegistrars = ArrayList<JavacFileReferencesRegistrar>()
 
   companion object {
-    const val BUILDER_ID: String = "java"
-
     private val ourProcFullRequiredFrom: Int // 0, if not set
 
     init {
@@ -178,11 +192,7 @@ internal class JavaBuilder(
       return javacCall.invoke(options, files, outSink)
     }
 
-    private fun shouldUseReleaseOption(config: JpsJavaCompilerConfiguration, compilerVersion: Int, chunkSdkVersion: Int, targetPlatformVersion: Int): Boolean {
-      if (!config.useReleaseOption()) {
-        return false
-      }
-
+    private fun shouldUseReleaseOption(compilerVersion: Int, chunkSdkVersion: Int, targetPlatformVersion: Int): Boolean {
       // --release option is supported in java9+ and higher
       if (compilerVersion >= 9 && chunkSdkVersion > 0 && targetPlatformVersion > 0) {
         if (chunkSdkVersion < 9) {
@@ -197,118 +207,13 @@ internal class JavaBuilder(
       return false
     }
 
-    private fun shouldForkCompilerProcess(context: CompileContext, chunk: ModuleChunk, chunkLanguageLevel: Int): Boolean {
-      val compilerSdkVersion = JavaVersion.current().feature
-
-      if (preferTargetJdkCompiler(context)) {
-        val sdkVersionPair = getAssociatedSdk(chunk)
-        if (sdkVersionPair != null) {
-          val chunkSdkVersion = sdkVersionPair.second
-          if (chunkSdkVersion != compilerSdkVersion && chunkSdkVersion >= ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION) {
-            // there is a special case because of difference in type inference behavior between javac8 and javac6-javac7
-            // so if the corresponding JDK is associated with the module chunk, prefer compiler from this JDK over the newer compiler version
-            return true
-          }
-        }
-      }
-
-      if (chunkLanguageLevel <= 0) {
-        // was not able to determine jdk version, so assuming an in-process compiler
-        return false
-      }
-      return !isTargetReleaseSupported(compilerSdkVersion, chunkLanguageLevel)
-    }
-
-    private fun isTargetReleaseSupported(compilerVersion: Int, targetPlatformVersion: Int): Boolean {
-      return when {
-        targetPlatformVersion > compilerVersion -> {
-          false
-        }
-
-        else -> {
-          when {
-            compilerVersion < 9 -> true
-            compilerVersion <= 11 -> targetPlatformVersion >= 6
-            compilerVersion <= 19 -> targetPlatformVersion >= 7
-            else -> targetPlatformVersion >= 8
-          }
-        }
-      }
-    }
-
-    private fun isJavac(compilingTool: JavaCompilingTool?): Boolean {
-      return compilingTool != null && (compilingTool.id == JavaCompilers.JAVAC_ID || compilingTool.id == JavaCompilers.JAVAC_API_ID)
-    }
-
-    private fun preferTargetJdkCompiler(context: CompileContext): Boolean {
-      var result = PREFER_TARGET_JDK_COMPILER.get(context)
-      if (result == null) {
-        val config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.projectDescriptor.project)
-        // default
-        result = config.getCompilerOptions(JavaCompilers.JAVAC_ID).PREFER_TARGET_JDK_COMPILER
-        PREFER_TARGET_JDK_COMPILER.set(context, result)
-      }
-      return result
-    }
-
-    @Synchronized
-    private fun ensureJavacServerStarted(context: CompileContext): ExternalJavacManager {
-      var server = ExternalJavacManagerKey.KEY.get(context)
-      if (server != null) {
-        return server
-      }
-
-      val listenPort = findFreePort()
-      server = object : ExternalJavacManager(Utils.getSystemRoot(), SharedThreadPool.getInstance(), 2 * 60 * 1000L /*keep idle builds for 2 minutes*/) {
-        override fun createProcessHandler(processId: UUID?, process: Process, commandLine: String, keepProcessAlive: Boolean): ExternalJavacProcessHandler {
-          return object : ExternalJavacProcessHandler(processId, process, commandLine, keepProcessAlive) {
-            override fun executeTask(task: Runnable): Future<*> {
-              return SharedThreadPool.getInstance().submit(task)
-            }
-
-            override fun readerOptions(): BaseOutputReader.Options {
-              return BaseOutputReader.Options.NON_BLOCKING
-            }
-          }
-        }
-      }
-      server.start(listenPort)
-      ExternalJavacManagerKey.KEY.set(context, server)
-      return server
-    }
-
-    private fun findFreePort(): Int {
-      try {
-        val serverSocket = ServerSocket(0)
-        try {
-          return serverSocket.getLocalPort()
-        }
-        finally {
-          //workaround for linux : calling close() immediately after opening socket
-          //may result that socket is not closed
-          synchronized(serverSocket) {
-            try {
-              (serverSocket as Object).wait(1)
-            }
-            catch (_: Throwable) {
-            }
-          }
-          serverSocket.close()
-        }
-      }
-      catch (e: IOException) {
-        e.printStackTrace(System.err)
-        return ExternalJavacManager.DEFAULT_SERVER_PORT
-      }
-    }
-
     private fun getCompilationOptions(
       compilerSdkVersion: Int,
       context: CompileContext,
       chunk: ModuleChunk,
       profile: ProcessorConfigProfile?,
       compilingTool: JavaCompilingTool,
-    ): Pair<Iterable<String>, Iterable<String>> {
+    ): kotlin.Pair<Iterable<String>, Iterable<String>> {
       val compilationOptions = ArrayList<String>()
       val vmOptions = ArrayList<String>()
       if (!JavacMain.TRACK_AP_GENERATED_DEPENDENCIES) {
@@ -396,14 +301,12 @@ internal class JavaBuilder(
 
       addCompilationOptions(
         compilerSdkVersion = compilerSdkVersion,
-        compilingTool = compilingTool,
         options = compilationOptions,
-        context = context,
         chunk = chunk,
         profile = profile,
       )
 
-      return Pair(vmOptions, compilationOptions)
+      return kotlin.Pair(vmOptions, compilationOptions)
     }
 
     private fun notifyOptionPossibleConflicts(context: CompileContext, option: String, chunk: ModuleChunk) {
@@ -422,13 +325,11 @@ internal class JavaBuilder(
 
     private fun addCompilationOptions(
       compilerSdkVersion: Int,
-      compilingTool: JavaCompilingTool?,
       options: MutableList<String>,
-      context: CompileContext,
       chunk: ModuleChunk,
       profile: ProcessorConfigProfile?,
     ) {
-      addCrossCompilationOptions(compilerSdkVersion, options, context, chunk)
+      addCrossCompilationOptions(compilerSdkVersion, options, chunk)
 
       if (!options.contains(ENABLE_PREVIEW_OPTION)) {
         val level = JpsJavaExtensionService.getInstance().getLanguageLevel(chunk.representativeTarget().module)
@@ -453,7 +354,7 @@ internal class JavaBuilder(
           }
           else {
             // by default required for javac from version 23
-            if (compilerSdkVersion > 22 && isJavac(compilingTool)) {
+            if (compilerSdkVersion > 22) {
               options.add(PROC_FULL_OPTION)
             }
           }
@@ -498,54 +399,48 @@ internal class JavaBuilder(
       return true
     }
 
-    private fun addCrossCompilationOptions(compilerSdkVersion: Int, options: MutableList<String>, context: CompileContext, chunk: ModuleChunk) {
-      val compilerConfiguration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(
-        context.projectDescriptor.project
-      )
+    private fun addCrossCompilationOptions(compilerSdkVersion: Int, options: MutableList<String>, chunk: ModuleChunk) {
+      val jpsJavaExtensionService = JpsJavaExtensionService.getInstance()
 
       val module = chunk.representativeTarget().module
-      val level = JpsJavaExtensionService.getInstance().getLanguageLevel(module)
+      val level = requireNotNull(jpsJavaExtensionService.getLanguageLevel(module)) {
+        "Language level must be set for module ${module.name}"
+      }
+      if (level.isPreview) {
+        options.add(ENABLE_PREVIEW_OPTION)
+      }
       val chunkSdkVersion = getChunkSdkVersion(chunk)
-      val languageLevel = if (level == null) 0 else if (level == LanguageLevel.JDK_X) chunkSdkVersion else level.feature()
-      var bytecodeTarget = if (level == LanguageLevel.JDK_X) chunkSdkVersion else getModuleBytecodeTarget(context, chunk, compilerConfiguration, languageLevel)
+      var bytecodeTarget = if (level == LanguageLevel.JDK_X) chunkSdkVersion else level.feature()
+      require(bytecodeTarget > 0)
 
-      if (shouldUseReleaseOption(compilerConfiguration, compilerSdkVersion, chunkSdkVersion, bytecodeTarget)) {
+      if (shouldUseReleaseOption(compilerSdkVersion, chunkSdkVersion, bytecodeTarget)) {
         options.add(RELEASE_OPTION)
         options.add(complianceOption(bytecodeTarget))
         return
       }
 
+      val languageLevel = if (level == LanguageLevel.JDK_X) chunkSdkVersion else level.feature()
       // alternatively, using `-source`, `-target` and `--system` (or `-bootclasspath`) options
       if (languageLevel > 0 && !options.contains(SOURCE_OPTION)) {
         options.add(SOURCE_OPTION)
         options.add(complianceOption(languageLevel))
       }
 
-      if (bytecodeTarget > 0) {
-        if (chunkSdkVersion > 0 && compilerSdkVersion > chunkSdkVersion) {
-          // if compiler is newer than module JDK
-          if (compilerSdkVersion >= bytecodeTarget) {
-            // if a user-specified bytecode version can be determined and is supported by compiler
-            if (bytecodeTarget > chunkSdkVersion) {
-              // and the user-specified bytecode target level is higher than the highest one supported by the target JDK,
-              // force compiler to use a highest-available bytecode target version that is supported by the chunk JDK.
-              bytecodeTarget = chunkSdkVersion
-            }
+      if (chunkSdkVersion > 0 && compilerSdkVersion > chunkSdkVersion) {
+        // if compiler is newer than module JDK
+        if (compilerSdkVersion >= bytecodeTarget) {
+          // if a user-specified bytecode version can be determined and is supported by compiler
+          if (bytecodeTarget > chunkSdkVersion) {
+            // and the user-specified bytecode target level is higher than the highest one supported by the target JDK,
+            // force compiler to use a highest-available bytecode target version that is supported by the chunk JDK.
+            bytecodeTarget = chunkSdkVersion
           }
-          // otherwise, let compiler display compilation error about an incorrectly set bytecode target version
         }
-      }
-      else {
-        if (chunkSdkVersion > 0 && compilerSdkVersion > chunkSdkVersion) {
-          // force lower bytecode target level to match the version of the chunk JDK
-          bytecodeTarget = chunkSdkVersion
-        }
+        // otherwise, let compiler display compilation error about an incorrectly set bytecode target version
       }
 
-      if (bytecodeTarget > 0) {
-        options.add(TARGET_OPTION)
-        options.add(complianceOption(bytecodeTarget))
-      }
+      options.add(TARGET_OPTION)
+      options.add(complianceOption(bytecodeTarget))
 
       if (compilerSdkVersion >= 9) {
         val associatedSdk = getAssociatedSdk(chunk)
@@ -553,36 +448,10 @@ internal class JavaBuilder(
           val homePath = associatedSdk.getFirst().homePath
           if (homePath != null) {
             options.add(SYSTEM_OPTION)
-            options.add(FileUtil.toSystemIndependentName(homePath))
+            options.add(FileUtilRt.toSystemIndependentName(homePath))
           }
         }
       }
-    }
-
-    private fun getModuleBytecodeTarget(context: CompileContext?, chunk: ModuleChunk, compilerConfiguration: JpsJavaCompilerConfiguration, languageLevel: Int): Int {
-      var bytecodeTarget = 0
-      for (module in chunk.modules) {
-        // use the lower possible target among modules that form the chunk
-        val moduleTarget = JpsJavaSdkType.parseVersion(compilerConfiguration.getByteCodeTargetLevel(module.name))
-        if (moduleTarget > 0 && (bytecodeTarget == 0 || moduleTarget < bytecodeTarget)) {
-          bytecodeTarget = moduleTarget
-        }
-      }
-      if (bytecodeTarget == 0) {
-        if (languageLevel > 0) {
-          // according to IDEA rule: if not specified explicitly, set target to be the same as source language level
-          bytecodeTarget = languageLevel
-        }
-        else {
-          // last resort and backward compatibility:
-          // check if user explicitly defined bytecode target in additional compiler options
-          val value = USER_DEFINED_BYTECODE_TARGET.get(context)
-          if (value != null) {
-            bytecodeTarget = JpsJavaSdkType.parseVersion(value)
-          }
-        }
-      }
-      return bytecodeTarget
     }
 
     private fun complianceOption(major: Int): String {
@@ -663,7 +532,7 @@ internal class JavaBuilder(
         val fallbackVersion = JpsJavaSdkType.parseVersion(fallbackJdkVersion)
         if (isTargetReleaseSupported(fallbackVersion, targetLanguageLevel)) {
           if (fallbackVersion >= ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION) {
-            return Pair.create<String?, Int?>(fallbackJdkHome, fallbackVersion)
+            return Pair(fallbackJdkHome, fallbackVersion)
           }
           else {
             span.addEvent("Version string for fallback JDK is '" + fallbackJdkVersion + "' (recognized as version '" + fallbackVersion + "')." +
@@ -693,39 +562,26 @@ internal class JavaBuilder(
 
       return null
     }
-
-    private fun getAssociatedSdk(chunk: ModuleChunk): Pair<JpsSdk<JpsDummyElement?>, Int>? {
-      // assuming all modules in the chunk have the same associated JDK,
-      // this constraint should be validated on build start
-      val sdk = chunk.representativeTarget().module.getSdk(JpsJavaSdkType.INSTANCE) ?: return null
-      return Pair(sdk, JpsJavaSdkType.getJavaVersion(sdk))
-    }
   }
 
   override fun getPresentableName(): String = builderName
 
   override fun buildStarted(context: CompileContext) {
-    val project = context.projectDescriptor.project
-    val compilerId = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).javaCompilerId
     MODULE_PATH_SPLITTER.set(context, ModulePathSplitter(ExplodedModuleNameFinder(context)))
-    val compilingTool = JavaBuilderUtil.findCompilingTool(compilerId)
-    COMPILING_TOOL.set(context, compilingTool)
     SHOWN_NOTIFICATIONS.set(context, Collections.synchronizedSet(HashSet<String>()))
-    val dataManager = context.projectDescriptor.dataManager
-    if (!isJavac(compilingTool)) {
-      dataManager.isProcessConstantsIncrementally = false
-    }
-    JavaBackwardReferenceIndexWriter.initialize(context)
-    for (registrar in JpsServiceManager.getInstance().getExtensions(JavacFileReferencesRegistrar::class.java)) {
-      if (registrar.isEnabled) {
-        registrar.initialize()
-        refRegistrars.add(registrar)
+    if (isIncremental) {
+      JavaBackwardReferenceIndexWriter.initialize(context)
+      for (registrar in JpsServiceManager.getInstance().getExtensions(JavacFileReferencesRegistrar::class.java)) {
+        if (registrar.isEnabled) {
+          registrar.initialize()
+          refRegistrars.add(registrar)
+        }
       }
     }
   }
 
   override fun chunkBuildStarted(context: CompileContext, chunk: ModuleChunk) {
-    if (!(context as BazelCompileContext).scope.isIncrementalCompilation) {
+    if (!isIncremental) {
       return
     }
 
@@ -750,21 +606,14 @@ internal class JavaBuilder(
     dirtyFilesHolder: DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget>,
     outputConsumer: OutputConsumer,
   ): ExitCode? {
-    return doBuild(
-      context = context,
-      chunk = chunk,
-      dirtyFilesHolder = dirtyFilesHolder,
-      outputConsumer = outputConsumer,
-      compilingTool = COMPILING_TOOL.get(context),
-    )
+    return doBuild(context = context, chunk = chunk, dirtyFilesHolder = dirtyFilesHolder, outputConsumer = outputConsumer)
   }
 
-  fun doBuild(
+  private fun doBuild(
     context: CompileContext,
     chunk: ModuleChunk,
     dirtyFilesHolder: DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget>,
     outputConsumer: OutputConsumer,
-    compilingTool: JavaCompilingTool,
   ): ExitCode? {
     val filesToCompile = linkedSet<File>()
     dirtyFilesHolder.processDirtyFiles { target, file, descriptor ->
@@ -789,11 +638,8 @@ internal class JavaBuilder(
       }
     }
 
-    if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
-      val logger = context.loggingManager.projectBuilderLogger
-      if (logger.isEnabled && !filesToCompile.isEmpty()) {
-        logger.logCompiledFiles(filesToCompile, BUILDER_ID, "Compiling files:")
-      }
+    if (isIncremental && !filesToCompile.isEmpty() && span.isRecording) {
+      span.addEvent("Compiling files", Attributes.of(AttributeKey.stringArrayKey("filesToCompile"), filesToCompile.map { it.toString() }))
     }
 
     if (javaModulesCount > 1) {
@@ -809,7 +655,6 @@ internal class JavaBuilder(
       dirtyFilesHolder = dirtyFilesHolder,
       files = filesToCompile,
       outputConsumer = outputConsumer,
-      compilingTool = compilingTool,
       moduleInfoFile = moduleInfoFile
     )
   }
@@ -820,7 +665,6 @@ internal class JavaBuilder(
     dirtyFilesHolder: DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget>,
     files: Collection<File>,
     outputConsumer: OutputConsumer,
-    compilingTool: JavaCompilingTool,
     moduleInfoFile: File?,
   ): ExitCode {
     val hasSourcesToCompile = !files.isEmpty()
@@ -835,7 +679,7 @@ internal class JavaBuilder(
     val outputSink = OutputFilesSink(
       context = context,
       outputConsumer = outputConsumer,
-      mappingsCallback = JavaBuilderUtil.getDependenciesRegistrar(context),
+      mappingsCallback = if (isIncremental) JavaBuilderUtil.getDependenciesRegistrar(context) else null,
       chunkName = chunk.presentableShortName,
       span = span,
     )
@@ -869,7 +713,6 @@ internal class JavaBuilder(
               sourcePath = emptyList(),
               diagnosticSink = diagnosticSink,
               outputSink = outputSink,
-              compilingTool = compilingTool,
               moduleInfoFile = moduleInfoFile,
             )
           }
@@ -908,43 +751,32 @@ internal class JavaBuilder(
     sourcePath: Collection<File>,
     diagnosticSink: DiagnosticOutputConsumer,
     outputSink: OutputFileConsumer,
-    compilingTool: JavaCompilingTool,
     moduleInfoFile: File?,
   ): Boolean {
-    val modules = chunk.modules
-    var profile: ProcessorConfigProfile? = null
-
     val compilerConfig = JpsJavaExtensionService.getInstance().getCompilerConfiguration(
       context.projectDescriptor.project
     )
 
-    if (modules.size == 1) {
-      profile = compilerConfig.getAnnotationProcessingProfile(modules.iterator().next())
-    }
     val targetLanguageLevel = getTargetPlatformLanguageVersion(chunk.representativeTarget().module)
-    // when forking external javac, compilers from SDK 1.7 and higher are supported
-    val forkSdk: Pair<String, Int>?
-    if (shouldForkCompilerProcess(context, chunk, targetLanguageLevel)) {
-      forkSdk = getForkedJavacSdk(diagnostic = diagnosticSink, chunk = chunk, targetLanguageLevel = targetLanguageLevel, span = span)
-      if (forkSdk == null) {
-        return false
-      }
+    // when we use a forked external javac, compilers from SDK 1.7 and higher are supported
+    val forkSdk = if (shouldForkCompilerProcess(context, chunk, targetLanguageLevel)) {
+      getForkedJavacSdk(diagnostic = diagnosticSink, chunk = chunk, targetLanguageLevel = targetLanguageLevel, span = span) ?: return false
     }
     else {
-      forkSdk = null
+      null
     }
 
     val compilerSdkVersion = if (forkSdk == null) JavaVersion.current().feature else forkSdk.getSecond()!!
 
-    val vm_compilerOptions = getCompilationOptions(
+    val compilingTool = JavacCompilerTool()
+    val vmCompilerOptions = getCompilationOptions(
       compilerSdkVersion = compilerSdkVersion,
       context = context,
       chunk = chunk,
-      profile = profile,
+      profile = compilerConfig.getAnnotationProcessingProfile(chunk.modules.single()),
       compilingTool = compilingTool,
     )
-    val vmOptions = vm_compilerOptions.first
-    val options = vm_compilerOptions.second
+    val options = vmCompilerOptions.second
     val outs = buildOutputDirectoriesMap(chunk)
 
     val classPath: Sequence<Path>?
@@ -1000,7 +832,7 @@ internal class JavaBuilder(
         server.forkJavac(
           forkSdk.getFirst(),
           heapSize,
-          vmOptions,
+          vmCompilerOptions.first,
           options,
           paths,
           files,
@@ -1077,14 +909,14 @@ private fun saveClass(fileObject: OutputFileObject, context: CompileContext, del
     val content = fileObject.content
     val file = fileObject.file
     if (content == null) {
-      context.processMessage(CompilerMessage(builderName, BuildMessage.Kind.WARNING, "Missing content for file ${file.path}"))
+      context.processMessage(CompilerMessage("java", BuildMessage.Kind.WARNING, "Missing content for file ${file.path}"))
     }
     else {
       saveToFile(file.toPath(), content)
     }
   }
   catch (e: IOException) {
-    context.processMessage(CompilerMessage(builderName, BuildMessage.Kind.ERROR, e.message))
+    context.processMessage(CompilerMessage("java", BuildMessage.Kind.ERROR, e.message))
   }
 
   delegateOutputFileSink.save(fileObject)
@@ -1129,7 +961,7 @@ private fun writeToFile(file: Path, content: BinaryContent) {
 private class OutputFilesSink(
   private val context: CompileContext,
   private val outputConsumer: OutputConsumer,
-  private val mappingsCallback: Backend,
+  private val mappingsCallback: Backend?,
   private val span: Span,
   chunkName: String
 ) : OutputFileConsumer {
@@ -1182,7 +1014,7 @@ private class OutputFilesSink(
           else {
             fileObject.file.invariantSeparatorsPath
           }
-          mappingsCallback.associate(fileName, sourcePaths, reader, fileObject.isGenerated)
+          mappingsCallback?.associate(fileName, sourcePaths, reader, fileObject.isGenerated)
         }
         catch (e: Throwable) {
           // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation
@@ -1291,7 +1123,7 @@ private class DiagnosticSink(
     }
     val message = diagnostic.getMessage(Locale.US)
     context.processMessage(CompilerMessage(
-      builderName,
+      "java",
       kind,
       message,
       sourcePath,
@@ -1347,3 +1179,61 @@ private fun buildOutputDirectoriesMap(chunk: ModuleChunk): Map<File, Set<File>> 
   @Suppress("RemoveRedundantQualifierName")
   return java.util.Map.of(target.outputDir, roots)
 }
+
+private fun shouldForkCompilerProcess(context: CompileContext, chunk: ModuleChunk, chunkLanguageLevel: Int): Boolean {
+  val compilerSdkVersion = JavaVersion.current().feature
+
+  if (preferTargetJdkCompiler(context)) {
+    val sdkVersionPair = getAssociatedSdk(chunk)
+    if (sdkVersionPair != null) {
+      val chunkSdkVersion = sdkVersionPair.second
+      if (chunkSdkVersion != compilerSdkVersion && chunkSdkVersion >= ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION) {
+        // there is a special case because of difference in type inference behavior between javac8 and javac6-javac7
+        // so if the corresponding JDK is associated with the module chunk, prefer compiler from this JDK over the newer compiler version
+        return true
+      }
+    }
+  }
+
+  if (chunkLanguageLevel <= 0) {
+    // was not able to determine jdk version, so assuming an in-process compiler
+    return false
+  }
+  return !isTargetReleaseSupported(compilerSdkVersion, chunkLanguageLevel)
+}
+
+private fun getAssociatedSdk(chunk: ModuleChunk): Pair<JpsSdk<JpsDummyElement?>, Int>? {
+  // assuming all modules in the chunk have the same associated JDK,
+  // this constraint should be validated on build start
+  val sdk = chunk.representativeTarget().module.getSdk(JpsJavaSdkType.INSTANCE) ?: return null
+  return Pair(sdk, JpsJavaSdkType.getJavaVersion(sdk))
+}
+
+private fun preferTargetJdkCompiler(context: CompileContext): Boolean {
+  var result = PREFER_TARGET_JDK_COMPILER.get(context)
+  if (result == null) {
+    val config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.projectDescriptor.project)
+    // default
+    result = config.getCompilerOptions(JavaCompilers.JAVAC_ID).PREFER_TARGET_JDK_COMPILER
+    PREFER_TARGET_JDK_COMPILER.set(context, result)
+  }
+  return result
+}
+
+private fun isTargetReleaseSupported(compilerVersion: Int, targetPlatformVersion: Int): Boolean {
+  return when {
+    targetPlatformVersion > compilerVersion -> {
+      false
+    }
+
+    else -> {
+      when {
+        compilerVersion < 9 -> true
+        compilerVersion <= 11 -> targetPlatformVersion >= 6
+        compilerVersion <= 19 -> targetPlatformVersion >= 7
+        else -> targetPlatformVersion >= 8
+      }
+    }
+  }
+}
+

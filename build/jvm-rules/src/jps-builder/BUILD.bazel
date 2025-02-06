@@ -5,7 +5,7 @@ load("//:src/jvm-args.bzl", "get_jvm_flags")
 
 kt_jvm_library(
     name = "worker-lib",
-    srcs = glob(["*.kt", "impl/*.kt", "state/*.kt"]),
+    srcs = glob(["*.kt", "impl/*.kt", "state/*.kt", "kotlin/*.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
         "@lib//:kotlin-stdlib",
@@ -46,7 +46,7 @@ kt_jvm_library(
         "//:kotlin-util-klib",
         "//:kotlin-util-klib-metadata",
         # kotlin compilers uses Guava :(
-        "@lib//:guava",
+#         "@lib//:guava",
     ],
     visibility = ["//visibility:public"],
 )

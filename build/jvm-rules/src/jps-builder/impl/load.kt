@@ -51,18 +51,18 @@ internal fun loadJpsProject(
   )
 }
 
-private object NoopIgnoredFileIndex : IgnoredFileIndex {
+internal object NoopIgnoredFileIndex : IgnoredFileIndex {
   override fun isIgnored(path: String) = false
 }
 
-private object NoopBuildDataVersionManager : BuildDataVersionManager {
+internal object NoopBuildDataVersionManager : BuildDataVersionManager {
   override fun versionDiffers() = false
 
   override fun saveVersion() {
   }
 }
 
-private class BazelBuildTargetIndex(moduleTarget: ModuleBuildTarget) : BuildTargetIndex {
+internal class BazelBuildTargetIndex(moduleTarget: ModuleBuildTarget) : BuildTargetIndex {
   private var targetChunks = java.util.List.of(BuildTargetChunk(java.util.Set.of(moduleTarget)))
   private var targets = java.util.List.of(moduleTarget)
 

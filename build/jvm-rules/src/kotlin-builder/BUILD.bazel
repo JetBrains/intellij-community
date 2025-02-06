@@ -8,7 +8,6 @@ kt_jvm_library(
     srcs = glob(["**/*.kt"]),
     deps = [
         "//:kotlin-compiler-embeddable",
-        "//:kotlin-build-tools-impl",
         "//src/worker-framework",
         "//src/jar",
         "//src/compiler-util",
@@ -23,8 +22,6 @@ kt_jvm_library(
     ],
     visibility = ["//visibility:public"],
 )
-
-
 
 java_binary(
     name = "worker-jvm",

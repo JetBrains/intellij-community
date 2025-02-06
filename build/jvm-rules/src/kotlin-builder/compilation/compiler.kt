@@ -86,52 +86,6 @@ internal class BazelJvmConfigurationPipelinePhase(
   override fun createMetadataVersion(versionArray: IntArray): BinaryVersion = MetadataVersion(*versionArray)
 }
 
-//internal fun k2jvm(
-//  config: CompilerConfiguration,
-//  rootDisposable: Disposable,
-//  module: ModuleBuilder,
-//  messageCollector: MessageCollector,
-//): ExitCode {
-//  val moduleBuilders = listOf(module)
-//
-//  val modularJdkRoot = module.modularJdkRoot
-//  if (modularJdkRoot != null) {
-//    // We use the SDK of the first module in the chunk, which is not always correct because some other module in the chunk
-//    // might depend on a different SDK
-//    config.put(JVMConfigurationKeys.JDK_HOME, File(modularJdkRoot))
-//  }
-//
-//  require(config.getBoolean(CommonConfigurationKeys.USE_LIGHT_TREE))
-//  require(config.getBoolean(CommonConfigurationKeys.USE_FIR))
-//  if (messageCollector.hasErrors()) {
-//    return ExitCode.COMPILATION_ERROR
-//  }
-//
-//  val projectEnvironment = createCoreEnvironment(
-//    configuration = config,
-//    rootDisposable = rootDisposable,
-//    configFiles = EnvironmentConfigFiles.JVM_CONFIG_FILES,
-//    messageCollector = messageCollector,
-//  )
-//  if (messageCollector.hasErrors()) {
-//    return ExitCode.COMPILATION_ERROR
-//  }
-//
-//  if (compileModulesUsingFrontendIrAndLightTree(
-//      projectEnvironment = projectEnvironment,
-//      compilerConfiguration = config,
-//      messageCollector = messageCollector,
-//      buildFile = null,
-//      chunk = moduleBuilders,
-//      targetDescription = module.getModuleName() + "-" + module.getModuleType(),
-//      checkSourceFiles = false,
-//      isPrintingVersion = false,
-//    )) {
-//    return ExitCode.OK
-//  }
-//  return ExitCode.COMPILATION_ERROR
-//}
-
 @OptIn(ExperimentalCompilerApi::class)
 internal fun loadPlugins(
   configuration: CompilerConfiguration,

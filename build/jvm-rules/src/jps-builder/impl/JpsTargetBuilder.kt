@@ -45,7 +45,7 @@ internal class JpsTargetBuilder(
   private val log: RequestLog,
   private val tracer: Tracer,
   private val isCleanBuild: Boolean,
-  private val dataManager: BazelBuildDataProvider,
+  private val dataManager: BazelBuildDataProvider?,
 ) {
   private val builderToDuration = hashMap<Builder, AtomicLong>()
   private val numberOfSourcesProcessedByBuilder = hashMap<Builder, AtomicInteger>()
@@ -59,7 +59,9 @@ internal class JpsTargetBuilder(
   ): Int {
     try {
       context.setDone(0.0f)
-      context.addBuildListener(ChainedTargetsBuildListener(context, dataManager))
+      if (dataManager != null) {
+        context.addBuildListener(ChainedTargetsBuildListener(context, dataManager))
+      }
       for (builder in builders) {
         builder.buildStarted(context)
       }
@@ -129,7 +131,7 @@ internal class JpsTargetBuilder(
       builder.chunkBuildStarted(context, chunk)
     }
 
-    if (!isCleanBuild) {
+    if (!isCleanBuild && dataManager != null) {
       completeRecompiledSourcesSet(context, target, dataManager)
     }
 
@@ -143,7 +145,7 @@ internal class JpsTargetBuilder(
         nextPassRequired = false
         fsState.beforeNextRoundStart(context, chunk)
 
-        if (!isCleanBuild) {
+        if (dataManager != null && !isCleanBuild) {
           cleanOutputsCorrespondingToChangedFiles(
             context = context,
             target = target,
@@ -221,7 +223,7 @@ internal class JpsTargetBuilder(
         }
         finally {
           outputConsumer.setCurrentBuilderName(null)
-          val moreToCompile = JavaBuilderUtil.updateMappingsOnRoundCompletion(context, dirtyFilesHolder, chunk)
+          val moreToCompile = dataManager != null && JavaBuilderUtil.updateMappingsOnRoundCompletion(context, dirtyFilesHolder, chunk)
           if (moreToCompile) {
             nextPassRequired = true
           }
@@ -309,7 +311,7 @@ internal class JpsTargetBuilder(
       fsState.clearContextRoundData(context)
       fsState.clearContextChunk(context)
 
-      if (doneSomething) {
+      if (doneSomething && dataManager != null) {
         markTargetUpToDate(context = context, target = target, dataManager = dataManager)
       }
     }

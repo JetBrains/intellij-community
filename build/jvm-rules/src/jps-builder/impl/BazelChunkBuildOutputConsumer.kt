@@ -1,9 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("HardCodedStringLiteral")
+@file:Suppress("HardCodedStringLiteral", "ReplaceGetOrSet")
 
 package org.jetbrains.bazel.jvm.jps.impl
 
-import org.jetbrains.bazel.jvm.jps.hashMap
 import org.jetbrains.bazel.jvm.jps.hashSet
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.incremental.BinaryContent
@@ -23,12 +22,12 @@ import kotlin.text.startsWith
 internal class ChunkBuildOutputConsumerImpl(
   private val context: CompileContext,
   target: ModuleBuildTarget,
-  dataManager: BazelBuildDataProvider,
+  dataManager: BazelBuildDataProvider?,
 ) : OutputConsumer {
   private val outputConsumer = BazelBuildOutputConsumer(target, context, dataManager)
-  private val classes = hashMap<String, CompiledClass>()
+  private val classes = HashMap<String, CompiledClass>()
   private val classesMap = ArrayList<CompiledClass>()
-  private val outputToBuilderNameMap = Collections.synchronizedMap(hashMap<File, String>())
+  private val outputToBuilderNameMap = Collections.synchronizedMap(HashMap<File, String>())
 
   @Volatile
   private var currentBuilderName: String? = null
@@ -86,7 +85,7 @@ internal class ChunkBuildOutputConsumerImpl(
 private class BazelBuildOutputConsumer(
   target: BuildTarget<*>,
   private val context: CompileContext,
-  private val dataManager: BazelBuildDataProvider,
+  private val dataManager: BazelBuildDataProvider?,
 ) {
   private val fileGeneratedEvent = FileGeneratedEvent(target)
 
@@ -115,8 +114,10 @@ private class BazelBuildOutputConsumer(
     }
     fileGeneratedEvent.add(targetOutDirPath, relativePath)
     registeredSources.addAll(sourcePaths)
-    for (sourcePath in sourcePaths) {
-      dataManager.sourceToOutputMapping.appendRawRelativeOutput(sourcePath, relativePath)
+    if (dataManager != null) {
+      for (sourcePath in sourcePaths) {
+        dataManager.sourceToOutputMapping.appendRawRelativeOutput(sourcePath, relativePath)
+      }
     }
   }
 

@@ -8,6 +8,7 @@ import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
 import com.google.devtools.build.runfiles.Runfiles
 import org.jetbrains.annotations.Unmodifiable
+import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestProperty
 import org.jetbrains.bazel.jvm.kotlin.ArgMap
@@ -26,6 +27,7 @@ import org.jetbrains.jps.model.library.impl.JpsLibraryReferenceImpl
 import org.jetbrains.jps.model.module.JpsDependenciesList
 import org.jetbrains.jps.model.module.impl.JpsModuleImpl
 import org.jetbrains.jps.model.module.impl.JpsModuleSourceRootImpl
+import org.jetbrains.kotlin.builtins.StandardNames.FqNames.target
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
@@ -82,9 +84,9 @@ internal fun loadJpsModel(
 
   val dependencyList = module.dependenciesList
   dependencyList.clear()
-  dependencyList.addModuleSourceDependency()
-
   configureJdk(model = model, module = module, dependencyList = dependencyList)
+  // must be after configureJdk - otherwise, for some reason, module output dir is not included into classpath
+  dependencyList.addModuleSourceDependency()
 
   val classPathFiles = configureClasspath(
     module = module,
@@ -101,6 +103,8 @@ internal fun loadJpsModel(
     classPathRootDir = classPathRootDir,
     configHash = configHash,
     classPathFiles = classPathFiles,
+    outputDir = classOutDir,
+    sources = sources,
   )
   configHash.putUnorderedIterable(args.optionalList(JvmBuilderFlags.ADD_EXPORT), HashFunnel.forString(), Hashing.xxh3_64())
   digests.set(TargetConfigurationDigestProperty.COMPILER, configHash.asLong)
@@ -109,6 +113,15 @@ internal fun loadJpsModel(
   project.addModule(module)
 
   configureJavac(project, args)
+
+  module.container.setChild(ClasspathHolder.KIND, ClasspathHolder(Array(classPathFiles.size + 1) {
+    if (it == 0) {
+      classOutDir
+    }
+    else {
+      classPathFiles[it - 1]
+    }
+  }))
 
   return model to digests
 }
@@ -134,6 +147,8 @@ private fun configureKotlinCompiler(
   classPathRootDir: Path,
   configHash: HashStream64,
   classPathFiles: Array<Path>,
+  outputDir: Path,
+  sources: List<Path>,
 ) {
   val kotlinFacetSettings = KotlinFacetSettings()
   kotlinFacetSettings.useProjectSettings = false
@@ -171,12 +186,25 @@ private fun configureKotlinCompiler(
   }
 
   kotlinArgs.classpath = classPathFiles.joinToString(separator = File.pathSeparator, transform = { it.toString() })
+  kotlinArgs.destination = outputDir.toString()
+  kotlinArgs.javaSourceRoots = run {
+    val result = ArrayList<String>()
+    for (file in sources) {
+      if (file.toString().endsWith(".java")) {
+        result.add(file.toString())
+      }
+    }
+    result.toTypedArray()
+  }
+  kotlinArgs.freeArgs = sources.map { it.toString() }
 
-  module.container.setChild(ClasspathHolder.KIND, ClasspathHolder(classPathFiles))
   module.container.setChild(JpsKotlinFacetModuleExtension.KIND, JpsKotlinFacetModuleExtension(kotlinFacetSettings))
 }
 
-internal class ClasspathHolder(@JvmField val classPath: Array<Path>) : JpsElementBase<ClasspathHolder>() {
+internal class ClasspathHolder(
+  // includes output dir - do not use for Kotlin, only for JavaBuilder
+  @JvmField val classPath: Array<Path>,
+) : JpsElementBase<ClasspathHolder>() {
   companion object {
     @JvmField val KIND: JpsElementChildRoleBase<ClasspathHolder> = JpsElementChildRoleBase.create<ClasspathHolder>("kotlin facet extension")
   }
