@@ -22,9 +22,9 @@
     <registryKey key="terminal.Ctrl-E.opens.RecentFiles.popup" defaultValue="false"
                  description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>
     <registryKey key="terminal.new.ui" defaultValue="false"
-                 description="Enable new terminal UI"/>
-    <registryKey key="terminal.new.ui.reworked" defaultValue="false"
-                 description="Enable reworked new terminal UI"/>
+                 description="Enable new terminal (Gen1)"/>
+    <registryKey key="terminal.new.ui.reworked" defaultValue="true"
+                 description="Replace classic terminal with reworked terminal (Gen2)"/>
     <registryKey key="terminal.new.ui.fish" defaultValue="false"
                  description="Enable new terminal for Fish"/>
     <registryKey key="terminal.new.ui.powershell.win11" defaultValue="true"
