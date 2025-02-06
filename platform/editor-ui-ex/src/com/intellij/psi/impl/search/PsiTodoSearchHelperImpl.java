@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.todo.TodoConfiguration;
@@ -6,7 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.TodoCacheManager;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.IndexPatternProvider;
+import com.intellij.psi.search.PsiTodoSearchHelper;
+import com.intellij.psi.search.TodoItem;
+import com.intellij.psi.search.TodoPattern;
 import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
@@ -48,7 +51,7 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
     TodoItemCreator todoItemCreator = new TodoItemCreator();
     boolean multiLine = TodoConfiguration.getInstance().isMultiLine();
     for (IndexPatternProvider provider : IndexPatternProvider.EP_NAME.getExtensionList()) {
-      IndexPatternSearch.search(file, provider, startOffset, endOffset, multiLine).forEach(occurrence -> {
+      IndexPatternSearch.search(file, provider, startOffset, endOffset, multiLine).asIterable().forEach(occurrence -> {
         if (occurrence.getTextRange().intersects(startOffset, endOffset)) {
           occurrences.add(todoItemCreator.createTodo(occurrence));
         }
@@ -69,7 +72,7 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
     for (IndexPatternProvider provider : IndexPatternProvider.EP_NAME.getExtensionList()) {
       LightIndexPatternSearch.SEARCH.createQuery(
         new IndexPatternSearch.SearchParameters(file, provider, TodoConfiguration.getInstance().isMultiLine())
-      ).forEach(occurrence -> {
+      ).asIterable().forEach(occurrence -> {
         if (occurrence.getTextRange().intersects(startOffset, endOffset)) {
           occurrences.add(todoItemCreator.createTodo(occurrence));
         }

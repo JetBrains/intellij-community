@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 
@@ -1192,7 +1192,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
                                                           @NotNull PsiExpression replacement) {
         List<PsiExpression> copies = ContainerUtil.map(joinParts, expression -> (PsiExpression)expression.copy());
         for (PsiElement joinPart : copies) {
-          ReferencesSearch.search(localVariable, new LocalSearchScope(joinPart)).forEach(reference -> {
+          ReferencesSearch.search(localVariable, new LocalSearchScope(joinPart)).asIterable().forEach(reference -> {
             reference.getElement().replace(replacement);
           });
         }

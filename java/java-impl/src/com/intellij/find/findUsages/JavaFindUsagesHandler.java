@@ -90,7 +90,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler {
       }
     }
 
-    FunctionalExpressionSearch.search(method).forEach(element -> {
+    FunctionalExpressionSearch.search(method).asIterable().forEach(element -> {
       if (element instanceof PsiLambdaExpression) {
         PsiParameter[] parameters = ReadAction.compute(() -> ((PsiLambdaExpression)element).getParameterList().getParameters());
         if (idx < parameters.length) {

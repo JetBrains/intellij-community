@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.concurrency.JobLauncher;
@@ -121,6 +121,7 @@ final class JavaTelescope {
 
     AtomicInteger count = new AtomicInteger();
     ClassInheritorsSearch.INSTANCE.createQuery(new ClassInheritorsSearch.SearchParameters(aClass, aClass.getUseScope(), true, true, true))
+      .asIterable()
       .forEach((Consumer<? super PsiClass>)__ -> count.incrementAndGet());
 
     return count.get();
@@ -128,7 +129,7 @@ final class JavaTelescope {
 
   static int collectOverridingMethods(@NotNull PsiMethod method) {
     AtomicInteger count = new AtomicInteger();
-    OverridingMethodsSearch.search(method).forEach((Consumer<? super PsiMethod>)__ -> count.incrementAndGet());
+    OverridingMethodsSearch.search(method).asIterable().forEach((Consumer<? super PsiMethod>)__ -> count.incrementAndGet());
 
     return count.get();
   }

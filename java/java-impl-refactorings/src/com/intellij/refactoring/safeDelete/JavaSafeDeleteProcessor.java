@@ -983,7 +983,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       assert header != null;
       int index = ArrayUtil.indexOf(header.getRecordComponents(), component);
       if (index < 0) return isInsideDeleted;
-      ReferencesSearch.search(constructor).forEach(ref -> {
+      ReferencesSearch.search(constructor).asIterable().forEach(ref -> {
         PsiElement element = ref.getElement();
         if (!isInsideDeleted.test(element)) {
           JavaSafeDeleteDelegate safeDeleteDelegate = JavaSafeDeleteDelegate.EP.forLanguage(element.getLanguage());
@@ -993,7 +993,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         }
       });
     }
-    ReferencesSearch.search(component).forEach(ref -> {
+    ReferencesSearch.search(component).asIterable().forEach(ref -> {
       PsiElement element = ref.getElement();
       if (!isInsideDeleted.test(element)) {
         boolean javadoc = element instanceof PsiDocParamRef;

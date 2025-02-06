@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -209,7 +209,7 @@ final class IconsReferencesQueryExecutor implements QueryExecutor<PsiReference, 
       final Query<PsiClass> allIconsSearch =
         AllClassesSearch.search(productionScope.intersectWith(GlobalSearchScope.notScope(notIconsPackageScope)),
                                 project, s -> StringUtil.endsWith(s, ICONS_CLASSNAME_SUFFIX) && !s.equals(ICONS_CLASSNAME_SUFFIX));
-      allIconsSearch.forEach(psiClass -> {
+      allIconsSearch.asIterable().forEach(psiClass -> {
         if (ALL_ICONS_FQN.equals(psiClass.getQualifiedName()) ||
             psiClass.isInterface() ||
             psiClass.getContainingClass() != null ||
