@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.*
@@ -21,7 +20,6 @@ import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
 import java.nio.file.StandardOpenOption.*
 import java.nio.file.attribute.*
 import java.security.MessageDigest
@@ -54,7 +52,7 @@ object EelPathUtils {
     val projectFilePath = project.projectFilePath ?: return Files.createTempFile(prefix, suffix)
     return runBlockingMaybeCancellable {
       val eel = Path.of(projectFilePath).getEelDescriptor().upgrade()
-      val file = eel.fs.createTemporaryFile(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().suffix(suffix).prefix(prefix).deleteOnExit(deleteOnExit).build()).getOrThrowFileSystemException()
+      val file = eel.fs.createTemporaryFile(CreateTemporaryEntryOptions.Builder().suffix(suffix).prefix(prefix).deleteOnExit(deleteOnExit).build()).getOrThrowFileSystemException()
       file.asNioPath()
     }
   }
@@ -73,7 +71,7 @@ object EelPathUtils {
 
   @JvmStatic
   suspend fun createTemporaryDirectory(eelApi: EelApi, prefix: String = ""): Path {
-    val file = eelApi.fs.createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().prefix(prefix).build()).getOrThrowFileSystemException()
+    val file = eelApi.fs.createTemporaryDirectory(CreateTemporaryEntryOptions.Builder().prefix(prefix).build()).getOrThrowFileSystemException()
     return file.asNioPath()
   }
 
@@ -244,7 +242,6 @@ object EelPathUtils {
     private val cache = ConcurrentHashMap<Pair<EelDescriptor, String>, Deferred<Pair<String, Path>>>()
 
 
-
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun transferIfNeeded(eel: EelApi, source: Path): Path {
       return cache.compute(eel.descriptor to source.toString()) { _, deferred ->
@@ -287,7 +284,7 @@ object EelPathUtils {
     digest.update(fileSize.toString().toByteArray())
     digest.update(lastModified.toString().toByteArray())
 
-    FileChannel.open(path, StandardOpenOption.READ).use { channel ->
+    FileChannel.open(path, READ).use { channel ->
       val buffer = java.nio.ByteBuffer.allocateDirect(1024 * 1024)
       while (channel.read(buffer) > 0) {
         buffer.flip()
