@@ -9,14 +9,10 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvid
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForElement
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinInfixCallPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinPropertyDelegatePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
-import org.jetbrains.kotlin.util.OperatorNameConventions
-
 
 internal open class CallableImportCandidatesProvider(
     override val positionContext: KotlinNameReferencePositionContext,
@@ -101,42 +97,5 @@ internal class InfixCallableImportCandidatesProvider(
 
     override fun acceptsCallableCandidate(kotlinCallable: CallableImportCandidate): Boolean {
         return (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isInfix == true
-    }
-}
-
-
-internal class DelegateMethodImportCandidatesProvider(
-    private val expectedDelegateFunctionSignature: String,
-    override val positionContext: KotlinPropertyDelegatePositionContext,
-) : AbstractImportCandidatesProvider() {
-
-    private val expectedDelegateFunctionName: Name? = listOf(
-        OperatorNameConventions.GET_VALUE,
-        OperatorNameConventions.SET_VALUE,
-    ).singleOrNull { expectedDelegateFunctionSignature.startsWith(it.asString() + "(") }
-    
-    private val missingDelegateFunctionNames: List<Name> =
-        listOfNotNull(
-            expectedDelegateFunctionName,
-            OperatorNameConventions.PROVIDE_DELEGATE,
-        )
-    
-    private fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean {
-        if (!kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD)) return false
-
-        return !kotlinCallable.isImported() && kotlinCallable.canBeImported()
-    }
-
-    context(KaSession)
-    override fun collectCandidates(
-        indexProvider: KtSymbolFromIndexProvider,
-    ): List<CallableImportCandidate> {
-        val expressionType = positionContext.propertyDelegate.expression?.expressionType ?: return emptyList()
-        return indexProvider.getExtensionCallableSymbolsByNameFilter(
-            nameFilter = { it in missingDelegateFunctionNames },
-            receiverTypes = listOf(expressionType),
-        ) { acceptsKotlinCallable(it) }
-            .map { CallableImportCandidate.create(it) }
-            .toList()
     }
 }
