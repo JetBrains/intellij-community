@@ -7,16 +7,22 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.terminal.block.output.CommandBlock
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.output.withOutput
+import org.jetbrains.plugins.terminal.util.terminalProjectScope
 
 internal class Gen1TerminalHyperlinkHighlighter(project: Project,
                                                 private val outputModel: TerminalOutputModel,
                                                 parentDisposable: Disposable) {
 
-  private val filterWrapper: CompositeFilterWrapper = CompositeFilterWrapper(project, parentDisposable)
+  private val filterWrapper: CompositeFilterWrapper = CompositeFilterWrapper(project, createCoroutineScope(project, parentDisposable))
+
   private var lastUpdatedBlockInfo: Pair<CommandBlock, ExpirableTokenProvider>? = null
 
   private val editor: EditorEx
@@ -58,4 +64,13 @@ internal class Gen1TerminalHyperlinkHighlighter(project: Project,
     }
   }
 
+  companion object {
+    private fun createCoroutineScope(project: Project, disposable: Disposable): CoroutineScope {
+      return terminalProjectScope(project).childScope(Gen1TerminalHyperlinkHighlighter::class.java.simpleName).also {
+        Disposer.register(disposable) {
+          it.cancel()
+        }
+      }
+    }
+  }
 }
