@@ -3,6 +3,8 @@ package com.intellij.execution.eel
 
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelTunnelsApi
+import com.intellij.platform.eel.ReadResult
+import com.intellij.platform.eel.channels.sendWholeBuffer
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.consumeAsInputStream
@@ -13,6 +15,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.nio.ByteBuffer
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -48,11 +51,12 @@ class EelLocalTunnelApiTest {
         .preferIPv4()
         .build()
       val connection = localEel.tunnels.getConnectionToRemotePort(address).getOrThrow()
-      val buffer = connection.receiveChannel.receive()
-      Assertions.assertEquals(NetworkConstants.HELLO_FROM_SERVER, NetworkConstants.fromByteBuffer(buffer))
-      connection.sendChannel.send(NetworkConstants.HELLO_FROM_CLIENT.toBuffer())
-      // Helper closes the stream, so does the channel
-      Assertions.assertFalse(connection.receiveChannel.iterator().hasNext())
+      val buffer = ByteBuffer.allocate(4096)
+      connection.receiveChannel.receive(buffer).getOrThrow()
+      Assertions.assertEquals(NetworkConstants.HELLO_FROM_SERVER, NetworkConstants.fromByteBuffer(buffer.flip()))
+      connection.sendChannel.sendWholeBuffer(NetworkConstants.HELLO_FROM_CLIENT.toBuffer()).getOrThrow()
+      //      Helper closes the stream, so does the channel
+      Assertions.assertEquals(ReadResult.EOF, connection.receiveChannel.receive(ByteBuffer.allocate(1)).getOrThrow())
     }
     finally {
       helper.kill()

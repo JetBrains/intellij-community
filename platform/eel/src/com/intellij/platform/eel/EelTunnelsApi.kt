@@ -2,6 +2,8 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelTunnelsApi.Connection
+import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelSendChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
@@ -146,12 +148,12 @@ sealed interface EelTunnelsApi {
     // todo: Channel is a bad API here.
     // The client that sends data to the server is also interested in the error that happens during the send.
     // This can be fixed by having a suspend function instead of a channel
-    val sendChannel: SendChannel<ByteBuffer>
+    val sendChannel: EelSendChannel<IOException>
 
     /**
      * A channel from the server
      */
-    val receiveChannel: ReceiveChannel<ByteBuffer>
+    val receiveChannel: EelReceiveChannel<IOException>
 
     /**
      * Sets the size of send buffer of the socket
@@ -254,13 +256,13 @@ sealed interface EelTunnelsApi {
  * Convenience operator to decompose connection to a pair of channels when needed.
  * @return channel to server
  */
-operator fun Connection.component1(): SendChannel<ByteBuffer> = sendChannel
+operator fun Connection.component1(): EelSendChannel<IOException> = sendChannel
 
 /**
  * Convenience operator to decompose connection to a pair of channels when needed.
  * @return channel from server
  */
-operator fun Connection.component2(): ReceiveChannel<ByteBuffer> = receiveChannel
+operator fun Connection.component2(): EelReceiveChannel<IOException> = receiveChannel
 
 interface EelTunnelsPosixApi : EelTunnelsApi {
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.EelResult
@@ -15,6 +15,7 @@ import java.io.Flushable
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.Socket
 import java.nio.ByteBuffer
 import java.nio.channels.ReadableByteChannel
 import java.nio.channels.WritableByteChannel
@@ -43,6 +44,7 @@ internal class NioWriteToEelAdapter(
   private val flushable: Flushable? = null,
 ) : EelSendChannel<IOException> {
 
+  override val closed: Boolean get() = ! writableByteChannel.isOpen
 
   override suspend fun send(src: ByteBuffer): EelResult<Unit, IOException> =
     withContext(Dispatchers.IO) {
@@ -188,3 +190,9 @@ internal fun CoroutineScope.consumeReceiveChannelAsKotlinImpl(receiveChannel: Ee
   }
   return channel
 }
+
+internal fun Socket.consumeAsEelChannelImpl(): EelReceiveChannel<IOException> =
+  channel?.consumeAsEelChannel() ?: inputStream.consumeAsEelChannel()
+
+internal fun Socket.asEelChannelImpl(): EelSendChannel<IOException> =
+  channel?.asEelChannel() ?: outputStream.asEelChannel()

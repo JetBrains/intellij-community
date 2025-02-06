@@ -19,14 +19,10 @@ import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.utils.EelPathUtils
-import com.intellij.platform.eel.provider.utils.forwardLocalPort
-import com.intellij.platform.util.coroutines.channel.ChannelInputStream
-import com.intellij.platform.util.coroutines.channel.ChannelOutputStream
+import com.intellij.platform.eel.provider.utils.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.icons.EMPTY_ICON
 import com.intellij.util.awaitCancellationAndInvoke
-import com.intellij.util.io.copyToAsync
 import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -163,11 +159,10 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
           val connection = acceptor.incomingConnections.receive()
 
           launch {
-            socket.getInputStream().copyToAsync(ChannelOutputStream.forByteBuffers(connection.sendChannel))
+            copy(socket.consumeAsEelChannel(), connection.sendChannel).getOrThrow()  // TODO: Process error
           }
-
           launch {
-            ChannelInputStream.forByteBuffers(this, connection.receiveChannel).copyToAsync(socket.getOutputStream())
+            copy(connection.receiveChannel, socket.asEelChannel()).getOrThrow() // TODO: PRocess error
           }
         }
 

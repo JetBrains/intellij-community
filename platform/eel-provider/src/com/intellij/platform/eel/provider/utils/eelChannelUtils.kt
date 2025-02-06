@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.progress.Cancellation.ensureActive
@@ -6,22 +6,27 @@ import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.ReadResult.EOF
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
+import com.intellij.platform.eel.channels.sendWholeBuffer
 import com.intellij.platform.eel.provider.ResultErrImpl
 import com.intellij.platform.eel.provider.ResultOkImpl
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.CheckReturnValue
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.Socket
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
 import java.nio.channels.ReadableByteChannel
 import java.nio.channels.WritableByteChannel
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 
 // In most cases, you are encouraged to work with eel channels directly for the best performance.
@@ -52,6 +57,9 @@ fun EelSendChannel<IOException>.asOutputStream(blockingContext: CoroutineContext
  */
 fun CoroutineScope.consumeReceiveChannelAsKotlin(receiveChannel: EelReceiveChannel<*>, bufferSize: Int = DEFAULT_BUFFER_SIZE): ReceiveChannel<ByteBuffer> =
   consumeReceiveChannelAsKotlinImpl(receiveChannel, bufferSize)
+
+fun Socket.consumeAsEelChannel(): EelReceiveChannel<IOException> = consumeAsEelChannelImpl()
+fun Socket.asEelChannel(): EelSendChannel<IOException> = asEelChannelImpl()
 
 /**
  * Bidirectional [kotlinx.coroutines.channels.Channel.RENDEZVOUS] pipe much like [java.nio.channels.Pipe].
@@ -90,10 +98,24 @@ sealed interface CopyResultError<ERR_IN : Any, ERR_OUT : Any> {
   data class OutError<ERR_IN : Any, ERR_OUT : Any>(val outError: ERR_OUT) : CopyResultError<ERR_IN, ERR_OUT>
 }
 
+
+enum class OnError {
+  /**
+   * Pretend to error happened, and try again after some time (simple backoff algorithm is used)
+   */
+  RETRY,
+
+  /**
+   * Return with error
+   */
+  EXIT
+}
+
 /**
  * Copies from [src] to [dst] till [src]'s end ([com.intellij.platform.eel.ReadResult.EOF]).
  * Result is either OK or [CopyResultError.InError] (when src returned an error) or [CopyResultError.OutError] (when dst did so)
  * Channels aren't closed.
+ * [onWriteError] and [onReadError] might be used to configure read/write error processing
  */
 @CheckReturnValue
 suspend fun <ERR_IN : Any, ERR_OUT : Any> copy(
@@ -102,27 +124,58 @@ suspend fun <ERR_IN : Any, ERR_OUT : Any> copy(
   bufferSize: Int = DEFAULT_BUFFER_SIZE,
   // CPU-bound, but due to the mokk error can't be used in tests. Used default in prod.
   dispatcher: CoroutineDispatcher = Dispatchers.Default,
+  onReadError: suspend (ERR_IN) -> OnError = { OnError.EXIT },
+  onWriteError: suspend (ERR_OUT) -> OnError = { OnError.EXIT },
 ): EelResult<Unit, CopyResultError<ERR_IN, ERR_OUT>> =
   withContext(dispatcher) {
     assert(bufferSize > 0)
+    var sendBackoff = backoff()
+    var receiveBackoff = backoff()
     val buffer = ByteBuffer.allocate(bufferSize)
     while (true) {
+      buffer.clear()
       // read data
       when (val r = src.receive(buffer)) {
-        is EelResult.Error -> return@withContext ResultErrImpl(CopyResultError.InError(r.error))
-        is EelResult.Ok -> if (r.value == EOF) break
+        is EelResult.Error -> {
+          when (onReadError(r.error)) {
+            OnError.RETRY -> {
+              delay(receiveBackoff.next())
+              continue
+            }
+            OnError.EXIT -> return@withContext ResultErrImpl(CopyResultError.InError(r.error))
+          }
+        }
+        is EelResult.Ok -> if (r.value == EOF) {
+          break
+        }
+        else {
+          receiveBackoff = backoff()
+        }
       }
       buffer.flip()
       do {
         // write data
-        when (@Suppress("OPT_IN_USAGE") val r = dst.send(buffer)) {
-          is EelResult.Error -> return@withContext ResultErrImpl(CopyResultError.OutError(r.error))
-          is EelResult.Ok -> Unit
+        when (val r = dst.sendWholeBuffer(buffer)) {
+          is EelResult.Error -> {
+            when (onWriteError(r.error)) {
+              OnError.RETRY -> {
+                delay(sendBackoff.next())
+                continue
+              }
+              OnError.EXIT -> return@withContext ResultErrImpl(CopyResultError.OutError(r.error))
+            }
+
+          }
+          is EelResult.Ok -> {
+            sendBackoff = backoff()
+          }
         }
       }
       while (buffer.hasRemaining())
-      buffer.clear()
       ensureActive()
     }
     return@withContext OK_UNIT
   }
+
+// Slowly increase timeout
+private fun backoff(): Iterator<Duration> = ((200..1000 step 200).asSequence() + generateSequence(1000) { 1000 }).map { it.milliseconds }.iterator()
