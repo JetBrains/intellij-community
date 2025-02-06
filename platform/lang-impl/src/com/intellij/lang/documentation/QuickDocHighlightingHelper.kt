@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementKind
@@ -29,11 +30,11 @@ import org.jetbrains.annotations.ApiStatus.Internal
  */
 object QuickDocHighlightingHelper {
 
-  const val CODE_BLOCK_PREFIX = "<pre><code>"
-  const val CODE_BLOCK_SUFFIX = "</code></pre>"
+  const val CODE_BLOCK_PREFIX: String = "<pre><code>"
+  const val CODE_BLOCK_SUFFIX: String = "</code></pre>"
 
-  const val INLINE_CODE_PREFIX = "<code>"
-  const val INLINE_CODE_SUFFIX = "</code>"
+  const val INLINE_CODE_PREFIX: String = "<code>"
+  const val INLINE_CODE_SUFFIX: String = "</code>"
 
   /**
    * The returned code block HTML (prefixed with [CODE_BLOCK_PREFIX] and suffixed with [CODE_BLOCK_SUFFIX])

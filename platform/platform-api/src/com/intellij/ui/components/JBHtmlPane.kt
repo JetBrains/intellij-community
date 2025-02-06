@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.ui.*
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions.icons
@@ -172,6 +173,8 @@ open class JBHtmlPane(
   }
 
   override fun setText(t: @Nls String?) {
+    if (t != null && t.length > 50000)
+      thisLogger().warn("HTML pane text is very long (${t.length}): ${StringUtil.shortenTextWithEllipsis(t, 1000, 250, "<TRUNCATED>")}")
     myText = t?.let { service.transpileHtmlPaneInput(it) } ?: ""
     try {
       super.setText(myText)
