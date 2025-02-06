@@ -9,8 +9,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -19,14 +17,9 @@ import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.IdeUICustomization;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SearchTextField.FindAction;
-import com.intellij.ui.SideBorder;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.ui.*;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
@@ -35,15 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_FIND;
@@ -117,7 +107,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
 
   @Override
   protected @Nullable JComponent createTitlePane() {
-    if (!isNonModal())
+    if (!shouldBeNonModal())
       return null;
     ApplyActionWrapper applyActionWrapper = new ApplyActionWrapper(editor.getApplyAction());
     applyActionWrapper.putValue(DEFAULT_ACTION, Boolean.toString(true));
@@ -221,7 +211,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
 
   @Override
   protected JComponent createSouthPanel() {
-    if (isNonModal())
+    if (shouldBeNonModal())
       return null;
     else
       return super.createSouthPanel();
@@ -269,11 +259,15 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
   }
 
   @ApiStatus.Internal
-  static public boolean isNonModal() {
+  static public boolean useNonModalSettingsWindow() {
     if (System.getProperty("ide.ui.non.modal.settings.window") != null) {
       return Boolean.parseBoolean(System.getProperty("ide.ui.non.modal.settings.window"));
     }
     return AdvancedSettings.getBoolean("ide.ui.non.modal.settings.window");
+  }
+
+  private boolean shouldBeNonModal() {
+    return useNonModalSettingsWindow() && editor instanceof SettingsEditor;
   }
 
   private final class ApplyActionWrapper extends AbstractAction {

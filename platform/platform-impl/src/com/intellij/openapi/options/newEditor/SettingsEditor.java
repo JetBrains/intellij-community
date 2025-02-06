@@ -133,7 +133,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     };
 
     JPanel searchPanel = new JPanel(new VerticalLayout(0));
-    if (!SettingsDialog.isNonModal()) {
+    if (!SettingsDialog.useNonModalSettingsWindow()) {
       searchPanel.add(VerticalLayout.CENTER, search);
     }
     this.filter = new SettingsFilter(project, groups, search, coroutineScope) {
@@ -389,7 +389,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   }
 
   private JComponent withHistoryToolbar(JComponent component) {
-    if (SettingsDialog.isNonModal())
+    if (SettingsDialog.useNonModalSettingsWindow())
       return component;
 
     ActionGroup group = ActionUtil.getActionGroup("Back", "Forward");

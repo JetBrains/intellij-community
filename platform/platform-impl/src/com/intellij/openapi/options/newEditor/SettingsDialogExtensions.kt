@@ -12,6 +12,7 @@ import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.actionButton
@@ -23,10 +24,10 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.Action
 
-internal fun SettingsDialog.createEditorToolbar(actions: List<Action>): DialogPanel {
+internal fun SettingsDialog.createEditorToolbar(actions: List<Action>): DialogPanel? {
   val actionGroup = getActionGroup("Back", "Forward");
   val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SETTINGS_HISTORY, actionGroup!!, true)
-  val settingsEditor = editor as SettingsEditor
+  val settingsEditor = editor as? SettingsEditor ?: return null
   settingsEditor.search.preferredSize = Dimension(400, settingsEditor.search.preferredSize.height)
   val forceShowSidebar = AtomicBooleanProperty(false)
 
@@ -75,6 +76,7 @@ internal fun SettingsDialog.createEditorToolbar(actions: List<Action>): DialogPa
       }
     }
   }
+  editorToolbar.border = JBUI.Borders.customLineBottom(JBColor.border())
   return editorToolbar
 }
 

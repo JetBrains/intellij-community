@@ -59,7 +59,7 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     private fun showInternal(project: Project?, toSelect: Configurable?, settingsDialogInitializer: () -> SettingsDialog) {
       val currentOrDefaultProject = currentOrDefaultProject(project)
       val isActualProject = currentOrDefaultProject != ProjectManager.getInstance().defaultProject
-      if (SettingsDialog.isNonModal() && isActualProject) {
+      if (SettingsDialog.useNonModalSettingsWindow() && isActualProject) {
         runWithModalProgressBlocking(currentOrDefaultProject, IdeBundle.message("settings.modal.opening.message")) {
           val settingsFile = SettingsVirtualFileHolder.getInstance(currentOrDefaultProject).getOrCreate(toSelect, settingsDialogInitializer)
           val fileEditorManager = FileEditorManager.getInstance(currentOrDefaultProject) as FileEditorManagerEx;
