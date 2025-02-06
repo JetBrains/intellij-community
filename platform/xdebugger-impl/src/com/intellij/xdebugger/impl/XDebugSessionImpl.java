@@ -74,7 +74,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.xdebugger.impl.mixedmode.XMixedModeUtilsKt.isMixedModeHighProcessReady;
 import static com.intellij.xdebugger.impl.rhizome.XDebugSessionDbUtilsKt.storeXDebugSessionInDb;
 
 @ApiStatus.Internal
@@ -873,7 +872,7 @@ public final class XDebugSessionImpl implements XDebugSession {
     // set this session active on breakpoint, update execution position will be called inside positionReached
     myDebuggerManager.setCurrentSession(this);
 
-    positionReachedMixedModeAware(suspendContext, true);
+    positionReachedInternal(suspendContext, true);
 
     if (doProcessing && breakpoint instanceof XLineBreakpoint<?> && ((XLineBreakpoint<?>)breakpoint).isTemporary()) {
       handleTemporaryBreakpointHit(breakpoint);
@@ -936,17 +935,11 @@ public final class XDebugSessionImpl implements XDebugSession {
     myPaused.set(false);
   }
 
-  private void positionReachedMixedModeAware(@NotNull XSuspendContext suspendContext, boolean attract) {
-    if (isMixedMode() && isMixedModeHighProcessReady(this)) {
-      ((XMixedModeCombinedDebugProcess)myDebugProcess).positionReached(suspendContext, attract);
+  private void positionReachedInternal(final @NotNull XSuspendContext suspendContext, boolean attract) {
+    if (handlePositionReaching(suspendContext, attract)) {
       return;
     }
 
-    positionReachedInternal(suspendContext, attract);
-  }
-
-  // TODO: roll the privacy back
-  public void positionReachedInternal(final @NotNull XSuspendContext suspendContext, boolean attract) {
     setBreakpointsDisabledTemporarily(false);
     mySuspendContext = suspendContext;
     myCurrentExecutionStack = suspendContext.getActiveExecutionStack();
@@ -1009,7 +1002,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   public void positionReached(@NotNull XSuspendContext suspendContext, boolean attract) {
     clearActiveNonLineBreakpoint();
-    positionReachedMixedModeAware(suspendContext, attract);
+    positionReachedInternal(suspendContext, attract);
   }
 
   @Override
@@ -1226,5 +1219,9 @@ public final class XDebugSessionImpl implements XDebugSession {
     else {
       XDebuggerPerformanceCollector.logBreakpointReached(myProject, fileType);
     }
+  }
+
+  private boolean handlePositionReaching(@NotNull XSuspendContext context, boolean attract) {
+    return isMixedMode() && ((XMixedModeCombinedDebugProcess)myDebugProcess).handlePositionReached(context, attract);
   }
 }

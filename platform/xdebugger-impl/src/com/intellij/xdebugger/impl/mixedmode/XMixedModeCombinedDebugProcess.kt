@@ -45,7 +45,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.Promise
-import java.util.function.BiConsumer
 import javax.swing.event.HyperlinkListener
 
 private val LOG = logger<XMixedModeCombinedDebugProcess>()
@@ -63,16 +62,25 @@ class XMixedModeCombinedDebugProcess(
   private val stateMachine = MixedModeProcessTransitionStateMachine(low as XMixedModeLowLevelDebugProcess, high as XMixedModeHighLevelDebugProcess, coroutineScope)
   private var myAttract : Boolean = false // being accessed on EDT
   private var highLevelDebugProcessReady : Boolean = false
-  private val positionReachedFn: BiConsumer<XSuspendContext, Boolean> = BiConsumer { context, attract -> session.positionReachedInternal(context, attract) }
   private val lowAsExtension get() = low as XMixedModeLowLevelDebugProcess
   private val highAsExtension get() = high as XMixedModeHighLevelDebugProcess
+  private var positionReachedInProgress: Boolean = false
   init {
     coroutineScope.launch(Dispatchers.Default) {
       while (true) {
         when(val newState = stateMachine.stateChannel.receive()) {
           is BothStopped -> {
             val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, lowAsExtension, coroutineScope)
-            withContext(Dispatchers.EDT) { positionReachedFn.accept(ctx, myAttract).also { myAttract = false } }
+            withContext(Dispatchers.EDT) {
+              positionReachedInProgress = true
+              try {
+                session.positionReached(ctx, myAttract)
+              }
+              finally {
+                positionReachedInProgress = false
+                myAttract = false
+              }
+            }
           }
           is BothRunning -> {
             highLevelDebugProcessReady = true
@@ -84,10 +92,16 @@ class XMixedModeCombinedDebugProcess(
     }
   }
 
-  fun positionReached(suspendContext: XSuspendContext, attract: Boolean) {
+  /**
+   * Tells XDebugSessionImpl if it has to proceed with positionReached call handling
+   */
+  fun handlePositionReached(suspendContext: XSuspendContext, attract: Boolean) : Boolean {
+    if (!isMixedModeHighProcessReady() || positionReachedInProgress) return false
+
     myAttract = myAttract || attract // if any of the processes requires attraction, we'll do it
     val isHighSuspendContext = !lowAsExtension.belongsToMe(suspendContext)
     stateMachine.set(if (isHighSuspendContext) HighLevelPositionReached(suspendContext) else LowLevelPositionReached(suspendContext))
+    return true
   }
 
   override fun getBreakpointHandlers(): Array<out XBreakpointHandler<*>?> = high.breakpointHandlers + low.breakpointHandlers
