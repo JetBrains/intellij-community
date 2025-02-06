@@ -72,10 +72,10 @@ abstract class WebSymbolsStructuredScope<T : PsiElement, R : PsiElement>(protect
       scopes.add(WebSymbolsPsiScopeImpl(rootElement, emptyMap(), null, providedSymbolKinds, emptySet()))
     }
 
-    fun currentScope(): WebSymbolsScope =
+    fun currentScope(): WebSymbolsPsiScope =
       scopes.peek()
 
-    fun previousScope(): WebSymbolsScope =
+    fun previousScope(): WebSymbolsPsiScope =
       scopes[scopes.size - 2]
 
     fun popScope() {

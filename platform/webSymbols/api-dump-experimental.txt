@@ -525,6 +525,18 @@
 - sf:INSTANCE:com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider$SourceKind$ProjectToolExecutable
 - equals(java.lang.Object):Z
 - hashCode():I
+*:com.intellij.webSymbols.customElements.CustomElementsSymbol
+- com.intellij.webSymbols.WebSymbol
+- *sf:Companion:com.intellij.webSymbols.customElements.CustomElementsSymbol$Companion
+- sf:KIND_CEM_DECLARATIONS:java.lang.String
+- sf:KIND_CEM_MODULES:java.lang.String
+- sf:KIND_CEM_PACKAGES:java.lang.String
+- sf:NAMESPACE_CUSTOM_ELEMENTS_MANIFEST:java.lang.String
+*f:com.intellij.webSymbols.customElements.CustomElementsSymbol$Companion
+- sf:KIND_CEM_DECLARATIONS:java.lang.String
+- sf:KIND_CEM_MODULES:java.lang.String
+- sf:KIND_CEM_PACKAGES:java.lang.String
+- sf:NAMESPACE_CUSTOM_ELEMENTS_MANIFEST:java.lang.String
 *:com.intellij.webSymbols.declarations.WebSymbolDeclaration
 - com.intellij.model.psi.PsiSymbolDeclaration
 - a:getSymbol():com.intellij.webSymbols.WebSymbol
@@ -639,6 +651,23 @@
 *f:com.intellij.webSymbols.inspections.WebSymbolsProblemQuickFixProvider$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - f:getQuickFixes(com.intellij.psi.PsiElement,com.intellij.webSymbols.WebSymbol,com.intellij.webSymbols.WebSymbolNameSegment,com.intellij.webSymbols.references.WebSymbolReferenceProblem$ProblemKind):java.util.List
+*e:com.intellij.webSymbols.js.WebSymbolJsKind
+- java.lang.Enum
+- sf:Alias:com.intellij.webSymbols.js.WebSymbolJsKind
+- sf:Class:com.intellij.webSymbols.js.WebSymbolJsKind
+- sf:Enum:com.intellij.webSymbols.js.WebSymbolJsKind
+- sf:Function:com.intellij.webSymbols.js.WebSymbolJsKind
+- sf:Interface:com.intellij.webSymbols.js.WebSymbolJsKind
+- sf:Method:com.intellij.webSymbols.js.WebSymbolJsKind
+- sf:Module:com.intellij.webSymbols.js.WebSymbolJsKind
+- sf:Namespace:com.intellij.webSymbols.js.WebSymbolJsKind
+- sf:ObjectLiteral:com.intellij.webSymbols.js.WebSymbolJsKind
+- sf:Property:com.intellij.webSymbols.js.WebSymbolJsKind
+- sf:Type:com.intellij.webSymbols.js.WebSymbolJsKind
+- sf:Variable:com.intellij.webSymbols.js.WebSymbolJsKind
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.webSymbols.js.WebSymbolJsKind
+- s:values():com.intellij.webSymbols.js.WebSymbolJsKind[]
 *Fa:com.intellij.webSymbols.patterns.WebSymbolsPattern
 *:com.intellij.webSymbols.query.WebSymbolDefaultIconProvider
 - *sf:Companion:com.intellij.webSymbols.query.WebSymbolDefaultIconProvider$Companion
@@ -889,6 +918,153 @@
 *f:com.intellij.webSymbols.search.WebSymbolUsageQueries
 - sf:INSTANCE:com.intellij.webSymbols.search.WebSymbolUsageQueries
 - f:buildWebSymbolUsagesQueries(com.intellij.webSymbols.WebSymbol,com.intellij.openapi.project.Project,com.intellij.psi.search.SearchScope):java.util.List
+*f:com.intellij.webSymbols.utils.FileUtils
+- sf:findOriginalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
+*f:com.intellij.webSymbols.utils.HtmlMarkdownUtils
+- s:toHtml(java.lang.String):java.lang.String
+- s:toHtml(java.lang.String,Z):java.lang.String
+*f:com.intellij.webSymbols.utils.MappedWebSymbol
+- com.intellij.webSymbols.WebSymbol
+- *sf:Companion:com.intellij.webSymbols.utils.MappedWebSymbol$Companion
+- sf:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedName[]):com.intellij.webSymbols.utils.MappedWebSymbol
+- sf:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedName[],com.intellij.webSymbols.WebSymbol$Priority):com.intellij.webSymbols.utils.MappedWebSymbol
+- createPointer():com.intellij.model.Pointer
+- getKind():java.lang.String
+- getName():java.lang.String
+- getNamespace():java.lang.String
+- getOrigin():com.intellij.webSymbols.WebSymbolOrigin
+- getPattern():com.intellij.webSymbols.patterns.WebSymbolsPattern
+- getPriority():com.intellij.webSymbols.WebSymbol$Priority
+*f:com.intellij.webSymbols.utils.MappedWebSymbol$Companion
+- f:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedName[]):com.intellij.webSymbols.utils.MappedWebSymbol
+- f:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedName[],com.intellij.webSymbols.WebSymbol$Priority):com.intellij.webSymbols.utils.MappedWebSymbol
+- bs:create$default(com.intellij.webSymbols.utils.MappedWebSymbol$Companion,com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedName[],com.intellij.webSymbols.WebSymbol$Priority,I,java.lang.Object):com.intellij.webSymbols.utils.MappedWebSymbol
+*f:com.intellij.webSymbols.utils.NameCaseUtils
+- sf:INSTANCE:com.intellij.webSymbols.utils.NameCaseUtils
+- sf:toCamelCase(java.lang.String):java.lang.String
+- sf:toCamelCase(java.lang.String,Z):java.lang.String
+- sf:toKebabCase(java.lang.String):java.lang.String
+- sf:toKebabCase(java.lang.String,Z,Z,Z):java.lang.String
+- sf:toPascalCase(java.lang.String):java.lang.String
+- sf:toPascalCase(java.lang.String,Z):java.lang.String
+- sf:toSnakeCase(java.lang.String):java.lang.String
+- sf:toSnakeCase(java.lang.String,Z,Z,Z):java.lang.String
+*f:com.intellij.webSymbols.utils.ReferencingWebSymbol
+- com.intellij.webSymbols.WebSymbol
+- *sf:Companion:com.intellij.webSymbols.utils.ReferencingWebSymbol$Companion
+- sf:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[]):com.intellij.webSymbols.utils.ReferencingWebSymbol
+- sf:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[],com.intellij.webSymbols.WebSymbol$Priority):com.intellij.webSymbols.utils.ReferencingWebSymbol
+- sf:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[],com.intellij.webSymbols.WebSymbol$Priority,java.util.List):com.intellij.webSymbols.utils.ReferencingWebSymbol
+- createPointer():com.intellij.model.Pointer
+- getKind():java.lang.String
+- getName():java.lang.String
+- getNamespace():java.lang.String
+- getOrigin():com.intellij.webSymbols.WebSymbolOrigin
+- getPattern():com.intellij.webSymbols.patterns.WebSymbolsPattern
+- getPriority():com.intellij.webSymbols.WebSymbol$Priority
+*f:com.intellij.webSymbols.utils.ReferencingWebSymbol$Companion
+- f:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[]):com.intellij.webSymbols.utils.ReferencingWebSymbol
+- f:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[],com.intellij.webSymbols.WebSymbol$Priority):com.intellij.webSymbols.utils.ReferencingWebSymbol
+- f:create(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[],com.intellij.webSymbols.WebSymbol$Priority,java.util.List):com.intellij.webSymbols.utils.ReferencingWebSymbol
+- bs:create$default(com.intellij.webSymbols.utils.ReferencingWebSymbol$Companion,com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,com.intellij.webSymbols.WebSymbolOrigin,com.intellij.webSymbols.WebSymbolQualifiedKind[],com.intellij.webSymbols.WebSymbol$Priority,java.util.List,I,java.lang.Object):com.intellij.webSymbols.utils.ReferencingWebSymbol
+*:com.intellij.webSymbols.utils.WebSymbolDeclaredInPsi
+- com.intellij.find.usages.api.SearchTarget
+- com.intellij.refactoring.rename.api.RenameTarget
+- com.intellij.webSymbols.WebSymbol
+- a:createPointer():com.intellij.model.Pointer
+- getDeclaration():com.intellij.webSymbols.declarations.WebSymbolDeclaration
+- getMaximalSearchScope():com.intellij.psi.search.SearchScope
+- getNavigationTargets(com.intellij.openapi.project.Project):java.util.Collection
+- getPsiContext():com.intellij.psi.PsiElement
+- a:getSourceElement():com.intellij.psi.PsiElement
+- getTargetName():java.lang.String
+- a:getTextRangeInSourceElement():com.intellij.openapi.util.TextRange
+- getUsageHandler():com.intellij.find.usages.api.UsageHandler
+- presentation():com.intellij.platform.backend.presentation.TargetPresentation
+*f:com.intellij.webSymbols.utils.WebSymbolDeclaredInPsi$PsiNavigatableWebSymbolNavigationTarget
+- com.intellij.platform.backend.navigation.NavigationTarget
+- computePresentation():com.intellij.platform.backend.presentation.TargetPresentation
+- createPointer():com.intellij.model.Pointer
+- f:getNavigationItem():com.intellij.navigation.NavigationItem
+- navigationRequest():com.intellij.platform.backend.navigation.NavigationRequest
+*f:com.intellij.webSymbols.utils.WebSymbolUtils
+- sf:applyIfNotNull(java.lang.Object,java.lang.Object,kotlin.jvm.functions.Function2):java.lang.Object
+- sf:asSingleSymbol(java.util.List,Z):com.intellij.webSymbols.WebSymbol
+- bs:asSingleSymbol$default(java.util.List,Z,I,java.lang.Object):com.intellij.webSymbols.WebSymbol
+- sf:coalesceApiStatus(java.lang.Iterable,kotlin.jvm.functions.Function1):com.intellij.webSymbols.WebSymbolApiStatus
+- sf:coalesceApiStatus(kotlin.sequences.Sequence,kotlin.jvm.functions.Function1):com.intellij.webSymbols.WebSymbolApiStatus
+- sf:coalesceWith(com.intellij.webSymbols.WebSymbolApiStatus,com.intellij.webSymbols.WebSymbolApiStatus):com.intellij.webSymbols.WebSymbolApiStatus
+- sf:createPsiRangeNavigationItem(com.intellij.platform.backend.navigation.NavigationTarget,com.intellij.psi.PsiElement,I):com.intellij.pom.Navigatable
+- sf:getCompleteMatch(com.intellij.webSymbols.WebSymbol):Z
+- sf:getDefaultCodeCompletions(com.intellij.webSymbols.WebSymbolsScope,com.intellij.webSymbols.WebSymbolQualifiedName,com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams,com.intellij.util.containers.Stack):java.util.List
+- sf:getHideFromCompletion(com.intellij.webSymbols.WebSymbol):Z
+- sf:getNameSegments(com.intellij.webSymbols.WebSymbol):java.util.List
+- sf:getNameSegmentsWithProblems(com.intellij.webSymbols.WebSymbol):kotlin.sequences.Sequence
+- sf:getProblemKind(com.intellij.webSymbols.WebSymbolNameSegment):com.intellij.webSymbols.references.WebSymbolReferenceProblem$ProblemKind
+- sf:getQualifiedKind(com.intellij.webSymbols.WebSymbol):com.intellij.webSymbols.WebSymbolQualifiedKind
+- sf:getQualifiedName(com.intellij.webSymbols.WebSymbol):com.intellij.webSymbols.WebSymbolQualifiedName
+- sf:hasOnlyExtensions(java.util.List):Z
+- sf:isCritical(com.intellij.webSymbols.WebSymbolNameSegment$MatchProblem):Z
+- sf:match(com.intellij.webSymbols.WebSymbol,java.lang.String,com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams,com.intellij.util.containers.Stack):java.util.List
+- sf:merge(kotlin.sequences.Sequence):com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
+- sf:nameMatches(com.intellij.webSymbols.WebSymbol,java.lang.String,com.intellij.webSymbols.query.WebSymbolsQueryExecutor):Z
+- sf:toCodeCompletionItems(com.intellij.webSymbols.WebSymbol,java.lang.String,com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams,com.intellij.util.containers.Stack):java.util.List
+- sf:unwrapMatchedSymbols(com.intellij.webSymbols.WebSymbol):kotlin.sequences.Sequence
+- sf:withMatchedKind(com.intellij.webSymbols.WebSymbol,com.intellij.webSymbols.WebSymbolQualifiedKind):com.intellij.webSymbols.WebSymbol
+- sf:withMatchedName(com.intellij.webSymbols.WebSymbol,java.lang.String):com.intellij.webSymbols.WebSymbol
+- sf:withNavigationTarget(com.intellij.webSymbols.WebSymbol,com.intellij.psi.PsiElement):com.intellij.webSymbols.WebSymbol
+- sf:withOffset(java.util.List,I):java.util.List
+- sf:withSegments(com.intellij.webSymbols.query.WebSymbolMatch,java.util.List):com.intellij.webSymbols.query.WebSymbolMatch
+- sf:withSymbols(com.intellij.webSymbols.WebSymbolNameSegment,java.util.List):com.intellij.webSymbols.WebSymbolNameSegment
+*a:com.intellij.webSymbols.utils.WebSymbolsIsolatedMappingScope
+- com.intellij.webSymbols.WebSymbolsScope
+- <init>(java.util.Map,java.lang.String,com.intellij.psi.PsiElement):V
+- pa:acceptSymbol(com.intellij.webSymbols.WebSymbol):Z
+- f:equals(java.lang.Object):Z
+- getCodeCompletions(com.intellij.webSymbols.WebSymbolQualifiedName,com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams,com.intellij.util.containers.Stack):java.util.List
+- pf:getFramework():java.lang.String
+- pf:getLocation():com.intellij.psi.PsiElement
+- pf:getMappings():java.util.Map
+- getMatchingSymbols(com.intellij.webSymbols.WebSymbolQualifiedName,com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams,com.intellij.util.containers.Stack):java.util.List
+- f:getModificationCount():J
+- pa:getSubScopeBuilder():kotlin.jvm.functions.Function2
+- getSymbols(com.intellij.webSymbols.WebSymbolQualifiedKind,com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams,com.intellij.util.containers.Stack):java.util.List
+- hashCode():I
+*a:com.intellij.webSymbols.utils.WebSymbolsStructuredScope
+- com.intellij.webSymbols.query.WebSymbolsCompoundScope
+- <init>(com.intellij.psi.PsiElement):V
+- p:build(com.intellij.webSymbols.query.WebSymbolsQueryExecutor,kotlin.jvm.functions.Function1):V
+- equals(java.lang.Object):Z
+- p:findBestMatchingScope(com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope):com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
+- pf:getCurrentScope():com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
+- pf:getLocation():com.intellij.psi.PsiElement
+- pa:getProvidedSymbolKinds():java.util.Set
+- pa:getRootPsiElement():com.intellij.psi.PsiElement
+- pf:getRootScope():com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
+- pa:getScopesBuilderProvider():kotlin.jvm.functions.Function2
+- hashCode():I
+*p:com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
+- com.intellij.webSymbols.WebSymbolsScope
+- a:getAllSymbols(com.intellij.webSymbols.WebSymbolQualifiedKind):java.util.List
+- a:getChildren():java.util.List
+- a:getLocalSymbols():java.util.List
+- a:getParent():com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
+- a:getProperties():java.util.Map
+- a:getSource():com.intellij.psi.PsiElement
+*pf:com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScopesHolder
+- <init>(com.intellij.psi.PsiElement,java.util.Set):V
+- f:currentScope():com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
+- f:currentScope(kotlin.jvm.functions.Function1):V
+- f:getProvidedSymbolKinds():java.util.Set
+- f:getRootElement():com.intellij.psi.PsiElement
+- f:popScope():V
+- f:previousScope():com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScope
+- f:previousScope(kotlin.jvm.functions.Function1):V
+- f:pushScope(com.intellij.psi.PsiElement,java.util.Map,java.util.Set,kotlin.jvm.functions.Function1):V
+- bs:pushScope$default(com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScopesHolder,com.intellij.psi.PsiElement,java.util.Map,java.util.Set,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+*:com.intellij.webSymbols.utils.WebSymbolsStructuredScope$WebSymbolsPsiScopesHolder$ScopeModifier
+- a:addSymbol(com.intellij.webSymbols.WebSymbol):V
+- a:addSymbols(java.util.List):V
 *:com.intellij.webSymbols.webTypes.WebTypesSymbol
 - com.intellij.webSymbols.PsiSourcedWebSymbol
 - *sf:Companion:com.intellij.webSymbols.webTypes.WebTypesSymbol$Companion
