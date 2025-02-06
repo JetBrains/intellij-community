@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.kernel
 
 import com.jetbrains.rhizomedb.*
@@ -212,10 +212,40 @@ interface KernelMetaKey<V : Any> : Key<V, Transactor>
 private const val ChangesBufferSize: Int = 1000
 private const val DispatchBufferSize: Int = 1000
 
-const val SharedPart: Part = 2 // replicated between all the clients and workspace using RemoteKernel interface
-const val FrontendPart: Part = 3 // frontend
-const val WorkspacePart: Part = 4 // workspace
-const val CommonPart: Part = 1 // shared between frontend and workspace kernel views when running in short-circuited mode
+/**
+ * Database's partition, which is replicated between all the clients and workspace using [fleet.kernel.rebase.RemoteKernel] interface.
+ *
+ * Entities created in a shared block are going to be in this partition:
+ * ```kotlin
+ * change {
+ *   shared {
+ *      // this one will be put in SharedPart
+ *      SomeEntity.new {
+ *         // ...
+ *      }
+ *   }
+ * }
+ * ```
+ */
+const val SharedPart: Part = 2
+
+/**
+ * Database's partition, which is used by frontend's entities. They are not replicated between workspace or other clients.
+ */
+const val FrontendPart: Part = 3
+
+/**
+ * Database's partition, which is used by workspace's entities. They are not replicated to the frontends.
+ */
+const val WorkspacePart: Part = 4
+
+/**
+ * Database's partition, which is replicated between a local frontend and workspace (called workspace kernel view).
+ * This partition is used in the local Fleet's mode where frontend and workspace live in the same process (called short-circuited mode).
+ *
+ * This partition is not replicated to other clients.
+ */
+const val CommonPart: Part = 1
 
 class DispatchChannelOverflowException : RuntimeException("dispatch channel is overflown")
 
