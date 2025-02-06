@@ -967,7 +967,7 @@ public class __XmlLexer implements FlexLexer {
           // fall through
           case 64: break;
           case 22:
-            { return XmlElementType.XML_MARKUP_DECL;
+            { return BasicXmlElementType.XML_MARKUP_DECL;
             }
           // fall through
           case 65: break;
