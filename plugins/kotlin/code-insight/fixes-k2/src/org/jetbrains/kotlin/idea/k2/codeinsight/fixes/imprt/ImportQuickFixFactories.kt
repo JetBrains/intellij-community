@@ -5,9 +5,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 
 /**
- * Note: factories from here are used only for importing references on the fly. 
- * 
- * In all other cases import fixes for unresolved references are created
+ * Note: generic unresolved references registration is handled
  * by [org.jetbrains.kotlin.idea.k2.codeinsight.fixes.KotlinFirUnresolvedReferenceQuickFixProvider]
  */
 object ImportQuickFixFactories {
@@ -20,6 +18,14 @@ object ImportQuickFixFactories {
     }
 
     val unresolvedReferenceWrongReceiverFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnresolvedReferenceWrongReceiver ->
+        ImportQuickFixProvider.getFixes(diagnostic)
+    }
+    
+    val delegateSpecialFunctionMissingFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.DelegateSpecialFunctionMissing ->
+        ImportQuickFixProvider.getFixes(diagnostic)
+    }
+
+    val delegateSpecialFunctionNoneApplicableFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable ->
         ImportQuickFixProvider.getFixes(diagnostic)
     }
 }

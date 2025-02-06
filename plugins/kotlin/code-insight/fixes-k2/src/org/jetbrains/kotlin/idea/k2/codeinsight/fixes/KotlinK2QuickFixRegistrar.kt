@@ -277,6 +277,9 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFixes(KaFirDiagnostic.ConflictingImport::class, RemovePsiElementSimpleFix.RemoveImportFactory)
         registerPsiQuickFixes(KaFirDiagnostic.UnresolvedImport::class, AddDependencyQuickFixHelper)
+        
+        registerFactory(ImportQuickFixFactories.delegateSpecialFunctionMissingFactory)
+        registerFactory(ImportQuickFixFactories.delegateSpecialFunctionNoneApplicableFactory)
     }
 
     private val mutability = KtQuickFixesListBuilder.registerPsiQuickFix {
