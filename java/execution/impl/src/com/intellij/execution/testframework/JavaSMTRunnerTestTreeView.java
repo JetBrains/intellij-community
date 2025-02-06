@@ -153,12 +153,15 @@ public class JavaSMTRunnerTestTreeView extends SMTRunnerTestTreeView implements 
 
   @Override
   public Long getCustomizedDuration(@NotNull SMTestProxy proxy) {
-    if (!proxy.isSuite() || !proxy.isFinal() || proxy.getDurationStrategy() != TestDurationStrategy.AUTOMATIC ||
+    if (!proxy.isSuite() || proxy.getDurationStrategy() != TestDurationStrategy.AUTOMATIC ||
         !JavaAwareTestConsoleProperties.USE_WALL_TIME.value(myTestConsoleProperties)) {
       return proxy.getDuration();
     }
     Long startTime = proxy.getStartTimeMillis();
     Long endTime = proxy.getEndTimeMillis();
+    if (endTime == null && proxy.isInProgress()) {
+      endTime = System.currentTimeMillis();
+    }
     if (startTime == null || endTime == null || startTime >= endTime) {
       return null;
     }
