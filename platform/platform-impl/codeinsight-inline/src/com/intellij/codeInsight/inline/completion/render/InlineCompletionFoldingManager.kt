@@ -118,22 +118,28 @@ internal class InlineCompletionFoldingManager private constructor(private val ed
 
   private fun verifyDocumentUnchanged() {
     val currentStamp = document.modificationStamp
-    if (lastModificationStamp != currentStamp) {
-      lastModificationStamp = currentStamp
+    if (lastModificationStamp != currentStamp && lastModificationStamp != null) {
+      LOG.error("Incorrect state of folding for inline completion. Some unexpected document changes.")
+      clear()
     }
+    lastModificationStamp = currentStamp
   }
 
   override fun dispose() {
     if (foldedLines.isNotEmpty() || lastModificationStamp != null) {
       LOG.error("Incorrect state of folding for inline completion. Some folded regions are not disposed.")
-      foldingModel.runBatchFoldingOperation {
-        foldedLines.forEach { (_, region) ->
-          foldingModel.removeFoldRegion(region)
-        }
-      }
-      foldedLines.clear()
-      lastModificationStamp = null
+      clear()
     }
+  }
+
+  private fun clear() {
+    foldingModel.runBatchFoldingOperation {
+      foldedLines.forEach { (_, region) ->
+        foldingModel.removeFoldRegion(region)
+      }
+    }
+    foldedLines.clear()
+    lastModificationStamp = null
   }
 
   companion object {
