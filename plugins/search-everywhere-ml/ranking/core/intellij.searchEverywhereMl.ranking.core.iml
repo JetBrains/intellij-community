@@ -151,7 +151,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="jetbrains.intellij.deps.searchEverywhere.model.find.ec" type="repository">
+      <library name="find-ec-model" type="repository">
         <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-ec-model:251.0.1">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/251.0.1/find-ec-model-251.0.1.jar">
