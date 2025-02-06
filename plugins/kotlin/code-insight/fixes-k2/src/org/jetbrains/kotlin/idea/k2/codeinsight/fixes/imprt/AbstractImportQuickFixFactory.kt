@@ -1,0 +1,39 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
+
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.psi.KtElement
+
+internal abstract class AbstractImportQuickFixFactory : KotlinQuickFixFactory.IntentionBased<KaDiagnosticWithPsi<*>> {
+
+    /**
+     * Returns the [KtElement] to put an auto-import on, and the detected [KotlinRawPositionContext] around it.
+     */
+    protected abstract fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): Pair<KtElement, KotlinRawPositionContext>?
+
+    protected abstract fun KaSession.provideImportCandidates(
+        diagnostic: KaDiagnosticWithPsi<*>,
+        positionContext: KotlinRawPositionContext,
+        indexProvider: KtSymbolFromIndexProvider,
+    ): List<ImportCandidate>
+
+    override fun KaSession.createQuickFixes(diagnostic: KaDiagnosticWithPsi<*>): List<ImportQuickFix> =
+        createQuickFixes(setOf(diagnostic))
+
+    fun KaSession.createQuickFixes(diagnostics: Set<KaDiagnosticWithPsi<*>>): List<ImportQuickFix> {
+        return diagnostics
+            .mapNotNull { diagnostic ->
+                val (expression, positionContext) = detectPositionContext(diagnostic) ?: return@mapNotNull null
+
+                val indexProvider = KtSymbolFromIndexProvider(expression.containingKtFile)
+
+                val candidates = provideImportCandidates(diagnostic, positionContext, indexProvider)
+                val data = ImportQuickFixProvider.createImportData(expression, candidates) ?: return@mapNotNull null
+                ImportQuickFixProvider.run { createImportFix(expression, data) }
+            }
+    }
+}
