@@ -5,6 +5,7 @@ package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
+import com.intellij.ide.plugins.PluginValidationError
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PathManager.getHomePath
 import com.intellij.util.getErrorsAsString
@@ -44,7 +45,7 @@ private val moduleSkipList = java.util.Set.of(
   "intellij.platform.syntax.psi", /* syntax.psi is not yet a real module because it's a part of Core */
 )
 
-class PluginModelValidator(sourceModules: List<Module>) {
+class PluginModelValidator(sourceModules: List<Module>, private val skipUnresolvedOptionalContentModules: Boolean = false) {
   sealed interface Module {
     val name: String
 
@@ -429,7 +430,15 @@ class PluginModelValidator(sourceModules: List<Module>) {
       }
 
       // ignore null - getModule reports error
-      val moduleDescriptorFileInfo = getModuleDescriptorFileInfo(moduleName, referencingModuleInfo, sourceModuleNameToFileInfo) ?: continue
+      val moduleDescriptorFileInfo = getModuleDescriptorFileInfo(
+        moduleName = moduleName,
+        moduleLoadingRule = moduleLoadingRule,
+        referencingModuleInfo = referencingModuleInfo,
+        sourceModuleNameToFileInfo = sourceModuleNameToFileInfo
+      )
+      if (moduleDescriptorFileInfo == null) {
+        continue
+      }
 
       val moduleDescriptor = requireNotNull(moduleDescriptorFileInfo.moduleDescriptor) {
         "No module descriptor ($moduleDescriptorFileInfo)"
@@ -484,9 +493,12 @@ class PluginModelValidator(sourceModules: List<Module>) {
     return moduleInfo
   }
 
-  private fun getModuleDescriptorFileInfo(moduleName: String,
-                                          referencingModuleInfo: ModuleInfo,
-                                          sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>): ModuleDescriptorFileInfo? {
+  private fun getModuleDescriptorFileInfo(
+    moduleName: String,
+    moduleLoadingRule: String?,
+    referencingModuleInfo: ModuleInfo,
+    sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>
+  ): ModuleDescriptorFileInfo? {
     var module = sourceModuleNameToFileInfo.get(moduleName)
     if (module != null) {
       return module
@@ -501,6 +513,9 @@ class PluginModelValidator(sourceModules: List<Module>) {
     val prefix = referencingModuleInfo.sourceModuleName + "/"
     if (!moduleName.startsWith(prefix)) {
       val i = moduleName.indexOf("/")
+      if (moduleLoadingRule != "required" && moduleLoadingRule != "embedded" && skipUnresolvedOptionalContentModules && i == -1) {
+        return null
+      }
       val message = if (i > -1) "$moduleName can only be accessed from ${moduleName.substring(0, i)}" else  "Cannot find module $moduleName"
       _errors.add(PluginValidationError(message,
         getErrorInfo(),
