@@ -2,16 +2,16 @@
 package com.intellij.debugger.streams.ui.impl
 
 import com.intellij.debugger.streams.trace.CollectionTreeBuilder
-import com.intellij.debugger.streams.trace.EvaluationContextWrapper
+import com.intellij.debugger.streams.trace.DebuggerCommandLauncher
 import com.intellij.debugger.streams.ui.TraceController
 
 /**
  * @author Vitaliy.Bibaev
  */
 class StreamTracesMappingView(
-  evaluationContext: EvaluationContextWrapper,
+  launcher: DebuggerCommandLauncher,
   prevController: TraceController,
   nextController: TraceController,
   builder: CollectionTreeBuilder,
   debugName: String
-) : FlatView(listOf(prevController, nextController), evaluationContext, builder, debugName)
+) : FlatView(listOf(prevController, nextController), launcher, builder, debugName)

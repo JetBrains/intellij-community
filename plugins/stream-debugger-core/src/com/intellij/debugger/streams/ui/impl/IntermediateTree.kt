@@ -1,7 +1,7 @@
 package com.intellij.debugger.streams.ui.impl
 
 import com.intellij.debugger.streams.trace.CollectionTreeBuilder
-import com.intellij.debugger.streams.trace.EvaluationContextWrapper
+import com.intellij.debugger.streams.trace.DebuggerCommandLauncher
 import com.intellij.debugger.streams.trace.TraceElement
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.xdebugger.frame.*
@@ -12,16 +12,16 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 
 class IntermediateTree(
   traceElements: List<TraceElement>,
-  evaluationContextWrapper: EvaluationContextWrapper,
+  launcher: DebuggerCommandLauncher,
   private val myBuilder: CollectionTreeBuilder,
   debugName: String,
-) : CollectionTree(traceElements, evaluationContextWrapper, myBuilder, debugName) {
+) : CollectionTree(traceElements, launcher, myBuilder, debugName) {
   private val myXValue2TraceElement: MutableMap<XValueContainer, TraceElement> = HashMap()
 
   private val itemsCount : Int = traceElements.size
 
   init {
-    val root = XValueNodeImpl(this, null, "root", MyTraceElementsRoot(traceElements, evaluationContextWrapper))
+    val root = XValueNodeImpl(this, null, "root", MyTraceElementsRoot(traceElements, launcher))
     setRoot(root, false)
     root.isLeaf = false
 
@@ -51,12 +51,12 @@ class IntermediateTree(
 
   private inner class MyTraceElementsRoot(
     private val myTraceElements: List<TraceElement>,
-    private val myEvaluationContext: EvaluationContextWrapper,
+    private val myDebuggerCommandLauncher: DebuggerCommandLauncher,
   ) : XValue() {
     override fun computeChildren(node: XCompositeNode) {
       val children = XValueChildrenList()
       for (value in myTraceElements) {
-        val namedValue = myBuilder.createXNamedValue(value.value, myEvaluationContext)
+        val namedValue = myBuilder.createXNamedValue(value.value, myDebuggerCommandLauncher)
         myXValue2TraceElement[namedValue] = value
         children.add(namedValue)
       }

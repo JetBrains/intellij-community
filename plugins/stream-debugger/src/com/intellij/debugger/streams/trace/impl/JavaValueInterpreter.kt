@@ -14,7 +14,7 @@ class JavaValueInterpreter : XValueInterpreter {
     if (result is JavaValue) {
       val reference = result.descriptor.getValue()
       if (reference is com.sun.jdi.ArrayReference) {
-        return XValueInterpreter.Result.Array(JvmArrayReference(reference), hasInnerExceptions(reference), JavaEvaluationContext(result.evaluationContext))
+        return XValueInterpreter.Result.Array(JvmArrayReference(reference), hasInnerExceptions(reference), JavaDebuggerCommandLauncher(result.evaluationContext))
       } else if (reference is com.sun.jdi.ObjectReference) {
         val type = reference.referenceType()
         var classType = type as? com.sun.jdi.ClassType

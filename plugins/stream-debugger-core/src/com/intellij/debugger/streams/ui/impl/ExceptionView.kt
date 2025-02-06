@@ -3,7 +3,7 @@ package com.intellij.debugger.streams.ui.impl
 
 import com.intellij.debugger.streams.StreamDebuggerBundle
 import com.intellij.debugger.streams.trace.CollectionTreeBuilder
-import com.intellij.debugger.streams.trace.EvaluationContextWrapper
+import com.intellij.debugger.streams.trace.DebuggerCommandLauncher
 import com.intellij.debugger.streams.trace.TraceElement
 import com.intellij.icons.AllIcons
 import com.intellij.ui.components.JBLabel
@@ -12,8 +12,8 @@ import javax.swing.JTree
 /**
  * @author Vitaliy.Bibaev
  */
-class ExceptionView(context: EvaluationContextWrapper, ex: TraceElement, builder: CollectionTreeBuilder)
-  : CollectionView(JBLabel(StreamDebuggerBundle.message("exception.label")), TerminationTree(ex.value!!, listOf(ex), context, builder, "ExceptionView")) {
+class ExceptionView(launcher: DebuggerCommandLauncher, ex: TraceElement, builder: CollectionTreeBuilder)
+  : CollectionView(JBLabel(StreamDebuggerBundle.message("exception.label")), TerminationTree(ex.value!!, listOf(ex), launcher, builder, "ExceptionView")) {
   init {
     instancesTree.cellRenderer = object : TraceTreeCellRenderer() {
       override fun customizeCellRenderer(tree: JTree,

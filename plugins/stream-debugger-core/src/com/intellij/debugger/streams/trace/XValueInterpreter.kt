@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nls
 
 interface XValueInterpreter {
   sealed class Result {
-    data class Array(val arrayReference: ArrayReference, val hasInnerExceptions: Boolean, val evaluationContext: EvaluationContextWrapper) : Result()
+    data class Array(val arrayReference: ArrayReference, val hasInnerExceptions: Boolean, val debuggerCommandLauncher: DebuggerCommandLauncher) : Result()
     data class Error(@Nls val message: String) : Result()
     object Unknown : Result()
   }

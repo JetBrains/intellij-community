@@ -47,7 +47,7 @@ class EvaluateExpressionTracer(
               return StreamTracer.Result.EvaluationFailed(streamTraceExpression,
                                         StreamDebuggerBundle.message("stream.debugger.evaluation.failed.cannot.interpret.result", t.message!!))
             }
-            return StreamTracer.Result.Evaluated(interpretedResult, result.evaluationContext)
+            return StreamTracer.Result.Evaluated(interpretedResult, result.debuggerCommandLauncher)
           }
           is XValueInterpreter.Result.Error -> {
             return StreamTracer.Result.EvaluationFailed(streamTraceExpression, result.message)

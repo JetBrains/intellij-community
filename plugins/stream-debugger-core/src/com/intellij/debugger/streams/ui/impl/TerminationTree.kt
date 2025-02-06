@@ -1,7 +1,7 @@
 package com.intellij.debugger.streams.ui.impl
 
 import com.intellij.debugger.streams.trace.CollectionTreeBuilder
-import com.intellij.debugger.streams.trace.EvaluationContextWrapper
+import com.intellij.debugger.streams.trace.DebuggerCommandLauncher
 import com.intellij.debugger.streams.trace.TraceElement
 import com.intellij.debugger.streams.trace.Value
 import com.intellij.openapi.application.ApplicationManager
@@ -19,15 +19,15 @@ import kotlinx.coroutines.yield
 class TerminationTree(
   streamResult : Value,
   traceElements: List<TraceElement>,
-  evaluationContextWrapper: EvaluationContextWrapper,
+  launcher: DebuggerCommandLauncher,
   private val myBuilder: CollectionTreeBuilder,
   @Suppress("CanBeParameter") private val debugName: String,
-) : CollectionTree(traceElements, evaluationContextWrapper, myBuilder, debugName) {
+) : CollectionTree(traceElements, launcher, myBuilder, debugName) {
 
   private val NULL_MARKER: Any = ObjectUtils.sentinel("CollectionTree.NULL_MARKER")
 
   init {
-    val root = XValueNodeImpl(this, null, "root", MyValueRoot(streamResult, evaluationContextWrapper))
+    val root = XValueNodeImpl(this, null, "root", MyValueRoot(streamResult, launcher))
     setRoot(root, false)
     root.isLeaf = false
 
@@ -40,7 +40,7 @@ class TerminationTree(
         if (node is XValueContainerNode<*>) {
           val container = (node as XValueContainerNode<*>).valueContainer
           if (myBuilder.isSupported(container)) {
-            evaluationContextWrapper.launchDebuggerCommand {
+            launcher.launchDebuggerCommand {
               val key = myBuilder.getKey(container, NULL_MARKER)
               withContext(Dispatchers.EDT) {
                 val elements = key2TraceElements[key]
@@ -76,10 +76,10 @@ class TerminationTree(
     })
   }
 
-  private inner class MyValueRoot(private val myValue: Value, private val myEvaluationContext: EvaluationContextWrapper) : XValue() {
+  private inner class MyValueRoot(private val myValue: Value, private val myDebuggerCommandLauncher: DebuggerCommandLauncher) : XValue() {
     override fun computeChildren(node: XCompositeNode) {
       val children = XValueChildrenList()
-      children.add(myBuilder.createXNamedValue(myValue, myEvaluationContext))
+      children.add(myBuilder.createXNamedValue(myValue, myDebuggerCommandLauncher))
       node.addChildren(children, true)
     }
 

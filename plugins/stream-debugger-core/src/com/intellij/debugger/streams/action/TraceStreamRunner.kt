@@ -155,7 +155,7 @@ class TraceStreamRunner(val cs: CoroutineScope) {
           is StreamTracer.Result.Evaluated -> {
             val resolvedTrace = result.result.resolve(provider.getLibrarySupport().resolverFactory)
             withContext(Dispatchers.EDT) {
-              window.setTrace(resolvedTrace, result.context, provider.getCollectionTreeBuilder(result.context.project))
+              window.setTrace(resolvedTrace, result.debuggerCommandLauncher, provider.getCollectionTreeBuilder(result.debuggerCommandLauncher.project))
             }
           }
           is StreamTracer.Result.EvaluationFailed -> {

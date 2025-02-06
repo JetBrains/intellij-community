@@ -2,7 +2,7 @@
 package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.debugger.streams.trace.CollectionTreeBuilder;
-import com.intellij.debugger.streams.trace.EvaluationContextWrapper;
+import com.intellij.debugger.streams.trace.DebuggerCommandLauncher;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.trace.Value;
 import com.intellij.debugger.streams.ui.PaintingListener;
@@ -45,10 +45,10 @@ public abstract class CollectionTree extends XDebuggerTree implements TraceConta
   private boolean myIgnoreExternalSelectionEvents = false;
 
   protected CollectionTree(@NotNull List<TraceElement> traceElements,
-                 @NotNull EvaluationContextWrapper evaluationContextWrapper,
+                 @NotNull DebuggerCommandLauncher launcher,
                  @NotNull CollectionTreeBuilder collectionTreeBuilder,
                  @NotNull String debugName) {
-    super(evaluationContextWrapper.getProject(), collectionTreeBuilder.getEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null);
+    super(launcher.getProject(), collectionTreeBuilder.getEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null);
 
     myDebugName = debugName;
 
@@ -72,14 +72,14 @@ public abstract class CollectionTree extends XDebuggerTree implements TraceConta
 
   public static CollectionTree create(@Nullable Value streamResult,
                                       @NotNull List<TraceElement> traceElements,
-                                      @NotNull EvaluationContextWrapper evaluationContextWrapper,
+                                      @NotNull DebuggerCommandLauncher debuggerCommandLauncher,
                                       @NotNull CollectionTreeBuilder collectionTreeBuilder,
                                       @NotNull String debugName) {
     if (streamResult == null) {
-      return new IntermediateTree(traceElements, evaluationContextWrapper, collectionTreeBuilder, debugName);
+      return new IntermediateTree(traceElements, debuggerCommandLauncher, collectionTreeBuilder, debugName);
     }
     else {
-      return new TerminationTree(streamResult, traceElements, evaluationContextWrapper, collectionTreeBuilder, debugName);
+      return new TerminationTree(streamResult, traceElements, debuggerCommandLauncher, collectionTreeBuilder, debugName);
     }
   }
 
