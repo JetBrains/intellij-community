@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
+import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.ide.structureView.StructureView
 import com.intellij.ide.structureView.StructureViewBuilder
@@ -14,12 +16,15 @@ import com.intellij.ide.structureView.impl.StructureViewComposite
 import com.intellij.ide.structureView.impl.StructureViewComposite.StructureViewDescriptor
 import com.intellij.ide.structureView.impl.StructureViewState
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
+import com.intellij.idea.AppMode
 import com.intellij.lang.LangBundle
 import com.intellij.lang.PsiStructureViewFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.*
+import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
@@ -38,10 +43,12 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isTooLargeForIntellijSense
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
@@ -181,17 +188,20 @@ class StructureViewWrapperImpl(
       }
     })
 
-    coroutineScope.launch {
-      rebuildRequests
-        .debounce {
-          when (it) {
-            RebuildDelay.NOW -> 0L
-            RebuildDelay.QUEUE -> REBUILD_TIME
+    val clientId = ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER).singleOrNull()?.clientId
+    withExplicitClientId(clientId) {
+      coroutineScope.launch {
+        rebuildRequests
+          .debounce {
+            when (it) {
+              RebuildDelay.NOW -> 0L
+              RebuildDelay.QUEUE -> REBUILD_TIME
+            }
           }
-        }
-        .collectLatest {
-          rebuildImpl()
-        }
+          .collectLatest {
+            rebuildImpl()
+          }
+      }
     }
   }
 
@@ -203,44 +213,48 @@ class StructureViewWrapperImpl(
     rebuildNow("clear caches")
   }
 
-  private fun checkUpdate() {
-    if (project.isDisposed) return
-    val owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
-    val insideToolwindow = SwingUtilities.isDescendingFrom(myToolWindow.component, owner)
-    if (insideToolwindow) LOG.debug("inside structure view")
-    if (!myFirstRun && (insideToolwindow || JBPopupFactory.getInstance().isPopupActive)) {
-      return
-    }
-    val dataContext = DataManager.getInstance().getDataContext(owner)
-    if (WRAPPER_DATA_KEY.getData(dataContext) === this) return
-    if (CommonDataKeys.PROJECT.getData(dataContext) !== project) return
-    if (insideToolwindow) {
-      if (myFirstRun) {
-        setFileFromSelectionHistory()
-        myFirstRun = false
+  private fun checkUpdate() = ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER).singleOrNull()?.clientId.let { clientId ->
+    withExplicitClientId(clientId) {
+      if (project.isDisposed) return@withExplicitClientId
+      val owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+                  ?: FileEditorManager.getInstance(project)?.takeIf { AppMode.isRemoteDevHost() }?.selectedTextEditor?.contentComponent
+      val insideToolwindow = SwingUtilities.isDescendingFrom(myToolWindow.component, owner)
+                             && (AppMode.isRemoteDevHost() && owner !is IdeFrame)
+      if (insideToolwindow) LOG.debug("inside structure view")
+      if (!myFirstRun && (insideToolwindow || JBPopupFactory.getInstance().isPopupActive)) {
+        return@withExplicitClientId
       }
-    }
-    else {
-      val asyncDataContext = Utils.createAsyncDataContext(dataContext)
-      ReadAction.nonBlocking<VirtualFile?> { getTargetVirtualFile(asyncDataContext) }
-        .coalesceBy(this, owner)
-        .finishOnUiThread(ModalityState.defaultModalityState()) { file: VirtualFile? ->
-          val firstRun = myFirstRun
+      val dataContext = DataManager.getInstance().getDataContext(owner)
+      if (WRAPPER_DATA_KEY.getData(dataContext) === this) return@withExplicitClientId
+      if (CommonDataKeys.PROJECT.getData(dataContext) !== project) return@withExplicitClientId
+      if (insideToolwindow) {
+        if (myFirstRun) {
+          setFileFromSelectionHistory()
           myFirstRun = false
+        }
+      }
+      else {
+        val asyncDataContext = Utils.createAsyncDataContext(dataContext)
+        ReadAction.nonBlocking<VirtualFile?> { getTargetVirtualFile(asyncDataContext) }
+          .coalesceBy(this, owner)
+          .finishOnUiThread(ModalityState.defaultModalityState()) { file: VirtualFile? ->
+            val firstRun = myFirstRun
+            myFirstRun = false
 
-          coroutineScope.launch {
-            if (file != null) {
-              setFile(file)
-            }
-            else if (firstRun) {
-              setFileFromSelectionHistory()
-            }
-            else {
-              setFile(null)
+            coroutineScope.launch {
+              if (file != null) {
+                setFile(file)
+              }
+              else if (firstRun) {
+                setFileFromSelectionHistory()
+              }
+              else {
+                setFile(null)
+              }
             }
           }
-        }
-        .submit(AppExecutorUtil.getAppExecutorService())
+          .submit(AppExecutorUtil.getAppExecutorService())
+      }
     }
   }
 
@@ -400,8 +414,9 @@ class StructureViewWrapperImpl(
       return
     }
 
+    val clientId = ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER).singleOrNull()?.clientId
     val file = myFile ?: run {
-      val selectedFiles = project.serviceAsync<FileEditorManager>().selectedFiles
+      val selectedFiles = withExplicitClientId(clientId) { FileEditorManager.getInstance(project).selectedFiles }
       if (selectedFiles.isNotEmpty()) selectedFiles[0] else null
     }
 
@@ -426,7 +441,7 @@ class StructureViewWrapperImpl(
         }
       }
       else {
-        val editor = project.serviceAsync<FileEditorManager>().getSelectedEditor(file)
+        val editor = withExplicitClientId(clientId) { FileEditorManager.getInstance(project).getSelectedEditor(file) }
         val structureViewBuilder = if (editor != null && editor.isValid)
           readAction { editor.structureViewBuilder } else createStructureViewBuilder(file)
         if (structureViewBuilder != null) {
@@ -593,7 +608,12 @@ class StructureViewWrapperImpl(
         return explicitlySpecifiedFile.orElse(null)
       }
       val commonFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(asyncDataContext)
-      return if (commonFiles != null && commonFiles.size == 1) commonFiles[0] else null
+      val project = CommonDataKeys.PROJECT.getData(asyncDataContext)
+      return when {
+        commonFiles != null && commonFiles.size == 1 -> commonFiles[0]
+        AppMode.isRemoteDevHost() && project != null -> FileEditorManager.getInstance(project)?.selectedEditor?.file
+        else -> null
+      }
     }
 
     private fun loggedRun(message: String, task: Runnable): Boolean {
