@@ -36,11 +36,6 @@ object ImportQuickFixProvider {
     }
 
     context(KaSession)
-    fun getFixes(diagnosticPsi: PsiElement, diagnostic: KaDiagnosticWithPsi<*>): List<ImportQuickFix> {
-        return getFixes(diagnosticPsi, setOf(diagnostic))
-    }
-
-    context(KaSession)
     fun getFixes(diagnosticPsi: PsiElement, diagnostics: Set<KaDiagnosticWithPsi<*>>): List<ImportQuickFix> {
         val (expression, positionContext) = detectPositionContext(diagnosticPsi) ?: return emptyList()
 
