@@ -57,7 +57,7 @@ class EditorCellInput(
       editor.notebookAppearance.aboveFirstCellDelimiterHeight
     }
     else {
-      editor.notebookAppearance.cellBorderHeight / 2
+      editor.notebookAppearance.cellBorderHeight
     }
 
     val bounds = calculateBounds()
