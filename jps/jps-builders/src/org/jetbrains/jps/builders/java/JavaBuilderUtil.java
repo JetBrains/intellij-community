@@ -556,7 +556,7 @@ public final class JavaBuilderUtil {
       dependencyGraph.integrate(diffResult);
     }
 
-    return !errorsDetected && additionalPassRequired;
+    return additionalPassRequired;
   }
 
   public static @Nullable File findModuleInfoFile(CompileContext context, ModuleBuildTarget target) {

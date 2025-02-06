@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 @TestRoot("jps/graphImplementationTests/testData/incremental")
 public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJpsTest {
     static void setUpTests() {
-        File kotlincFolder = getKotlincFolder("2.0.20-dev-1563");
+        File kotlincFolder = getKotlincFolder("2.1.10");
         System.setProperty("jps.kotlin.home", kotlincFolder.getAbsolutePath());
 
         // enable graph implementation
@@ -608,6 +608,11 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         @TestMetadata("removeTopLevelTypeAlias")
         public void testRemoveTopLevelTypeAlias() throws Exception {
             runTest("pureKotlin/removeTopLevelTypeAlias/");
+        }
+
+        @TestMetadata("changeTopLevelTypeAlias")
+        public void testChangeTopLevelTypeAlias() throws Exception {
+            runTest("pureKotlin/changeTopLevelTypeAlias/");
         }
 
         @TestMetadata("removeUnusedFile")
