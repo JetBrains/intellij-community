@@ -19,7 +19,7 @@ class NewProjectMicronautDialogUI(data: ComponentData) : UiComponent(data) {
     nameTextField.doubleClick()
     keyboard {
       backspace()
-      enterText(text)
+      typeText(text)
     }
   }
 

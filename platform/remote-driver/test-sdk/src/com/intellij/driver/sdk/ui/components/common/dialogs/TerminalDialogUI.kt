@@ -27,7 +27,7 @@ class TerminalDialogUI(data: ComponentData) : UiComponent(data) {
   fun execute(command: String, finishFlag: String = "") {
     this.click()
     keyboard {
-      enterText(command)
+      typeText(command)
       if (finishFlag.isNotEmpty()) waitFor { hasSubtext(finishFlag) }
     }
   }

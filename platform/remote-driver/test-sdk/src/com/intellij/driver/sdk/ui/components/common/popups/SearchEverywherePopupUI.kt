@@ -61,7 +61,7 @@ class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
     searchField.click()
     keyboard {
       backspace()
-      keyboard { enterText(text) }
+      keyboard { typeText(text) }
       resultsList.should(timeout = 15.seconds) {
         if (exactMatch) hasText(text) else hasSubtext(text)
       }

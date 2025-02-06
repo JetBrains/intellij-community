@@ -13,7 +13,7 @@ class KubernetesPodShellPanelUI(data: ComponentData): UiComponent(data) {
   private val terminal = x("//div[@class='JBTerminalPanel']")
 
   fun executeCommand(text: String) {
-    terminal.keyboard { enterText(text) }
+    terminal.keyboard { typeText(text) }
     terminal.keyboard { enter() }
   }
 
