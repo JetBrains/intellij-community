@@ -12,8 +12,16 @@ import java.util.function.Consumer;
  */
 abstract class TextFragment implements LineFragment {
   final float @NotNull [] myCharPositions; // i-th value is the x coordinate of right edge of i-th character (counted in visual order)
+  final @Nullable Float myGridCellWidth;
 
-  TextFragment(int charCount) {
+  TextFragment(int charCount, @Nullable EditorView view) {
+    if (view != null) {
+      var multiplier = view.getEditor().getSettings().getCharacterGridWidthMultiplier();
+      myGridCellWidth = multiplier == null ? null : multiplier * view.getMaxCharWidth();
+    }
+    else {
+      myGridCellWidth = null;
+    }
     assert charCount > 0;
     myCharPositions = new float[charCount]; // populated by subclasses' constructors
   }
@@ -55,10 +63,17 @@ abstract class TextFragment implements LineFragment {
     return column;
   }
 
-  @Nullable Float getGridCellWidth(@Nullable EditorView view) {
-    if (view == null) return null;
-    var multiplier = view.getEditor().getSettings().getCharacterGridWidthMultiplier();
-    return multiplier == null ? null : multiplier * view.getMaxCharWidth();
+  boolean isGridCellAlignmentEnabled() {
+    return myGridCellWidth != null;
+  }
+
+  @Nullable Float adjustedWidthOrNull(float width, float tolerance) {
+    assert myGridCellWidth != null;
+    var slots = width / myGridCellWidth;
+    if (Math.abs(slots - Math.round(slots)) < 0.001) return null;
+    var actualSlots = Math.min(Math.max(1, Math.ceil(slots - tolerance)), 2);
+    var actualWidth = actualSlots * myGridCellWidth;
+    return (float)actualWidth;
   }
 
   private final class TextFragmentWindow implements LineFragment {

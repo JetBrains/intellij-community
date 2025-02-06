@@ -18,24 +18,20 @@ final class SimpleTextFragment extends TextFragment {
   private float @Nullable [] myCharAlignment = null;
 
   SimpleTextFragment(char @NotNull [] lineChars, int start, int end, @NotNull FontInfo fontInfo, @Nullable EditorView view) {
-    super(end - start);
+    super(end - start, view);
     myText = Arrays.copyOfRange(lineChars, start, end);
     myFont = fontInfo.getFont();
-    var gridWidth = getGridCellWidth(view);
     float x = 0;
     for (int i = 0; i < myText.length; i++) {
       var charWidth = fontInfo.charWidth2D(myText[i]);
-      if (gridWidth != null) {
-        var slots = charWidth / gridWidth;
-        if (Math.abs(slots - Math.round(slots)) > 0.001) {
-          // allow for 10% overflow for potential unusual almost-single-width chars
-          var actualSlots = (float)Math.min(Math.max(1, Math.ceil(slots - 0.1)), 2);
-          var alignment = actualSlots * gridWidth - charWidth;
+      if (isGridCellAlignmentEnabled()) {
+        var newWidth = adjustedWidthOrNull(charWidth, 0.1f);
+        if (newWidth != null) {
           if (myCharAlignment == null) {
             myCharAlignment = new float[myText.length];
           }
-          myCharAlignment[i] = alignment;
-          charWidth += alignment;
+          myCharAlignment[i] = newWidth - charWidth;
+          charWidth = newWidth;
         }
       }
       x += charWidth;

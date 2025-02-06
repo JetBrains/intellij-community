@@ -25,8 +25,8 @@ final class ComplexTextFragment extends TextFragment {
                                             // (null if each code point takes one char).
                                             // We expect no more than 1025 chars in a fragment, so 'short' should be enough.
 
-  ComplexTextFragment(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo, EditorView view) {
-    super(end - start);
+  ComplexTextFragment(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo, @Nullable EditorView view) {
+    super(end - start, view);
     assert start >= 0              : assertMessage(lineChars, start, end, isRtl, fontInfo);
     assert end <= lineChars.length : assertMessage(lineChars, start, end, isRtl, fontInfo);
     assert start < end             : assertMessage(lineChars, start, end, isRtl, fontInfo);
@@ -39,36 +39,27 @@ final class ComplexTextFragment extends TextFragment {
       end,
       isRtl
     );
-    var gridWidth = getGridCellWidth(view);
     float[] alignments = null;
-    if (gridWidth != null) {
+    if (isGridCellAlignmentEnabled()) {
       // This thing assumes that one glyph = one character.
       // This seems to work "well enough" for the terminal
       // (the only place where it's used at the moment of writing),
       // but may need to be updated as unusual edge cases are discovered.
       // PASS 1: store the original widths.
-      var originalWidths = new double[myGlyphVector.getNumGlyphs()];
+      var originalWidths = new float[myGlyphVector.getNumGlyphs()];
       alignments = new float[myGlyphVector.getNumGlyphs()];
-      for (int i = 1; i <= myGlyphVector.getNumGlyphs(); i++) {
-        originalWidths[i - 1] = myGlyphVector.getGlyphPosition(i).getX() - myGlyphVector.getGlyphPosition(i - 1).getX();
+      for (int i = 0; i < myGlyphVector.getNumGlyphs(); i++) {
+        originalWidths[i] = (float)(myGlyphVector.getGlyphPosition(i + 1).getX() - myGlyphVector.getGlyphPosition(i).getX());
       }
       // PASS 2: use the original widths to calculate the new widths, update the positions to match the new widths.
       var x = myGlyphVector.getGlyphPosition(0).getX();
-      for (int i = 1; i <= myGlyphVector.getNumGlyphs(); i++) {
-        var prevOriginalWidth = originalWidths[i - 1];
-        var slots = prevOriginalWidth / gridWidth;
-        if (Math.abs(slots - Math.round(slots)) > 0.001) {
-          // allow for 20% overflow for chars with unusual widths
-          var actualSlots = Math.min(Math.max(1, Math.ceil(slots - 0.2)), 2);
-          var actualWidth = actualSlots * gridWidth;
-          x += actualWidth;
-        }
-        else { // no width adjustment, use the original width as-is
-          x += prevOriginalWidth;
-        }
-        var nextPos = myGlyphVector.getGlyphPosition(i);
+      for (int i = 0; i < myGlyphVector.getNumGlyphs(); i++) {
+        var originalWidth = originalWidths[i];
+        var adjustedWidth = adjustedWidthOrNull(originalWidth, 0.2f);
+        x += adjustedWidth != null ? adjustedWidth : originalWidth;
+        var nextPos = myGlyphVector.getGlyphPosition(i + 1);
         nextPos.setLocation(x, nextPos.getY());
-        myGlyphVector.setGlyphPosition(i, nextPos);
+        myGlyphVector.setGlyphPosition(i + 1, nextPos);
       }
       // PASS 3: use the differences between the original and the new widths to center the characters.
       for (int i = 0; i < myGlyphVector.getNumGlyphs(); i++) {
