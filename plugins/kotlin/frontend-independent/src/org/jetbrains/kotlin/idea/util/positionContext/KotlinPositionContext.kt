@@ -201,6 +201,25 @@ class KotlinMemberDeclarationExpectedPositionContext(
     val classBody: KtClassBody
 ) : KotlinRawPositionContext()
 
+/**
+ * A position that describes a delegated property.
+ * 
+ * Example: 
+ * ```
+ * val foo by bar
+ * ```
+ * 
+ * [propertyDelegate] points to the delegation part (`by bar`) of the declaration.
+ * 
+ * Note: This position currently is NOT detected automatically by `KotlinPositionContextDetector`;
+* it should be created explicitly.
+ */
+class KotlinPropertyDelegatePositionContext(
+    val propertyDelegate: KtPropertyDelegate,
+) : KotlinRawPositionContext() {
+    override val position: KtElement = propertyDelegate
+}
+
 sealed class KDocNameReferencePositionContext : KotlinNameReferencePositionContext() {
     abstract override val reference: KDocReference
     abstract override val nameExpression: KDocName

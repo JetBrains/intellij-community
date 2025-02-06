@@ -69,6 +69,7 @@ internal class FirKeywordCompletionContributor(
             is KotlinValueParameterPositionContext,
             is KotlinMemberDeclarationExpectedPositionContext,
             is KDocNameReferencePositionContext,
+            is KotlinPropertyDelegatePositionContext,
             is KotlinUnknownPositionContext -> null
         }
 
