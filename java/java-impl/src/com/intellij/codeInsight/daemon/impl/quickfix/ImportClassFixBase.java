@@ -55,12 +55,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   private final PsiClass[] myClassesToImport;
   private final boolean myHasUnresolvedImportWhichCanImport;
   private final PsiFile myContainingPsiFile;
-  /**
-   * If true, this.isAvailable() will return false when PSI has changed after this action instantiation.
-   * By default, make this action unavailable on PSI modification because e.g., the file text might change to obsolete this fix altogether.
-   * However, sometimes we do need to perform import on changed PSI, e.g., in case of auto-importing unambiguous references in bulk.
-   */
-  private boolean abortOnPSIModification = true;
   private boolean myInContent;
   private ThreeState extensionsAllowToChangeFileSilently;
 
@@ -94,19 +88,18 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     if (!isPsiModificationStampChanged()) {
       return true;
     }
-    if (abortOnPSIModification) return false;
     // ok, something did change. but can we still import? (in case of auto-import there maybe multiple fixes wanting to be executed)
     List<? extends PsiClass> classesToImport = getClassesToImport(true);
-    return classesToImport.size() == 1 && !isClassMaybeImportedAlready(myContainingPsiFile, classesToImport.get(0));
+    return classesToImport.size() == 1 && !isClassDefinitelyPositivelyImportedAlready(myContainingPsiFile, classesToImport.get(0));
   }
 
   /**
    * @return true if the class candidate name to be imported already present in the import list (maybe some auto-import-fix for another reference did it?)
    * This method is intended to be cheap and resolve-free, because it might be called in EDT.
    * This method is used as an optimization against trying to import the same class several times,
-   * so false negatives are OK (returning false even when the class already imported) whereas false positives are bad (don't return true when the class wasn't imported).
+   * so false negatives are fine (returning false even when the class already imported is OK) whereas false positives are bad (don't return true when the class wasn't imported).
    */
-  protected boolean isClassMaybeImportedAlready(@NotNull PsiFile containingFile, @NotNull PsiClass classToImport) {
+  protected boolean isClassDefinitelyPositivelyImportedAlready(@NotNull PsiFile containingFile, @NotNull PsiClass classToImport) {
     return false;
   }
 
@@ -509,9 +502,5 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
         ImportClassFixBase.this.bindReference(ref, targetClass);
       }
     };
-  }
-
-  public void surviveOnPSIModifications() {
-    abortOnPSIModification = false;
   }
 }

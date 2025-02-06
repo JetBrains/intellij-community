@@ -164,7 +164,7 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
   }
 
   @Override
-  protected boolean isClassMaybeImportedAlready(@NotNull PsiFile containingFile, @NotNull PsiClass classToImport) {
+  protected boolean isClassDefinitelyPositivelyImportedAlready(@NotNull PsiFile containingFile, @NotNull PsiClass classToImport) {
     if (containingFile instanceof PsiJavaFile) {
       PsiImportList importList = ((PsiJavaFile)containingFile).getImportList();
       if (importList == null) return false;
