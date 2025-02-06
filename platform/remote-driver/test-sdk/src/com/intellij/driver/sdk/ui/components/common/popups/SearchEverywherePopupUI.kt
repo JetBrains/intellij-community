@@ -5,6 +5,7 @@ import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ActionManager
 import com.intellij.driver.sdk.ActionUtils
 import com.intellij.driver.sdk.AnAction
+import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -55,6 +56,13 @@ class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data) {
   }
 
   fun getSelectedTab(): SearchEverywhereTab = SearchEverywhereTab.entries.single { it.id == searchEverywhereUi.getSelectedTabID() }
+
+  fun search(text: String) {
+    step("Search for '$text' in Search Everywhere") {
+      searchField.click()
+      searchField.text = text
+    }
+  }
 
   fun searchAndChooseFirst(text: String, exactMatch: Boolean = true) {
     searchField.text = ""
