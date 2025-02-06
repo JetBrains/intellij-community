@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.logs
 
-import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogs.INSERTED_STATE_EVENT_V2
-import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.INSERTED_STATE_EVENT
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogs.INSERTED_STATE_EVENT
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.INSERTED_STATE_EVENT_OLD
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.lang.Language
@@ -60,7 +60,7 @@ class InsertedStateTracker(private val cs: CoroutineScope) {
               )
               language?.let { data.add(EventFields.Language.with(it)) }
               fileLanguage?.let { data.add(EventFields.Language.with(it)) }
-              INSERTED_STATE_EVENT.log(data)
+              INSERTED_STATE_EVENT_OLD.log(data)
             }
           }
         }
@@ -85,8 +85,8 @@ class InsertedStateTracker(private val cs: CoroutineScope) {
         durations.forEach {
           launch {
             delay(it.toMillis())
-            if (!editor.isDisposed) {
-              readAction {
+            readAction {
+              if (!editor.isDisposed) {
                 val resultText = if (rangeMarker.isValid) rangeMarker.document.getText(rangeMarker.textRange) else ""
                 val commonPrefixLength = resultText.commonPrefixWith(suggestion).length
                 val commonSuffixLength = resultText.commonSuffixWith(suggestion).length
@@ -103,7 +103,7 @@ class InsertedStateTracker(private val cs: CoroutineScope) {
                   InlineCompletionLogs.InsertedStateEvents.COMMON_SUFFIX_LENGTH.with(commonSuffixLength),
                 )
                 fileLanguage?.let { data.add(EventFields.Language.with(it)) }
-                INSERTED_STATE_EVENT_V2.log(data)
+                INSERTED_STATE_EVENT.log(data)
               }
             }
           }

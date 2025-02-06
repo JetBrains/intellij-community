@@ -20,7 +20,7 @@ object InlineCompletionLogs : CounterUsagesCollector() {
   // TODO use ML_RECORDER_ID
   val GROUP: EventLogGroup = EventLogGroup("inline.completion.v2", 29, recorder = "ML")
 
-  val INSERTED_STATE_EVENT_V2: VarargEventId = GROUP.registerVarargEvent(
+  val INSERTED_STATE_EVENT: VarargEventId = GROUP.registerVarargEvent(
     "inserted_state",
     description = "Tracks the state of the accepted suggestion after some time",
     InsertedStateEvents.REQUEST_ID,
