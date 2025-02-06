@@ -7,6 +7,8 @@ java_library(
   runtime_deps = [
     "//plugins/devkit/intellij.devkit.plugin/noKotlin:devkit-plugin-main-noKotlin",
     "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
+    "//plugins/devkit/intellij.kotlin.devkit/k1:kotlin-devkit-k1",
+    "//plugins/devkit/intellij.kotlin.devkit/k2:kotlin-devkit-k2",
     "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
   ]
 )

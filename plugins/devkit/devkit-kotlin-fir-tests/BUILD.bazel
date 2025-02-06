@@ -30,8 +30,12 @@ jvm_library(
     "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
     "//plugins/kotlin/fir/tests:kotlin-fir-tests_test_lib",
     "@lib//:jetbrains-annotations",
+    "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
   ],
-  runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"]
+  runtime_deps = [
+    "//plugins/kotlin:kotlin-plugin-community-main",
+    "//plugins/devkit/intellij.kotlin.devkit/k2:kotlin-devkit-k2",
+  ]
 )
 
 jvm_test(
