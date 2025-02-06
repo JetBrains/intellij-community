@@ -29,7 +29,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsPane
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabRepositoryAndAccountSelectorViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabReviewTabViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowConnectedProjectViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -41,7 +41,7 @@ import javax.swing.*
 
 internal class GitLabReviewTabComponentFactory(
   private val project: Project,
-  private val toolwindowViewModel: GitLabToolWindowViewModel,
+  private val vm: GitLabProjectViewModel,
 ) : ReviewTabsComponentFactory<GitLabReviewTabViewModel, GitLabToolWindowConnectedProjectViewModel> {
 
   override fun createReviewListComponent(
@@ -91,7 +91,7 @@ internal class GitLabReviewTabComponentFactory(
       background = UIUtil.getListBackground()
     }
 
-    panel.bindChildIn(cs, toolwindowViewModel.selectorVm, BorderLayout.NORTH) { selectorVm ->
+    panel.bindChildIn(cs, vm.selectorVm, BorderLayout.NORTH) { selectorVm ->
       if (selectorVm == null) return@bindChildIn null
       val selectorCs = this
 

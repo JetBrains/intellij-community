@@ -12,8 +12,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gitlab.GitlabIcons
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -26,16 +25,16 @@ internal class GitLabMergeRequestOpenCreateTabAction : DumbAwareAction() {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    val twVm = project.service<GitLabToolWindowViewModel>()
-    val twAvailable = twVm.isAvailable.value
-    val twInitialized = twVm.projectVm.value != null
+    val vm = project.service<GitLabProjectViewModel>()
+    val vmAvailable = vm.isAvailable.value
+    val vmProjectConnected = vm.projectVm.value != null
 
     if (e.place == ActionPlaces.TOOLWINDOW_TITLE) {
-      e.presentation.isEnabledAndVisible = twInitialized
+      e.presentation.isEnabledAndVisible = vmProjectConnected
       e.presentation.icon = AllIcons.General.Add
     }
     else {
-      e.presentation.isEnabledAndVisible = twAvailable
+      e.presentation.isEnabledAndVisible = vmAvailable
       e.presentation.icon = GitlabIcons.GitLabLogo
     }
   }
@@ -54,7 +53,7 @@ internal class GitLabOpenMergeRequestExistingTabNotificationAction(
   private val existingMrOrNull: String,
 ) : NotificationAction(GitLabBundle.message("merge.request.notification.open.action.text")) {
   override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-    val twVm = project.service<GitLabToolWindowViewModel>()
+    val twVm = project.service<GitLabProjectViewModel>()
     val selectorVm = twVm.selectorVm.value ?: error("Tool window has not been initialized")
     selectorVm.selectRepoAndAccount(projectMapping, account)
     selectorVm.submitSelection()
@@ -63,8 +62,8 @@ internal class GitLabOpenMergeRequestExistingTabNotificationAction(
 }
 
 private fun openExistingTab(event: AnActionEvent, mrId: String) {
-  event.project!!.service<GitLabToolWindowViewModel>().activateAndAwaitProject {
-    selectTab(GitLabReviewTab.ReviewSelected(mrId))
+  event.project!!.service<GitLabProjectViewModel>().activateAndAwaitProject {
+    openMergeRequestDetails(mrId, GitLabStatistics.ToolWindowOpenTabActionPlace.NOTIFICATION)
   }
 }
 
@@ -75,8 +74,8 @@ internal class GitLabMergeRequestOpenCreateTabNotificationAction(
   private val account: GitLabAccount,
 ) : NotificationAction(GitLabBundle.message("merge.request.notification.create.action.text")) {
   override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-    val twVm = project.service<GitLabToolWindowViewModel>()
-    val selectorVm = twVm.selectorVm.value ?: error("Tool window has not been initialized")
+    val vm = project.service<GitLabProjectViewModel>()
+    val selectorVm = vm.selectorVm.value ?: error("Tool window has not been initialized")
     selectorVm.selectRepoAndAccount(projectMapping, account)
     selectorVm.submitSelection()
 
@@ -85,7 +84,7 @@ internal class GitLabMergeRequestOpenCreateTabNotificationAction(
 }
 
 private fun openNewMergeRequestDetails(event: AnActionEvent, place: GitLabStatistics.ToolWindowOpenTabActionPlace) {
-  event.project!!.service<GitLabToolWindowViewModel>().activateAndAwaitProject {
+  event.project!!.service<GitLabProjectViewModel>().activateAndAwaitProject {
     openMergeRequestDetails(null, place, false)
   }
 }

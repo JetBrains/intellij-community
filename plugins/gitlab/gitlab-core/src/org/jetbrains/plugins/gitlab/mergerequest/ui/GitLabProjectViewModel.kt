@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gitlab.mergerequest.ui
 
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.mapScoped
@@ -12,7 +12,14 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
@@ -20,17 +27,18 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.createSingleProjectAndAccountState
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabConnectedProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabRepositoryAndAccountSelectorViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowConnectedProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowConnectedProjectViewModel.Companion.GitLabToolWindowConnectedProjectViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestsUtil.repoAndAccountState
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestsUtil
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 @Service(Service.Level.PROJECT)
-internal class GitLabToolWindowViewModel(
+internal class GitLabProjectViewModel(
   private val project: Project,
   parentCs: CoroutineScope
 ) : ReviewToolwindowViewModel<GitLabToolWindowConnectedProjectViewModel> {
-  private val cs = parentCs.childScope(Dispatchers.Default)
+  private val cs = parentCs.childScope(javaClass.name, Dispatchers.Default)
 
   private val connectionManager: GitLabProjectConnectionManager = project.service<GitLabProjectConnectionManager>()
   private val projectsManager: GitLabProjectsManager = project.service<GitLabProjectsManager>()
@@ -57,7 +65,7 @@ internal class GitLabToolWindowViewModel(
       // Make sure the first found selected repo and account will be selected
       launch {
         val (repo, account) =
-          repoAndAccountState(
+          GitLabMergeRequestsUtil.repoAndAccountState(
             projectsManager.knownRepositoriesState,
             accountManager.accountsState,
             preferences.selectedUrlAndAccountId ?: return@launch

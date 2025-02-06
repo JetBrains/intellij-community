@@ -22,7 +22,7 @@ import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 internal class GitLabToolWindowFactory : ToolWindowFactory, DumbAware {
@@ -45,7 +45,7 @@ private class GitLabMergeRequestsToolWindowController(private val project: Proje
   private val cs = parentCs.childScope(Dispatchers.Main)
 
   suspend fun manageToolWindow(toolWindow: ToolWindow) {
-    val vm = project.serviceAsync<GitLabToolWindowViewModel>()
+    val vm = project.serviceAsync<GitLabProjectViewModel>()
     coroutineScope {
       launch {
         vm.isAvailable.collect {
@@ -75,7 +75,7 @@ private class GitLabMergeRequestsToolWindowController(private val project: Proje
     toolWindow.setAdditionalGearActions(DefaultActionGroup(GitLabSwitchProjectAndAccountAction()))
 
     cs.launch {
-      val vm = project.serviceAsync<GitLabToolWindowViewModel>()
+      val vm = project.serviceAsync<GitLabProjectViewModel>()
       val componentFactory = GitLabReviewTabComponentFactory(project, vm)
       toolWindow.contentManager.addDataProvider(EdtNoGetDataProvider { sink ->
         sink[GitLabMergeRequestsActionKeys.CONNECTED_PROJECT_VM] = vm.projectVm.value

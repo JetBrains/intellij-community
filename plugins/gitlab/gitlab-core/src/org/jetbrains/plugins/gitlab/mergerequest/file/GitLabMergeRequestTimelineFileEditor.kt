@@ -30,7 +30,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabConnectedProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestErrorUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.beans.PropertyChangeListener
@@ -84,7 +84,7 @@ private class ComponentFactory(private val project: Project, parentCs: Coroutine
     })
 
     cs.launchNow {
-      project.serviceAsync<GitLabToolWindowViewModel>().projectVm.collectScoped { projectVm ->
+      project.serviceAsync<GitLabProjectViewModel>().projectVm.collectScoped { projectVm ->
         projectVm?.getTimelineViewModel(file.mergeRequestId)?.collectScoped {
           showTimelineOrError(projectVm, it, file.mergeRequestId, wrapper)
         }

@@ -33,7 +33,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffChangeViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 internal data class GitLabMergeRequestDiffFile(
@@ -71,7 +71,7 @@ private fun getPresentablePath(glProject: GitLabProjectCoordinates, mergeRequest
   "$glProject/mergerequests/${mergeRequestIid}.diff"
 
 private fun isFileValid(project: Project, connectionId: String): Boolean =
-  project.serviceIfCreated<GitLabToolWindowViewModel>()?.projectVm?.value.takeIf { it?.connectionId == connectionId } != null
+  project.serviceIfCreated<GitLabProjectViewModel>()?.projectVm?.value.takeIf { it?.connectionId == connectionId } != null
 
 @Service(Service.Level.PROJECT)
 private class GitLabMergeRequestDiffService(private val project: Project, private val cs: CoroutineScope) {
@@ -103,7 +103,7 @@ private class GitLabMergeRequestDiffService(private val project: Project, privat
 
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun findDiffVm(project: Project, connectionId: String, mergeRequestIid: String): Flow<GitLabMergeRequestDiffViewModel?> {
-  val projectVm = project.serviceIfCreated<GitLabToolWindowViewModel>()?.projectVm ?: return flowOf(null)
+  val projectVm = project.serviceIfCreated<GitLabProjectViewModel>()?.projectVm ?: return flowOf(null)
   return projectVm.flatMapLatest {
     if (it != null && it.connectionId == connectionId) {
       it.getDiffViewModel(mergeRequestIid).map { it.getOrNull() }
