@@ -37,5 +37,9 @@
     <module name="intellij.platform.frontend"/>
 
     <module name="intellij.platform.inline.completion"/>
+
+    <module name="intellij.platform.recentFiles"/>
+    <module name="intellij.platform.recentFiles.frontend"/>
+    <module name="intellij.platform.recentFiles.backend"/>
   </content>
 </idea-plugin>
