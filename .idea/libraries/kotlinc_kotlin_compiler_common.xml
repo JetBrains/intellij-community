@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-common" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-common-for-ide:2.1.20-ij243-51">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-common-for-ide:2.1.20-ij243-56">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.1.20-ij243-51/kotlin-compiler-common-for-ide-2.1.20-ij243-51.jar">
-          <sha256sum>b87e58f2648fa490210f9c5d6f619a06d8a8bde89c1f26da68027d6a4e4e360c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.1.20-ij243-56/kotlin-compiler-common-for-ide-2.1.20-ij243-56.jar">
+          <sha256sum>8a1d838f3ccc12f74c8eb6a36a046cc7c8bcf6332dcb79e75ce54a92c6de39b9</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.1.20-ij243-51/kotlin-compiler-common-for-ide-2.1.20-ij243-51.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.1.20-ij243-56/kotlin-compiler-common-for-ide-2.1.20-ij243-56.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.1.20-ij243-51/kotlin-compiler-common-for-ide-2.1.20-ij243-51-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.1.20-ij243-56/kotlin-compiler-common-for-ide-2.1.20-ij243-56-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
