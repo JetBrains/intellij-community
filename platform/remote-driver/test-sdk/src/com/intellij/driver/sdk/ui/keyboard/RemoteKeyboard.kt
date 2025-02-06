@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui.keyboard
 
+import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.remote.Robot
 import com.intellij.openapi.diagnostic.logger
 import java.awt.event.KeyEvent
@@ -74,10 +75,12 @@ class RemoteKeyboard(private val robot: Robot) {
   }
 
   fun enterText(text: String, delayBetweenCharsInMs: Long = 50) {
-    LOG.info("Entering text '$text'.")
-    text.forEach {
-      robot.type(it)
-      Thread.sleep(delayBetweenCharsInMs)
+    step("Type text '$text'") {
+      LOG.info("Entering text '$text'.")
+      text.forEach {
+        robot.type(it)
+        Thread.sleep(delayBetweenCharsInMs)
+      }
     }
   }
 
