@@ -2315,7 +2315,8 @@ suspend fun waitForFullyCompleted(composite: FileEditorComposite) {
   }
 }
 
-internal fun getOpenMode(event: AWTEvent): FileEditorManagerImpl.OpenMode {
+@Internal
+fun getOpenMode(event: AWTEvent): FileEditorManagerImpl.OpenMode {
   if (event is MouseEvent) {
     val isMouseClick = event.getID() == MouseEvent.MOUSE_CLICKED || event.getID() == MouseEvent.MOUSE_PRESSED || event.getID() == MouseEvent.MOUSE_RELEASED
     val modifiers = event.modifiersEx

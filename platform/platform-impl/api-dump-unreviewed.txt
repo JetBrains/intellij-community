@@ -2376,9 +2376,6 @@ f:com.intellij.ide.actions.StoreDefaultLayoutAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.Switcher
-- com.intellij.openapi.project.DumbAwareAction
-- sf:INSTANCE:com.intellij.ide.actions.Switcher
 c:com.intellij.ide.actions.SynchronizeAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
