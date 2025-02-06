@@ -15,7 +15,7 @@ import com.intellij.psi.impl.source.parsing.xml.DtdParsing
 import com.intellij.psi.impl.source.xml.XmlFileImpl
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.xml.XmlElementType
-import com.intellij.psi.xml.XmlEntityDecl
+import com.intellij.psi.xml.XmlEntityContextType
 
 class DTDParserDefinition :
   XMLParserDefinition() {
@@ -28,7 +28,7 @@ class DTDParserDefinition :
 
   override fun createParser(project: Project?): PsiParser =
     PsiParser { root, builder ->
-      DtdParsing(root, XmlEntityDecl.EntityContextType.GENERIC_XML, builder).parse()
+      DtdParsing(root, XmlEntityContextType.GENERIC_XML, builder).parse()
     }
 
   override fun getFileNodeType(): IFileElementType =

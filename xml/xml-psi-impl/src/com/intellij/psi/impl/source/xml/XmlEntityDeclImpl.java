@@ -78,7 +78,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
   }
 
   @Override
-  public PsiElement parse(PsiFile baseFile, EntityContextType contextType, final XmlEntityRef originalElement) {
+  public PsiElement parse(PsiFile baseFile, XmlEntityContextType contextType, final XmlEntityRef originalElement) {
     PsiElement dep = DEPENDING_ELEMENT.get(getParent());
     PsiElement dependsOnElement = getValueElement(dep instanceof PsiFile ? (PsiFile)dep : baseFile);
     String value = null;
@@ -93,7 +93,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl {
 
     DtdParsing dtdParsing = new DtdParsing(value, XML_ELEMENT_DECL, contextType, baseFile);
     PsiElement generated = dtdParsing.parse().getPsi().getFirstChild();
-    if (contextType == EntityContextType.ELEMENT_CONTENT_SPEC && generated instanceof XmlElementContentSpec) {
+    if (contextType == XmlEntityContextType.ELEMENT_CONTENT_SPEC && generated instanceof XmlElementContentSpec) {
       generated = generated.getFirstChild();
     }
     setDependsOnElement(generated, dependsOnElement);

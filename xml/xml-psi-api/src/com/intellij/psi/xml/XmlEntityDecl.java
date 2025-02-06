@@ -6,15 +6,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 
 public interface XmlEntityDecl extends XmlElement, PsiNamedElement {
-  enum EntityContextType {
-    ELEMENT_CONTENT_SPEC, ATTRIBUTE_SPEC, ATTLIST_SPEC, ENTITY_DECL_CONTENT, GENERIC_XML,
-    ENUMERATED_TYPE, ATTR_VALUE
-  }
-
   @Override
   String getName();
   PsiElement getNameElement();
   XmlAttributeValue getValueElement();
-  PsiElement parse(PsiFile baseFile, EntityContextType context, XmlEntityRef originalElement);
+  PsiElement parse(PsiFile baseFile, XmlEntityContextType context, XmlEntityRef originalElement);
   boolean isInternalReference();
 }

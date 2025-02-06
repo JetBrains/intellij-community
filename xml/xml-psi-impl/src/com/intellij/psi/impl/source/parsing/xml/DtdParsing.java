@@ -17,7 +17,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlEntityContextType;
 import com.intellij.xml.parsing.XmlParserBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,10 +28,10 @@ public class DtdParsing extends XmlParsing {
   private static final Logger LOG = Logger.getInstance(XmlParser.class);
 
   private final IElementType myRootType;
-  public static final XmlEntityDecl.EntityContextType TYPE_FOR_MARKUP_DECL = XmlEntityDecl.EntityContextType.ELEMENT_CONTENT_SPEC;
-  private final XmlEntityDecl.EntityContextType myContextType;
+  public static final XmlEntityContextType TYPE_FOR_MARKUP_DECL = XmlEntityContextType.ELEMENT_CONTENT_SPEC;
+  private final XmlEntityContextType myContextType;
 
-  public DtdParsing(IElementType root, XmlEntityDecl.EntityContextType contextType, PsiBuilder builder) {
+  public DtdParsing(IElementType root, XmlEntityContextType contextType, PsiBuilder builder) {
     super(builder);
     myRootType = root;
     myContextType = contextType;
@@ -40,7 +40,7 @@ public class DtdParsing extends XmlParsing {
 
   public DtdParsing(CharSequence chars,
                     final IElementType type,
-                    final XmlEntityDecl.EntityContextType contextType,
+                    final XmlEntityContextType contextType,
                     PsiFile contextFile
   ) {
     this(
@@ -116,7 +116,7 @@ public class DtdParsing extends XmlParsing {
     return astNode;
   }
 
-  private static int getLexerInitialState(IElementType rootNodeType, XmlEntityDecl.EntityContextType context) {
+  private static int getLexerInitialState(IElementType rootNodeType, XmlEntityContextType context) {
     short state = 0;
 
     switch (context) {
