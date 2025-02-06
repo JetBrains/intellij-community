@@ -30,9 +30,7 @@ import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
-private fun shortcutText(actionId: String) = ActionManager.getInstance().getKeyboardShortcut(actionId)?.let { getShortcutText(it) }
-
-private val mainTextComparator by lazy { Comparator.comparing(SwitcherListItem::mainText, NaturalComparator.INSTANCE) }
+internal fun shortcutText(actionId: String) = ActionManager.getInstance().getKeyboardShortcut(actionId)?.let { getShortcutText(it) }
 
 internal sealed interface SwitcherListItem {
   val mnemonic: String? get() = null
@@ -41,9 +39,6 @@ internal sealed interface SwitcherListItem {
   val pathText: String get() = ""
   val shortcutText: String? get() = null
   val separatorAbove: Boolean get() = false
-
-  fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode)
-  fun close(switcher: Switcher.SwitcherPanel): Unit = Unit
 
   fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean)
   fun prepareExtraRenderer(component: SimpleColoredComponent, selected: Boolean) {
@@ -56,7 +51,6 @@ internal sealed interface SwitcherListItem {
     }
   }
 }
-
 
 internal class SwitcherRecentLocations(val switcher: Switcher.SwitcherPanel) : SwitcherListItem {
   override val separatorAbove: Boolean = true
@@ -76,7 +70,7 @@ internal class SwitcherRecentLocations(val switcher: Switcher.SwitcherPanel) : S
       else -> shortcutText(RecentLocationsAction.RECENT_LOCATIONS_ACTION_ID)
     }
 
-  override fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) {
+  fun perform() {
     RecentLocationsAction.showPopup(switcher.project, switcher.isOnlyEditedFilesShown)
   }
 
@@ -86,27 +80,25 @@ internal class SwitcherRecentLocations(val switcher: Switcher.SwitcherPanel) : S
   }
 }
 
+@Internal
+data class SwitcherToolWindow(
+  val window: ToolWindow,
+  val id: String,
+  val shortcut: Boolean,
+  override val mnemonic: @NlsSafe String?,
+) : SwitcherListItem {
+  override val mainText: @NlsSafe String
+    get() = window.stripeTitle
+  override val statusText: @NlsSafe String
+    get() = message("recent.files.accessible.show.tool.window", mainText)
+  override val pathText: @NlsSafe String
+    get() = ""
+  override val shortcutText: @NlsSafe String?
+    get() = if (shortcut) shortcutText(actionId) else null
+  override val separatorAbove: Boolean
+    get() = false
 
-internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : SwitcherListItem {
   private val actionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(window.id)
-  override var mnemonic: String? = null
-
-  override val mainText: @NlsContexts.TabTitle String = window.stripeTitle
-  override val statusText: @Nls String = message("recent.files.accessible.show.tool.window", mainText)
-  override val shortcutText: @NlsSafe String? = if (shortcut) shortcutText(actionId) else null
-
-  override fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) {
-    val manager = ToolWindowManager.getInstance(switcher.project) as? ToolWindowManagerImpl
-    manager?.activateToolWindow(window.id, null, true, when (switcher.isSpeedSearchPopupActive) {
-      true -> ToolWindowEventSource.SwitcherSearch
-      else -> ToolWindowEventSource.Switcher
-    }) ?: window.activate(null, true)
-  }
-
-  override fun close(switcher: Switcher.SwitcherPanel) {
-    val manager = ToolWindowManager.getInstance(switcher.project) as? ToolWindowManagerImpl
-    manager?.hideToolWindow(id = window.id, moveFocus = false, source = ToolWindowEventSource.CloseFromSwitcher) ?: window.hide()
-  }
 
   override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {
     val defaultIcon = if (ExperimentalUI.isNewUI()) EmptyIcon.ICON_16 else EmptyIcon.ICON_13
@@ -119,39 +111,36 @@ internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : S
 
 @Internal
 class SwitcherVirtualFile(
-  val project: Project,
-  val file: VirtualFile,
-  val window: EditorWindow?
+  val rpcModel: SwitcherRpcDto.File,
 ) : SwitcherListItem, BackgroundSupplier {
+  override val mainText: @NlsSafe String
+    get() = rpcModel.mainText
+  override val statusText: @NlsSafe String
+    get() = rpcModel.statusText
+  override val pathText: @NlsSafe String
+    get() = rpcModel.pathText
+  override val mnemonic: @NlsSafe String?
+    get() = null
+  override val shortcutText: @NlsSafe String?
+    get() = null
+  override val separatorAbove: Boolean
+    get() = false
 
-  private val icon by lazy { IconUtil.getIcon(file, ICON_FLAG_READ_STATUS, project) }
+  val virtualFileId: VirtualFileId
+    get() = rpcModel.virtualFileId
 
-  var backgroundColor: Color? = null
-  var foregroundTextColor: Color? = null
-
-  val isProblemFile: Boolean
-    get() = WolfTheProblemSolver.getInstance(project)?.isProblemFile(file) == true
-
-  override var mainText: String = ""
-
-  override var statusText: String = ""
-  
-  override var pathText: String = ""
-
-  override fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) {
-  }
-
-  override fun close(switcher: Switcher.SwitcherPanel) {
+  override fun getElementBackground(row: Int): Color? {
+    return rpcModel.backgroundColorId?.color()
   }
 
   override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {
     component.iconTextGap = JBUI.scale(4)
     component.icon = when (Registry.`is`("ide.project.view.change.icon.on.selection", true)) {
-      true -> RenderingUtil.getIcon(icon, selected)
-      else -> icon
+      true -> RenderingUtil.getIcon(rpcModel.iconId.icon(), selected)
+      else -> rpcModel.iconId.icon()
     }
-    val foreground = if (selected) null else foregroundTextColor
-    val effectColor = if (isProblemFile) JBColor.red else null
+    val foreground = if (selected) null else rpcModel.foregroundTextColorId?.color()
+    val effectColor = if (rpcModel.hasProblems) JBColor.red else null
     val style = when (effectColor) {
       null -> SimpleTextAttributes.STYLE_PLAIN
       else -> SimpleTextAttributes.STYLE_PLAIN or SimpleTextAttributes.STYLE_WAVED
@@ -160,23 +149,45 @@ class SwitcherVirtualFile(
     component.font?.let {
       val fontMetrics = component.getFontMetrics(it)
       val mainTextWidth = PaintUtil.getStringWidth(mainText, component.graphics, fontMetrics)
-      val shortcutTextWidth = shortcutText?.let { PaintUtil.getStringWidth(it, component.graphics, fontMetrics) } ?: 0
+      val shortcutTextWidth = shortcutText?.let { shortcut -> PaintUtil.getStringWidth(shortcut, component.graphics, fontMetrics) } ?: 0
       val width = component.width - mainTextWidth - shortcutTextWidth - component.iconTextGap - component.icon.iconWidth -
                   component.insets.left - component.insets.right
       if (width <= 0) return@let null
-      PaintUtil.cutContainerText(" $pathText", width, fontMetrics)?.let {
+      PaintUtil.cutContainerText(" ${pathText}", width, fontMetrics)?.let { fragment ->
         @Suppress("HardCodedStringLiteral")
-        component.append(it, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+        component.append(fragment, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
     }
   }
 
-  override fun getElementBackground(row: Int) : Color? = backgroundColor
-}
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is SwitcherVirtualFile) return false
 
+    if (separatorAbove != other.separatorAbove) return false
+    if (mainText != other.mainText) return false
+    if (statusText != other.statusText) return false
+    if (pathText != other.pathText) return false
+    if (mnemonic != other.mnemonic) return false
+    if (shortcutText != other.shortcutText) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = separatorAbove.hashCode()
+    result = 31 * result + mainText.hashCode()
+    result = 31 * result + statusText.hashCode()
+    result = 31 * result + pathText.hashCode()
+    result = 31 * result + (mnemonic?.hashCode() ?: 0)
+    result = 31 * result + (shortcutText?.hashCode() ?: 0)
+    return result
+  }
+}
 
 internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : ListCellRenderer<SwitcherListItem> {
   private val SEPARATOR = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()
+
   @Suppress("HardCodedStringLiteral") // to calculate preferred size
   private val mnemonic = JLabel("W").apply {
     preferredSize = preferredSize.apply { width += JBUI.CurrentTheme.ActionsList.mnemonicIconGap() }
@@ -190,8 +201,10 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
     add(BorderLayout.EAST, extra)
   }
 
-  override fun getListCellRendererComponent(list: JList<out SwitcherListItem>, value: SwitcherListItem, index: Int,
-                                            selected: Boolean, focused: Boolean): Component {
+  override fun getListCellRendererComponent(
+    list: JList<out SwitcherListItem>, value: SwitcherListItem, index: Int,
+    selected: Boolean, focused: Boolean,
+  ): Component {
     main.clear()
     extra.clear()
 
@@ -206,7 +219,7 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
       extra.foreground = it
     }
     mnemonic.text = value.mnemonic ?: ""
-    mnemonic.isVisible = value.mnemonic != null
+    mnemonic.isVisible = !switcher.recent && value.mnemonic != null
     value.prepareExtraRenderer(extra, selected)
     main.font = list.font
     val splitIconWidth = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width
@@ -217,22 +230,4 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
     panel.accessibleContext.accessibleDescription = value.statusText
     return panel
   }
-
-  private val toolWindowsAllowed = when (switcher.recent) {
-    true -> Registry.`is`("ide.recent.files.tool.window.list")
-    else -> Registry.`is`("ide.switcher.tool.window.list")
-  }
-
-  val toolWindows: List<SwitcherToolWindow> = if (toolWindowsAllowed) {
-    val manager = ToolWindowManagerEx.getInstanceEx(switcher.project)
-    val windows = manager.toolWindows
-      .filter { it.isAvailable && it.isShowStripeButton }
-      .map { SwitcherToolWindow(it, switcher.pinned) }
-      .sortedWith(mainTextComparator)
-
-    // TODO: assign mnemonics
-
-    windows
-  }
-  else emptyList()
 }
