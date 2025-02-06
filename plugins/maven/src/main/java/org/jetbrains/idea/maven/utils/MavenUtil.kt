@@ -470,6 +470,7 @@ object MavenUtil {
     properties.setProperty("GROUP_ID", projectId.getGroupId())
     properties.setProperty("ARTIFACT_ID", projectId.getArtifactId())
     properties.setProperty("VERSION", projectId.getVersion())
+    properties.setProperty("MODEL_VERSION", "4.0.0")
 
     if (parentId != null) {
       conditions.setProperty("HAS_PARENT", "true")
@@ -535,7 +536,7 @@ object MavenUtil {
     }
     allProperties.putAll(conditions!!)
     var text = fileTemplate.getText(allProperties)
-    val pattern = Pattern.compile("\\$\\{(.*)}")
+    val pattern = Pattern.compile("\\$\\{(.*?)}")
     val matcher = pattern.matcher(text)
     val builder = StringBuilder()
     while (matcher.find()) {
