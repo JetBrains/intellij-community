@@ -274,7 +274,7 @@ class PluginModelValidator(sourceModules: List<Module>, private val skipUnresolv
           }
 
           val dependency = pluginIdToInfo[id]
-          if (!id.startsWith("com.intellij.modules.") && dependency == null) {
+          if (!id.startsWith("com.intellij.modules.") && !id.startsWith("com.intellij.platform.experimental.") && dependency == null) {
             _errors.add(PluginValidationError(
               "Plugin not found: $id",
               getErrorInfo(),
