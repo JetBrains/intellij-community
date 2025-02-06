@@ -186,7 +186,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     GeneralHighlightingPass.setupAnnotationSession(session, myPriorityRange, myRestrictRange,
                                                    ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity());
 
-    AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(injectedPsi, false, session) : null;
+    AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, false) : null;
     Divider.divideInsideAndOutsideAllRoots(injectedPsi, injectedPsi.getTextRange(), injectedPsi.getTextRange(), GeneralHighlightingPass.SHOULD_HIGHLIGHT_FILTER, dividedElements -> {
       List<? extends @NotNull PsiElement> inside = dividedElements.inside();
       LongList insideRanges = dividedElements.insideRanges();

@@ -250,7 +250,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     AnnotationSession session = AnnotationSessionImpl.create(getFile());
     setupAnnotationSession(session, myPriorityRange, myRestrictRange,
                            ((HighlightingSessionImpl)getHighlightingSession()).getMinimumSeverity());
-    AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(getFile(), false, session) : null;
+    AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, false) : null;
     if (annotatorRunner == null) {
       runnable.run();
       return true;

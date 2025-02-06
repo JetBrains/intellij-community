@@ -44,11 +44,9 @@ public final class AnnotatorRunner {
   private final AnnotatorStatisticsCollector myAnnotatorStatisticsCollector = new AnnotatorStatisticsCollector();
   private final List<HighlightInfo> results = Collections.synchronizedList(new ArrayList<>());
 
-  public AnnotatorRunner(@NotNull PsiFile psiFile,
-                  boolean batchMode,
-                  @NotNull AnnotationSession annotationSession) {
-    myProject = psiFile.getProject();
-    myPsiFile = psiFile;
+  public AnnotatorRunner(@NotNull AnnotationSession annotationSession, boolean batchMode) {
+    myProject = annotationSession.getFile().getProject();
+    myPsiFile = annotationSession.getFile();
     myAnnotationSession = annotationSession;
     myDumbService = DumbService.getInstance(myProject);
     myBatchMode = batchMode;
