@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core
 
+import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
@@ -15,6 +17,19 @@ import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
+
+@ApiStatus.Internal
+@OptIn(KaExperimentalApi::class)
+fun KaSession.methodName(symbol: KaFunctionSymbol): String? = when (symbol) {
+    is KaNamedFunctionSymbol -> getByteCodeMethodName(symbol)
+    is KaConstructorSymbol -> JVMNameUtil.CONSTRUCTOR_NAME
+    is KaPropertyAccessorSymbol -> {
+        val propertySymbol = symbol.containingSymbol as? KaPropertySymbol
+        (if (symbol is KaPropertyGetterSymbol) propertySymbol?.javaGetterName else propertySymbol?.javaSetterName)?.asString()
+    }
+
+    else -> null
+}
 
 @ApiStatus.Internal
 fun KaSession.getByteCodeMethodName(symbol: KaNamedFunctionSymbol): String {

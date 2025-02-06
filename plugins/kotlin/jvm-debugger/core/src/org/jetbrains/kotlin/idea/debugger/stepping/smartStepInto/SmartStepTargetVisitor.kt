@@ -118,15 +118,9 @@ class SmartStepTargetVisitor(
         }
         val property = propertyAccessSymbol.psi as? KtDeclaration ?: return false
         if (property is KtPropertyAccessor && property.hasBody()) {
-            val methodName = if (targetType == KtNameReferenceExpressionUsage.PROPERTY_SETTER) {
-                symbol.javaSetterName ?: return false
-            } else {
-                symbol.javaGetterName
-            }
             val methodInfo = CallableMemberInfo(
                 propertyAccessSymbol,
                 ordinal = countExistingMethodCalls(property),
-                name = methodName.asString()
             )
             val label = propertyAccessLabel(symbol, propertyAccessSymbol)
             appendPropertyFilter(methodInfo, property, label, expression, lines)

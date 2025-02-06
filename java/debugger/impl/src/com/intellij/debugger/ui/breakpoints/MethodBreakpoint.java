@@ -51,10 +51,7 @@ import com.sun.jdi.event.MethodExitEvent;
 import com.sun.jdi.request.*;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -461,30 +458,36 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       if (method == null) {
         return null;
       }
-      final int methodOffset = method.getTextOffset();
-      if (!DocumentUtil.isValidOffset(methodOffset, document) || document.getLineNumber(methodOffset) < sourcePosition.getLine()) {
-        return null;
-      }
-
-      final PsiIdentifier identifier = method.getNameIdentifier();
-      int methodNameOffset = identifier != null ? identifier.getTextOffset() : methodOffset;
-      final MethodDescriptor res =
-        new MethodDescriptor();
-      res.methodName = JVMNameUtil.getJVMMethodName(method);
-      try {
-        res.methodSignature = JVMNameUtil.getJVMSignature(method);
-        res.isStatic = method.hasModifierProperty(PsiModifier.STATIC);
-      }
-      catch (IndexNotReadyException ignored) {
-        return null;
-      }
-      res.methodLine = document.getLineNumber(methodNameOffset);
-      return res;
+      return getMethodDescriptor(sourcePosition, method, document);
     });
     if (descriptor == null || descriptor.methodName == null || descriptor.methodSignature == null) {
       return null;
     }
     return descriptor;
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable MethodDescriptor getMethodDescriptor(@NotNull SourcePosition sourcePosition,
+                                                               @NotNull PsiMethod method,
+                                                               @NotNull Document document) {
+    final int methodOffset = method.getTextOffset();
+    if (!DocumentUtil.isValidOffset(methodOffset, document) || document.getLineNumber(methodOffset) < sourcePosition.getLine()) {
+      return null;
+    }
+
+    final PsiIdentifier identifier = method.getNameIdentifier();
+    int methodNameOffset = identifier != null ? identifier.getTextOffset() : methodOffset;
+    final MethodDescriptor res = new MethodDescriptor();
+    res.methodName = JVMNameUtil.getJVMMethodName(method);
+    try {
+      res.methodSignature = JVMNameUtil.getJVMSignature(method);
+      res.isStatic = method.hasModifierProperty(PsiModifier.STATIC);
+    }
+    catch (IndexNotReadyException ignored) {
+      return null;
+    }
+    res.methodLine = document.getLineNumber(methodNameOffset);
+    return res;
   }
 
   static @Nullable <T extends EventRequest> T findRequest(@NotNull DebugProcessImpl debugProcess, Class<T> requestClass, Requestor requestor) {
@@ -546,6 +549,26 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     public JVMName methodSignature;
     public boolean isStatic;
     public int methodLine;
+
+    public MethodDescriptor() {
+    }
+
+    public MethodDescriptor(String methodName, String signature, boolean isStatic, int methodLine) {
+      this.methodName = methodName;
+      this.methodSignature = new JVMName() {
+        @Override
+        public String getName(DebugProcessImpl process) throws EvaluateException {
+          return signature;
+        }
+
+        @Override
+        public String getDisplayName(DebugProcessImpl debugProcess) {
+          return signature;
+        }
+      };
+      this.isStatic = isStatic;
+      this.methodLine = methodLine;
+    }
   }
 
   private static void processPreparedSubTypes(ReferenceType classType,

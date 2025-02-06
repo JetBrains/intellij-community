@@ -152,7 +152,7 @@ class KotlinSmartStepTargetFilterer(
                 // Relaxing the check when there are no alternative candidates for the given target.
                 // This reduces the number of error reports.
                 if (!ApplicationManager.getApplication().isUnitTestMode && !hasSimilarTargets) return@analyze true
-                val declarationSignature = getJvmSignature(symbol)
+                val declarationSignature = getJvmSignature(symbol, isConstructor = false)
                 signature == declarationSignature
             }
         }
@@ -285,7 +285,7 @@ private fun String.isSubClassOf(baseInternalName: String?): Boolean {
 }
 
 @OptIn(KaExperimentalApi::class)
-private fun KaSession.getJvmSignature(symbol: KaCallableSymbol): String? {
+internal fun KaSession.getJvmSignature(symbol: KaCallableSymbol, isConstructor: Boolean): String? {
     val element = symbol.psi ?: return null
     val contextReceivers = symbol.contextReceivers.mapNotNull { jvmName(it.type, element) }.joinToString("")
     val receiver = jvmName(symbol.receiverType, element) ?: ""
@@ -297,6 +297,7 @@ private fun KaSession.getJvmSignature(symbol: KaCallableSymbol): String? {
         }.joinToString("")
     } else ""
     val returnType = when {
+        isConstructor -> "V"
         isSuspend -> "Ljava/lang/Object;"
         else -> jvmName(symbol.returnType, element) ?: return null
     }

@@ -3,15 +3,14 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.isLocal
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
-import org.jetbrains.kotlin.idea.debugger.core.getByteCodeMethodName
 import org.jetbrains.kotlin.idea.debugger.core.getContainingClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
+import org.jetbrains.kotlin.idea.debugger.core.methodName
 
 data class CallableMemberInfo(
     val isInvoke: Boolean,
@@ -32,9 +31,9 @@ data class CallableMemberInfo(
 internal fun KaSession.CallableMemberInfo(
     symbol: KaFunctionSymbol,
     ordinal: Int = 0,
-    name: String = methodName(symbol),
     isEqualsNullCall: Boolean = false,
 ): CallableMemberInfo {
+    val name = methodName(symbol) ?: ""
     val isInvoke = symbol.isInvoke()
     val isSuspend = symbol.isSuspend()
     val effectiveName = if (isInvoke && isSuspend) KotlinDebuggerConstants.INVOKE_SUSPEND_METHOD_NAME else name
@@ -61,12 +60,6 @@ internal fun KaSession.containsInlineClassInParameters(symbol: KaFunctionSymbol)
     symbol.valueParameters.any { isInlineClass(it.returnType.expandedSymbol) }
             || isInlineClass(symbol.receiverParameter?.returnType?.expandedSymbol)
             || symbol.contextReceivers.any { isInlineClass(it.type.expandedSymbol) }
-
-private fun KaSession.methodName(symbol: KaFunctionSymbol) = when (symbol) {
-    is KaNamedFunctionSymbol -> getByteCodeMethodName(symbol)
-    is KaConstructorSymbol -> "<init>"
-    else -> ""
-}
 
 internal fun KaSession.isInsideInlineClass(symbol: KaFunctionSymbol): Boolean =
     isInlineClass(getContainingClassOrObjectSymbol(symbol))
