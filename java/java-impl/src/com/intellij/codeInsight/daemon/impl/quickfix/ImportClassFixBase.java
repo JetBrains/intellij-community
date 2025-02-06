@@ -86,6 +86,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   protected boolean isStillAvailable() {
     if (!isPsiModificationStampChanged()) {
+      // optimization: we know nothing was changed since the last isAvailable() call
       return true;
     }
     // ok, something did change. but can we still import? (in case of auto-import there maybe multiple fixes wanting to be executed)
