@@ -78,7 +78,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    installExecutionOutputPrinter();
+    installExecutionOutputPrinter(getTestDisposable());
   }
 
   @Override
@@ -96,7 +96,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     return myTestDisposable;
   }
 
-  private void installExecutionOutputPrinter() {
+  public static void installExecutionOutputPrinter(@NotNull Disposable parentDisposable) {
     var notificationManager = ExternalSystemProgressNotificationManager.getInstance();
     var notificationListener = new ExternalSystemTaskNotificationListener() {
 
@@ -120,7 +120,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
         System.out.println();
       }
     };
-    notificationManager.addNotificationListener(notificationListener, getTestDisposable());
+    notificationManager.addNotificationListener(notificationListener, parentDisposable);
   }
 
   protected void assertModulesContains(String... expectedNames) {

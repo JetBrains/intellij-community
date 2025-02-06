@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.testFramework.common.runAll
 import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
@@ -43,6 +44,7 @@ abstract class GradleBaseTestCase {
     testDisposable = Disposer.newDisposable()
     AutoImportProjectTracker.enableAutoReloadInTests(testDisposable)
     AutoImportProjectTracker.enableAsyncAutoReloadInTests(testDisposable)
+    ExternalSystemImportingTestCase.installExecutionOutputPrinter(testDisposable)
   }
 
   @AfterEach
