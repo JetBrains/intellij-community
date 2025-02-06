@@ -163,7 +163,7 @@ class PyTypeHintsInspection : PyInspection() {
         if (insideTypeHint && type is PyPositionalVariadicType) {
           checkTypeVarTupleUnpacked(node)
         }
-        if (type is PyTypeParameterType && type.scopeOwner == null) {
+        if (type is PyTypeParameterType && type.scopeOwner == null && !isInsideTypeParameterDefault(node)) {
           registerProblem(node, PyPsiBundle.message("INSP.type.hints.unbound.type.variable"))
         }
       }
@@ -208,6 +208,24 @@ class PyTypeHintsInspection : PyInspection() {
         if (operandType is PyClassType && PyTypingTypeProvider.isGeneric(operandType, myTypeEvalContext)) {
           return true
         }
+      }
+      return false
+    }
+
+    private fun isInsideTypeParameterDefault(node: PyReferenceExpression): Boolean {
+      val keywordArgument = PsiTreeUtil.getParentOfType(node, PyKeywordArgument::class.java, true, PyStatement::class.java)
+      if (keywordArgument != null) {
+        if (keywordArgument.name == "default" && PsiTreeUtil.isAncestor(keywordArgument.valueExpression, node, false)) {
+          val callExpr = keywordArgument.parent?.parent
+          if (callExpr is PyCallExpression) {
+            return PyTypingTypeProvider.getTypeParameterKindFromDeclaration(callExpr, myTypeEvalContext) != null
+          }
+        }
+        return false
+      }
+      val typeParameter = PsiTreeUtil.getParentOfType(node, PyTypeParameter::class.java, true, PyStatement::class.java)
+      if (typeParameter != null) {
+        return PsiTreeUtil.isAncestor(typeParameter.defaultExpression, node, false)
       }
       return false
     }

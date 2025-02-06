@@ -260,10 +260,14 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   public void testUnboundTypeParameter() {
     doTestByText(
       """
-        from typing import Generic, TypeVar, TypeAlias
+        from typing import Generic, TypeVar, TypeVarTuple, ParamSpec, TypeAlias, Unpack
         
         T = TypeVar('T')
         S = TypeVar('S')
+        
+        T1 = TypeVar('T1', default=T)
+        T2 = TypeVarTuple('T2', default=Unpack[tuple[S, T]])
+        T3 = ParamSpec('T3', default=[S, T])
         
         Alias1 = T
         Alias2 = dict[S, T]

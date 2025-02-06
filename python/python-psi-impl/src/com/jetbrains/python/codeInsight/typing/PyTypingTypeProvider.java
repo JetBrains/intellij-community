@@ -1510,8 +1510,9 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return null;
   }
 
-  private static @Nullable PyAstTypeParameter.Kind getTypeParameterKindFromDeclaration(@NotNull PyCallExpression callExpression,
-                                                                                       @NotNull TypeEvalContext context) {
+  @ApiStatus.Internal
+  public static @Nullable PyAstTypeParameter.Kind getTypeParameterKindFromDeclaration(@NotNull PyCallExpression callExpression,
+                                                                                      @NotNull TypeEvalContext context) {
     final PyExpression callee = callExpression.getCallee();
     if (callee != null) {
       final Collection<String> calleeQNames = resolveToQualifiedNames(callee, context);
