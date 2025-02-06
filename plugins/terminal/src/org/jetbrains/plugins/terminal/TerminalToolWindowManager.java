@@ -42,6 +42,7 @@ import com.intellij.terminal.session.TerminalSession;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TerminalWidgetKt;
 import com.intellij.toolWindow.InternalDecoratorImpl;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
@@ -631,8 +632,9 @@ public final class TerminalToolWindowManager implements Disposable {
 
     TerminalWidgetProvider provider = TerminalWidgetProvider.getProvider();
     if (provider != null &&
-        Registry.is(BLOCK_TERMINAL_REGISTRY) &&
+        ExperimentalUI.isNewUI() &&
         Registry.is(REWORKED_BLOCK_TERMINAL_REGISTRY) &&
+        !Registry.is(BLOCK_TERMINAL_REGISTRY) &&
         terminalRunner == myTerminalRunner) {
       widget = provider.createTerminalWidget(myProject, parentDisposable);
       TerminalSessionStartHelper.startTerminalSessionForWidget(myProject, widget, startupOptions, deferSessionStartUntilUiShown);

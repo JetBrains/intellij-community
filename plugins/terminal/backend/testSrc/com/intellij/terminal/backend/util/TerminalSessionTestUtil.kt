@@ -27,8 +27,7 @@ internal object TerminalSessionTestUtil {
     coroutineScope: CoroutineScope,
     size: TermSize = TermSize(80, 24),
   ): TerminalSession {
-    Registry.Companion.get(LocalBlockTerminalRunner.Companion.BLOCK_TERMINAL_REGISTRY).setValue(true, coroutineScope.asDisposable())
-    Registry.Companion.get(LocalBlockTerminalRunner.Companion.REWORKED_BLOCK_TERMINAL_REGISTRY).setValue(true, coroutineScope.asDisposable())
+    Registry.get(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY).setValue(true, coroutineScope.asDisposable())
 
     val options = ShellStartupOptions.Builder()
       .shellCommand(listOf(shellPath))
