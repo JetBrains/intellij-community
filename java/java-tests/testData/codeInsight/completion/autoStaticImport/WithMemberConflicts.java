@@ -6,6 +6,6 @@ class Foo {
   }
 
   void m() {
-    <caret>
+    requireN<caret>
   }
 }
