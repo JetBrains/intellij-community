@@ -151,7 +151,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
       sdkModificator.commitChanges();
     });
 
-    myModuleRootListener.assertEventsCount(2);
+    myModuleRootListener.assertEventsCount(1);
   }
 
   public void testModuleJdkEditing() {
@@ -177,7 +177,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
       final SdkModificator sdkModificator = jdk.getSdkModificator();
       sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
-      myModuleRootListener.assertEventsCount(2);
+      myModuleRootListener.assertEventsCount(1);
 
       final SdkModificator sdkModificator2 = unused.getSdkModificator();
       sdkModificator2.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
@@ -201,12 +201,12 @@ public class RootsChangedTest extends JavaModuleTestCase {
       
       Sdk jdk = ProjectJdkTable.getInstance().createSdk("new-jdk", JavaSdk.getInstance());
       ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
-      myModuleRootListener.assertEventsCount(2);
+      myModuleRootListener.assertEventsCount(1);
 
       final SdkModificator sdkModificator = jdk.getSdkModificator();
       sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
-      myModuleRootListener.assertEventsCount(2);
+      myModuleRootListener.assertEventsCount(1);
     });
   }
 
@@ -243,7 +243,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
       final SdkModificator sdkModificator = jdk.getSdkModificator();
       sdkModificator.addRoot(getTempDir().createVirtualDir(), OrderRootType.CLASSES);
       sdkModificator.commitChanges();
-      myModuleRootListener.assertEventsCount(2);
+      myModuleRootListener.assertEventsCount(1);
     });
   }
 
