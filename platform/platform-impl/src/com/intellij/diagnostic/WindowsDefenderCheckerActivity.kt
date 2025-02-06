@@ -75,20 +75,20 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val checker = serviceAsync<WindowsDefenderChecker>()
 
-    if (checker.isStatusCheckIgnored(project)) {
-      LOG.info("status check is disabled")
-      WindowsDefenderStatisticsCollector.protectionCheckSkipped(project)
-      return
-    }
-
     val projectStatus = checker.isAlreadyProcessed(project)
     if (projectStatus == ProjectStatus.SKIPPED) {
       LOG.info("status check is skipped for this run")
       return
     }
-    else if (projectStatus != null) {
+    else if (listOf( ProjectStatus.SUCCEED, ProjectStatus.FAILED).contains(projectStatus)) {
       LOG.info("requested from the \"trust project\" dialog; status=${projectStatus}")
       notify(project, success = projectStatus == ProjectStatus.SUCCEED)
+      return
+    }
+
+    if (checker.isStatusCheckIgnored(project)) {
+      LOG.info("status check is disabled")
+      WindowsDefenderStatisticsCollector.protectionCheckSkipped(project)
       return
     }
 
