@@ -682,11 +682,14 @@ private object UntilBuildDeprecation {
       return untilBuild
     }
     try {
-      val buildNumber = BuildNumber.fromStringOrNull(untilBuild)
-      if (buildNumber != null && buildNumber.baselineVersion >= 243) {
-        LOG.info("Plugin ${diagnosticId ?: "<no name>"} has until-build set to $untilBuild. " +
-                 "Until-build _from plugin configuration file (plugin.xml)_ for plugins targeting 243+ is ignored. " +
-                 "Effective until-build value can be set via the Marketplace.")
+      val untilBuildNumber = BuildNumber.fromStringOrNull(untilBuild)
+      if (untilBuildNumber != null && untilBuildNumber.baselineVersion >= 243) {
+        if (untilBuildNumber < PluginManagerCore.buildNumber) {
+          // log only if it would fail the compatibility check without the deprecation in place
+          LOG.info("Plugin ${diagnosticId ?: "<no name>"} has until-build set to $untilBuild. " +
+                   "Until-build _from plugin configuration file (plugin.xml)_ for plugins targeting 243+ is ignored. " +
+                   "Effective until-build value can be set via the Marketplace.")
+        }
         return null
       }
     } catch (e: Throwable) {
