@@ -13331,6 +13331,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         public void testSimple2() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/removeRedundantLabel/simple2.kt");
         }
+
+        @TestMetadata("simple3.kt")
+        public void testSimple3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeRedundantLabel/simple3.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
