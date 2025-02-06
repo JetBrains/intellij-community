@@ -80,7 +80,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
 
   private val myCurrentThreadDescriptionComponent = StyledTextPane().apply {
     Disposer.register(this@XThreadsFramesView, this)
-    background = JBUI.CurrentTheme.List.BACKGROUND
+    background = JBUI.CurrentTheme.ToolWindow.background()
   }
 
   private val mySplitter: NonProportionalOnePixelSplitter
@@ -294,7 +294,6 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3) : XDebugView() {
     myCurrentThreadDescriptionComponent.paragraphs = listOf(TextParagraph(listOf(RegularTextPart(text).apply {
       this.editAttributes {
         StyleConstants.setForeground(this, NamedColorUtil.getInactiveTextColor())
-        StyleConstants.setBackground(this, JBUI.CurrentTheme.List.BACKGROUND)
       }
     })))
     myCurrentThreadDescriptionComponent.revalidate()
