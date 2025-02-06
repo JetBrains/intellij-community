@@ -36,7 +36,7 @@ class KotlinFirUnresolvedReferenceQuickFixProvider : UnresolvedReferenceQuickFix
         analyze(ktElement) {
             val savedDiagnostics = ktElement.restoreKaDiagnosticsForUnresolvedReference()
             
-            for (quickFix in ImportQuickFixProvider.getFixes(ktElement, savedDiagnostics)) {
+            for (quickFix in ImportQuickFixProvider.getFixes(savedDiagnostics)) {
                 registrar.register(quickFix)
             }
 

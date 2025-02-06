@@ -32,23 +32,22 @@ import javax.swing.Icon
 object ImportQuickFixProvider {
     context(KaSession)
     fun getFixes(diagnostic: KaDiagnosticWithPsi<*>): List<ImportQuickFix> {
-        return getFixes(diagnostic.psi, setOf(diagnostic))
+        return getFixes(setOf(diagnostic))
     }
 
     context(KaSession)
-    fun getFixes(diagnosticPsi: PsiElement, diagnostics: Set<KaDiagnosticWithPsi<*>>): List<ImportQuickFix> {
-        val (expression, positionContext) = detectPositionContext(diagnosticPsi) ?: return emptyList()
-
-        if (positionContext !is KotlinNameReferencePositionContext) return emptyList()
-        val indexProvider = KtSymbolFromIndexProvider(positionContext.nameExpression.containingKtFile)
-
+    fun getFixes(diagnostics: Set<KaDiagnosticWithPsi<*>>): List<ImportQuickFix> {
         return diagnostics
-            .asSequence()
-            .map { diagnostic -> provideImportCandidates(diagnostic, positionContext, indexProvider) }
-            .mapNotNull { candidates ->
+            .mapNotNull { diagnostic ->
+                val (expression, positionContext) = detectPositionContext(diagnostic.psi) ?: return@mapNotNull null
+
+                if (positionContext !is KotlinNameReferencePositionContext) return@mapNotNull null
+                val indexProvider = KtSymbolFromIndexProvider(positionContext.nameExpression.containingKtFile)
+
+                val candidates = provideImportCandidates(diagnostic, positionContext, indexProvider)
                 val data = createImportData(expression, candidates) ?: return@mapNotNull null
                 createImportFix(expression, data)
-            }.toList()
+            }
     }
 
     /**
