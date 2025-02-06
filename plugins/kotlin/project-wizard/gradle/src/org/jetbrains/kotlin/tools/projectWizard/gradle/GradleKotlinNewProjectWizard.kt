@@ -335,7 +335,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             }
 
             addOrConfigureSettingsScript {
-                if (parent.isFoojayPluginSupported || parent.isCreatingDaemonToolchain) {
+                if (parent.isCreatingNewLinkedProject && parent.isFoojayPluginSupported || parent.isCreatingDaemonToolchain) {
                     withFoojayPlugin()
                 }
             }

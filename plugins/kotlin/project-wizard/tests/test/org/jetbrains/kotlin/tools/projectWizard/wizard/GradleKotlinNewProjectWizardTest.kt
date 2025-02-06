@@ -356,6 +356,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
     private fun simpleJavaProject(useKotlinDsl: Boolean) = projectInfo("project", useKotlinDsl) {
         withJavaBuildFile()
         withSettingsFile {
+            withFoojayPlugin()
             setProjectName("project")
         }
     }
@@ -400,6 +401,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
             withKotlinJvmPlugin("1.9.0")
         }
         withSettingsFile {
+            withFoojayPlugin()
             setProjectName("project")
         }
     }
@@ -459,6 +461,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
             }
         }
         withSettingsFile {
+            withFoojayPlugin()
             setProjectName("project")
             include("othermodule")
         }
@@ -517,6 +520,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
             }
         }
         withSettingsFile {
+            withFoojayPlugin()
             setProjectName("project")
         }
         withFile(
