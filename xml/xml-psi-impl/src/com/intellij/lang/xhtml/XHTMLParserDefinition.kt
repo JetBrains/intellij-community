@@ -1,26 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lang.xhtml;
+package com.intellij.lang.xhtml
 
-import com.intellij.lang.xml.XMLParserDefinition;
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer.XHtmlLexer;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.xml.XmlFileImpl;
-import com.intellij.psi.xml.XmlElementType;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.lang.xml.XMLParserDefinition
+import com.intellij.lexer.Lexer
+import com.intellij.lexer.XHtmlLexer
+import com.intellij.openapi.project.Project
+import com.intellij.psi.FileViewProvider
+import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.xml.XmlFileImpl
+import com.intellij.psi.xml.XmlElementType
 
-public class XHTMLParserDefinition extends XMLParserDefinition {
+class XHTMLParserDefinition :
+  XMLParserDefinition() {
 
-  @Override
-  public @NotNull Lexer createLexer(Project project) {
-    return new XHtmlLexer();
-  }
+  override fun createLexer(project: Project?): Lexer =
+    XHtmlLexer()
 
-  @Override
-  public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
-    return new XmlFileImpl(viewProvider, XmlElementType.XHTML_FILE);
-  }
-
+  override fun createFile(viewProvider: FileViewProvider): PsiFile =
+    XmlFileImpl(viewProvider, XmlElementType.XHTML_FILE)
 }
