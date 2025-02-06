@@ -4178,11 +4178,15 @@ f:com.intellij.ide.ui.RegistryTextOptionDescriptor
 a:com.intellij.ide.ui.RoundedActionButton
 - javax.swing.JButton
 - <init>(I,I):V
+- getArc():I
 - pa:getBackgroundBorderPaint():java.awt.Paint
 - pa:getBackgroundPaint():java.awt.Paint
 - pa:getButtonForeground():java.awt.Color
+- getHGap():I
 - getPreferredSize():java.awt.Dimension
 - paint(java.awt.Graphics):V
+- setArc(I):V
+- setHGap(I):V
 com.intellij.ide.ui.ScreenAreaConsumer
 - com.intellij.openapi.Disposable
 - a:getConsumedScreenBounds():java.awt.Rectangle
