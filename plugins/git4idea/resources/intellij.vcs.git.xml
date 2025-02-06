@@ -23,7 +23,9 @@
     <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup" searchable="false"/>
     <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
     <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision"/>
-    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch"/>
+    <action id="Git.CreateNewBranch"
+            class="git4idea.actions.GitCreateNewBranchAction"
+            icon="AllIcons.General.Add"/>
     <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag"/>
     <action id="Git.PushUpToCommit" class="git4idea.actions.GitPushUpToCommitAction"/>
     <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" icon="AllIcons.Actions.Rollback"/>
@@ -303,7 +305,9 @@
       <reference ref="Git.PushUpToCommit"/>
       <separator/>
       <reference ref="Git.BranchOperationGroup"/>
-      <reference ref="Git.CreateNewBranch"/>
+      <action id="Git.CreateNewBranch.FromCommit"
+              class="git4idea.log.action.GitCreateNewBranchFromCommitAction"
+              use-shortcut-of="Git.CreateNewBranch"/>
       <reference ref="Git.CreateNewTag"/>
       <separator/>
       <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="Vcs.Log.GoToChild" anchor="before"/>
