@@ -1,16 +1,20 @@
 package com.intellij.driver.sdk.ui.components.common.dialogs
 
+import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.application.fullProductName
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.elements.list
 import com.intellij.driver.sdk.ui.components.elements.radioButton
+import com.intellij.driver.sdk.ui.ui
 import javax.swing.JList
 
 fun Finder.licenseDialog(action: LicenseDialogUi.() -> Unit) {
   x("//div[@title='Manage Licenses']", LicenseDialogUi::class.java).action()
 }
+
+fun Driver.licenseDialog(action: LicenseDialogUi.() -> Unit = {}) = this.ui.licenseDialog(action)
 
 class LicenseDialogUi(data: ComponentData) : UiComponent(data) {
   val productsList = list { byType(JList::class.java) }
