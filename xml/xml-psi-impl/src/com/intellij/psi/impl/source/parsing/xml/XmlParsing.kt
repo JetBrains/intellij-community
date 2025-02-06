@@ -54,7 +54,7 @@ open class XmlParsing(
   @JvmField
   protected val myBuilder: PsiBuilder,
 ) {
-  private val myTagNamesStack = Stack<String?>()
+  private val tagNamesStack = Stack<String>()
 
   fun parseDocument() {
     val document = mark()
@@ -136,9 +136,9 @@ open class XmlParsing(
 
       if (token() === XML_NAME) {
         val endName = myBuilder.tokenText
-        if (tagName != endName && myTagNamesStack.contains(endName)) {
+        if (tagName != endName && tagNamesStack.contains(endName)) {
           footer.rollbackTo()
-          myTagNamesStack.pop()
+          tagNamesStack.pop()
           tag.doneBefore(XML_TAG, content, message("xml.parsing.named.element.is.not.closed", tagName))
           content.drop()
           return
@@ -172,7 +172,7 @@ open class XmlParsing(
     }
 
     content.drop()
-    myTagNamesStack.pop()
+    tagNamesStack.pop()
     tag.done(XML_TAG)
   }
 
@@ -196,7 +196,7 @@ open class XmlParsing(
       checkNotNull(tagName)
       advance()
     }
-    myTagNamesStack.push(tagName)
+    tagNamesStack.push(tagName)
 
     do {
       val tt = token()
@@ -214,7 +214,7 @@ open class XmlParsing(
 
     if (token() === XML_EMPTY_ELEMENT_END) {
       advance()
-      myTagNamesStack.pop()
+      tagNamesStack.pop()
       tag.done(XML_TAG)
       return null
     }
@@ -224,12 +224,12 @@ open class XmlParsing(
     }
     else {
       error(message("xml.parsing.tag.start.is.not.closed"))
-      myTagNamesStack.pop()
+      tagNamesStack.pop()
       tag.done(XML_TAG)
       return null
     }
 
-    if (myTagNamesStack.size > BALANCING_DEPTH_THRESHOLD) {
+    if (tagNamesStack.size > BALANCING_DEPTH_THRESHOLD) {
       error(message("xml.parsing.way.too.unbalanced"))
       tag.done(XML_TAG)
       return null
