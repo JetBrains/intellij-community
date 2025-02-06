@@ -2180,6 +2180,7 @@ f:com.intellij.ide.macro.MacrosDialog$Filters
 - sf:NONE:java.util.function.Predicate
 com.intellij.openapi.module.WorkingDirectoryProvider
 - a:getWorkingDirectoryPath(com.intellij.openapi.module.Module):java.lang.String
+- getWorkingDirectoryPath(com.intellij.openapi.project.Project,com.intellij.openapi.module.Module):java.lang.String
 f:com.intellij.terminal.AppendableTerminalDataStream
 - com.jediterm.terminal.TerminalDataStream
 - java.lang.Appendable

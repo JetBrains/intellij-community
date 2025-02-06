@@ -177,7 +177,7 @@ public class ProgramParametersConfigurator {
                                                            @Nullable Module module) {
     String workingDirectory = PathUtil.toSystemIndependentName(configuration.getWorkingDirectory());
 
-    String projectDirectory = getDefaultWorkingDir(project);
+    String projectDirectory = getDefaultWorkingDir(project, module);
     if (StringUtil.isEmptyOrSpaces(workingDirectory)) {
       workingDirectory = projectDirectory;
       if (workingDirectory == null) return null;
@@ -200,6 +200,14 @@ public class ProgramParametersConfigurator {
     }
 
     return workingDirectory;
+  }
+
+  private @Nullable String getDefaultWorkingDir(@NotNull Project project, @Nullable Module module) {
+    for (WorkingDirectoryProvider provider : WORKING_DIRECTORY_PROVIDER_EP_NAME.getExtensions()) {
+      @SystemIndependent String path = provider.getWorkingDirectoryPath(project, module);
+      if (path != null) return path;
+    }
+    return getDefaultWorkingDir(project);
   }
 
   protected @Nullable String getDefaultWorkingDir(@NotNull Project project) {
