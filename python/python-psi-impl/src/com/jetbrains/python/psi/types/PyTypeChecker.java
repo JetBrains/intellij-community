@@ -22,6 +22,8 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser;
+import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.Traversal;
 import com.jetbrains.python.psi.types.PyTypeParameterMapping.Option;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -970,10 +972,9 @@ public final class PyTypeChecker {
     if (typeParamsFromReturnType.typeVars.isEmpty() && typeParamsFromReturnType.paramSpecs.isEmpty()) {
       return existingSubstitutions;
     }
-    Set<PyType> visited = new HashSet<>();
     Generics typeParamsFromParameterTypes = new Generics();
     for (PyCallableParameter parameter : parameters) {
-      collectGenerics(parameter.getArgumentType(context), context, typeParamsFromParameterTypes, visited);
+      collectGenerics(parameter.getArgumentType(context), context, typeParamsFromParameterTypes);
     }
 
     for (PyTypeVarType returnTypeParam : typeParamsFromReturnType.typeVars) {
@@ -1014,88 +1015,44 @@ public final class PyTypeChecker {
   @ApiStatus.Internal
   public static @NotNull Generics collectGenerics(@Nullable PyType type, @NotNull TypeEvalContext context) {
     final var result = new Generics();
-    collectGenerics(type, context, result, new HashSet<>());
+    collectGenerics(type, context, result);
     return result;
   }
 
   private static void collectGenerics(@Nullable PyType type,
                                       @NotNull TypeEvalContext context,
-                                      @NotNull Generics generics,
-                                      @NotNull Set<? super PyType> visited) {
-    if (type instanceof PyTypeParameterType typeParameter) {
-      generics.allTypeParameters.add(typeParameter);
-    }
-    if (visited.contains(type)) {
-      return;
-    }
-    visited.add(type);
-    if (type instanceof PyTypeVarType typeVarType) {
-      generics.typeVars.add(typeVarType);
-    }
-    if (type instanceof PyTypeVarTupleType typeVarTupleType) {
-      generics.typeVarTuples.add(typeVarTupleType);
-    }
-    if (type instanceof PyParamSpecType) {
-      generics.paramSpecs.add((PyParamSpecType)type);
-    }
-    // TODO These are not type parameters at all
-    if (type instanceof PyConcatenateType) {
-      generics.concatenates.add((PyConcatenateType)type);
-    }
-    if (type instanceof PySelfType) {
-      generics.self = (PySelfType)type;
-    }
-    else if (type instanceof PyUnionType union) {
-      for (PyType t : union.getMembers()) {
-        collectGenerics(t, context, generics, visited);
+                                      @NotNull Generics generics) {
+    PyRecursiveTypeVisitor.traverse(type, context, new PyTypeTraverser() {
+      @Override
+      public @NotNull Traversal visitPyTypeVarType(@NotNull PyTypeVarType typeVarType) {
+        generics.typeVars.add(typeVarType);
+        return super.visitPyTypeVarType(typeVarType);
       }
-    }
-    else if (type instanceof PyTupleType tuple) {
-      final int n = tuple.isHomogeneous() ? 1 : tuple.getElementCount();
-      for (int i = 0; i < n; i++) {
-        collectGenerics(tuple.getElementType(i), context, generics, visited);
+
+      @Override
+      public @NotNull Traversal visitPyTypeVarTupleType(@NotNull PyTypeVarTupleType typeVarTupleType) {
+        generics.typeVarTuples.add(typeVarTupleType);
+        return super.visitPyTypeVarTupleType(typeVarTupleType);
       }
-    }
-    else if (type instanceof PyCollectionType collection) {
-      for (PyType elementType : collection.getElementTypes()) {
-        collectGenerics(elementType, context, generics, visited);
+
+      @Override
+      public @NotNull Traversal visitPySelfType(@NotNull PySelfType selfType) {
+        generics.self = selfType;
+        return super.visitPySelfType(selfType);
       }
-    }
-    else if (type instanceof PyTypedDictType typedDict) {
-      for (PyTypedDictType.FieldTypeAndTotality field : typedDict.getFields().values()) {
-        collectGenerics(field.getType(), context, generics, visited);
+
+      @Override
+      public @NotNull Traversal visitPyParamSpecType(@NotNull PyParamSpecType paramSpecType) {
+        generics.paramSpecs.add(paramSpecType);
+        return super.visitPyParamSpecType(paramSpecType);
       }
-    }
-    else if (type instanceof PyCallableType callable && !(type instanceof PyClassLikeType)) {
-      final List<PyCallableParameter> parameters = callable.getParameters(context);
-      if (parameters != null) {
-        for (PyCallableParameter parameter : parameters) {
-          if (parameter != null) {
-            collectGenerics(parameter.getType(context), context, generics, visited);
-          }
-        }
+
+      @Override
+      public @NotNull Traversal visitPyTypeParameterType(@NotNull PyTypeParameterType typeParameterType) {
+        generics.allTypeParameters.add(typeParameterType);
+        return Traversal.PRUNE;
       }
-      collectGenerics(callable.getReturnType(context), context, generics, visited);
-    }
-    else if (type instanceof PyConcatenateType concatenateType) {
-      for (PyType elementType : concatenateType.getFirstTypes()) {
-        collectGenerics(elementType, context, generics, visited);
-      }
-      collectGenerics(concatenateType.getParamSpec(), context, generics, visited);
-    }
-    else if (type instanceof PyCallableParameterListType callableParameterList) {
-      for (PyCallableParameter parameter : callableParameterList.getParameters()) {
-        collectGenerics(parameter.getType(context), context, generics, visited);
-      }
-    }
-    else if (type instanceof PyUnpackedTupleType unpackedTupleType) {
-      for (PyType elementType : unpackedTupleType.getElementTypes()) {
-        collectGenerics(elementType, context, generics, visited);
-      }
-    }
-    else if (type instanceof PyNarrowedType narrowedType) {
-      collectGenerics(narrowedType.getNarrowedType(), context, generics, visited);
-    }
+    });
   }
 
   public static @NotNull List<@Nullable PyType> substituteExpand(@Nullable PyType type,
@@ -1696,8 +1653,6 @@ public final class PyTypeChecker {
 
     private final @NotNull Set<PyParamSpecType> paramSpecs = new LinkedHashSet<>();
 
-    private final @NotNull Set<PyConcatenateType> concatenates = new LinkedHashSet<>();
-
     private @Nullable PySelfType self;
 
     public @NotNull Set<PyTypeVarType> getTypeVars() {
@@ -1717,7 +1672,7 @@ public final class PyTypeChecker {
     }
 
     public boolean isEmpty() {
-      return typeVars.isEmpty() && typeVarTuples.isEmpty() && paramSpecs.isEmpty() && concatenates.isEmpty() && self == null;
+      return typeVars.isEmpty() && typeVarTuples.isEmpty() && paramSpecs.isEmpty() && self == null;
     }
 
     @Override
