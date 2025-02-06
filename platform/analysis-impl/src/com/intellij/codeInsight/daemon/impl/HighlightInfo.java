@@ -689,10 +689,12 @@ public class HighlightInfo implements Segment {
    * @deprecated use {@link HighlightInfo#fromAnnotation(ExternalAnnotator, Annotation)}
    */
   @Deprecated
+  @ApiStatus.Internal
   public static @NotNull HighlightInfo fromAnnotation(@NotNull Annotation annotation) {
     return fromAnnotation(ExternalAnnotator.class, annotation, false);
   }
 
+  @ApiStatus.Internal
   public static @NotNull HighlightInfo fromAnnotation(@NotNull ExternalAnnotator<?,?> externalAnnotator, @NotNull Annotation annotation) {
     return fromAnnotation(externalAnnotator.getClass(), annotation, false);
   }
@@ -1245,6 +1247,7 @@ public class HighlightInfo implements Segment {
       String toolTip = info.getToolTip();
       if (toolTip != null) {
         if (!result.isEmpty()) {
+          //noinspection SpellCheckingInspection
           result.append("<hr size=1 noshade>");
         }
         toolTip = XmlStringUtil.stripHtml(toolTip);

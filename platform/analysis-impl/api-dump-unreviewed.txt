@@ -601,8 +601,6 @@ Fc:com.intellij.codeInsight.daemon.impl.HighlightInfo
 - s:convertType(com.intellij.codeInsight.daemon.impl.HighlightInfoType):com.intellij.codeInspection.ProblemHighlightType
 - equals(java.lang.Object):Z
 - findRegisteredQuickFix(java.util.function.BiFunction):java.lang.Object
-- s:fromAnnotation(com.intellij.lang.annotation.Annotation):com.intellij.codeInsight.daemon.impl.HighlightInfo
-- s:fromAnnotation(com.intellij.lang.annotation.ExternalAnnotator,com.intellij.lang.annotation.Annotation):com.intellij.codeInsight.daemon.impl.HighlightInfo
 - s:fromRangeHighlighter(com.intellij.openapi.editor.markup.RangeHighlighter):com.intellij.codeInsight.daemon.impl.HighlightInfo
 - getActualEndOffset():I
 - getActualStartOffset():I
