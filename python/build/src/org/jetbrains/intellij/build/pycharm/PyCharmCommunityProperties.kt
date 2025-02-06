@@ -37,6 +37,8 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
         "intellij.vcs.gitlab.community") +
       Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt"))
 
+    productLayout.skipUnresolvedContentModules = true
+    
     baseDownloadUrl = "https://download.jetbrains.com/python/"
 
     mavenArtifacts.forIdeModules = true
