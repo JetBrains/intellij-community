@@ -70,6 +70,7 @@ open class MavenModuleBuilderHelper(
           file = root.findChild(MavenConstants.POM_XML)
           file?.delete(this)
           file = root.createChildData(this, MavenConstants.POM_XML)
+          root.createChildDirectory(this, MavenConstants.MVN_CONFIG_DIR)
           vcsFileAdder.markFileForAdding(file)
           MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, myProjectId, isInteractive)
         }
