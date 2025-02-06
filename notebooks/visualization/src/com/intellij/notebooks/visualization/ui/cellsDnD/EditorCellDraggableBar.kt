@@ -29,7 +29,7 @@ class EditorCellDraggableBar(
   private val foldInput: () -> Unit,
   private val unfoldInput: () -> Unit,
 ) : Disposable {
-  private var panel: JComponent? = null
+  private var panel: DraggableBarComponent? = null
 
   private val boundsChangeListener = object : JupyterBoundsChangeListener {
     override fun boundsChanged() = updateBounds()
@@ -124,7 +124,7 @@ class EditorCellDraggableBar(
           unfoldCellIfNeeded()
 
           ApplicationManager.getApplication().messageBus
-            .syncPublisher(CellDropNotifier.CELL_DROP_TOPIC)
+            .syncPublisher(CellDropNotifier.getTopicForEditor(editor))
             .cellDropped(CellDropEvent(cellInput.cell, targetCell))
         }
       })
