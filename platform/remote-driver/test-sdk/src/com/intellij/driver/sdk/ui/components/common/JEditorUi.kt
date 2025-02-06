@@ -131,6 +131,13 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
+  fun goToLine(line: Int) = step("Go to $line line") {
+    click()
+    interact {
+      getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, 1, (this as? RefWrapper)?.getRef()?.rdTarget ?: RdTarget.DEFAULT))
+    }
+  }
+
   fun moveCaretToOffset(offset: Int) {
     interact {
       getCaretModel().moveToOffset(offset)
@@ -172,6 +179,14 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun invokeAiIntentionAction(intentionActionName: String) {
     driver.utility(AiTestIntentionUtils::class).invokeAiAssistantIntention(editor, intentionActionName)
+  }
+
+  fun containsText(expectedText: String) {
+    step("Verify that editor contains text: $expectedText") {
+      waitFor(errorMessage = { "Editor doesn't contain text: $expectedText" }) {
+        text.trimIndent().contains(expectedText)
+      }
+    }
   }
 }
 
@@ -219,7 +234,7 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
 
 
   fun getGutterIcons(): List<GutterIcon> {
-    waitFor  { this.icons.isNotEmpty() }
+    waitFor { this.icons.isNotEmpty() }
     return this.icons
   }
 
@@ -245,6 +260,7 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
     fun click() {
       click(location)
     }
+
     fun getIconPath(): String {
       return mark
         .getIcon()
