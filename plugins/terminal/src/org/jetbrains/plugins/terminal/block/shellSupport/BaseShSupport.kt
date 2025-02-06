@@ -11,12 +11,12 @@ import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 
 internal abstract class BaseShSupport : TerminalShellSupport {
   override val promptContentElementType: IElementType?
-    get() = serviceOrNull<ShLangService>()?.promptContentElementType
+    get() = serviceOrNull<TerminalShLangService>()?.promptContentElementType
 
   override val lineContinuationChar: Char = '\\'
 
   override fun getCommandTokens(project: Project, command: String): List<String>? {
-    return serviceOrNull<ShLangService>()?.getShellCommandTokens(project, command)
+    return serviceOrNull<TerminalShLangService>()?.getShellCommandTokens(project, command)
   }
 
   override fun parseAliases(aliasesDefinition: String): Map<String, String> {

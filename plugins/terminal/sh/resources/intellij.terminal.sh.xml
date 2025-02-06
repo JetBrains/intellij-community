@@ -5,7 +5,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <shellOccurrencesHighlightingSuppressor implementation="org.jetbrains.plugins.terminal.sh.prompt.TerminalPromptHighlightingSuppressor"/>
-    <applicationService serviceInterface="org.jetbrains.plugins.terminal.block.shellSupport.ShLangService"
-                        serviceImplementation="org.jetbrains.plugins.terminal.sh.prompt.ShLangServiceImpl"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.terminal.block.shellSupport.TerminalShLangService"
+                        serviceImplementation="org.jetbrains.plugins.terminal.sh.prompt.TerminalShLangServiceImpl"/>
   </extensions>
 </idea-plugin>

@@ -9,17 +9,17 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.tree.IElementType
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.jetbrains.plugins.terminal.block.shellSupport.ShLangService
+import org.jetbrains.plugins.terminal.block.shellSupport.TerminalShLangService
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 
 internal class PowerShellSupport : TerminalShellSupport {
   override val promptContentElementType: IElementType?
-    get() = serviceOrNull<ShLangService>()?.promptContentElementType
+    get() = serviceOrNull<TerminalShLangService>()?.promptContentElementType
 
   override val lineContinuationChar: Char = '`'
 
   override fun getCommandTokens(project: Project, command: String): List<String>? {
-    return serviceOrNull<ShLangService>()?.getShellCommandTokens(project, command)
+    return serviceOrNull<TerminalShLangService>()?.getShellCommandTokens(project, command)
   }
 
   override fun parseCommandHistory(history: String): List<String> {

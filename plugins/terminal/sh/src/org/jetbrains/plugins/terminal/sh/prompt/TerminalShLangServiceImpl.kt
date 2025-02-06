@@ -9,9 +9,9 @@ import com.intellij.sh.ShLanguage
 import com.intellij.sh.psi.ShCommandsList
 import com.intellij.sh.psi.ShFileElementType
 import com.intellij.sh.psi.ShSimpleCommand
-import org.jetbrains.plugins.terminal.block.shellSupport.ShLangService
+import org.jetbrains.plugins.terminal.block.shellSupport.TerminalShLangService
 
-class ShLangServiceImpl : ShLangService {
+internal class TerminalShLangServiceImpl : TerminalShLangService {
   override val promptContentElementType: IElementType
     get() = ShFileElementType.INSTANCE
 

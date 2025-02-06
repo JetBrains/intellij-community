@@ -3,8 +3,10 @@ package org.jetbrains.plugins.terminal.block.shellSupport
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.annotations.ApiStatus
 
-interface ShLangService {
+@ApiStatus.Internal
+interface TerminalShLangService {
   val promptContentElementType: IElementType
 
   fun getShellCommandTokens(project: Project, command: String): List<String>?
