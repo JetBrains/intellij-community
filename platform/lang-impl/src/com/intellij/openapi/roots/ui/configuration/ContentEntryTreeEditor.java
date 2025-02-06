@@ -10,6 +10,7 @@ import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileSystemTree;
@@ -119,6 +120,7 @@ public class ContentEntryTreeEditor {
     treePanel.add(excludePatternsPanel, BorderLayout.SOUTH);
     myComponent = UiDataProvider.wrapComponent(treePanel, sink -> {
       sink.set(FileSystemTree.DATA_KEY, myFileSystemTree);
+      // fix SelectInProjectViewAction if the virtual files are moved into BGT_DATA_PROVIDER
       sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, myFileSystemTree == null ? null : myFileSystemTree.getSelectedFiles());
     });
     myComponent.setVisible(false);
@@ -289,7 +291,7 @@ public class ContentEntryTreeEditor {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -298,6 +300,14 @@ public class ContentEntryTreeEditor {
       VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
       if (project == null || ProjectView.getInstance(project) == null) {
         e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+
+      Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+      DialogWrapper dialogWrapper = getDialogWrapperFor(component);
+      Configurable singleConfigurable = getSingleConfigurable(dialogWrapper);
+      if (singleConfigurable == null && !ModalityState.current().accepts(ModalityState.nonModal())) {
+        e.getPresentation().setEnabledAndVisible(false); // we can't reliably close the dialog
         return;
       }
 
@@ -317,25 +327,32 @@ public class ContentEntryTreeEditor {
     }
 
     private static void closeSettingsWindow(@Nullable Component component) {
-      Window window = UIUtil.getWindow(component);
-      if (window instanceof DialogWrapperDialog wrapper) {
-        DialogWrapper dialogWrapper = wrapper.getDialogWrapper();
-        Configurable singleConfigurable = getSingleConfigurable(dialogWrapper);
-        if (singleConfigurable != null) {
-          if (singleConfigurable.isModified()) {
-            boolean proceed = MessageDialogBuilder.yesNo(ProjectBundle.message("project.structure.unsaved.on.navigation.title"),
-                                                         ProjectBundle.message("project.structure.unsaved.on.navigation.message"))
-              .yesText(ProjectBundle.message("project.structure.unsaved.on.navigation.discard.action"))
-              .noText(CommonBundle.getCancelButtonText())
-              .ask(component);
-            if (!proceed) return;
-          }
-          dialogWrapper.doCancelAction();
-        }
+      DialogWrapper dialogWrapper = getDialogWrapperFor(component);
+      if (dialogWrapper == null) return;
+
+      Configurable singleConfigurable = getSingleConfigurable(dialogWrapper);
+      if (singleConfigurable == null) return;
+
+      if (singleConfigurable.isModified()) {
+        boolean proceed = MessageDialogBuilder.yesNo(ProjectBundle.message("project.structure.unsaved.on.navigation.title"),
+                                                     ProjectBundle.message("project.structure.unsaved.on.navigation.message"))
+          .yesText(ProjectBundle.message("project.structure.unsaved.on.navigation.discard.action"))
+          .noText(CommonBundle.getCancelButtonText())
+          .ask(component);
+        if (!proceed) return;
       }
+      dialogWrapper.doCancelAction();
     }
 
-    private static @Nullable Configurable getSingleConfigurable(@NotNull DialogWrapper dialogWrapper) {
+    private static @Nullable DialogWrapper getDialogWrapperFor(@Nullable Component component) {
+      Window window = UIUtil.getWindow(component);
+      if (window instanceof DialogWrapperDialog wrapper) {
+        return wrapper.getDialogWrapper();
+      }
+      return null;
+    }
+
+    private static @Nullable Configurable getSingleConfigurable(@Nullable DialogWrapper dialogWrapper) {
       if (dialogWrapper instanceof SingleConfigurableEditor settingsDialog) {
         return settingsDialog.getConfigurable();
       }
@@ -356,7 +373,7 @@ public class ContentEntryTreeEditor {
   protected void setupExcludedAction() {
     ToggleExcludedStateAction toggleExcludedAction = new ToggleExcludedStateAction(myTree, this);
     myEditingActionsGroup.add(toggleExcludedAction);
-    toggleExcludedAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.ALT_MASK)), myTree);
+    toggleExcludedAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.ALT_MASK)),
+                                                   myTree);
   }
-
 }
