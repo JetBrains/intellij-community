@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvid
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.psi.KtEnumEntry
 
-internal class EnumEntryImportCandidatesProvider(positionContext: KotlinNameReferencePositionContext) :
-    AbstractImportCandidatesProvider(positionContext) {
+internal class EnumEntryImportCandidatesProvider(override val positionContext: KotlinNameReferencePositionContext) :
+    AbstractImportCandidatesProvider() {
 
     private fun acceptsKotlinEnumEntry(enumEntry: KtEnumEntry): Boolean {
         return !enumEntry.isImported() && enumEntry.canBeImported()
