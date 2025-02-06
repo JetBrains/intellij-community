@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.extensions
 
+import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.*
@@ -20,7 +21,7 @@ import kotlin.io.path.name
  * Important: this is supposed to be a fallback provider, meaning that it should work as a last resort.
  */
 internal class FromKotlinDistForIdeByNameFallbackBundledFirCompilerPluginProvider : KotlinBundledFirCompilerPluginProvider {
-    override fun provideBundledPluginJar(userSuppliedPluginJar: Path): Path? {
+    override fun provideBundledPluginJar(project: Project, userSuppliedPluginJar: Path): Path? {
         // this provider only handles files from 'kotlin-dist-for-ide' folder
         if (!userSuppliedPluginJar.startsWith(KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX.toPath())) return null
 
