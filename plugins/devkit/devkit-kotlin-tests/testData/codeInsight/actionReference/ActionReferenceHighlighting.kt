@@ -216,7 +216,7 @@ object ActionReferenceHighlighting {
   fun testEditorTestUtil(editor : com.intellij.openapi.editor.Editor) {
     EditorTestUtil.executeAction(editor, "myAction")
     EditorTestUtil.executeAction(editor, "<error descr="Cannot resolve action 'myGroup'">myGroup</error>")
-    EditorTestUtil.executeAction(editor, "<error descr=¨"Cannot resolve action 'INVALID_VALUE'">INVALID_VALUE</error>")
+    EditorTestUtil.executeAction(editor, "<error descr="Cannot resolve action 'INVALID_VALUE'">INVALID_VALUE</error>")
   }
 
   object MyLightPlatformCodeInsightTestCase : LightPlatformCodeInsightTestCase() {
