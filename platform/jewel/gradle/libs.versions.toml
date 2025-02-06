@@ -14,7 +14,6 @@ kotlinterGradlePlugin = "4.4.1"
 kotlinxSerialization = "1.7.3"
 kotlinxBinaryCompat = "0.16.3"
 ktfmtGradlePlugin = "0.20.1"
-poko = "0.17.1"
 
 [libraries]
 commonmark-core = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
@@ -40,7 +39,6 @@ kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
 kotlinter-gradlePlugin = { module = "org.jmailen.gradle:kotlinter-gradle", version.ref = "kotlinterGradlePlugin" }
 kotlinx-binaryCompatValidator-gradlePlugin = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version.ref = "kotlinxBinaryCompat" }
 ktfmt-gradlePlugin = { module = "com.ncorti.ktfmt.gradle:plugin", version.ref = "ktfmtGradlePlugin" }
-poko-gradlePlugin = { module = "dev.drewhamilton.poko:poko-gradle-plugin", version.ref = "poko" }
 
 [plugins]
 composeDesktop = { id = "org.jetbrains.compose", version.ref = "composeDesktop" }
@@ -55,4 +53,3 @@ kotlinx-binaryCompatValidator = { id = "org.jetbrains.kotlinx.binary-compatibili
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinterGradlePlugin" }
 ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmtGradlePlugin" }
-poko = { id = "dev.drewhamilton.poko", version.ref = "poko" }
