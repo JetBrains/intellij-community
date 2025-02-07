@@ -1928,8 +1928,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     myIndexableFilesFilterHolder.ensureFileIdPresent(fileId, () -> containingProjects);
     Project projectForFile = ContainerUtil.getFirstItem(containingProjects);
-    if (LOG.isTraceEnabled() && containingProjects.size() > 1) {
-      LOG.trace("File " + fileId + " belongs to " + containingProjects.size() + " projects. " +
+    if (TRACE_STUB_INDEX_UPDATES && containingProjects.size() > 1) {
+      LOG.info("File " + fileId + " belongs to " + containingProjects.size() + " projects. " +
                 "Indexing in " + projectForFile.getLocationHash());
     }
 
