@@ -172,5 +172,6 @@
     <orderEntry type="module" module-name="intellij.python.community.execService" />
     <orderEntry type="module" module-name="intellij.python.community.services.systemPython" />
     <orderEntry type="module" module-name="intellij.python.community.services.internal.impl" />
+    <orderEntry type="library" name="io.github.z4kn4fein.semver.jvm" level="project" />
   </component>
 </module>

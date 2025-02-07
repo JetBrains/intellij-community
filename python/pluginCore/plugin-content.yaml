@@ -4,6 +4,10 @@
     files:
     - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
     reason: withProjectLibrary
+  - name: io.github.z4kn4fein.semver.jvm
+    files:
+    - name: $MAVEN_REPOSITORY$/io/github/z4kn4fein/semver-jvm/2/semver-jvm-2.jar
+    reason: <- intellij.python.community.impl
   - name: jetbrains.ml.models.python.imports.ranking.model
     files:
     - name: $MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/lilac-coua/python-imports-ranking-model-lilac-coua.jar
