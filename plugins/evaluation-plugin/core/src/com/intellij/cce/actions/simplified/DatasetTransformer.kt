@@ -5,10 +5,8 @@ import com.intellij.cce.actions.simplified.SimplifiedDatasetSerializer.parseLine
 import com.intellij.cce.core.SimpleTokenProperties
 import com.intellij.cce.core.SymbolLocation
 import com.intellij.cce.core.TypeProperty
-import com.intellij.cce.evaluable.FILE_CHANGED_LINES_PREFIX
-import com.intellij.cce.evaluable.FILE_PATTERN_PROPERTY_PREFIX
-import com.intellij.cce.evaluable.FILE_UNCHANGED_LINES_PREFIX
 import com.intellij.cce.evaluable.PROMPT_PROPERTY
+import com.intellij.cce.evaluable.FILE_VALIDATIONS
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
@@ -61,18 +59,10 @@ class DatasetTransformer(private val offsetProvider: OffsetProvider) {
   }
 
   private fun generateActions(sessionId: UUID, interaction: SimplifiedDatasetSerializer.InteractionData): List<CallFeature> {
-    val fileValidation = interaction.fileValidations.firstOrNull()
+    val fileValidationsJson = SimplifiedDatasetSerializer.serializeFileValidations(interaction.fileValidations)
     val nodeProperties = SimpleTokenProperties.create(TypeProperty.FILE, SymbolLocation.PROJECT) {
-      put(PROMPT_PROPERTY,interaction.userPrompt)
-      fileValidation?.patterns.orEmpty().forEachIndexed { i, pattern ->
-        put("${FILE_PATTERN_PROPERTY_PREFIX}_${i+1}", pattern)
-      }
-      fileValidation?.changedLines.orEmpty().forEachIndexed { i, pattern ->
-        put("${FILE_CHANGED_LINES_PREFIX}_${i+1}", pattern)
-      }
-      fileValidation?.unchangedLines.orEmpty().forEachIndexed { i, pattern ->
-        put("${FILE_UNCHANGED_LINES_PREFIX}_${i+1}", pattern)
-      }
+      put(PROMPT_PROPERTY, interaction.userPrompt)
+      put(FILE_VALIDATIONS, fileValidationsJson)
     }
     val position = interaction.position
     val defaultLine = position.caretLine ?: parseLineRange(position.selectionLines)?.first ?: 0

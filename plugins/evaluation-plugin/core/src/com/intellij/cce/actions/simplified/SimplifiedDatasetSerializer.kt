@@ -1,9 +1,19 @@
 package com.intellij.cce.actions.simplified
 
 import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
 
 object SimplifiedDatasetSerializer {
   private val gson = GsonBuilder().create()
+
+  fun parseFileValidations(jsonData: String): List<FileValidation> {
+    val listType = object : TypeToken<List<FileValidation>>() {}.type
+    return gson.fromJson(jsonData, listType)
+  }
+
+  fun serializeFileValidations(fileValidations: List<FileValidation>): String {
+    return gson.toJson(fileValidations)
+  }
 
   /**
    * Parses a string representing a range of integers in the format "start-end" and returns it as an IntRange object.
