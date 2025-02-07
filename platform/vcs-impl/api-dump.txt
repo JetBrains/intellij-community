@@ -2701,6 +2701,8 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesListView
 - getUnversionedFiles():com.intellij.util.containers.JBIterable
 - installPopupHandler(com.intellij.openapi.actionSystem.ActionGroup):V
 - p:isEmptyTextVisible():Z
+- p:isIncludable(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):Z
+- p:isInclusionEnabled(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):Z
 - p:isInclusionVisible(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):Z
 - isOverSelection(java.awt.Point):Z
 - processMouseEvent(java.awt.event.MouseEvent):V

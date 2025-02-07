@@ -11,8 +11,7 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.CommitMode.NonModalCommitMode
@@ -32,6 +31,33 @@ class MergeConflictManager(private val project: Project, private val cs: Corouti
         VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
       }
     }, cs)
+  }
+
+  fun synchronizeInclusion() {
+    val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler ?: return
+    val defaultChangeList = ChangeListManager.getInstance(project).defaultChangeList
+
+    val resolvedChanges = defaultChangeList.changes.filter { isResolvedConflict(it) }
+    val changesPaths = resolvedChanges.map { ChangesUtil.getFilePath(it) }.toSet()
+    val resolvedUnchanged = getResolvedConflictPaths().filter { it !in changesPaths }
+    val included = resolvedChanges + resolvedUnchanged
+
+    if (included.isNotEmpty()) {
+      cs.launch(Dispatchers.EDT) {
+        workflowHandler.setCommitState(defaultChangeList, included, true)
+      }
+    }
+  }
+
+  fun isResolvedConflict(item: Any): Boolean {
+    if (item is FilePath) {
+      return isResolvedConflict(item)
+    }
+    if (item is Change) {
+      return isResolvedConflict(ChangesUtil.getFilePath(item))
+    }
+
+    return false
   }
 
   fun isResolvedConflict(path: FilePath): Boolean =
@@ -67,6 +93,9 @@ class MergeConflictManager(private val project: Project, private val cs: Corouti
     }
 
    private fun isNonModalMergeRegistryValue() = Registry.get("vcs.non.modal.merge.enabled")
+
+    @JvmStatic
+    fun isForceIncludeResolvedConflicts(): Boolean = Registry.`is`("vcs.non.modal.merge.force.include.resolved")
 
     @JvmStatic
     fun getInstance(project: Project): MergeConflictManager = project.service<MergeConflictManager>()

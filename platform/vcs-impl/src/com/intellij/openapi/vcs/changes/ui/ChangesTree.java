@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.InclusionListener;
 import com.intellij.openapi.vcs.changes.InclusionModel;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
+import com.intellij.openapi.vcs.merge.MergeConflictManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.ClickListener;
@@ -207,6 +208,9 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
 
         setSelectionPath(path);
         List<Object> selected = getIncludableUserObjects(selected(ChangesTree.this));
+        if (MergeConflictManager.isForceIncludeResolvedConflicts()) {
+          selected = ContainerUtil.filter(selected, item -> !MergeConflictManager.getInstance(myProject).isResolvedConflict(item));
+        }
         boolean exclude = toggleChanges(selected);
         logInclusionToggleEvents(exclude, event);
         return true;

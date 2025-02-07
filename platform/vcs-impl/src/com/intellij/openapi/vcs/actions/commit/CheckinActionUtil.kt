@@ -111,13 +111,15 @@ internal object CheckinActionUtil {
                                  selectedUnversioned: List<FilePath>,
                                  initialChangeList: LocalChangeList,
                                  pathsToCommit: List<FilePath>): Collection<Any> {
+    val resolvedConflictPaths = ChangeListManager.getInstance(project).resolvedConflictPaths
     if (selectedChanges.isEmpty() && selectedUnversioned.isEmpty()) {
       val allChanges = ChangeListManager.getInstance(project).allChanges
       val changesToCommit = VcsImplUtil.filterChangesUnder(allChanges, pathsToCommit).toSet()
-      return initialChangeList.changes.intersect(changesToCommit)
+      return ContainerUtil.concat(resolvedConflictPaths, initialChangeList.changes.intersect(changesToCommit).toList())
     }
     else {
-      return ContainerUtil.concat(selectedChanges, selectedUnversioned)
+      val changesAndUnversioned = ContainerUtil.concat(selectedChanges, selectedUnversioned)
+      return ContainerUtil.concat(resolvedConflictPaths, changesAndUnversioned)
     }
   }
 
