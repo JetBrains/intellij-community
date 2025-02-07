@@ -21,6 +21,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.WorkingDirectoryProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.workspace.SubprojectInfoProvider;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
@@ -32,6 +33,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
 import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
@@ -203,8 +205,8 @@ public class ProgramParametersConfigurator {
   }
 
   private @Nullable String getDefaultWorkingDir(@NotNull Project project, @Nullable Module module) {
-    for (WorkingDirectoryProvider provider : WORKING_DIRECTORY_PROVIDER_EP_NAME.getExtensions()) {
-      @SystemIndependent String path = provider.getWorkingDirectoryPath(project, module);
+    if (module != null) {
+      String path = SubprojectInfoProvider.Companion.getSubprojectPath(module);
       if (path != null) return path;
     }
     return getDefaultWorkingDir(project);

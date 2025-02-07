@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -23,9 +22,4 @@ import org.jetbrains.annotations.SystemIndependent;
 public interface WorkingDirectoryProvider {
   @Nullable @SystemIndependent
   String getWorkingDirectoryPath(@NotNull Module module);
-
-  @Nullable @SystemIndependent
-  default String getWorkingDirectoryPath(@NotNull Project project, @Nullable Module module) {
-    return null;
-  }
 }
