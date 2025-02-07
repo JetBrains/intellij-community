@@ -1,6 +1,6 @@
 package com.intellij.jvm.analysis.internal.testFramework
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaPreviewFeatureUtil
+import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.JDK_HOME
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.LANGUAGE_LEVEL
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.PREVIEW_JDK_HOME

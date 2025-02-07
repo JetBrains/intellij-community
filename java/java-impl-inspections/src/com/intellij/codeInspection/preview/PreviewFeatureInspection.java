@@ -1,9 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.preview;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaPreviewFeatureUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil;
+import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiImportStatementBase;
@@ -37,7 +38,7 @@ public final class PreviewFeatureInspection extends LocalInspectionTool {
               element = nameElement;
             }
           }
-          holder.registerProblem(element, usage.description());
+          holder.registerProblem(element, JavaErrorKinds.PREVIEW_API_USAGE.description(element, usage).toString());
         }
       }
     };

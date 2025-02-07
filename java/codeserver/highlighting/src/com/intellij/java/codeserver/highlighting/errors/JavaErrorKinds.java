@@ -4,6 +4,7 @@ package com.intellij.java.codeserver.highlighting.errors;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Parameterized;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Simple;
@@ -67,6 +68,9 @@ public final class JavaErrorKinds {
         @NlsSafe String hex = String.format("U+%04X", (int)c);
         return message("illegal.character", printable ? c + " (" + hex + ")" : hex);
       });
+  public static final Parameterized<PsiElement, JavaPreviewFeatureUtil.PreviewFeatureUsage> PREVIEW_API_USAGE =
+    parameterized(PsiElement.class, JavaPreviewFeatureUtil.PreviewFeatureUsage.class, "preview.api.usage")
+      .withRawDescription((e, c) -> message("preview.api.usage", c.targetName()));
 
   public static final Simple<PsiAnnotation> ANNOTATION_NOT_ALLOWED_HERE = error("annotation.not.allowed.here");
   public static final Simple<PsiPackageStatement> ANNOTATION_NOT_ALLOWED_ON_PACKAGE =

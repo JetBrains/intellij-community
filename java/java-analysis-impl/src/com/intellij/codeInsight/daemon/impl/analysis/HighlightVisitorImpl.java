@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
@@ -559,7 +560,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       HighlightInfoType type = isReflective ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
 
       HighlightInfo.Builder highlightInfo =
-        HighlightUtil.checkFeature(element, usage.feature(), myLanguageLevel, element.getContainingFile(), usage.description(), type);
+        HighlightUtil.checkFeature(element, usage.feature(), myLanguageLevel, element.getContainingFile(),
+                                   PREVIEW_API_USAGE.description(element, usage).toString(), type);
       if (highlightInfo != null) {
         myErrorSink.accept(highlightInfo);
       }
