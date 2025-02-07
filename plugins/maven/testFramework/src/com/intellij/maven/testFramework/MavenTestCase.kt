@@ -224,11 +224,11 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   private fun isProjectInEelEnvironment(): Boolean {
-    return System.getenv("eel.fixture.engine") != null
+    return System.getenv("EEL_FIXTURE_ENGINE") != null
   }
 
   private fun getEelFixtureEngineJavaHome(): String {
-    return System.getenv("eel.fixture.engine.java.home") ?: throw IllegalArgumentException("eel.fixture.engine.java.home is not specified")
+    return System.getenv("EEL_FIXTURE_ENGINE_JAVA_HOME") ?: throw IllegalArgumentException("The system environment variable EEL_FIXTURE_ENGINE_JAVA_HOME should be explicitly specified")
   }
 
   protected fun waitForMavenUtilRunnablesComplete() {
@@ -318,7 +318,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   private fun ensureTempDirCreated() {
     ourTempDir = when {
       isProjectInEelEnvironment() -> {
-        val mount = System.getenv("eel.fixture.mount") ?: throw IllegalArgumentException("eel.fixture.mount is not specified")
+        val mount = System.getenv("EEL_FIXTURE_MOUNT") ?: throw IllegalArgumentException("The EEL_FIXTURE_MOUNT environment variable is not specified")
         Path("$mount/mavenTests")
       }
       myWSLDistribution != null -> myWSLDistribution!!.getWindowsPath("/tmp").toNioPathOrNull()!!.resolve("mavenTests")
