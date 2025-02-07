@@ -9,6 +9,7 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
+    <module name="intellij.json.split"/>
   </dependencies>
   <content>
     <module name="intellij.yaml.backend"/><!-- should be marked as 'required in backend mode' when IJPL-177060 is fixed -->
