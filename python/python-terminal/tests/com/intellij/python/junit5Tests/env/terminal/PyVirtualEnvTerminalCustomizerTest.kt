@@ -121,6 +121,6 @@ class PyVirtualEnvTerminalCustomizerTest {
       .shellCommand(command.toList())
       .shellIntegration(ShellIntegration(ShellType.POWERSHELL, null))
       .build()
-    return LocalShellIntegrationInjector.injectShellIntegration(options, true, true)
+    return LocalShellIntegrationInjector.injectShellIntegration(options, false, false)
   }
 }
