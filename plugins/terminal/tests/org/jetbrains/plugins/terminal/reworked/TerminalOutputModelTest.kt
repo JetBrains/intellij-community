@@ -9,6 +9,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.block.session.StyleRange
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
 import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil
@@ -138,6 +139,38 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
 
     assertEquals(expectedText, model.document.text)
     assertEquals(expectedHighlightingsSnapshot, model.getHighlightings())
+  }
+
+  @Test
+  fun `update exceeds maxCapacity`() = runBlocking(Dispatchers.EDT) {
+    val model = TerminalSessionTestUtil.createOutputModel(maxLength = 10)
+    val startOffsets = mutableListOf<Int>()
+    model.addListener(testRootDisposable, object: TerminalOutputModelListener {
+      override fun afterContentChanged(startOffset: Int) {
+        startOffsets.add(startOffset)
+      }
+    })
+
+    model.update(0, """
+      abcdef
+      ghijkl
+    """.trimIndent(), emptyList())
+
+    assertEquals("""
+      def
+      ghijkl
+    """.trimIndent(), model.document.text)
+
+    model.update(1, """
+      mnopqrs
+      tuvwxyz
+    """.trimIndent(), emptyList())
+
+    assertEquals("""
+      rs
+      tuvwxyz
+    """.trimIndent(), model.document.text)
+    assertEquals(listOf(0, 0), startOffsets)
   }
 
   @Test

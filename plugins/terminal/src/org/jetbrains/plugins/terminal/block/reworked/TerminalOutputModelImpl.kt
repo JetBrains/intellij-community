@@ -13,6 +13,7 @@ import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSn
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.session.StyleRange
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
+import kotlin.math.max
 
 /**
  * [maxOutputLength] limits the length of the document. Zero means unlimited length.
@@ -92,7 +93,7 @@ internal class TerminalOutputModelImpl(
 
     val trimmedCount = trimToSize()
 
-    return replaceStartOffset - trimmedCount
+    return max(0, replaceStartOffset - trimmedCount)
   }
 
   /** Returns trimmed characters count */
