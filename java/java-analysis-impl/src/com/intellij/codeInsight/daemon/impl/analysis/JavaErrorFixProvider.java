@@ -96,6 +96,7 @@ final class JavaErrorFixProvider {
 
   JavaErrorFixProvider() {
     multi(UNSUPPORTED_FEATURE, error -> HighlightUtil.getIncreaseLanguageLevelFixes(error.psi(), error.context()));
+    multi(PREVIEW_API_USAGE, error -> HighlightUtil.getIncreaseLanguageLevelFixes(error.psi(), error.context().feature()));
     JavaFixProvider<PsiElement, Object> genericRemover = error -> myFactory.createDeleteFix(error.psi());
     for (JavaErrorKind<?, ?> kind : List.of(ANNOTATION_MEMBER_THROWS_NOT_ALLOWED, ANNOTATION_ATTRIBUTE_DUPLICATE,
                                             ANNOTATION_NOT_ALLOWED_EXTENDS, RECEIVER_STATIC_CONTEXT, RECEIVER_WRONG_POSITION,

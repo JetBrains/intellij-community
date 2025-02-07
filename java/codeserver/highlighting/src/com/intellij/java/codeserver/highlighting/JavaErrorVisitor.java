@@ -2,6 +2,7 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.UnhandledExceptions;
+import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.lang.ASTNode;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.PREVIEW_API_USAGE;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -203,6 +205,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myTypeChecker.checkArrayType(type);
     if (!hasErrorResults()) myGenericsChecker.checkReferenceTypeUsedAsTypeArgument(type);
     if (!hasErrorResults()) myGenericsChecker.checkWildcardUsage(type);
+    if (!hasErrorResults()) checkPreviewFeature(type);
   }
 
   @Override
@@ -302,6 +305,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myExpressionChecker.checkNewExpression(expression, type);
     if (!hasErrorResults()) myGenericsChecker.checkTypeParameterInstantiation(expression);
     if (!hasErrorResults()) myGenericsChecker.checkGenericArrayCreation(expression, type);
+    if (!hasErrorResults()) checkPreviewFeature(expression);
   }
 
   @Override
@@ -413,6 +417,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
     if (!hasErrorResults()) myFunctionChecker.checkMethodReferenceResolve(expression, results, functionalInterfaceType);
     if (!hasErrorResults()) myFunctionChecker.checkMethodReferenceReturnType(expression, result, functionalInterfaceType);
+    if (!hasErrorResults() && method instanceof PsiModifierListOwner) checkPreviewFeature(expression);
   }
 
   @Override
@@ -517,6 +522,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkSuperQualifierType(expression);
     if (!hasErrorResults()) myExpressionChecker.checkMethodCall(expression);
     if (!hasErrorResults()) visitExpression(expression);
+    if (!hasErrorResults()) checkPreviewFeature(expression);
   }
 
   @Override
@@ -616,7 +622,13 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     super.visitModule(module);
     if (!hasErrorResults()) checkFeature(module, JavaFeature.MODULES);
   }
-  
+
+  @Override
+  public void visitModuleStatement(@NotNull PsiStatement statement) {
+    super.visitModuleStatement(statement);
+    if (!hasErrorResults()) checkPreviewFeature(statement);
+  }
+
   @Override
   public void visitImportModuleStatement(@NotNull PsiImportModuleStatement statement) {
     super.visitImportModuleStatement(statement);
@@ -631,9 +643,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   @Override
   public void visitImportStatement(@NotNull PsiImportStatement statement) {
     super.visitImportStatement(statement);
-    if (!hasErrorResults()) {
-      myImportChecker.checkSingleImportClassConflict(statement);
-    }
+    if (!hasErrorResults()) myImportChecker.checkSingleImportClassConflict(statement);
+    if (!hasErrorResults()) checkPreviewFeature(statement);
   }
 
   @Override
@@ -674,6 +685,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
         }
       }
     }
+    if (!hasErrorResults()) checkPreviewFeature(statement);
   }
 
   @Override
@@ -766,6 +778,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
     if (!hasErrorResults()) myGenericsChecker.checkAccessStaticFieldFromEnumConstructor(expression, result);
     myExpressionChecker.checkUnqualifiedSuperInDefaultMethod(expression, qualifierExpression);
+    if (!hasErrorResults() && resolved instanceof PsiModifierListOwner) checkPreviewFeature(expression);
   }
   
   
@@ -886,9 +899,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
         myExpressionChecker.checkLocalClassReferencedFromAnotherSwitchBranch(ref, aClass);
       }
       if (!hasErrorResults()) myGenericsChecker.checkRawOnParameterizedType(ref, resolved);
-      if (!hasErrorResults()) {
-        myExpressionChecker.checkAmbiguousConstructorCall(ref, resolved);
-      }
+      if (!hasErrorResults()) myExpressionChecker.checkAmbiguousConstructorCall(ref, resolved);
+      if (!hasErrorResults() && resolved instanceof PsiModifierListOwner) checkPreviewFeature(ref);
     }
   }
 
@@ -1244,4 +1256,15 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       report(JavaErrorKinds.UNSUPPORTED_FEATURE.create(element, feature));
     }
   }
+
+  private void checkPreviewFeature(@NotNull PsiElement element) {
+    if (myLanguageLevel.isPreview()) return;
+    JavaPreviewFeatureUtil.PreviewFeatureUsage usage = JavaPreviewFeatureUtil.getPreviewFeatureUsage(element);
+    if (usage == null || usage.isReflective()) return;
+
+    if (!usage.feature().isSufficient(myLanguageLevel)) {
+      report(PREVIEW_API_USAGE.create(element, usage));
+    }
+  }
+
 }

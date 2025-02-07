@@ -26,7 +26,6 @@ public final class JavaPreviewFeatureUtil {
   public static final @NonNls String JDK_INTERNAL_JAVAC_PREVIEW_FEATURE = "jdk.internal.javac.PreviewFeature";
 
   /**
-   * 
    * @param feature preview feature
    * @param ref reference to highlight ({@link PsiJavaCodeReferenceElement} or {@link PsiJavaModuleReferenceElement})
    * @param target target object (module, class, method, field)
@@ -37,7 +36,10 @@ public final class JavaPreviewFeatureUtil {
     @NotNull PsiElement ref,
     @NotNull PsiModifierListOwner target,
     @NotNull PsiAnnotation annotation
-  ) { 
+  ) {
+    /**
+     * @return user-readable name of the reference or target object to be used in the error message
+     */
     public @NlsSafe String targetName() {
       if (target instanceof PsiJavaModule module) {
         return module.getName();
@@ -67,10 +69,21 @@ public final class JavaPreviewFeatureUtil {
       }
       return requireNonNullElse(name, ref.getText());
     }
+
+    /**
+     * @return true if 
+     */
+    public boolean isReflective() {
+      return Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation(), "reflective"));
+    }
   }
-  
-  public static @Nullable PreviewFeatureUsage getPreviewFeatureUsage(@NotNull PsiElement e) {
-    if (e instanceof PsiJavaCodeReferenceElement refElement) {
+
+  /**
+   * @param element element to check (reference or a statement from a module-info file)
+   * @return PreviewFeatureUsage object if the element refers to a preview API feature; null otherwise
+   */
+  public static @Nullable PreviewFeatureUsage getPreviewFeatureUsage(@NotNull PsiElement element) {
+    if (element instanceof PsiJavaCodeReferenceElement refElement) {
       PsiElement resolved = refElement.resolve();
       if (resolved instanceof PsiModifierListOwner owner) {
         PsiAnnotation annotation = getPreviewFeatureAnnotationInternal(owner);
@@ -80,7 +93,7 @@ public final class JavaPreviewFeatureUtil {
         return new PreviewFeatureUsage(feature, refElement, owner, annotation);
       }
     }
-    else if (e instanceof PsiRequiresStatement requiresStatement) {
+    else if (element instanceof PsiRequiresStatement requiresStatement) {
       PsiJavaModule module = requiresStatement.resolve();
       if (module == null) return null;
 
@@ -92,17 +105,17 @@ public final class JavaPreviewFeatureUtil {
         return new PreviewFeatureUsage(feature, moduleRef, module, annotation);
       }
     }
-    else if (e instanceof PsiProvidesStatement providesStatement) {
+    else if (element instanceof PsiProvidesStatement providesStatement) {
       PsiReferenceList list = providesStatement.getImplementationList();
       if (list == null) return null;
 
-      for (PsiJavaCodeReferenceElement element : list.getReferenceElements()) {
-        PsiElement resolved = element.resolve();
+      for (PsiJavaCodeReferenceElement ref : list.getReferenceElements()) {
+        PsiElement resolved = ref.resolve();
         if (resolved instanceof PsiClass psiClass) {
           PsiAnnotation annotation = getPreviewFeatureAnnotationInternal(psiClass);
           JavaFeature feature = fromPreviewFeatureAnnotation(annotation);
           if (feature == null) continue;
-          return new PreviewFeatureUsage(feature, element, psiClass, annotation);
+          return new PreviewFeatureUsage(feature, ref, psiClass, annotation);
         }
       }
     }

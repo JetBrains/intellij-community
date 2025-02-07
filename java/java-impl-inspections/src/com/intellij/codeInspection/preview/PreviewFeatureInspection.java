@@ -3,8 +3,9 @@ package com.intellij.codeInspection.preview;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil;
-import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiImportStatementBase;
@@ -21,15 +22,17 @@ public final class PreviewFeatureInspection extends LocalInspectionTool {
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.getLanguageLevel(holder.getFile()).isPreview()) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
-    
+    LanguageLevel level = PsiUtil.getLanguageLevel(holder.getFile());
+    boolean preview = level.isPreview();
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
         JavaPreviewFeatureUtil.PreviewFeatureUsage usage = JavaPreviewFeatureUtil.getPreviewFeatureUsage(element);
         if (usage != null) {
+          if (!preview && !usage.isReflective()) {
+            // reported as a compilation error
+            return;
+          } 
           // Do not report warnings in imports, because they cannot be suppressed and javac doesn't report them
           if (element.getParent() instanceof PsiImportStatementBase) return;
           if (element instanceof PsiReferenceExpression ref) {
@@ -38,7 +41,10 @@ public final class PreviewFeatureInspection extends LocalInspectionTool {
               element = nameElement;
             }
           }
-          holder.registerProblem(element, JavaErrorKinds.PREVIEW_API_USAGE.description(element, usage).toString());
+          holder.registerProblem(element,
+                                 usage.isReflective()
+                                 ? JavaBundle.message("preview.api.usage.reflective", usage.targetName())
+                                 : JavaBundle.message("preview.api.usage", usage.targetName()));
         }
       }
     };

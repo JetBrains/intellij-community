@@ -627,18 +627,9 @@ public final class HighlightUtil {
                                                       @NotNull JavaFeature feature,
                                                       @NotNull LanguageLevel level,
                                                       @NotNull PsiFile file) {
-    return checkFeature(element, feature, level, file, null, HighlightInfoType.ERROR);
-  }
-
-  static @Nullable HighlightInfo.Builder checkFeature(@NotNull PsiElement element,
-                                                      @NotNull JavaFeature feature,
-                                                      @NotNull LanguageLevel level,
-                                                      @NotNull PsiFile file,
-                                                      @Nullable @NlsContexts.DetailedDescription String message,
-                                                      @NotNull HighlightInfoType highlightInfoType) {
     if (!feature.isSufficient(level)) {
-      message = message == null ? getUnsupportedFeatureMessage(feature, level, file) : message;
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element).descriptionAndTooltip(message);
+      String message = getUnsupportedFeatureMessage(feature, level, file);
+      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message);
       registerIncreaseLanguageLevelFixes(file, feature, info);
       return info;
     }
