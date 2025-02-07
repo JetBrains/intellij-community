@@ -1341,9 +1341,8 @@ internal fun initFontDefaults(defaults: UIDefaults, uiFont: FontUIResource) {
   for (fontResource in patchableFontResources) {
     defaults.put(fontResource, uiFont)
   }
-  if (!SystemInfoRt.isMac) {
-    defaults.put("PasswordField.font", monoFont)
-  }
+
+  defaults.put("PasswordField.font", textFont)
   defaults.put("TextArea.font", monoFont)
   defaults.put("TextPane.font", textFont)
   defaults.put("EditorPane.font", textFont)
@@ -1382,7 +1381,6 @@ private fun installMacosXFonts(defaults: UIDefaults) {
   defaults.put("Menu.font", menuFont)
   defaults.put("MenuItem.font", menuFont)
   defaults.put("MenuItem.acceleratorFont", menuFont)
-  defaults.put("PasswordField.font", defaults.getFont("TextField.font"))
 }
 
 private sealed interface DefaultThemeStrategy {
