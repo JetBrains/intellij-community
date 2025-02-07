@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.originalFileOrSelf
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
@@ -53,7 +54,8 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
                 nameSequence.endsWith(BuiltInSerializerProtocol.DOT_DEFAULT_EXTENSION) ||
                 nameSequence.endsWith(DOT_METADATA_FILE_EXTENSION)
 
-        if (virtualFile !is VirtualFileWindow && !hasBinaryFileExtension && fileIndex.isUnderSourceRootOfType(virtualFile, rootType)) {
+        if (virtualFile !is VirtualFileWindow && !hasBinaryFileExtension &&
+            fileIndex.isUnderSourceRootOfType(virtualFile.originalFileOrSelf(), rootType)) {
             return filter.includeProjectSourceFiles
         }
 

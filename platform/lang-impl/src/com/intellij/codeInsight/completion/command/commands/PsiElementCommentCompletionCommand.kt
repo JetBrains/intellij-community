@@ -3,22 +3,23 @@ package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 
 internal class PsiElementCommentCompletionCommand : AbstractActionCompletionCommand("CommentByLineComment",
                                                                            "Comment element",
-                                                                           CodeInsightBundle.message("command.completion.psi.element.comment.text"),
+                                                                           CodeInsightBundle.message(
+                                                                             "command.completion.psi.element.comment.text"),
                                                                            null) {
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     if (!super.isApplicable(offset, psiFile, editor)) return false
     val fileDocument = psiFile.fileDocument
-    val immutableCharSequence = fileDocument.immutableCharSequence
     if (offset - 1 < 0) return false
-    val ch = immutableCharSequence[offset - 1]
-    if (ch != '}' && ch != ']' && ch != ')') return false
     val context = getHighLevelContext(offset, psiFile) ?: return false
+    if (PsiTreeUtil.skipWhitespacesBackward(context) is PsiComment) return true
     val startLineNumber = fileDocument.getLineNumber(context.textRange.startOffset)
     val endLineNumber = fileDocument.getLineNumber(context.textRange.endOffset)
     return startLineNumber != endLineNumber
@@ -42,7 +43,14 @@ internal class PsiElementCommentCompletionCommand : AbstractActionCompletionComm
     val selectionModel = editor.selectionModel
     val highLevelContext = getHighLevelContext(offset, psiFile) ?: return
     val textRange = highLevelContext.textRange
-    selectionModel.setSelection(textRange.startOffset, textRange.endOffset)
+    var startOffset = textRange.startOffset
+    val endOffset = textRange.endOffset
+    var current: PsiElement? = highLevelContext
+    while (current is PsiComment) {
+      startOffset = current.textRange.endOffset
+      current = PsiTreeUtil.skipWhitespacesBackward(current)
+    }
+    selectionModel.setSelection(startOffset, endOffset)
     super.execute(offset, psiFile, editor)
     selectionModel.removeSelection()
   }
