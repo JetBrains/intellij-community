@@ -164,7 +164,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   private static final JBValueGroup JBVG = new JBValueGroup();
   static final JBValue START_ICON_AREA_WIDTH = JBVG.value(17);
-  private static final JBValue FREE_PAINTERS_EXTRA_LEFT_AREA_WIDTH = JBVG.value(8); // to the left of the line numbers in the new UI
+  private static final JBValue FREE_PAINTERS_EXTRA_RIGHT_AREA_WIDTH = JBVG.value(8); // as the last element in the new UI
   private static final JBValue FREE_PAINTERS_LEFT_AREA_WIDTH = JBVG.value(8);
   private static final JBValue FREE_PAINTERS_RIGHT_AREA_WIDTH = JBVG.value(5);
   private static final JBValue GAP_BETWEEN_ICONS = JBVG.value(3);
@@ -1375,7 +1375,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     if (ExperimentalUI.isNewUI()) {
       int x = e.getX();
       int offset = getExtraLineMarkerFreePaintersAreaOffset();
-      int width = getExtraLeftFreePaintersAreaWidth();
+      int width = getExtraRightFreePaintersAreaWidth();
       return offset < x && x <= offset + width;
     }
     return e.getX() > getLineMarkerFreePaintersAreaOffset();
@@ -1589,7 +1589,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   @Override
   public int getWhitespaceSeparatorOffset() {
     if (ExperimentalUI.isNewUI()) {
-      return getWidth() - 3;
+      return getWidth() - JBUI.scale(3);
     }
     else {
       return (int)Math.round(getFoldingMarkerCenterOffset2D());
@@ -1929,11 +1929,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   @Override
   public int getExtraLineMarkerFreePaintersAreaOffset() {
-    return myLayout.getExtraLeftFreePaintersAreaOffset();
+    return myLayout.getExtraRightFreePaintersAreaOffset();
   }
 
-  int getExtraLeftFreePaintersAreaWidth() {
-    float width = FREE_PAINTERS_EXTRA_LEFT_AREA_WIDTH.getFloat();
+  int getExtraRightFreePaintersAreaWidth() {
+    float width = FREE_PAINTERS_EXTRA_RIGHT_AREA_WIDTH.getFloat();
     return scaleWithEditor(width);
   }
 
@@ -2074,7 +2074,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
     int hoveredLine;
     if (x >= getExtraLineMarkerFreePaintersAreaOffset() &&
-        x <= getExtraLineMarkerFreePaintersAreaOffset() + getExtraLeftFreePaintersAreaWidth()) {
+        x <= getExtraLineMarkerFreePaintersAreaOffset() + getExtraRightFreePaintersAreaWidth()) {
       hoveredLine = getEditor().xyToLogicalPosition(point).line;
     }
     else {
