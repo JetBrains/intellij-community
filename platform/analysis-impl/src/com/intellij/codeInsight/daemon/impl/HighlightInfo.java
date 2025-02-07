@@ -239,7 +239,7 @@ public class HighlightInfo implements Segment {
 
   @NotNull
   @ApiStatus.Internal
-  public TextRange getFixTextRange() {
+  public synchronized TextRange getFixTextRange() {
     return TextRangeScalarUtil.create(fixRange);
   }
 
@@ -1143,7 +1143,7 @@ public class HighlightInfo implements Segment {
   }
 
   @ApiStatus.Internal
-  public boolean containsOffset(int offset, boolean includeFixRange) {
+  public synchronized boolean containsOffset(int offset, boolean includeFixRange) {
     RangeHighlighterEx highlighter = getHighlighter();
     if (highlighter == null || !highlighter.isValid()) return false;
     int startOffset = highlighter.getStartOffset();
@@ -1199,7 +1199,7 @@ public class HighlightInfo implements Segment {
    * For example, when this HighlightInfo was created as an error for some unresolved reference, and some "Import" quickfixes are to be computed, after {@link UnresolvedReferenceQuickFixProvider} asked about em
    */
   @ApiStatus.Internal
-  public boolean hasLazyQuickFixes() {
+  public synchronized boolean hasLazyQuickFixes() {
     return !myLazyQuickFixes.isEmpty();
   }
 
@@ -1355,7 +1355,9 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  @NotNull @Unmodifiable List<? extends @NotNull Consumer<? super QuickFixActionRegistrar>>
+  @NotNull
+  @Unmodifiable
+  synchronized List<? extends @NotNull Consumer<? super QuickFixActionRegistrar>>
   getLazyQuickFixes() {
     return ContainerUtil.map(myLazyQuickFixes, p -> p.fixesComputer());
   }
