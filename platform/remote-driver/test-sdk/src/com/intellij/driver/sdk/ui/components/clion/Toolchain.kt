@@ -1,35 +1,35 @@
 package com.intellij.driver.sdk.ui.components.clion
 
-sealed class Toolchain(val name: ToolchainNames)
-
-class DefaultToolchain(
-  val compiler: Compiler = Compiler.DEFAULT,
-  val debugger: Debugger = Debugger.BUNDLED_GDB,
-  val buildTool: Make = Make.DEFAULT,
-  name: ToolchainNames = ToolchainNames.DEFAULT,
-) : Toolchain(name) {
+sealed class Toolchain(
+  val name: ToolchainNames,
+  val compiler: Compiler,
+  val debugger: Debugger,
+  val buildTool: Make
+) {
   override fun toString(): String = "${compiler}_$debugger"
+
+  class Default(
+    compiler: Compiler = Compiler.DEFAULT,
+    debugger: Debugger = Debugger.BUNDLED_GDB,
+    buildTool: Make = Make.DEFAULT,
+    name: ToolchainNames = ToolchainNames.DEFAULT
+  ) : Toolchain(name, compiler, debugger, buildTool)
+
+  class GCC(
+    compiler: Compiler = Compiler.GCC,
+    debugger: Debugger = Debugger.BUNDLED_GDB,
+    buildTool: Make = Make.DEFAULT,
+    name: ToolchainNames = ToolchainNames.GCC
+  ) : Toolchain(name, compiler, debugger, buildTool)
+
+  class CLang(
+    compiler: Compiler = Compiler.CLANG,
+    debugger: Debugger = Debugger.BUNDLED_LLDB,
+    buildTool: Make = Make.DEFAULT,
+    name: ToolchainNames = ToolchainNames.CLang
+  ) : Toolchain(name, compiler, debugger, buildTool)
 }
 
-class GCCToolchain(
-  val compiler: Compiler = Compiler.GCC,
-  val debugger: Debugger = Debugger.BUNDLED_GDB,
-  val buildTool: Make = Make.DEFAULT,
-  name: ToolchainNames = ToolchainNames.GCC,
-) : Toolchain(name) {
-  override fun toString(): String = "${compiler}_$debugger"
-}
-
-class CLangToolchain(
-  val compiler: Compiler = Compiler.CLANG,
-  val debugger: Debugger = Debugger.BUNDLED_LLDB,
-  val buildTool: Make = Make.DEFAULT,
-  name: ToolchainNames = ToolchainNames.CLang,
-) : Toolchain(name) {
-  override fun toString(): String = "${compiler}_$debugger"
-}
-
-@Suppress("unused")
 enum class Make {
   DEFAULT {
     override fun getMakePath(): String = ""

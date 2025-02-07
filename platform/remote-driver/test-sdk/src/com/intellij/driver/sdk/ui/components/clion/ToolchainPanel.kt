@@ -33,30 +33,14 @@ class ToolchainPanel(data: ComponentData) : SettingsDialogUiComponent(data) {
   }
 
   fun setupToolchains(toolchain: Toolchain) {
-    when (toolchain) {
-      is DefaultToolchain -> {
-        if (toolchain.buildTool != Make.DEFAULT) {
-          writeTextField("Build Tool:", toolchain.buildTool.getMakePath())
-        }
-        writeTextField("C Compiler:", toolchain.compiler.getCCompilerPath())
-        writeTextField("C++ Compiler:", toolchain.compiler.getCppCompilerPath())
-      }
-      is CLangToolchain -> {
-        if (toolchain.buildTool != Make.DEFAULT) {
-          writeTextField("Build Tool:", toolchain.buildTool.getMakePath())
-        }
-        writeTextField("C Compiler:", toolchain.compiler.getCCompilerPath())
-        writeTextField("C++ Compiler:", toolchain.compiler.getCppCompilerPath())
-        setDebugger(toolchain.debugger.getDebuggerPath())
-      }
-      is GCCToolchain -> {
-        if (toolchain.buildTool != Make.DEFAULT) {
-          writeTextField("Build Tool:", toolchain.buildTool.getMakePath())
-        }
-        writeTextField("C Compiler:", toolchain.compiler.getCCompilerPath())
-        writeTextField("C++ Compiler:", toolchain.compiler.getCppCompilerPath())
-        setDebugger(toolchain.debugger.getDebuggerPath())
-      }
+    if (toolchain.buildTool != Make.DEFAULT) {
+      writeTextField("Build Tool:", toolchain.buildTool.getMakePath())
+    }
+    writeTextField("C Compiler:", toolchain.compiler.getCCompilerPath())
+    writeTextField("C++ Compiler:", toolchain.compiler.getCppCompilerPath())
+
+    if (toolchain !is Toolchain.Default) {
+      setDebugger(toolchain.debugger.getDebuggerPath())
     }
   }
 
