@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -53,7 +53,6 @@ import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -379,7 +378,7 @@ public class RefManagerImpl extends RefManager {
       containingDirs.addFirst(parent.getName());
       parent = parent.getOwner();
     }
-    return containingDirs.isEmpty() ? null : StringUtil.join(containingDirs, File.separator);
+    return containingDirs.isEmpty() ? null : StringUtil.join(containingDirs, "/");
   }
 
   private static void appendModule(final Element problem, final RefModule refModule) {
