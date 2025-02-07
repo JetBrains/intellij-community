@@ -1,0 +1,22 @@
+<idea-plugin>
+  <name>JSON</name>
+  <!-- The plugin id is intentionally kept equal to its main module id
+  because historically the module was bundled into the platform,
+  and dependent plugins used only module dependency -->
+  <id>com.intellij.modules.json</id>
+  <vendor>JetBrains</vendor>
+  <category>Languages</category>
+  <description><![CDATA[
+    Provides syntax highlighting and editor features for
+    <a href="https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON">JSON</a> and
+    <a href="https://json-schema.org/overview/what-is-jsonschema">JSON Schema</a> languages
+  ]]></description>
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+
+  <content>
+    <module name="intellij.json.split" loading="required"/>
+    <module name="intellij.json" loading="embedded"/>
+  </content>  
+</idea-plugin>

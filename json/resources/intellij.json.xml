@@ -1,24 +1,8 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <!-- No package, there are two top level packages available :( -->
-  <name>JSON</name>
-  <!-- The plugin id is intentionally kept equal to its main module id
-  because historically the module was bundled into the platform,
-  and dependent plugins used only module dependency -->
-  <id>com.intellij.modules.json</id>
-  <vendor>JetBrains</vendor>
-  <category>Languages</category>
-  <description><![CDATA[
-    Provides syntax highlighting and editor features for
-    <a href="https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON">JSON</a> and
-    <a href="https://json-schema.org/overview/what-is-jsonschema">JSON Schema</a> languages
-  ]]></description>
+<idea-plugin>
   <dependencies>
-    <plugin id="com.intellij.modules.lang"/>
+    <module name="intellij.json.split"/>
   </dependencies>
-
-  <!--todo employ embedded/required content module feature when IJPL-164312 is fixed-->
-  <xi:include href="/intellij.json.split.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
+  
   <actions resource-bundle="messages.JsonBundle">
     <action id="JsonCopyPointer" class="com.intellij.json.editor.JsonCopyPointerAction">
       <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyReference"/>
@@ -86,7 +70,7 @@
     <localInspection language="JSON" shortName="JsonSchemaRefReference"
                      bundle="messages.JsonBundle" key="json.schema.ref.refs.inspection.name" groupKey="json.inspection.group"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.jsonSchema.impl.inspections.JsonSchemaRefReferenceInspection" />
+                     implementationClass="com.jetbrains.jsonSchema.impl.inspections.JsonSchemaRefReferenceInspection"/>
 
     <projectService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration"/>
     <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema"
@@ -110,7 +94,8 @@
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor"/>
     <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaRegexInjector"/>
     <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaBasedLanguageInjector"/>
-    <gotoDeclarationHandler id="JsonSchemaGotoDeclarationHandler" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaGotoDeclarationHandler"/>
+    <gotoDeclarationHandler id="JsonSchemaGotoDeclarationHandler"
+                            implementation="com.jetbrains.jsonSchema.impl.JsonSchemaGotoDeclarationHandler"/>
     <highlightVisitor implementation="com.intellij.json.highlighting.JsonRainbowVisitor"/>
     <intentionAction>
       <language>JSON</language>
@@ -145,7 +130,7 @@
 
   <extensions defaultExtensionNs="com.intellij.json">
     <jsonLikePsiWalkerFactory implementation="com.intellij.json.json5.Json5PsiWalkerFactory"/>
-    <jsonSchemaEnabler implementation="com.jetbrains.jsonSchema.impl.JsonSchemaInJsonFilesEnabler" />
+    <jsonSchemaEnabler implementation="com.jetbrains.jsonSchema.impl.JsonSchemaInJsonFilesEnabler"/>
   </extensions>
 
   <extensionPoints>
