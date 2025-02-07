@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -29,7 +28,6 @@ import com.intellij.util.asDisposable
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.*
-import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.output.NEW_TERMINAL_OUTPUT_CAPACITY_KB
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
@@ -46,7 +44,6 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.KeyEvent
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 import javax.swing.JScrollPane
 import kotlin.math.min
@@ -57,8 +54,6 @@ internal class ReworkedTerminalView(
 ) : TerminalContentView {
   private val coroutineScope = terminalProjectScope(project).childScope("ReworkedTerminalView")
   private val terminalSessionFuture = CompletableFuture<TerminalSession>()
-
-  private val terminationListeners: MutableList<Runnable> = CopyOnWriteArrayList()
 
   private val sessionModel: TerminalSessionModel
   private val encodingManager: TerminalKeyEncodingManager
@@ -83,17 +78,6 @@ internal class ReworkedTerminalView(
       terminalSessionFuture.complete(null)
 
       coroutineScope.cancel()
-    }
-
-    coroutineScope.coroutineContext.job.invokeOnCompletion {
-      for (listener in terminationListeners) {
-        try {
-          listener.run()
-        }
-        catch (t: Throwable) {
-          thisLogger().error("Unhandled exception in termination listener", t)
-        }
-      }
     }
 
     sessionModel = TerminalSessionModelImpl(settings)
@@ -156,7 +140,7 @@ internal class ReworkedTerminalView(
   }
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
-    TerminalUtil.addItem(terminationListeners, onTerminated, parentDisposable)
+    controller.addTerminationCallback(onTerminated, parentDisposable)
   }
 
   override fun sendCommandToExecute(shellCommand: String) {

@@ -1,16 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.intellij.util.containers.DisposableWrapperList
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.reworked.session.output.*
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
@@ -23,9 +22,14 @@ internal class TerminalSessionController(
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val coroutineScope: CoroutineScope,
 ) {
+
+  private val terminationListeners: DisposableWrapperList<Runnable> = DisposableWrapperList()
+
   fun handleEvents(channel: ReceiveChannel<List<TerminalOutputEvent>>) {
     coroutineScope.launch {
       doHandleEvents(channel)
+    }.invokeOnCompletion {
+      fireSessionTerminated()
     }
   }
 
@@ -104,5 +108,20 @@ internal class TerminalSessionController(
 
   private fun getCurrentOutputModel(): TerminalOutputModel {
     return if (sessionModel.terminalState.value.isAlternateScreenBuffer) alternateBufferModel else outputModel
+  }
+
+  fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
+    terminationListeners.add(onTerminated, parentDisposable)
+  }
+
+  private fun fireSessionTerminated() {
+    for (listener in terminationListeners) {
+      try {
+        listener.run()
+      }
+      catch (t: Throwable) {
+        thisLogger().error("Unhandled exception in termination listener", t)
+      }
+    }
   }
 }
