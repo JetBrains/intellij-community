@@ -1,9 +1,11 @@
 package com.intellij.database.run.ui.table;
 
 import com.intellij.application.options.EditorFontsConstants;
+import com.intellij.database.actions.ShowEditMaximizedAction;
 import com.intellij.database.datagrid.*;
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.HierarchicalGridColumn;
 import com.intellij.database.extractors.DisplayType;
+import com.intellij.database.remote.jdbc.LobInfo;
 import com.intellij.database.run.actions.ColumnLocalFilterAction;
 import com.intellij.database.run.ui.*;
 import com.intellij.database.run.ui.grid.*;
@@ -25,6 +27,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -1295,12 +1298,33 @@ public final class TableResultView extends JBTableWithResizableCells
   @Override
   public boolean editCellAt(int row, int column, EventObject e) {
     ClientProperty.put(this, GridTableCellEditor.EDITING_STARTER_CLIENT_PROPERTY_KEY, e);
+    if (shouldDisplayValueEditor(row, column)) {
+      showValueEditor(e);
+      return false;
+    }
     try {
       return super.editCellAt(row, column, e);
     }
     finally {
       ClientProperty.put(this, GridTableCellEditor.EDITING_STARTER_CLIENT_PROPERTY_KEY, null);
     }
+  }
+
+  private boolean shouldDisplayValueEditor(int row, int column) {
+    var tableModel = getModel();
+    var cellValue = tableModel.getValueAt(row, column);
+    return cellValue instanceof LobInfo.ClobInfo clob && clob.isFullyReloaded();
+  }
+
+  private void showValueEditor(EventObject e) {
+    if (e instanceof MouseEvent mouseEvent && mouseEvent.getClickCount() < 2) return;
+    if (e instanceof KeyEvent && !UIUtil.isReallyTypedEvent((KeyEvent)e)) return;
+
+    var action = ActionUtil.wrap("Console.TableResult.EditValueMaximized");
+    var dataContext = DataManager.getInstance().getDataContext(this);
+    AnActionEvent event = AnActionEvent.createEvent(action, dataContext, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null);
+    var view = ShowEditMaximizedAction.getView(this.myResultPanel, event);
+    view.open(tabInfoProvider -> tabInfoProvider instanceof ValueTabInfoProvider);
   }
 
   @Override

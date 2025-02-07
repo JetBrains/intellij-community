@@ -20,6 +20,8 @@ import java.util.Objects;
 public abstract class LobInfo<T extends LobInfo<?>> implements Comparable<T>, Serializable {
   public final long length;
 
+  private boolean isFullyReloaded;
+
   private static final ThreadLocal<byte[]> BUFFER = new ThreadLocal<byte[]>() {
     @Override
     protected byte[] initialValue() {
@@ -33,6 +35,14 @@ public abstract class LobInfo<T extends LobInfo<?>> implements Comparable<T>, Se
 
   public boolean isTruncated() {
     return length != getLoadedDataLength();
+  }
+
+  public boolean isFullyReloaded() {
+      return isFullyReloaded;
+  }
+
+  public void setFullyReloaded(boolean fullyReloaded) {
+    this.isFullyReloaded = fullyReloaded;
   }
 
   public abstract long getLoadedDataLength();

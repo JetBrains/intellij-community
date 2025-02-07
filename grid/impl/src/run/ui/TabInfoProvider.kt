@@ -5,11 +5,11 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.editor.impl.EditorHeaderComponent
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBPanelWithEmptyText
+import com.intellij.ui.components.TwoSideComponent
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.tabs.TabInfo
-import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
@@ -19,11 +19,9 @@ import javax.swing.JPanel
 abstract class TabInfoProvider(title: @NlsContexts.TabTitle String, private val actionGroup: ActionGroup?) : Disposable {
   private val panel = JPanel(BorderLayout())
   protected val toolbar = createToolbar()
-  val tabInfo = TabInfo(JBPanelWithEmptyText()).setText(title).setComponent(panel).setSideComponent(toolbar?.let {
-    EditorHeaderComponent().also { header ->
-      header.add(toolbar.component, BorderLayout.EAST)
-      header.border = JBUI.Borders.empty()
-    }
+  val tabInfo = TabInfo(JBPanelWithEmptyText()).setText(title).setComponent(panel)
+    .setSideComponent(toolbar?.let {
+      TwoSideComponent(Wrapper(), toolbar.component)
   })
 
   protected var isOnTab: Boolean = false
