@@ -1,6 +1,5 @@
 fragment pullRequestReviewComment on PullRequestReviewComment {
   ...comment
-  databaseId
   url
   state
   commit {

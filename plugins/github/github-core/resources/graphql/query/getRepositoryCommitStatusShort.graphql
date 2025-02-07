@@ -3,7 +3,7 @@ query($repoOwner: String!, $repoName: String!, $oid: GitObjectID!) {
     object(oid: $oid) {
       ... on Commit {
         statusCheckRollup {
-          state
+          ...commitStatusRollupShort
         }
       }
     }

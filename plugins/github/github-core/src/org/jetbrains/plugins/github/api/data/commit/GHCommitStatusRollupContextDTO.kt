@@ -9,7 +9,7 @@ import org.jetbrains.plugins.github.api.data.GHCommitCheckSuiteConclusion
 import org.jetbrains.plugins.github.api.data.GHCommitCheckSuiteStatusState
 import org.jetbrains.plugins.github.api.data.GHCommitStatusContextState
 
-@GraphQLFragment("/graphql/query/getRepositoryCommitStatusContexts.graphql")
+@GraphQLFragment("/graphql/fragment/commitStatusRollup.graphql")
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = true)
 @JsonSubTypes(
   JsonSubTypes.Type(name = "CheckRun", value = GHCommitStatusRollupContextDTO.CheckRun::class),

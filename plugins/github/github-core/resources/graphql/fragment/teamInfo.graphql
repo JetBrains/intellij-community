@@ -3,7 +3,7 @@ fragment teamInfo on Team {
     ...nodeInfo
     slug
     url
-    avatarUrl
-    name
+    teamAvatarUrl: avatarUrl
+    teamName: name
     combinedSlug
 }

@@ -9,7 +9,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState.ChecksState
-import kotlin.collections.buildList
 
 internal class GHPRMergeabilityStateBuilder(
   private val mergeabilityData: GHPullRequestMergeabilityData,
@@ -45,7 +44,7 @@ internal class GHPRMergeabilityStateBuilder(
       CodeReviewCIJob(context.context, context.state.toCiState(), context.isRequired, context.targetUrl)
     }
     val checkSuites = lastCommit?.checkSuites?.nodes.orEmpty()
-    val checkSuitesCI = checkSuites.flatMap { checkSuite -> checkSuite.checkRuns.nodes }.map { checkRun ->
+    val checkSuitesCI = checkSuites.flatMap { checkSuite -> checkSuite.checkRuns?.nodes.orEmpty() }.map { checkRun ->
       CodeReviewCIJob(checkRun.name, checkRun.conclusion.toCiState(), checkRun.isRequired, checkRun.detailsUrl ?: checkRun.url)
     }
     val ciJobs = buildList<CodeReviewCIJob> {

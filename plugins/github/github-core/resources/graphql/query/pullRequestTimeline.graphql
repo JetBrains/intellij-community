@@ -68,7 +68,7 @@ fragment mergedEvent on MergedEvent {
     ...actor
   }
   createdAt
-  commit {
+  mergedEventCommit: commit {
     ...commitShort
   }
   mergeRefName
@@ -191,14 +191,14 @@ fragment referenceSubject on ReferencedSubject {
   ... on PullRequest {
     title
     number
-    state
+    prState: state
     isDraft
     url
   }
   ... on Issue {
     title
     number
-    state
+    issueState: state
     url
   }
 }

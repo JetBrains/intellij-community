@@ -16,12 +16,11 @@ data class GHPullRequestMergeabilityData(
   private val baseRef: BaseRef?,
   val commits: GHPullRequestCommitWithCheckStatusesConnection
 ) {
-
   @JsonIgnore
   val baseRefUpdateRule: GHRefUpdateRule? = baseRef?.refUpdateRule
 
   class GHPullRequestCommitWithCheckStatusesConnection(
     pageInfo: GraphQLCursorPageInfoDTO,
-    nodes: List<GHPullRequestCommitWithCheckStatuses>
+    nodes: List<GHPullRequestCommitWithCheckStatuses> = listOf()
   ) : GraphQLConnectionDTO<GHPullRequestCommitWithCheckStatuses>(pageInfo, nodes)
 }

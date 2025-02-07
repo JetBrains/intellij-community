@@ -52,7 +52,7 @@ object GHGQLRequests {
           withOperationName("get teams in organization")
         }
 
-      private class TeamsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHTeam>)
+      private class TeamsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHTeam> = listOf())
         : GraphQLConnectionDTO<GHTeam>(pageInfo, nodes)
     }
   }
@@ -99,7 +99,7 @@ object GHGQLRequests {
         withOperationName("get branch protection rules")
       }
 
-    private class ProtectedRulesConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHBranchProtectionRule>)
+    private class ProtectedRulesConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHBranchProtectionRule> = listOf())
       : GraphQLConnectionDTO<GHBranchProtectionRule>(pageInfo, nodes)
 
     fun getCommitStatus(
@@ -322,7 +322,7 @@ object GHGQLRequests {
         withOperationName("get review threads")
       }
 
-    private class ThreadsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestReviewThread>)
+    private class ThreadsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestReviewThread> = listOf())
       : GraphQLConnectionDTO<GHPullRequestReviewThread>(pageInfo, nodes)
 
     fun commits(
@@ -339,7 +339,7 @@ object GHGQLRequests {
         withOperationName("get pull request commits")
       }
 
-    private class CommitsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestCommit>)
+    private class CommitsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestCommit> = listOf())
       : GraphQLConnectionDTO<GHPullRequestCommit>(pageInfo, nodes)
 
     fun files(
@@ -356,7 +356,7 @@ object GHGQLRequests {
         withOperationName("get pull request files")
       }
 
-    private class FilesConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestChangedFile>) :
+    private class FilesConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestChangedFile> = listOf()) :
       GraphQLConnectionDTO<GHPullRequestChangedFile>(pageInfo, nodes)
 
     fun markFileAsViewed(server: GithubServerPath, pullRequestId: String, path: String): GQLQuery<Unit> =
@@ -401,7 +401,7 @@ object GHGQLRequests {
           withOperationName("get pull request timeline items")
         }
 
-      private class TimelineConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPRTimelineItem>)
+      private class TimelineConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPRTimelineItem> = listOf())
         : GraphQLConnectionDTO<GHPRTimelineItem>(pageInfo, nodes)
     }
 
@@ -471,7 +471,7 @@ object GHGQLRequests {
           withOperationName("get pending reviews")
         }
 
-      private class PendingReviewNodes(nodes: List<GHPullRequestPendingReviewDTO>) :
+      private class PendingReviewNodes(nodes: List<GHPullRequestPendingReviewDTO> = listOf()) :
         GraphQLNodesDTO<GHPullRequestPendingReviewDTO>(nodes)
 
       fun addComment(

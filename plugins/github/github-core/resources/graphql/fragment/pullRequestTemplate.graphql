@@ -1,0 +1,3 @@
+fragment pullRequestTemplate on PullRequestTemplate {
+  body
+}

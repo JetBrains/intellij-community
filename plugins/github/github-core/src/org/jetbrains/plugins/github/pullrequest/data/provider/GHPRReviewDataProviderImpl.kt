@@ -243,7 +243,7 @@ internal class GHPRReviewDataProviderImpl(parentCs: CoroutineScope,
 
 @VisibleForTesting
 internal fun GHPullRequestPendingReviewDTO.toModel(): GHPullRequestPendingReview =
-  GHPullRequestPendingReview(id, state, comments.totalCount ?: 0)
+  GHPullRequestPendingReview(id, state, comments.totalCount)
 
 private fun updateCommentBody(threads: List<GHPullRequestReviewThread>, commentId: String, newBody: String) =
   threads.map {

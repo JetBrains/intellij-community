@@ -44,10 +44,10 @@ c:com.intellij.collaboration.api.dto.GraphQLErrorDTO
 - java.lang.annotation.Annotation
 - a:value():com.intellij.collaboration.api.dto.GraphQLFragment[]
 c:com.intellij.collaboration.api.dto.GraphQLNodesDTO
-- <init>(java.util.List,java.lang.Integer):V
-- b:<init>(java.util.List,java.lang.Integer,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>():V
+- <init>(java.util.List):V
+- b:<init>(java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getNodes():java.util.List
-- f:getTotalCount():java.lang.Integer
 com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
 - a:getNodes():java.util.List
 - a:getPageInfo():com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO

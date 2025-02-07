@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.api.data
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
 
-@GraphQLFragment("/graphql/fragment/organizationInfo.graphql")
+@GraphQLFragment("/graphql/fragment/actor.graphql")
 class GHOrganization(
   id: String,
   override val login: String,
