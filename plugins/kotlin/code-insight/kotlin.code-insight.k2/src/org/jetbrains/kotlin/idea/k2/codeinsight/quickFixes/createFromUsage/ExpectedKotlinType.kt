@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toNullability
 
 @OptIn(KaExperimentalApi::class)
-class ExpectedKotlinType private constructor(
+internal class ExpectedKotlinType private constructor(
     private val kaTypePointer: KaTypePointer<KaType>,
     jvmType: JvmType,
     nullability: Nullability,
