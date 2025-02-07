@@ -5,10 +5,10 @@ import com.intellij.lang.*
 import com.intellij.lang.impl.PsiBuilderImpl
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Ref
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.xml.XmlElementType
-import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlTokenType
 import com.intellij.util.ThreeState
 import com.intellij.util.TripleFunction
@@ -47,7 +47,10 @@ open class XmlParser :
       newNode: LighterASTNode,
       structure: FlyweightCapableTreeStructure<LighterASTNode>,
     ): ThreeState {
-      if (oldNode is XmlTag && newNode.tokenType === XmlElementType.XML_TAG) {
+      if (oldNode is PsiNamedElement
+          && oldNode.elementType === XmlElementType.XML_TAG
+          && newNode.tokenType === XmlElementType.XML_TAG
+      ) {
         val oldName = oldNode.name
         val childrenRef = Ref.create<Array<LighterASTNode>>()
         val count = structure.getChildren(newNode, childrenRef)
