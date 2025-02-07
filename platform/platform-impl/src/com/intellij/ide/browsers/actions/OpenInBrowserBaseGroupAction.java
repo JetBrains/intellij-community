@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -108,11 +109,8 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
       Editor editor = e.getData(CommonDataKeys.EDITOR);
       final WebBrowserManager browserManager = WebBrowserManager.getInstance();
       PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
-      Language language = null;
-      if (psiFile != null) {
-        language = psiFile.getViewProvider().getBaseLanguage();
-      }
-      else {
+      Language language = psiFile != null ? psiFile.getViewProvider().getBaseLanguage() : null;
+      if (language == null || language == Language.ANY || language == PlainTextLanguage.INSTANCE) {
         VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
         if (virtualFile != null && virtualFile.getFileType() instanceof LanguageFileType fileType) {
           language = fileType.getLanguage();
