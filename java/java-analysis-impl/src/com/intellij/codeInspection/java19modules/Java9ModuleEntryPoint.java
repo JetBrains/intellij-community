@@ -2,10 +2,10 @@
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.codeInsight.daemon.impl.JavaServiceUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.visibility.EntryPointWithVisibilityLevel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -115,7 +115,7 @@ public final class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
   }
 
   private static @Nullable PsiJavaModule getJavaModule(@Nullable PsiElement element) {
-    return element != null && PsiUtil.isAvailable(JavaFeature.MODULES, element) ? JavaModuleGraphUtil.findDescriptorByElement(element) : null;
+    return element != null && PsiUtil.isAvailable(JavaFeature.MODULES, element) ? JavaPsiModuleUtil.findDescriptorByElement(element) : null;
   }
 
   private static boolean isInExportedPackage(@NotNull PsiClass psiClass, @NotNull PsiJavaModule javaModule) {

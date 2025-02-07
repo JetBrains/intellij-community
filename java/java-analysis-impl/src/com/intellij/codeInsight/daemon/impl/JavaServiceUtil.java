@@ -3,9 +3,9 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.NlsSafe;
@@ -84,7 +84,7 @@ public final class JavaServiceUtil {
     String implementerClassName = implementerClass.getQualifiedName();
     if (implementerClassName == null) return Collections.emptyList();
 
-    PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(identifier);
+    PsiJavaModule javaModule = JavaPsiModuleUtil.findDescriptorByElement(identifier);
     if (javaModule == null) return Collections.emptyList();
 
     for (PsiProvidesStatement providesStatement : javaModule.getProvides()) {
@@ -134,7 +134,7 @@ public final class JavaServiceUtil {
     String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName == null) return Collections.emptyList();
 
-    PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(methodCall);
+    PsiJavaModule javaModule = JavaPsiModuleUtil.findDescriptorByElement(methodCall);
     if (javaModule == null) return Collections.emptyList();
 
     for (PsiUsesStatement statement : javaModule.getUses()) {
@@ -162,7 +162,7 @@ public final class JavaServiceUtil {
 
     @Override
     public void navigate(MouseEvent e, @Nullable PsiElement element) {
-      Optional.ofNullable(JavaModuleGraphUtil.findDescriptorByElement(element))
+      Optional.ofNullable(JavaPsiModuleUtil.findDescriptorByElement(element))
         .map(this::findTargetReference)
         .filter(NavigationItem.class::isInstance)
         .map(NavigationItem.class::cast)

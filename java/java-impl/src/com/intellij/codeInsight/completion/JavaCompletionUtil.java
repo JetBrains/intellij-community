@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -521,7 +522,7 @@ public final class JavaCompletionUtil {
             final PsiJavaModule currentModule =
               ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByFile(myOriginalFile, myPlace.getProject()));
             if (currentModule != null) {
-              final PsiJavaModule targetModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByElement(psiClass));
+              final PsiJavaModule targetModule = ReadAction.compute(() -> JavaPsiModuleUtil.findDescriptorByElement(psiClass));
               if (targetModule != null && targetModule != currentModule &&
                   !JavaModuleGraphUtil.reads(currentModule, targetModule)) {
                 LookupElementDecorator<LookupElement> element = generator.apply(presentation -> presentation.setItemTextForeground(JBColor.RED));

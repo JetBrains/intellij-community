@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -49,7 +50,7 @@ public final class HighlightClassUtil {
       }
 
       if (!JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, superClass) &&
-          JavaModuleGraphUtil.findDescriptorByElement(aClass) == null) {
+          JavaPsiModuleUtil.findDescriptorByElement(aClass) == null) {
         String description = StringUtil.capitalize(JavaErrorBundle.message(
           "class.not.allowed.to.extend.sealed.class.from.another.package",
           JavaElementKind.fromElement(aClass).subject(), HighlightUtil.formatClass(aClass, false),
@@ -96,7 +97,7 @@ public final class HighlightClassUtil {
     if (!(parent instanceof PsiClass aClass) || !list.equals(aClass.getPermitsList())) {
       return;
     }
-    PsiJavaModule currentModule = JavaModuleGraphUtil.findDescriptorByElement(aClass);
+    PsiJavaModule currentModule = JavaPsiModuleUtil.findDescriptorByElement(aClass);
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(aClass.getProject());
     for (PsiJavaCodeReferenceElement permitted : list.getReferenceElements()) {
 
@@ -147,7 +148,7 @@ public final class HighlightClassUtil {
             }
             errorSink.accept(info);
           }
-          else if (currentModule != null && !areModulesTheSame(currentModule, JavaModuleGraphUtil.findDescriptorByElement(inheritorClass))) {
+          else if (currentModule != null && !areModulesTheSame(currentModule, JavaPsiModuleUtil.findDescriptorByElement(inheritorClass))) {
             HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
               .range(permitted)
               .descriptionAndTooltip(JavaErrorBundle.message("class.not.allowed.to.extend.sealed.class.from.another.module"));

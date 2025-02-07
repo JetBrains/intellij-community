@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorHighlightType;
@@ -145,7 +146,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myHolder = holder;
     myFile = file;
     myLanguageLevel = PsiUtil.getLanguageLevel(file);
-    myJavaModule = JavaFeature.MODULES.isSufficient(myLanguageLevel) ? JavaModuleGraphUtil.findDescriptorByElement(file) : null;
+    myJavaModule = JavaFeature.MODULES.isSufficient(myLanguageLevel) ? JavaPsiModuleUtil.findDescriptorByElement(file) : null;
     JavaErrorFixProvider errorFixProvider = JavaErrorFixProvider.getInstance();
     myCollector = new JavaErrorCollector(myFile, myJavaModule, error -> reportError(error, errorFixProvider));
   }

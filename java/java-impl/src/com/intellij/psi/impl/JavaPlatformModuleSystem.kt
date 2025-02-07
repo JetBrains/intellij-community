@@ -16,6 +16,7 @@ import com.intellij.execution.process.CapturingProcessRunner
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.java.JavaBundle
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil.findDescriptorByElement
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandAction
@@ -140,7 +141,7 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     isAccessible: (ModuleAccessInfo) -> Boolean,
   ): ErrorWithFixes? {
     val useFile = place.containingFile?.originalFile ?: return null
-    val useModule = JavaModuleGraphUtil.findDescriptorByElement(useFile).let { if (it is LightJavaModule) null else it }
+    val useModule = findDescriptorByElement(useFile).let { if (it is LightJavaModule) null else it }
     val current = CurrentModuleInfo(useModule, place)
 
     val targetModule = target.module
@@ -205,7 +206,7 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
   private fun checkAccess(target: TargetModuleInfo, place: PsiFileSystemItem, quick: Boolean,
                           isAccessible: (ModuleAccessInfo) -> Boolean): ErrorWithFixes? {
-    val useModule = JavaModuleGraphUtil.findDescriptorByElement(place).let { if (it is LightJavaModule) null else it }
+    val useModule = findDescriptorByElement(place).let { if (it is LightJavaModule) null else it }
     val current = CurrentModuleInfo(useModule, place)
 
     val targetModule = target.module
@@ -480,7 +481,7 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
       ModuleUtilCore.findModuleForPsiElement(element)
     }
     override val module: PsiJavaModule? by lazy {
-      JavaModuleGraphUtil.findDescriptorByElement(element)
+      findDescriptorByElement(element)
     }
   }
 

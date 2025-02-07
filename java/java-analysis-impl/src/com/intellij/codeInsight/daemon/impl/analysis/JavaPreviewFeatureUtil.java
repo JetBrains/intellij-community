@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.java.JavaFeature;
@@ -141,7 +142,7 @@ public final class JavaPreviewFeatureUtil {
       annotation = containingClass == null ? null : getPreviewFeatureAnnotationInternal(containingClass);
     }
     if (annotation == null && !(element instanceof PsiJavaModule)) {
-      PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(element);
+      PsiJavaModule javaModule = JavaPsiModuleUtil.findDescriptorByElement(element);
       annotation = javaModule == null ? null : getPreviewFeatureAnnotationInternal(javaModule);
     }
     return annotation;
@@ -191,7 +192,7 @@ public final class JavaPreviewFeatureUtil {
     PsiAnnotation packageAnnotation = getAnnotation(psiPackage);
     if (packageAnnotation != null) return packageAnnotation;
 
-    PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(owner);
+    PsiJavaModule module = JavaPsiModuleUtil.findDescriptorByElement(owner);
     if (module == null) return null;
 
     return getAnnotation(module);

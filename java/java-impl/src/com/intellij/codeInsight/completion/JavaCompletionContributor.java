@@ -11,6 +11,7 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
@@ -983,7 +984,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     List<LookupElement> lookupElements = new SmartList<>();
     PsiJavaFile psiJavaFile = ObjectUtils.tryCast(referenceElement.getContainingFile(), PsiJavaFile.class);
     if (psiJavaFile == null) return lookupElements;
-    PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(psiJavaFile.getOriginalElement());
+    PsiJavaModule javaModule = JavaPsiModuleUtil.findDescriptorByElement(psiJavaFile.getOriginalElement());
     if (javaModule == null) {
       String packageName = psiJavaFile.getPackageName();
       PsiPackage psiPackage = JavaPsiFacade.getInstance(psiJavaFile.getProject()).findPackage(packageName);
@@ -1414,7 +1415,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
           return psiJavaModule.getName();
         };
         String currentJavaModuleName = getModuleName.apply(PsiTreeUtil.getParentOfType(statement, PsiJavaModule.class));
-        if (currentJavaModuleName == null) currentJavaModuleName = getModuleName.apply(JavaModuleGraphHelper.getInstance().findDescriptorByElement(originalFile));
+        if (currentJavaModuleName == null) currentJavaModuleName = getModuleName.apply(JavaPsiModuleUtil.findDescriptorByElement(originalFile));
         if (currentJavaModuleName == null) currentJavaModuleName = findModuleName(originalFile, position);
 
         if (currentJavaModuleName != null) {

@@ -2,6 +2,7 @@
 package com.intellij.psi.util.proximity;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.NotNullLazyKey;
@@ -120,7 +121,7 @@ public final class ExplicitlyImportedWeigher extends ProximityWeigher {
 
         List<PsiJavaModule> importedModules = PLACE_IMPORTED_MODULES.getValue(location);
         if (importedModules != null && !importedModules.isEmpty()) {
-          PsiJavaModule suggestedModule = JavaModuleGraphHelper.getInstance().findDescriptorByElement(element);
+          PsiJavaModule suggestedModule = JavaPsiModuleUtil.findDescriptorByElement(element);
           if (suggestedModule != null && importedModules.contains(suggestedModule)) return ImportWeight.MODULE_IMPORTED;
         }
 

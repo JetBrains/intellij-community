@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.JavaServiceUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -78,7 +79,7 @@ final class ModuleHighlightUtil {
       if (pack != null) {
         ProjectFileIndex fileIndex = ProjectRootManager.getInstance(pack.getProject()).getFileIndex();
         for (PsiDirectory directory : pack.getDirectories()) {
-          PsiJavaModule anotherJavaModule = JavaModuleGraphUtil.findDescriptorByElement(directory);
+          PsiJavaModule anotherJavaModule = JavaPsiModuleUtil.findDescriptorByElement(directory);
           if (anotherJavaModule != null) {
             VirtualFile moduleVFile = PsiUtilCore.getVirtualFile(anotherJavaModule);
             if (moduleVFile != null && ContainerUtil.find(fileIndex.getOrderEntriesForFile(moduleVFile), JdkOrderEntry.class::isInstance) != null) {

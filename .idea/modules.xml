@@ -443,6 +443,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/java-analysis-api/intellij.java.analysis.iml" filepath="$PROJECT_DIR$/java/java-analysis-api/intellij.java.analysis.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-analysis-impl/intellij.java.analysis.impl.iml" filepath="$PROJECT_DIR$/java/java-analysis-impl/intellij.java.analysis.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ByteCodeViewer/intellij.java.byteCodeViewer.iml" filepath="$PROJECT_DIR$/plugins/ByteCodeViewer/intellij.java.byteCodeViewer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java/codeserver/core/intellij.java.codeserver.core.iml" filepath="$PROJECT_DIR$/java/codeserver/core/intellij.java.codeserver.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/codeserver/highlighting/intellij.java.codeserver.highlighting.iml" filepath="$PROJECT_DIR$/java/codeserver/highlighting/intellij.java.codeserver.highlighting.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/openapi/intellij.java.compiler.iml" filepath="$PROJECT_DIR$/java/compiler/openapi/intellij.java.compiler.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/javac2/intellij.java.compiler.antTasks.iml" filepath="$PROJECT_DIR$/java/compiler/javac2/intellij.java.compiler.antTasks.iml" />

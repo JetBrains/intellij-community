@@ -23,7 +23,7 @@ public final class JavaMultiReleaseUtil {
    * Minimal JDK version which supports multi-release Jars
    */
   public static final LanguageLevel MIN_MULTI_RELEASE_VERSION = LanguageLevel.JDK_1_9;
-  
+
   private static class VersionRootInfo {
     final @NotNull LanguageLevel level;
     final @NotNull VirtualFile versionRoot;
@@ -98,17 +98,39 @@ public final class JavaMultiReleaseUtil {
    * @param file file that represents a non-version-specific file from an MR-JAR
    * @param level desired language level
    * @return a version of the file, which should be loaded on the specified language level. Returns
-   * input file if there's no more-specific version of the file, or the input file is not located inside MR-JAR.
+   * the input file if there's no more-specific version of the file, or the input file is not located inside MR-JAR.
    */
   public static @NotNull VirtualFile findVersionSpecificFile(@NotNull VirtualFile file, @NotNull LanguageLevel level) {
     VirtualFile root = VfsUtilCore.getRootFile(file);
     if (!(root.getFileType() instanceof ArchiveFileType)) return file;
     String relativePath = VfsUtilCore.getRelativePath(file, root);
     if (relativePath == null) return file;
+    return findFileImpl(file, level, root, relativePath);
+  }
+
+  /**
+   * @param root content root
+   * @param relativePath path to the file relative to content root
+   * @param level desired language level
+   * @return a version of the file, which should be loaded on the specified language level. Returns null if the file is not found.
+   */
+  public static @Nullable VirtualFile findVersionSpecificFile(@NotNull VirtualFile root,
+                                                              @NotNull String relativePath,
+                                                              @NotNull LanguageLevel level) {
+    VirtualFile file = root.findFileByRelativePath(relativePath);
+    if (!(root.getFileType() instanceof ArchiveFileType)) return file;
+    return findFileImpl(file, level, root, relativePath);
+  }
+
+  @Contract("!null, _, _, _ -> !null")
+  private static @Nullable VirtualFile findFileImpl(@Nullable VirtualFile defaultFile,
+                                                    @NotNull LanguageLevel level,
+                                                    @NotNull VirtualFile root,
+                                                    @NotNull String relativePath) {
     VirtualFile metaInf = root.findChild("META-INF");
-    if (metaInf == null) return file;
+    if (metaInf == null) return defaultFile;
     VirtualFile versions = metaInf.findChild("versions");
-    if (versions == null) return file;
+    if (versions == null) return defaultFile;
     int feature = level.feature();
     int minFeature = MIN_MULTI_RELEASE_VERSION.feature();
     while (feature >= minFeature) {
@@ -121,7 +143,7 @@ public final class JavaMultiReleaseUtil {
       }
       feature--;
     }
-    return file;
+    return defaultFile;
   }
 
   /**

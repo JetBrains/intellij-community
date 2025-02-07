@@ -3,9 +3,9 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -64,7 +64,7 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
           return;
         }
 
-        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(aClass);
+        PsiJavaModule javaModule = JavaPsiModuleUtil.findDescriptorByElement(aClass);
         if (javaModule != null) {
           return;
         }

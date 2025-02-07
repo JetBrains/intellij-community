@@ -37,6 +37,7 @@
   - name: intellij.platform.uast
   - name: intellij.platform.uast.ide
   - name: intellij.java.uast.ide
+  - name: intellij.java.codeserver.core
   - name: intellij.java.codeserver.highlighting
   - name: intellij.java.compiler.impl
   - name: intellij.java.debugger.impl

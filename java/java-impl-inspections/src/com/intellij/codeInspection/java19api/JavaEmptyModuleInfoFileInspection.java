@@ -4,6 +4,7 @@ package com.intellij.codeInspection.java19api;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.module.Module;
@@ -158,12 +159,12 @@ public class JavaEmptyModuleInfoFileInspection extends AbstractBaseJavaLocalInsp
     if (psiElement instanceof PsiPackage psiPackage) {
       PsiDirectory[] directories = psiPackage.getDirectories(psiPackage.getResolveScope());
       for (PsiDirectory directory : directories) {
-        PsiJavaModule descriptor = JavaModuleGraphUtil.findDescriptorByElement(directory);
+        PsiJavaModule descriptor = JavaPsiModuleUtil.findDescriptorByElement(directory);
         if (descriptor != null) return descriptor;
       }
     }
     else {
-      return JavaModuleGraphUtil.findDescriptorByElement(psiElement);
+      return JavaPsiModuleUtil.findDescriptorByElement(psiElement);
     }
     return null;
   }
