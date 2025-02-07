@@ -3,7 +3,7 @@ package com.intellij.xdebugger.mixedMode
 
 import com.intellij.xdebugger.frame.XSuspendContext
 
-interface XMixedModeHighLevelDebugProcess : XMixedModeDebugProcessExtension {
+interface XMixedModeHighLevelDebugProcessExtension : XMixedModeDebugProcessExtension {
   fun pauseMixedModeSession()
   suspend fun isStepWillBringIntoNativeCode(suspendContext: XSuspendContext): Boolean
 

@@ -35,8 +35,8 @@ import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMach
 import com.intellij.xdebugger.impl.mixedmode.MixedModeProcessTransitionStateMachine.Stop
 import com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
 import com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizer
-import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
-import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
+import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcessExtension
+import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcessExtension
 import com.intellij.xdebugger.mixedMode.XMixedModeProcessesConfiguration
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.ui.XDebugTabLayouter
@@ -59,18 +59,18 @@ class XMixedModeCombinedDebugProcess(
   private var myProcessHandler: XMixedModeProcessHandler? = null
   private var editorsProvider: XMixedModeDebuggersEditorProvider? = null
   private val coroutineScope get() = session.coroutineScope
-  private val stateMachine = MixedModeProcessTransitionStateMachine(low as XMixedModeLowLevelDebugProcess, high as XMixedModeHighLevelDebugProcess, coroutineScope)
+  private val stateMachine = MixedModeProcessTransitionStateMachine(low, high, coroutineScope)
   private var myAttract : Boolean = false // being accessed on EDT
   private var highLevelDebugProcessReady : Boolean = false
-  private val lowAsExtension get() = low as XMixedModeLowLevelDebugProcess
-  private val highAsExtension get() = high as XMixedModeHighLevelDebugProcess
+  private val lowExtension get() = low.mixedModeDebugProcessExtension as XMixedModeLowLevelDebugProcessExtension
+  private val highExtension get() = high.mixedModeDebugProcessExtension as XMixedModeHighLevelDebugProcessExtension
   private var positionReachedInProgress: Boolean = false
   init {
     coroutineScope.launch(Dispatchers.Default) {
       while (true) {
         when(val newState = stateMachine.stateChannel.receive()) {
           is BothStopped -> {
-            val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, lowAsExtension, coroutineScope)
+            val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, lowExtension, coroutineScope)
             withContext(Dispatchers.EDT) {
               positionReachedInProgress = true
               try {
@@ -99,7 +99,7 @@ class XMixedModeCombinedDebugProcess(
     if (!isMixedModeHighProcessReady() || positionReachedInProgress) return false
 
     myAttract = myAttract || attract // if any of the processes requires attraction, we'll do it
-    val isHighSuspendContext = !lowAsExtension.belongsToMe(suspendContext)
+    val isHighSuspendContext = !lowExtension.belongsToMe(suspendContext)
     stateMachine.set(if (isHighSuspendContext) HighLevelPositionReached(suspendContext) else LowLevelPositionReached(suspendContext))
     return true
   }
@@ -266,7 +266,7 @@ class XMixedModeCombinedDebugProcess(
   override fun isLibraryFrameFilterSupported(): Boolean = processes.all { it.isLibraryFrameFilterSupported }
 
   override fun logStack(suspendContext: XSuspendContext, session: XDebugSession) {
-    if (lowAsExtension.belongsToMe(suspendContext))
+    if (lowExtension.belongsToMe(suspendContext))
       low.logStack(suspendContext, session)
     else
       high.logStack(suspendContext, session)
@@ -300,7 +300,7 @@ class XMixedModeCombinedDebugProcess(
                                                                 ?: (low as? XDebugSessionTabCustomizer)
 
   private fun mixedStepInto(suspendContext: XMixedModeSuspendContext) {
-    val isLowLevelStep = !highAsExtension.stoppedInManagedContext(suspendContext)
+    val isLowLevelStep = !highExtension.stoppedInManagedContext(suspendContext)
     if (isLowLevelStep) {
       stateMachine.set(LowLevelStepRequested(suspendContext, StepType.Into))
     }
@@ -308,7 +308,7 @@ class XMixedModeCombinedDebugProcess(
       val stepSuspendContext = suspendContext.highLevelDebugSuspendContext
       coroutineScope.launch {
         val newState =
-          if (highAsExtension.isStepWillBringIntoNativeCode(stepSuspendContext))
+          if (highExtension.isStepWillBringIntoNativeCode(stepSuspendContext))
             MixedStepRequested(stepSuspendContext, MixedStepType.IntoLowFromHigh)
           else
             HighLevelDebuggerStepRequested(stepSuspendContext, StepType.Into)
@@ -319,7 +319,7 @@ class XMixedModeCombinedDebugProcess(
   }
 
   private fun mixedStepOver(suspendContext: XMixedModeSuspendContext) {
-    val isLowLevelStep = !highAsExtension.stoppedInManagedContext(suspendContext)
+    val isLowLevelStep = !highExtension.stoppedInManagedContext(suspendContext)
 
     val stepType = StepType.Over
     val newState = if (isLowLevelStep) LowLevelStepRequested(suspendContext, stepType) else HighLevelDebuggerStepRequested(suspendContext.highLevelDebugSuspendContext, stepType)
@@ -327,7 +327,7 @@ class XMixedModeCombinedDebugProcess(
   }
 
   private fun mixedStepOut(suspendContext: XMixedModeSuspendContext) {
-    val isLowLevelStep = !highAsExtension.stoppedInManagedContext(suspendContext)
+    val isLowLevelStep = !highExtension.stoppedInManagedContext(suspendContext)
 
     val stepType = StepType.Out
     val newState = if (isLowLevelStep) LowLevelStepRequested(suspendContext, stepType) else HighLevelDebuggerStepRequested(suspendContext.highLevelDebugSuspendContext, stepType)
@@ -335,7 +335,7 @@ class XMixedModeCombinedDebugProcess(
   }
 
   private fun mixedRunToPosition(position: XSourcePosition, suspendContext: XMixedModeSuspendContext) {
-    val isLowLevelStep = lowAsExtension.belongsToMe(position.file)
+    val isLowLevelStep = lowExtension.belongsToMe(position.file)
     val actionSuspendContext = if (isLowLevelStep) suspendContext.lowLevelDebugSuspendContext else suspendContext.highLevelDebugSuspendContext
     val state = if (isLowLevelStep) LowLevelRunToAddress(position, actionSuspendContext) else HighLevelRunToAddress(position, actionSuspendContext)
     this.stateMachine.set(state)

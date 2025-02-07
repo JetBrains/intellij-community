@@ -5,7 +5,7 @@ import com.intellij.xdebugger.frame.XMixedModeSuspendContextBase
 import com.intellij.xdebugger.frame.XSuspendContext
 import kotlinx.coroutines.Deferred
 
-interface XMixedModeLowLevelDebugProcess : XMixedModeDebugProcessExtension {
+interface XMixedModeLowLevelDebugProcessExtension : XMixedModeDebugProcessExtension {
   val ready : Deferred<Unit>
   val mixedStackBuilder: MixedModeStackBuilder
 

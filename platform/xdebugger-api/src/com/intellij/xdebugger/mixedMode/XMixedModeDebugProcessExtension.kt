@@ -11,6 +11,3 @@ interface XMixedModeDebugProcessExtension {
   fun belongsToMe(frame: XStackFrame): Boolean
   fun belongsToMe(file: VirtualFile): Boolean
 }
-
-val XMixedModeDebugProcessExtension.asXDebugProcess: XDebugProcess
-  get() = this as XDebugProcess

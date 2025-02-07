@@ -5,8 +5,8 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
-import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcess
-import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
+import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcessExtension
+import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcessExtension
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 val XDebugSession.mixedModeExecutionStack: XMixedModeExecutionStack?
@@ -37,16 +37,16 @@ val XDebugSession.lowLevelProcessOrThrow: XDebugProcess
 val XDebugSession.highLevelProcessOrThrow: XDebugProcess
   get() = debugProcess.highLevelProcessOrThrow
 
-val XDebugProcess.lowLevelMixedModeExtensionOrThrow: XMixedModeLowLevelDebugProcess
-  get() = lowLevelProcessOrThrow as XMixedModeLowLevelDebugProcess
+val XDebugProcess.lowLevelMixedModeExtensionOrThrow: XMixedModeLowLevelDebugProcessExtension
+  get() = lowLevelProcessOrThrow.mixedModeDebugProcessExtension as XMixedModeLowLevelDebugProcessExtension
 
-val XDebugProcess.highLevelMixedModeExtensionOrThrow: XMixedModeHighLevelDebugProcess
-  get() = highLevelProcessOrThrow as XMixedModeHighLevelDebugProcess
+val XDebugProcess.highLevelMixedModeExtensionOrThrow: XMixedModeHighLevelDebugProcessExtension
+  get() = highLevelProcessOrThrow.mixedModeDebugProcessExtension as XMixedModeHighLevelDebugProcessExtension
 
-val XDebugSession.lowLevelMixedModeExtensionOrThrow: XMixedModeLowLevelDebugProcess
+val XDebugSession.lowLevelMixedModeExtensionOrThrow: XMixedModeLowLevelDebugProcessExtension
   get() = debugProcess.lowLevelMixedModeExtensionOrThrow
 
-val XDebugSession.highLevelMixedModeExtension: XMixedModeHighLevelDebugProcess
+val XDebugSession.highLevelMixedModeExtension: XMixedModeHighLevelDebugProcessExtension
   get() = debugProcess.highLevelMixedModeExtensionOrThrow
 
 val XDebugSession.highLevelSuspendContext: XSuspendContext?

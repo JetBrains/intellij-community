@@ -10,7 +10,7 @@ import com.intellij.xdebugger.frame.XMixedModeSuspendContextBase
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.frame.nativeThreadId
 import com.intellij.xdebugger.impl.util.adviseOnFrameChanged
-import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcess
+import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcessExtension
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -30,7 +30,7 @@ class XMixedModeSuspendContext(
   val session: XDebugSession,
   lowLevelDebugSuspendContext: XSuspendContext,
   highLevelDebugSuspendContext: XSuspendContext,
-  val lowLevelDebugProcess: XMixedModeLowLevelDebugProcess,
+  val lowLevelDebugProcess: XMixedModeLowLevelDebugProcessExtension,
   val mixedModeDebugCoroutineScope: CoroutineScope,
 ) : XMixedModeSuspendContextBase(lowLevelDebugSuspendContext, highLevelDebugSuspendContext) {
 

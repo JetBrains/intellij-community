@@ -16,6 +16,7 @@ import com.intellij.xdebugger.frame.XDropFrameHandler;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
+import com.intellij.xdebugger.mixedMode.XMixedModeDebugProcessExtension;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.ApiStatus;
@@ -313,5 +314,11 @@ public abstract class XDebugProcess {
   @ApiStatus.Experimental
   public boolean dependsOnPlugin(@NotNull IdeaPluginDescriptor descriptor) {
     return false;
+  }
+
+  @ApiStatus.Experimental
+  @Nullable
+  public XMixedModeDebugProcessExtension getMixedModeDebugProcessExtension() {
+    return null;
   }
 }
