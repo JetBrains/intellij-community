@@ -28,7 +28,7 @@ def find_shebang_start_index(where_to_search_shebang: bytes) -> int:
         return default_offset
 
     # Not found in default offset? Let's search
-    for drive_letter_code in range(ord('a'), ord('z')):
+    for drive_letter_code in range(ord('a'), ord('z') + 1):
         for drive_letter in [chr(drive_letter_code), chr(drive_letter_code).upper()]:
             try:
                 return where_to_search_shebang.index(
