@@ -43,9 +43,9 @@ object K2CreateClassFromUsageBuilder {
 
         analyze(refExpr) {
             val expectedType: ExpectedKotlinType? = refExpr.getExpectedKotlinType()
-            val superClass: KtClass? = expectedType?.ktType?.convertToClass()
+            val superClass: KtClass? = expectedType?.kaType?.convertToClass()
 
-            val superClassSymbol = superClass?.classSymbol ?: (expectedType?.ktType as? KaClassType)?.symbol as? KaClassSymbol
+            val superClassSymbol = superClass?.classSymbol ?: (expectedType?.kaType as? KaClassType)?.symbol as? KaClassSymbol
             val superClassName:String? = superClass?.name
             val isAny = superClassName == StandardClassIds.Any.shortClassName.asString()
             val returnTypeString: String = if (superClass == null || superClassName == null || isAny) ""

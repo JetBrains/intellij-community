@@ -69,7 +69,7 @@ object K2CreateLocalVariableFromUsageBuilder {
                 analyze(refExpr) {
                     if (assignment == null) {
                         val expressionForTypeGuess = originalElement.getAssignmentByLHS()?.right ?: originalElement
-                        expressionForTypeGuess.getExpectedKotlinType()?.ktType?.defaultInitializer
+                        expressionForTypeGuess.getExpectedKotlinType()?.kaType?.defaultInitializer
                     }
                     else {
                         "x"

@@ -146,7 +146,7 @@ object CreateKotlinCallableActionTextBuilder {
     context (KaSession)
     @OptIn(KaExperimentalApi::class)
     fun renderTypeName(expectedType: ExpectedType, container: KtElement): String? {
-        val ktType = if (expectedType is ExpectedKotlinType) expectedType.ktType else expectedType.toKtTypeWithNullability(container)
+        val ktType = if (expectedType is ExpectedKotlinType) expectedType.kaType else expectedType.toKtTypeWithNullability(container)
         if (ktType == null || ktType == builtinTypes.unit) return null
         return ktType.render(renderer = K2CreateFunctionFromUsageUtil.WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
     }

@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.hasApplicableAllowedTarget
@@ -255,7 +254,7 @@ object K2CreatePropertyFromUsageBuilder {
                 analyze(container) {
                     val expectedType = request.fieldType.firstOrNull()
                     val type = when (expectedType) {
-                        is ExpectedKotlinType -> expectedType.ktType
+                        is ExpectedKotlinType -> expectedType.kaType
                         else -> (expectedType?.theType as? PsiType)?.asKaType(container)
                     }
                     type?.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.IN_VARIANCE)
