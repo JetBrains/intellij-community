@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.BannerStartPagePromoter
+import com.intellij.openapi.wm.StartPagePromoter.Companion.PRIORITY_LEVEL_NORMAL
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.messages.MessageBusConnection
@@ -52,6 +53,8 @@ internal class TechInsightsLabPromoter : BannerStartPagePromoter() {
   }
 
   private var facadeConnection: MessageBusConnection? = null
+
+  override fun getPriorityLevel() = PRIORITY_LEVEL_NORMAL - 1
 
   override fun getPromotion(isEmptyState: Boolean): JComponent {
     val promotion = super.getPromotion(isEmptyState)
