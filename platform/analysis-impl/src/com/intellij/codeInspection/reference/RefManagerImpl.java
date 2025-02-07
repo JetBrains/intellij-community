@@ -179,8 +179,8 @@ public class RefManagerImpl extends RefManager {
   public void fireNodeMarkedReferenced(RefElement refWhat,
                                        RefElement refFrom,
                                        boolean referencedFromClassInitializer,
-                                       final boolean forReading,
-                                       final boolean forWriting) {
+                                       boolean forReading,
+                                       boolean forWriting) {
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
       annotator.onMarkReferenced(refWhat, refFrom, referencedFromClassInitializer, forReading, forWriting);
     }
@@ -189,8 +189,8 @@ public class RefManagerImpl extends RefManager {
   public void fireNodeMarkedReferenced(RefElement refWhat,
                                        RefElement refFrom,
                                        boolean referencedFromClassInitializer,
-                                       final boolean forReading,
-                                       final boolean forWriting,
+                                       boolean forReading,
+                                       boolean forWriting,
                                        PsiElement element) {
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
       annotator.onMarkReferenced(refWhat, refFrom, referencedFromClassInitializer, forReading, forWriting, element);
@@ -212,8 +212,8 @@ public class RefManagerImpl extends RefManager {
   public void registerGraphAnnotator(@NotNull RefGraphAnnotator annotator) {
     if (!myGraphAnnotators.contains(annotator)) {
       myGraphAnnotators.add(annotator);
-      if (annotator instanceof RefGraphAnnotatorEx) {
-        ((RefGraphAnnotatorEx)annotator).initialize(this);
+      if (annotator instanceof RefGraphAnnotatorEx annotatorEx) {
+        annotatorEx.initialize(this);
       }
     }
   }
@@ -232,13 +232,13 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
-  public <T> T getExtension(final @NotNull Key<T> key) {
+  public <T> T getExtension(@NotNull Key<T> key) {
     //noinspection unchecked
     return (T)myExtensions.get(key);
   }
 
   @Override
-  public @Nullable String getType(final @NotNull RefEntity ref) {
+  public @Nullable String getType(@NotNull RefEntity ref) {
     for (RefManagerExtension<?> extension : myExtensions.values()) {
       final String type = extension.getType(ref);
       if (type != null) return type;
@@ -267,14 +267,14 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
-  public @Nullable Element export(@NotNull RefEntity refEntity, final int actualLine) {
+  public @Nullable Element export(@NotNull RefEntity refEntity, int actualLine) {
     refEntity = getRefinedElement(refEntity);
 
     Element problem = new Element("problem");
 
-    if (refEntity instanceof RefDirectory) {
+    if (refEntity instanceof RefDirectory dir) {
       Element fileElement = new Element("file");
-      VirtualFile virtualFile = ((PsiDirectory)((RefDirectory)refEntity).getPsiElement()).getVirtualFile();
+      VirtualFile virtualFile = ((PsiDirectory)dir.getPsiElement()).getVirtualFile();
       fileElement.addContent(virtualFile.getUrl());
       problem.addContent(fileElement);
     }
@@ -363,7 +363,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
-  public @Nullable String getGroupName(final @NotNull RefElement entity) {
+  public @Nullable String getGroupName(@NotNull RefElement entity) {
     for (RefManagerExtension<?> extension : myExtensions.values()) {
       final String groupName = extension.getGroupName(entity);
       if (groupName != null) return groupName;
@@ -381,7 +381,7 @@ public class RefManagerImpl extends RefManager {
     return containingDirs.isEmpty() ? null : StringUtil.join(containingDirs, "/");
   }
 
-  private static void appendModule(final Element problem, final RefModule refModule) {
+  private static void appendModule(Element problem, RefModule refModule) {
     if (refModule != null) {
       Element moduleElement = new Element("module");
       moduleElement.addContent(refModule.getName());
@@ -605,7 +605,7 @@ public class RefManagerImpl extends RefManager {
     myCachedSortedRefs = null;
   }
 
-  private static @NotNull PsiAnchor createAnchor(final @NotNull PsiElement element) {
+  private static @NotNull PsiAnchor createAnchor(@NotNull PsiElement element) {
     return ReadAction.compute(() -> PsiAnchor.create(element));
   }
 
@@ -719,7 +719,7 @@ public class RefManagerImpl extends RefManager {
     return getReference(elem, false);
   }
 
-  public @Nullable RefElement getReference(PsiElement elem, final boolean ignoreScope) {
+  public @Nullable RefElement getReference(PsiElement elem, boolean ignoreScope) {
     if (ReadAction.compute(() -> elem == null || !elem.isValid() ||
                                  elem instanceof LightElement || !(elem instanceof PsiDirectory) && !belongsToScope(elem, ignoreScope))) {
       return null;
@@ -733,23 +733,23 @@ public class RefManagerImpl extends RefManager {
           final RefElement refElement = extension.createRefElement(elem);
           if (refElement != null) return (RefElementImpl)refElement;
         }
-        if (elem instanceof PsiFile) {
-          return new RefFileImpl((PsiFile)elem, this);
+        if (elem instanceof PsiFile file) {
+          return new RefFileImpl(file, this);
         }
-        if (elem instanceof PsiDirectory) {
-          return new RefDirectoryImpl((PsiDirectory)elem, this);
+        if (elem instanceof PsiDirectory dir) {
+          return new RefDirectoryImpl(dir, this);
         }
         return null;
       }),
       element -> ReadAction.run(() -> element.initializeIfNeeded()));
   }
 
-  private RefManagerExtension<?> getExtension(final Language language) {
+  private RefManagerExtension<?> getExtension(Language language) {
     return myLanguageExtensions.get(language);
   }
 
   @Override
-  public @Nullable RefEntity getReference(final String type, final String fqName) {
+  public @Nullable RefEntity getReference(String type, String fqName) {
     for (RefManagerExtension<?> extension : myExtensions.values()) {
       final RefEntity refEntity = extension.getReference(type, fqName);
       if (refEntity != null) return refEntity;
@@ -774,7 +774,7 @@ public class RefManagerImpl extends RefManager {
     return null;
   }
 
-  public @Nullable <T extends RefElement> T getFromRefTableOrCache(final @NotNull PsiElement element, @NotNull NullableFactory<? extends T> factory) {
+  public @Nullable <T extends RefElement> T getFromRefTableOrCache(@NotNull PsiElement element, @NotNull NullableFactory<? extends T> factory) {
     return getFromRefTableOrCache(element, factory, null);
   }
 
@@ -820,11 +820,11 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
-  public boolean belongsToScope(final PsiElement psiElement) {
+  public boolean belongsToScope(PsiElement psiElement) {
     return belongsToScope(psiElement, false);
   }
 
-  private boolean belongsToScope(final PsiElement psiElement, final boolean ignoreScope) {
+  private boolean belongsToScope(PsiElement psiElement, boolean ignoreScope) {
     if (psiElement == null || !psiElement.isValid()) return false;
     if (psiElement instanceof PsiCompiledElement) return false;
     final PsiFile containingFile = ReadAction.compute(psiElement::getContainingFile);
