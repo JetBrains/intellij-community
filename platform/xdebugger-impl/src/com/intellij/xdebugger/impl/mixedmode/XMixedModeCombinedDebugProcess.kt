@@ -37,18 +37,21 @@ import com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
 import com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizer
 import com.intellij.xdebugger.mixedMode.XMixedModeHighLevelDebugProcessExtension
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcessExtension
+import com.intellij.xdebugger.mixedMode.XMixedModeProcessHandler
 import com.intellij.xdebugger.mixedMode.XMixedModeProcessesConfiguration
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.Promise
 import javax.swing.event.HyperlinkListener
 
 private val LOG = logger<XMixedModeCombinedDebugProcess>()
 
+@ApiStatus.Internal
 class XMixedModeCombinedDebugProcess(
   val low: XDebugProcess,
   val high: XDebugProcess,

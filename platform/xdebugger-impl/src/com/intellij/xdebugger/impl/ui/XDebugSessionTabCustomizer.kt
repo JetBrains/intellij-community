@@ -27,6 +27,7 @@ fun XDebugProcess.getBottomLocalsComponentProvider(): SessionTabComponentProvide
   return (this as? XDebugSessionTabCustomizer)?.getBottomLocalsComponentProvider()
 }
 
+@ApiStatus.Internal
 fun XDebugProcess.useSplitterView(): Boolean = getBottomLocalsComponentProvider() != null
 
 

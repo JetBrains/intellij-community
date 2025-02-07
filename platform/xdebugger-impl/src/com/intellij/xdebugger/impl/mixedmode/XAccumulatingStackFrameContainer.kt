@@ -6,7 +6,9 @@ import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class XAccumulatingStackFrameContainer : XExecutionStack.XStackFrameContainer {
   private var delegateErrorContainer: XExecutionStack.XStackFrameContainer? = null
   private val myFramesDeferred = CompletableDeferred<List<XStackFrame>>()

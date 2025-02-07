@@ -16,7 +16,7 @@ import kotlinx.coroutines.channels.Channel
 private val logger = logger<MixedModeProcessTransitionStateMachine>()
 
 @Suppress("SSBasedInspection")
-class MixedModeProcessTransitionStateMachine(
+internal class MixedModeProcessTransitionStateMachine(
   private val low: XDebugProcess,
   private val high: XDebugProcess,
   private val coroutineScope: CoroutineScope,

@@ -1,10 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.xdebugger
+package com.intellij.xdebugger.mixedMode
 
 import com.intellij.execution.process.CompositeProcessHandler
 import com.intellij.execution.process.ProcessHandler
-import com.intellij.xdebugger.mixedMode.XMixedModeProcessesConfiguration
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class XMixedModeProcessHandler(
   highLevelProcessHandler: ProcessHandler,
   lowLevelProcessHandler: ProcessHandler,

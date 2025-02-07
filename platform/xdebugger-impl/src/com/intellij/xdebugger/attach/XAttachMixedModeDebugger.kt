@@ -3,7 +3,9 @@ package com.intellij.xdebugger.attach
 
 import com.intellij.execution.process.ProcessInfo
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface XAttachMixedModeDebugger {
   fun attachMixedModeDebugSession(
     project: Project,

@@ -2,7 +2,9 @@
 package com.intellij.xdebugger.mixedMode
 
 import com.intellij.xdebugger.frame.XSuspendContext
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface XMixedModeHighLevelDebugProcessExtension : XMixedModeDebugProcessExtension {
   fun pauseMixedModeSession()
   suspend fun isStepWillBringIntoNativeCode(suspendContext: XSuspendContext): Boolean

@@ -3,12 +3,15 @@ package com.intellij.xdebugger.mixedMode
 
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface MixedModeStackBuilder {
   /**
   * On exception only low level threads will be shown
    * frameToSelectIndex == null, means we agree to select the highest frame by default
    */
+  @ApiStatus.Internal
   data class MixedBuiltStackResult(val lowLevelToHighLevelFrameMap: Map<XStackFrame, XStackFrame?>, val highestHighLevelFrame: XStackFrame?)
   suspend fun buildMixedStack(
     lowExecutionStack: XExecutionStack,

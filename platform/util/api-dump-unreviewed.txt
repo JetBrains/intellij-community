@@ -106,6 +106,16 @@ a:com.intellij.execution.process.BaseProcessHandler
 - f:getProcess():java.lang.Process
 - getProcessInput():java.io.OutputStream
 - p:onOSProcessTerminated(I):V
+c:com.intellij.execution.process.CompositeProcessHandler
+- com.intellij.execution.process.ProcessHandler
+- <init>(java.util.List):V
+- p:destroyProcessImpl():V
+- detachIsDefault():Z
+- p:detachProcessImpl():V
+- f:getHandlers():java.util.List
+- getProcessInput():java.io.OutputStream
+- startNotify():V
+- p:startNotifyHandler(com.intellij.execution.process.ProcessHandler):V
 c:com.intellij.execution.process.NopProcessHandler
 - com.intellij.execution.process.ProcessHandler
 - <init>():V

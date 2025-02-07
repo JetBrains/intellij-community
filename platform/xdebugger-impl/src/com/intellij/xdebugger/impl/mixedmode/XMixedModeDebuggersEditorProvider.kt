@@ -14,7 +14,7 @@ import com.intellij.xdebugger.evaluation.InlineDebuggerHelper
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import org.jetbrains.annotations.Unmodifiable
 
-class XMixedModeDebuggersEditorProvider(
+internal class XMixedModeDebuggersEditorProvider(
   val session: XDebugSession,
   val lowDebuggerEditorsProvider: XDebuggerEditorsProvider,
   val highDebuggerEditorsProvider: XDebuggerEditorsProvider,

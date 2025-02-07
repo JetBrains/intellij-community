@@ -317,6 +317,7 @@ public abstract class XDebugProcess {
   }
 
   @ApiStatus.Experimental
+  @ApiStatus.Internal
   @Nullable
   public XMixedModeDebugProcessExtension getMixedModeDebugProcessExtension() {
     return null;

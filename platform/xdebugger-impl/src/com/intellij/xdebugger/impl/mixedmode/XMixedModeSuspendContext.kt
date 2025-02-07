@@ -19,6 +19,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
@@ -26,6 +27,7 @@ import kotlin.time.measureTimedValue
 
 private val logger = logger<XMixedModeSuspendContext>()
 
+@ApiStatus.Internal
 class XMixedModeSuspendContext(
   val session: XDebugSession,
   lowLevelDebugSuspendContext: XSuspendContext,
@@ -162,5 +164,5 @@ class XMixedModeSuspendContext(
   }
 }
 
-fun XSuspendContext.asMixedModeSuspendContext(): XMixedModeSuspendContext = (this as XMixedModeSuspendContext)
-fun XSuspendContext.mixedActiveStack(): XMixedModeExecutionStack = asMixedModeSuspendContext().activeExecutionStack as XMixedModeExecutionStack
+internal fun XSuspendContext.asMixedModeSuspendContext(): XMixedModeSuspendContext = (this as XMixedModeSuspendContext)
+internal fun XSuspendContext.mixedActiveStack(): XMixedModeExecutionStack = asMixedModeSuspendContext().activeExecutionStack as XMixedModeExecutionStack

@@ -6,7 +6,7 @@ import com.intellij.execution.ui.RunnerLayoutUi
 import com.intellij.ui.content.Content
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 
-class XCombinedDebugTabLayouter(
+internal class XCombinedDebugTabLayouter(
   val tabLayouters: List<XDebugTabLayouter>,
   val consoleLayouter: XDebugTabLayouter
 ) : XDebugTabLayouter() {

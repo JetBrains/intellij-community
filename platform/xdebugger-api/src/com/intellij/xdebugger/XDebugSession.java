@@ -174,5 +174,6 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   RunnerLayoutUi getUI();
 
+  @ApiStatus.Internal
   boolean isMixedMode();
 }
