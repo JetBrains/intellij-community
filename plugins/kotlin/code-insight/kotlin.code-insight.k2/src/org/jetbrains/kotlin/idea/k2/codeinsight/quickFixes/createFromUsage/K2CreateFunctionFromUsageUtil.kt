@@ -127,7 +127,7 @@ object K2CreateFunctionFromUsageUtil {
 
         expectedType = makeAccessibleInCreationPlace(expectedType, this) ?: return null
         val jvmType = expectedType.convertToJvmType(this) ?: return null
-        return ExpectedKotlinType(expectedType, jvmType)
+        return ExpectedKotlinType.create(expectedType, jvmType)
     }
 
     // Given: `println("a = ${A().foo()}")`
@@ -190,7 +190,7 @@ object K2CreateFunctionFromUsageUtil {
             expectedArgumentType = guessAccessibleTypeByArguments(receiverType, expectedArgumentType)
         }
         val jvmParameterType = expectedArgumentType?.convertToJvmType(argumentExpression!!)
-        val expectedType = if (jvmParameterType == null) ExpectedTypeWithNullability.INVALID_TYPE else ExpectedKotlinType(expectedArgumentType, jvmParameterType)
+        val expectedType = if (jvmParameterType == null) ExpectedTypeWithNullability.INVALID_TYPE else ExpectedKotlinType.create(expectedArgumentType, jvmParameterType)
         val names = parameterNames?.toList() ?: listOf(defaultParameterName)
         val nameArray = (if (isTheOnlyAnnotationParameter && parameterNameAsString==null) listOf("value") + names else names).toTypedArray()
         return expectedParameter(expectedType, *nameArray)

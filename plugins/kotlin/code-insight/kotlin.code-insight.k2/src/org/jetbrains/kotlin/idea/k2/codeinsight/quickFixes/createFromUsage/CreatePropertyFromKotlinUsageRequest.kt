@@ -43,7 +43,7 @@ internal class CreatePropertyFromKotlinUsageRequest (
             if (returnJvmType == null) {
                 val expectedType = builtinTypes.any
                 val jvmType = expectedType.convertToJvmType(referenceExpression) ?: return emptyList()
-                return listOf(ExpectedKotlinType(expectedType, jvmType))
+                return listOf(ExpectedKotlinType.create(expectedType, jvmType))
             }
             listOf(returnJvmType)
         }
