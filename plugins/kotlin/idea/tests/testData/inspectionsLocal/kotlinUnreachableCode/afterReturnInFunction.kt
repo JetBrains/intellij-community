@@ -1,5 +1,5 @@
 // IGNORE_K1
-// FIX: none
+// FIX: Remove unreachable code
 fun example() {
     return
     <caret>println("Unreachable")
