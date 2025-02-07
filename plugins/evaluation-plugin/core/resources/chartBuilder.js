@@ -255,16 +255,18 @@ function generateSankeyEdges(structure) {
         metricSum -= childSum
 
         sankeyData.push(...childMetrics)
-        sankeyData.push({
-          from: structure.head,
-          to: child.head,
-          flow: childSum,
-        })
+        if (childSum !== 0) {
+          sankeyData.push({
+            from: structure.head,
+            to: child.head,
+            flow: childSum,
+          })
+        }
       }
     })
   }
 
-  if (structure.hasOwnProperty("lambda")) {
+  if (structure.hasOwnProperty("lambda") && metricSum !== 0) {
     sankeyData.push({
       from: structure.head,
       to: structure.underFlow,
@@ -334,7 +336,6 @@ function getColorTo(name) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  if (getValueOfMetricsFromTabulatorTable(sankeyChartStructure.lambda).reduce((acc, metric) => acc + metric.flow, 0) !== 0)
-    redrawSankeyChart()
+  redrawSankeyChart()
   redrawCharts()
 })
