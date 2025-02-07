@@ -236,7 +236,7 @@ val Module.implementingModules: List<Module>
 
 /**
  * Returns stable binary name of module from the *Kotlin* point of view.
- * Having correct module name is critical for compiler, e.g. for 'internal'-visibility
+ * Having the correct module name is critical for the compiler, e.g., for 'internal'-visibility
  * mangling (see KT-23668).
  *
  * Note that build systems and IDEA have their own module systems and, potentially, their
