@@ -6,9 +6,7 @@ import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystem
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider
-import com.intellij.openapi.diagnostic.currentClassLogger
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.provider.EelNioBridgeService
 import com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApi
@@ -121,9 +119,7 @@ class IjentWslNioFsToggleStrategy(
     enabledInDistros.forEachGuaranteed { distro ->
       val descriptor = WslEelDescriptor(distro)
       val service = EelNioBridgeService.getInstanceSync()
-      runCatching {
-        service.deregister(descriptor)
-      }.getOrLogException { currentClassLogger().warn("Unable to deregister eel descriptor $descriptor", it) }
+      service.deregister(descriptor)
     }
   }
 }
