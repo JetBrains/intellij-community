@@ -17,16 +17,18 @@ public class EvaluateCommand extends AbstractFrameCommand {
   private final boolean myTrimResult;
   private PyDebugValue myValue = null;
   private final String myTempName;
+  private final int myEvaluationTimeout;
 
 
   public EvaluateCommand(final RemoteDebugger debugger, final String threadId, final String frameId, final String expression,
-                         final boolean execute, final boolean trimResult) {
+                         final boolean execute, final boolean trimResult, final int evaluationTimeout) {
     super(debugger, (execute ? EXECUTE : EVALUATE), threadId, frameId);
     myExpression = expression;
     myExecute = execute;
     myDebugProcess = debugger.getDebugProcess();
     myTrimResult = trimResult;
-    myTempName = myDebugProcess.canSaveToTemp(expression)? debugger.generateSaveTempName(threadId, frameId): "";
+    myTempName = myDebugProcess.canSaveToTemp(expression) ? debugger.generateSaveTempName(threadId, frameId) : "";
+    myEvaluationTimeout = evaluationTimeout;
   }
 
   @Override
@@ -48,6 +50,11 @@ public class EvaluateCommand extends AbstractFrameCommand {
     if (!myTempName.isEmpty()) {
       myValue.setTempName(myTempName);
     }
+  }
+
+  @Override
+  protected long getResponseTimeout() {
+    return myEvaluationTimeout;
   }
 
   public PyDebugValue getValue() {

@@ -23,12 +23,16 @@ public interface ProcessDebugger {
 
   PyDebugValue evaluate(String threadId,
                         String frameId,
-                        String expression, boolean execute) throws PyDebuggerException;
+                        String expression,
+                        boolean execute,
+                        final int evaluationTimeout)
+    throws PyDebuggerException;
 
   PyDebugValue evaluate(String threadId,
                         String frameId,
                         String expression,
                         boolean execute,
+                        final int evaluationTimeout,
                         boolean trimResult)
     throws PyDebuggerException;
 
@@ -151,5 +155,5 @@ public interface ProcessDebugger {
 
   void suspendOtherThreads(PyThreadInfo thread);
 
-  default void interruptDebugConsole() {}
+  default void interruptDebugConsole() { }
 }

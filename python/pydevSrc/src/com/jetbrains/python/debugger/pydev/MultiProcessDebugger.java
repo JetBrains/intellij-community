@@ -190,14 +190,20 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public PyDebugValue evaluate(String threadId, String frameId, String expression, boolean execute) throws PyDebuggerException {
-    return debugger(threadId).evaluate(threadId, frameId, expression, execute);
+  public PyDebugValue evaluate(String threadId, String frameId, String expression, boolean execute, int evaluationTimeout)
+    throws PyDebuggerException {
+    return debugger(threadId).evaluate(threadId, frameId, expression, execute, evaluationTimeout);
   }
 
   @Override
-  public PyDebugValue evaluate(String threadId, String frameId, String expression, boolean execute, boolean trimResult)
+  public PyDebugValue evaluate(String threadId,
+                               String frameId,
+                               String expression,
+                               boolean execute,
+                               int evaluationTimeout,
+                               boolean trimResult)
     throws PyDebuggerException {
-    return debugger(threadId).evaluate(threadId, frameId, expression, execute, trimResult);
+    return debugger(threadId).evaluate(threadId, frameId, expression, execute, evaluationTimeout, trimResult);
   }
 
   @Override
@@ -214,7 +220,8 @@ public class MultiProcessDebugger implements ProcessDebugger {
   public @Nullable String execTableCommand(String threadId,
                                            String frameId,
                                            String command,
-                                           TableCommandType commandType, TableCommandParameters tableCommandParameters) throws PyDebuggerException {
+                                           TableCommandType commandType, TableCommandParameters tableCommandParameters)
+    throws PyDebuggerException {
     return debugger(threadId).execTableCommand(threadId, frameId, command, commandType, tableCommandParameters);
   }
 
@@ -248,7 +255,10 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void loadReferrers(String threadId, String frameId, PyReferringObjectsValue var, PyDebugCallback<? super XValueChildrenList> callback) {
+  public void loadReferrers(String threadId,
+                            String frameId,
+                            PyReferringObjectsValue var,
+                            PyDebugCallback<? super XValueChildrenList> callback) {
     debugger(threadId).loadReferrers(threadId, frameId, var, callback);
   }
 

@@ -42,6 +42,7 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
     public boolean myRunDebuggerInServerMode = true;
     public int myDebuggerPort = 29781;
     public @NonNls String myAttachProcessFilter = "python";
+    public int myEvaluationResponseTimeout = 60_000;
   }
 
 
@@ -86,8 +87,9 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
   }
 
   public String getPyQtBackend() {
-    if (StringUtil.toLowerCase(PyBundle.messagePointer("python.debugger.qt.backend.auto").get()).equals(myState.myPyQtBackend))
+    if (StringUtil.toLowerCase(PyBundle.messagePointer("python.debugger.qt.backend.auto").get()).equals(myState.myPyQtBackend)) {
       return "auto";
+    }
     return myState.myPyQtBackend;
   }
 
@@ -117,6 +119,14 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
 
   public void setAttachProcessFilter(String filter) {
     myState.myAttachProcessFilter = filter;
+  }
+
+  public int getEvaluationResponseTimeout() {
+    return myState.myEvaluationResponseTimeout;
+  }
+
+  public void setEvaluationResponseTimeout(int timeout) {
+    myState.myEvaluationResponseTimeout = timeout;
   }
 }
 
