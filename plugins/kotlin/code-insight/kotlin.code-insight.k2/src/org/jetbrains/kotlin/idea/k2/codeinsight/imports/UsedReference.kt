@@ -123,6 +123,6 @@ private fun KaSession.adjustSymbolIfNeeded(
         resolveTypeAliasedConstructorReference(reference, samClass, containingFile) ?: samClass
     }
 
-    else -> target
+    else -> resolveTypeAliasedObjectAsInvokeCallReceiver(reference, target) ?: target
 }
 

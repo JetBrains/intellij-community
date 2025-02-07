@@ -372,6 +372,26 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("TypealiasedObject_InvokeFunction.kt")
+            public void testTypealiasedObject_InvokeFunction() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/TypealiasedObject_InvokeFunction.kt");
+            }
+
+            @TestMetadata("TypealiasedObject_InvokeFunctionOnCompanion.kt")
+            public void testTypealiasedObject_InvokeFunctionOnCompanion() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/TypealiasedObject_InvokeFunctionOnCompanion.kt");
+            }
+
+            @TestMetadata("TypealiasedObject_InvokeFunction_AliasWithSameName.kt")
+            public void testTypealiasedObject_InvokeFunction_AliasWithSameName() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/TypealiasedObject_InvokeFunction_AliasWithSameName.kt");
+            }
+
+            @TestMetadata("TypealiasedObject_InvokeFunction_CurlyBraces.kt")
+            public void testTypealiasedObject_InvokeFunction_CurlyBraces() throws Exception {
+                runTest("testData/editor/optimizeImports/common/basic/TypealiasedObject_InvokeFunction_CurlyBraces.kt");
+            }
+
             @TestMetadata("UnusedClass.kt")
             public void testUnusedClass() throws Exception {
                 runTest("testData/editor/optimizeImports/common/basic/UnusedClass.kt");
