@@ -26,7 +26,7 @@ class UvSupportSurvey : InIdeFeedbackSurveyConfig {
 
   override val surveyId: String = "python_uv_support_survey"
   override val lastDayOfFeedbackCollection: LocalDate
-    get() = LocalDate(2025, 2, 15)
+    get() = LocalDate(2025, 3, 15)
 
   override val requireIdeEAP: Boolean = true
 
