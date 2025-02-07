@@ -171,6 +171,10 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
    * or because an action like {@link #stepInto(SuspendContextImpl)}
    * or {@link #stepOver(SuspendContextImpl)} finished,
    * a single action is polled from the queue and then run.
+   * <p>
+   * It is expected that {@code runnable} executes any resume action (resume/step/...)
+   * at the end of its successful execution.
+   * {@link #resume} is called automatically in case of {@link AssertionError}.
    */
   protected void onBreakpoint(SuspendContextRunnable runnable) {
     getBreakpointProvider().onBreakpoint(runnable);
