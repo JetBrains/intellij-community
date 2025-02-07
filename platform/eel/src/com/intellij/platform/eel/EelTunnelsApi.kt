@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelTunnelsApi.Connection
@@ -10,7 +10,6 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.CheckReturnValue
 import java.io.IOException
-import java.nio.ByteBuffer
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -294,8 +293,8 @@ interface EelTunnelsPosixApi : EelTunnelsApi {
 
   data class ListenOnUnixSocketResult(
     val unixSocketPath: String,
-    val tx: SendChannel<ByteBuffer>,
-    val rx: ReceiveChannel<ByteBuffer>,
+    val tx: EelSendChannel<IOException>,
+    val rx: EelReceiveChannel<IOException>,
   )
 
   sealed interface CreateFilePath {
