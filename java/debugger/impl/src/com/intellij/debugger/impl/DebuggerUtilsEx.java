@@ -434,6 +434,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static void setArrayValues(@NotNull ArrayReference array, @NotNull List<? extends Value> values, boolean checkAssignable)
     throws ClassNotLoadedException, InvalidTypeException {
 
+    // The comment below is a workaround for QD-10948.
+    //noinspection ConstantValue
     if (array instanceof ArrayReferenceImpl) {
       ((ArrayReferenceImpl)array).setValues(0, values, 0, -1, checkAssignable);
     }
