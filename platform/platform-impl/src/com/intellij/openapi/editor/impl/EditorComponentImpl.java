@@ -202,26 +202,28 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     if (EditorImpl.EVENT_LOG.isDebugEnabled()) {
       EditorImpl.EVENT_LOG.debug(e.toString());
     }
-    // Don't dispatch to super first; now that EditorComponentImpl is a JTextComponent,
-    // this would have the side effect of invoking Swing document machinery which relies
-    // on creating Document positions etc (and won't update the document in an IntelliJ
-    // safe way, such as running through all the carets etc.).
-    // First try to handle the event using the default editor logic, then dispatch to
-    // `super.processInputMethodEvent(e)`, which in turn will call the listeners and
-    // if still not consumed, handle the event by the default JTextComponent logic.
-    //    super.processInputMethodEvent(e);
+    WriteIntentReadAction.run((Runnable)() -> {
+      // Don't dispatch to super first; now that EditorComponentImpl is a JTextComponent,
+      // this would have the side effect of invoking Swing document machinery which relies
+      // on creating Document positions etc (and won't update the document in an IntelliJ
+      // safe way, such as running through all the carets etc.).
+      // First try to handle the event using the default editor logic, then dispatch to
+      // `super.processInputMethodEvent(e)`, which in turn will call the listeners and
+      // if still not consumed, handle the event by the default JTextComponent logic.
+      //    super.processInputMethodEvent(e);
 
-    if (!e.isConsumed() && !editor.isDisposed()) {
-      InputMethodListener listener = editor.getInputMethodSupport().getListener();
-      switch (e.getID()) {
-        case InputMethodEvent.INPUT_METHOD_TEXT_CHANGED:
-          listener.inputMethodTextChanged(e);
-          break;
-        case InputMethodEvent.CARET_POSITION_CHANGED:
-          listener.caretPositionChanged(e);
-          break;
+      if (!e.isConsumed() && !editor.isDisposed()) {
+        InputMethodListener listener = editor.getInputMethodSupport().getListener();
+        switch (e.getID()) {
+          case InputMethodEvent.INPUT_METHOD_TEXT_CHANGED:
+            listener.inputMethodTextChanged(e);
+            break;
+          case InputMethodEvent.CARET_POSITION_CHANGED:
+            listener.caretPositionChanged(e);
+            break;
+        }
       }
-    }
+    });
 
     super.processInputMethodEvent(e);
   }
