@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
@@ -13,7 +14,10 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.packaging.common.*
+import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.common.PythonPackageManagementListener
+import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -21,6 +25,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
+  private val logger = thisLogger()
   abstract var installedPackages: List<PythonPackage>
 
   abstract val repositoryManager: PythonRepositoryManager
@@ -42,7 +47,9 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   }
 
   suspend fun installPackage(specification: PythonPackageSpecification, options: List<String>): Result<List<PythonPackage>> {
+    logger.info("install $specification: start")
     installPackageCommand(specification, options).onFailure { return Result.failure(it) }
+    logger.info("install $specification: finish")
     refreshPaths()
     return reloadPackages()
   }
@@ -54,15 +61,19 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   }
 
   suspend fun uninstallPackage(pkg: PythonPackage): Result<List<PythonPackage>> {
+    logger.info("Uninstall package $pkg: start")
     uninstallPackageCommand(pkg).onFailure { return Result.failure(it) }
+    logger.info("Uninstall package $pkg: finished")
     refreshPaths()
     return reloadPackages()
   }
 
   open suspend fun reloadPackages(): Result<List<PythonPackage>> {
+    logger.info("Reload packages: start")
     val packages = reloadPackagesCommand().getOrElse {
       return Result.failure(it)
     }
+    logger.info("Reload packages: finish")
 
     installedPackages = packages
     ApplicationManager.getApplication().messageBus.apply {
