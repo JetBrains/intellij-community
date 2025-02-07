@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
@@ -42,6 +44,7 @@ abstract class KotlinApplicableInspectionBase<E : KtElement, C : Any> : LocalIns
         val context = try {
           getElementContext(element)
         } catch (e: Exception) {
+            if (e is ControlFlowException) throw e
             throw KotlinExceptionWithAttachments("Unable to get element context", e)
                 .withPsiAttachment("element.kt", element)
                 .withPsiAttachment("file.kt", element.containingFile)
