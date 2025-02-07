@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-set -eux
+set -eu
 
 JPS_BOOTSTRAP_DIR="$(cd "$(dirname "$0")"; pwd)"
 JPS_BOOTSTRAP_COMMUNITY_HOME="$(cd "$JPS_BOOTSTRAP_DIR/../.."; pwd)"
@@ -167,7 +167,7 @@ trap "{ set +x; } >/dev/null 2>&1; rm -f '$_java_args_file'" EXIT INT HUP
 # Run jps-bootstrap and produce java args file to run actual user class
 export JPS_BOOTSTRAP_COMMUNITY_HOME
 # shellcheck disable=SC2086
-"$JAVA_HOME/bin/java" -ea -Xmx4g -Djava.awt.headless=true $BOOTSTRAP_SYSTEM_PROPERTIES -classpath "$JPS_BOOTSTRAP_PREPARE_DIR/jps-bootstrap.out.lib/*" -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005 org.jetbrains.jpsBootstrap.JpsBootstrapMain "--java-argfile-target=$_java_args_file" "$@"
+"$JAVA_HOME/bin/java" -ea -Xmx4g -Djava.awt.headless=true $BOOTSTRAP_SYSTEM_PROPERTIES -classpath "$JPS_BOOTSTRAP_PREPARE_DIR/jps-bootstrap.out.lib/*" org.jetbrains.jpsBootstrap.JpsBootstrapMain "--java-argfile-target=$_java_args_file" "$@"
 
 # Run user class via wrapper from platform to correctly capture and report exception to TeamCity build log
 "$JAVA_HOME/bin/java" "@$_java_args_file"
