@@ -584,6 +584,7 @@
     <filePasteProvider implementation="org.jetbrains.kotlin.idea.codeInsight.copyPaste.KotlinFilePasteProvider" order="first"/>
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.j2k.copyPaste.ConvertJavaCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.j2k.copyPaste.ConvertTextJavaCopyPasteProcessor"/>
+    <diff.lang.DiffIgnoredRangeProvider implementation="org.jetbrains.kotlin.idea.git.KotlinDiffIgnoredRangeProvider"/>
   </extensions>
 
   <actions>
