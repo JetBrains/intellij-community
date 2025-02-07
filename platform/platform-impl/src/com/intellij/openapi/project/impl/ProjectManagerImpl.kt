@@ -624,7 +624,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     var result: Project? = null
     try {
       coroutineScope {
-        val initHelper = ProjectInitHelper(this, frameAllocator)
+        val initScope = this
+        val initHelper = ProjectInitHelper(initScope, frameAllocator)
         val backgroundJob = launch {
           frameAllocator.runInBackground(initHelper)
         }
@@ -632,6 +633,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         launch {
           launch {
             frameAllocator.run(initHelper)
+          }.invokeOnCompletion { cause ->
+            if (cause is CancellationException) {
+              initScope.cancel(cause)
+            }
           }
 
           launch {
@@ -690,6 +695,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
               runInitProjectActivities(project)
             }
             initHelper.projectInitTimestamp = System.nanoTime()
+          }.invokeOnCompletion { cause ->
+            if (cause is CancellationException) {
+              initScope.cancel(cause)
+            }
           }
         }.invokeOnCompletion {
           backgroundJob.cancel()
