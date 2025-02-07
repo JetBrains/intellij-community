@@ -948,7 +948,7 @@ object PluginManagerCore {
         FileVisitResult.TERMINATE -> return false
         FileVisitResult.CONTINUE -> {
           if (descriptor != null && depProcessed.add(descriptor)) {
-            processAllNonOptionalDependencies(descriptor, depProcessed, pluginIdMap, consumer)
+            if (!processAllNonOptionalDependencies(descriptor, depProcessed, pluginIdMap, consumer)) return false
           }
         }
         FileVisitResult.SKIP_SUBTREE -> {}
