@@ -47,6 +47,7 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createFile
+import kotlin.io.path.name
 import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = fileLogger()
@@ -244,7 +245,7 @@ private suspend fun openProject(projectPath: Path): Project {
   // There are countless number of reasons `openProjectAsync` might return null
   if (project.modules.isEmpty()) {
     writeAction {
-      ModuleManager.getInstance(project).newModule(projectPath, PythonModuleTypeBase.getInstance().id)
+      ModuleManager.getInstance(project).newModule(projectPath.resolve("${projectPath.name}.iml"), PythonModuleTypeBase.getInstance().id)
     }
   }
   return project
