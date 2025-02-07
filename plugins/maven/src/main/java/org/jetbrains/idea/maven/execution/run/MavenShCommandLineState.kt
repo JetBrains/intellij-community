@@ -34,11 +34,11 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.search.ExecutionSearchScopes
+import com.intellij.util.text.nullize
 import org.jetbrains.idea.maven.buildtool.BuildToolConsoleProcessAdapter
 import org.jetbrains.idea.maven.buildtool.MavenBuildEventProcessor
-import org.jetbrains.idea.maven.execution.MavenRunConfiguration
-import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
-import org.jetbrains.idea.maven.execution.RunnerBundle
+import org.jetbrains.idea.maven.execution.*
+import org.jetbrains.idea.maven.execution.MavenExternalParameters.encodeProfiles
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext
 import org.jetbrains.idea.maven.project.MavenHomeType
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -171,10 +171,49 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     addIdeaParameters(args)
     args.addAll(myConfiguration.runnerParameters.options)
     args.addAll(myConfiguration.runnerParameters.goals)
-    myConfiguration.runnerSettings?.mavenProperties?.forEach {
+    addSettingParameters(args)
+    return args.list
+  }
+
+  private fun addSettingParameters(args: ParametersList) {
+    val encodeProfiles = encodeProfiles(myConfiguration.runnerParameters.profilesMap)
+    val runnerSettings = myConfiguration.runnerSettings ?: MavenRunner.getInstance(myConfiguration.project).state
+    val generalSettings = myConfiguration.generalSettings ?: MavenProjectsManager.getInstance(myConfiguration.project).generalSettings
+    if (encodeProfiles.isNotEmpty()) {
+      args.addAll("-P", encodeProfiles)
+    }
+    runnerSettings.mavenProperties?.forEach {
       args.addProperty(it.key, it.value)
     }
-    return args.list
+    if (runnerSettings.vmOptions.isNotBlank()) {
+      args.add(runnerSettings.vmOptions)
+    }
+
+    if (runnerSettings.isSkipTests) {
+      args.addProperty("skipTests", "true")
+    }
+
+    if (generalSettings.outputLevel == MavenExecutionOptions.LoggingLevel.DEBUG) {
+      args.add("--debug")
+    }
+    if (generalSettings.isNonRecursive) {
+      args.add("--non-recursive")
+    }
+    if (generalSettings.isPrintErrorStackTraces) {
+      args.add("--errors")
+    }
+    if (generalSettings.isAlwaysUpdateSnapshots) {
+      args.add("--update-snapshots")
+    }
+    val threads = generalSettings.threads
+    if (!threads.isNullOrBlank()) {
+      args.addAll("-T", threads)
+    }
+
+    if (generalSettings.userSettingsFile.isNotBlank()) {
+      args.addAll("-s", generalSettings.userSettingsFile)
+    }
+    generalSettings.localRepository.nullize(true)?.also { args.addProperty("-Dmaven.repo.local=$it") }
   }
 
   private fun addIdeaParameters(args: ParametersList) {
