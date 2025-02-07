@@ -98,10 +98,12 @@ internal class CoroutineView(project: Project, javaDebugProcess: JavaDebugProces
     fun collapseCoroutineHierarchyNode() {
         if (isLiveUpdateEnabled) return
         DebuggerUIUtil.invokeLater {
-            val rootNode = panel.tree.root.children.firstOrNull() ?: return@invokeLater
-            val pathToRootNode = TreePath(panel.tree.treeModel.getPathToRoot(rootNode))
-            if ((rootNode as? XValueNodeImpl)?.name == KotlinDebuggerCoroutinesBundle.message("coroutine.view.node.jobs") && !panel.tree.isCollapsed(pathToRootNode)) {
-                panel.tree.collapsePath(pathToRootNode)
+            panel.tree.root?.let { treeRoot ->
+                val rootNode = treeRoot.children.firstOrNull() ?: return@invokeLater
+                val pathToRootNode = TreePath(panel.tree.treeModel.getPathToRoot(rootNode))
+                if ((rootNode as? XValueNodeImpl)?.name == KotlinDebuggerCoroutinesBundle.message("coroutine.view.node.jobs") && !panel.tree.isCollapsed(pathToRootNode)) {
+                    panel.tree.collapsePath(pathToRootNode)
+                }
             }
         }
     }
