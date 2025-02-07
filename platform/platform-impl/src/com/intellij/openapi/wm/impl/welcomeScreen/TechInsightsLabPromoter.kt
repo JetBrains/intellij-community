@@ -6,10 +6,13 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.BannerStartPagePromoter
 import com.intellij.ui.LicensingFacade
+import com.intellij.ui.ScreenUtil
+import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.Icon
@@ -48,6 +51,8 @@ internal class TechInsightsLabPromoter : BannerStartPagePromoter() {
     it.set(2025, Calendar.JUNE, 1, 0, 1)
   }
 
+  private var facadeConnection: MessageBusConnection? = null
+
   override fun getPromotion(isEmptyState: Boolean): JComponent {
     val promotion = super.getPromotion(isEmptyState)
     promoPanel = promotion
@@ -73,7 +78,8 @@ internal class TechInsightsLabPromoter : BannerStartPagePromoter() {
     if (PropertiesComponent.getInstance().getBoolean(BUTTON_CLICKED_PROPERTY)) {
       return false
     }
-    if (LicensingFacade.getInstance()?.isEvaluationLicense == true) {
+    val facade = LicensingFacade.getInstance()
+    if (facade?.isEvaluationLicense == true) {
       return false
     }
     if (ConfigImportHelper.isFirstSession() || ConfigImportHelper.isConfigImported()) {
@@ -81,7 +87,35 @@ internal class TechInsightsLabPromoter : BannerStartPagePromoter() {
     }
 
     val now = Calendar.getInstance()
-    return now.before(endDate) && now.after(startDate)
+    if (now.before(endDate) && now.after(startDate) || java.lang.Boolean.getBoolean("ignore.promo.dates")) {
+      if (facade == null && facadeConnection == null) {
+        val connection = ApplicationManager.getApplication().messageBus.connect()
+        facadeConnection = connection
+        connection.subscribe(LicensingFacade.LicenseStateListener.TOPIC, LicensingFacade.LicenseStateListener { facade ->
+          if (facade == null) {
+            return@LicenseStateListener
+          }
+          facadeConnection = null
+          connection.disconnect()
+
+          if (facade.isEvaluationLicense) {
+            promoPanel?.let {
+              it.isVisible = false
+              it.revalidate()
+            }
+          }
+        })
+      }
+      return true
+    }
+    return false
+  }
+
+  override fun onBannerHide() {
+    if (promoPanel != null && ScreenUtil.isStandardAddRemoveNotify(promoPanel)) {
+      facadeConnection?.disconnect()
+      facadeConnection = null
+    }
   }
 }
 

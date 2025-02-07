@@ -9,8 +9,11 @@ import com.intellij.ui.InplaceButton
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.dsl.gridLayout.*
+import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.dsl.gridLayout.toUnscaledGaps
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -41,6 +44,10 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
       UiNotifyConnector.installOn(it, object : Activatable {
         override fun showNotify() {
           onBannerShown()
+        }
+
+        override fun hideNotify() {
+          onBannerHide()
         }
       })
     }
@@ -113,6 +120,8 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
   protected abstract fun runAction()
 
   protected open fun onBannerShown() {}
+
+  protected open fun onBannerHide() {}
 
   protected open fun createHeader(): JLabel {
     val result = JLabel(headerLabel)

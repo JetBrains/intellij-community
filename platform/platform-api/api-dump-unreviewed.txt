@@ -5043,6 +5043,7 @@ a:com.intellij.openapi.wm.BannerStartPagePromoter
 - pa:getHeaderLabel():java.lang.String
 - pa:getPromoImage():javax.swing.Icon
 - getPromotion(Z):javax.swing.JComponent
+- p:onBannerHide():V
 - p:onBannerShown():V
 - pa:runAction():V
 com.intellij.openapi.wm.CustomStatusBarWidget
