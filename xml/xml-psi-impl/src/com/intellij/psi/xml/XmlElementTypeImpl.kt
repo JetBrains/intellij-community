@@ -18,8 +18,4 @@ private object XmlElementTypeImpl {
   @JvmField
   val HTML_RAW_TEXT: IElementType =
     HtmlRawTextElementType
-
-  @JvmField
-  val XML_MARKUP_DECL: IElementType =
-    XmlMarkupDeclElementType()
 }

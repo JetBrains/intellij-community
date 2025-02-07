@@ -131,5 +131,5 @@ object XmlElementType {
 
   @JvmField
   val XML_MARKUP_DECL: IElementType =
-    factory.getElementType("XML_MARKUP_DECL", XMLLanguage.INSTANCE)
+    XmlMarkupDeclElementType()
 }
