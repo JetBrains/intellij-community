@@ -149,9 +149,10 @@ class PythonNewEnvironmentDialogNavigator {
 internal fun SimpleColoredComponent.customizeForPythonInterpreter(interpreter: PythonSelectableInterpreter) {
   when (interpreter) {
     is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> {
-      icon = IconLoader.getTransparentIcon(PythonPsiApiIcons.Python)
+      icon = IconLoader.getTransparentIcon(interpreter.uiCustomization?.icon ?: PythonPsiApiIcons.Python)
       append(replaceHomePathToTilde(interpreter.homePath))
-      append(" " + message("sdk.rendering.detected.grey.text"), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+      val message = interpreter.uiCustomization?.title ?: message("sdk.rendering.detected.grey.text")
+      append(" $message", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
     is InstallableSelectableInterpreter -> {
       icon = AllIcons.Actions.Download

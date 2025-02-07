@@ -14,5 +14,10 @@ interface SystemPythonProvider {
     val EP: ExtensionPointName<SystemPythonProvider> = ExtensionPointName<SystemPythonProvider>("Pythonid.systemPythonProvider")
   }
 
+  /**
+   * You can optionally customize how your pythons are displayed
+   */
+  val uiCustomization: UICustomization? get() = null
+
   suspend fun findSystemPythons(eelApi: EelApi): Result<Set<PythonBinary>>
 }

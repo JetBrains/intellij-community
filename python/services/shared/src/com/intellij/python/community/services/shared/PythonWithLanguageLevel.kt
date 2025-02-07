@@ -5,7 +5,7 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.psi.LanguageLevel
 import org.jetbrains.annotations.Nls
 
-interface PythonWithLanguageLevel {
+interface PythonWithLanguageLevel : Comparable<PythonWithLanguageLevel> {
   val pythonBinary: PythonBinary
   val languageLevel: LanguageLevel
 

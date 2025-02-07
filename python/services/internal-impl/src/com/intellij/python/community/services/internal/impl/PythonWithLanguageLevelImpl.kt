@@ -26,15 +26,16 @@ import kotlin.io.path.relativeTo
 class PythonWithLanguageLevelImpl internal constructor(
   override val pythonBinary: PythonBinary,
   override val languageLevel: LanguageLevel,
-) : PythonWithLanguageLevel, Comparable<PythonWithLanguageLevelImpl> {
+) : PythonWithLanguageLevel, Comparable<PythonWithLanguageLevel> {
   companion object {
 
     private val concurrentLimit = Semaphore(permits = 4)
 
     /**
      * Like [createByPythonBinary] but runs in parallel up to [concurrentLimit]
+     * @return python path -> python with language level sorted from highest to lowest.
      */
-    suspend fun createByPythonBinaries(pythonBinaries: Collection<PythonBinary>): Collection<Pair<PythonBinary, Result<PythonWithLanguageLevelImpl, @Nls String>>> =
+    suspend fun createByPythonBinaries(pythonBinaries: Collection<PythonBinary>): Collection<Pair<PythonBinary, Result<PythonWithLanguageLevel, @Nls String>>> =
       coroutineScope {
         pythonBinaries.map {
           async {
@@ -43,7 +44,7 @@ class PythonWithLanguageLevelImpl internal constructor(
             }
           }
         }.awaitAll()
-      }
+      }.sortedBy { it.first }
 
     suspend fun createByPythonBinary(pythonBinary: PythonBinary): Result<PythonWithLanguageLevelImpl, @Nls String> {
       val languageLevel = pythonBinary.validatePythonAndGetVersion().getOr { return it }
@@ -80,6 +81,6 @@ class PythonWithLanguageLevelImpl internal constructor(
     return "$pythonString ($languageLevel)"
   }
 
-  // TODO: DOC backward
-  override fun compareTo(other: PythonWithLanguageLevelImpl): Int = other.languageLevel.compareTo(languageLevel)
+  // Backward: first python is the highest
+  override fun compareTo(other: PythonWithLanguageLevel): Int = languageLevel.compareTo(other.languageLevel) * -1
 }

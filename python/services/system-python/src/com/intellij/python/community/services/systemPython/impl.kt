@@ -32,7 +32,7 @@ internal class SystemPythonServiceImpl : SystemPythonService, SimplePersistentSt
   override suspend fun registerSystemPython(pythonPath: PythonBinary): Result<SystemPython, @Nls String> {
     val impl = PythonWithLanguageLevelImpl.createByPythonBinary(pythonPath).getOr { return it }
     state.userProvidedPythons.add(pythonPath)
-    return Result.success(SystemPython(impl))
+    return Result.success(SystemPython(impl, null))
   }
 
   override fun getInstaller(eelApi: EelApi): PythonInstallerService? =
@@ -47,9 +47,18 @@ internal class SystemPythonServiceImpl : SystemPythonService, SimplePersistentSt
         }
     else emptyList()
 
+    val pythonsUi = mutableMapOf<PythonBinary, UICustomization>()
+
     val pythonsFromExtensions = SystemPythonProvider.EP
       .extensionList
-      .flatMap { it.findSystemPythons(eelApi).getOrNull() ?: emptyList() }.filter { it.getEelDescriptor().upgrade() == eelApi }
+      .flatMap { provider ->
+        val pythons = provider.findSystemPythons(eelApi).getOrNull() ?: emptyList()
+        val ui = provider.uiCustomization
+        if (ui != null) {
+          pythons.forEach { pythonsUi[it] = ui }
+        }
+        pythons
+      }.filter { it.getEelDescriptor().upgrade() == eelApi }
 
     val badPythons = mutableSetOf<PythonBinary>()
     val pythons = corePythons + pythonsFromExtensions + state.userProvidedPythons.filter { it.getEelDescriptor() == eelApi.descriptor }
@@ -57,7 +66,7 @@ internal class SystemPythonServiceImpl : SystemPythonService, SimplePersistentSt
     val result = PythonWithLanguageLevelImpl.createByPythonBinaries(pythons.toSet())
       .mapNotNull { (python, r) ->
         when (r) {
-          is Result.Success -> SystemPython(r.result)
+          is Result.Success -> SystemPython(r.result, pythonsUi[r.result.pythonBinary])
           is Result.Failure -> {
             fileLogger().info("Skipping $python : ${r.error}")
             badPythons.add(python)
@@ -68,7 +77,7 @@ internal class SystemPythonServiceImpl : SystemPythonService, SimplePersistentSt
       }.toSet()
     // Remove stale pythons from cache
     state.userProvidedPythons.removeAll(badPythons)
-    return@withContext result.sortedByDescending { it.languageLevel }
+    return@withContext result.sorted()
   }
 
 

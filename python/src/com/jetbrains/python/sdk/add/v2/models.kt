@@ -12,7 +12,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl
 import com.intellij.python.community.services.shared.PythonWithLanguageLevel
+import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.intellij.python.community.services.systemPython.UICustomization
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -157,13 +159,13 @@ abstract class PythonAddInterpreterModel(params: PyInterpreterModelParams, priva
       }
 
       // System (base) pythons
-      val system: List<PythonWithLanguageLevel> = systemPythonService.findSystemPythons()
+      val system: List<SystemPython> = systemPythonService.findSystemPythons()
 
       // Python + isBase. Both: system and venv.
-      val detected = (venvs.map { Pair(it, false) } + system.map { Pair(it, true) })
+      val detected = (venvs.map { Triple(it, false, null) } + system.map { Triple(it, true, it.ui) })
         .filterNot { (python, _) -> python.pythonBinary in existingSdkPaths }
-        .map { (python, base) -> DetectedSelectableInterpreter(python.pythonBinary.pathString, python.languageLevel, base) }
-        .sortedByDescending { it.languageLevel }
+        .map { (python, base, ui) -> DetectedSelectableInterpreter(python.pythonBinary.pathString, python.languageLevel, base, ui) }
+        .sorted()
 
       withContext(uiContext) {
         installable = filteredInstallable
@@ -285,6 +287,7 @@ sealed class PythonSelectableInterpreter {
 
   abstract val homePath: String
   abstract val languageLevel: LanguageLevel
+  open val uiCustomization: UICustomization? = null
   override fun toString(): String =
     "PythonSelectableInterpreter(homePath='$homePath')"
 }
@@ -300,8 +303,16 @@ class ExistingSelectableInterpreter(val sdk: Sdk, override val languageLevel: La
 /**
  * [isBase] is a system interpreter, see [isBasePython]
  */
-class DetectedSelectableInterpreter(override val homePath: String, override val languageLevel: LanguageLevel, private val isBase: Boolean) : PythonSelectableInterpreter() {
+class DetectedSelectableInterpreter(override val homePath: String, override val languageLevel: LanguageLevel, private val isBase: Boolean, override val uiCustomization: UICustomization? = null) : PythonSelectableInterpreter(), Comparable<DetectedSelectableInterpreter> {
   override suspend fun isBasePython(): Boolean = isBase
+
+
+  override fun compareTo(other: DetectedSelectableInterpreter): Int {
+    // First by type
+    val byType = (uiCustomization?.title ?: "").compareTo(other.uiCustomization?.title ?: "")
+    // Then from the highest python to the lowest
+    return if (byType != 0) byType else (languageLevel.compareTo(other.languageLevel) * -1)
+  }
 }
 
 class ManuallyAddedSelectableInterpreter(override val homePath: String, override val languageLevel: LanguageLevel) : PythonSelectableInterpreter()
