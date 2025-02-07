@@ -257,7 +257,7 @@ final class UnindexedFilesFinder {
         else {
           shouldCheckContentIndexes = false;
         }
-        boolean fileTypeIndexAlreadyUpToData = fileTypeIndexState != null && !fileTypeIndexState.updateRequired();
+        boolean fileTypeIndexAlreadyUpToData = fileTypeIndexState != null && fileTypeIndexState.isUpToDate();
         Set<ID<?, ?>> appliedIndexes = myFileBasedIndex.getAppliedIndexes(inputId);
         List<ID<?, ?>> requiredIndexes = myFileBasedIndex.getRequiredIndexes(indexedFile);
 
