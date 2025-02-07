@@ -128,7 +128,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       val chunks = mutableListOf<MutableList<PluginId>>()
       chunks.add(mutableListOf())
 
-      val maxLength = 7000 // 8k minus safety gap
+      val maxLength = 3500 // 4k minus safety gap
       var currentLength = 0
       val pluginXmlIdsLength = "&pluginXmlId=".length
 
