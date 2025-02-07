@@ -7,11 +7,10 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
@@ -99,14 +98,11 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
       });
     }
     for (HighlightInfo info : unresolvedInfos) {
-      startJob(info, editor, file, visibleRange);
+      startJob(info);
     }
   }
 
-  private void startJob(@NotNull HighlightInfo info,
-                        @NotNull Editor editor,
-                        @NotNull PsiFile file,
-                        @NotNull ProperTextRange visibleRange) {
+  private void startJob(@NotNull HighlightInfo info) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!enabled) {
@@ -115,11 +111,8 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
     info.startComputeQuickFixes(computation -> {
       return ReadAction.nonBlocking(()->{
         AtomicReference<List<HighlightInfo.IntentionActionDescriptor>> result = new AtomicReference<>(List.of());
-        ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(
-          () -> ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
-            () -> {
-              result.set(info.doComputeLazyQuickFixes(computation));
-            }, new DaemonProgressIndicator()));
+        ((ApplicationEx)ApplicationManager.getApplication()).executeByImpatientReader(
+          () -> result.set(info.doComputeLazyQuickFixes(computation)));
         return result.get();
       }).submit(ForkJoinPool.commonPool());
       }
