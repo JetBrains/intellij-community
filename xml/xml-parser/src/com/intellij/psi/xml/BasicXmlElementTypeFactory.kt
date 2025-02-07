@@ -1,6 +1,5 @@
 package com.intellij.psi.xml
 
-import com.intellij.lang.Language
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
@@ -17,10 +16,9 @@ internal class BasicXmlElementTypeFactory {
 
   fun getElementType(
     name: String,
-    language: Language = HTMLLanguage.INSTANCE,
   ): IElementType {
     return getField(name, IElementType::class)
-           ?: IElementType(name, language)
+           ?: IElementType(name, HTMLLanguage.INSTANCE)
   }
 
   private fun <T : IElementType> getField(
