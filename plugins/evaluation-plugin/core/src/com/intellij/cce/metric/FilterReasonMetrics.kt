@@ -4,12 +4,10 @@ import com.google.gson.Gson
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
-import com.intellij.ml.inline.completion.impl.postprocessing.filter.*
-import com.intellij.ml.inline.completion.python.Python2Filter
 import com.intellij.openapi.diagnostic.thisLogger
 import kotlin.math.max
 
-fun SessionFilterReasonMetrics(): List<Metric> = listOf(
+fun SessionFilterReasonMetrics(sessions: List<Session>): List<Metric> = listOf(
   AllProposalsMetric(),
   RelevantProposalsMetric(true),
   RelevantProposalsMetric(false),
@@ -21,35 +19,33 @@ fun SessionFilterReasonMetrics(): List<Metric> = listOf(
   GroupingOfIdenticalSuggestionsMetric(),
   MaxSuggestionsForAnalysisLimitMetric(),
   MultipleFailureReasonsMetric(),
-) + hardFilteredProposalMetrics
+) + GenerateHardFilterMetrics(sessions)
 
-val hardFilteredProposalMetrics: List<HardFilteredProposalsMetric> = listOf(
-  IncorrectCodeFilter.debugDescription,
-  ScoreFilter.debugDescription,
-  NotValuableFilter.debugDescription,
-  ProhibitedPatternsFilter.debugDescription,
-  SemanticFilter.debugDescription,
-  EmptyStringFilter.debugDescription,
-  ASCIIFilter.debugDescription,
-  EqualToOneselfPatternFilter.debugDescription,
-  ContainsMulticharQuoteFilter.debugDescription,
-  LineRepetitionFilter.debugDescription,
-  ProfanityFilter.debugDescription,
-  ValuableCharacterAfterCaretFilter.debugDescription,
-  CommentFilter.debugDescription,
+fun GenerateHardFilterMetrics(sessions: List<Session>): List<Metric> {
+  hardFilteredProposalMetrics.clear()
 
-  Python2Filter.debugDescription,
+  hardFilteredProposalMetrics.addAll(sessions.flatMap { it.lookups }
+                                       .flatMap { lookup ->
+                                         val rawFiltered = lookup.additionalInfo["raw_filtered"] as? List<*> ?: emptyList<Any>()
+                                         val analyzedFiltered = lookup.additionalInfo["analyzed_filtered"] as? List<*> ?: emptyList<Any>()
+                                         rawFiltered + analyzedFiltered
+                                       }
+                                       .map { it as? Map<String, List<String>> ?: emptyMap() }
+                                       .flatMap { map -> map["second"] as? List<String> ?: emptyList() }
+                                       .distinct()
+                                       .map { HardFilteredProposalsMetric(it) }
+  )
+  return hardFilteredProposalMetrics
+}
 
-  HighEntropyFilter.Base64("").debugDescription,
-  HighEntropyFilter.Hex("").debugDescription,
-).map { HardFilteredProposalsMetric(it) } + secretFilters("").map { HardFilteredProposalsMetric(it.debugDescription) }
+private val hardFilteredProposalMetrics: MutableList<Metric> = mutableListOf()
 
 abstract class SessionFilterReasonMetric(debugDescription: String) : Metric {
   private val sample = Sample()
-  override val name = "FilterReason${debugDescription.filterNot { it.isWhitespace() }}"
+  override val name: String = "FilterReason${debugDescription.filterNot { it.isWhitespace() }}"
   override val description: String = debugDescription
-  override val showByDefault = false
-  override val valueType = MetricValueType.INT
+  override val showByDefault: Boolean = false
+  override val valueType: MetricValueType = MetricValueType.INT
   override val value: Double
     get() = sample.sum()
 
@@ -179,8 +175,7 @@ class MultipleFailureReasonsMetric : SessionFilterReasonMetric("multiple failure
   }
 }
 
-private class Branch(val head: String, val lambda: String? = null, val underFlow: String? = null, val children: List<Any> = emptyList()) {
-}
+private data class Branch(val head: String, val lambda: String? = null, val underFlow: String? = null, val children: List<Any> = emptyList())
 
 fun generateJsonStructureForSankeyChart(): String {
   val gson = Gson()
