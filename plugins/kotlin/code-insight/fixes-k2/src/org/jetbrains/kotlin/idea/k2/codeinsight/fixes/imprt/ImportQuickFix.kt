@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.isOneSegmentFQN
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -138,5 +139,20 @@ class ImportQuickFix(
         if (element.parent is KtCallableReferenceExpression) return false
         
         return true
+    }
+
+    override fun isClassDefinitelyPositivelyImportedAlready(containingFile: KtFile, classFqName: FqName): Boolean {
+        val importList = containingFile.importList
+        if (importList == null) return false
+        for (statement in importList.imports) {
+            val importRefFqName = statement.importedFqName ?: continue// rely on the optimization: no resolve while getting import statement canonical text
+            if (importRefFqName == classFqName) {
+                return true
+            }
+            if (importRefFqName.shortName() == Name.identifier("*") && importRefFqName.parent() == classFqName.parent()) {
+                return true
+            }
+        }
+        return false
     }
 }
