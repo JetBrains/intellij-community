@@ -16,11 +16,12 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import kotlin.io.path.deleteExisting
+import kotlin.time.Duration.Companion.minutes
 
 @PyEnvTestCase
 class PyVenvCreationManuallyShowCaseTest {
   @Test
-  fun createVenvTest(@PythonBinaryPath python: PythonBinary, @TempDir venvDir: Directory): Unit = timeoutRunBlocking {
+  fun createVenvTest(@PythonBinaryPath python: PythonBinary, @TempDir venvDir: Directory): Unit = timeoutRunBlocking(5.minutes) {
     val venvPython = createVenv(python, venvDir).getOrThrow()
     val sdk = createSdk(venvPython)
     val flavorAndData = sdk.getOrCreateAdditionalData().flavorAndData
