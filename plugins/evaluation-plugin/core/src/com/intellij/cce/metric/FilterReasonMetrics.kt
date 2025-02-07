@@ -7,7 +7,7 @@ import com.intellij.cce.metric.util.Sample
 import com.intellij.openapi.diagnostic.thisLogger
 import kotlin.math.max
 
-fun SessionFilterReasonMetrics(sessions: List<Session>): List<Metric> = listOf(
+fun createFilterReasonMetrics(sessions: List<Session>): List<Metric> = listOf(
   AllProposalsMetric(),
   RelevantProposalsMetric(true),
   RelevantProposalsMetric(false),
@@ -19,26 +19,15 @@ fun SessionFilterReasonMetrics(sessions: List<Session>): List<Metric> = listOf(
   GroupingOfIdenticalSuggestionsMetric(),
   MaxSuggestionsForAnalysisLimitMetric(),
   MultipleFailureReasonsMetric(),
-) + GenerateHardFilterMetrics(sessions)
+) + generateHardFilterMetrics(sessions)
 
-fun GenerateHardFilterMetrics(sessions: List<Session>): List<Metric> {
-  hardFilteredProposalMetrics.clear()
+private fun generateHardFilterMetrics(sessions: List<Session>): List<Metric> =
+  sessions.flatMap { it.lookups }
+    .flatMap { lookup -> lookup.rawFilteredHardFiltersList + lookup.analyzedFilteredHardFiltersList }
+    .flatten()
+    .distinct()
+    .map { HardFilteredProposalsMetric(it) }
 
-  hardFilteredProposalMetrics.addAll(sessions.flatMap { it.lookups }
-                                       .flatMap { lookup ->
-                                         val rawFiltered = lookup.additionalInfo["raw_filtered"] as? List<*> ?: emptyList<Any>()
-                                         val analyzedFiltered = lookup.additionalInfo["analyzed_filtered"] as? List<*> ?: emptyList<Any>()
-                                         rawFiltered + analyzedFiltered
-                                       }
-                                       .map { it as? Map<String, List<String>> ?: emptyMap() }
-                                       .flatMap { map -> map["second"] as? List<String> ?: emptyList() }
-                                       .distinct()
-                                       .map { HardFilteredProposalsMetric(it) }
-  )
-  return hardFilteredProposalMetrics
-}
-
-private val hardFilteredProposalMetrics: MutableList<Metric> = mutableListOf()
 
 abstract class SessionFilterReasonMetric(debugDescription: String) : Metric {
   private val sample = Sample()
@@ -53,7 +42,6 @@ abstract class SessionFilterReasonMetric(debugDescription: String) : Metric {
 
   override fun evaluate(sessions: List<Session>): Double {
     val lookups = sessions.flatMap { it.lookups }
-
     val suggestions = compute(lookups)
 
     sample.add(suggestions.toDouble())
@@ -68,7 +56,7 @@ abstract class SessionFilterReasonMetric(debugDescription: String) : Metric {
 class AllProposalsMetric : SessionFilterReasonMetric("all proposals") {
   override fun compute(lookups: List<Lookup>): Int {
     return lookups
-             .map { it.additionalInfo["raw_proposals"] as? List<*> ?: emptyList<Any>() }
+             .map { it.rawProposalsList }
              .sumOf { it.size } +
            FetchedFromCacheProposalsMetric(true).compute(lookups) +
            FetchedFromCacheProposalsMetric(false).compute(lookups)
@@ -84,8 +72,7 @@ class RelevantProposalsMetric(val isRelevant: Boolean) : SessionFilterReasonMetr
     return lookups
       .filter { it.suggestions.isNotEmpty() }
       .flatMap { it.suggestions }
-      .filter { it.isRelevant == isRelevant }
-      .size
+      .count { it.isRelevant == isRelevant }
   }
 }
 
@@ -95,26 +82,23 @@ class FilteredByModelProposalsMetric(val modelType: String) : SessionFilterReaso
 
   override fun compute(lookups: List<Lookup>): Int {
     return lookups
-      .filter { it.additionalInfo["${modelType}_decision"] == "SKIP" }
-      .size
+      .count { it.additionalInfo["${modelType}_decision"] == "SKIP" }
   }
 }
 
-class HardFilteredProposalsMetric(val hardFilterDebugDescription: String) : SessionFilterReasonMetric("hard filtered") {
+class HardFilteredProposalsMetric(val hardFilterDebugDescription: String) : SessionFilterReasonMetric(debugDescription) {
   override val name: String = super.name + hardFilterDebugDescription.filter { !it.isWhitespace() }
   override val description: String = hardFilterDebugDescription
 
   override fun compute(lookups: List<Lookup>): Int {
     return lookups
-      .flatMap { lookup ->
-        val rawFiltered = lookup.additionalInfo["raw_filtered"] as? List<*> ?: emptyList<Any>()
-        val analyzedFiltered = lookup.additionalInfo["analyzed_filtered"] as? List<*> ?: emptyList<Any>()
-        rawFiltered + analyzedFiltered
-      }
-      .map { it as? Map<String, List<String>> ?: emptyMap() }
-      .flatMap { map -> map["second"] as? List<String> ?: emptyList() }
-      .filter { it == hardFilterDebugDescription }
-      .size
+      .flatMap { it.rawFilteredHardFiltersList + it.analyzedFilteredHardFiltersList }
+      .flatten()
+      .count { it == hardFilterDebugDescription }
+  }
+
+  companion object {
+    const val debugDescription: String = "hard filtered"
   }
 }
 
@@ -125,22 +109,17 @@ class FetchedFromCacheProposalsMetric(val isRelevant: Boolean) : SessionFilterRe
 
   override fun compute(lookups: List<Lookup>): Int {
     return lookups
-      .filter { lookup ->
-        val rawProposals = lookup.additionalInfo["raw_proposals"] as? List<*> ?: emptyList<Any>()
-        rawProposals.isEmpty() && lookup.suggestions.isNotEmpty()
-      }
+      .filter { it.rawFilteredList.isEmpty() && it.suggestions.isNotEmpty() }
       .flatMap { it.suggestions }
-      .filter { it.isRelevant == isRelevant }
-      .size
+      .count { it.isRelevant == isRelevant }
   }
 }
 
 class GroupingOfIdenticalSuggestionsMetric : SessionFilterReasonMetric("grouping of identical suggestions") {
   override fun compute(lookups: List<Lookup>): Int {
     return lookups.sumOf { lookup ->
-      val rawProposalsSize = (lookup.additionalInfo["raw_proposals"] as? List<*>)?.size ?: 0
-      val rawFilteredSize = (lookup.additionalInfo["raw_filtered"] as? List<*>)?.size ?: 0
-      rawProposalsSize - rawFilteredSize
+      lookup.rawProposalsList.size -
+      lookup.rawFilteredList.size
     }
   }
 }
@@ -148,15 +127,8 @@ class GroupingOfIdenticalSuggestionsMetric : SessionFilterReasonMetric("grouping
 class MaxSuggestionsForAnalysisLimitMetric : SessionFilterReasonMetric("maxSuggestionsForAnalysis limit") {
   override fun compute(lookups: List<Lookup>): Int {
     return lookups.sumOf { lookup ->
-      val rawFilteredList = lookup.additionalInfo["raw_filtered"] as? List<*> ?: emptyList<Any>()
-      val analyzedFilteredSize = (lookup.additionalInfo["analyzed_filtered"] as? List<*>)?.size ?: 0
-
-      val countZero = rawFilteredList.map { element ->
-        val mapItem = element as? Map<String, List<String>> ?: emptyMap()
-        (mapItem["second"] as? List<String>)?.size ?: 0
-      }.count { it == 0 }
-
-      countZero - analyzedFilteredSize
+      lookup.rawFilteredHardFiltersList.count { it.isEmpty() } -
+      lookup.analyzedFilteredList.size
     }
   }
 }
@@ -164,37 +136,56 @@ class MaxSuggestionsForAnalysisLimitMetric : SessionFilterReasonMetric("maxSugge
 class MultipleFailureReasonsMetric : SessionFilterReasonMetric("multiple failure reasons") {
   override fun compute(lookups: List<Lookup>): Int {
     return lookups.sumOf { lookup ->
-      val rawFilteredList = lookup.additionalInfo["raw_filtered"] as? List<*> ?: emptyList<Any>()
-      rawFilteredList
-        .map { element ->
-          val mapItem = element as? Map<String, List<String>> ?: emptyMap()
-          (mapItem["second"] as? List<String>)?.size ?: 0
-        }
+      lookup.rawFilteredHardFiltersList
+        .map { it.size }
         .sumOf { size -> max(0, size - 1) }
     }
   }
 }
 
+private val Lookup.rawProposalsList: List<String>
+  get() = this.additionalInfo["raw_proposals"] as? List<String> ?: emptyList()
+
+private val Lookup.rawFilteredList: List<String>
+  get() = this.additionalInfo["raw_filtered"] as? List<String> ?: emptyList()
+
+private val Lookup.analyzedFilteredList: List<String>
+  get() = this.additionalInfo["analyzed_filtered"] as? List<String> ?: emptyList()
+
+private val Lookup.rawFilteredHardFiltersList: List<List<String>>
+  get() = (this.additionalInfo["raw_filtered"] as? List<String> ?: emptyList<Any>()).map { element ->
+    val mapItem = element as? Map<String, List<String>> ?: emptyMap()
+    (mapItem["second"] as? List<String>) ?: emptyList<String>()
+  }
+
+private val Lookup.analyzedFilteredHardFiltersList: List<List<String>>
+  get() = (this.additionalInfo["analyzed_filtered"] as? List<*> ?: emptyList<Any>()).map { element ->
+    val mapItem = element as? Map<String, List<String>> ?: emptyMap()
+    (mapItem["second"] as? List<String>) ?: emptyList<String>()
+  }
+
 private data class Branch(val head: String, val lambda: String? = null, val underFlow: String? = null, val children: List<Any> = emptyList())
 
-fun generateJsonStructureForSankeyChart(): String {
+fun generateJsonStructureForSankeyChart(metrics: List<MetricInfo>): String {
   val gson = Gson()
 
   val correctSuggestionsBranch = Branch("correct suggestions",
                                         lambda = RelevantProposalsMetric(true).name,
-                                        underFlow = "not fetched from cache",
+                                        underFlow = "newly generated",
                                         children = listOf(FetchedFromCacheProposalsMetric(true).name))
 
   val incorrectSuggestionsBranch = Branch("incorrect suggestions",
                                           lambda = RelevantProposalsMetric(false).name,
-                                          underFlow = "not fetched from cache",
+                                          underFlow = "newly generated",
                                           children = listOf(FetchedFromCacheProposalsMetric(false).name))
 
   val suggestionsBranch = Branch("Suggestions",
                                  children = listOf(correctSuggestionsBranch, incorrectSuggestionsBranch))
 
   val hardFiltersBranch = Branch("Hard Filters",
-                                 children = hardFilteredProposalMetrics.map { it.name })
+                                 children = metrics
+                                   .filter { it.name.contains(HardFilteredProposalsMetric.debugDescription.filter { it.isLetterOrDigit() || it == '_' }) }
+                                   .map { it.name })
 
   val multipleFailureReasonsBranch = Branch("Multiple Failure Reasons",
                                             children = listOf(MultipleFailureReasonsMetric().name))

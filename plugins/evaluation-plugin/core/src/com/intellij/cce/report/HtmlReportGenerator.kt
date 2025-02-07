@@ -171,7 +171,7 @@ class HtmlReportGenerator(
     fun getReportRow(repRef: Map.Entry<String, ReferenceInfo>) =
       "{id:${rowId++},file:${getReportLink(repRef)},${formatMetrics(getReportMetrics(repRef.value))}}"
     return """
-        |let sankeyChartStructure = ${generateJsonStructureForSankeyChart()};
+        |let sankeyChartStructure = ${generateJsonStructureForSankeyChart(globalMetrics)};
         |let tableData = [{id:0,file:'Summary',${formatMetrics(globalMetrics)}}
         |${with(errorReferences) { if (isNotEmpty()) map { getErrorRow(it) }.joinToString(",\n", ",") else "" }}
         |${with(fileGenerator.reportReferences) { if (isNotEmpty()) map { getReportRow(it) }.joinToString(",\n", ",") else "" }}];
