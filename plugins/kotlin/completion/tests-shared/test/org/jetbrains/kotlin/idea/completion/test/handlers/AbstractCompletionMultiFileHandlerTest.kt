@@ -49,6 +49,7 @@ abstract class AbstractCompletionMultiFileHandlerTest : KotlinFixtureCompletionB
     fun testPackageDirective() = doTest()
     fun testPackageInImportDirective() = doTest()
     fun testJavaEnumCompletionEntry() = doTest(extraFileNames = arrayOf("JavaEnum.java"))
+    fun testKTIJ_32792() = doTest { tailText == " -> " && typeText == "(Int, String)" }
 
     protected fun getTestFileName(): String = "${getTestName(false)}-1.kt"
 

@@ -2,9 +2,11 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.findParentOfType
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.startOffset
@@ -18,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnn
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
@@ -30,6 +33,8 @@ import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaParameterNameWeigher.isTrailingLambdaParameter
+import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.addImportIfRequired
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.factories.TrailingFunctionDescriptor
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
@@ -210,12 +215,9 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
                 val classSymbol = parameterType.expandedSymbol as? KaNamedClassSymbol
                     ?: return@sequence
 
-                val suggestedNames = getSubstitutedComponents(
-                    classSymbol = classSymbol,
-                    candidateChecker = candidateChecker,
-                    parameterType = parameterType,
-                ).mapIndexed { index, (callableSymbol, returnType) ->
-                    val name = when (val member = callableSymbol.psi?.navigationElement) {
+                val signatures = classSymbol.getSignatures(candidateChecker, parameterType)
+                val suggestedNames = signatures.map { functionSignature ->
+                    val name = when (val member = functionSignature.symbol.psi?.navigationElement) {
                         is KtNamedFunction -> {
                             val expression = member.singleReturnExpressionOrNull?.returnedExpression
                                 ?: member.bodyExpression
@@ -228,10 +230,28 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
                         else -> null
                     }
 
+                    val returnType = functionSignature.returnType
+                        .lowerBoundIfFlexible()
                     returnType to nameSuggester(returnType, name).first()
                 }
 
-                yieldIfNotNull(createCompoundLookupElement(suggestedNames, isDestructuring = true))
+                val fqNames = signatures.mapNotNull { signature ->
+                    val addImport =
+                        importStrategyDetector.detectImportStrategyForCallableSymbol(signature.symbol) as? ImportStrategy.AddImport
+                            ?: return@mapNotNull null
+                    addImport.nameToImport
+                }
+
+                createCompoundLookupElement(suggestedNames, isDestructuring = true)?.withChainedInsertHandler { context, item ->
+                    val targetFile = context.file
+                    if (targetFile !is KtFile) throw IllegalStateException("Target file '${targetFile.name}' is not a Kotlin file")
+
+                    for (nameToImport in fqNames) {
+                        addImportIfRequired(targetFile, nameToImport)
+                    }
+                    context.commitDocument()
+                    context.doPostponedOperationsAndUnblockDocument()
+                }?.let { yield(it) }
 
                 val lookupObject = classSymbol.psi
                     ?: return@sequence
@@ -250,16 +270,15 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun getSubstitutedComponents(
-        classSymbol: KaNamedClassSymbol,
+    private fun KaNamedClassSymbol.getSignatures(
         candidateChecker: KaCompletionExtensionCandidateChecker,
         parameterType: KaClassType,
         receiverTypes: List<KaClassType> = listOf(parameterType), // todo all receiver types
-    ): List<SubstitutedSymbol> {
-        val components = classSymbol.getComponents(receiverTypes)
+    ): List<KaFunctionSignature<KaNamedFunctionSymbol>> {
+        val components = getComponents(receiverTypes)
         if (components.isEmpty()) return emptyList()
 
-        val defaultSubstitutor = classSymbol.typeParameters
+        val defaultSubstitutor = typeParameters
             .zip(parameterType.typeArguments.mapNotNull { it.type })
             .toMap()
             .let { createSubstitutor(it) }
@@ -274,10 +293,7 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
                 defaultSubstitutor
             }
 
-            SubstitutedSymbol(
-                callableSymbol = callableSymbol,
-                returnType = substitutor.substitute(callableSymbol.returnType),
-            )
+            callableSymbol.substitute(substitutor)
         }
 
         return if (substituted.size == components.size) substituted
@@ -332,15 +348,20 @@ private val NoAnnotationsTypeRenderer: KaTypeRenderer = KaTypeRendererForSource.
 
 private const val TailText: @NlsSafe String = " -> "
 
-private fun LookupElementBuilder.withTailTextInsertHandler(
-    delegate: InsertHandler<LookupElement>? = null,
-) = withTailText(TailText, true)
+private fun LookupElementBuilder.withTailTextInsertHandler() = this
+    .withTailText(TailText, true)
     .withInsertHandler { context, item ->
-        delegate?.handleInsert(context, item)
         context.document.insertString(context.tailOffset, TailText)
         context.commitDocument()
         context.editor.caretModel.moveToOffset(context.tailOffset)
     }
+
+private fun LookupElementBuilder.withChainedInsertHandler(
+    delegate: InsertHandler<LookupElement>,
+) = withInsertHandler { context, item ->
+    delegate.handleInsert(context, item)
+    insertHandler?.handleInsert(context, item)
+}
 
 context(KaSession)
 private fun createCompoundLookupElement(
@@ -367,8 +388,10 @@ private fun createCompoundLookupElement(
         .withPresentableText(presentableText)
         .withTypeText(typeText)
         .withLookupStrings(lookupStrings)
-        .withTailTextInsertHandler { context, item ->
+        .withTailTextInsertHandler()
+        .withChainedInsertHandler { context, item ->
             context.document.replaceString(context.startOffset, context.tailOffset, presentableText)
+            context.commitDocument()
         }
 }
 
@@ -404,7 +427,6 @@ private fun createExtensionCandidateChecker(
     )
 }
 
-private data class SubstitutedSymbol(
-    val callableSymbol: KaNamedFunctionSymbol,
-    val returnType: KaType,
-)
+private fun InsertionContext.doPostponedOperationsAndUnblockDocument() {
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
+}
