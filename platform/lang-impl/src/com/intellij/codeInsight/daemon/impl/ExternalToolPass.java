@@ -256,7 +256,7 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
   private void doFinish() {
     List<HighlightInfo> highlights = myAnnotationData.stream()
       .flatMap(data ->
-        ContainerUtil.notNullize(data.annotationHolder).stream().map(annotation -> HighlightInfo.fromAnnotation(data.annotator, annotation)))
+        ContainerUtil.notNullize(data.annotationHolder).stream().map(annotation -> HighlightInfo.fromAnnotation(data.annotator, annotation, getDocument())))
       .toList();
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true);
     HighlightingSessionImpl.runInsideHighlightingSession(myFile, getColorsScheme(), ProperTextRange.create(myFile.getTextRange()), false, session -> {

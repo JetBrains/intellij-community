@@ -1266,7 +1266,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       else {
         markup.changeAttributesInBatch(highlighter, changeAttributes);
       }
-      oldInfo.copyComputedLazyFixesTo(newInfo);
+      oldInfo.copyComputedLazyFixesTo(newInfo, session.getDocument());
       assert oldInfo.getGroup() == MANAGED_HIGHLIGHT_INFO_GROUP: oldInfo;
     }
     newInfo.setHighlighter(highlighter);

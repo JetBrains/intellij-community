@@ -281,7 +281,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
             TextRange patchedFixRange = documentWindow.injectedToHost(editableRange);
             return descriptor.withFixRange(patchedFixRange);
           });
-        patched.registerFixes(fixes);
+        patched.registerFixes(fixes, documentWindow.getDelegate());
         return null;
       });
       patched.markFromInjection();

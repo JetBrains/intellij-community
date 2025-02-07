@@ -269,7 +269,7 @@ public final class HighlightInfoB implements HighlightInfo.Builder {
                                            problemGroup, null, gutterIconRenderer, group, false, myLazyFixes);
     // fill IntentionActionDescriptor.problemGroup and IntentionActionDescriptor.severity - they can be null because .registerFix() might have been called before .problemGroup() and .severity()
     List<HighlightInfo.IntentionActionDescriptor> iads = ContainerUtil.map(fixes, fixInfo -> fixInfo.withProblemGroupAndSeverity(problemGroup, severity));
-    info.registerFixes(iads);
+    info.registerFixes(iads, null);
     return info;
   }
 

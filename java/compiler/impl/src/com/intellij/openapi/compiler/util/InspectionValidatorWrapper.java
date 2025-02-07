@@ -329,7 +329,7 @@ public final class InspectionValidatorWrapper implements Validator {
       AnnotationSessionImpl.computeWithSession(xmlFile, false, annotator, annotationHolder -> {
         processAnnotator(xmlFile, ((AnnotationHolderImpl)annotationHolder), annotator);
         for (Annotation annotation : ((AnnotationHolderImpl)annotationHolder)) {
-          HighlightInfo info = HighlightInfo.fromAnnotation(annotator, annotation);
+          HighlightInfo info = HighlightInfo.fromAnnotation(annotator, annotation, xmlFile.getFileDocument());
           if (info.getSeverity() == HighlightSeverity.INFORMATION) continue;
 
           PsiElement startElement = xmlFile.findElementAt(info.startOffset);

@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -686,20 +687,29 @@ public class HighlightInfo implements Segment {
   }
 
   /**
-   * @deprecated use {@link HighlightInfo#fromAnnotation(ExternalAnnotator, Annotation)}
+   * @deprecated Use {@link #newHighlightInfo(HighlightInfoType)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
+  public static @NotNull HighlightInfo fromAnnotation(@NotNull Annotation annotation, @NotNull Document document) {
+    return fromAnnotation(ExternalAnnotator.class, annotation, false,document);
+  }
+  /**
+   * @deprecated absolutely do not use. quick fixes registered with this Annotation won't be transferred to HighlightInfo.
+   * Use {@link #newHighlightInfo(HighlightInfoType)} instead.
+   */
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public static @NotNull HighlightInfo fromAnnotation(@NotNull Annotation annotation) {
-    return fromAnnotation(ExternalAnnotator.class, annotation, false);
+    return fromAnnotation(ExternalAnnotator.class, annotation, false, new DocumentImpl(""));
   }
 
   @ApiStatus.Internal
-  public static @NotNull HighlightInfo fromAnnotation(@NotNull ExternalAnnotator<?,?> externalAnnotator, @NotNull Annotation annotation) {
-    return fromAnnotation(externalAnnotator.getClass(), annotation, false);
+  public static @NotNull HighlightInfo fromAnnotation(@NotNull ExternalAnnotator<?,?> externalAnnotator, @NotNull Annotation annotation, @NotNull Document document) {
+    return fromAnnotation(externalAnnotator.getClass(), annotation, false, document);
   }
 
-  static @NotNull HighlightInfo fromAnnotation(@NotNull Class<?> annotatorClass, @NotNull Annotation annotation, boolean batchMode) {
+  static @NotNull HighlightInfo fromAnnotation(@NotNull Class<?> annotatorClass, @NotNull Annotation annotation, boolean batchMode, @NotNull Document document) {
     TextAttributes forcedAttributes = annotation.getEnforcedTextAttributes();
     TextAttributesKey key = annotation.getTextAttributes();
     TextAttributesKey forcedAttributesKey = forcedAttributes == null && key != HighlighterColors.NO_HIGHLIGHTING ? key : null;
@@ -718,7 +728,7 @@ public class HighlightInfo implements Segment {
         HighlightDisplayKey k = af.key != null ? af.key : HighlightDisplayKey.find(ANNOTATOR_INSPECTION_SHORT_NAME);
         return new IntentionActionDescriptor(af.quickFix, null, HighlightDisplayKey.getDisplayNameByKey(k), null, k, annotation.getProblemGroup(), info.getSeverity(), range);
       });
-      info.registerFixes(descriptors);
+      info.registerFixes(descriptors, document);
     }
 
     return info;
@@ -1049,16 +1059,16 @@ public class HighlightInfo implements Segment {
                    @Nullable @Nls String displayName,
                    @Nullable TextRange fixRange,
                    @Nullable HighlightDisplayKey key) {
-    registerFixes(List.of(new IntentionActionDescriptor(action, options, displayName, null, key, myProblemGroup, getSeverity(), fixRange)));
+    registerFixes(List.of(new IntentionActionDescriptor(action, options, displayName, null, key, myProblemGroup, getSeverity(), fixRange)), null);
   }
 
   @ApiStatus.Internal
   synchronized // synchronized to avoid concurrent access to quickFix* fields; TODO rework to lock-free
-  public void registerFixes(@NotNull List<? extends @NotNull IntentionActionDescriptor> fixes) {
+  public void registerFixes(@NotNull List<? extends @NotNull IntentionActionDescriptor> fixes, @Nullable Document document) {
     if (fixes.isEmpty()) {
       return;
     }
-    List<IntentionActionDescriptor> descriptors = getIntentionActionDescriptors();
+    List<IntentionActionDescriptor> descriptors = myIntentionActionDescriptors;
     List<IntentionActionDescriptor> result = new ArrayList<>(descriptors.size() + fixes.size());
     result.addAll(descriptors);
     for (IntentionActionDescriptor descriptor : fixes) {
@@ -1071,11 +1081,10 @@ public class HighlightInfo implements Segment {
     }
     myIntentionActionDescriptors = List.copyOf(result);
 
-    updateFields(getIntentionActionDescriptors());
+    updateFields(getIntentionActionDescriptors(), document);
   }
 
-  private void updateFields(@NotNull @Unmodifiable List<? extends IntentionActionDescriptor> descriptors) {
-    Document document = null;
+  private synchronized void updateFields(@NotNull @Unmodifiable List<? extends IntentionActionDescriptor> descriptors, @Nullable Document document) {
     for (IntentionActionDescriptor descriptor : descriptors) {
       TextRange fixRange = descriptor.getFixRange();
       if (descriptor.myAction instanceof HintAction) {
@@ -1089,9 +1098,7 @@ public class HighlightInfo implements Segment {
     RangeHighlighterEx highlighter = this.highlighter;
     if (document == null) {
       RangeMarker fixMarker = this.fixMarker;
-      document = fixMarker != null ? fixMarker.getDocument() :
-                 highlighter != null ? highlighter.getDocument() :
-                 null;
+      document = fixMarker != null ? fixMarker.getDocument() : highlighter != null ? highlighter.getDocument() : null;
     }
     if (document != null) {
       // coerce fixRange inside document
@@ -1103,7 +1110,7 @@ public class HighlightInfo implements Segment {
       //highlighter already has been created, we need to update quickFixActionMarkers
       long highlighterRange = TextRangeScalarUtil.toScalarRange(highlighter);
       Long2ObjectMap<RangeMarker> cache = getRangeMarkerCache();
-      updateQuickFixFields(highlighter.getDocument(), cache, highlighterRange);
+      updateQuickFixFields(descriptors, highlighter.getDocument(), cache, highlighterRange);
     }
   }
 
@@ -1166,7 +1173,14 @@ public class HighlightInfo implements Segment {
   synchronized void updateQuickFixFields(@NotNull Document document,
                                          @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
                                          long finalHighlighterRange) {
-    for (IntentionActionDescriptor descriptor : getIntentionActionDescriptors()) {
+    updateQuickFixFields(getIntentionActionDescriptors(), document, range2markerCache, finalHighlighterRange);
+  }
+
+  private synchronized void updateQuickFixFields(@NotNull List<? extends IntentionActionDescriptor> descriptors,
+                                         @NotNull Document document,
+                                         @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
+                                         long finalHighlighterRange) {
+    for (IntentionActionDescriptor descriptor : descriptors) {
       Segment fixRange = descriptor.myFixRange;
       if (fixRange instanceof TextRange tr) {
         descriptor.myFixRange = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(tr));
@@ -1260,7 +1274,7 @@ public class HighlightInfo implements Segment {
     return XmlStringUtil.wrapInHtml(result);
   }
 
-  void computeQuickFixesSynchronously() throws ExecutionException, InterruptedException {
+  void computeQuickFixesSynchronously(@NotNull Document document) throws ExecutionException, InterruptedException {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -1272,7 +1286,7 @@ public class HighlightInfo implements Segment {
       Future<? extends List<IntentionActionDescriptor>> future = desc.future();
       if (future == null) {
         Consumer<? super QuickFixActionRegistrar> computer = desc.fixesComputer();
-        future = CompletableFuture.completedFuture(doComputeLazyQuickFixes(computer));
+        future = CompletableFuture.completedFuture(doComputeLazyQuickFixes(document, computer));
         return new LazyFixDescription(computer, future);
       }
       else {
@@ -1289,7 +1303,8 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  @NotNull List<IntentionActionDescriptor> doComputeLazyQuickFixes(@NotNull Consumer<? super QuickFixActionRegistrar> computation) {
+  @NotNull List<IntentionActionDescriptor> doComputeLazyQuickFixes(@NotNull Document document,
+                                                                   @NotNull Consumer<? super QuickFixActionRegistrar> computation) {
     List<IntentionActionDescriptor> descriptors = new ArrayList<>();
     QuickFixActionRegistrar registrarDelegate = new QuickFixActionRegistrar() {
       @Override
@@ -1306,7 +1321,7 @@ public class HighlightInfo implements Segment {
       }
     };
     computation.accept(registrarDelegate);
-    updateFields(ContainerUtil.concat(getIntentionActionDescriptors(), descriptors)); // descriptors aren't saved yet
+    updateFields(ContainerUtil.concat(getIntentionActionDescriptors(), descriptors), document); // descriptors aren't saved yet
     return descriptors;
   }
 
@@ -1327,7 +1342,7 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  void copyComputedLazyFixesTo(@NotNull HighlightInfo newInfo) {
+  void copyComputedLazyFixesTo(@NotNull HighlightInfo newInfo, @NotNull Document document) {
     List<LazyFixDescription> list;
     synchronized (this) {
       list = new ArrayList<>(myLazyQuickFixes);
@@ -1335,12 +1350,13 @@ public class HighlightInfo implements Segment {
     synchronized (newInfo) {
       if (newInfo.myLazyQuickFixes.size() == list.size()) {
         newInfo.myLazyQuickFixes = list;
+        newInfo.updateFields(newInfo.getIntentionActionDescriptors(), document);
       }
     }
   }
 
   @NotNull @Unmodifiable List<? extends @NotNull Consumer<? super QuickFixActionRegistrar>>
   getLazyQuickFixes() {
-    return ContainerUtil.map(myLazyQuickFixes, p->p.fixesComputer());
+    return ContainerUtil.map(myLazyQuickFixes, p -> p.fixesComputer());
   }
 }

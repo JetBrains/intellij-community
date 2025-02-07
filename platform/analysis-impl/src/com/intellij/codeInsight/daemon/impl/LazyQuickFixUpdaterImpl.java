@@ -52,7 +52,7 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
 
     ReadAction.run(() -> {
       try {
-        info.computeQuickFixesSynchronously();
+        info.computeQuickFixesSynchronously(editor.getDocument());
       }
       catch (ExecutionException | InterruptedException ignored) {
 
@@ -98,11 +98,11 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
       });
     }
     for (HighlightInfo info : unresolvedInfos) {
-      startJob(info);
+      startJob(info, editor);
     }
   }
 
-  private void startJob(@NotNull HighlightInfo info) {
+  private void startJob(@NotNull HighlightInfo info, @NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!enabled) {
@@ -112,7 +112,7 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
       return ReadAction.nonBlocking(()->{
         AtomicReference<List<HighlightInfo.IntentionActionDescriptor>> result = new AtomicReference<>(List.of());
         ((ApplicationEx)ApplicationManager.getApplication()).executeByImpatientReader(
-          () -> result.set(info.doComputeLazyQuickFixes(computation)));
+          () -> result.set(info.doComputeLazyQuickFixes(editor.getDocument(), computation)));
         return result.get();
       }).submit(ForkJoinPool.commonPool());
       }
@@ -126,12 +126,12 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
   }
 
   @TestOnly
-  void waitForBackgroundJobIfStartedInTests(@NotNull HighlightInfo info, int timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  void waitForBackgroundJobIfStartedInTests(@NotNull HighlightInfo info, @NotNull Document document, int timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     ReadAction.nonBlocking(() -> {
       try {
-        info.computeQuickFixesSynchronously();
+        info.computeQuickFixesSynchronously(document);
       }
       catch (ExecutionException | InterruptedException e) {
         throw new RuntimeException(e);
