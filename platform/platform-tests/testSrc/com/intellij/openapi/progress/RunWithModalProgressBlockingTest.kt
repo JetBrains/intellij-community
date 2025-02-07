@@ -9,9 +9,12 @@ import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.ModalCoroutineTest
 import com.intellij.openapi.application.impl.processApplicationQueue
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.util.application
 import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
@@ -21,7 +24,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
-import java.lang.Runnable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.ContinuationInterceptor
@@ -425,6 +427,23 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
           }
         }
       }
+    }
+  }
+
+  @Suppress("ForbiddenInSuspectContextMethod")
+  @Test
+  fun `service initializer inherits read lock from context`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    runWithModalProgressBlocking {
+      ReadAction.nonBlocking<Unit> {
+        application.service<MyTestService>()
+      }.executeSynchronously()
+    }
+  }
+
+  @Service
+  private class MyTestService {
+    init {
+      assertTrue { application.isReadAccessAllowed }
     }
   }
 }

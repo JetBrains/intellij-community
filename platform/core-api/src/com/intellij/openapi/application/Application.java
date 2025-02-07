@@ -687,7 +687,7 @@ public interface Application extends ComponentManager {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  default CoroutineContext getLockStateAsCoroutineContext(boolean shared) {
+  default CoroutineContext getLockStateAsCoroutineContext(CoroutineContext context, boolean shared) {
     return EmptyCoroutineContext.INSTANCE;
   }
 

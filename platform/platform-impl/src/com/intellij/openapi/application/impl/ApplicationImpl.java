@@ -1285,8 +1285,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager
   }
 
   @Override
-  public CoroutineContext getLockStateAsCoroutineContext(boolean shared) {
-    return getThreadingSupport().getPermitAsContextElement(shared);
+  public CoroutineContext getLockStateAsCoroutineContext(CoroutineContext baseContext, boolean shared) {
+    return getThreadingSupport().getPermitAsContextElement(baseContext, shared);
   }
 
   @Override

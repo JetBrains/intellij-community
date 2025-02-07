@@ -319,7 +319,7 @@ interface ThreadingSupport {
   fun isInsideUnlockedWriteIntentLock(): Boolean
 
   @ApiStatus.Internal
-  fun getPermitAsContextElement(shared: Boolean): CoroutineContext
+  fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): CoroutineContext
 
   @ApiStatus.Internal
   fun returnPermitFromContextElement(ctx: CoroutineContext)

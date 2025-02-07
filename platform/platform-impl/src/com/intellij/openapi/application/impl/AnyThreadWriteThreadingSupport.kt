@@ -139,12 +139,12 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   @Volatile
   private var myWriteAcquired: Thread? = null
 
-  override fun getPermitAsContextElement(shared: Boolean): CoroutineContext {
+  override fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): CoroutineContext {
     if (!isLockStoredInContext) {
       return EmptyCoroutineContext
     }
 
-    val element = currentThreadContext()[LockStateContextElement]
+    val element = baseContext[LockStateContextElement]
     if (element?.threadState?.permit != null) {
       if (shared) {
         element.threadState.fork()

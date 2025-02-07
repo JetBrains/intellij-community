@@ -13,6 +13,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.util.progress.*
+import com.intellij.platform.util.progress.internalCreateRawHandleFromContextStepIfExistsAndFresh
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -480,14 +482,20 @@ private fun assertBackgroundThreadOrWriteAction() {
 @IntellijInternalApi
 @Internal
 fun getLockPermitContext(forSharing: Boolean = false): CoroutineContext {
+  return getLockPermitContext(currentThreadContext(), forSharing)
+}
+
+@IntellijInternalApi
+@Internal
+fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): CoroutineContext {
   val application = ApplicationManager.getApplication()
   return if (application != null) {
     if (isLockStoredInContext) {
       if (EDT.isCurrentThreadEdt()) {
-        application.getLockStateAsCoroutineContext(forSharing) + LockLeakedFromEDTMarker
+        application.getLockStateAsCoroutineContext(baseContext, forSharing) + LockLeakedFromEDTMarker
       }
       else {
-        application.getLockStateAsCoroutineContext(forSharing)
+        application.getLockStateAsCoroutineContext(baseContext, forSharing)
       }
     }
     else if (application.isReadAccessAllowed) {
