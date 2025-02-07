@@ -51,8 +51,8 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoStackTraceFoldingPanel {
-  private static final Map<Icon, Icon> daemonIcons = new HashMap<>();
-  private static final Map<Icon, Icon> virtualIcons = new HashMap<>();
+  private static final Map<Icon, IconWithDaemonOverlay> daemonIcons = new HashMap<>();
+  private static final Map<Icon, IconWithVirtualOverlay> virtualIcons = new HashMap<>();
 
   private final JBList<ThreadState> myThreadList;
   private final List<ThreadState> myThreadDump;
@@ -203,11 +203,6 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     }
   }
 
-  private static Icon getLayeredIcon(Icon baseIcon, Icon extraIcon, Map<Icon, Icon> cache) {
-    return cache.computeIfAbsent(baseIcon,
-                                 bi -> IconManager.getInstance().createLayered(bi, extraIcon));
-  }
-
   private static Icon getThreadStateIcon(ThreadState threadState) {
     Icon baseIcon;
     if (threadState.isSleeping()) {
@@ -239,10 +234,10 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
     }
 
     if (threadState.isVirtual()) {
-      return getLayeredIcon(baseIcon, AllIcons.Debugger.ThreadStates.Virtual_sign, virtualIcons);
+      return virtualIcons.computeIfAbsent(baseIcon, IconWithVirtualOverlay::new);
     }
     else if (threadState.isDaemon()) {
-      return getLayeredIcon(baseIcon, AllIcons.Debugger.ThreadStates.Daemon_sign, daemonIcons);
+      return daemonIcons.computeIfAbsent(baseIcon, IconWithDaemonOverlay::new);
     }
     else {
       return baseIcon;

@@ -96,7 +96,7 @@ internal fun fromState(state: State, isCurrent: Boolean): Icon =
         State.SUSPENDED -> AllIcons.Debugger.ThreadFrozen
         State.RUNNING -> if (isCurrent) AllIcons.Debugger.ThreadCurrent else AllIcons.Debugger.ThreadRunning
         State.CREATED -> AllIcons.Debugger.ThreadStates.Idle
-        else -> AllIcons.Debugger.ThreadStates.Daemon_sign
+        State.UNKNOWN -> AllIcons.Debugger.ThreadGroup
     }
 
 internal class SimpleColoredTextIconPresentationRenderer {

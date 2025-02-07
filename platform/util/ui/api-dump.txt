@@ -346,11 +346,13 @@ f:com.intellij.icons.AllIcons$Debugger
 - sf:ThawAll:javax.swing.Icon
 - sf:ThreadAtBreakpoint:javax.swing.Icon
 - sf:ThreadCurrent:javax.swing.Icon
+- sf:ThreadDaemon:javax.swing.Icon
 - sf:ThreadFrozen:javax.swing.Icon
 - sf:ThreadGroup:javax.swing.Icon
 - sf:ThreadGroupCurrent:javax.swing.Icon
 - sf:ThreadRunning:javax.swing.Icon
 - sf:ThreadSuspended:javax.swing.Icon
+- sf:ThreadVirtual:javax.swing.Icon
 - sf:Threads:javax.swing.Icon
 - sf:Value:javax.swing.Icon
 - sf:VariablesTab:javax.swing.Icon
@@ -359,10 +361,8 @@ f:com.intellij.icons.AllIcons$Debugger
 - sf:WatchLastReturnValue:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Debugger$ThreadStates
-- sf:Daemon_sign:javax.swing.Icon
 - sf:Idle:javax.swing.Icon
 - sf:Socket:javax.swing.Icon
-- sf:Virtual_sign:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Diff
 - sf:ApplyNotConflicts:javax.swing.Icon
