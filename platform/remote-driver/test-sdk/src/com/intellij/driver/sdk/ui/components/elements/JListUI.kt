@@ -55,7 +55,7 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
   fun doubleClickItem(itemText: String, fullMatch: Boolean = true) {
     findItemIndex(itemText, fullMatch)?.let { index ->
       val cellBounds = getCellBounds(index)
-      doubleClick(Point(cellBounds.getCenterX().toInt(), cellBounds.getCenterY().toInt()))
+      doubleClick(Point(cellBounds.centerX.toInt(), cellBounds.centerY.toInt()))
     }
   }
 

@@ -58,7 +58,7 @@ interface SwingUtilities {
   fun computeDifference(rectA: Rectangle, rectB: Rectangle): Array<Rectangle>
 }
 
-val Rectangle.center get() = Point(getCenterX().toInt(), getCenterY().toInt())
+val Rectangle.center: Point get() = Point(centerX.toInt(), centerY.toInt())
 
 fun printableString(toPrint: String): String {
   val resultString = toPrint.let {

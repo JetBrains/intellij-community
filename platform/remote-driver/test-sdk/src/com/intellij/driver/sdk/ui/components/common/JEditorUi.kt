@@ -291,7 +291,7 @@ data class GutterState(
 class InlayHint(val offset: Int, val text: String)
 
 fun List<InlayHint>.getHint(offset: Int): InlayHint {
-  val foundHint = this.find { it.offset.equals(offset) }
+  val foundHint = this.find { it.offset == offset }
   if (foundHint == null) {
     throw NoSuchElementException("cannot find hint with offset: $offset")
   }
