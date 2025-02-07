@@ -2,12 +2,15 @@
 package com.intellij.util;
 
 import com.intellij.execution.util.EnvVariablesTable;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +70,18 @@ public class EnvironmentUtilTest {
   }
 
   @Test(timeout = 30000)
+  public void loadingPs1Env() throws Exception {
+    assumeWindows();
+
+    File file = FileUtil.createTempFile("test file with spaces", ".ps1", true);
+    FileUtil.writeToFile(file, "$env:FOO_TEST_1=\"123\"\r\n$env:FOO_TEST_2=$($args[0])");
+
+    Map<String, String> result = new EnvReader().readPs1Env(file.toPath(), Collections.singletonList("arg_value"));
+    assertEquals("123", result.get("FOO_TEST_1"));
+    assertEquals("arg_value", result.get("FOO_TEST_2"));
+  }
+
+  @Test(timeout = 30000)
   public void loadingBatEnv_ErrorHandling() throws Exception {
     assumeWindows();
 
@@ -78,8 +93,36 @@ public class EnvironmentUtilTest {
       fail("error should be reported");
     }
     catch (Exception e) {
-      assertTrue(e.getMessage(), e.getMessage().contains("some error"));
+      String text = collectTextAndAttachment(e);
+      assertTrue(text, text.contains("some error"));
     }
+  }
+
+  @Test(timeout = 30000)
+  public void loadingPs1Env_ErrorHandling() throws Exception {
+    assumeWindows();
+
+    File file = FileUtil.createTempFile("test_failure", ".ps1", true);
+    FileUtil.writeToFile(file, "echo \"some failure\"\r\nWrite-Error \"some error\"\r\nexit 100");
+
+    try {
+      new EnvReader().readPs1Env(file.toPath(), Collections.emptyList());
+      fail("error should be reported");
+    }
+    catch (Exception e) {
+      String errorText = collectTextAndAttachment(e);
+      assertTrue(errorText, errorText.contains("some error"));
+      assertTrue(errorText, errorText.contains("some failure"));
+    }
+  }
+
+  private static @NotNull String collectTextAndAttachment(Exception e) {
+    StringBuilder errorTextBuilder = new StringBuilder(e.getMessage());
+    if (e instanceof ExceptionWithAttachments) {
+      Arrays.stream(((ExceptionWithAttachments)e).getAttachments()).forEach(attachment -> errorTextBuilder.append(attachment.getDisplayText()));
+    }
+    String errorText = errorTextBuilder.toString();
+    return errorText;
   }
 
   @Test
