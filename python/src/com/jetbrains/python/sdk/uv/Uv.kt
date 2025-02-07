@@ -13,7 +13,7 @@ interface UvCli {
 interface UvLowLevel {
   suspend fun initializeEnvironment(init: Boolean, python: Path?): Result<Path>
 
-  suspend fun discoverUvInstalledPythons(): Result<Set<Path>>
+  suspend fun listUvPythons(): Result<Set<Path>>
 
   /**
   * Manage project dependencies by adding/removing them to the project along side installation

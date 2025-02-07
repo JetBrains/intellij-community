@@ -17,6 +17,6 @@ internal class UvSystemPythonProvider : SystemPythonProvider {
     }
 
     val uv = createUvLowLevel(Path.of("."))
-    return uv.discoverUvInstalledPythons()
+    return uv.listUvPythons()
   }
 }
