@@ -112,15 +112,15 @@ final class UnindexedFilesFinder {
       return !appliers.isEmpty() || !removers.isEmpty();
     }
 
-    private @NotNull String getAppliersAndRemoversLogString(IndexedFile indexedFile) {
-      return "Scanner has updated file " + indexedFile.getFileName() +
+    private @NotNull String getAppliersAndRemoversLogString(@NotNull IndexedFile indexedFile) {
+      return "Scanner has updated file " + getLogString(indexedFile) +
              " with appliers: " + appliers +
              " and removers: " + removers + "; ";
     }
 
-    private String getIndexingReasonLogString(IndexedFile indexedFile) {
+    private String getIndexingReasonLogString(@NotNull IndexedFile indexedFile) {
       StringBuilder sb = new StringBuilder("Scheduling indexing of ");
-      sb.append(indexedFile.getFileName());
+      sb.append(getLogString(indexedFile));
       sb.append(" by request of indexes: [");
       if (unindexedStates != null) {
         for (Pair<FileIndexingStateWithExplanation, ID<?, ?>> state : unindexedStates) {
@@ -137,6 +137,16 @@ final class UnindexedFilesFinder {
       }
       return sb.toString();
     }
+  }
+
+  @NotNull
+  private static String getLogString(@NotNull IndexedFile indexedFile) {
+    StringBuilder sb = new StringBuilder(indexedFile.getFileName());
+    VirtualFile file = indexedFile.getFile();
+    if (file instanceof VirtualFileWithId fileWithId) {
+      sb.append(" (id=").append(fileWithId.getId()).append(")");
+    }
+    return sb.toString();
   }
 
   UnindexedFilesFinder(@NotNull Project project,
@@ -243,7 +253,7 @@ final class UnindexedFilesFinder {
           fileTypeIndexState = myFileBasedIndex.getIndexingState(indexedFile, myFileTypeIndex, indexingStamp);
           if (fileTypeIndexState.isIndexedButOutdated()) {
             if (FileBasedIndexEx.doTraceIndexUpdates()) {
-              LOG.info("Scheduling full indexing of " + indexedFile.getFileName() + " because file type index is outdated. " +
+              LOG.info("Scheduling full indexing of " + getLogString(indexedFile) + " because file type index is outdated. " +
                        fileTypeIndexState.getExplanationAsString());
             }
             myFileBasedIndex.dropNontrivialIndexedStates(inputId);
@@ -337,7 +347,7 @@ final class UnindexedFilesFinder {
       if (fileIndexingState.updateRequired()) {
         if (FileBasedIndexEx.doTraceStubUpdates(indexId)) {
           FileBasedIndexImpl.LOG.info(
-            "Scheduling indexing of " + indexedFile.getFileName() + " by request of index " + indexId +
+            "Scheduling indexing of " + getLogString(indexedFile) + " by request of index " + indexId +
             (fileStatusBuilder.indexInfrastructureExtensionInvalidated ? " because extension invalidated;" : ";") +
             ("indexing state = " + fileIndexingState));
         }
@@ -466,7 +476,7 @@ final class UnindexedFilesFinder {
       if (processor.tryIndexFileWithoutContent(fileContent, inputId, indexId)) {
         myFileBasedIndex.getIndex(indexId).setIndexedStateForFile(inputId, fileContent, true);
         if (FileBasedIndexEx.doTraceStubUpdates(indexId)) {
-          LOG.info("File " + fileContent.getFileName() + " indexed using extension for " + indexId + " without content");
+          LOG.info("File " + getLogString(fileContent) + " indexed using extension for " + indexId + " without content");
         }
         return true;
       }
