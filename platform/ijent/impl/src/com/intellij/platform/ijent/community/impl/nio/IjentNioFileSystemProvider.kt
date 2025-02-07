@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.openapi.diagnostic.thisLogger
@@ -73,7 +73,13 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun newFileSystem(uri: URI, env: MutableMap<String, *>): IjentNioFileSystem {
     @Suppress("NAME_SHADOWING") val uri = uri.normalize()
-    typicalUriChecks(uri)
+    if (uri.authority.isNullOrEmpty()
+        || uri.scheme != this.scheme
+        || !uri.query.isNullOrEmpty()
+        || !uri.fragment.isNullOrEmpty()) {
+      throw UnsupportedOperationException(uri.toString() + " doesn't look like a proper URL for " + IjentNioFileSystemProvider::class.simpleName)
+    }
+
     val ijentFs =
       try {
         env[KEY_IJENT_FS] as IjentFileSystemApi
@@ -496,35 +502,35 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
         val oldPermissions =
           (readAttributes(path, PosixFileAttributes::class.java, *options) as IjentNioPosixFileAttributes).fileInfo.permissions
         builder.permissions(when (requestedAttributes.singleOrNull()) {
-          "permissions" -> {
-            value as Set<*> // ClassCastException is expected
-            @Suppress("UNCHECKED_CAST") val mask = PosixFilePermissionsUtil.toUnixMode(value as Set<PosixFilePermission>)
-            EelPosixFileInfoImpl.Permissions(oldPermissions.owner, oldPermissions.group, mask)
-          }
-          "owner" -> {
-            if (value is EelPosixUserPrincipal) {
-              if (value.uid != oldPermissions.owner) {
-                TODO("Changing uid is not supported yet")
-              }
-              oldPermissions
-            }
-            else {
-              throw UnsupportedOperationException("Unsupported owner principal: $value")
-            }
-          }
-          "group" -> {
-            if (value is EelPosixGroupPrincipal) {
-              if (value.gid != oldPermissions.group) {
-                TODO("Changing gid is not supported yet")
-              }
-              oldPermissions
-            }
-            else {
-              throw java.lang.UnsupportedOperationException("Unsupported group principal: $value")
-            }
-          }
-          else -> throw IllegalArgumentException("Unrecognized attribute: $attribute")
-        })
+                              "permissions" -> {
+                                value as Set<*> // ClassCastException is expected
+                                @Suppress("UNCHECKED_CAST") val mask = PosixFilePermissionsUtil.toUnixMode(value as Set<PosixFilePermission>)
+                                EelPosixFileInfoImpl.Permissions(oldPermissions.owner, oldPermissions.group, mask)
+                              }
+                              "owner" -> {
+                                if (value is EelPosixUserPrincipal) {
+                                  if (value.uid != oldPermissions.owner) {
+                                    TODO("Changing uid is not supported yet")
+                                  }
+                                  oldPermissions
+                                }
+                                else {
+                                  throw UnsupportedOperationException("Unsupported owner principal: $value")
+                                }
+                              }
+                              "group" -> {
+                                if (value is EelPosixGroupPrincipal) {
+                                  if (value.gid != oldPermissions.group) {
+                                    TODO("Changing gid is not supported yet")
+                                  }
+                                  oldPermissions
+                                }
+                                else {
+                                  throw java.lang.UnsupportedOperationException("Unsupported group principal: $value")
+                                }
+                              }
+                              else -> throw IllegalArgumentException("Unrecognized attribute: $attribute")
+                            })
       }
       else -> throw java.lang.IllegalArgumentException("Unrecognized attribute: $attribute")
     }
@@ -624,14 +630,6 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
 
     return path
-  }
-
-  private fun typicalUriChecks(uri: URI) {
-    require(uri.authority.isNotEmpty())
-
-    require(uri.scheme == scheme) { "${uri.scheme} != $scheme" }
-    require(uri.query.isNullOrEmpty()) { uri.query }
-    require(uri.fragment.isNullOrEmpty()) { uri.fragment }
   }
 }
 
