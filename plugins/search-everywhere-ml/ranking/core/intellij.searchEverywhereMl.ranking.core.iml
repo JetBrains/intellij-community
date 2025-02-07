@@ -163,7 +163,9 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/251.0.1/find-ec-model-251.0.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/251.0.1/find-ec-model-251.0.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.ext" />
