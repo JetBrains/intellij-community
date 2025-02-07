@@ -28,6 +28,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
+import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -1680,13 +1681,14 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   }
 
   private static @NotNull PsiElement getStubRetainedTypeHintContext(@NotNull PsiElement typeHintExpression) {
+    PsiFile containingFile = typeHintExpression.getContainingFile();
     // Values from PSI stubs and regular type comments
-    PsiElement fragmentOwner = typeHintExpression.getContainingFile().getUserData(FRAGMENT_OWNER);
+    PsiElement fragmentOwner = containingFile.getUserData(FRAGMENT_OWNER);
     if (fragmentOwner != null) {
       return fragmentOwner;
     }
-    // Values from function type comments
-    else if (typeHintExpression.getContainingFile() instanceof PyFunctionTypeAnnotationFile) {
+    // Values from function type comments and string literals
+    else if (containingFile instanceof PyFunctionTypeAnnotationFile || containingFile instanceof PyTypeHintFile) {
       return PyPsiUtils.getRealContext(typeHintExpression);
     }
     else {

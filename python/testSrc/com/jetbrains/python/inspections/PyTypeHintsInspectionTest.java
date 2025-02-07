@@ -299,6 +299,8 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
             attr4: list[<warning descr="Unbound type variable">S</warning>] = []
         
             def do_something(self, x: S) -> S:
+                ...
+            def do_something_else(self, other: 'Bar[T]'):
                 ...""");
   }
 
