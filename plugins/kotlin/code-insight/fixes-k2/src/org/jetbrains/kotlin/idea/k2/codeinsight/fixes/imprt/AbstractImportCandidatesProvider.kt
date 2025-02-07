@@ -44,7 +44,7 @@ internal abstract class AbstractImportCandidatesProvider(): ImportCandidatesProv
 
     protected fun PsiMember.canBeImported(): Boolean {
         return when (this) {
-            is PsiClass -> qualifiedName != null && (containingClass == null || hasModifier(JvmModifier.STATIC))
+            is PsiClass -> qualifiedName != null && (containingClass == null || hasModifier(JvmModifier.STATIC) || positionContext.acceptsInnerClasses())
             is PsiField, is PsiMethod -> hasModifier(JvmModifier.STATIC) && containingClass?.qualifiedName != null
             else -> false
         }

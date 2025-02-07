@@ -270,14 +270,29 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/innerClass/innerClassInCallableReference.test");
             }
 
+            @TestMetadata("innerClassInCallableReference_fromJava.test")
+            public void testInnerClassInCallableReference_fromJava() throws Exception {
+                runTest("testData/quickfix/autoImports/innerClass/innerClassInCallableReference_fromJava.test");
+            }
+
             @TestMetadata("innerClassInExpression.test")
             public void testInnerClassInExpression() throws Exception {
                 runTest("testData/quickfix/autoImports/innerClass/innerClassInExpression.test");
             }
 
+            @TestMetadata("innerClassInExpression_fromJava.test")
+            public void testInnerClassInExpression_fromJava() throws Exception {
+                runTest("testData/quickfix/autoImports/innerClass/innerClassInExpression_fromJava.test");
+            }
+
             @TestMetadata("innerClassInTypeReference.test")
             public void testInnerClassInTypeReference() throws Exception {
                 runTest("testData/quickfix/autoImports/innerClass/innerClassInTypeReference.test");
+            }
+
+            @TestMetadata("innerClassInTypeReference_fromJava.test")
+            public void testInnerClassInTypeReference_fromJava() throws Exception {
+                runTest("testData/quickfix/autoImports/innerClass/innerClassInTypeReference_fromJava.test");
             }
         }
 
