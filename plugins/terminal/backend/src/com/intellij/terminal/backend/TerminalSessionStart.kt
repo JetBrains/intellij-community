@@ -31,18 +31,26 @@ import org.jetbrains.plugins.terminal.util.waitFor
 
 private val LOG: Logger = Logger.getInstance(BackendTerminalSession::class.java)
 
+/**
+ * Returns a pair of started terminal session and final options used for session start.
+ */
 @OptIn(AwaitCancellationAndInvoke::class)
 internal fun startTerminalSession(
   project: Project,
   options: ShellStartupOptions,
   settings: JBTerminalSystemSettingsProviderBase,
   coroutineScope: CoroutineScope,
-): TerminalSession {
+): Pair<TerminalSession, ShellStartupOptions> {
   val termSize = options.initialTermSize ?: run {
     LOG.warn("No initial terminal size provided, using default 80x24. $options")
     TermSize(80, 24)
   }
-  val connector = startTerminalProcess(project, options, termSize)
+  val optionsWithSize = options.builder().initialTermSize(termSize).build()
+
+  val runner = LocalBlockTerminalRunner(project)
+  val configuredOptions = runner.configureStartupOptions(optionsWithSize)
+  val process = runner.createProcess(configuredOptions)
+  val connector = runner.createTtyConnector(process)
 
   val maxHistoryLinesCount = AdvancedSettings.getInt("terminal.buffer.max.lines.count")
   val services: JediTermServices = createJediTermServices(connector, termSize, maxHistoryLinesCount, settings)
@@ -72,15 +80,8 @@ internal fun startTerminalSession(
     }
   }
 
-  return BackendTerminalSession(inputChannel, outputFlow.asSharedFlow())
-}
-
-private fun startTerminalProcess(project: Project, options: ShellStartupOptions, initialSize: TermSize): TtyConnector {
-  val runner = LocalBlockTerminalRunner(project)
-  val optionsWithSize = options.builder().initialTermSize(initialSize).build()
-  val configuredOptions = runner.configureStartupOptions(optionsWithSize)
-  val process = runner.createProcess(configuredOptions)
-  return runner.createTtyConnector(process)
+  val session = BackendTerminalSession(inputChannel, outputFlow.asSharedFlow())
+  return session to configuredOptions
 }
 
 private fun createJediTermServices(

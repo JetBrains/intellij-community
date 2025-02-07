@@ -34,7 +34,8 @@ internal object TerminalSessionTestUtil {
       .initialTermSize(size)
       .envVariables(mapOf(EnvironmentUtil.DISABLE_OMZ_AUTO_UPDATE to "true", "HISTFILE" to "/dev/null"))
       .build()
-    return startTerminalSession(project, options, JBTerminalSystemSettingsProviderBase(), coroutineScope)
+    val (session, _) = startTerminalSession(project, options, JBTerminalSystemSettingsProviderBase(), coroutineScope)
+    return session
   }
 
   suspend fun TerminalSession.awaitOutputEvent(targetEvent: TerminalOutputEvent) {

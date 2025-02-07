@@ -8,11 +8,16 @@ import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.session.ShellStartupOptionsDto
+import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
 
 @ApiStatus.Internal
 @Rpc
 interface TerminalTabsManagerApi : RemoteApi<Unit> {
-  suspend fun startTerminalSession(projectId: ProjectId, options: ShellStartupOptionsDto): TerminalSessionId
+  suspend fun getTerminalTabs(projectId: ProjectId): List<TerminalSessionTab>
+
+  suspend fun createNewTerminalTab(projectId: ProjectId, options: ShellStartupOptionsDto): TerminalSessionTab
+
+  suspend fun startTerminalSessionForTab(projectId: ProjectId, tabId: Int, options: ShellStartupOptionsDto): TerminalSessionId
 
   companion object {
     @JvmStatic
