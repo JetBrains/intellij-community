@@ -1,6 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
@@ -23,8 +21,8 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
    * JAR will be added to the plugin's classpath) this will also cause a module library from [moduleName] with scopes 'Compile' and
    * 'Runtime' to be copied to the 'lib' directory of the plugin.
    *
-   * @param relativeJarPath target JAR path relative to 'lib' directory of the plugin; different modules may be packed into the same JAR,
-   * but <strong>don't use this for new plugins</strong>; this parameter is temporary added to keep the layout of old plugins.
+   * @param relativeJarPath target JAR path relative to the 'lib' directory of the plugin; different modules may be packed into the same JAR,
+   * but <strong>don't use this for new plugins</strong>; this parameter is temporarily added to keep the layout of old plugins.
    */
   fun withModule(moduleName: String, relativeJarPath: String) {
     layout.withModule(moduleName, relativeJarPath)
@@ -61,9 +59,9 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
   }
 
   /**
-   * Include the module library to the plugin distribution. Please note that it makes sense to call this method only
-   * for additional modules which aren't copied directly to the 'lib' directory of the plugin distribution, because for ordinary modules,
-   * their module libraries are included in the layout automatically.
+   * Include the module library in the plugin distribution.
+   * Please note that it makes sense to call this method only for additional modules which aren't copied directly to the 'lib' directory of the plugin distribution,
+   * because for ordinary modules, their module libraries are included in the layout automatically.
    * @param relativeOutputPath target path relative to 'lib' directory
    */
   fun withModuleLibrary(libraryName: String, moduleName: String, relativeOutputPath: String, extraCopy: Boolean = false) {
@@ -79,24 +77,15 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
    * Exclude the specified files when [moduleName] is packed into JAR file.
    * <strong>This is a temporary method added to keep the layout of some old plugins. If some files from a module shouldn't be included in the
    * module JAR, it's strongly recommended to move these files outside the module source roots.</strong>
-   * @param excludedPattern Ant-like pattern describing files to be excluded (relatively to the module output root); e.g., foo&#47;**
+   * @param excludedPattern Ant-like pattern describing files to be excluded (relatively to the module output root); e.g., `foo&#47;**`
    * to exclude `foo` directory
-  */
+   */
   fun excludeFromModule(moduleName: String, excludedPattern: String) {
     layout.excludeFromModule(moduleName, excludedPattern)
   }
 
   fun excludeFromModule(moduleName: String, excludedPatterns: List<String>) {
     layout.excludeFromModule(moduleName, excludedPatterns)
-  }
-
-  /**
-   * Include an artifact output to the plugin distribution.
-   * @param artifactName name of the project configuration
-   * @param relativeOutputPath target path relative to 'lib' directory
-   */
-  fun withArtifact(artifactName: String, relativeOutputPath: String) {
-    layout.includedArtifacts = layout.includedArtifacts.put(artifactName, relativeOutputPath)
   }
 
   /**

@@ -476,8 +476,8 @@ internal suspend fun generateProjectStructureMapping(platformLayout: PlatformLay
     for (plugin in allPlugins) {
       if (satisfiesBundlingRequirements(plugin, osFamily = null, arch = null, context)) {
         val targetDirectory = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY).resolve(plugin.directoryName)
-        entries.add(PluginBuildDescriptor(dir = targetDirectory, layout = plugin, os = null, moduleNames = emptyList()) to layoutDistribution(
-          layout = plugin,
+        entries.add(PluginBuildDescriptor(targetDirectory, os = null, plugin, moduleNames = emptyList()) to layoutDistribution(
+          plugin,
           platformLayout,
           targetDirectory,
           copyFiles = false,
@@ -559,7 +559,7 @@ internal suspend fun buildPlugins(
         }
       }
 
-      PluginBuildDescriptor(pluginDir, os, layout = plugin, moduleNames = emptyList()) to task.await()
+      PluginBuildDescriptor(pluginDir, os, plugin, moduleNames = emptyList()) to task.await()
     }
   }
 
@@ -999,7 +999,7 @@ private fun copyIfChanged(targetDir: Path, sourceDir: Path, sourceFile: Path): B
 private suspend fun layoutAdditionalResources(layout: BaseLayout, context: BuildContext, targetDirectory: Path) {
   // quick fix for a very annoying FileAlreadyExistsException in CLion dev build
   val overwrite = ("intellij.rider.plugins.clion.radler" == (layout as? PluginLayout)?.mainModule)
-  layoutResourcePaths(layout, context, targetDirectory, overwrite = overwrite)
+  layoutResourcePaths(layout, context, targetDirectory, overwrite)
   if (layout !is PluginLayout) {
     return
   }
@@ -1015,10 +1015,12 @@ private suspend fun layoutAdditionalResources(layout: BaseLayout, context: Build
 }
 
 @OptIn(ExperimentalPathApi::class)
-private suspend fun layoutArtifacts(layout: BaseLayout,
-                                    context: BuildContext,
-                                    copyFiles: Boolean,
-                                    targetDirectory: Path): Collection<DistributionFileEntry> {
+private suspend fun layoutArtifacts(
+  layout: BaseLayout,
+  context: BuildContext,
+  copyFiles: Boolean,
+  targetDirectory: Path,
+): Collection<DistributionFileEntry> {
   val span = Span.current()
   val entries = mutableListOf<DistributionFileEntry>()
   val jpsArtifactService = JpsArtifactService.getInstance()
