@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.textmate.regex.joni
+package com.intellij.textmate.joni
 
 import org.jetbrains.plugins.textmate.regex.MatchData
 import org.jetbrains.plugins.textmate.regex.MatchData.Companion.NOT_MATCHED

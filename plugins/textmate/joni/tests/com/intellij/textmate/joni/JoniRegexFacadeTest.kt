@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.textmate.regex.joni
+package com.intellij.textmate.joni
 
 import org.jetbrains.plugins.textmate.regex.RegexFacade
 import org.jetbrains.plugins.textmate.regex.RegexFacadeTest

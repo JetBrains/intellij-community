@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.textmate.regex.joni
+package com.intellij.textmate.joni
 
 import org.jcodings.specific.UTF8Encoding
 import org.jetbrains.plugins.textmate.regex.RegexFacade
