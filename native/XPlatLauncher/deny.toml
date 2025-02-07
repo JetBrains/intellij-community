@@ -9,7 +9,7 @@ ignore = []
 [licenses]
 version = 2
 confidence-threshold = 0.95
-allow = ["MIT", "Apache-2.0", "BSD-3-Clause", "Unicode-3.0"]
+allow = ["MIT", "Apache-2.0"]
 exceptions = [
     { allow = ["Unicode-DFS-2016"], crate = "unicode-ident" }, # 'serde' dependency
     { allow = ["ISC"], crate = "libloading" },
@@ -30,7 +30,8 @@ deny = []
 skip = []
 skip-tree = [
     { name = "windows-sys", version = "0.45.0" }, # 'jni' seems to stuck
-    { name = "reqwest" }, # build-time dependency
+    { name = "curl" }, # build-time dependency
+    { name = "native-dialog" }, # false positives in macOS-specific subtree
 ]
 
 [sources]

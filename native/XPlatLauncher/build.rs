@@ -13,10 +13,10 @@ use {
 
 #[cfg(all(target_os = "windows", feature = "cef"))]
 use {
-    reqwest::blocking::Client,
+    curl::easy::Easy,
     sha1::{Digest, Sha1},
     std::fs::File,
-    std::io::Read,
+    std::io::{Read, Write},
     std::process::Command,
 };
 
@@ -78,18 +78,15 @@ pub fn download_cef(version: &str, platform: &str, working_dir: &Path) -> Result
     fs_remove(&extract_dir)?;
     std::fs::create_dir_all(working_dir)?;
 
-    let client = Client::new();
-
     let archive_url = format!("https://cache-redirector.jetbrains.com/cef-builds.spotifycdn.com/{cef_distribution}.tar.bz2");
     let archive_file = working_dir.join(format!("{cef_distribution}.tar.bz2"));
-    download_to_file(&client, &archive_url, &archive_file)?;
+    download_file(&archive_url, &archive_file)?;
 
     let checksum_url = format!("{archive_url}.sha1");
     let checksum_file = working_dir.join(format!("{cef_distribution}.tar.bz2.sha1"));
-    download_to_file(&client, &checksum_url, &checksum_file)?;
+    download_file(&checksum_url, &checksum_file)?;
 
     let checksum = std::fs::read_to_string(&checksum_file)?;
-
     verify_sha1_checksum(&archive_file, &checksum)?;
 
     extract_tar_bz2(&archive_file, &extract_dir, &extract_marker)?;
@@ -101,23 +98,17 @@ pub fn download_cef(version: &str, platform: &str, working_dir: &Path) -> Result
 }
 
 #[cfg(all(target_os = "windows", feature = "cef"))]
-fn download_to_file(client: &Client, src: &str, dest: &Path) -> Result<()> {
-    fs_remove(dest)?;
-
-    trace!("Downloading {src} to {dest:?}");
-    let mut response = client.get(src).send()?.error_for_status()?;
-
-    let code = response.status();
-    trace!("Got response from {src}, code {code}");
-
-    let mut file = File::create(dest)
-        .context(format!("Failed to create file at {dest:?}"))?;
-
-    trace!("Writing response from {src} to {dest:?}");
-    std::io::copy(&mut response, &mut file)
-        .context(format!("Failed to copy response from {src} to {dest:?}"))?;
-    trace!("Written response from {src} to {dest:?}");
-
+fn download_file(url: &str, file: &Path) -> Result<()> {
+    trace!("Downloading {url} to {file:?}");
+    let mut out = File::create(&file)?;
+    let mut easy = Easy::new();
+    easy.url(&url)?;
+    easy.follow_location(true)?;
+    easy.write_function(move |data| {
+        out.write_all(data).unwrap();
+        Ok(data.len())
+    })?;
+    easy.perform()?;
     Ok(())
 }
 

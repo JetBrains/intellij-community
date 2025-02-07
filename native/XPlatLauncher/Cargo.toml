@@ -50,14 +50,14 @@ cargo-about = "0.6.5"  # generates license report
 anyhow = { version = "1.0.95", features = ["std", "backtrace"] }
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
-reqwest = { version = "0.12.12", features = ["blocking"] }
+curl = { version = "0.4.47", features = ["static-curl"] }
 sha1 = "0.10.6"
 winresource = "0.1.19"
 
 [package.metadata.winresource]
 CompanyName = "JetBrains s.r.o."
 FileDescription = "IntelliJ Platform Windows Launcher"
-LegalCopyright = "Copyright 2000-2024 JetBrains s.r.o."
+LegalCopyright = "Copyright 2000-2025 JetBrains s.r.o."
 InternalName = "WinLauncher.exe"
 OriginalFilename = "WinLauncher.exe"
 ProductName = "IntelliJ Platform"
