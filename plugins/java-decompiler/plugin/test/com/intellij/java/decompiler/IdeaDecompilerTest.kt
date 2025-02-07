@@ -153,6 +153,16 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     doTestNavigation(17, 28, 16, 13)  // to "int r"
   }
 
+  fun testUnicode_high() {
+    val state = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.HIGH)
+    IdeaDecompilerSettings.getInstance().loadState(state)
+
+    val file = getTestFile("UnicodeTest.class")
+    val decompiled = IdeaDecompiler().getText(file).toString()
+    assertTrue(decompiled, decompiled.contains("你好"))
+    assertFalse(decompiled, decompiled.contains("\\u4f60"))
+  }
+
   private fun doTestNavigation(line: Int, column: Int, expectedLine: Int, expectedColumn: Int) {
     val target = GotoDeclarationAction.findTargetElement(project, myFixture.editor, offset(line, column)) as Navigatable
     target.navigate(true)
