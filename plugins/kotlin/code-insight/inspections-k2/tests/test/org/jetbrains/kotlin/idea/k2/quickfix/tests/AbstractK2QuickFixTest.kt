@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.actionsListDirectives
 import java.io.File
 
 abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
@@ -36,7 +37,10 @@ abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
 
     override fun checkAvailableActionsAreExpected(actions: List<IntentionAction>) {
         DirectiveBasedActionUtils.checkAvailableActionsAreExpected(
-            dataFile(), actions, actionsToExclude = ACTIONS_NOT_IMPLEMENTED + ACTIONS_DIFFERENT_FROM_K1,
+            file,
+            dataFile(), actions,
+            actionsToExclude = ACTIONS_NOT_IMPLEMENTED + ACTIONS_DIFFERENT_FROM_K1,
+            actionsListDirectives = pluginMode.actionsListDirectives
         )
     }
 

@@ -123,7 +123,8 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                         actionFileName,
                         this::availableActions,
                         this::doHighlighting,
-                        InTextDirectivesUtils.isDirectiveDefined(actionFile.text, "// SHOULD_BE_AVAILABLE_AFTER_EXECUTION")
+                        pluginMode = pluginMode,
+                        shouldBeAvailableAfterExecution = InTextDirectivesUtils.isDirectiveDefined(actionFile.text, "// SHOULD_BE_AVAILABLE_AFTER_EXECUTION")
                     )
 
                     TypeAccessibilityChecker.testLog.toString()

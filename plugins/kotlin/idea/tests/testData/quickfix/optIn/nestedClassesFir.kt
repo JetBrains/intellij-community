@@ -1,5 +1,4 @@
 // "Propagate 'MyExperimentalAPI' opt-in requirement to containing class 'Outer'" "false"
-// IGNORE_K1
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 // ACTION: Opt in for 'MyExperimentalAPI' in containing file 'nestedClassesFir.kt'

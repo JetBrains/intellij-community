@@ -367,9 +367,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     private fun checkForUnexpectedActions() {
         val text = myFixture.editor.document.text
         val actionHint = myFixture.file.actionHint(text)
-        if (!InTextDirectivesUtils.isDirectiveDefined(text, DirectiveBasedActionUtils.ACTION_DIRECTIVE)) {
-            return
-        }
+        val actionDirective = pluginMode.actionsListDirectives.firstNotNullOfOrNull {
+            if (!InTextDirectivesUtils.isDirectiveDefined(text, it)) it else null
+        } ?: return
 
         myFixture.doHighlighting()
         val cachedIntentions = ShowIntentionActionsHandler.calcCachedIntentions(project, editor, file)
@@ -384,7 +384,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 "$className should be inheritor of IntentionAction or ModCommandAction"
             }
 
-            val validActions = HashSet(InTextDirectivesUtils.findLinesWithPrefixesRemoved(text, DirectiveBasedActionUtils.ACTION_DIRECTIVE))
+            val validActions = HashSet(InTextDirectivesUtils.findLinesWithPrefixesRemoved(text, actionDirective))
 
             actions.removeAll { action -> !aClass.isAssignableFrom(action.javaClass) || validActions.contains(action.text) }
 
@@ -433,7 +433,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     }
 
     protected open fun checkAvailableActionsAreExpected(actions: List<IntentionAction>) {
-        DirectiveBasedActionUtils.checkAvailableActionsAreExpected(dataFile(), actions)
+        DirectiveBasedActionUtils.checkAvailableActionsAreExpected(
+            myFixture.file,dataFile(), actions, actionsListDirectives = pluginMode.actionsListDirectives
+        )
     }
 
     protected open fun checkForUnexpectedErrors() = DirectiveBasedActionUtils.checkForUnexpectedErrors(myFixture.file as KtFile)
