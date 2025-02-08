@@ -1,5 +1,6 @@
 // FILE: test.before.kt
 // "Change function signature to 'fun foo(x: String): String'" "true"
+// ERROR: 'foo' overrides nothing
 package p;
 
 class Bar : Foo() {
@@ -50,6 +51,7 @@ public class Foo {
 
 // FILE: test.after.kt
 // "Change function signature to 'fun foo(x: String): String'" "true"
+// ERROR: 'foo' overrides nothing
 package p;
 
 class Bar : Foo() {
