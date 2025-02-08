@@ -16,7 +16,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField.FindAction;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -124,6 +126,9 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     String hint = project != null && project.isDefault() ? IdeUICustomization.getInstance().projectMessage("template.settings.hint") : null;
     myHintLabel.setText(hint);
     setTitle(name == null ? CommonBundle.settingsTitle() : name.replace('\n', ' '));
+    if (shouldBeNonModal()) {
+      setUndecorated(true);
+    }
 
     ShortcutSet set = getFindActionShortcutSet();
     if (set != null) {
@@ -131,7 +136,8 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     }
 
     init();
-    if (configurable == null) {
+
+    if (configurable == null && !shouldBeNonModal()) {
       JRootPane rootPane = getPeer().getRootPane();
       if (rootPane != null) {
         rootPane.setMinimumSize(new JBDimension(900, 700));

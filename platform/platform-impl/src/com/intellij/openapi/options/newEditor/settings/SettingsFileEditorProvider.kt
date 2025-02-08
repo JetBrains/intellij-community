@@ -24,7 +24,7 @@ class SettingsFileEditorProvider : FileEditorProvider, DumbAware {
     val settingsFile = file as SettingsVirtualFile
     val dialog = settingsFile.getOrCreateDialog()
     val tree = (dialog.editor as? SettingsEditor)?.treeView?.tree
-    return SettingsFileEditor(settingsFile, dialog.editor.rootPane, tree, dialog.disposable)
+    return SettingsFileEditor(settingsFile, dialog.rootPane, tree, dialog.disposable)
   }
 
   override fun getEditorTypeId(): String {
