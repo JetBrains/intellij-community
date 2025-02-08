@@ -1,10 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.abi
 
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ReceiveChannel
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.io.writeZipUsingTempFile
-import org.jetbrains.org.objectweb.asm.*
+import org.jetbrains.org.objectweb.asm.ClassReader
+import org.jetbrains.org.objectweb.asm.ClassWriter
 import java.nio.ByteBuffer
 import java.nio.file.Path
 import kotlin.metadata.jvm.KotlinModuleMetadata
@@ -12,13 +13,13 @@ import kotlin.metadata.jvm.UnstableMetadataApi
 
 class JarContentToProcess(
   @JvmField val name: ByteArray,
-  @JvmField val data: ByteArray,
+  @JvmField val data: ByteBuffer,
   @JvmField val isKotlinModuleMetadata: Boolean,
   @JvmField val isKotlin: Boolean,
 )
 
 @OptIn(UnstableMetadataApi::class)
-suspend fun writeAbi(abiJar: Path, classChannel: Channel<JarContentToProcess>) {
+suspend fun writeAbi(abiJar: Path, classChannel: ReceiveChannel<JarContentToProcess>) {
   writeZipUsingTempFile(abiJar, indexWriter = null) { stream ->
     val classesToBeDeleted = HashSet<String>()
     var kotlinModuleMetadata: JarContentToProcess? = null
@@ -29,7 +30,7 @@ suspend fun writeAbi(abiJar: Path, classChannel: Channel<JarContentToProcess>) {
       }
 
       val abiData = createAbi(item, classesToBeDeleted) ?: continue
-      stream.writeDataRawEntryWithoutCrc(ByteBuffer.wrap(abiData), item.name)
+      stream.writeDataRawEntryWithoutCrc(item.name, abiData)
     }
 
     if (kotlinModuleMetadata != null) {
@@ -38,20 +39,21 @@ suspend fun writeAbi(abiJar: Path, classChannel: Channel<JarContentToProcess>) {
   }
 }
 
-private fun createAbi(item: JarContentToProcess, classesToBeDeleted: HashSet<String>): ByteArray? {
+private fun createAbi(item: JarContentToProcess, classesToBeDeleted: HashSet<String>): ByteBuffer? {
+  val data = item.data
   if (item.isKotlin) {
     // check that Java ABI works
-    if (true) {
-      return item.data
-    }
-    return createAbForKotlin(classesToBeDeleted, item)
+    //if (true) {
+      return data
+    //}
+    //return createAbForKotlin(classesToBeDeleted, item)
   }
   else {
     val classWriter = ClassWriter(0)
     val abiClassVisitor = JavaAbiClassVisitor(classWriter, classesToBeDeleted)
-    ClassReader(item.data).accept(abiClassVisitor, ClassReader.SKIP_FRAMES or ClassReader.SKIP_CODE)
+    ClassReader(data.array(), data.arrayOffset() + data.position(), data.remaining()).accept(abiClassVisitor, ClassReader.SKIP_FRAMES or ClassReader.SKIP_CODE)
     if (abiClassVisitor.isApiClass) {
-      return classWriter.toByteArray()
+      return ByteBuffer.wrap(classWriter.toByteArray())
     }
   }
   return null
@@ -63,7 +65,10 @@ private fun writeKotlinModuleMetadata(
   classesToBeDeleted: HashSet<String>,
   stream: ZipArchiveOutputStream
 ) {
-  val parsed = requireNotNull(KotlinModuleMetadata.read(kotlinModuleMetadata.data)) {
+  val bytes = kotlinModuleMetadata.data.array()
+  require(kotlinModuleMetadata.data.position() == 0)
+  require(kotlinModuleMetadata.data.remaining() == bytes.size)
+  val parsed = requireNotNull(KotlinModuleMetadata.read(bytes)) {
     "Unsuccessful parsing of Kotlin module metadata for ABI generation: ${kotlinModuleMetadata.name.decodeToString()}"
   }
 
@@ -80,6 +85,6 @@ private fun writeKotlinModuleMetadata(
     }
   }
 
-  val newData = if (isChanged) parsed.write() else kotlinModuleMetadata.data
-  stream.writeDataRawEntryWithoutCrc(ByteBuffer.wrap(newData), kotlinModuleMetadata.name)
+  val newData = if (isChanged) parsed.write() else bytes
+  stream.writeDataRawEntryWithoutCrc(kotlinModuleMetadata.name, ByteBuffer.wrap(newData))
 }

@@ -3,6 +3,7 @@
 
 package org.jetbrains.bazel.jvm.jps.impl
 
+import org.jetbrains.bazel.jvm.jps.OutputSink
 import org.jetbrains.bazel.jvm.jps.hashSet
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.incremental.BinaryContent
@@ -19,14 +20,14 @@ import java.util.Collections
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.text.startsWith
 
-internal class ChunkBuildOutputConsumerImpl(
+internal class BazelTargetBuildOutputConsumer(
   private val context: CompileContext,
   target: ModuleBuildTarget,
   dataManager: BazelBuildDataProvider?,
+  @JvmField val outputSink: OutputSink,
 ) : OutputConsumer {
   private val outputConsumer = BazelBuildOutputConsumer(target, context, dataManager)
   private val classes = HashMap<String, CompiledClass>()
-  private val classesMap = ArrayList<CompiledClass>()
   private val outputToBuilderNameMap = Collections.synchronizedMap(HashMap<File, String>())
 
   @Volatile
@@ -36,7 +37,9 @@ internal class ChunkBuildOutputConsumerImpl(
     currentBuilderName = builderName
   }
 
-  override fun getTargetCompiledClasses(target: BuildTarget<*>): Collection<CompiledClass> = classesMap
+  override fun getTargetCompiledClasses(target: BuildTarget<*>): Collection<CompiledClass> {
+    throw IllegalStateException("getTargetCompiledClasses is not and will be not supported")
+  }
 
   override fun getCompiledClasses(): Map<String, CompiledClass> = classes
 
@@ -46,12 +49,37 @@ internal class ChunkBuildOutputConsumerImpl(
     val className = compiled.className
     if (className != null) {
       classes.put(className, compiled)
-      if (target != null) {
-        classesMap.add(compiled)
-      }
     }
     if (target != null) {
       registerOutputFile(target = target, outputFile = compiled.outputFile, sourcePaths = compiled.sourceFilesPaths)
+    }
+  }
+
+  fun registerCompiledClass(
+    relativeOutputPath: String,
+    outputFile: File,
+    sourceFiles: Collection<Path>,
+    compiled: CompiledClass,
+    builderName: String,
+  ) {
+    compiled.className?.let {
+      classes.put(it, compiled)
+    }
+
+    val previousBuilder = outputToBuilderNameMap.put(outputFile, builderName)
+    if (previousBuilder != null && previousBuilder != builderName) {
+      val source = sourceFiles.firstOrNull()?.toString()
+      context.processMessage(CompilerMessage(
+        builderName, BuildMessage.Kind.ERROR, "Output file \"${outputFile}\" has already been registered by \"$previousBuilder\"", source
+      ))
+    }
+
+    outputConsumer.fileGeneratedEvent.add(outputConsumer.targetOutDirPath, relativeOutputPath)
+    outputConsumer.registeredSources.addAll(sourceFiles)
+    if (outputConsumer.dataManager != null) {
+      for (source in sourceFiles) {
+        outputConsumer.dataManager.sourceToOutputMapping.appendRawRelativeOutput(source, relativeOutputPath)
+      }
     }
   }
 
@@ -77,7 +105,6 @@ internal class ChunkBuildOutputConsumerImpl(
 
   fun clear() {
     classes.clear()
-    classesMap.clear()
     outputToBuilderNameMap.clear()
   }
 }
@@ -85,14 +112,14 @@ internal class ChunkBuildOutputConsumerImpl(
 private class BazelBuildOutputConsumer(
   target: BuildTarget<*>,
   private val context: CompileContext,
-  private val dataManager: BazelBuildDataProvider?,
+  @JvmField val dataManager: BazelBuildDataProvider?,
 ) {
-  private val fileGeneratedEvent = FileGeneratedEvent(target)
+  @JvmField val fileGeneratedEvent = FileGeneratedEvent(target)
 
-  private val targetOutDir = (target as BazelModuleBuildTarget).outDir
-  private val targetOutDirPath = targetOutDir.invariantSeparatorsPathString
+  @JvmField val targetOutDir = (target as BazelModuleBuildTarget).outDir
+  @JvmField val targetOutDirPath = targetOutDir.invariantSeparatorsPathString
 
-  private val registeredSources = hashSet<Path>()
+  @JvmField val registeredSources = hashSet<Path>()
 
   private fun addEventsRecursively(output: File, outputRootPath: String?, relativePath: String) {
     val children = output.listFiles()

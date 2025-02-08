@@ -48,7 +48,8 @@ internal fun createAbForKotlin(classesToBeDeleted: HashSet<String>, item: JarCon
     remapper = remapper,
     innerClassesToKeep = innerClassesToKeep,
   )
-  ClassReader(item.data).accept(abiClassVisitor, ClassReader.SKIP_FRAMES)
+  require(item.data.array().size == item.data.remaining())
+  ClassReader(item.data.array()).accept(abiClassVisitor, ClassReader.SKIP_FRAMES)
   if (abiClassVisitor.isApiClass) {
     return classWriter.toByteArray()
   }

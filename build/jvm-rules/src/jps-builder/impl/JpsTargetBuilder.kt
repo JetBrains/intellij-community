@@ -11,7 +11,9 @@ import io.opentelemetry.api.trace.Tracer
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import kotlinx.coroutines.ensureActive
+import org.jetbrains.bazel.jvm.jps.OutputSink
 import org.jetbrains.bazel.jvm.jps.hashMap
+import org.jetbrains.bazel.jvm.jps.java.BazelJavaBuilder
 import org.jetbrains.bazel.jvm.jps.linkedSet
 import org.jetbrains.bazel.jvm.jps.state.LoadStateResult
 import org.jetbrains.bazel.jvm.jps.state.RemovedFileInfo
@@ -26,6 +28,7 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException
 import org.jetbrains.jps.incremental.*
+import org.jetbrains.jps.incremental.fs.BuildFSState
 import org.jetbrains.jps.incremental.fs.BuildFSState.CURRENT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.fs.BuildFSState.NEXT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.fs.CompilationRound
@@ -55,6 +58,7 @@ internal class JpsTargetBuilder(
     moduleTarget: BazelModuleBuildTarget,
     builders: Array<ModuleLevelBuilder>,
     buildState: LoadStateResult?,
+    outputSink: OutputSink,
     parentSpan: Span,
   ): Int {
     try {
@@ -67,7 +71,7 @@ internal class JpsTargetBuilder(
       }
 
       try {
-        buildTarget(context = context, target = moduleTarget, builders = builders, buildState = buildState)
+        buildTarget(context = context, target = moduleTarget, builders = builders, outputSink = outputSink, buildState = buildState)
       }
       finally {
         for (builder in builders) {
@@ -124,6 +128,7 @@ internal class JpsTargetBuilder(
     context: CompileContext,
     target: BazelModuleBuildTarget,
     builders: Array<ModuleLevelBuilder>,
+    outputSink: OutputSink,
     parentSpan: Span,
   ): Boolean {
     val chunk = ModuleChunk(java.util.Set.of<ModuleBuildTarget>(target))
@@ -136,7 +141,7 @@ internal class JpsTargetBuilder(
     }
 
     var doneSomething = false
-    val outputConsumer = ChunkBuildOutputConsumerImpl(context = context, target = target, dataManager = dataManager)
+    val outputConsumer = BazelTargetBuildOutputConsumer(context = context, target = target, dataManager = dataManager, outputSink = outputSink)
     try {
       val fsState = context.projectDescriptor.fsState
       var rebuildFromScratchRequested = false
@@ -154,12 +159,7 @@ internal class JpsTargetBuilder(
           )
         }
 
-        val dirtyFilesHolder = object : DirtyFilesHolderBase<JavaSourceRootDescriptor, ModuleBuildTarget>(context) {
-          override fun processDirtyFiles(processor: FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>) {
-            fsState.processFilesToRecompile(context, target, processor)
-          }
-        }
-
+        val dirtyFilesHolder = BazelDirtyFileHolder(context, fsState, target)
         try {
           var buildersPassed = 0
           var instrumentedClassesSaved = false
@@ -179,7 +179,19 @@ internal class JpsTargetBuilder(
 
             val start = System.nanoTime()
             val processedSourcesBefore = outputConsumer.getNumberOfProcessedSources()
-            val buildResult = builder.build(context, chunk, dirtyFilesHolder, outputConsumer)
+            val buildResult = if (builder is BazelJavaBuilder) {
+              builder.build(
+                context = context,
+                chunk = chunk,
+                dirtyFilesHolder = dirtyFilesHolder,
+                target = target,
+                outputConsumer = outputConsumer,
+                outputSink = outputSink,
+              )
+            }
+            else {
+              builder.build(context, chunk, dirtyFilesHolder, outputConsumer)
+            }
             storeBuilderStatistics(
               builder = builder,
               elapsedTime = System.nanoTime() - start,
@@ -251,6 +263,7 @@ internal class JpsTargetBuilder(
     target: BazelModuleBuildTarget,
     builders: Array<ModuleLevelBuilder>,
     buildState: LoadStateResult?,
+    outputSink: OutputSink,
   ) {
     val targets = java.util.Set.of<BuildTarget<*>>(target)
     try {
@@ -303,7 +316,7 @@ internal class JpsTargetBuilder(
       fsState.beforeChunkBuildStart(context, targets)
 
       tracer.span("runModuleLevelBuilders") { span ->
-        if (runModuleLevelBuilders(context, target, builders, span)) {
+        if (runModuleLevelBuilders(context, target, builders, outputSink, span)) {
           doneSomething = true
         }
       }
@@ -337,6 +350,38 @@ internal class JpsTargetBuilder(
   private fun storeBuilderStatistics(builder: Builder, elapsedTime: Long, processedFiles: Int) {
     builderToDuration.computeIfAbsent(builder) { AtomicLong() }.addAndGet(elapsedTime)
     numberOfSourcesProcessedByBuilder.computeIfAbsent(builder) { AtomicInteger() }.addAndGet(processedFiles)
+  }
+}
+
+internal class BazelDirtyFileHolder(
+  @JvmField val context: CompileContext,
+  @JvmField val fsState: BuildFSState,
+  private val target: BazelModuleBuildTarget
+) : DirtyFilesHolderBase<JavaSourceRootDescriptor, ModuleBuildTarget>(context) {
+  override fun processDirtyFiles(processor: FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>) {
+    fsState.processFilesToRecompile(context, target, processor)
+  }
+
+  inline fun processFilesToRecompile(processor: (Path) -> Boolean): Boolean {
+    val scope = context.scope
+    val delta = fsState.getEffectiveFilesDelta(context, target)
+    delta.lockData()
+    try {
+      for (entry in delta.getSourceMapToRecompile().entries) {
+        for (file in entry.value) {
+          if (!scope.isAffected(target, file)) {
+            continue
+          }
+          if (!processor(file)) {
+            return false
+          }
+        }
+      }
+      return true
+    }
+    finally {
+      delta.unlockData()
+    }
   }
 }
 
@@ -487,7 +532,7 @@ private fun notifyChunkRebuildRequested(context: CompileContext, chunk: ModuleCh
   context.processMessage(CompilerMessage("", kind, infoMessage))
 }
 
-private fun saveInstrumentedClasses(outputConsumer: ChunkBuildOutputConsumerImpl) {
+private fun saveInstrumentedClasses(outputConsumer: BazelTargetBuildOutputConsumer) {
   for (compiledClass in outputConsumer.compiledClasses.values) {
     if (compiledClass.isDirty) {
       compiledClass.save()

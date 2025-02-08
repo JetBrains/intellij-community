@@ -6,7 +6,7 @@ kt_jvm_library(
     deps = [
         "//src/jar",
         "//:kotlin-metadata",
-        "//:kotlin-compiler-provided",
+        "//:kotlin-compiler-embeddable",
     ],
-    visibility = ["//src/kotlin-builder:__pkg__"],
+    visibility = ["//visibility:public"],
 )

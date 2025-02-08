@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("HardCodedStringLiteral", "DialogTitleCapitalization", "UnstableApiUsage", "ReplaceGetOrSet")
 
 package org.jetbrains.bazel.jvm.jps.kotlin
@@ -5,6 +6,11 @@ package org.jetbrains.bazel.jvm.jps.kotlin
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
+import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
+import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
+import org.jetbrains.bazel.jvm.kotlin.configureModule
+import org.jetbrains.bazel.jvm.kotlin.createJvmPipeline
+import org.jetbrains.bazel.jvm.kotlin.prepareCompilerConfiguration
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.DirtyFilesHolder
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
@@ -17,11 +23,7 @@ import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.CompilerMessage
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.K2JVMCompilerPerformanceManager
-import org.jetbrains.kotlin.cli.pipeline.jvm.JvmCliPipeline
 import org.jetbrains.kotlin.config.Services
-import org.jetbrains.kotlin.jps.model.kotlinFacet
 import org.jetbrains.kotlin.progress.CompilationCanceledStatus
 import java.io.File
 
@@ -48,8 +50,28 @@ internal class NonIncrementalKotlinBuilder(
       }
     })
 
-    val exitCode = JvmCliPipeline(K2JVMCompilerPerformanceManager()).execute(
-      arguments = module.kotlinFacet!!.settings.compilerArguments!! as K2JVMCompilerArguments,
+    val bazelConfigurationHolder = module.container.getChild(BazelConfigurationHolder.KIND)!!
+    val config = prepareCompilerConfiguration(
+      args = bazelConfigurationHolder.args,
+      kotlinArgs = bazelConfigurationHolder.kotlinArgs,
+      baseDir = bazelConfigurationHolder.classPathRootDir,
+    )
+    configureModule(
+      moduleName = module.name,
+      config = config,
+      outFileOrDirPath = "",
+      args = bazelConfigurationHolder.args,
+      baseDir = bazelConfigurationHolder.classPathRootDir,
+      sources = bazelConfigurationHolder.sources,
+      classPath = bazelConfigurationHolder.classPath.asList(),
+    )
+
+    val pipeline = createJvmPipeline(config) {
+      (outputConsumer as BazelTargetBuildOutputConsumer).outputSink.registerKotlincOutput(it.asList())
+    }
+
+    val exitCode = pipeline.execute(
+      arguments = bazelConfigurationHolder.kotlinArgs,
       services = builder.build(),
       originalMessageCollector = messageCollector,
     )

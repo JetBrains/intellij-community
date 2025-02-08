@@ -5,7 +5,7 @@ load("//:src/jvm-args.bzl", "get_jvm_flags")
 
 kt_jvm_library(
     name = "worker-lib",
-    srcs = glob(["*.kt", "impl/*.kt", "state/*.kt", "kotlin/*.kt"]),
+    srcs = glob(["*.kt", "impl/*.kt", "state/*.kt", "kotlin/*.kt", "java/*.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
         "@lib//:kotlin-stdlib",
@@ -51,17 +51,17 @@ kt_jvm_library(
     visibility = ["//visibility:public"],
 )
 
-# java_import(
-#     name = "jps-standalone",
-#     jars = ["jps-build-standalone.jar"],
-#     visibility = ["//src/jps-builder:__subpackages__"],
-# )
-jvm_import(
+java_import(
     name = "jps-standalone",
-    jar = "@jps-standalone_http//file",
-    source_jar = "@jps-standalone_http//file",
+    jars = ["jps-build-standalone.jar"],
     visibility = ["//src/jps-builder:__subpackages__"],
 )
+# jvm_import(
+#     name = "jps-standalone",
+#     jar = "@jps-standalone_http//file",
+#     source_jar = "@jps-standalone_http//file",
+#     visibility = ["//src/jps-builder:__subpackages__"],
+# )
 
 java_binary(
     name = "worker-jvm",

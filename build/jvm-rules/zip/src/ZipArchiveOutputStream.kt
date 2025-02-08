@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import io.netty.buffer.ByteBuf
@@ -77,7 +77,7 @@ class ZipArchiveOutputStream(
     )
   }
 
-  fun writeDataRawEntryWithoutCrc(data: ByteBuffer, name: ByteArray) {
+  fun writeDataRawEntryWithoutCrc(name: ByteArray, data: ByteBuffer) {
     val size = data.remaining()
     writeDataRawEntry(data = data, name = name, size = size, compressedSize = size, method = ZipEntry.STORED, crc = 0)
   }

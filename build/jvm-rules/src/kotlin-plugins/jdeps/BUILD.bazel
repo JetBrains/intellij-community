@@ -5,9 +5,9 @@ kt_jvm_library(
     srcs = glob(["**/*.kt"]),
     deps = [
         "//src/jar",
-        "//:kotlin-compiler-provided",
+        "//:kotlin-compiler-embeddable",
         "//:protobuf-java",
         "@bazel_tools//src/main/protobuf:deps_java_proto",
     ],
-    visibility = ["//src/kotlin-builder:__pkg__"],
+    visibility = ["//visibility:public"],
 )

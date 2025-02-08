@@ -120,7 +120,7 @@ class JarCreator(
 
     val content = manifestContentImpl(existingFile = manifestFile)
 
-    out.writeDataRawEntryWithoutCrc(data = ByteBuffer.wrap(content), name = MANIFEST_NAME_BYTES)
+    out.writeDataRawEntryWithoutCrc(name = MANIFEST_NAME_BYTES, data = ByteBuffer.wrap(content))
   }
 
   override fun close() {
