@@ -253,8 +253,13 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
     if (!delta.isSourceOnly()) {
       // complete affected file set with source-delta dependencies
+      Delta affectedSourceDelta = createDelta(
+        filter(affectedSources, params.belongsToCurrentCompilationChunk()::test),
+        Collections.emptyList(),
+        true
+      );
       var srcDeltaParams = DifferentiateParametersBuilder.create(params).compiledWithErrors(false).get();
-      collect(differentiate(createDelta(affectedSources, Collections.emptyList(), true), srcDeltaParams).getAffectedSources(), affectedSources);
+      collect(differentiate(affectedSourceDelta, srcDeltaParams).getAffectedSources(), affectedSources);
     }
 
     return new DifferentiateResult() {
