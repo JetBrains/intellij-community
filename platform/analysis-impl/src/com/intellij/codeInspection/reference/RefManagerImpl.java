@@ -622,24 +622,35 @@ public class RefManagerImpl extends RefManager {
       ProgressManager.checkCanceled();
       final RefManagerExtension<?> extension = getExtension(element.getLanguage());
       if (extension != null) {
-        extension.visitElement(element);
+        PsiElement current = element;
+        while (current != null) {
+          extension.visitElement(current);
+          current = depthFirstNext(current, element);
+        }
       }
       else if (processExternalElements) {
-        PsiFile file = element.getContainingFile();
-        if (file != null) {
-          RefManagerExtension<?> externalFileManagerExtension =
-            ContainerUtil.find(myExtensions.values(), ex -> ex.shouldProcessExternalFile(file));
-          if (externalFileManagerExtension == null) {
-            if (element instanceof PsiFile) {
-              VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
-              if (virtualFile instanceof VirtualFileWithId) {
-                registerUnprocessed(virtualFile);
-              }
+        processExternalElements(element);
+      }
+    }
+
+    private void processExternalElements(@NotNull PsiElement element) {
+      PsiFile file = element.getContainingFile();
+      if (file != null) {
+        RefManagerExtension<?> externalFileManagerExtension =
+          ContainerUtil.find(myExtensions.values(), ex -> ex.shouldProcessExternalFile(file));
+        if (externalFileManagerExtension == null) {
+          if (element instanceof PsiFile) {
+            VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+            if (virtualFile instanceof VirtualFileWithId) {
+              registerUnprocessed(virtualFile);
             }
-          } else {
-            RefElement refFile = getReference(file);
-            LOG.assertTrue(refFile != null, file);
-            for (PsiReference reference : element.getReferences()) {
+          }
+        } else {
+          RefElement refFile = getReference(file);
+          LOG.assertTrue(refFile != null, file);
+          PsiElement current = element;
+          while (current != null) {
+            for (PsiReference reference : current.getReferences()) {
               PsiElement resolve = reference.resolve();
               if (resolve != null) {
                 fireNodeMarkedReferenced(resolve, file);
@@ -657,26 +668,38 @@ public class RefManagerImpl extends RefManager {
                 }
               }
             }
-
-            Stream<? extends PsiElement> implicitRefs = externalFileManagerExtension.extractExternalFileImplicitReferences(file);
-            implicitRefs.forEach(e -> {
-              RefElement superClassReference = getReference(e);
-              if (superClassReference != null) {
-                //in case of implicit inheritance, e.g. GroovyObject
-                //= no explicit reference is provided, dependency on groovy library could be treated as redundant though it is not
-                //inReference is not important in this case
-                ((RefElementImpl)refFile).addOutReference(superClassReference);
-              }
-            });
-
-            if (element instanceof PsiFile) {
-              externalFileManagerExtension.markExternalReferencesProcessed(refFile);
+            current = depthFirstNext(current, element);
+          }
+          Stream<? extends PsiElement> implicitRefs = externalFileManagerExtension.extractExternalFileImplicitReferences(file);
+          implicitRefs.forEach(e -> {
+            RefElement superClassReference = getReference(e);
+            if (superClassReference != null) {
+              //in case of implicit inheritance, e.g. GroovyObject
+              //= no explicit reference is provided, dependency on groovy library could be treated as redundant though it is not
+              //inReference is not important in this case
+              ((RefElementImpl)refFile).addOutReference(superClassReference);
             }
+          });
+
+          if (element instanceof PsiFile) {
+            externalFileManagerExtension.markExternalReferencesProcessed(refFile);
           }
         }
       }
-      for (PsiElement aChildren : element.getChildren()) {
-        aChildren.accept(this);
+    }
+
+    private static PsiElement depthFirstNext(PsiElement current, PsiElement root) {
+      PsiElement child = current.getFirstChild();
+      if (child != null) return child;
+      if (current == root) return null;
+      PsiElement sibling = current.getNextSibling();
+      if (sibling != null) return sibling;
+      while (true) {
+        PsiElement parent = current.getParent();
+        if (parent == root || parent == null) return null;
+        PsiElement parentSibling = parent.getNextSibling();
+        if (parentSibling != null) return parentSibling;
+        current = parent;
       }
     }
 
