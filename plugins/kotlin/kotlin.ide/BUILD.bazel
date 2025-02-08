@@ -27,6 +27,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/util/jdom",
     "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
+    "//platform/diff-impl",
   ],
   runtime_deps = ["//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic"]
 )

@@ -7,7 +7,6 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "@lib//:joni",
     "@lib//:jetbrains-annotations",
     "//platform/util/xmlDom",
     "@lib//:kotlinx-serialization-core",
@@ -17,8 +16,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:slf4j-api",
     "@lib//:kotlinx-collections-immutable",
-  ],
-  exports = ["@lib//:joni"]
+  ]
 )
 
 jvm_library(
@@ -27,7 +25,6 @@ jvm_library(
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   associates = [":core"],
   deps = [
-    "@lib//:joni",
     "@lib//:jetbrains-annotations",
     "//platform/util/xmlDom",
     "@lib//:kotlinx-serialization-core",

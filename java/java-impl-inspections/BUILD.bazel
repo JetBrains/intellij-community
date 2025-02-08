@@ -23,6 +23,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/util/text-matching",
     "//java/codeserver/highlighting:java-codeserver-highlighting",
+    "//java/codeserver/core:java-codeserver-core",
   ]
 )
 ### auto-generated section `build intellij.java.impl.inspections` end

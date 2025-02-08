@@ -49,6 +49,7 @@ jvm_library(
     "@lib//:jackson-databind",
     "@lib//:json-schema-validator",
     "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-json-io",
     "@lib//:kotlinx-serialization-core",
     "//platform/util/zip",
     "//platform/runtime/product",

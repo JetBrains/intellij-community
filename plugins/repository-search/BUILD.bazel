@@ -43,6 +43,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-slf4j",
     "//libraries/ktor-client",
     "@lib//:package-search-api-client",
+    "@lib//:kotlinx-document-store-mvstore",
     "@lib//:mvstore",
   ],
   exports = ["@lib//:package-search-api-client"],
@@ -80,6 +81,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-test",
     "//libraries/ktor-client",
     "@lib//:package-search-api-client",
+    "@lib//:kotlinx-document-store-mvstore",
     "@lib//:mvstore",
   ],
   runtime_deps = [":repository-search_resources"]

@@ -3318,17 +3318,17 @@ http_file(
 )
 
 http_file(
-  name = "jb-jdi-2_39_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jb-jdi/2.39/jb-jdi-2.39.jar",
-  sha256 = "fab6227b82244b18e5a245e8ad33721811ffd02d1fbbd8f34fd9a1bb70602ecd",
-  downloaded_file_path = "jb-jdi-2.39.jar"
+  name = "jb-jdi-2_40_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jb-jdi/2.40/jb-jdi-2.40.jar",
+  sha256 = "5d58e2e7f0059e80c48de816edcb187fa260d47decbcfaec2f4b5366b79c8d35",
+  downloaded_file_path = "jb-jdi-2.40.jar"
 )
 
 http_file(
-  name = "jb-jdi-2_39-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jb-jdi/2.39/jb-jdi-2.39-sources.jar",
-  sha256 = "698b91775aa41a9d6d51b00682e4916b90452a08bd064d28b05fb4023f483d21",
-  downloaded_file_path = "jb-jdi-2.39-sources.jar"
+  name = "jb-jdi-2_40-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/jb-jdi/2.40/jb-jdi-2.40-sources.jar",
+  sha256 = "08a6c53aea863974e3d844cca46bbb770a09fbff7b6ced2d69ccb9df667c6873",
+  downloaded_file_path = "jb-jdi-2.40-sources.jar"
 )
 
 http_file(
@@ -5425,6 +5425,34 @@ http_file(
 )
 
 http_file(
+  name = "kotlinx-document-store-mvstore-0_0_4_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/com/github/lamba92/kotlinx-document-store-mvstore/0.0.4/kotlinx-document-store-mvstore-0.0.4.jar",
+  sha256 = "956a4c7faad66e3471861adaa278d9486f3a050ac25fb6a99ca90809d379adfe",
+  downloaded_file_path = "kotlinx-document-store-mvstore-0.0.4.jar"
+)
+
+http_file(
+  name = "kotlinx-document-store-core-jvm-0_0_4_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/com/github/lamba92/kotlinx-document-store-core-jvm/0.0.4/kotlinx-document-store-core-jvm-0.0.4.jar",
+  sha256 = "7e638082b4a14e3a96ca90f3f5db70ac65591e0b6c6670629e849d22ec34455f",
+  downloaded_file_path = "kotlinx-document-store-core-jvm-0.0.4.jar"
+)
+
+http_file(
+  name = "kotlinx-document-store-mvstore-0_0_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/com/github/lamba92/kotlinx-document-store-mvstore/0.0.4/kotlinx-document-store-mvstore-0.0.4-sources.jar",
+  sha256 = "deb5bc70a522e49cde38d0d948b8c28566cf124961409cb8f41d11802ecbb4d6",
+  downloaded_file_path = "kotlinx-document-store-mvstore-0.0.4-sources.jar"
+)
+
+http_file(
+  name = "kotlinx-document-store-core-jvm-0_0_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/com/github/lamba92/kotlinx-document-store-core-jvm/0.0.4/kotlinx-document-store-core-jvm-0.0.4-sources.jar",
+  sha256 = "dca1d077540e813b004f4bc2e751b96c34efdbd10b6421b293474e54546343bd",
+  downloaded_file_path = "kotlinx-document-store-core-jvm-0.0.4-sources.jar"
+)
+
+http_file(
   name = "kotlinx-html-jvm-0_12_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-html-jvm/0.12.0/kotlinx-html-jvm-0.12.0.jar",
   sha256 = "f854126f39acbd963fd54e0cd226000a151a76f7225ee28185d52f44e262befb",
@@ -5467,6 +5495,20 @@ http_file(
 )
 
 http_file(
+  name = "kotlinx-serialization-json-io-jvm-1_7_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-io-jvm/1.7.3/kotlinx-serialization-json-io-jvm-1.7.3.jar",
+  sha256 = "963372b471616c2cd421fdea8085c4afb801a9aa71e5ef3acd1ba66e3450216c",
+  downloaded_file_path = "kotlinx-serialization-json-io-jvm-1.7.3.jar"
+)
+
+http_file(
+  name = "kotlinx-serialization-json-io-jvm-1_7_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-json-io-jvm/1.7.3/kotlinx-serialization-json-io-jvm-1.7.3-sources.jar",
+  sha256 = "60a176e88a074452f03e7f359f33bed4ca734e24e008c50677468fd253af9e98",
+  downloaded_file_path = "kotlinx-serialization-json-io-jvm-1.7.3-sources.jar"
+)
+
+http_file(
   name = "kotlinx-serialization-protobuf-jvm-1_7_3_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-protobuf-jvm/1.7.3/kotlinx-serialization-protobuf-jvm-1.7.3.jar",
   sha256 = "7c85fb07055583a2e58dfdcee9dc19fef7255a323285707f82a0adc84f2ee84d",
@@ -5495,318 +5537,353 @@ http_file(
 )
 
 http_file(
-  name = "ktor-client-core-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-core-jvm/2.3.13/ktor-client-core-jvm-2.3.13.jar",
-  sha256 = "7052849ba4383ca9f6d539db28252e2a02b91d18b4958c80647aba77efa24f45",
-  downloaded_file_path = "ktor-client-core-jvm-2.3.13.jar"
+  name = "ktor-client-core-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-core-jvm/3.0.3/ktor-client-core-jvm-3.0.3.jar",
+  sha256 = "e3d174d16548023805041b29a42fb135bfe3182534d3bf9f839d5821337f8d69",
+  downloaded_file_path = "ktor-client-core-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-http-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-jvm/2.3.13/ktor-http-jvm-2.3.13.jar",
-  sha256 = "a389bf58aaa001c60c289195dbea40c092de8ec4bac5533f34aa71d246811029",
-  downloaded_file_path = "ktor-http-jvm-2.3.13.jar"
+  name = "ktor-http-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-jvm/3.0.3/ktor-http-jvm-3.0.3.jar",
+  sha256 = "0e4e38b5f7098f269f39962cd78f3479027637f3970176798a41be82bd46d2ca",
+  downloaded_file_path = "ktor-http-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-utils-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-utils-jvm/2.3.13/ktor-utils-jvm-2.3.13.jar",
-  sha256 = "7a2d6b9308d1d257c71d5a0c61f5838f5c0f0708fa688de4879c20aae8728aba",
-  downloaded_file_path = "ktor-utils-jvm-2.3.13.jar"
+  name = "ktor-utils-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-utils-jvm/3.0.3/ktor-utils-jvm-3.0.3.jar",
+  sha256 = "4948ec013b71417fffcae187e4aa7943f24eaf907210a4ac9bf853af27131b72",
+  downloaded_file_path = "ktor-utils-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-io-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-io-jvm/2.3.13/ktor-io-jvm-2.3.13.jar",
-  sha256 = "cd5463381fd9e992e09b59eb0f01e6a241513a8e515c2b7ddecf616bbaa8c3f6",
-  downloaded_file_path = "ktor-io-jvm-2.3.13.jar"
+  name = "ktor-io-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-io-jvm/3.0.3/ktor-io-jvm-3.0.3.jar",
+  sha256 = "587f6aa4a22daf484ebb84ee5513f1b898e0feeeac714bd2fe0dd2232f57ade5",
+  downloaded_file_path = "ktor-io-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-events-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-events-jvm/2.3.13/ktor-events-jvm-2.3.13.jar",
-  sha256 = "87afba70c6dc3e902a14bd2872c7d07e67286aed2a25867e83b75d8fcf9ba072",
-  downloaded_file_path = "ktor-events-jvm-2.3.13.jar"
+  name = "kotlinx-io-core-jvm-0_5_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.5.4/kotlinx-io-core-jvm-0.5.4.jar",
+  sha256 = "dc3587c12795af01231591c0ef09a4139dfca8113c2989273b96b958006853c3",
+  downloaded_file_path = "kotlinx-io-core-jvm-0.5.4.jar"
 )
 
 http_file(
-  name = "ktor-websocket-serialization-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websocket-serialization-jvm/2.3.13/ktor-websocket-serialization-jvm-2.3.13.jar",
-  sha256 = "db595630988bb7aed56505f273774e1ebe333bc450f3f70aeb227ed2880d4155",
-  downloaded_file_path = "ktor-websocket-serialization-jvm-2.3.13.jar"
+  name = "kotlinx-io-bytestring-jvm-0_5_4_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.5.4/kotlinx-io-bytestring-jvm-0.5.4.jar",
+  sha256 = "1fc96e19b445387dbc49183d0cc623c5a61bfa47c86cf81aaf5aff4845154fab",
+  downloaded_file_path = "kotlinx-io-bytestring-jvm-0.5.4.jar"
 )
 
 http_file(
-  name = "ktor-serialization-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-jvm/2.3.13/ktor-serialization-jvm-2.3.13.jar",
-  sha256 = "2f076e022ff7815decb5810fac3dbc9a757cdfa170f8d990257867268efd91a3",
-  downloaded_file_path = "ktor-serialization-jvm-2.3.13.jar"
+  name = "ktor-events-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-events-jvm/3.0.3/ktor-events-jvm-3.0.3.jar",
+  sha256 = "317ee7adeb43e197717a5ab61fa3d8761514805ca0bcff49de029c4d6f2b3df2",
+  downloaded_file_path = "ktor-events-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-websockets-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websockets-jvm/2.3.13/ktor-websockets-jvm-2.3.13.jar",
-  sha256 = "7dc3c3087d46a6e9d3a1176650bf56f6ccbd47d1bc615b744777442263579e7b",
-  downloaded_file_path = "ktor-websockets-jvm-2.3.13.jar"
+  name = "ktor-websocket-serialization-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websocket-serialization-jvm/3.0.3/ktor-websocket-serialization-jvm-3.0.3.jar",
+  sha256 = "80cdcfd738948e123744e24534a752e90b353b3485a5c48c8af17a2467a96e76",
+  downloaded_file_path = "ktor-websocket-serialization-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-client-core-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-core-jvm/2.3.13/ktor-client-core-jvm-2.3.13-sources.jar",
-  sha256 = "bcf4e52c43410790255866cb712f6ed362cb93ae4482a3785513f2c0cd4b306a",
-  downloaded_file_path = "ktor-client-core-jvm-2.3.13-sources.jar"
+  name = "ktor-serialization-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-jvm/3.0.3/ktor-serialization-jvm-3.0.3.jar",
+  sha256 = "78eb204e4b58f9357cd7f5c7a92d301518488c721befedb6c3832dc4c32a0354",
+  downloaded_file_path = "ktor-serialization-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-http-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-jvm/2.3.13/ktor-http-jvm-2.3.13-sources.jar",
-  sha256 = "9438da19c45c5a60a2653c705d1948ba2e346d3d450599b57bda9827649c8277",
-  downloaded_file_path = "ktor-http-jvm-2.3.13-sources.jar"
+  name = "ktor-websockets-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websockets-jvm/3.0.3/ktor-websockets-jvm-3.0.3.jar",
+  sha256 = "4ecb08d33dc0d7c9d6b943b2b3e706f3d55fabef584b0c72fb2f0c5ba8a0eb7a",
+  downloaded_file_path = "ktor-websockets-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-utils-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-utils-jvm/2.3.13/ktor-utils-jvm-2.3.13-sources.jar",
-  sha256 = "45cee763aec26ad43a6a10ccf0cac05500f4cf204bab5a1e7d9773e5f17141b7",
-  downloaded_file_path = "ktor-utils-jvm-2.3.13-sources.jar"
+  name = "ktor-sse-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-sse-jvm/3.0.3/ktor-sse-jvm-3.0.3.jar",
+  sha256 = "5fbfc2833738bc283d5bb8464bff48e08e7b526014e0eff5828efa9e69bffdf3",
+  downloaded_file_path = "ktor-sse-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-io-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-io-jvm/2.3.13/ktor-io-jvm-2.3.13-sources.jar",
-  sha256 = "f3a8d1835fd26acd0cd90a51e667fe707c1f0c853d1d5fc2ad97b3a75d10eaa6",
-  downloaded_file_path = "ktor-io-jvm-2.3.13-sources.jar"
+  name = "ktor-client-core-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-core-jvm/3.0.3/ktor-client-core-jvm-3.0.3-sources.jar",
+  sha256 = "076e3c81e8a95353b87e9f17a489b477e2512ca8c4edef10c24efcfdd8a86dd6",
+  downloaded_file_path = "ktor-client-core-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-events-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-events-jvm/2.3.13/ktor-events-jvm-2.3.13-sources.jar",
-  sha256 = "1213d03731e0504ef9fd04ae0333c33f9352b1cac59697bd698aa0b37aacc5de",
-  downloaded_file_path = "ktor-events-jvm-2.3.13-sources.jar"
+  name = "ktor-http-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-jvm/3.0.3/ktor-http-jvm-3.0.3-sources.jar",
+  sha256 = "8ca10b4ae69ab1a3d44ac86156d6bdbbd0c2a9b1d37e2991b73957ba473281e9",
+  downloaded_file_path = "ktor-http-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-websocket-serialization-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websocket-serialization-jvm/2.3.13/ktor-websocket-serialization-jvm-2.3.13-sources.jar",
-  sha256 = "b135316b2dcea4bbf2e4986a0513ee3c838a30d77b06d6b4043e404dd4261045",
-  downloaded_file_path = "ktor-websocket-serialization-jvm-2.3.13-sources.jar"
+  name = "ktor-utils-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-utils-jvm/3.0.3/ktor-utils-jvm-3.0.3-sources.jar",
+  sha256 = "67d0604c1841679a3869a27d0e8db95ec2b15b3dc7e6b6ffdc3b4784f5b24d7c",
+  downloaded_file_path = "ktor-utils-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-serialization-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-jvm/2.3.13/ktor-serialization-jvm-2.3.13-sources.jar",
-  sha256 = "051d868621eaea7fcad8286bc90742ebca6b31f3f0759318850c3df3c138b3b7",
-  downloaded_file_path = "ktor-serialization-jvm-2.3.13-sources.jar"
+  name = "ktor-io-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-io-jvm/3.0.3/ktor-io-jvm-3.0.3-sources.jar",
+  sha256 = "340558950ff253c8e37f2480affcba00d5b6459a4007400e6e0c92f064e340df",
+  downloaded_file_path = "ktor-io-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-websockets-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websockets-jvm/2.3.13/ktor-websockets-jvm-2.3.13-sources.jar",
-  sha256 = "0027c56f7c0d2b3272bbe47c5b53a8e3e47be673f72a86578aa6b87ab0f534b0",
-  downloaded_file_path = "ktor-websockets-jvm-2.3.13-sources.jar"
+  name = "kotlinx-io-core-jvm-0_5_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.5.4/kotlinx-io-core-jvm-0.5.4-sources.jar",
+  sha256 = "fa48baf82c3b07173f09004e7003239128a6a375bb08b71191d0b7d032e1e1d6",
+  downloaded_file_path = "kotlinx-io-core-jvm-0.5.4-sources.jar"
 )
 
 http_file(
-  name = "ktor-client-auth-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-auth-jvm/2.3.13/ktor-client-auth-jvm-2.3.13.jar",
-  sha256 = "674c9810d615b8f756fd1bc60a37de281fd6e04b24a7f11258e94e7f75b40391",
-  downloaded_file_path = "ktor-client-auth-jvm-2.3.13.jar"
+  name = "kotlinx-io-bytestring-jvm-0_5_4-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.5.4/kotlinx-io-bytestring-jvm-0.5.4-sources.jar",
+  sha256 = "4985c32e0d04ac8800f0e20bb1a95b261a7c6baa6921f20fca3bf1cb4d6006c5",
+  downloaded_file_path = "kotlinx-io-bytestring-jvm-0.5.4-sources.jar"
 )
 
 http_file(
-  name = "ktor-client-auth-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-auth-jvm/2.3.13/ktor-client-auth-jvm-2.3.13-sources.jar",
-  sha256 = "b4c970a609f5a3f65dcb3000673d3d73c3f42f89ee76448481856cd8859d8a6c",
-  downloaded_file_path = "ktor-client-auth-jvm-2.3.13-sources.jar"
+  name = "ktor-events-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-events-jvm/3.0.3/ktor-events-jvm-3.0.3-sources.jar",
+  sha256 = "db9ffe0a31869e626e495a36e17d93d6e7979ac98727b843bc55b9390487b050",
+  downloaded_file_path = "ktor-events-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-client-cio-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-cio-jvm/2.3.13/ktor-client-cio-jvm-2.3.13.jar",
-  sha256 = "12631a34407537d9226c399e4f7f2ee6e45baf1389ebfe204559ec1137573913",
-  downloaded_file_path = "ktor-client-cio-jvm-2.3.13.jar"
+  name = "ktor-websocket-serialization-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websocket-serialization-jvm/3.0.3/ktor-websocket-serialization-jvm-3.0.3-sources.jar",
+  sha256 = "70d54c49d7953bee10087c174c63392d0ccbb8caeebaf27fafe9d6584cfa46e5",
+  downloaded_file_path = "ktor-websocket-serialization-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-http-cio-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-cio-jvm/2.3.13/ktor-http-cio-jvm-2.3.13.jar",
-  sha256 = "c63192adf60ed79996842a2c6e9317ce4ba6234f370686340d87189eaa46009b",
-  downloaded_file_path = "ktor-http-cio-jvm-2.3.13.jar"
+  name = "ktor-serialization-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-jvm/3.0.3/ktor-serialization-jvm-3.0.3-sources.jar",
+  sha256 = "4ef4d56bf0d8b8bb46b4f0f6d7909ea5a6a482128ed0f1a0baba06082e576836",
+  downloaded_file_path = "ktor-serialization-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-network-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-network-jvm/2.3.13/ktor-network-jvm-2.3.13.jar",
-  sha256 = "17fc53774c193c11443457bf5dbc9991e95daca09b2d8cd475050dfa0c71f280",
-  downloaded_file_path = "ktor-network-jvm-2.3.13.jar"
+  name = "ktor-websockets-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-websockets-jvm/3.0.3/ktor-websockets-jvm-3.0.3-sources.jar",
+  sha256 = "6a88023afad3a7229c66ba2eb720581f1787bd42e714acd38db0d270dece9e19",
+  downloaded_file_path = "ktor-websockets-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-network-tls-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-network-tls-jvm/2.3.13/ktor-network-tls-jvm-2.3.13.jar",
-  sha256 = "80998b6c6171845bec17b1c1cf29712514e76c6b43c2ad68a4261e555fd90bb2",
-  downloaded_file_path = "ktor-network-tls-jvm-2.3.13.jar"
+  name = "ktor-sse-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-sse-jvm/3.0.3/ktor-sse-jvm-3.0.3-sources.jar",
+  sha256 = "45887da7e131df98dbd4f3ce2dee4a8d38e4bd285c46490a515bba5cb2060ec3",
+  downloaded_file_path = "ktor-sse-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-client-cio-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-cio-jvm/2.3.13/ktor-client-cio-jvm-2.3.13-sources.jar",
-  sha256 = "414cae0a36d77f8e65e3998d748535284084dd0ee9dc11743280ee0d833efd8b",
-  downloaded_file_path = "ktor-client-cio-jvm-2.3.13-sources.jar"
+  name = "ktor-client-auth-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-auth-jvm/3.0.3/ktor-client-auth-jvm-3.0.3.jar",
+  sha256 = "e78ff6ab04f5c7ddbfd64e23039a325cc244ee9b6b813ed3806147db2cd4eae5",
+  downloaded_file_path = "ktor-client-auth-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-http-cio-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-cio-jvm/2.3.13/ktor-http-cio-jvm-2.3.13-sources.jar",
-  sha256 = "b724df26075cb3dc8a0219d98089844c6f6504a57821a4c60f903d538a9aebf4",
-  downloaded_file_path = "ktor-http-cio-jvm-2.3.13-sources.jar"
+  name = "ktor-client-auth-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-auth-jvm/3.0.3/ktor-client-auth-jvm-3.0.3-sources.jar",
+  sha256 = "8bdc4865a4030153b353c1fbc57c2b8613aee333fd4beee5c86a65f99e90cf68",
+  downloaded_file_path = "ktor-client-auth-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-network-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-network-jvm/2.3.13/ktor-network-jvm-2.3.13-sources.jar",
-  sha256 = "477f5dac4616164064728cca8c028c631ee238ee9bf3c2999a7e1cf2a37b27fe",
-  downloaded_file_path = "ktor-network-jvm-2.3.13-sources.jar"
+  name = "ktor-client-cio-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-cio-jvm/3.0.3/ktor-client-cio-jvm-3.0.3.jar",
+  sha256 = "0d3bbfc7698254bd93f52522ac9b8ed92597d5cf80ea3ffc0f0c9f237f3396ce",
+  downloaded_file_path = "ktor-client-cio-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-network-tls-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-network-tls-jvm/2.3.13/ktor-network-tls-jvm-2.3.13-sources.jar",
-  sha256 = "dad34e5d3cd17da6b4719d62f828267efda6fc9743ae28582ea253bba83fb263",
-  downloaded_file_path = "ktor-network-tls-jvm-2.3.13-sources.jar"
+  name = "ktor-http-cio-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-cio-jvm/3.0.3/ktor-http-cio-jvm-3.0.3.jar",
+  sha256 = "2574639ce266e33419ecbbb729c8f921274b2588ed1dfeb4aa87039115df0666",
+  downloaded_file_path = "ktor-http-cio-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-client-content-negotiation-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-content-negotiation-jvm/2.3.13/ktor-client-content-negotiation-jvm-2.3.13.jar",
-  sha256 = "d2930b79843a4da5ea40074f8e905dbd4c5c571bfa004d301d50db241de3a09e",
-  downloaded_file_path = "ktor-client-content-negotiation-jvm-2.3.13.jar"
+  name = "ktor-network-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-network-jvm/3.0.3/ktor-network-jvm-3.0.3.jar",
+  sha256 = "c7c440822e0dcd90b3c794b17c85a50851cb92fa406693bd08d858141ecdc6c1",
+  downloaded_file_path = "ktor-network-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-client-content-negotiation-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-content-negotiation-jvm/2.3.13/ktor-client-content-negotiation-jvm-2.3.13-sources.jar",
-  sha256 = "ad7f0c6a8824d25983d8fcd1f8d1252dbc8c29ec8c72e17737921e13fe8fa737",
-  downloaded_file_path = "ktor-client-content-negotiation-jvm-2.3.13-sources.jar"
+  name = "ktor-network-tls-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-network-tls-jvm/3.0.3/ktor-network-tls-jvm-3.0.3.jar",
+  sha256 = "65e9a916e918fc76dd72764d17235506190ec1ec92dd7a4633246b2db12579c8",
+  downloaded_file_path = "ktor-network-tls-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-client-encoding-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-encoding-jvm/2.3.13/ktor-client-encoding-jvm-2.3.13.jar",
-  sha256 = "a82c96a76ee3da9e8f5e94424728d498d45f2b701361103c5757171a310eeffe",
-  downloaded_file_path = "ktor-client-encoding-jvm-2.3.13.jar"
+  name = "ktor-client-cio-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-cio-jvm/3.0.3/ktor-client-cio-jvm-3.0.3-sources.jar",
+  sha256 = "a8ff01ccc83452b936dfff217e5a5996401375dba6fe10c607fb13ed603eea42",
+  downloaded_file_path = "ktor-client-cio-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-client-encoding-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-encoding-jvm/2.3.13/ktor-client-encoding-jvm-2.3.13-sources.jar",
-  sha256 = "74ea555360e91f4c44bc911c61c597369f5e5ba3cc69651a6c16071fadfb7a2e",
-  downloaded_file_path = "ktor-client-encoding-jvm-2.3.13-sources.jar"
+  name = "ktor-http-cio-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-http-cio-jvm/3.0.3/ktor-http-cio-jvm-3.0.3-sources.jar",
+  sha256 = "546cf0fdbd2fd10b89e70c82ed9e5d933c4f2a61ddcf6ce7c58a48c3bcacbdb7",
+  downloaded_file_path = "ktor-http-cio-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-client-java-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-java-jvm/2.3.13/ktor-client-java-jvm-2.3.13.jar",
-  sha256 = "8479371db1a26f42f304b8f24005095add0185d7092939d5ba662ba98fe4ed8b",
-  downloaded_file_path = "ktor-client-java-jvm-2.3.13.jar"
+  name = "ktor-network-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-network-jvm/3.0.3/ktor-network-jvm-3.0.3-sources.jar",
+  sha256 = "85de8c445328236108c2382bfaf3f2770187c5bcdb80fa10aac66a3307baf489",
+  downloaded_file_path = "ktor-network-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-client-java-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-java-jvm/2.3.13/ktor-client-java-jvm-2.3.13-sources.jar",
-  sha256 = "2036c50e1939f140aac898829eab46dca5d6c8f3f3efc027fc9f8b9efb148592",
-  downloaded_file_path = "ktor-client-java-jvm-2.3.13-sources.jar"
+  name = "ktor-network-tls-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-network-tls-jvm/3.0.3/ktor-network-tls-jvm-3.0.3-sources.jar",
+  sha256 = "a0206448d459f1c879f4d7abee3526f67fd94989b6b67c8dc8808f3aa75c5a1a",
+  downloaded_file_path = "ktor-network-tls-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-client-logging-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-logging-jvm/2.3.13/ktor-client-logging-jvm-2.3.13.jar",
-  sha256 = "0592b54ddec3b0071c4db05bd0e5a9377d50d7625799a3aed8cfff1ef39999f4",
-  downloaded_file_path = "ktor-client-logging-jvm-2.3.13.jar"
+  name = "ktor-client-content-negotiation-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-content-negotiation-jvm/3.0.3/ktor-client-content-negotiation-jvm-3.0.3.jar",
+  sha256 = "683829363345abb59e20f6adfb3323d6abb100ba4d46c10002fa0c1bad149532",
+  downloaded_file_path = "ktor-client-content-negotiation-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-client-logging-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-logging-jvm/2.3.13/ktor-client-logging-jvm-2.3.13-sources.jar",
-  sha256 = "4659aafec558b0d492e0b0669a8943057a522c63ffdbb378ac303caaef66bc88",
-  downloaded_file_path = "ktor-client-logging-jvm-2.3.13-sources.jar"
+  name = "ktor-client-content-negotiation-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-content-negotiation-jvm/3.0.3/ktor-client-content-negotiation-jvm-3.0.3-sources.jar",
+  sha256 = "af8317e710859f3dd1ede5bc083ba93adea1d1366e48c170f1d2ea28b0331d5f",
+  downloaded_file_path = "ktor-client-content-negotiation-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-client-mock-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-mock-jvm/2.3.13/ktor-client-mock-jvm-2.3.13.jar",
-  sha256 = "88479d8374d51f748d77aeb05ad3da201c49741a5254034ceac3fa3856ff5445",
-  downloaded_file_path = "ktor-client-mock-jvm-2.3.13.jar"
+  name = "ktor-client-encoding-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-encoding-jvm/3.0.3/ktor-client-encoding-jvm-3.0.3.jar",
+  sha256 = "924822996d4dd9696c21480eaca5b3bcfd1280d7780c89ca7a5c510db50e0fcf",
+  downloaded_file_path = "ktor-client-encoding-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-client-mock-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-mock-jvm/2.3.13/ktor-client-mock-jvm-2.3.13-sources.jar",
-  sha256 = "0f38269470a2d5677b0311650360fd9a77d623cc489ec16486b4589780cab97c",
-  downloaded_file_path = "ktor-client-mock-jvm-2.3.13-sources.jar"
+  name = "ktor-client-encoding-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-encoding-jvm/3.0.3/ktor-client-encoding-jvm-3.0.3-sources.jar",
+  sha256 = "2ec57ba5937f661fc64f93e254e7a8ce9d549cf865b1f70c86f05bec741434b5",
+  downloaded_file_path = "ktor-client-encoding-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-client-okhttp-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-okhttp-jvm/2.3.13/ktor-client-okhttp-jvm-2.3.13.jar",
-  sha256 = "b040ca8f5a636183be0e63955edec3a8db1d6dd09b731f4c17b4d40296b61cd7",
-  downloaded_file_path = "ktor-client-okhttp-jvm-2.3.13.jar"
+  name = "ktor-client-java-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-java-jvm/3.0.3/ktor-client-java-jvm-3.0.3.jar",
+  sha256 = "0ef22cd0d7a0dd5c99878e02786a7bbacf3e4327accfb282232b687e4d08b8d6",
+  downloaded_file_path = "ktor-client-java-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-client-okhttp-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-okhttp-jvm/2.3.13/ktor-client-okhttp-jvm-2.3.13-sources.jar",
-  sha256 = "9c9a29cbd2ecf994ff7a74549559ec3d87de79275c2ef9d95b8b30483ae7a289",
-  downloaded_file_path = "ktor-client-okhttp-jvm-2.3.13-sources.jar"
+  name = "ktor-client-java-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-java-jvm/3.0.3/ktor-client-java-jvm-3.0.3-sources.jar",
+  sha256 = "7904fab5a7331f9ae9a7590078ef5edddfd78996417c26611ff102c841bcf7b6",
+  downloaded_file_path = "ktor-client-java-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-serialization-kotlinx-json-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-kotlinx-json-jvm/2.3.13/ktor-serialization-kotlinx-json-jvm-2.3.13.jar",
-  sha256 = "c622e10cb9cf0ab733faf637b43111f06359cbd07bf992d92eb5fed52b56acda",
-  downloaded_file_path = "ktor-serialization-kotlinx-json-jvm-2.3.13.jar"
+  name = "ktor-client-logging-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-logging-jvm/3.0.3/ktor-client-logging-jvm-3.0.3.jar",
+  sha256 = "4761f5ea9ae9d4839d36098a8747619aaa48635c1ca6616aadc62f1865b35d97",
+  downloaded_file_path = "ktor-client-logging-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-serialization-kotlinx-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-kotlinx-jvm/2.3.13/ktor-serialization-kotlinx-jvm-2.3.13.jar",
-  sha256 = "833fc47df54c13dd0bac8653560d4d3a68ac1f16bfb26ae46235adf8a034ea7e",
-  downloaded_file_path = "ktor-serialization-kotlinx-jvm-2.3.13.jar"
+  name = "ktor-client-logging-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-logging-jvm/3.0.3/ktor-client-logging-jvm-3.0.3-sources.jar",
+  sha256 = "49d4cd6490d7e97bcdd5d180bf6465e3902481d9f3603546eb05945a9d267cdb",
+  downloaded_file_path = "ktor-client-logging-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-serialization-kotlinx-json-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-kotlinx-json-jvm/2.3.13/ktor-serialization-kotlinx-json-jvm-2.3.13-sources.jar",
-  sha256 = "132267a83914eb8a34afe69a4171424f35d62efefafa0164bc27e0fe5b4caab6",
-  downloaded_file_path = "ktor-serialization-kotlinx-json-jvm-2.3.13-sources.jar"
+  name = "ktor-client-mock-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-mock-jvm/3.0.3/ktor-client-mock-jvm-3.0.3.jar",
+  sha256 = "fbbcc7694b2ec2269f9a140527a9aadd4f973b6c92c75fd121941c5501774ab0",
+  downloaded_file_path = "ktor-client-mock-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-serialization-kotlinx-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-kotlinx-jvm/2.3.13/ktor-serialization-kotlinx-jvm-2.3.13-sources.jar",
-  sha256 = "169c88f013c708bbb5c54605d011322f6da28b2c353af17eb62b132d0c585ffb",
-  downloaded_file_path = "ktor-serialization-kotlinx-jvm-2.3.13-sources.jar"
+  name = "ktor-client-mock-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-mock-jvm/3.0.3/ktor-client-mock-jvm-3.0.3-sources.jar",
+  sha256 = "21fe2bed485088af75d38c3fcfe017230add05ae144a1ebe097351c9197ce4b2",
+  downloaded_file_path = "ktor-client-mock-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-server-cio-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-cio-jvm/2.3.13/ktor-server-cio-jvm-2.3.13.jar",
-  sha256 = "b3305ea559cf66662032ebbe6f735c8e8f5dbf0938c7cb09458c22b69187d8ff",
-  downloaded_file_path = "ktor-server-cio-jvm-2.3.13.jar"
+  name = "ktor-client-okhttp-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-okhttp-jvm/3.0.3/ktor-client-okhttp-jvm-3.0.3.jar",
+  sha256 = "c497931a1cc4192e59d3e28c39bab4a821a02da0856b71a2014a814bb64587bb",
+  downloaded_file_path = "ktor-client-okhttp-jvm-3.0.3.jar"
 )
 
 http_file(
-  name = "ktor-server-host-common-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-host-common-jvm/2.3.13/ktor-server-host-common-jvm-2.3.13.jar",
-  sha256 = "cd4041ed719634747f62d60fa14a4b719fed10005da1e33e294e9f7d31283105",
-  downloaded_file_path = "ktor-server-host-common-jvm-2.3.13.jar"
+  name = "ktor-client-okhttp-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-client-okhttp-jvm/3.0.3/ktor-client-okhttp-jvm-3.0.3-sources.jar",
+  sha256 = "3f3154531fbfcdbf7f1e7c5b177d53f9046dbaf2be03355fb668520182020001",
+  downloaded_file_path = "ktor-client-okhttp-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-server-core-jvm-2_3_13_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-core-jvm/2.3.13/ktor-server-core-jvm-2.3.13.jar",
-  sha256 = "04d0a73b1a6d1f186c63bc3e249f37c9e1ec0f4c9b2ce150e45af1f562b23d94",
-  downloaded_file_path = "ktor-server-core-jvm-2.3.13.jar"
+  name = "ktor-serialization-kotlinx-json-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-kotlinx-json-jvm/3.0.3/ktor-serialization-kotlinx-json-jvm-3.0.3.jar",
+  sha256 = "dbee8f66edf9a845c1f96b9b8c34ff6920c600f1c46e72f4fe530b4333f4a8cb",
+  downloaded_file_path = "ktor-serialization-kotlinx-json-jvm-3.0.3.jar"
+)
+
+http_file(
+  name = "ktor-serialization-kotlinx-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-kotlinx-jvm/3.0.3/ktor-serialization-kotlinx-jvm-3.0.3.jar",
+  sha256 = "101fa93a9bb0a1b70d410834bbad3e7a060a5eb8da0ba76f3c6f00737ade28ea",
+  downloaded_file_path = "ktor-serialization-kotlinx-jvm-3.0.3.jar"
+)
+
+http_file(
+  name = "ktor-serialization-kotlinx-json-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-kotlinx-json-jvm/3.0.3/ktor-serialization-kotlinx-json-jvm-3.0.3-sources.jar",
+  sha256 = "1f38cade31a60228f039f4c17e75b3183e62219ecce7941537aeb70e1d5b7f3b",
+  downloaded_file_path = "ktor-serialization-kotlinx-json-jvm-3.0.3-sources.jar"
+)
+
+http_file(
+  name = "ktor-serialization-kotlinx-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-serialization-kotlinx-jvm/3.0.3/ktor-serialization-kotlinx-jvm-3.0.3-sources.jar",
+  sha256 = "bf8375c8a2e7acc336db74c277c75e604bf1d67d5a486c19ad06d009706ba306",
+  downloaded_file_path = "ktor-serialization-kotlinx-jvm-3.0.3-sources.jar"
+)
+
+http_file(
+  name = "ktor-server-cio-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-cio-jvm/3.0.3/ktor-server-cio-jvm-3.0.3.jar",
+  sha256 = "172e5fc3dc4f00f90252f7a92466b53712cce16d9e7160d414923fb3332bfc92",
+  downloaded_file_path = "ktor-server-cio-jvm-3.0.3.jar"
+)
+
+http_file(
+  name = "ktor-server-core-jvm-3_0_3_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-core-jvm/3.0.3/ktor-server-core-jvm-3.0.3.jar",
+  sha256 = "bb751d8ed0b0b72b37e5101ac552f1555d6fcbb557c1ec46802ac84e5873413a",
+  downloaded_file_path = "ktor-server-core-jvm-3.0.3.jar"
 )
 
 http_file(
@@ -5817,24 +5894,17 @@ http_file(
 )
 
 http_file(
-  name = "ktor-server-cio-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-cio-jvm/2.3.13/ktor-server-cio-jvm-2.3.13-sources.jar",
-  sha256 = "aeb543f1c9ab9d48889be220da69535e06cbda9af37ea28cb4bc3eeb949fe8d1",
-  downloaded_file_path = "ktor-server-cio-jvm-2.3.13-sources.jar"
+  name = "ktor-server-cio-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-cio-jvm/3.0.3/ktor-server-cio-jvm-3.0.3-sources.jar",
+  sha256 = "8c7e6570ffe402f4a802b2745cecdcacffc8f85beebf848ecf4f0a322d0a92a6",
+  downloaded_file_path = "ktor-server-cio-jvm-3.0.3-sources.jar"
 )
 
 http_file(
-  name = "ktor-server-host-common-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-host-common-jvm/2.3.13/ktor-server-host-common-jvm-2.3.13-sources.jar",
-  sha256 = "a62fa813a722166e20778cbbec65fef60e5738e73671651640a299b811f67080",
-  downloaded_file_path = "ktor-server-host-common-jvm-2.3.13-sources.jar"
-)
-
-http_file(
-  name = "ktor-server-core-jvm-2_3_13-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-core-jvm/2.3.13/ktor-server-core-jvm-2.3.13-sources.jar",
-  sha256 = "ab943348fdde4c38b31e68af09518d77503a83876555791cb900a296aeecc420",
-  downloaded_file_path = "ktor-server-core-jvm-2.3.13-sources.jar"
+  name = "ktor-server-core-jvm-3_0_3-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/ktor/ktor-server-core-jvm/3.0.3/ktor-server-core-jvm-3.0.3-sources.jar",
+  sha256 = "94b6cbe9247eb9d777fb6757e97c3e918bea8a7701c2443a7af39f593f6bfb64",
+  downloaded_file_path = "ktor-server-core-jvm-3.0.3-sources.jar"
 )
 
 http_file(
@@ -10451,38 +10521,31 @@ http_file(
 )
 
 http_file(
-  name = "packagesearch-api-client-jvm-3_3_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.3.1/packagesearch-api-client-jvm-3.3.1.jar",
-  sha256 = "d7e293f78f1be85cec7a1ad3dfec5b5a868074b00a90a8be2438c25660526019",
-  downloaded_file_path = "packagesearch-api-client-jvm-3.3.1.jar"
+  name = "packagesearch-api-client-jvm-3_4_0_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.4.0/packagesearch-api-client-jvm-3.4.0.jar",
+  sha256 = "9d0f4c74e96787499fcc2462c32afeb7f4db97db30042e2578f205f61e5898fb",
+  downloaded_file_path = "packagesearch-api-client-jvm-3.4.0.jar"
 )
 
 http_file(
-  name = "packagesearch-http-models-jvm-3_3_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.3.1/packagesearch-http-models-jvm-3.3.1.jar",
+  name = "packagesearch-http-models-jvm-3_4_0_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.4.0/packagesearch-http-models-jvm-3.4.0.jar",
   sha256 = "0318b967115de0c7c8fbd93bc6e3d279c82de2954f90794146962921de45972d",
-  downloaded_file_path = "packagesearch-http-models-jvm-3.3.1.jar"
+  downloaded_file_path = "packagesearch-http-models-jvm-3.4.0.jar"
 )
 
 http_file(
-  name = "packagesearch-api-models-jvm-3_3_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.3.1/packagesearch-api-models-jvm-3.3.1.jar",
-  sha256 = "a16f54c2126f9289610438d4f5592cd386113110cb8180ccfbe6999f5b1a3dbf",
-  downloaded_file_path = "packagesearch-api-models-jvm-3.3.1.jar"
+  name = "packagesearch-api-models-jvm-3_4_0_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.4.0/packagesearch-api-models-jvm-3.4.0.jar",
+  sha256 = "22022fe954980d8e183b252889719fc6ca71a13e91b8e869d92532da308e3da1",
+  downloaded_file_path = "packagesearch-api-models-jvm-3.4.0.jar"
 )
 
 http_file(
-  name = "kotlinx-document-store-mvstore-0_0_4_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/com/github/lamba92/kotlinx-document-store-mvstore/0.0.4/kotlinx-document-store-mvstore-0.0.4.jar",
-  sha256 = "956a4c7faad66e3471861adaa278d9486f3a050ac25fb6a99ca90809d379adfe",
-  downloaded_file_path = "kotlinx-document-store-mvstore-0.0.4.jar"
-)
-
-http_file(
-  name = "packagesearch-version-utils-jvm-3_3_1_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.3.1/packagesearch-version-utils-jvm-3.3.1.jar",
+  name = "packagesearch-version-utils-jvm-3_4_0_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.4.0/packagesearch-version-utils-jvm-3.4.0.jar",
   sha256 = "4c86546693efaeb889e02d043521cda15da5f10853b0471095b7db80dc0540e7",
-  downloaded_file_path = "packagesearch-version-utils-jvm-3.3.1.jar"
+  downloaded_file_path = "packagesearch-version-utils-jvm-3.4.0.jar"
 )
 
 http_file(
@@ -10493,59 +10556,31 @@ http_file(
 )
 
 http_file(
-  name = "kotlinx-document-store-core-jvm-0_0_4_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/com/github/lamba92/kotlinx-document-store-core-jvm/0.0.4/kotlinx-document-store-core-jvm-0.0.4.jar",
-  sha256 = "7e638082b4a14e3a96ca90f3f5db70ac65591e0b6c6670629e849d22ec34455f",
-  downloaded_file_path = "kotlinx-document-store-core-jvm-0.0.4.jar"
+  name = "packagesearch-api-client-jvm-3_4_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.4.0/packagesearch-api-client-jvm-3.4.0-sources.jar",
+  sha256 = "fa07b8152bc23d6c0fb5bac147bf1a45aa7c7d00ed3d7c3df680671dc2bf3d69",
+  downloaded_file_path = "packagesearch-api-client-jvm-3.4.0-sources.jar"
 )
 
 http_file(
-  name = "kotlinx-io-core-jvm-0_5_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.5.0/kotlinx-io-core-jvm-0.5.0.jar",
-  sha256 = "f43dd81cf3c7f87abdc80100607b3892a5eb13d87b4d1ceccb7dfb53a68fa4ca",
-  downloaded_file_path = "kotlinx-io-core-jvm-0.5.0.jar"
-)
-
-http_file(
-  name = "kotlinx-io-bytestring-jvm-0_5_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.5.0/kotlinx-io-bytestring-jvm-0.5.0.jar",
-  sha256 = "9b462754c2a574cb7720b16ef1129e6ea76d360d7c84c58684fcab77b17f844d",
-  downloaded_file_path = "kotlinx-io-bytestring-jvm-0.5.0.jar"
-)
-
-http_file(
-  name = "packagesearch-api-client-jvm-3_3_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.3.1/packagesearch-api-client-jvm-3.3.1-sources.jar",
-  sha256 = "809fe21bfdeb3fdea6d30fdf174dcf70e05a7371e21bda8fb9571e69b6176b45",
-  downloaded_file_path = "packagesearch-api-client-jvm-3.3.1-sources.jar"
-)
-
-http_file(
-  name = "packagesearch-http-models-jvm-3_3_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.3.1/packagesearch-http-models-jvm-3.3.1-sources.jar",
+  name = "packagesearch-http-models-jvm-3_4_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.4.0/packagesearch-http-models-jvm-3.4.0-sources.jar",
   sha256 = "7802c87c2360d29b791d7c048ed481504f39d2d43b7dc6dd489fc2150b7d40a0",
-  downloaded_file_path = "packagesearch-http-models-jvm-3.3.1-sources.jar"
+  downloaded_file_path = "packagesearch-http-models-jvm-3.4.0-sources.jar"
 )
 
 http_file(
-  name = "packagesearch-api-models-jvm-3_3_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.3.1/packagesearch-api-models-jvm-3.3.1-sources.jar",
-  sha256 = "6a066eff862c34a4b42860e5a21c937b0df5dc45e596a025003e4a9a0eeff1eb",
-  downloaded_file_path = "packagesearch-api-models-jvm-3.3.1-sources.jar"
+  name = "packagesearch-api-models-jvm-3_4_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.4.0/packagesearch-api-models-jvm-3.4.0-sources.jar",
+  sha256 = "72ff50a4cc9631242b26a7e7b240cc5761af68b348288676908557d850e9f777",
+  downloaded_file_path = "packagesearch-api-models-jvm-3.4.0-sources.jar"
 )
 
 http_file(
-  name = "kotlinx-document-store-mvstore-0_0_4-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/com/github/lamba92/kotlinx-document-store-mvstore/0.0.4/kotlinx-document-store-mvstore-0.0.4-sources.jar",
-  sha256 = "deb5bc70a522e49cde38d0d948b8c28566cf124961409cb8f41d11802ecbb4d6",
-  downloaded_file_path = "kotlinx-document-store-mvstore-0.0.4-sources.jar"
-)
-
-http_file(
-  name = "packagesearch-version-utils-jvm-3_3_1-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.3.1/packagesearch-version-utils-jvm-3.3.1-sources.jar",
+  name = "packagesearch-version-utils-jvm-3_4_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.4.0/packagesearch-version-utils-jvm-3.4.0-sources.jar",
   sha256 = "36e3f24ea7197dc4223e4bec9e42475f7445fdc80e9ae642deb9a2b00c92cd43",
-  downloaded_file_path = "packagesearch-version-utils-jvm-3.3.1-sources.jar"
+  downloaded_file_path = "packagesearch-version-utils-jvm-3.4.0-sources.jar"
 )
 
 http_file(
@@ -10553,27 +10588,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/soywiz/korlibs/krypto/krypto-jvm/4.0.10/krypto-jvm-4.0.10-sources.jar",
   sha256 = "470645a178210f3a300ddeea884762b2d8abfca01efef1e8ce2c6c00f00b60c7",
   downloaded_file_path = "krypto-jvm-4.0.10-sources.jar"
-)
-
-http_file(
-  name = "kotlinx-document-store-core-jvm-0_0_4-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kpm/public/com/github/lamba92/kotlinx-document-store-core-jvm/0.0.4/kotlinx-document-store-core-jvm-0.0.4-sources.jar",
-  sha256 = "dca1d077540e813b004f4bc2e751b96c34efdbd10b6421b293474e54546343bd",
-  downloaded_file_path = "kotlinx-document-store-core-jvm-0.0.4-sources.jar"
-)
-
-http_file(
-  name = "kotlinx-io-core-jvm-0_5_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.5.0/kotlinx-io-core-jvm-0.5.0-sources.jar",
-  sha256 = "f7445096709080e031f78580c65bdabfb1eb214011083ebf5e2d7d7cf67effab",
-  downloaded_file_path = "kotlinx-io-core-jvm-0.5.0-sources.jar"
-)
-
-http_file(
-  name = "kotlinx-io-bytestring-jvm-0_5_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.5.0/kotlinx-io-bytestring-jvm-0.5.0-sources.jar",
-  sha256 = "6025c7b620ab7d950cde96b060ce25ed8fe6ecbc1a3ddffd6fc9747775651ea6",
-  downloaded_file_path = "kotlinx-io-bytestring-jvm-0.5.0-sources.jar"
 )
 
 http_file(
@@ -12226,6 +12240,20 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/243.0.1/find-classes-model-243.0.1-sources.jar",
   sha256 = "7953ac367e5b80632d34e009cb75b812f7f3419d1079f422cc736618b9f6a228",
   downloaded_file_path = "find-classes-model-243.0.1-sources.jar"
+)
+
+http_file(
+  name = "find-ec-model-251_0_1_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/251.0.1/find-ec-model-251.0.1.jar",
+  sha256 = "ae63199745e718694979c467993df0e6170d5fedda3a38916b1d009436bf0c3c",
+  downloaded_file_path = "find-ec-model-251.0.1.jar"
+)
+
+http_file(
+  name = "find-ec-model-251_0_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/251.0.1/find-ec-model-251.0.1-sources.jar",
+  sha256 = "1a975e7d373cf3fbffb64fd3021eb75074ec4f22d7091a0799283ca4927b8b2a",
+  downloaded_file_path = "find-ec-model-251.0.1-sources.jar"
 )
 
 http_file(

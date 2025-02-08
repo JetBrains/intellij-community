@@ -1,5 +1,5 @@
 ### auto-generated section `build intellij.platform.syntax` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
   name = "syntax",
@@ -10,6 +10,18 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
+  ]
+)
+
+jvm_test(
+  name = "syntax_test",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  associates = [":syntax"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:junit5",
   ]
 )
 ### auto-generated section `build intellij.platform.syntax` end

@@ -2451,8 +2451,8 @@ java_import(
 
 java_import(
   name = "jb-jdi",
-  jars = ["@jb-jdi-2_39_http//file"],
-  srcjar = "@jb-jdi-2_39-sources_http//file",
+  jars = ["@jb-jdi-2_40_http//file"],
+  srcjar = "@jb-jdi-2_40-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3945,6 +3945,27 @@ kt_jvm_import(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "kotlinx-document-store-mvstore",
+  exports = [
+    ":kotlinx-document-store-mvstore-0_0_4_http_import",
+    ":kotlinx-document-store-core-jvm-0_0_4_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "kotlinx-document-store-mvstore-0_0_4_http_import",
+  jar = "@kotlinx-document-store-mvstore-0_0_4_http//file",
+  srcjar = "@kotlinx-document-store-mvstore-0_0_4-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "kotlinx-document-store-core-jvm-0_0_4_http_import",
+  jar = "@kotlinx-document-store-core-jvm-0_0_4_http//file",
+  srcjar = "@kotlinx-document-store-core-jvm-0_0_4-sources_http//file"
+)
+
 kt_jvm_import(
   name = "kotlinx-html-jvm",
   jar = "@kotlinx-html-jvm-0_12_0_http//file",
@@ -3983,6 +4004,13 @@ java_library(
 )
 
 kt_jvm_import(
+  name = "kotlinx-serialization-json-io",
+  jar = "@kotlinx-serialization-json-io-jvm-1_7_3_http//file",
+  srcjar = "@kotlinx-serialization-json-io-jvm-1_7_3-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
   name = "kotlinx-serialization-protobuf",
   jar = "@kotlinx-serialization-protobuf-jvm-1_7_3_http//file",
   srcjar = "@kotlinx-serialization-protobuf-jvm-1_7_3-sources_http//file",
@@ -3999,203 +4027,228 @@ java_import(
 java_library(
   name = "ktor-client",
   exports = [
-    ":ktor-client-core-jvm-2_3_13_http_import",
-    ":ktor-http-jvm-2_3_13_http_import",
-    ":ktor-utils-jvm-2_3_13_http_import",
-    ":ktor-io-jvm-2_3_13_http_import",
-    ":ktor-events-jvm-2_3_13_http_import",
-    ":ktor-websocket-serialization-jvm-2_3_13_http_import",
-    ":ktor-serialization-jvm-2_3_13_http_import",
-    ":ktor-websockets-jvm-2_3_13_http_import",
+    ":ktor-client-core-jvm-3_0_3_http_import",
+    ":ktor-http-jvm-3_0_3_http_import",
+    ":ktor-utils-jvm-3_0_3_http_import",
+    ":ktor-io-jvm-3_0_3_http_import",
+    ":kotlinx-io-core-jvm-0_5_4_http_import",
+    ":kotlinx-io-bytestring-jvm-0_5_4_http_import",
+    ":ktor-events-jvm-3_0_3_http_import",
+    ":ktor-websocket-serialization-jvm-3_0_3_http_import",
+    ":ktor-serialization-jvm-3_0_3_http_import",
+    ":ktor-websockets-jvm-3_0_3_http_import",
+    ":ktor-sse-jvm-3_0_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "ktor-client-core-jvm-2_3_13_http_import",
-  jar = "@ktor-client-core-jvm-2_3_13_http//file",
-  srcjar = "@ktor-client-core-jvm-2_3_13-sources_http//file"
+  name = "ktor-client-core-jvm-3_0_3_http_import",
+  jar = "@ktor-client-core-jvm-3_0_3_http//file",
+  srcjar = "@ktor-client-core-jvm-3_0_3-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ktor-http-jvm-2_3_13_http_import",
-  jar = "@ktor-http-jvm-2_3_13_http//file",
-  srcjar = "@ktor-http-jvm-2_3_13-sources_http//file"
+  name = "ktor-http-jvm-3_0_3_http_import",
+  jar = "@ktor-http-jvm-3_0_3_http//file",
+  srcjar = "@ktor-http-jvm-3_0_3-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ktor-utils-jvm-2_3_13_http_import",
-  jar = "@ktor-utils-jvm-2_3_13_http//file",
-  srcjar = "@ktor-utils-jvm-2_3_13-sources_http//file"
+  name = "ktor-utils-jvm-3_0_3_http_import",
+  jar = "@ktor-utils-jvm-3_0_3_http//file",
+  srcjar = "@ktor-utils-jvm-3_0_3-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ktor-io-jvm-2_3_13_http_import",
-  jar = "@ktor-io-jvm-2_3_13_http//file",
-  srcjar = "@ktor-io-jvm-2_3_13-sources_http//file"
+  name = "ktor-io-jvm-3_0_3_http_import",
+  jar = "@ktor-io-jvm-3_0_3_http//file",
+  srcjar = "@ktor-io-jvm-3_0_3-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ktor-events-jvm-2_3_13_http_import",
-  jar = "@ktor-events-jvm-2_3_13_http//file",
-  srcjar = "@ktor-events-jvm-2_3_13-sources_http//file"
+  name = "kotlinx-io-core-jvm-0_5_4_http_import",
+  jar = "@kotlinx-io-core-jvm-0_5_4_http//file",
+  srcjar = "@kotlinx-io-core-jvm-0_5_4-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ktor-websocket-serialization-jvm-2_3_13_http_import",
-  jar = "@ktor-websocket-serialization-jvm-2_3_13_http//file",
-  srcjar = "@ktor-websocket-serialization-jvm-2_3_13-sources_http//file"
+  name = "kotlinx-io-bytestring-jvm-0_5_4_http_import",
+  jar = "@kotlinx-io-bytestring-jvm-0_5_4_http//file",
+  srcjar = "@kotlinx-io-bytestring-jvm-0_5_4-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ktor-serialization-jvm-2_3_13_http_import",
-  jar = "@ktor-serialization-jvm-2_3_13_http//file",
-  srcjar = "@ktor-serialization-jvm-2_3_13-sources_http//file"
+  name = "ktor-events-jvm-3_0_3_http_import",
+  jar = "@ktor-events-jvm-3_0_3_http//file",
+  srcjar = "@ktor-events-jvm-3_0_3-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ktor-websockets-jvm-2_3_13_http_import",
-  jar = "@ktor-websockets-jvm-2_3_13_http//file",
-  srcjar = "@ktor-websockets-jvm-2_3_13-sources_http//file"
+  name = "ktor-websocket-serialization-jvm-3_0_3_http_import",
+  jar = "@ktor-websocket-serialization-jvm-3_0_3_http//file",
+  srcjar = "@ktor-websocket-serialization-jvm-3_0_3-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "ktor-serialization-jvm-3_0_3_http_import",
+  jar = "@ktor-serialization-jvm-3_0_3_http//file",
+  srcjar = "@ktor-serialization-jvm-3_0_3-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "ktor-websockets-jvm-3_0_3_http_import",
+  jar = "@ktor-websockets-jvm-3_0_3_http//file",
+  srcjar = "@ktor-websockets-jvm-3_0_3-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "ktor-sse-jvm-3_0_3_http_import",
+  jar = "@ktor-sse-jvm-3_0_3_http//file",
+  srcjar = "@ktor-sse-jvm-3_0_3-sources_http//file"
 )
 
 kt_jvm_import(
   name = "ktor-client-auth",
-  jar = "@ktor-client-auth-jvm-2_3_13_http//file",
-  srcjar = "@ktor-client-auth-jvm-2_3_13-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "ktor-client-auth-provided",
-  exports = [":ktor-client-auth"],
-  neverlink = True,
+  jar = "@ktor-client-auth-jvm-3_0_3_http//file",
+  srcjar = "@ktor-client-auth-jvm-3_0_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ktor-client-cio",
   exports = [
-    ":ktor-client-cio-jvm-2_3_13_http_import",
-    ":ktor-client-core-jvm-2_3_13_http_import",
-    ":ktor-http-jvm-2_3_13_http_import",
-    ":ktor-events-jvm-2_3_13_http_import",
-    ":ktor-websocket-serialization-jvm-2_3_13_http_import",
-    ":ktor-serialization-jvm-2_3_13_http_import",
-    ":ktor-http-cio-jvm-2_3_13_http_import",
-    ":ktor-network-jvm-2_3_13_http_import",
-    ":ktor-websockets-jvm-2_3_13_http_import",
-    ":ktor-network-tls-jvm-2_3_13_http_import",
-    ":ktor-utils-jvm-2_3_13_http_import",
-    ":ktor-io-jvm-2_3_13_http_import",
+    ":ktor-client-cio-jvm-3_0_3_http_import",
+    ":ktor-client-core-jvm-3_0_3_http_import",
+    ":ktor-http-jvm-3_0_3_http_import",
+    ":ktor-events-jvm-3_0_3_http_import",
+    ":ktor-websocket-serialization-jvm-3_0_3_http_import",
+    ":ktor-serialization-jvm-3_0_3_http_import",
+    ":ktor-sse-jvm-3_0_3_http_import",
+    ":ktor-http-cio-jvm-3_0_3_http_import",
+    ":ktor-network-jvm-3_0_3_http_import",
+    ":ktor-io-jvm-3_0_3_http_import",
+    ":kotlinx-io-core-jvm-0_5_4_http_import",
+    ":kotlinx-io-bytestring-jvm-0_5_4_http_import",
+    ":ktor-websockets-jvm-3_0_3_http_import",
+    ":ktor-network-tls-jvm-3_0_3_http_import",
+    ":ktor-utils-jvm-3_0_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "ktor-client-cio-jvm-2_3_13_http_import",
-  jar = "@ktor-client-cio-jvm-2_3_13_http//file",
-  srcjar = "@ktor-client-cio-jvm-2_3_13-sources_http//file"
+  name = "ktor-client-cio-jvm-3_0_3_http_import",
+  jar = "@ktor-client-cio-jvm-3_0_3_http//file",
+  srcjar = "@ktor-client-cio-jvm-3_0_3-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ktor-http-cio-jvm-2_3_13_http_import",
-  jar = "@ktor-http-cio-jvm-2_3_13_http//file",
-  srcjar = "@ktor-http-cio-jvm-2_3_13-sources_http//file"
+  name = "ktor-http-cio-jvm-3_0_3_http_import",
+  jar = "@ktor-http-cio-jvm-3_0_3_http//file",
+  srcjar = "@ktor-http-cio-jvm-3_0_3-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ktor-network-jvm-2_3_13_http_import",
-  jar = "@ktor-network-jvm-2_3_13_http//file",
-  srcjar = "@ktor-network-jvm-2_3_13-sources_http//file"
+  name = "ktor-network-jvm-3_0_3_http_import",
+  jar = "@ktor-network-jvm-3_0_3_http//file",
+  srcjar = "@ktor-network-jvm-3_0_3-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ktor-network-tls-jvm-2_3_13_http_import",
-  jar = "@ktor-network-tls-jvm-2_3_13_http//file",
-  srcjar = "@ktor-network-tls-jvm-2_3_13-sources_http//file"
+  name = "ktor-network-tls-jvm-3_0_3_http_import",
+  jar = "@ktor-network-tls-jvm-3_0_3_http//file",
+  srcjar = "@ktor-network-tls-jvm-3_0_3-sources_http//file"
 )
 
 kt_jvm_import(
   name = "ktor-client-content-negotiation",
-  jar = "@ktor-client-content-negotiation-jvm-2_3_13_http//file",
-  srcjar = "@ktor-client-content-negotiation-jvm-2_3_13-sources_http//file",
+  jar = "@ktor-client-content-negotiation-jvm-3_0_3_http//file",
+  srcjar = "@ktor-client-content-negotiation-jvm-3_0_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ktor-client-core",
   exports = [
-    ":ktor-client-core-jvm-2_3_13_http_import",
-    ":ktor-http-jvm-2_3_13_http_import",
-    ":ktor-utils-jvm-2_3_13_http_import",
-    ":ktor-io-jvm-2_3_13_http_import",
-    ":ktor-events-jvm-2_3_13_http_import",
-    ":ktor-websocket-serialization-jvm-2_3_13_http_import",
-    ":ktor-serialization-jvm-2_3_13_http_import",
-    ":ktor-websockets-jvm-2_3_13_http_import",
+    ":ktor-client-core-jvm-3_0_3_http_import",
+    ":ktor-http-jvm-3_0_3_http_import",
+    ":ktor-utils-jvm-3_0_3_http_import",
+    ":ktor-io-jvm-3_0_3_http_import",
+    ":kotlinx-io-core-jvm-0_5_4_http_import",
+    ":kotlinx-io-bytestring-jvm-0_5_4_http_import",
+    ":ktor-events-jvm-3_0_3_http_import",
+    ":ktor-websocket-serialization-jvm-3_0_3_http_import",
+    ":ktor-serialization-jvm-3_0_3_http_import",
+    ":ktor-websockets-jvm-3_0_3_http_import",
+    ":ktor-sse-jvm-3_0_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "ktor-client-encoding",
-  jar = "@ktor-client-encoding-jvm-2_3_13_http//file",
-  srcjar = "@ktor-client-encoding-jvm-2_3_13-sources_http//file",
+  jar = "@ktor-client-encoding-jvm-3_0_3_http//file",
+  srcjar = "@ktor-client-encoding-jvm-3_0_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "ktor-client-java",
-  jar = "@ktor-client-java-jvm-2_3_13_http//file",
-  srcjar = "@ktor-client-java-jvm-2_3_13-sources_http//file",
+  jar = "@ktor-client-java-jvm-3_0_3_http//file",
+  srcjar = "@ktor-client-java-jvm-3_0_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "ktor-client-logging",
-  jar = "@ktor-client-logging-jvm-2_3_13_http//file",
-  srcjar = "@ktor-client-logging-jvm-2_3_13-sources_http//file",
+  jar = "@ktor-client-logging-jvm-3_0_3_http//file",
+  srcjar = "@ktor-client-logging-jvm-3_0_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ktor-client-mock",
   exports = [
-    ":ktor-client-mock-jvm-2_3_13_http_import",
-    ":ktor-http-jvm-2_3_13_http_import",
-    ":ktor-utils-jvm-2_3_13_http_import",
-    ":ktor-io-jvm-2_3_13_http_import",
-    ":ktor-client-core-jvm-2_3_13_http_import",
-    ":ktor-events-jvm-2_3_13_http_import",
-    ":ktor-websocket-serialization-jvm-2_3_13_http_import",
-    ":ktor-serialization-jvm-2_3_13_http_import",
-    ":ktor-websockets-jvm-2_3_13_http_import",
+    ":ktor-client-mock-jvm-3_0_3_http_import",
+    ":ktor-http-jvm-3_0_3_http_import",
+    ":ktor-utils-jvm-3_0_3_http_import",
+    ":ktor-io-jvm-3_0_3_http_import",
+    ":kotlinx-io-core-jvm-0_5_4_http_import",
+    ":kotlinx-io-bytestring-jvm-0_5_4_http_import",
+    ":ktor-client-core-jvm-3_0_3_http_import",
+    ":ktor-events-jvm-3_0_3_http_import",
+    ":ktor-websocket-serialization-jvm-3_0_3_http_import",
+    ":ktor-serialization-jvm-3_0_3_http_import",
+    ":ktor-websockets-jvm-3_0_3_http_import",
+    ":ktor-sse-jvm-3_0_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "ktor-client-mock-jvm-2_3_13_http_import",
-  jar = "@ktor-client-mock-jvm-2_3_13_http//file",
-  srcjar = "@ktor-client-mock-jvm-2_3_13-sources_http//file"
+  name = "ktor-client-mock-jvm-3_0_3_http_import",
+  jar = "@ktor-client-mock-jvm-3_0_3_http//file",
+  srcjar = "@ktor-client-mock-jvm-3_0_3-sources_http//file"
 )
 
 kt_jvm_import(
   name = "ktor-client-okhttp",
-  jar = "@ktor-client-okhttp-jvm-2_3_13_http//file",
-  srcjar = "@ktor-client-okhttp-jvm-2_3_13-sources_http//file",
+  jar = "@ktor-client-okhttp-jvm-3_0_3_http//file",
+  srcjar = "@ktor-client-okhttp-jvm-3_0_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ktor-network-tls",
   exports = [
-    ":ktor-network-tls-jvm-2_3_13_http_import",
-    ":ktor-http-jvm-2_3_13_http_import",
-    ":ktor-network-jvm-2_3_13_http_import",
-    ":ktor-utils-jvm-2_3_13_http_import",
-    ":ktor-io-jvm-2_3_13_http_import",
+    ":ktor-network-tls-jvm-3_0_3_http_import",
+    ":ktor-http-jvm-3_0_3_http_import",
+    ":ktor-network-jvm-3_0_3_http_import",
+    ":ktor-utils-jvm-3_0_3_http_import",
+    ":ktor-io-jvm-3_0_3_http_import",
+    ":kotlinx-io-core-jvm-0_5_4_http_import",
+    ":kotlinx-io-bytestring-jvm-0_5_4_http_import",
   ],
   visibility = ["//visibility:public"]
 )
@@ -4203,60 +4256,55 @@ java_library(
 java_library(
   name = "ktor-serialization-kotlinx-json",
   exports = [
-    ":ktor-serialization-kotlinx-json-jvm-2_3_13_http_import",
-    ":ktor-serialization-kotlinx-jvm-2_3_13_http_import",
-    ":ktor-serialization-jvm-2_3_13_http_import",
+    ":ktor-serialization-kotlinx-json-jvm-3_0_3_http_import",
+    ":ktor-serialization-kotlinx-jvm-3_0_3_http_import",
+    ":ktor-serialization-jvm-3_0_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "ktor-serialization-kotlinx-json-jvm-2_3_13_http_import",
-  jar = "@ktor-serialization-kotlinx-json-jvm-2_3_13_http//file",
-  srcjar = "@ktor-serialization-kotlinx-json-jvm-2_3_13-sources_http//file"
+  name = "ktor-serialization-kotlinx-json-jvm-3_0_3_http_import",
+  jar = "@ktor-serialization-kotlinx-json-jvm-3_0_3_http//file",
+  srcjar = "@ktor-serialization-kotlinx-json-jvm-3_0_3-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ktor-serialization-kotlinx-jvm-2_3_13_http_import",
-  jar = "@ktor-serialization-kotlinx-jvm-2_3_13_http//file",
-  srcjar = "@ktor-serialization-kotlinx-jvm-2_3_13-sources_http//file"
+  name = "ktor-serialization-kotlinx-jvm-3_0_3_http_import",
+  jar = "@ktor-serialization-kotlinx-jvm-3_0_3_http//file",
+  srcjar = "@ktor-serialization-kotlinx-jvm-3_0_3-sources_http//file"
 )
 
 java_library(
   name = "ktor-server-cio",
   exports = [
-    ":ktor-server-cio-jvm-2_3_13_http_import",
-    ":ktor-server-host-common-jvm-2_3_13_http_import",
-    ":ktor-server-core-jvm-2_3_13_http_import",
+    ":ktor-server-cio-jvm-3_0_3_http_import",
+    ":ktor-server-core-jvm-3_0_3_http_import",
     ":config-1_4_3_http_import",
-    ":ktor-serialization-jvm-2_3_13_http_import",
-    ":ktor-events-jvm-2_3_13_http_import",
-    ":ktor-http-cio-jvm-2_3_13_http_import",
-    ":ktor-http-jvm-2_3_13_http_import",
-    ":ktor-websockets-jvm-2_3_13_http_import",
-    ":ktor-network-jvm-2_3_13_http_import",
-    ":ktor-utils-jvm-2_3_13_http_import",
-    ":ktor-io-jvm-2_3_13_http_import",
+    ":ktor-utils-jvm-3_0_3_http_import",
+    ":ktor-http-jvm-3_0_3_http_import",
+    ":ktor-serialization-jvm-3_0_3_http_import",
+    ":ktor-events-jvm-3_0_3_http_import",
+    ":ktor-http-cio-jvm-3_0_3_http_import",
+    ":ktor-io-jvm-3_0_3_http_import",
+    ":kotlinx-io-core-jvm-0_5_4_http_import",
+    ":kotlinx-io-bytestring-jvm-0_5_4_http_import",
+    ":ktor-websockets-jvm-3_0_3_http_import",
+    ":ktor-network-jvm-3_0_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "ktor-server-cio-jvm-2_3_13_http_import",
-  jar = "@ktor-server-cio-jvm-2_3_13_http//file",
-  srcjar = "@ktor-server-cio-jvm-2_3_13-sources_http//file"
+  name = "ktor-server-cio-jvm-3_0_3_http_import",
+  jar = "@ktor-server-cio-jvm-3_0_3_http//file",
+  srcjar = "@ktor-server-cio-jvm-3_0_3-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "ktor-server-host-common-jvm-2_3_13_http_import",
-  jar = "@ktor-server-host-common-jvm-2_3_13_http//file",
-  srcjar = "@ktor-server-host-common-jvm-2_3_13-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "ktor-server-core-jvm-2_3_13_http_import",
-  jar = "@ktor-server-core-jvm-2_3_13_http//file",
-  srcjar = "@ktor-server-core-jvm-2_3_13-sources_http//file"
+  name = "ktor-server-core-jvm-3_0_3_http_import",
+  jar = "@ktor-server-core-jvm-3_0_3_http//file",
+  srcjar = "@ktor-server-core-jvm-3_0_3-sources_http//file"
 )
 
 kt_jvm_import(
@@ -4551,10 +4599,13 @@ kt_jvm_import(
 java_library(
   name = "libraries-ktor-client-cio-ktor-client-cio-internal",
   exports = [
-    ":ktor-client-cio-jvm-2_3_13_http_import",
-    ":ktor-http-cio-jvm-2_3_13_http_import",
-    ":ktor-network-jvm-2_3_13_http_import",
-    ":ktor-network-tls-jvm-2_3_13_http_import",
+    ":ktor-client-cio-jvm-3_0_3_http_import",
+    ":ktor-http-cio-jvm-3_0_3_http_import",
+    ":ktor-network-jvm-3_0_3_http_import",
+    ":ktor-io-jvm-3_0_3_http_import",
+    ":kotlinx-io-core-jvm-0_5_4_http_import",
+    ":kotlinx-io-bytestring-jvm-0_5_4_http_import",
+    ":ktor-network-tls-jvm-3_0_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
@@ -7417,71 +7468,43 @@ java_import(
 java_library(
   name = "package-search-api-client",
   exports = [
-    ":packagesearch-api-client-jvm-3_3_1_http_import",
-    ":packagesearch-http-models-jvm-3_3_1_http_import",
-    ":packagesearch-api-models-jvm-3_3_1_http_import",
-    ":kotlinx-document-store-mvstore-0_0_4_http_import",
-    ":packagesearch-version-utils-jvm-3_3_1_http_import",
+    ":packagesearch-api-client-jvm-3_4_0_http_import",
+    ":packagesearch-http-models-jvm-3_4_0_http_import",
+    ":packagesearch-api-models-jvm-3_4_0_http_import",
+    ":packagesearch-version-utils-jvm-3_4_0_http_import",
     ":krypto-jvm-4_0_10_http_import",
-    ":kotlinx-document-store-core-jvm-0_0_4_http_import",
-    ":kotlinx-io-core-jvm-0_5_0_http_import",
-    ":kotlinx-io-bytestring-jvm-0_5_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "packagesearch-api-client-jvm-3_3_1_http_import",
-  jar = "@packagesearch-api-client-jvm-3_3_1_http//file",
-  srcjar = "@packagesearch-api-client-jvm-3_3_1-sources_http//file"
+  name = "packagesearch-api-client-jvm-3_4_0_http_import",
+  jar = "@packagesearch-api-client-jvm-3_4_0_http//file",
+  srcjar = "@packagesearch-api-client-jvm-3_4_0-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "packagesearch-http-models-jvm-3_3_1_http_import",
-  jar = "@packagesearch-http-models-jvm-3_3_1_http//file",
-  srcjar = "@packagesearch-http-models-jvm-3_3_1-sources_http//file"
+  name = "packagesearch-http-models-jvm-3_4_0_http_import",
+  jar = "@packagesearch-http-models-jvm-3_4_0_http//file",
+  srcjar = "@packagesearch-http-models-jvm-3_4_0-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "packagesearch-api-models-jvm-3_3_1_http_import",
-  jar = "@packagesearch-api-models-jvm-3_3_1_http//file",
-  srcjar = "@packagesearch-api-models-jvm-3_3_1-sources_http//file"
+  name = "packagesearch-api-models-jvm-3_4_0_http_import",
+  jar = "@packagesearch-api-models-jvm-3_4_0_http//file",
+  srcjar = "@packagesearch-api-models-jvm-3_4_0-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "kotlinx-document-store-mvstore-0_0_4_http_import",
-  jar = "@kotlinx-document-store-mvstore-0_0_4_http//file",
-  srcjar = "@kotlinx-document-store-mvstore-0_0_4-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "packagesearch-version-utils-jvm-3_3_1_http_import",
-  jar = "@packagesearch-version-utils-jvm-3_3_1_http//file",
-  srcjar = "@packagesearch-version-utils-jvm-3_3_1-sources_http//file"
+  name = "packagesearch-version-utils-jvm-3_4_0_http_import",
+  jar = "@packagesearch-version-utils-jvm-3_4_0_http//file",
+  srcjar = "@packagesearch-version-utils-jvm-3_4_0-sources_http//file"
 )
 
 kt_jvm_import(
   name = "krypto-jvm-4_0_10_http_import",
   jar = "@krypto-jvm-4_0_10_http//file",
   srcjar = "@krypto-jvm-4_0_10-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "kotlinx-document-store-core-jvm-0_0_4_http_import",
-  jar = "@kotlinx-document-store-core-jvm-0_0_4_http//file",
-  srcjar = "@kotlinx-document-store-core-jvm-0_0_4-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "kotlinx-io-core-jvm-0_5_0_http_import",
-  jar = "@kotlinx-io-core-jvm-0_5_0_http//file",
-  srcjar = "@kotlinx-io-core-jvm-0_5_0-sources_http//file"
-)
-
-kt_jvm_import(
-  name = "kotlinx-io-bytestring-jvm-0_5_0_http_import",
-  jar = "@kotlinx-io-bytestring-jvm-0_5_0_http//file",
-  srcjar = "@kotlinx-io-bytestring-jvm-0_5_0-sources_http//file"
 )
 
 java_import(
@@ -9569,6 +9592,13 @@ java_import(
   name = "search_everywhere_ml-ranking-core-find-classes-model-experimental",
   jars = ["@find-classes-model-243_0_1_http//file"],
   srcjar = "@find-classes-model-243_0_1-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_import(
+  name = "search_everywhere_ml-ranking-core-find-ec-model-experimental",
+  jars = ["@find-ec-model-251_0_1_http//file"],
+  srcjar = "@find-ec-model-251_0_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
