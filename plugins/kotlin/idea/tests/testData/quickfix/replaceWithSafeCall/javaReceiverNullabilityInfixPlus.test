@@ -1,5 +1,6 @@
 // FILE: test.before.kt
 // "Replace with safe (?.) call" "true"
+// ERROR: Operator call corresponds to a dot-qualified call 'y.plus(y)' which is not allowed on a nullable receiver 'y'.
 package p;
 
 fun test(x: Foo) {
@@ -32,6 +33,7 @@ public class Foo {
 
 // FILE: test.after.kt
 // "Replace with safe (?.) call" "true"
+// ERROR: Operator call corresponds to a dot-qualified call 'y.plus(y)' which is not allowed on a nullable receiver 'y'.
 package p;
 
 fun test(x: Foo) {

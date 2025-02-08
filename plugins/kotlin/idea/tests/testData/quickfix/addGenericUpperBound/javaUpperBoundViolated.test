@@ -1,5 +1,6 @@
 // FILE: test.before.kt
 // "Add 'Any' as upper bound for T" "true"
+// ERROR: Type argument is not within its bounds: should be subtype of 'Any'
 package p;
 
 class Derived<T> : Base<<caret>T>() {}
@@ -30,6 +31,7 @@ public class Base<T> {}
 
 // FILE: test.after.kt
 // "Add 'Any' as upper bound for T" "true"
+// ERROR: Type argument is not within its bounds: should be subtype of 'Any'
 package p;
 
 class Derived<T : Any> : Base<<caret>T>() {}

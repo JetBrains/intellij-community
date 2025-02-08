@@ -1,5 +1,6 @@
 // FILE: test.before.kt
 // "Add non-null asserted (this!!) call" "true"
+// ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type A?
 // WITH_STDLIB
 package p;
 
@@ -40,6 +41,7 @@ public class Foo {
 
 // FILE: test.after.kt
 // "Add non-null asserted (this!!) call" "true"
+// ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type A?
 // WITH_STDLIB
 package p;
 
