@@ -21,8 +21,8 @@ import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbolApiStatus.Companion.getMessage
 import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.WebSymbolNameSegment.MatchProblem
-import com.intellij.webSymbols.inspections.WebSymbolsInspectionsPass.Companion.getDefaultProblemMessage
 import com.intellij.webSymbols.inspections.WebSymbolsProblemQuickFixProvider
+import com.intellij.webSymbols.inspections.getDefaultProblemMessage
 import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind

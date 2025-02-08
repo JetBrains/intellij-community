@@ -59,9 +59,6 @@
     <extensionPoint qualifiedName="com.intellij.webSymbols.problemQuickFixProvider"
                     interface="com.intellij.webSymbols.inspections.WebSymbolsProblemQuickFixProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.webSymbols.highlightInLanguage"
-                    beanClass="com.intellij.webSymbols.inspections.impl.WebSymbolsHighlightInLanguageEP"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webSymbols.contextSourceProximityProvider"
                     interface="com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider"
                     dynamic="true"/>
