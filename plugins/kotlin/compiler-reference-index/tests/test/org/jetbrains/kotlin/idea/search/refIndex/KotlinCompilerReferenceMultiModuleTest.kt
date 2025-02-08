@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.CommonClassNames
@@ -11,6 +12,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 
 @SkipSlowTestLocally
 open class KotlinCompilerReferenceMultiModuleTest : KotlinCompilerReferenceTestBase() {
@@ -138,6 +140,11 @@ open class KotlinCompilerReferenceMultiModuleTest : KotlinCompilerReferenceTestB
     private fun createModule(moduleName: String): Module {
         val moduleDir = myFixture.tempDirFixture.findOrCreateDir(moduleName)
         val module = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), moduleName, moduleDir)
+        ModuleRootManager.getInstance(module)!!.modifiableModel.apply {
+            if (withK2Compiler) {
+                ConfigLibraryUtil.configureKotlinRuntime(module)
+            }
+        }
         IdeaTestUtil.setModuleLanguageLevel(module, LanguageLevel.JDK_11)
         return module
     }

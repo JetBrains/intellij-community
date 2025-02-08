@@ -20,3 +20,5 @@ fun main() {
         use { it.foo }
     }
 }
+
+// IGNORE_K2
