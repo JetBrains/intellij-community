@@ -26,7 +26,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_test")
 jvm_test(
   name = "ide-plugin-k1-tests_test",
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
-  associates = ["//plugins/compose/intellij.compose.ide.plugin.k1:ide-plugin-k1"],
   deps = [
     "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests_test_lib",
     "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
@@ -38,6 +37,7 @@ jvm_test(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/core",
-  ]
+  ],
+  runtime_deps = ["//plugins/compose/intellij.compose.ide.plugin.k1:ide-plugin-k1"]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.k1.tests` end
