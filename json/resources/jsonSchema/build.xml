@@ -111,23 +111,23 @@
 
   <target name="js_schemas">
     <get_schema fromUrl="http://json.schemastore.org/babelrc"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.babelrc-schema.json" />
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/resources/jsonSchemas/.babelrc-schema.json" />
     <get_schema fromUrl="http://json.schemastore.org/stylelintrc"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.stylelintrc-schema.json" />
-    <replaceregexp file="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.stylelintrc-schema.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/resources/jsonSchemas/.stylelintrc-schema.json" />
+    <replaceregexp file="${idea.project.home}/plugins/JavaScriptLanguage/resources/jsonSchemas/.stylelintrc-schema.json"
                    match="&quot;definitions&quot;" replace="&quot;id&quot;: &quot;http://json.schemastore.org/stylelintrc&quot;,${line.separator}&#9;&quot;definitions&quot;" />
     <get_schema fromUrl="http://json.schemastore.org/jsconfig"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/jsconfig-schema.json" />
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/resources/jsonSchemas/jsconfig-schema.json" />
     <get_schema fromUrl="http://json.schemastore.org/tsconfig"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/tsconfig-schema.json" />
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/resources/jsonSchemas/tsconfig-schema.json" />
     <get_schema fromUrl="http://json.schemastore.org/tsd"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/tsd-schema.json" />
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/resources/jsonSchemas/tsd-schema.json" />
     <get_schema fromUrl="http://json.schemastore.org/typings"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/typings-schema.json" />
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/resources/jsonSchemas/typings-schema.json" />
 
     <get_schema fromUrl="http://json.schemastore.org/eslintrc"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.eslintrc-schema.json" />
-    <replaceregexp file="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.eslintrc-schema.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/resources/jsonSchemas/.eslintrc-schema.json" />
+    <replaceregexp file="${idea.project.home}/plugins/JavaScriptLanguage/resources/jsonSchemas/.eslintrc-schema.json"
                    match="&quot;definitions&quot;" replace="&quot;id&quot;: &quot;http://json.schemastore.org/eslintrc&quot;,${line.separator}  &quot;definitions&quot;" />
   </target>
 
