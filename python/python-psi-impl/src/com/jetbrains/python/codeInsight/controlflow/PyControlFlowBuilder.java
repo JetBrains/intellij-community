@@ -820,31 +820,33 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     super.visitPyAssertStatement(node);
     final PyExpression[] args = node.getArguments();
     // assert False
-    if (args.length >= 1 && !PyEvaluator.evaluateAsBooleanNoResolve(args[0], true)) {
-      myBuilder.processPending((pendingScope, instruction) -> {
-        final PsiElement pendingElement = instruction.getElement();
-        if (pendingElement != null && PsiTreeUtil.isAncestor(node, pendingElement, false)) {
-          myBuilder.addEdge(null, instruction);
-        }
-        else {
-          myBuilder.addPendingEdge(pendingScope, instruction);
-        }
-      });
-      myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
-      myBuilder.flowAbrupted();
-      return;
+    if (args.length >= 1) {
+      if (!PyEvaluator.evaluateAsBooleanNoResolve(args[0], true)) {
+        myBuilder.processPending((pendingScope, instruction) -> {
+          final PsiElement pendingElement = instruction.getElement();
+          if (pendingElement != null && PsiTreeUtil.isAncestor(node, pendingElement, false)) {
+            myBuilder.addEdge(null, instruction);
+          }
+          else {
+            myBuilder.addPendingEdge(pendingScope, instruction);
+          }
+        });
+        myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
+        myBuilder.flowAbrupted();
+        return;
+      }
+
+      TransparentInstruction trueNode = addTransparentInstruction();
+      TransparentInstruction falseNode = addTransparentInstruction();
+      visitCondition(args[0], trueNode, falseNode);
+
+      PyRaiseInstruction raiseInstruction = new PyRaiseInstruction(myBuilder, null);
+      myBuilder.instructions.add(raiseInstruction);
+      myBuilder.addEdge(falseNode, raiseInstruction);
+
+      myBuilder.addPendingEdge(null, raiseInstruction);
+      myBuilder.prevInstruction = trueNode;
     }
-
-    TransparentInstruction trueNode = addTransparentInstruction();
-    TransparentInstruction falseNode = addTransparentInstruction();
-    visitCondition(args[0], trueNode, falseNode);
-
-    PyRaiseInstruction raiseInstruction = new PyRaiseInstruction(myBuilder, null);
-    myBuilder.instructions.add(raiseInstruction);
-    myBuilder.addEdge(falseNode, raiseInstruction);
-
-    myBuilder.addPendingEdge(null, raiseInstruction);
-    myBuilder.prevInstruction = trueNode;
   }
 
   @Override
