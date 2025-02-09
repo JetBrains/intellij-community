@@ -31,7 +31,7 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
     Set<JvmNodeReferenceID> affectedSealedClasses = new HashSet<>();
     Set<JvmNodeReferenceID> baseNodes = new HashSet<>();
 
-    for (JvmClass cls : Utils.uniqueBy(flat(map(baseSources, s -> graph.getNodes(s, JvmClass.class))), JvmClass::isSame, JvmClass::diffHashCode)) {
+    for (JvmClass cls : flat(map(baseSources, s -> graph.getNodes(s, JvmClass.class)))) {
       if (!cls.isPrivate()) {
         for (ReferenceID id : present.withAllSubclasses(cls.getReferenceID())) {
           if (id instanceof JvmNodeReferenceID) {
@@ -76,7 +76,7 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
     }
 
     // sealed classes check should be done on both base and affected sources
-    for (JvmClass cls : Utils.uniqueBy(flat(map(affectedSources, s -> graph.getNodes(s, JvmClass.class))), JvmClass::isSame, JvmClass::diffHashCode)) {
+    for (JvmClass cls : flat(map(affectedSources, s -> graph.getNodes(s, JvmClass.class)))) {
       appendSealedClasses(cls, present, affectedSealedClasses);
     }
 
