@@ -1,14 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.eel
 
 import com.intellij.execution.process.UnixSignal
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.Pty
-import com.intellij.platform.eel.EelProcess
-import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.ReadResult
-import com.intellij.platform.eel.executeProcess
-import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.tests.eelHelpers.EelHelper
@@ -45,7 +41,7 @@ class EelLocalExecApiTest {
     @BeforeAll
     @JvmStatic
     fun createExecutor() {
-      executor = JavaMainClassExecutor(EelHelper::class.java)
+      executor = JavaMainClassExecutor(EelHelper::class.java, EelHelper.HelperMode.TTY.name)
     }
   }
 

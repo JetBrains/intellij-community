@@ -144,9 +144,6 @@ sealed interface EelTunnelsApi {
     /**
      * A channel to the server
      */
-    // todo: Channel is a bad API here.
-    // The client that sends data to the server is also interested in the error that happens during the send.
-    // This can be fixed by having a suspend function instead of a channel
     val sendChannel: EelSendChannel<IOException>
 
     /**

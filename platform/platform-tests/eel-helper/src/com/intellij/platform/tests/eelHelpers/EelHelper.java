@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.tests.eelHelpers;
 
 import org.jetbrains.annotations.TestOnly;
 
-import static com.intellij.platform.tests.eelHelpers.network.NetworkHelperKt.startNetworkHelper;
+import static com.intellij.platform.tests.eelHelpers.network.NetworkHelperKt.startNetworkClientHelper;
+import static com.intellij.platform.tests.eelHelpers.network.NetworkHelperKt.startNetworkConnectionHelper;
 import static com.intellij.platform.tests.eelHelpers.ttyAndExit.TtyAndExitHelperKt.startTtyAndExitHelper;
 
 /**
@@ -16,11 +17,21 @@ public final class EelHelper {
 
   @TestOnly
   public static void main(String[] args) {
-    if (args.length == 0) {
-      startTtyAndExitHelper();
+    HelperMode mode = HelperMode.valueOf(args[0]);
+    switch (mode) {
+      case TTY -> {
+        startTtyAndExitHelper();
+      }
+      case NETWORK_CLIENT -> {
+        startNetworkClientHelper();
+      }
+      case NETWORK_CONNECTION -> {
+        startNetworkConnectionHelper();
+      }
     }
-    else {
-      startNetworkHelper();
-    }
+  }
+
+  public enum HelperMode {
+    TTY, NETWORK_CLIENT, NETWORK_CONNECTION
   }
 }
