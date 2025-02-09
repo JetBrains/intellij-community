@@ -82,6 +82,10 @@ open class BeControlComponentBase(
     return frontendComponent.isEnabled()
   }
 
+  override fun requestFocus() {
+    frontendComponent.requestFocus()
+  }
+
   override fun isFocusOwner(): Boolean {
     return frontendComponent.isFocusOwner()
   }
