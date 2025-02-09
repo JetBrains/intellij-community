@@ -37,8 +37,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public final class EditorHyperlinkSupport {
   private static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
@@ -144,6 +144,7 @@ public final class EditorHyperlinkSupport {
     return myEditor.getInlayModel().getInlineElementsInRange(startOffset, endOffset).stream().filter(INLAY::isIn).toList();
   }
 
+  @TestOnly
   public void waitForPendingFilters(long timeoutMs) {
     myFilterRunner.waitForPendingFilters(timeoutMs);
   }

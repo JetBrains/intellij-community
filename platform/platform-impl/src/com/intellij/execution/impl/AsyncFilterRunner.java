@@ -17,8 +17,10 @@ import com.intellij.openapi.util.Expirable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.ArrayList;
@@ -114,6 +116,7 @@ final class AsyncFilterRunner {
     }
   }
 
+  @TestOnly
   void waitForPendingFilters(long timeoutMs) {
     ThreadingAssertions.assertEventDispatchThread();
     
@@ -132,6 +135,9 @@ final class AsyncFilterRunner {
 
       if (System.currentTimeMillis() - started > timeoutMs) {
         return;
+      }
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        UIUtil.dispatchAllInvocationEvents();
       }
       TimeoutUtil.sleep(1);
     }
