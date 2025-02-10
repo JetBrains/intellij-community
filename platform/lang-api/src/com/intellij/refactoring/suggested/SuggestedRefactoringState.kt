@@ -1,22 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.suggested
 
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
+import com.intellij.psi.createSmartPointer
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 import com.intellij.util.asSafely
 import com.intellij.util.keyFMap.KeyFMap
-import org.jetbrains.annotations.Nls
-import com.intellij.psi.createSmartPointer
-import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 private var nextFeatureUsageId = 0
 
 /**
- * Data class representing state of accumulated signature changes.
+ * Data class representing the state of accumulated signature changes.
  */
 class SuggestedRefactoringState(
   val anchor: PsiElement,
@@ -27,9 +26,9 @@ class SuggestedRefactoringState(
   val oldSignature: Signature,
   val newSignature: Signature,
   val parameterMarkers: List<ParameterMarker>,
-  val disappearedParameters: Map<String, Any> = emptyMap() /* last known parameter name to its id */,
+  val disappearedParameters: Map<String, Any> = emptyMap(), /* last known parameter name to its id */
   val featureUsageId: Int = nextFeatureUsageId++,
-  val additionalData: AdditionalData = AdditionalData.Empty
+  val additionalData: AdditionalData = AdditionalData.Empty,
 ) {
   data class ParameterMarker(val rangeMarker: RangeMarker, val parameterId: Any)
 
@@ -163,7 +162,7 @@ class SuggestedRefactoringState(
     NO_ERRORS,
     /** There is a syntax error in the signature or duplicated parameter names in the signature */
     SYNTAX_ERROR,
-    /** The state is inconsistent: declaration is invalid or signature range marker does not match signature range anymore */
+    /** The state is inconsistent: declaration is invalid, or signature range marker does not match signature range anymore */
     INCONSISTENT
   }
 }
@@ -187,8 +186,7 @@ class SuggestedRenameData(override val declaration: PsiNamedElement, val oldName
 /**
  * Data representing suggested Change Signature refactoring.
  */
-@Suppress("DataClassPrivateConstructor")
-data class SuggestedChangeSignatureData private constructor(
+data class SuggestedChangeSignatureData @ApiStatus.Internal constructor(
   val anchorPointer: SmartPsiElementPointer<PsiElement>,
   val declarationPointer: SmartPsiElementPointer<PsiElement>,
   val oldSignature: Signature,
@@ -197,7 +195,6 @@ data class SuggestedChangeSignatureData private constructor(
   val oldDeclarationText: String,
   val oldImportsText: String?
 ) : SuggestedRefactoringData() {
-
   override val declaration: PsiElement
     get() = declarationPointer.element!!
 
