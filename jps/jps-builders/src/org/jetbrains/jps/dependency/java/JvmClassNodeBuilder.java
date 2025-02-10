@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import com.dynatrace.hash4j.hashing.HashStream64;
+import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.SmartList;
@@ -24,9 +26,6 @@ import org.jetbrains.org.objectweb.asm.util.TraceMethodVisitor;
 
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -965,41 +964,23 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     Object getResult();
 
     static ContentHashBuilder create() {
-      try {
-        MessageDigest digest = MessageDigest.getInstance("MD5");
-        return wrap(new ContentHashBuilder() {
-          @Override
-          public void update(Object data) {
-            digest.update(String.valueOf(data).trim().getBytes(StandardCharsets.UTF_8));
-          }
-
-          @Override
-          public Object getResult() {
-            byte[] digestBytes = digest.digest();
-            long[] hash = new long[digestBytes.length / 8];
-            for (int hi = 0; hi < hash.length; hi++) {
-              for (int i = 0; i < 8; i++) {
-                hash[hi] = (hash[hi] << 8) | (digestBytes[hi * 8 + i] & 0xFF);
-              }
-            }
-            return hash;
-          }
-        });
-      }
-      catch (NoSuchAlgorithmException e) {
-        LOG.info(e);
-      }
-      // fallback logic
+      HashStream64 digest = Hashing.komihash5_0().hashStream();
       return wrap(new ContentHashBuilder() {
-        int hash = 0;
         @Override
         public void update(Object data) {
-          hash = 31 * hash + String.valueOf(data).trim().hashCode();
+          if (data.getClass().isArray()) {
+            for (int idx = 0, length = Array.getLength(data); idx < length; idx++) {
+              update(Array.get(data, idx));
+            }
+          }
+          else {
+            digest.putString(String.valueOf(data).trim());
+          }
         }
 
         @Override
         public Object getResult() {
-          return hash;
+          return digest.getAsLong();
         }
       });
     }
