@@ -18,6 +18,7 @@ import com.intellij.platform.feedback.dialog.uiBlocks.RadioButtonItemData
 import com.intellij.platform.feedback.dialog.uiBlocks.TextAreaBlock
 import com.intellij.platform.feedback.dialog.uiBlocks.TopLabelBlock
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
+import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle.message
 import kotlinx.datetime.LocalDate
 
@@ -30,7 +31,7 @@ class UvSupportSurvey : InIdeFeedbackSurveyConfig {
 
   override val requireIdeEAP: Boolean = true
 
-  override fun checkIdeIsSuitable(): Boolean = true
+  override fun checkIdeIsSuitable(): Boolean = PlatformUtils.isPyCharm()
 
   override fun updateStateAfterDialogClosedOk(project: Project) {}
   override fun updateStateAfterNotificationShowed(project: Project) {}
