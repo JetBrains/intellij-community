@@ -1,7 +1,7 @@
 package com.intellij.compose.ide.plugin.k2.highlighting
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
-import com.intellij.compose.ide.plugin.shared.highlighting.ComposeFunctionCallHighlightingTestCase
+import com.intellij.compose.ide.plugin.shared.highlighting.ComposableFunctionCallHighlightingTestCase
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
-internal class K2ComposeFunctionCallHighlightingTestCase: ComposeFunctionCallHighlightingTestCase() {
+internal class K2ComposeFunctionCallHighlightingTestCase: ComposableFunctionCallHighlightingTestCase() {
   private val ext = ComposableFunctionCallHighlighterExtension()
 
   override val pluginMode: KotlinPluginMode
