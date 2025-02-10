@@ -54,13 +54,12 @@ public class GfmTableStyling(
         return result
     }
 
-    override fun toString(): String {
-        return "GfmTableStyling(" +
+    override fun toString(): String =
+        "GfmTableStyling(" +
             "colors=$colors, " +
             "metrics=$metrics, " +
             "headerBaseFontWeight=$headerBaseFontWeight" +
             ")"
-    }
 
     public companion object
 }
@@ -94,14 +93,13 @@ public class GfmTableColors(
         return result
     }
 
-    override fun toString(): String {
-        return "GfmTableColors(" +
+    override fun toString(): String =
+        "GfmTableColors(" +
             "borderColor=$borderColor, " +
             "rowBackgroundColor=$rowBackgroundColor, " +
             "alternateRowBackgroundColor=$alternateRowBackgroundColor, " +
             "rowBackgroundStyle=$rowBackgroundStyle" +
             ")"
-    }
 
     public companion object
 }

@@ -14,12 +14,12 @@ Additional supported Markdown, via extensions:
 * Autolink (standard CommonMark, but provided as extension) — see [`extension-autolink`](extension/autolink)
 * Tables ([GitHub Flavored Markdown](https://github.github.com/gfm/#tables-extension-)) — see [
   `extension-gfm-tables`](extension/gfm-tables)
+* Strikethrough ([GitHub Flavored Markdown](https://github.github.com/gfm/#strikethrough-extension-))
 
 [alerts-specs]: https://github.com/orgs/community/discussions/16925
 
 On the roadmap, but not currently supported — in no particular order:
 
-* Strikethrough ([GitHub Flavored Markdown](https://github.github.com/gfm/#strikethrough-extension-))
 * Image loading (via [Coil 3](https://coil-kt.github.io/coil/upgrading_to_coil3/))
 * Task list items ([GitHub Flavored Markdown](https://github.github.com/gfm/#task-list-items-extension-))
 * Keyboard shortcuts highlighting (specialized HTML handling)

@@ -2,7 +2,10 @@ package org.jetbrains.jewel.markdown
 
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 
-/** A run of inline Markdown used as content for [block-level elements][MarkdownBlock]. */
+/**
+ * An inline Markdown node, usually found as content for [block-level elements][MarkdownBlock] or other inline nodes
+ * annotated with the [WithInlineMarkdown] interface.
+ */
 public sealed interface InlineMarkdown {
     @GenerateDataFunctions
     public class Code(override val content: String) : InlineMarkdown, WithTextContent {
@@ -20,12 +23,26 @@ public sealed interface InlineMarkdown {
         override fun toString(): String = "Code(content='$content')"
     }
 
-    public interface CustomNode : InlineMarkdown {
+    /**
+     * An inline node that is delimited by a fixed delimiter, and can be rendered directly into an
+     * [androidx.compose.ui.text.AnnotatedString].
+     *
+     * This type of node can be parsed by a
+     * [org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension] and rendered by a
+     * [org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineRendererExtension].
+     */
+    public interface CustomDelimitedNode : InlineMarkdown, WithInlineMarkdown {
         /**
-         * If this custom node has a text-based representation, this function should return it. Otherwise, it should
-         * return null.
+         * The string used to indicate the beginning of this type of inline node. Can be identical to the
+         * [closingDelimiter].
          */
-        public fun contentOrNull(): String? = null
+        public val openingDelimiter: String
+
+        /**
+         * The string used to indicate the end of this type of inline node. Can be identical to the [openingDelimiter].
+         */
+        public val closingDelimiter: String
+            get() = openingDelimiter
     }
 
     @GenerateDataFunctions
