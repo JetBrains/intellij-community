@@ -6,6 +6,6 @@
   </dependencies>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <callHighlighterExtension implementation="com.intellij.compose.ide.plugin.k2.highlighting.ComposableCallHighlighterExtension"/>
+    <callHighlighterExtension implementation="com.intellij.compose.ide.plugin.k2.highlighting.ComposableFunctionCallHighlighterExtension"/>
   </extensions>
 </intellij-plugin>

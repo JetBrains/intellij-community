@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.idea.highlighting.KotlinCallHighlighterExtension
 
-internal class ComposableCallHighlighterExtension : KotlinCallHighlighterExtension {
+internal class ComposableFunctionCallHighlighterExtension : KotlinCallHighlighterExtension {
   context(KaSession)
   override fun highlightCall(elementToHighlight: PsiElement, call: KaCall): HighlightInfoType? {
     val memberCall = call as? KaCallableMemberCall<*, *> ?: return null
