@@ -2664,7 +2664,7 @@ c:com.intellij.codeInspection.ex.InspectionProfileWrapper
 f:com.intellij.codeInspection.ex.InspectionToolRegistrar
 - com.intellij.codeInspection.ex.InspectionToolsSupplier
 - sf:Companion:com.intellij.codeInspection.ex.InspectionToolRegistrar$Companion
-- <init>():V
+- <init>(kotlinx.coroutines.CoroutineScope):V
 - createTools():java.util.List
 - sf:getInstance():com.intellij.codeInspection.ex.InspectionToolRegistrar
 f:com.intellij.codeInspection.ex.InspectionToolRegistrar$Companion

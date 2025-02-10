@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.diagnostic.PluginException;
@@ -6,10 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.*;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,7 +28,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
 
   private static final Logger LOG = Logger.getInstance(LocalInspectionTool.class);
 
-  interface LocalDefaultNameProvider extends DefaultNameProvider {
+  @ApiStatus.Internal
+  public interface LocalDefaultNameProvider extends DefaultNameProvider {
     @Nullable
     String getDefaultID();
 

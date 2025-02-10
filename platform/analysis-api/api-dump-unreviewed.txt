@@ -1348,11 +1348,7 @@ c:com.intellij.codeInspection.LocalInspectionEP
 - unfair:Z
 - <init>():V
 - getDefaultAlternativeID():java.lang.String
-- a:getDefaultDisplayName():java.lang.String
-- a:getDefaultGroupDisplayName():java.lang.String
 - getDefaultID():java.lang.String
-- a:getDefaultShortName():java.lang.String
-- a:getGroupKey():java.lang.String
 a:com.intellij.codeInspection.LocalInspectionTool
 - com.intellij.codeInspection.InspectionProfileEntry
 - com.intellij.openapi.project.PossiblyDumbAware
