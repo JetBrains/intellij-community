@@ -59,7 +59,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       val eelApi = myConfiguration.project.getEelDescriptor().upgrade()
       val processOptions = EelExecApi.ExecuteProcessOptions.Builder(if (isWindows()) "cmd.exe" else "/bin/sh")
         .env(getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug))
-        .workingDirectory(EelPath.parse(myConfiguration.runnerParameters.workingDirPath.toString(), eelApi.descriptor))
+        .workingDirectory(EelPath.parse(myConfiguration.runnerParameters.workingDirPath, eelApi.descriptor))
         .args(getArgs())
         .build()
 
@@ -116,7 +116,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     processHandler.addProcessListener(BuildToolConsoleProcessAdapter(eventProcessor))
     buildView.attachToProcess(MavenHandlerFilterSpyWrapper(processHandler))
 
-    return DefaultExecutionResult(buildView, processHandler);
+    return DefaultExecutionResult(buildView, processHandler)
   }
 
   @Throws(ExecutionException::class)
@@ -220,10 +220,10 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   }
 
   private fun getEnv(existingEnv: Map<String, String>, debug: Boolean): Map<String, String> {
-    val map = HashMap<String, String>();
+    val map = HashMap<String, String>()
     map.putAll(existingEnv)
     myConfiguration.runnerSettings?.environmentProperties?.let { map.putAll(map) }
-    val javaParams = myConfiguration.createJavaParameters(myConfiguration.project);
+    val javaParams = myConfiguration.createJavaParameters(myConfiguration.project)
     map.put("JAVA_HOME", javaParams.jdkPath)
     if (debug && myRemoteConnection != null) {
       val maven_opts = map["MAVEN_OPTS"] ?: ""
@@ -264,15 +264,4 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
   private fun isWindows() =
     myConfiguration.project.getEelDescriptor().operatingSystem == EelPath.OS.WINDOWS
-
-  fun getEscapedPath(path: String): String? {
-    return if (path.contains(' ')) {
-      if (isWindows()) "\"${path}\"" else path.replace(" ", "\\ ")
-    }
-    else {
-      path
-    }
-  }
 }
-
-
