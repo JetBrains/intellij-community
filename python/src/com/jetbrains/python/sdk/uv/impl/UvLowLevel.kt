@@ -32,6 +32,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
       initArgs.add("--no-pin-python")
       initArgs.add("--vcs")
       initArgs.add("none")
+      initArgs.add("--no-project")
 
       uvCli.runUv(cwd, *initArgs.toTypedArray())
         .onFailure { return Result.failure(it) }
