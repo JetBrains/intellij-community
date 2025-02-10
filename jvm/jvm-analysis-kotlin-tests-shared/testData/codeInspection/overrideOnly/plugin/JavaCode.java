@@ -32,6 +32,12 @@ class Invoker {
     javaInterfaceOverrideOnly.<warning descr="Method 'implementOnlyMethod()' can only be overridden">implementOnlyMethod</warning>();
     kotlinClassOverrideOnly.<warning descr="Method 'overrideOnlyMethod()' can only be overridden">overrideOnlyMethod</warning>();
     kotlinInterfaceOverrideOnly.<warning descr="Method 'implementOnlyMethod()' can only be overridden">implementOnlyMethod</warning>();
+
+    //No warning
+    JavaClassOverrideOnly.staticMethod();
+    JavaInterfaceOverrideOnly.staticMethod();
+    KotlinClassOverrideOnly.staticMethod();
+    KotlinInterfaceOverrideOnly.staticMethod();
   }
 
   public void methodReferences() {
@@ -44,6 +50,12 @@ class Invoker {
     Consumer<JavaInterfaceOverrideOnly> b1 = JavaInterfaceOverrideOnly::<warning descr="Method 'implementOnlyMethod()' can only be overridden">implementOnlyMethod</warning>;
     Consumer<KotlinClassOverrideOnly> c1 = KotlinClassOverrideOnly::<warning descr="Method 'overrideOnlyMethod()' can only be overridden">overrideOnlyMethod</warning>;
     Consumer<KotlinInterfaceOverrideOnly> d1 = KotlinInterfaceOverrideOnly::<warning descr="Method 'implementOnlyMethod()' can only be overridden">implementOnlyMethod</warning>;
+
+    //No warning
+    Runnable a2 = JavaClassOverrideOnly::staticMethod;
+    Runnable b2 = JavaInterfaceOverrideOnly::staticMethod;
+    Runnable c2 = KotlinClassOverrideOnly::staticMethod;
+    Runnable d2 = KotlinInterfaceOverrideOnly::staticMethod;
   }
 }
 
