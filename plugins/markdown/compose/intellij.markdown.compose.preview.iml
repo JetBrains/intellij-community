@@ -38,5 +38,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.ideLafBridgeStyling" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmTables" />
   </component>
 </module>

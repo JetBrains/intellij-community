@@ -35,8 +35,13 @@ import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
 import org.jetbrains.jewel.intui.markdown.bridge.ProvideMarkdownStyling
+import org.jetbrains.jewel.intui.markdown.bridge.styling.extensions.github.tables.create
 import org.jetbrains.jewel.markdown.Markdown
 import org.jetbrains.jewel.markdown.MarkdownMode
+import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling
+import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableRendererExtension
+import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.DefaultInlineMarkdownRenderer
 import org.jetbrains.jewel.markdown.scrolling.ScrollSyncMarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
@@ -68,10 +73,30 @@ internal class MarkdownComposePanel(
     val fontSize = scheme.fontSize.sp / scheme.scale
     val scrollState = rememberScrollState(0)
     val scrollingSynchronizer = remember(scrollState) { ScrollingSynchronizer.create(scrollState) }
-    val markdownStyling = JcefLikeMarkdownStyling(scheme, fontSize)
-    val blockRenderer = ScrollSyncMarkdownBlockRenderer(markdownStyling, emptyList(), DefaultInlineMarkdownRenderer(emptyList()))
+    val markdownStyling = remember(scheme, fontSize) { JcefLikeMarkdownStyling(scheme, fontSize) }
+    val markdownMode = remember(scrollingSynchronizer) {
+      MarkdownMode.EditorPreview(scrollingSynchronizer)
+    }
+    val processor = remember(markdownMode) {
+      MarkdownProcessor(
+        listOf(
+          GitHubTableProcessorExtension
+        ),
+        markdownMode,
+      )
+    }
+    val tableRenderer = remember(markdownStyling) {
+      GitHubTableRendererExtension(GfmTableStyling.create(), markdownStyling)
+    }
+    val blockRenderer = remember(markdownStyling) {
+      ScrollSyncMarkdownBlockRenderer(
+        markdownStyling,
+        listOf(tableRenderer),
+        DefaultInlineMarkdownRenderer(listOf(tableRenderer)))
+    }
     ProvideMarkdownStyling(
-      markdownMode = MarkdownMode.EditorPreview(scrollingSynchronizer),
+      markdownMode = markdownMode,
+      markdownProcessor = processor,
       markdownStyling = markdownStyling,
       codeHighlighter = remember(project) {
         project?.let {

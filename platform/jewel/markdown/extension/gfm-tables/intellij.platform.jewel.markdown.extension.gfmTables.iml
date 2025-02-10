@@ -14,9 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.10/kotlin-compose-compiler-plugin-2.1.10.jar</arg>
-              </args>
+              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.10/kotlin-compose-compiler-plugin-2.1.10.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -348,24 +346,19 @@
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-test" level="project" />
     <orderEntry type="module-library">
       <library name="commonmark.ext.gfm.tables" type="repository">
-        <properties maven-id="org.commonmark:commonmark-ext-gfm-tables:0.24.0">
+        <properties include-transitive-deps="false" maven-id="org.commonmark:commonmark-ext-gfm-tables:0.24.0">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/org/commonmark/commonmark-ext-gfm-tables/0.24.0/commonmark-ext-gfm-tables-0.24.0.jar">
               <sha256sum>b54dc332f931e6d07c2766144c087b08f3693677e368151a67020b4e95bb4b99</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/commonmark/commonmark/0.24.0/commonmark-0.24.0.jar">
-              <sha256sum>679338e0b7fc15c02d275d598654b01a149893bc28a87992e90123c8d06af25b</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/commonmark/commonmark-ext-gfm-tables/0.24.0/commonmark-ext-gfm-tables-0.24.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/commonmark/commonmark/0.24.0/commonmark-0.24.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/org/commonmark/commonmark-ext-gfm-tables/0.24.0/commonmark-ext-gfm-tables-0.24.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/commonmark/commonmark/0.24.0/commonmark-0.24.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
