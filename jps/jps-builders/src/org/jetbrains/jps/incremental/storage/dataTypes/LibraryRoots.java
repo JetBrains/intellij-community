@@ -4,6 +4,7 @@ package org.jetbrains.jps.incremental.storage.dataTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.StorageOwner;
@@ -15,7 +16,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,7 +31,7 @@ public class LibraryRoots implements StorageOwner {
   private final Path myFile;
   @NotNull
   private final PathRelativizerService myRelativizer;
-  private Map<Path, Long> myRoots;
+  private Map<Path, RootData> myRoots;
   private boolean myChanged = false;
 
   public LibraryRoots(BuildDataPaths dataPaths, @NotNull PathRelativizerService relativizer) {
@@ -39,20 +39,34 @@ public class LibraryRoots implements StorageOwner {
     myRelativizer = relativizer;
   }
 
-  public synchronized Set<Path> getRoots() {
-    return new HashSet<>(getLibraryRoots().keySet());
+  public synchronized Set<Path> getRoots(Set<Path> acc) {
+    acc.addAll(getLibraryRoots().keySet());
+    return acc;
   }
 
-  public synchronized long remove(Path root) {
-    Long oldStamp = getLibraryRoots().remove(root);
-    myChanged |= (oldStamp != null);
-    return oldStamp != null? oldStamp : -1L;
+  /**
+   * @return true, if root data has been changed after the update, otherwise false
+   */
+  public synchronized boolean remove(Path root) {
+    boolean changed = getLibraryRoots().remove(root) != null;
+    myChanged |= changed;
+    return changed;
   }
 
-  public synchronized long update(Path root, long stamp) {
-    Long oldStamp = getLibraryRoots().put(root, stamp);
-    myChanged |= (oldStamp == null || oldStamp != stamp);
-    return oldStamp != null? oldStamp : -1L;
+  /**
+   * @return true, if root data has been changed after the update, otherwise false
+   */
+  public synchronized boolean update(Path root, String libName, long stamp) {
+    RootData update = RootData.create(libName, stamp);
+    boolean changed = !update.equals(getLibraryRoots().put(root, update));
+    myChanged |= changed;
+    return changed;
+  }
+
+  @Nullable
+  public synchronized String getLibraryName(Path root) {
+    RootData rootData = getLibraryRoots().get(root);
+    return rootData != null? rootData.libName : null;
   }
 
   @Override
@@ -75,8 +89,8 @@ public class LibraryRoots implements StorageOwner {
     storeLibraryRoots(false);
   }
 
-  private Map<Path, Long> getLibraryRoots() {
-    Map<Path, Long> roots = myRoots;
+  private Map<Path, RootData> getLibraryRoots() {
+    Map<Path, RootData> roots = myRoots;
     if (roots != null) {
       return roots;
     }
@@ -84,9 +98,15 @@ public class LibraryRoots implements StorageOwner {
     try (Stream<String> lines = Files.lines(myFile)) {
       for (String line : lines.collect(Collectors.toList())) {
         int idx = line.indexOf(TIMESTAMP_DELIMITER);
-        long stamp = idx > 0? Long.parseLong(line.substring(0, idx)) : -1L;
-        String path = idx > 0? line.substring(idx + TIMESTAMP_DELIMITER.length()) : line;
-        roots.put(Path.of(myRelativizer.toFull(path)), stamp);
+        if (idx > 0) {
+          long stamp = Long.parseLong(line.substring(0, idx));
+          int idx2 = line.indexOf(TIMESTAMP_DELIMITER, idx + TIMESTAMP_DELIMITER.length());
+          if (idx2 > 0) {
+            String libName = line.substring(idx + TIMESTAMP_DELIMITER.length(), idx2);
+            String path = line.substring(idx2 + TIMESTAMP_DELIMITER.length());
+            roots.put(Path.of(myRelativizer.toFull(path)), RootData.create(libName, stamp));
+          }
+        }
       }
     }
     catch(NoSuchFileException ignored) {
@@ -98,7 +118,7 @@ public class LibraryRoots implements StorageOwner {
   }
 
   private void storeLibraryRoots(boolean keepMemoryData) throws IOException {
-    Map<Path, Long> roots = myRoots;
+    Map<Path, RootData> roots = myRoots;
     if (roots == null) {
       return; // not initialized
     }
@@ -109,7 +129,7 @@ public class LibraryRoots implements StorageOwner {
         }
         else {
           Files.createDirectories(myFile.getParent());
-          Files.write(myFile, Iterators.map(roots.entrySet(), entry -> String.join(TIMESTAMP_DELIMITER, Long.toString(entry.getValue()), myRelativizer.toRelative(entry.getKey()))), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+          Files.write(myFile, Iterators.map(roots.entrySet(), entry -> String.join(TIMESTAMP_DELIMITER, Long.toString(entry.getValue().stamp), entry.getValue().libName, myRelativizer.toRelative(entry.getKey()))), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         }
       }
     }
@@ -123,12 +143,44 @@ public class LibraryRoots implements StorageOwner {
     }
   }
 
-  protected void cleanState() {
-    Map<Path, Long> roots = myRoots;
+  private void cleanState() {
+    Map<Path, RootData> roots = myRoots;
     if (roots != null) {
       myRoots = null;
       myChanged = false;
       roots.clear();
+    }
+  }
+
+  private static final class RootData {
+    @NotNull
+    final String libName;
+    final long stamp;
+
+    private RootData(@NotNull String libName, long stamp) {
+      this.libName = libName;
+      this.stamp = stamp;
+    }
+
+    static RootData create(@NotNull String name, long stamp) {
+      return new RootData(name, stamp);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (!(o instanceof RootData)) {
+        return false;
+      }
+
+      final RootData rootData = (RootData)o;
+      return stamp == rootData.stamp && libName.equals(rootData.libName);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = libName.hashCode();
+      result = 31 * result + Long.hashCode(stamp);
+      return result;
     }
   }
 

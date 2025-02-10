@@ -4,8 +4,9 @@ package org.jetbrains.jps.incremental.dependencies;
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.dependency.*;
-import org.jetbrains.jps.dependency.impl.PathSourceMapper;
+import org.jetbrains.jps.dependency.GraphConfiguration;
+import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.NodeSource;
 import org.jetbrains.jps.dependency.java.JVMClassNode;
 import org.jetbrains.jps.dependency.java.JvmClassNodeBuilder;
 
@@ -60,30 +61,5 @@ final class LibraryNodesBuilder {
   private static String getFileName(@NotNull Path path) {
     Path fname = path.getFileName();
     return fname == null? "" : fname.toString();
-  }
-
-  public static void main(String[] args) throws IOException {
-    String jarPath = args[0];
-    GraphConfiguration graphConfig = new GraphConfiguration() {
-      private final PathSourceMapper mapper = new PathSourceMapper();
-
-      @Override
-      public @NotNull NodeSourcePathMapper getPathMapper() {
-        return mapper;
-      }
-
-      @Override
-      public @NotNull DependencyGraph getGraph() {
-        return null;
-      }
-    };
-    LibraryNodesBuilder builder = new LibraryNodesBuilder(graphConfig);
-    NodeSource src = graphConfig.getPathMapper().toNodeSource(jarPath);
-    int count = 0;
-    for (Node<?, ?> node : builder.processLibraryRoot("generic-lib", src)) {
-      count += 1;
-      System.out.println(node.getReferenceID() + " from " + src);
-    }
-    System.out.println("Total " + count + " nodes");
   }
 }
