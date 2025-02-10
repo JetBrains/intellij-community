@@ -35,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -273,7 +274,19 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     String getDefaultGroupDisplayName();
   }
 
-  volatile DefaultNameProvider myNameProvider;
+  private volatile DefaultNameProvider myNameProvider;
+
+  @ApiStatus.Internal
+  @Transient
+  public DefaultNameProvider getNameProvider() {
+    return myNameProvider;
+  }
+
+  @ApiStatus.Internal
+  @Transient
+  public void setNameProvider(DefaultNameProvider nameProvider) {
+    myNameProvider = nameProvider;
+  }
 
   /**
    * @see InspectionEP#groupDisplayName

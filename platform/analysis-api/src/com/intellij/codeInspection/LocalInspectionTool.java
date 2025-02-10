@@ -57,8 +57,9 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
    * @return inspection tool ID.
    */
   public @NonNls @NotNull String getID() {
-    if (myNameProvider instanceof LocalDefaultNameProvider) {
-      String id = ((LocalDefaultNameProvider)myNameProvider).getDefaultID();
+    DefaultNameProvider nameProvider = getNameProvider();
+    if (nameProvider instanceof LocalDefaultNameProvider) {
+      String id = ((LocalDefaultNameProvider)nameProvider).getDefaultID();
       if (id != null) {
         return id;
       }
@@ -73,8 +74,9 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry impleme
 
   @Override
   public @NonNls @Nullable String getAlternativeID() {
-    if (myNameProvider instanceof LocalDefaultNameProvider) {
-      return ((LocalDefaultNameProvider)myNameProvider).getDefaultAlternativeID();
+    DefaultNameProvider nameProvider = getNameProvider();
+    if (nameProvider instanceof LocalDefaultNameProvider) {
+      return ((LocalDefaultNameProvider)nameProvider).getDefaultAlternativeID();
     }
     return null;
   }
