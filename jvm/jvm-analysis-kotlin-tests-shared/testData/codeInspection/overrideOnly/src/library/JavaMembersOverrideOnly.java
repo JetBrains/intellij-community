@@ -2,12 +2,13 @@ package library;
 
 import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 
-@OverrideOnly
-public abstract class JavaClassOverrideOnly {
+public abstract class JavaMembersOverrideOnly {
+  @OverrideOnly
+  public abstract void implementOnlyMethod();
 
-  public abstract void overrideOnlyMethod();
-
+  @OverrideOnly
   public static void staticMethod() { }
 
+  @OverrideOnly
   public final void finalMethod() { }
 }
