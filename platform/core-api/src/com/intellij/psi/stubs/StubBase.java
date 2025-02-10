@@ -32,6 +32,11 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     return myStubList;
   }
 
+  @ApiStatus.Internal
+  public void setStubList(StubList stubList) {
+    myStubList = stubList;
+  }
+
   @ApiStatus.Experimental
   protected StubBase(@Nullable StubElement parent, @Nullable IElementType elementType) {
     super(parent);
