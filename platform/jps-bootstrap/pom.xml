@@ -10,7 +10,7 @@
 
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
-    <bootstrap.intellij.version>251.15859</bootstrap.intellij.version>
+    <bootstrap.intellij.version>251.21223</bootstrap.intellij.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -43,22 +43,22 @@
     <dependency>
       <groupId>io.ktor</groupId>
       <artifactId>ktor-client-java-jvm</artifactId>
-      <version>2.3.13</version>
+      <version>3.0.3</version>
     </dependency>
     <dependency>
       <groupId>io.ktor</groupId>
       <artifactId>ktor-client-okhttp-jvm</artifactId>
-      <version>2.3.13</version>
+      <version>3.0.3</version>
     </dependency>
     <dependency>
       <groupId>io.ktor</groupId>
       <artifactId>ktor-client-encoding-jvm</artifactId>
-      <version>2.3.13</version>
+      <version>3.0.3</version>
     </dependency>
     <dependency>
       <groupId>io.ktor</groupId>
       <artifactId>ktor-client-auth-jvm</artifactId>
-      <version>2.3.13</version>
+      <version>3.0.3</version>
     </dependency>
     <dependency>
       <groupId>io.opentelemetry</groupId>
