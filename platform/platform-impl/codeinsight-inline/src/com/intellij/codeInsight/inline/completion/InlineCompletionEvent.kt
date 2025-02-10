@@ -5,6 +5,7 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessio
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Caret
@@ -237,13 +238,17 @@ interface InlineCompletionEvent {
     @get:ApiStatus.Experimental
     val editor: Editor
 
+    // Since injected editors are poorly supported, we register handlers only for top-level editors.
+    @get:ApiStatus.Experimental
+    val topLevelEditor: Editor
+      get() = (editor as? EditorWindow)?.delegate ?: editor
+
     val event: LookupEvent
 
     override fun toRequest(): InlineCompletionRequest? {
-      val editor = runReadAction { event.lookup?.editor } ?: return null
       return getRequest(
         event = this,
-        editor = editor,
+        editor = topLevelEditor,
         getLookupElement = { event.item }
       )
     }

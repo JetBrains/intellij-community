@@ -5,6 +5,7 @@
 com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEvent
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 - *a:getEditor():com.intellij.openapi.editor.Editor
+- *:getTopLevelEditor():com.intellij.openapi.editor.Editor
 *f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InsertNextLine
 - com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 *f:com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InsertNextWord
