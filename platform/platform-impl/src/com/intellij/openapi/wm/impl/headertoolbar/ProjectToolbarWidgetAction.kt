@@ -157,7 +157,8 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
   private fun createRecentProjectPane(value: PopupFactoryImpl.ActionItem, isSelected: Boolean, separator: ListSeparator?, hideLine: Boolean): JComponent {
     val action = value.action as ProjectToolbarWidgetPresentable
     lateinit var nameLbl: JLabel
-    var pathLbl: JLabel? = null
+    var providerPathLbl: JLabel? = null
+    var projectPathLbl: JLabel? = null
 
     val content = panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {
@@ -167,17 +168,31 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
             .customize(UnscaledGaps(right = 8))
 
           panel {
+            val textGaps = UnscaledGaps(bottom = 4, top = 4)
             row {
               nameLbl = label(action.projectNameToDisplay)
-                .customize(UnscaledGaps(bottom = 4))
+                .customize(textGaps.copy(top = 0))
                 .applyToComponent {
                   foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(true) else UIUtil.getListForeground()
                 }.component
             }
-            val projectPath = action.projectPathToDisplay
-            if (projectPath != null) {
+            val providerPath = action.providerPathToDisplay
+            if (providerPath != null) {
               row {
-                pathLbl = label(projectPath)
+                providerPathLbl = label(providerPath)
+                  .customize(textGaps)
+                  .applyToComponent {
+                    icon = AllIcons.Nodes.Console
+                    font = JBFont.smallOrNewUiMedium()
+                    foreground = UIUtil.getLabelInfoForeground()
+                  }.component
+              }
+            }
+            val projectPathToDisplay = action.projectPathToDisplay
+            if (projectPathToDisplay != null) {
+              row {
+                projectPathLbl = label(projectPathToDisplay)
+                  .customize(textGaps)
                   .applyToComponent {
                     font = JBFont.smallOrNewUiMedium()
                     foreground = UIUtil.getLabelInfoForeground()
@@ -187,7 +202,7 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
             action.branchName?.let {
               row {
                 label(it)
-                  .customize(UnscaledGaps(bottom = 4, top = 4))
+                  .customize(textGaps)
                   .applyToComponent {
                     icon = AllIcons.Vcs.Branch
                     font = JBFont.smallOrNewUiMedium()
@@ -209,14 +224,8 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
       result.selectionColor = ListPluginComponent.SELECTION_COLOR
     }
 
-    if (pathLbl != null) {
-      AccessibleContextUtil.setCombinedName(result, nameLbl, " - ", pathLbl)
-      AccessibleContextUtil.setCombinedDescription(result, nameLbl, " - ", pathLbl)
-    }
-    else {
-      AccessibleContextUtil.setName(result, nameLbl)
-      AccessibleContextUtil.setDescription(result, nameLbl)
-    }
+    AccessibleContextUtil.setCombinedName(result, nameLbl, " - ", providerPathLbl, " - ", projectPathLbl)
+    AccessibleContextUtil.setCombinedDescription(result, nameLbl, " - ", providerPathLbl, " - ", projectPathLbl)
 
     if (separator == null) {
       return result
@@ -251,6 +260,7 @@ private fun createSeparator(separator: ListSeparator, hideLine: Boolean): JCompo
 
 interface ProjectToolbarWidgetPresentable {
   val projectNameToDisplay: @NlsSafe String
+  val providerPathToDisplay: @NlsSafe String? get() = null
   val projectPathToDisplay: @NlsSafe String?
   val branchName: @NlsSafe String?
   val projectIcon: Icon

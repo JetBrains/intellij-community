@@ -1838,6 +1838,7 @@ c:com.intellij.ide.RecentProjectsManagerBase
 - f:getLastOpenedProject():java.lang.String
 - getLastProjectCreationLocation():java.lang.String
 - getModificationCount():J
+- f:getNonLocalProjectIcon(java.lang.String,Z,I,java.lang.String):javax.swing.Icon
 - p:getProjectDisplayName(com.intellij.openapi.project.Project):java.lang.String
 - f:getProjectIcon(java.lang.String,Z):javax.swing.Icon
 - f:getProjectIcon(java.lang.String,Z,I,java.lang.String):javax.swing.Icon
@@ -1871,19 +1872,21 @@ c:com.intellij.ide.RecentProjectsManagerBase
 f:com.intellij.ide.RecentProjectsManagerBase$Companion
 - f:getInstanceEx():com.intellij.ide.RecentProjectsManagerBase
 c:com.intellij.ide.ReopenProjectAction
-- com.intellij.openapi.actionSystem.AnAction
 - com.intellij.ide.lightEdit.LightEditCompatible
+- com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
 - <init>(java.lang.String,java.lang.String,java.lang.String):V
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
 - b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- f:getBranchName():java.lang.String
+- getBranchName():java.lang.String
 - f:getProjectDisplayName():java.lang.String
+- getProjectIcon():javax.swing.Icon
 - f:getProjectName():java.lang.String
-- f:getProjectNameToDisplay():java.lang.String
+- getProjectNameToDisplay():java.lang.String
 - f:getProjectPath():java.lang.String
+- getProjectPathToDisplay():java.lang.String
 - f:isRemoved():Z
 - f:setProjectGroup(com.intellij.ide.ProjectGroup):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V

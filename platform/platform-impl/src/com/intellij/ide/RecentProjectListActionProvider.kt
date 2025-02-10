@@ -3,20 +3,29 @@ package com.intellij.ide
 
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.NaturalComparator
+import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetPresentable
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProviderRecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
+import javax.swing.Icon
 
 open class RecentProjectListActionProvider {
   companion object {
     @JvmStatic
     fun getInstance(): RecentProjectListActionProvider = service<RecentProjectListActionProvider>()
+
+    private val EP = ExtensionPointName.create<RecentProjectProvider>("com.intellij.recentProjectsProvider")
   }
 
   internal fun collectProjectsWithoutCurrent(currentProject: Project): List<RecentProjectTreeItem> = collectProjects(currentProject)
@@ -52,7 +61,11 @@ open class RecentProjectListActionProvider {
     val projectsWithoutGroups = allRecentProjectPaths.asSequence().map { recentProject ->
       createRecentProject(path = recentProject, duplicates = duplicates, projectGroup = null, recentProjectManager = recentProjectManager)
     }
-    return (projectGroups + projectsWithoutGroups).toList()
+
+    val projectsFromEP = if (Registry.`is`("ide.recent.projects.query.ep.providers"))
+      EP.extensionList.flatMap { createProjectsFromProvider(it) }
+    else emptyList()
+    return (projectGroups + projectsWithoutGroups + projectsFromEP).toList()
   }
 
   @JvmOverloads
@@ -102,7 +115,12 @@ open class RecentProjectListActionProvider {
         recentProjectManager = recentProjectManager,
       )
     }
-    return actions
+
+    val actionsFromEP = if (Registry.`is`("ide.recent.projects.query.ep.providers")) {
+      EP.extensionList.flatMap { createActionsFromProvider(it) }
+    }
+    else emptyList()
+    return (actions + actionsFromEP)
   }
 
   private fun addGroups(
@@ -174,6 +192,20 @@ open class RecentProjectListActionProvider {
     )
   }
 
+  private fun createProjectsFromProvider(provider: RecentProjectProvider): List<RecentProjectTreeItem> {
+    return provider.getRecentProjects().map { project ->
+      val projectId = getProviderProjectId(provider, project)
+      ProviderRecentProjectItem(projectId, project)
+    }
+  }
+
+  private fun createActionsFromProvider(provider: RecentProjectProvider): List<AnAction> {
+    return provider.getRecentProjects().map { project ->
+      val projectId = getProviderProjectId(provider, project)
+      RemoteRecentProjectAction(projectId, project)
+    }
+  }
+
   /**
    * Returns true if action corresponds to a specified project
    */
@@ -214,4 +246,29 @@ private class ProjectGroupComparator(private val projectPaths: Set<String>) : Co
     }
     return index
   }
+}
+
+private class RemoteRecentProjectAction(val projectId: String, val project: RecentProject) : DumbAwareAction(), ProjectToolbarWidgetPresentable {
+  init {
+    var text = project.displayName
+    if (project.providerName != null) text += " [${project.providerName}]"
+    if (project.branchName != null) text += " [${project.branchName}]"
+    templatePresentation.text = text
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    project.openProject()
+  }
+
+  override val projectNameToDisplay: @NlsSafe String = project.displayName
+  override val providerPathToDisplay: @NlsSafe String? get() = project.providerPath
+  override val projectPathToDisplay: @NlsSafe String? = project.projectPath
+  override val branchName: @NlsSafe String? = project.branchName
+  override val projectIcon: Icon
+    get() = project.icon
+            ?: RecentProjectsManagerBase.getInstanceEx().getNonLocalProjectIcon(projectId, true, unscaledProjectIconSize(), project.displayName)
+}
+
+private fun getProviderProjectId(provider: RecentProjectProvider, project: RecentProject): String {
+  return provider.providerId + "$" + (project.projectId ?: project.displayName)
 }

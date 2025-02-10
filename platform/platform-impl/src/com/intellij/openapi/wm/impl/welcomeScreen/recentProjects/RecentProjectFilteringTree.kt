@@ -375,6 +375,7 @@ internal class RecentProjectFilteringTree(
 
       return when (val item = (value as DefaultMutableTreeNode).userObject as RecentProjectTreeItem) {
         is RecentProjectItem -> recentProjectComponent.customizeComponent(item, selected)
+        is ProviderRecentProjectItem -> recentProjectComponent.customizeComponent(item, selected)
         is ProjectsGroupItem -> projectGroupComponent.customizeComponent(item, selected)
         is CloneableProjectItem -> cloneableProjectComponent.customizeComponent(item, selected)
         is RootItem -> null
@@ -386,6 +387,10 @@ internal class RecentProjectFilteringTree(
         get() = RecentProjectsManagerBase.getInstanceEx()
 
       private val projectNameLabel = JLabel()
+      private val providerPathLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("").apply {
+        foreground = NamedColorUtil.getInactiveTextColor()
+        icon = AllIcons.Nodes.Console
+      }
       private val projectPathLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("").apply {
         foreground = NamedColorUtil.getInactiveTextColor()
       }
@@ -401,6 +406,7 @@ internal class RecentProjectFilteringTree(
         isOpaque = false
 
         add(projectNameLabel)
+        add(providerPathLabel)
         add(projectPathLabel)
         add(projectBranchNameLabel)
       }
@@ -427,6 +433,7 @@ internal class RecentProjectFilteringTree(
         customizeComponent(displayName = item.displayName,
                            projectPath = projectPath,
                            branchName = item.branchName,
+                           providerPath = null,
                            tooltip = tooltip,
                            projectIcon = projectIcon,
                            isProjectValid = isProjectValid)
@@ -443,10 +450,26 @@ internal class RecentProjectFilteringTree(
         return this
       }
 
+      fun customizeComponent(item: ProviderRecentProjectItem, rowHovered: Boolean): JComponent {
+        val isProjectValid = true
+        val projectIcon = item.icon
+                          ?: recentProjectsManager.getNonLocalProjectIcon(item.projectId, isProjectValid,
+                                                                          unscaledProjectIconSize(), item.displayName())
+        customizeComponent(displayName = item.displayName(),
+                           projectPath = item.projectPath,
+                           branchName = item.branchName,
+                           providerPath = item.providerPath,
+                           tooltip = null,
+                           projectIcon = projectIcon,
+                           isProjectValid = isProjectValid)
+        return this
+      }
+
       private fun customizeComponent(
         displayName: @NlsSafe String,
         projectPath: @NlsSafe String?,
         branchName: @NlsSafe String?,
+        providerPath: @NlsSafe String?,
         tooltip: @NlsSafe String?,
         projectIcon: Icon,
         isProjectValid: Boolean,
@@ -455,6 +478,10 @@ internal class RecentProjectFilteringTree(
         projectNameLabel.apply {
           text = displayName
           foreground = if (isProjectValid) UIUtil.getListForeground() else NamedColorUtil.getInactiveTextColor()
+        }
+        providerPathLabel.apply {
+          text = providerPath ?: ""
+          isVisible = providerPath != null
         }
         projectPathLabel.apply {
           text = projectPath ?: ""
@@ -478,8 +505,10 @@ internal class RecentProjectFilteringTree(
         }
 
         AccessibleContextUtil.setCombinedName(this, projectNameLabel,
+                                              "-", providerPathLabel.takeIf { providerPathLabel.isVisible },
                                               "-", projectPathLabel.takeIf { projectPathLabel.isVisible }) // NON-NLS
         AccessibleContextUtil.setCombinedDescription(this, projectNameLabel,
+                                                     "-", providerPathLabel.takeIf { providerPathLabel.isVisible },
                                                      "-", projectPathLabel.takeIf { projectPathLabel.isVisible }) // NON-NLS
       }
 
@@ -744,6 +773,9 @@ internal class RecentProjectFilteringTree(
         is RecentProjectItem -> {
           val actionEvent = createActionEvent(tree, inputEvent)
           item.openProject(actionEvent)
+        }
+        is ProviderRecentProjectItem -> {
+          item.openProject()
         }
         is ProjectsGroupItem -> {
           val treePath = tree.selectionPath ?: return

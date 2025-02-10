@@ -115,7 +115,6 @@ open class ReopenProjectAction @JvmOverloads constructor(
   val projectPath: @SystemIndependent String
     get() = myProjectPath
 
-
   val projectName: @NlsSafe String?
     get() {
       val manager = RecentProjectsManager.getInstance()

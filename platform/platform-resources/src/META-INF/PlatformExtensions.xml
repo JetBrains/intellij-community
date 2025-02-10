@@ -1796,6 +1796,9 @@
                  defaultValue="false"
                  description="Turn on the highlighting passes preload experiment"/>
 
+    <registryKey key="ide.recent.projects.query.ep.providers"
+                 defaultValue="true"
+                 description="Enables showing non-local projects in the recents list"/>
 
     <actionConfigurationCustomizer implementation="com.intellij.openapi.project.impl.SeparateProcessActionsCustomizer"/>
 

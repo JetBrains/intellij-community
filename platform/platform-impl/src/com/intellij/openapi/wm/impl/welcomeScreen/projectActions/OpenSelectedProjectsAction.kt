@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProviderRecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 import java.awt.event.InputEvent
 
@@ -21,6 +22,7 @@ class OpenSelectedProjectsAction : RecentProjectsWelcomeScreenActionBase() {
       when (item) {
         is ProjectsGroupItem -> item.children.forEach { child -> child.openProject(newEvent) }
         is RecentProjectItem -> item.openProject(newEvent)
+        is ProviderRecentProjectItem -> item.openProject()
         else -> {}
       }
     }
@@ -36,7 +38,7 @@ class OpenSelectedProjectsAction : RecentProjectsWelcomeScreenActionBase() {
     }
 
     if (ActionPlaces.WELCOME_SCREEN == event.place) {
-      presentation.isEnabledAndVisible = items.all { item -> item is RecentProjectItem || item is ProjectsGroupItem }
+      presentation.isEnabledAndVisible = items.all { item -> item is RecentProjectItem || item is ProjectsGroupItem || item is ProviderRecentProjectItem }
       when {
         items.size == 1 && items.first() is ProjectsGroupItem -> presentation.setText(
           IdeBundle.messagePointer("action.presentation.OpenSelectedProjectsAction.text.open.all.projects.in.group")
