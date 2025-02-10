@@ -30,6 +30,7 @@ import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -45,13 +46,13 @@ import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.StringJoiner;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import static com.intellij.ide.plugins.PluginManagerCoreKt.pluginRequiresUltimatePluginButItsDisabled;
 
 @ApiStatus.Internal
 public final class ListPluginComponent extends JPanel {
@@ -67,7 +68,9 @@ public final class ListPluginComponent extends JPanel {
   private final boolean myMarketplace;
   private final boolean myIsAvailable;
   private final boolean myIsEssential;
+  private final boolean myIsNotFreeInFreeMode;
   private @NotNull IdeaPluginDescriptor myPlugin;
+  private final @Nullable IdeaPluginDescriptor myUltimatePlugin;
   private PluginNode myInstalledPluginMarketplaceNode;
   private final @NotNull PluginsGroup myGroup;
   private boolean myOnlyUpdateMode;
@@ -113,6 +116,9 @@ public final class ListPluginComponent extends JPanel {
                          : PluginManagerCore.INSTANCE.getIncompatibleOs(plugin) == null;
     myIsAvailable = (compatible || isInstalledAndEnabled()) && PluginManagementPolicy.getInstance().canEnablePlugin(plugin);
     myIsEssential = ApplicationInfo.getInstance().isEssentialPlugin(pluginId);
+    var idMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
+    myIsNotFreeInFreeMode = pluginRequiresUltimatePluginButItsDisabled(plugin.getPluginId(), idMap);
+    myUltimatePlugin = idMap.get(PluginManagerCore.ULTIMATE_PLUGIN_ID);
     pluginModel.addComponent(this);
 
     setOpaque(true);
@@ -348,7 +354,7 @@ public final class ListPluginComponent extends JPanel {
 
     myLayout.addButtonComponent(myEnableDisableButton);
     myEnableDisableButton.setOpaque(false);
-    myEnableDisableButton.setEnabled(!myIsEssential);
+    myEnableDisableButton.setEnabled(!myIsEssential && !myIsNotFreeInFreeMode);
     myEnableDisableButton.getAccessibleContext()
       .setAccessibleName(IdeBundle.message("plugins.configurable.enable.checkbox.accessible.name"));
   }
@@ -650,14 +656,14 @@ public final class ListPluginComponent extends JPanel {
   public void updateErrors() {
     IdeaPluginDescriptor plugin = getDescriptorForActions();
     List<? extends HtmlChunk> errors = myOnlyUpdateMode ? List.of() : myPluginModel.getErrors(plugin);
-    boolean hasErrors = !errors.isEmpty();
-    updateIcon(hasErrors, myPluginModel.isUninstalled(plugin) || !isEnabledState() || !myIsAvailable);
+    boolean hasErrors = !errors.isEmpty() && !myIsNotFreeInFreeMode;
+    updateIcon(hasErrors, myPluginModel.isUninstalled(plugin) || !isEnabledState() || !myIsAvailable || myIsNotFreeInFreeMode);
 
     if (myAlignButton != null) {
       myAlignButton.setVisible(myRestartButton != null || myAfterUpdate);
     }
 
-    if (hasErrors) {
+    if (hasErrors || myIsNotFreeInFreeMode) {
       boolean addListeners = myErrorComponent == null && myEventHandler != null;
 
       if (myErrorPanel == null) {
@@ -670,8 +676,15 @@ public final class ListPluginComponent extends JPanel {
         myErrorComponent.setBorder(JBUI.Borders.emptyTop(5));
         myErrorPanel.add(myErrorComponent, BorderLayout.CENTER);
       }
-      myErrorComponent.setErrors(errors, () -> myPluginModel.enableRequiredPlugins(plugin));
-
+      if (!myIsNotFreeInFreeMode) {
+        myErrorComponent.setErrors(errors, () -> myPluginModel.enableRequiredPlugins(plugin));
+      }
+      else {
+        String messageKy = PlatformUtils.isPyCharm() ? "label.requires.pro" : "label.requires.ultimate";
+        myErrorComponent.setErrors(List.of(HtmlChunk.icon("AllIcons.Nodes.Padlock", AllIcons.Nodes.Padlock),
+                                           HtmlChunk.text((IdeBundle.message(messageKy)))),
+                                   () -> {});
+      }
       if (addListeners) {
         myEventHandler.addAll(myErrorPanel);
       }
@@ -683,10 +696,10 @@ public final class ListPluginComponent extends JPanel {
     }
 
     if (myLicensePanel != null) {
-      myLicensePanel.setVisible(!hasErrors);
+      myLicensePanel.setVisible(!hasErrors && !myIsNotFreeInFreeMode);
     }
     if (myUpdateLicensePanel != null) {
-      myUpdateLicensePanel.setVisible(!hasErrors);
+      myUpdateLicensePanel.setVisible(!hasErrors && !myIsNotFreeInFreeMode);
     }
   }
 
@@ -880,6 +893,10 @@ public final class ListPluginComponent extends JPanel {
 
   public boolean isMarketplace() {
     return myMarketplace;
+  }
+
+  boolean isNotFreeInFreeMode() {
+    return myIsNotFreeInFreeMode;
   }
 
   public boolean isEssential() {
