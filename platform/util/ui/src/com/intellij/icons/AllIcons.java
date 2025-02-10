@@ -1317,11 +1317,11 @@ public class AllIcons {
   /** 16x16 */ public static final @NotNull Icon Stub = load("expui/stub.svg", -784127213, 2);
 
   public static final class Survey {
-    /** 16x16 */ public static final @NotNull Icon Dissatisfied = load("expui/survey/dissatisfied.svg", -804389422, 2);
-    /** 16x16 */ public static final @NotNull Icon Neutral = load("expui/survey/neutral.svg", -1987031457, 2);
-    /** 16x16 */ public static final @NotNull Icon Satisfied = load("expui/survey/satisfied.svg", 1105387664, 2);
-    /** 16x16 */ public static final @NotNull Icon VeryDissatisfied = load("expui/survey/veryDissatisfied.svg", 223633271, 2);
-    /** 16x16 */ public static final @NotNull Icon VerySatisfied = load("expui/survey/verySatisfied.svg", -1470265700, 2);
+    /** 16x16 */ public static final @NotNull Icon Dissatisfied = load("expui/survey/dissatisfied.svg", 1799600033, 2);
+    /** 16x16 */ public static final @NotNull Icon Neutral = load("expui/survey/neutral.svg", 19446713, 2);
+    /** 16x16 */ public static final @NotNull Icon Satisfied = load("expui/survey/satisfied.svg", -670378856, 2);
+    /** 16x16 */ public static final @NotNull Icon VeryDissatisfied = load("expui/survey/veryDissatisfied.svg", 229691784, 2);
+    /** 16x16 */ public static final @NotNull Icon VerySatisfied = load("expui/survey/verySatisfied.svg", -116389630, 2);
   }
 
   public static final class Table {
