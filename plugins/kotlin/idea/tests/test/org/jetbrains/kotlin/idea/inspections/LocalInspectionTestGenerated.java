@@ -18192,6 +18192,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/nonPrivateFields.kt");
             }
 
+            @TestMetadata("operatorParameters.kt")
+            public void testOperatorParameters() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/operatorParameters.kt");
+            }
+
             @TestMetadata("overrideProperty.kt")
             public void testOverrideProperty() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/overrideProperty.kt");

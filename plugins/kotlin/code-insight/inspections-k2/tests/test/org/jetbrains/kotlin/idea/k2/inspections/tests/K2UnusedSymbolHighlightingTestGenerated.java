@@ -467,6 +467,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/nonPrivateFields.kt");
         }
 
+        @TestMetadata("operatorParameters.kt")
+        public void testOperatorParameters() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/operatorParameters.kt");
+        }
+
         @TestMetadata("overrideProperty.kt")
         public void testOverrideProperty() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/overrideProperty.kt");

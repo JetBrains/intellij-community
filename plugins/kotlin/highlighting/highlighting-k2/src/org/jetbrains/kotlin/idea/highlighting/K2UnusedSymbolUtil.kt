@@ -87,9 +87,14 @@ object K2UnusedSymbolUtil {
               // do not highlight unused in .forEach { (a,b) -> {} }
               return false
           }
-          else if (ownerFunction is KtFunction &&
-              (isEffectivelyAbstractFunction(ownerFunction) || isExpectedOrActual(ownerFunction))) {
-              return false
+          else if (ownerFunction is KtFunction) {
+              if (ownerFunction.hasModifier(KtTokens.OPERATOR_KEYWORD)) {
+                  // operator parameters are hardcoded to be used since they can't be removed at will, because operator convention would break
+                  return false
+              }
+              if (isEffectivelyAbstractFunction(ownerFunction) || isExpectedOrActual(ownerFunction)) {
+                  return false
+              }
           }
       }
       val owner:KtNamedDeclaration
