@@ -114,17 +114,17 @@ private class CloseSettingsAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    val project = e.project ?: run {
-      e.presentation.isEnabled = false
-      return
-    }
-    e.presentation.isEnabled = SettingsVirtualFileHolder.getInstance(project).virtualFileExists()
+    e.presentation.isEnabled = getSettingsVirtualFile(e) != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val fileEditor = (PlatformDataKeys.FILE_EDITOR.getData(e.dataContext)
-                      ?: PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.getData(e.dataContext)) as? SettingsFileEditor ?: return
-    val settingsVirtualFile = fileEditor.file as? SettingsVirtualFile ?: return
+    val settingsVirtualFile = getSettingsVirtualFile(e) ?: return
     settingsVirtualFile.getOrCreateDialog().doCancelAction(e.inputEvent)
+  }
+
+  private fun getSettingsVirtualFile(e: AnActionEvent): SettingsVirtualFile? {
+    val fileEditor = (PlatformDataKeys.FILE_EDITOR.getData(e.dataContext)
+                      ?: PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.getData(e.dataContext)) as? SettingsFileEditor ?: return null
+    return fileEditor.file as? SettingsVirtualFile
   }
 }
