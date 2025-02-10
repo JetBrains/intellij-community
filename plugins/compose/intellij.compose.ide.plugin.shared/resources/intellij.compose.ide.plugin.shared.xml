@@ -1,5 +1,8 @@
 <intellij-plugin package="com.intellij.compose.ide.plugin.shared">
   <extensions defaultExtensionNs="com.intellij">
+    <additionalTextAttributes scheme="Default" file="colorSchemes/IntelliJComposeColorSchemeDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/IntelliJComposeColorSchemeDarcula.xml"/>
+
     <lang.inspectionSuppressor language="kotlin"
                                implementationClass="com.intellij.compose.ide.plugin.shared.ComposableNamingInspectionSuppressor"/>
 

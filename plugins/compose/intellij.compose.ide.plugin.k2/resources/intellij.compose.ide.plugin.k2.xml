@@ -1,6 +1,11 @@
 <intellij-plugin package="com.intellij.compose.ide.plugin.k2">
   <dependencies>
     <plugin id="com.intellij.modules.kotlin.k2"/>
+    <module name="kotlin.highlighting.k2"/>
     <module name="intellij.compose.ide.plugin.shared" />
   </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <callHighlighterExtension implementation="com.intellij.compose.ide.plugin.k2.highlighting.ComposableCallHighlighterExtension"/>
+  </extensions>
 </intellij-plugin>
