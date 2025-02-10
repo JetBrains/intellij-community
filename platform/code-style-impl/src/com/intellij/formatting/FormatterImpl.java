@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.formatting;
 
@@ -459,9 +459,9 @@ public final class FormatterImpl extends FormatterEx
   }
 
   @Override
-  public @Nullable List<String> getLineIndents(final FormattingModel model,
-                                               final CodeStyleSettings settings,
-                                               final CommonCodeStyleSettings.IndentOptions indentOptions) {
+  public @NotNull List<String> getLineIndents(final FormattingModel model,
+                                              final CodeStyleSettings settings,
+                                              final CommonCodeStyleSettings.IndentOptions indentOptions) {
     final FormattingDocumentModel documentModel = model.getDocumentModel();
     final Block block = model.getRootBlock();
     if (block.getTextRange().isEmpty()) return Collections.emptyList(); // handing empty document case
@@ -733,8 +733,8 @@ public final class FormatterImpl extends FormatterEx
   }
 
   @Override
-  public @Nullable FormattingModelBuilder createExternalFormattingModelBuilder(@NotNull PsiFile psiFile,
-                                                                               @Nullable FormattingModelBuilder langBuilder) {
+  public @NotNull FormattingModelBuilder createExternalFormattingModelBuilder(@NotNull PsiFile psiFile,
+                                                                              @Nullable FormattingModelBuilder langBuilder) {
     return new ExternalFormattingModelBuilderImpl(langBuilder);
   }
 

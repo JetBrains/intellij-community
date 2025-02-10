@@ -1,5 +1,3 @@
-com.intellij.formatting.Formatter
-- *a:getIndentEnforcedToChildrenToBeRelativeToMe(com.intellij.formatting.Indent$Type,I):com.intellij.formatting.Indent
 a:com.intellij.formatting.Indent
 - *s:getIndentEnforcedToChildrenToBeRelativeToMe():com.intellij.formatting.Indent
 - *s:getIndentEnforcedToChildrenToBeRelativeToMe(com.intellij.formatting.Indent$Type,I):com.intellij.formatting.Indent
