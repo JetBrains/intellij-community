@@ -35,6 +35,9 @@ class McpToolManager {
             GetRunConfigurationsTool(),
             GetProjectModulesTool(),
             GetProjectDependenciesTool(),
+            GetAllOpenFileTextsTool(),
+            GetAllOpenFilePathsTool(),
+            OpenFileInEditorTool(),
         )
     }
 }

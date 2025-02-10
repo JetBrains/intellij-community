@@ -5,16 +5,17 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.executors.DefaultRunExecutor.getRunExecutorInstance
 import com.intellij.find.FindManager
 import com.intellij.find.impl.FindInProjectUtil
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManager.getInstance
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -44,6 +45,9 @@ fun Path.resolveRel(pathInProject: String): Path {
         else -> resolve(pathInProject.removePrefix("/"))
     }
 }
+
+fun Path.relativizeByProjectDir(projDir: Path?): String =
+    projDir?.relativize(this)?.pathString ?: this.absolutePathString()
 
 class GetCurrentFileTextTool : AbstractMcpTool<NoArgs>() {
     override val name: String = "get_open_in_editor_file_text"
@@ -77,6 +81,82 @@ class GetCurrentFilePathTool : AbstractMcpTool<NoArgs>() {
     }
 }
 
+class GetAllOpenFileTextsTool : AbstractMcpTool<NoArgs>() {
+    override val name: String = "get_all_open_file_texts"
+    override val description: String = """
+        Returns text of all currently open files in the JetBrains IDE editor.
+        Returns an empty list if no files are open.
+        
+        Use this tool to explore current open editors.
+        Returns a JSON array of objects containing file information:
+            - path: Path relative to project root
+            - text: File text
+    """.trimIndent()
+
+    override fun handle(project: Project, args: NoArgs): Response {
+        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
+
+        val fileEditorManager = FileEditorManager.getInstance(project)
+        val openFiles = fileEditorManager.openFiles
+        val filePaths = openFiles.mapNotNull { """{"path": "${it.toNioPath().relativizeByProjectDir(projectDir)}", "text": "${it.readText()}", """ }
+        return Response(filePaths.joinToString(",\n", prefix = "[", postfix = "]"))
+    }
+}
+
+class GetAllOpenFilePathsTool : AbstractMcpTool<NoArgs>() {
+    override val name: String = "get_all_open_file_paths"
+    override val description: String = """
+        Lists full path relative paths to project root of all currently open files in the JetBrains IDE editor.
+        Returns a list of file paths that are currently open in editor tabs.
+        Returns an empty list if no files are open.
+        
+        Use this tool to explore current open editors.
+        Returns a list of file paths separated by newline symbol.
+    """.trimIndent()
+
+    override fun handle(project: Project, args: NoArgs): Response {
+        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
+
+        val fileEditorManager = FileEditorManager.getInstance(project)
+        val openFiles = fileEditorManager.openFiles
+        val filePaths = openFiles.mapNotNull { it.toNioPath().relativizeByProjectDir(projectDir) }
+        return Response(filePaths.joinToString("\n"))
+    }
+}
+
+@Serializable
+data class OpenFileInEditorArgs(val filePath: String)
+
+class OpenFileInEditorTool : AbstractMcpTool<OpenFileInEditorArgs>() {
+    override val name: String = "open_file_in_editor"
+    override val description: String = """
+        Opens the specified file in the JetBrains IDE editor.
+        Requires a filePath parameter containing the path to the file to open.
+        Requires two parameters:
+            - filePath: The path of file to open can be absolute or relative to the project root.
+            - text: The content to write into the new file
+        Returns one of two possible responses:
+            - "file is opened" if the file was successfully created and populated
+            - "file doesn't exist or can't be opened" otherwise
+    """.trimIndent()
+
+    override fun handle(project: Project, args: OpenFileInEditorArgs): Response {
+        val projectDir = project.guessProjectDir()?.toNioPathOrNull()
+            ?: return Response(error = "can't find project dir")
+
+        val file = LocalFileSystem.getInstance().findFileByPath(args.filePath)
+            ?: LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir.resolveRel(args.filePath))
+
+        return if (file != null && file.exists()) {
+            invokeLater {
+                FileEditorManager.getInstance(project).openFile(file, true)
+            }
+            Response("file is opened")
+        } else {
+            Response("file doesn't exist or can't be opened")
+        }
+    }
+}
 class GetSelectedTextTool : AbstractMcpTool<NoArgs>() {
     override val name: String = "get_selected_in_editor_text"
     override val description: String = """
