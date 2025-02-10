@@ -286,6 +286,10 @@ public abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements Int
       return myTree;
     }
 
+    public @NotNull ReadWriteLock getTreeLock() {
+      return myTree.l;
+    }
+
     /**
      * packing/unpacking cachedDeltaUpToRoot field parts
      * Bits layout:

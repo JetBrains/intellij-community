@@ -99,7 +99,7 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
     }
 
     private void recalculateRenderFlagsUp() {
-      getTree().l.writeLock().lock();
+      getTreeLock().writeLock().lock();
       try {
         RHNode n = this;
         while (n != null) {
@@ -110,7 +110,7 @@ public final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighter
         }
       }
       finally {
-        getTree().l.writeLock().unlock();
+        getTreeLock().writeLock().unlock();
       }
     }
 
