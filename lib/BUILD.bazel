@@ -2023,6 +2023,13 @@ java_import(
   visibility = ["//visibility:public"]
 )
 
+kt_jvm_import(
+  name = "io-github-z4kn4fein-semver-jvm",
+  jar = "@semver-jvm-2_0_0_http//file",
+  srcjar = "@semver-jvm-2_0_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
 java_library(
   name = "io-mockk",
   exports = [

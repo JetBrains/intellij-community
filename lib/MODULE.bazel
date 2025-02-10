@@ -2667,6 +2667,20 @@ http_file(
 )
 
 http_file(
+  name = "semver-jvm-2_0_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/z4kn4fein/semver-jvm/2.0.0/semver-jvm-2.0.0.jar",
+  sha256 = "fbbf174a4e78aa5be1f1b7db73edc5c0a6a2e59e1562263e2c3a2e510fa1ba45",
+  downloaded_file_path = "semver-jvm-2.0.0.jar"
+)
+
+http_file(
+  name = "semver-jvm-2_0_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/github/z4kn4fein/semver-jvm/2.0.0/semver-jvm-2.0.0-sources.jar",
+  sha256 = "db8d695e786aeb04af526a37187f6d9d1b5d27d2d936d7fa41b50e211985a548",
+  downloaded_file_path = "semver-jvm-2.0.0-sources.jar"
+)
+
+http_file(
   name = "mockk-1_13_12_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/mockk/mockk/1.13.12/mockk-1.13.12.jar",
   sha256 = "f634a6723d70211de75070491bc7062b042f8dc01bcd3b88487fcb1a5b6d1c1c",
