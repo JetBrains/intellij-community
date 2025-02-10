@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Parameterized;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Simple;
@@ -1335,6 +1336,42 @@ public final class JavaErrorKinds {
     parameterized(PsiJavaCodeReferenceElement.class, PsiVariable.class, "variable.must.be.effectively.final.lambda");
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiVariable> VARIABLE_MUST_BE_EFFECTIVELY_FINAL_GUARD =
     parameterized(PsiJavaCodeReferenceElement.class, PsiVariable.class, "variable.must.be.effectively.final.guard");
+  
+  public static final Simple<PsiPackageStatement> MODULE_NO_PACKAGE = error("module.no.package");
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiJavaModule> MODULE_CONFLICTING_PACKAGES = 
+    parameterized(PsiJavaCodeReferenceElement.class, PsiJavaModule.class, "module.conflicting.packages")
+      .withRawDescription((ref, module) -> message("module.conflicting.packages", ref.getText(), module.getName()));
+  public static final Simple<PsiJavaModule> MODULE_FILE_WRONG_NAME = error(PsiJavaModule.class, "module.file.wrong.name")
+    .withRange(JavaErrorFormatUtil::getRange);
+  public static final Parameterized<PsiJavaModule, PsiFile> MODULE_FILE_DUPLICATE = 
+    parameterized(PsiJavaModule.class, PsiFile.class, "module.file.duplicate")
+    .withRange((module, file) -> getRange(module));
+  public static final Parameterized<PsiRequiresStatement, String> MODULE_DUPLICATE_REQUIRES =
+    parameterized(PsiRequiresStatement.class, String.class, "module.duplicate.requires")
+      .withRawDescription((requires, refName) -> message("module.duplicate.requires", refName));
+  public static final Parameterized<PsiPackageAccessibilityStatement, String> MODULE_DUPLICATE_EXPORTS =
+    parameterized(PsiPackageAccessibilityStatement.class, String.class, "module.duplicate.exports")
+      .withRawDescription((requires, refName) -> message("module.duplicate.exports", refName));
+  public static final Parameterized<PsiPackageAccessibilityStatement, String> MODULE_DUPLICATE_OPENS =
+    parameterized(PsiPackageAccessibilityStatement.class, String.class, "module.duplicate.opens")
+      .withRawDescription((requires, refName) -> message("module.duplicate.opens", refName));
+  public static final Parameterized<PsiUsesStatement, String> MODULE_DUPLICATE_USES =
+    parameterized(PsiUsesStatement.class, String.class, "module.duplicate.uses")
+      .withRawDescription((requires, refName) -> message("module.duplicate.uses", refName));
+  public static final Parameterized<PsiProvidesStatement, String> MODULE_DUPLICATE_PROVIDES =
+    parameterized(PsiProvidesStatement.class, String.class, "module.duplicate.provides")
+      .withRawDescription((requires, refName) -> message("module.duplicate.provides", refName));
+  public static final Parameterized<PsiJavaModule, JavaPsiModuleUtil.ModulePackageConflict> MODULE_CONFLICTING_READS =
+    parameterized(PsiJavaModule.class, JavaPsiModuleUtil.ModulePackageConflict.class, "module.conflicting.reads")
+      .withRange((module, conflict) -> getRange(module))
+      .withRawDescription((module, conflict) -> message("module.conflicting.reads", 
+                                                        module.getName(), conflict.packageName(), 
+                                                        conflict.module1().getName(), conflict.module2().getName()));
+  public static final Parameterized<PsiJavaModule, VirtualFile> MODULE_FILE_WRONG_LOCATION =
+    parameterized(PsiJavaModule.class, VirtualFile.class, "module.file.wrong.location")
+      .withRange((module, file) -> getRange(module));
+  public static final Parameterized<PsiPackageAccessibilityStatement, PsiJavaModule> MODULE_OPENS_IN_WEAK_MODULE =
+    parameterized(PsiPackageAccessibilityStatement.class, PsiJavaModule.class, "module.opens.in.weak.module");
 
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(
     @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {

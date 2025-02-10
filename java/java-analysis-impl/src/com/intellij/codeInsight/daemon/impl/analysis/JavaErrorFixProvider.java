@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ClassUtil;
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
@@ -110,7 +111,9 @@ final class JavaErrorFixProvider {
                                             CALL_DIRECT_ABSTRACT_METHOD_ACCESS, RECORD_SPECIAL_METHOD_TYPE_PARAMETERS,
                                             RECORD_SPECIAL_METHOD_THROWS, ARRAY_TYPE_ARGUMENTS, ARRAY_EMPTY_DIAMOND,
                                             IMPORT_LIST_EXTRA_SEMICOLON, ENUM_CONSTANT_MODIFIER, METHOD_REFERENCE_PARAMETERIZED_QUALIFIER,
-                                            CONSTRUCTOR_IN_IMPLICIT_CLASS, TYPE_ARGUMENT_IN_PERMITS_LIST)) {
+                                            CONSTRUCTOR_IN_IMPLICIT_CLASS, TYPE_ARGUMENT_IN_PERMITS_LIST, MODULE_NO_PACKAGE,
+                                            MODULE_DUPLICATE_REQUIRES, MODULE_DUPLICATE_EXPORTS, MODULE_DUPLICATE_OPENS, 
+                                            MODULE_DUPLICATE_USES, MODULE_DUPLICATE_PROVIDES, MODULE_OPENS_IN_WEAK_MODULE)) {
       fix(kind, genericRemover);
     }
 
@@ -129,6 +132,22 @@ final class JavaErrorFixProvider {
     createAccessFixes();
     createAnnotationFixes();
     createReceiverParameterFixes();
+    createModuleFixes();
+  }
+
+  private void createModuleFixes() {
+    fix(MODULE_FILE_WRONG_NAME, error -> myFactory.createRenameFileFix(PsiJavaModule.MODULE_INFO_FILE));
+    fix(MODULE_FILE_DUPLICATE, error ->
+      error.context() != null ? new GoToSymbolFix(error.context(), JavaErrorBundle.message("module.open.duplicate.text")) : null);
+    JavaFixProvider<PsiStatement, String> mergeModuleFix = error -> MergeModuleStatementsFix.createFix(error.psi());
+    fix(MODULE_DUPLICATE_REQUIRES, mergeModuleFix);
+    fix(MODULE_DUPLICATE_PROVIDES, mergeModuleFix);
+    fix(MODULE_DUPLICATE_OPENS, mergeModuleFix);
+    fix(MODULE_DUPLICATE_USES, mergeModuleFix);
+    fix(MODULE_DUPLICATE_EXPORTS, mergeModuleFix);
+    fix(MODULE_FILE_WRONG_LOCATION, error -> new MoveFileFix(error.psi().getContainingFile().getVirtualFile(),
+                                                             error.context(), QuickFixBundle.message("move.file.to.source.root.text")));
+    fix(MODULE_OPENS_IN_WEAK_MODULE, error -> removeModifierFix(error.context(), PsiModifier.OPEN));
   }
 
   private void createStatementFixes() {
@@ -306,11 +325,15 @@ final class JavaErrorFixProvider {
     fix(MODIFIER_NOT_ALLOWED, error -> {
       @SuppressWarnings("MagicConstant") @PsiModifier.ModifierConstant String modifier = error.context();
       PsiModifierList list = (PsiModifierList)error.psi().getParent();
-      if (list.getParent() instanceof PsiClass aClass && !aClass.isInterface()
+      PsiElement parent = list.getParent();
+      if (parent instanceof PsiClass aClass && !aClass.isInterface()
           && (PsiModifier.PRIVATE.equals(modifier) || PsiModifier.PROTECTED.equals(modifier))) {
         return myFactory.createChangeModifierFix();
       }
-      return removeModifierFix((PsiModifierListOwner)list.getParent(), modifier);
+      if (parent instanceof PsiModifierListOwner owner) {
+        return removeModifierFix(owner, modifier);
+      }
+      return myFactory.createModifierListFix(list, modifier, false, false);
     });
     JavaFixProvider<PsiKeyword, Object> removeModifier = error -> {
       @SuppressWarnings("MagicConstant") @PsiModifier.ModifierConstant String modifier = error.psi().getText();

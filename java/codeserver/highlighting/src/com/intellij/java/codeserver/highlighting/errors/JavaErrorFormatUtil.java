@@ -96,6 +96,9 @@ final class JavaErrorFormatUtil {
     if (element instanceof PsiMember member) {
       return getMemberDeclarationTextRange(member);
     }
+    if (element instanceof PsiJavaModule module) {
+      return getModuleRange(module);
+    }
     if (element instanceof PsiNewExpression newExpression) {
       PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
       if (reference != null) {
@@ -131,6 +134,12 @@ final class JavaErrorFormatUtil {
       end = method.getThrowsList().getTextRange().getEndOffset();
     }
     return new TextRange(start, end).shiftLeft(method.getTextRange().getStartOffset());
+  }
+
+  private static @NotNull TextRange getModuleRange(@NotNull PsiJavaModule module) {
+    PsiKeyword kw = PsiTreeUtil.getChildOfType(module, PsiKeyword.class);
+    return new TextRange(kw != null ? kw.getTextRangeInParent().getStartOffset() : 0, 
+                         module.getNameIdentifier().getTextRangeInParent().getEndOffset());
   }
 
   static @Nullable TextRange getMemberDeclarationTextRange(@NotNull PsiMember member) {

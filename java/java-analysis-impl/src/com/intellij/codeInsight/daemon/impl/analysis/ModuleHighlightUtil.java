@@ -7,173 +7,38 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaServiceUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.*;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddUsesDirectiveFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
-import com.intellij.java.codeserver.core.JavaPsiModuleUtil.ModulePackageConflict;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
 import com.intellij.psi.impl.IncompleteModelUtil;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.psi.JavaTokenType.TRANSITIVE_KEYWORD;
-
 // generates HighlightInfoType.ERROR-like HighlightInfos for modularity-related (Jigsaw) problems
 final class ModuleHighlightUtil {
-  static HighlightInfo.Builder checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule javaModule) {
-    if (PsiUtil.isModuleFile(file)) {
-      String message = JavaErrorBundle.message("module.no.package");
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message);
-      IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(statement);
-      info.registerFix(action, null, null, null, null);
-      return info;
-    }
-
-    if (javaModule != null) {
-      String packageName = statement.getPackageName();
-      if (packageName != null) {
-        PsiJavaModule origin = JavaPsiModuleUtil.findOrigin(javaModule, packageName);
-        if (origin != null) {
-          PsiJavaCodeReferenceElement reference = statement.getPackageReference();
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-            .range(reference)
-            .descriptionAndTooltip(JavaErrorBundle.message("module.conflicting.packages", packageName, origin.getName()));
-        }
-      }
-    }
-    else {
-      Module module = ModuleUtilCore.findModuleForFile(file);
-      if (module == null) {
-        return null;
-      }
-      PsiJavaCodeReferenceElement reference = statement.getPackageReference();
-      PsiPackage pack = (PsiPackage)reference.resolve();
-      if (pack != null) {
-        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(pack.getProject()).getFileIndex();
-        for (PsiDirectory directory : pack.getDirectories()) {
-          PsiJavaModule anotherJavaModule = JavaPsiModuleUtil.findDescriptorByElement(directory);
-          if (anotherJavaModule != null) {
-            VirtualFile moduleVFile = PsiUtilCore.getVirtualFile(anotherJavaModule);
-            if (moduleVFile != null && ContainerUtil.find(fileIndex.getOrderEntriesForFile(moduleVFile), JdkOrderEntry.class::isInstance) != null) {
-              VirtualFile rootForFile = fileIndex.getSourceRootForFile(file.getVirtualFile());
-              if (rootForFile != null && JavaCompilerConfigurationProxy.isPatchedModuleRoot(anotherJavaModule.getName(), module, rootForFile)) {
-                return null;
-              }
-              for (PsiPackageAccessibilityStatement export : anotherJavaModule.getExports()) {
-                String exportPackageName = export.getPackageName();
-                if (exportPackageName != null && exportPackageName.equals(pack.getQualifiedName())) {
-                  return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                    .range(reference)
-                    .descriptionAndTooltip(JavaErrorBundle.message("module.conflicting.packages", pack.getQualifiedName(), anotherJavaModule.getName()));
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    return null;
-  }
-
-  static HighlightInfo.Builder checkFileName(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
-    if (!PsiJavaModule.MODULE_INFO_FILE.equals(file.getName())) {
-      String message = JavaErrorBundle.message("module.file.wrong.name");
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).descriptionAndTooltip(message);
-      IntentionAction action = QuickFixFactory.getInstance().createRenameFileFix(PsiJavaModule.MODULE_INFO_FILE);
-      info.registerFix(action, null, null, null, null);
-      return info;
-    }
-
-    return null;
-  }
-
-  static HighlightInfo.Builder checkFileDuplicates(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
-    Project project = file.getProject();
-    Module module = ModuleUtilCore.findModuleForFile(file);
-    if (module == null) return null;
-    Collection<VirtualFile> moduleInfos = FilenameIndex.getVirtualFilesByName(PsiJavaModule.MODULE_INFO_FILE, module.getModuleScope());
-    JpsModuleSourceRootType<?> type = ProjectFileIndex.getInstance(project).getContainingSourceRootType(file.getVirtualFile());
-    if (type == null || !JavaModuleSourceRootTypes.SOURCES.contains(type)) return null;
-    ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
-    Collection<VirtualFile> rootModuleInfos = ContainerUtil.filter(moduleInfos, moduleInfo ->
-      moduleFileIndex.isUnderSourceRootOfType(moduleInfo, ContainerUtil.newHashSet(type))
-    );
-    if (rootModuleInfos.size() > 1) {
-      String message = JavaErrorBundle.message("module.file.duplicate");
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .range(range(element))
-        .descriptionAndTooltip(message);
-      rootModuleInfos.stream().map(f -> PsiManager.getInstance(project).findFile(f)).filter(f -> f != file).findFirst().ifPresent(
-        duplicate -> {
-          var action = new GoToSymbolFix(duplicate, JavaErrorBundle
-            .message("module.open.duplicate.text"));
-          info.registerFix(action, null, null, null, null);
-        }
-      );
-      return info;
-    }
-    return null;
-  }
-
-  static void checkDuplicateStatements(@NotNull PsiJavaModule module, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    checkDuplicateRefs(module.getRequires(), st -> st.getModuleName(), "module.duplicate.requires", errorSink);
-    checkDuplicateRefs(module.getExports(), st -> st.getPackageName(), "module.duplicate.exports", errorSink);
-    checkDuplicateRefs(module.getOpens(), st -> st.getPackageName(), "module.duplicate.opens", errorSink);
-    checkDuplicateRefs(module.getUses(), st -> qName(st.getClassReference()), "module.duplicate.uses", errorSink);
-    checkDuplicateRefs(module.getProvides(), st -> qName(st.getInterfaceReference()), "module.duplicate.provides", errorSink);
-  }
-
-  private static <T extends PsiStatement> void checkDuplicateRefs(@NotNull Iterable<? extends T> statements,
-                                                                  @NotNull Function<? super T, String> ref,
-                                                                  @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key,
-                                                                  @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    Set<String> filter = new HashSet<>();
-    for (T statement : statements) {
-      String refText = ref.apply(statement);
-      if (refText != null && !filter.add(refText)) {
-        String message = JavaErrorBundle.message(key, refText);
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message);
-        IntentionAction action1 = QuickFixFactory.getInstance().createDeleteFix(statement);
-        info.registerFix(action1, null, null, null, null);
-        var action = MergeModuleStatementsFix.createFix(statement);
-        if (action != null) {
-          info.registerFix(action, null, null, null, null);
-        }
-        errorSink.accept(info);
-      }
-    }
-  }
 
   static void checkUnusedServices(@NotNull PsiJavaModule module, @NotNull PsiFile file, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     Module host = ModuleUtilCore.findModuleForFile(file);
@@ -209,22 +74,6 @@ final class ModuleHighlightUtil {
 
   private static String qName(PsiJavaCodeReferenceElement ref) {
     return ref != null ? ref.getQualifiedName() : null;
-  }
-
-  static HighlightInfo.Builder checkFileLocation(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
-    VirtualFile vFile = file.getVirtualFile();
-    if (vFile != null) {
-      VirtualFile root = ProjectFileIndex.getInstance(file.getProject()).getSourceRootForFile(vFile);
-      if (root != null && !root.equals(vFile.getParent())) {
-        String message = JavaErrorBundle.message("module.file.wrong.location");
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(element)).descriptionAndTooltip(message);
-        info.registerFix(new MoveFileFix(vFile, root, QuickFixBundle.message("move.file.to.source.root.text")), null, null, null, null);
-        return info;
-      }
-    }
-
-    return null;
   }
 
   static HighlightInfo.Builder checkModuleReference(@NotNull PsiImportModuleStatement statement) {
@@ -301,23 +150,6 @@ final class ModuleHighlightUtil {
           .range(refElement)
           .descriptionAndTooltip(JavaErrorBundle.message("module.ambiguous", refElement.getReferenceText()));
     }
-  }
-
-  static HighlightInfo.Builder checkHostModuleStrength(@NotNull PsiPackageAccessibilityStatement statement) {
-    if (statement.getRole() == Role.OPENS &&
-        statement.getParent() instanceof PsiJavaModule module &&
-        module.hasModifierProperty(PsiModifier.OPEN)) {
-      String message = JavaErrorBundle.message("module.opens.in.weak.module");
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message);
-      IntentionAction action1 = QuickFixFactory.getInstance()
-        .createModifierListFix(module, PsiModifier.OPEN, false, false);
-      info.registerFix(action1, null, null, null, null);
-      IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(statement);
-      info.registerFix(action, null, null, null, null);
-      return info;
-    }
-
-    return null;
   }
 
   static HighlightInfo.Builder checkPackageReference(@NotNull PsiPackageAccessibilityStatement statement, @NotNull PsiFile file) {
@@ -482,41 +314,6 @@ final class ModuleHighlightUtil {
         }
       }
     }
-  }
-
-  static HighlightInfo.Builder checkClashingReads(@NotNull PsiJavaModule module) {
-    ModulePackageConflict conflict = JavaPsiModuleUtil.findConflict(module);
-    if (conflict != null) {
-      String message = JavaErrorBundle.message(
-        "module.conflicting.reads", module.getName(), conflict.packageName(), conflict.module1(), conflict.module2());
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(module)).descriptionAndTooltip(message);
-    }
-
-    return null;
-  }
-
-  static void checkModifiers(@NotNull PsiRequiresStatement statement, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    PsiModifierList modList = statement.getModifierList();
-    if (modList != null && PsiJavaModule.JAVA_BASE.equals(statement.getModuleName())) {
-      boolean transitiveAvailable = PsiUtil.isAvailable(JavaFeature.TRANSITIVE_DEPENDENCY_ON_JAVA_BASE, statement);
-      PsiTreeUtil.processElements(modList, PsiKeyword.class, keyword -> {
-        if (keyword.getTokenType() == TRANSITIVE_KEYWORD && transitiveAvailable) {
-          return true;
-        }
-        @PsiModifier.ModifierConstant String modifier = keyword.getText();
-        String message = JavaErrorBundle.message("modifier.not.allowed", modifier);
-        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message);
-        IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(modList, modifier, false, false);
-        info.registerFix(action, null, null, null, null);
-        errorSink.accept(info);
-        return true;
-      });
-    }
-  }
-
-  private static @NotNull TextRange range(@NotNull PsiJavaModule module) {
-    PsiKeyword kw = PsiTreeUtil.getChildOfType(module, PsiKeyword.class);
-    return new TextRange(kw != null ? kw.getTextOffset() : module.getTextOffset(), module.getNameIdentifier().getTextRange().getEndOffset());
   }
 
   private static @NotNull PsiElement range(@NotNull PsiJavaCodeReferenceElement refElement) {

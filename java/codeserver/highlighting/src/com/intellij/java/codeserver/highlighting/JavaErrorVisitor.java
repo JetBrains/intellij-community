@@ -59,6 +59,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   final @NotNull ControlFlowChecker myControlFlowChecker = new ControlFlowChecker(this);
   private final @NotNull FunctionChecker myFunctionChecker = new FunctionChecker(this);
   final @NotNull PatternChecker myPatternChecker = new PatternChecker(this);
+  private final @NotNull ModuleChecker myModuleChecker = new ModuleChecker(this);
   final @NotNull ModifierChecker myModifierChecker = new ModifierChecker(this);
   final @NotNull ExpressionChecker myExpressionChecker = new ExpressionChecker(this);
   private final @NotNull StatementChecker myStatementChecker = new StatementChecker(this);
@@ -248,6 +249,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     super.visitPackageStatement(statement);
     if (!hasErrorResults()) myAnnotationChecker.checkPackageAnnotationContainingFile(statement);
     if (!hasErrorResults()) myClassChecker.checkPackageNotAllowedInImplicitClass(statement);
+    if (isApplicable(JavaFeature.MODULES)) {
+      if (!hasErrorResults()) myModuleChecker.checkPackageStatement(statement);
+    }
   }
 
   @Override
@@ -626,6 +630,27 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitModule(@NotNull PsiJavaModule module) {
     super.visitModule(module);
     if (!hasErrorResults()) checkFeature(module, JavaFeature.MODULES);
+    if (!hasErrorResults()) myModuleChecker.checkFileName(module);
+    if (!hasErrorResults()) myModuleChecker.checkFileDuplicates(module);
+    if (!hasErrorResults()) myModuleChecker.checkDuplicateStatements(module);
+    if (!hasErrorResults()) myModuleChecker.checkClashingReads(module);
+    if (!hasErrorResults()) myModuleChecker.checkFileLocation(module);
+  }
+
+  @Override
+  public void visitRequiresStatement(@NotNull PsiRequiresStatement statement) {
+    super.visitRequiresStatement(statement);
+    if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
+      if (!hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_10)) myModuleChecker.checkModifiers(statement);
+    }
+  }
+
+  @Override
+  public void visitPackageAccessibilityStatement(@NotNull PsiPackageAccessibilityStatement statement) {
+    super.visitPackageAccessibilityStatement(statement);
+    if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
+      if (!hasErrorResults()) myModuleChecker.checkHostModuleStrength(statement);
+    }
   }
 
   @Override

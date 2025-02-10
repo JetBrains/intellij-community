@@ -280,14 +280,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
-  @Override
-  public void visitPackageStatement(@NotNull PsiPackageStatement statement) {
-    super.visitPackageStatement(statement);
-    if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
-      if (!hasErrorResults()) add(ModuleHighlightUtil.checkPackageStatement(statement, myFile, myJavaModule));
-    }
-  }
-
   private JavaResolveResult doVisitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
     JavaResolveResult result = resolveOptimised(ref, myFile);
     if (result == null) return null;
@@ -418,12 +410,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitModule(@NotNull PsiJavaModule module) {
     super.visitModule(module);
-    if (!hasErrorResults()) add(ModuleHighlightUtil.checkFileName(module, myFile));
-    if (!hasErrorResults()) add(ModuleHighlightUtil.checkFileDuplicates(module, myFile));
-    if (!hasErrorResults()) ModuleHighlightUtil.checkDuplicateStatements(module, myErrorSink);
-    if (!hasErrorResults()) add(ModuleHighlightUtil.checkClashingReads(module));
     if (!hasErrorResults()) ModuleHighlightUtil.checkUnusedServices(module, myFile, myErrorSink);
-    if (!hasErrorResults()) add(ModuleHighlightUtil.checkFileLocation(module, myFile));
   }
 
   @Override
@@ -431,9 +418,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitRequiresStatement(statement);
     if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
       if (!hasErrorResults()) add(ModuleHighlightUtil.checkModuleReference(statement));
-      if (!hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_10)) {
-        ModuleHighlightUtil.checkModifiers(statement, myErrorSink);
-      }
     }
   }
 
@@ -441,7 +425,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitPackageAccessibilityStatement(@NotNull PsiPackageAccessibilityStatement statement) {
     super.visitPackageAccessibilityStatement(statement);
     if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
-      if (!hasErrorResults()) add(ModuleHighlightUtil.checkHostModuleStrength(statement));
       if (!hasErrorResults()) add(ModuleHighlightUtil.checkPackageReference(statement, myFile));
       if (!hasErrorResults()) ModuleHighlightUtil.checkPackageAccessTargets(statement, myErrorSink);
     }
@@ -454,8 +437,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       doVisitReferenceElement(ref);
     }
   }
-
-
 
   @Override
   public void visitUsesStatement(@NotNull PsiUsesStatement statement) {
