@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import java.io.File
 
-internal abstract class BaseComposableCallHighlightingTestCase  : KotlinLightCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
+abstract class BaseComposableCallHighlightingTestCase  : KotlinLightCodeInsightFixtureTestCase(), ExpectedPluginModeProvider {
 
   override val testDataDirectory: File
     get() = resolveTestDataDirectory("testData/highlighting/$testDataSubdirectory").toFile()
