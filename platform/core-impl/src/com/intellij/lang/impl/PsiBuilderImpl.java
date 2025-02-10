@@ -241,7 +241,8 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   /**
    * Base interface for nodes in a light tree
    */
-  interface Node extends LighterASTNode {
+  @ApiStatus.Internal
+  public interface Node extends LighterASTNode {
     boolean tokenTextMatches(@NotNull CharSequence chars);
   }
 
