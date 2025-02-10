@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiUtilCore
@@ -44,7 +45,8 @@ class OverrideOnlyInspection : LocalInspectionTool() {
     }
 
     private fun isOverrideOnlyMethod(method: PsiMethod) =
-      method.hasAnnotation(ANNOTATION_NAME) || method.containingClass?.hasAnnotation(ANNOTATION_NAME) == true
+      method.hasAnnotation(ANNOTATION_NAME) ||
+      !method.hasModifierProperty(PsiModifier.STATIC) && method.containingClass?.hasAnnotation(ANNOTATION_NAME) == true
 
     private fun isInsideOverridenOnlyMethod(sourceNode: UElement, target: PsiMethod): Boolean = sourceNode.getContainingUMethod()?.let {
       val psiMethod = it.javaPsi as? PsiMethod ?: return false
