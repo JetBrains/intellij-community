@@ -29,9 +29,13 @@ public class TimeDelegate extends DateAndTimeFormatterDelegate<Time, OffsetTime>
     if (value instanceof Time time) {
       offsetTime = time.toLocalTime().atOffset(ZoneOffset.ofTotalSeconds(-time.getTimezoneOffset() * 60));
     }
-    else {
-      offsetTime = ((LocalTime)value).atOffset(ZoneOffset.UTC);
+    else if (value instanceof LocalTime localTime) {
+      offsetTime = localTime.atOffset(ZoneOffset.UTC);
     }
+    else {
+      throw new IllegalArgumentException("Unsupported value type: " + value.getClass());
+    }
+
     return offsetTime.withOffsetSameInstant(DataGridFormattersUtilCore.getZoneOffsetByEpochOrDefault(myConfig));
   }
 }
