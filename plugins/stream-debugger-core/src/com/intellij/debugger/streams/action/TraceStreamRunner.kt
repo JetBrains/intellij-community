@@ -15,6 +15,7 @@ import com.intellij.debugger.streams.ui.ElementChooser
 import com.intellij.debugger.streams.ui.impl.ElementChooserImpl
 import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow
 import com.intellij.debugger.streams.wrapper.StreamChain
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -30,6 +31,7 @@ import com.intellij.xdebugger.XDebugSession
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import java.util.stream.Stream
+import kotlin.coroutines.CoroutineContext
 
 @Service(Service.Level.PROJECT)
 class TraceStreamRunner(val cs: CoroutineScope) {
@@ -143,7 +145,7 @@ class TraceStreamRunner(val cs: CoroutineScope) {
         yield()
         window.show()
       }
-      withContext(Dispatchers.Default) {
+      withContext(Dispatchers.Default + TraceStreamUIScope(window.disposable)) {
         val project = session.getProject()
         val expressionBuilder = provider.getExpressionBuilder(project)
         val resultInterpreter = TraceResultInterpreterImpl(provider.getLibrarySupport().interpreterFactory)
@@ -173,4 +175,13 @@ class TraceStreamRunner(val cs: CoroutineScope) {
       }
     }
   }
+}
+
+/**
+ * This is a lifetime of a Trace Stream window. It is used to release some memory-heavy resources after the window is closed.
+ */
+class TraceStreamUIScope(val disposable: Disposable) : CoroutineContext.Element {
+  companion object Key : CoroutineContext.Key<TraceStreamUIScope>
+
+  override val key: CoroutineContext.Key<*> = Key
 }
