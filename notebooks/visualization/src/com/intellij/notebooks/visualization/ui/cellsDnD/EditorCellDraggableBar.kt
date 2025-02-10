@@ -1,6 +1,5 @@
 package com.intellij.notebooks.visualization.ui.cellsDnD
 
-import com.intellij.icons.AllIcons
 import com.intellij.notebooks.ui.visualization.NotebookUtil.notebookAppearance
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
 import com.intellij.notebooks.visualization.getCell
@@ -14,8 +13,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Cursor
-import java.awt.Graphics
-import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -34,8 +31,6 @@ class EditorCellDraggableBar(
   private val boundsChangeListener = object : JupyterBoundsChangeListener {
     override fun boundsChanged() = updateBounds()
   }
-
-  private val dragIcon = AllIcons.General.Drag
 
   private val inlayManager = NotebookCellInlayManager.get(editor)
 
@@ -59,11 +54,16 @@ class EditorCellDraggableBar(
         it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY
       }?.bounds ?: return@let
 
+      val upperInlayBounds = inlays.lastOrNull {
+        it.properties.isShownAbove == true &&
+        it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY
+      }?.bounds ?: return@let
+
       val x = editor.gutterComponentEx.iconAreaOffset
       val width = editor.gutterComponentEx.getIconsAreaWidth()
 
-      val y = lowerInlayBounds.y
-      val height = lowerInlayBounds.height
+      val y = upperInlayBounds.y + upperInlayBounds.height + editor.lineHeight
+      val height = lowerInlayBounds.y + lowerInlayBounds.height - y
 
       it.setBounds(x, y, width, height)
     }
@@ -106,7 +106,7 @@ class EditorCellDraggableBar(
 
     init {
       cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-      isOpaque = false
+      isOpaque = true
 
       addMouseListener(object : MouseAdapter() {
         override fun mousePressed(e: MouseEvent) {
@@ -157,15 +157,6 @@ class EditorCellDraggableBar(
       val line = editor.document.getLineNumber(editor.xyToLogicalPosition(editorPoint).let(editor::logicalPositionToOffset))
       val realCell = notebookCellManager.getCell(editor.getCell(line).ordinal)
       return CellDropTarget.TargetCell(realCell)
-    }
-
-    override fun paintComponent(g: Graphics?) {
-      super.paintComponent(g)
-      val g2d = g as Graphics2D
-
-      val iconX = (width - dragIcon.iconWidth) / 2
-      val iconY = (height - dragIcon.iconHeight) / 2
-      dragIcon.paintIcon(this, g2d, iconX, iconY)
     }
 
     private fun retrieveTargetCell(e: MouseEvent): CellDropTarget {
