@@ -19,7 +19,9 @@ enum class TestModules(@JvmField val sourcePath: String, private val paramsPath:
   XML_DOM("platform/util/xmlDom/src", "platform/util/xmlDom/xmlDom.jar-0.params"),
   PLATFORM_IMPL("platform/platform-impl/src", "platform/platform-impl/ide-impl.jar-0.params"),
   LANG_IMPL("platform/lang-impl/src", "platform/lang-impl/lang-impl.jar-0.params"),
-  PLATFORM_BOOTSTRAP("platform/platform-impl/bootstrap/src", "platform/platform-impl/bootstrap/ide-bootstrap-kt.jar-0.params");
+  PLATFORM_BOOTSTRAP("platform/platform-impl/bootstrap/src", "platform/platform-impl/bootstrap/ide-bootstrap-kt.jar-0.params"),
+  JEWEL("platform/jewel/foundation/src/main/kotlin", "platform/jewel/foundation/foundation.jar-0.params"),
+  ;
 
   fun getParams(baseDir: Path): String {
     @Suppress("SpellCheckingInspection")

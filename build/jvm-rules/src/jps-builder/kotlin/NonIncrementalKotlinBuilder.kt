@@ -10,6 +10,7 @@ import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
 import org.jetbrains.bazel.jvm.kotlin.configureModule
 import org.jetbrains.bazel.jvm.kotlin.createJvmPipeline
+import org.jetbrains.bazel.jvm.kotlin.executeJvmPipeline
 import org.jetbrains.bazel.jvm.kotlin.prepareCompilerConfiguration
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.DirtyFilesHolder
@@ -69,12 +70,7 @@ internal class NonIncrementalKotlinBuilder(
     val pipeline = createJvmPipeline(config) {
       (outputConsumer as BazelTargetBuildOutputConsumer).outputSink.registerKotlincOutput(it.asList())
     }
-
-    val exitCode = pipeline.execute(
-      arguments = bazelConfigurationHolder.kotlinArgs,
-      services = builder.build(),
-      originalMessageCollector = messageCollector,
-    )
+    val exitCode = executeJvmPipeline(pipeline, bazelConfigurationHolder.kotlinArgs, builder.build(), messageCollector)
     if (org.jetbrains.kotlin.cli.common.ExitCode.INTERNAL_ERROR == exitCode) {
       context.processMessage(CompilerMessage("kotlin", BuildMessage.Kind.ERROR, "Internal compiler error"))
       return ExitCode.ABORT

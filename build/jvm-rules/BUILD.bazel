@@ -107,16 +107,16 @@ jvm_import(
 )
 
 jvm_import(
-    name = "kotlin-serialization-compiler-plugin",
-    jar = "@kotlin-serialization-compiler-plugin//file",
-    source_jar = "@kotlin-serialization-compiler-plugin-sources//file",
+    name = "kotlin-serialization-compiler-plugin-embeddable",
+    jar = "@kotlin-serialization-compiler-plugin-embeddable//file",
+    source_jar = "@kotlin-serialization-compiler-plugin-embeddable-sources//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
-    name = "kotlin-compose-compiler-plugin",
-    jar = "@kotlin-compose-compiler-plugin//file",
-    source_jar = "@kotlin-compose-compiler-plugin-sources//file",
+    name = "kotlin-compose-compiler-plugin-embeddable",
+    jar = "@kotlin-compose-compiler-plugin-embeddable//file",
+    source_jar = "@kotlin-compose-compiler-plugin-embeddable-sources//file",
     visibility = ["//visibility:public"],
 )
 

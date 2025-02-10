@@ -23,9 +23,9 @@
     - id: org.jetbrains.kotlin:kotlin-jps-plugin
       version: 2.1.20-Beta2
     # kotlin compiler plugins
-    - id: org.jetbrains.kotlin:kotlin-serialization-compiler-plugin
+    - id: org.jetbrains.kotlin:kotlin-serialization-compiler-plugin-embeddable
       version: 2.1.20-Beta2
-    - id: org.jetbrains.kotlin:kotlin-compose-compiler-plugin
+    - id: org.jetbrains.kotlin:kotlin-compose-compiler-plugin-embeddable
       version: 2.1.20-Beta2
     # other libs
     - id: org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm

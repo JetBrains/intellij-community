@@ -12,6 +12,7 @@ import org.jetbrains.bazel.jvm.jps.impl.BazelKotlinFsOperationsHelper
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
 import org.jetbrains.bazel.jvm.kotlin.configureModule
 import org.jetbrains.bazel.jvm.kotlin.createJvmPipeline
+import org.jetbrains.bazel.jvm.kotlin.executeJvmPipeline
 import org.jetbrains.bazel.jvm.kotlin.prepareCompilerConfiguration
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.DirtyFilesHolder
@@ -480,11 +481,7 @@ internal class IncrementalKotlinBuilder(
       (outputConsumer as BazelTargetBuildOutputConsumer).outputSink.registerKotlincOutput(it.asList())
     }
 
-    val exitCode = pipeline.execute(
-      arguments = bazelConfigurationHolder.kotlinArgs,
-      services = environment.services,
-      originalMessageCollector = messageCollector,
-    )
+    val exitCode = executeJvmPipeline(pipeline, bazelConfigurationHolder.kotlinArgs, environment.services, messageCollector)
     @Suppress("RemoveRedundantQualifierName")
     if (org.jetbrains.kotlin.cli.common.ExitCode.INTERNAL_ERROR == exitCode) {
       messageCollector.report(CompilerMessageSeverity.ERROR, "Compiler terminated with internal error")

@@ -58,7 +58,6 @@ import org.jetbrains.kotlin.modules.JavaRootPath
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus
 import java.io.File
 import java.nio.file.Path
-import kotlin.text.plus
 
 private val configTemplate = createCompilerConfigurationTemplate()
 
@@ -101,7 +100,7 @@ fun configureModule(
   sources: List<Path>,
   classPath: List<Path>
 ) {
-  var isJava9Module =  false
+  var isJava9Module = false
   config.moduleName = moduleName
 
   val module = ModuleBuilder(name = moduleName, outputDir = outFileOrDirPath, type = "java-production")

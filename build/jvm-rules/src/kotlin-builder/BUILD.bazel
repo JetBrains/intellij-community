@@ -17,8 +17,6 @@ kt_jvm_library(
         "@bazel_tools//src/main/protobuf:deps_java_proto",
         "//src/kotlin-plugins/jdeps",
         "//src/kotlin-plugins/abi",
-        "//:kotlin-compose-compiler-plugin",
-        "//:kotlin-serialization-compiler-plugin",
     ],
     visibility = ["//visibility:public"],
 )

@@ -30,12 +30,8 @@ java_binary(
 java_binary(
     name = "test-worker",
     runtime_deps = [":jps-builder-test-lib"],
-    data = [
-        "@kotlin-serialization-compiler-plugin//file",
-    ],
     main_class = "org.jetbrains.bazel.jvm.jps.test.TestJpsBuildWorker",
     jvm_flags = get_jvm_flags([
         "-Djps.use.experimental.storage=true",
-        "-Dorg.jetbrains.kotlin.kotlin-serialization-compiler-plugin.path=$(rlocationpath @kotlin-serialization-compiler-plugin//file)",
     ]),
 )

@@ -146,7 +146,6 @@ def _new_plugins_from(targets):
         if not (plugin.stubs or plugin.compile):
             plugins_without_phase.append("%s: %s" % (t.label, plugin.id))
         if plugin.id in all_plugins:
-            # This need a more robust error messaging.
             fail("has multiple plugins with the same id: %s." % plugin.id)
         all_plugins[plugin.id] = plugin
 

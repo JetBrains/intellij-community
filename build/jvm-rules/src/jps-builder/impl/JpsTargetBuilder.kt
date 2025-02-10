@@ -27,16 +27,29 @@ import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException
-import org.jetbrains.jps.incremental.*
+import org.jetbrains.jps.incremental.BuildListener
+import org.jetbrains.jps.incremental.Builder
+import org.jetbrains.jps.incremental.BuilderCategory
+import org.jetbrains.jps.incremental.CompileContext
+import org.jetbrains.jps.incremental.FSOperations
+import org.jetbrains.jps.incremental.ModuleBuildTarget
+import org.jetbrains.jps.incremental.ModuleLevelBuilder
+import org.jetbrains.jps.incremental.ProjectBuildException
+import org.jetbrains.jps.incremental.RebuildRequestedException
+import org.jetbrains.jps.incremental.StopBuildException
+import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.jps.incremental.fs.BuildFSState
 import org.jetbrains.jps.incremental.fs.BuildFSState.CURRENT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.fs.BuildFSState.NEXT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.fs.CompilationRound
-import org.jetbrains.jps.incremental.messages.*
+import org.jetbrains.jps.incremental.messages.BuildMessage
+import org.jetbrains.jps.incremental.messages.CompilerMessage
+import org.jetbrains.jps.incremental.messages.FileDeletedEvent
+import org.jetbrains.jps.incremental.messages.FileGeneratedEvent
+import org.jetbrains.jps.incremental.messages.ProgressMessage
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.coroutineContext
@@ -182,6 +195,7 @@ internal class JpsTargetBuilder(
             val buildResult = if (builder is BazelJavaBuilder) {
               builder.build(
                 context = context,
+                module = target.module,
                 chunk = chunk,
                 dirtyFilesHolder = dirtyFilesHolder,
                 target = target,
@@ -367,7 +381,7 @@ internal class BazelDirtyFileHolder(
     val delta = fsState.getEffectiveFilesDelta(context, target)
     delta.lockData()
     try {
-      for (entry in delta.getSourceMapToRecompile().entries) {
+      for (entry in delta.sourceMapToRecompile.entries) {
         for (file in entry.value) {
           if (!scope.isAffected(target, file)) {
             continue

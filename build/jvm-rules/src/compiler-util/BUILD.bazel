@@ -7,9 +7,8 @@ kt_jvm_library(
       "//:kotlin-compiler-embeddable",
       "//src/kotlin-plugins/jdeps",
       "//src/kotlin-plugins/abi",
-      "//:kotlin-compose-compiler-plugin",
-      "//:poko-compiler-plugin",
-      "//:kotlin-serialization-compiler-plugin",
+      "//:kotlin-compose-compiler-plugin-embeddable",
+      "//:kotlin-serialization-compiler-plugin-embeddable",
     ],
     visibility = ["//visibility:public"],
 )

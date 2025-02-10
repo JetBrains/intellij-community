@@ -303,6 +303,7 @@ suspend fun buildUsingJps(
     ),
     buildState = buildState,
     parentSpan = parentSpan,
+    isDebugEnabled = isDebugEnabled,
   )
 
   if (exitCode == -1) {
@@ -327,6 +328,7 @@ suspend fun buildUsingJps(
       ),
       buildState = null,
       parentSpan = parentSpan,
+      isDebugEnabled = isDebugEnabled,
     )
   }
 
@@ -375,7 +377,7 @@ private suspend fun nonIncrementalBuildUsingJps(
   val outputSink = OutputSink()
   val exitCode = tracer.spanBuilder("compile").use { span ->
     val builders = arrayOf(
-      BazelJavaBuilder(isIncremental = false, span = span, out = log.out),
+      BazelJavaBuilder(isIncremental = false, tracer = tracer, isDebugEnabled =  isDebugEnabled, out = log.out),
       //NotNullInstrumentingBuilder(),
       NonIncrementalKotlinBuilder(job = coroutineContext.job, module = moduleTarget.module, span = span),
     )
@@ -469,6 +471,7 @@ private suspend fun initAndBuild(
   buildDataProvider: BazelBuildDataProvider,
   buildState: LoadStateResult?,
   parentSpan: Span,
+  isDebugEnabled: Boolean,
 ): Int {
   val isRebuild = compileScope.isRebuild
   val tracer = messageHandler.tracer
@@ -502,7 +505,12 @@ private suspend fun initAndBuild(
         .setAttribute(AttributeKey.booleanKey("isRebuild"), isRebuild)
         .use { span ->
           val builders = arrayOf(
-            BazelJavaBuilder(isIncremental = compileScope.isIncrementalCompilation, span, messageHandler.out),
+            BazelJavaBuilder(
+              isIncremental = compileScope.isIncrementalCompilation,
+              tracer = tracer,
+              isDebugEnabled = isDebugEnabled,
+              out = messageHandler.out,
+            ),
             //NotNullInstrumentingBuilder(),
             JavaBackwardReferenceIndexBuilder(),
             if (compileScope.isIncrementalCompilation) {

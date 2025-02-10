@@ -6,22 +6,39 @@ package org.jetbrains.bazel.jvm.jps
 import com.dynatrace.hash4j.hashing.HashFunnel
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
-import com.google.devtools.build.runfiles.Runfiles
 import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestProperty
 import org.jetbrains.bazel.jvm.kotlin.ArgMap
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.configureCommonCompilerArgs
-import org.jetbrains.jps.model.*
+import org.jetbrains.jps.model.JpsCompositeElement
+import org.jetbrains.jps.model.JpsDummyElement
+import org.jetbrains.jps.model.JpsElement
+import org.jetbrains.jps.model.JpsElementFactory
+import org.jetbrains.jps.model.JpsElementReference
+import org.jetbrains.jps.model.JpsModel
+import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.JpsReferenceableElement
 import org.jetbrains.jps.model.ex.JpsElementBase
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase
 import org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase
 import org.jetbrains.jps.model.impl.JpsElementCollectionImpl
-import org.jetbrains.jps.model.java.*
+import org.jetbrains.jps.model.java.JavaSourceRootProperties
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.java.JpsJavaLibraryType
+import org.jetbrains.jps.model.java.JpsJavaModuleType
+import org.jetbrains.jps.model.java.JpsJavaSdkType
+import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
-import org.jetbrains.jps.model.library.*
+import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.library.JpsLibraryReference
+import org.jetbrains.jps.model.library.JpsLibraryRoot
 import org.jetbrains.jps.model.library.JpsLibraryRoot.InclusionOptions
+import org.jetbrains.jps.model.library.JpsLibraryType
+import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.library.JpsTypedLibrary
 import org.jetbrains.jps.model.library.impl.JpsLibraryReferenceImpl
 import org.jetbrains.jps.model.module.JpsDependenciesList
 import org.jetbrains.jps.model.module.impl.JpsModuleImpl
@@ -37,9 +54,9 @@ import kotlin.io.path.invariantSeparatorsPathString
 
 private val jpsElementFactory = JpsElementFactory.getInstance()
 
-internal val runFiles by lazy {
-  Runfiles.preload().unmapped()
-}
+//internal val runFiles by lazy {
+//  Runfiles.preload().unmapped()
+//}
 
 private val javaHome = Path.of(System.getProperty("java.home")).normalize() ?: error("No java.home system property")
 
@@ -114,14 +131,6 @@ internal fun loadJpsModel(
 
   module.container.setChild(BazelConfigurationHolder.KIND, BazelConfigurationHolder(
     classPath = classPathFiles,
-    javacClassPath = Array(classPathFiles.size + 1) {
-      if (it == 0) {
-        classOutDir
-      }
-      else {
-        classPathFiles[it - 1]
-      }
-    },
     args = args,
     kotlinArgs = kotlinArgs,
     classPathRootDir = classPathRootDir,
@@ -175,19 +184,20 @@ private fun configureKotlinCompiler(
   val plugins = args.optionalList(JvmBuilderFlags.PLUGIN_ID).zip(args.optionalList(JvmBuilderFlags.PLUGIN_CLASSPATH))
   configHash.putInt(plugins.size)
   if (plugins.isNotEmpty()) {
-    val pluginClassPaths = mutableListOf<String>()
+    //val pluginClassPaths = mutableListOf<String>()
     @Suppress("UnusedVariable")
     for ((id, paths) in plugins) {
-      val propertyName = "$id.path"
-      val relativePath = System.getProperty(propertyName)
-      if (relativePath == null) {
-        throw IllegalArgumentException("Missing system property $propertyName")
-      }
-
       configHash.putString(id)
-      pluginClassPaths.add(runFiles.rlocation(relativePath))
+
+      //val propertyName = "$id.path"
+      //val relativePath = System.getProperty(propertyName)
+      //if (relativePath == null) {
+      //  throw IllegalArgumentException("Missing system property $propertyName")
+      //}
+      //
+      //pluginClassPaths.add(runFiles.rlocation(relativePath))
     }
-    kotlinArgs.pluginClasspaths = pluginClassPaths.toTypedArray()
+    //kotlinArgs.pluginClasspaths = pluginClassPaths.toTypedArray()
   }
 
   kotlinArgs.classpath = classPathFiles.joinToString(separator = File.pathSeparator, transform = { it.toString() })
@@ -208,8 +218,6 @@ private fun configureKotlinCompiler(
 }
 
 internal class BazelConfigurationHolder(
-  // includes output dir - do not use for Kotlin, only for JavaBuilder
-  @JvmField val javacClassPath: Array<Path>,
   @JvmField val classPath: Array<Path>,
   @JvmField val args: ArgMap<JvmBuilderFlags>,
   @JvmField val kotlinArgs: K2JVMCompilerArguments,

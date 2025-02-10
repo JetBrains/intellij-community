@@ -5,7 +5,6 @@ package org.jetbrains.bazel.jvm.jps.java
 
 import com.intellij.util.io.BaseOutputReader
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.builders.JpsBuildBundle
 import org.jetbrains.jps.incremental.CompileContext
@@ -15,15 +14,15 @@ import org.jetbrains.jps.javac.ExternalJavacManagerKey
 import org.jetbrains.jps.javac.ExternalJavacProcess
 import org.jetbrains.jps.javac.PlainMessageDiagnostic
 import org.jetbrains.jps.model.java.JpsJavaSdkType
+import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.service.SharedThreadPool
 import java.io.IOException
 import java.net.ServerSocket
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.Future
 import javax.tools.Diagnostic
 import javax.tools.DiagnosticListener
 import javax.tools.JavaFileObject
-import kotlin.Pair
 
 @Synchronized
 internal fun ensureJavacServerStarted(context: CompileContext): ExternalJavacManager {
@@ -77,11 +76,11 @@ private fun findFreePort(): Int {
 
 internal fun getForkedJavacSdk(
   diagnostic: DiagnosticListener<JavaFileObject>,
-  chunk: ModuleChunk,
+  module: JpsModule,
   targetLanguageLevel: Int,
   span: Span,
 ): Pair<String, Int>? {
-  val associatedSdk = getAssociatedSdk(chunk)
+  val associatedSdk = getAssociatedSdk(module)
   var canRunAssociatedJavac = false
   if (associatedSdk != null) {
     val sdkVersion = associatedSdk.second
@@ -92,7 +91,7 @@ internal fun getForkedJavacSdk(
       }
     }
     else {
-      span.addEvent("""Target bytecode version $targetLanguageLevel is not supported by SDK $sdkVersion associated with module ${chunk.name}""")
+      span.addEvent("""Target bytecode version $targetLanguageLevel is not supported by SDK $sdkVersion associated with module ${module.name}""")
     }
   }
 
@@ -106,7 +105,7 @@ internal fun getForkedJavacSdk(
   }
 
   if (associatedSdk == null && (fallbackJdkHome == null || fallbackJdkVersion == null)) {
-    diagnostic.report(PlainMessageDiagnostic(Diagnostic.Kind.ERROR, JpsBuildBundle.message("build.message.cannot.start.javac.process.for.0.unknown.jdk.home", chunk.name)))
+    diagnostic.report(PlainMessageDiagnostic(Diagnostic.Kind.ERROR, JpsBuildBundle.message("build.message.cannot.start.javac.process.for.0.unknown.jdk.home", module.name)))
     return null
   }
 
@@ -134,7 +133,7 @@ internal fun getForkedJavacSdk(
       diagnostic.report(PlainMessageDiagnostic(Diagnostic.Kind.ERROR,
         JpsBuildBundle.message(
           "build.message.unsupported.javac.version",
-          chunk.name,
+          module.name,
           associatedSdk.second,
           ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION,
           targetLanguageLevel

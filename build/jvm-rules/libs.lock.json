@@ -63,8 +63,8 @@
     "3997081b2e2172155a042e58b179f7e7e53caa012d43a9ba7c0c1a654ef0bdb6",
     "471080a3e0323d16c76385da8642eaea947632e45a59273533183c37adc80116"
   ],
-  "org.jetbrains.kotlin:kotlin-compose-compiler-plugin:2.1.20-Beta2": [
-    "516e93281f577203335d0aaafcd63a5ffa23082d674c3d78159d5000b1c40f61",
+  "org.jetbrains.kotlin:kotlin-compose-compiler-plugin-embeddable:2.1.20-Beta2": [
+    "e27c07c16aefec40e1bd46fea6b7214f432545756a816afa94e5276ba4067fea",
     "bfb26a777eb4338852c072adb735c7903306e7c45ea57a59e6a023f2986af628"
   ],
   "org.jetbrains.kotlin:kotlin-jps-plugin:2.1.20-Beta2": [
@@ -75,9 +75,9 @@
     "a4d99e5b88eff9972c117b577436aa587e83f78e60cf005cd614065f59ead7a9",
     "3f5468b5c409702c7cac30067208b7218ab9e3f7209e686966c6c2de2134dd18"
   ],
-  "org.jetbrains.kotlin:kotlin-serialization-compiler-plugin:2.1.20-Beta2": [
-    "deabc2903e4c1aab9d5e3e4be29736c0873a961b7b2f9db02051d5fd1675ceb8",
-    "941b3bf2b6b366f6b6d066b8d17daf4ec974ec9a419888aa3448716b15fde8e9"
+  "org.jetbrains.kotlin:kotlin-serialization-compiler-plugin-embeddable:2.1.20-Beta2": [
+    "76e181a944d540fed791a5a3ffbbd94c952e81c751964052eb46443990d871aa",
+    "31f6551c01805264ba8e2dcdc48a7da259821f20e5e54d746afb70f7dfb4c571"
   ],
   "org.jetbrains.kotlin:kotlin-util-klib-metadata:2.1.20-Beta2": [
     "98261bc30acd236aadd09de17b8a375a5a3181af72e293b4d5e41e08a2e2f691",

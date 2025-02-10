@@ -3,8 +3,6 @@ package org.jetbrains.bazel.jvm.kotlin
 
 import androidx.compose.compiler.plugins.kotlin.ComposeCommandLineProcessor
 import androidx.compose.compiler.plugins.kotlin.ComposePluginRegistrar
-import dev.drewhamilton.poko.PokoCommandLineProcessor
-import dev.drewhamilton.poko.PokoCompilerPluginRegistrar
 import io.bazel.kotlin.plugin.jdeps.JdepsGenCommandLineProcessor
 import io.bazel.kotlin.plugin.jdeps.JdepsGenComponentRegistrar
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser.RegisteredPluginInfo
