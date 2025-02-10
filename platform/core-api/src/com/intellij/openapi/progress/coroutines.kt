@@ -139,7 +139,7 @@ fun <T> runBlockingCancellable(compensateParallelism: Boolean, action: suspend C
 }
 
 private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParallelism: Boolean, action: suspend CoroutineScope.() -> T): T {
-  assertBackgroundThreadOrWriteAction()
+  assertBackgroundThreadAndNoWriteAction()
   return prepareThreadContext { ctx ->
     if (!allowOrphan && ctx[Job] == null) {
       LOG.error(IllegalStateException("There is no ProgressIndicator or Job in this thread, the current job is not cancellable."))
@@ -199,7 +199,7 @@ fun <T> runBlockingMaybeCancellable(compensateParallelism: Boolean, action: susp
 @Internal
 @RequiresBlockingContext
 fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
-  assertBackgroundThreadOrWriteAction()
+  assertBackgroundThreadAndNoWriteAction()
   return prepareIndicatorThreadContext(indicator) { ctx ->
     val context = ctx +
                   CoroutineName("indicator run blocking")
@@ -463,14 +463,22 @@ fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T):
   }
 }
 
-private fun assertBackgroundThreadOrWriteAction() {
+private fun assertBackgroundThreadAndNoWriteAction() {
   if (!EDT.isCurrentThreadEdt()) {
     return
   }
 
   val app = ApplicationManager.getApplication()
-  if (!app.isDispatchThread || app.isWriteAccessAllowed || app.isUnitTestMode) {
+  if (!app.isDispatchThread || app.isUnitTestMode) {
     return // OK
+  }
+
+  if (app.isWriteAccessAllowed) {
+    LOG.error(IllegalStateException(
+      "This method is forbidden in write-action because it implies that a long-running action is being executed in a non-cancellable region." +
+      "This can introduce UI freezes."
+    ))
+    return
   }
 
   LOG.error(IllegalStateException(
