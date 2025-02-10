@@ -40,8 +40,11 @@ internal class BranchesDashboardTreeController(
   }
 
   fun updateLogBranchFilter() {
-    val selectedFilters = tree.getSelection().selectedBranchFilters
-    selectionHandler.filterBy(selectedFilters)
+    val treeSelection = tree.getSelection()
+    val selectedFilters = treeSelection.selectedBranchFilters
+    val repositories = if (repositoryGroupingEnabled()) treeSelection.repositoriesOfSelectedBranches else emptySet()
+
+    selectionHandler.filterBy(selectedFilters, repositories)
   }
 
   fun navigateLogToRef(selection: BranchNodeDescriptor.LogNavigatable) {
@@ -53,7 +56,7 @@ internal class BranchesDashboardTreeController(
     if (selectedRemotes.isEmpty()) return emptyMap()
 
     val result = hashMapOf<GitRepository, MutableSet<GitRemote>>()
-    if (model.groupingConfig[GroupingKey.GROUPING_BY_REPOSITORY] == true) {
+    if (repositoryGroupingEnabled()) {
       for (selectedRemote in selectedRemotes) {
         val repository = selectedRemote.repository ?: continue
         val remote = repository.remotes.find { it.name == selectedRemote.remoteName } ?: continue
@@ -72,6 +75,8 @@ internal class BranchesDashboardTreeController(
 
     return result
   }
+
+  private fun repositoryGroupingEnabled(): Boolean = model.groupingConfig[GroupingKey.GROUPING_BY_REPOSITORY] ?: false
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[BRANCHES_UI_CONTROLLER] = this

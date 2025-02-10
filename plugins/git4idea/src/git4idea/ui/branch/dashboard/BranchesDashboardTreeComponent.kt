@@ -22,6 +22,7 @@ import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.ui.ProgressStripe
 import git4idea.i18n.GitBundle.message
+import git4idea.repo.GitRepository
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowBranchDiffAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesAction
@@ -168,7 +169,7 @@ internal interface BranchesDashboardTreeSelectionHandler {
   var selectionAction: SelectionAction?
 
   @RequiresEdt
-  fun filterBy(branches: List<String>)
+  fun filterBy(branches: List<String>, repositories: Set<GitRepository> = emptySet())
 
   @RequiresEdt
   fun navigateTo(navigatable: BranchNodeDescriptor.LogNavigatable, focus: Boolean)
