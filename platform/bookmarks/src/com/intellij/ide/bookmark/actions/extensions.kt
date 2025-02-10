@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.Bookmark
@@ -25,7 +25,6 @@ import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.KeyStroke
-
 
 internal val AnActionEvent.bookmarksManager: BookmarksManager?
   get() = project?.let { BookmarksManager.getInstance(it) }
@@ -90,7 +89,6 @@ internal val AnActionEvent.contextBookmarks: List<Bookmark>?
     return files.mapNotNull { manager.createBookmark(it) }
   }
 
-
 internal val Bookmark.bookmarksManager: BookmarksManager?
   get() = BookmarksManager.getInstance(provider.project)
 
@@ -114,9 +112,11 @@ internal fun JComponent.registerBookmarkTypeAction(parent: Disposable, type: Boo
 /**
  * Creates an action that navigates to a selected bookmark by the EditSource shortcut.
  */
-internal fun JComponent.registerEditSourceAction(parent: Disposable): Unit = LightEditActionFactory
-  .create { OpenSourceUtil.navigate(*it.getData(CommonDataKeys.NAVIGATABLE_ARRAY).orEmpty()) }
-  .registerCustomShortcutSet(CommonShortcuts.getEditSource(), this, parent)
+internal fun JComponent.registerEditSourceAction(parent: Disposable) {
+  LightEditActionFactory
+    .create { OpenSourceUtil.navigate(*it.getData(CommonDataKeys.NAVIGATABLE_ARRAY).orEmpty()) }
+    .registerCustomShortcutSet(CommonShortcuts.getEditSource(), this, parent)
+}
 
 internal fun JTree.registerNavigateOnEnterAction(whenPerformed: () -> Unit = {}) {
   val enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
