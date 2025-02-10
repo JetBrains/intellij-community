@@ -17,7 +17,6 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
@@ -89,12 +88,9 @@ class CommitModeManager(private val project: Project, private val coroutineScope
 
     if (activeVcses.isEmpty()) return CommitMode.PendingCommitMode
 
-    if (singleVcs != null && singleVcs.isWithCustomLocalChanges) {
-      return CommitMode.ExternalCommitMode(singleVcs)
-    }
-
-    if (System.getProperty("vcs.force.modal.commit").toBoolean()) {
-      return CommitMode.ModalCommitMode
+    val forcedCommitMode = singleVcs?.forcedCommitMode
+    if (forcedCommitMode != null) {
+      return forcedCommitMode
     }
 
     if (canSetNonModal()) {
@@ -161,37 +157,5 @@ class CommitModeManager(private val project: Project, private val coroutineScope
   }
 
   override fun dispose() {
-  }
-}
-
-sealed class CommitMode {
-  abstract fun useCommitToolWindow(): Boolean
-  open fun hideLocalChangesTab(): Boolean = false
-  open fun disableDefaultCommitAction(): Boolean = false
-
-  object PendingCommitMode : CommitMode() {
-    override fun useCommitToolWindow(): Boolean {
-      // Enable 'Commit' toolwindow before vcses are activated
-      return true
-    }
-
-    override fun disableDefaultCommitAction(): Boolean {
-      // Disable `Commit` action until vcses are activated
-      return true
-    }
-  }
-
-  object ModalCommitMode : CommitMode() {
-    override fun useCommitToolWindow(): Boolean = false
-  }
-
-  data class NonModalCommitMode(val isToggleMode: Boolean) : CommitMode() {
-    override fun useCommitToolWindow(): Boolean = true
-  }
-
-  data class ExternalCommitMode(val vcs: AbstractVcs) : CommitMode() {
-    override fun useCommitToolWindow(): Boolean = true
-    override fun hideLocalChangesTab(): Boolean = true
-    override fun disableDefaultCommitAction(): Boolean = true
   }
 }

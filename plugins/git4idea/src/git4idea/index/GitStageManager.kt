@@ -11,6 +11,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.CommitModeManager
 import git4idea.GitVcs
+import git4idea.commit.GitStagingAreaCommitMode
 import git4idea.config.GitVcsApplicationSettings
 
 internal class CommitModeListener(val project: Project) : CommitModeManager.CommitModeListener {
@@ -48,6 +49,5 @@ fun enableStagingArea(enabled: Boolean) {
 
 internal fun isStagingAreaAvailable(project: Project): Boolean {
   val commitMode = CommitModeManager.getInstance(project).getCurrentCommitMode()
-  return commitMode is CommitMode.ExternalCommitMode &&
-         commitMode.vcs.keyInstanceMethod == GitVcs.getKey()
+  return commitMode is GitStagingAreaCommitMode
 }
