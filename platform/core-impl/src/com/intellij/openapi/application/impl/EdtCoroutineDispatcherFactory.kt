@@ -11,6 +11,6 @@ internal class EdtCoroutineDispatcherFactory : MainDispatcherFactory {
   override val loadPriority: Int get() = 0
 
   override fun createDispatcher(allFactories: List<MainDispatcherFactory>): MainCoroutineDispatcher {
-    return EdtCoroutineDispatcher
+    return EdtCoroutineDispatcher.Locking
   }
 }
