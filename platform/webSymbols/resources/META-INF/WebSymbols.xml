@@ -18,6 +18,13 @@
       implementation="com.intellij.webSymbols.documentation.WebSymbolDocumentationTargetProvider"/>
     <psi.declarationProvider implementation="com.intellij.webSymbols.declarations.impl.WebSymbolDeclarationProviderDelegate"/>
 
+    <!--suppress PluginXmlRegistrationCheck -->
+    <psi.symbolReferenceProvider hostElementClass="com.intellij.model.psi.PsiExternalReferenceHost"
+                                 hostLanguage="WebSymbolsEnabledLanguage"
+                                 implementationClass="com.intellij.webSymbols.references.impl.PsiWebSymbolReferenceProviderImpl"
+                                 targetClass="com.intellij.webSymbols.WebSymbol"
+                                 referenceClass="com.intellij.webSymbols.references.WebSymbolReference"/>
+
     <referencesSearch implementation="com.intellij.webSymbols.search.PsiSourcedWebSymbolReferenceSearcher"/>
     <refactoring.helper implementation="com.intellij.webSymbols.refactoring.PsiSourcedWebSymbolRefactoringHelper"/>
     <renameHandler implementation="com.intellij.webSymbols.refactoring.PsiSourcedWebSymbolRenameHandler"/>

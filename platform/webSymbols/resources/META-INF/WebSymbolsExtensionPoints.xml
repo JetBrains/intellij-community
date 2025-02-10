@@ -51,6 +51,12 @@
     <extensionPoint qualifiedName="com.intellij.webSymbols.declarationProvider"
                     interface="com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.psiReferenceProvider"
+                    beanClass="com.intellij.webSymbols.references.impl.PsiWebSymbolReferenceProviderBean"
+                    dynamic="true">
+      <with attribute="hostElementClass" implements="com.intellij.model.psi.PsiExternalReferenceHost"/>
+      <with attribute="implementationClass" implements="com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.webSymbols.psiSourcedSymbolProvider"
                     interface="com.intellij.webSymbols.PsiSourcedWebSymbolProvider"
                     dynamic="true"/>

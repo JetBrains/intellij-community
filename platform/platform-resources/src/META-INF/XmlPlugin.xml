@@ -679,21 +679,15 @@
     <completion.contributor language="HtmlCompatible"
                             implementationClass="com.intellij.html.webSymbols.WebSymbolsHtmlCompletionContributor"/>
 
-    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
-                                 hostLanguage="HtmlCompatible"
-                                 implementationClass="com.intellij.html.webSymbols.elements.WebSymbolInTagNameRefProvider"
-                                 referenceClass="com.intellij.webSymbols.references.WebSymbolReference"
-                                 targetClass="com.intellij.webSymbols.WebSymbol"/>
-    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
-                                 hostLanguage="HtmlCompatible"
-                                 implementationClass="com.intellij.html.webSymbols.attributes.WebSymbolInAttributeNameRefProvider"
-                                 referenceClass="com.intellij.webSymbols.references.WebSymbolReference"
-                                 targetClass="com.intellij.webSymbols.WebSymbol"/>
-    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
-                                 hostLanguage="HtmlCompatible"
-                                 implementationClass="com.intellij.html.webSymbols.attributeValues.WebSymbolHtmlAttributeValueReferenceProvider"
-                                 referenceClass="com.intellij.webSymbols.references.WebSymbolReference"
-                                 targetClass="com.intellij.webSymbols.WebSymbol"/>
+    <webSymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
+                                  hostLanguage="HtmlCompatible"
+                                  implementationClass="com.intellij.html.webSymbols.elements.WebSymbolInTagNameRefProvider"/>
+    <webSymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
+                                  hostLanguage="HtmlCompatible"
+                                  implementationClass="com.intellij.html.webSymbols.attributes.WebSymbolInAttributeNameRefProvider"/>
+    <webSymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
+                                  hostLanguage="HtmlCompatible"
+                                  implementationClass="com.intellij.html.webSymbols.attributeValues.WebSymbolHtmlAttributeValueReferenceProvider"/>
     <vetoRenameCondition implementation="com.intellij.html.webSymbols.HtmlWebSymbolRenameHandlerVeto"/>
     <xml.xmlExtension implementation="com.intellij.html.webSymbols.WebSymbolsXmlExtension" id="web-symbols"
                       order="before html, after react"/>

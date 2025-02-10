@@ -872,6 +872,16 @@
 - a:getSymbol():com.intellij.webSymbols.WebSymbol
 *f:com.intellij.webSymbols.refactoring.WebSymbolRenameTarget$Companion
 - f:create(com.intellij.webSymbols.WebSymbol):com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
+*:com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
+- *sf:Companion:com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider$Companion
+- getOffsetsToReferencedSymbols(com.intellij.model.psi.PsiExternalReferenceHost):java.util.Map
+- getReferencedSymbol(com.intellij.model.psi.PsiExternalReferenceHost):com.intellij.webSymbols.WebSymbol
+- getReferencedSymbolNameOffset(com.intellij.model.psi.PsiExternalReferenceHost):I
+- shouldShowProblems(com.intellij.model.psi.PsiExternalReferenceHost):Z
+- s:unresolvedSymbol(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,java.lang.String):com.intellij.webSymbols.query.WebSymbolMatch
+*f:com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider$Companion
+- f:unresolvedSymbol(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,java.lang.String):com.intellij.webSymbols.query.WebSymbolMatch
+- bs:unresolvedSymbol$default(com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider$Companion,com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.webSymbols.query.WebSymbolMatch
 *:com.intellij.webSymbols.references.WebSymbolReference
 - com.intellij.model.psi.PsiSymbolReference
 - getProblems():java.util.Collection
@@ -905,7 +915,6 @@
 - p:getSymbolNameOffset(com.intellij.model.psi.PsiExternalReferenceHost):I
 - p:shouldShowProblems(com.intellij.model.psi.PsiExternalReferenceHost):Z
 - sf:startOffsetIn(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):I
-- pf:unresolvedSymbol(com.intellij.webSymbols.WebSymbolQualifiedKind,java.lang.String):com.intellij.webSymbols.query.WebSymbolMatch
 *f:com.intellij.webSymbols.references.WebSymbolReferenceProvider$Companion
 - f:startOffsetIn(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):I
 *:com.intellij.webSymbols.search.WebSymbolSearchTarget
