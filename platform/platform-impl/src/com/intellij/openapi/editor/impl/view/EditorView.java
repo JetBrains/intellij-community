@@ -24,7 +24,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
@@ -73,7 +72,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   private int myTabSize; // guarded by myLock
   private int myTopOverhang; //guarded by myLock
   private int myBottomOverhang; //guarded by myLock
-  private @Nullable DoubleWidthCharacterStrategy myDoubleWidthCharacterStrategy;
+  private @NotNull DoubleWidthCharacterStrategy myDoubleWidthCharacterStrategy = new DefaultDoubleWidthCharacterStrategy();
 
   private final Object myLock = new Object();
 
@@ -666,7 +665,13 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
-    return myCharWidthCache.getCodePointWidth(codePoint, fontStyle);
+    var multiplier = myEditor.getSettings().getCharacterGridWidthMultiplier();
+    if (multiplier != null) {
+      return multiplier * (myDoubleWidthCharacterStrategy.isDoubleWidth(codePoint) ? getMaxCharWidth() * 2.0f : getMaxCharWidth());
+    }
+    else {
+      return myCharWidthCache.getCodePointWidth(codePoint, fontStyle);
+    }
   }
 
   Insets getInsets() {
@@ -771,15 +776,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   /**
-   * Returns the current double-width character strategy.
-   * @see #setDoubleWidthCharacterStrategy(DoubleWidthCharacterStrategy)
-   * @return the current double-width character strategy
-   */
-  public @Nullable DoubleWidthCharacterStrategy getDoubleWidthCharacterStrategy() {
-    return myDoubleWidthCharacterStrategy;
-  }
-
-  /**
    * Sets the strategy to differentiate between single and double width characters.
    * <p>
    *   Only used when the {@link EditorSettings#setCharacterGridWidthMultiplier(Float) character grid mode}
@@ -791,7 +787,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
    * </p>
    * @param doubleWidthCharacterStrategy the strategy to use
    */
-  public void setDoubleWidthCharacterStrategy(@Nullable DoubleWidthCharacterStrategy doubleWidthCharacterStrategy) {
+  public void setDoubleWidthCharacterStrategy(@NotNull DoubleWidthCharacterStrategy doubleWidthCharacterStrategy) {
     myDoubleWidthCharacterStrategy = doubleWidthCharacterStrategy;
   }
 
@@ -836,5 +832,13 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     // And it has different values for component graphics (ON/OFF) and component's font metrics (DEFAULT), causing
     // unnecessary layout cache resets.
     return c1.getTransform().equals(c2.getTransform()) && c1.getAntiAliasingHint().equals(c2.getAntiAliasingHint());
+  }
+
+  private class DefaultDoubleWidthCharacterStrategy implements DoubleWidthCharacterStrategy {
+    @Override
+    public boolean isDoubleWidth(int codePoint) {
+      int width = Math.round(myCharWidthCache.getCodePointWidth(codePoint, Font.PLAIN) / getMaxCharWidth());
+      return Math.min(2, Math.max(1, width)) == 2;
+    }
   }
 }

@@ -12,20 +12,11 @@ import java.util.function.Consumer;
  */
 abstract class TextFragment implements LineFragment {
   final float @NotNull [] myCharPositions; // i-th value is the x coordinate of right edge of i-th character (counted in visual order)
-  final @Nullable Float myGridCellWidth;
-  final @Nullable DoubleWidthCharacterStrategy myDoubleWidthCharacterStrategy;
+  final @Nullable EditorView myView;
 
   TextFragment(int charCount, @Nullable EditorView view) {
-    if (view != null) {
-      var multiplier = view.getEditor().getSettings().getCharacterGridWidthMultiplier();
-      myGridCellWidth = multiplier == null ? null : multiplier * view.getMaxCharWidth();
-      myDoubleWidthCharacterStrategy = multiplier == null ? null : view.getDoubleWidthCharacterStrategy();
-    }
-    else {
-      myGridCellWidth = null;
-      myDoubleWidthCharacterStrategy = null;
-    }
     assert charCount > 0;
+    this.myView = view;
     myCharPositions = new float[charCount]; // populated by subclasses' constructors
   }
 
@@ -67,21 +58,14 @@ abstract class TextFragment implements LineFragment {
   }
 
   boolean isGridCellAlignmentEnabled() {
-    return myGridCellWidth != null;
+    return myView != null && myView.getEditor().getSettings().getCharacterGridWidthMultiplier() != null;
   }
 
-  @Nullable Float adjustedWidthOrNull(int codePoint,  float width, float tolerance) {
-    assert myGridCellWidth != null;
-    var slots = width / myGridCellWidth;
-    float actualSlots;
-    if (myDoubleWidthCharacterStrategy == null) {
-      actualSlots = (float)Math.min(Math.max(1.0f, Math.ceil(slots - tolerance)), 2.0f);
-    }
-    else {
-      actualSlots = myDoubleWidthCharacterStrategy.isDoubleWidth(codePoint) ? 2.0f : 1.0f;
-    }
-    if (Math.abs(slots - actualSlots) < 0.001) return null;
-    return actualSlots * myGridCellWidth;
+  @Nullable Float adjustedWidthOrNull(int codePoint,  float width) {
+    assert myView != null;
+    var actualWidth = myView.getCodePointWidth(codePoint, Font.PLAIN); // in the grid mode all font styles should have identical widths
+    if (Math.abs(width - actualWidth) < 0.001) return null;
+    return actualWidth;
   }
 
   private final class TextFragmentWindow implements LineFragment {

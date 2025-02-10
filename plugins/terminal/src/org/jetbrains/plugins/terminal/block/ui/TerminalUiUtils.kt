@@ -107,7 +107,7 @@ internal object TerminalUiUtils {
       characterGridWidthMultiplier = 1.0f
     }
 
-    editor.view.doubleWidthCharacterStrategy = DoubleWidthCharacterStrategy { codePoint ->
+    editor.view.setDoubleWidthCharacterStrategy { codePoint ->
       CharUtils.isDoubleWidthCharacter(codePoint, false)
     }
 
