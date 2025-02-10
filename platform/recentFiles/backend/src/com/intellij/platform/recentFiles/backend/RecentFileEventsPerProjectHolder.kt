@@ -22,15 +22,19 @@ internal class RecentFileEventsPerProjectHolder {
   private val recentFiles = MutableSharedFlow<RecentFilesEvent>()
 
   fun getRecentFiles(): Flow<RecentFilesEvent> {
+    LOG.debug("Switcher get recent files")
     return recentFiles
   }
 
   suspend fun emitRecentFiles(searchRequest: RecentFilesBackendRequest.NewSearchWithParameters) {
+    LOG.debug("Switcher emit recent files: $searchRequest")
+
     recentFiles.emit(RecentFilesEvent.AllItemsRemoved())
     recentFiles.emitAll(fetchRecentFiles(searchRequest))
   }
 
   suspend fun hideAlreadyShownFile(hideFileRequest: RecentFilesBackendRequest.HideFile) {
+    LOG.debug("Switcher hide file: $hideFileRequest")
     val project = hideFileRequest.projectId.findProjectOrNull() ?: return
     val virtualFile = hideFileRequest.fileToHide.virtualFileId.virtualFile() ?: return
     EditorHistoryManager.getInstance(project).removeFile(virtualFile)
@@ -39,6 +43,7 @@ internal class RecentFileEventsPerProjectHolder {
 
   fun scheduleRehighlightUnopenedFiles(projectId: ProjectId) {
     val project = projectId.findProjectOrNull() ?: return
+    LOG.debug("Switcher rehighlight files in project: $projectId")
     HighlightingPassesCache.getInstance(project).schedule(getNotOpenedRecentFiles(project))
   }
 
@@ -50,13 +55,13 @@ internal class RecentFileEventsPerProjectHolder {
 
   private fun fetchRecentFiles(filter: RecentFilesBackendRequest.NewSearchWithParameters): Flow<RecentFilesEvent> {
     return flow {
-      LOG.debug("Started fetching recent files")
+      LOG.debug("Switcher started fetching recent files")
       val project = filter.projectId.findProjectOrNull() ?: return@flow
 
       val collectedFiles = readAction {
         getFilesToShow(project, filter.onlyEdited, filter.pinned)
       }
-      LOG.debug("Collected ${collectedFiles.size} recent files")
+      LOG.debug("Switcher collected ${collectedFiles.size} recent files")
 
       emitAll(
         collectedFiles

@@ -262,9 +262,10 @@ object Switcher : BaseSwitcherAction(null) {
       maybeSearchableModel.addListDataListener(object : ListDataListener {
         override fun intervalAdded(e: ListDataEvent?) {
           if (e == null) return
-
+          LOG.debug("Switcher add interval: $e")
           // select the first item, if it's the only one
           if (preservingSelectionModel.isSelectionEmpty && maybeSearchableModel.size == 1) {
+            LOG.debug("Switcher add first item: $e")
             files.requestFocusInWindow()
             preservingSelectionModel.setSelectionInterval(0, 0)
             return
@@ -272,13 +273,17 @@ object Switcher : BaseSwitcherAction(null) {
 
           // otherwise, select the first file not opened in the focused editor after it is received
           if (preservingSelectionModel.selectedIndices.singleOrNull() == 0 && maybeSearchableModel.size > 1) {
+            LOG.debug("Switcher add non-first item: $e")
             val firstSelectedEntry = maybeSearchableModel.getElementAt(0)
             if (firstSelectedEntry.virtualFileId.virtualFile() != FileEditorManager.getInstance(project).selectedEditor?.file) {
+              LOG.debug("Switcher added item != editor: $e")
               return
             }
 
             val newFileEntry = maybeSearchableModel.getElementAt(e.index0) ?: return
+            LOG.debug("Switcher new item in model != null: $e, $newFileEntry")
             if (FileEditorManager.getInstance(project).selectedEditor?.file != newFileEntry.virtualFileId.virtualFile()) {
+              LOG.debug("Switcher added item != editor: $e, $newFileEntry")
               preservingSelectionModel.setSelectionInterval(e.index0, e.index0)
             }
           }
@@ -286,6 +291,7 @@ object Switcher : BaseSwitcherAction(null) {
 
         override fun intervalRemoved(e: ListDataEvent?) {
           if (maybeSearchableModel.size == 0) {
+            LOG.debug("Switcher removed item, empty model: $e")
             toolWindows.requestFocusInWindow()
             ScrollingUtil.ensureSelectionExists(toolWindows)
           }
@@ -299,6 +305,8 @@ object Switcher : BaseSwitcherAction(null) {
 
       val filesSelectionListener = object : ListSelectionListener {
         override fun valueChanged(e: ListSelectionEvent) {
+          LOG.debug("Switcher value changed: $e")
+
           if (e.valueIsAdjusting) {
             return
           }
