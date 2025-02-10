@@ -77,16 +77,16 @@ class BundledScriptDefinition(
 )
 abstract class KotlinScratchScript()
 
-class KotlinScratchCompilationConfiguration() : ScriptCompilationConfiguration(
+private class KotlinScratchCompilationConfiguration() : ScriptCompilationConfiguration(
     {
         displayName("Kotlin Scratch")
         explainField(SCRATCH_EXPLAIN_VARIABLE_NAME)
     })
 
-class KotlinScratchHostConfiguration : ScriptingHostConfiguration(
+private class KotlinScratchHostConfiguration : ScriptingHostConfiguration(
     {
         getScriptingClass(JvmGetScriptingClass())
     })
 
 
-const val SCRATCH_EXPLAIN_VARIABLE_NAME: String = "\$\$explain"
+private const val SCRATCH_EXPLAIN_VARIABLE_NAME: String = "\$\$explain"

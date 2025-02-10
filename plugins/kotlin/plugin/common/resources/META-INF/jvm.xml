@@ -11,7 +11,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <scratch.creationHelper language="kotlin"
-                            implementationClass="org.jetbrains.kotlin.idea.scratch.KtScratchFileCreationHelper"/>
+                            implementationClass="org.jetbrains.kotlin.idea.scratch.KotlinScratchFileCreationHelper"/>
 
     <registryKey
             key="repo.with.kotlin.versions.url"

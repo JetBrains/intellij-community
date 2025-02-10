@@ -53,8 +53,6 @@
 
         <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanelProvider"/>
 
-        <scratch.creationHelper language="kotlin"
-                                implementationClass="org.jetbrains.kotlin.idea.scratch.KtScratchFileCreationHelper"/>
         <runLineMarkerContributor language="kotlin"
                                   implementationClass="org.jetbrains.kotlin.idea.scratch.actions.ScratchRunLineMarkerContributor"/>
 
