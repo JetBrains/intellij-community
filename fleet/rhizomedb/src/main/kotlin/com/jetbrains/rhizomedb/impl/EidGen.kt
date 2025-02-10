@@ -7,7 +7,7 @@ import com.jetbrains.rhizomedb.Part
 import com.jetbrains.rhizomedb.withPart
 import fleet.util.AtomicRef
 import fleet.util.incrementAndGet
-import java.util.concurrent.ConcurrentHashMap
+import fleet.multiplatform.shims.ConcurrentHashMap
 
 sealed interface EidGen {
   companion object : EidGen {

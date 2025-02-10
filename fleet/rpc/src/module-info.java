@@ -12,6 +12,7 @@ module fleet.rpc {
   requires io.opentelemetry.api;
   requires fleet.preferences;
   requires fleet.reporting.api;
+  requires fleet.multiplatform.shims;
 
   exports fleet.rpc;
   exports fleet.rpc.core;

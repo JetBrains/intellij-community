@@ -14,7 +14,7 @@ import kotlinx.coroutines.channels.consume
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.select
-import java.util.concurrent.ConcurrentHashMap
+import fleet.multiplatform.shims.ConcurrentHashMap
 
 interface ConnectionListener {
   fun onConnect(kind: EndpointKind, route: UID, socketId: UID, presentableName: String?) {}

@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.whileSelect
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
-import java.util.concurrent.ConcurrentHashMap
+import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlin.coroutines.*
 
 private data class OutgoingRequest(

@@ -37,6 +37,7 @@
     <orderEntry type="module" module-name="fleet.util.logging.api" exported="" />
     <orderEntry type="library" exported="" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="module" module-name="fleet.reporting.api" />
+    <orderEntry type="module" module-name="fleet.multiplatform.shims" exported="" />
     <orderEntry type="module" module-name="fleet.preferences" />
     <orderEntry type="module" module-name="fleet.util.os" />
     <orderEntry type="module" module-name="fleet.fastutil" exported="" />

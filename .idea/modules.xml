@@ -6,6 +6,7 @@
       <module fileurl="file://$PROJECT_DIR$/fleet/compiler-plugins/fleet.compiler.plugins.iml" filepath="$PROJECT_DIR$/fleet/compiler-plugins/fleet.compiler.plugins.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/fastutil/fleet.fastutil.iml" filepath="$PROJECT_DIR$/fleet/fastutil/fleet.fastutil.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/kernel/fleet.kernel.iml" filepath="$PROJECT_DIR$/fleet/kernel/fleet.kernel.iml" />
+      <module fileurl="file://$PROJECT_DIR$/fleet/multiplatform.shims/fleet.multiplatform.shims.iml" filepath="$PROJECT_DIR$/fleet/multiplatform.shims/fleet.multiplatform.shims.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/preferences/fleet.preferences.iml" filepath="$PROJECT_DIR$/fleet/preferences/fleet.preferences.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/reporting/api/fleet.reporting.api.iml" filepath="$PROJECT_DIR$/fleet/reporting/api/fleet.reporting.api.iml" />
       <module fileurl="file://$PROJECT_DIR$/fleet/rhizomedb/fleet.rhizomedb.iml" filepath="$PROJECT_DIR$/fleet/rhizomedb/fleet.rhizomedb.iml" />

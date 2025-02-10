@@ -34,6 +34,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="fleet.reporting.api" />
     <orderEntry type="module" module-name="fleet.preferences" />
+    <orderEntry type="module" module-name="fleet.multiplatform.shims" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />

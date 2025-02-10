@@ -2,7 +2,7 @@
 package fleet.kernel.rete.impl
 
 import fleet.kernel.rete.*
-import java.util.concurrent.ConcurrentHashMap
+import fleet.multiplatform.shims.ConcurrentHashSet
 
 internal fun <T : Any> SubscriptionScope.distinct(producer: Producer<T>): Producer<T> =
   run {
@@ -14,7 +14,7 @@ internal fun <T : Any> SubscriptionScope.distinct(producer: Producer<T>): Produc
         true -> {
           when (val matches = memory[v]) {
             null -> {
-              val ms = ConcurrentHashMap.newKeySet<Match<T>>()
+              val ms = ConcurrentHashSet<Match<T>>()
               memory[v] = ms
               ms.add(token.match)
               broadcast(Token(true, distinctMatchValue(v, ms)))

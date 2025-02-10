@@ -4,6 +4,7 @@ module fleet.rhizomedb {
   requires kotlin.stdlib;
   requires kotlinx.collections.immutable.jvm;
   requires transitive kotlinx.serialization.core;
+  requires fleet.multiplatform.shims;
   requires kotlinx.serialization.json;
   requires org.jetbrains.annotations;
   exports com.jetbrains.rhizomedb;
