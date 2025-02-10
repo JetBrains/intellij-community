@@ -42,7 +42,9 @@ public final class BatchEvaluator {
 
     EvaluationContext evaluationContext = command.getEvaluationContext();
     SuspendContextImpl suspendContext = (SuspendContextImpl)evaluationContext.getSuspendContext();
-    if (!Registry.is("debugger.batch.evaluation.force") && !Registry.is("debugger.batch.evaluation")) {
+    if (!(command.getValue() instanceof ObjectReference) || // skip for primitive values
+        (!Registry.is("debugger.batch.evaluation.force") &&
+        !Registry.is("debugger.batch.evaluation"))) {
       suspendContext.getManagerThread().invokeCommand(command);
     }
     else {
@@ -71,6 +73,11 @@ public final class BatchEvaluator {
     try {
       DebugProcess debugProcess = evaluationContext.getDebugProcess();
       List<Value> values = ContainerUtil.map(requests, ToStringCommand::getValue);
+
+      if (ContainerUtil.exists(values, v -> !(v instanceof ObjectReference))) {
+        LOG.error("Batch toString evaluation can only be used for object references");
+        return false;
+      }
 
       String helperMethodName;
 
