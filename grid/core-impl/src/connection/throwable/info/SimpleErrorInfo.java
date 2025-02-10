@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class SimpleErrorInfo extends SimpleThrowableInfo implements ErrorInfo {
+public final class SimpleErrorInfo extends SimpleThrowableInfo implements ErrorInfo {
   private final List<Fix> myFixes;
 
   @Contract("null, null, _ -> fail")
