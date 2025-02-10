@@ -3,6 +3,10 @@
     <projectService serviceInterface="com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory"
                     serviceImplementation="com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorFactoryImpl"/>
 
+    <metaLanguage implementation="com.intellij.webSymbols.WebSymbolsEnabledLanguage"/>
+    <annotator language="WebSymbolsEnabledLanguage"
+               implementationClass="com.intellij.webSymbols.inspections.WebSymbolsHighlightingAnnotator"/>
+
     <webSymbols.webTypes.filter
       name="match-prefix"
       implementation="com.intellij.webSymbols.webTypes.filters.WebSymbolsMatchPrefixFilter"/>

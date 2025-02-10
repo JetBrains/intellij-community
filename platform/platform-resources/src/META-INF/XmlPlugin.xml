@@ -655,7 +655,7 @@
                        order="before JSConfigurationInjector, after TemporaryPlacesInjector"
                        id="WebSymbolsHtmlText"/>
 
-    <annotator language="HtmlCompatible" implementationClass="com.intellij.webSymbols.inspections.WebSymbolsHighlightingAnnotator"/>
+    <webSymbols.enableInLanguage language="HtmlCompatible"/>
 
     <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="attributes" problemKind="UnknownSymbol"
                                       toolShortName="HtmlUnknownAttribute"/>
