@@ -37,7 +37,7 @@ final class JarLoader implements Loader {
 
   final ClassPath configuration;
   final URL url;
-  final ResourceFile zipFile;
+  public final ResourceFile zipFile;
   private final Path path;
 
   JarLoader(@NotNull Path path, @NotNull ClassPath configuration, @NotNull ResourceFile zipFile) throws IOException {
