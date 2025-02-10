@@ -72,13 +72,9 @@ public final class Comparing {
     }
 
     Set<T> aSet = new HashSet<>(a);
-    for (T t : b) {
-      if (!aSet.contains(t)) {
-        return false;
-      }
-    }
+    Set<T> bSet = new HashSet<>(b);
 
-    return true;
+    return aSet.equals(bSet);
   }
 
   public static <T> boolean haveEqualElements(@Nullable T[] a, @Nullable T[] b) {
@@ -91,14 +87,7 @@ public final class Comparing {
       return false;
     }
 
-    Set<T> aSet = new HashSet<>(Arrays.asList(a));
-    for (T t : b) {
-      if (!aSet.contains(t)) {
-        return false;
-      }
-    }
-
-    return true;
+    return haveEqualElements(Arrays.asList(a), Arrays.asList(b));
   }
 
   @SuppressWarnings("MethodNamesDifferingOnlyByCase")
