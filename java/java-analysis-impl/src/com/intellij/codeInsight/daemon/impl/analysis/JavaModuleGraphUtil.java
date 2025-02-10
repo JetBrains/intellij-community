@@ -22,11 +22,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiJavaModuleModificationTracker;
-import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.search.searches.JavaModuleSearch;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
@@ -345,13 +345,11 @@ public final class JavaModuleGraphUtil {
     MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
     Set<String> transitiveEdges = new HashSet<>();
 
-    JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
     GlobalSearchScope scope = ProjectScope.getAllScope(project);
-    for (String key : index.getAllKeys(project)) {
-      for (PsiJavaModule module : index.getModules(key, project, scope)) {
-        visit(module, relations, transitiveEdges);
-      }
-    }
+    JavaModuleSearch.allModules(project, scope).forEach(module -> {
+      visit(module, relations, transitiveEdges);
+      return true;
+    });
 
     Graph<PsiJavaModule> graph = GraphGenerator.generate(new ChameleonGraph<>(relations, true));
     return new RequiresGraph(graph, transitiveEdges);
