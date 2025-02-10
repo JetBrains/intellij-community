@@ -570,7 +570,6 @@ public final class XDebugSessionImpl implements XDebugSession {
     if (ignoreBreakpoints) {
       setBreakpointsDisabledTemporarily(true);
     }
-
     myDebugProcess.startStepOver(doResume());
   }
 
@@ -615,7 +614,6 @@ public final class XDebugSessionImpl implements XDebugSession {
     if (ignoreBreakpoints) {
       setBreakpointsDisabledTemporarily(true);
     }
-
     myDebugProcess.runToPosition(position, doResume());
   }
 
