@@ -27,6 +27,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder
 import org.junit.Test
 
+
 class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
   private lateinit var myFixture: MavenProjectJDKTestFixture
   private lateinit var myBuilder: MavenJavaModuleBuilder

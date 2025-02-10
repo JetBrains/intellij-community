@@ -29,6 +29,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
+import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
@@ -63,6 +64,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
         .env(getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug))
         .workingDirectory(Path(myConfiguration.runnerParameters.workingDirPath).asEelPath())
         .args(getArgs(eelApi))
+        .ptyOrStdErrSettings(Pty(-1, -1, true))
         .build()
 
       val result = eelApi.exec.execute(processOptions)
@@ -169,9 +171,9 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     val args = ParametersList()
     args.add(getScriptPath(eel))
     addIdeaParameters(args, eel)
+    addSettingParameters(args)
     args.addAll(myConfiguration.runnerParameters.options)
     args.addAll(myConfiguration.runnerParameters.goals)
-    addSettingParameters(args)
     return args.list
   }
 

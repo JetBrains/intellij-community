@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 public class MavenSpyOutputParser {
   public static final String PREFIX = "[IJ]-";
-  public static final String MAVEN4_PREFIX = "[INFO] [stdout]" + " " + PREFIX;
   private static final String SEPARATOR = "-[IJ]-";
   private static final String NEWLINE = "-[N]-";
   private static final String DOWNLOAD_DEPENDENCIES_NAME = "dependencies";
@@ -25,7 +24,7 @@ public class MavenSpyOutputParser {
   private final MavenParsingContext myContext;
 
   public static boolean isSpyLog(String s) {
-    return s != null && (s.startsWith(PREFIX) || s.startsWith(MAVEN4_PREFIX));
+    return s != null && s.startsWith(PREFIX);
   }
 
   public MavenSpyOutputParser(@NotNull MavenParsingContext context) {
@@ -79,12 +78,7 @@ public class MavenSpyOutputParser {
     if (line.startsWith(PREFIX)) {
       return line.substring(PREFIX.length());
     }
-    else if (line.startsWith(MAVEN4_PREFIX)) {
-      return line.substring(MAVEN4_PREFIX.length());
-    }
-    else {
-      return null;
-    }
+    return null;
   }
 
   protected void parse(int threadId,
