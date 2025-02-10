@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
 import org.jetbrains.kotlin.analysis.api.platform.packages.*
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
 import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KotlinRestrictedAnalysisService
+import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.withRestrictedDataAccess
 import org.jetbrains.kotlin.caches.project.CachedValue
 import org.jetbrains.kotlin.caches.project.getValue
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
@@ -57,7 +58,7 @@ private class IdeKotlinPackageProvider(
 
     override fun doesKotlinOnlyPackageExist(packageFqName: FqName): Boolean {
         return packageExistsCache.getOrPut(packageFqName) {
-            restrictedAnalysisService.withDumbModeHandling {
+            restrictedAnalysisService.withRestrictedDataAccess {
                 KotlinPackageIndexUtils.packageExists(packageFqName, searchScope)
             }
         }
@@ -67,7 +68,7 @@ private class IdeKotlinPackageProvider(
         if (packageExistsCache[packageFqName] == false) return emptySet()
 
         return subpackageNamesCache.getOrPut(packageFqName) { packageFqName ->
-            restrictedAnalysisService.withDumbModeHandling {
+            restrictedAnalysisService.withRestrictedDataAccess {
                 KotlinPackageIndexUtils.getSubpackageNames(packageFqName, searchScope)
             }
         } ?: emptySet()

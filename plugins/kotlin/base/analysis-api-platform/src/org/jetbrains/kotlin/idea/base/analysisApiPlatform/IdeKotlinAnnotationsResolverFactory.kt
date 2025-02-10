@@ -6,6 +6,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolver
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolverFactory
 import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KotlinRestrictedAnalysisService
+import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.withRestrictedDataAccess
 import org.jetbrains.kotlin.idea.stubindex.KotlinAnnotationsIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.name.ClassId
@@ -35,7 +36,7 @@ private class IdeKotlinAnnotationsResolver(
             "Queried annotation must be top-level, but was $annotationClassId"
         }
 
-        val annotationEntries = KotlinRestrictedAnalysisService.getInstance(project).withDumbModeHandling {
+        val annotationEntries = KotlinRestrictedAnalysisService.getInstance(project).withRestrictedDataAccess {
             KotlinAnnotationsIndex[annotationClassId.shortClassName.asString(), project, searchScope]
         }
 
@@ -128,7 +129,7 @@ private class IdeKotlinAnnotationsResolver(
     private fun Set<FqName>.resolveToSingleName(): FqName? = singleOrNull { annotationActuallyExists(it) }
 
     private fun annotationActuallyExists(matchingImport: FqName): Boolean =
-        KotlinRestrictedAnalysisService.getInstance(project).withDumbModeHandling {
+        KotlinRestrictedAnalysisService.getInstance(project).withRestrictedDataAccess {
             val foundClasses = KotlinFullClassNameIndex[matchingImport.asString(), project, searchScope]
             foundClasses.singleOrNull { it.isAnnotation() && it.isTopLevel() } != null
         }

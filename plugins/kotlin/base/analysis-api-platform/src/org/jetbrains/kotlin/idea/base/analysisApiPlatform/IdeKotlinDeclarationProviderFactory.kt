@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.platform.declarations.*
 import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
 import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KotlinRestrictedAnalysisService
+import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.withRestrictedDataAccess
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex
@@ -87,7 +88,7 @@ private class IdeKotlinDeclarationProvider(
         return result
     }
 
-    override fun getClassLikeDeclarationByClassId(classId: ClassId): KtClassLikeDeclaration? = withDumbModeHandling {
+    override fun getClassLikeDeclarationByClassId(classId: ClassId): KtClassLikeDeclaration? = withRestrictedDataAccess {
         val classOrObject = firstMatchingOrNull(KotlinFullClassNameIndex.indexKey, key = classId.asStringForIndexes()) { candidate ->
             candidate.getClassId() == classId
         }
@@ -104,7 +105,7 @@ private class IdeKotlinDeclarationProvider(
         return classOrObject ?: typeAlias
     }
 
-    override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> = withDumbModeHandling {
+    override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> = withRestrictedDataAccess {
         KotlinFullClassNameIndex.getAllElements(
             classId.asStringForIndexes(),
             project,
@@ -113,39 +114,39 @@ private class IdeKotlinDeclarationProvider(
             .toList()
     }
 
-    override fun getAllTypeAliasesByClassId(classId: ClassId): Collection<KtTypeAlias> = withDumbModeHandling {
+    override fun getAllTypeAliasesByClassId(classId: ClassId): Collection<KtTypeAlias> = withRestrictedDataAccess {
         listOfNotNull(getTypeAliasByClassId(classId)) //todo
     }
 
-    override fun getTopLevelCallableNamesInPackage(packageFqName: FqName): Set<Name> = withDumbModeHandling {
+    override fun getTopLevelCallableNamesInPackage(packageFqName: FqName): Set<Name> = withRestrictedDataAccess {
         getNamesInPackage(KotlinTopLevelCallableByPackageShortNameIndex.NAME, packageFqName, scope)
     }
 
-    override fun getTopLevelKotlinClassLikeDeclarationNamesInPackage(packageFqName: FqName): Set<Name> = withDumbModeHandling {
+    override fun getTopLevelKotlinClassLikeDeclarationNamesInPackage(packageFqName: FqName): Set<Name> = withRestrictedDataAccess {
         getNamesInPackage(KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex.NAME, packageFqName, scope)
     }
 
-    override fun findFilesForFacadeByPackage(packageFqName: FqName): Collection<KtFile> = withDumbModeHandling {
+    override fun findFilesForFacadeByPackage(packageFqName: FqName): Collection<KtFile> = withRestrictedDataAccess {
         KotlinFileFacadeClassByPackageIndex[packageFqName.asString(), project, scope]
     }
 
     override val hasSpecificClassifierPackageNamesComputation: Boolean get() = false
     override val hasSpecificCallablePackageNamesComputation: Boolean get() = false
 
-    override fun computePackageNames(): Set<String>? = withDumbModeHandling {
+    override fun computePackageNames(): Set<String>? = withRestrictedDataAccess {
         contextualModule?.let { KotlinModulePackageNamesProvider.getInstance(project).computePackageNames(it) }
     }
 
-    override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> = withDumbModeHandling {
+    override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> = withRestrictedDataAccess {
         //TODO original LC has platformSourcesFirst()
         KotlinFileFacadeFqNameIndex[facadeFqName.asString(), project, scope]
     }
 
-    override fun findInternalFilesForFacade(facadeFqName: FqName): Collection<KtFile> = withDumbModeHandling {
+    override fun findInternalFilesForFacade(facadeFqName: FqName): Collection<KtFile> = withRestrictedDataAccess {
         KotlinMultiFileClassPartIndex[facadeFqName.asString(), project, scope]
     }
 
-    override fun findFilesForScript(scriptFqName: FqName): Collection<KtScript> = withDumbModeHandling {
+    override fun findFilesForScript(scriptFqName: FqName): Collection<KtScript> = withRestrictedDataAccess {
         KotlinScriptFqnIndex[scriptFqName.asString(), project, scope]
     }
 
@@ -157,15 +158,15 @@ private class IdeKotlinDeclarationProvider(
         ) ?: firstMatchingOrNull(stubKey = KotlinInnerTypeAliasClassIdIndex.indexKey, key = classId.asString())
     }
 
-    override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> = withDumbModeHandling {
+    override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> = withRestrictedDataAccess {
         KotlinTopLevelPropertyFqnNameIndex.get(callableId.asTopLevelStringForIndexes(), project, scope)
     }
 
-    override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> = withDumbModeHandling {
+    override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> = withRestrictedDataAccess {
         KotlinTopLevelFunctionFqnNameIndex.get(callableId.asTopLevelStringForIndexes(), project, scope)
     }
 
-    override fun getTopLevelCallableFiles(callableId: CallableId): Collection<KtFile> = withDumbModeHandling {
+    override fun getTopLevelCallableFiles(callableId: CallableId): Collection<KtFile> = withRestrictedDataAccess {
         val callableIdString = callableId.asTopLevelStringForIndexes()
 
         buildSet {
@@ -182,7 +183,8 @@ private class IdeKotlinDeclarationProvider(
         }
     }
 
-    private inline fun <R> withDumbModeHandling(crossinline action: () -> R): R = restrictedAnalysisService.withDumbModeHandling(action)
+    private inline fun <R> withRestrictedDataAccess(crossinline action: () -> R): R =
+        restrictedAnalysisService.withRestrictedDataAccess(action)
 
     companion object {
         private val log = Logger.getInstance(IdeKotlinDeclarationProvider::class.java)

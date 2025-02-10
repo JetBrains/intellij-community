@@ -23,18 +23,10 @@ internal class IdeKotlinRestrictedAnalysisService(private val project: Project) 
     override fun rejectRestrictedAnalysis(): Nothing {
         throw IndexNotReadyException.create()
     }
-}
 
-/**
- * Accesses indices with [DumbModeAccessType.RELIABLE_DATA_ONLY] if deemed necessary and applicable by [KotlinRestrictedAnalysisService].
- */
-internal inline fun <R> KotlinRestrictedAnalysisService?.withDumbModeHandling(crossinline action: () -> R): R {
-    return if (this != null && isAnalysisRestricted && isRestrictedAnalysisAllowed) {
+    override fun <R> runWithRestrictedDataAccess(action: () -> R): R =
         FileBasedIndex.getInstance().ignoreDumbMode(
             DumbModeAccessType.RELIABLE_DATA_ONLY,
-            ThrowableComputable { action() },
+            ThrowableComputable(action),
         )
-    } else {
-        action()
-    }
 }
