@@ -2,12 +2,16 @@
 package com.intellij.platform.project
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.kernel.withKernel
+import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.awaitCancellationAndInvoke
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -25,6 +29,7 @@ abstract class ProjectEntitiesStorage {
    */
   // withKernel should be kept here, since Kernel is not properly propagated in tests
   // and project entity may be created from threads without attached Kernel
+  @OptIn(AwaitCancellationAndInvoke::class)
   @Suppress("DEPRECATION")
   suspend fun createEntity(project: Project): Unit = withKernel {
     val projectId = project.projectId()
@@ -34,13 +39,14 @@ abstract class ProjectEntitiesStorage {
 
     LOG.info("Entity for project $projectId created successfully")
 
-    Disposer.register(project, Disposable {
+    project.service<ProjectEntityScopeService>().coroutineScope.awaitCancellationAndInvoke {
       LOG.info("Project $projectId is disposed, removing entity")
-      runBlockingMaybeCancellable {
-        removeProjectEntity(project)
-      }
-    })
+      removeProjectEntity(project)
+    }
   }
+
+  @Service(Service.Level.PROJECT)
+  private class ProjectEntityScopeService(val coroutineScope: CoroutineScope)
 
   /**
    * Creates [ProjectEntity] for the given [Project] and stores it in the Rhizome DB.
