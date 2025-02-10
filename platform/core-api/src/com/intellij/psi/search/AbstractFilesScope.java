@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
@@ -9,12 +9,14 @@ import com.intellij.openapi.vfs.VirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFileSetEx;
 import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-abstract class AbstractFilesScope extends GlobalSearchScope implements VirtualFileEnumeration {
+@ApiStatus.Internal
+public abstract class AbstractFilesScope extends GlobalSearchScope implements VirtualFileEnumeration {
   volatile Boolean myHasFilesOutOfProjectRoots;
 
   /** @param hasFilesOutOfProjectRoots optimization */
@@ -31,7 +33,7 @@ abstract class AbstractFilesScope extends GlobalSearchScope implements VirtualFi
   abstract @NotNull VirtualFileSet getFiles();
 
   @Override
-  public boolean contains(final @NotNull VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     return getFiles().contains(file);
   }
 

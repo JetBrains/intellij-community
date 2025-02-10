@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class StubFieldAccessor implements Supplier<ObjectStubSerializer<?, ? extends Stub>> {
-  final String externalId;
+  public final String externalId;
   private final Field myField;
   private volatile ObjectStubSerializer<?, Stub> myFieldValue;
 

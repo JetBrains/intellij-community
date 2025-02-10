@@ -361,7 +361,7 @@ final class MaterialStubList extends StubList {
 
     for (int i = 0; i < copy.size(); i++) {
       StubBase<?> stub = copy.get(i);
-      stub.myStubList = copy;
+      stub.setStubList(copy);
       stub.id = i;
     }
 

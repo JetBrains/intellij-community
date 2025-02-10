@@ -17,7 +17,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<StubElement<?>> implements StubElement<T> {
-  StubList myStubList;
+  private StubList myStubList;
   private volatile T myPsi;
 
   private static final AtomicReferenceFieldUpdater<StubBase, PsiElement> myPsiUpdater =

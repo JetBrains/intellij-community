@@ -4547,15 +4547,7 @@ a:com.intellij.psi.search.GlobalSearchScope
 - uniteWith(com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.search.GlobalSearchScope
 c:com.intellij.psi.search.GlobalSearchScope$FilesScope
 - com.intellij.psi.search.GlobalSearchScope
-- asArray():I[]
-- calcHashCode():I
-- contains(I):Z
-- contains(com.intellij.openapi.vfs.VirtualFile):Z
-- equals(java.lang.Object):Z
 - getFiles():com.intellij.openapi.vfs.VirtualFileSet
-- getFilesIfCollection():java.util.Collection
-- isSearchInLibraries():Z
-- isSearchInModuleContent(com.intellij.openapi.module.Module):Z
 f:com.intellij.psi.search.GlobalSearchScopeUtil
 - <init>():V
 - s:getLocalScopeFiles(com.intellij.psi.search.LocalSearchScope):java.util.Set
