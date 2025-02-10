@@ -196,7 +196,7 @@ object UpdateChecker {
 
     return productDataLock.withLock {
       val cached = productDataCache?.get()
-      if (cached != null && url == productDataUrl) return@withLock cached.getOrThrow()
+      if (cached != null && url == productDataUrl && cached.isSuccess) return@withLock cached.getOrThrow()
 
       val result = runCatching {
         LOG.debug { "loading ${url}" }
@@ -210,9 +210,10 @@ object UpdateChecker {
             }
           }
       }
-
-      productDataCache = SoftReference(result)
-      productDataUrl = url
+      if (result.isSuccess) {
+        productDataCache = SoftReference(result)
+        productDataUrl = url
+      }
       AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MIN, TimeUnit.MINUTES)
       result.getOrThrow()
     }
