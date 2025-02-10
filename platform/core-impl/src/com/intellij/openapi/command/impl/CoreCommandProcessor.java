@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.AccessToken;
@@ -24,7 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class CoreCommandProcessor extends CommandProcessorEx {
-  private static class CommandDescriptor implements CommandToken {
+  @ApiStatus.Internal
+  public static final class CommandDescriptor implements CommandToken {
     public final @NotNull Runnable myCommand;
     public final Project myProject;
     public @NlsContexts.Command String myName;
