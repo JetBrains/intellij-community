@@ -516,9 +516,11 @@ open class ConsoleViewImpl protected constructor(
 
   protected open fun disposeEditor() {
     UIUtil.invokeAndWaitIfNeeded {
-      val editor = editor
-      if (!editor!!.isDisposed) {
-        EditorFactory.getInstance().releaseEditor(editor)
+      ApplicationManager.getApplication().runWriteIntentReadAction<Unit, Exception> {
+        val editor = editor
+        if (!editor!!.isDisposed) {
+          EditorFactory.getInstance().releaseEditor(editor)
+        }
       }
     }
   }
