@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.CommitMessageI
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
@@ -85,10 +84,11 @@ internal class ChangesViewCommitWorkflowHandler(
 
   override fun uiDataSnapshot(sink: DataSink) {
     super.uiDataSnapshot(sink)
-    if (!isActive) return
-    sink[VcsDataKeys.COMMIT_WORKFLOW_HANDLER] = this
-    sink[VcsDataKeys.COMMIT_WORKFLOW_UI] = ui
-    sink[VcsDataKeys.COMMIT_MESSAGE_CONTROL] = ui.commitMessageUi as? CommitMessageI
+    if (!isActive) {
+      sink.setNull(VcsDataKeys.COMMIT_WORKFLOW_HANDLER)
+      sink.setNull(VcsDataKeys.COMMIT_WORKFLOW_UI)
+      sink.setNull(VcsDataKeys.COMMIT_MESSAGE_CONTROL)
+    }
   }
 
   override fun commitOptionsCreated() {
