@@ -17,6 +17,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ConfigImportHelper;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -77,7 +78,9 @@ import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY;
@@ -94,6 +97,8 @@ public final class TerminalToolWindowManager implements Disposable {
   private final AbstractTerminalRunner<?> myTerminalRunner;
   private TerminalDockContainer myDockContainer;
   private final Map<TerminalWidget, TerminalContainer> myContainerByWidgetMap = new HashMap<>();
+
+  private CompletableFuture<Void> myTabsRestoredFuture = CompletableFuture.completedFuture(null);
 
   public @NotNull AbstractTerminalRunner<?> getTerminalRunner() {
     return myTerminalRunner;
@@ -156,8 +161,27 @@ public final class TerminalToolWindowManager implements Disposable {
         public void toolWindowShown(@NotNull ToolWindow toolWindow) {
           if (isTerminalToolWindow(toolWindow) && myToolWindow == toolWindow &&
               toolWindow.isVisible() && toolWindow.getContentManager().isEmpty()) {
-            // open a new session if all tabs were closed manually
-            createNewSession(myTerminalRunner, null, null, true, true);
+            if (myTabsRestoredFuture.isDone()) {
+              // Open a new session if all tabs were closed manually.
+              createNewSession(myTerminalRunner, null, null, true, true);
+            }
+            else {
+              // Wait for tabs restoration for some time and check if there are any tabs restored.
+              Runnable createSessionIfNeeded = () -> {
+                ApplicationManager.getApplication().invokeLater(() -> {
+                  if (!myProject.isDisposed() && toolWindow.getContentManager().isEmpty()) {
+                    createNewSession(myTerminalRunner, null, null, true, true);
+                  }
+                }, ModalityState.any());
+              };
+
+              myTabsRestoredFuture.thenRun(createSessionIfNeeded)
+                .orTimeout(2, TimeUnit.SECONDS)
+                .exceptionally((t) -> {
+                  createSessionIfNeeded.run();
+                  return null;
+                });
+            }
           }
         }
       });
@@ -189,10 +213,18 @@ public final class TerminalToolWindowManager implements Disposable {
    * Should be used only with Reworked Terminal (Gen2).
    */
   void restoreTabsFromBackend() {
+    myTabsRestoredFuture = new CompletableFuture<Void>()
+      .orTimeout(5, TimeUnit.SECONDS)
+      .exceptionally((t) -> {
+        LOG.error("Failed to restore tabs from the backend in the given timeout", t);
+        return null;
+      });
+
     TerminalSessionStartHelper.getStoredTerminalTabs(myProject).thenAccept(tabs -> {
       ApplicationManager.getApplication().invokeLater(() -> {
         doRestoreTabsFromBackend(tabs);
-      });
+        myTabsRestoredFuture.complete(null);
+      }, ModalityState.any());
     });
   }
 
