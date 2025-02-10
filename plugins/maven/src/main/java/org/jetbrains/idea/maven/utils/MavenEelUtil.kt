@@ -42,6 +42,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.config.MavenConfig
 import org.jetbrains.idea.maven.config.MavenConfigSettings
 import org.jetbrains.idea.maven.execution.SyncBundle
@@ -241,7 +242,10 @@ object MavenEelUtil  {
 
   @JvmStatic
   fun resolveUserSettingsPathBlocking(overriddenUserSettingsFile: String?, project: Project?): Path {
-    return runBlockingMaybeCancellable { resolveUserSettingsPathAsync(overriddenUserSettingsFile, project) }
+    @Suppress("RAW_RUN_BLOCKING")
+    return runBlocking {
+      resolveUserSettingsPathAsync(overriddenUserSettingsFile, project)
+    }
   }
 
   suspend fun resolveLocalRepositoryAsync(
