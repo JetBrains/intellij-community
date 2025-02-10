@@ -339,7 +339,7 @@ public class FileChooserDescriptor implements Cloneable {
     return myChooseFiles || myChooseJarContents && isArchive(file);
   }
 
-  private boolean matchesFilters(VirtualFile file) {
+  protected boolean matchesFilters(VirtualFile file) {
     return
       (myExtensionFilter == null || ContainerUtil.exists(myExtensionFilter.second, ext -> Strings.endsWithIgnoreCase(file.getName(), '.' + ext))) &&
       (myFileTypeFilter == null || ContainerUtil.exists(myFileTypeFilter, type -> FileTypeRegistry.getInstance().isFileOfType(file, type))) &&

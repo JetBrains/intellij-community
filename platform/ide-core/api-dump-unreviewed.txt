@@ -1332,6 +1332,7 @@ c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - isShowFileSystemRoots():Z
 - isShowHiddenFiles():Z
 - isTreeRootVisible():Z
+- p:matchesFilters(com.intellij.openapi.vfs.VirtualFile):Z
 - putUserData(com.intellij.openapi.actionSystem.DataKey,java.lang.Object):V
 - setDescription(java.lang.String):V
 - setForcedToUseIdeaFileChooser(Z):V
