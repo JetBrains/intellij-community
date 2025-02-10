@@ -224,7 +224,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   @Override
-  public @NotNull List<ProductionMarker> getProductions() {
+  public @NotNull List<? extends Production> getProductions() {
     return new AbstractList<ProductionMarker>() {
       @Override
       public ProductionMarker get(int index) {
@@ -239,12 +239,13 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   /**
-   * Base interface for nodes in light tree
+   * Base interface for nodes in a light tree
    */
-  private interface Node extends LighterASTNode {
+  interface Node extends LighterASTNode {
     boolean tokenTextMatches(@NotNull CharSequence chars);
   }
 
+  @ApiStatus.Internal
   public abstract static class ProductionMarker implements Node, Production {
     final int markerId;
     protected final PsiBuilderImpl myBuilder;
@@ -562,8 +563,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
    * A node in light tree
    * Represents a chameleon consisting several lexemes which does not support light parsing
    */
-  private static class TokenRangeNode extends TokenRange implements LighterASTTokenNode { }
-
+  private static final class TokenRangeNode extends TokenRange implements LighterASTTokenNode { }
   /**
    * A node in light tree
    * Represents a leaf node
@@ -591,7 +591,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
    * A node in light tree
    * Represents a chameleon consisting of one or several lexemes and supporting light parsing
    */
-  private static class LazyParseableToken extends TokenRange implements LighterLazyParseableNode {
+  private static final class LazyParseableToken extends TokenRange implements LighterLazyParseableNode {
     private final MyTreeStructure myParentStructure;
     private final int myStartIndex;
     private final int myEndIndex;
@@ -652,7 +652,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     }
   }
 
-  static class ErrorItem extends ProductionMarker {
+  static final class ErrorItem extends ProductionMarker {
     private @NlsContexts.DetailedDescription String myMessage;
 
     ErrorItem(int markerId, @NotNull PsiBuilderImpl builder) {

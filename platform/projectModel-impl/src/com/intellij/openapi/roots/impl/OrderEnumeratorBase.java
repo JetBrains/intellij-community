@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,12 +13,14 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnumeratorSettings {
+@ApiStatus.Internal
+public abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnumeratorSettings {
   private static final Logger LOG = Logger.getInstance(OrderEnumeratorBase.class);
   private boolean myProductionOnly;
   private boolean myCompileOnly;
