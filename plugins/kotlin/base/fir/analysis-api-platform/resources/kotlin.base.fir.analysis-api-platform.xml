@@ -46,7 +46,7 @@
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$SdkChangeListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
 
-    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.InvalidateCachesAfterDumbMode"
+    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeDumbModeInvalidationListener"
               topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
   </projectListeners>
 
