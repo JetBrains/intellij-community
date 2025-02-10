@@ -343,6 +343,18 @@ public final class JavaErrorKinds {
     error("class.cannot.extend.multiple.classes");
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_EXTENDS_INTERFACE = 
     parameterized("class.extends.interface");
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_EXTENDS_SEALED_LOCAL = 
+    parameterized("class.extends.sealed.local");
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_EXTENDS_SEALED_NOT_PERMITTED = 
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.extends.sealed.not.permitted")
+      .withRawDescription((ref, cls) -> message("class.extends.sealed.not.permitted", formatClass(cls)));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_EXTENDS_SEALED_ANOTHER_PACKAGE = 
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.extends.sealed.another.package")
+      .withRawDescription((ref, cls) -> {
+        PsiClass superClass = (PsiClass)requireNonNull(ref.resolve());
+        return StringUtil.capitalize(message("class.extends.sealed.another.package", JavaElementKind.fromElement(cls).subject(), formatClass(cls),
+                       JavaElementKind.fromElement(superClass).subject(), formatClass(superClass)));
+      });
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_EXTENDS_PROHIBITED_CLASS = 
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.extends.prohibited.class")
       .withRawDescription((ref, cls) -> message("class.extends.prohibited.class", cls.getQualifiedName()));

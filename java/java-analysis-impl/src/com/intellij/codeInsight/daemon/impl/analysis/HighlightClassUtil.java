@@ -15,7 +15,6 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,62 +33,6 @@ public final class HighlightClassUtil {
   @Deprecated
   public static boolean isRestrictedIdentifier(@Nullable String typeName, @NotNull LanguageLevel level) {
     return PsiTypesUtil.isRestrictedIdentifier(typeName, level);
-  }
-
-  public static HighlightInfo.Builder checkExtendsSealedClass(@NotNull PsiClass aClass,
-                                                       @NotNull PsiClass superClass,
-                                                       @NotNull PsiJavaCodeReferenceElement elementToHighlight) {
-    if (superClass.hasModifierProperty(PsiModifier.SEALED)) {
-      if (PsiUtil.isLocalClass(aClass)) {
-        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .range(elementToHighlight)
-          .descriptionAndTooltip(JavaErrorBundle.message("local.classes.must.not.extend.sealed.classes"));
-        IntentionAction action = QuickFixFactory.getInstance().createConvertLocalToInnerAction(aClass);
-        info.registerFix(action, null, null, null, null);
-        return info;
-      }
-
-      if (!JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, superClass) &&
-          JavaPsiModuleUtil.findDescriptorByElement(aClass) == null) {
-        String description = StringUtil.capitalize(JavaErrorBundle.message(
-          "class.not.allowed.to.extend.sealed.class.from.another.package",
-          JavaElementKind.fromElement(aClass).subject(), HighlightUtil.formatClass(aClass, false),
-          JavaElementKind.fromElement(superClass).object(), HighlightUtil.formatClass(superClass, true)));
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(description);
-        PsiFile parentFile = superClass.getContainingFile();
-        if (parentFile instanceof PsiClassOwner classOwner) {
-          String parentPackage = classOwner.getPackageName();
-          IntentionAction action = QuickFixFactory.getInstance().createMoveClassToPackageFix(aClass, parentPackage);
-          info.registerFix(action, null, null, null, null);
-        }
-        return info;
-      }
-
-      PsiClassType[] permittedTypes = superClass.getPermitsListTypes();
-      if (permittedTypes.length > 0) {
-        PsiManager manager = superClass.getManager();
-        if (ContainerUtil.exists(permittedTypes, permittedType -> manager.areElementsEquivalent(aClass, permittedType.resolve()))) {
-          return null;
-        }
-      }
-      else if (aClass.getContainingFile() == superClass.getContainingFile()) {
-        return null;
-      }
-      PsiIdentifier identifier = aClass.getNameIdentifier();
-      if (identifier == null) {
-        return null;
-      }
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .descriptionAndTooltip(JavaErrorBundle.message("not.allowed.in.sealed.hierarchy", aClass.getName()))
-        .range(elementToHighlight);
-      if (!(superClass instanceof PsiCompiledElement)) {
-        IntentionAction action = QuickFixFactory.getInstance().createAddToPermitsListFix(aClass, superClass);
-        info.registerFix(action, null, null, null, null);
-      }
-      return info;
-    }
-    return null;
   }
 
   static void checkPermitsList(@NotNull PsiReferenceList list, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {

@@ -556,24 +556,6 @@ public final class HighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkElementInReferenceList(@NotNull PsiJavaCodeReferenceElement ref,
-                                                           @NotNull PsiReferenceList referenceList,
-                                                           @NotNull JavaResolveResult resolveResult) {
-    PsiElement resolved = resolveResult.getElement();
-    HighlightInfo.Builder builder = null;
-    PsiElement refGrandParent = referenceList.getParent();
-    if (resolved instanceof PsiClass aClass) {
-      if (refGrandParent instanceof PsiClass parentClass) {
-        if (!(refGrandParent instanceof PsiTypeParameter)) {
-          if (referenceList.equals(parentClass.getImplementsList()) || referenceList.equals(parentClass.getExtendsList())) {
-            builder = HighlightClassUtil.checkExtendsSealedClass(parentClass, aClass, ref);
-          }
-        }
-      }
-    }
-    return builder;
-  }
-
   static HighlightInfo.Builder checkClassReferenceAfterQualifier(@NotNull PsiReferenceExpression expression, @Nullable PsiElement resolved) {
     if (!(resolved instanceof PsiClass)) return null;
     PsiExpression qualifier = expression.getQualifierExpression();

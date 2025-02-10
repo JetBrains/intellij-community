@@ -3,6 +3,7 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.module.Module;
@@ -819,4 +820,34 @@ final class ClassChecker {
       }
     }
   }
+
+  void checkExtendsSealedClass(@NotNull PsiClass aClass,
+                               @NotNull PsiClass superClass,
+                               @NotNull PsiJavaCodeReferenceElement elementToHighlight) {
+    if (superClass.hasModifierProperty(PsiModifier.SEALED)) {
+      if (PsiUtil.isLocalClass(aClass)) {
+        myVisitor.report(JavaErrorKinds.CLASS_EXTENDS_SEALED_LOCAL.create(elementToHighlight, aClass));
+        return;
+      }
+      if (!JavaPsiFacade.getInstance(aClass.getProject()).arePackagesTheSame(aClass, superClass) &&
+          JavaPsiModuleUtil.findDescriptorByElement(aClass) == null) {
+        myVisitor.report(JavaErrorKinds.CLASS_EXTENDS_SEALED_ANOTHER_PACKAGE.create(elementToHighlight, aClass));
+      }
+
+      PsiClassType[] permittedTypes = superClass.getPermitsListTypes();
+      if (permittedTypes.length > 0) {
+        PsiManager manager = superClass.getManager();
+        if (ContainerUtil.exists(permittedTypes, permittedType -> manager.areElementsEquivalent(aClass, permittedType.resolve()))) {
+          return;
+        }
+      }
+      else if (aClass.getContainingFile() == superClass.getContainingFile()) {
+        return;
+      }
+      PsiIdentifier identifier = aClass.getNameIdentifier();
+      if (identifier == null) return;
+      myVisitor.report(JavaErrorKinds.CLASS_EXTENDS_SEALED_NOT_PERMITTED.create(elementToHighlight, aClass));
+    }
+  }
+
 }

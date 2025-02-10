@@ -297,10 +297,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     add(HighlightUtil.checkReference(ref, result));
 
-    if (resolved != null && parent instanceof PsiReferenceList referenceList && !hasErrorResults()) {
-      add(HighlightUtil.checkElementInReferenceList(ref, referenceList, result));
-    }
-
     if (parent instanceof PsiAnonymousClass psiAnonymousClass && ref.equals(psiAnonymousClass.getBaseClassReference())) {
       GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(psiAnonymousClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
       myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(psiAnonymousClass));

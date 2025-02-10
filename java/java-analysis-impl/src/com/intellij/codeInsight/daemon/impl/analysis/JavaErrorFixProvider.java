@@ -777,6 +777,7 @@ final class JavaErrorFixProvider {
         sink.accept(myFactory.createRenameElementFix(aClass));
       }
     });
+    fix(CLASS_SEALED_NO_INHERITORS, error -> addModifierFix(error.psi(), PsiModifier.NON_SEALED));
     fix(CLASS_SEALED_INCOMPLETE_PERMITS, error -> myFactory.createFillPermitsListFix(requireNonNull(error.psi().getNameIdentifier())));
     multi(CLASS_SEALED_INHERITOR_EXPECTED_MODIFIERS_CAN_BE_FINAL, error -> List.of(
       addModifierFix(error.psi(), PsiModifier.FINAL),
@@ -840,6 +841,19 @@ final class JavaErrorFixProvider {
       if (owner instanceof PsiClass klass && !(klass instanceof PsiAnonymousClass) && ref.resolve() instanceof PsiClass throwableClass) {
         PsiClassType classType = JavaPsiFacade.getElementFactory(error.project()).createType(throwableClass);
         return myFactory.createExtendsListFix(klass, classType, false);
+      }
+      return null;
+    });
+    fix(CLASS_EXTENDS_SEALED_LOCAL, error -> myFactory.createConvertLocalToInnerAction(error.context()));
+    fix(CLASS_EXTENDS_SEALED_ANOTHER_PACKAGE, error -> {
+      if (error.psi().resolve() instanceof PsiClass superClass && superClass.getContainingFile() instanceof PsiClassOwner classOwner) {
+        return myFactory.createMoveClassToPackageFix(error.context(), classOwner.getPackageName());
+      }
+      return null;
+    });
+    fix(CLASS_EXTENDS_SEALED_NOT_PERMITTED, error -> {
+      if (error.psi().resolve() instanceof PsiClass superClass && !(superClass instanceof PsiCompiledElement)) {
+        return myFactory.createAddToPermitsListFix(error.context(), superClass);
       }
       return null;
     });

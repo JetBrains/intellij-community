@@ -1021,7 +1021,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
             myClassChecker.checkExtendsProhibitedClass(aClass, parentClass, ref);
           }
           if (!hasErrorResults()) {
-            // TODO: checkExtendsSealedClass
+            myClassChecker.checkExtendsSealedClass(parentClass, aClass, ref);
           }
           if (!hasErrorResults()) {
             myGenericsChecker.checkCannotInheritFromTypeParameter(aClass, ref);

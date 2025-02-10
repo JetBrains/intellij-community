@@ -99,5 +99,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.searchEverywhere" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.searchEverywhere.testFramework" />
+    <orderEntry type="module" module-name="intellij.java.codeserver.highlighting" scope="TEST" />
   </component>
 </module>
