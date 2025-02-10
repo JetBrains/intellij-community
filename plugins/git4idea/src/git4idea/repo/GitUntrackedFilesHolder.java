@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer;
@@ -89,7 +89,9 @@ public class GitUntrackedFilesHolder implements Disposable {
    */
   public void addUntracked(@NotNull Collection<? extends FilePath> files) {
     synchronized (LOCK) {
-      myUntrackedFiles.add(files);
+      if (myUntrackedFiles.getInitialized()) {
+        myUntrackedFiles.add(files);
+      }
       if (!myEverythingDirty) myDirtyFiles.addAll(files);
     }
     ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
@@ -101,7 +103,9 @@ public class GitUntrackedFilesHolder implements Disposable {
    */
   public void removeUntracked(@NotNull Collection<? extends FilePath> files) {
     synchronized (LOCK) {
-      myUntrackedFiles.remove(files);
+      if (myUntrackedFiles.getInitialized()) {
+        myUntrackedFiles.remove(files);
+      }
       if (!myEverythingDirty) myDirtyFiles.addAll(files);
     }
     ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
@@ -355,7 +359,9 @@ public class GitUntrackedFilesHolder implements Disposable {
     @Override
     public void removeIgnoredFiles(@NotNull Collection<? extends FilePath> filePaths) {
       synchronized (LOCK) {
-        ignoredFiles.remove(filePaths);
+        if (ignoredFiles.getInitialized()) {
+          ignoredFiles.remove(filePaths);
+        }
 
         if (!myEverythingDirty) {
           // break parent ignored directory into separate ignored files
