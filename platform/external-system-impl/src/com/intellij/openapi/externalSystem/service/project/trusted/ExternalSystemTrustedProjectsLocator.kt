@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.PathPrefixTree
 import java.nio.file.Path
 
-private class ExternalSystemTrustedProjectsLocator : TrustedProjectsLocator {
+class ExternalSystemTrustedProjectsLocator : TrustedProjectsLocator {
   override fun getProjectRoots(project: Project): List<Path> {
     val projectRoots = PathPrefixTree.createSet()
     ExternalSystemManager.EP_NAME.forEachExtensionSafe { manager ->

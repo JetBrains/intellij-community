@@ -709,6 +709,11 @@ f:com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrus
 - sf:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId):Z
 - sf:confirmLoadingUntrustedProject(com.intellij.openapi.project.Project,java.util.Collection):Z
 - f:confirmLoadingUntrustedProjectAsync(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectsLocator
+- com.intellij.ide.trustedProjects.TrustedProjectsLocator
+- <init>():V
+- getProjectRoots(com.intellij.openapi.project.Project):java.util.List
+- getProjectRoots(java.nio.file.Path,com.intellij.openapi.project.Project):java.util.List
 a:com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder
 - com.intellij.ide.util.projectWizard.ModuleBuilder
 - p:<init>(com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.externalSystem.settings.ExternalProjectSettings):V

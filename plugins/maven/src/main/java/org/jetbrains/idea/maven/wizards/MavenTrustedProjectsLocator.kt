@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.toNioPathOrNull
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import java.nio.file.Path
 
-private class MavenTrustedProjectsLocator : TrustedProjectsLocator {
+class MavenTrustedProjectsLocator : TrustedProjectsLocator {
   override fun getProjectRoots(project: Project): List<Path> {
     val projectRoots = VirtualFilePrefixTree.createSet()
     val projectsManager = MavenProjectsManager.getInstance(project)
