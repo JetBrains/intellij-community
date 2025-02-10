@@ -1,22 +1,23 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.containers.Interner;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@SuppressWarnings("SSBasedInspection")
 public final class JDOMInterner {
   @ApiStatus.Internal
   public static final JDOMInterner INSTANCE = new JDOMInterner();
 
-  private final Interner<String> myStrings = Interner.createStringInterner();
+  private final ObjectOpenHashSet<String> strings = new ObjectOpenHashSet<>();
   private final ObjectOpenCustomHashSet<Element> myElements = new ObjectOpenCustomHashSet<>(new Hash.Strategy<Element>() {
     @Override
     public int hashCode(Element e) {
@@ -107,14 +108,14 @@ public final class JDOMInterner {
     Text interned = myTexts.get(text);
     if (interned == null) {
       // no need to intern CDATA - there are no duplicates anyway
-      interned = text instanceof CDATA ? new ImmutableCDATA(text.getText()) : new ImmutableText(myStrings.intern(text.getText()));
+      interned = text instanceof CDATA ? new ImmutableCDATA(text.getText()) : new ImmutableText(strings.addOrGet(text.getText()));
       myTexts.add(interned);
     }
     return interned;
   }
 
   synchronized String internString(String s) {
-    return myStrings.intern(s);
+    return strings.addOrGet(s);
   }
 
   public static int hashCode(@Nullable Element e) {

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jdom;
 
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.filter.Filter;
@@ -54,8 +53,8 @@ final class ImmutableElement extends Element {
   }
 
   private static @NotNull List<Attribute> internAttributes(@NotNull Element origin, @NotNull JDOMInterner interner) {
-    List<Attribute> originAttributes = JDOMUtil.getAttributes(origin);
-    if (originAttributes.isEmpty()) {
+    List<Attribute> originAttributes = origin.hasAttributes() ? origin.getAttributes() : null;
+    if (originAttributes == null || originAttributes.isEmpty()) {
       return EMPTY_LIST;
     }
 
