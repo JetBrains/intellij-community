@@ -533,7 +533,6 @@ a:com.intellij.openapi.externalSystem.service.project.AbstractIdeModifiableModel
 - getModifiableModuleModel():com.intellij.openapi.module.ModifiableModuleModel
 - a:getModifiableProjectLibrariesModel():com.intellij.openapi.roots.libraries.LibraryTable$ModifiableModel
 - getModifiableRootModel(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ModifiableRootModel
-- getModifiableWorkspace():com.intellij.openapi.externalSystem.service.project.ModifiableWorkspace
 - getModules():com.intellij.openapi.module.Module[]
 - getOrderEntries(com.intellij.openapi.module.Module):com.intellij.openapi.roots.OrderEntry[]
 - getProductionModuleName(com.intellij.openapi.module.Module):java.lang.String

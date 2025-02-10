@@ -217,8 +217,11 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     return myModifiableLibraryModels.computeIfAbsent(library, k -> doGetModifiableLibraryModel(library));
   }
 
-  public @Nullable ModifiableWorkspace getModifiableWorkspace() {
-    if (myModifiableWorkspace == null && ExternalProjectsWorkspaceImpl.isDependencySubstitutionEnabled()) {
+  private @Nullable ModifiableWorkspace getModifiableWorkspace() {
+    if (!ExternalProjectsWorkspaceImpl.isDependencySubstitutionEnabled()) {
+      return null;
+    }
+    if (myModifiableWorkspace == null) {
       myModifiableWorkspace = doGetModifiableWorkspace();
     }
     return myModifiableWorkspace;
@@ -314,28 +317,25 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
   @Override
   public ModuleOrderEntry trySubstitute(Module ownerModule, LibraryOrderEntry libraryOrderEntry, ProjectCoordinate publicationId) {
-    String workspaceModuleCandidate = findModuleByPublication(publicationId);
+    ModifiableWorkspace workspace = getModifiableWorkspace();
+    String workspaceModuleCandidate = workspace == null ? null : workspace.findModule(publicationId);
     Module workspaceModule = workspaceModuleCandidate == null ? null : findIdeModule(workspaceModuleCandidate);
     if (workspaceModule == null) {
       return null;
     }
-    else {
-      ModifiableRootModel modifiableRootModel = getModifiableRootModel(ownerModule);
-      ModuleOrderEntry moduleOrderEntry = modifiableRootModel.findModuleOrderEntry(workspaceModule);
-      if (moduleOrderEntry == null) // if that module exists already (after re-import)
-        moduleOrderEntry = modifiableRootModel.addModuleOrderEntry(workspaceModule);
-      moduleOrderEntry.setScope(libraryOrderEntry.getScope());
-      moduleOrderEntry.setExported(libraryOrderEntry.isExported());
-      ModifiableWorkspace workspace = getModifiableWorkspace();
-
-      assert workspace != null;
-      workspace.addSubstitution(ownerModule.getName(),
-                                workspaceModule.getName(),
-                                libraryOrderEntry.getLibraryName(),
-                                libraryOrderEntry.getScope());
-      modifiableRootModel.removeOrderEntry(libraryOrderEntry);
-      return moduleOrderEntry;
+    ModifiableRootModel modifiableRootModel = getModifiableRootModel(ownerModule);
+    ModuleOrderEntry moduleOrderEntry = modifiableRootModel.findModuleOrderEntry(workspaceModule);
+    if (moduleOrderEntry == null) { // if that module exists already (after re-import)
+      moduleOrderEntry = modifiableRootModel.addModuleOrderEntry(workspaceModule);
     }
+    moduleOrderEntry.setScope(libraryOrderEntry.getScope());
+    moduleOrderEntry.setExported(libraryOrderEntry.isExported());
+    workspace.addSubstitution(ownerModule.getName(),
+                              workspaceModule.getName(),
+                              libraryOrderEntry.getLibraryName(),
+                              libraryOrderEntry.getScope());
+    modifiableRootModel.removeOrderEntry(libraryOrderEntry);
+    return moduleOrderEntry;
   }
 
   @Override
@@ -382,7 +382,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
     Map<String, String> toSubstitute = new HashMap<>();
     ProjectDataManager projectDataManager = ProjectDataManager.getInstance();
-    for (ExternalSystemManager<?, ?, ?, ?, ?> manager: ExternalSystemManager.EP_NAME.getIterable()) {
+    ExternalSystemManager.EP_NAME.forEachExtensionSafe(manager -> {
       Collection<ExternalProjectInfo> projectsData = projectDataManager.getExternalProjectsData(myProject, manager.getSystemId());
       for (ExternalProjectInfo projectInfo: projectsData) {
         if (projectInfo.getExternalProjectStructure() == null) {
@@ -392,13 +392,13 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
         Collection<DataNode<LibraryData>> libraryNodes =
           ExternalSystemApiUtil.findAll(projectInfo.getExternalProjectStructure(), ProjectKeys.LIBRARY);
         for (DataNode<LibraryData> libraryNode: libraryNodes) {
-          String substitutionModuleCandidate = findModuleByPublication(libraryNode.getData());
+          String substitutionModuleCandidate = workspace.findModule(libraryNode.getData());
           if (substitutionModuleCandidate != null) {
             toSubstitute.put(libraryNode.getData().getInternalName(), substitutionModuleCandidate);
           }
         }
       }
-    }
+    });
 
     for (Module module: getModules()) {
       ModifiableRootModel modifiableRootModel = getModifiableRootModel(module);

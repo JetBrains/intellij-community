@@ -119,9 +119,9 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   private void workspaceModelCommit() {
     ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
-      if (ExternalProjectsWorkspaceImpl.isDependencySubstitutionEnabled()) {
-        updateSubstitutions();
-      }
+
+      updateSubstitutions();
+
       LibraryTable.ModifiableModel projectLibrariesModel = getModifiableProjectLibrariesModel();
       for (Map.Entry<Library, Library.ModifiableModel> entry: myModifiableLibraryModels.entrySet()) {
         Library fromLibrary = entry.getKey();
@@ -129,10 +129,14 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         Library.ModifiableModel modifiableModel = entry.getValue();
 
         // Modifiable model for the new library which was disposed via ModifiableModel.removeLibrary should also be disposed
+        if (fromLibrary instanceof LibraryEx fromLibraryEx && fromLibraryEx.isDisposed()) {
+          Disposer.dispose(modifiableModel);
+        }
         // Modifiable model for the old library which was removed from ProjectLibraryTable should also be disposed
-        if ((fromLibrary instanceof LibraryEx && ((LibraryEx)fromLibrary).isDisposed())
-            || (fromLibrary.getTable() != null && libraryName != null && projectLibrariesModel.getLibraryByName(libraryName) == null)
-            || (getModifiableWorkspace() != null && getModifiableWorkspace().isSubstituted(fromLibrary.getName()))) {
+        else if (fromLibrary.getTable() != null && libraryName != null && projectLibrariesModel.getLibraryByName(libraryName) == null) {
+          Disposer.dispose(modifiableModel);
+        }
+        else if (isSubstituted(fromLibrary.getName())) {
           Disposer.dispose(modifiableModel);
         }
         else {
