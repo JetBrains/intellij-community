@@ -91,11 +91,9 @@ private fun createInlinesStyling(
   linkHovered = link.copy(color = JBUI.CurrentTheme.Link.Foreground.HOVERED.toComposeColor()),
   linkFocused = link.copy(
     color = JBUI.CurrentTheme.Link.Foreground.HOVERED.toComposeColor(),
-    background = JBUI.CurrentTheme.ActionButton.hoverBackground().toComposeColor(),
   ),
   linkPressed = link.copy(
     color = JBUI.CurrentTheme.Link.Foreground.PRESSED.toComposeColor(),
-    background = JBUI.CurrentTheme.ActionButton.pressedBackground().toComposeColor(),
   ),
   linkVisited = link.copy(color = JBUI.CurrentTheme.Link.Foreground.VISITED.toComposeColor()),
   renderInlineHtml = false,
