@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.headertoolbar
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.RecentProjectListActionProvider
-import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
@@ -15,6 +14,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboButton
@@ -29,7 +29,6 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.util.maximumWidth
-import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
@@ -89,7 +88,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<out Any>> { base ->
       ListCellRenderer<PopupFactoryImpl.ActionItem> { list, value, index, isSelected, cellHasFocus ->
         val action = (value as PopupFactoryImpl.ActionItem).action
-        if (action is ReopenProjectAction) {
+        if (action is ProjectToolbarWidgetPresentable) {
           widgetRenderer.getListCellRendererComponent(list = list,
                                                       value = value,
                                                       index = index,
@@ -156,32 +155,34 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
   }
 
   private fun createRecentProjectPane(value: PopupFactoryImpl.ActionItem, isSelected: Boolean, separator: ListSeparator?, hideLine: Boolean): JComponent {
-    val action = value.action as ReopenProjectAction
-    val projectPath = action.projectPath
+    val action = value.action as ProjectToolbarWidgetPresentable
     lateinit var nameLbl: JLabel
-    lateinit var pathLbl: JLabel
+    var pathLbl: JLabel? = null
 
     val content = panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {
         row {
-          icon(RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectPath, true, 20))
+          icon(action.projectIcon)
             .align(AlignY.TOP)
             .customize(UnscaledGaps(right = 8))
 
           panel {
             row {
-              nameLbl = label(action.projectNameToDisplay ?: "")
+              nameLbl = label(action.projectNameToDisplay)
                 .customize(UnscaledGaps(bottom = 4))
                 .applyToComponent {
                   foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(true) else UIUtil.getListForeground()
                 }.component
             }
-            row {
-              pathLbl = label(FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(projectPath), false))
-                .applyToComponent {
-                  font = JBFont.smallOrNewUiMedium()
-                  foreground = UIUtil.getLabelInfoForeground()
-                }.component
+            val projectPath = action.projectPathToDisplay
+            if (projectPath != null) {
+              row {
+                pathLbl = label(projectPath)
+                  .applyToComponent {
+                    font = JBFont.smallOrNewUiMedium()
+                    foreground = UIUtil.getLabelInfoForeground()
+                  }.component
+              }
             }
             action.branchName?.let {
               row {
@@ -208,8 +209,14 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
       result.selectionColor = ListPluginComponent.SELECTION_COLOR
     }
 
-    AccessibleContextUtil.setCombinedName(result, nameLbl, " - ", pathLbl)
-    AccessibleContextUtil.setCombinedDescription(result, nameLbl, " - ", pathLbl)
+    if (pathLbl != null) {
+      AccessibleContextUtil.setCombinedName(result, nameLbl, " - ", pathLbl)
+      AccessibleContextUtil.setCombinedDescription(result, nameLbl, " - ", pathLbl)
+    }
+    else {
+      AccessibleContextUtil.setName(result, nameLbl)
+      AccessibleContextUtil.setDescription(result, nameLbl)
+    }
 
     if (separator == null) {
       return result
@@ -239,4 +246,12 @@ private fun createSeparator(separator: ListSeparator, hideLine: Boolean): JCompo
   panel.add(res)
 
   return panel
+}
+
+
+interface ProjectToolbarWidgetPresentable {
+  val projectNameToDisplay: @NlsSafe String
+  val projectPathToDisplay: @NlsSafe String?
+  val branchName: @NlsSafe String?
+  val projectIcon: Icon
 }

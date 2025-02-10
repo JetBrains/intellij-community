@@ -15,27 +15,31 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Strings
+import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetPresentable
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem.Companion.openProjectAndLogRecent
 import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.BitUtil
+import com.intellij.util.PathUtil
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.event.ActionEvent
 import java.nio.file.Files
 import java.nio.file.Path
+import javax.swing.Icon
 
 open class ReopenProjectAction @JvmOverloads constructor(
   projectPath: @SystemIndependent String,
   projectName: @NlsSafe String?,
   displayName: @NlsSafe String?,
-  branchName: @NlsSafe String? = null
-) : AnAction(), DumbAware, LightEditCompatible {
+  branchName: @NlsSafe String? = null,
+) : AnAction(), DumbAware, LightEditCompatible, ProjectToolbarWidgetPresentable {
   private val myProjectPath: @SystemIndependent String
   private val myProjectName: @NlsSafe String?
   private val myDisplayName: @NlsSafe String?
+  private val myBranchName: @NlsSafe String?
 
-  val branchName: @NlsSafe String?
+  override val branchName: @NlsSafe String? get() = myBranchName
 
   var isRemoved: Boolean = false
     private set
@@ -47,7 +51,7 @@ open class ReopenProjectAction @JvmOverloads constructor(
     myProjectPath = projectPath
     myProjectName = projectName
     myDisplayName = displayName
-    this.branchName = branchName
+    myBranchName = branchName
 
     if (Strings.isEmpty(projectDisplayName)) {
       logger<ReopenProjectAction>().error("Empty action text for projectName='$projectName' displayName='$displayName' path='$projectPath'")
@@ -111,17 +115,23 @@ open class ReopenProjectAction @JvmOverloads constructor(
   val projectPath: @SystemIndependent String
     get() = myProjectPath
 
+
   val projectName: @NlsSafe String?
     get() {
       val manager = RecentProjectsManager.getInstance()
       return if (manager is RecentProjectsManagerBase) manager.getProjectName(myProjectPath) else myProjectName
     }
 
-  val projectNameToDisplay: @NlsSafe String?
+  override val projectNameToDisplay: @NlsSafe String
     get() {
       val manager = RecentProjectsManager.getInstance()
-      return (if (manager is RecentProjectsManagerBase) manager.getDisplayName(myProjectPath) else null) ?: projectName
+      return (if (manager is RecentProjectsManagerBase) manager.getDisplayName(myProjectPath) else null) ?: projectName ?: projectPath
     }
+
+  override val projectPathToDisplay: @NlsSafe String
+    get() = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(projectPath), false)
+
+  override val projectIcon: Icon get() = RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectPath, true, 20)
 
   fun setProjectGroup(projectGroup: ProjectGroup?) {
     this.projectGroup = projectGroup
