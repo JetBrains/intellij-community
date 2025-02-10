@@ -372,12 +372,12 @@ class ProjectWindowCustomizerService : Disposable {
     val color = getGradientProjectColor(project)
 
     val length = Registry.intValue("ide.colorful.toolbar.gradient.radius", 300)
-    val projectComboBtn = ComponentUtil.findComponentsOfType(parent, ToolbarComboButton::class.java).find {
+    val projectComboBtn = ComponentUtil.findComponentsOfType(parent.rootPane, ToolbarComboButton::class.java).find {
       it.text == project.name
     }
     val projectIconWidth = projectComboBtn?.leftIcons?.firstOrNull()?.iconWidth?.toFloat() ?: 0f
     val offset = projectComboBtn?.let {
-      SwingUtilities.convertPoint(it.parent, it.x, it.y, parent).x.toFloat() + it.margin.left.toFloat() + projectIconWidth / 2
+      SwingUtilities.convertPoint(it.parent, it.x, it.y, parent.rootPane).x.toFloat() + it.margin.left.toFloat() + projectIconWidth / 2
     } ?: 150f
 
     if (ComponentUtil.findComponentsOfType(parent, MainToolbar::class.java).firstOrNull() == null

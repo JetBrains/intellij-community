@@ -35,7 +35,6 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHe
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.isMenuButtonInToolbar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ExpandableMenu
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -79,7 +78,7 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
   private val mainMenuButton = mainMenuWithButton.mainMenuButton
 
   init {
-    val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope, frame) { !ShowMode.isMergedMainMenu() }
+    val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope, frame)
     mainMenuButton.expandableMenu = expandableMenu
     mainMenuButton.rootPane = frame.rootPane
   }

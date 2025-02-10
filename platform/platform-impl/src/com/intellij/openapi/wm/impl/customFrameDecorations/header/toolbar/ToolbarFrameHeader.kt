@@ -70,7 +70,7 @@ internal class ToolbarFrameHeader(
   private var toolbarDisposable: Disposable? = null
   private val toolbarPlaceholder = createToolbarPlaceholder()
   private val headerContent = createHeaderContent()
-  private val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope.childScope("ExpandableMenu"), frame) { !isCompactHeader && !ShowMode.isMergedMainMenu() }
+  private val expandableMenu = ExpandableMenu(headerContent = headerContent, coroutineScope = coroutineScope.childScope("ExpandableMenu"), frame) { !isCompactHeader }
   private val toolbarHeaderTitle = SimpleCustomDecorationPathComponent(frame = frame, isGrey = { mode != ShowMode.TOOLBAR }).apply {
     isOpaque = false
   }
