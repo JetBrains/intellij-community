@@ -3,6 +3,7 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.UnhandledExceptions;
 import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.lang.ASTNode;
@@ -66,12 +67,12 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull JavaSdkVersion myJavaSdkVersion;
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
-  JavaErrorVisitor(@NotNull PsiFile file, @Nullable PsiJavaModule module, @NotNull Consumer<JavaCompilationError<?, ?>> consumer) {
+  JavaErrorVisitor(@NotNull PsiFile file, @NotNull Consumer<JavaCompilationError<?, ?>> consumer) {
     myFile = file;
     myProject = file.getProject();
     myLanguageLevel = PsiUtil.getLanguageLevel(file);
     myErrorConsumer = consumer;
-    myJavaModule = module;
+    myJavaModule = isApplicable(JavaFeature.MODULES) ? JavaPsiModuleUtil.findDescriptorByElement(file) : null;
     myJavaSdkVersion = ObjectUtils
       .notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
     myFactory = JavaPsiFacade.getElementFactory(myProject);

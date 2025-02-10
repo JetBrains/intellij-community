@@ -147,7 +147,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myLanguageLevel = PsiUtil.getLanguageLevel(file);
     myJavaModule = JavaFeature.MODULES.isSufficient(myLanguageLevel) ? JavaPsiModuleUtil.findDescriptorByElement(file) : null;
     JavaErrorFixProvider errorFixProvider = JavaErrorFixProvider.getInstance();
-    myCollector = new JavaErrorCollector(myFile, myJavaModule, error -> reportError(error, errorFixProvider));
+    myCollector = new JavaErrorCollector(myFile, error -> reportError(error, errorFixProvider));
   }
 
   private void reportError(JavaCompilationError<?, ?> error, JavaErrorFixProvider errorFixProvider) {
