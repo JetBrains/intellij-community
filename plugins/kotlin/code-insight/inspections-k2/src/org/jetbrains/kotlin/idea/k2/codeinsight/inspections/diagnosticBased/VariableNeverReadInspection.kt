@@ -38,7 +38,7 @@ internal class VariableNeverReadInspection : KotlinKtDiagnosticBasedInspectionBa
     override fun createQuickFixes(
         element: KtNamedDeclaration,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtNamedDeclaration>> = emptyArray() // KTIJ-29530
+    ): Array<KotlinModCommandQuickFix<KtNamedDeclaration>> = emptyArray() // TODO KTIJ-33011
 
     override fun buildVisitor(
         holder: ProblemsHolder,
