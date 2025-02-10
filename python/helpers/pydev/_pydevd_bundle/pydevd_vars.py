@@ -608,7 +608,7 @@ def array_to_meta_xml(array, name, format):
 
     try:
         import numpy as np
-        if isinstance(array, np.recarray):
+        if isinstance(array, np.recarray) and l > 1:
             slice = "{}['{}']".format(slice, array.dtype.names[0])
             array = array[array.dtype.names[0]]
     except ImportError:

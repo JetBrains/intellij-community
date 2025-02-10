@@ -307,12 +307,7 @@ def __create_table(command, start_index=None, end_index=None, format=None):
         np_array = command
 
     if is_pd:
-        if isinstance(np_array, np.recarray):
-            sorted_df = pd.DataFrame()
-            for record in np_array:
-                sorted_df = pd.concat([sorted_df, pd.DataFrame(record.tolist())])
-        else:
-            sorted_df = __sort_df(pd.DataFrame(np_array), sort_keys)
+        sorted_df = __sort_df(pd.DataFrame(np_array), sort_keys)
         if start_index is not None and end_index is not None:
             sorted_df_slice = sorted_df.iloc[start_index:end_index]
             # to apply "format" we should not have None inside DFs
