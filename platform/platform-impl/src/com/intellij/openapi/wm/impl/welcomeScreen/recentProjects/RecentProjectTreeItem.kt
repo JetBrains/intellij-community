@@ -26,10 +26,12 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.BitUtil
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.event.ActionEvent
 import java.nio.file.Files
 import java.nio.file.Path
+import javax.swing.Icon
 import javax.swing.SwingUtilities
 
 /**
@@ -42,7 +44,7 @@ import javax.swing.SwingUtilities
  * @see com.intellij.ide.ManageRecentProjectsAction
  */
 internal sealed interface RecentProjectTreeItem {
-  fun displayName(): String
+  fun displayName(): @NlsSafe String
 
   fun children(): List<RecentProjectTreeItem>
 
