@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -44,6 +44,10 @@ public interface PsiJavaModule extends NavigatablePsiElement, PsiNameIdentifierO
 
   @Override @NotNull PsiJavaModuleReferenceElement getNameIdentifier();
   @Override @NotNull String getName();
+  boolean doNotResolveByDefault();
+  boolean warnDeprecated();
+  boolean warnDeprecatedForRemoval();
+  boolean warnIncubating();
 
   @NotNull Iterable<PsiRequiresStatement> getRequires();
   @NotNull Iterable<PsiPackageAccessibilityStatement> getExports();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.diagnostic.PluginException;
@@ -566,7 +566,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       if (module) {
         PsiJavaFileStub stub = new PsiJavaFileStubImpl(null, "", level, true);
         ModuleStubBuildingVisitor visitor = new ModuleStubBuildingVisitor(stub);
-        reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
+        reader.accept(visitor, visitor.attributes(), ClassReader.SKIP_FRAMES);
         if (visitor.getResult() != null) return stub;
       }
       else {

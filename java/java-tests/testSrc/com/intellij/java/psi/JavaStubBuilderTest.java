@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.lang.FileASTNode;
@@ -563,7 +563,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            """
              PsiJavaFileStub []
                IMPORT_LIST:PsiImportListStub
-               MODULE:PsiJavaModuleStub:M.N
+               MODULE:PsiJavaModuleStub[name=M.N, resolution=0]
                  MODIFIER_LIST:PsiModifierListStub[mask=8192]
                    ANNOTATION:PsiAnnotationStub[@Deprecated]
                      ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl

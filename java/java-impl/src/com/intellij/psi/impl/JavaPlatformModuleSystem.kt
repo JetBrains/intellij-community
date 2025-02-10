@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl
 
 import com.intellij.codeInsight.JavaModuleSystemEx
@@ -11,10 +11,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.CapturingProcessRunner
-import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.java.JavaBundle
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil.findDescriptorByElement
 import com.intellij.modcommand.ActionContext
@@ -23,29 +19,19 @@ import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.pom.java.JavaFeature
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.JavaModuleSystem.*
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtil
-import com.intellij.util.ConcurrencyUtil
-import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
-import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
 /**
  * Checks package accessibility according to JLS 7 "Packages and Modules".
@@ -54,8 +40,6 @@ import java.util.concurrent.TimeoutException
  * @see <a href="http://openjdk.org/jeps/261">JEP 261: Module System</a>
  */
 internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
-  private val vmModulesExecutor: VmModulesExecutor = VmModulesExecutor()
-
   override fun getName(): String = JavaBundle.message("java.platform.module.system.name")
 
   override fun isAccessible(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): Boolean {
@@ -169,10 +153,8 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
           else null
         }
 
-        if (targetModule.name.startsWith("java.") &&
-            targetModule.name != PsiJavaModule.JAVA_BASE &&
-            !inAddedModules(currentJpsModule, targetModule.name) &&
-            !accessibleFromLoadedModules(current, target, isAccessible)) {
+        if (!accessibleFromJdkModules(current, target, place, isAccessible) &&
+            !inAddedModules(currentJpsModule, targetModule.name)) {
           return if (quick) ERR
           else ErrorWithFixes(JavaErrorBundle.message("module.not.in.graph", targetModule.name),
                               listOf(AddModulesOptionFix(currentJpsModule, targetModule.name).asIntention()))
@@ -223,11 +205,9 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
           return null  // a target is not on the mandatory module path
         }
 
-        if (targetModule.name.startsWith("java.") &&
-            targetModule.name != PsiJavaModule.JAVA_BASE &&
+        if (!accessibleFromJdkModules(current, target, place, isAccessible) &&
             !inAddedModules(currentJpsModule, targetModule.name) &&
-            !hasUpgrade(currentJpsModule, targetModule.name, target.packageName, place) &&
-            !accessibleFromLoadedModules(current, target, isAccessible)) {
+            !hasUpgrade(currentJpsModule, targetModule.name, target.packageName, place)) {
           return if (quick) ERR
           else ErrorWithFixes(
             JavaErrorBundle.message("module.access.not.in.graph", target.packageName, targetModule.name),
@@ -282,21 +262,37 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     return null
   }
 
-  private fun accessibleFromLoadedModules(current: CurrentModuleInfo,
-                                          target: TargetModuleInfo,
-                                          isAccessible: (ModuleAccessInfo) -> Boolean): Boolean {
+  private fun accessibleFromJdkModules(
+    current: CurrentModuleInfo,
+    target: TargetModuleInfo,
+    place: PsiElement,
+    isAccessible: (ModuleAccessInfo) -> Boolean,
+  ): Boolean {
     val jpsModule = current.jpsModule ?: return false
     val targetModule = target.module ?: return false
-    val modules = vmModulesExecutor.getOrComputeModulesForJdk(jpsModule)
-    if (!modules.isEmpty()) {
-      return modules.contains(targetModule.name)
+    if(targetModule.name == PsiJavaModule.JAVA_BASE) return true
+    if (!(targetModule.name.startsWith("java.") || targetModule.name.startsWith("jdk."))) return false
+
+    val languageLevel = PsiUtil.getLanguageLevel(place)
+    val jdkModulePred: (PsiJavaModule) -> Boolean = if (languageLevel >= LanguageLevel.JDK_11) {
+      { module -> module.exports.any { e -> e.moduleNames.isEmpty() } }
     }
     else {
-      val root = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<PsiJavaModule, Throwable> {
-        JavaPsiFacade.getInstance(jpsModule.project).findModule("java.se", jpsModule.moduleWithLibrariesScope)
+      val javaSE = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<PsiJavaModule, Throwable> {
+        JavaPsiFacade.getInstance(place.project).findModule("java.se", jpsModule.moduleWithLibrariesScope)
       }
-      return root == null || isAccessible(ModuleAccessInfo(CurrentModuleInfo(root, current.name) { jpsModule }, target))
+
+      if(javaSE != null) {
+        { module ->
+          (!module.name.startsWith("java.") && module.exports.any { e -> e.moduleNames.isEmpty() }) ||
+          isAccessible(ModuleAccessInfo(CurrentModuleInfo(javaSE, current.name) { jpsModule }, target))
+        }
+      } else {
+        {_ -> true}
+      }
     }
+    val noIncubatorPred: (PsiJavaModule) -> Boolean = {module -> !module.doNotResolveByDefault()}
+    return jdkModulePred(targetModule) && noIncubatorPred(targetModule)
   }
 
   private fun inSameMultiReleaseModule(current: ModuleInfo, target: ModuleInfo): Boolean {
@@ -482,80 +478,6 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     }
     override val module: PsiJavaModule? by lazy {
       findDescriptorByElement(element)
-    }
-  }
-
-  private class VmModulesExecutor {
-    companion object {
-      private val ourData: MutableMap<String, CompletableFuture<List<String>>> = CollectionFactory.createConcurrentSoftValueMap()
-    }
-
-    /**
-     * Retrieves or computes the list of jigsaw modules available for the specified JDK.
-     *
-     * @param module the intellij module for which to retrieve or compute the list of available jigsaw modules
-     * @return the list of jigsaw modules available for the specified intellij module or
-     *         empty if:
-     *         - the IntelliJ module does not contain a JDK
-     *         - an error has occurred
-     *         - isn't ready yet.
-     */
-    fun getOrComputeModulesForJdk(module: Module): List<String> {
-      val sdk = ModuleRootManager.getInstance(module).sdk ?: return listOf()
-      val homePath = sdk.homePath ?: return listOf()
-      if (sdk.sdkType !is JavaSdk) return listOf()
-      try {
-        return getOrCreate(sdk)
-      }
-      catch (_: InterruptedException) {
-      }
-      catch (_: TimeoutException) {
-      }
-      catch (_: ExecutionException) {
-        ourData[homePath] = CompletableFuture.completedFuture(listOf())
-      }
-      return listOf()
-    }
-
-    private fun getOrCreate(sdk: Sdk): List<String> {
-      val sdkHome = sdk.homePath ?: return listOf()
-      val future = ourData.computeIfAbsent(sdkHome) { CompletableFuture.supplyAsync({ computeModules(sdk) }, AppExecutorUtil.getAppExecutorService()) }
-      if (future.isDone) {
-        // sometimes the timeout may appear, and in order not to block the possibility to get the completion afterwards, it is better to retry
-        val result = future.get(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-        if (result != null) {
-          return result
-        }
-        else {
-          ourData.computeIfPresent(sdkHome) { _, value ->
-            if (future != value) return@computeIfPresent value // another thread has already changed the value
-            return@computeIfPresent CompletableFuture.supplyAsync({ computeModules(sdk) }, AppExecutorUtil.getAppExecutorService())
-          }
-        }
-      }
-      return listOf()
-    }
-
-    // when null is returned, it was a timeout
-    private fun computeModules(sdk: Sdk): List<String>? {
-      val vmPath = EelPathUtils.renderAsEelPath(Path.of(JavaSdk.getInstance().getVMExecutablePath(sdk)))
-      val generalCommandLine = GeneralCommandLine(vmPath).apply {
-        addParameters("--list-modules")
-      }
-      try {
-        val handler = OSProcessHandler(generalCommandLine)
-        val runner = CapturingProcessRunner(handler)
-        val output = runner.runProcess(1_000)
-        if (output.isTimeout) {
-          return null
-        }
-        else {
-          return output.stdout.lineSequence().map { line -> line.substringBefore('@') }.toList()
-        }
-      }
-      catch (e: ProcessNotCreatedException) {
-        return null
-      }
     }
   }
 }

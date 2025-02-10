@@ -8,10 +8,8 @@ import com.intellij.psi.impl.java.stubs.impl.*;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
-import org.jetbrains.org.objectweb.asm.AnnotationVisitor;
-import org.jetbrains.org.objectweb.asm.ClassVisitor;
-import org.jetbrains.org.objectweb.asm.ModuleVisitor;
-import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.commons.ModuleResolutionAttribute;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +21,7 @@ import static com.intellij.util.containers.ContainerUtil.map2Array;
 
 public class ModuleStubBuildingVisitor extends ClassVisitor {
   private static final Function<String, String> NAME_MAPPER = name1 -> name1.replace('/', '.');
+  private static final Attribute[] ATTRIBUTES = new Attribute[]{new ModuleResolutionAttribute()};
 
   private final ModuleStubBuilder myBuilder;
 
@@ -78,6 +77,14 @@ public class ModuleStubBuildingVisitor extends ClassVisitor {
   }
 
   @Override
+  public void visitAttribute(Attribute attribute) {
+    if (attribute instanceof ModuleResolutionAttribute) {
+      myBuilder.resolution(((ModuleResolutionAttribute)attribute).resolution);
+    }
+    super.visitAttribute(attribute);
+  }
+
+  @Override
   public void visitEnd() {
     super.visitEnd();
   }
@@ -97,6 +104,10 @@ public class ModuleStubBuildingVisitor extends ClassVisitor {
     return flags;
   }
 
+  public Attribute[] attributes() {
+    return ATTRIBUTES;
+  }
+
   private static class ModuleStubBuilder {
     private final PsiJavaFileStub myParent;
 
@@ -104,6 +115,7 @@ public class ModuleStubBuildingVisitor extends ClassVisitor {
 
     private volatile String myName;
     private volatile int myFlags;
+    private volatile int myResolution;
 
     private final List<Requires> myRequires = new ArrayList<>();
     private final List<PackageAccessibility> myPackageAccessibilities = new ArrayList<>();
@@ -130,11 +142,15 @@ public class ModuleStubBuildingVisitor extends ClassVisitor {
       myPackageAccessibilities.add(new PackageAccessibility(type, packageName, modules));
     }
 
+    void resolution(int resolution) {
+      myResolution = resolution;
+    }
+
     PsiJavaModuleStub build() {
       if (myResult == null) {
         synchronized (this) {
           if (myResult == null) {
-            PsiJavaModuleStub result = new PsiJavaModuleStubImpl(myParent, myName);
+            PsiJavaModuleStub result = new PsiJavaModuleStubImpl(myParent, myName, myResolution);
             PsiModifierListStubImpl modifiers = new PsiModifierListStubImpl(result, myFlags);
             for (Requires require : myRequires) {
               PsiRequiresStatementStubImpl req = new PsiRequiresStatementStubImpl(result, require.name);
@@ -193,7 +209,6 @@ public class ModuleStubBuildingVisitor extends ClassVisitor {
       Provide(String service, String[] providers) {
         myService = service;
         myProviders = providers == null ? null : Arrays.asList(providers);
-        ;
       }
     }
 

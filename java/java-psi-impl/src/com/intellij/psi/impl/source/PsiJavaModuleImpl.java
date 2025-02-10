@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.SyntaxTraverser.psiTraverser;
+import static com.intellij.psi.impl.java.stubs.PsiJavaModuleStub.*;
+import static com.intellij.util.BitUtil.isSet;
 
 public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
   public PsiJavaModuleImpl(@NotNull PsiJavaModuleStub stub) {
@@ -106,6 +108,50 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     }
     else {
       return getNameIdentifier().getReferenceText();
+    }
+  }
+
+  @Override
+  public boolean doNotResolveByDefault() {
+    PsiJavaModuleStub stub = getGreenStub();
+    if (stub != null) {
+      return isSet(stub.getResolution(), DO_NOT_RESOLVE_BY_DEFAULT);
+    }
+    else {
+      return false;
+    }
+  }
+
+  @Override
+  public boolean warnDeprecated() {
+    PsiJavaModuleStub stub = getGreenStub();
+    if (stub != null) {
+      return isSet(stub.getResolution(), WARN_DEPRECATED);
+    }
+    else {
+      return false;
+    }
+  }
+
+  @Override
+  public boolean warnDeprecatedForRemoval() {
+    PsiJavaModuleStub stub = getGreenStub();
+    if (stub != null) {
+      return isSet(stub.getResolution(), WARN_DEPRECATED_FOR_REMOVAL);
+    }
+    else {
+      return false;
+    }
+  }
+
+  @Override
+  public boolean warnIncubating() {
+    PsiJavaModuleStub stub = getGreenStub();
+    if (stub != null) {
+      return isSet(stub.getResolution(), WARN_INCUBATING);
+    }
+    else {
+      return false;
     }
   }
 

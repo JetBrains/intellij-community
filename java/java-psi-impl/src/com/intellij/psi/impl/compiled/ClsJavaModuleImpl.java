@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
@@ -21,6 +21,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.psi.impl.java.stubs.PsiJavaModuleStub.*;
+import static com.intellij.util.BitUtil.isSet;
 
 public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
   private final PsiJavaModuleReferenceElement myReference;
@@ -107,6 +110,26 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
   @Override
   public @NotNull String getName() {
     return myReference.getReferenceText();
+  }
+
+  @Override
+  public boolean doNotResolveByDefault() {
+    return isSet(getStub().getResolution(), DO_NOT_RESOLVE_BY_DEFAULT);
+  }
+
+  @Override
+  public boolean warnDeprecated() {
+    return isSet(getStub().getResolution(), WARN_DEPRECATED);
+  }
+
+  @Override
+  public boolean warnDeprecatedForRemoval() {
+    return isSet(getStub().getResolution(), WARN_DEPRECATED_FOR_REMOVAL);
+  }
+
+  @Override
+  public boolean warnIncubating() {
+    return isSet(getStub().getResolution(), WARN_INCUBATING);
   }
 
   @Override
