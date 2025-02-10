@@ -24,9 +24,15 @@ import org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
-import org.jetbrains.jewel.markdown.processing.readInlineContent
+import org.jetbrains.jewel.markdown.processing.readInlineMarkdown
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 
+/**
+ * Adds support for table parsing. Tables are a GitHub Flavored Markdown extension, defined
+ * [in the GFM specs](https://github.github.com/gfm/#tables-extension-).
+ *
+ * @see TablesExtension
+ */
 @OptIn(ExperimentalJewelApi::class)
 public object GitHubTableProcessorExtension : MarkdownProcessorExtension {
     override val parserExtension: ParserExtension = GitHubTablesCommonMarkExtension
@@ -54,7 +60,7 @@ public object GitHubTableProcessorExtension : MarkdownProcessorExtension {
                             TableCell(
                                 rowIndex = 0,
                                 columnIndex = columnIndex,
-                                content = cell.readInlineContent(processor),
+                                content = cell.readInlineMarkdown(processor),
                                 alignment = getAlignment(cell),
                             )
                         }
@@ -67,7 +73,7 @@ public object GitHubTableProcessorExtension : MarkdownProcessorExtension {
                                     TableCell(
                                         rowIndex = rowIndex + 1, // The header is row zero
                                         columnIndex = columnIndex,
-                                        content = cell.readInlineContent(processor),
+                                        content = cell.readInlineMarkdown(processor),
                                         alignment = getAlignment(cell),
                                     )
                                 },

@@ -68,10 +68,10 @@ public class ScrollingSynchronizerTest {
     public fun headings() {
         val markdown =
             """
-                            # Heading 1
-                            ## Heading 2
-                            ### Heading 3
-                        """
+            # Heading 1
+            ## Heading 2
+            ### Heading 3
+            """
                 .trimIndent()
         doTest(markdown) { scrollState, synchronizer ->
             synchronizer.scrollToLine(0)
@@ -99,12 +99,12 @@ public class ScrollingSynchronizerTest {
     public fun paragraphs() {
         val markdown =
             """
-                            p1
+            p1
 
-                            p2
+            p2
 
-                            p3
-                        """
+            p3
+            """
                 .trimIndent()
         doTest(markdown) { scrollState, synchronizer ->
             synchronizer.scrollToLine(1)
@@ -131,17 +131,17 @@ public class ScrollingSynchronizerTest {
     public fun `empty spaces`() {
         val markdown =
             """
-                            # Heading 1
-
-
-                            # Heading 2
-
-
-                            ## Heading 3
-
-
-                        """
-                .trimIndent()
+            |# Heading 1
+            |
+            |
+            |# Heading 2
+            |
+            |
+            |## Heading 3
+            |
+            |
+            """
+                .trimMargin()
         doTest(markdown) { scrollState, synchronizer ->
             synchronizer.scrollToLine(1)
             val h2Top = scrollState.value
@@ -179,12 +179,12 @@ public class ScrollingSynchronizerTest {
     public fun `unordered list`() {
         val markdown =
             """
-                            Items:
-                            - item 1
-                                - subitem A
-                            - item 2
-                            - item 3
-                        """
+            Items:
+            - item 1
+                - subitem A
+            - item 2
+            - item 3
+            """
                 .trimIndent()
         doTest(markdown) { scrollState, synchronizer ->
             synchronizer.scrollToLine(1)
@@ -213,12 +213,12 @@ public class ScrollingSynchronizerTest {
     public fun `ordered list`() {
         val markdown =
             """
-                            Items:
-                            1. item 1
-                                1. subitem A
-                            2. item 2
-                            3. item 3
-                        """
+            Items:
+            1. item 1
+                1. subitem A
+            2. item 2
+            3. item 3
+            """
                 .trimIndent()
         doTest(markdown) { scrollState, synchronizer ->
             synchronizer.scrollToLine(1)
@@ -247,14 +247,14 @@ public class ScrollingSynchronizerTest {
     public fun `fenced code block`() {
         val markdown =
             """
-                            ```kotlin
-                            package my.awesome.pkg
+            ```kotlin
+            package my.awesome.pkg
 
-                            fun main() {
-                                println("Hello world")
-                            }
-                            ```
-                        """
+            fun main() {
+                println("Hello world")
+            }
+            ```
+            """
                 .trimIndent()
         doTest(markdown) { scrollState, synchronizer ->
             synchronizer.scrollToLine(1)
@@ -296,14 +296,14 @@ public class ScrollingSynchronizerTest {
     public fun `indented code block`() {
         val markdown =
             """
-                            Here starts the indented code block.
+            Here starts the indented code block.
 
-                                package my.awesome.pkg
+                package my.awesome.pkg
 
-                                fun main() {
-                                    println("Hello world")
-                                }
-                        """
+                fun main() {
+                    println("Hello world")
+                }
+            """
                 .trimIndent()
         doTest(markdown) { scrollState, synchronizer ->
             synchronizer.scrollToLine(2)
@@ -345,28 +345,28 @@ public class ScrollingSynchronizerTest {
     public fun `add a block`() {
         val firstRun =
             """
-                            ```kotlin
-                            package my.awesome.pkg
+            ```kotlin
+            package my.awesome.pkg
 
-                            fun main() {
-                                println("Hello world")
-                            }
-                            ```
-                        """
+            fun main() {
+                println("Hello world")
+            }
+            ```
+            """
                 .trimIndent()
 
         val secondRun =
             """
-                            **CHANGE**
+            **CHANGE**
 
-                            ```kotlin
-                            package my.awesome.pkg
+            ```kotlin
+            package my.awesome.pkg
 
-                            fun main() {
-                                println("Hello world")
-                            }
-                            ```
-                        """
+            fun main() {
+                println("Hello world")
+            }
+            ```
+            """
                 .trimIndent()
 
         doTest(firstRun, secondRun) { scrollState, synchronizer ->
@@ -409,28 +409,28 @@ public class ScrollingSynchronizerTest {
     public fun `remove a block`() {
         val firstRun =
             """
-                            **CHANGE**
+            **CHANGE**
 
-                            ```kotlin
-                            package my.awesome.pkg
+            ```kotlin
+            package my.awesome.pkg
 
-                            fun main() {
-                                println("Hello world")
-                            }
-                            ```
-                        """
+            fun main() {
+                println("Hello world")
+            }
+            ```
+            """
                 .trimIndent()
 
         val secondRun =
             """
-                            ```kotlin
-                            package my.awesome.pkg
+            ```kotlin
+            package my.awesome.pkg
 
-                            fun main() {
-                                println("Hello world")
-                            }
-                            ```
-                        """
+            fun main() {
+                println("Hello world")
+            }
+            ```
+            """
                 .trimIndent()
 
         doTest(firstRun, secondRun) { scrollState, synchronizer ->
@@ -473,27 +473,27 @@ public class ScrollingSynchronizerTest {
     public fun `change a block`() {
         val firstRun =
             """
-                            ```kotlin
-                            package my.awesome.pkg
+            ```kotlin
+            package my.awesome.pkg
 
-                            fun main() {
-                                println("Hello world")
-                            }
-                            ```
-                        """
+            fun main() {
+                println("Hello world")
+            }
+            ```
+            """
                 .trimIndent()
 
         val secondRun =
             """
-                            ```kotlin
-                            package my.awesome.pkg
+            ```kotlin
+            package my.awesome.pkg
 
-                            fun main() {
-                                val name = "Steve"
-                                println("Hello " + name)
-                            }
-                            ```
-                        """
+            fun main() {
+                val name = "Steve"
+                println("Hello " + name)
+            }
+            ```
+            """
                 .trimIndent()
 
         doTest(firstRun, secondRun) { scrollState, synchronizer ->
@@ -541,36 +541,36 @@ public class ScrollingSynchronizerTest {
     public fun `merge code blocks`() {
         val firstRun =
             """
-                            ```kotlin
-                            package my.awesome.pkg
+            ```kotlin
+            package my.awesome.pkg
 
-                            fun main() {
-                                println("Hello world")
-                            }
-                            ```
+            fun main() {
+                println("Hello world")
+            }
+            ```
 
-                            ```kotlin
-                            fun foo() {
-                                println("Foo")
-                            }
-                            ```
-                        """
+            ```kotlin
+            fun foo() {
+                println("Foo")
+            }
+            ```
+            """
                 .trimIndent()
 
         val secondRun =
             """
-                            ```kotlin
-                            package my.awesome.pkg
+            ```kotlin
+            package my.awesome.pkg
 
-                            fun main() {
-                                println("Hello world")
-                            }
+            fun main() {
+                println("Hello world")
+            }
 
-                            fun foo() {
-                                println("Foo")
-                            }
-                            ```
-                        """
+            fun foo() {
+                println("Foo")
+            }
+            ```
+            """
                 .trimIndent()
 
         doTest(firstRun, secondRun) { scrollState, synchronizer ->

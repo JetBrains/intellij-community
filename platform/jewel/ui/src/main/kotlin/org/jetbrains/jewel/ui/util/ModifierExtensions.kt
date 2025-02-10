@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
  * otherwise.
  */
 @Deprecated(
-    message = "This modifier has been moved to org.jetbrains.jewel.foundation.util. Please update your imports.",
+    message = "This modifier has been moved to org.jetbrains.jewel.foundation.modifier. Please update your imports.",
     ReplaceWith("thenIf(precondition, action)", "org.jetbrains.jewel.foundation.modifier.thenIf"),
 )
 @ApiStatus.ScheduledForRemoval(inVersion = "2025.2")
