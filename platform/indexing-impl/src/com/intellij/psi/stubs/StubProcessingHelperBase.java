@@ -2,6 +2,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -176,8 +177,12 @@ public abstract class StubProcessingHelperBase {
 
       LOG.error(extraMessage + dumbState + "\n" + StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null, source));
     }
-    finally {
+    catch (ProcessCanceledException pce) {
+      throw pce;
+    }
+    catch (Throwable t) {
       onInternalError(psiFile.getVirtualFile());
+      throw t;
     }
   }
 
