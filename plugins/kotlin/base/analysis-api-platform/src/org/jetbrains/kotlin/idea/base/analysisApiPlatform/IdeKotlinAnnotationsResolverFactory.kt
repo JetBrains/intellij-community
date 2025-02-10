@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolver
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolverFactory
+import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KotlinRestrictedAnalysisService
 import org.jetbrains.kotlin.idea.stubindex.KotlinAnnotationsIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.name.ClassId
@@ -34,7 +35,9 @@ private class IdeKotlinAnnotationsResolver(
             "Queried annotation must be top-level, but was $annotationClassId"
         }
 
-        val annotationEntries = KotlinAnnotationsIndex[annotationClassId.shortClassName.asString(), project, searchScope]
+        val annotationEntries = KotlinRestrictedAnalysisService.getInstance(project).withDumbModeHandling {
+            KotlinAnnotationsIndex[annotationClassId.shortClassName.asString(), project, searchScope]
+        }
 
         return annotationEntries.asSequence()
             .filter { it.resolveAnnotationId() == annotationClassId }
@@ -124,10 +127,11 @@ private class IdeKotlinAnnotationsResolver(
 
     private fun Set<FqName>.resolveToSingleName(): FqName? = singleOrNull { annotationActuallyExists(it) }
 
-    private fun annotationActuallyExists(matchingImport: FqName): Boolean {
-        val foundClasses = KotlinFullClassNameIndex[matchingImport.asString(), project, searchScope]
-        return foundClasses.singleOrNull { it.isAnnotation() && it.isTopLevel() } != null
-    }
+    private fun annotationActuallyExists(matchingImport: FqName): Boolean =
+        KotlinRestrictedAnalysisService.getInstance(project).withDumbModeHandling {
+            val foundClasses = KotlinFullClassNameIndex[matchingImport.asString(), project, searchScope]
+            foundClasses.singleOrNull { it.isAnnotation() && it.isTopLevel() } != null
+        }
 }
 
 /**
@@ -140,4 +144,3 @@ private val KtAnnotationEntry.annotationOwner: KtAnnotated?
 
         return modifierList?.parent as? KtAnnotated
     }
-

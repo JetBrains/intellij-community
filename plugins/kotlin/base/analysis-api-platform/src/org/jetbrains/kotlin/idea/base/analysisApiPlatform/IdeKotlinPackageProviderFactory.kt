@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.platform.caches.getOrPut
 import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
 import org.jetbrains.kotlin.analysis.api.platform.packages.*
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
+import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KotlinRestrictedAnalysisService
 import org.jetbrains.kotlin.caches.project.CachedValue
 import org.jetbrains.kotlin.caches.project.getValue
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
@@ -34,6 +35,10 @@ private class IdeKotlinPackageProvider(
     project: Project,
     searchScope: GlobalSearchScope
 ) : KotlinPackageProviderBase(project, searchScope) {
+    private val restrictedAnalysisService by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        KotlinRestrictedAnalysisService.getInstance(project)
+    }
+
     /**
      * We don't need to invalidate the cache because [KotlinPackageProvider]'s lifetime is already constrained by modification. The cached
      * value is still useful to keep the cache behind a soft reference.
@@ -51,14 +56,20 @@ private class IdeKotlinPackageProvider(
             .build<FqName, Set<Name>>()
 
     override fun doesKotlinOnlyPackageExist(packageFqName: FqName): Boolean {
-        return packageExistsCache.getOrPut(packageFqName) { KotlinPackageIndexUtils.packageExists(packageFqName, searchScope) }
+        return packageExistsCache.getOrPut(packageFqName) {
+            restrictedAnalysisService.withDumbModeHandling {
+                KotlinPackageIndexUtils.packageExists(packageFqName, searchScope)
+            }
+        }
     }
 
     override fun getKotlinOnlySubpackageNames(packageFqName: FqName): Set<Name> {
         if (packageExistsCache[packageFqName] == false) return emptySet()
 
-        return subpackageNamesCache
-            .getOrPut(packageFqName) { KotlinPackageIndexUtils.getSubpackageNames(it, searchScope) }
-            ?: emptySet()
+        return subpackageNamesCache.getOrPut(packageFqName) { packageFqName ->
+            restrictedAnalysisService.withDumbModeHandling {
+                KotlinPackageIndexUtils.getSubpackageNames(packageFqName, searchScope)
+            }
+        } ?: emptySet()
     }
 }
