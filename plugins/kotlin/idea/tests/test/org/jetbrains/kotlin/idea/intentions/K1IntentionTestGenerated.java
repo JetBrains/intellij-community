@@ -3533,55 +3533,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     runTest("testData/intentions/branched/unfolding/propertyToIf/simpleIfWithType.kt");
                 }
             }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/intentions/branched/unfolding/propertyToWhen")
-            public static class PropertyToWhen extends AbstractK1IntentionTest {
-                @java.lang.Override
-                @org.jetbrains.annotations.NotNull
-                public final KotlinPluginMode getPluginMode() {
-                    return KotlinPluginMode.K1;
-                }
-
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-                }
-
-                @TestMetadata("nonLocalProperty.kt")
-                public void testNonLocalProperty() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToWhen/nonLocalProperty.kt");
-                }
-
-                @TestMetadata("nonLocalProperty2.kt")
-                public void testNonLocalProperty2() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToWhen/nonLocalProperty2.kt");
-                }
-
-                @TestMetadata("simpleWhen.kt")
-                public void testSimpleWhen() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToWhen/simpleWhen.kt");
-                }
-
-                @TestMetadata("simpleWhen2.kt")
-                public void testSimpleWhen2() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToWhen/simpleWhen2.kt");
-                }
-
-                @TestMetadata("simpleWhenWithBlocks.kt")
-                public void testSimpleWhenWithBlocks() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToWhen/simpleWhenWithBlocks.kt");
-                }
-
-                @TestMetadata("simpleWhenWithBlocks2.kt")
-                public void testSimpleWhenWithBlocks2() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToWhen/simpleWhenWithBlocks2.kt");
-                }
-
-                @TestMetadata("simpleWhenWithType.kt")
-                public void testSimpleWhenWithType() throws Exception {
-                    runTest("testData/intentions/branched/unfolding/propertyToWhen/simpleWhenWithType.kt");
-                }
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
@@ -27,7 +28,7 @@ object BranchedUnfoldingUtils {
         editor?.caretModel?.moveToOffset(resultIf.textOffset)
     }
 
-    fun unfoldAssignmentToWhen(assignment: KtBinaryExpression, editor: Editor?) {
+    fun unfoldAssignmentToWhen(assignment: KtBinaryExpression, moveCaretToOffset: (Int) -> Unit) {
         val op = assignment.operationReference.text
         val left = assignment.left!!
         val whenExpression = assignment.right as KtWhenExpression
@@ -43,6 +44,7 @@ object BranchedUnfoldingUtils {
 
         val resultWhen = assignment.replace(newWhenExpression)
 
-        editor?.caretModel?.moveToOffset(resultWhen.textOffset)
+        resultWhen.reformat()
+        moveCaretToOffset(resultWhen.textOffset)
     }
 }

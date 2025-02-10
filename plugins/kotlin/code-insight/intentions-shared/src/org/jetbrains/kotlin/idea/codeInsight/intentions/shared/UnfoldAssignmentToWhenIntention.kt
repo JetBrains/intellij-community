@@ -29,5 +29,7 @@ class UnfoldAssignmentToWhenIntention :
         return TextRange(element.startOffset, right.whenKeyword.endOffset)
     }
 
-    override fun applyTo(element: KtBinaryExpression, editor: Editor?): Unit = BranchedUnfoldingUtils.unfoldAssignmentToWhen(element, editor)
+    override fun applyTo(element: KtBinaryExpression, editor: Editor?): Unit = BranchedUnfoldingUtils.unfoldAssignmentToWhen(element) {
+        editor?.caretModel?.moveToOffset(it)
+    }
 }
