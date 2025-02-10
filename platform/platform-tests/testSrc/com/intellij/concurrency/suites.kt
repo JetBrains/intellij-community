@@ -21,7 +21,7 @@ import org.junit.platform.suite.api.Suite
   LaterInvocatorTest::class,
   ModalCoroutineTest::class,
   ReadWritePropagationTest::class,
-
+  SwingThreadingTest::class,
 
   // contexts
   ContextSwitchTest::class,

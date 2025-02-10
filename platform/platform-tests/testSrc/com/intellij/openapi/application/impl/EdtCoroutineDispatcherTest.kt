@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
@@ -259,6 +260,41 @@ class EdtCoroutineDispatcherTest {
       jobs.forEach { it.join() }
       assertThat(collected.get()).isEqualTo(2)
       assertThat(modalities).containsOnly(ModalityState.nonModal())
+    }
+  }
+
+  @Test
+  fun `edt coroutine cancellation happens under lock`() = timeoutRunBlocking {
+    val job = Job()
+    val computation = launch(Dispatchers.EDT) {
+      try {
+        suspendCancellableCoroutine {
+          job.complete()
+        }
+      }
+      finally {
+        assertThat(application.isReadAccessAllowed).isTrue
+        assertThat(application.isWriteIntentLockAcquired).isTrue
+        assertThat(application.isWriteAccessAllowed).isFalse
+      }
+    }
+    job.join()
+    computation.cancelAndJoin()
+  }
+
+  @Test
+  fun `edt coroutine holds lock`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      assertThat(application.isReadAccessAllowed).isTrue
+      assertThat(application.isWriteIntentLockAcquired).isTrue
+      assertThat(application.isWriteAccessAllowed).isFalse
+    }
+  }
+
+  @Test
+  fun `edt coroutine scheduled with ANY modality runs under lock`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      assertThat(application.isReadAccessAllowed).isTrue
     }
   }
 }

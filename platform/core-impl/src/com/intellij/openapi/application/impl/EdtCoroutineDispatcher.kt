@@ -3,9 +3,12 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.isCoroutineWILEnabled
 import com.intellij.openapi.progress.isRunBlockingUnderReadAction
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.coroutines.Runnable
@@ -28,14 +31,32 @@ internal sealed class EdtCoroutineDispatcher : MainCoroutineDispatcher() {
     check(!context.isRunBlockingUnderReadAction()) {
       "Switching to Dispatchers.EDT from `runBlockingCancellable` inside in a read-action leads to possible deadlock."
     }
+    val lockingAwareBlock = wrapWithLocking(block)
     val state = context.effectiveContextModality()
     val runnable = if (state === ModalityState.any()) {
-      ContextAwareRunnable(block::run)
+      ContextAwareRunnable(lockingAwareBlock::run)
     }
     else {
-      DispatchedRunnable(context.job, block)
+      DispatchedRunnable(context.job, lockingAwareBlock)
     }
     ApplicationManagerEx.getApplicationEx().dispatchCoroutineOnEDT(runnable, state)
+  }
+
+  private fun wrapWithLocking(runnable: Runnable): Runnable {
+    if (isCoroutineWILEnabled) {
+      return Runnable {
+        WriteIntentReadAction.run {
+          ThreadingAssertions.setImplicitLockOnEDT(true)
+          try {
+            runnable.run()
+          }
+          finally {
+            ThreadingAssertions.setImplicitLockOnEDT(false)
+          }
+        }
+      }
+    }
+    return runnable
   }
 
   companion object : EdtCoroutineDispatcher() {
