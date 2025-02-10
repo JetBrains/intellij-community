@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder({
     "node-packages",
     "ruby-gems",
+    "symfony-bundles",
     "file-extensions",
     "file-name-patterns",
     "ide-libraries",
@@ -43,6 +44,13 @@ public class EnablementRules {
     @JsonProperty("ruby-gems")
     @JsonPropertyDescription("Ruby gem names, which enable framework support within the particular Ruby module.")
     private List<String> rubyGems = new ArrayList<String>();
+    /**
+     * Symfony bundle names, which enable framework support within the particular Symfony project using AssetMapper.
+     * 
+     */
+    @JsonProperty("symfony-bundles")
+    @JsonPropertyDescription("Symfony bundle names, which enable framework support within the particular Symfony project using AssetMapper.")
+    private List<String> symfonyBundles = new ArrayList<String>();
     /**
      * Extensions of files, which should have the framework support enabled. Use this to support custom file extensions like '.vue' or '.svelte'. Never specify generic extensions like '.html', '.js' or '.ts'. If you need your contributions to be present in every file don't specify the framework at all
      * 
@@ -108,6 +116,24 @@ public class EnablementRules {
     @JsonProperty("ruby-gems")
     public void setRubyGems(List<String> rubyGems) {
         this.rubyGems = rubyGems;
+    }
+
+    /**
+     * Symfony bundle names, which enable framework support within the particular Symfony project using AssetMapper.
+     * 
+     */
+    @JsonProperty("symfony-bundles")
+    public List<String> getSymfonyBundles() {
+        return symfonyBundles;
+    }
+
+    /**
+     * Symfony bundle names, which enable framework support within the particular Symfony project using AssetMapper.
+     * 
+     */
+    @JsonProperty("symfony-bundles")
+    public void setSymfonyBundles(List<String> symfonyBundles) {
+        this.symfonyBundles = symfonyBundles;
     }
 
     /**
