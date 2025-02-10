@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.path.EelPath
@@ -58,7 +57,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   private fun startProcess(debug: Boolean): ProcessHandler {
     return runWithModalProgressBlocking(myConfiguration.project, RunnerBundle.message("maven.target.run.label")) {
       val eelApi = myConfiguration.project.getEelDescriptor().upgrade()
-      val processOptions = EelExecApi.ExecuteProcessOptions.Builder(if (SystemInfo.isWindows) "cmd.exe" else "/bin/sh")
+      val processOptions = EelExecApi.ExecuteProcessOptions.Builder(if (isWindows()) "cmd.exe" else "/bin/sh")
         .env(getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug))
         .workingDirectory(EelPath.parse(myConfiguration.runnerParameters.workingDirPath.toString(), eelApi.descriptor))
         .args(getArgs())
@@ -77,7 +76,6 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       }
     }
   }
-
 
   override fun execute(executor: Executor, runner: ProgramRunner<*>): ExecutionResult {
     try {
