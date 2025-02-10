@@ -42,7 +42,8 @@ object ApiDumpUtil {
     val firstContentRoot = contentRoots.firstOrNull() ?: return false
     val firstContentRootUrl = firstContentRoot.url
     return firstContentRootUrl.append(ApiDumpConstants.API_DUMP_FILENAME).exists() ||
-           firstContentRootUrl.append(ApiDumpConstants.API_DUMP_UNREVIEWED_FILENAME).exists()
+           firstContentRootUrl.append(ApiDumpConstants.API_DUMP_UNREVIEWED_FILENAME).exists() ||
+           firstContentRootUrl.append(ApiDumpConstants.API_DUMP_EXPERIMENTAL_FILENAME).exists()
   }
 
   private fun VirtualFileUrl.exists(): Boolean = toPath().exists()
