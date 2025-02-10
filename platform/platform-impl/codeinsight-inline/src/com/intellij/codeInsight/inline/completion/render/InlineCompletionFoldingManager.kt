@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.render
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
@@ -147,6 +149,10 @@ internal class InlineCompletionFoldingManager private constructor(private val ed
     private val LOG = thisLogger()
 
     private fun isFoldingSupported(editor: Editor): Boolean {
+      if (!ClientId.currentOrNull.isLocal) {
+        // Folding will happen on frontend
+        return false
+      }
       val foldingModel = editor.foldingModel
       return foldingModel is FoldingModelEx && foldingModel.isFoldingEnabled
     }
