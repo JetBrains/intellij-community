@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import com.intellij.openapi.util.Pair;
@@ -949,6 +949,27 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
       affectDependentModules(
         context, present, changedModule, true, constraintPackageNames.isEmpty()? null : node -> node instanceof JvmModule && constraintPackageNames.contains(((JvmModule)node).getName())
       );
+    }
+    return true;
+  }
+
+  @Override
+  public boolean processNodesWithErrors(DifferentiateContext context, Iterable<JVMClassNode<?, ?>> nodes, Utils present) {
+    for (JvmClass jvmClass : Graph.getNodesOfType(nodes, JvmClass.class)) {
+      for (JvmField field : filter(jvmClass.getFields(), f -> !f.isPrivate() && f.isInlinable() && f.getValue() != null)) {
+        if (context.getParams().isProcessConstantsIncrementally()) {
+          debug("Potentially inlined field is contained in a source compiled with errors => affecting field usages and static member import usages");
+          var propagated = present.collectSubclassesWithoutField(jvmClass.getReferenceID(), field);
+          affectMemberUsages(context, jvmClass.getReferenceID(), field, propagated);
+          affectStaticMemberImportUsages(context, jvmClass.getReferenceID(), field.getName(), propagated);
+        }
+        else {
+          debug("Potentially inlined field is contained in a source compiled with errors => a switch to non-incremental mode requested");
+          if (!affectOnNonIncrementalChange(context, jvmClass.getReferenceID(), field, present)) {
+            return false;
+          }
+        }
+      }
     }
     return true;
   }
