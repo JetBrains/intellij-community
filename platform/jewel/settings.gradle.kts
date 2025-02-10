@@ -86,6 +86,8 @@ lazy(LazyThreadSafetyMode.NONE) {
 
 val shebang = if (isWindows) "" else "#!/bin/sh"
 
+/*
+// This is broken on Windows, please do not enable it again until it is fixed. 
 gitHooks {
     hook("pre-push") {
         from(shebang) {
@@ -105,4 +107,4 @@ gitHooks {
     }
 
     createHooks(overwriteExisting = true)
-}
+}*/
