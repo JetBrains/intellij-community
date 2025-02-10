@@ -72,6 +72,8 @@ class RecentProjectIconHelper {
     @Internal
     fun createIcon(data: ByteArray, svg: Boolean, size: Int): Icon = ProjectFileIcon(loadIcon(data, svg, size))
 
+    fun createIcon(data: ByteArray, svg: Boolean): Icon = createIcon(data, svg, unscaledProjectIconSize())
+
     fun refreshProjectIcon(path: @SystemIndependent String) {
       projectIconCache.keys
         .filter { it.first == path }
