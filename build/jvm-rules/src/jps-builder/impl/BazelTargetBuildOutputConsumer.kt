@@ -3,30 +3,27 @@
 
 package org.jetbrains.bazel.jvm.jps.impl
 
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import org.jetbrains.bazel.jvm.jps.OutputSink
-import org.jetbrains.bazel.jvm.jps.hashSet
 import org.jetbrains.jps.builders.BuildTarget
+import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.incremental.BinaryContent
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.CompiledClass
-import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.ModuleLevelBuilder.OutputConsumer
-import org.jetbrains.jps.incremental.messages.BuildMessage
-import org.jetbrains.jps.incremental.messages.CompilerMessage
-import org.jetbrains.jps.incremental.messages.FileGeneratedEvent
+import org.jetbrains.kotlin.backend.common.output.OutputFile
 import java.io.File
 import java.nio.file.Path
-import java.util.Collections
-import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.text.startsWith
+import java.util.*
 
 internal class BazelTargetBuildOutputConsumer(
-  private val context: CompileContext,
-  target: ModuleBuildTarget,
-  dataManager: BazelBuildDataProvider?,
+  private val dataManager: BazelBuildDataProvider?,
   @JvmField val outputSink: OutputSink,
 ) : OutputConsumer {
-  private val outputConsumer = BazelBuildOutputConsumer(target, context, dataManager)
+  private var registeredSourceCount = 0
+
+  //private val fileGeneratedEvent = FileGeneratedEvent(target)
+
   private val classes = HashMap<String, CompiledClass>()
   private val outputToBuilderNameMap = Collections.synchronizedMap(HashMap<File, String>())
 
@@ -55,105 +52,75 @@ internal class BazelTargetBuildOutputConsumer(
     }
   }
 
-  fun registerCompiledClass(
+  fun registerKotlincOutput(context: CompileContext, outputs: List<OutputFile>) {
+    val successfullyCompiled = ObjectLinkedOpenHashSet<File>(outputs.size)
+    outputSink.registerKotlincOutput(outputs)
+    for (fileObject in outputs) {
+      val sourceFiles = fileObject.sourceFiles
+      if (fileObject.relativePath.endsWith(".kt")) {
+        successfullyCompiled.addAll(sourceFiles)
+      }
+
+      for (sourceFile in sourceFiles) {
+        dataManager?.sourceToOutputMapping?.appendRawRelativeOutput(sourceFile.toPath(), fileObject.relativePath)
+      }
+    }
+    registeredSourceCount += successfullyCompiled.size
+    JavaBuilderUtil.registerSuccessfullyCompiled(context, successfullyCompiled)
+  }
+
+  fun addRegisteredSourceCount(add: Int) {
+    registeredSourceCount += add
+  }
+
+  fun registerJavacCompiledClass(
     relativeOutputPath: String,
-    outputFile: File,
-    sourceFiles: Collection<Path>,
-    compiled: CompiledClass,
-    builderName: String,
+    sourceFile: Path,
+    compiled: CompiledClass?,
   ) {
-    compiled.className?.let {
+    compiled?.className?.let {
       classes.put(it, compiled)
     }
 
-    val previousBuilder = outputToBuilderNameMap.put(outputFile, builderName)
-    if (previousBuilder != null && previousBuilder != builderName) {
-      val source = sourceFiles.firstOrNull()?.toString()
-      context.processMessage(CompilerMessage(
-        builderName, BuildMessage.Kind.ERROR, "Output file \"${outputFile}\" has already been registered by \"$previousBuilder\"", source
-      ))
-    }
+    //val previousBuilder = outputToBuilderNameMap.put(outputFile, builderName)
+    //if (previousBuilder != null && previousBuilder != builderName) {
+    //  val source = sourceFiles.firstOrNull()?.toString()
+    //  context.processMessage(CompilerMessage(
+    //    builderName, BuildMessage.Kind.ERROR, "Output file \"${outputFile}\" has already been registered by \"$previousBuilder\"", source
+    //  ))
+    //}
 
-    outputConsumer.fileGeneratedEvent.add(outputConsumer.targetOutDirPath, relativeOutputPath)
-    outputConsumer.registeredSources.addAll(sourceFiles)
-    if (outputConsumer.dataManager != null) {
-      for (source in sourceFiles) {
-        outputConsumer.dataManager.sourceToOutputMapping.appendRawRelativeOutput(source, relativeOutputPath)
-      }
-    }
+    //fileGeneratedEvent.add("", relativeOutputPath)
+    dataManager?.sourceToOutputMapping?.appendRawRelativeOutput(sourceFile, relativeOutputPath)
   }
 
   override fun registerOutputFile(target: BuildTarget<*>, outputFile: File, sourcePaths: Collection<String>) {
-    val currentBuilder = currentBuilderName
-    if (currentBuilder != null) {
-      val previousBuilder = outputToBuilderNameMap.put(outputFile, currentBuilder)
-      if (previousBuilder != null && previousBuilder != currentBuilder) {
-        val source = if (sourcePaths.isEmpty()) null else sourcePaths.iterator().next()
-        context.processMessage(CompilerMessage(
-          currentBuilder, BuildMessage.Kind.ERROR, "Output file \"${outputFile}\" has already been registered by \"$previousBuilder\"", source
-        ))
-      }
-    }
-    outputConsumer.registerOutputFile(outputFile = outputFile.toPath(), sourcePaths = sourcePaths.map { Path.of(it) })
+    throw IllegalStateException("")
   }
 
   fun fireFileGeneratedEvents() {
-    outputConsumer.fireFileGeneratedEvent()
+    //if (!fileGeneratedEvent.isEmpty) {
+    //  context.processMessage(fileGeneratedEvent)
+    //}
   }
 
-  fun getNumberOfProcessedSources(): Int = outputConsumer.numberOfProcessedSources
+  fun getNumberOfProcessedSources(): Int = registeredSourceCount
 
   fun clear() {
     classes.clear()
     outputToBuilderNameMap.clear()
   }
-}
 
-private class BazelBuildOutputConsumer(
-  target: BuildTarget<*>,
-  private val context: CompileContext,
-  @JvmField val dataManager: BazelBuildDataProvider?,
-) {
-  @JvmField val fileGeneratedEvent = FileGeneratedEvent(target)
-
-  @JvmField val targetOutDir = (target as BazelModuleBuildTarget).outDir
-  @JvmField val targetOutDirPath = targetOutDir.invariantSeparatorsPathString
-
-  @JvmField val registeredSources = hashSet<Path>()
-
-  private fun addEventsRecursively(output: File, outputRootPath: String?, relativePath: String) {
-    val children = output.listFiles()
-    if (children == null) {
-      fileGeneratedEvent.add(outputRootPath, relativePath)
-    }
-    else {
-      val prefix = if (relativePath.isEmpty() || relativePath == ".") "" else "$relativePath/"
-      for (child in children) {
-        addEventsRecursively(child, outputRootPath, prefix + child.getName())
-      }
-    }
-  }
-
-  fun registerOutputFile(outputFile: Path, sourcePaths: Collection<Path>) {
-    val relativePath = targetOutDir.relativize(outputFile).invariantSeparatorsPathString
-    require(!relativePath.startsWith("../")) {
-      "$outputFile must be created under $targetOutDir"
-    }
-    fileGeneratedEvent.add(targetOutDirPath, relativePath)
-    registeredSources.addAll(sourcePaths)
-    if (dataManager != null) {
-      for (sourcePath in sourcePaths) {
-        dataManager.sourceToOutputMapping.appendRawRelativeOutput(sourcePath, relativePath)
-      }
-    }
-  }
-
-  val numberOfProcessedSources: Int
-    get() = registeredSources.size
-
-  fun fireFileGeneratedEvent() {
-    if (!fileGeneratedEvent.isEmpty) {
-      context.processMessage(fileGeneratedEvent)
-    }
-  }
+  //private fun addEventsRecursively(output: File, outputRootPath: String?, relativePath: String) {
+  //  val children = output.listFiles()
+  //  if (children == null) {
+  //    fileGeneratedEvent.add(outputRootPath, relativePath)
+  //  }
+  //  else {
+  //    val prefix = if (relativePath.isEmpty() || relativePath == ".") "" else "$relativePath/"
+  //    for (child in children) {
+  //      addEventsRecursively(child, outputRootPath, prefix + child.getName())
+  //    }
+  //  }
+  //}
 }

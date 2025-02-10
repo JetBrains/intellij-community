@@ -605,7 +605,7 @@ def _run_jps_builder(
         args.add("--jdeps-out", jdeps)
 
     if isIncremental:
-        args.add("--incremental", jdeps)
+        args.add("--incremental")
 
     javac_opts = ctx.attr.javac_opts[JavacOptions] if ctx.attr.javac_opts else None
     if javac_opts and javac_opts.add_exports:

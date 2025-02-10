@@ -54,17 +54,12 @@ import kotlin.io.path.invariantSeparatorsPathString
 
 private val jpsElementFactory = JpsElementFactory.getInstance()
 
-//internal val runFiles by lazy {
-//  Runfiles.preload().unmapped()
-//}
-
 private val javaHome = Path.of(System.getProperty("java.home")).normalize() ?: error("No java.home system property")
 
 internal fun loadJpsModel(
   sources: List<Path>,
   args: ArgMap<JvmBuilderFlags>,
   classPathRootDir: Path,
-  classOutDir: Path,
   dependencyFileToDigest: Map<Path, ByteArray>,
 ): Pair<JpsModel, TargetConfigurationDigestContainer> {
   val model = jpsElementFactory.createModel()
@@ -80,7 +75,6 @@ internal fun loadJpsModel(
     jpsElementFactory.createDummyElement(),
   )
   val jpsJavaModuleExtension = JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(module)
-  jpsJavaModuleExtension.outputUrl = classOutDir.toUri().toString()
 
   val languageLevelEnumName = "JDK_" + args.mandatorySingle(JvmBuilderFlags.JVM_TARGET).let { if (it == "8") "1_8" else it }
   val langLevel = LanguageLevel.valueOf(languageLevelEnumName)
@@ -118,7 +112,6 @@ internal fun loadJpsModel(
     classPathRootDir = classPathRootDir,
     configHash = configHash,
     classPathFiles = classPathFiles,
-    outputDir = classOutDir,
     sources = sources,
   )
   configHash.putUnorderedIterable(args.optionalList(JvmBuilderFlags.ADD_EXPORT), HashFunnel.forString(), Hashing.xxh3_64())
@@ -161,7 +154,6 @@ private fun configureKotlinCompiler(
   classPathRootDir: Path,
   configHash: HashStream64,
   classPathFiles: Array<Path>,
-  outputDir: Path,
   sources: List<Path>,
 ): K2JVMCompilerArguments {
   val kotlinFacetSettings = KotlinFacetSettings()
@@ -188,20 +180,10 @@ private fun configureKotlinCompiler(
     @Suppress("UnusedVariable")
     for ((id, paths) in plugins) {
       configHash.putString(id)
-
-      //val propertyName = "$id.path"
-      //val relativePath = System.getProperty(propertyName)
-      //if (relativePath == null) {
-      //  throw IllegalArgumentException("Missing system property $propertyName")
-      //}
-      //
-      //pluginClassPaths.add(runFiles.rlocation(relativePath))
     }
-    //kotlinArgs.pluginClasspaths = pluginClassPaths.toTypedArray()
   }
 
   kotlinArgs.classpath = classPathFiles.joinToString(separator = File.pathSeparator, transform = { it.toString() })
-  kotlinArgs.destination = outputDir.toString()
   kotlinArgs.javaSourceRoots = run {
     val result = ArrayList<String>()
     for (file in sources) {

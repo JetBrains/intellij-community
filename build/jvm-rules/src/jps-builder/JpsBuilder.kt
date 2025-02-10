@@ -194,18 +194,14 @@ suspend fun buildUsingJps(
   val bazelOutDir = outJar.parent
   val dataDir = bazelOutDir.resolve("$cachePrefix$prefix-jps-data")
 
-  val classOutDir = bazelOutDir.resolve("$cachePrefix$prefix-classes")
-
   val (jpsModel, targetDigests) = loadJpsModel(
     sources = sources,
     args = args,
     classPathRootDir = baseDir,
-    classOutDir = classOutDir,
     dependencyFileToDigest = dependencyFileToDigest,
   )
 
   val moduleTarget = BazelModuleBuildTarget(
-    outDir = classOutDir,
     module = jpsModel.project.modules.single(),
     sources = sources,
   )
@@ -221,7 +217,6 @@ suspend fun buildUsingJps(
       tracer = tracer,
       jpsModel = jpsModel,
       moduleTarget = moduleTarget,
-      classOutDir = classOutDir,
     )
   }
 
@@ -233,16 +228,12 @@ suspend fun buildUsingJps(
     }
   }
 
-  val relativizer = createPathRelativizer(baseDir = baseDir, classOutDir = classOutDir)
+  val relativizer = createPathRelativizer(baseDir = baseDir)
 
-  // if class output dir doesn't exist, make sure that we do not to use existing cache -
+  // if class jar doesn't exist, make sure that we do not to use existing cache -
   // set `isRebuild` to true and clear caches in this case
   var isRebuild = false
-  if (Files.notExists(dataDir)) {
-    FileUtilRt.deleteRecursively(classOutDir)
-    isRebuild = true
-  }
-  else if (Files.notExists(classOutDir)) {
+  if (Files.notExists(outJar)) {
     FileUtilRt.deleteRecursively(dataDir)
     isRebuild = true
   }
@@ -268,7 +259,6 @@ suspend fun buildUsingJps(
     )
     if (forceFullRebuild) {
       FileUtilRt.deleteRecursively(dataDir)
-      FileUtilRt.deleteRecursively(classOutDir)
 
       isRebuild = true
       return null
@@ -287,7 +277,6 @@ suspend fun buildUsingJps(
     compileScope = BazelCompileScope(isIncrementalCompilation = true, isRebuild = isRebuild),
     messageHandler = log,
     dataDir = dataDir,
-    classOutDir = classOutDir,
     targetDigests = targetDigests,
     moduleTarget = moduleTarget,
     outJar = outJar,
@@ -312,7 +301,6 @@ suspend fun buildUsingJps(
       compileScope = BazelCompileScope(isIncrementalCompilation = true, isRebuild = true),
       messageHandler = log,
       dataDir = dataDir,
-      classOutDir = classOutDir,
       targetDigests = targetDigests,
       moduleTarget = moduleTarget,
       outJar = outJar,
@@ -344,7 +332,6 @@ private suspend fun nonIncrementalBuildUsingJps(
   log: RequestLog,
   jpsModel: JpsModel,
   moduleTarget: BazelModuleBuildTarget,
-  classOutDir: Path,
 ): Int {
   val abiJar = args.optionalSingle(JvmBuilderFlags.ABI_OUT)?.let { baseDir.resolve(it).normalize() }
   val outJar = baseDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUT)).normalize()
@@ -352,8 +339,6 @@ private suspend fun nonIncrementalBuildUsingJps(
     parentSpan.setAttribute("outJar", outJar.toString())
     parentSpan.setAttribute("abiJar", abiJar?.toString() ?: "")
   }
-
-  FileUtilRt.deleteRecursively(classOutDir)
 
   val projectDescriptor = ProjectDescriptor(
     /* model = */ jpsModel,
@@ -461,7 +446,6 @@ private suspend fun initAndBuild(
   compileScope: BazelCompileScope,
   messageHandler: RequestLog,
   dataDir: Path,
-  classOutDir: Path,
   targetDigests: TargetConfigurationDigestContainer,
   moduleTarget: BazelModuleBuildTarget,
   outJar: Path,
@@ -475,7 +459,7 @@ private suspend fun initAndBuild(
 ): Int {
   val isRebuild = compileScope.isRebuild
   val tracer = messageHandler.tracer
-  val storageInitializer = StorageInitializer(dataDir = dataDir, classOutDir = classOutDir)
+  val storageInitializer = StorageInitializer(dataDir = dataDir, outJar = outJar)
   val storageManager = tracer.span("init storage") { span ->
     if (isRebuild) {
       storageInitializer.clearAndInit(span)
@@ -505,6 +489,17 @@ private suspend fun initAndBuild(
         .setAttribute(AttributeKey.booleanKey("isRebuild"), isRebuild)
         .use { span ->
           val builders = arrayOf(
+            if (compileScope.isIncrementalCompilation) {
+              IncrementalKotlinBuilder(
+                isKotlinBuilderInDumbMode = false,
+                isRebuild = isRebuild,
+                span = span,
+                dataManager = buildDataProvider,
+              )
+            }
+            else {
+              NonIncrementalKotlinBuilder(job = coroutineContext.job, module = moduleTarget.module, span = span)
+            },
             BazelJavaBuilder(
               isIncremental = compileScope.isIncrementalCompilation,
               tracer = tracer,
@@ -513,16 +508,6 @@ private suspend fun initAndBuild(
             ),
             //NotNullInstrumentingBuilder(),
             JavaBackwardReferenceIndexBuilder(),
-            if (compileScope.isIncrementalCompilation) {
-              IncrementalKotlinBuilder(
-                isKotlinBuilderInDumbMode = false,
-                span = span,
-                dataManager = buildDataProvider,
-              )
-            }
-            else {
-              NonIncrementalKotlinBuilder(job = coroutineContext.job, module = moduleTarget.module, span = span)
-            },
             KotlinCompilerReferenceIndexBuilder(),
           )
           builders.sortBy { it.category.ordinal }
@@ -555,7 +540,6 @@ private suspend fun initAndBuild(
             moduleTarget = moduleTarget,
             outJar = outJar,
             abiJar = abiJar,
-            classOutDir = classOutDir,
             context = context,
             targetDigests = targetDigests,
             buildDataProvider = buildDataProvider,
@@ -596,7 +580,6 @@ private fun CoroutineScope.postBuild(
   moduleTarget: ModuleBuildTarget,
   outJar: Path,
   abiJar: Path?,
-  classOutDir: Path,
   context: BazelCompileContext,
   targetDigests: TargetConfigurationDigestContainer,
   buildDataProvider: BazelBuildDataProvider,
@@ -627,13 +610,6 @@ private fun CoroutineScope.postBuild(
       metadata = Object2ObjectArrayMap(stateFileMetaNames, targetDigests.asString()),
       allocator = buildDataProvider.allocator,
     )
-  }
-
-  launch {
-    // deletes class loader classpath index files for changed output roots
-    // todo remove when we will produce JAR directly
-    Files.deleteIfExists(classOutDir.resolve("classpath.index"))
-    Files.deleteIfExists(classOutDir.resolve(".unmodified"))
   }
 
   if (success) {

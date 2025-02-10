@@ -3,7 +3,6 @@
 
 package org.jetbrains.bazel.jvm.jps.java
 
-import com.intellij.compiler.instrumentation.FailSafeClassReader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtilRt
@@ -16,8 +15,10 @@ import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.jps.OutputSink
+import org.jetbrains.bazel.jvm.jps.emptyList
+import org.jetbrains.bazel.jvm.jps.emptyMap
 import org.jetbrains.bazel.jvm.jps.hashSet
-import org.jetbrains.bazel.jvm.jps.impl.BazelBuildRootIndex
+import org.jetbrains.bazel.jvm.jps.impl.BazelBuildTargetIndex
 import org.jetbrains.bazel.jvm.jps.impl.BazelDirtyFileHolder
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
@@ -28,20 +29,14 @@ import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
 import org.jetbrains.jps.builders.DirtyFilesHolder
 import org.jetbrains.jps.builders.FileProcessor
 import org.jetbrains.jps.builders.JpsBuildBundle
-import org.jetbrains.jps.builders.ModuleBasedTarget
-import org.jetbrains.jps.builders.TargetOutputIndex
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase
-import org.jetbrains.jps.builders.impl.TargetOutputIndexImpl
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.JavaCompilingTool
-import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
-import org.jetbrains.jps.builders.java.dependencyView.Callbacks.Backend
 import org.jetbrains.jps.cmdline.ClasspathBootstrap
 import org.jetbrains.jps.incremental.BuilderCategory
 import org.jetbrains.jps.incremental.CompileContext
-import org.jetbrains.jps.incremental.CompiledClass
 import org.jetbrains.jps.incremental.GlobalContextKey
 import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.ModuleLevelBuilder
@@ -59,7 +54,6 @@ import org.jetbrains.jps.javac.ExternalJavacManagerKey
 import org.jetbrains.jps.javac.JavacFileReferencesRegistrar
 import org.jetbrains.jps.javac.JavacMain
 import org.jetbrains.jps.javac.JpsInfoDiagnostic
-import org.jetbrains.jps.javac.JpsJavacFileProvider
 import org.jetbrains.jps.javac.ModulePath
 import org.jetbrains.jps.javac.OutputFileConsumer
 import org.jetbrains.jps.javac.OutputFileObject
@@ -77,27 +71,16 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.jetbrains.jps.service.JpsServiceManager
-import java.io.ByteArrayInputStream
 import java.io.File
-import java.io.InputStream
-import java.io.OutputStream
-import java.io.Reader
-import java.io.Writer
-import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BiConsumer
 import java.util.function.Function
-import javax.lang.model.element.Modifier
-import javax.lang.model.element.NestingKind
 import javax.tools.Diagnostic
-import javax.tools.JavaFileManager
 import javax.tools.JavaFileObject
-import javax.tools.StandardLocation
 import kotlin.coroutines.coroutineContext
-import kotlin.io.path.invariantSeparatorsPathString
 
 private const val USE_MODULE_PATH_ONLY_OPTION = "compiler.force.module.path"
 
@@ -213,13 +196,11 @@ internal class BazelJavaBuilder(
       return ExitCode.NOTHING_DONE
     }
 
-
-    // begin compilation round
-    val javacOutputSink = JavacOutputFileSink(
-      context = context,
+    val jpsJavaFileProvider = BazelJpsJavacFileProvider(
+      outputSink = outputSink,
+      expectedOutputFileCount = filesToCompile.count(),
       outputConsumer = outputConsumer,
       mappingsCallback = if (isIncremental) JavaBuilderUtil.getDependenciesRegistrar(context) else null,
-      outputSink = outputSink,
     )
     var filesWithErrors: Collection<File>? = null
     try {
@@ -242,10 +223,8 @@ internal class BazelJavaBuilder(
                 target = target,
                 files = filesToCompile,
                 originalClassPath = classpath,
-                sourcePath = emptyList(),
                 diagnosticSink = diagnosticSink,
-                javacOutputSink = javacOutputSink,
-                outputJar = outputSink,
+                jpsJavaFileProvider = jpsJavaFileProvider,
                 span = it,
               )
             }
@@ -271,7 +250,7 @@ internal class BazelJavaBuilder(
       if (filesWithErrors != null) {
         JavaBuilderUtil.registerFilesWithErrors(context, filesWithErrors)
       }
-      JavaBuilderUtil.registerSuccessfullyCompiled(context, javacOutputSink.successfullyCompiled)
+      jpsJavaFileProvider.registerOutputs(context)
     }
     return if (hasSourcesToCompile) ExitCode.OK else ExitCode.NOTHING_DONE
   }
@@ -284,10 +263,8 @@ internal class BazelJavaBuilder(
     chunk: ModuleChunk,
     files: Sequence<Path>,
     originalClassPath: Array<Path>,
-    sourcePath: Collection<File>,
     diagnosticSink: DiagnosticOutputConsumer,
-    javacOutputSink: JavacOutputFileSink,
-    outputJar: OutputSink,
+    jpsJavaFileProvider: BazelJpsJavacFileProvider,
   ): Boolean {
     val javaExtensionService = JpsJavaExtensionService.getInstance()
     val targetLanguageLevel = javaExtensionService.getModuleExtension(module)!!.languageLevel!!.feature()
@@ -309,8 +286,6 @@ internal class BazelJavaBuilder(
       compilingTool = compilingTool,
     )
     val options = vmCompilerOptions.second
-    val outs = buildOutputDirectoriesMap(target)
-
     var moduleInfoFile: Path? = null
     if (targetLanguageLevel >= 9) {
       for (file in target.sources) {
@@ -331,7 +306,7 @@ internal class BazelJavaBuilder(
       // has modules
       val splitter = MODULE_PATH_SPLITTER.get(context)
       val pair = splitter.splitPath(
-        moduleInfoFile.toFile(), outs.keys, ProjectPaths.getCompilationModulePath(chunk, false), collectAdditionalRequires(options)
+        moduleInfoFile.toFile(), emptySet(), ProjectPaths.getCompilationModulePath(chunk, false), collectAdditionalRequires(options)
       )
       val useModulePathOnly = System.getProperty(USE_MODULE_PATH_ONLY_OPTION).toBoolean() /*compilerConfig.useModulePathOnly()*/
       if (useModulePathOnly) {
@@ -354,11 +329,11 @@ internal class BazelJavaBuilder(
     if (forkSdk != null) {
       val server = ensureJavacServerStarted(context)
       val paths = CompilationPaths.create(
-        emptyList(),
-        classPath.map { it.toFile() }.toList(),
-        emptyList(),
-        modulePath,
-        sourcePath,
+        /* platformCp = */ emptyList(),
+        /* cp = */ classPath.map { it.toFile() }.toList(),
+        /* upgradeModCp = */ emptyList(),
+        /* modulePath = */ modulePath,
+        /* sourcePath = */ emptyList(),
       )
       val heapSize = Utils.suggestForkedCompilerHeapSize()
       return invokeJavac(
@@ -369,7 +344,7 @@ internal class BazelJavaBuilder(
         options = options,
         files = files,
         outSink = {
-          javacOutputSink.save(fileObject = it)
+          throw IllegalStateException("should not be called")
         },
       ) { options, files, outSink ->
         logJavacCall(options = options, mode = "fork", span = span)
@@ -380,39 +355,13 @@ internal class BazelJavaBuilder(
           options,
           paths,
           files,
-          outs,
+          emptyMap(),
           diagnosticSink,
           outSink,
           compilingTool,
           context.cancelStatus,
           true,
         ).get()
-      }
-    }
-
-    val jpsJavaFileProvider = object : JpsJavacFileProvider {
-      override fun list(
-        location: JavaFileManager.Location,
-        packageName: String,
-        kinds: Set<JavaFileObject.Kind>,
-        recurse: Boolean
-      ): Iterable<JavaFileObject> {
-        if (!kinds.contains(JavaFileObject.Kind.CLASS)) {
-          return emptySequence<JavaFileObject>().asIterable()
-        }
-
-        return sequence {
-          outputJar.findByPackage(packageName, recurse) { relativePath, data, offset, length ->
-            yield(InMemoryJavaFileObject(path = relativePath, data = data, offset = offset, length = length))
-          }
-        }.asIterable()
-      }
-
-      override fun inferBinaryName(location: JavaFileManager.Location, file: JavaFileObject): String? {
-        if (location == StandardLocation.CLASS_PATH && file is InMemoryJavaFileObject) {
-          return file.path.substringBeforeLast('.').replace('/', '.')
-        }
-        return null
       }
     }
 
@@ -424,7 +373,7 @@ internal class BazelJavaBuilder(
       options = options,
       files = files,
       outSink = {
-        javacOutputSink.save(fileObject = it)
+        throw IllegalStateException("should not be called")
       },
       javacCall = { options, files, outSink ->
         logJavacCall(options = options, mode = "in-process", span = span)
@@ -435,8 +384,8 @@ internal class BazelJavaBuilder(
           /* platformClasspath = */ emptyList(),
           /* modulePath = */ modulePath,
           /* upgradeModulePath = */ emptyList(),
-          /* sourcePath = */ sourcePath,
-          /* outputDirToRoots = */ outs,
+          /* sourcePath = */ emptyList(),
+          /* outputDirToRoots = */ emptyMap(),
           /* diagnosticConsumer = */ diagnosticSink,
           /* outputSink = */ outSink,
           /* canceledStatus = */ context.cancelStatus,
@@ -455,142 +404,10 @@ internal class BazelJavaBuilder(
   override fun getExpectedBuildTime(): Long = 100
 }
 
-private class InMemoryJavaFileObject(
-  @JvmField val path: String,
-  private val data: ByteArray,
-  private val offset: Int,
-  private val length: Int,
-) : JavaFileObject {
-  override fun getKind(): JavaFileObject.Kind = JavaFileObject.Kind.CLASS
-
-  override fun isNameCompatible(simpleName: String, kind: JavaFileObject.Kind): Boolean {
-    return kind == JavaFileObject.Kind.CLASS && simpleName == path
-  }
-
-  override fun getNestingKind(): NestingKind? = null
-
-  override fun getAccessLevel(): Modifier? = null
-
-  override fun toUri(): URI? {
-    throw UnsupportedOperationException()
-  }
-
-  override fun getName(): String = path
-
-  override fun openInputStream(): InputStream = ByteArrayInputStream(data, offset, length)
-
-  override fun openOutputStream(): OutputStream = throw IllegalStateException()
-
-  override fun openReader(ignoreEncodingErrors: Boolean): Reader = getCharContent(true).reader()
-
-  override fun getCharContent(ignoreEncodingErrors: Boolean): String {
-    return data.decodeToString(startIndex = offset, endIndex = offset + length)
-  }
-
-  override fun openWriter(): Writer = throw IllegalStateException()
-
-  override fun getLastModified(): Long = 1
-
-  override fun delete(): Boolean = throw IllegalStateException()
-}
-
 private class ExplodedModuleNameFinder(context: CompileContext) : Function<File?, String?> {
-  private val outsIndex: TargetOutputIndex
+  private val moduleTarget = (context.projectDescriptor.buildTargetIndex as BazelBuildTargetIndex).moduleTarget
 
-  init {
-    val targetIndex = context.projectDescriptor.buildTargetIndex
-    val javaModuleTargets = ArrayList<ModuleBuildTarget?>()
-    for (type in JavaModuleBuildTargetType.ALL_TYPES) {
-      javaModuleTargets.addAll(targetIndex.getAllTargets(type))
-    }
-    outsIndex = TargetOutputIndexImpl(javaModuleTargets, context)
-  }
-
-  override fun apply(outputDir: File?): String? {
-    for (target in outsIndex.getTargetsByOutputFile(outputDir!!)) {
-      if (target is ModuleBasedTarget<*>) {
-        return target.module.name.trim()
-      }
-    }
-    return ModulePathSplitter.DEFAULT_MODULE_NAME_SEARCH.apply(outputDir)
-  }
-}
-
-private class JavacOutputFileSink(
-  private val context: CompileContext,
-  private val outputConsumer: BazelTargetBuildOutputConsumer,
-  private val mappingsCallback: Backend?,
-  private val outputSink: OutputSink,
-) {
-  @JvmField
-  val successfullyCompiled = hashSet<File>()
-
-  fun save(fileObject: OutputFileObject) {
-    val content = fileObject.content
-    val file = fileObject.file
-    if (content == null) {
-      context.processMessage(CompilerMessage("java", BuildMessage.Kind.WARNING, "Missing content for file ${file.path}"))
-    }
-    else {
-      outputSink.registerJavacOutput(fileObject.relativePath, content.buffer, content.offset, content.length)
-    }
-
-    val outKind = fileObject.getKind()
-    val sourceIoFiles = fileObject.sourceFiles.toList()
-    val sourceFiles = sourceIoFiles.map { it.toPath() }
-    if (!sourceFiles.isEmpty() && content != null) {
-      val sourcePaths = sourceFiles.map { it.invariantSeparatorsPathString }
-      var rootDescriptor: JavaSourceRootDescriptor? = null
-      for (sourceFile in sourceFiles) {
-        rootDescriptor = (context.projectDescriptor.buildRootIndex as BazelBuildRootIndex).fileToDescriptors.get(sourceFile)
-        if (rootDescriptor != null) {
-          break
-        }
-      }
-
-      if (rootDescriptor == null) {
-        // was not able to determine the source root descriptor, or the source root is excluded from compilation (e.g., for annotation processors)
-        if (outKind == JavaFileObject.Kind.CLASS) {
-          outputConsumer.registerCompiledClass(null, CompiledClass(fileObject.file, sourceIoFiles, fileObject.className, content))
-        }
-      }
-      else {
-        // first, handle [src->output] mapping and register paths for files_generated event
-        if (outKind == JavaFileObject.Kind.CLASS) {
-          outputConsumer.registerCompiledClass(
-            outputFile = fileObject.file,
-            relativeOutputPath = fileObject.relativePath,
-            compiled = CompiledClass(fileObject.file, sourceIoFiles, fileObject.className, content),
-            builderName = "java",
-            sourceFiles = sourceFiles,
-          )
-        }
-        else {
-          outputConsumer.registerOutputFile(
-            target = rootDescriptor.target,
-            outputFile = fileObject.file,
-            sourcePaths = sourcePaths,
-          )
-        }
-      }
-
-      if (outKind == JavaFileObject.Kind.CLASS && mappingsCallback != null) {
-        // register in mappings any non-temp class file
-        val fileName = if (JavaBuilderUtil.isDepGraphEnabled()) {
-          FileUtilRt.toSystemIndependentName(fileObject.relativePath)
-        }
-        else {
-          fileObject.file.invariantSeparatorsPath
-        }
-        val reader = FailSafeClassReader(content.buffer, content.offset, content.length)
-        mappingsCallback.associate(fileName, sourcePaths, reader, fileObject.isGenerated)
-      }
-    }
-
-    if (outKind == JavaFileObject.Kind.CLASS && !sourceFiles.isEmpty()) {
-      successfullyCompiled.addAll(sourceIoFiles)
-    }
-  }
+  override fun apply(outputDir: File?): String? = moduleTarget.module.name.trim()
 }
 
 private class DiagnosticSink(
@@ -727,13 +544,6 @@ private fun collectAdditionalRequires(options: Iterable<String>): Collection<Str
     }
   }
   return result
-}
-
-private fun buildOutputDirectoriesMap(target: BazelModuleBuildTarget): Map<File, Set<File>> {
-  val roots = HashSet<File>(target.sources.size)
-  target.sources.mapTo(roots) { it.toFile() }
-  @Suppress("RemoveRedundantQualifierName")
-  return java.util.Map.of(target.outputDir, roots)
 }
 
 internal fun getAssociatedSdk(module: JpsModule): Pair<JpsSdk<JpsDummyElement?>, Int>? {

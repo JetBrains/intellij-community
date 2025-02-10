@@ -92,6 +92,7 @@ internal class IncrementalKotlinBuilder(
   private val isKotlinBuilderInDumbMode: Boolean,
   private val enableLookupStorageFillingInDumbMode: Boolean = false,
   private val dataManager: BazelBuildDataProvider,
+  private val isRebuild: Boolean,
   private val span: Span,
 ) : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
   override fun getPresentableName() = "Kotlin Builder"
@@ -108,7 +109,7 @@ internal class IncrementalKotlinBuilder(
 
     val kotlinContext = ensureKotlinContextInitialized(context, span)
 
-    if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context.scope)) {
+    if (isRebuild) {
       return
     }
 
@@ -125,10 +126,10 @@ internal class IncrementalKotlinBuilder(
         ))
         for (target in kotlinChunk.targets) {
           FSOperations.markDirtyFiles(
-            kotlinContext.jpsContext,
+            context,
             target.jpsModuleBuildTarget,
             CompilationRound.NEXT,
-            kotlinContext.jpsContext.projectDescriptor.dataManager.getFileStampStorage(target.jpsModuleBuildTarget),
+            context.projectDescriptor.dataManager.getFileStampStorage(target.jpsModuleBuildTarget),
             true,
             null
           ) { file ->
@@ -478,7 +479,7 @@ internal class IncrementalKotlinBuilder(
     )
 
     val pipeline = createJvmPipeline(config) {
-      (outputConsumer as BazelTargetBuildOutputConsumer).outputSink.registerKotlincOutput(it.asList())
+      (outputConsumer as BazelTargetBuildOutputConsumer).registerKotlincOutput(context, it.asList())
     }
 
     val exitCode = executeJvmPipeline(pipeline, bazelConfigurationHolder.kotlinArgs, environment.services, messageCollector)

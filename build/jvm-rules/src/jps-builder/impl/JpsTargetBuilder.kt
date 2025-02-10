@@ -48,7 +48,6 @@ import org.jetbrains.jps.incremental.messages.FileDeletedEvent
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent
 import org.jetbrains.jps.incremental.messages.ProgressMessage
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -96,7 +95,7 @@ internal class JpsTargetBuilder(
         val processedSources = numberOfSourcesProcessedByBuilder.get(builder)?.get() ?: 0
         val time = time.get().toDuration(DurationUnit.NANOSECONDS)
         val message = "Build duration: ${builder.presentableName} took ${formatDuration(time.toJavaDuration())}; " +
-          processedSources + " sources processed" +
+          processedSources + " sources processed (not unique if multiple outputs are produced for a source file)" +
           (if (processedSources == 0) "" else " (${time.inWholeMilliseconds / processedSources} ms per file)")
         parentSpan.addEvent(message)
       }
@@ -154,7 +153,7 @@ internal class JpsTargetBuilder(
     }
 
     var doneSomething = false
-    val outputConsumer = BazelTargetBuildOutputConsumer(context = context, target = target, dataManager = dataManager, outputSink = outputSink)
+    val outputConsumer = BazelTargetBuildOutputConsumer(dataManager = dataManager, outputSink = outputSink)
     try {
       val fsState = context.projectDescriptor.fsState
       var rebuildFromScratchRequested = false
@@ -321,6 +320,7 @@ internal class JpsTargetBuilder(
                 context = context,
                 target = target,
                 deletedFiles = deletedFiles,
+                outputSink = outputSink,
                 span = span,
               )
             }
@@ -437,20 +437,17 @@ private fun deleteOutputsAssociatedWithDeletedPaths(
   context: CompileContext,
   target: ModuleBuildTarget,
   deletedFiles: List<RemovedFileInfo>,
+  outputSink: OutputSink,
   span: Span,
 ): Boolean {
-  val dirsToDelete = linkedSet<Path>()
   var doneSomething = false
   // delete outputs associated with removed paths
   for (item in deletedFiles) {
-    val deletedOutputFiles = ArrayList<Path>()
+    val deletedOutputFiles = ArrayList<String>(item.outputs.size)
     for (output in item.outputs) {
-      val deleted = Files.deleteIfExists(output)
+      val deleted = outputSink.remove(output)
       if (deleted) {
         deletedOutputFiles.add(output)
-        output.parent?.let {
-          dirsToDelete.add(it)
-        }
       }
     }
     if (!deletedOutputFiles.isEmpty()) {
@@ -458,10 +455,10 @@ private fun deleteOutputsAssociatedWithDeletedPaths(
       if (span.isRecording) {
         span.addEvent(
           "deleted files",
-          Attributes.of(AttributeKey.stringArrayKey("deletedOutputFiles"), deletedOutputFiles.map { it.toString() }),
+          Attributes.of(AttributeKey.stringArrayKey("deletedOutputFiles"), deletedOutputFiles),
         )
       }
-      context.processMessage(FileDeletedEvent(deletedOutputFiles.map { it.toString() }))
+      //context.processMessage(FileDeletedEvent(deletedOutputFiles.map { it.toString() }))
     }
   }
 
@@ -476,7 +473,6 @@ private fun deleteOutputsAssociatedWithDeletedPaths(
     context.putUserData(Utils.REMOVED_SOURCES_KEY, java.util.Map.of(target, set as Collection<Path>))
   }
 
-  FSOperations.pruneEmptyDirs(context, dirsToDelete)
   return doneSomething
 }
 

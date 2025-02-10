@@ -22,16 +22,12 @@ import java.io.File
 import java.nio.file.Path
 
 internal class BazelModuleBuildTarget(
-  @JvmField val outDir: Path,
   module: JpsModule,
   @JvmField val sources: List<Path>,
 ) : ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION) {
-  private val outDirFile = outDir.toFile()
-  private val outRoots = java.util.List.of(outDirFile)
+  override fun getOutputDir(): File = throw IllegalStateException("")
 
-  override fun getOutputDir(): File = outDirFile
-
-  override fun getOutputRoots(context: CompileContext): Collection<File> = outRoots
+  override fun getOutputRoots(context: CompileContext): Collection<File> = throw IllegalStateException("")
 
   override fun isTests() = false
 

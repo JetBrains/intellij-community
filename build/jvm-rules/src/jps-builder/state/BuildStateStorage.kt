@@ -32,7 +32,6 @@ import java.nio.channels.FileChannel
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import kotlin.collections.iterator
 
 // https://observablehq.com/@huggingface/apache-arrow-quick-view
 
@@ -220,7 +219,7 @@ data class LoadStateResult(
 
 class RemovedFileInfo(
   @JvmField val sourceFile: Path,
-  @JvmField val outputs: List<Path>,
+  @JvmField val outputs: Array<String>,
 )
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -258,10 +257,7 @@ private fun doLoad(
     if (actualDigest == null) {
       // removed
       if (outputs != null) {
-        deletedFiles.add(RemovedFileInfo(
-          sourceFile = sourceFile,
-          outputs = outputs.map { relativizer.toAbsoluteFile(it, RelativePathType.OUTPUT) },
-        ))
+        deletedFiles.add(RemovedFileInfo(sourceFile = sourceFile, outputs = outputs))
       }
     }
     else {

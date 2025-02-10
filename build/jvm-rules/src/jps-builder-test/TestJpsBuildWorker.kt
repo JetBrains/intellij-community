@@ -25,7 +25,7 @@ internal object TestJpsBuildWorker {
     val testPaths = getTestWorkerPaths()
     val baseDir = testPaths.baseDir
 
-    val testModule = TestModules.JEWEL
+    val testModule = TestModules.PLATFORM_IMPL
     val sources = collectSources(sourceDirPath = testModule.sourcePath, paths = testPaths)
     val testParams = testModule.getParams(baseDir)
 
@@ -69,6 +69,8 @@ internal object TestJpsBuildWorker {
       }
 
       openTelemetryAndOnClose.second()
+
+      println("baseDir: $baseDir")
 
       exitCode
     }

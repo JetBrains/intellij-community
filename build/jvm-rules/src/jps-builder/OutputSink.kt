@@ -3,6 +3,7 @@ package org.jetbrains.bazel.jvm.jps
 
 import kotlinx.coroutines.channels.SendChannel
 import org.jetbrains.bazel.jvm.abi.JarContentToProcess
+import org.jetbrains.bazel.jvm.jps.java.InMemoryJavaOutputFileObject
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.writeZipUsingTempFile
@@ -12,7 +13,7 @@ import java.nio.file.Path
 import java.util.*
 
 class OutputSink {
-  private var kotlinOutput: List<OutputFile>? = null
+  private var isChanged = false
 
   @PublishedApi
   @JvmField
@@ -20,15 +21,18 @@ class OutputSink {
 
   @Synchronized
   fun registerKotlincOutput(outputFiles: List<OutputFile>) {
-    kotlinOutput = outputFiles
-
     for (file in outputFiles) {
       fileToData.put(file.relativePath, file)
     }
+    isChanged = true
   }
 
-  fun registerJavacOutput(relativePath: String, data: ByteArray, offset: Int, length: Int) {
-    fileToData.put(relativePath, ByteBuffer.wrap(data, offset, length))
+  @Synchronized
+  internal fun registerJavacOutput(outputs: List<InMemoryJavaOutputFileObject>) {
+    for (output in outputs) {
+      fileToData.put(output.path, ByteBuffer.wrap(output.content ?: continue))
+    }
+    isChanged = true
   }
 
   inline fun findByPackage(packageName: String, recursive: Boolean, consumer: (String, ByteArray, Int, Int) -> Unit) {
@@ -92,5 +96,14 @@ class OutputSink {
       }
       packageIndexBuilder.writePackageIndex(stream = stream, addDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY)
     }
+  }
+
+  @Synchronized
+  fun remove(path: String): Boolean {
+    val removed = fileToData.remove(path) != null
+    if (removed) {
+      isChanged = true
+    }
+    return removed
   }
 }
