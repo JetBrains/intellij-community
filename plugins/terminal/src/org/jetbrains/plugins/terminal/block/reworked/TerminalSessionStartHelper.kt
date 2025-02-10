@@ -4,8 +4,6 @@ package org.jetbrains.plugins.terminal.block.reworked
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
-import com.intellij.terminal.session.TerminalCloseEvent
-import com.intellij.terminal.session.TerminalSession
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.update.UiNotifyConnector
@@ -17,6 +15,7 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.block.reworked.session.FrontendTerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi
@@ -55,9 +54,9 @@ internal object TerminalSessionStartHelper {
   }
 
   @JvmStatic
-  fun closeTerminalSession(project: Project, session: TerminalSession) {
+  fun closeTerminalTab(project: Project, tabId: Int) {
     terminalProjectScope(project).launch {
-      session.sendInputEvent(TerminalCloseEvent)
+      TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), tabId)
     }
   }
 
@@ -75,27 +74,27 @@ internal object TerminalSessionStartHelper {
       }
       else options
 
-      val session = withContext(Dispatchers.IO) {
-        startTerminalSession(project, optionsWithSize, tabId)
+      val sessionTab: TerminalSessionTab = withContext(Dispatchers.IO) {
+        startTerminalSessionForTab(project, optionsWithSize, tabId)
       }
 
+      val sessionId = sessionTab.sessionId ?: error("Session ID is absent in the terminal session tab: $sessionTab")
+      val session = FrontendTerminalSession(sessionId)
       widget.connectToSession(session)
+
+      TerminalToolWindowManager.getInstance(project).bindTabIdToWidget(widget, sessionTab.id)
     }
   }
 
-  private suspend fun startTerminalSession(project: Project, options: ShellStartupOptions, tabId: Int?): TerminalSession {
+  private suspend fun startTerminalSessionForTab(project: Project, options: ShellStartupOptions, tabId: Int?): TerminalSessionTab {
     val api = TerminalTabsManagerApi.getInstance()
 
-    val sessionId = if (tabId != null) {
+    return if (tabId != null) {
       // TerminalSessionTab is already existing, start session for it
       api.startTerminalSessionForTab(project.projectId(), tabId, options.toDto())
     }
     else {
-      // Create new TerminalSessionTab
-      val tab = api.createNewTerminalTab(project.projectId(), options.toDto())
-      tab.sessionId ?: error("Session ID is absent in the newly created TerminalSessionTab: $tab")
+      api.createNewTerminalTab(project.projectId(), options.toDto())
     }
-
-    return FrontendTerminalSession(sessionId)
   }
 }

@@ -39,7 +39,6 @@ import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.terminal.TerminalTitle;
 import com.intellij.terminal.TerminalTitleListener;
-import com.intellij.terminal.session.TerminalSession;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TerminalWidgetKt;
 import com.intellij.toolWindow.InternalDecoratorImpl;
@@ -97,6 +96,11 @@ public final class TerminalToolWindowManager implements Disposable {
   private final AbstractTerminalRunner<?> myTerminalRunner;
   private TerminalDockContainer myDockContainer;
   private final Map<TerminalWidget, TerminalContainer> myContainerByWidgetMap = new HashMap<>();
+  /**
+   * Stores IDs of the {@link TerminalSessionTab} that is stored on backend.
+   * See {@link org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi} for operations with tab ID.
+   */
+  private final Map<TerminalWidget, Integer> myTabIdByWidgetMap = new HashMap<>();
 
   private CompletableFuture<Void> myTabsRestoredFuture = CompletableFuture.completedFuture(null);
 
@@ -432,18 +436,19 @@ public final class TerminalToolWindowManager implements Disposable {
 
     content.setPreferredFocusedComponent(() -> finalWidget.getPreferredFocusableComponent());
 
-    Disposer.register(content, new Disposable() {
+    Disposer.register(widget, new Disposable() {
       @Override
       public void dispose() {
-        // Terminal session lifecycle is not directly bound to the Tool Window tab lifecycle.
-        // We need to close the session when the tab is closed explicitly.
+        // Backend terminal session tab lifecycle is not directly bound to the Tool Window tab lifecycle.
+        // We need to close the backend tab when the tool window tab is closed explicitly.
         // And don't need it when a user is closing the project leaving the terminal tabs opened: to be able to reconnect back.
         // So we send close event only if the tab is closed explicitly: backend will close it on its termination.
         // It is not easy to determine whether it is explicit closing or not, so we use the heuristic.
-        TerminalSession session = finalWidget.getSession();
+        Integer sessionTabId = getTabIdByWidget(finalWidget);
         boolean isProjectClosing = toolWindow.getContentManager().isDisposed();
-        if (session != null && !isProjectClosing) {
-          TerminalSessionStartHelper.closeTerminalSession(myProject, session);
+        if (sessionTabId != null && !isProjectClosing) {
+          TerminalSessionStartHelper.closeTerminalTab(myProject, sessionTabId);
+          bindTabIdToWidget(finalWidget, null);
         }
       }
     });
@@ -704,6 +709,9 @@ public final class TerminalToolWindowManager implements Disposable {
         !Registry.is(BLOCK_TERMINAL_REGISTRY) &&
         terminalRunner == myTerminalRunner) {
       widget = provider.createTerminalWidget(myProject, parentDisposable);
+      if (tabId != null) {
+        bindTabIdToWidget(widget, tabId);
+      }
       TerminalSessionStartHelper.startTerminalSessionForWidget(myProject, widget, startupOptions, tabId, deferSessionStartUntilUiShown);
     }
     else {
@@ -711,6 +719,15 @@ public final class TerminalToolWindowManager implements Disposable {
     }
 
     return widget;
+  }
+
+  private @Nullable Integer getTabIdByWidget(@NotNull TerminalWidget widget) {
+    return myTabIdByWidgetMap.get(widget);
+  }
+
+  @ApiStatus.Internal
+  public void bindTabIdToWidget(@NotNull TerminalWidget widget, @Nullable Integer tabId) {
+    myTabIdByWidgetMap.put(widget, tabId);
   }
 
   public static @Nullable JBTerminalWidget getWidgetByContent(@NotNull Content content) {

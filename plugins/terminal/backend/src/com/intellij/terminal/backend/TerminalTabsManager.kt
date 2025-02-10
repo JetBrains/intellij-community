@@ -4,8 +4,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.kernel.backend.delete
+import com.intellij.platform.kernel.backend.findValueEntity
 import com.intellij.platform.kernel.backend.newValueEntity
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.session.TerminalCloseEvent
+import com.intellij.terminal.session.TerminalSession
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
@@ -61,12 +64,12 @@ internal class TerminalTabsManager(private val project: Project, private val cor
     return newTab
   }
 
-  suspend fun startTerminalSessionForTab(tabId: Int, options: ShellStartupOptions): TerminalSessionId {
+  suspend fun startTerminalSessionForTab(tabId: Int, options: ShellStartupOptions): TerminalSessionTab {
     return updateTabsAndStore { tabs ->
       val tab = tabs[tabId] ?: error("No TerminalSessionTab with ID: $tabId")
       val existingSessionId = tab.sessionId
       if (existingSessionId != null) {
-        return@updateTabsAndStore existingSessionId
+        return@updateTabsAndStore tab
       }
 
       val scope = coroutineScope.childScope("TerminalSession")
@@ -84,7 +87,30 @@ internal class TerminalTabsManager(private val project: Project, private val cor
         }
       }
 
-      sessionId
+      updatedTab
+    }
+  }
+
+  suspend fun closeTerminalTab(tabId: Int) {
+    updateTabsAndStore { tabs ->
+      val tab = tabs[tabId] ?: return@updateTabsAndStore  // Already removed or never existed
+      val sessionId = tab.sessionId
+      if (sessionId != null) {
+        val session = sessionId.eid.findValueEntity<TerminalSession>()?.value
+        if (session == null) {
+          // If the session is already removed, it means that close event was already sent to the session.
+          // It's coroutine scope cancellation is in progress: we already removed the entity, but still not removed the tab.
+          // Return here, because the tab will be removed once we free the tabs' lock.
+          return@updateTabsAndStore
+        }
+        // It should terminate the shell process, then cancel the coroutine scope,
+        // and finally remove the tab in awaitCancellationAndInvoke body defined in the methods above.
+        session.sendInputEvent(TerminalCloseEvent)
+      }
+      else {
+        // The session was not started - just remove the tab.
+        tabs.remove(tabId)
+      }
     }
   }
 
