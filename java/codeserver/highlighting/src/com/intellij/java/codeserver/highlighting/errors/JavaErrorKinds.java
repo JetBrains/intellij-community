@@ -73,6 +73,7 @@ public final class JavaErrorKinds {
       .withRawDescription((e, c) -> message("preview.api.usage", c.targetName()));
 
   public static final Simple<PsiAnnotation> ANNOTATION_NOT_ALLOWED_HERE = error("annotation.not.allowed.here");
+  public static final Simple<PsiAnnotation> ANNOTATION_NOT_ALLOWED_IN_PERMIT_LIST = error("annotation.not.allowed.in.permit.list");
   public static final Simple<PsiPackageStatement> ANNOTATION_NOT_ALLOWED_ON_PACKAGE =
     error(PsiPackageStatement.class, "annotation.not.allowed.on.package")
       .withAnchor(statement -> requireNonNull(statement.getAnnotationList()));
@@ -345,15 +346,17 @@ public final class JavaErrorKinds {
     parameterized("class.extends.interface");
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_EXTENDS_SEALED_LOCAL = 
     parameterized("class.extends.sealed.local");
-  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_EXTENDS_SEALED_NOT_PERMITTED = 
-    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.extends.sealed.not.permitted")
-      .withRawDescription((ref, cls) -> message("class.extends.sealed.not.permitted", formatClass(cls)));
-  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_EXTENDS_SEALED_ANOTHER_PACKAGE = 
-    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.extends.sealed.another.package")
+  public static final Parameterized<PsiJavaCodeReferenceElement, SuperclassSubclassContext> CLASS_EXTENDS_SEALED_NOT_PERMITTED =
+    parameterized(PsiJavaCodeReferenceElement.class, SuperclassSubclassContext.class, "class.extends.sealed.not.permitted")
+      .withRawDescription((ref, cls) -> message("class.extends.sealed.not.permitted", formatClass(cls.subClass())));
+  public static final Parameterized<PsiJavaCodeReferenceElement, SuperclassSubclassContext> CLASS_EXTENDS_SEALED_ANOTHER_MODULE =
+    parameterized(PsiJavaCodeReferenceElement.class, SuperclassSubclassContext.class, "class.extends.sealed.another.module");
+  public static final Parameterized<PsiJavaCodeReferenceElement, SuperclassSubclassContext> CLASS_EXTENDS_SEALED_ANOTHER_PACKAGE =
+    parameterized(PsiJavaCodeReferenceElement.class, SuperclassSubclassContext.class, "class.extends.sealed.another.package")
       .withRawDescription((ref, cls) -> {
-        PsiClass superClass = (PsiClass)requireNonNull(ref.resolve());
-        return StringUtil.capitalize(message("class.extends.sealed.another.package", JavaElementKind.fromElement(cls).subject(), formatClass(cls),
-                       JavaElementKind.fromElement(superClass).subject(), formatClass(superClass)));
+        return StringUtil.capitalize(message("class.extends.sealed.another.package",
+                                             JavaElementKind.fromElement(cls.subClass()).subject(), formatClass(cls.subClass()),
+                                             JavaElementKind.fromElement(cls.superClass()).subject(), formatClass(cls.superClass())));
       });
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_EXTENDS_PROHIBITED_CLASS = 
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.extends.prohibited.class")
@@ -417,6 +420,15 @@ public final class JavaErrorKinds {
       .withRawDescription((psi, cls) -> message("class.not.accessible", formatClass(cls)));
   public static final Simple<PsiCodeBlock> CLASS_INITIALIZER_MUST_COMPLETE_NORMALLY =
     error("class.initializer.must.complete.normally");
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_PERMITTED_MUST_HAVE_MODIFIER =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.permitted.must.have.modifier");
+  public static final Parameterized<PsiJavaCodeReferenceElement, SuperclassSubclassContext> CLASS_PERMITTED_NOT_DIRECT_SUBCLASS =
+    parameterized(PsiJavaCodeReferenceElement.class, SuperclassSubclassContext.class, "class.permitted.not.direct.subclass")
+      .withRawDescription((ref, ctx) -> message(
+        "class.permitted.not.direct.subclass",
+        ctx.subClass().getName(),
+        ctx.subClass().isInterface() == ctx.superClass().isInterface() ? 1 : 2,
+        ctx.superClass().getName()));
 
   public static final Simple<PsiJavaCodeReferenceElement> VALUE_CLASS_EXTENDS_NON_ABSTRACT = error("value.class.extends.non.abstract");
   
@@ -743,6 +755,7 @@ public final class JavaErrorKinds {
   public static final Simple<PsiReferenceParameterList> TYPE_ARGUMENT_NOT_ALLOWED = error("type.argument.not.allowed");
   public static final Simple<PsiReferenceParameterList> TYPE_ARGUMENT_ON_RAW_TYPE = error("type.argument.on.raw.type");
   public static final Simple<PsiReferenceParameterList> TYPE_ARGUMENT_ON_RAW_METHOD = error("type.argument.on.raw.method");
+  public static final Simple<PsiReferenceParameterList> TYPE_ARGUMENT_IN_PERMITS_LIST = error("type.argument.in.permits.list");
   public static final Simple<PsiTypeElement> TYPE_WILDCARD_NOT_EXPECTED = error(PsiTypeElement.class, "type.wildcard.not.expected");
   public static final Simple<PsiTypeElement> TYPE_WILDCARD_MAY_BE_USED_ONLY_AS_REFERENCE_PARAMETERS = 
     error(PsiTypeElement.class, "type.wildcard.may.be.used.only.as.reference.parameters");

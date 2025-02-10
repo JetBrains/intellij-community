@@ -95,7 +95,11 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   @NotNull Project project() {
     return myProject;
   }
-  
+
+  @Nullable PsiJavaModule javaModule() {
+    return myJavaModule;
+  }
+
   @NotNull PsiElementFactory factory() {
     return myFactory;
   }

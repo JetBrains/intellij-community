@@ -395,16 +395,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitReferenceList(@NotNull PsiReferenceList list) {
-    super.visitReferenceList(list);
-    if (list.getFirstChild() == null) return;
-    PsiElement parent = list.getParent();
-    if (!(parent instanceof PsiTypeParameter)) {
-      if (!hasErrorResults()) HighlightClassUtil.checkPermitsList(list, myErrorSink);
-    }
-  }
-
-  @Override
   public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
     super.visitSwitchStatement(statement);
     checkSwitchBlock(statement);

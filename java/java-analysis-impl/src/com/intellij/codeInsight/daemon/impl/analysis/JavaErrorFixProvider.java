@@ -32,6 +32,7 @@ import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.VisibilityUtil;
@@ -99,17 +100,17 @@ final class JavaErrorFixProvider {
     multi(PREVIEW_API_USAGE, error -> HighlightUtil.getIncreaseLanguageLevelFixes(error.psi(), error.context().feature()));
     JavaFixProvider<PsiElement, Object> genericRemover = error -> myFactory.createDeleteFix(error.psi());
     for (JavaErrorKind<?, ?> kind : List.of(ANNOTATION_MEMBER_THROWS_NOT_ALLOWED, ANNOTATION_ATTRIBUTE_DUPLICATE,
-                                            ANNOTATION_NOT_ALLOWED_EXTENDS, RECEIVER_STATIC_CONTEXT, RECEIVER_WRONG_POSITION,
-                                            RECORD_HEADER_REGULAR_CLASS, INTERFACE_CLASS_INITIALIZER, INTERFACE_CONSTRUCTOR,
-                                            CLASS_IMPLICIT_INITIALIZER, CLASS_IMPLICIT_PACKAGE,
-                                            RECORD_EXTENDS, ENUM_EXTENDS, RECORD_PERMITS, ENUM_PERMITS, ANNOTATION_PERMITS,
-                                            NEW_EXPRESSION_DIAMOND_NOT_ALLOWED, REFERENCE_TYPE_ARGUMENT_STATIC_CLASS,
+                                            ANNOTATION_NOT_ALLOWED_EXTENDS, ANNOTATION_NOT_ALLOWED_IN_PERMIT_LIST, 
+                                            RECEIVER_STATIC_CONTEXT, RECEIVER_WRONG_POSITION, RECORD_HEADER_REGULAR_CLASS, 
+                                            INTERFACE_CLASS_INITIALIZER, INTERFACE_CONSTRUCTOR, CLASS_IMPLICIT_INITIALIZER, 
+                                            CLASS_IMPLICIT_PACKAGE, RECORD_EXTENDS, ENUM_EXTENDS, RECORD_PERMITS, ENUM_PERMITS, 
+                                            ANNOTATION_PERMITS, NEW_EXPRESSION_DIAMOND_NOT_ALLOWED, REFERENCE_TYPE_ARGUMENT_STATIC_CLASS,
                                             STATEMENT_CASE_OUTSIDE_SWITCH, NEW_EXPRESSION_DIAMOND_NOT_APPLICABLE,
                                             NEW_EXPRESSION_ANONYMOUS_IMPLEMENTS_INTERFACE_WITH_TYPE_ARGUMENTS,
                                             CALL_DIRECT_ABSTRACT_METHOD_ACCESS, RECORD_SPECIAL_METHOD_TYPE_PARAMETERS,
                                             RECORD_SPECIAL_METHOD_THROWS, ARRAY_TYPE_ARGUMENTS, ARRAY_EMPTY_DIAMOND,
                                             IMPORT_LIST_EXTRA_SEMICOLON, ENUM_CONSTANT_MODIFIER, METHOD_REFERENCE_PARAMETERIZED_QUALIFIER,
-                                            CONSTRUCTOR_IN_IMPLICIT_CLASS)) {
+                                            CONSTRUCTOR_IN_IMPLICIT_CLASS, TYPE_ARGUMENT_IN_PERMITS_LIST)) {
       fix(kind, genericRemover);
     }
 
@@ -846,17 +847,27 @@ final class JavaErrorFixProvider {
     });
     fix(CLASS_EXTENDS_SEALED_LOCAL, error -> myFactory.createConvertLocalToInnerAction(error.context()));
     fix(CLASS_EXTENDS_SEALED_ANOTHER_PACKAGE, error -> {
-      if (error.psi().resolve() instanceof PsiClass superClass && superClass.getContainingFile() instanceof PsiClassOwner classOwner) {
-        return myFactory.createMoveClassToPackageFix(error.context(), classOwner.getPackageName());
+      if (error.context().superClass().getContainingFile() instanceof PsiClassOwner classOwner) {
+        return myFactory.createMoveClassToPackageFix(error.context().subClass(), classOwner.getPackageName());
       }
       return null;
     });
-    fix(CLASS_EXTENDS_SEALED_NOT_PERMITTED, error -> {
-      if (error.psi().resolve() instanceof PsiClass superClass && !(superClass instanceof PsiCompiledElement)) {
-        return myFactory.createAddToPermitsListFix(error.context(), superClass);
+    fix(CLASS_EXTENDS_SEALED_NOT_PERMITTED, error -> error.context().superClass() instanceof PsiCompiledElement
+           ? null
+           : myFactory.createAddToPermitsListFix(error.context().subClass(), error.context().superClass()));
+    fixes(CLASS_PERMITTED_MUST_HAVE_MODIFIER, (error, sink) -> {
+      PsiClass inheritorClass = error.context();
+      sink.accept(addModifierFix(inheritorClass, PsiModifier.NON_SEALED));
+      boolean hasInheritors = DirectClassInheritorsSearch.search(inheritorClass).findFirst() != null;
+      if (!inheritorClass.isInterface() && !inheritorClass.hasModifierProperty(PsiModifier.ABSTRACT) || hasInheritors) {
+        IntentionAction action = hasInheritors ?
+                                 myFactory.createSealClassFromPermitsListFix(inheritorClass) :
+                                 addModifierFix(inheritorClass, PsiModifier.FINAL);
+        sink.accept(action);
       }
-      return null;
     });
+    multi(CLASS_PERMITTED_NOT_DIRECT_SUBCLASS, error ->
+      myFactory.createExtendSealedClassFixes(error.psi(), error.context().superClass(), error.context().subClass()));
   }
 
   private void createAnnotationFixes() {
