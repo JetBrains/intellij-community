@@ -1046,7 +1046,6 @@
     <statistics.collectorExtension implementation="com.intellij.ide.actions.ToolwindowFusEventFields"/>
     <statistics.collectorExtension implementation="com.intellij.ide.actions.DragEditorTabsFusEventFields"/>
 
-    <applicationInitializedListener implementation="com.intellij.ide.OsDataLoggerApplicationInitializedListener"/>
     <aboutPopupDescriptionProvider implementation="com.intellij.ide.OsDataLoggerAboutPopupDescriptionProvider"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"
@@ -1922,6 +1921,9 @@
 
     <listener class="com.intellij.ui.tree.RecursiveExpandSettingListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener" />
+
+    <listener class="com.intellij.ide.OsDataLoggerApplicationInitializedListener"
+              topic="com.intellij.ide.AppLifecycleListener"/>
   </applicationListeners>
 
   <projectListeners>
