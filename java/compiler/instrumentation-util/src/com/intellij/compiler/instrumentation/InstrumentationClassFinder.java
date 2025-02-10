@@ -533,7 +533,7 @@ public class InstrumentationClassFinder {
     }
 
 
-    abstract static class Loader {
+    public abstract static class Loader {
       protected static final String JAR_PROTOCOL = "jar";
       protected static final String FILE_PROTOCOL = "file";
       protected static final String JRT_PROTOCOL = "jrt";
