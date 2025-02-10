@@ -34,6 +34,8 @@ import com.intellij.ui.popup.PopupPositionManager.Position.RIGHT
 import com.intellij.ui.popup.PopupPositionManager.PositionAdjuster
 import com.intellij.ui.popup.PopupUpdateProcessor
 import com.intellij.ui.popup.util.PopupImplUtil
+import com.intellij.ui.util.height
+import com.intellij.ui.util.width
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
@@ -97,10 +99,9 @@ class IntentionPreviewPopupUpdateProcessor internal constructor(
 
       component.addComponentListener(object : ComponentAdapter() {
         override fun componentResized(e: ComponentEvent?) {
-          var size = popup.size
-          size = Dimension(size.width.coerceAtLeast(MIN_WIDTH), size.height)
-          popup.content.preferredSize = size
-          popup.size = size
+          val size = popup.size
+          val insets = popup.content.insets
+          popup.size = Dimension((size.width - insets.width).coerceAtLeast(MIN_WIDTH), size.height - insets.height)
           adjustPosition(originalPopup, true)
         }
       })
