@@ -151,8 +151,12 @@ public final class PyTypeChecker {
       return match(context.mySubstitutions.qualifierType, expected, context);
     }
 
-    if (expected instanceof PyParamSpecType) {
-      return Optional.of(match((PyParamSpecType)expected, actual, context));
+    if (expected instanceof PyParamSpecType paramSpecType) {
+      return Optional.of(match(paramSpecType, actual, context));
+    }
+
+    if (expected instanceof PyConcatenateType concatenateType) {
+      return Optional.of(match(concatenateType, actual, context));
     }
 
     if (expected instanceof PyCallableParameterListType callableParameterListType) {
@@ -400,6 +404,43 @@ public final class PyTypeChecker {
     return true;
   }
 
+  private static boolean match(@NotNull PyConcatenateType expected, @Nullable PyType actual, @NotNull MatchContext context) {
+    if (actual == null) return true;
+    List<PyType> expectedFirstTypes = expected.getFirstTypes();
+    int expectedPrefixSize = expectedFirstTypes.size();
+    if (actual instanceof PyConcatenateType actualConcatenateType) {
+      if (expectedPrefixSize > actualConcatenateType.getFirstTypes().size()) {
+        return false;
+      }
+      List<PyType> actualFirstTypes = actualConcatenateType.getFirstTypes().subList(0, expectedPrefixSize);
+      if (!match(expectedFirstTypes, actualFirstTypes, context)) {
+        return false;
+      }
+      if (actualFirstTypes.size() > expectedPrefixSize) {
+        return match(expected.getParamSpec(),
+                     new PyConcatenateType(ContainerUtil.subList(expectedFirstTypes, actualFirstTypes.size()),
+                                           actualConcatenateType.getParamSpec()), context);
+      }
+      else {
+        return match(expected.getParamSpec(), actualConcatenateType.getParamSpec(), context);
+      }
+    }
+    else if (actual instanceof PyCallableParameterListType actualParameters) {
+      if (expectedPrefixSize > actualParameters.getParameters().size()) {
+        return false;
+      }
+      List<PyType> actualFirstParamTypes = ContainerUtil.map(actualParameters.getParameters().subList(0, expectedPrefixSize), 
+                                                             it -> it.getType(context.context));
+      if (!match(expectedFirstTypes, actualFirstParamTypes, context)) {
+        return false;
+      }
+      return match(expected.getParamSpec(),
+                   new PyCallableParameterListTypeImpl(ContainerUtil.subList(actualParameters.getParameters(), expectedPrefixSize)),
+                   context);
+    }
+    return false;
+  }
+
   private static boolean match(@NotNull PyCallableParameterListType expectedParameters, @Nullable PyType actual, @NotNull MatchContext context) {
     if (actual == null) return true;
     if (!(actual instanceof PyCallableParameterListType actualParameters)) return false;
@@ -644,46 +685,26 @@ public final class PyTypeChecker {
   private static boolean matchCallableParameters(@NotNull List<PyCallableParameter> expectedParameters,
                                                  @NotNull List<PyCallableParameter> actualParameters,
                                                  @NotNull MatchContext matchContext) {
-    final TypeEvalContext context = matchContext.context;
-
+    TypeEvalContext context = matchContext.context;
     if (expectedParameters.size() == 1) {
-      final var firstExpectedParam = expectedParameters.get(0);
-      final var expectedParamType = firstExpectedParam.getType(context);
-      if (expectedParamType instanceof final PyParamSpecType expectedParamSpecType) {
-        matchContext.mySubstitutions.paramSpecs.put(expectedParamSpecType, new PyCallableParameterListTypeImpl(actualParameters));
-        return true;
+      PyType onlyExpectedParamType = expectedParameters.get(0).getType(context);
+      if (onlyExpectedParamType instanceof PyParamSpecType expectedParamSpecType) {
+        if (actualParameters.size() == 1) {
+          PyType actualOnlyParamType = actualParameters.get(0).getType(context);
+          if (actualOnlyParamType instanceof PyParamSpecType || actualOnlyParamType instanceof PyConcatenateType) {
+            return match(expectedParamSpecType, actualOnlyParamType, matchContext);
+          }
+        }
+        return match(expectedParamSpecType, new PyCallableParameterListTypeImpl(actualParameters), matchContext);
       }
-      else if (expectedParamType instanceof final PyConcatenateType expectedConcatenateType) {
-        if (actualParameters.isEmpty()) {
-          return true;
-        }
-        final var actualParamType = actualParameters.get(0).getType(context);
-        final var expectedFirstTypes = expectedConcatenateType.getFirstTypes();
-
-        if (actualParamType instanceof final PyConcatenateType actualConcatenateType) {
-          final var actualFirstType = actualConcatenateType.getFirstTypes();
-          if (!match(expectedFirstTypes, actualFirstType, matchContext)) {
-            return false;
+      else if (onlyExpectedParamType instanceof PyConcatenateType expectedConcatenateType) {
+        if (actualParameters.size() == 1) {
+          PyType actualOnlyParamType = actualParameters.get(0).getType(context);
+          if (actualOnlyParamType instanceof PyParamSpecType || actualOnlyParamType instanceof PyConcatenateType) {
+            return match(expectedConcatenateType, actualOnlyParamType, matchContext);
           }
         }
-        else {
-          final var actualParamRightBound = Math.min(expectedFirstTypes.size(), actualParameters.size());
-          final var actualFirstParamTypes = ContainerUtil
-            .map(actualParameters.subList(0, actualParamRightBound), it -> it.getType(context));
-
-          if (!match(expectedFirstTypes, actualFirstParamTypes, matchContext)) {
-            return false;
-          }
-
-          if (actualParamRightBound < actualParameters.size()) {
-            final var expectedParamSpecType = expectedConcatenateType.getParamSpec();
-            final var restActualParameters = actualParameters.subList(actualParamRightBound, actualParameters.size());
-            matchContext.mySubstitutions.paramSpecs.put(expectedParamSpecType, new PyCallableParameterListTypeImpl(restActualParameters));
-            return true;
-          }
-        }
-
-        return true;
+        return match(expectedConcatenateType, new PyCallableParameterListTypeImpl(actualParameters), matchContext);
       }
     }
 
@@ -769,8 +790,8 @@ public final class PyTypeChecker {
   }
 
   private static boolean match(@NotNull List<PyType> expected, @NotNull List<PyType> actual, @NotNull MatchContext matchContext) {
-    final var size = Math.min(expected.size(), actual.size());
-    for (int i = 0; i < size; ++i) {
+    if (expected.size() != actual.size()) return false;
+    for (int i = 0; i < expected.size(); ++i) {
       if (!match(expected.get(i), actual.get(i), matchContext).orElse(true)) return false;
     }
     return true;
@@ -1254,8 +1275,6 @@ public final class PyTypeChecker {
               .toList()
           );
         }
-        // TODO the next two don't work as expected because ParamSpecs and Concatenate are wrapped in unnamed
-        //  callable parameters
         else if (paramSpecSubs instanceof PyParamSpecType paramSpecType) {
           return new PyConcatenateType(firstParamTypeSubs, paramSpecType);
         }

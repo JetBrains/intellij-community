@@ -1065,6 +1065,55 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    transform(bar)(<warning descr="Expected type 'str', got 'int' instead">42</warning>)""");
   }
 
+  // PY-79098
+  public void testCallableConcatenateMatching() {
+    doTestByText("""
+                   from typing import Callable, Concatenate, reveal_type
+                   
+                   def f[**P2](fn: Callable[Concatenate[int, int, P2], None]) -> <warning descr="Expected type '(**P2) -> None', got 'None' instead">Callable[P2, None]</warning>:
+                       def shorter_concat[**P3](fn: Callable[Concatenate[int, P3], None]):
+                           f(<warning descr="Expected type '(Concatenate(int, int, **P2)) -> None' (matched generic type '(Concatenate(int, int, **P2)) -> None'), got '(Concatenate(int, **P3)) -> None' instead">fn</warning>)
+                       def longer_concat[**P3](fn: Callable[Concatenate[int, int, int, P3], None]):
+                           f(fn)
+                       def empty(fn: Callable[[], None]):
+                           f(<warning descr="Expected type '(Concatenate(int, int, **P2)) -> None' (matched generic type '(Concatenate(int, int, **P2)) -> None'), got '() -> None' instead">fn</warning>)
+                       def param_spec[**P3](fn: Callable[P3, None]):
+                           f(<warning descr="Expected type '(Concatenate(int, int, **P2)) -> None' (matched generic type '(Concatenate(int, int, **P2)) -> None'), got '(**P3) -> None' instead">fn</warning>)
+                       def shorter_param_list[**P3](fn: Callable[[int], None]):
+                           f(<warning descr="Expected type '(Concatenate(int, int, **P2)) -> None' (matched generic type '(Concatenate(int, int, **P2)) -> None'), got '(int) -> None' instead">fn</warning>)
+                       def exact_param_list[**P3](fn: Callable[[int, int], None]):
+                           f(fn)
+                       def longer_param_list[**P3](fn: Callable[[int, int, int], None]):
+                           f(fn)
+                   """);
+  }
+
+  // PY-79098
+  public void testUserGenericConcatenateMatching() {
+    doTestByText("""
+                   from typing import Callable, Concatenate, reveal_type
+                   
+                   class MyCallable[**P, R]:
+                       pass
+                   
+                   def g[**P2](fn: MyCallable[Concatenate[int, int, P2], None]) -> <warning descr="Expected type 'MyCallable[**P2, None]', got 'None' instead">MyCallable[P2, None]</warning>:
+                       def shorter_concat[**P3](fn: MyCallable[Concatenate[int, P3], None]):
+                           g(<warning descr="Expected type 'MyCallable[Concatenate(int, int, **P2), None]' (matched generic type 'MyCallable[Concatenate(int, int, **P2), None]'), got 'MyCallable[Concatenate(int, **P3), None]' instead">fn</warning>)
+                       def longer_concat[**P3](fn: MyCallable[Concatenate[int, int, int, P3], None]):
+                           g(fn)
+                       def empty(fn: MyCallable[[], None]):
+                           g(<warning descr="Expected type 'MyCallable[Concatenate(int, int, **P2), None]' (matched generic type 'MyCallable[Concatenate(int, int, **P2), None]'), got 'MyCallable[[], None]' instead">fn</warning>)
+                       def param_spec[**P3](fn: MyCallable[P3, None]):
+                           g(<warning descr="Expected type 'MyCallable[Concatenate(int, int, **P2), None]' (matched generic type 'MyCallable[Concatenate(int, int, **P2), None]'), got 'MyCallable[**P3, None]' instead">fn</warning>)
+                       def shorter_param_list[**P3](fn: MyCallable[[int], None]):
+                           g(<warning descr="Expected type 'MyCallable[Concatenate(int, int, **P2), None]' (matched generic type 'MyCallable[Concatenate(int, int, **P2), None]'), got 'MyCallable[[int], None]' instead">fn</warning>)
+                       def exact_param_list[**P3](fn: MyCallable[[int, int], None]):
+                           g(fn)
+                       def longer_param_list[**P3](fn: MyCallable[[int, int, int], None]):
+                           g(fn)
+                   """);
+  }
+
   // PY-50337
   public void testBitwiseOrUnionWithNotCalculatedGenericFromUnion() {
     doTestByText("""
