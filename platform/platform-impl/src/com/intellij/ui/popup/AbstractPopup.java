@@ -2185,9 +2185,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         size = window.getSize(); // use current window size
       }
       else {
-        if (!Registry.is("ide.popup.fix.ijpl172384", false)) {
-          JBInsets.addTo(size, insets);
-        }
+        JBInsets.addTo(size, insets);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Update content preferred size: width = " + size.width + " height = " + size.height);
         }
