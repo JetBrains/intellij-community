@@ -1,20 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-final class ProgressMonitorInputStream extends InputStream {
+@ApiStatus.Internal
+public final class ProgressMonitorInputStream extends InputStream {
   private final ProgressIndicator myIndicator;
   private final InputStream myStream;
 
   private final double myAvailable;
   private long count;
 
-  ProgressMonitorInputStream(@NotNull ProgressIndicator indicator, @NotNull InputStream stream, long length) {
+  public ProgressMonitorInputStream(@NotNull ProgressIndicator indicator, @NotNull InputStream stream, long length) {
     myIndicator = indicator;
     myStream = stream;
     myAvailable = length;
