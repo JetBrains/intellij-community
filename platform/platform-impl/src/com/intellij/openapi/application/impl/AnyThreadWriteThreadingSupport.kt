@@ -130,6 +130,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   // We approximate "on stack" permits with "thread local" permits for shared main lock
   private val mySecondaryPermits = ThreadLocal.withInitial { ArrayList<Permit>() }
   private val myReadActionsInThread = ThreadLocal.withInitial { 0 }
+  private val myLockingProhibited = ThreadLocal.withInitial { false }
 
   // todo: reimplement with listeners in IJPL-177760
   private val myTopmostReadAction = ThreadLocal.withInitial { false }
@@ -221,6 +222,10 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
   // @Throws(E::class)
   override fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
+    if (myLockingProhibited.get()) {
+      throw ThreadingSupport.LockAccessDisallowed("Attempt to take write-intent lock was prevented")
+    }
+
     val listener = myWriteIntentActionListener
     fireBeforeWriteIntentReadActionStart(listener, computation.javaClass)
     val currentReadState = myTopmostReadAction.get()
@@ -392,6 +397,10 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   }
 
   private fun <T, E : Throwable?> runReadAction(clazz: Class<*>, block: ThrowableComputable<T, E>): T {
+    if (myLockingProhibited.get()) {
+      throw ThreadingSupport.LockAccessDisallowed("Attempt to take the read lock for `runReadAction` was prevented")
+    }
+
     val listener = myReadActionListener
     fireBeforeReadActionStart(listener, clazz)
 
@@ -449,6 +458,10 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   }
 
   override fun tryRunReadAction(action: Runnable): Boolean {
+    if (myLockingProhibited.get()) {
+      throw ThreadingSupport.LockAccessDisallowed("Attempt to take the read lock for `tryRunReadAction` was prevented")
+    }
+
     val listener = myReadActionListener
     fireBeforeReadActionStart(listener, action.javaClass)
 
@@ -622,6 +635,10 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       throwCannotWriteException()
     }
 
+    if (myLockingProhibited.get()) {
+      throw ThreadingSupport.LockAccessDisallowed("Attempt to take write lock was prevented")
+    }
+
     myWriteActionPending.incrementAndGet()
     if (myWriteActionsStack.isEmpty()) {
       fireBeforeWriteActionStart(listener, ts, clazz)
@@ -767,6 +784,17 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       override fun finish() {
         myNoWriteActionCounter.decrementAndGet()
       }
+    }
+  }
+
+  override fun prohibitTakingLocksInsideAndRun(action: Runnable) {
+    val currentValue = myLockingProhibited.get()
+    myLockingProhibited.set(true)
+    try {
+      action.run()
+    }
+    finally {
+      myLockingProhibited.set(currentValue)
     }
   }
 

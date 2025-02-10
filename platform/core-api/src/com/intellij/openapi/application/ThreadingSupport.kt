@@ -10,6 +10,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.function.BooleanSupplier
 import kotlin.coroutines.CoroutineContext
+import kotlin.jvm.Throws
 
 @ApiStatus.Internal
 interface ThreadingSupport {
@@ -302,6 +303,13 @@ interface ThreadingSupport {
   fun removeLockAcquisitionListener(listener: LockAcquisitionListener)
 
   /**
+   * Prevents any attempt to use R/W locks inside [action].
+   */
+  @ApiStatus.Internal
+  @Throws(LockAccessDisallowed::class)
+  fun prohibitTakingLocksInsideAndRun(action: Runnable)
+
+  /**
    * DO NOT USE
    */
   @ApiStatus.Internal
@@ -318,4 +326,6 @@ interface ThreadingSupport {
 
   @ApiStatus.Internal
   fun isInTopmostReadAction(): Boolean
+
+  class LockAccessDisallowed(override val message: String) : IllegalStateException(message)
 }

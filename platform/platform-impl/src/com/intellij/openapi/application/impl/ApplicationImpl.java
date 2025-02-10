@@ -1311,6 +1311,11 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @Override
+  public void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable) {
+    getThreadingSupport().prohibitTakingLocksInsideAndRun(runnable);
+  }
+
+  @Override
   public boolean isTopmostReadAccessAllowed() {
     return getThreadingSupport().isInTopmostReadAction();
   }
