@@ -162,7 +162,7 @@ public final class JavaErrorKinds {
       .withRawDescription((psi, message) -> message("lambda.return.type.error", message));
   public static final Parameterized<PsiLambdaExpression, PsiMethod> LAMBDA_WRONG_NUMBER_OF_PARAMETERS =
     parameterized(PsiLambdaExpression.class, PsiMethod.class, "lambda.wrong.number.of.parameters")
-      .withAnchor((lambda, method) -> lambda.getParameterList())
+      .withAnchor(PsiLambdaExpression::getParameterList)
       .withRawDescription((lambda, method) -> message("lambda.wrong.number.of.parameters",
                                                       method.getParameterList().getParametersCount(),
                                                       lambda.getParameterList().getParametersCount()));
@@ -184,11 +184,11 @@ public final class JavaErrorKinds {
       .withRawDescription((psi, message) -> message("method.reference.return.type.error", message));
   public static final Parameterized<PsiMethodReferenceExpression, MethodCandidateInfo> METHOD_REFERENCE_INFERENCE_ERROR =
     parameterized(PsiMethodReferenceExpression.class, MethodCandidateInfo.class, "method.reference.inference.error")
-      .withAnchor((ref, candidate) -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
       .withRawDescription((ref, candidate) -> message("method.reference.inference.error", candidate.getInferenceErrorMessage()));
   public static final Parameterized<PsiMethodReferenceExpression, PsiClass> METHOD_REFERENCE_UNRESOLVED_CONSTRUCTOR =
     parameterized(PsiMethodReferenceExpression.class, PsiClass.class, "method.reference.unresolved.constructor")
-      .withAnchor((ref, cls) -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
       .withRawDescription((ref, cls) -> message("method.reference.unresolved.constructor", cls.getName()));
   public static final Simple<PsiMethodReferenceExpression> METHOD_REFERENCE_UNRESOLVED_METHOD =
     error(PsiMethodReferenceExpression.class, "method.reference.unresolved.method")
@@ -397,7 +397,7 @@ public final class JavaErrorKinds {
                                                 formatType(ctx.type1() != null ? ctx.type1() : ctx.type2())));
   public static final Parameterized<PsiClass, OverrideClashContext> CLASS_INHERITANCE_METHOD_CLASH =
     parameterized(PsiClass.class, OverrideClashContext.class, "class.inheritance.method.clash")
-      .withAnchor((cls, ctx) -> cls.getNameIdentifier())
+      .withAnchor(PsiClass::getNameIdentifier)
       .withRawDescription((cls, ctx) -> message(
         "class.inheritance.method.clash",
         formatMethod(ctx.superMethod()), formatClass(requireNonNull(ctx.superMethod().getContainingClass())),
@@ -449,12 +449,12 @@ public final class JavaErrorKinds {
       .withRawDescription(throwsList -> message("record.special.method.throws", getRecordMethodKind(((PsiMethod)throwsList.getParent()))));
   public static final Parameterized<PsiMethod, AccessModifier> RECORD_CONSTRUCTOR_STRONGER_ACCESS =
     parameterized(PsiMethod.class, AccessModifier.class, "record.constructor.stronger.access")
-      .withAnchor((method, classModifier) -> method.getNameIdentifier())
+      .withAnchor(PsiMethod::getNameIdentifier)
       .withRawDescription(
         (method, classModifier) -> message("record.constructor.stronger.access", getRecordMethodKind(method), classModifier));
   public static final Parameterized<PsiMethod, JavaIncompatibleTypeErrorContext> RECORD_ACCESSOR_WRONG_RETURN_TYPE =
     parameterized(PsiMethod.class, JavaIncompatibleTypeErrorContext.class, "record.accessor.wrong.return.type")
-      .withAnchor((method, ctx) -> method.getReturnTypeElement())
+      .withAnchor(PsiMethod::getReturnTypeElement)
       .withRawDescription((method, ctx) -> message("record.accessor.wrong.return.type",
                                                    ctx.lType().getPresentableText(), requireNonNull(ctx.rType()).getPresentableText()));
   public static final Simple<PsiMethod> RECORD_ACCESSOR_NON_PUBLIC =
@@ -463,13 +463,13 @@ public final class JavaErrorKinds {
     error(PsiMethod.class, "record.no.constructor.call.in.non.canonical").withAnchor(PsiMethod::getNameIdentifier);
   public static final Parameterized<PsiParameter, PsiRecordComponent> RECORD_CANONICAL_CONSTRUCTOR_WRONG_PARAMETER_TYPE =
     parameterized(PsiParameter.class, PsiRecordComponent.class, "record.canonical.constructor.wrong.parameter.type")
-      .withAnchor((parameter, component) -> parameter.getTypeElement())
+      .withAnchor(PsiParameter::getTypeElement)
       .withRawDescription((parameter, component) -> message(
         "record.canonical.constructor.wrong.parameter.type", component.getName(), component.getType().getPresentableText(),
         parameter.getType().getPresentableText()));
   public static final Parameterized<PsiParameter, PsiRecordComponent> RECORD_CANONICAL_CONSTRUCTOR_WRONG_PARAMETER_NAME =
     parameterized(PsiParameter.class, PsiRecordComponent.class, "record.canonical.constructor.wrong.parameter.name")
-      .withAnchor((parameter, component) -> parameter.getNameIdentifier())
+      .withAnchor(PsiVariable::getNameIdentifier)
       .withRawDescription((parameter, component) -> message(
         "record.canonical.constructor.wrong.parameter.name", component.getName(), parameter.getName()));
 
@@ -626,7 +626,7 @@ public final class JavaErrorKinds {
           if (keyword != null) {
             return keyword.getTextRange().shiftLeft(method.getTextRange().getStartOffset());
           }
-          // in case of package-private or some crazy third-party plugin where some access modifier implied even if it's absent
+          // in the case of package-private or some crazy third-party plugin where some access modifier implied even if it's absent
           PsiIdentifier identifier = method.getNameIdentifier();
           if (identifier != null) {
             return identifier.getTextRangeInParent();
@@ -675,7 +675,7 @@ public final class JavaErrorKinds {
                                                 formatType(ctx.exceptionType())));
   public static final Parameterized<PsiMethod, String> METHOD_MISSING_RETURN_TYPE =
     parameterized(PsiMethod.class, String.class, "method.missing.return.type")
-      .withAnchor((method, className) -> requireNonNullElse(method.getNameIdentifier(), method));
+      .withAnchor(method -> requireNonNullElse(method.getNameIdentifier(), method));
 
   public static final Parameterized<PsiMember, AmbiguousImplicitConstructorCallContext> CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL =
     parameterized(PsiMember.class, AmbiguousImplicitConstructorCallContext.class, "constructor.ambiguous.implicit.call")
@@ -721,7 +721,7 @@ public final class JavaErrorKinds {
 
   public static final Parameterized<PsiElement, JavaIncompatibleTypeErrorContext> TYPE_INCOMPATIBLE =
     parameterized(PsiElement.class, JavaIncompatibleTypeErrorContext.class, "type.incompatible")
-      .withAnchor((psi, context) -> psi.getParent() instanceof PsiAssignmentExpression assignment ? assignment : psi)
+      .withAnchor(psi -> psi.getParent() instanceof PsiAssignmentExpression assignment ? assignment : psi)
       .withRange((psi, context) -> psi.getParent() instanceof PsiAssignmentExpression ? null : getRange(psi))
       .withDescription((psi, context) -> context.createDescription())
       .withTooltip((psi, context) -> context.createTooltip());
@@ -831,12 +831,12 @@ public final class JavaErrorKinds {
                                                  ctx.recordComponents().length, ctx.patternComponents().length));
   public static final Parameterized<PsiTypeTestPattern, JavaIncompatibleTypeErrorContext> PATTERN_INSTANCEOF_SUPERTYPE =
     parameterized(PsiTypeTestPattern.class, JavaIncompatibleTypeErrorContext.class, "pattern.instanceof.supertype")
-      .withAnchor((expr, context) -> expr.getCheckType())
+      .withAnchor(PsiTypeTestPattern::getCheckType)
       .withRawDescription((expr, context) -> message(
         "pattern.instanceof.supertype", context.lType().getPresentableText(), requireNonNull(context.rType()).getPresentableText()));
   public static final Parameterized<PsiTypeTestPattern, PsiType> PATTERN_INSTANCEOF_EQUALS =
     parameterized(PsiTypeTestPattern.class, PsiType.class, "pattern.instanceof.equals")
-      .withAnchor((expr, context) -> expr.getCheckType())
+      .withAnchor(PsiTypeTestPattern::getCheckType)
       .withRawDescription((expr, context) -> message("pattern.instanceof.equals", context.getPresentableText()));
   
   public static final Simple<PsiTypeElement> INSTANCEOF_TYPE_PARAMETER = error("instanceof.type.parameter");
@@ -886,7 +886,7 @@ public final class JavaErrorKinds {
                                                  formatClass(ctx.subClass()), formatClass(ctx.superClass())));
   public static final Parameterized<PsiSuperExpression, PsiClass> EXPRESSION_SUPER_BAD_QUALIFIER_METHOD_OVERRIDDEN =
     parameterized(PsiSuperExpression.class, PsiClass.class, "expression.super.bad.qualifier.method.overridden")
-      .withAnchor((expr, superClass) -> expr.getQualifier())
+      .withAnchor(PsiSuperExpression::getQualifier)
       .withRawDescription((expr, superClass) -> message("expression.super.bad.qualifier.method.overridden",
                                                  ((PsiReferenceExpression)expr.getParent()).getReferenceName(), 
                                                  formatClass(superClass)));
@@ -908,7 +908,7 @@ public final class JavaErrorKinds {
   
   public static final Parameterized<PsiJavaToken, JavaIncompatibleTypeErrorContext> BINARY_OPERATOR_NOT_APPLICABLE =
     parameterized(PsiJavaToken.class, JavaIncompatibleTypeErrorContext.class, "binary.operator.not.applicable")
-      .withAnchor((token, context) -> TypeConversionUtil.convertEQtoOperation(token.getTokenType()) == null ? token.getParent() : token)
+      .withAnchor(token -> TypeConversionUtil.convertEQtoOperation(token.getTokenType()) == null ? token.getParent() : token)
       .withRawDescription((token, context) -> {
         String text = token.getText();
         if (TypeConversionUtil.convertEQtoOperation(token.getTokenType()) != null) {
@@ -947,7 +947,7 @@ public final class JavaErrorKinds {
       .withAnchor(call -> call.getArgumentList());
   public static final Parameterized<PsiConstructorCall, UnresolvedConstructorContext> NEW_EXPRESSION_UNRESOLVED_CONSTRUCTOR =
     parameterized(PsiConstructorCall.class, UnresolvedConstructorContext.class, "new.expression.unresolved.constructor")
-      .withAnchor((call, ctx) -> call.getArgumentList())
+      .withAnchor(PsiCall::getArgumentList)
       .withRawDescription((call, ctx) -> message("new.expression.unresolved.constructor", 
                                           ctx.psiClass().getName() + formatArgumentTypes(call.getArgumentList(), true)));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiTypeParameter> NEW_EXPRESSION_TYPE_PARAMETER =
@@ -985,7 +985,7 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiPrimitiveType> REFERENCE_QUALIFIER_PRIMITIVE =
     parameterized(PsiJavaCodeReferenceElement.class, PsiPrimitiveType.class, "reference.qualifier.primitive")
       .withHighlightType((ref, type) -> JavaErrorHighlightType.WRONG_REF)
-      .withAnchor((ref, type) -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
       .withRawDescription((ref, type) -> message("reference.qualifier.primitive", type.getPresentableText()));
   public static final Simple<PsiElement> REFERENCE_PENDING =
     error(PsiElement.class, "incomplete.project.state.pending.reference")
@@ -1004,7 +1004,7 @@ public final class JavaErrorKinds {
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "reference.class.in.default.package")
       .withHighlightType((ref, cls) -> JavaErrorHighlightType.WRONG_REF)
       .withRawDescription((ref, cls) -> message("reference.class.in.default.package", cls.getName()))
-      .withAnchor((ref, cls) -> requireNonNullElse(ref.getReferenceNameElement(), ref));
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref));
   public static final Parameterized<PsiJavaCodeReferenceElement, List<JavaResolveResult>> REFERENCE_AMBIGUOUS =
     error(PsiJavaCodeReferenceElement.class, "reference.ambiguous")
       .withHighlightType(ref -> JavaErrorHighlightType.WRONG_REF)
@@ -1016,7 +1016,7 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiElement> REFERENCE_NON_STATIC_FROM_STATIC_CONTEXT =
     parameterized(PsiJavaCodeReferenceElement.class, PsiElement.class, "reference.non.static.from.static.context")
       .withHighlightType((ref, refElement) -> JavaErrorHighlightType.WRONG_REF)
-      .withAnchor((ref, refElement) -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
       .withRawDescription((ref, refElement) -> {
         String type = JavaElementKind.fromElement(refElement).lessDescriptive().subject();
         String name = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
@@ -1108,7 +1108,7 @@ public final class JavaErrorKinds {
       .withRange(JavaErrorFormatUtil::getRange);
   public static final Parameterized<PsiCall, PsiClass> CALL_FORMAL_VARARGS_ELEMENT_TYPE_INACCESSIBLE_HERE =
     parameterized(PsiCall.class, PsiClass.class, "call.formal.varargs.element.type.inaccessible.here")
-      .withAnchor((call, cls) -> requireNonNullElse(call.getArgumentList(), call))
+      .withAnchor(call -> requireNonNullElse(call.getArgumentList(), call))
       .withRawDescription((call, cls) -> message("call.formal.varargs.element.type.inaccessible.here", formatClass(cls)));
   public static final Parameterized<PsiCall, String> CALL_TYPE_INFERENCE_ERROR =
     parameterized(PsiCall.class, String.class, "call.type.inference.error")
@@ -1120,7 +1120,7 @@ public final class JavaErrorKinds {
       .withDescription((psi, ctx) -> ctx.createDescription());
   public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_UNRESOLVED =
     parameterized(PsiMethodCallExpression.class, JavaResolveResult[].class, "call.unresolved")
-      .withAnchor((call, results) -> call.getArgumentList())
+      .withAnchor(PsiMethodCallExpression::getArgumentList)
       .withRawDescription((call, results) -> message(
         "call.unresolved", call.getMethodExpression().getReferenceName() + formatArgumentTypes(call.getArgumentList(), true)));
   public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_UNRESOLVED_NAME =
@@ -1131,7 +1131,7 @@ public final class JavaErrorKinds {
         "call.unresolved.name", call.getMethodExpression().getReferenceName() + formatArgumentTypes(call.getArgumentList(), true)));
   public static final Parameterized<PsiMethodCallExpression, JavaAmbiguousCallContext> CALL_AMBIGUOUS =
     parameterized(PsiMethodCallExpression.class, JavaAmbiguousCallContext.class, "call.ambiguous")
-      .withAnchor((call, ctx) -> call.getArgumentList())
+      .withAnchor(PsiMethodCallExpression::getArgumentList)
       .withRawDescription((call, ctx) -> ctx.description())
       .withTooltip((call, ctx) -> ctx.tooltip());
   public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_AMBIGUOUS_NO_MATCH =
@@ -1179,21 +1179,21 @@ public final class JavaErrorKinds {
 
   public static final Parameterized<PsiJavaCodeReferenceElement, JavaResolveResult> ACCESS_PRIVATE =
     parameterized(PsiJavaCodeReferenceElement.class, JavaResolveResult.class, "access.private")
-      .withAnchor((psi, result) -> requireNonNullElse(psi.getReferenceNameElement(), psi))
+      .withAnchor(psi -> requireNonNullElse(psi.getReferenceNameElement(), psi))
       .withRawDescription((psi, result) -> message("access.private", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
   public static final Parameterized<PsiJavaCodeReferenceElement, JavaResolveResult> ACCESS_PROTECTED =
     parameterized(PsiJavaCodeReferenceElement.class, JavaResolveResult.class, "access.protected")
-      .withAnchor((psi, result) -> requireNonNullElse(psi.getReferenceNameElement(), psi))
+      .withAnchor(psi -> requireNonNullElse(psi.getReferenceNameElement(), psi))
       .withRawDescription(
         (psi, result) -> message("access.protected", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
   public static final Parameterized<PsiJavaCodeReferenceElement, JavaResolveResult> ACCESS_PACKAGE_LOCAL =
     parameterized(PsiJavaCodeReferenceElement.class, JavaResolveResult.class, "access.package.local")
-      .withAnchor((psi, result) -> requireNonNullElse(psi.getReferenceNameElement(), psi))
+      .withAnchor(psi -> requireNonNullElse(psi.getReferenceNameElement(), psi))
       .withRawDescription(
         (psi, result) -> message("access.package.local", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
   public static final Parameterized<PsiJavaCodeReferenceElement, JavaResolveResult> ACCESS_GENERIC_PROBLEM =
     parameterized(PsiJavaCodeReferenceElement.class, JavaResolveResult.class, "access.generic.problem")
-      .withAnchor((psi, result) -> requireNonNullElse(psi.getReferenceNameElement(), psi))
+      .withAnchor(psi -> requireNonNullElse(psi.getReferenceNameElement(), psi))
       .withRawDescription(
         (psi, result) -> message("access.generic.problem", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
 
@@ -1278,7 +1278,7 @@ public final class JavaErrorKinds {
       .withRawDescription((ref, var) -> message("variable.not.initialized", var.getName()));
   public static final Parameterized<PsiVariable, PsiVariable> VARIABLE_ALREADY_DEFINED =
     parameterized(PsiVariable.class, PsiVariable.class, "variable.already.defined")
-      .withAnchor((var, oldVar) -> requireNonNullElse(var.getNameIdentifier(), var))
+      .withAnchor(var -> requireNonNullElse(var.getNameIdentifier(), var))
       .withRawDescription((var, oldVar) -> message("variable.already.defined", var.getName()))
       .withTooltip((variable, oldVariable) -> {
         VirtualFile vFile = PsiUtilCore.getVirtualFile(variable);

@@ -39,7 +39,7 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
    * @return a desired anchor to put the error message at
    */
   public @NotNull PsiElement anchor() {
-    return kind.anchor(psi, context);
+    return kind.anchor(psi);
   }
 
   /**
