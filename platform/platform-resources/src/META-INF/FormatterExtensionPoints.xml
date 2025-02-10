@@ -22,6 +22,6 @@
 
     <extensionPoint name="formatOnSaveOptions.defaultsProvider" interface="com.intellij.codeInsight.actions.onSave.FormatOnSaveOptionsBase$DefaultsProvider" dynamic="true"/>
 
-    <extensionPoint name="resultHandler" interface="com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingResultHandler"/>
+    <extensionPoint name="resultHandlerProvider" interface="com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingResultHandlerProvider"/>
   </extensionPoints>
 </idea-plugin>

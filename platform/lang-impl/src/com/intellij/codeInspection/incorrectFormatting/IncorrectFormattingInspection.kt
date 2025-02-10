@@ -61,7 +61,7 @@ class IncorrectFormattingInspection(
     if (formattingChanges.mismatches.isEmpty()) return null
 
     val helper = IncorrectFormattingInspectionHelper(formattingChanges, file, document, manager, isOnTheFly)
-    return IncorrectFormattingResultHandler.getResultHandler(globalContext).getResults(reportPerFile, helper)
+    return IncorrectFormattingResultHandlerProvider.getResultHandler(globalContext).getResults(reportPerFile, helper)
   }
 
   override fun getOptionsPane(): OptPane = OptPane(
