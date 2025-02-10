@@ -628,7 +628,11 @@
             <separator/>
             <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
             <group id="ChangeMainMenuModeActionGroup"
-                   class="com.intellij.ide.actions.ChangeMainMenuModeActionGroup" searchable="false" popup="true"/>
+                   class="com.intellij.ide.actions.ChangeMainMenuModeActionGroup" searchable="false" popup="true">
+              <action id="MainMenuUnderHamburgerButtonToolbarAction" class="com.intellij.ide.actions.MainMenuUnderHamburgerButtonToolbarAction"/>
+              <action id="MergeMainMenuAction" class="com.intellij.ide.actions.MergeMainMenuAction"/>
+              <action id="MainMenuInSeparateToolbarAction" class="com.intellij.ide.actions.MainMenuInSeparateToolbarAction"/>
+            </group>
             <action id="ViewNewToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewNewToolbarAction"/>
             <action id="ViewObsoleteToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteToolbarAction"/>
             <action id="ViewObsoleteNavBarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteNavBarAction"/>

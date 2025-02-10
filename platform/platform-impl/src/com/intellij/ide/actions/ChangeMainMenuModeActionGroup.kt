@@ -17,10 +17,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ExperimentalUI
 
 internal class ChangeMainMenuModeActionGroup : DefaultActionGroup(), DumbAware {
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    return MainMenuDisplayMode.entries.map { ChangeMainMenuModeAction(it) }.toTypedArray()
-  }
-
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -28,7 +24,11 @@ internal class ChangeMainMenuModeActionGroup : DefaultActionGroup(), DumbAware {
   }
 }
 
-private class ChangeMainMenuModeAction(private val mode: MainMenuDisplayMode) : DumbAware, ToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
+internal class MergeMainMenuAction: ChangeMainMenuModeAction(MainMenuDisplayMode.MERGED_WITH_MAIN_TOOLBAR)
+internal class MainMenuUnderHamburgerButtonToolbarAction: ChangeMainMenuModeAction(MainMenuDisplayMode.UNDER_HAMBURGER_BUTTON)
+internal class MainMenuInSeparateToolbarAction: ChangeMainMenuModeAction(MainMenuDisplayMode.SEPARATE_TOOLBAR)
+
+internal open class ChangeMainMenuModeAction(private val mode: MainMenuDisplayMode) : DumbAware, ToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
   init {
     templatePresentation.text = mode.description
     templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
