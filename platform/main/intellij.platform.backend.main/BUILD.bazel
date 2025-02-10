@@ -14,6 +14,7 @@ java_library(
     "//platform/searchEverywhere/backend",
     "//platform/vcs-impl/backend:vcs-impl-backend",
     "//platform/bookmarks/backend",
+    "//platform/recentFiles/backend",
     "//platform/editor/backend",
   ]
 )

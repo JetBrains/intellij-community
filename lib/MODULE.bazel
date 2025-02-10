@@ -10717,10 +10717,10 @@ http_file(
 )
 
 http_file(
-  name = "apple-notary-api-kotlin-client-1_0_5_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/apple-notary-api-kotlin-client/1.0.5/apple-notary-api-kotlin-client-1.0.5.jar",
-  sha256 = "68d0ecf4537f09f9115b2d68c57664cd1bdcf8ec25937b7280f89eea20c3bf22",
-  downloaded_file_path = "apple-notary-api-kotlin-client-1.0.5.jar"
+  name = "apple-notary-api-kotlin-client-2_0_1_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/apple-notary-api-kotlin-client/2.0.1/apple-notary-api-kotlin-client-2.0.1.jar",
+  sha256 = "46aa057f38b1cb2ac89d7e4b6357570b82bfd8e2b4d062ab40b09db3290d1c26",
+  downloaded_file_path = "apple-notary-api-kotlin-client-2.0.1.jar"
 )
 
 http_file(
@@ -10759,10 +10759,10 @@ http_file(
 )
 
 http_file(
-  name = "apple-notary-api-kotlin-client-1_0_5-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/apple-notary-api-kotlin-client/1.0.5/apple-notary-api-kotlin-client-1.0.5-sources.jar",
-  sha256 = "d6e8a90ab10f45cbf0c18b5f077924b020b39b7e42f4e2baa4087b9d6d66d84b",
-  downloaded_file_path = "apple-notary-api-kotlin-client-1.0.5-sources.jar"
+  name = "apple-notary-api-kotlin-client-2_0_1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/apple-notary-api-kotlin-client/2.0.1/apple-notary-api-kotlin-client-2.0.1-sources.jar",
+  sha256 = "639c9270c94b207f7ef72121c6cff63244f98886cad3f22deb43414e099eea81",
+  downloaded_file_path = "apple-notary-api-kotlin-client-2.0.1-sources.jar"
 )
 
 http_file(

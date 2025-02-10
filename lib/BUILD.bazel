@@ -7580,7 +7580,7 @@ kt_jvm_import(
 java_library(
   name = "platform-build_scripts-jetbrains-apple-notary-api-kotlin-client",
   exports = [
-    ":apple-notary-api-kotlin-client-1_0_5_http_import",
+    ":apple-notary-api-kotlin-client-2_0_1_http_import",
     ":aws-java-sdk-s3-1_12_431_http_import",
     ":aws-java-sdk-kms-1_12_431_http_import",
     ":aws-java-sdk-core-1_12_431_http_import",
@@ -7591,9 +7591,9 @@ java_library(
 )
 
 kt_jvm_import(
-  name = "apple-notary-api-kotlin-client-1_0_5_http_import",
-  jar = "@apple-notary-api-kotlin-client-1_0_5_http//file",
-  srcjar = "@apple-notary-api-kotlin-client-1_0_5-sources_http//file"
+  name = "apple-notary-api-kotlin-client-2_0_1_http_import",
+  jar = "@apple-notary-api-kotlin-client-2_0_1_http//file",
+  srcjar = "@apple-notary-api-kotlin-client-2_0_1-sources_http//file"
 )
 
 kt_jvm_import(

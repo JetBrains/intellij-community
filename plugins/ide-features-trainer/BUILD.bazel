@@ -39,6 +39,7 @@ jvm_library(
     "//platform/lvcs-impl",
     "//platform/tips-of-the-day:tips",
     "//platform/diagnostic",
+    "//platform/recentFiles/frontend",
   ],
   exports = [
     "@lib//:assert_j",
@@ -86,6 +87,7 @@ jvm_library(
     "//platform/lvcs-impl:lvcs-impl_test_lib",
     "//platform/tips-of-the-day:tips",
     "//platform/diagnostic",
+    "//platform/recentFiles/frontend",
   ],
   runtime_deps = [":featuresTrainer_resources"]
 )
