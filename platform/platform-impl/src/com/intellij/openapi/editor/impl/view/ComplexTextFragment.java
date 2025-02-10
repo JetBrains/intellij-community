@@ -55,7 +55,9 @@ final class ComplexTextFragment extends TextFragment {
       var x = myGlyphVector.getGlyphPosition(0).getX();
       for (int i = 0; i < myGlyphVector.getNumGlyphs(); i++) {
         var originalWidth = originalWidths[i];
-        var adjustedWidth = adjustedWidthOrNull(originalWidth, 0.2f);
+        int charIndex = myGlyphVector.getGlyphCharIndex(i);
+        int codePoint = Character.codePointAt(lineChars, charIndex);
+        var adjustedWidth = adjustedWidthOrNull(codePoint, originalWidth, 0.2f);
         x += adjustedWidth != null ? adjustedWidth : originalWidth;
         var nextPos = myGlyphVector.getGlyphPosition(i + 1);
         nextPos.setLocation(x, nextPos.getY());

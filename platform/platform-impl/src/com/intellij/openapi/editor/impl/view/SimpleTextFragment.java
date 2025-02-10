@@ -25,7 +25,8 @@ final class SimpleTextFragment extends TextFragment {
     for (int i = 0; i < myText.length; i++) {
       var charWidth = fontInfo.charWidth2D(myText[i]);
       if (isGridCellAlignmentEnabled()) {
-        var newWidth = adjustedWidthOrNull(charWidth, 0.1f);
+        int codePoint = Character.codePointAt(myText, i);
+        var newWidth = adjustedWidthOrNull(codePoint, charWidth, 0.1f);
         if (newWidth != null) {
           if (myCharAlignment == null) {
             myCharAlignment = new float[myText.length];

@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
+import com.intellij.openapi.editor.impl.view.DoubleWidthCharacterStrategy
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -104,6 +105,10 @@ internal object TerminalUiUtils {
       isBlockCursor = true
       isWhitespacesShown = false
       characterGridWidthMultiplier = 1.0f
+    }
+
+    editor.view.doubleWidthCharacterStrategy = DoubleWidthCharacterStrategy { codePoint ->
+      CharUtils.isDoubleWidthCharacter(codePoint, false)
     }
 
     if (installContextMenu) {

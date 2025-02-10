@@ -24,6 +24,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
@@ -72,6 +73,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   private int myTabSize; // guarded by myLock
   private int myTopOverhang; //guarded by myLock
   private int myBottomOverhang; //guarded by myLock
+  private @Nullable DoubleWidthCharacterStrategy myDoubleWidthCharacterStrategy;
 
   private final Object myLock = new Object();
 
@@ -766,6 +768,31 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
                                                   contextToSet.getAntiAliasingHint(),
                                                   fmHint);
     return true;
+  }
+
+  /**
+   * Returns the current double-width character strategy.
+   * @see #setDoubleWidthCharacterStrategy(DoubleWidthCharacterStrategy)
+   * @return the current double-width character strategy
+   */
+  public @Nullable DoubleWidthCharacterStrategy getDoubleWidthCharacterStrategy() {
+    return myDoubleWidthCharacterStrategy;
+  }
+
+  /**
+   * Sets the strategy to differentiate between single and double width characters.
+   * <p>
+   *   Only used when the {@link EditorSettings#setCharacterGridWidthMultiplier(Float) character grid mode}
+   *   is enabled.
+   *   If not set, then the character width will be guessed by its actual width in the font used.
+   *   Such heuristics generally works well for most regular characters,
+   *   but may fail for special characters sometimes used in fancy shell prompts, for example,
+   *   which is why an explicit strategy is needed.
+   * </p>
+   * @param doubleWidthCharacterStrategy the strategy to use
+   */
+  public void setDoubleWidthCharacterStrategy(@Nullable DoubleWidthCharacterStrategy doubleWidthCharacterStrategy) {
+    myDoubleWidthCharacterStrategy = doubleWidthCharacterStrategy;
   }
 
   private void checkFontRenderContext(FontRenderContext context) {

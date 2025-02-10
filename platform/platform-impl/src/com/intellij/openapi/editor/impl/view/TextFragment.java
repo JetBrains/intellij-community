@@ -13,14 +13,17 @@ import java.util.function.Consumer;
 abstract class TextFragment implements LineFragment {
   final float @NotNull [] myCharPositions; // i-th value is the x coordinate of right edge of i-th character (counted in visual order)
   final @Nullable Float myGridCellWidth;
+  final @Nullable DoubleWidthCharacterStrategy myDoubleWidthCharacterStrategy;
 
   TextFragment(int charCount, @Nullable EditorView view) {
     if (view != null) {
       var multiplier = view.getEditor().getSettings().getCharacterGridWidthMultiplier();
       myGridCellWidth = multiplier == null ? null : multiplier * view.getMaxCharWidth();
+      myDoubleWidthCharacterStrategy = multiplier == null ? null : view.getDoubleWidthCharacterStrategy();
     }
     else {
       myGridCellWidth = null;
+      myDoubleWidthCharacterStrategy = null;
     }
     assert charCount > 0;
     myCharPositions = new float[charCount]; // populated by subclasses' constructors
@@ -67,13 +70,18 @@ abstract class TextFragment implements LineFragment {
     return myGridCellWidth != null;
   }
 
-  @Nullable Float adjustedWidthOrNull(float width, float tolerance) {
+  @Nullable Float adjustedWidthOrNull(int codePoint,  float width, float tolerance) {
     assert myGridCellWidth != null;
     var slots = width / myGridCellWidth;
-    if (Math.abs(slots - Math.round(slots)) < 0.001) return null;
-    var actualSlots = Math.min(Math.max(1, Math.ceil(slots - tolerance)), 2);
-    var actualWidth = actualSlots * myGridCellWidth;
-    return (float)actualWidth;
+    float actualSlots;
+    if (myDoubleWidthCharacterStrategy == null) {
+      actualSlots = (float)Math.min(Math.max(1.0f, Math.ceil(slots - tolerance)), 2.0f);
+    }
+    else {
+      actualSlots = myDoubleWidthCharacterStrategy.isDoubleWidth(codePoint) ? 2.0f : 1.0f;
+    }
+    if (Math.abs(slots - actualSlots) < 0.001) return null;
+    return actualSlots * myGridCellWidth;
   }
 
   private final class TextFragmentWindow implements LineFragment {
