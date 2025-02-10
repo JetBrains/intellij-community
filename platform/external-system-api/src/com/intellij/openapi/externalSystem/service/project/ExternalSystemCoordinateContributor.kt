@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
  * The import can use that mapping for binary dependencies substitution on module dependencies
  * across unrelated projects based on any build system or another kind of project modules generator.
  */
-@ApiStatus.Experimental
 interface ExternalSystemCoordinateContributor {
 
   /**

@@ -120,7 +120,9 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
   private void workspaceModelCommit() {
     ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
 
-      updateSubstitutions();
+      var workspaceModel = getModifiableWorkspaceModel();
+      workspaceModel.updateLibrarySubstitutions();
+      workspaceModel.commit();
 
       LibraryTable.ModifiableModel projectLibrariesModel = getModifiableProjectLibrariesModel();
       for (Map.Entry<Library, Library.ModifiableModel> entry: myModifiableLibraryModels.entrySet()) {
@@ -136,7 +138,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         else if (fromLibrary.getTable() != null && libraryName != null && projectLibrariesModel.getLibraryByName(libraryName) == null) {
           Disposer.dispose(modifiableModel);
         }
-        else if (isSubstituted(fromLibrary.getName())) {
+        else if (workspaceModel.isLibrarySubstituted(fromLibrary)) {
           Disposer.dispose(modifiableModel);
         }
         else {
