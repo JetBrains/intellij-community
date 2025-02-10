@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntStack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class CollectHighlightsUtil {
-  static final ExtensionPointName<Condition<PsiElement>> EP_NAME = new ExtensionPointName<>("com.intellij.elementsToHighlightFilter");
+  @ApiStatus.Internal
+  public static final ExtensionPointName<Condition<PsiElement>> EP_NAME = new ExtensionPointName<>("com.intellij.elementsToHighlightFilter");
 
   private static final Logger LOG = Logger.getInstance(CollectHighlightsUtil.class);
 
