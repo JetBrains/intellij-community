@@ -5,10 +5,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XExecutionStack
-import com.intellij.xdebugger.frame.XExecutionStackWithNativeThreadId
-import com.intellij.xdebugger.frame.XMixedModeSuspendContextBase
+import com.intellij.xdebugger.mixedMode.XExecutionStackWithNativeThreadId
+import com.intellij.xdebugger.mixedMode.XMixedModeSuspendContextBase
 import com.intellij.xdebugger.frame.XSuspendContext
-import com.intellij.xdebugger.frame.nativeThreadId
+import com.intellij.xdebugger.mixedMode.nativeThreadId
 import com.intellij.xdebugger.impl.util.adviseOnFrameChanged
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcessExtension
 import kotlinx.coroutines.CompletableDeferred
@@ -25,8 +25,12 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.measureTimedValue
 
-private val logger = logger<XMixedModeSuspendContext>()
+private val LOG = logger<XMixedModeSuspendContext>()
 
+/**
+ * Special mixed mode suspend context that encapsulates high- and low-level suspend contexts,
+ * When building execution stacks, it creates XMixedModeExecutionStack and pass high and low-level stack traces as ctor arguments
+ */
 @ApiStatus.Internal
 class XMixedModeSuspendContext(
   val session: XDebugSession,
@@ -52,7 +56,7 @@ class XMixedModeSuspendContext(
     when (val currentThreadId = activeThreadId) {
       null -> activeExecutionStackBasedOnDebugProcesses
       else -> stacksMap[currentThreadId]
-    }?.also { logger.info("Active execution stack ${it.topFrame}") }
+    }?.also { LOG.info("Active execution stack ${it.topFrame}") }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun computeExecutionStacks(container: XExecutionStackContainer) {
@@ -97,7 +101,7 @@ class XMixedModeSuspendContext(
     val acc = MyAccumulatingContainer()
     highLevelDebugSuspendContext.computeExecutionStacks(acc)
 
-    val highLevelStacks = measureTimedValue { acc.frames.await() }.also { logger.info("High level stacks loaded in ${it.duration}") }.value
+    val highLevelStacks = measureTimedValue { acc.frames.await() }.also { LOG.info("High level stacks loaded in ${it.duration}") }.value
     val threadIdToHighLevelStackMap = highLevelStacks.associateBy { stack -> stack.nativeThreadId }
 
     lowLevelDebugSuspendContext.computeExecutionStacks(object : XExecutionStackContainer {
@@ -165,4 +169,6 @@ class XMixedModeSuspendContext(
 }
 
 internal fun XSuspendContext.asMixedModeSuspendContext(): XMixedModeSuspendContext = (this as XMixedModeSuspendContext)
-internal fun XSuspendContext.mixedActiveStack(): XMixedModeExecutionStack = asMixedModeSuspendContext().activeExecutionStack as XMixedModeExecutionStack
+
+@ApiStatus.Internal
+fun XSuspendContext.mixedActiveStack(): XMixedModeExecutionStack = asMixedModeSuspendContext().activeExecutionStack as XMixedModeExecutionStack

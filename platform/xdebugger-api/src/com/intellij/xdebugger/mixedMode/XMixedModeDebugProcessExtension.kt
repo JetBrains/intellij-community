@@ -6,6 +6,9 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Provides methods needed for basic debugger actions support, such as all kind of stepping, pause, breakpoint hit, etc.
+ */
 @ApiStatus.Internal
 interface XMixedModeDebugProcessExtension {
   fun getStoppedThreadId(context : XSuspendContext) : Long

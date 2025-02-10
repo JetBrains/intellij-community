@@ -316,6 +316,9 @@ public abstract class XDebugProcess {
     return false;
   }
 
+  /**
+   * Provides an extension to support mixed mode debugging
+   */
   @ApiStatus.Experimental
   @ApiStatus.Internal
   @Nullable

@@ -18,7 +18,7 @@ val XDebugSession.mixedModeExecutionStackOrThrow: XMixedModeExecutionStack
   @ApiStatus.Internal
   get() = checkNotNull(mixedModeExecutionStack)
 
-// In mixed mode we preserve all frames in high- and low- execution stacks letting XMixedModeExecutionStack filter them
+// In mixed mode we preserve all frames in high- and low-execution stacks letting XMixedModeExecutionStack filter them
 val XDebugProcess.canFilterFramesMixedModeAware: Boolean
   @ApiStatus.Internal
   get() = !session.isMixedMode || !session.isMixedModeHighProcessReady

@@ -6,7 +6,6 @@ import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
@@ -49,8 +48,10 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.Promise
 import javax.swing.event.HyperlinkListener
 
-private val LOG = logger<XMixedModeCombinedDebugProcess>()
-
+/**
+ * Interacts with XDebugSession and encapsulates the mixed mode debugging logic.
+ * Primarily, it passes events from XDebugSession to the stateMachine and reacts back
+ */
 @ApiStatus.Internal
 class XMixedModeCombinedDebugProcess(
   val low: XDebugProcess,
@@ -303,7 +304,7 @@ class XMixedModeCombinedDebugProcess(
                                                                 ?: (low as? XDebugSessionTabCustomizer)
 
   private fun mixedStepInto(suspendContext: XMixedModeSuspendContext) {
-    val isLowLevelStep = !highExtension.stoppedInManagedContext(suspendContext)
+    val isLowLevelStep = !highExtension.stoppedInHighLevelSuspendContext(suspendContext)
     if (isLowLevelStep) {
       stateMachine.set(LowLevelStepRequested(suspendContext, StepType.Into))
     }
@@ -311,7 +312,7 @@ class XMixedModeCombinedDebugProcess(
       val stepSuspendContext = suspendContext.highLevelDebugSuspendContext
       coroutineScope.launch {
         val newState =
-          if (highExtension.isStepWillBringIntoNativeCode(stepSuspendContext))
+          if (highExtension.isStepWillBringIntoLowLevelCode(stepSuspendContext))
             MixedStepRequested(stepSuspendContext, MixedStepType.IntoLowFromHigh)
           else
             HighLevelDebuggerStepRequested(stepSuspendContext, StepType.Into)
@@ -322,7 +323,7 @@ class XMixedModeCombinedDebugProcess(
   }
 
   private fun mixedStepOver(suspendContext: XMixedModeSuspendContext) {
-    val isLowLevelStep = !highExtension.stoppedInManagedContext(suspendContext)
+    val isLowLevelStep = !highExtension.stoppedInHighLevelSuspendContext(suspendContext)
 
     val stepType = StepType.Over
     val newState = if (isLowLevelStep) LowLevelStepRequested(suspendContext, stepType) else HighLevelDebuggerStepRequested(suspendContext.highLevelDebugSuspendContext, stepType)
@@ -330,7 +331,7 @@ class XMixedModeCombinedDebugProcess(
   }
 
   private fun mixedStepOut(suspendContext: XMixedModeSuspendContext) {
-    val isLowLevelStep = !highExtension.stoppedInManagedContext(suspendContext)
+    val isLowLevelStep = !highExtension.stoppedInHighLevelSuspendContext(suspendContext)
 
     val stepType = StepType.Out
     val newState = if (isLowLevelStep) LowLevelStepRequested(suspendContext, stepType) else HighLevelDebuggerStepRequested(suspendContext.highLevelDebugSuspendContext, stepType)

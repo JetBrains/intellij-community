@@ -5,6 +5,9 @@ import com.intellij.execution.process.CompositeProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Responsible for correctly starting and terminating a process in mixed mode
+ */
 @ApiStatus.Internal
 class XMixedModeProcessHandler(
   highLevelProcessHandler: ProcessHandler,

@@ -8,6 +8,9 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Special frames container that can be used when you need to asynchronously wait for the completion of a frame computation
+ */
 @ApiStatus.Internal
 class XAccumulatingStackFrameContainer : XExecutionStack.XStackFrameContainer {
   private var delegateErrorContainer: XExecutionStack.XStackFrameContainer? = null

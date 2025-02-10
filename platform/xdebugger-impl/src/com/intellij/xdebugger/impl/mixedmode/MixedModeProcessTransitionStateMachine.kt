@@ -15,6 +15,11 @@ import kotlinx.coroutines.channels.Channel
 
 private val logger = logger<MixedModeProcessTransitionStateMachine>()
 
+/**
+ * A state machine that is intended to handle debugger events from both debug processes
+ * It takes the work of synchronizing debuggers and solving conflicts (like low-level breakpoint is hit while a managed step over is active).
+ * Start state is OnlyLowStarted, finish state is Exited
+ */
 @Suppress("SSBasedInspection")
 internal class MixedModeProcessTransitionStateMachine(
   private val low: XDebugProcess,
@@ -138,7 +143,7 @@ internal class MixedModeProcessTransitionStateMachine(
 
               if (currentState is BothRunning && currentState.activeManagedStepping) {
                 logger.info("Aborting the active managed step when we're in BothRunning state with an active breakpoint")
-                highExtension.abortManagedStepping()
+                highExtension.abortHighLevelStepping()
               }
 
               // please keep don't await it, it will break the status change logic
@@ -178,7 +183,7 @@ internal class MixedModeProcessTransitionStateMachine(
               lowExtension.continueAllThreads(setOf(lowExtension.getStoppedThreadId(event.suspendContext)), silent = true)
               if (currentState is ManagedStepStarted) {
                 logger.info("Aborting the active managed step when the managed step just has been started")
-                highExtension.abortManagedStepping()
+                highExtension.abortHighLevelStepping()
               }
             }
 

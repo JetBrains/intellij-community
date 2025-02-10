@@ -5,9 +5,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XExecutionStack
-import com.intellij.xdebugger.frame.XExecutionStackWithNativeThreadId
+import com.intellij.xdebugger.mixedMode.XExecutionStackWithNativeThreadId
 import com.intellij.xdebugger.frame.XStackFrame
-import com.intellij.xdebugger.frame.nativeThreadId
+import com.intellij.xdebugger.mixedMode.nativeThreadId
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
 import com.intellij.xdebugger.impl.util.adviseOnFrameChanged
@@ -24,11 +24,14 @@ import kotlin.time.measureTimedValue
 
 private val logger = logger<XMixedModeExecutionStack>()
 
+/**
+ * Builds a mixed stack trace by matching low- and high-level execution stacks
+ */
 @ApiStatus.Internal
 class XMixedModeExecutionStack(
   val session: XDebugSession,
   val lowLevelExecutionStack: XExecutionStack,
-  // Null if there's no managed stack frames on the stack
+  // Null if there are no managed stack frames on the stack
   val highLevelExecutionStack: XExecutionStack?,
   val framesMatcher: MixedModeStackBuilder,
   val coroutineScope: CoroutineScope,
@@ -36,7 +39,7 @@ class XMixedModeExecutionStack(
 
   // TODO: If suspend context has been reset before computation of frames started, this deferred will never be completed
   // TODO: need to set it cancelled in this case to not block waiters forever
-  val computedFramesMap: CompletableDeferred<Map</*low level frame*/XStackFrame, /*high level frame*/XStackFrame?>> = CompletableDeferred()
+  val computedFramesMap: CompletableDeferred<Map</*low-level frame*/XStackFrame, /*high-level frame*/XStackFrame?>> = CompletableDeferred()
   private var currentFrame: XStackFrame? = topFrame
 
   init {
@@ -52,7 +55,7 @@ class XMixedModeExecutionStack(
   }
 
   override fun getTopFrame(): XStackFrame? {
-    // when we are stopped the top frame is always from a low-level debugger, so no need to look for a corresponding high level frame
+    // when we are stopped, the top frame is always from a low-level debugger, so no need to look for a corresponding high-level frame
     return lowLevelExecutionStack.topFrame
   }
 

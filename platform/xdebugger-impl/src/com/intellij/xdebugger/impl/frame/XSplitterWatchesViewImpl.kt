@@ -20,6 +20,11 @@ import javax.swing.JPanel
  * Allows customizing of variables view and splitting into 2 components.
  * Notice that you must provide the bottom component of the view by implementing XDebugSessionTabCustomizer in your XDebugProcess
  * @see com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizer.getBottomLocalsComponentProvider
+ *
+ * This component supports working in the mixed mode debugging,
+ * If only one debug process provides a custom bottom component,
+ * we will show the customized frame view only when a frame of this debug process is chosen.
+ * When switching to a frame of a debug process that doesn't provide a custom bottom component, we will show a default frame view
  */
 @Internal
 class XSplitterWatchesViewImpl(
