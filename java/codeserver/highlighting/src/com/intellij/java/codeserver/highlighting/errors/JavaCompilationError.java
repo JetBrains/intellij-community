@@ -26,11 +26,7 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
   public static final String JAVA_DISPLAY_GRAYED = "--java-display-grayed";
   public static final String JAVA_DISPLAY_PARAMETER = "--java-display-parameter";
   public static final String JAVA_DISPLAY_ERROR = "--java-display-error";
-  
-  public JavaCompilationError {
-    kind.validate(psi, context);
-  }
-  
+
   public @NotNull Project project() {
     return psi.getProject();
   }

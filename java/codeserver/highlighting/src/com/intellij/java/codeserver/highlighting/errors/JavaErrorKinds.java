@@ -212,11 +212,6 @@ public final class JavaErrorKinds {
   
   public static final Parameterized<PsiAnnotation, @NotNull List<PsiAnnotation.@NotNull TargetType>> ANNOTATION_NOT_APPLICABLE =
     error(PsiAnnotation.class, "annotation.not.applicable").<@NotNull List<PsiAnnotation.@NotNull TargetType>>parameterized()
-      .withValidator((annotation, types) -> {
-        if (types.isEmpty()) {
-          throw new IllegalArgumentException("types must not be empty");
-        }
-      })
       .withRawDescription((annotation, types) -> {
         String target = JavaPsiBundle.message("annotation.target." + types.get(0));
         PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
