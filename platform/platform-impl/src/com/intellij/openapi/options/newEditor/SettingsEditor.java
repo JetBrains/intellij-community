@@ -448,6 +448,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     checkModified(filter.context.getCurrentConfigurable());
     for (Configurable configurable : filter.context.getModified()) {
       filter.context.fireReset(configurable);
+      configurable.reset();
     }
   }
 
