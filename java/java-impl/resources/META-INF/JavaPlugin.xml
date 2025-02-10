@@ -11,6 +11,7 @@
   <xi:include href="intellij.java.debugger.impl.shared.xml"/>
   <xi:include href="/META-INF/JavaIndexingPlugin.xml"/>
   <xi:include href="/META-INF/JavaPsiPlugin.xml"/>
+  <xi:include href="/META-INF/JavaCodeServerCore.xml"/>
   <xi:include href="/META-INF/JavaAnalysisPlugin.xml"/>
   <xi:include href="/META-INF/IntentionPowerPack.xml">
     <xi:fallback/>
@@ -395,8 +396,6 @@
                         serviceImplementation="com.intellij.psi.impl.file.PsiPackageImplementationHelperImpl"/>
     <applicationService serviceInterface="com.intellij.psi.codeStyle.JavaFileCodeStyleFacadeFactory"
                         serviceImplementation="com.intellij.psi.codeStyle.JavaFileCodeStyleFacadeImpl$Factory"/>
-    <applicationService serviceInterface="com.intellij.psi.JavaModuleGraphHelper"
-                        serviceImplementation="com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphHelperImpl"/>
 
     <projectService serviceImplementation="com.intellij.jarRepository.RemoteRepositoriesConfiguration"/>
     <projectService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>

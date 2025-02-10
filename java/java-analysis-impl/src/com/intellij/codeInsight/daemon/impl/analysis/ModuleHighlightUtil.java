@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil.ModulePackageConflict;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -19,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
@@ -60,7 +60,7 @@ final class ModuleHighlightUtil {
     if (javaModule != null) {
       String packageName = statement.getPackageName();
       if (packageName != null) {
-        PsiJavaModule origin = JavaModuleGraphUtil.findOrigin(javaModule, packageName);
+        PsiJavaModule origin = JavaPsiModuleUtil.findOrigin(javaModule, packageName);
         if (origin != null) {
           PsiJavaCodeReferenceElement reference = statement.getPackageReference();
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
@@ -485,10 +485,10 @@ final class ModuleHighlightUtil {
   }
 
   static HighlightInfo.Builder checkClashingReads(@NotNull PsiJavaModule module) {
-    Trinity<String, PsiJavaModule, PsiJavaModule> conflict = JavaModuleGraphUtil.findConflict(module);
+    ModulePackageConflict conflict = JavaPsiModuleUtil.findConflict(module);
     if (conflict != null) {
       String message = JavaErrorBundle.message(
-        "module.conflicting.reads", module.getName(), conflict.first, conflict.second.getName(), conflict.third.getName());
+        "module.conflicting.reads", module.getName(), conflict.packageName(), conflict.module1(), conflict.module2());
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(module)).descriptionAndTooltip(message);
     }
 

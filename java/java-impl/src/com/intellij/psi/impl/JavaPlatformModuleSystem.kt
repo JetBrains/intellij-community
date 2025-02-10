@@ -12,6 +12,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.java.JavaBundle
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil.findDescriptorByElement
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
@@ -50,21 +51,21 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     return getProblem(targetPackageName, targetFile, place, false) { (current, target) ->
       val currentModule = current.module ?: return@getProblem false
       val targetModule = target.module ?: return@getProblem false
-      return@getProblem JavaModuleGraphUtil.reads(currentModule, targetModule)
+      return@getProblem JavaPsiModuleUtil.reads(currentModule, targetModule)
     }
   }
 
   override fun isAccessible(targetModule: PsiJavaModule, place: PsiElement): Boolean {
     return getProblem(targetModule, place, true) { (current, target) ->
       if (current.module == null || target.module == null) return@getProblem false
-      return@getProblem JavaModuleGraphUtil.reads(current.module, target.module!!)
+      return@getProblem JavaPsiModuleUtil.reads(current.module, target.module!!)
     } == null
   }
 
   override fun checkAccess(targetModule: PsiJavaModule, place: PsiElement): ErrorWithFixes? {
     return getProblem(targetModule, place, false) { (current, target) ->
       if (current.module == null || target.module == null) return@getProblem false
-      return@getProblem JavaModuleGraphUtil.reads(current.module, target.module!!)
+      return@getProblem JavaPsiModuleUtil.reads(current.module, target.module!!)
     }
   }
 

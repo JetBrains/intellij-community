@@ -7,7 +7,6 @@ import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
@@ -520,11 +519,11 @@ public final class JavaCompletionUtil {
           }
           if (PsiUtil.isAvailable(JavaFeature.MODULES, myPlace)) {
             final PsiJavaModule currentModule =
-              ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByFile(myOriginalFile, myPlace.getProject()));
+              ReadAction.compute(() -> JavaPsiModuleUtil.findDescriptorByFile(myOriginalFile, myPlace.getProject()));
             if (currentModule != null) {
               final PsiJavaModule targetModule = ReadAction.compute(() -> JavaPsiModuleUtil.findDescriptorByElement(psiClass));
               if (targetModule != null && targetModule != currentModule &&
-                  !JavaModuleGraphUtil.reads(currentModule, targetModule)) {
+                  !JavaPsiModuleUtil.reads(currentModule, targetModule)) {
                 LookupElementDecorator<LookupElement> element = generator.apply(presentation -> presentation.setItemTextForeground(JBColor.RED));
                 return PrioritizedLookupElement.withExplicitProximity(element, -1);
               }

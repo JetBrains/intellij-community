@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.*;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -225,7 +225,7 @@ public final class JavaParametersUtil {
 
     Set<PsiJavaModule> forModulePath = new HashSet<>(explicitModules);
     for (PsiJavaModule explicitModule : explicitModules) {
-      forModulePath.addAll(JavaModuleGraphUtil.getAllDependencies(explicitModule));
+      forModulePath.addAll(JavaPsiModuleUtil.getAllDependencies(explicitModule));
     }
 
     if (!includeTests) {
@@ -296,7 +296,7 @@ public final class JavaParametersUtil {
           PsiClassType provideInterfaceType = provide.getInterfaceType();
           if (provideInterfaceType != null && interfaces.contains(provideInterfaceType.getCanonicalText())) {
             registerProviders.accept(aModule);
-            JavaModuleGraphUtil.getAllDependencies(aModule).forEach(registerProviders);
+            JavaPsiModuleUtil.getAllDependencies(aModule).forEach(registerProviders);
             continue nextModule;
           }
         }

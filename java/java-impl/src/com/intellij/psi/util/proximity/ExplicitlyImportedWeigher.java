@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util.proximity;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -33,7 +32,7 @@ public final class ExplicitlyImportedWeigher extends ProximityWeigher {
       BiConsumer<List<PsiJavaModule>, PsiJavaModule> append = (list, module) -> {
         if (module != null) {
           list.add(module);
-          list.addAll(JavaModuleGraphUtil.getAllTransitiveDependencies(module));
+          list.addAll(JavaPsiModuleUtil.getAllTransitiveDependencies(module));
         }
       };
 

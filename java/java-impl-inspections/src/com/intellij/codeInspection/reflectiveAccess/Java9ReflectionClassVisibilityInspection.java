@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddOpensDirectiveFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix;
@@ -62,7 +61,7 @@ public final class Java9ReflectionClassVisibilityInspection extends AbstractBase
         if (psiClass != null) {
           final PsiJavaModule otherModule = JavaPsiModuleUtil.findDescriptorByElement(psiClass);
           if (otherModule != null && otherModule != javaModule) {
-            if (!JavaModuleGraphUtil.reads(javaModule, otherModule)) {
+            if (!JavaPsiModuleUtil.reads(javaModule, otherModule)) {
               String message = JavaBundle.message("module.not.in.requirements", javaModule.getName(), otherModule.getName());
               holder.problem(classNameArgument, message).fix(new AddRequiresDirectiveFix(javaModule, otherModule.getName())).register();
               return;

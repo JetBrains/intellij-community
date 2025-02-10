@@ -18,21 +18,26 @@ import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.search.searches.JavaModuleSearch;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.BiFunction;
 import java.util.jar.JarFile;
+
+import static com.intellij.psi.PsiJavaModule.JAVA_BASE;
 
 /**
  * Utilities related to JPMS modules
@@ -211,5 +216,246 @@ public final class JavaPsiModuleUtil {
     }
 
     return null;
+  }
+
+  /**
+   * @param source source module
+   * @param destination target module
+   * @return true if the source module reads the target module
+   */
+  public static boolean reads(@NotNull PsiJavaModule source, @NotNull PsiJavaModule destination) {
+    return getRequiresGraph(source).reads(source, destination);
+  }
+
+  /**
+   * @param source source module
+   * @return set of all direct (non-transitive) dependencies of the source module
+   */
+  public static @NotNull Set<PsiJavaModule> getAllDependencies(@NotNull PsiJavaModule source) {
+    return getRequiresGraph(source).getAllDependencies(source, false);
+  }
+
+  /**
+   * @param source source module
+   * @return set of all direct and indirect (transitive) dependencies of the source module
+   */
+  public static @NotNull Set<PsiJavaModule> getAllTransitiveDependencies(@NotNull PsiJavaModule source) {
+    return getRequiresGraph(source).getAllDependencies(source, true);
+  }
+
+  /**
+   * Represents a dependency conflict when a single package is imported from two modules
+   * @param packageName package name
+   * @param module1 first module from which this package is being read
+   * @param module2 second module from which this package is being read
+   */
+  public record ModulePackageConflict(@NotNull String packageName, @NotNull PsiJavaModule module1, @NotNull PsiJavaModule module2) { }
+
+  /**
+   * @param module module to check 
+   * @return a {@link ModulePackageConflict} representing a package name conflict among module dependencies; null if no conflict found.
+   * If there are several conflicts, only the first one is returned.
+   */
+  public static @Nullable ModulePackageConflict findConflict(@NotNull PsiJavaModule module) {
+    return getRequiresGraph(module).findConflict(module);
+  }
+
+  /**
+   * @param module module that accesses a package
+   * @param packageName the name of the accessed package
+   * @return the module where the package is declared; null if not found
+   */
+  public static @Nullable PsiJavaModule findOrigin(@NotNull PsiJavaModule module, @NotNull String packageName) {
+    return getRequiresGraph(module).findOrigin(module, packageName);
+  }
+
+  private static RequiresGraph getRequiresGraph(@NotNull PsiJavaModule module) {
+    final Project project = module.getProject();
+    if (DumbService.getInstance(project).isAlternativeResolveEnabled()) {
+      return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> buildRequiresGraph(project));
+    }
+    return CachedValuesManager.getManager(project).getCachedValue(project, () ->
+      CachedValueProvider.Result.create(buildRequiresGraph(project),
+                                        PsiJavaModuleModificationTracker.getInstance(project),
+                                        ProjectRootModificationTracker.getInstance(project)));
+  }
+
+  /*
+   * Collects all module dependencies in the project.
+   * The resulting graph is used for tracing readability and checking package conflicts.
+   */
+  private static @NotNull RequiresGraph buildRequiresGraph(@NotNull Project project) {
+    MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
+    Set<String> transitiveEdges = new HashSet<>();
+
+    GlobalSearchScope scope = ProjectScope.getAllScope(project);
+    JavaModuleSearch.allModules(project, scope).forEach(module -> {
+      visit(module, relations, transitiveEdges);
+      return true;
+    });
+
+    Graph<PsiJavaModule> graph = GraphGenerator.generate(new ChameleonGraph<>(relations, true));
+    return new RequiresGraph(graph, transitiveEdges);
+  }
+
+  private static void visit(@NotNull PsiJavaModule module, @NotNull MultiMap<PsiJavaModule, PsiJavaModule> relations, @NotNull Set<String> transitiveEdges) {
+    if (!(module instanceof LightJavaModule) && !relations.containsKey(module)) {
+      relations.putValues(module, Collections.emptyList());
+      boolean explicitJavaBase = false;
+      for (PsiRequiresStatement statement : module.getRequires()) {
+        PsiJavaModuleReference ref = statement.getModuleReference();
+        if (ref != null) {
+          if (JAVA_BASE.equals(ref.getCanonicalText())) explicitJavaBase = true;
+          for (ResolveResult result : ref.multiResolve(false)) {
+            PsiJavaModule dependency = (PsiJavaModule)result.getElement();
+            assert dependency != null : result;
+            relations.putValue(module, dependency);
+            if (statement.hasModifierProperty(PsiModifier.TRANSITIVE)) transitiveEdges.add(RequiresGraph.key(dependency, module));
+            visit(dependency, relations, transitiveEdges);
+          }
+        }
+      }
+      if (!explicitJavaBase) {
+        PsiJavaModule javaBase = JavaPsiFacade.getInstance(module.getProject()).findModule(JAVA_BASE, module.getResolveScope());
+        if (javaBase != null) relations.putValue(module, javaBase);
+      }
+    }
+  }
+  
+  private static final class ChameleonGraph<N> implements Graph<N> {
+    private final Set<N> myNodes;
+    private final MultiMap<N, N> myEdges;
+    private final boolean myInbound;
+
+    private ChameleonGraph(MultiMap<N, N> edges, boolean inbound) {
+      myNodes = new HashSet<>();
+      edges.entrySet().forEach(e -> {
+        myNodes.add(e.getKey());
+        myNodes.addAll(e.getValue());
+      });
+      myEdges = edges;
+      myInbound = inbound;
+    }
+
+    @Override
+    public @NotNull Collection<N> getNodes() {
+      return myNodes;
+    }
+
+    @Override
+    public @NotNull Iterator<N> getIn(N n) {
+      return myInbound ? myEdges.get(n).iterator() : Collections.emptyIterator();
+    }
+
+    @Override
+    public @NotNull Iterator<N> getOut(N n) {
+      return myInbound ? Collections.emptyIterator() : myEdges.get(n).iterator();
+    }
+  }
+  
+  private static final class RequiresGraph {
+    private final @NotNull Graph<PsiJavaModule> myGraph;
+    private final @NotNull Set<String> myTransitiveEdges;
+
+    private RequiresGraph(@NotNull Graph<PsiJavaModule> graph, @NotNull Set<String> transitiveEdges) {
+      myGraph = graph;
+      myTransitiveEdges = transitiveEdges;
+    }
+
+    public boolean reads(PsiJavaModule source, PsiJavaModule destination) {
+      Collection<PsiJavaModule> nodes = myGraph.getNodes();
+      if (nodes.contains(destination) && nodes.contains(source)) {
+        Iterator<PsiJavaModule> directReaders = myGraph.getOut(destination);
+        while (directReaders.hasNext()) {
+          PsiJavaModule next = directReaders.next();
+          if (source.equals(next) || myTransitiveEdges.contains(key(destination, next)) && reads(source, next)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    private @Nullable ModulePackageConflict findConflict(@NotNull PsiJavaModule source) {
+      Map<String, PsiJavaModule> exports = new HashMap<>();
+      return processExports(source, (pkg, m) -> {
+        PsiJavaModule found = exports.put(pkg, m);
+        return found == null ||
+               found instanceof LightJavaModule && m instanceof LightJavaModule ||
+               found.getName().equals(m.getName())
+               ? null : new ModulePackageConflict(pkg, found, m);
+      });
+    }
+
+    private @Nullable PsiJavaModule findOrigin(@NotNull PsiJavaModule module, @NotNull String packageName) {
+      return processExports(module, (pkg, m) -> packageName.equals(pkg) ? m : null);
+    }
+
+    private <T> @Nullable T processExports(@NotNull PsiJavaModule start, @NotNull BiFunction<? super String, ? super PsiJavaModule, ? extends T> processor) {
+      return myGraph.getNodes().contains(start) ? processExports(start.getName(), start, true, new HashSet<>(), processor) : null;
+    }
+
+    private <T> @Nullable T processExports(@Nullable String name,
+                                           @NotNull PsiJavaModule module,
+                                           boolean direct,
+                                           @NotNull Set<? super PsiJavaModule> visited,
+                                           @NotNull BiFunction<? super String, ? super PsiJavaModule, ? extends T> processor) {
+      if (visited.add(module)) {
+        if (!direct) {
+          for (PsiPackageAccessibilityStatement statement : module.getExports()) {
+            List<String> exportTargets = statement.getModuleNames();
+            if (exportTargets.isEmpty() || exportTargets.contains(name)) {
+              T result = processor.apply(statement.getPackageName(), module);
+              if (result != null) return result;
+            }
+          }
+        }
+        for (Iterator<PsiJavaModule> iterator = myGraph.getIn(module); iterator.hasNext();) {
+          PsiJavaModule dependency = iterator.next();
+          if (direct || myTransitiveEdges.contains(key(dependency, module))) {
+            T result = processExports(name, dependency, false, visited, processor);
+            if (result != null) return result;
+          }
+        }
+      }
+
+      return null;
+    }
+
+    public static @NotNull String key(@NotNull PsiJavaModule module, @NotNull PsiJavaModule exporter) {
+      return module.getName() + '/' + exporter.getName();
+    }
+
+    public @NotNull Set<PsiJavaModule> getAllDependencies(@NotNull PsiJavaModule module, boolean transitive) {
+      Set<PsiJavaModule> requires = new HashSet<>();
+      collectDependencies(module, requires, transitive);
+      return requires;
+    }
+
+    private void collectDependencies(@NotNull PsiJavaModule module, @NotNull Set<PsiJavaModule> dependencies, boolean transitive) {
+      for (Iterator<PsiJavaModule> iterator = myGraph.getIn(module); iterator.hasNext();) {
+        PsiJavaModule dependency = iterator.next();
+        if (!dependencies.contains(dependency) && (!transitive || myTransitiveEdges.contains(key(dependency, module)))) {
+          dependencies.add(dependency);
+          collectDependencies(dependency, dependencies, transitive);
+        }
+      }
+    }
+  }
+
+  /**
+   * Helper service to support resolve in java-psi-impl
+   */
+  public static class Helper extends JavaModuleGraphHelper {
+    @Contract("null->null")
+    @Override
+    public @Nullable PsiJavaModule findDescriptorByElement(@Nullable PsiElement element) {
+      return JavaPsiModuleUtil.findDescriptorByElement(element);
+    }
+  
+    @Override
+    public @NotNull Set<PsiJavaModule> getAllTransitiveDependencies(@NotNull PsiJavaModule psiJavaModule) {
+      return JavaPsiModuleUtil.getAllTransitiveDependencies(psiJavaModule);
+    }
   }
 }
