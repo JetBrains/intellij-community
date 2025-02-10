@@ -48,7 +48,7 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
   companion object {
     @JvmStatic
     @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use WebSymbolPsiReferenceProvider.Companion.startOffsetIn() instead")
+    @Deprecated("Use com.intellij.psi.util.startOffsetIn() instead")
     fun PsiElement.startOffsetIn(parent: PsiElement): Int {
       var result = 0
       var tmp: PsiElement? = this

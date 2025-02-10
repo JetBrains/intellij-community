@@ -432,6 +432,25 @@ fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
   return false
 }
 
+/**
+ * Provides the start offset of the receiver element
+ * relative to the start offset of one of its predecessors.
+ *
+ * Useful, for instance, when a name identifier element is not
+ * a direct descendant of an element, yet we need to calculate
+ * the relative offset.
+ */
+fun PsiElement.startOffsetIn(predecessor: PsiElement): Int {
+  var result = 0
+  var tmp: PsiElement? = this
+  while (tmp != predecessor && tmp != null) {
+    result += tmp.startOffsetInParent
+    tmp = tmp.parent
+  }
+  return if (tmp != null)
+    result
+  else -1
+}
 
 inline fun <reified T : PsiElement> PsiElement.childrenOfType(): List<T> = PsiTreeUtil.getChildrenOfTypeAsList(this, T::class.java)
 

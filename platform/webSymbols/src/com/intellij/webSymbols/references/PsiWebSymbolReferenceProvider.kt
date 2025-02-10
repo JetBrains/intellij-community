@@ -2,7 +2,6 @@
 package com.intellij.webSymbols.references
 
 import com.intellij.model.psi.PsiExternalReferenceHost
-import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolNameSegment.MatchProblem
@@ -31,19 +30,6 @@ interface PsiWebSymbolReferenceProvider<T : PsiExternalReferenceHost> {
         name, qualifiedKind, WebSymbolOrigin.create(framework),
         WebSymbolNameSegment.create(0, name.length, problem = MatchProblem.UNKNOWN_SYMBOL)
       )
-
-    @JvmStatic
-    fun PsiElement.startOffsetIn(parent: PsiElement): Int {
-      var result = 0
-      var tmp: PsiElement? = this
-      while (tmp != parent && tmp != null) {
-        result += tmp.startOffsetInParent
-        tmp = tmp.parent
-      }
-      return if (tmp != null)
-        result
-      else -1
-    }
   }
 
 }

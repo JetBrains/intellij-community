@@ -5134,6 +5134,7 @@ f:com.intellij.psi.util.PsiTreeUtilKt
 - bs:siblings$default(com.intellij.psi.PsiElement,Z,I,java.lang.Object):kotlin.sequences.Sequence
 - bs:siblings$default(com.intellij.psi.PsiElement,Z,Z,I,java.lang.Object):kotlin.sequences.Sequence
 - sf:skipTokens(kotlin.sequences.Sequence,com.intellij.psi.tree.TokenSet):kotlin.sequences.Sequence
+- sf:startOffsetIn(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):I
 - sf:validOrNull(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 c:com.intellij.psi.util.PsiUtilCore
 - sf:NULL_PSI_ELEMENT:com.intellij.psi.PsiElement
