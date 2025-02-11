@@ -30,7 +30,8 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
               "CancellationCheckInLoops",
               "ThreadingConcurrency",
               "CallingMethodShouldBeRequiresBlockingContext",
-              "PotentialDeadlockInServiceInitialization"
+              "PotentialDeadlockInServiceInitialization",
+              "ObsoleteDispatchersEdt"
     ).sorted().toList();
 
   /**
@@ -40,7 +41,7 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
     List<LocalInspectionEP> devkitInspections = ContainerUtil.filter(LocalInspectionEP.LOCAL_INSPECTION.getExtensionList(), ep -> {
       return "DevKit".equals(ep.getPluginDescriptor().getPluginId().getIdString());
     });
-    assertEquals("Mismatch in total inspections, check classpath in test run configuration (intellij.devkit.plugin.main)", 77,
+    assertEquals("Mismatch in total inspections, check classpath in test run configuration (intellij.devkit.plugin.main)", 78,
                  devkitInspections.size());
 
     List<LocalInspectionEP> disabledInspections = ContainerUtil.filter(devkitInspections, ep -> !ep.enabledByDefault);

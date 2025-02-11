@@ -37,7 +37,8 @@ private const val INVOKE_LATER_KT = "com.intellij.openapi.application.invokeLate
 private const val MODALITY_STATE_DEFAULT_MODALITY_STATE = "com.intellij.openapi.application.ModalityState.defaultModalityState"
 private const val APPLICATION_GET_DEFAULT_MODALITY_STATE = "com.intellij.openapi.application.Application.getDefaultModalityState"
 private const val RESTRICTS_SUSPENSION = "kotlin.coroutines.RestrictsSuspension"
-private const val INTELLIJ_EDT_DISPATCHER = "com.intellij.openapi.application.EDT"
+internal const val INTELLIJ_EDT_DISPATCHER = "com.intellij.openapi.application.EDT"
+internal const val INTELLIJ_UI_DISPATCHER = "com.intellij.openapi.application.UI"
 private const val LAUNCH = "kotlinx.coroutines.launch"
 
 private val progressManagerCheckedCanceledName = FqName(PROGRESS_MANAGER_CHECKED_CANCELED)
@@ -67,33 +68,11 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
   }
 
   private fun createFileVisitor(holder: ProblemsHolder): PsiElementVisitor {
-    val blockingContextCallsVisitor by lazy(mode = LazyThreadSafetyMode.NONE) {
+    val blockingContextCallsVisitor = lazy(mode = LazyThreadSafetyMode.NONE) {
       BlockingContextMethodsCallsVisitor(holder)
     }
 
-    return object : KtTreeVisitorVoid() {
-      override fun visitElement(element: PsiElement): Unit = Unit
-
-      override fun visitNamedFunction(function: KtNamedFunction) {
-        if (function.hasModifier(KtTokens.SUSPEND_KEYWORD) && !isSuspensionRestricted(function)) {
-          function.bodyExpression?.accept(blockingContextCallsVisitor)
-          return
-        }
-        super.visitNamedFunction(function)
-      }
-
-      override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression) {
-        analyze(lambdaExpression) {
-          val type = lambdaExpression.expressionType
-          if (type?.isSuspendFunctionType == true && !isSuspensionRestricted(type)) {
-            lambdaExpression.bodyExpression?.accept(blockingContextCallsVisitor)
-            return
-          }
-        }
-
-        super.visitLambdaExpression(lambdaExpression)
-      }
-    }
+    return TopLevelFunctionVisitor(blockingContextCallsVisitor)
   }
 
   private class BlockingContextMethodsCallsVisitor(
@@ -339,7 +318,7 @@ private fun isImported(name: FqName, file: KtFile): Boolean {
   return file.importDirectives.mapNotNull { it.importPath }.any { name.isImported(it) }
 }
 
-private fun isSuspensionRestricted(function: KtNamedFunction): Boolean {
+internal fun isSuspensionRestricted(function: KtNamedFunction): Boolean {
   analyze(function) {
     val declaringClass = function.containingClass()
     val declaringClassSymbol = declaringClass?.classSymbol
@@ -353,7 +332,7 @@ private fun isSuspensionRestricted(function: KtNamedFunction): Boolean {
   }
 }
 
-private fun KaSession.isSuspensionRestricted(lambdaType: KaType): Boolean {
+internal fun KaSession.isSuspensionRestricted(lambdaType: KaType): Boolean {
   assert(lambdaType.isSuspendFunctionType)
 
   val receiverTypeSymbol = (lambdaType as? KaFunctionType)?.receiverType?.expandedSymbol
