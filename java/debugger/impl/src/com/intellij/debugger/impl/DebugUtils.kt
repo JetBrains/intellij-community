@@ -1,13 +1,21 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl
 
+import com.intellij.debugger.engine.DebugProcessEvents
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.debugger.engine.withDebugContext
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.sun.jdi.InternalException
-import com.sun.jdi.ObjectCollectedException
-import com.sun.jdi.VMDisconnectedException
+import com.intellij.openapi.util.registry.Registry
+import com.sun.jdi.*
+import com.sun.jdi.event.ClassPrepareEvent
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -60,3 +68,35 @@ inline fun <T : Any, R> computeSafeIfAny(ep: ExtensionPointName<T>, processor: (
       null
     }
   }
+
+// TODO: move into VirtualMachineProxyImpl when converted to kotlin
+fun preloadAllClasses(vm: VirtualMachine) {
+  DebuggerManagerThreadImpl.Companion.assertIsManagerThread()
+  val allClasses = DebuggerUtilsAsync.allCLasses(vm)
+  if (!Registry.Companion.`is`("debugger.preload.types.hierarchy", true)) return
+
+  val channel = Channel<ReferenceType>(capacity = Channel.Factory.UNLIMITED)
+  try {
+    DebugProcessEvents.enableNonSuspendingRequest(vm.eventRequestManager().createClassPrepareRequest()) { event ->
+      channel.trySend((event as ClassPrepareEvent).referenceType())
+    }
+  }
+  catch (_: UnsupportedOperationException) {
+  }
+
+  val managerThread = InvokeThread.currentThread() as DebuggerManagerThreadImpl
+  managerThread.coroutineScope.launch {
+    val allClasses = allClasses.await()
+    allClasses.forEach { channel.send(it) }
+    channel.consumeEach { type ->
+      withDebugContext(managerThread, PrioritizedTask.Priority.LOWEST) {
+        DebuggerUtilsAsync.supertypes(type).await()
+      }
+      delay(1)
+    }
+  }
+}
+
+fun computeInDMT() {
+
+}

@@ -5,22 +5,20 @@
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.debugger.engine.DebugProcessEvents;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.impl.DebugUtilsKt;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.attach.SAJDWPRemoteConnection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jdi.ReferenceTypeImpl;
 import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
-import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.EventRequestManager;
 import org.jetbrains.annotations.*;
 
@@ -60,19 +58,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     canWatchFieldModification(); // fetch capabilities
 
     if (canBeModified()) { // no need to spend time here for read only sessions
-      // this will cache classes inside JDI and enable faster search of classes later
-      CompletableFuture<List<ReferenceType>> allClasses = DebuggerUtilsAsync.allCLasses(virtualMachine);
-
-      if (Registry.is("debugger.preload.types.hierarchy", true)) {
-        try {
-          DebugProcessEvents.enableNonSuspendingRequest(eventRequestManager().createClassPrepareRequest(), event -> {
-            DebuggerUtilsAsync.supertypes(((ClassPrepareEvent)event).referenceType());
-          });
-        }
-        catch (UnsupportedOperationException ignored) {
-        }
-        allClasses.thenAccept(classes -> classes.forEach(DebuggerUtilsAsync::supertypes));
-      }
+      DebugUtilsKt.preloadAllClasses(virtualMachine);
     }
 
     virtualMachine.topLevelThreadGroups().forEach(this::threadGroupCreated);
@@ -462,6 +448,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
     ThreadReferenceProxyImpl proxy = myAllThreads.computeIfAbsent(thread, t -> {
       // do not cache virtual threads
+      //noinspection ConstantValue
       if (!forceCache && thread instanceof ThreadReferenceImpl && ((ThreadReferenceImpl)thread).isVirtual()) {
         return null;
       }
