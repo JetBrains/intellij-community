@@ -63,35 +63,41 @@ internal class ShadowedCallablesFilter {
 
     context(KaSession)
     private fun processSignatureConsideringOptions(
-        callable: KaCallableSignature<*>,
+        callableSignature: KaCallableSignature<*>,
         insertionOptions: CallableInsertionOptions,
         symbolOrigin: CompletionSymbolOrigin,
         typeArgumentsAreRequired: Boolean,
     ): Boolean {
         val (importingStrategy, insertionStrategy) = insertionOptions
 
+        fun createSimplifiedSignature(considerContainer: Boolean = false) =
+            SimplifiedSignature.create(callableSignature, considerContainer, insertionStrategy, typeArgumentsAreRequired)
+
         return when (importingStrategy) {
-            is ImportStrategy.DoNothing ->
-                processSignature(callable, symbolOrigin, considerContainer = false, insertionStrategy, typeArgumentsAreRequired)
+            is ImportStrategy.DoNothing -> {
+                val simplifiedSignature = createSimplifiedSignature()
+
+                simplifiedSignature != null
+                        && processSignature(simplifiedSignature, symbolOrigin)
+            }
 
             is ImportStrategy.AddImport -> { // `AddImport` doesn't necessarily mean that import is required and will be eventually inserted
-                val simplifiedSignature = SimplifiedSignature.create(
-                    callable,
-                    considerContainer = false,
-                    insertionStrategy,
-                    typeArgumentsAreRequired
-                ) ?: return false
+                val simplifiedSignature = createSimplifiedSignature()
+                    ?: return false
 
+                val considerContainer = symbolOrigin is CompletionSymbolOrigin.Index
                 when (val shadowingCallableOrigin = processedSimplifiedSignatures[simplifiedSignature]) {
                     // no callable with unspecified container shadows current callable
                     null -> {
                         // if origin is `Index` and there is no shadowing callable, import is required and container needs to be considered
-                        val considerContainer = symbolOrigin is CompletionSymbolOrigin.Index
-                        processSignature(callable, symbolOrigin, considerContainer, insertionStrategy, typeArgumentsAreRequired)
+                        val simplifiedSignature = createSimplifiedSignature(considerContainer)
+
+                        simplifiedSignature != null
+                                && processSignature(simplifiedSignature, symbolOrigin)
                     }
 
                     else -> {
-                        if (symbolOrigin !is CompletionSymbolOrigin.Index) return true
+                        if (!considerContainer) return true
 
                         // if the callable which shadows target callable belongs to the scope with priority lower than the priority of
                         // explicit simple importing scope, then it won't shadow target callable after import is inserted
@@ -100,13 +106,10 @@ internal class ShadowedCallablesFilter {
                             is KaScopeKind.DefaultSimpleImportingScope,
                             is KaScopeKind.ExplicitStarImportingScope,
                             is KaScopeKind.DefaultStarImportingScope -> {
-                                processSignature(
-                                    callable,
-                                    symbolOrigin,
-                                    considerContainer = true,
-                                    insertionStrategy,
-                                    typeArgumentsAreRequired
-                                )
+                                val simplifiedSignature = @Suppress("KotlinConstantConditions") createSimplifiedSignature(considerContainer)
+
+                                simplifiedSignature != null
+                                        && processSignature(simplifiedSignature, symbolOrigin)
                             }
 
                             else -> true
@@ -115,30 +118,19 @@ internal class ShadowedCallablesFilter {
                 }
             }
 
-            is ImportStrategy.InsertFqNameAndShorten ->
-                processSignature(callable, symbolOrigin, considerContainer = true, insertionStrategy, typeArgumentsAreRequired)
+            is ImportStrategy.InsertFqNameAndShorten -> {
+                val simplifiedSignature = createSimplifiedSignature(considerContainer = true)
+
+                simplifiedSignature != null
+                        && processSignature(simplifiedSignature, symbolOrigin)
+            }
         }
     }
 
-    context(KaSession)
     private fun processSignature(
-        callable: KaCallableSignature<*>,
+        simplifiedSignature: SimplifiedSignature,
         symbolOrigin: CompletionSymbolOrigin,
-        considerContainer: Boolean,
-        insertionStrategy: CallableInsertionStrategy,
-        typeArgumentsAreRequired: Boolean,
-    ): Boolean {
-        val simplifiedSignature = SimplifiedSignature.create(
-            callable,
-            considerContainer,
-            insertionStrategy,
-            typeArgumentsAreRequired
-        ) ?: return false
-        if (simplifiedSignature in processedSimplifiedSignatures) return true
-
-        processedSimplifiedSignatures[simplifiedSignature] = symbolOrigin
-        return false
-    }
+    ): Boolean = processedSimplifiedSignatures.putIfAbsent(simplifiedSignature, symbolOrigin) != null
 
     companion object {
         /**
