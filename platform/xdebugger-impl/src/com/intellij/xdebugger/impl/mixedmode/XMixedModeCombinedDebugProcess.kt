@@ -118,11 +118,6 @@ class XMixedModeCombinedDebugProcess(
     stateMachine.set(PauseRequested)
   }
 
-  // not called from debug session
-  override fun startStepOver() {
-    super.startStepOver()
-  }
-
   override fun startStepOver(context: XSuspendContext?) {
     if (!session.isMixedModeHighProcessReady) {
       low.startStepOver(context)
@@ -137,11 +132,6 @@ class XMixedModeCombinedDebugProcess(
     super.startForceStepInto(context)
   }
 
-  // not called from debug session
-  override fun startStepInto() {
-    super.startStepInto()
-  }
-
   override fun startStepInto(context: XSuspendContext?) {
     if (!session.isMixedModeHighProcessReady) {
       low.startStepInto(context)
@@ -149,11 +139,6 @@ class XMixedModeCombinedDebugProcess(
     }
 
     mixedStepInto(context as XMixedModeSuspendContext)
-  }
-
-  // not called from debug session
-  override fun startStepOut() {
-    super.startStepOut()
   }
 
   override fun startStepOut(context: XSuspendContext?) {
@@ -171,19 +156,9 @@ class XMixedModeCombinedDebugProcess(
 
   override fun getAlternativeSourceHandler(): XAlternativeSourceHandler? = getIfOnlyOneExists { it.alternativeSourceHandler }
 
-  // not called from debug session
-  override fun stop() {
-    super.stop()
-  }
-
   override fun stopAsync(): Promise<in Any> {
     stateMachine.set(Stop)
     return high.stopAsync().thenAsync { low.stopAsync() }
-  }
-
-  // not called from debug session
-  override fun resume() {
-    super.resume()
   }
 
   override fun resume(context: XSuspendContext?) {
@@ -193,11 +168,6 @@ class XMixedModeCombinedDebugProcess(
     }
 
     stateMachine.set(ResumeRequested)
-  }
-
-  // not called from debug session
-  override fun runToPosition(position: XSourcePosition) {
-    super.runToPosition(position)
   }
 
   override fun runToPosition(position: XSourcePosition, context: XSuspendContext?) {
@@ -260,11 +230,6 @@ class XMixedModeCombinedDebugProcess(
       error("Custom values sorting only for one debug process is not yet supported")
 
     return super.isValuesCustomSorted()
-  }
-
-  // satisfied with the super class implementation, that chooses evaluator depending on a current selected stack frame
-  override fun getEvaluator(): XDebuggerEvaluator? {
-    return super.getEvaluator()
   }
 
   override fun isLibraryFrameFilterSupported(): Boolean = processes.all { it.isLibraryFrameFilterSupported }
