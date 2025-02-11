@@ -72,6 +72,7 @@ class EditorCellDraggableBar(
   private fun createAndAddDraggableBar() {
     val panel = DraggableBarComponent()
     editor.gutterComponentEx.add(panel)
+    editor.gutterComponentEx.setComponentZOrder(panel, editor.gutterComponentEx.componentCount - 1)
     this.panel = panel
     updateBounds()
   }
@@ -101,6 +102,7 @@ class EditorCellDraggableBar(
     private var currentlyHighlightedCell: CellDropTarget = CellDropTarget.NoCell
     private var dragPreview: CellDragCellPreviewWindow? = null
 
+    private var wasFolded: Boolean = false
     private var inputFoldedState: Boolean = false
     private var outputInitialStates: MutableMap<Int, Boolean> = mutableMapOf()
 
@@ -117,16 +119,27 @@ class EditorCellDraggableBar(
         }
 
         override fun mouseReleased(e: MouseEvent) {
-          if (!isDragging) return
+          if (!isDragging || dragStartPoint == null) {
+            isDragging = false
+            return
+          }
+
+          val dragDistance = e.locationOnScreen.distance(dragStartPoint!!)
+          if (dragDistance < 5) {
+            clearDragState()
+            unfoldCellIfNeeded()
+            return
+          }
+
           clearDragState()
           val targetCell = retrieveTargetCell(e)
-
           unfoldCellIfNeeded()
 
           ApplicationManager.getApplication().messageBus
             .syncPublisher(CellDropNotifier.getTopicForEditor(editor))
             .cellDropped(CellDropEvent(cellInput.cell, targetCell))
         }
+
       })
 
       addMouseMotionListener(object : MouseMotionAdapter() {
@@ -177,15 +190,18 @@ class EditorCellDraggableBar(
         outputInitialStates[index] = output.collapsed
         output.collapsed = true
       }
+      wasFolded = true
     }
 
     private fun unfoldCellIfNeeded() {
+      if (wasFolded == false) return
       if (inputFoldedState == false) unfoldInput()
 
       cellInput.cell.view?.outputs?.outputs?.forEachIndexed { index, output ->
         output.collapsed = outputInitialStates[index] == true
       }
       outputInitialStates.clear()
+      wasFolded = false
     }
 
     private fun clearDragState() {
