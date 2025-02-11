@@ -278,7 +278,7 @@ private fun CoroutineScope.postOpenUiTasks() {
   }
 
   launch {
-    startSystemHealthMonitor()
+    SystemHealthMonitor.start()
   }
 
   launch {
