@@ -18,7 +18,6 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface XMixedModeLowLevelDebugProcessExtension : XMixedModeDebugProcessExtension {
-  val ready : Deferred<Unit>
   val mixedStackBuilder: MixedModeStackBuilder
 
   suspend fun continueAllThreads(exceptThreads: Set<Long>, silent : Boolean)
