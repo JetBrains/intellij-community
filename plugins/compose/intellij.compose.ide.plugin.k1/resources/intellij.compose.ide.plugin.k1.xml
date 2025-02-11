@@ -4,6 +4,10 @@
     <module name="intellij.compose.ide.plugin.shared" />
   </dependencies>
 
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <highlighterExtension implementation="com.intellij.compose.ide.plugin.k1.highlighting.ComposableHighlightingVisitorExtension"/>
+  </extensions>
+
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="kotlin"
                             implementationClass="com.intellij.compose.ide.plugin.k1.completion.K1ComposeModifierCompletionContributor"
