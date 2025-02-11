@@ -6830,9 +6830,6 @@ a:com.intellij.ui.ScrollingUtil$ListScrollAction
 - com.intellij.openapi.project.DumbAwareAction
 - com.intellij.ui.ScrollingUtil$ScrollingAction
 - p:<init>(com.intellij.openapi.actionSystem.ShortcutSet,javax.swing.JComponent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- p:isEnabled():Z
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.ui.ScrollingUtil$ScrollingAction
 - com.intellij.openapi.project.DumbAware
 c:com.intellij.ui.SearchTextField
