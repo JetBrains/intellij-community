@@ -248,7 +248,7 @@ public class OutputChecker {
       result = replacePath(result, PathManager.getHomePath(), "!IDEA_HOME!");
       result = result.replace("Process finished with exit code 255", "Process finished with exit code -1");
 
-      result = result.replaceAll(" -javaagent:.*debugger-agent\\.jar", "");
+      result = result.replaceAll(" -javaagent:.*?debugger-agent\\.jar(=.+?\\.props)?", "");
       result = result.replaceAll(" -agentpath:\\S*memory_agent([\\w^\\s]*)?\\.\\S+", "");
       result = result.replaceAll("!HOST_NAME!:\\d*", "!HOST_NAME!:!HOST_PORT!");
       result = result.replaceAll("at '.*?'", "at '!HOST_NAME!:PORT_NAME!'");
