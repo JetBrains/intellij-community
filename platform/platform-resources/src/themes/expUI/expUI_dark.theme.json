@@ -487,7 +487,6 @@
     },
 
     "Popup": {
-      "borderWidth": 1,
       "paintBorder": true,
       "borderColor": "Gray4",
       "inactiveBorderColor": "Gray3",
