@@ -24,6 +24,20 @@ private const val VSCODE_PLUGINS_IDENTIFICATION_TAG = "identifier"
 private const val VSCODE_PLUGINS_ID_TAG = "id"
 private val logger = logger<VSCodeCollectionDataProvider>()
 
+
+/**
+ * Collects anonymous data about installed VSCode plugins to improve the "Import settings from VSCode" feature
+ * and prioritize support for popular plugins.
+ *
+ * This includes:
+ * - Detecting if VSCode is installed and determining its configuration directories across platforms (Windows, macOS, Linux).
+ * - Parsing the VSCode configuration file (`extensions.json`) to identify installed plugins.
+ *   Though, only info about public popular plugins from the VSCode Marketplace is collected.
+ * - Checking the last usage time of VSCode to ensure the relevance of collected data.
+ *
+ * The data is completely anonymized and no personally identifiable information is captured.
+ * All collected data is used to enhance support "Import settings from VSCode" for widely used VSCode plugins.
+ */
 internal class VSCodeCollectionDataProvider : ExternalEditorCollectionDataProvider() {
 
   private val vsCodeHomePath: Path? = when {
