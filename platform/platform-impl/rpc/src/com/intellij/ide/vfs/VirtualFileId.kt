@@ -38,6 +38,5 @@ fun VirtualFileId.virtualFile(): VirtualFile? {
 }
 
 @ApiStatus.Internal
-@ConsistentCopyVisibility
 @Serializable
-data class VirtualFileId internal constructor(@Serializable internal val serializedValue: SerializedValue? = null, @Transient internal val localVirtualFile: VirtualFile? = null)
+class VirtualFileId internal constructor(@Serializable internal val serializedValue: SerializedValue? = null, @Transient internal val localVirtualFile: VirtualFile? = null)
