@@ -698,7 +698,7 @@ public final class TerminalToolWindowManager implements Disposable {
   private @NotNull TerminalWidget startShellTerminalWidget(@NotNull Disposable parentDisposable,
                                                            @NotNull AbstractTerminalRunner<?> terminalRunner,
                                                            @NotNull ShellStartupOptions startupOptions,
-                                                           @Nullable Integer tabId,
+                                                           @Nullable Integer existingTabId,
                                                            boolean deferSessionStartUntilUiShown) {
     TerminalWidget widget;
 
@@ -709,10 +709,24 @@ public final class TerminalToolWindowManager implements Disposable {
         !Registry.is(BLOCK_TERMINAL_REGISTRY) &&
         terminalRunner == myTerminalRunner) {
       widget = provider.createTerminalWidget(myProject, parentDisposable);
-      if (tabId != null) {
+
+      Consumer<Integer> bindTabIdAndStartSession = (Integer tabId) -> {
         bindTabIdToWidget(widget, tabId);
+        TerminalSessionStartHelper.startTerminalSessionForWidget(myProject, widget, startupOptions, tabId, deferSessionStartUntilUiShown);
+      };
+
+      if (existingTabId != null) {
+        bindTabIdAndStartSession.accept(existingTabId);
       }
-      TerminalSessionStartHelper.startTerminalSessionForWidget(myProject, widget, startupOptions, tabId, deferSessionStartUntilUiShown);
+      else {
+        TerminalSessionStartHelper.createNewTerminalTab(myProject).thenAccept((tab) -> {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (!myProject.isDisposed()) {
+              bindTabIdAndStartSession.accept(tab.getId());
+            }
+          }, ModalityState.any());
+        });
+      }
     }
     else {
       widget = terminalRunner.startShellTerminalWidget(parentDisposable, startupOptions, deferSessionStartUntilUiShown);
@@ -725,8 +739,7 @@ public final class TerminalToolWindowManager implements Disposable {
     return myTabIdByWidgetMap.get(widget);
   }
 
-  @ApiStatus.Internal
-  public void bindTabIdToWidget(@NotNull TerminalWidget widget, @Nullable Integer tabId) {
+  private void bindTabIdToWidget(@NotNull TerminalWidget widget, @Nullable Integer tabId) {
     myTabIdByWidgetMap.put(widget, tabId);
   }
 

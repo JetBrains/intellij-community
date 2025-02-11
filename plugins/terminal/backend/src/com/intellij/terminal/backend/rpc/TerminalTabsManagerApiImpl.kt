@@ -15,12 +15,12 @@ internal class TerminalTabsManagerApiImpl : TerminalTabsManagerApi {
     return manager.getTerminalTabs()
   }
 
-  override suspend fun createNewTerminalTab(projectId: ProjectId, options: ShellStartupOptionsDto): TerminalSessionTab {
+  override suspend fun createNewTerminalTab(projectId: ProjectId): TerminalSessionTab {
     val manager = getTerminalTabsManager(projectId)
-    return manager.createNewTerminalTab(options.toShellStartupOptions())
+    return manager.createNewTerminalTab()
   }
 
-  override suspend fun startTerminalSessionForTab(projectId: ProjectId, tabId: Int, options: ShellStartupOptionsDto): TerminalSessionTab {
+  override suspend fun startTerminalSessionForTab(projectId: ProjectId, tabId: Int, options: ShellStartupOptionsDto): TerminalSessionId {
     val manager = getTerminalTabsManager(projectId)
     return manager.startTerminalSessionForTab(tabId, options.toShellStartupOptions())
   }

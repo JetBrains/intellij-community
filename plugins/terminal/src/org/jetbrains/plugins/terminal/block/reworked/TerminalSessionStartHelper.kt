@@ -15,9 +15,9 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 import org.jetbrains.plugins.terminal.block.reworked.session.FrontendTerminalSession
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
+import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSessionId
 import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalTabsManagerApi
 import org.jetbrains.plugins.terminal.block.reworked.session.toDto
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
@@ -33,12 +33,26 @@ internal object TerminalSessionStartHelper {
   }
 
   @JvmStatic
+  fun createNewTerminalTab(project: Project): CompletableFuture<TerminalSessionTab> {
+    return terminalProjectScope(project).async {
+      TerminalTabsManagerApi.getInstance().createNewTerminalTab(project.projectId())
+    }.asCompletableFuture()
+  }
+
+  @JvmStatic
+  fun closeTerminalTab(project: Project, tabId: Int) {
+    terminalProjectScope(project).launch {
+      TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), tabId)
+    }
+  }
+
+  @JvmStatic
   @RequiresEdt
   fun startTerminalSessionForWidget(
     project: Project,
     widget: TerminalWidget,
     options: ShellStartupOptions,
-    tabId: Int?,
+    tabId: Int,
     deferSessionStartUntilUiShown: Boolean,
   ) {
     val doStart = Runnable {
@@ -53,18 +67,11 @@ internal object TerminalSessionStartHelper {
     else doStart.run()
   }
 
-  @JvmStatic
-  fun closeTerminalTab(project: Project, tabId: Int) {
-    terminalProjectScope(project).launch {
-      TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), tabId)
-    }
-  }
-
   private fun doStartTerminalSessionForWidget(
     project: Project,
     widget: TerminalWidget,
     options: ShellStartupOptions,
-    tabId: Int?,
+    tabId: Int,
   ) {
     terminalProjectScope(project).launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
       val initialSizeFuture = widget.getTerminalSizeInitializedFuture()
@@ -74,27 +81,17 @@ internal object TerminalSessionStartHelper {
       }
       else options
 
-      val sessionTab: TerminalSessionTab = withContext(Dispatchers.IO) {
+      val sessionId = withContext(Dispatchers.IO) {
         startTerminalSessionForTab(project, optionsWithSize, tabId)
       }
 
-      val sessionId = sessionTab.sessionId ?: error("Session ID is absent in the terminal session tab: $sessionTab")
       val session = FrontendTerminalSession(sessionId)
       widget.connectToSession(session)
-
-      TerminalToolWindowManager.getInstance(project).bindTabIdToWidget(widget, sessionTab.id)
     }
   }
 
-  private suspend fun startTerminalSessionForTab(project: Project, options: ShellStartupOptions, tabId: Int?): TerminalSessionTab {
+  private suspend fun startTerminalSessionForTab(project: Project, options: ShellStartupOptions, tabId: Int): TerminalSessionId {
     val api = TerminalTabsManagerApi.getInstance()
-
-    return if (tabId != null) {
-      // TerminalSessionTab is already existing, start session for it
-      api.startTerminalSessionForTab(project.projectId(), tabId, options.toDto())
-    }
-    else {
-      api.createNewTerminalTab(project.projectId(), options.toDto())
-    }
+    return api.startTerminalSessionForTab(project.projectId(), tabId, options.toDto())
   }
 }

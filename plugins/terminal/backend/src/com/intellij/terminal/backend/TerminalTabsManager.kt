@@ -41,35 +41,26 @@ internal class TerminalTabsManager(private val project: Project, private val cor
     }
   }
 
-  suspend fun createNewTerminalTab(options: ShellStartupOptions): TerminalSessionTab {
-    val scope = coroutineScope.childScope("TerminalSession")
-    val (sessionId, configuredOptions) = startTerminalSession(options, scope)
-
+  suspend fun createNewTerminalTab(): TerminalSessionTab {
     val newTab = TerminalSessionTab(
       id = tabIdCounter.andIncrement,
       name = null,
-      shellCommand = configuredOptions.shellCommand,
-      sessionId = sessionId
+      shellCommand = null,
+      sessionId = null,
     )
     updateTabsAndStore { tabs ->
       tabs[newTab.id] = newTab
     }
 
-    scope.awaitCancellationAndInvoke {
-      updateTabsAndStore { tabs ->
-        tabs.remove(newTab.id)
-      }
-    }
-
     return newTab
   }
 
-  suspend fun startTerminalSessionForTab(tabId: Int, options: ShellStartupOptions): TerminalSessionTab {
+  suspend fun startTerminalSessionForTab(tabId: Int, options: ShellStartupOptions): TerminalSessionId {
     return updateTabsAndStore { tabs ->
       val tab = tabs[tabId] ?: error("No TerminalSessionTab with ID: $tabId")
       val existingSessionId = tab.sessionId
       if (existingSessionId != null) {
-        return@updateTabsAndStore tab
+        return@updateTabsAndStore existingSessionId
       }
 
       val scope = coroutineScope.childScope("TerminalSession")
@@ -87,7 +78,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
         }
       }
 
-      updatedTab
+      sessionId
     }
   }
 

@@ -15,9 +15,9 @@ import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
 interface TerminalTabsManagerApi : RemoteApi<Unit> {
   suspend fun getTerminalTabs(projectId: ProjectId): List<TerminalSessionTab>
 
-  suspend fun createNewTerminalTab(projectId: ProjectId, options: ShellStartupOptionsDto): TerminalSessionTab
+  suspend fun createNewTerminalTab(projectId: ProjectId): TerminalSessionTab
 
-  suspend fun startTerminalSessionForTab(projectId: ProjectId, tabId: Int, options: ShellStartupOptionsDto): TerminalSessionTab
+  suspend fun startTerminalSessionForTab(projectId: ProjectId, tabId: Int, options: ShellStartupOptionsDto): TerminalSessionId
 
   suspend fun closeTerminalTab(projectId: ProjectId, tabId: Int)
 
