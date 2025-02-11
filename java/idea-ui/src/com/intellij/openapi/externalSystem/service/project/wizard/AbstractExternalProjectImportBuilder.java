@@ -204,7 +204,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
                               boolean isFromUI,
                               final List<Module> modules,
                               IdeModifiableModelsProvider modelsProvider, final ExternalProjectSettings projectSettings) {
-    myProjectDataManager.importData(externalProjectNode, project, modelsProvider);
     myExternalProjectNode = null;
 
     // resolve dependencies
