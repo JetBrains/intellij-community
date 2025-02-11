@@ -6,7 +6,7 @@ import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.SearchContext
 import com.intellij.driver.sdk.ui.UiText
-import com.intellij.driver.sdk.ui.UiText.Companion.allText
+import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.keyboard.WithKeyboard
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Robot
@@ -165,7 +165,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   fun allTextAsString(): String {
-    return getAllTexts().allText()
+    return getAllTexts().asString()
   }
 
   /**
@@ -261,7 +261,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   fun waitContainsText(text: String, message: String? = null, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT) {
     waitFor(message = message ?: "Finding the text containing '$text' in $this",
             timeout = timeout,
-            getter = { getAllTexts().allText() },
+            getter = { getAllTexts().asString() },
             checker = { it.contains(text, ignoreCase = ignoreCase) }
     )
   }
@@ -309,10 +309,10 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
                getter = { getAllVerticallyOrderedUiText() },
                checker = {
                  if (fullMatch) {
-                   text == it.allText()
+                   text == it.asString()
                  }
                  else {
-                   it.allText().contains(text)
+                   it.asString().contains(text)
                  }
                })
 

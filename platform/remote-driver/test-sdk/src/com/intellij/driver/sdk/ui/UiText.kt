@@ -9,7 +9,7 @@ class UiText(private val component: UiComponent, private val textData: TextData)
   companion object {
     private val LOG get() = logger<UiText>()
 
-    fun List<UiText>.allText(separator: String = "") = joinToString(separator) { it.text }
+    fun List<UiText>.asString(separator: String = "") = joinToString(separator) { it.text }
   }
 
   val text get(): String = textData.text

@@ -1,7 +1,7 @@
 package com.intellij.driver.sdk.ui.components.kubernetes
 
 import com.intellij.driver.sdk.ui.Finder
-import com.intellij.driver.sdk.ui.UiText.Companion.allText
+import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 
@@ -18,7 +18,7 @@ class KubernetesPodShellPanelUI(data: ComponentData): UiComponent(data) {
   }
 
   private fun getTerminalText(): String =
-    terminal.getAllTexts().allText("")
+    terminal.getAllTexts().asString("")
 
   fun isCommandSuccessful(command: String): Boolean =
     getTerminalText().substringAfter(command).isNotEmpty()
