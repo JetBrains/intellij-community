@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,14 +12,10 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UnfairTextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.*;
 
 import java.util.Map;
@@ -90,86 +84,6 @@ public final class FileStatusMap implements Disposable {
     synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       return status != null && status.errorFound;
-    }
-  }
-
-  private static final class FileStatus {
-    private boolean defensivelyMarked; // The file was marked dirty without knowledge of specific dirty region. Subsequent markScopeDirty can refine dirty scope, not extend it
-    private boolean wolfPassFinished;
-    // if contains the special value "WHOLE_FILE_MARKER" then the corresponding range is (0, document length)
-    private final Int2ObjectMap<RangeMarker> dirtyScopes = new Int2ObjectOpenHashMap<>(); // guarded by myDocumentToStatusMap
-    private boolean errorFound;
-
-    private FileStatus(@NotNull Project project) {
-      markWholeFileDirty(project);
-    }
-
-    private void markWholeFileDirty(@NotNull Project project) {
-      setDirtyScope(Pass.UPDATE_ALL, WHOLE_FILE_DIRTY_MARKER);
-      setDirtyScope(Pass.EXTERNAL_TOOLS, WHOLE_FILE_DIRTY_MARKER);
-      setDirtyScope(Pass.LOCAL_INSPECTIONS, WHOLE_FILE_DIRTY_MARKER);
-      setDirtyScope(Pass.LINE_MARKERS, WHOLE_FILE_DIRTY_MARKER);
-      setDirtyScope(Pass.SLOW_LINE_MARKERS, WHOLE_FILE_DIRTY_MARKER);
-      setDirtyScope(Pass.INJECTED_GENERAL, WHOLE_FILE_DIRTY_MARKER);
-      TextEditorHighlightingPassRegistrarEx registrar = (TextEditorHighlightingPassRegistrarEx) TextEditorHighlightingPassRegistrar.getInstance(project);
-      for(DirtyScopeTrackingHighlightingPassFactory factory: registrar.getDirtyScopeTrackingFactories()) {
-        setDirtyScope(factory.getPassId(), WHOLE_FILE_DIRTY_MARKER);
-      }
-    }
-
-    private boolean allDirtyScopesAreNull() {
-      for (RangeMarker o : dirtyScopes.values()) {
-        if (o != null) return false;
-      }
-      return true;
-    }
-
-    private void combineScopesWith(@NotNull TextRange scope, @NotNull Document document) {
-      dirtyScopes.replaceAll((__, oldScope) -> combineScopes(oldScope, scope, document));
-    }
-
-    private static final TextRange WHOLE_FILE_TEXT_RANGE = new UnfairTextRange(-1, -1);
-    private static @NotNull RangeMarker combineScopes(@Nullable RangeMarker old, @NotNull TextRange scope, @NotNull Document document) {
-      if (scope == WHOLE_FILE_TEXT_RANGE || old == WHOLE_FILE_DIRTY_MARKER) {
-        return WHOLE_FILE_DIRTY_MARKER;
-      }
-      TextRange oldRange = old == null ? null : old.getTextRange();
-      TextRange result = oldRange == null ? scope : scope.union(oldRange);
-      if (old != null && old.isValid() && result.equals(oldRange)) {
-        return old;
-      }
-      if (result.getEndOffset() > document.getTextLength()) {
-        if (result.getStartOffset() == 0) {
-          return WHOLE_FILE_DIRTY_MARKER;
-        }
-        result =  result.intersection(new TextRange(0, document.getTextLength()));
-      }
-      assert result != null;
-      if (old != null) {
-        old.dispose();
-      }
-      return document.createRangeMarker(result);
-    }
-
-    @Override
-    public @NonNls String toString() {
-      return
-        (defensivelyMarked ? "defensivelyMarked = "+defensivelyMarked : "")
-        +(wolfPassFinished ? "" : "; wolfPassFinished = "+wolfPassFinished)
-        +(errorFound ? "; errorFound = "+errorFound : "")
-        +(dirtyScopes.isEmpty() ? "" : "; dirtyScopes: ("+
-        StringUtil.join(dirtyScopes.int2ObjectEntrySet(), e ->
-          " pass: "+e.getIntKey()+" -> "+(e.getValue() == WHOLE_FILE_DIRTY_MARKER ? "Whole file" : e.getValue()), ";") +")");
-    }
-
-    private void setDirtyScope(int passId, @Nullable RangeMarker scope) {
-      RangeMarker marker = dirtyScopes.get(passId);
-      if (marker != scope) {
-        if (marker != null) {
-          marker.dispose();
-        }
-        dirtyScopes.put(passId, scope);
-      }
     }
   }
 
@@ -336,68 +250,7 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
-  private static final RangeMarker WHOLE_FILE_DIRTY_MARKER =
-    new RangeMarker() {
-      @Override
-      public @NotNull Document getDocument() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public int getStartOffset() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public int getEndOffset() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public boolean isValid() {
-        return false;
-      }
-
-      @Override
-      public void setGreedyToLeft(boolean greedy) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void setGreedyToRight(boolean greedy) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public boolean isGreedyToRight() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public boolean isGreedyToLeft() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void dispose() {
-        // ignore
-      }
-
-      @Override
-      public <T> T getUserData(@NotNull Key<T> key) {
-        return null;
-      }
-
-      @Override
-      public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public @NonNls String toString() {
-        return "WHOLE_FILE";
-      }
-    };
+  private static final RangeMarker WHOLE_FILE_DIRTY_MARKER = new WholeFileDirtyMarker();
 
   // logging
   private static final ConcurrentMap<Thread, Integer> threads = CollectionFactory.createConcurrentWeakMap();
