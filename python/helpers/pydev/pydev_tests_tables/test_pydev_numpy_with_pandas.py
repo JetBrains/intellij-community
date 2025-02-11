@@ -293,6 +293,7 @@ def test_display_data_html_float_values(mocker, setup_np_array_with_floats):
         expected_file='test_data/numpy_with_pandas/' + test_data_directory + '/display_data_html_float_values.txt'
     )
 
+
 # 21
 def test_display_data_html_recarray_float_values(mocker, setup_np_recarray_with_floats):
     recarray = setup_np_recarray_with_floats
@@ -308,7 +309,6 @@ def test_display_data_html_recarray_float_values(mocker, setup_np_recarray_with_
         actual=displayed_html.data,
         expected_file='test_data/numpy_with_pandas/' + test_data_directory + '/display_data_html_recarray_float_values.txt'
     )
-
 
 
 # 22
@@ -345,7 +345,6 @@ def test_display_data_html_recarray_none_values(mocker, setup_np_recarray_with_n
         actual=displayed_html.data,
         expected_file='test_data/numpy_with_pandas/' + test_data_directory + '/display_data_html_recarray_none_values.txt'
     )
-
 
 
 # 24

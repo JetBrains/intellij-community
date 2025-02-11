@@ -51,6 +51,32 @@ def setup_np_array_with_types():
     return np.array(data, dtype=dtype)
 
 
+@pytest.fixture
+def setup_np_recarray_with_floats():
+    recarray_with_floats = np.rec.array([
+        (1, 1.1, 1.001),
+        (2, 2.2, 2.002),
+        (3, 3.3, 3.0003),
+        (4, 4.4, 4.00004),
+        (5, 5.5, 5.000005)
+    ], dtype=[('col1', 'int64'), ('col2', 'float64'), ('col3', 'float64')])
+
+    return recarray_with_floats
+
+
+@pytest.fixture
+def setup_np_recarray_with_nones():
+    recarray_with_nones = np.rec.array([
+        (1, 1.1, None),
+        (2, None, 2.002),
+        (3, 3.3, 3.0003),
+        (None, 4.4, 4.00004),
+        (5, None, None)
+    ], dtype=[('col1', 'float64'), ('col2', 'float64'), ('col3', 'float64')])
+
+    return recarray_with_nones
+
+
 # 1
 def test_simple_array():
     arr = np.array([1, 2, 3])
@@ -58,18 +84,25 @@ def test_simple_array():
 
 
 # 2
+def test_recarray_1d_number():
+    arr = np.rec.array([(1, 2.5, 'a'), (2, 3.5, 'b'), (3, 4.5, 'c')],
+                       dtype=[('col1', 'int64'), ('col2', 'float64'), ('col3', 'U1')])
+    __check_info_np_array(arr, 'test_data/numpy_without_pandas/' + test_data_directory + '/recarray_1d_number.txt')
+
+
+# 3
 def test_simple_3d_array():
     arr = np.array([[True, "False", True], [True, True, False], [True, True, False]])
     __check_info_np_array(arr, 'test_data/numpy_without_pandas/' + test_data_directory + '/array_3d_simple.txt')
 
 
-# 3
+# 4
 def test_3d_array():
     arr = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     __check_info_np_array(arr, 'test_data/numpy_without_pandas/' + test_data_directory + '/array_3d_number.txt')
 
 
-# 4
+# 5
 def test_array_with_dtype():
     arr = np.array([(10, 3.14, 'Hello', True),
                     (20, 2.71, 'World', False)],
@@ -81,7 +114,7 @@ def test_array_with_dtype():
     __check_info_np_array(arr, 'test_data/numpy_without_pandas/' + test_data_directory + '/array_with_dtype.txt')
 
 
-# 5
+# 6
 def test_define_format_function():
     assert numpy_tables_helpers.__define_format_function(None) is None
     assert numpy_tables_helpers.__define_format_function('null') is None
@@ -102,7 +135,7 @@ def test_define_format_function():
         assert formatter(float_value) == expected_result
 
 
-# 6
+# 7
 def test_get_tables_display_options():
     max_cols, max_colwidth, max_rows = numpy_tables_helpers.__get_tables_display_options()
     assert max_cols is None
@@ -113,7 +146,7 @@ def test_get_tables_display_options():
         assert max_colwidth is None
 
 
-# 7
+# 8
 def test_get_data_float_values_2f(setup_np_array_with_floats):
     np_array = setup_np_array_with_floats
     actual = numpy_tables_helpers.get_data(np_array, False, 0, 5, format="%.2f")
@@ -123,7 +156,17 @@ def test_get_data_float_values_2f(setup_np_array_with_floats):
         expected_file='test_data/numpy_without_pandas/' + test_data_directory + '/get_data_float_values_2f.txt'
     )
 
-# 8
+
+# 9
+def test_get_data_recarray_float_values_2f(setup_np_recarray_with_floats):
+    recarray = setup_np_recarray_with_floats
+    actual = numpy_tables_helpers.get_data(recarray, False, 0, 5, format="%.2f")
+    __read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/numpy_without_pandas/' + test_data_directory + '/get_data_recarray_float_values_2f.txt'
+    )
+
+# 10
 def test_get_data_float_values_12f(setup_np_array_with_floats):
     np_array = setup_np_array_with_floats
     actual = numpy_tables_helpers.get_data(np_array, False, 0, 5, format="%.12f")
@@ -134,7 +177,18 @@ def test_get_data_float_values_12f(setup_np_array_with_floats):
     )
 
 
-# 9
+# 11
+def test_get_data_recarray_float_values_12f(setup_np_recarray_with_floats):
+    recarray = setup_np_recarray_with_floats
+    actual = numpy_tables_helpers.get_data(recarray, False, 0, 5, format="%.12f")
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/numpy_without_pandas/' + test_data_directory + '/get_data_recarray_float_values_12f.txt'
+    )
+
+
+# 12
 def test_get_data_float_values_2e(setup_np_array_with_floats):
     np_array = setup_np_array_with_floats
     actual = numpy_tables_helpers.get_data(np_array, False, 0, 5, format="%.2e")
@@ -145,7 +199,18 @@ def test_get_data_float_values_2e(setup_np_array_with_floats):
     )
 
 
-# 10
+# 13
+def test_get_data_recarray_float_values_2e(setup_np_recarray_with_floats):
+    recarray = setup_np_recarray_with_floats
+    actual = numpy_tables_helpers.get_data(recarray, False, 0, 5, format="%.2e")
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/numpy_without_pandas/' + test_data_directory + '/get_data_recarray_float_values_2e.txt'
+    )
+
+
+# 14
 def test_get_data_float_values_d(setup_np_array_with_floats):
     np_array = setup_np_array_with_floats
     actual = numpy_tables_helpers.get_data(np_array, False, 0, 5, format="%d")
@@ -156,7 +221,18 @@ def test_get_data_float_values_d(setup_np_array_with_floats):
     )
 
 
-# 11
+# 15
+def test_get_data_recarray_float_values_d(setup_np_recarray_with_floats):
+    recarray = setup_np_recarray_with_floats
+    actual = numpy_tables_helpers.get_data(recarray, False, 0, 5, format="%d")
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/numpy_without_pandas/' + test_data_directory + '/get_data_recarray_float_values_d.txt'
+    )
+
+
+# 16
 def test_get_data_float_values_d_garbage(setup_np_array_with_floats):
     np_array = setup_np_array_with_floats
     actual = numpy_tables_helpers.get_data(np_array, False, 0, 5, format="%d garbage")
@@ -167,7 +243,18 @@ def test_get_data_float_values_d_garbage(setup_np_array_with_floats):
     )
 
 
-# 12
+# 17
+def test_get_data_recarray_float_values_d_garbage(setup_np_recarray_with_floats):
+    recarray = setup_np_recarray_with_floats
+    actual = numpy_tables_helpers.get_data(recarray, False, 0, 5, format="%d garbage")
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/numpy_without_pandas/' + test_data_directory + '/get_data_recarray_float_values_d_garbage.txt'
+    )
+
+
+# 18
 def test_get_data_none_values_2e(setup_np_array_with_nones):
     np_array = setup_np_array_with_nones
     actual = numpy_tables_helpers.get_data(np_array, False, 0, 5, format="%.2e")
@@ -178,7 +265,18 @@ def test_get_data_none_values_2e(setup_np_array_with_nones):
     )
 
 
-# 13
+# 19
+def test_get_data_recarray_none_values_2e(setup_np_recarray_with_nones):
+    recarray = setup_np_recarray_with_nones
+    actual = numpy_tables_helpers.get_data(recarray, False, 0, 5, format="%.2e")
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=actual,
+        expected_file='test_data/numpy_without_pandas/' + test_data_directory + '/get_data_recarray_none_values_2e.txt'
+    )
+
+
+# 20
 def test_display_data_html_float_values(mocker, setup_np_array_with_floats):
     np_array = setup_np_array_with_floats
 
@@ -194,7 +292,24 @@ def test_display_data_html_float_values(mocker, setup_np_array_with_floats):
     )
 
 
-# 14
+# 21
+def test_display_data_html_recarray_float_values(mocker, setup_np_recarray_with_floats):
+    recarray = setup_np_recarray_with_floats
+    # Mock the HTML and display functions
+    mock_display = mocker.patch('IPython.display.display')
+
+    numpy_tables_helpers.display_data_html(recarray, 0, 3)
+
+    called_args, called_kwargs = mock_display.call_args
+    displayed_html = called_args[0]
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=displayed_html.data,
+        expected_file='test_data/numpy_without_pandas/' + test_data_directory + '/display_data_html_recarray_float_values.txt'
+    )
+
+
+# 22
 def test_display_data_html_none_values(mocker, setup_np_array_with_nones):
     np_array = setup_np_array_with_nones
 
@@ -210,7 +325,25 @@ def test_display_data_html_none_values(mocker, setup_np_array_with_nones):
     )
 
 
-# 15
+# 23
+def test_display_data_html_recarray_none_values(mocker, setup_np_recarray_with_nones):
+    recarray = setup_np_recarray_with_nones
+
+    # Mock the HTML and display functions
+    mock_display = mocker.patch('IPython.display.display')
+
+    numpy_tables_helpers.display_data_html(recarray, 0, 3)
+
+    called_args, called_kwargs = mock_display.call_args
+    displayed_html = called_args[0]
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=displayed_html.data,
+        expected_file='test_data/numpy_without_pandas/' + test_data_directory + '/display_data_html_recarray_none_values.txt'
+    )
+
+
+# 24
 def test_display_data_html_with_types(mocker, setup_np_array_with_types):
     np_array = setup_np_array_with_types
 
@@ -228,7 +361,7 @@ def test_display_data_html_with_types(mocker, setup_np_array_with_types):
     )
 
 
-# 16
+# 25
 def test_display_data_csv_float_values(mocker, setup_np_array_with_floats):
     np_array = setup_np_array_with_floats
 
@@ -243,7 +376,22 @@ def test_display_data_csv_float_values(mocker, setup_np_array_with_floats):
     )
 
 
-# 17
+# 26
+def test_display_data_csv_recarray_float_values(mocker, setup_np_recarray_with_floats):
+    recarray = setup_np_recarray_with_floats
+
+    # Mock the CSV and display functions
+    mock_print = mocker.patch('sys.stdout', new_callable=StringIO)
+    numpy_tables_helpers.display_data_csv(recarray, 0, 3)
+    displayed_csv = mock_print.getvalue()
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=displayed_csv,
+        expected_file='test_data/numpy_without_pandas/' + test_data_directory + '/display_data_csv_recarray_float_values.txt'
+    )
+
+
+# 27
 def test_display_data_csv_none_values(mocker, setup_np_array_with_nones):
     np_array = setup_np_array_with_nones
 
@@ -258,7 +406,22 @@ def test_display_data_csv_none_values(mocker, setup_np_array_with_nones):
     )
 
 
-# 18
+# 28
+def test_display_data_csv_recarray_none_values(mocker, setup_np_recarray_with_nones):
+    recarray = setup_np_recarray_with_nones
+
+    # Mock the CSV and display functions
+    mock_print = mocker.patch('sys.stdout', new_callable=StringIO)
+    numpy_tables_helpers.display_data_csv(recarray, 0, 3)
+    displayed_csv = mock_print.getvalue()
+
+    __read_expected_from_file_and_compare_with_actual(
+        actual=displayed_csv,
+        expected_file='test_data/numpy_without_pandas/' + test_data_directory + '/display_data_csv_recarray_none_values.txt'
+    )
+
+
+# 29
 def test_display_data_csv_with_types(mocker, setup_np_array_with_types):
     np_array = setup_np_array_with_types
 
