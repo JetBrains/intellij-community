@@ -78,6 +78,17 @@ internal class TerminalCursorPainter private constructor(
         updateCursor(curCursorState)
       }
     }, coroutineScope.asDisposable())
+
+    // Handling the case when:
+    // 0. The cursor is at the end of the document.
+    // 1. Something was appended to the document.
+    // 2. An equal amount of text was removed from the beginning, so that the max document size is maintained.
+    // 3. As a result, the logical offset of the cursor stayed the same, but we still need to repaint it.
+    outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
+      override fun afterContentChanged(startOffset: Int) {
+        updateCursor(curCursorState)
+      }
+    })
   }
 
   @RequiresEdt
