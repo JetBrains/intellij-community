@@ -47,6 +47,13 @@ internal object TerminalSessionStartHelper {
   }
 
   @JvmStatic
+  fun renameTerminalTab(project: Project, tabId: Int, newName: String, isUserDefinedName: Boolean) {
+    terminalProjectScope(project).launch {
+      TerminalTabsManagerApi.getInstance().renameTerminalTab(project.projectId(), tabId, newName, isUserDefinedName)
+    }
+  }
+
+  @JvmStatic
   @RequiresEdt
   fun startTerminalSessionForWidget(
     project: Project,

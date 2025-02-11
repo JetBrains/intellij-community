@@ -21,6 +21,8 @@ interface TerminalTabsManagerApi : RemoteApi<Unit> {
 
   suspend fun closeTerminalTab(projectId: ProjectId, tabId: Int)
 
+  suspend fun renameTerminalTab(projectId: ProjectId, tabId: Int, newName: String, isUserDefinedName: Boolean)
+
   companion object {
     @JvmStatic
     suspend fun getInstance(): TerminalTabsManagerApi {

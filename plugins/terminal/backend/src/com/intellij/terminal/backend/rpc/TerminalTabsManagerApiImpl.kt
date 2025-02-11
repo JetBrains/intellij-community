@@ -30,6 +30,11 @@ internal class TerminalTabsManagerApiImpl : TerminalTabsManagerApi {
     manager.closeTerminalTab(tabId)
   }
 
+  override suspend fun renameTerminalTab(projectId: ProjectId, tabId: Int, newName: String, isUserDefinedName: Boolean) {
+    val manager = getTerminalTabsManager(projectId)
+    manager.renameTerminalTab(tabId, newName, isUserDefinedName)
+  }
+
   private fun getTerminalTabsManager(projectId: ProjectId): TerminalTabsManager {
     val project = projectId.findProject()
     return TerminalTabsManager.getInstance(project)

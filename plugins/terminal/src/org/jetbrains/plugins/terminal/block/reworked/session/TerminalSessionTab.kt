@@ -10,6 +10,7 @@ import org.jetbrains.plugins.terminal.block.reworked.session.rpc.TerminalSession
 data class TerminalSessionTab(
   val id: Int,
   val name: String?,
+  val isUserDefinedName: Boolean,
   val shellCommand: List<String>?,
   val sessionId: TerminalSessionId?,
 )

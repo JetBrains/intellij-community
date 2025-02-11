@@ -45,6 +45,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
     val newTab = TerminalSessionTab(
       id = tabIdCounter.andIncrement,
       name = null,
+      isUserDefinedName = false,
       shellCommand = null,
       sessionId = null,
     )
@@ -105,6 +106,14 @@ internal class TerminalTabsManager(private val project: Project, private val cor
     }
   }
 
+  suspend fun renameTerminalTab(tabId: Int, newName: String, isUserDefinedName: Boolean) {
+    updateTabsAndStore { tabs ->
+      val tab = tabs[tabId] ?: return@updateTabsAndStore
+      val updatedTab = tab.copy(name = newName, isUserDefinedName = isUserDefinedName)
+      tabs[tabId] = updatedTab
+    }
+  }
+
   /**
    * Returns ID of started terminal session and final options used for session start.
    */
@@ -134,6 +143,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
   private fun TerminalSessionTab.toPersistedTab(): TerminalSessionPersistedTab {
     return TerminalSessionPersistedTab(
       name = name,
+      isUserDefinedName = isUserDefinedName,
       shellCommand = shellCommand,
     )
   }
@@ -142,6 +152,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
     return TerminalSessionTab(
       id = tabIdCounter.andIncrement,
       name = name,
+      isUserDefinedName = isUserDefinedName,
       shellCommand = shellCommand,
       sessionId = null,
     )

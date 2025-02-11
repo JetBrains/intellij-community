@@ -235,7 +235,9 @@ public final class TerminalToolWindowManager implements Disposable {
   private void doRestoreTabsFromBackend(List<TerminalSessionTab> tabs) {
     for (TerminalSessionTab tab : tabs) {
       TerminalTabState tabState = new TerminalTabState();
+      //noinspection HardCodedStringLiteral
       tabState.myTabName = tab.getName();
+      tabState.myIsUserDefinedTabTitle = tab.isUserDefinedName();
       tabState.myShellCommand = tab.getShellCommand();
 
       createNewSession(myTerminalRunner, tabState, tab.getId(), false, true);
@@ -396,7 +398,7 @@ public final class TerminalToolWindowManager implements Disposable {
         .commandHistoryFileProvider(() -> commandHistoryFileLazyValue.getValue())
         .startupMoment(startupMoment)
         .build();
-      widget = startShellTerminalWidget(content, terminalRunner, startupOptions, tabId, deferSessionStartUntilUiShown);
+      widget = startShellTerminalWidget(content, terminalRunner, startupOptions, tabId, deferSessionStartUntilUiShown, true, content);
       widget.getTerminalTitle().change(state -> {
         if (state.getDefaultTitle() == null) {
           state.setDefaultTitle(terminalRunner.getDefaultTabTitle());
@@ -420,7 +422,7 @@ public final class TerminalToolWindowManager implements Disposable {
         return null;
       });
     }
-    updateTabTitle(widget.getTerminalTitle(), toolWindow, content);
+    updateTabTitle(widget, toolWindow, content);
     setupTerminalWidget(toolWindow, terminalRunner, widget, content);
 
     content.setCloseable(true);
@@ -467,7 +469,7 @@ public final class TerminalToolWindowManager implements Disposable {
       @Override
       public void onTitleChanged(@NotNull TerminalTitle terminalTitle) {
         ApplicationManager.getApplication().invokeLater(() -> {
-          updateTabTitle(terminalTitle, toolWindow, content);
+          updateTabTitle(widget, toolWindow, content);
         }, myProject.getDisposed());
       }
     }, content);
@@ -573,18 +575,26 @@ public final class TerminalToolWindowManager implements Disposable {
     });
   }
 
-  private static void updateTabTitle(@NotNull TerminalTitle terminalTitle,
-                                     @NotNull ToolWindow toolWindow,
-                                     @NotNull Content content) {
-    String title = terminalTitle.buildTitle();
+  private void updateTabTitle(@NotNull TerminalWidget widget,
+                              @NotNull ToolWindow toolWindow,
+                              @NotNull Content content) {
+    TerminalTitle title = widget.getTerminalTitle();
+    String titleString = title.buildTitle();
     List<String> tabs = Arrays.stream(toolWindow.getContentManager().getContents())
-      .filter(c -> c!= content)
+      .filter(c -> c != content)
       .map(c -> c.getDisplayName()).toList();
-    String generatedName = generateUniqueName(title, tabs);
+    String generatedName = generateUniqueName(titleString, tabs);
+
+    Integer tabId = getTabIdByWidget(widget);
+    if (tabId != null) {
+      boolean isDefinedByUser = Objects.equals(generatedName, title.getUserDefinedTitle());
+      TerminalSessionStartHelper.renameTerminalTab(myProject, tabId, generatedName, isDefinedByUser);
+    }
+
     content.setDisplayName(generatedName);
-    terminalTitle.change((state) -> {
+    title.change((state) -> {
       state.setDefaultTitle(generatedName);
-      return null;
+      return Unit.INSTANCE;
     });
   }
 
@@ -613,8 +623,9 @@ public final class TerminalToolWindowManager implements Disposable {
     if (container != null) {
       String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget);
       ShellStartupOptions startupOptions = ShellStartupOptionsKt.shellStartupOptions(workingDirectory);
-      TerminalWidget newWidget = startShellTerminalWidget(container.getContent(), myTerminalRunner, startupOptions, null, true);
-      setupTerminalWidget(myToolWindow, myTerminalRunner, newWidget, container.getContent());
+      Content content = container.getContent();
+      TerminalWidget newWidget = startShellTerminalWidget(content, myTerminalRunner, startupOptions, null, true, false, content);
+      setupTerminalWidget(myToolWindow, myTerminalRunner, newWidget, content);
       container.split(!vertically, newWidget);
     }
   }
@@ -695,11 +706,13 @@ public final class TerminalToolWindowManager implements Disposable {
     createNewSession(myTerminalRunner, state);
   }
 
-  private @NotNull TerminalWidget startShellTerminalWidget(@NotNull Disposable parentDisposable,
+  private @NotNull TerminalWidget startShellTerminalWidget(@NotNull Content content,
                                                            @NotNull AbstractTerminalRunner<?> terminalRunner,
                                                            @NotNull ShellStartupOptions startupOptions,
                                                            @Nullable Integer existingTabId,
-                                                           boolean deferSessionStartUntilUiShown) {
+                                                           boolean deferSessionStartUntilUiShown,
+                                                           boolean updateTabTitleOnBackend,
+                                                           @NotNull Disposable parentDisposable) {
     TerminalWidget widget;
 
     TerminalWidgetProvider provider = TerminalWidgetProvider.getProvider();
@@ -712,6 +725,10 @@ public final class TerminalToolWindowManager implements Disposable {
 
       Consumer<Integer> bindTabIdAndStartSession = (Integer tabId) -> {
         bindTabIdToWidget(widget, tabId);
+        if (updateTabTitleOnBackend) {
+          // Update the tab title on backend because all previous updates were ignored since we didn't have a tab ID.
+          updateTabTitle(widget, myToolWindow, content);
+        }
         TerminalSessionStartHelper.startTerminalSessionForWidget(myProject, widget, startupOptions, tabId, deferSessionStartUntilUiShown);
       };
 
