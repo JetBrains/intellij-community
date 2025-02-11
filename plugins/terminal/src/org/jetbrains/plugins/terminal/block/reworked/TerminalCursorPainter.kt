@@ -167,9 +167,11 @@ internal class TerminalCursorPainter private constructor(
       highlighter.setCustomRenderer { _, _, g ->
         val offset = highlighter.startOffset
         val point = editor.offsetToPoint2D(offset)
+        val text = editor.document.text
+        val codePoint = if (offset in text.indices) text.codePointAt(offset) else 'W'.code
+        val cursorWidth = (editor as EditorImpl).view.getCodePointWidth(codePoint)
         val cursorHeight = editor.lineHeight
-        val rect = Rectangle2D.Double(point.x, point.y,
-                                      (editor as EditorImpl).charHeight.toDouble(), cursorHeight.toDouble())
+        val rect = Rectangle2D.Double(point.x, point.y, cursorWidth.toDouble(), cursorHeight.toDouble())
         g as Graphics2D
         paintCursor(g, rect)
       }

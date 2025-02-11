@@ -664,6 +664,10 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return layout;
   }
 
+  public float getCodePointWidth(int codePoint) {
+    return getCodePointWidth(codePoint, Font.PLAIN);
+  }
+
   float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
     var multiplier = myEditor.getSettings().getCharacterGridWidthMultiplier();
     if (multiplier != null) {
