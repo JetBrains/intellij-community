@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
 
 class RunScratchFromHereAction : ScratchAction(
-    KotlinJvmBundle.message("scratch.run.from.here.button"),
+    KotlinJvmBundle.getLazyMessage("scratch.run.from.here.button"),
     AllIcons.Diff.ArrowRight
 ) {
 

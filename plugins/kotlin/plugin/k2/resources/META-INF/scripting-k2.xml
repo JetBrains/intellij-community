@@ -78,7 +78,8 @@
     <projectService serviceInterface="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunner"
                     serviceImplementation="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunnerK2"/>
 
-    <fileEditorProvider id="KtsScratchFileEditorProvider" implementation="org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorProvider"/>
+    <fileEditorProvider id="KtsScratchFileEditorProvider"
+                        implementation="org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorProvider"/>
 
     <statusBarWidgetFactory id="kotlin.script.definition"
                             implementation="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptDefinitionStatusBarWidgetFactory"
@@ -145,7 +146,23 @@
 
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.script.k2.ScriptTemplatesFromDependenciesDefinitionSource"/>
     <scratchFileLanguageProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.scratch.KtScratchFileLanguageProvider"/>
+
+    <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.scratch.ScratchAdditionalIdeaDependenciesProvider"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.scratch.ScratchFileModuleInfoProvider"
+              topic="org.jetbrains.kotlin.idea.scratch.ScratchFileListener"/>
+  </projectListeners>
+
+  <actions>
+    <action id="Kotlin.RunScratch" class="org.jetbrains.kotlin.idea.scratch.actions.RunScratchActionK2">
+      <keyboard-shortcut first-keystroke="control alt W" keymap="$default"/>
+      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
+    </action>
+    <action id="Kotlin.ClearScratch" class="org.jetbrains.kotlin.idea.scratch.actions.ClearScratchAction"/>
+    <action id="Kotlin.StopScratch" class="org.jetbrains.kotlin.idea.scratch.actions.StopScratchAction"/>
+  </actions>
 
   <actions resource-bundle="messages.KotlinBaseScriptingBundle">
     <action id="LoadMainKtsConfiguration"

@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.scratch.*
-import org.jetbrains.kotlin.idea.scratch.actions.RunScratchAction
+import org.jetbrains.kotlin.idea.scratch.actions.RunScratchActionK2
 import org.jetbrains.kotlin.idea.scratch.output.*
 import org.jetbrains.kotlin.psi.UserDataProperty
 
@@ -311,7 +311,7 @@ private class LayoutDependantOutputHandler(
         targetHandler.handle(file, expression, output)
     }
 
-    override fun handle(file: ScratchFile, infos: List<RunScratchAction.ExplainInfo>, scope: CoroutineScope) {
+    override fun handle(file: ScratchFile, infos: List<RunScratchActionK2.ExplainInfo>, scope: CoroutineScope) {
         targetHandler.handle(file, infos, scope)
     }
 

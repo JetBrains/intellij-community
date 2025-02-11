@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 
 class StopScratchAction : ScratchAction(
-    KotlinJvmBundle.message("scratch.stop.button"),
+    KotlinJvmBundle.getLazyMessage("scratch.stop.button"),
     AllIcons.Actions.Suspend
 ) {
 

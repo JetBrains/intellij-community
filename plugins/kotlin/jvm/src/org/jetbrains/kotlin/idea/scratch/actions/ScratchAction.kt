@@ -11,9 +11,10 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorWithPreview
 import org.jetbrains.kotlin.idea.scratch.ui.findScratchFileEditorWithPreview
+import java.util.function.Supplier
 import javax.swing.Icon
 
-abstract class ScratchAction(@Nls message: String, icon: Icon) : AnAction(message, message, icon) {
+abstract class ScratchAction(@Nls message: Supplier<String>, icon: Icon) : AnAction(message, message, icon) {
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 

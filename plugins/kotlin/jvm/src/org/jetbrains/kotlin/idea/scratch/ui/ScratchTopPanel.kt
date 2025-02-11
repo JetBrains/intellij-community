@@ -8,24 +8,29 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.application
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunnerK2
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunner
+import org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunnerK2
 import org.jetbrains.kotlin.idea.scratch.actions.ClearScratchAction
 import org.jetbrains.kotlin.idea.scratch.actions.RunScratchAction
+import org.jetbrains.kotlin.idea.scratch.actions.RunScratchActionK2
 import org.jetbrains.kotlin.idea.scratch.actions.StopScratchAction
 import org.jetbrains.kotlin.idea.scratch.output.ScratchOutputHandlerAdapter
 
 class ScratchTopPanelK2(val scratchFile: ScratchFile) {
+    private val moduleChooserAction: ModulesComboBoxAction = ModulesComboBoxAction(scratchFile)
     val actionsToolbar: ActionToolbar
 
     init {
         setupTopPanelUpdateHandlers()
 
         val toolbarGroup = DefaultActionGroup().apply {
-            add(RunScratchAction())
+            add(RunScratchActionK2())
             addSeparator()
             add(ClearScratchAction())
+            addSeparator()
+            add(moduleChooserAction)
+            add(IsMakeBeforeRunAction(scratchFile))
             addSeparator()
             add(IsInteractiveCheckboxAction())
         }
@@ -43,12 +48,10 @@ class ScratchTopPanelK2(val scratchFile: ScratchFile) {
 
         override fun setSelected(e: AnActionEvent, isInteractiveMode: Boolean) {
             if (isInteractiveMode) {
-                val runAction = actionsToolbar.actions.firstOrNull { it is RunScratchAction }
-                runAction?.update(e)
                 val project = e.project
                 if (project != null) {
                     application.invokeLater {
-                        runWithModalProgressBlocking(project, "run scratch") {
+                        runWithModalProgressBlocking(project, KotlinJvmBundle.message("progress.title.run.scratch")) {
                             (ScratchFileAutoRunner.getInstance(project) as? ScratchFileAutoRunnerK2)?.submitRun(scratchFile)
                         }
                     }
@@ -61,6 +64,8 @@ class ScratchTopPanelK2(val scratchFile: ScratchFile) {
     }
 
     private fun setupTopPanelUpdateHandlers() {
+        scratchFile.addModuleListener { _, _ -> actionsToolbar.updateToolbar() }
+
         val toolbarHandler = createUpdateToolbarHandler()
         scratchFile.k2ScratchExecutor?.addOutputHandler(toolbarHandler)
     }
@@ -68,18 +73,12 @@ class ScratchTopPanelK2(val scratchFile: ScratchFile) {
     private fun createUpdateToolbarHandler(): ScratchOutputHandlerAdapter {
         return object : ScratchOutputHandlerAdapter() {
             override fun onStart(file: ScratchFile) {
-                updateToolbar()
+                actionsToolbar.updateToolbar()
             }
 
             override fun onFinish(file: ScratchFile) {
-                updateToolbar()
+                actionsToolbar.updateToolbar()
             }
-        }
-    }
-
-    private fun updateToolbar() {
-        ApplicationManager.getApplication().invokeLater {
-            actionsToolbar.updateActionsImmediately()
         }
     }
 }
@@ -98,7 +97,7 @@ class ScratchTopPanel(val scratchFile: ScratchFile) {
             add(ClearScratchAction())
             addSeparator()
             add(moduleChooserAction)
-            add(IsMakeBeforeRunAction())
+            add(IsMakeBeforeRunAction(scratchFile))
             addSeparator()
             add(IsInteractiveCheckboxAction())
             addSeparator()
@@ -109,7 +108,7 @@ class ScratchTopPanel(val scratchFile: ScratchFile) {
     }
 
     private fun setupTopPanelUpdateHandlers() {
-        scratchFile.addModuleListener { _, _ -> updateToolbar() }
+        scratchFile.addModuleListener { _, _ -> actionsToolbar.updateToolbar() }
 
         val toolbarHandler = createUpdateToolbarHandler()
         scratchFile.replScratchExecutor?.addOutputHandler(toolbarHandler)
@@ -119,39 +118,13 @@ class ScratchTopPanel(val scratchFile: ScratchFile) {
     private fun createUpdateToolbarHandler(): ScratchOutputHandlerAdapter {
         return object : ScratchOutputHandlerAdapter() {
             override fun onStart(file: ScratchFile) {
-                updateToolbar()
+                actionsToolbar.updateToolbar()
             }
 
             override fun onFinish(file: ScratchFile) {
-                updateToolbar()
+                actionsToolbar.updateToolbar()
             }
         }
-    }
-
-    private fun updateToolbar() {
-        ApplicationManager.getApplication().invokeLater {
-            actionsToolbar.updateActionsImmediately()
-        }
-    }
-
-    private inner class IsMakeBeforeRunAction : SmallBorderCheckboxAction(KotlinJvmBundle.message("scratch.make.before.run.checkbox")) {
-        override fun update(e: AnActionEvent) {
-            super.update(e)
-            e.presentation.isVisible = scratchFile.module != null
-            e.presentation.description = scratchFile.module?.let { selectedModule ->
-                KotlinJvmBundle.message("scratch.make.before.run.checkbox.description", selectedModule.name)
-            }
-        }
-
-        override fun isSelected(e: AnActionEvent): Boolean {
-            return scratchFile.options.isMakeBeforeRun
-        }
-
-        override fun setSelected(e: AnActionEvent, isMakeBeforeRun: Boolean) {
-            scratchFile.saveOptions { copy(isMakeBeforeRun = isMakeBeforeRun) }
-        }
-
-        override fun getActionUpdateThread() = ActionUpdateThread.BGT
     }
 
     private inner class IsInteractiveCheckboxAction : SmallBorderCheckboxAction(
@@ -190,5 +163,31 @@ class ScratchTopPanel(val scratchFile: ScratchFile) {
         }
 
         override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    }
+}
+
+private class IsMakeBeforeRunAction(val scratchFile: ScratchFile) : SmallBorderCheckboxAction(KotlinJvmBundle.message("scratch.make.before.run.checkbox")) {
+    override fun update(e: AnActionEvent) {
+        super.update(e)
+        e.presentation.isVisible = scratchFile.module != null && !scratchFile.options.isInteractiveMode
+        e.presentation.description = scratchFile.module?.let { selectedModule ->
+            KotlinJvmBundle.message("scratch.make.before.run.checkbox.description", selectedModule.name)
+        }
+    }
+
+    override fun isSelected(e: AnActionEvent): Boolean {
+        return scratchFile.options.isMakeBeforeRun
+    }
+
+    override fun setSelected(e: AnActionEvent, isMakeBeforeRun: Boolean) {
+        scratchFile.saveOptions { copy(isMakeBeforeRun = isMakeBeforeRun) }
+    }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+}
+
+private fun ActionToolbar.updateToolbar() {
+    ApplicationManager.getApplication().invokeLater {
+        updateActionsAsync()
     }
 }
