@@ -70,17 +70,15 @@ internal class ShadowedCallablesFilter {
     ): Boolean {
         val (importingStrategy, insertionStrategy) = insertionOptions
 
-        val isVariableCall = callable is KaVariableSignature<*> && insertionStrategy is CallableInsertionStrategy.AsCall
-
         return when (importingStrategy) {
             is ImportStrategy.DoNothing ->
-                processSignature(callable, symbolOrigin, considerContainer = false, isVariableCall, typeArgumentsAreRequired)
+                processSignature(callable, symbolOrigin, considerContainer = false, insertionStrategy, typeArgumentsAreRequired)
 
             is ImportStrategy.AddImport -> { // `AddImport` doesn't necessarily mean that import is required and will be eventually inserted
                 val simplifiedSignature = SimplifiedSignature.create(
                     callable,
                     considerContainer = false,
-                    isVariableCall,
+                    insertionStrategy,
                     typeArgumentsAreRequired
                 ) ?: return false
 
@@ -89,7 +87,7 @@ internal class ShadowedCallablesFilter {
                     null -> {
                         // if origin is `Index` and there is no shadowing callable, import is required and container needs to be considered
                         val considerContainer = symbolOrigin is CompletionSymbolOrigin.Index
-                        processSignature(callable, symbolOrigin, considerContainer, isVariableCall, typeArgumentsAreRequired)
+                        processSignature(callable, symbolOrigin, considerContainer, insertionStrategy, typeArgumentsAreRequired)
                     }
 
                     else -> {
@@ -102,7 +100,13 @@ internal class ShadowedCallablesFilter {
                             is KaScopeKind.DefaultSimpleImportingScope,
                             is KaScopeKind.ExplicitStarImportingScope,
                             is KaScopeKind.DefaultStarImportingScope -> {
-                                processSignature(callable, symbolOrigin, considerContainer = true, isVariableCall, typeArgumentsAreRequired)
+                                processSignature(
+                                    callable,
+                                    symbolOrigin,
+                                    considerContainer = true,
+                                    insertionStrategy,
+                                    typeArgumentsAreRequired
+                                )
                             }
 
                             else -> true
@@ -112,7 +116,7 @@ internal class ShadowedCallablesFilter {
             }
 
             is ImportStrategy.InsertFqNameAndShorten ->
-                processSignature(callable, symbolOrigin, considerContainer = true, isVariableCall, typeArgumentsAreRequired)
+                processSignature(callable, symbolOrigin, considerContainer = true, insertionStrategy, typeArgumentsAreRequired)
         }
     }
 
@@ -121,13 +125,13 @@ internal class ShadowedCallablesFilter {
         callable: KaCallableSignature<*>,
         symbolOrigin: CompletionSymbolOrigin,
         considerContainer: Boolean,
-        isVariableCall: Boolean,
+        insertionStrategy: CallableInsertionStrategy,
         typeArgumentsAreRequired: Boolean,
     ): Boolean {
         val simplifiedSignature = SimplifiedSignature.create(
             callable,
             considerContainer,
-            isVariableCall,
+            insertionStrategy,
             typeArgumentsAreRequired
         ) ?: return false
         if (simplifiedSignature in processedSimplifiedSignatures) return true
@@ -227,12 +231,13 @@ private sealed class SimplifiedSignature {
     abstract val containerFqName: FqName?
 
     companion object {
+
         context(KaSession)
         fun create(
             callableSignature: KaCallableSignature<*>,
             considerContainer: Boolean,
-            isVariableCall: Boolean,
-            typeArgumentsAreRequired: Boolean
+            insertionStrategy: CallableInsertionStrategy,
+            typeArgumentsAreRequired: Boolean,
         ): SimplifiedSignature? {
             val symbol = callableSignature.symbol
             if (symbol !is KaNamedSymbol) return null
@@ -241,39 +246,32 @@ private sealed class SimplifiedSignature {
 
             @OptIn(KaExperimentalApi::class)
             return when (callableSignature) {
-                is KaVariableSignature<*> -> createSimplifiedSignature(callableSignature, isVariableCall, containerFqName)
+                is KaVariableSignature<*> -> when (insertionStrategy) {
+                    CallableInsertionStrategy.AsCall -> FunctionLikeSimplifiedSignature(
+                        name = callableSignature.name,
+                        containerFqName = containerFqName,
+                        requiredTypeArgumentsCount = 0,
+                        valueParameterTypes = lazy(LazyThreadSafetyMode.NONE) {
+                            val functionalType = callableSignature.returnType
+                            if (functionalType !is KaFunctionType) error("Unexpected ${functionalType::class}")
+                            functionalType.parameterTypes
+                        },
+                        varargValueParameterIndices = emptyList(),
+                        analysisSession = this@KaSession,
+                    )
+
+                    else -> VariableLikeSimplifiedSignature(callableSignature.name, containerFqName)
+                }
+
                 is KaFunctionSignature<*> -> FunctionLikeSimplifiedSignature(
-                    symbol.name,
-                    containerFqName,
+                    name = symbol.name,
+                    containerFqName = containerFqName,
                     requiredTypeArgumentsCount = if (typeArgumentsAreRequired) callableSignature.symbol.typeParameters.size else 0,
-                    lazy(LazyThreadSafetyMode.NONE) { callableSignature.valueParameters.map { it.returnType } },
-                    callableSignature.valueParameters.mapIndexedNotNull { index, parameter -> index.takeIf { parameter.symbol.isVararg } },
-                    this@KaSession,
+                    valueParameterTypes = lazy(LazyThreadSafetyMode.NONE) { callableSignature.valueParameters.map { it.returnType } },
+                    varargValueParameterIndices = callableSignature.valueParameters.mapIndexedNotNull { index, parameter -> index.takeIf { parameter.symbol.isVararg } },
+                    analysisSession = this@KaSession,
                 )
             }
-        }
-
-        context(KaSession)
-        private fun createSimplifiedSignature(
-            signature: KaVariableSignature<*>,
-            isFunctionalVariableCall: Boolean,
-            containerFqName: FqName?,
-        ): SimplifiedSignature = when {
-            isFunctionalVariableCall -> {
-                FunctionLikeSimplifiedSignature(
-                    signature.name,
-                    containerFqName,
-                    requiredTypeArgumentsCount = 0,
-                    lazy(LazyThreadSafetyMode.NONE) {
-                        val functionalType = signature.returnType as? KaFunctionType ?: error("Unexpected ${signature.returnType::class}")
-                        functionalType.parameterTypes
-                    },
-                    varargValueParameterIndices = emptyList(),
-                    this@KaSession,
-                )
-            }
-
-            else -> VariableLikeSimplifiedSignature(signature.name, containerFqName)
         }
 
         context(KaSession)
