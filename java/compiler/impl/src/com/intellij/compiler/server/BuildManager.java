@@ -153,6 +153,9 @@ import java.util.stream.Collectors;
 
 import static com.intellij.ide.impl.ProjectUtil.getProjectForComponent;
 import static com.intellij.openapi.diagnostic.InMemoryHandler.IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME;
+import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
+import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
+import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferContentsIfNonLocal;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 public final class BuildManager implements Disposable {
@@ -882,7 +885,7 @@ public final class BuildManager implements Disposable {
     Function<String, String> pathMapper;
 
     if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
-      pathMapper = e -> EelNioBridgeServiceKt.asEelPath(Path.of(e)).toString();
+      pathMapper = e -> asEelPath(Path.of(e)).toString();
     }
     else {
       pathMapper = wslDistribution != null ? wslDistribution::getWslPath : Function.identity();
@@ -916,8 +919,18 @@ public final class BuildManager implements Disposable {
         future.setDone();
       }
       else {
+        String optionsPath = PathManager.getOptionsPath();
+
+        if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+          final var eel = upgradeBlocking(eelDescriptor);
+          optionsPath = asEelPath(transferContentsIfNonLocal(eel, Path.of(optionsPath), null)).toString();
+        }
+        else {
+          optionsPath = pathMapper.apply(optionsPath);
+        }
+
         final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals =
-          CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.newBuilder().setGlobalOptionsPath(pathMapper.apply(PathManager.getOptionsPath()))
+          CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.newBuilder().setGlobalOptionsPath(optionsPath)
             .build();
         CmdlineRemoteProto.Message.ControllerMessage.FSEvent currentFSChanges;
         final ExecutorService projectTaskQueue;
