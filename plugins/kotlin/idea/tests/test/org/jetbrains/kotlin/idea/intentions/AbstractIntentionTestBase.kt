@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -94,7 +94,8 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
             1 -> {
                 val className = FileUtil.loadFile(candidateFiles[0]).trim { it <= ' ' }
                 val newInstance = Class.forName(className).getDeclaredConstructor().newInstance()
-                return (newInstance as? ModCommandAction)?.asIntention() ?: newInstance as? IntentionAction ?: error("Class `$className` has to be IntentionAction or ModCommandAction")
+                return (newInstance as? ModCommandAction)?.asIntention() ?: newInstance as? IntentionAction
+                ?: error("Class `$className` has to be IntentionAction or ModCommandAction")
             }
 
             else -> throw AssertionError(
@@ -206,7 +207,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
         val isApplicableExpected: Boolean = isApplicableDirective(fileText)
 
         val isApplicableOnPooled: Boolean = project.computeOnBackground {
-            runReadAction{ intentionAction.isAvailable(project, editor, file) }
+            runReadAction { intentionAction.isAvailable(project, editor, file) }
         }
         Assert.assertTrue(
             "isAvailable() for " + intentionAction.javaClass + " should return " + isApplicableExpected,
@@ -256,6 +257,17 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                         if (command is ModDisplayMessage) {
                             TestCase.assertEquals("Failure message mismatch.", shouldFailString, command.messageText().replace('\n', ' '))
                             return
+                        } else if (command is ModCompositeCommand && command.commands().first() is ModShowConflicts) {
+                            val showConflictsCommand = command.commands().first() as ModShowConflicts
+                            val actualFailString = showConflictsCommand
+                                .conflicts
+                                .values
+                                .flatMap { it.messages }
+                                .joinToString(separator = ", ") {
+                                    it.replace(Regex("<[^>]+>"), "")
+                                }
+                            TestCase.assertEquals("Failure message mismatch.", shouldFailString, actualFailString)
+                            return
                         } else {
                             project.executeCommand(intentionAction.text, null) {
                                 ModCommandExecutor.getInstance().executeInteractively(actionContext, command, editor)
@@ -279,7 +291,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                     }
                 }
             }
-            TestCase.assertEquals("Expected test to fail.", "", shouldFailString)
+            TestCase.assertEquals("Expected test to fail.", shouldFailString, "")
         } catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
             TestCase.assertEquals("Failure message mismatch.", shouldFailString, StringUtil.join(e.messages.sorted(), ", "))
         } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
