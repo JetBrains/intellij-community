@@ -179,15 +179,15 @@ createPython("python3.10", "3.10",
              listOf("untangle"), listOf("python3.10", "untangle"))
 
 createPython("python3.11", "3.11",
-             listOf("black == 23.1.0", "joblib", "tensorflow", "poetry"),
-             listOf("python3.11", "black", "poetry", "joblib", "tensorflow"))
+             listOf("black == 23.1.0", "joblib", "tensorflow", "poetry", "uv"),
+             listOf("python3.11", "black", "poetry", "uv", "joblib", "tensorflow"))
 
 createPython("python3.12", "3.12",
-             listOf("teamcity-messages", "Twisted", "pytest", "poetry", "black>=23.11.0")
+             listOf("teamcity-messages", "Twisted", "pytest", "poetry", "uv", "black>=23.11.0")
              // TODO: maybe switch to optional dependency Twisted[windows-platform]
              // https://docs.twisted.org/en/stable/installation/howto/optional.html
              + if (isWindows) listOf("pypiwin32") else listOf(), //win32api is required for pypiwin32
-             listOf("python3", "poetry", "python3.12", "messages", "twisted", "pytest", "black-fragments-formatting"))
+             listOf("python3", "poetry", "uv", "python3.12", "messages", "twisted", "pytest", "black-fragments-formatting"))
 
 // set CONDA_PATH to conda binary location to be able to run tests
 createPython("conda", "Miniconda3-py312_25.1.1-0", listOf(), listOf("conda"), type = PythonType.CONDA)
