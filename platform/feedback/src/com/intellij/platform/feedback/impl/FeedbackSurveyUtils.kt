@@ -14,7 +14,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 
-
 internal const val MAX_FEEDBACK_SURVEY_NUMBER_SHOWS: Int = 2
 
 internal fun FeedbackSurveyConfig.checkIsFeedbackCollectionDeadlineNotPast(): Boolean {
@@ -61,7 +60,7 @@ internal fun isSuitableToShow(feedbackSurveyConfig: FeedbackSurveyConfig, projec
     true
   }
   else {
-    !CommonFeedbackSurveyService.checkIsFeedbackSurveyAnswerSent(feedbackSurveyConfig.surveyId) &&
+    !CommonFeedbackSurveyService.checkIsFeedbackSurveyAnswerSent(feedbackSurveyConfig) &&
     feedbackSurveyConfig.checkIdeIsSuitable() &&
     feedbackSurveyConfig.checkIsFeedbackCollectionDeadlineNotPast() &&
     feedbackSurveyConfig.checkIsIdeEAPIfRequired() &&
@@ -106,7 +105,8 @@ private fun browseToSurvey(project: Project, feedbackSurveyConfig: ExternalFeedb
 }
 
 private fun checkNumberShowsNotExceeded(feedbackSurveyConfig: FeedbackSurveyConfig): Boolean {
-  return CommonFeedbackSurveyService.getNumberShowsOfFeedbackSurvey(
-    feedbackSurveyConfig.surveyId) < MAX_FEEDBACK_SURVEY_NUMBER_SHOWS
+  if (feedbackSurveyConfig.isIndefinite) return true
+
+  return CommonFeedbackSurveyService.getNumberShowsOfFeedbackSurvey(feedbackSurveyConfig.surveyId) < MAX_FEEDBACK_SURVEY_NUMBER_SHOWS
 }
 
