@@ -450,7 +450,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     if (isUserActivityEvent(e)) {
       ActivityTracker.getInstance().inc()
     }
-    if (popupManager.isPopupActive && popupManager.dispatch(e)) {
+    if (popupManager.isPopupActive && threadingSupport.runWriteIntentReadAction<Boolean, Throwable> { popupManager.dispatch(e) }) {
       if (keyEventDispatcher.isWaitingForSecondKeyStroke) {
         keyEventDispatcher.state = KeyState.STATE_INIT
       }
@@ -946,15 +946,15 @@ internal fun performActivity(e: AWTEvent, needWIL: Boolean, runnable: () -> Unit
     val runnableWithWIL =
       if (needWIL) {
         {
-            WriteIntentReadAction.run {
-              ThreadingAssertions.setImplicitLockOnEDT(true)
-              try {
-                runnable()
-              }
-              finally {
-                ThreadingAssertions.setImplicitLockOnEDT(false)
-              }
+          WriteIntentReadAction.run {
+            ThreadingAssertions.setImplicitLockOnEDT(true)
+            try {
+              runnable()
             }
+            finally {
+              ThreadingAssertions.setImplicitLockOnEDT(false)
+            }
+          }
         }
       }
       else {
