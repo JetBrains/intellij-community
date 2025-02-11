@@ -11,6 +11,9 @@ public final class MavenConstants {
   public static final String[] POM_NAMES = new String[]{POM_XML, "pom.scala", "pom.groovy", "pom.atom", "pom.rb", "pom.yml", "pom.clj"};
   public static final String[] POM_EXTENSIONS = {"pom", "xml", "scala", "groovy", "atom", "rb", "yml", "clj"};
 
+  public static final String MODEL_VERSION_4_0_0 = "4.0.0";
+  public static final String MODEL_VERSION_4_1_0 = "4.1.0";
+
   public static final String SUPER_POM_4_0_XML = "pom-4.0.0.xml";
   public static final String SUPER_POM_4_1_XML = "pom-4.1.0.xml";
   public static final String PROFILES_XML = "profiles.xml";

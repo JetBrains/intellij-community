@@ -75,6 +75,7 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.model.MavenRemoteRepository
@@ -470,7 +471,7 @@ object MavenUtil {
     properties.setProperty("GROUP_ID", projectId.getGroupId())
     properties.setProperty("ARTIFACT_ID", projectId.getArtifactId())
     properties.setProperty("VERSION", projectId.getVersion())
-    properties.setProperty("MODEL_VERSION", "4.0.0")
+    properties.setProperty("MODEL_VERSION", MODEL_VERSION_4_0_0)
 
     if (parentId != null) {
       conditions.setProperty("HAS_PARENT", "true")

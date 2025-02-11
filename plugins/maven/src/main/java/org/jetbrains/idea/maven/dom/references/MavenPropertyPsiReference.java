@@ -57,6 +57,7 @@ import java.util.*;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
 import static org.jetbrains.idea.maven.dom.MavenDomUtil.isAtLeastMaven4;
+import static org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_1_0;
 
 public class MavenPropertyPsiReference extends MavenPsiReference implements LocalQuickFixProvider {
   public static final String TIMESTAMP_PROP = "maven.build.timestamp";
@@ -526,7 +527,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   private @NotNull String getSchemaUrl() {
     if (isAtLeastMaven4(myVirtualFile, myProject)
         && myProjectDom != null
-        && "4.1.0".equals(myProjectDom.getModelVersion().getValue())
+        && MODEL_VERSION_4_1_0.equals(myProjectDom.getModelVersion().getValue())
     ) {
       return MavenSchemaProvider.MAVEN_PROJECT_SCHEMA_4_1_URL;
     }

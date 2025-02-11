@@ -34,6 +34,7 @@ import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_1_0
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
@@ -155,7 +156,7 @@ open class MavenModuleBuilderHelper(
     if (model.subprojects.subprojects.any()) return true
     if (model.modules.modules.any()) return false
     val modelVersion = model.modelVersion.value
-    return VersionComparatorUtil.compare(modelVersion, "4.1.0") >= 0
+    return VersionComparatorUtil.compare(modelVersion, MODEL_VERSION_4_1_0) >= 0
   }
 
   protected fun updateProjectPom(project: Project, pom: VirtualFile) {
