@@ -607,6 +607,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "canConvertToMultiDollarString", // K2-only
                     "branched/introduceWhenSubject/whenGuards", // K2-only
                     "removeRedundantLabel", // quick fix in K1
+                    "contextParametersMigration", // K2-only
                 )
             )
         }
