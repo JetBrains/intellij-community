@@ -117,6 +117,9 @@
 
     <highlightErrorFilter implementation="org.jetbrains.idea.devkit.highlighting.TestFragmentsErrorFilter"/>
 
+    <registryKey defaultValue="false" description="Enables experimental new remote dev module in intellij repository"
+                 key="devkit.new.remdev.module.action"/>
+
     <localInspection language="XML" shortName="PluginXmlValidity" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"

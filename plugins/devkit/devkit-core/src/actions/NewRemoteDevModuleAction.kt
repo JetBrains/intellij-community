@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions
 
 import com.intellij.codeInsight.actions.ReformatCodeAction
@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.readText
@@ -83,6 +84,10 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
+    if (!Registry.`is`("devkit.new.remdev.module.action")) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
     val dataContext = e.dataContext
     if (e.uiKind == ActionUiKind.MAIN_MENU || e.uiKind == ActionUiKind.SEARCH_POPUP) {
       e.presentation.isEnabledAndVisible = false
