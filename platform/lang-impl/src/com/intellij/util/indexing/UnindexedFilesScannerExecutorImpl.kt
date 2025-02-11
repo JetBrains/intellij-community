@@ -129,33 +129,32 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
             runningTask?.cancel() // We expect that running task is null. But it's better to be on the safe side
             val scanningParameters = task.task.getScanningParameters()
             if (scanningParameters is ScanningIterators) {
-              coroutineScope {
-                runningTask = async(CoroutineName("Scanning")) {
-                  try {
-                    val history = runScanningTask(task.task, scanningParameters)
-                    task.futureHistory.set(history)
-                  }
-                  catch (t: Throwable) {
-                    task.futureHistory.setException(t)
-                    throw t
-                  } finally {
-                    // Scanning may throw exception (or error).
-                    // In this case, we should either clear or flush the indexing queue; otherwise, dumb mode will not end in the project.
-                    // TODO: we should flush the queue before setting the future, otherwise we have a race in UnindexedFilesScannerTest:
-                    //  it clears "allowFlushing" after future is set, expecting that if flush might be called, it had already been called
-                    val indexingScheduled = project.service<PerProjectIndexingQueue>().flushNow(scanningParameters.indexingReason)
-                    if (!indexingScheduled) {
-                      modCount.incrementAndGet()
-                    }
+              val deferred = async(CoroutineName("Scanning")) {
+                try {
+                  runScanningTask(task.task, scanningParameters)
+                }
+                finally {
+                  // Scanning may throw exception (or error).
+                  // In this case, we should either clear or flush the indexing queue; otherwise, dumb mode will not end in the project.
+                  // TODO: we should flush the queue before setting the future, otherwise we have a race in UnindexedFilesScannerTest:
+                  //  it clears "allowFlushing" after future is set, expecting that if flush might be called, it had already been called
+                  val indexingScheduled = project.service<PerProjectIndexingQueue>().flushNow(scanningParameters.indexingReason)
+                  if (!indexingScheduled) {
+                    modCount.incrementAndGet()
                   }
                 }
               }
-              logInfo("Task finished: $task")
-            } else {
-              LOG.info("Skipping task: $task")
+              runningTask = deferred
+              val history = deferred.await()
+              task.futureHistory.set(history)
+              logInfo("Task finished (scanning id=${history.scanningSessionId}): $task")
+            }
+            else {
+              logInfo("Skipping task: $task")
             }
           }
           catch (t: Throwable) {
+            task.futureHistory.setException(t)
             logInfo("Task interrupted: $task. ${t.message}")
             project.service<ProjectIndexingDependenciesService>().requestHeavyScanningOnProjectOpen("Task interrupted: $task")
             checkCanceled() // this will re-throw cancellation
