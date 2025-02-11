@@ -3,6 +3,7 @@
   <name>Platform Stream Debugger</name>
   <vendor>JetBrains</vendor>
   <category>Other Tools</category>
+  <description>Provides the core functionality, APIs, and extension points for stream debugger plugin development.</description>
 
   <resource-bundle>messages.StreamDebuggerBundle</resource-bundle>
 
