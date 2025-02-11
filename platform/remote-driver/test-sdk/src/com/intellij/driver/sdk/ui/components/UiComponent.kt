@@ -7,7 +7,6 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.SearchContext
 import com.intellij.driver.sdk.ui.UiText
 import com.intellij.driver.sdk.ui.UiText.Companion.allText
-import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
 import com.intellij.driver.sdk.ui.keyboard.WithKeyboard
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Robot
@@ -17,13 +16,9 @@ import com.intellij.driver.sdk.waitAny
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.SystemInfo
 import java.awt.Color
 import java.awt.IllegalComponentStateException
 import java.awt.Point
-import java.awt.image.BufferedImage
-import java.io.File
-import javax.imageio.ImageIO
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -163,10 +158,10 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   /*
     Returns all UiText's matching predicate without waiting
    */
-  fun getAllTexts(predicate: ((UiText) -> Boolean)? = null): List<UiText> {
+  fun getAllTexts(filter: ((UiText) -> Boolean)? = null): List<UiText> {
     val allText = withComponent { searchService.findAllText(it) }
       .map { UiText(this, it) }
-    return predicate?.let { allText.filter(predicate) } ?: allText
+    return filter?.let { allText.filter(filter) } ?: allText
   }
 
   /**
@@ -257,6 +252,10 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     )
   }
 
+  fun hasSubtext(subtext: String): Boolean {
+    return getAllTexts { it.text.contains(subtext) }.isNotEmpty()
+  }
+
   /**
    * Waits until there is one UiText's with substring '$text'.
    */
@@ -283,19 +282,6 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     return getAllTexts(text).isNotEmpty()
   }
 
-  fun hasTextSequence(vararg texts: String, indexOffset: Int = 0): Boolean {
-    require(indexOffset >= 0) { "Value must be non-negative" }
-    val stringList = texts.toList()
-    val uiTextList = getAllTexts()
-    return stringList.indices.all { index ->
-      val uiTextIndex = index + indexOffset
-      uiTextIndex in uiTextList.indices && stringList[index] == uiTextList[uiTextIndex].text
-    }
-  }
-
-  fun hasSubtext(subtext: String): Boolean {
-    return getAllTexts { it.text.contains(subtext) }.isNotEmpty()
-  }
 
   /**
    * Retrieves all UI text elements in a vertically ordered manner.
@@ -326,12 +312,12 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
    * @return A list of `UiText` objects that match the specified conditions.
    */
   fun waitOneMatchInVerticallyOrderedText(
-    message: String? = null,
     text: String,
+    message: String? = null,
     fullMatch: Boolean = true,
     timeout: Duration = DEFAULT_FIND_TIMEOUT,
   ): List<UiText> =
-    waitForOne(message, timeout,
+    waitForOne(message ?: "Find '${text}'(fullMatch = $fullMatch) in vertically ordered text", timeout,
                getter = { getAllVerticallyOrderedUiText() },
                checker = {
                  if (fullMatch) {
@@ -341,9 +327,6 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
                    it.allText().contains(text)
                  }
                })
-
-  fun waitOneMatchInVerticallyOrderedText(text: String, fullMatch: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> =
-    waitOneMatchInVerticallyOrderedText("Find '${text}'(fullMatch = $fullMatch) in vertically ordered text", text, fullMatch, timeout = timeout)
 
   fun present(): Boolean {
     val found = data.parentSearchContext.findAll(data.xpath)
@@ -394,32 +377,6 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
     return UiComponent(ComponentData(data.xpath + "/..", driver, searchService, robotProvider,
                                      data.parentSearchContext, parent))
-  }
-
-  fun getScreenshot(): BufferedImage {
-    val screenshotPath = driver.takeScreenshot(this::class.simpleName)!!
-
-    return withComponent { component ->
-      val screenshot = ImageIO.read(File(screenshotPath))
-        .getSubimage(component.getLocationOnScreen().x, component.getLocationOnScreen().y, component.width, component.height)
-
-      if (SystemInfo.isWindows && this is DialogUiComponent) {
-        screenshot.getSubimage(
-          7,
-          0,
-          component.width - 14,
-          component.height - 7
-        )
-      }
-      else {
-        screenshot
-      }
-    }
-  }
-
-  fun getFullScreenScreenshot(): BufferedImage {
-    val screenshotPath = driver.takeScreenshot(this::class.simpleName)!!
-    return ImageIO.read(File(screenshotPath))
   }
 
   fun getColor(point: Point?, moveMouse: Boolean = true): Color {
