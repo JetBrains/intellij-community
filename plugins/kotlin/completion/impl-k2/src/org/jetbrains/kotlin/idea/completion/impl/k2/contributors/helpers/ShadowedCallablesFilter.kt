@@ -1,17 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
@@ -54,8 +49,14 @@ internal class ShadowedCallablesFilter {
         if (!processedSignatures.add(callableSignature)) return FilterResult(excludeFromCompletion = true)
 
         val (importStrategy, insertionStrategy) = options
-        fun createSimplifiedSignature(considerContainer: Boolean) =
-            SimplifiedSignature.create(callableSignature, considerContainer, insertionStrategy, requiresTypeArguments)
+        fun createSimplifiedSignature(considerContainer: Boolean) = when (callableSignature) {
+            is KaVariableSignature<*> -> when (insertionStrategy) {
+                is CallableInsertionStrategy.AsCall -> FunctionLikeSimplifiedSignature.create(callableSignature, considerContainer)
+                else -> VariableLikeSimplifiedSignature.create(callableSignature, considerContainer)
+            }
+
+            is KaFunctionSignature<*> -> FunctionLikeSimplifiedSignature.create(callableSignature, considerContainer, requiresTypeArguments)
+        }
 
         fun isAlreadyImported() = with(importStrategyDetector) {
             val callableId = callableSignature.callableId
@@ -180,11 +181,12 @@ internal class ShadowedCallablesFilter {
                     val receiverId = receiverType?.let { ReceiverId.create(it) }
                     applicableExtension to receiverId
                 }
-                .sortedWith(compareBy(
-                    { (_, receiverId) -> indexOfReceiverFromContext[receiverId] ?: Int.MAX_VALUE },
-                    { (_, receiverId) -> indexInClassHierarchy[receiverId] ?: Int.MAX_VALUE },
-                    { (applicableExtension, _) -> applicableExtension.signature is KaVariableSignature<*> }
-                ))
+                .sortedWith(
+                    compareBy(
+                        { (_, receiverId) -> indexOfReceiverFromContext[receiverId] ?: Int.MAX_VALUE },
+                        { (_, receiverId) -> indexInClassHierarchy[receiverId] ?: Int.MAX_VALUE },
+                        { (applicableExtension, _) -> applicableExtension.signature is KaVariableSignature<*> }
+                    ))
                 .map { (applicableExtension, _) -> applicableExtension }
         }
 
@@ -226,54 +228,9 @@ private sealed class SimplifiedSignature {
 
     companion object {
 
-        context(KaSession)
-        fun create(
-            callableSignature: KaCallableSignature<*>,
-            considerContainer: Boolean,
-            insertionStrategy: CallableInsertionStrategy,
-            requiresTypeArguments: (KaFunctionSymbol) -> Boolean,
-        ): SimplifiedSignature? {
-            val symbol = callableSignature.symbol
-            if (symbol !is KaNamedSymbol) return null
+        context(KaSymbolProvider) fun KaCallableSymbol.getContainerFqName(considerContainer: Boolean): FqName? {
+            if (!considerContainer) return null
 
-            val containerFqName = if (considerContainer) symbol.getContainerFqName() else null
-
-            @OptIn(KaExperimentalApi::class)
-            return when (callableSignature) {
-                is KaVariableSignature<*> -> when (insertionStrategy) {
-                    CallableInsertionStrategy.AsCall -> FunctionLikeSimplifiedSignature(
-                        name = callableSignature.name,
-                        containerFqName = containerFqName,
-                        requiredTypeArgumentsCount = 0,
-                        valueParameterTypes = lazy(LazyThreadSafetyMode.NONE) {
-                            val functionalType = callableSignature.returnType
-                            if (functionalType !is KaFunctionType) error("Unexpected ${functionalType::class}")
-                            functionalType.parameterTypes
-                        },
-                        varargValueParameterIndices = emptyList(),
-                        analysisSession = this@KaSession,
-                    )
-
-                    else -> VariableLikeSimplifiedSignature(callableSignature.name, containerFqName)
-                }
-
-                is KaFunctionSignature<*> -> {
-                    val symbol = callableSignature.symbol as KaNamedFunctionSymbol
-                    val valueParameters = callableSignature.valueParameters
-                    FunctionLikeSimplifiedSignature(
-                        name = symbol.name,
-                        containerFqName = containerFqName,
-                        requiredTypeArgumentsCount = if (requiresTypeArguments(symbol)) symbol.typeParameters.size else 0,
-                        valueParameterTypes = lazy(LazyThreadSafetyMode.NONE) { valueParameters.map { it.returnType } },
-                        varargValueParameterIndices = valueParameters.mapIndexedNotNull { index, parameter -> index.takeIf { parameter.symbol.isVararg } },
-                        analysisSession = this@KaSession,
-                    )
-                }
-            }
-        }
-
-        context(KaSession)
-        private fun KaCallableSymbol.getContainerFqName(): FqName? {
             val callableId = callableId ?: return null
             return when (location) {
                 // if a callable is in the root package, then its fully-qualified name coincides with short name
@@ -294,7 +251,20 @@ private sealed class SimplifiedSignature {
 private data class VariableLikeSimplifiedSignature(
     override val name: Name,
     override val containerFqName: FqName?,
-) : SimplifiedSignature()
+) : SimplifiedSignature() {
+
+    companion object {
+
+        context(KaSymbolProvider)
+        fun create(
+            signature: KaVariableSignature<*>,
+            considerContainer: Boolean,
+        ) = VariableLikeSimplifiedSignature(
+            name = signature.name,
+            containerFqName = signature.symbol.getContainerFqName(considerContainer),
+        )
+    }
+}
 
 private class FunctionLikeSimplifiedSignature(
     override val name: Name,
@@ -304,6 +274,47 @@ private class FunctionLikeSimplifiedSignature(
     private val varargValueParameterIndices: List<Int>,
     private val analysisSession: KaSession,
 ) : SimplifiedSignature() {
+
+    companion object {
+
+        context(KaSession)
+        fun create(
+            signature: KaVariableSignature<*>,
+            considerContainer: Boolean,
+        ) = FunctionLikeSimplifiedSignature(
+            name = signature.name,
+            containerFqName = signature.symbol.getContainerFqName(considerContainer),
+            requiredTypeArgumentsCount = 0,
+            valueParameterTypes = lazy(LazyThreadSafetyMode.NONE) {
+                val functionalType = signature.returnType
+                if (functionalType !is KaFunctionType) error("Unexpected ${functionalType::class}")
+                functionalType.parameterTypes
+            },
+            varargValueParameterIndices = emptyList(),
+            analysisSession = this@KaSession,
+        )
+
+        context(KaSession)
+        fun create(
+            signature: KaFunctionSignature<*>,
+            considerContainer: Boolean,
+            requiresTypeArguments: (KaFunctionSymbol) -> Boolean,
+        ): FunctionLikeSimplifiedSignature? {
+            val symbol = signature.symbol as? KaNamedFunctionSymbol
+                ?: return null
+
+            val valueParameters = signature.valueParameters
+            return FunctionLikeSimplifiedSignature(
+                name = symbol.name,
+                containerFqName = symbol.getContainerFqName(considerContainer),
+                requiredTypeArgumentsCount = if (requiresTypeArguments(symbol)) symbol.typeParameters.size else 0,
+                valueParameterTypes = lazy(LazyThreadSafetyMode.NONE) { valueParameters.map { it.returnType } },
+                varargValueParameterIndices = valueParameters.mapIndexedNotNull { index, parameter -> index.takeIf { parameter.symbol.isVararg } },
+                analysisSession = this@KaSession,
+            )
+        }
+    }
+
     override fun hashCode(): Int {
         var result = name.hashCode()
         result = 31 * result + containerFqName.hashCode()
