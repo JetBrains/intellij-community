@@ -565,7 +565,7 @@ object UpdateChecker {
     }
 
     val dialog = when (checkForUpdateResult) {
-      is PlatformUpdates.Loaded -> UpdateInfoDialog(project, checkForUpdateResult, patchFile)
+      is PlatformUpdates.Loaded -> PlatformUpdateDialog.createTestDialog(project, checkForUpdateResult, patchFile)
       else -> NoUpdatesDialog(true)
     }
 
@@ -685,7 +685,7 @@ private fun doUpdateAndShowResult(
       showResults(
         project = project,
         platformUpdates = platformUpdates,
-        updatedPlugins = updatesForPlugins,
+        updatesForPlugins = updatesForPlugins,
         incompatiblePlugins = pluginUpdates.incompatible,
         showNotification = userInitiated || WelcomeFrame.getInstance() != null,
         forceDialog = forceDialog,
@@ -815,7 +815,7 @@ private fun showUpdatePluginsNotification(updatesForPlugins: List<PluginDownload
 private fun showResults(
   project: Project?,
   platformUpdates: PlatformUpdates.Loaded,
-  updatedPlugins: List<PluginDownloader>,
+  updatesForPlugins: List<PluginDownloader>,
   incompatiblePlugins: Collection<IdeaPluginDescriptor>,
   showNotification: Boolean,
   forceDialog: Boolean,
@@ -826,11 +826,11 @@ private fun showResults(
   }
 
   val showUpdateDialog = {
-    UpdateInfoDialog(
+    PlatformUpdateDialog(
       project,
       platformUpdates,
       showSettingsLink,
-      updatedPlugins,
+      updatesForPlugins,
       incompatiblePlugins,
     ).show()
   }
@@ -839,7 +839,7 @@ private fun showResults(
     showUpdateDialog()
   }
   else {
-    UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatedPlugins, incompatiblePlugins)
+    UpdateSettingsEntryPointActionProvider.newPlatformUpdate(platformUpdates, updatesForPlugins, incompatiblePlugins)
 
     if (showNotification) {
       IdeUpdateUsageTriggerCollector.NOTIFICATION_SHOWN.log(project)

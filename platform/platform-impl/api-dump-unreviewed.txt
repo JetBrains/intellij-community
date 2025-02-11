@@ -10336,15 +10336,6 @@ c:com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 - isNewerVersion(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.util.BuildNumber):Z
 f:com.intellij.openapi.updateSettings.UpdateStrategyCustomization$Companion
 - f:getInstance():com.intellij.openapi.updateSettings.UpdateStrategyCustomization
-a:com.intellij.openapi.updateSettings.impl.AbstractUpdateDialog
-- com.intellij.openapi.ui.DialogWrapper
-- pf:myEnableLink:Z
-- p:<init>(com.intellij.openapi.project.Project,Z):V
-- p:<init>(Z):V
-- p:configureMessageArea(javax.swing.JEditorPane):V
-- p:getCancelButtonText():java.lang.String
-- p:getOkButtonText():java.lang.String
-- p:init():V
 f:com.intellij.openapi.updateSettings.impl.BuildInfo
 - f:getApiVersion():com.intellij.openapi.util.BuildNumber
 - f:getBlogPost():java.lang.String
@@ -10418,10 +10409,6 @@ f:com.intellij.openapi.updateSettings.impl.PluginDownloader
 f:com.intellij.openapi.updateSettings.impl.PluginUpdateFacadeKt
 - sf:getPendingUpdates():java.util.Collection
 - sf:installUpdates(java.util.Collection,javax.swing.JComponent,java.util.function.Consumer):V
-f:com.intellij.openapi.updateSettings.impl.PluginsConfiguration
-- com.intellij.openapi.components.BaseState
-- <init>():V
-- f:getRepositories():java.util.List
 f:com.intellij.openapi.updateSettings.impl.Product
 - f:getChannels():java.util.List
 - f:getDisableMachineId():Z

@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.LicensingFacade;
@@ -41,29 +40,30 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.updateSettings.impl.UpdateCheckerService.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
-import static com.intellij.openapi.util.Pair.pair;
 
 @ApiStatus.Internal
-public final class UpdateInfoDialog extends AbstractUpdateDialog {
+public final class PlatformUpdateDialog extends AbstractUpdateDialog {
   private final @Nullable Project myProject;
-  private final @NotNull PlatformUpdates.Loaded myLoadedResult;
-  private final @Nullable Collection<PluginDownloader> myUpdatedPlugins;
+  private final @NotNull PlatformUpdates.Loaded myPlatformUpdate;
+  private final @Nullable Collection<PluginDownloader> myUpdatesForPlugins;
   private final boolean myWriteProtected;
-  private final @Nullable Pair<@NlsContexts.Label String, Boolean> myLicenseInfo;
+  private final @Nullable LicenseInfo myLicenseInfo;
   private final @Nullable Path myTestPatch;
 
-  public UpdateInfoDialog(@Nullable Project project,
-                          @NotNull PlatformUpdates.Loaded loadedResult,
-                          boolean enableLink,
-                          @Nullable Collection<PluginDownloader> updatedPlugins,
-                          @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
-    super(project, enableLink);
+  private record LicenseInfo(@NlsContexts.Label String licenseNote, boolean warning) {}
+
+  public PlatformUpdateDialog(@Nullable Project project,
+                              @NotNull PlatformUpdates.Loaded platformUpdate,
+                              boolean addConfigureUpdatesLink,
+                              @Nullable Collection<PluginDownloader> updatesForPlugins,
+                              @Nullable Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
+    super(project, addConfigureUpdatesLink);
     myProject = project;
-    myLoadedResult = loadedResult;
-    myUpdatedPlugins = updatedPlugins;
-    UpdateChain patches = myLoadedResult.getPatches();
+    myPlatformUpdate = platformUpdate;
+    myUpdatesForPlugins = updatesForPlugins;
+    UpdateChain patches = myPlatformUpdate.getPatches();
     myWriteProtected = patches != null && !SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()));
-    myLicenseInfo = getLicensingInfo(myLoadedResult);
+    myLicenseInfo = getLicensingInfo(myPlatformUpdate);
     myTestPatch = null;
     init();
     if (!ContainerUtil.isEmpty(incompatiblePlugins)) {
@@ -76,42 +76,48 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
-  UpdateInfoDialog(@Nullable Project project,
-                   @NotNull PlatformUpdates.Loaded loadedResult,
-                   @Nullable Path patchFile) {
+  private PlatformUpdateDialog(@Nullable Project project,
+                       @NotNull PlatformUpdates.Loaded platformUpdate,
+                       @Nullable Path patchFile) {
     super(true);
     myProject = project;
-    myLoadedResult = loadedResult;
-    myUpdatedPlugins = null;
+    myPlatformUpdate = platformUpdate;
+    myUpdatesForPlugins = null;
     myWriteProtected = false;
-    myLicenseInfo = getLicensingInfo(myLoadedResult);
+    myLicenseInfo = getLicensingInfo(myPlatformUpdate);
     myTestPatch = patchFile;
     init();
     setTitle("[TEST] " + getTitle());
   }
 
-  private static @Nullable Pair<@NlsContexts.Label String, Boolean> getLicensingInfo(@NotNull PlatformUpdates.Loaded result) {
+  public static PlatformUpdateDialog createTestDialog(@Nullable Project project,
+                                                      @NotNull PlatformUpdates.Loaded platformUpdate,
+                                                      @Nullable Path patchFile) {
+    return new PlatformUpdateDialog(project, platformUpdate, patchFile);
+  }
+
+  private static @Nullable LicenseInfo getLicensingInfo(@NotNull PlatformUpdates.Loaded platformUpdate) {
     LicensingFacade la = LicensingFacade.getInstance();
     if (la == null) return null;
 
-    UpdateChannel channel = result.getUpdatedChannel();
+    UpdateChannel channel = platformUpdate.getUpdatedChannel();
     if (channel.getLicensing() == UpdateChannel.Licensing.EAP) {
-      return pair(IdeBundle.message("updates.channel.bundled.key"), Boolean.FALSE);
+      return new LicenseInfo(IdeBundle.message("updates.channel.bundled.key"), Boolean.FALSE);
     }
 
-    Date releaseDate = result.getNewBuild().getReleaseDate();
+    Date releaseDate = platformUpdate.getNewBuild().getReleaseDate();
     if (releaseDate == null) return null;
 
     if (!la.isApplicableForProduct(releaseDate)) {
-      return pair(IdeBundle.message("updates.paid.upgrade", channel.getEvalDays()), Boolean.TRUE);
+      return new LicenseInfo(IdeBundle.message("updates.paid.upgrade", channel.getEvalDays()), Boolean.TRUE);
     }
     if (la.isPerpetualForProduct(releaseDate)) {
-      return pair(IdeBundle.message("updates.fallback.build"), Boolean.FALSE);
+      return new LicenseInfo(IdeBundle.message("updates.fallback.build"), Boolean.FALSE);
     }
 
     Date expiration = la.getLicenseExpirationDate();
     if (expiration != null) {
-      return pair(IdeBundle.message("updates.interim.build", NlsMessages.formatDateLong(expiration)), Boolean.FALSE);
+      return new LicenseInfo(IdeBundle.message("updates.interim.build", NlsMessages.formatDateLong(expiration)), Boolean.FALSE);
     }
     else {
       return null;
@@ -120,14 +126,16 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
 
   @Override
   protected @NotNull JComponent createCenterPanel() {
-    return UpdateInfoPanel.create(myLoadedResult.getNewBuild(),
-                                  myLoadedResult.getPatches(),
-                                  myTestPatch,
-                                  myWriteProtected,
-                                  myLicenseInfo != null ? myLicenseInfo.first : null,
-                                  myLicenseInfo != null && myLicenseInfo.second,
-                                  myEnableLink,
-                                  myLoadedResult.getUpdatedChannel());
+    return UpdateInfoPanel.create(
+      myPlatformUpdate.getNewBuild(),
+      myPlatformUpdate.getPatches(),
+      myTestPatch,
+      myWriteProtected,
+      myLicenseInfo != null ? myLicenseInfo.licenseNote : null,
+      myLicenseInfo != null && myLicenseInfo.warning,
+      myAddConfigureUpdatesLink,
+      myPlatformUpdate.getUpdatedChannel()
+    );
   }
 
   @Override
@@ -148,7 +156,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
       new AbstractAction(IdeBundle.message("updates.ignore.update.button")) {
         @Override
         public void actionPerformed(ActionEvent e) {
-          String build = myLoadedResult.getNewBuild().getNumber().asStringWithoutProductCode();
+          String build = myPlatformUpdate.getNewBuild().getNumber().asStringWithoutProductCode();
           UpdateSettings.getInstance().getIgnoredBuildNumbers().add(build);
           doCancelAction();
         }
@@ -162,7 +170,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
     actions.add(getCancelAction());
 
     AbstractAction updateButton = null;
-    if (myLoadedResult.getPatches() != null || myTestPatch != null) {
+    if (myPlatformUpdate.getPatches() != null || myTestPatch != null) {
       boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
       String name =
         canRestart ? IdeBundle.message("updates.download.and.restart.button") : IdeBundle.message("updates.apply.manually.button");
@@ -176,7 +184,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
       updateButton.setEnabled(!myWriteProtected);
     }
     else {
-      String downloadUrl = myLoadedResult.getNewBuild().getDownloadUrl();
+      String downloadUrl = myPlatformUpdate.getNewBuild().getDownloadUrl();
       if (downloadUrl != null) {
         updateButton = new AbstractAction(IdeBundle.message("updates.download.button")) {
           @Override
@@ -202,7 +210,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private void downloadPatchAndRestart() {
-    if (!ContainerUtil.isEmpty(myUpdatedPlugins) && !new PluginUpdateDialog(myProject, myUpdatedPlugins).showAndGet()) {
+    if (!ContainerUtil.isEmpty(myUpdatesForPlugins) && !new PluginUpdateDialog(myProject, myUpdatesForPlugins).showAndGet()) {
       return;  // update cancelled
     }
 
@@ -215,7 +223,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
             command = UpdateInstaller.preparePatchCommand(List.of(myTestPatch), indicator);
           }
           else {
-            @SuppressWarnings("DataFlowIssue") var files = UpdateInstaller.downloadPatchChain(myLoadedResult.getPatches().getChain(), indicator);
+            @SuppressWarnings("DataFlowIssue") var files = UpdateInstaller.downloadPatchChain(myPlatformUpdate.getPatches().getChain(), indicator);
             command = UpdateInstaller.preparePatchCommand(files, indicator);
           }
         }
@@ -223,10 +231,10 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
           throw e;
         }
         catch (Exception e) {
-          Logger.getInstance(UpdateInfoDialog.class).warn(e);
+          Logger.getInstance(PlatformUpdateDialog.class).warn(e);
 
           var title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-          var downloadUrl = UpdateInfoPanel.downloadUrl(myLoadedResult.getNewBuild(), myLoadedResult.getUpdatedChannel());
+          var downloadUrl = UpdateInfoPanel.downloadUrl(myPlatformUpdate.getNewBuild(), myPlatformUpdate.getUpdatedChannel());
           var message = IdeBundle.message("update.downloading.patch.error", e.getMessage());
           UpdateChecker.getNotificationGroupForIdeUpdateResults()
             .createNotification(title, message, NotificationType.ERROR)
@@ -237,8 +245,8 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
           return;
         }
 
-        if (!ContainerUtil.isEmpty(myUpdatedPlugins)) {
-          UpdateInstaller.installPluginUpdates(myUpdatedPlugins, indicator);
+        if (!ContainerUtil.isEmpty(myUpdatesForPlugins)) {
+          UpdateInstaller.installPluginUpdates(myUpdatesForPlugins, indicator);
         }
 
         if (ApplicationManager.getApplication().isRestartCapable()) {
@@ -280,7 +288,7 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
       FileUtil.setExecutable(file);
     }
     catch (Exception e) {
-      Logger.getInstance(UpdateInfoDialog.class).error(e);
+      Logger.getInstance(PlatformUpdateDialog.class).error(e);
       return;
     }
 
