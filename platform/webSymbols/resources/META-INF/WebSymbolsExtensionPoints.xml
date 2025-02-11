@@ -72,5 +72,8 @@
     <extensionPoint qualifiedName="com.intellij.webSymbols.contextSourceProximityProvider"
                     interface="com.intellij.webSymbols.context.WebSymbolsContextSourceProximityProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.webSymbols.highlightingCustomizer"
+                    interface="com.intellij.webSymbols.highlighting.WebSymbolHighlightingCustomizer"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

@@ -667,6 +667,9 @@
     <webSymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="DeprecatedSymbol"
                                       toolShortName="HtmlDeprecatedTag"/>
 
+    <webSymbols.highlightingCustomizer
+      id="html"
+      implementation="com.intellij.html.webSymbols.WebSymbolsHtmlHighlightingCustomizer"/>
     <webSymbols.queryConfigurator
       implementation="com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator"/>
     <webSymbols.codeCompletionItemCustomizer

@@ -24,10 +24,10 @@ import com.intellij.webSymbols.WebSymbolApiStatus.Companion.getMessage
 import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.webSymbols.WebSymbolNameSegment
 import com.intellij.webSymbols.WebSymbolsBundle
+import com.intellij.webSymbols.highlighting.impl.getDefaultProblemMessage
+import com.intellij.webSymbols.impl.removeZeroLengthSegmentsRecursively
 import com.intellij.webSymbols.inspections.WebSymbolsProblemQuickFixProvider
-import com.intellij.webSymbols.inspections.getDefaultProblemMessage
 import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
-import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.references.PsiWebSymbolReferenceProvider
 import com.intellij.webSymbols.references.WebSymbolReference
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem
@@ -39,7 +39,7 @@ import com.intellij.webSymbols.utils.nameSegments
 import org.jetbrains.annotations.Nls
 import java.util.*
 
-private const val IJ_IGNORE_REFS = "ij-no-psi-refs"
+internal const val IJ_IGNORE_REFS = "ij-no-psi-refs"
 
 class PsiWebSymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
 
@@ -49,16 +49,16 @@ class PsiWebSymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
   override fun getSearchRequests(project: Project, target: Symbol): Collection<SearchRequest> =
     emptyList()
 
-  private fun getSymbolOffsetsAndReferences(element: PsiExternalReferenceHost): Pair<MultiMap<Int, WebSymbol>, List<WebSymbolReference>> =
+  internal fun getSymbolOffsetsAndReferences(element: PsiExternalReferenceHost): Pair<MultiMap<Int, WebSymbol>, List<WebSymbolReference>> =
     CachedValuesManager.getCachedValue(element, CachedValuesManager.getManager(element.project).getKeyForClass(this.javaClass)) {
       val beans = PsiWebSymbolReferenceProviders.byLanguage(element.getLanguage()).byHostClass(element.javaClass)
       val result = SmartList<WebSymbolReference>()
-      val offsets = MultiMap.create<Int, WebSymbol>()
+      val offsets = MultiMap.createSet<Int, WebSymbol>()
       for (bean in beans) {
         @Suppress("UNCHECKED_CAST")
         val provider = bean.instance as PsiWebSymbolReferenceProvider<PsiExternalReferenceHost>
         val showProblems = provider.shouldShowProblems(element)
-        val offsetsFromProvider =provider.getOffsetsToReferencedSymbols(element)
+        val offsetsFromProvider = provider.getOffsetsToReferencedSymbols(element)
         result.addAll(offsetsFromProvider.flatMap { (offset, symbol) ->
           getReferences(element, offset, symbol, showProblems)
         })
@@ -70,16 +70,6 @@ class PsiWebSymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
 }
 
 internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: WebSymbol, showProblems: Boolean): List<WebSymbolReference> {
-  fun WebSymbol.removeZeroLengthSegmentsRecursively(): List<WebSymbol> {
-    if (this !is WebSymbolMatch) return listOf(this)
-    val nameLength = matchedName.length
-    return nameSegments
-             .takeIf { it.size > 1 && it.none { segment -> segment.problem != null } }
-             ?.find { segment -> segment.start == 0 && segment.end == nameLength }
-             ?.let { segment -> segment.symbols.flatMap { it.removeZeroLengthSegmentsRecursively() } }
-           ?: listOf(this)
-  }
-
   val problemOnlyRanges = mutableMapOf<TextRange, Boolean>()
   val result = MultiMap<TextRange, WebSymbolNameSegment>()
 

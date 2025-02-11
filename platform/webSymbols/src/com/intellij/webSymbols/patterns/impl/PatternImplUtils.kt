@@ -40,12 +40,12 @@ internal fun <T : MatchResult> T.addOwner(owner: WebSymbol): T {
       newSegments.add(segment)
     }
     else {
+      newSegments.add(segment.copy(symbols = listOf(owner), highlightEnd = end.takeIf { !applied }))
       applied = true
-      newSegments.add(segment.copy(symbols = listOf(owner)))
     }
   }
   if (!applied) {
-    newSegments.add(0, WebSymbolNameSegment.create(start, start, owner))
+    newSegments.add(0, WebSymbolNameSegment.create(start, start, owner).copy(highlightEnd = end))
   }
   return copy(segments = newSegments)
 }
@@ -87,9 +87,11 @@ internal fun getPatternCompletablePrefix(pattern: String?): String {
   return pattern
 }
 
-internal fun <T> withPrevMatchScope(scopeStack: Stack<WebSymbolsScope>,
-                                    prevResult: List<WebSymbolNameSegment>?,
-                                    action: () -> T): T =
+internal fun <T> withPrevMatchScope(
+  scopeStack: Stack<WebSymbolsScope>,
+  prevResult: List<WebSymbolNameSegment>?,
+  action: () -> T,
+): T =
   if (prevResult.isNullOrEmpty()) {
     ProgressManager.checkCanceled()
     action()
@@ -108,10 +110,12 @@ internal fun <T> withPrevMatchScope(scopeStack: Stack<WebSymbolsScope>,
     }
   }
 
-internal fun <T : MatchResult> T.applyToSegments(vararg contributions: WebSymbol,
-                                                 apiStatus: WebSymbolApiStatus? = null,
-                                                 priority: WebSymbol.Priority? = null,
-                                                 proximity: Int? = null): T =
+internal fun <T : MatchResult> T.applyToSegments(
+  vararg contributions: WebSymbol,
+  apiStatus: WebSymbolApiStatus? = null,
+  priority: WebSymbol.Priority? = null,
+  proximity: Int? = null,
+): T =
   if (apiStatus != null || priority != null || proximity != null || contributions.isNotEmpty())
     copy(
       segments.map {

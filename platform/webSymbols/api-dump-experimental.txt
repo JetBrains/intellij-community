@@ -612,6 +612,14 @@
 - f:getAll():java.util.List
 - f:inLocation(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.webSymbols.framework.WebSymbolsFramework
 - f:inLocation(com.intellij.psi.PsiElement):com.intellij.webSymbols.framework.WebSymbolsFramework
+*:com.intellij.webSymbols.highlighting.WebSymbolHighlightingCustomizer
+- *sf:Companion:com.intellij.webSymbols.highlighting.WebSymbolHighlightingCustomizer$Companion
+- getDefaultHostClassTextAttributes():java.util.Map
+- getSymbolKindTextAttributes(com.intellij.webSymbols.WebSymbolQualifiedKind):com.intellij.openapi.editor.colors.TextAttributesKey
+- getSymbolTextAttributes(com.intellij.model.psi.PsiExternalReferenceHost,com.intellij.webSymbols.WebSymbol,I):com.intellij.openapi.editor.colors.TextAttributesKey
+*f:com.intellij.webSymbols.highlighting.WebSymbolHighlightingCustomizer$Companion
+*f:com.intellij.webSymbols.highlighting.WebSymbolsHighlightingUtilsKt
+- sf:newSilentAnnotationWithDebugInfo(com.intellij.lang.annotation.AnnotationHolder,com.intellij.lang.annotation.HighlightSeverity,java.lang.String):com.intellij.lang.annotation.AnnotationBuilder
 *:com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 - *sf:Companion:com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue$Companion
 - copy(com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue$Kind,com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue$Type,java.lang.Boolean,java.lang.String,java.lang.Object):com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
