@@ -244,7 +244,10 @@ object GHShareProjectUtil {
           indicator.text = GithubBundle.message("share.process.adding.files")
 
           // ask for files to add
-          val trackedFiles = ChangeListManager.getInstance(project).affectedFiles.toMutableList()
+          val manager = GitUtil.getRepositoryManager(project)
+          val trackedFiles = ChangeListManager.getInstance(project).affectedFiles.filter {
+            it.isInLocalFileSystem && manager.getRepositoryForFileQuick(it) == repository
+          }.toMutableList()
           val untrackedFiles =
             filterOutIgnored(project, repository.untrackedFilesHolder.retrieveUntrackedFilePaths().mapNotNull(FilePath::getVirtualFile))
           trackedFiles.removeAll(untrackedFiles) // fix IDEA-119855
