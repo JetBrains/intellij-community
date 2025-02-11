@@ -34,6 +34,7 @@
     <extensionPoint qualifiedName="com.intellij.codeInsight.changeVariableTypeQuickFixProvider" interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.jvm.annotationPackageSupport" interface="com.intellij.codeInsight.annoPackages.AnnotationPackageSupport" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.jvm.ignoreAnnotationParamSupport" interface="com.intellij.codeInspection.DefaultAnnotationParamInspection$IgnoreAnnotationParamSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.ignoreVariableCanBeFinalSupport" interface="com.intellij.codeInspection.localCanBeFinal.IgnoreVariableCanBeFinalSupport" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javaLanguageLevelPusherCustomizer" interface="com.intellij.openapi.roots.impl.JavaLanguageLevelPusherCustomizer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.propertyAccessorDetector" interface="com.intellij.psi.util.PropertyAccessorDetector" dynamic="true"/>
 
