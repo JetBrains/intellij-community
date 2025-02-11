@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
 import com.intellij.find.FindBundle;
@@ -17,7 +17,6 @@ import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,10 +31,7 @@ import java.awt.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
-
-@ApiStatus.Internal
 final class ShowUsagesTableCellRenderer implements TableCellRenderer {
-
   static final int MARGIN = 2;
 
   private final @NotNull Predicate<? super Usage> myOriginUsageCheck;
@@ -455,8 +451,7 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
   }
 
   private static final class MyLayout extends BoxLayout {
-
-    public MyLayout(Container target) {
+    MyLayout(Container target) {
       super(target, BoxLayout.X_AXIS);
     }
 
