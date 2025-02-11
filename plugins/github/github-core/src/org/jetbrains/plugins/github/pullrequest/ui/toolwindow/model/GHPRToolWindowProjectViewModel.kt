@@ -41,6 +41,7 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRFilesManagerImpl
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRViewModelContainer
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRViewModelContainerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffViewModel
@@ -61,9 +62,9 @@ private val LOG = logger<GHPRToolWindowProjectViewModel>()
 class GHPRToolWindowProjectViewModel internal constructor(
   private val project: Project,
   parentCs: CoroutineScope,
-  private val twVm: GHPRToolWindowViewModel,
   connection: GHRepositoryConnection,
-) : ReviewToolwindowProjectViewModel<GHPRToolWindowTab, GHPRToolWindowTabViewModel> {
+  private val activate: () -> Unit,
+) : ReviewToolwindowProjectViewModel<GHPRToolWindowTab, GHPRToolWindowTabViewModel>, GHPRConnectedProjectViewModel {
   private val cs = parentCs.childScope(javaClass.name)
 
   internal val dataContext: GHPRDataContext = connection.dataContext
@@ -145,7 +146,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
 
   fun viewPullRequest(id: GHPRIdentifier, requestFocus: Boolean = true) {
     if (requestFocus) {
-      twVm.activate()
+      activate()
     }
     tabsHelper.showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
       if (requestFocus) {
@@ -155,7 +156,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
   }
 
   private fun viewPullRequest(id: GHPRIdentifier, commitOid: String) {
-    twVm.activate()
+    activate()
     tabsHelper.showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
       selectCommit(commitOid)
     }
