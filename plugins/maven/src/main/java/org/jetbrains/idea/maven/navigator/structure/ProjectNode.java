@@ -92,7 +92,7 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
   }
 
   void updateProject() {
-    var level = myMavenProject.getProblems().isEmpty() ? MavenProjectsStructure.ErrorLevel.NONE : MavenProjectsStructure.ErrorLevel.ERROR;
+    var level = getErrors().isEmpty() ? MavenProjectsStructure.ErrorLevel.NONE : MavenProjectsStructure.ErrorLevel.ERROR;
     setErrorLevel(level);
     myLifecycleNode.updateGoalsList();
     myPluginsNode.updatePlugins(myMavenProject);
@@ -110,6 +110,10 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
     myTooltipCache = makeDescription();
 
     myMavenProjectsStructure.updateFrom(getParent());
+  }
+
+  private List<MavenProjectProblem> getErrors() {
+    return myMavenProject.getProblems().stream().filter(MavenProjectProblem::isError).toList();
   }
 
   public void updateIgnored() {
@@ -189,7 +193,7 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
   }
 
   private void appendProblems(StringBuilder desc) {
-    List<MavenProjectProblem> problems = myMavenProject.getProblems();
+    List<MavenProjectProblem> problems = getErrors();
     if (problems.isEmpty()) return;
 
     desc.append("<tr>" +
