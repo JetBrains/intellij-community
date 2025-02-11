@@ -90,56 +90,41 @@ internal class ShadowedCallablesFilter {
         symbolOrigin: CompletionSymbolOrigin,
         createSimplifiedSignature: (considerContainer: Boolean) -> SimplifiedSignature?,
     ): Boolean {
-        return when (importStrategy) {
-            is ImportStrategy.DoNothing -> {
-                val simplifiedSignature = createSimplifiedSignature(false)
+        val simplifiedSignature = createSimplifiedSignature(importStrategy is ImportStrategy.InsertFqNameAndShorten)
+            ?: return false
 
-                simplifiedSignature != null
-                        && processSignature(simplifiedSignature, symbolOrigin)
-            }
+        if (importStrategy !is ImportStrategy.AddImport) {
+            return processSignature(simplifiedSignature, symbolOrigin)
+        }
 
-            is ImportStrategy.AddImport -> { // `AddImport` doesn't necessarily mean that import is required and will be eventually inserted
-                val simplifiedSignature = createSimplifiedSignature(false)
-                    ?: return false
+        // `AddImport` doesn't necessarily mean that import is required and will be eventually inserted
+        val considerContainer = symbolOrigin is CompletionSymbolOrigin.Index
+        val shadowingCallableOrigin = processedSimplifiedSignatures[simplifiedSignature]
+        return if (shadowingCallableOrigin == null) {
+            // no callable with unspecified container shadows current callable
+            // if origin is `Index` and there is no shadowing callable,
+            // import is required and container needs to be considered
+            val simplifiedSignature = createSimplifiedSignature(considerContainer)
 
-                val considerContainer = symbolOrigin is CompletionSymbolOrigin.Index
-                when (val shadowingCallableOrigin = processedSimplifiedSignatures[simplifiedSignature]) {
-                    // no callable with unspecified container shadows current callable
-                    null -> {
-                        // if origin is `Index` and there is no shadowing callable, import is required and container needs to be considered
-                        val simplifiedSignature = createSimplifiedSignature(considerContainer)
+            simplifiedSignature != null
+                    && processSignature(simplifiedSignature, symbolOrigin)
+        } else {
+            if (!considerContainer) return true
 
-                        simplifiedSignature != null
-                                && processSignature(simplifiedSignature, symbolOrigin)
-                    }
+            // if the callable which shadows target callable belongs to the scope with priority lower than the priority of
+            // explicit simple importing scope, then it won't shadow target callable after import is inserted
+            when ((shadowingCallableOrigin as? CompletionSymbolOrigin.Scope)?.kind) {
+                is KaScopeKind.PackageMemberScope,
+                is KaScopeKind.DefaultSimpleImportingScope,
+                is KaScopeKind.ExplicitStarImportingScope,
+                is KaScopeKind.DefaultStarImportingScope -> {
+                    val simplifiedSignature = @Suppress("KotlinConstantConditions") createSimplifiedSignature(considerContainer)
 
-                    else -> {
-                        if (!considerContainer) return true
-
-                        // if the callable which shadows target callable belongs to the scope with priority lower than the priority of
-                        // explicit simple importing scope, then it won't shadow target callable after import is inserted
-                        when ((shadowingCallableOrigin as? CompletionSymbolOrigin.Scope)?.kind) {
-                            is KaScopeKind.PackageMemberScope,
-                            is KaScopeKind.DefaultSimpleImportingScope,
-                            is KaScopeKind.ExplicitStarImportingScope,
-                            is KaScopeKind.DefaultStarImportingScope -> {
-                                val simplifiedSignature = @Suppress("KotlinConstantConditions") createSimplifiedSignature(considerContainer)
-
-                                simplifiedSignature != null
-                                        && processSignature(simplifiedSignature, symbolOrigin)
-                            }
-
-                            else -> true
-                        }
-                    }
+                    simplifiedSignature != null
+                            && processSignature(simplifiedSignature, symbolOrigin)
                 }
-            }
 
-            is ImportStrategy.InsertFqNameAndShorten -> {
-                val simplifiedSignature = createSimplifiedSignature(true)
-
-                simplifiedSignature != null
-                        && processSignature(simplifiedSignature, symbolOrigin)
+                else -> true
             }
         }
     }
