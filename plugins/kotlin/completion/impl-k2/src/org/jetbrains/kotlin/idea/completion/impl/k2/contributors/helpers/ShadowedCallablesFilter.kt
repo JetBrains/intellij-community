@@ -24,8 +24,8 @@ import org.jetbrains.kotlin.name.Name
 internal class ShadowedCallablesFilter {
     data class FilterResult(val excludeFromCompletion: Boolean, val updatedInsertionOptions: CallableInsertionOptions)
 
-    private val processedSignatures: MutableSet<KaCallableSignature<*>> = HashSet()
-    private val processedSimplifiedSignatures: MutableMap<SimplifiedSignature, CompletionSymbolOrigin> = HashMap()
+    private val processedSignatures = HashSet<KaCallableSignature<*>>()
+    private val processedSimplifiedSignatures = HashMap<SimplifiedSignature, CompletionSymbolOrigin>()
 
     /**
      *  Checks whether callable is shadowed and updates [CallableInsertionOptions] if the callable is already imported and its short name
