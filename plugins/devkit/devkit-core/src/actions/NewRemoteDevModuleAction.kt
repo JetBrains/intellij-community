@@ -1,19 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions
 
-import com.intellij.codeInsight.actions.ReformatCodeAction
-import com.intellij.codeInspection.incorrectFormatting.ReformatQuickFix
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -34,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.vfs.writeText
-import com.intellij.patterns.XmlPatterns.xmlFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
@@ -44,7 +38,6 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.util.xml.DomManager
 import kotlinx.coroutines.*
 import org.jetbrains.idea.devkit.actions.ModuleType.*
-import org.jetbrains.idea.devkit.actions.NewRemoteDevModuleAction
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
@@ -122,11 +115,12 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
     val steps = mutableListOf<CreateRemoteDevModuleStep>()
     val moduleName = dialogResult.moduleName.replace('-', '.').replace('_', '.')
 
-    val moduleType = if (moduleName.endsWith("backend")) {
-      BACKEND
-    }
-    else {
-      FRONTEND
+    val isPlatform = moduleName.startsWith("intellij.platform")
+
+    val moduleType = when {
+      moduleName.endsWith("backend") -> BACKEND
+      moduleName.endsWith("frontend") -> FRONTEND
+      else -> SHARED
     }
 
     val moduleDirectories = createRemoteDevModuleDirectories(rootDirectory, moduleName)
@@ -140,9 +134,19 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
 
     steps.add(createPluginXml(project, module, moduleDirectories.resourcesDirectory, moduleType))
 
-    steps.add(patchRemoteDevImls(project, module, moduleType))
+    if (isPlatform) {
+      steps.add(patchRemoteDevImls(project, module, moduleType))
+    }
+    else {
+      steps.add(CreateRemoteDevModuleStep.Failed("Patch imls manually, so the module will be included in run configurations"))
+    }
 
-    steps.add(patchEssentialModulesXml(project, module))
+    if (isPlatform) {
+      steps.add(patchEssentialModulesXml(project, module))
+    }
+    else {
+      steps.add(CreateRemoteDevModuleStep.Failed("Patch plugin.xml of the plugin manually"))
+    }
 
     // add FacetManagers with Kotlin Compiler plugins
     steps.add(addKotlinPlugins(project, moduleDirectories.moduleRoot, module))
@@ -212,16 +216,27 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
 
   @Suppress("PluginXmlValidity")
   private fun getPluginXmlInitialContent(moduleName: String, moduleType: ModuleType): String {
-    val dependency = when (moduleType) {
-      ModuleType.FRONTEND -> "<plugin id=\"com.intellij.platform.experimental.frontend\"/>"
-      ModuleType.BACKEND -> "<module name=\"intellij.platform.kernel.backend\"/>"
+    val dependencies = when (moduleType) {
+      ModuleType.FRONTEND ->
+        //language=XML
+        """
+        <dependencies>
+          <plugin id="com.intellij.platform.experimental.frontend"/>
+        </dependencies>
+      """.trimIndent()
+      ModuleType.BACKEND ->
+        //language=XML
+        """
+        <dependencies>
+          <module name="intellij.platform.kernel.backend"/>
+        </dependencies>
+      """.trimIndent()
+      ModuleType.SHARED -> ""
     }
     //language=XML
     return """
       <idea-plugin package="${getPackageName(moduleName)}">
-        <dependencies>
-         $dependency
-        </dependencies>
+        $dependencies
       </idea-plugin>
     """.trimIndent()
   }
@@ -292,6 +307,7 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
       val moduleNameToPatch = when (moduleType) {
         FRONTEND -> "intellij.platform.frontend.main"
         BACKEND -> "intellij.platform.backend.main"
+        SHARED -> "intellij.platform.main"
       }
       val moduleToPatch = readAction {
         ModuleManager.getInstance(project).findModuleByName(moduleNameToPatch)
@@ -446,7 +462,7 @@ private class NewRemoteDevModuleDialog(project: Project) : DialogWrapper(project
       textField()
         .align(AlignX.FILL)
         .focused()
-        .text("intellij.platform.")
+        .text("intellij.")
         .columns(COLUMNS_LARGE)
         .applyToComponent {
           moduleNameTextField = this
@@ -456,11 +472,9 @@ private class NewRemoteDevModuleDialog(project: Project) : DialogWrapper(project
         }
         .validationOnApply {
           val text = it.text.trim()
-          if (!text.startsWith("intellij.platform")) {
-            return@validationOnApply error("Module name should start with `intellij.platform`, since action supports creation of platform frontend and backend modules only")
-          }
-          if (!(text.endsWith(".backend") || text.endsWith(".frontend"))) {
-            return@validationOnApply error("Module name should end with `.backend` or `.frontend`, since action supports creation of platform frontend and backend modules only")
+          if (!text.startsWith("intellij.")) {
+            return@validationOnApply error(
+              "Module name should start with `intellij.`, since action supports creation of intellij frontend, backend and shared modules only")
           }
           null
         }
@@ -477,7 +491,7 @@ private class NewRemoteDevModuleDialog(project: Project) : DialogWrapper(project
 }
 
 private enum class ModuleType {
-  FRONTEND, BACKEND
+  FRONTEND, BACKEND, SHARED
 }
 
 @Service(Service.Level.PROJECT)
