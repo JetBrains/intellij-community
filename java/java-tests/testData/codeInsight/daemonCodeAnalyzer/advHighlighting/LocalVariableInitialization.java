@@ -122,7 +122,7 @@ public class a  {
 
         public String getTreeCellRendererComponent(String value) {
             if (value instanceof String) {
-                int i = <error descr="Variable 'myLabel' might not have been initialized">myLabel</error>.length();
+                int i = myLabel.length();
             }
             return null;
         }

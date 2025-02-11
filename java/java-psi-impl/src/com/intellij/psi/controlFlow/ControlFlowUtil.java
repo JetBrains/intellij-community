@@ -387,7 +387,7 @@ public final class ControlFlowUtil {
 
   private static @Nullable PsiElement getTopBlock(@NotNull PsiReferenceExpression expression, @NotNull PsiVariable variable) {
     if (variable.hasInitializer()) {
-      return PsiUtil.getVariableCodeBlock(variable, null);
+      return PsiUtil.getVariableCodeBlock(variable, variable);
     }
     PsiElement scope = variable instanceof PsiField
                        ? ((PsiField)variable).getContainingClass()
