@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.action
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.plugins.terminal.block.TerminalPromotedDumbAwareAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
@@ -28,7 +29,7 @@ internal class TerminalClearAction : TerminalPromotedDumbAwareAction(), ActionRe
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible =
       ((e.editor?.isPromptEditor == true || e.editor?.isOutputEditor == true) && e.terminalSession?.model?.isCommandRunning != true) ||
-      e.editor?.isOutputModelEditor == true
+      (e.editor?.isOutputModelEditor == true && !SystemInfo.isWindows)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
