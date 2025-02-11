@@ -68,7 +68,7 @@ public class HighlightInfo implements Segment {
    * it doesn't have "disable" or "suppress" quickfixes
    */
   @ApiStatus.Internal
-  public static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
+  static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
   // optimization: if tooltip contains this marker object, then it replaced with description field in getTooltip()
   private static final String DESCRIPTION_PLACEHOLDER = "\u0000";
 
@@ -734,7 +734,6 @@ public class HighlightInfo implements Segment {
     return info;
   }
 
-  @ApiStatus.Internal
   private static @NotNull HighlightInfoType convertType(@NotNull Annotation annotation) {
     ProblemHighlightType type = annotation.getHighlightType();
     HighlightSeverity severity = annotation.getSeverity();
@@ -859,7 +858,7 @@ public class HighlightInfo implements Segment {
     }
     @NotNull
     @ApiStatus.Internal
-    public IntentionActionDescriptor withFixRange(@NotNull TextRange fixRange) {
+    IntentionActionDescriptor withFixRange(@NotNull TextRange fixRange) {
       return new IntentionActionDescriptor(myAction, myOptions, myDisplayName, myIcon, myKey, myProblemGroup, mySeverity, fixRange);
     }
 
@@ -1064,7 +1063,7 @@ public class HighlightInfo implements Segment {
 
   @ApiStatus.Internal
   synchronized // synchronized to avoid concurrent access to quickFix* fields; TODO rework to lock-free
-  public void registerFixes(@NotNull List<? extends @NotNull IntentionActionDescriptor> fixes, @Nullable Document document) {
+  void registerFixes(@NotNull List<? extends @NotNull IntentionActionDescriptor> fixes, @Nullable Document document) {
     if (fixes.isEmpty()) {
       return;
     }
