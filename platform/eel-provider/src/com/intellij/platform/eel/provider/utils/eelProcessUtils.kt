@@ -91,7 +91,7 @@ suspend fun EelExecApi.where(exe: String): EelPath? {
     EelPath.OS.WINDOWS -> "where.exe"
   }
 
-  val result = executeProcess(tool, exe).getOrThrow().awaitProcessResult()
+  val result = execute(tool) { env(fetchLoginShellEnvVariables()).args(exe) }.getOrThrow().awaitProcessResult()
 
   if (result.exitCode != 0) {
     // TODO: log error?/throw Exception?
