@@ -157,93 +157,93 @@ java_import(
 
 kt_jvm_import(
   name = "ai-grazie-nlp-langs",
-  jar = "@nlp-langs-jvm-0_4_12_http//file",
-  srcjar = "@nlp-langs-jvm-0_4_12-sources_http//file",
+  jar = "@nlp-langs-jvm-0_4_16_http//file",
+  srcjar = "@nlp-langs-jvm-0_4_16-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ai-grazie-spell-gec-engine-local",
   exports = [
-    ":gec-spell-engine-local-jvm-0_4_12_http_import",
-    ":utils-common-jvm-0_4_12_http_import",
-    ":model-gec-jvm-0_4_12_http_import",
-    ":model-text-jvm-0_4_12_http_import",
-    ":model-common-jvm-0_4_12_http_import",
-    ":nlp-langs-jvm-0_4_12_http_import",
-    ":nlp-common-jvm-0_4_12_http_import",
-    ":nlp-patterns-jvm-0_4_12_http_import",
-    ":nlp-similarity-jvm-0_4_12_http_import",
-    ":nlp-phonetics-jvm-0_4_12_http_import",
-    ":nlp-tokenizer-jvm-0_4_12_http_import",
+    ":gec-spell-engine-local-jvm-0_4_16_http_import",
+    ":utils-common-jvm-0_4_16_http_import",
+    ":model-gec-jvm-0_4_16_http_import",
+    ":model-text-jvm-0_4_16_http_import",
+    ":model-common-jvm-0_4_16_http_import",
+    ":nlp-langs-jvm-0_4_16_http_import",
+    ":nlp-common-jvm-0_4_16_http_import",
+    ":nlp-patterns-jvm-0_4_16_http_import",
+    ":nlp-similarity-jvm-0_4_16_http_import",
+    ":nlp-phonetics-jvm-0_4_16_http_import",
+    ":nlp-tokenizer-jvm-0_4_16_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "gec-spell-engine-local-jvm-0_4_12_http_import",
-  jar = "@gec-spell-engine-local-jvm-0_4_12_http//file",
-  srcjar = "@gec-spell-engine-local-jvm-0_4_12-sources_http//file"
+  name = "gec-spell-engine-local-jvm-0_4_16_http_import",
+  jar = "@gec-spell-engine-local-jvm-0_4_16_http//file",
+  srcjar = "@gec-spell-engine-local-jvm-0_4_16-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "utils-common-jvm-0_4_12_http_import",
-  jar = "@utils-common-jvm-0_4_12_http//file",
-  srcjar = "@utils-common-jvm-0_4_12-sources_http//file"
+  name = "utils-common-jvm-0_4_16_http_import",
+  jar = "@utils-common-jvm-0_4_16_http//file",
+  srcjar = "@utils-common-jvm-0_4_16-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "model-gec-jvm-0_4_12_http_import",
-  jar = "@model-gec-jvm-0_4_12_http//file",
-  srcjar = "@model-gec-jvm-0_4_12-sources_http//file"
+  name = "model-gec-jvm-0_4_16_http_import",
+  jar = "@model-gec-jvm-0_4_16_http//file",
+  srcjar = "@model-gec-jvm-0_4_16-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "model-text-jvm-0_4_12_http_import",
-  jar = "@model-text-jvm-0_4_12_http//file",
-  srcjar = "@model-text-jvm-0_4_12-sources_http//file"
+  name = "model-text-jvm-0_4_16_http_import",
+  jar = "@model-text-jvm-0_4_16_http//file",
+  srcjar = "@model-text-jvm-0_4_16-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "model-common-jvm-0_4_12_http_import",
-  jar = "@model-common-jvm-0_4_12_http//file",
-  srcjar = "@model-common-jvm-0_4_12-sources_http//file"
+  name = "model-common-jvm-0_4_16_http_import",
+  jar = "@model-common-jvm-0_4_16_http//file",
+  srcjar = "@model-common-jvm-0_4_16-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "nlp-langs-jvm-0_4_12_http_import",
-  jar = "@nlp-langs-jvm-0_4_12_http//file",
-  srcjar = "@nlp-langs-jvm-0_4_12-sources_http//file"
+  name = "nlp-langs-jvm-0_4_16_http_import",
+  jar = "@nlp-langs-jvm-0_4_16_http//file",
+  srcjar = "@nlp-langs-jvm-0_4_16-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "nlp-common-jvm-0_4_12_http_import",
-  jar = "@nlp-common-jvm-0_4_12_http//file",
-  srcjar = "@nlp-common-jvm-0_4_12-sources_http//file"
+  name = "nlp-common-jvm-0_4_16_http_import",
+  jar = "@nlp-common-jvm-0_4_16_http//file",
+  srcjar = "@nlp-common-jvm-0_4_16-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "nlp-patterns-jvm-0_4_12_http_import",
-  jar = "@nlp-patterns-jvm-0_4_12_http//file",
-  srcjar = "@nlp-patterns-jvm-0_4_12-sources_http//file"
+  name = "nlp-patterns-jvm-0_4_16_http_import",
+  jar = "@nlp-patterns-jvm-0_4_16_http//file",
+  srcjar = "@nlp-patterns-jvm-0_4_16-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "nlp-similarity-jvm-0_4_12_http_import",
-  jar = "@nlp-similarity-jvm-0_4_12_http//file",
-  srcjar = "@nlp-similarity-jvm-0_4_12-sources_http//file"
+  name = "nlp-similarity-jvm-0_4_16_http_import",
+  jar = "@nlp-similarity-jvm-0_4_16_http//file",
+  srcjar = "@nlp-similarity-jvm-0_4_16-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "nlp-phonetics-jvm-0_4_12_http_import",
-  jar = "@nlp-phonetics-jvm-0_4_12_http//file",
-  srcjar = "@nlp-phonetics-jvm-0_4_12-sources_http//file"
+  name = "nlp-phonetics-jvm-0_4_16_http_import",
+  jar = "@nlp-phonetics-jvm-0_4_16_http//file",
+  srcjar = "@nlp-phonetics-jvm-0_4_16-sources_http//file"
 )
 
 kt_jvm_import(
-  name = "nlp-tokenizer-jvm-0_4_12_http_import",
-  jar = "@nlp-tokenizer-jvm-0_4_12_http//file",
-  srcjar = "@nlp-tokenizer-jvm-0_4_12-sources_http//file"
+  name = "nlp-tokenizer-jvm-0_4_16_http_import",
+  jar = "@nlp-tokenizer-jvm-0_4_16_http//file",
+  srcjar = "@nlp-tokenizer-jvm-0_4_16-sources_http//file"
 )
 
 java_library(
@@ -1299,6 +1299,13 @@ java_import(
 )
 
 kt_jvm_import(
+  name = "de-cketti-unicode-kotlin-codepoints-jvm",
+  jar = "@kotlin-codepoints-jvm-0_9_0_http//file",
+  srcjar = "@kotlin-codepoints-jvm-0_9_0-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
   name = "devkit-runtime-module-repository-jps",
   jar = "@devkit-runtime-module-repository-jps-251_16369_http//file",
   srcjar = "@devkit-runtime-module-repository-jps-251_16369-sources_http//file",
@@ -1502,28 +1509,28 @@ java_import(
 java_library(
   name = "grazie-core-ai-grazie-nlp-detect",
   exports = [
-    ":nlp-detect-jvm-0_4_12_http_import",
-    ":utils-common-jvm-0_4_12_http_import",
-    ":nlp-common-jvm-0_4_12_http_import",
-    ":model-text-jvm-0_4_12_http_import",
-    ":model-common-jvm-0_4_12_http_import",
-    ":nlp-patterns-jvm-0_4_12_http_import",
-    ":nlp-tokenizer-jvm-0_4_12_http_import",
-    ":nlp-similarity-jvm-0_4_12_http_import",
-    ":nlp-langs-jvm-0_4_12_http_import",
+    ":nlp-detect-jvm-0_4_16_http_import",
+    ":utils-common-jvm-0_4_16_http_import",
+    ":nlp-common-jvm-0_4_16_http_import",
+    ":model-text-jvm-0_4_16_http_import",
+    ":model-common-jvm-0_4_16_http_import",
+    ":nlp-patterns-jvm-0_4_16_http_import",
+    ":nlp-tokenizer-jvm-0_4_16_http_import",
+    ":nlp-similarity-jvm-0_4_16_http_import",
+    ":nlp-langs-jvm-0_4_16_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "nlp-detect-jvm-0_4_12_http_import",
-  jar = "@nlp-detect-jvm-0_4_12_http//file",
-  srcjar = "@nlp-detect-jvm-0_4_12-sources_http//file"
+  name = "nlp-detect-jvm-0_4_16_http_import",
+  jar = "@nlp-detect-jvm-0_4_16_http//file",
+  srcjar = "@nlp-detect-jvm-0_4_16-sources_http//file"
 )
 
 java_import(
   name = "grazie-core-ai-grazie-utils-lucene-lt-compatibility",
-  jars = ["@utils-lucene-lt-compatibility-0_4_12_http//file"],
+  jars = ["@utils-lucene-lt-compatibility-0_4_16_http//file"],
   visibility = ["//visibility:public"]
 )
 
@@ -8520,19 +8527,11 @@ java_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "platform-jewel-markdown-extension-gfm_tables-commonmark-ext-gfm-tables",
-  exports = [
-    ":commonmark-ext-gfm-tables-0_24_0_http_import",
-    ":commonmark-0_24_0_http_import",
-  ],
-  visibility = ["//visibility:public"]
-)
-
 java_import(
-  name = "commonmark-ext-gfm-tables-0_24_0_http_import",
+  name = "platform-jewel-markdown-extension-gfm_tables-commonmark-ext-gfm-tables",
   jars = ["@commonmark-ext-gfm-tables-0_24_0_http//file"],
-  srcjar = "@commonmark-ext-gfm-tables-0_24_0-sources_http//file"
+  srcjar = "@commonmark-ext-gfm-tables-0_24_0-sources_http//file",
+  visibility = ["//visibility:public"]
 )
 
 java_import(
@@ -9553,18 +9552,18 @@ java_import(
 java_library(
   name = "search_everywhere_ml-ai-grazie-emb",
   exports = [
-    ":model-emb-jvm-0_4_12_http_import",
-    ":model-text-jvm-0_4_12_http_import",
-    ":model-common-jvm-0_4_12_http_import",
-    ":utils-common-jvm-0_4_12_http_import",
+    ":model-emb-jvm-0_4_16_http_import",
+    ":model-text-jvm-0_4_16_http_import",
+    ":model-common-jvm-0_4_16_http_import",
+    ":utils-common-jvm-0_4_16_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
-  name = "model-emb-jvm-0_4_12_http_import",
-  jar = "@model-emb-jvm-0_4_12_http//file",
-  srcjar = "@model-emb-jvm-0_4_12-sources_http//file"
+  name = "model-emb-jvm-0_4_16_http_import",
+  jar = "@model-emb-jvm-0_4_16_http//file",
+  srcjar = "@model-emb-jvm-0_4_16-sources_http//file"
 )
 
 java_import(
@@ -9668,15 +9667,15 @@ java_import(
 java_library(
   name = "spellchecker-ai-grazie-nlp-detect",
   exports = [
-    ":nlp-detect-jvm-0_4_12_http_import",
-    ":utils-common-jvm-0_4_12_http_import",
-    ":nlp-common-jvm-0_4_12_http_import",
-    ":model-text-jvm-0_4_12_http_import",
-    ":model-common-jvm-0_4_12_http_import",
-    ":nlp-patterns-jvm-0_4_12_http_import",
-    ":nlp-tokenizer-jvm-0_4_12_http_import",
-    ":nlp-similarity-jvm-0_4_12_http_import",
-    ":nlp-langs-jvm-0_4_12_http_import",
+    ":nlp-detect-jvm-0_4_16_http_import",
+    ":utils-common-jvm-0_4_16_http_import",
+    ":nlp-common-jvm-0_4_16_http_import",
+    ":model-text-jvm-0_4_16_http_import",
+    ":model-common-jvm-0_4_16_http_import",
+    ":nlp-patterns-jvm-0_4_16_http_import",
+    ":nlp-tokenizer-jvm-0_4_16_http_import",
+    ":nlp-similarity-jvm-0_4_16_http_import",
+    ":nlp-langs-jvm-0_4_16_http_import",
   ],
   visibility = ["//visibility:public"]
 )
@@ -9690,7 +9689,7 @@ kt_jvm_import(
 
 java_import(
   name = "spellchecker-ai-grazie-utils-lucene-lt-compatibility",
-  jars = ["@utils-lucene-lt-compatibility-0_4_12_http//file"],
+  jars = ["@utils-lucene-lt-compatibility-0_4_16_http//file"],
   visibility = ["//visibility:public"]
 )
 

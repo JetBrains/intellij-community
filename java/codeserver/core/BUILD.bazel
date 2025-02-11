@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.java.codeserver.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "java-codeserver-core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "java-codeserver-core",
@@ -17,6 +23,8 @@ jvm_library(
     "//java/java-frontback-psi-api:frontback-psi",
     "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",
-  ]
+    "//java/java-indexing-api:indexing",
+  ],
+  runtime_deps = [":java-codeserver-core_resources"]
 )
 ### auto-generated section `build intellij.java.codeserver.core` end

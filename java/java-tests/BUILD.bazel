@@ -117,6 +117,7 @@ jvm_library(
     "//platform/statistics/testFramework",
     "//platform/searchEverywhere/shared:searchEverywhere",
     "//platform/searchEverywhere/testFramework",
+    "//java/codeserver/highlighting:java-codeserver-highlighting",
   ],
   runtime_deps = [
     "//community-resources:customization",

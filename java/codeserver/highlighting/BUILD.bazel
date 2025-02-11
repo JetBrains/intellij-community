@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:stream_ex",
     "//platform/util",
     "//platform/projectModel-api:projectModel",
+    "//platform/indexing-api:indexing",
     "//java/java-frontback-psi-api:frontback-psi",
     "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",

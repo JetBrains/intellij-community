@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.bazel
 
 internal inline fun buildFile(out: BazelFileUpdater, sectionName: String, block: BuildFile.() -> Unit) {
@@ -13,6 +13,8 @@ internal class BuildFile {
   private val loads = HashSet<LoadStatement>()
   private val targets = mutableListOf<Target>()
   private val lines = mutableListOf<String>()
+
+  @JvmField val nameGuard = HashSet<String>()
 
   fun load(bzlFile: String, vararg symbols: String) {
     val existing = loads.firstOrNull { it.bzlFile == bzlFile }
@@ -38,6 +40,12 @@ internal class BuildFile {
     return sequenceOf(loadStatements, targetStatements, lines.joinToString("\n"))
       .filter { it.isNotEmpty() }
       .joinToString("\n\n")
+  }
+
+  fun reset() {
+    loads.clear()
+    targets.clear()
+    lines.clear()
   }
 }
 
