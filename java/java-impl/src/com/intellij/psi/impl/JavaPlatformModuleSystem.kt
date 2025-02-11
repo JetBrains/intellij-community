@@ -272,9 +272,10 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     val jpsModule = current.jpsModule ?: return false
     val targetModule = target.module ?: return false
     if(targetModule.name == PsiJavaModule.JAVA_BASE) return true
-    if (!(targetModule.name.startsWith("java.") || targetModule.name.startsWith("jdk."))) return false
 
+    if(!isJdkModule(jpsModule, targetModule)) return false
     val languageLevel = PsiUtil.getLanguageLevel(place)
+    // https://bugs.openjdk.org/browse/JDK-8197532
     val jdkModulePred: (PsiJavaModule) -> Boolean = if (languageLevel >= LanguageLevel.JDK_11) {
       { module -> module.exports.any { e -> e.moduleNames.isEmpty() } }
     }
@@ -294,6 +295,18 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     }
     val noIncubatorPred: (PsiJavaModule) -> Boolean = {module -> !module.doNotResolveByDefault()}
     return jdkModulePred(targetModule) && noIncubatorPred(targetModule)
+  }
+
+  private fun isJdkModule(jpsModule: Module, psiModule: PsiJavaModule): Boolean {
+    val sdkHomePath = ModuleRootManager.getInstance(jpsModule).getSdk()?.homePath?.replace('\\', '/')
+    val moduleFilePath = psiModule.containingFile?.virtualFile?.path?.replace('\\', '/')
+    if (sdkHomePath != null && moduleFilePath != null) {
+      return moduleFilePath.startsWith("$sdkHomePath!") ||
+             moduleFilePath.startsWith(if(sdkHomePath.last() == '/') sdkHomePath else "$sdkHomePath/")
+    } else {
+      return psiModule.name.startsWith("java.") ||
+             psiModule.name.startsWith("jdk.")
+    }
   }
 
   private fun inSameMultiReleaseModule(current: ModuleInfo, target: ModuleInfo): Boolean {
