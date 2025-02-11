@@ -182,22 +182,17 @@ public final class MavenDomUtil {
     return result;
   }
 
-  public static <T> T getImmediateParent(ConvertContext context, Class<T> clazz) {
-    DomElement parentElement = context.getInvocationElement().getParent();
-    return clazz.isInstance(parentElement) ? (T)parentElement : null;
-  }
-
   public static @Nullable VirtualFile getVirtualFile(@NotNull DomElement element) {
     PsiFile psiFile = DomUtil.getFile(element);
-    return getVirtualFile(psiFile);
+    return doGetVirtualFile(psiFile);
   }
 
   public static @Nullable VirtualFile getVirtualFile(@NotNull PsiElement element) {
     PsiFile psiFile = element.getContainingFile();
-    return getVirtualFile(psiFile);
+    return doGetVirtualFile(psiFile);
   }
 
-  private static @Nullable VirtualFile getVirtualFile(PsiFile psiFile) {
+  private static @Nullable VirtualFile doGetVirtualFile(PsiFile psiFile) {
     if (psiFile == null) return null;
     psiFile = psiFile.getOriginalFile();
     VirtualFile virtualFile = psiFile.getVirtualFile();
@@ -357,7 +352,7 @@ public final class MavenDomUtil {
 
   public static boolean isFilteredResourceFile(PsiElement element) {
     PsiFile psiFile = element.getContainingFile();
-    VirtualFile file = getVirtualFile(psiFile);
+    VirtualFile file = doGetVirtualFile(psiFile);
     if (file == null) return false;
 
     MavenProjectsManager manager = MavenProjectsManager.getInstance(psiFile.getProject());
