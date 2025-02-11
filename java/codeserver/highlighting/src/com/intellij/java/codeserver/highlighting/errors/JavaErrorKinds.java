@@ -1373,6 +1373,30 @@ public final class JavaErrorKinds {
       .withRange((module, file) -> getRange(module));
   public static final Parameterized<PsiPackageAccessibilityStatement, PsiJavaModule> MODULE_OPENS_IN_WEAK_MODULE =
     parameterized(PsiPackageAccessibilityStatement.class, PsiJavaModule.class, "module.opens.in.weak.module");
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> MODULE_SERVICE_ENUM =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "module.service.enum")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription((ref, cls) -> message("module.service.enum", cls.getName()));
+  public static final Simple<PsiJavaModuleReferenceElement> MODULE_NOT_FOUND =
+    error(PsiJavaModuleReferenceElement.class, "module.not.found")
+      .withHighlightType(JavaErrorHighlightType.WRONG_REF)
+      .withRawDescription(ref -> message("module.not.found", ref.getReferenceText()));
+  public static final Simple<PsiJavaModuleReferenceElement> MODULE_NOT_ON_PATH =
+    error(PsiJavaModuleReferenceElement.class, "module.not.on.path")
+      .withRawDescription(ref -> message("module.not.on.path", ref.getReferenceText()));
+  public static final Parameterized<PsiJavaModuleReferenceElement, Collection<PsiJavaModule>> MODULE_CYCLIC_DEPENDENCE =
+    error(PsiJavaModuleReferenceElement.class, "module.cyclic.dependence")
+      .<Collection<PsiJavaModule>>parameterized()
+      .withRawDescription(
+        (ref, modules) -> message("module.cyclic.dependence", modules.stream().map(PsiJavaModule::getName)
+          .sorted().collect(Collectors.joining(", "))));
+
+  public static final Simple<PsiJavaModuleReferenceElement> MODULE_DUPLICATE_EXPORTS_TARGET =
+    error(PsiJavaModuleReferenceElement.class, "module.duplicate.exports.target")
+      .withRawDescription(ref -> message("module.duplicate.exports.target", ref.getReferenceText()));
+  public static final Simple<PsiJavaModuleReferenceElement> MODULE_DUPLICATE_OPENS_TARGET =
+    error(PsiJavaModuleReferenceElement.class, "module.duplicate.opens.target")
+      .withRawDescription(ref -> message("module.duplicate.opens.target", ref.getReferenceText()));
 
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(
     @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {

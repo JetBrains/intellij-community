@@ -3,6 +3,7 @@ package com.intellij.java.codeserver.core;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -22,14 +23,17 @@ import com.intellij.psi.search.searches.JavaModuleSearch;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.JavaMultiReleaseUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
@@ -38,6 +42,7 @@ import java.util.function.BiFunction;
 import java.util.jar.JarFile;
 
 import static com.intellij.psi.PsiJavaModule.JAVA_BASE;
+import static java.util.Objects.requireNonNullElse;
 
 /**
  * Utilities related to JPMS modules
@@ -241,6 +246,80 @@ public final class JavaPsiModuleUtil {
    */
   public static @NotNull Set<PsiJavaModule> getAllTransitiveDependencies(@NotNull PsiJavaModule source) {
     return getRequiresGraph(source).getAllDependencies(source, true);
+  }
+
+  /**
+   * @param module module to check for dependency cycles
+   * @return collection of modules that form a dependency cycle
+   */
+  public static @NotNull Collection<PsiJavaModule> findCycle(@NotNull PsiJavaModule module) {
+    Project project = module.getProject();
+    List<Set<PsiJavaModule>> cycles = CachedValuesManager.getManager(project).getCachedValue(project, () ->
+      CachedValueProvider.Result.create(findCycles(project),
+                                        PsiJavaModuleModificationTracker.getInstance(project),
+                                        ProjectRootModificationTracker.getInstance(project)));
+    return requireNonNullElse(ContainerUtil.find(cycles, set -> set.contains(module)), Collections.emptyList());
+  }
+
+  private static @Nullable VirtualFile getVirtualFile(@NotNull PsiJavaModule module) {
+    if (module instanceof LightJavaModule light) {
+      return light.getRootVirtualFile();
+    }
+    return PsiUtilCore.getVirtualFile(module);
+  }
+
+  /*
+   * Looks for cycles between Java modules in the project sources.
+   * Library/JDK modules are excluded in an assumption there can't be any lib -> src dependencies.
+   * Module references are resolved "globally" (i.e., without taking project dependencies into account).
+   */
+  private static @Unmodifiable @NotNull List<Set<PsiJavaModule>> findCycles(@NotNull Project project) {
+    Set<PsiJavaModule> projectModules = new HashSet<>();
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      List<PsiJavaModule> descriptors = ContainerUtil.mapNotNull(moduleRootManager.getSourceRoots(true),
+                                                                 root -> findDescriptorByFile(root, project));
+      if (descriptors.size() > 2) return Collections.emptyList();  // aborts the process when there are incorrect modules in the project
+
+      if (descriptors.size() == 2) {
+        if (descriptors.stream()
+              .map(d -> getVirtualFile(d))
+              .filter(Objects::nonNull).count() < 2) {
+          return Collections.emptyList();
+        }
+        projectModules.addAll(descriptors);
+      }
+      if (descriptors.size() == 1) projectModules.add(descriptors.get(0));
+    }
+
+    if (!projectModules.isEmpty()) {
+      MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
+      for (PsiJavaModule module : projectModules) {
+        for (PsiRequiresStatement statement : module.getRequires()) {
+          PsiJavaModuleReference ref = statement.getModuleReference();
+          if (ref != null) {
+            ResolveResult[] results = ref.multiResolve(true);
+            if (results.length == 1) {
+              PsiJavaModule dependency = (PsiJavaModule)results[0].getElement();
+              if (dependency != null && projectModules.contains(dependency)) {
+                relations.putValue(module, dependency);
+              }
+            }
+          }
+        }
+      }
+
+      if (!relations.isEmpty()) {
+        Graph<PsiJavaModule> graph = new ChameleonGraph<>(relations, false);
+        DFSTBuilder<PsiJavaModule> builder = new DFSTBuilder<>(graph);
+        Collection<Collection<PsiJavaModule>> components = builder.getComponents();
+        if (!components.isEmpty()) {
+          return ContainerUtil.map(components, elements -> new LinkedHashSet<>(elements));
+        }
+      }
+    }
+
+    return Collections.emptyList();
   }
 
   /**

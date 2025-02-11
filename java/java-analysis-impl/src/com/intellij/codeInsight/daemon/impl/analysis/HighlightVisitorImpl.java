@@ -426,7 +426,19 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitPackageAccessibilityStatement(statement);
     if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
       if (!hasErrorResults()) add(ModuleHighlightUtil.checkPackageReference(statement, myFile));
-      if (!hasErrorResults()) ModuleHighlightUtil.checkPackageAccessTargets(statement, myErrorSink);
+    }
+  }
+
+  @Override
+  public void visitModuleReferenceElement(@NotNull PsiJavaModuleReferenceElement refElement) {
+    super.visitModuleReferenceElement(refElement);
+    PsiJavaModuleReference ref = refElement.getReference();
+    if (refElement.getParent() instanceof PsiPackageAccessibilityStatement && 
+        ref != null && ref.multiResolve(true).length == 0) {
+      String message = JavaErrorBundle.message("module.not.found", refElement.getReferenceText());
+      HighlightInfo.Builder info =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).descriptionAndTooltip(message);
+      add(info);
     }
   }
 
@@ -435,14 +447,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitReferenceElement(ref);
     if (!(ref instanceof PsiExpression)) {
       doVisitReferenceElement(ref);
-    }
-  }
-
-  @Override
-  public void visitUsesStatement(@NotNull PsiUsesStatement statement) {
-    super.visitUsesStatement(statement);
-    if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
-      if (!hasErrorResults()) add(ModuleHighlightUtil.checkServiceReference(statement.getClassReference()));
     }
   }
 

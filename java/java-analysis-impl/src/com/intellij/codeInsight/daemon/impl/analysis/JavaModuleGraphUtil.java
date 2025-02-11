@@ -11,7 +11,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -19,7 +18,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiJavaModuleModificationTracker;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -30,18 +28,14 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.graph.DFSTBuilder;
-import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
 import static com.intellij.openapi.roots.DependencyScope.PROVIDED;
 import static com.intellij.psi.PsiJavaModule.JAVA_BASE;
-import static java.util.Objects.requireNonNullElse;
 
 public final class JavaModuleGraphUtil {
   private static final Set<String> STATIC_REQUIRES_MODULE_NAMES = Set.of("lombok");
@@ -70,15 +64,6 @@ public final class JavaModuleGraphUtil {
   public static @Nullable PsiJavaModule findNonAutomaticDescriptorByModule(@Nullable Module module, boolean inTests) {
     PsiJavaModule javaModule = findDescriptorByModule(module, inTests);
     return javaModule instanceof LightJavaModule ? null : javaModule;
-  }
-
-  public static @NotNull Collection<PsiJavaModule> findCycle(@NotNull PsiJavaModule module) {
-    Project project = module.getProject();
-    List<Set<PsiJavaModule>> cycles = CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(findCycles(project),
-                    PsiJavaModuleModificationTracker.getInstance(project),
-                    ProjectRootModificationTracker.getInstance(project)));
-    return requireNonNullElse(ContainerUtil.find(cycles, set -> set.contains(module)), Collections.emptyList());
   }
 
   public static boolean exports(@NotNull PsiJavaModule source, @NotNull String packageName, @Nullable PsiJavaModule target) {
@@ -208,60 +193,6 @@ public final class JavaModuleGraphUtil {
     return scope == PROVIDED;
   }
 
-  /*
-   * Looks for cycles between Java modules in the project sources.
-   * Library/JDK modules are excluded in an assumption there can't be any lib -> src dependencies.
-   * Module references are resolved "globally" (i.e., without taking project dependencies into account).
-   */
-  private static @Unmodifiable @NotNull List<Set<PsiJavaModule>> findCycles(@NotNull Project project) {
-    Set<PsiJavaModule> projectModules = new HashSet<>();
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      List<PsiJavaModule> descriptors = ContainerUtil.mapNotNull(moduleRootManager.getSourceRoots(true),
-                                                                 root -> findDescriptorByFile(root, project));
-      if (descriptors.size() > 2) return Collections.emptyList();  // aborts the process when there are incorrect modules in the project
-
-      if (descriptors.size() == 2) {
-        if (descriptors.stream()
-              .map(d -> getVirtualFile(d))
-              .filter(Objects::nonNull).count() < 2) {
-          return Collections.emptyList();
-        }
-        projectModules.addAll(descriptors);
-      }
-      if (descriptors.size() == 1) projectModules.add(descriptors.get(0));
-    }
-
-    if (!projectModules.isEmpty()) {
-      MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
-      for (PsiJavaModule module : projectModules) {
-        for (PsiRequiresStatement statement : module.getRequires()) {
-          PsiJavaModuleReference ref = statement.getModuleReference();
-          if (ref != null) {
-            ResolveResult[] results = ref.multiResolve(true);
-            if (results.length == 1) {
-              PsiJavaModule dependency = (PsiJavaModule)results[0].getElement();
-              if (dependency != null && projectModules.contains(dependency)) {
-                relations.putValue(module, dependency);
-              }
-            }
-          }
-        }
-      }
-
-      if (!relations.isEmpty()) {
-        Graph<PsiJavaModule> graph = new ChameleonGraph<>(relations, false);
-        DFSTBuilder<PsiJavaModule> builder = new DFSTBuilder<>(graph);
-        Collection<Collection<PsiJavaModule>> components = builder.getComponents();
-        if (!components.isEmpty()) {
-          return ContainerUtil.map(components, elements -> new LinkedHashSet<>(elements));
-        }
-      }
-    }
-
-    return Collections.emptyList();
-  }
-
   private static @NotNull Map<String, Set<String>> exportsMap(@NotNull PsiJavaModule source) {
     Map<String, Set<String>> map = new HashMap<>();
     for (PsiPackageAccessibilityStatement statement : source.getExports()) {
@@ -270,37 +201,6 @@ public final class JavaModuleGraphUtil {
       map.put(pkg, targets.isEmpty() ? Collections.emptySet() : new HashSet<>(targets));
     }
     return map;
-  }
-
-  private static final class ChameleonGraph<N> implements Graph<N> {
-    private final Set<N> myNodes;
-    private final MultiMap<N, N> myEdges;
-    private final boolean myInbound;
-
-    private ChameleonGraph(MultiMap<N, N> edges, boolean inbound) {
-      myNodes = new HashSet<>();
-      edges.entrySet().forEach(e -> {
-        myNodes.add(e.getKey());
-        myNodes.addAll(e.getValue());
-      });
-      myEdges = edges;
-      myInbound = inbound;
-    }
-
-    @Override
-    public @NotNull Collection<N> getNodes() {
-      return myNodes;
-    }
-
-    @Override
-    public @NotNull Iterator<N> getIn(N n) {
-      return myInbound ? myEdges.get(n).iterator() : Collections.emptyIterator();
-    }
-
-    @Override
-    public @NotNull Iterator<N> getOut(N n) {
-      return myInbound ? Collections.emptyIterator() : myEdges.get(n).iterator();
-    }
   }
 
   public static class JavaModuleScope extends GlobalSearchScope {

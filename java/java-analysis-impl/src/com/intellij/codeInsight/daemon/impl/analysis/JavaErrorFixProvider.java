@@ -148,6 +148,19 @@ final class JavaErrorFixProvider {
     fix(MODULE_FILE_WRONG_LOCATION, error -> new MoveFileFix(error.psi().getContainingFile().getVirtualFile(),
                                                              error.context(), QuickFixBundle.message("move.file.to.source.root.text")));
     fix(MODULE_OPENS_IN_WEAK_MODULE, error -> removeModifierFix(error.context(), PsiModifier.OPEN));
+    fix(MODULE_DUPLICATE_EXPORTS_TARGET,
+        error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
+    fix(MODULE_DUPLICATE_OPENS_TARGET,
+        error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
+    multi(MODULE_NOT_ON_PATH, error -> {
+      PsiJavaModuleReference ref = error.psi().getReference();
+      if (ref != null) {
+        List<IntentionAction> registrar = new ArrayList<>();
+        myFactory.registerOrderEntryFixes(ref, registrar);
+        return registrar;
+      }
+      return List.of();
+    });
   }
 
   private void createStatementFixes() {

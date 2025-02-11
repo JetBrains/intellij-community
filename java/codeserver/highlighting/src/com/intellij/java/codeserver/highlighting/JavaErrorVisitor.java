@@ -642,6 +642,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     super.visitRequiresStatement(statement);
     if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
       if (!hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_10)) myModuleChecker.checkModifiers(statement);
+      if (!hasErrorResults()) myModuleChecker.checkModuleReference(statement);
     }
   }
 
@@ -650,6 +651,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     super.visitPackageAccessibilityStatement(statement);
     if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
       if (!hasErrorResults()) myModuleChecker.checkHostModuleStrength(statement);
+      if (!hasErrorResults()) myModuleChecker.checkDuplicateModuleReferences(statement);
     }
   }
 
@@ -657,6 +659,14 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitModuleStatement(@NotNull PsiStatement statement) {
     super.visitModuleStatement(statement);
     if (!hasErrorResults()) checkPreviewFeature(statement);
+  }
+
+  @Override
+  public void visitUsesStatement(@NotNull PsiUsesStatement statement) {
+    super.visitUsesStatement(statement);
+    if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
+      if (!hasErrorResults()) myModuleChecker.checkServiceReference(statement.getClassReference());
+    }
   }
 
   @Override

@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -127,6 +128,20 @@ final class ModuleChecker {
     }
   }
 
+  void checkDuplicateModuleReferences(@NotNull PsiPackageAccessibilityStatement statement) {
+    Set<String> targets = new HashSet<>();
+    for (PsiJavaModuleReferenceElement refElement : statement.getModuleReferences()) {
+      String refText = refElement.getReferenceText();
+      PsiJavaModuleReference ref = refElement.getReference();
+      assert ref != null : statement;
+      if (!targets.add(refText)) {
+        boolean exports = statement.getRole() == PsiPackageAccessibilityStatement.Role.EXPORTS;
+        var kind = exports ? JavaErrorKinds.MODULE_DUPLICATE_EXPORTS_TARGET : JavaErrorKinds.MODULE_DUPLICATE_OPENS_TARGET;
+        myVisitor.report(kind.create(refElement));
+      }
+    }
+  }
+
   private static String qName(PsiJavaCodeReferenceElement ref) {
     return ref != null ? ref.getQualifiedName() : null;
   }
@@ -167,4 +182,52 @@ final class ModuleChecker {
       myVisitor.report(JavaErrorKinds.MODULE_OPENS_IN_WEAK_MODULE.create(statement, module));
     }
   }
-}
+
+  void checkServiceReference(@Nullable PsiJavaCodeReferenceElement refElement) {
+    if (refElement != null) {
+      PsiElement target = refElement.resolve();
+      if (!(target instanceof PsiClass psiClass)) {
+        myVisitor.report(JavaErrorKinds.REFERENCE_UNRESOLVED.create(refElement));
+      }
+      else if (psiClass.isEnum()) {
+        myVisitor.report(JavaErrorKinds.MODULE_SERVICE_ENUM.create(refElement, psiClass));
+      }
+    }
+  }
+
+  void checkModuleReference(@NotNull PsiRequiresStatement statement) {
+    PsiJavaModuleReferenceElement refElement = statement.getReferenceElement();
+    if (refElement != null) {
+      PsiJavaModuleReference ref = refElement.getReference();
+      assert ref != null : refElement.getParent();
+      PsiJavaModule target = ref.resolve();
+      if (target == null) {
+        reportUnresolvedJavaModule(refElement);
+        return;
+      }
+      PsiJavaModule container = (PsiJavaModule)statement.getParent();
+      if (target == container) {
+        myVisitor.report(JavaErrorKinds.MODULE_CYCLIC_DEPENDENCE.create(refElement, Set.of(container)));
+      }
+      else {
+        Collection<PsiJavaModule> cycle = JavaPsiModuleUtil.findCycle(target);
+        if (cycle.contains(container)) {
+          myVisitor.report(JavaErrorKinds.MODULE_CYCLIC_DEPENDENCE.create(refElement, cycle));
+        }
+      }
+    }
+  }
+
+  private void reportUnresolvedJavaModule(@NotNull PsiJavaModuleReferenceElement refElement) {
+    PsiJavaModuleReference ref = refElement.getReference();
+    assert ref != null : refElement.getParent();
+
+    ResolveResult[] results = ref.multiResolve(true);
+    switch (results.length) {
+      case 0 -> myVisitor.report(myVisitor.isIncompleteModel()
+                       ? JavaErrorKinds.REFERENCE_PENDING.create(refElement)
+                       : JavaErrorKinds.MODULE_NOT_FOUND.create(refElement));
+      case 1 -> myVisitor.report(JavaErrorKinds.MODULE_NOT_ON_PATH.create(refElement));
+      default -> {}
+    }
+  }}

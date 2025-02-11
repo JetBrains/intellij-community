@@ -13,7 +13,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.java.codeserver.core.JavaServiceProviderUtil;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -30,12 +29,9 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 // generates HighlightInfoType.ERROR-like HighlightInfos for modularity-related (Jigsaw) problems
 final class ModuleHighlightUtil {
@@ -102,19 +98,16 @@ final class ModuleHighlightUtil {
       PsiJavaModuleReference ref = refElement.getReference();
       assert ref != null : refElement.getParent();
       PsiJavaModule target = ref.resolve();
-      if (target == null) return getUnresolvedJavaModuleReason(statement, refElement);
-      PsiJavaModule container = (PsiJavaModule)statement.getParent();
-      if (target == container) {
-        String message = JavaErrorBundle.message("module.cyclic.dependence", container.getName());
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message);
-      }
-      else {
-        Collection<PsiJavaModule> cycle = JavaModuleGraphUtil.findCycle(target);
-        if (cycle.contains(container)) {
-          Stream<String> stream = cycle.stream().map(PsiJavaModule::getName);
-          if (ApplicationManager.getApplication().isUnitTestMode()) stream = stream.sorted();
-          String message = JavaErrorBundle.message("module.cyclic.dependence", stream.collect(Collectors.joining(", ")));
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message);
+      if (target == null) {
+        PsiJavaModuleReference ref1 = refElement.getReference();
+        assert ref1 != null : refElement.getParent();
+
+        ResolveResult[] results = ref1.multiResolve(true);
+        if (results.length > 1) {
+          // TODO: make as error or extract to inspection
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING)
+            .range(refElement)
+            .descriptionAndTooltip(JavaErrorBundle.message("module.ambiguous", refElement.getReferenceText()));
         }
       }
     }
@@ -201,44 +194,6 @@ final class ModuleHighlightUtil {
     else {
       return PsiUtil.isPackageEmpty(directories, packageName);
     }
-  }
-
-  static void checkPackageAccessTargets(@NotNull PsiPackageAccessibilityStatement statement,
-                                        @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    Set<String> targets = new HashSet<>();
-    for (PsiJavaModuleReferenceElement refElement : statement.getModuleReferences()) {
-      String refText = refElement.getReferenceText();
-      PsiJavaModuleReference ref = refElement.getReference();
-      assert ref != null : statement;
-      if (!targets.add(refText)) {
-        boolean exports = statement.getRole() == Role.EXPORTS;
-        String message = JavaErrorBundle.message(exports ? "module.duplicate.exports.target" : "module.duplicate.opens.target", refText);
-        HighlightInfo.Builder info = createDuplicateReference(refElement, message);
-        errorSink.accept(info);
-      }
-      else if (ref.multiResolve(true).length == 0) {
-        String message = JavaErrorBundle.message("module.not.found", refElement.getReferenceText());
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).descriptionAndTooltip(message);
-        errorSink.accept(info);
-      }
-    }
-  }
-
-  static HighlightInfo.Builder checkServiceReference(@Nullable PsiJavaCodeReferenceElement refElement) {
-    if (refElement != null) {
-      PsiElement target = refElement.resolve();
-      if (!(target instanceof PsiClass psiClass)) {
-        String message = JavaErrorBundle.message("cannot.resolve.symbol", refElement.getReferenceName());
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(refElement)).descriptionAndTooltip(message);
-      }
-      else if (psiClass.isEnum()) {
-        String message = JavaErrorBundle.message("module.service.enum", psiClass.getName());
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(refElement)).descriptionAndTooltip(message);
-      }
-    }
-
-    return null;
   }
 
   static void checkServiceImplementations(@NotNull PsiProvidesStatement statement, @NotNull PsiFile file,
