@@ -3,7 +3,6 @@ package com.intellij.driver.sdk.ui.components.aqua
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
-import com.intellij.driver.sdk.ui.components.common.jcef
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.waitFor
 
@@ -21,13 +20,5 @@ class WebInspectorUI(data: ComponentData) : UiComponent(data) {
     waitFor { this.url.text == url }
     this.url.click()
     keyboard { enter() }
-  }
-
-  fun selectElement(selector: String) {
-    locatorEvaluator { selectElement.click() }
-    jcef {
-      findElement(selector).scroll()
-      findElement(selector).clickAtCenter()
-    }
   }
 }
