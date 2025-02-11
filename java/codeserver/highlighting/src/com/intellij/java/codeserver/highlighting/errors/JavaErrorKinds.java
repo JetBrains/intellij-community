@@ -195,7 +195,7 @@ public final class JavaErrorKinds {
   public static final Simple<PsiMethodReferenceExpression> METHOD_REFERENCE_UNRESOLVED_METHOD =
     error(PsiMethodReferenceExpression.class, "method.reference.unresolved.method")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
-      .withHighlightType(ref -> JavaErrorHighlightType.WRONG_REF)
+      .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withRawDescription(ref -> message("method.reference.unresolved.method", ref.getReferenceName()));
   public static final Parameterized<PsiMethodReferenceExpression, PsiMethod> METHOD_REFERENCE_ABSTRACT_METHOD =
     parameterized(PsiMethodReferenceExpression.class, PsiMethod.class, "method.reference.abstract.method")
@@ -521,10 +521,10 @@ public final class JavaErrorKinds {
 
   public static final Parameterized<PsiJavaFile, PsiImplicitClass> CLASS_IMPLICIT_NO_MAIN_METHOD = 
     error(PsiJavaFile.class, "class.implicit.no.main.method")
-      .withHighlightType(psi -> JavaErrorHighlightType.FILE_LEVEL_ERROR).parameterized();
+      .withHighlightType(JavaErrorHighlightType.FILE_LEVEL_ERROR).parameterized();
   public static final Parameterized<PsiJavaFile, PsiImplicitClass> CLASS_IMPLICIT_INVALID_FILE_NAME = 
     error(PsiJavaFile.class, "class.implicit.invalid.file.name")
-      .withHighlightType(psi -> JavaErrorHighlightType.FILE_LEVEL_ERROR).parameterized();
+      .withHighlightType(JavaErrorHighlightType.FILE_LEVEL_ERROR).parameterized();
   public static final Simple<PsiClassInitializer> CLASS_IMPLICIT_INITIALIZER = error("class.implicit.initializer");
   public static final Simple<PsiPackageStatement> CLASS_IMPLICIT_PACKAGE = error("class.implicit.package.statement");
   
@@ -712,12 +712,12 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiElement, Collection<PsiClassType>> EXCEPTION_UNHANDLED =
     error(PsiElement.class, "exception.unhandled")
       .withRange(JavaErrorFormatUtil::getRange)
-      .withHighlightType(e -> JavaErrorHighlightType.UNHANDLED_EXCEPTION)
+      .withHighlightType(JavaErrorHighlightType.UNHANDLED_EXCEPTION)
       .<Collection<PsiClassType>>parameterized()
       .withRawDescription((psi, unhandled) -> message("exception.unhandled", formatTypes(unhandled), unhandled.size()));
   public static final Parameterized<PsiResourceListElement, Collection<PsiClassType>> EXCEPTION_UNHANDLED_CLOSE =
     error(PsiResourceListElement.class, "exception.unhandled")
-      .withHighlightType(e -> JavaErrorHighlightType.UNHANDLED_EXCEPTION)
+      .withHighlightType(JavaErrorHighlightType.UNHANDLED_EXCEPTION)
       .<Collection<PsiClassType>>parameterized()
       .withRawDescription((psi, unhandled) -> message("exception.unhandled.close", formatTypes(unhandled), unhandled.size()));
   public static final Parameterized<PsiTypeElement, SuperclassSubclassContext> EXCEPTION_MUST_BE_DISJOINT =
@@ -987,7 +987,7 @@ public final class JavaErrorKinds {
       .withRawDescription(ref -> message("reference.type.needs.type.arguments", requireNonNull(ref.getReferenceNameElement()).getText()));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> REFERENCE_LOCAL_CLASS_OTHER_SWITCH_BRANCH =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "reference.local.class.other.switch.branch")
-      .withHighlightType((ref, cls) -> JavaErrorHighlightType.WRONG_REF)
+      .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withRawDescription((ref, cls) -> message("reference.local.class.other.switch.branch", formatClass(cls)));
   public static final Parameterized<PsiReferenceExpression, PsiField> REFERENCE_FIELD_FORWARD =
     parameterized(PsiReferenceExpression.class, PsiField.class, "reference.field.forward")
@@ -1002,33 +1002,33 @@ public final class JavaErrorKinds {
     parameterized(PsiReferenceExpression.class, PsiField.class, "reference.enum.self")
       .withRawDescription((ref, field) -> message("reference.enum.self", field.getName()));
   public static final Simple<PsiExpression> REFERENCE_QUALIFIER_NOT_EXPRESSION =
-    error(PsiExpression.class, "reference.qualifier.not.expression").withHighlightType(ref -> JavaErrorHighlightType.WRONG_REF);
+    error(PsiExpression.class, "reference.qualifier.not.expression").withHighlightType(JavaErrorHighlightType.WRONG_REF);
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiPrimitiveType> REFERENCE_QUALIFIER_PRIMITIVE =
     parameterized(PsiJavaCodeReferenceElement.class, PsiPrimitiveType.class, "reference.qualifier.primitive")
-      .withHighlightType((ref, type) -> JavaErrorHighlightType.WRONG_REF)
+      .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
       .withRawDescription((ref, type) -> message("reference.qualifier.primitive", type.getPresentableText()));
   public static final Simple<PsiElement> REFERENCE_PENDING =
     error(PsiElement.class, "incomplete.project.state.pending.reference")
-      .withHighlightType(ref -> JavaErrorHighlightType.PENDING_REF);
+      .withHighlightType(JavaErrorHighlightType.PENDING_REF);
   public static final Simple<PsiJavaCodeReferenceElement> REFERENCE_UNRESOLVED =
     error(PsiJavaCodeReferenceElement.class, "reference.unresolved")
-      .withHighlightType(ref -> JavaErrorHighlightType.WRONG_REF)
+      .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withRawDescription(ref -> message("reference.unresolved", ref.getReferenceName()))
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref));
   public static final Simple<PsiJavaCodeReferenceElement> REFERENCE_IMPLICIT_CLASS =
     error(PsiJavaCodeReferenceElement.class, "reference.implicit.class")
-      .withHighlightType(ref -> JavaErrorHighlightType.WRONG_REF)
+      .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withRawDescription(ref -> message("reference.implicit.class", ref.getReferenceName()))
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> REFERENCE_CLASS_IN_DEFAULT_PACKAGE =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "reference.class.in.default.package")
-      .withHighlightType((ref, cls) -> JavaErrorHighlightType.WRONG_REF)
+      .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withRawDescription((ref, cls) -> message("reference.class.in.default.package", cls.getName()))
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref));
   public static final Parameterized<PsiJavaCodeReferenceElement, List<JavaResolveResult>> REFERENCE_AMBIGUOUS =
     error(PsiJavaCodeReferenceElement.class, "reference.ambiguous")
-      .withHighlightType(ref -> JavaErrorHighlightType.WRONG_REF)
+      .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
       .<List<JavaResolveResult>>parameterized()
       .withRawDescription((ref, results) -> message("reference.ambiguous", ref.getReferenceName(),
@@ -1036,7 +1036,7 @@ public final class JavaErrorKinds {
                                                     format(requireNonNull(results.get(1).getElement()))));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiElement> REFERENCE_NON_STATIC_FROM_STATIC_CONTEXT =
     parameterized(PsiJavaCodeReferenceElement.class, PsiElement.class, "reference.non.static.from.static.context")
-      .withHighlightType((ref, refElement) -> JavaErrorHighlightType.WRONG_REF)
+      .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
       .withRawDescription((ref, refElement) -> {
         String type = JavaElementKind.fromElement(refElement).lessDescriptive().subject();
@@ -1045,7 +1045,7 @@ public final class JavaErrorKinds {
       });
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiTypeParameter> REFERENCE_OUTER_TYPE_PARAMETER_FROM_STATIC_CONTEXT =
     parameterized(PsiJavaCodeReferenceElement.class, PsiTypeParameter.class, "reference.outer.type.parameter.from.static.context")
-      .withHighlightType((ref, refElement) -> JavaErrorHighlightType.WRONG_REF)
+      .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withRawDescription((ref, refElement) -> message("reference.outer.type.parameter.from.static.context", refElement.getName()));
   public static final Simple<PsiJavaCodeReferenceElement> REFERENCE_SELECT_FROM_TYPE_PARAMETER =
     error(PsiJavaCodeReferenceElement.class, "reference.select.from.type.parameter");
@@ -1147,7 +1147,7 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_UNRESOLVED_NAME =
     parameterized(PsiMethodCallExpression.class, JavaResolveResult[].class, "call.unresolved.name")
       .withRange((call, cls) -> getRange(call))
-      .withHighlightType((call, results) -> JavaErrorHighlightType.WRONG_REF)
+      .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withRawDescription((call, results) -> message(
         "call.unresolved.name", call.getMethodExpression().getReferenceName() + formatArgumentTypes(call.getArgumentList(), true)));
   public static final Parameterized<PsiMethodCallExpression, JavaAmbiguousCallContext> CALL_AMBIGUOUS =
@@ -1158,13 +1158,14 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_AMBIGUOUS_NO_MATCH =
     parameterized(PsiMethodCallExpression.class, JavaResolveResult[].class, "call.ambiguous.no.match")
       .withRange((call, cls) -> getRange(call))
+      .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withRawDescription(
         (call, cls) -> message("call.ambiguous.no.match", call.getMethodExpression().getReferenceName(),
                                requireNonNull(RefactoringChangeUtil.getQualifierClass(call.getMethodExpression())).getName()));
   public static final Parameterized<PsiMethodCallExpression, PsiPrimitiveType> CALL_QUALIFIER_PRIMITIVE =
     parameterized(PsiMethodCallExpression.class, PsiPrimitiveType.class, "call.qualifier.primitive")
-      .withHighlightType((ref, type) -> JavaErrorHighlightType.WRONG_REF)
       .withRange((call, type) -> getRange(call))
+      .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withRawDescription((call, type) -> message("call.qualifier.primitive", type.getPresentableText()));
     
   public static final Parameterized<PsiMethodCallExpression, PsiMethod> CALL_DIRECT_ABSTRACT_METHOD_ACCESS =

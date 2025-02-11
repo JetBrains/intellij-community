@@ -170,6 +170,16 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
     }
 
     /**
+     * Creates a new instance of Simple with the specified constant highlight type.
+     *
+     * @param type a {@link JavaErrorHighlightType} for this error kind.
+     * @return a new Simple instance with the updated highlight type function.
+     */
+    Simple<Psi> withHighlightType(@NotNull JavaErrorHighlightType type) {
+      return withHighlightType(psi -> type);
+    }
+
+    /**
      * Creates a new instance of Simple with the specified description function.
      *
      * @param description a Function that generates a description as an HtmlChunk 
@@ -325,6 +335,16 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      */
     Parameterized<Psi, Context> withHighlightType(@NotNull BiFunction<? super Psi, ? super Context, JavaErrorHighlightType> type) {
       return new Parameterized<>(myKey, myDescription, myTooltip, myAnchor, myRange, type);
+    }
+
+    /**
+     * Creates a new instance of Parameterized with the specified constant highlight type.
+     *
+     * @param type a {@link JavaErrorHighlightType} for a given error kind.
+     * @return a new Parameterized instance with the updated highlight type function.
+     */
+    Parameterized<Psi, Context> withHighlightType(@NotNull JavaErrorHighlightType type) {
+      return withHighlightType((psi, ctx) -> type);
     }
 
     /**
