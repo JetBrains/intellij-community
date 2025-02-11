@@ -24,6 +24,8 @@ from _pydevd_bundle.pydevd_constants import IS_PY39_OR_GREATER
 from _pydevd_bundle.pydevd_constants import IS_PY310_OR_GREATER
 from _pydevd_bundle.pydevd_constants import IS_PY312_OR_GREATER
 from _pydevd_bundle.pydevd_constants import IS_PY313
+from _pydevd_bundle.pydevd_constants import IS_PY313_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY314
 
 
 try:
@@ -284,7 +286,7 @@ def test_case_suspend_thread(case_setup):
 # we're inside the tracing other threads don't run (so, we can have only one
 # thread paused in the debugger).
 @pytest.mark.skipif(IS_JYTHON, reason='Jython can only have one thread stopped at each time.')
-@pytest.mark.xfail(IS_PY313, reason='PCQA-888')
+@pytest.mark.xfail(IS_PY313_OR_GREATER, reason='PCQA-888')
 def test_case_suspend_all_thread(case_setup):
     with case_setup.test_file('_debugger_case_suspend_all.py') as writer:
         writer.write_make_initial_run()
@@ -1064,7 +1066,7 @@ def test_case_qthread4(case_setup):
         writer.log.append('Marking finished ok.')
         writer.finished_ok = True
 
-
+@pytest.mark.xfail(IS_PY314, reason='PCQA-941')
 def test_m_switch(case_setup_m_switch):
     with case_setup_m_switch.test_file() as writer:
         writer.log.append('writing add breakpoint')
@@ -1091,7 +1093,7 @@ def test_m_switch(case_setup_m_switch):
 
         writer.finished_ok = True
 
-
+@pytest.mark.xfail(IS_PY314, reason='PCQA-942')
 def test_module_entry_point(case_setup_m_switch_entry_point):
     with case_setup_m_switch_entry_point.test_file() as writer:
         writer.log.append('writing add breakpoint')
@@ -2454,8 +2456,8 @@ def test_return_value(case_setup):
 @pytest.mark.parametrize(
     'check_single_notification',
     (
-        pytest.param(True, marks=pytest.mark.xfail(IS_PY313, reason='PCQA-889')),
-        pytest.param(False, marks=pytest.mark.xfail(IS_PY313, reason='PCQA-890')),
+        pytest.param(True, marks=pytest.mark.xfail(IS_PY313_OR_GREATER, reason='PCQA-889')),
+        pytest.param(False, marks=pytest.mark.xfail(IS_PY313_OR_GREATER, reason='PCQA-890')),
     ),
 )
 def test_run_pause_all_threads_single_notification(case_setup, check_single_notification):
