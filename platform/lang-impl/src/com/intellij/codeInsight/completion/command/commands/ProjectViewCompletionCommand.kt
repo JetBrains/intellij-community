@@ -2,17 +2,14 @@
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.completion.command.AbstractActionCompletionCommand
 import com.intellij.ide.actions.ActivateToolWindowAction.Manager
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * A completion command, which triggers the "Project" tool window in the IDE.
  */
-@ApiStatus.Experimental
-class ProjectViewCompletionCommand : AbstractActionCompletionCommand(Manager.getActionIdForToolWindow("Project"),
+internal class ProjectViewCompletionCommand : AbstractActionCompletionCommand(Manager.getActionIdForToolWindow("Project"),
                                                                      "Project tool",
                                                                      CodeInsightBundle.message("command.completion.project.tool.text"),
                                                                      null,

@@ -12,7 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-class JavaDeleteCompletionCommand : ApplicableCompletionCommand(), DumbAware {
+internal class JavaDeleteCompletionCommand : ApplicableCompletionCommand(), DumbAware {
   override val name: String
     get() = "Delete"
   override val i18nName: @Nls String

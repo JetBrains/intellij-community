@@ -13,7 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-class JavaInlineVariableCompletionCommand : ApplicableCompletionCommand() {
+internal class JavaInlineVariableCompletionCommand : ApplicableCompletionCommand() {
   override val name: String
     get() = "Inline"
 

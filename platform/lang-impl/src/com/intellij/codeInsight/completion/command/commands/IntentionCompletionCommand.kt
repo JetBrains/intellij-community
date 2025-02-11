@@ -7,11 +7,9 @@ import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-@ApiStatus.Experimental
 internal class IntentionCompletionCommand(
   private val intentionAction: IntentionActionWithTextCaching,
   override val priority: Int?,

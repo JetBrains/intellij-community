@@ -49,7 +49,6 @@ import kotlin.math.min
  * completion factories to customize behavior according to individual requirements.
  */
 @ApiStatus.Internal
-@ApiStatus.Experimental
 @Service(Service.Level.PROJECT)
 internal class CommandCompletionService(
   val coroutineScope: CoroutineScope,
@@ -139,7 +138,6 @@ internal class CommandCompletionService(
     lookup.putUserData(INSTALLED_HINT_KEY, true)
   }
 
-  @ApiStatus.Internal
   private object CommandCompletionLookupItemFilter : Condition<LookupElement> {
     override fun value(e: LookupElement?): Boolean {
       return e != null && e.`as`(CommandCompletionLookupElement::class.java) != null
@@ -157,7 +155,8 @@ private val LOOKUP_HIGHLIGHTING = Key.create<List<RangeHighlighter>>("completion
 private val ICON_RENDER = Key.create<Inlay<PresentationRenderer?>>("completion.command.icon.render")
 private const val PROMPT_LAYER = HighlighterLayer.ERROR + 10
 
-private class CommandCompletionListener : LookupManagerListener {
+@ApiStatus.Internal
+internal class CommandCompletionListener : LookupManagerListener {
 
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
     if (!Registry.`is`("ide.completion.command.enabled")) return
@@ -338,7 +337,8 @@ private class CommandCompletionHighlightingListener(
  * select an item, or hide the lookup based on various conditions, such as the presence of
  * specific data in the current lookup or the state of the caret/editor.
  */
-private class CommandCompletionCharFilter : CharFilter() {
+@ApiStatus.Internal
+internal class CommandCompletionCharFilter : CharFilter() {
   override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup?): Result? {
     if (!Registry.`is`("ide.completion.command.enabled")) return null
     if (lookup !is LookupImpl) return null
@@ -370,7 +370,8 @@ private class CommandCompletionCharFilter : CharFilter() {
  * A private implementation of the `LookupCustomizer` interface that modifies a lookup instance
  * to insert additional flags.
  */
-private class CommandCompletionLookupCustomizer : LookupCustomizer {
+@ApiStatus.Internal
+internal class CommandCompletionLookupCustomizer : LookupCustomizer {
   override fun customizeLookup(lookupImpl: LookupImpl) {
     if (!Registry.`is`("ide.completion.command.enabled")) return
     val project = lookupImpl.project

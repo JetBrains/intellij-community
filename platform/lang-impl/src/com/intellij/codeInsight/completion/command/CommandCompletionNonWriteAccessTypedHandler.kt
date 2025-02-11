@@ -38,9 +38,8 @@ import org.jetbrains.annotations.ApiStatus
  * and triggering command completions without modifying the editor's document directly.
  *
  */
-@ApiStatus.Experimental
 @ApiStatus.Internal
-class CommandCompletionNonWriteAccessTypedHandler : NonWriteAccessTypedHandler {
+internal class CommandCompletionNonWriteAccessTypedHandler : NonWriteAccessTypedHandler {
   override fun isApplicable(editor: Editor, charTyped: Char, dataContext: DataContext): Boolean {
     if (!Registry.`is`("ide.completion.command.enabled")) return false
     val project = editor.project ?: return false
@@ -75,9 +74,8 @@ internal val INSTALLED_EDITOR = Key.create<Inlay<ComponentInlayRenderer<Language
 internal val ORIGINAL_EDITOR = Key.create<Pair<Editor, Int>>("completion.command.original.editor")
 
 @ApiStatus.Internal
-@ApiStatus.Experimental
 @Service(Service.Level.PROJECT)
-class NonWriteAccessCommandCompletionService(
+internal class NonWriteAccessCommandCompletionService(
   val coroutineScope: CoroutineScope,
 ) {
 

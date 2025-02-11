@@ -10,7 +10,7 @@ import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 
-class JavaCopyFQNCompletionCommand : AbstractCopyFQNCompletionCommand() {
+internal class JavaCopyFQNCompletionCommand : AbstractCopyFQNCompletionCommand() {
   override fun placeIsApplicable(element: PsiElement, offset: Int): Boolean {
     if (FqnUtil.elementToFqn(element, null) == null) return false
     val member = PsiTreeUtil.getParentOfType(element, PsiMember::class.java) ?: return false

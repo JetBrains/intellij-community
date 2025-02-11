@@ -8,7 +8,7 @@ import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiStatement
 import com.intellij.psi.util.parents
 
-class JavaFormatCodeCompletionCommand : AbstractFormatCodeCompletionCommand() {
+internal class JavaFormatCodeCompletionCommand : AbstractFormatCodeCompletionCommand() {
   override fun findTargetToRefactor(element: PsiElement): PsiElement {
     return element.parents(true).first { it is PsiMember || it is PsiCodeBlock || it is PsiStatement }
   }

@@ -9,7 +9,6 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -18,7 +17,6 @@ import javax.swing.Icon
  * This class handles the completion logic for reformatting code based on the PSI (Program Structure Interface)
  * context and specific applicability conditions.
  */
-@ApiStatus.Experimental
 abstract class AbstractFormatCodeCompletionCommand : ApplicableCompletionCommand() {
   final override val name: String
     get() = "Format"

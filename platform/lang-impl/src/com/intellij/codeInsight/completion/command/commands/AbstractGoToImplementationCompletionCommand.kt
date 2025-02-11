@@ -1,18 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
-import com.intellij.codeInsight.completion.command.AbstractActionCompletionCommand
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Represents an abstract command to navigate to the implementation(s)
  * of a given element within a code editor during code completion processes.
  */
-@ApiStatus.Experimental
 abstract class AbstractGoToImplementationCompletionCommand : AbstractActionCompletionCommand("GotoImplementation",
                                                                                              "Go to Implementation",
                                                                                              ActionsBundle.message("action.GotoImplementation.text"),

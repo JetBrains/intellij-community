@@ -7,8 +7,8 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.patterns.PlatformPatterns
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-private class CommandCompletionContributor : CompletionContributor(), DumbAware {
+@ApiStatus.Internal
+internal class CommandCompletionContributor : CompletionContributor(), DumbAware {
   init {
     extend(CompletionType.BASIC,
            PlatformPatterns.psiElement(),

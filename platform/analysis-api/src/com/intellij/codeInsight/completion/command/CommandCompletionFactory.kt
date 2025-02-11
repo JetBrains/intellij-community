@@ -4,10 +4,10 @@ package com.intellij.codeInsight.completion.command
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Factory interface for creating and managing completion commands in a specific context.
@@ -18,8 +18,7 @@ import org.jetbrains.annotations.ApiStatus
  *
  * Should implement DumbAware to support dumb mode
  */
-@ApiStatus.Experimental
-interface CommandCompletionFactory {
+interface CommandCompletionFactory : PossiblyDumbAware {
   /**
    * Provides the default character suffix. After that, suffix command completion will be enabled
    *

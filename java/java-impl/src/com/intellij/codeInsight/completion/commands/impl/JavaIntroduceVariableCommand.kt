@@ -20,7 +20,7 @@ import com.intellij.refactoring.actions.IntroduceVariableAction
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-class JavaIntroduceVariableCommand : ApplicableCompletionCommand() {
+internal class JavaIntroduceVariableCommand : ApplicableCompletionCommand() {
   override val name: String
     get() = "Introduce variable"
 

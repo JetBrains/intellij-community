@@ -7,7 +7,7 @@ import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.util.PsiTreeUtil
 
-class JavaGoToDeclarationCommandCompletion : AbstractGoToDeclarationCompletionCommand() {
+internal class JavaGoToDeclarationCommandCompletion : AbstractGoToDeclarationCompletionCommand() {
   override fun canNavigateToDeclaration(context: PsiElement): Boolean {
     if (context !is PsiIdentifier) {
       return false

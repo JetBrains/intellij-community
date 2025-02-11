@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
-import com.intellij.codeInsight.completion.command.AbstractActionCompletionCommand
 import com.intellij.codeInsight.completion.command.getTargetContext
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.IdeActions
@@ -9,10 +8,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-class RenameActionCompletionCommand : AbstractActionCompletionCommand(IdeActions.ACTION_RENAME,
+internal class RenameActionCompletionCommand : AbstractActionCompletionCommand(IdeActions.ACTION_RENAME,
                                                                       "Rename",
                                                                       ActionsBundle.message("action.RenameElement.text"),
                                                                       null) {

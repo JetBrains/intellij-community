@@ -6,7 +6,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiIdentifier
 
-class JavaGenerateCommandCompletion : AbstractGenerateCommandProvider() {
+internal class JavaGenerateCommandCompletion : AbstractGenerateCommandProvider() {
   override fun generationIsAvailable(element: PsiElement, offset: Int): Boolean {
     val parent = element.parent
     if (parent !is PsiClass) return false

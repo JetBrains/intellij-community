@@ -1,18 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
-import com.intellij.codeInsight.completion.command.AbstractActionCompletionCommand
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**
  * Represents an abstract completion command specifically designed for navigating to declarations
  * in the code editor.
  */
-@Experimental
 abstract class AbstractGoToDeclarationCompletionCommand : AbstractActionCompletionCommand("GotoDeclarationOnly",
                                                                          "Go to Declaration",
                                                                          ActionsBundle.message("action.GotoDeclarationOnly.text"),

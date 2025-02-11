@@ -9,7 +9,7 @@ import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 
-class JavaGoToImplementationCommandCompletion : AbstractGoToImplementationCompletionCommand() {
+internal class JavaGoToImplementationCommandCompletion : AbstractGoToImplementationCompletionCommand() {
   override fun canGoToImplementation(element: PsiElement, offset: Int): Boolean {
 
     val member = PsiTreeUtil.getParentOfType(element, PsiMember::class.java) ?: return false

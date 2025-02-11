@@ -28,7 +28,6 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.JBIterable.from
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Predicate
 import javax.swing.Icon
@@ -36,8 +35,7 @@ import javax.swing.Icon
 /**
  * A provider for run marker-related completion commands in the code editor.
  */
-@ApiStatus.Experimental
-class SimpleRunMarkerCommandProvider : CommandProvider {
+internal class SimpleRunMarkerCommandProvider : CommandProvider {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     return runBlockingCancellable {
       val offset = context.offset

@@ -1,20 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
-import com.intellij.codeInsight.completion.command.AbstractActionCompletionCommand
 import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**
  * Abstract base class for defining commands that are intended to execute the "Show Usages" action
  * specifically within the context of code completion.
  */
-@Experimental
 abstract class AbstractShowUsagesActionCompletionCommand : AbstractActionCompletionCommand(ShowUsagesAction.ID,
                                                                                            "Show usages",
                                                                                            ActionsBundle.message("action.ShowUsages.text"),

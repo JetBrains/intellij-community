@@ -22,7 +22,6 @@ import org.jetbrains.annotations.ApiStatus
  * list is selected and inserted into the editor.
  */
 @ApiStatus.Internal
-@ApiStatus.Experimental
 internal class CommandInsertHandler(private val completionCommand: CompletionCommand) : InsertHandler<LookupElement?> {
   override fun handleInsert(context: InsertionContext, item: LookupElement) {
     var editor = context.editor

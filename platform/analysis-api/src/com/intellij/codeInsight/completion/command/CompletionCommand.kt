@@ -3,12 +3,12 @@ package com.intellij.codeInsight.completion.command
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -19,7 +19,6 @@ import javax.swing.Icon
  *
  * This class is marked as experimental and may change in future releases.
  */
-@ApiStatus.Experimental
 abstract class CompletionCommand {
   /**
    * Represents the name which is used as a main lookup string
@@ -79,8 +78,7 @@ abstract class CompletionCommand {
  * Should be stateless and can be applied either to physical and non-physical classes
  * Should implement DumbAware to support DumbMode
  */
-@ApiStatus.Experimental
-abstract class ApplicableCompletionCommand : CompletionCommand() {
+abstract class ApplicableCompletionCommand : CompletionCommand(), PossiblyDumbAware {
 
   /**
    * Determines whether the command is applicable based on the given context.
@@ -102,7 +100,6 @@ abstract class ApplicableCompletionCommand : CompletionCommand() {
   open fun supportsReadOnly(): Boolean = false
 }
 
-@ApiStatus.Experimental
 data class HighlightInfoLookup(
   val range: TextRange,
   val attributesKey: TextAttributesKey,

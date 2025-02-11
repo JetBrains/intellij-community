@@ -48,15 +48,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.job
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 
 /**
  * Provides supplying completion commands
  * based on intentions, errors, and inspections within the given context.
  */
-@ApiStatus.Experimental
-class DirectIntentionCommandProvider : CommandProvider {
+internal class DirectIntentionCommandProvider : CommandProvider {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     if (!Registry.`is`("ide.completion.command.enabled")) return emptyList()
     return runBlockingCancellable {
@@ -344,7 +342,6 @@ private fun getInspectionTools(profile: InspectionProfileWrapper, file: PsiFile)
   return enabled
 }
 
-@ApiStatus.Experimental
 interface IntentionCommandSkipper {
   companion object {
     internal val EP_NAME: LanguageExtension<IntentionCommandSkipper> = LanguageExtension<IntentionCommandSkipper>("com.intellij.codeInsight.completion.intention.skipper")

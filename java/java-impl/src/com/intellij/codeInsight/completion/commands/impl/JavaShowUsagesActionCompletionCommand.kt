@@ -5,7 +5,7 @@ import com.intellij.codeInsight.completion.command.commands.AbstractShowUsagesAc
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 
-class JavaShowUsagesActionCompletionCommand : AbstractShowUsagesActionCompletionCommand() {
+internal class JavaShowUsagesActionCompletionCommand : AbstractShowUsagesActionCompletionCommand() {
   override fun hasToShow(element: PsiElement): Boolean {
     val namedIdentifierParent = PsiTreeUtil.getParentOfType(element, PsiNameIdentifierOwner::class.java)
     return namedIdentifierParent?.nameIdentifier == element &&

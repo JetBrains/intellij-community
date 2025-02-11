@@ -15,11 +15,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaCommandCompletionFactory implements CommandCompletionFactory, DumbAware {
+class JavaCommandCompletionFactory implements CommandCompletionFactory, DumbAware {
 
   @Override
   public boolean isApplicable(@NotNull PsiFile psiFile, int offset) {
-    //todo skip varargs!
     if (!(psiFile instanceof PsiJavaFile)) return false;
     PsiElement elementAt = psiFile.findElementAt(offset);
     if (elementAt == null) return true;

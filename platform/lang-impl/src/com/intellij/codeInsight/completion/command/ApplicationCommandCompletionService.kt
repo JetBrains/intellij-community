@@ -10,10 +10,9 @@ import org.jetbrains.annotations.ApiStatus
  *
  */
 @Service(Service.Level.APP)
-@ApiStatus.Experimental
 @ApiStatus.Internal
 @State(name = "CommandCompletion", category = SettingsCategory.UI, storages = [Storage("CommandCompletion.xml", roamingType = RoamingType.DISABLED)])
-class ApplicationCommandCompletionService : PersistentStateComponent<AppCommandCompletionSettings> {
+internal class ApplicationCommandCompletionService : PersistentStateComponent<AppCommandCompletionSettings> {
 
   private var myState = AppCommandCompletionSettings()
 
@@ -24,8 +23,7 @@ class ApplicationCommandCompletionService : PersistentStateComponent<AppCommandC
   }
 }
 
-@ApiStatus.Experimental
 @ApiStatus.Internal
-class AppCommandCompletionSettings(
+internal class AppCommandCompletionSettings(
   var showCounts: Int = 0,
 )

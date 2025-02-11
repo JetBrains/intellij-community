@@ -9,13 +9,11 @@ import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * An implementation of the CommandProvider interface that supplies completion commands
  * registered through extension points ('com.intellij.codeInsight.completion.applicable.command') for specific programming languages.
  */
-@ApiStatus.Experimental
 internal class ExtensionPointCommandProvider : CommandProvider, DumbAware {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     if (!Registry.`is`("ide.completion.command.enabled")) return emptyList()

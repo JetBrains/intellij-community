@@ -14,15 +14,15 @@ import com.intellij.psi.util.PsiTreeUtil
 import javax.swing.Icon
 
 
-class GenerateGetterSetterHandleCompletionCommand :
+internal class GenerateGetterSetterHandleCompletionCommand :
   BaseGenerateGetterSetterHandleCompletionCommand(true, true, "Generate 'Getter/Setter'",
                                                   QuickFixBundle.message("create.getter.setter"))
 
-class GenerateSetterHandleCompletionCommand :
+internal class GenerateSetterHandleCompletionCommand :
   BaseGenerateGetterSetterHandleCompletionCommand(false, true, "Generate 'Setter'",
                                                   QuickFixBundle.message("create.setter"))
 
-class GenerateGetterHandleCompletionCommand :
+internal class GenerateGetterHandleCompletionCommand :
   BaseGenerateGetterSetterHandleCompletionCommand(true, false, "Generate 'Getter'",
                                                   QuickFixBundle.message("create.getter"))
 

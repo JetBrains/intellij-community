@@ -2,9 +2,9 @@
 package com.intellij.codeInsight.completion.command
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**
  * Represents a provider of completion commands used in code completion mechanisms.
@@ -13,8 +13,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  *
  * Should be DumbAware to support dumb mode
  */
-@Experimental
-interface CommandProvider {
+interface CommandProvider : PossiblyDumbAware {
 
 
   /**
@@ -53,7 +52,6 @@ interface CommandProvider {
  * @property isReadOnly it is not allowed to write in this PSI file. For example, a command can navigate to another file
  *                        (e.g., an imaginary file or preview state).
  */
-@Experimental
 data class CommandCompletionProviderContext(
   val project: Project,
   val editor: Editor,

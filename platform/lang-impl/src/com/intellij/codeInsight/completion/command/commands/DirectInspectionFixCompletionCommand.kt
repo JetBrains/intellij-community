@@ -25,11 +25,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
 import kotlinx.coroutines.job
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-@ApiStatus.Experimental
 internal class DirectInspectionFixCompletionCommand(
   private val inspectionId: String,
   override val name: @Nls String,

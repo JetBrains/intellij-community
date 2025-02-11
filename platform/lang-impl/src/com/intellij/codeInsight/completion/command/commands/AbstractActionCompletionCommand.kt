@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.completion.command
+package com.intellij.codeInsight.completion.command.commands
 
+import com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
+import com.intellij.codeInsight.completion.command.getDataContext
+import com.intellij.codeInsight.completion.command.getTargetContext
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -10,7 +13,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -20,9 +23,8 @@ import javax.swing.Icon
  * as part of code completion features, ensuring that the action is applicable and
  * executable within a given code editor context.
  */
-@ApiStatus.Experimental
 abstract class AbstractActionCompletionCommand(
-  var actionId: String,
+  @Language("devkit-action-id") var actionId: String,
   override val name: String,
   override val i18nName: @Nls String,
   override val icon: Icon?,

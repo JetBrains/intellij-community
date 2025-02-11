@@ -15,15 +15,12 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.Icon
 
 /**
  * Represents a specialized lookup element intended for usage in command completion scenarios.
  */
 @ApiStatus.Internal
-@ApiStatus.Experimental
 internal class CommandCompletionLookupElement(
   lookupElement: LookupElement,
   val hostStartOffset: Int,
@@ -51,8 +48,7 @@ internal class CommandCompletionLookupElement(
  * @param context An optional [PsiElement] representing the context; can be null.
  * @return A [DataContext] instance containing the provided context information.
  */
-@Internal
-@Experimental
+@ApiStatus.Internal
 fun getDataContext(
   psiFile: PsiFile,
   editor: Editor,
@@ -78,8 +74,7 @@ fun getDataContext(
  * @return The PSI element found at the specified offset, or null if no suitable element is found
  *         or if the index is not ready.
  */
-@Internal
-@Experimental
+@ApiStatus.Internal
 fun getTargetContext(offset: Int, editor: Editor): PsiElement? {
   try {
     val util = TargetElementUtil.getInstance()

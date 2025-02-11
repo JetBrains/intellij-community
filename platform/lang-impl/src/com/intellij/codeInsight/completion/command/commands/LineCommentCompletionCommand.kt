@@ -1,18 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
-import com.intellij.codeInsight.completion.command.AbstractActionCompletionCommand
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**
  * A command that executes the "Comment by Line Comment" action
  * within the context of code completion.
  */
-@Experimental
-class LineCommentCompletionCommand : AbstractActionCompletionCommand("CommentByLineComment",
+internal class LineCommentCompletionCommand : AbstractActionCompletionCommand("CommentByLineComment",
                                                                      "Comment line",
                                                                      ActionsBundle.actionText("CommentByLineComment"),
                                                                      null) {

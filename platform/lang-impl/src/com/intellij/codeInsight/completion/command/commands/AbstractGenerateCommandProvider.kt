@@ -16,7 +16,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.JBIterable
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -24,7 +23,6 @@ import javax.swing.Icon
  * Abstract base class that provides a framework for generating completion commands
  * in a code completion system.
  */
-@Experimental
 abstract class AbstractGenerateCommandProvider : CommandProvider, DumbAware {
   final override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     val psiFile = context.psiFile

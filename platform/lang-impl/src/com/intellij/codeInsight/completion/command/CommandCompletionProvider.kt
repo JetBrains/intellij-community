@@ -42,7 +42,6 @@ import org.jetbrains.annotations.ApiStatus
  *
  */
 @ApiStatus.Internal
-@ApiStatus.Experimental
 internal class CommandCompletionProvider : CompletionProvider<CompletionParameters?>() {
 
   companion object {
@@ -309,7 +308,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
 }
 
 @ApiStatus.Internal
-class CommandCompletionUnsupportedOperationException
+internal class CommandCompletionUnsupportedOperationException
   : UnsupportedOperationException("It's unexpected to invoke this method on a command completion calculating.")
 
 private class MyEditor(psiFileCopy: PsiFile, private val settings: EditorSettings) : ImaginaryEditor(psiFileCopy.project,

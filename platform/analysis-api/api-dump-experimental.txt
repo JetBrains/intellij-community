@@ -1,9 +1,11 @@
 *a:com.intellij.codeInsight.completion.command.ApplicableCompletionCommand
 - com.intellij.codeInsight.completion.command.CompletionCommand
+- com.intellij.openapi.project.PossiblyDumbAware
 - <init>():V
 - a:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - supportsReadOnly():Z
 *:com.intellij.codeInsight.completion.command.CommandCompletionFactory
+- com.intellij.openapi.project.PossiblyDumbAware
 - commandProviders(com.intellij.openapi.project.Project,com.intellij.lang.Language):java.util.List
 - createFile(com.intellij.psi.PsiFile,java.lang.String):com.intellij.psi.PsiFile
 - filterSuffix():java.lang.Character
@@ -32,6 +34,7 @@
 - hashCode():I
 - f:isReadOnly():Z
 *:com.intellij.codeInsight.completion.command.CommandProvider
+- com.intellij.openapi.project.PossiblyDumbAware
 - a:getCommands(com.intellij.codeInsight.completion.command.CommandCompletionProviderContext):java.util.List
 - getId():java.lang.String
 - supportsReadOnly():Z

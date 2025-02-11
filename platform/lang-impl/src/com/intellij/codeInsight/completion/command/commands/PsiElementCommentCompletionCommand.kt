@@ -2,12 +2,11 @@
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.completion.command.AbstractActionCompletionCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 
-class PsiElementCommentCompletionCommand : AbstractActionCompletionCommand("CommentByLineComment",
+internal class PsiElementCommentCompletionCommand : AbstractActionCompletionCommand("CommentByLineComment",
                                                                            "Comment element",
                                                                            CodeInsightBundle.message("command.completion.psi.element.comment.text"),
                                                                            null) {

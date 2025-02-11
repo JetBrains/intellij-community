@@ -2,16 +2,13 @@
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.completion.command.AbstractActionCompletionCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * This command enables triggering the "Recent Files" action during code completion.
  */
-@ApiStatus.Experimental
-class RecentFilesCompletionCommand : AbstractActionCompletionCommand("RecentFiles",
+internal class RecentFilesCompletionCommand : AbstractActionCompletionCommand("RecentFiles",
                                                                      "Recent files",
                                                                      CodeInsightBundle.message("command.completion.recent.files.text"),
                                                                      null,
