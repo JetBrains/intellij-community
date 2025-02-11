@@ -163,9 +163,15 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
   }
 
   /**
-   * Remove environments.
+   * Removes a specified environment or the default environment if none is provided.
    *
-   * @return true if removed, false if not exists
+   * @param envName The name of the environment to be removed. If null, the default environment will be targeted.
+   * @return A Result instance containing:
+   * - [RemoveResult.Removed] if the environment was successfully removed.
+   * - [RemoveResult.NotExists] if the environment does not exist.
+   * - [RemoveResult.NotDefinedInConfig] if the environment is not defined in the project configuration.
+   * - [RemoveResult.CantRemoveActiveEnvironment] if the environment cannot be removed because it is currently active.
+   * - An error wrapped in [ExecException] in case of execution failure.
    */
   suspend fun remove(envName: String? = null): Result<RemoveResult, ExecException> {
     val arguments = if (envName == null) emptyArray() else arrayOf(envName)
@@ -182,9 +188,13 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
   }
 
   /**
-   * Show the available environments.
+   * Returns details of the specified environments.
    *
-   * @param internal - Show internal environments
+   * @param envs A vararg parameter specifying the environment names to be displayed. If not provided, information for all environments is shown.
+   * @param internal Optional parameter indicating whether to include internal environments. Defaults to null.
+   * @return A [Result] containing:
+   * - [Environments] if operation is successful.
+   * - An error wrapped in [ExecException] if an execution failure occurs.
    */
   suspend fun show(vararg envs: String, internal: Boolean? = null): Result<Environments, ExecException> {
     val options = listOf(internal to "--internal").makeOptions()

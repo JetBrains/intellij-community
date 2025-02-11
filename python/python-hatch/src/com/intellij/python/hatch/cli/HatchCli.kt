@@ -67,12 +67,12 @@ class HatchCli(private val runtime: HatchRuntime) {
   /**
    * Build a project
    */
-  fun build(): Result<Nothing, ExecException> = TODO()
+  fun build(): Result<Unit, ExecException> = TODO()
 
   /**
    * Remove build artifacts
    */
-  fun clean(): Result<Nothing, ExecException> = TODO()
+  fun clean(): Result<Unit, ExecException> = TODO()
 
   /**
    * Manage the config file
@@ -92,7 +92,7 @@ class HatchCli(private val runtime: HatchRuntime) {
   /**
    * Format and lint source code
    */
-  fun fmt(): Result<Nothing, ExecException> = TODO()
+  fun fmt(): Result<Unit, ExecException> = TODO()
 
   /**
    * Create or initialize a project.
@@ -121,7 +121,7 @@ class HatchCli(private val runtime: HatchRuntime) {
   /**
    * Publish build artifacts
    */
-  fun publish(): Result<Nothing, ExecException> = TODO()
+  fun publish(): Result<Unit, ExecException> = TODO()
 
   /**
    * Manage Python installations
@@ -131,7 +131,7 @@ class HatchCli(private val runtime: HatchRuntime) {
   /**
    * Run commands within project environments
    */
-  fun run(): Result<Nothing, ExecException> = TODO()
+  fun run(): Result<Unit, ExecException> = TODO()
 
   /**
    * Manage Hatch
@@ -141,7 +141,7 @@ class HatchCli(private val runtime: HatchRuntime) {
   /**
    * Enter a shell within a project's environment
    */
-  fun shell(): Result<Nothing, ExecException> = TODO()
+  fun shell(): Result<Unit, ExecException> = TODO()
 
   data class HatchStatus(val project: String, val location: String, val config: String)
 
@@ -160,7 +160,7 @@ class HatchCli(private val runtime: HatchRuntime) {
   /**
    * Run tests
    */
-  fun test(): Result<Nothing, ExecException> = TODO()
+  fun test(): Result<Unit, ExecException> = TODO()
 
   /**
    * View a project's version.
