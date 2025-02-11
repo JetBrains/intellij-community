@@ -755,7 +755,7 @@ c:com.intellij.structuralsearch.inspection.StructuralSearchAdvertiser
 - com.intellij.profile.codeInspection.ui.InspectionTreeAdvertiser
 - <init>():V
 - getCustomGroups():java.util.List
-c:com.intellij.structuralsearch.inspection.StructuralSearchFakeInspection
+f:com.intellij.structuralsearch.inspection.StructuralSearchFakeInspection
 - com.intellij.codeInspection.LocalInspectionTool
 - <init>(java.util.Collection):V
 - createOptionsPanel():javax.swing.JComponent

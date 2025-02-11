@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -29,7 +29,6 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,11 +38,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author Bas Leijdekkers
- */
-public class StructuralSearchFakeInspection extends LocalInspectionTool {
-
+public final class StructuralSearchFakeInspection extends LocalInspectionTool {
   private Configuration myMainConfiguration;
   private final @NotNull List<Configuration> myConfigurations;
 
@@ -96,12 +91,12 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   }
 
   @Override
-  public @Nullable String getAlternativeID() {
+  public @NotNull String getAlternativeID() {
     return SSBasedInspection.SHORT_NAME;
   }
 
   @Override
-  public @Nullable String getMainToolId() {
+  public @NotNull String getMainToolId() {
     return SSBasedInspection.SHORT_NAME;
   }
 
@@ -116,7 +111,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   }
 
   @Override
-  public @Nullable String getStaticDescription() {
+  public @NotNull String getStaticDescription() {
     final String description = myMainConfiguration.getDescription();
     if (StringUtil.isEmpty(description)) {
       return SSRBundle.message("no.description.message");
