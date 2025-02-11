@@ -361,7 +361,7 @@ public class EditorSearchSession implements SearchSession,
     setMatchesLimit(LivePreviewController.MATCHES_LIMIT);
     String text = myComponent.getSearchTextComponent().getText();
     myFindModel.setStringToFind(text);
-    updateResults(true);
+    updateResults(FindSettings.getInstance().isScrollToResultsDuringTyping());
     updateMultiLineStateIfNeeded();
   }
 

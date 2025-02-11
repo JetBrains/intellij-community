@@ -2,7 +2,10 @@
 package com.intellij.find.impl.livePreview;
 
 
-import com.intellij.find.*;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindResult;
+import com.intellij.find.FindUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -451,7 +454,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     updateExcluded();
     notifyChanged();
     if (myCursor == null || !myCursor.equals(oldCursorRange)) {
-      if (toChangeSelection && FindSettings.getInstance().isScrollToResultsDuringTyping()) {
+      if (toChangeSelection) {
         updateSelection(true, true, true);
       }
       notifyCursorMoved();
