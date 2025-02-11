@@ -784,6 +784,7 @@
     <lang.smartEnterProcessor language="JSPX" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
 
     <iconProvider implementation="com.intellij.execution.testframework.TestIconProvider" id="testIcons"/>
+    <console.folding implementation="com.intellij.execution.JavaRunnerRestrictedMethodCallConsoleFolding"/>
     <stacktrace.fold.line.modifier implementation="com.intellij.execution.JavaModuleNameStacktraceModifier"/>
     <stacktrace.fold substring="at java.awt.EventDispatchThread"/>
     <stacktrace.fold substring="at java.awt.Window.dispatchEventImpl("/>
