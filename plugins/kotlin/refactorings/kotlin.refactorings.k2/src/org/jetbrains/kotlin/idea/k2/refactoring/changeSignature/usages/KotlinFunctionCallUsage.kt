@@ -298,7 +298,7 @@ internal class KotlinFunctionCallUsage(
 
                     else -> {
                         val expression = resolvedArgument.element ?: continue
-                        var newArgument: KtValueArgument = expression.parent as KtValueArgument
+                        var newArgument: KtValueArgument = expression.parent as? KtValueArgument ?: continue
                         if (newArgument.getArgumentName()?.asName != name || newArgument is KtLambdaArgument) {
                             newArgument = psiFactory.createArgument(newArgument.getArgumentExpression(), name)
                         }
