@@ -63,9 +63,12 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       val processOptions = EelExecApi.ExecuteProcessOptions.Builder(if (isWindows()) "cmd.exe" else "/bin/sh")
         .env(getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug))
         .workingDirectory(Path(myConfiguration.runnerParameters.workingDirPath).asEelPath())
-        .args(getArgs(eelApi))
-        .ptyOrStdErrSettings(Pty(-1, -1, true))
-        .build()
+        .args(getArgs(eelApi)).let {
+          if (!isWindows()) {
+            it.ptyOrStdErrSettings(Pty(-1, -1, true))
+          }
+          else it
+        }.build()
 
       val result = eelApi.exec.execute(processOptions)
       return@runWithModalProgressBlocking when (result) {
@@ -174,6 +177,9 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     addSettingParameters(args)
     args.addAll(myConfiguration.runnerParameters.options)
     args.addAll(myConfiguration.runnerParameters.goals)
+    if (isWindows()) {
+      return listOf("/c", args.parametersString)
+    }
     return args.list
   }
 
