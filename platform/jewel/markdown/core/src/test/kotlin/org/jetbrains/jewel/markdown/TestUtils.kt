@@ -23,24 +23,28 @@ public fun List<MarkdownBlock>.assertEquals(vararg expected: MarkdownBlock) {
     )
 }
 
-public fun List<MarkdownBlock>.findDifferences(expected: List<MarkdownBlock>, indentSize: Int): List<String> = buildList {
-    val indent = " ".repeat(indentSize)
-    val thisSize = this@findDifferences.size
-    if (expected.size != thisSize) {
-        add("$indent * Content size mismatch. Was $thisSize, but we expected ${expected.size}")
-        add("$indent     Actual:   ${this@findDifferences}")
-        add("$indent     Expected: $expected\n")
-        add("$indent   ℹ️ Note: skipping cells comparison as it's meaningless")
-        return@buildList
-    }
+public fun List<MarkdownBlock>.findDifferences(expected: List<MarkdownBlock>, indentSize: Int): List<String> =
+    buildList {
+        val indent = " ".repeat(indentSize)
+        val thisSize = this@findDifferences.size
+        if (expected.size != thisSize) {
+            add("$indent * Content size mismatch. Was $thisSize, but we expected ${expected.size}")
+            add("$indent     Actual:   ${this@findDifferences}")
+            add("$indent     Expected: $expected\n")
+            add("$indent   ℹ️ Note: skipping cells comparison as it's meaningless")
+            return@buildList
+        }
 
-    for ((i, item) in this@findDifferences.withIndex()) {
-        val difference = item.findDifferenceWith(expected[i], indentSize + 2)
-        if (difference.isNotEmpty()) {
-            add("$indent * Item #$i is not the same as the expected value.\n\n" + "${difference.joinToString("\n")}\n")
+        for ((i, item) in this@findDifferences.withIndex()) {
+            val difference = item.findDifferenceWith(expected[i], indentSize + 2)
+            if (difference.isNotEmpty()) {
+                add(
+                    "$indent * Item #$i is not the same as the expected value.\n\n" +
+                        "${difference.joinToString("\n")}\n"
+                )
+            }
         }
     }
-}
 
 private fun MarkdownBlock.findDifferenceWith(expected: MarkdownBlock, indentSize: Int): List<String> {
     val indent = " ".repeat(indentSize)
@@ -168,19 +172,25 @@ private fun diffList(actual: ListBlock, expected: MarkdownBlock, indentSize: Int
 
 public fun paragraph(content: String): Paragraph = Paragraph(InlineMarkdown.Text(content))
 
-public fun heading(level: Int, vararg inlineContent: InlineMarkdown): Heading = Heading(inlineContent = inlineContent, level = level)
+public fun heading(level: Int, vararg inlineContent: InlineMarkdown): Heading =
+    Heading(inlineContent = inlineContent, level = level)
 
 public fun indentedCodeBlock(content: String): IndentedCodeBlock = IndentedCodeBlock(content)
 
-public fun fencedCodeBlock(content: String, mimeType: MimeType? = null): FencedCodeBlock = FencedCodeBlock(content, mimeType)
+public fun fencedCodeBlock(content: String, mimeType: MimeType? = null): FencedCodeBlock =
+    FencedCodeBlock(content, mimeType)
 
 public fun blockQuote(vararg contents: MarkdownBlock): BlockQuote = BlockQuote(contents.toList())
 
 public fun unorderedList(vararg items: ListItem, isTight: Boolean = true, marker: String = "-"): UnorderedList =
     UnorderedList(items.toList(), isTight, marker)
 
-public fun orderedList(vararg items: ListItem, isTight: Boolean = true, startFrom: Int = 1, delimiter: String = "."): OrderedList =
-    OrderedList(items.toList(), isTight, startFrom, delimiter)
+public fun orderedList(
+    vararg items: ListItem,
+    isTight: Boolean = true,
+    startFrom: Int = 1,
+    delimiter: String = ".",
+): OrderedList = OrderedList(items.toList(), isTight, startFrom, delimiter)
 
 public fun listItem(vararg items: MarkdownBlock): ListItem = ListItem(*items)
 
