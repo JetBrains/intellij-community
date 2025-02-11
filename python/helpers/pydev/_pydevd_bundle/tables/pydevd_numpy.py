@@ -90,6 +90,14 @@ def display_data_csv(table, start_index=None, end_index=None):
     __compute_data(table, ipython_display)
 
 
+def remove_nones_values(array_part, na_rep):
+    if np.issubdtype(array_part.dtype, np.number):
+        array_part_without_nones = np.where(array_part == None, np.nan, array_part)
+    else:
+        array_part_without_nones = np.where(array_part == None, na_rep, array_part)
+    return array_part_without_nones
+
+
 class _NpTable:
     def __init__(self, np_array, format=None):
         self.array = np_array
@@ -190,12 +198,12 @@ class _NpTable:
     def to_csv(self, na_rep="None", float_format=None, sep=CSV_FORMAT_SEPARATOR):
         csv_stream = io.StringIO()
         if self.array.dtype.names is not None:
-            np_array_without_nones = np.copy(self.array)
+            np_array_without_nones = []
             for field in self.array.dtype.names:
-                np_array_without_nones[str(field)] = np.where(self.array[str(field)] == None, np.nan, self.array[str(field)])
-            np_array_without_nones = np.column_stack([np_array_without_nones[str(field)] for field in self.array.dtype.names])
+                np_array_without_nones.append(remove_nones_values(self.array[str(field)], na_rep))
+            np_array_without_nones = np.column_stack(np_array_without_nones)
         else:
-            np_array_without_nones = np.where(self.array == None, np.nan, self.array)
+            np_array_without_nones = remove_nones_values(self.array, na_rep)
         if float_format is None or float_format == 'null':
             float_format = "%s"
 

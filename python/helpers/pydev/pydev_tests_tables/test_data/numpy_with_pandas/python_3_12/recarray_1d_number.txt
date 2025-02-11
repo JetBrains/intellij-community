@@ -1,4 +1,4 @@
-<class 'numpy.recarray'>
+<class 'numpy.rec.recarray'>
 __pydev_val__
 (3, 3)
 __pydev_val__

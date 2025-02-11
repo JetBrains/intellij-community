@@ -1,4 +1,4 @@
 ~id~name~age~score
-0~1~Alice~23~85
-1~2~Bob~25~92
-2~3~Charlie~22~67
+0~1.0~Alice~23.0~85.0
+1~2.0~Bob~25.0~92.0
+2~3.0~Charlie~22.0~67.0
