@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -53,9 +53,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.JComponent
-import kotlin.Result
 import kotlin.concurrent.withLock
-import kotlin.getOrThrow
 
 private enum class NotificationKind { PLATFORM, PLUGINS, EXTERNAL }
 
@@ -100,7 +98,7 @@ object UpdateChecker {
 
   private val productDataLock = ReentrantLock()
   private var productDataUrl: Url? = null
-  private var productDataCache: SoftReference<Result<Product?>>? = null
+  private var productDataCache: SoftReference<Product?>? = null
   private val ourUpdatedPlugins: MutableMap<PluginId, PluginDownloader> = HashMap()
 
   /**
@@ -196,11 +194,10 @@ object UpdateChecker {
 
     return productDataLock.withLock {
       val cached = productDataCache?.get()
-      if (cached != null && url == productDataUrl) return@withLock cached.getOrThrow()
-
-      val result = runCatching {
+      if (cached != null && url == productDataUrl) cached
+      else {
         LOG.debug { "loading ${url}" }
-        HttpRequests.request(url)
+        val product = HttpRequests.request(url)
           .productNameAsUserAgent()
           .connect { JDOMUtil.load(it.getReader(indicator)) }
           .let { parseUpdateData(it) }
@@ -209,12 +206,11 @@ object UpdateChecker {
               PropertiesComponent.getInstance().setValue(MACHINE_ID_DISABLED_PROPERTY, true)
             }
           }
+        productDataCache = SoftReference(product)
+        productDataUrl = url
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MIN, TimeUnit.MINUTES)
+        product
       }
-
-      productDataCache = SoftReference(result)
-      productDataUrl = url
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MIN, TimeUnit.MINUTES)
-      result.getOrThrow()
     }
   }
 
