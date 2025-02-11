@@ -28,8 +28,9 @@ class ProjectGradleSettingsListener(
     override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
         settings.forEach {
             coroutineScope.launchTracked(Dispatchers.IO) {
+                val gradleVersion = getGradleVersion(project, it)
                 writeAction {
-                    val newRoot = buildRootsManager.loadLinkedRoot(it)
+                    val newRoot = buildRootsManager.loadLinkedRoot(it, gradleVersion)
                     buildRootsManager.add(newRoot)
                 }
             }
@@ -40,8 +41,9 @@ class ProjectGradleSettingsListener(
         if (KotlinPluginModeProvider.isK2Mode()) {
             settings.forEach {
                 coroutineScope.launchTracked(Dispatchers.IO) {
+                    val gradleVersion = getGradleVersion(project, it)
                     val newRoot = writeAction {
-                        buildRootsManager.loadLinkedRoot(it)
+                        buildRootsManager.loadLinkedRoot(it, gradleVersion)
                     }
                     if (newRoot is Imported) {
                         loadScriptConfigurations(newRoot, it)

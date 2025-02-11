@@ -294,7 +294,7 @@ class GradleBuildRootsManager(val project: Project, private val coroutineScope: 
         }
     }
 
-    fun loadLinkedRoot(settings: GradleProjectSettings, version: String = getGradleVersion(project, settings)): GradleBuildRoot {
+    fun loadLinkedRoot(settings: GradleProjectSettings, version: String): GradleBuildRoot {
         if (!enabled) {
             return Legacy(settings)
         }
