@@ -19,6 +19,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import kotlin.math.abs
 
 internal const val USER_CONSIDERED_NEW_DAYS = 30
 internal const val NEW_USER_SURVEY_PERIOD = 29
@@ -71,8 +72,8 @@ internal class CsatFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
 
     val surveyPeriod = if (isNewUser) NEW_USER_SURVEY_PERIOD else EXISTING_USER_SURVEY_PERIOD
 
-    val productHash = (ApplicationInfo.getInstance().versionName + MachineIdManager.getAnonymizedMachineId("CSAT Survey")).hashCode() % surveyPeriod
-    val daysHash = ChronoUnit.DAYS.between(java.time.LocalDate.of(1970, 1, 1), today).hashCode() % surveyPeriod
+    val productHash = abs((ApplicationInfo.getInstance().versionName + MachineIdManager.getAnonymizedMachineId("CSAT Survey")).hashCode()) % surveyPeriod
+    val daysHash = abs(ChronoUnit.DAYS.between(java.time.LocalDate.of(1970, 1, 1), today).toInt()) % surveyPeriod
 
     if (productHash != daysHash) {
       LOG.debug("Periods do not match: $productHash / $daysHash, is not yet suitable date for the survey")

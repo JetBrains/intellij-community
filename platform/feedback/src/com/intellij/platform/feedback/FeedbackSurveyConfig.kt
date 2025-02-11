@@ -35,6 +35,12 @@ interface FeedbackSurveyConfig {
   val requireIdeEAP: Boolean
 
   /**
+   * Whether the survey is allowed to be shown indefinite times. Must only be used by product and not plugins.
+   */
+  val isIndefinite: Boolean
+    get() = false
+
+  /**
    * Checks whether the IDE is suitable for the feedback survey.
    *
    * Usually needed when you want to show a survey only to users of a particular IDE.
