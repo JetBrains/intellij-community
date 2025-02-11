@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
@@ -136,7 +135,7 @@ public final class IdeaLogger extends JulLogger {
   }
 
   private void doLogError(String message, @Nullable Throwable t, String... details) {
-    if (t instanceof ControlFlowException) {
+    if (t != null && shouldRethrow(t)) {
       logSevere(message, ensureNotControlFlow(t));
       ExceptionUtil.rethrow(t);
     }

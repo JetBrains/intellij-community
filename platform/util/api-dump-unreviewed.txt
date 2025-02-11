@@ -399,6 +399,7 @@ a:com.intellij.openapi.diagnostic.Logger
 - setLevel(com.intellij.openapi.diagnostic.LogLevel):V
 - setLevel(org.apache.log4j.Level):V
 - s:setUnitTestMode():V
+- s:shouldRethrow(java.lang.Throwable):Z
 - trace(java.lang.String):V
 - trace(java.lang.Throwable):V
 - warn(java.lang.String):V

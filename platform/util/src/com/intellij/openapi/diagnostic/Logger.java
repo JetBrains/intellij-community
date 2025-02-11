@@ -11,6 +11,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Constructor;
 import java.util.Collection;
+import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 
 /**
@@ -490,8 +491,15 @@ public abstract class Logger {
     error(getClass() + " should override '#setLevel(LogLevel)'");
   }
 
+  private static final boolean ourRethrowCE = "true".equals(System.getProperty("idea.log.rethrow.ce", "true"));
+
+  public static boolean shouldRethrow(@NotNull Throwable t) {
+    return t instanceof ControlFlowException ||
+           t instanceof CancellationException && ourRethrowCE;
+  }
+
   protected static @Nullable Throwable ensureNotControlFlow(@Nullable Throwable t) {
-    return t instanceof ControlFlowException ?
+    return t != null && shouldRethrow(t) ?
            new Throwable("Control-flow exceptions (e.g. this " + t.getClass() + ") should never be logged. " +
                          "Instead, these should have been rethrown if caught.", t) :
            t;
