@@ -121,7 +121,6 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
         .validationRequestor(WHEN_STATE_CHANGED(repositoriesComboBox))
         .validationRequestor(WHEN_DOCUMENT_CHANGED)
         .validationOnApply(validateBranchName(true, overwriteCheckbox, repositoriesComboBox))
-        .validationOnInput(validateBranchName(false, overwriteCheckbox, repositoriesComboBox))
     }
     row(GitBundle.message("new.branch.dialog.branch.root.name")) {
       cell(repositoriesComboBox)
