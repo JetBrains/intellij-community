@@ -34,7 +34,7 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
       .collect(Collectors.toSet());
 
     Set<String> classShortNames = names.stream()
-      .map(name -> StringUtil.getShortName(StringUtil.getShortName(StringUtil.getPackageName(name))))
+      .map(name -> StringUtil.getShortName(StringUtil.getPackageName(name)))
       .filter(name -> !name.isBlank())
       .collect(Collectors.toSet());
     shortNames.addAll(classShortNames);
