@@ -8,9 +8,10 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.ApplicableExtension
@@ -22,7 +23,11 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 internal class ShadowedCallablesFilter {
-    data class FilterResult(val excludeFromCompletion: Boolean, val updatedInsertionOptions: CallableInsertionOptions)
+
+    data class FilterResult(
+        val excludeFromCompletion: Boolean,
+        val newImportStrategy: ImportStrategy? = null,
+    )
 
     private val processedSignatures = HashSet<KaCallableSignature<*>>()
     private val processedSimplifiedSignatures = HashMap<SimplifiedSignature, CompletionSymbolOrigin>()
@@ -38,51 +43,56 @@ internal class ShadowedCallablesFilter {
      */
     context(KaSession)
     fun excludeFromCompletion(
-        callable: KaCallableSignature<*>,
+        callableSignature: KaCallableSignature<*>,
         options: CallableInsertionOptions,
         symbolOrigin: CompletionSymbolOrigin,
         isAlreadyImported: Boolean,
-        typeArgumentsAreRequired: Boolean,
+        requiresTypeArguments: (KaFunctionSymbol) -> Boolean,
     ): FilterResult {
         // there is no need to create simplified signature if `KaCallableSignature<*>` is already processed
-        if (!processedSignatures.add(callable)) return FilterResult(excludeFromCompletion = true, options)
+        if (!processedSignatures.add(callableSignature)) return FilterResult(excludeFromCompletion = true)
+
+        val (importStrategy, insertionStrategy) = options
+        fun createSimplifiedSignature(considerContainer: Boolean) =
+            SimplifiedSignature.create(callableSignature, considerContainer, insertionStrategy, requiresTypeArguments)
 
         // if callable is already imported, try updating importing strategy
         if ((isAlreadyImported || symbolOrigin is CompletionSymbolOrigin.Scope)
-            && options.importingStrategy != ImportStrategy.DoNothing
+            && importStrategy != ImportStrategy.DoNothing
         ) {
-            val updatedOptions = options.copy(importingStrategy = ImportStrategy.DoNothing)
-            val excludeFromCompletion = processSignatureConsideringOptions(callable, updatedOptions, symbolOrigin, typeArgumentsAreRequired)
+            val newImportStrategy = ImportStrategy.DoNothing
+            val excludeFromCompletion = processSignatureConsideringOptions(
+                importStrategy = newImportStrategy,
+                symbolOrigin = symbolOrigin,
+                createSimplifiedSignature = ::createSimplifiedSignature,
+            )
             if (!excludeFromCompletion) {
-                return FilterResult(excludeFromCompletion = false, updatedOptions)
+                return FilterResult(excludeFromCompletion = false, newImportStrategy)
             }
         }
 
-        return FilterResult(processSignatureConsideringOptions(callable, options, symbolOrigin, typeArgumentsAreRequired), options)
+        val excludeFromCompletion = processSignatureConsideringOptions(importStrategy, symbolOrigin) { considerContainer ->
+            createSimplifiedSignature(considerContainer)
+        }
+        return FilterResult(excludeFromCompletion)
     }
 
     context(KaSession)
     private fun processSignatureConsideringOptions(
-        callableSignature: KaCallableSignature<*>,
-        insertionOptions: CallableInsertionOptions,
+        importStrategy: ImportStrategy,
         symbolOrigin: CompletionSymbolOrigin,
-        typeArgumentsAreRequired: Boolean,
+        createSimplifiedSignature: (considerContainer: Boolean) -> SimplifiedSignature?,
     ): Boolean {
-        val (importingStrategy, insertionStrategy) = insertionOptions
-
-        fun createSimplifiedSignature(considerContainer: Boolean = false) =
-            SimplifiedSignature.create(callableSignature, considerContainer, insertionStrategy, typeArgumentsAreRequired)
-
-        return when (importingStrategy) {
+        return when (importStrategy) {
             is ImportStrategy.DoNothing -> {
-                val simplifiedSignature = createSimplifiedSignature()
+                val simplifiedSignature = createSimplifiedSignature(false)
 
                 simplifiedSignature != null
                         && processSignature(simplifiedSignature, symbolOrigin)
             }
 
             is ImportStrategy.AddImport -> { // `AddImport` doesn't necessarily mean that import is required and will be eventually inserted
-                val simplifiedSignature = createSimplifiedSignature()
+                val simplifiedSignature = createSimplifiedSignature(false)
                     ?: return false
 
                 val considerContainer = symbolOrigin is CompletionSymbolOrigin.Index
@@ -119,7 +129,7 @@ internal class ShadowedCallablesFilter {
             }
 
             is ImportStrategy.InsertFqNameAndShorten -> {
-                val simplifiedSignature = createSimplifiedSignature(considerContainer = true)
+                val simplifiedSignature = createSimplifiedSignature(true)
 
                 simplifiedSignature != null
                         && processSignature(simplifiedSignature, symbolOrigin)
@@ -229,7 +239,7 @@ private sealed class SimplifiedSignature {
             callableSignature: KaCallableSignature<*>,
             considerContainer: Boolean,
             insertionStrategy: CallableInsertionStrategy,
-            typeArgumentsAreRequired: Boolean,
+            requiresTypeArguments: (KaFunctionSymbol) -> Boolean,
         ): SimplifiedSignature? {
             val symbol = callableSignature.symbol
             if (symbol !is KaNamedSymbol) return null
@@ -255,14 +265,18 @@ private sealed class SimplifiedSignature {
                     else -> VariableLikeSimplifiedSignature(callableSignature.name, containerFqName)
                 }
 
-                is KaFunctionSignature<*> -> FunctionLikeSimplifiedSignature(
-                    name = symbol.name,
-                    containerFqName = containerFqName,
-                    requiredTypeArgumentsCount = if (typeArgumentsAreRequired) callableSignature.symbol.typeParameters.size else 0,
-                    valueParameterTypes = lazy(LazyThreadSafetyMode.NONE) { callableSignature.valueParameters.map { it.returnType } },
-                    varargValueParameterIndices = callableSignature.valueParameters.mapIndexedNotNull { index, parameter -> index.takeIf { parameter.symbol.isVararg } },
-                    analysisSession = this@KaSession,
-                )
+                is KaFunctionSignature<*> -> {
+                    val symbol = callableSignature.symbol as KaNamedFunctionSymbol
+                    val valueParameters = callableSignature.valueParameters
+                    FunctionLikeSimplifiedSignature(
+                        name = symbol.name,
+                        containerFqName = containerFqName,
+                        requiredTypeArgumentsCount = if (requiresTypeArguments(symbol)) symbol.typeParameters.size else 0,
+                        valueParameterTypes = lazy(LazyThreadSafetyMode.NONE) { valueParameters.map { it.returnType } },
+                        varargValueParameterIndices = valueParameters.mapIndexedNotNull { index, parameter -> index.takeIf { parameter.symbol.isVararg } },
+                        analysisSession = this@KaSession,
+                    )
+                }
             }
         }
 

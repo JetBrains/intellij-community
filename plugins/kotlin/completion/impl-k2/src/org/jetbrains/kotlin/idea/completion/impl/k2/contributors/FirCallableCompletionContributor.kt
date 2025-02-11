@@ -8,7 +8,6 @@ import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.util.parents
-import com.intellij.util.applyIf
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -663,20 +662,24 @@ internal open class FirCallableCompletionContributor(
             for (callableWithMetadata in this@filterOutShadowedCallables) {
                 val callableFqName = callableWithMetadata.signature.callableId?.asSingleFqName()
                 val isAlreadyImported = with(importStrategyDetector) { callableFqName?.isAlreadyImported() == true }
-                val typeArgumentsAreRequired = (callableWithMetadata.signature.symbol as? KaFunctionSymbol)?.let {
-                    FunctionInsertionHelper.functionCanBeCalledWithoutExplicitTypeArguments(it, expectedType)
-                } == false
 
-                val (excludeFromCompletion, updatedOptions) = shadowedCallablesFilter.excludeFromCompletion(
-                    callableWithMetadata.signature,
-                    callableWithMetadata.options,
-                    callableWithMetadata.symbolOrigin,
-                    isAlreadyImported,
-                    typeArgumentsAreRequired,
-                )
+                val insertionOptions = callableWithMetadata.options
+                val (excludeFromCompletion, newImportStrategy) = shadowedCallablesFilter.excludeFromCompletion(
+                    callableSignature = callableWithMetadata.signature,
+                    options = insertionOptions,
+                    symbolOrigin = callableWithMetadata.symbolOrigin,
+                    isAlreadyImported = isAlreadyImported,
+                ) {
+                    !FunctionInsertionHelper.functionCanBeCalledWithoutExplicitTypeArguments(it, expectedType)
+                }
                 if (excludeFromCompletion) continue
 
-                yield(callableWithMetadata.applyIf(updatedOptions != callableWithMetadata.options) { copy(options = updatedOptions) })
+                yield(
+                    if (newImportStrategy != null)
+                        callableWithMetadata.copy(options = insertionOptions.copy(importingStrategy = newImportStrategy))
+                    else
+                        callableWithMetadata
+                )
             }
         }
 
