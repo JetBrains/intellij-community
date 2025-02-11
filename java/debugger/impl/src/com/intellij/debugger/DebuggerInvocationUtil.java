@@ -5,6 +5,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,7 @@ public final class DebuggerInvocationUtil {
 
     SwingUtilities.invokeLater(() -> {
       if (!project.isDisposed()) {
-        ReadAction.run(() -> runnable.run());
+        WriteIntentReadAction.run(runnable);
       }
     });
   }
