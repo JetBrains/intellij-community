@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.recentFiles.backend
 
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
@@ -16,7 +15,6 @@ import kotlinx.coroutines.flow.emptyFlow
 private class FilesSwitcherBackendApi : FileSwitcherApi {
 
   override suspend fun getRecentFileEvents(projectId: ProjectId): Flow<RecentFilesEvent> {
-    LOG.debug("Switcher fetching recent files for projectId: $projectId")
     return getProjectFileEventsHolderOrNull(projectId)?.getRecentFiles() ?: emptyFlow()
   }
 
@@ -33,10 +31,9 @@ private class FilesSwitcherBackendApi : FileSwitcherApi {
   private fun getProjectFileEventsHolderOrNull(projectId: ProjectId): RecentFileEventsPerProjectHolder? {
     val project = projectId.findProjectOrNull()
     if (project == null) {
-      LOG.debug("Switcher unable to resolve project from projectId, recent files request will be ignored for projectId: $projectId")
+      thisLogger().warn("Unable to resolve project from projectId, recent files request will be ignored for projectId: $projectId")
       return null
     }
-    LOG.debug("Switcher found recent files holder for projectId: $projectId")
     return RecentFileEventsPerProjectHolder.getInstance(project)
   }
 }
@@ -48,5 +45,3 @@ private class RecentFilesBackendApiProvider : RemoteApiProvider {
     }
   }
 }
-
-private val LOG by lazy { fileLogger() }
