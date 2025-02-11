@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
@@ -46,7 +47,7 @@ internal class ShadowedCallablesFilter {
         callableSignature: KaCallableSignature<*>,
         options: CallableInsertionOptions,
         symbolOrigin: CompletionSymbolOrigin,
-        isAlreadyImported: Boolean,
+        importStrategyDetector: ImportStrategyDetector,
         requiresTypeArguments: (KaFunctionSymbol) -> Boolean,
     ): FilterResult {
         // there is no need to create simplified signature if `KaCallableSignature<*>` is already processed
@@ -56,9 +57,15 @@ internal class ShadowedCallablesFilter {
         fun createSimplifiedSignature(considerContainer: Boolean) =
             SimplifiedSignature.create(callableSignature, considerContainer, insertionStrategy, requiresTypeArguments)
 
+        fun isAlreadyImported() = with(importStrategyDetector) {
+            val callableId = callableSignature.callableId
+            callableId != null
+                    && callableId.asSingleFqName().isAlreadyImported()
+        }
+
         // if callable is already imported, try updating importing strategy
-        if ((isAlreadyImported || symbolOrigin is CompletionSymbolOrigin.Scope)
-            && importStrategy != ImportStrategy.DoNothing
+        if (importStrategy != ImportStrategy.DoNothing
+            && (symbolOrigin is CompletionSymbolOrigin.Scope || isAlreadyImported())
         ) {
             val newImportStrategy = ImportStrategy.DoNothing
             val excludeFromCompletion = processSignatureConsideringOptions(
