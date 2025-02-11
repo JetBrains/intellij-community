@@ -241,9 +241,9 @@ private class AdRangeHighlighter(
   override fun getAffectedAreaStartOffset(): Int = startAffectedOffset
   override fun getAffectedAreaEndOffset(): Int = endAffectedOffset
 
-  override fun getCustomRenderer(): CustomHighlighterRenderer? = null // TODO
-  override fun getLineSeparatorPlacement(): SeparatorPlacement? = null // TODO
-  override fun getLineSeparatorRenderer(): LineSeparatorRenderer? = null // TODO
+  override fun getCustomRenderer(): CustomHighlighterRenderer? = origin.customRenderer // TODO
+  override fun getLineSeparatorPlacement(): SeparatorPlacement? = origin.lineSeparatorPlacement // TODO
+  override fun getLineSeparatorRenderer(): LineSeparatorRenderer? = origin.lineSeparatorRenderer // TODO
 
   override fun getLineSeparatorColor(): Color? = origin.lineSeparatorColor
   override fun isAfterEndOfLine(): Boolean = origin.isAfterEndOfLine

@@ -661,7 +661,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   private void paintLineMarkers(Graphics2D g, int firstVisibleOffset, int lastVisibleOffset, int firstVisibleLine, int lastVisibleLine) {
-    if (isLineMarkersShown() && myEditor.myAdView == null) {
+    if (isLineMarkersShown()) {
       paintGutterRenderers(g, firstVisibleOffset, lastVisibleOffset, firstVisibleLine, lastVisibleLine);
     }
   }
