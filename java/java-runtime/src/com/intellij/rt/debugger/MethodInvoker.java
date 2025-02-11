@@ -234,8 +234,13 @@ public final class MethodInvoker {
 
   private static Object keepReference(Object ref, boolean soft) {
     List<Object> objects = keptValues.get();
+    removeStaleReferences(objects);
+    Object wrapper = soft ? new SoftReference<>(ref) : new Object[]{ref};
+    objects.add(wrapper);
+    return wrapper;
+  }
 
-    // remove stale references first
+  private static void removeStaleReferences(List<Object> objects) {
     Iterator<Object> iterator = objects.iterator();
     while (iterator.hasNext()) {
       Object object = iterator.next();
@@ -250,9 +255,5 @@ public final class MethodInvoker {
         }
       }
     }
-
-    Object wrapper = soft ? new SoftReference<>(ref) : new Object[]{ref};
-    objects.add(wrapper);
-    return soft ? ref : wrapper;
   }
 }
