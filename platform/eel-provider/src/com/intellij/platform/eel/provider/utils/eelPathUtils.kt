@@ -118,7 +118,7 @@ object EelPathUtils {
    * @return the path which contains the transferred data. Sometimes this value can coincide with [source] if the [sink]
    */
   @JvmStatic
-  fun transferContentsIfNonLocal(eel: EelApi, source: Path, sink: Path?): Path {
+  fun transferContentsIfNonLocal(eel: EelApi, source: Path, sink: Path? = null): Path {
     if (eel is LocalEelApi) return source
     if (source.getEelDescriptor() !is LocalEelDescriptor) {
       if (sink != null && source.getEelDescriptor() != sink.getEelDescriptor()) {
