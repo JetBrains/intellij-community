@@ -1,3 +1,0 @@
-f:com.intellij.platform.recentFiles.frontend.Switcher
-- com.intellij.openapi.project.DumbAwareAction
-- sf:INSTANCE:com.intellij.platform.recentFiles.frontend.Switcher
