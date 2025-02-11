@@ -3,21 +3,20 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 
 class GHPRSwitchRemoteAction : DumbAwareAction(GithubBundle.message("pull.request.change.remote.or.account")) {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project?.serviceIfCreated<GHPRToolWindowViewModel>()?.canResetRemoteOrAccount() ?: false
+    val vm = e.getData(GHPRActionKeys.PULL_REQUESTS_PROJECT_VM)
+    e.presentation.isEnabledAndVisible = vm?.canResetRemoteOrAccount() == true
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.project!!.service<GHPRToolWindowViewModel>().resetRemoteAndAccount()
+    val vm = e.getData(GHPRActionKeys.PULL_REQUESTS_PROJECT_VM)
+    vm?.resetRemoteAndAccount()
   }
 }

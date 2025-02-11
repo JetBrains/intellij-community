@@ -20,7 +20,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.selector.GHRepositoryAndAccou
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowTabViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import java.awt.BorderLayout
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
@@ -30,7 +30,7 @@ import javax.swing.event.ListDataListener
 
 internal class GHPRToolWindowTabComponentFactory(
   private val project: Project,
-  private val vm: GHPRToolWindowViewModel
+  private val vm: GHPRProjectViewModel
 ) : ReviewTabsComponentFactory<GHPRToolWindowTabViewModel, GHPRToolWindowProjectViewModel> {
 
   override fun createEmptyTabContent(cs: CoroutineScope): JComponent {

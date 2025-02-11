@@ -29,8 +29,8 @@ import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsReloadAction
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateDiffChangeViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateDiffViewModel
 
@@ -85,7 +85,7 @@ internal class GHPRDiffService(private val project: Project, parentCs: Coroutine
 
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun findDiffVm(project: Project, repository: GHRepositoryCoordinates, pullRequest: GHPRIdentifier): Flow<GHPRDiffViewModel?> =
-  project.serviceIfCreated<GHPRToolWindowViewModel>()?.projectVm?.flatMapLatest {
+  project.serviceIfCreated<GHPRProjectViewModel>()?.connectedProjectVm?.flatMapLatest {
     if (it?.repository == repository) {
       it.getDiffViewModelFlow(pullRequest)
     }
@@ -95,7 +95,7 @@ private fun findDiffVm(project: Project, repository: GHRepositoryCoordinates, pu
   } ?: flowOf(null)
 
 private fun findDiffVm(project: Project, repository: GHRepositoryCoordinates): Flow<GHPRCreateDiffViewModel?> =
-  project.serviceIfCreated<GHPRToolWindowViewModel>()?.projectVm?.map {
+  project.serviceIfCreated<GHPRProjectViewModel>()?.connectedProjectVm?.map {
     if (it?.repository == repository) {
       it.getCreateVmOrNull()?.diffVm
     }

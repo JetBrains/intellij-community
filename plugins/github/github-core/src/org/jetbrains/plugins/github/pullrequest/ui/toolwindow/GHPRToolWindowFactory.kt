@@ -30,6 +30,7 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSelectPullRequestForFileAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSwitchRemoteAction
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 import javax.swing.UIManager
 
@@ -55,7 +56,7 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
   @OptIn(ExperimentalCoroutinesApi::class)
   suspend fun manageIconInToolbar(toolWindow: ToolWindow) {
     coroutineScope {
-      val vm = project.serviceAsync<GHPRToolWindowViewModel>()
+      val vm = project.serviceAsync<GHPRProjectViewModel>()
       launch {
         vm.isAvailable.collect {
           withContext(Dispatchers.EDT) {
@@ -74,7 +75,7 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
 
       val focusColor = UIManager.getColor("ToolWindow.Button.selectedForeground")
       launch {
-        vm.projectVm
+        vm.connectedProjectVm
           .filterNotNull().flatMapLatest { it.listVm.hasUpdates }
           .distinctUntilChanged()
           .collectLatest {
@@ -100,17 +101,19 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
     toolWindow.setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
 
     cs.launch {
-      val vm = project.serviceAsync<GHPRToolWindowViewModel>()
+      val vm = project.serviceAsync<GHPRProjectViewModel>()
+      val reviewTwVm = GHPRToolWindowViewModel(this, vm)
 
       coroutineScope {
         toolWindow.contentManager.addDataProvider(EdtNoGetDataProvider { sink ->
-          sink[GHPRActionKeys.PULL_REQUESTS_CONNECTED_PROJECT_VM] = vm.projectVm.value
+          sink[GHPRActionKeys.PULL_REQUESTS_PROJECT_VM] = vm
+          sink[GHPRActionKeys.PULL_REQUESTS_CONNECTED_PROJECT_VM] = vm.connectedProjectVm.value
         })
 
         // so it's not closed when all content is removed
         toolWindow.dontHideOnEmptyContent()
         val componentFactory = GHPRToolWindowTabComponentFactory(project, vm)
-        manageReviewToolwindowTabs(this, toolWindow, vm, componentFactory, GithubBundle.message("toolwindow.stripe.Pull_Requests"))
+        manageReviewToolwindowTabs(this, toolWindow, reviewTwVm, componentFactory, GithubBundle.message("toolwindow.stripe.Pull_Requests"))
 
         awaitCancellation()
       }

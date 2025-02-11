@@ -11,8 +11,8 @@ import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffService
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 
 internal data class GHNewPRDiffVirtualFile(override val fileManagerId: String,
                                            private val project: Project,
@@ -39,7 +39,7 @@ internal data class GHNewPRDiffVirtualFile(override val fileManagerId: String,
   }
 
   private fun findProjectVm(): GHPRConnectedProjectViewModel? =
-    project.service<GHPRToolWindowViewModel>().projectVm.value?.takeIf { it.repository == repository }
+    project.service<GHPRProjectViewModel>().connectedProjectVm.value?.takeIf { it.repository == repository }
 }
 
 private fun getPresentablePath(repository: GHRepositoryCoordinates) =

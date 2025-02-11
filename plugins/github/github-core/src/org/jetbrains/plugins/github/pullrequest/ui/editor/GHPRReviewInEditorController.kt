@@ -24,7 +24,7 @@ import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Service(Service.Level.PROJECT)
@@ -47,7 +47,7 @@ internal class GHPRReviewInEditorController(private val project: Project, privat
 
     cs.launchNow(Dispatchers.Main) {
       val settings = project.serviceAsync<GithubPullRequestsProjectUISettings>()
-      project.serviceAsync<GHPRToolWindowViewModel>().projectVm
+      project.serviceAsync<GHPRProjectViewModel>().connectedProjectVm
         .flatMapLatest { projectVm ->
           projectVm?.prOnCurrentBranch?.mapScoped {
             val id = it?.getOrNull() ?: return@mapScoped null
