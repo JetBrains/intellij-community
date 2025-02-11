@@ -4,6 +4,7 @@ package com.intellij.platform.feedback.csat
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
@@ -48,6 +49,8 @@ internal class CsatFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
   }
 
   override fun checkExtraConditionSatisfied(project: Project): Boolean {
+    if (ConfigImportHelper.isFirstSession()) return false
+
     val today = getCsatToday()
     LOG.debug("Today is ${today.format(DateTimeFormatter.ISO_LOCAL_DATE)}")
 
