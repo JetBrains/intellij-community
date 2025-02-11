@@ -31,6 +31,11 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuilder {
+  
+  private static final Iterable<AnnotationChangesTracker> ourAnnotationChangeTrackers = Iterators.collect(
+    ServiceLoader.load(AnnotationChangesTracker.class, JvmClassNodeBuilder.class.getClassLoader()),
+    new SmartList<>()
+  );
 
   private static final Logger LOG = Logger.getInstance(JvmClassNodeBuilder.class);
   public static final String LAMBDA_FACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";
@@ -101,7 +106,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
     private final TypeRepr.ClassType myType;
     private final ElemType myTarget;
-    private final ContentHashBuilder myHashBuilder = ContentHashBuilder.create();
+    private final ContentHashBuilder myHashBuilder;
     private final Consumer<ElementAnnotation> myResultConsumer;
 
     private final Set<String> myUsedArguments = new HashSet<>();
@@ -111,6 +116,12 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       this.myType = type;
       this.myTarget = target;
       myResultConsumer = resultConsumer;
+
+      // Do not track changes in the annotation's content, if there are no registered annotation trackers that would process these changes.
+      // Some technical annotations (e.g. DebugInfo) may contain different content after every compiler run => they will always be considered "changed".
+      // Handling such changes may involve additional type-consuming analysis and unnecessary dependency data updates.
+      myHashBuilder = isAnnotationTracked(type)? ContentHashBuilder.create() : ContentHashBuilder.NULL;
+
       final Set<ElemType> targets = myAnnotationTargets.get(type);
       if (targets == null) {
         myAnnotationTargets.put(type, EnumSet.of(target));
@@ -947,6 +958,15 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     addUsage(new ClassPermitsUsage(permittedSubclass));
   }
 
+  private static boolean isAnnotationTracked(TypeRepr.ClassType annotationType) {
+    for (AnnotationChangesTracker tracker : ourAnnotationChangeTrackers) {
+      if (tracker.isAnnotationTracked(annotationType)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private class BaseSignatureVisitor extends SignatureVisitor {
 
     BaseSignatureVisitor() {
@@ -960,6 +980,17 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   }
 
   private interface ContentHashBuilder {
+    ContentHashBuilder NULL = new ContentHashBuilder() {
+      @Override
+      public void update(Object data) {
+      }
+
+      @Override
+      public Object getResult() {
+        return null;
+      }
+    };
+
     void update(Object data);
     Object getResult();
 
