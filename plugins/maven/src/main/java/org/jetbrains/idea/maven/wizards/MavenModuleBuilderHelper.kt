@@ -59,9 +59,8 @@ open class MavenModuleBuilderHelper(
   open fun configure(project: Project, root: VirtualFile, isInteractive: Boolean) {
     trigger(project, MavenActionsUsagesCollector.CREATE_MAVEN_PROJECT)
 
-    val psiFiles = if (myAggregatorProject != null
-    ) arrayOf(getPsiFile(project, myAggregatorProject.file))
-    else PsiFile.EMPTY_ARRAY
+    val psiFiles = if (myAggregatorProject != null) arrayOf(getPsiFile(project, myAggregatorProject.file)) else PsiFile.EMPTY_ARRAY
+
     val pom = WriteCommandAction.writeCommandAction(project, *psiFiles).withName(myCommandName).compute<VirtualFile?, RuntimeException> {
       val vcsFileAdder = GitSilentFileAdderProvider.create(project)
       var file: VirtualFile? = null
@@ -128,7 +127,7 @@ open class MavenModuleBuilderHelper(
     }
   }
 
-  protected fun setPomPackagingForAggregatorProject(project: Project, file: VirtualFile?) {
+  protected fun setPomPackagingForAggregatorProject(project: Project, file: VirtualFile) {
     val aggregatorProjectFile = myAggregatorProject!!.file
     val model = MavenDomUtil.getMavenDomProjectModel(project, aggregatorProjectFile)
     if (model != null) {
@@ -139,12 +138,12 @@ open class MavenModuleBuilderHelper(
     }
   }
 
-  protected fun updateProjectPom(project: Project, pom: VirtualFile?) {
+  protected fun updateProjectPom(project: Project, pom: VirtualFile) {
     if (myParentProject == null) return
 
     WriteCommandAction.writeCommandAction(project).withName(myCommandName).run<RuntimeException> {
       PsiDocumentManager.getInstance(project).commitAllDocuments()
-      val model = MavenDomUtil.getMavenDomProjectModel(project, pom!!)
+      val model = MavenDomUtil.getMavenDomProjectModel(project, pom)
       if (model == null) return@run
 
       MavenDomUtil.updateMavenParent(model, myParentProject)
@@ -165,7 +164,7 @@ open class MavenModuleBuilderHelper(
 
       if (!FileUtil.namesEqual(MavenConstants.POM_XML, myParentProject.file.name)) {
         pomFiles.add(myParentProject.file)
-        //MavenProjectsManager.getInstance(project).scheduleForceUpdateMavenProject(myParentProject)
+        MavenProjectsManager.getInstance(project).scheduleForceUpdateMavenProject(myParentProject)
       }
       unblockAndSaveDocuments(project, *pomFiles.toTypedArray())
     }
@@ -253,8 +252,8 @@ open class MavenModuleBuilderHelper(
     }
 
     @JvmStatic
-    protected fun getPsiFile(project: Project?, pom: VirtualFile?): PsiFile? {
-      return PsiManager.getInstance(project!!).findFile(pom!!)
+    protected fun getPsiFile(project: Project, pom: VirtualFile): PsiFile? {
+      return PsiManager.getInstance(project).findFile(pom)
     }
 
     @JvmStatic
