@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.KtFile
 
-@Deprecated("Prefer using KotlinModCommandAction")
+@Deprecated("Prefer using KotlinApplicableModCommandAction")
 abstract class KotlinApplicatorBasedQuickFix<T : PsiElement, in I : KotlinApplicatorBasedQuickFix.Input>(
     element: T,
     @FileModifier.SafeFieldForPreview
