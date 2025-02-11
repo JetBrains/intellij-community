@@ -44,7 +44,7 @@ abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
     }
     else {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("switcher")
-      createAndShowNewSwitcher(null, event, message("window.title.switcher"), project)
+      SwitcherPanel(project, message("window.title.switcher"), event.inputEvent, null, forward ?: forward(event))
     }
   }
 }
@@ -63,13 +63,8 @@ internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boole
 
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
-    val existingPanel = Switcher.SWITCHER_KEY.get(project)
-    if (existingPanel != null) {
-      existingPanel.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected }
-    }
-    else {
-      createAndShowNewSwitcher(onlyEditedFiles,null, message("title.popup.recent.files"), project)
-    }
+    Switcher.SWITCHER_KEY.get(project)?.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected }
+    ?: SwitcherPanel(project, message("title.popup.recent.files"), null, onlyEditedFiles, true)
   }
 }
 
@@ -111,9 +106,8 @@ internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction(), Ac
 internal class SwitcherNextProblemAction : SwitcherProblemAction(true)
 internal class SwitcherPreviousProblemAction : SwitcherProblemAction(false)
 internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareAction() {
-  private fun getFileList(event: AnActionEvent): JBList<SwitcherVirtualFile>? {
-    return Switcher.SWITCHER_KEY.get(event.project)?.let { if (it.pinned) it.files else null }
-  }
+  private fun getFileList(event: AnActionEvent) =
+    Switcher.SWITCHER_KEY.get(event.project)?.let { if (it.pinned) it.files else null }
 
   private fun getErrorIndex(list: JList<SwitcherVirtualFile>): Int? {
     val model = list.model ?: return null
@@ -129,7 +123,7 @@ internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareA
         true -> (start + i).let { if (it > range.last) it - size else it }
         else -> (start - i).let { if (it < range.first) it + size else it }
       }
-      if (model.getElementAt(index)?.rpcModel?.hasProblems == true) return index
+      if (model.getElementAt(index)?.isProblemFile == true) return index
     }
     return null
   }
@@ -205,6 +199,22 @@ class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Consumer<Inpu
     if (wasControlDown) append("control ")
     if (wasMetaDown) append("meta ")
   }.toString()
+
+  val forbiddenMnemonic: String? = (event as? KeyEvent)?.keyCode?.let { getMnemonic(it) }
+
+  fun getForbiddenMnemonic(keyStroke: KeyStroke): String? = when {
+    isSet(keyStroke.modifiers, InputEvent.ALT_DOWN_MASK) != wasAltDown -> null
+    isSet(keyStroke.modifiers, InputEvent.ALT_GRAPH_DOWN_MASK) != wasAltGraphDown -> null
+    isSet(keyStroke.modifiers, InputEvent.CTRL_DOWN_MASK) != wasControlDown -> null
+    isSet(keyStroke.modifiers, InputEvent.META_DOWN_MASK) != wasMetaDown -> null
+    else -> getMnemonic(keyStroke.keyCode)
+  }
+
+  private fun getMnemonic(keyCode: Int) = when (keyCode) {
+    in KeyEvent.VK_0..KeyEvent.VK_9 -> keyCode.toChar().toString()
+    in KeyEvent.VK_A..KeyEvent.VK_Z -> keyCode.toChar().toString()
+    else -> null
+  }
 
   fun getShortcuts(vararg keys: String): CustomShortcutSet {
     val modifiers = initialModifiers ?: return CustomShortcutSet.fromString(*keys)

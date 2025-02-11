@@ -26,7 +26,7 @@ class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSe
     }
   }
 
-  internal fun <T : SwitcherListItem> wrap(model: ListModel<T>): ListModel<T> =
+  fun <T : SwitcherListItem> wrap(model: ListModel<T>): ListModel<T> =
     NameFilteringListModel(model,
                            { it.mainText + " " + it.pathText },
                            { !isPopupActive || compare(it, enteredPrefix) },
