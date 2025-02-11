@@ -286,7 +286,9 @@ public final class PsiClassImplUtil {
     PsiClass containingClass = aClass.getContainingClass();
     if (aClass.hasModifierProperty(PsiModifier.PUBLIC) ||
         aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
-      return containingClass == null ? maximalUseScope : containingClass.getUseScope();
+      // If the containing class is not final, it's possible to expose nested class through public subclass of containing class 
+      return containingClass == null || !containingClass.hasModifierProperty(PsiModifier.FINAL) ? 
+             maximalUseScope : containingClass.getUseScope();
     }
     else if (aClass.hasModifierProperty(PsiModifier.PRIVATE) || aClass instanceof PsiTypeParameter) {
       PsiClass topClass = PsiUtil.getTopLevelClass(aClass);
