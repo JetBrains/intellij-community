@@ -9751,19 +9751,6 @@ c:com.intellij.openapi.options.newEditor.SettingsTreeView
 pf:com.intellij.openapi.options.newEditor.SettingsTreeView$AccessibleSettingsTreeView
 - javax.swing.JComponent$AccessibleJComponent
 - getAccessibleRole():javax.accessibility.AccessibleRole
-f:com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider
-- com.intellij.openapi.fileEditor.FileEditorProvider
-- com.intellij.openapi.project.DumbAware
-- sf:Companion:com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider$Companion
-- sf:ID:java.lang.String
-- <init>():V
-- accept(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
-- createEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor
-- disposeEditor(com.intellij.openapi.fileEditor.FileEditor):V
-- getEditorTypeId():java.lang.String
-- getPolicy():com.intellij.openapi.fileEditor.FileEditorPolicy
-- isDumbAware():Z
-f:com.intellij.openapi.options.newEditor.settings.SettingsFileEditorProvider$Companion
 f:com.intellij.openapi.preview.PreviewProviderId
 c:com.intellij.openapi.progress.BackgroundTaskQueue
 - pf:myProcessor:com.intellij.util.concurrency.QueueProcessor

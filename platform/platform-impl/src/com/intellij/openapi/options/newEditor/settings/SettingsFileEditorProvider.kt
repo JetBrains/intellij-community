@@ -24,8 +24,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.UIBundle
 import com.intellij.ui.tabs.impl.TabLabel
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 
+@ApiStatus.Internal
 class SettingsFileEditorProvider : FileEditorProvider, FileStatusProvider, EditorTabTitleProvider, DumbAware {
   companion object {
     const val ID = "SettingsFileEditor"
