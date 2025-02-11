@@ -159,21 +159,9 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     Returns all UiText's matching predicate without waiting
    */
   fun getAllTexts(filter: ((UiText) -> Boolean)? = null): List<UiText> {
-    val allText = withComponent { searchService.findAllText(it) }
-      .map { UiText(this, it) }
-    return filter?.let { allText.filter(filter) } ?: allText
-  }
-
-  /**
-   * Returns all UiText objects matching the specified text without waiting.
-   * NB: In certain cases (e.g., console output) `getAllTest()` will not much `JEditorUiComponent.text`
-   * and `getAllTest()` will return only currently visible text.
-   *
-   */
-  fun getAllTexts(text: String): List<UiText> {
     return withComponent { searchService.findAllText(it) }
+      .filter { text -> filter?.invoke(UiText(this, text)) ?: true }
       .map { UiText(this, it) }
-      .filter { it.text == text }
   }
 
   fun allTextAsString(): String {
@@ -279,7 +267,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   fun hasText(text: String): Boolean {
-    return getAllTexts(text).isNotEmpty()
+    return getAllTexts().filter { it.text == text }.isNotEmpty()
   }
 
 
