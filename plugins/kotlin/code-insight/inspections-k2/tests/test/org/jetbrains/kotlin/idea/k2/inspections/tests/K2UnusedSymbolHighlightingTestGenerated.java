@@ -517,6 +517,21 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/primaryConstructorParameterDataClass.kt");
         }
 
+        @TestMetadata("privateDestructuringArrayComponentDeclaration.kt")
+        public void testPrivateDestructuringArrayComponentDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/privateDestructuringArrayComponentDeclaration.kt");
+        }
+
+        @TestMetadata("privateDestructuringArrayComponentUnusedDeclaration.kt")
+        public void testPrivateDestructuringArrayComponentUnusedDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/privateDestructuringArrayComponentUnusedDeclaration.kt");
+        }
+
+        @TestMetadata("privateDestructuringListComponentDeclaration.kt")
+        public void testPrivateDestructuringListComponentDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/privateDestructuringListComponentDeclaration.kt");
+        }
+
         @TestMetadata("privateFunction.kt")
         public void testPrivateFunction() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/privateFunction.kt");

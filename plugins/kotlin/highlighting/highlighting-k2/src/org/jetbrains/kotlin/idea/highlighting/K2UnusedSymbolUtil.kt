@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.resolve.DataClassResolver
 
 object K2UnusedSymbolUtil {
   private val KOTLIN_ADDITIONAL_ANNOTATIONS: List<String> = listOf("kotlin.test.*", "kotlin.js.JsExport")
@@ -143,7 +144,9 @@ object K2UnusedSymbolUtil {
           AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED && symbol.compilerVisibility.isPublicAPI) {
           return null
       }
-      if (symbol is KaNamedFunctionSymbol && symbol.isOperator) return null
+      if (symbol is KaNamedFunctionSymbol && symbol.isOperator && declaration.name?.let { DataClassResolver.isComponentLike(it) } != true) {
+          return null
+      }
 
       val isCheapEnough = lazy(LazyThreadSafetyMode.NONE) {
           isCheapEnoughToSearchUsages(declaration)
