@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 
-class IdeVirtualFileFinderFactory : VirtualFileFinderFactory, MetadataFinderFactory {
-    override fun create(scope: GlobalSearchScope): VirtualFileFinder = IdeVirtualFileFinder(scope)
+class IdeVirtualFileFinderFactory(private val project: Project) : VirtualFileFinderFactory, MetadataFinderFactory {
+    override fun create(scope: GlobalSearchScope): VirtualFileFinder = IdeVirtualFileFinder(scope, project)
 
     override fun create(project: Project, module: ModuleDescriptor): VirtualFileFinder {
         val ideaModuleInfo = module.getCapability(ModuleInfo.Capability) as? IdeaModuleInfo
@@ -25,6 +25,6 @@ class IdeVirtualFileFinderFactory : VirtualFileFinderFactory, MetadataFinderFact
             GlobalSearchScope.allScope(project)
         }
 
-        return IdeVirtualFileFinder(scope)
+        return IdeVirtualFileFinder(scope, project)
     }
 }
