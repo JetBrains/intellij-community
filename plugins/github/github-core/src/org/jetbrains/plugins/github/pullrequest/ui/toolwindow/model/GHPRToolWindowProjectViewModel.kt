@@ -17,8 +17,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import git4idea.GitStandardRemoteBranch
-import git4idea.push.GitPushRepoResult
 import git4idea.remote.hosting.findHostedRemoteBranchTrackedByCurrent
 import git4idea.remote.hosting.knownRepositories
 import kotlinx.coroutines.CoroutineScope
@@ -204,22 +202,6 @@ class GHPRToolWindowProjectViewModel internal constructor(
           }
         }
       }.stateIn(cs, SharingStarted.Lazily, null)
-
-  suspend fun isExistingPullRequest(pushResult: GitPushRepoResult): Boolean? {
-    val creationService = dataContext.creationService
-    val repositoryDataService = dataContext.repositoryDataService
-
-    val repositoryMapping = repositoryDataService.repositoryMapping
-    val defaultRemoteBranch = repositoryDataService.getDefaultRemoteBranch() ?: return null
-
-    val pullRequest = creationService.findOpenPullRequest(
-      baseBranch = defaultRemoteBranch,
-      repositoryMapping.repository.repositoryPath,
-      headBranch = GitStandardRemoteBranch(repositoryMapping.gitRemote, pushResult.sourceBranch)
-    )
-
-    return pullRequest != null
-  }
 
   fun refreshPrOnCurrentBranch() {
     prOnCurrentBranchRefreshSignal.tryEmit(Unit)
