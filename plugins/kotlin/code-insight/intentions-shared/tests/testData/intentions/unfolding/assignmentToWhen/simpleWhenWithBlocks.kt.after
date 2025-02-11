@@ -9,6 +9,7 @@ fun test(n: Int): String {
             doSomething("***")
             res = "one"
         }
+
         else -> {
             doSomething("***")
             res = "two"
