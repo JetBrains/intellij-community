@@ -17,6 +17,7 @@ import com.intellij.openapi.observable.util.addKeyListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import org.intellij.lang.annotations.Language
@@ -58,7 +59,9 @@ internal abstract class TerminalEventDispatcher(
     if (!skipAction(e)) {
       if (e.id != KeyEvent.KEY_TYPED || !ignoreNextKeyTypedEvent) {
         ignoreNextKeyTypedEvent = false
-        handleKeyEvent(e)
+        application.runReadAction {
+          handleKeyEvent(e)
+        }
       }
     }
     else {
