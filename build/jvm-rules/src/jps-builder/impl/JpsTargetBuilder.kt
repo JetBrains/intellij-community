@@ -29,7 +29,6 @@ import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException
 import org.jetbrains.jps.incremental.BuildListener
 import org.jetbrains.jps.incremental.Builder
-import org.jetbrains.jps.incremental.BuilderCategory
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.FSOperations
 import org.jetbrains.jps.incremental.ModuleBuildTarget
@@ -167,6 +166,7 @@ internal class JpsTargetBuilder(
             context = context,
             target = target,
             dataManager = dataManager,
+            outputSink = outputSink,
             parentSpan = parentSpan,
           )
         }
@@ -174,16 +174,7 @@ internal class JpsTargetBuilder(
         val dirtyFilesHolder = BazelDirtyFileHolder(context, fsState, target)
         try {
           var buildersPassed = 0
-          var instrumentedClassesSaved = false
           for (builder in builders) {
-            if (builder.category == BuilderCategory.CLASS_POST_PROCESSOR && !instrumentedClassesSaved) {
-              instrumentedClassesSaved = true
-              // ensure changes from instruments are visible to class post-processors
-              saveInstrumentedClasses(outputConsumer)
-            }
-
-            outputConsumer.setCurrentBuilderName(builder.presentableName)
-
             val deletedFiles = fsState.getAndClearDeletedPaths(target)
             require(deletedFiles.isEmpty()) {
               "Unexpected files to delete: $deletedFiles"
@@ -191,19 +182,21 @@ internal class JpsTargetBuilder(
 
             val start = System.nanoTime()
             val processedSourcesBefore = outputConsumer.getNumberOfProcessedSources()
-            val buildResult = if (builder is BazelJavaBuilder) {
-              builder.build(
-                context = context,
-                module = target.module,
-                chunk = chunk,
-                dirtyFilesHolder = dirtyFilesHolder,
-                target = target,
-                outputConsumer = outputConsumer,
-                outputSink = outputSink,
-              )
-            }
-            else {
-              builder.build(context, chunk, dirtyFilesHolder, outputConsumer)
+            val buildResult = tracer.span("runModuleLevelBuilder") { span ->
+              if (builder is BazelJavaBuilder) {
+                builder.build(
+                  context = context,
+                  module = target.module,
+                  chunk = chunk,
+                  dirtyFilesHolder = dirtyFilesHolder,
+                  target = target,
+                  outputConsumer = outputConsumer,
+                  outputSink = outputSink,
+                )
+              }
+              else {
+                builder.build(context, chunk, dirtyFilesHolder, outputConsumer)
+              }
             }
             storeBuilderStatistics(
               builder = builder,
@@ -247,7 +240,6 @@ internal class JpsTargetBuilder(
           }
         }
         finally {
-          outputConsumer.setCurrentBuilderName(null)
           val moreToCompile = dataManager != null && JavaBuilderUtil.updateMappingsOnRoundCompletion(context, dirtyFilesHolder, chunk)
           if (moreToCompile) {
             nextPassRequired = true
@@ -257,7 +249,6 @@ internal class JpsTargetBuilder(
       } while (nextPassRequired)
     }
     finally {
-      saveInstrumentedClasses(outputConsumer)
       outputConsumer.fireFileGeneratedEvents()
       outputConsumer.clear()
       for (builder in builders) {
@@ -540,12 +531,4 @@ private fun notifyChunkRebuildRequested(context: CompileContext, chunk: ModuleCh
     }
   }
   context.processMessage(CompilerMessage("", kind, infoMessage))
-}
-
-private fun saveInstrumentedClasses(outputConsumer: BazelTargetBuildOutputConsumer) {
-  for (compiledClass in outputConsumer.compiledClasses.values) {
-    if (compiledClass.isDirty) {
-      compiledClass.save()
-    }
-  }
 }

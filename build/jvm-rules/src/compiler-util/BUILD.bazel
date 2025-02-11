@@ -4,11 +4,11 @@ kt_jvm_library(
     name = "compiler-util",
     srcs = glob(["*.kt"]),
     deps = [
-      "//:kotlin-compiler-embeddable",
+      "//:kotlin-compiler",
       "//src/kotlin-plugins/jdeps",
       "//src/kotlin-plugins/abi",
-      "//:kotlin-compose-compiler-plugin-embeddable",
-      "//:kotlin-serialization-compiler-plugin-embeddable",
+      "//:kotlin-compose-compiler-plugin",
+      "//:kotlin-serialization-compiler-plugin",
     ],
     visibility = ["//visibility:public"],
 )

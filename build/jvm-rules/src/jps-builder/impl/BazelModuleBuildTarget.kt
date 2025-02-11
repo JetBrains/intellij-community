@@ -25,7 +25,8 @@ internal class BazelModuleBuildTarget(
   module: JpsModule,
   @JvmField val sources: List<Path>,
 ) : ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION) {
-  override fun getOutputDir(): File = throw IllegalStateException("")
+  // org.jetbrains.kotlin.incremental.IncrementalJvmCache allows `null`
+  override fun getOutputDir(): File? = null
 
   override fun getOutputRoots(context: CompileContext): Collection<File> = throw IllegalStateException("")
 

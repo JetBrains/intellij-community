@@ -266,7 +266,7 @@ internal class IncrementalKotlinBuilder(
     fsOperations: BazelKotlinFsOperationsHelper,
   ): ExitCode {
     val kotlinContext = context.kotlin
-    val kotlinChunk = context.kotlin.getChunk(chunk)!!
+    val kotlinChunk = kotlinContext.getChunk(chunk)!!
     if (!kotlinChunk.haveSameCompiler) {
       throw RuntimeException("Cyclically dependent modules ${kotlinChunk.presentableModulesToCompilersList} should have same compiler.")
     }

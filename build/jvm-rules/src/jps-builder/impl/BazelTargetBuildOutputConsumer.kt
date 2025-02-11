@@ -25,14 +25,6 @@ internal class BazelTargetBuildOutputConsumer(
   //private val fileGeneratedEvent = FileGeneratedEvent(target)
 
   private val classes = HashMap<String, CompiledClass>()
-  private val outputToBuilderNameMap = Collections.synchronizedMap(HashMap<File, String>())
-
-  @Volatile
-  private var currentBuilderName: String? = null
-
-  fun setCurrentBuilderName(builderName: String?) {
-    currentBuilderName = builderName
-  }
 
   override fun getTargetCompiledClasses(target: BuildTarget<*>): Collection<CompiledClass> {
     throw IllegalStateException("getTargetCompiledClasses is not and will be not supported")
@@ -108,7 +100,6 @@ internal class BazelTargetBuildOutputConsumer(
 
   fun clear() {
     classes.clear()
-    outputToBuilderNameMap.clear()
   }
 
   //private fun addEventsRecursively(output: File, outputRootPath: String?, relativePath: String) {

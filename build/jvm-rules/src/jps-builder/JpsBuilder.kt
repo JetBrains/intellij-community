@@ -185,6 +185,7 @@ suspend fun buildUsingJps(
   parentSpan: Span,
   tracer: Tracer,
   cachePrefix: String = "",
+  forceIncremental: Boolean = false,
 ): Int {
   val log = RequestLog(out = out, parentSpan = parentSpan, tracer = tracer)
 
@@ -206,7 +207,7 @@ suspend fun buildUsingJps(
     sources = sources,
   )
 
-  val isIncrementalCompilation = args.boolFlag(JvmBuilderFlags.INCREMENTAL)
+  val isIncrementalCompilation = forceIncremental || args.boolFlag(JvmBuilderFlags.INCREMENTAL)
   if (!isIncrementalCompilation) {
     return nonIncrementalBuildUsingJps(
       log = log,

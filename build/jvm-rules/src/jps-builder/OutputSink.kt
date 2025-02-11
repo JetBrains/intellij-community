@@ -106,4 +106,13 @@ class OutputSink {
     }
     return removed
   }
+
+  @Synchronized
+  fun removeAll(paths: Array<String>) {
+    for (path in paths) {
+      if (fileToData.remove(path) != null) {
+        isChanged = true
+      }
+    }
+  }
 }

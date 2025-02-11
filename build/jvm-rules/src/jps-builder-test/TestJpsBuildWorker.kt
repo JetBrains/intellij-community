@@ -25,7 +25,7 @@ internal object TestJpsBuildWorker {
     val testPaths = getTestWorkerPaths()
     val baseDir = testPaths.baseDir
 
-    val testModule = TestModules.PLATFORM_IMPL
+    val testModule = TestModules.STAT_CONFIG
     val sources = collectSources(sourceDirPath = testModule.sourcePath, paths = testPaths)
     val testParams = testModule.getParams(baseDir)
 
@@ -43,6 +43,7 @@ internal object TestJpsBuildWorker {
       val exitCode = RootAllocator(Long.MAX_VALUE).use { allocator ->
         tracer.span("build") { span ->
           buildUsingJps(
+            forceIncremental = true,
             baseDir = baseDir,
             args = args,
             out = out,
@@ -68,9 +69,9 @@ internal object TestJpsBuildWorker {
         }
       }
 
-      openTelemetryAndOnClose.second()
+      println("out jar: " + baseDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUT)).normalize())
 
-      println("baseDir: $baseDir")
+      openTelemetryAndOnClose.second()
 
       exitCode
     }

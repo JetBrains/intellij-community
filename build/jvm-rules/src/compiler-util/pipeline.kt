@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.cli.pipeline.PipelineArtifactWithExitCode
 import org.jetbrains.kotlin.cli.pipeline.PipelineContext
 import org.jetbrains.kotlin.cli.pipeline.PipelineStepException
 import org.jetbrains.kotlin.cli.pipeline.SuccessfulPipelineExecutionException
-import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.config.phaser.PhaseConfig
 import org.jetbrains.kotlin.config.phaser.invokeToplevel

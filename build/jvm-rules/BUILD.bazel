@@ -41,7 +41,7 @@ _kt_kotlinc_options(
 
 jvm_provided_library(
   name = "kotlin-compiler-provided",
-  lib = "//:kotlin-compiler-embeddable",
+  lib = "//:kotlin-compiler",
   visibility = ["//visibility:public"],
 )
 
@@ -82,9 +82,9 @@ jvm_import(
 )
 
 jvm_import(
-    name = "kotlin-compiler-embeddable",
-    jar = "@kotlin-compiler-embeddable//file",
-    source_jar = "@kotlin-compiler-embeddable-sources//file",
+    name = "kotlin-compiler",
+    jar = "@kotlin-compiler//file",
+    source_jar = "@kotlin-compiler-sources//file",
     visibility = ["//visibility:public"],
     runtime_deps = [
         "@lib//:jetbrains-annotations",
@@ -107,16 +107,16 @@ jvm_import(
 )
 
 jvm_import(
-    name = "kotlin-serialization-compiler-plugin-embeddable",
-    jar = "@kotlin-serialization-compiler-plugin-embeddable//file",
-    source_jar = "@kotlin-serialization-compiler-plugin-embeddable-sources//file",
+    name = "kotlin-serialization-compiler-plugin",
+    jar = "@kotlin-serialization-compiler-plugin//file",
+    source_jar = "@kotlin-serialization-compiler-plugin-sources//file",
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
-    name = "kotlin-compose-compiler-plugin-embeddable",
-    jar = "@kotlin-compose-compiler-plugin-embeddable//file",
-    source_jar = "@kotlin-compose-compiler-plugin-embeddable-sources//file",
+    name = "kotlin-compose-compiler-plugin",
+    jar = "@kotlin-compose-compiler-plugin//file",
+    source_jar = "@kotlin-compose-compiler-plugin-sources//file",
     visibility = ["//visibility:public"],
 )
 

@@ -7,7 +7,13 @@ import org.jetbrains.bazel.jvm.jps.SourceDescriptor
 import org.jetbrains.bazel.jvm.jps.emptyStringArray
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping
-import org.jetbrains.jps.incremental.storage.*
+import org.jetbrains.jps.incremental.storage.BuildDataProvider
+import org.jetbrains.jps.incremental.storage.OneToManyPathMapping
+import org.jetbrains.jps.incremental.storage.OutputToTargetMapping
+import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
+import org.jetbrains.jps.incremental.storage.RelativePathType
+import org.jetbrains.jps.incremental.storage.SourceToOutputMappingCursor
+import org.jetbrains.jps.incremental.storage.StampsStorage
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 
@@ -188,13 +194,13 @@ internal class BazelSourceToOutputMapping(
       ?.map { relativizer.toAbsoluteFile(it, RelativePathType.OUTPUT) }
   }
 
-  fun getAndClearOutputs(sourceFile: Path): MutableList<Path>? {
+  fun getAndClearOutputs(sourceFile: Path): Array<String>? {
     synchronized(map) {
       // must be not null - probably, later we should add warning here
       val descriptor = map.get(sourceFile) ?: return null
       val result = descriptor.outputs.takeIf { it.isNotEmpty() } ?: return null
       descriptor.outputs = emptyStringArray
-      return result.mapTo(ArrayList(result.size)) { relativizer.toAbsoluteFile(it, RelativePathType.OUTPUT) }
+      return result
     }
   }
 

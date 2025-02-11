@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UnstableApiUsage", "ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 
 package org.jetbrains.bazel.jvm.jps.impl
@@ -8,18 +9,16 @@ import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import kotlinx.coroutines.ensureActive
+import org.jetbrains.bazel.jvm.jps.OutputSink
 import org.jetbrains.jps.builders.BuildRootDescriptor
 import org.jetbrains.jps.builders.BuildTarget
-import org.jetbrains.jps.builders.FileProcessor
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
-import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
-import org.jetbrains.jps.incremental.*
+import org.jetbrains.jps.incremental.CompileContext
+import org.jetbrains.jps.incremental.FSOperations
+import org.jetbrains.jps.incremental.ModuleBuildTarget
+import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.jps.incremental.fs.BuildFSState
 import org.jetbrains.jps.incremental.messages.DoneSomethingNotification
-import org.jetbrains.jps.incremental.messages.FileDeletedEvent
-import java.io.File
-import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.coroutines.coroutineContext
 
@@ -41,62 +40,35 @@ internal fun cleanOutputsCorrespondingToChangedFiles(
   context: CompileContext,
   target: BazelModuleBuildTarget,
   dataManager: BazelBuildDataProvider,
+  outputSink: OutputSink,
   parentSpan: Span,
 ) {
-  val dirsToDelete = HashSet<Path>()
-  val deletedOutputFiles = ArrayList<Path>()
+  val deletedOutputFiles = ArrayList<String>()
   val sourceToOutputMapping = dataManager.sourceToOutputMapping
-
-  context.projectDescriptor.fsState.processFilesToRecompile(context, target, object : FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> {
-    @Suppress("SameReturnValue")
-    override fun apply(target: ModuleBuildTarget, ioFile: File, sourceRoot: JavaSourceRootDescriptor): Boolean {
-      val sourceFile = ioFile.toPath()
-      val outputs = sourceToOutputMapping.getAndClearOutputs(sourceFile)?.takeIf { it.isNotEmpty() } ?: return true
-      try {
-        for (i in outputs.size - 1 downTo 0) {
-          val outputFile = outputs.get(i)
-          try {
-            if (Files.deleteIfExists(outputFile)) {
-              outputs.removeAt(i)
-              outputFile.parent?.let {
-                dirsToDelete.add(it)
-              }
-              deletedOutputFiles.add(outputFile)
-            }
-          }
-          catch (e: IOException) {
-            parentSpan.recordException(e, Attributes.of(
-              AttributeKey.stringKey("message"), "cannot delete output file",
-              AttributeKey.stringKey("sourceFile"), sourceFile.toString(),
-            ))
-          }
-        }
+  val delta = context.projectDescriptor.fsState.getEffectiveFilesDelta(context, target)
+  delta.lockData()
+  try {
+    for (entry in delta.getSourceMapToRecompile().entries) {
+      for (sourceFile in entry.value) {
+        val outputs = sourceToOutputMapping.getAndClearOutputs(sourceFile)?.takeIf { it.isNotEmpty() } ?: continue
+        outputSink.removeAll(outputs)
+        deletedOutputFiles.addAll(outputs)
       }
-      finally {
-        if (outputs.isNotEmpty()) {
-          sourceToOutputMapping.setOutputs(sourceFile, outputs)
-          parentSpan.addEvent("some outputs were not removed", Attributes.of(
-            AttributeKey.stringKey("sourceFile"), sourceFile.toString(),
-            AttributeKey.stringArrayKey("outputs"), outputs.map { it.toString() },
-          ))
-        }
-      }
-      return true
     }
-  })
+  }
+  finally {
+    delta.unlockData()
+  }
 
   if (!deletedOutputFiles.isEmpty()) {
     if (JavaBuilderUtil.isCompileJavaIncrementally(context) && parentSpan.isRecording) {
-      parentSpan.addEvent("allDeletedOutputPaths", Attributes.of(
-        AttributeKey.stringArrayKey("deletedOutputFiles"), deletedOutputFiles.map { it.toString() },
+      parentSpan.addEvent("deletedOutputs", Attributes.of(
+        AttributeKey.stringArrayKey("deletedOutputFiles"), deletedOutputFiles,
       ))
     }
 
-    context.processMessage(FileDeletedEvent(deletedOutputFiles.map { it.toString() }))
+    //context.processMessage(FileDeletedEvent(deletedOutputFiles.map { it.toString() }))
   }
-
-  // attempting to delete potentially empty directories
-  FSOperations.pruneEmptyDirs(context, dirsToDelete)
 }
 
 internal suspend fun markTargetUpToDate(

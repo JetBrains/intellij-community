@@ -131,16 +131,16 @@ http_file(
 )
 
 http_file(
-    name = "kotlin-compiler-embeddable",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.20-Beta2/kotlin-compiler-embeddable-2.1.20-Beta2.jar",
-    sha256 = "3997081b2e2172155a042e58b179f7e7e53caa012d43a9ba7c0c1a654ef0bdb6",
-    downloaded_file_path = "kotlin-compiler-embeddable-2.1.20-Beta2.jar",
+    name = "kotlin-compiler",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler/2.1.20-Beta2/kotlin-compiler-2.1.20-Beta2.jar",
+    sha256 = "367c4d9e0ba8c4e1f5ee52552bb4c63ca1422fc8543333378480031eda5010eb",
+    downloaded_file_path = "kotlin-compiler-2.1.20-Beta2.jar",
 )
 http_file(
-    name = "kotlin-compiler-embeddable-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.20-Beta2/kotlin-compiler-embeddable-2.1.20-Beta2-sources.jar",
-    sha256 = "471080a3e0323d16c76385da8642eaea947632e45a59273533183c37adc80116",
-    downloaded_file_path = "kotlin-compiler-embeddable-2.1.20-Beta2-sources.jar",
+    name = "kotlin-compiler-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler/2.1.20-Beta2/kotlin-compiler-2.1.20-Beta2-sources.jar",
+    sha256 = "84652229286b1136776b0d739993c48d5a963343a9dbd240a7a41da99c68556d",
+    downloaded_file_path = "kotlin-compiler-2.1.20-Beta2-sources.jar",
 )
 
 http_file(
@@ -170,29 +170,29 @@ http_file(
 )
 
 http_file(
-    name = "kotlin-serialization-compiler-plugin-embeddable",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-serialization-compiler-plugin-embeddable/2.1.20-Beta2/kotlin-serialization-compiler-plugin-embeddable-2.1.20-Beta2.jar",
-    sha256 = "76e181a944d540fed791a5a3ffbbd94c952e81c751964052eb46443990d871aa",
-    downloaded_file_path = "kotlin-serialization-compiler-plugin-embeddable-2.1.20-Beta2.jar",
+    name = "kotlin-serialization-compiler-plugin",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-serialization-compiler-plugin/2.1.20-Beta2/kotlin-serialization-compiler-plugin-2.1.20-Beta2.jar",
+    sha256 = "deabc2903e4c1aab9d5e3e4be29736c0873a961b7b2f9db02051d5fd1675ceb8",
+    downloaded_file_path = "kotlin-serialization-compiler-plugin-2.1.20-Beta2.jar",
 )
 http_file(
-    name = "kotlin-serialization-compiler-plugin-embeddable-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-serialization-compiler-plugin-embeddable/2.1.20-Beta2/kotlin-serialization-compiler-plugin-embeddable-2.1.20-Beta2-sources.jar",
-    sha256 = "31f6551c01805264ba8e2dcdc48a7da259821f20e5e54d746afb70f7dfb4c571",
-    downloaded_file_path = "kotlin-serialization-compiler-plugin-embeddable-2.1.20-Beta2-sources.jar",
+    name = "kotlin-serialization-compiler-plugin-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-serialization-compiler-plugin/2.1.20-Beta2/kotlin-serialization-compiler-plugin-2.1.20-Beta2-sources.jar",
+    sha256 = "941b3bf2b6b366f6b6d066b8d17daf4ec974ec9a419888aa3448716b15fde8e9",
+    downloaded_file_path = "kotlin-serialization-compiler-plugin-2.1.20-Beta2-sources.jar",
 )
 
 http_file(
-    name = "kotlin-compose-compiler-plugin-embeddable",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin-embeddable/2.1.20-Beta2/kotlin-compose-compiler-plugin-embeddable-2.1.20-Beta2.jar",
-    sha256 = "e27c07c16aefec40e1bd46fea6b7214f432545756a816afa94e5276ba4067fea",
-    downloaded_file_path = "kotlin-compose-compiler-plugin-embeddable-2.1.20-Beta2.jar",
+    name = "kotlin-compose-compiler-plugin",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.20-Beta2/kotlin-compose-compiler-plugin-2.1.20-Beta2.jar",
+    sha256 = "516e93281f577203335d0aaafcd63a5ffa23082d674c3d78159d5000b1c40f61",
+    downloaded_file_path = "kotlin-compose-compiler-plugin-2.1.20-Beta2.jar",
 )
 http_file(
-    name = "kotlin-compose-compiler-plugin-embeddable-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin-embeddable/2.1.20-Beta2/kotlin-compose-compiler-plugin-embeddable-2.1.20-Beta2-sources.jar",
+    name = "kotlin-compose-compiler-plugin-sources",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.20-Beta2/kotlin-compose-compiler-plugin-2.1.20-Beta2-sources.jar",
     sha256 = "bfb26a777eb4338852c072adb735c7903306e7c45ea57a59e6a023f2986af628",
-    downloaded_file_path = "kotlin-compose-compiler-plugin-embeddable-2.1.20-Beta2-sources.jar",
+    downloaded_file_path = "kotlin-compose-compiler-plugin-2.1.20-Beta2-sources.jar",
 )
 
 http_file(
