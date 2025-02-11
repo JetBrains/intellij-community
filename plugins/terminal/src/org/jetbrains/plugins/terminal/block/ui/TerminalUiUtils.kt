@@ -104,6 +104,7 @@ internal object TerminalUiUtils {
       isAdditionalPageAtBottom = false
       isBlockCursor = true
       isWhitespacesShown = false
+      isUseCustomSoftWrapIndent = false
       characterGridWidthMultiplier = 1.0f
     }
 
