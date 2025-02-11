@@ -10334,55 +10334,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/convertVarargParameterToArray")
-    public static class ConvertVarargParameterToArray extends AbstractK1IntentionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("genericType.kt")
-        public void testGenericType() throws Exception {
-            runTest("testData/intentions/convertVarargParameterToArray/genericType.kt");
-        }
-
-        @TestMetadata("inConstructor.kt")
-        public void testInConstructor() throws Exception {
-            runTest("testData/intentions/convertVarargParameterToArray/inConstructor.kt");
-        }
-
-        @TestMetadata("int.kt")
-        public void testInt() throws Exception {
-            runTest("testData/intentions/convertVarargParameterToArray/int.kt");
-        }
-
-        @TestMetadata("long.kt")
-        public void testLong() throws Exception {
-            runTest("testData/intentions/convertVarargParameterToArray/long.kt");
-        }
-
-        @TestMetadata("noVararg.kt")
-        public void testNoVararg() throws Exception {
-            runTest("testData/intentions/convertVarargParameterToArray/noVararg.kt");
-        }
-
-        @TestMetadata("string.kt")
-        public void testString() throws Exception {
-            runTest("testData/intentions/convertVarargParameterToArray/string.kt");
-        }
-
-        @TestMetadata("withDefaultValue.kt")
-        public void testWithDefaultValue() throws Exception {
-            runTest("testData/intentions/convertVarargParameterToArray/withDefaultValue.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertVariableAssignmentToExpression")
     public static class ConvertVariableAssignmentToExpression extends AbstractK1IntentionTest {
         @java.lang.Override
