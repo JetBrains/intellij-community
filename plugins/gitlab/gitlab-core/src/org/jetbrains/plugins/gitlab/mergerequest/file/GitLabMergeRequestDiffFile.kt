@@ -29,11 +29,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffChangeViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 internal data class GitLabMergeRequestDiffFile(
@@ -66,8 +67,9 @@ private fun getPresentablePath(glProject: GitLabProjectCoordinates, mergeRequest
 private fun isFileValid(project: Project, connectionId: String): Boolean =
   project.serviceIfCreated<GitLabProjectViewModel>()?.connectedProjectVm?.value.takeIf { it?.connectionId == connectionId } != null
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-private class GitLabMergeRequestDiffService(private val project: Project, private val cs: CoroutineScope) {
+class GitLabMergeRequestDiffService(private val project: Project, private val cs: CoroutineScope) {
   fun createGitLabDiffRequestProcessor(connectionId: String, mergeRequestIid: String): DiffEditorViewer {
     val processor = if (CodeReviewAdvancedSettings.isCombinedDiffEnabled()) {
       createCombinedDiffProcessor(project, cs, connectionId, mergeRequestIid)

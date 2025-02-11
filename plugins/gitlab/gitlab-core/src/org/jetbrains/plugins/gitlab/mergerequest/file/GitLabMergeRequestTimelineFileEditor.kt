@@ -27,6 +27,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabConnectedProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
@@ -74,11 +75,12 @@ internal class GitLabMergeRequestTimelineFileEditor(private val project: Project
   override fun isModified(): Boolean = false
 }
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-private class GitLabMergeRequestTimelineEditorFactory(private val project: Project, parentCs: CoroutineScope) {
+class GitLabMergeRequestTimelineEditorFactory(private val project: Project, parentCs: CoroutineScope) {
   private val cs = parentCs.childScope(javaClass.name, Dispatchers.Main)
 
-  fun createComponent(mergeRequestId: String, disposable: Disposable): JComponent {
+  internal fun createComponent(mergeRequestId: String, disposable: Disposable): JComponent {
     return createIn(project, cs.childScope("GitLabMergeRequestTimelineEditorComponent").cancelledWith(disposable), mergeRequestId)
   }
 
