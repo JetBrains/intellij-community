@@ -208,6 +208,10 @@ public final class JavaBuilderUtil {
         LOG.warn("Libraries update for " + chunk.getPresentableShortName() + " returned non-incremental exitcode");
       }
 
+      if (context.isCanceled()) {
+        return;
+      }
+
       Set<NodeSource> toCompile = new HashSet<>();
       dfh.processDirtyFiles((target, file, root) -> toCompile.add(mapper.toNodeSource(file)));
       if (!toCompile.isEmpty() || hasRemovedPaths(chunk, dfh)) {
