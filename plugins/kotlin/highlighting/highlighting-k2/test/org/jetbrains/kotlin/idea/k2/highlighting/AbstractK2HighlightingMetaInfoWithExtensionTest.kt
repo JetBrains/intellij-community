@@ -21,8 +21,10 @@ object KotlinCallHighlighterExtensionForTest : KotlinCallHighlighterExtension {
     context(KaSession)
     override fun highlightCall(elementToHighlight: PsiElement, call: KaCall): HighlightInfoType? {
         if (call !is KaCallableMemberCall<*, *>) return null
-        val highlightType = call.partiallyAppliedSymbol.symbol.annotations.firstNotNullOfOrNull { annotation ->
-            HighlightType.values().singleOrNull { it.annotationName == annotation.classId?.shortClassName?.asString() }
+        val annotations = call.partiallyAppliedSymbol.symbol.annotations +
+                (call.partiallyAppliedSymbol.dispatchReceiver?.type?.annotations ?: emptyList())
+        val highlightType = annotations.firstNotNullOfOrNull { annotation ->
+            HighlightType.entries.singleOrNull { it.annotationName == annotation.classId?.shortClassName?.asString() }
         } ?: return null
         return when (highlightType) {
             HighlightType.SUSPEND -> KotlinHighlightInfoTypeSemanticNames.SUSPEND_FUNCTION_CALL

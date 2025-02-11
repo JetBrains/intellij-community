@@ -34,4 +34,9 @@ public class K2HighlightingMetaInfoWithExtensionTestGenerated extends AbstractK2
     public void testFunctions() throws Exception {
         runTest("../../idea/tests/testData/highlighterMetaInfoWithExtension/Functions.kt");
     }
+
+    @TestMetadata("Properties.kt")
+    public void testProperties() throws Exception {
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithExtension/Properties.kt");
+    }
 }
