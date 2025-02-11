@@ -1,0 +1,24 @@
+<idea-plugin package="com.intellij.vcs.git.commit.modal">
+  <name>Git Modal Commit Interface</name>
+  <id>intellij.git.commit.modal</id>
+  <category>Version Controls</category>
+  <vendor>JetBrains</vendor>
+  <description>
+    <![CDATA[Adds the option to enable a modal interface for Git commit (Settings | Advanced Settings)]]>
+  </description>
+
+  <dependencies>
+    <plugin id="Git4Idea"/>
+  </dependencies>
+
+  <resource-bundle>messages.GitModalCommitBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="Git4Idea">
+    <gitCommitModeProvider implementation="com.intellij.vcs.git.commit.modal.GitModalCommitModeProvider"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <advancedSetting id="git.non.modal.commit" default="false" groupKey="advanced.settings.git"/>
+    <backgroundPostStartupActivity implementation="com.intellij.vcs.git.commit.modal.GitModalCommitSettingsListener$InitOnStartup"/>
+  </extensions>
+</idea-plugin>

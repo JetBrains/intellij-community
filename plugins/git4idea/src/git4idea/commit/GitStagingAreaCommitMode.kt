@@ -2,6 +2,13 @@
 package git4idea.commit
 
 import com.intellij.vcs.commit.CommitMode
+import git4idea.config.GitVcsApplicationSettings
+
+class GitStagingAreaCommitModeProvider : GitCommitModeProvider {
+  override fun getCommitMode(): CommitMode? {
+    return if (GitVcsApplicationSettings.getInstance().isStagingAreaEnabled) GitStagingAreaCommitMode else null
+  }
+}
 
 data object GitStagingAreaCommitMode : CommitMode {
   override fun useCommitToolWindow(): Boolean = true
