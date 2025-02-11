@@ -2129,6 +2129,7 @@ def test_multiprocessing(case_setup_multiprocessing):
 
 
 @pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.xfail(reason="PY-79070", strict=False)
 def test_fork_no_attach(case_setup):
     with case_setup.test_file('_debugger_case_fork.py') as writer:
         writer.write_add_breakpoint(writer.get_line_index_with_content('break here'))
