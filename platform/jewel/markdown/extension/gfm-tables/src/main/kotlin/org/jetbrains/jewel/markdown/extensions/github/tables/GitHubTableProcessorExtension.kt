@@ -147,13 +147,13 @@ internal data class TableBlock(val header: TableHeader, val rows: List<TableRow>
     }
 }
 
-internal data class TableHeader(val cells: List<TableCell>) : CustomBlock()
+internal data class TableHeader(val cells: List<TableCell>) : MarkdownBlock.CustomBlock
 
-internal data class TableRow(val rowIndex: Int, val cells: List<TableCell>) : CustomBlock()
+internal data class TableRow(val rowIndex: Int, val cells: List<TableCell>) : MarkdownBlock.CustomBlock
 
 internal data class TableCell(
     val rowIndex: Int,
     val columnIndex: Int,
     val content: List<InlineMarkdown>,
     val alignment: Alignment.Horizontal?,
-) : CustomBlock()
+) : MarkdownBlock.CustomBlock
