@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NonNls
 /**
  * Usage: %showRecentFiles <seconds to wait before close>
  */
-class ShowRecentFilesCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+class ShowRecentFilesCommand(text: String, line: Int): PerformanceCommandCoroutineAdapter(text, line) {
 
   companion object {
     const val NAME: @NonNls String = "showRecentFiles"
@@ -21,12 +21,12 @@ class ShowRecentFilesCommand(text: String, line: Int) : PerformanceCommandCorout
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val secondsToWaitBeforeClose = extractCommandArgument(PREFIX).runCatching { this.toInt() }.getOrDefault(5)
+    val secondsToWaitBeforeClose = extractCommandArgument(PREFIX).runCatching { this.toInt()  }.getOrDefault(5)
     withContext(Dispatchers.EDT) {
       val switcher = Switcher.SWITCHER_KEY.get(context.project)?.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected }
-                     ?: createAndShowNewSwitcherSuspend(false, null, IdeBundle.message("title.popup.recent.files"), context.project)
+      ?: Switcher.SwitcherPanel(context.project, IdeBundle.message("title.popup.recent.files"), null, false, true)
       delay(secondsToWaitBeforeClose * 1000L)
-      if (switcher is Switcher.SwitcherPanel) {
+      if(switcher is Switcher.SwitcherPanel){
         switcher.cancel()
       }
     }
