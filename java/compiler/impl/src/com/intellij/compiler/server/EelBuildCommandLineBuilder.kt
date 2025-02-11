@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.provider.*
@@ -20,6 +21,10 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
 class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCommandLineBuilder {
+  companion object {
+    private val logger = logger<EelBuildCommandLineBuilder>()
+  }
+
   private val eel: EelApi = exePath.getEelDescriptor().upgradeBlocking()
   private val commandLine = GeneralCommandLine().withExePath(exePath.asEelPath().toString())
 
@@ -41,9 +46,11 @@ class EelBuildCommandLineBuilder(val project: Project, exePath: Path) : BuildCom
   }
 
   override fun addClasspathParameter(classpathInHost: List<String>, classpathInTarget: List<String>) {
-    val mappedClasspath = classpathInHost.joinToString(eel.platform.pathSeparator) { hostLocation ->
-      copyPathToHostIfRequired(Path.of(hostLocation))
-    }
+    val mappedClasspath = classpathInHost.mapNotNull { hostLocation ->
+      runCatching {
+        copyPathToHostIfRequired(Path.of(hostLocation))
+      }.onFailure { error -> logger.warn("Can't map classpath parameter: $hostLocation", error) }.getOrNull()
+    }.joinToString(eel.platform.pathSeparator)
     require(classpathInTarget.isEmpty()) {
       "Target classpath is not supported"
     }
