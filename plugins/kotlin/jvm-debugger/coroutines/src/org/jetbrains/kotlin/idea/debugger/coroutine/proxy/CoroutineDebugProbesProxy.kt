@@ -26,8 +26,10 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
         val coroutineInfoCache = CoroutineInfoCache()
         try {
             val executionContext = suspendContext.executionContext() ?: return coroutineInfoCache.fail()
-            val libraryAgentProxy = findProvider(executionContext) ?: return coroutineInfoCache.ok()
-            val coroutineInfos = libraryAgentProxy.dumpCoroutinesInfo() ?: emptyList()
+            val coroutineInfos =
+                CoroutinesInfoFromJsonAndReferencesProvider(executionContext).dumpCoroutinesInfo()
+                    ?: CoroutineLibraryAgent2Proxy.instance(executionContext)?.dumpCoroutinesInfo()
+                    ?: emptyList()
             coroutineInfoCache.ok(coroutineInfos)
         } catch (e: Throwable) {
             logError("Exception is thrown by calling dumpCoroutines.", e)
@@ -76,13 +78,5 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
             jobsWithParents[i + 1] = job?.parent?.getJob()?.details
         }
         return jobsWithParents.toList()
-    }
-
-    private fun findProvider(executionContext: DefaultExecutionContext): CoroutineInfoProvider? {
-        val debugProbesImpl = DebugProbesImpl.instance(executionContext)
-        return if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
-            CoroutinesInfoFromJsonAndReferencesProvider.instance(executionContext, debugProbesImpl) ?:
-            CoroutineLibraryAgent2Proxy(executionContext, debugProbesImpl)
-        } else null
     }
 }
