@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
+import org.jetbrains.kotlin.analysis.api.platform.caches.getOrPut
 import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
 import org.jetbrains.kotlin.analysis.api.platform.packages.*
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
@@ -47,7 +48,7 @@ private class IdeKotlinPackageProvider(
     private val subpackageNamesCache =
         Caffeine.newBuilder()
             .maximumSize(250)
-            .build<FqName, Set<Name>> { KotlinPackageIndexUtils.getSubpackageNames(it, searchScope) }
+            .build<FqName, Set<Name>>()
 
     override fun doesKotlinOnlyPackageExist(packageFqName: FqName): Boolean {
         return packageExistsCache.getOrPut(packageFqName) { KotlinPackageIndexUtils.packageExists(packageFqName, searchScope) }
@@ -56,6 +57,8 @@ private class IdeKotlinPackageProvider(
     override fun getKotlinOnlySubpackageNames(packageFqName: FqName): Set<Name> {
         if (packageExistsCache[packageFqName] == false) return emptySet()
 
-        return subpackageNamesCache[packageFqName] ?: emptySet()
+        return subpackageNamesCache
+            .getOrPut(packageFqName) { KotlinPackageIndexUtils.getSubpackageNames(it, searchScope) }
+            ?: emptySet()
     }
 }
