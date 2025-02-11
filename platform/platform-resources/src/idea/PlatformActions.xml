@@ -125,6 +125,21 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
+    <group id="SwitcherAndRecentFiles">
+      <action id="Switcher" class="com.intellij.ide.actions.Switcher"/>
+      <action id="SwitcherForward" class="com.intellij.ide.actions.ShowSwitcherForwardAction"/>
+      <action id="SwitcherBackward" class="com.intellij.ide.actions.ShowSwitcherBackwardAction"/>
+      <action id="SwitcherRecentEditedChangedToggleCheckBox" class="com.intellij.ide.actions.SwitcherToggleOnlyEditedFilesAction"/>
+      <action id="SwitcherIterateItems" class="com.intellij.ide.actions.SwitcherIterateThroughItemsAction"/>
+      <action id="SwitcherNextProblem" use-shortcut-of="GotoNextError" class="com.intellij.ide.actions.SwitcherNextProblemAction"/>
+      <action id="SwitcherPreviousProblem" use-shortcut-of="GotoPreviousError"
+              class="com.intellij.ide.actions.SwitcherPreviousProblemAction"/>
+      <action id="DeleteRecentFiles" use-shortcut-of="$Delete" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <action id="RecentFiles" class="com.intellij.ide.actions.ShowRecentFilesAction"/>
+      <action id="RecentChangedFiles" class="com.intellij.ide.actions.ShowRecentlyEditedFilesAction"/>
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+
     <action id="CollapseExpandableComponent" icon="AllIcons.General.CollapseComponentHover"
             class="com.intellij.ui.ExpandableActions$Collapse"/>
     <action id="ExpandExpandableComponent" icon="AllIcons.General.ExpandComponentHover"
@@ -653,6 +668,10 @@
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
         <separator/>
         <group id="ViewRecentActions">
+          <reference ref="RecentFiles"/>
+          <reference ref="SwitcherRecentEditedChangedToggleCheckBox"/>
+          <reference ref="SwitcherIterateItems"/>
+          <reference ref="RecentChangedFiles"/>
           <action id="RecentLocations" class="com.intellij.ide.actions.RecentLocationsAction"/>
         </group>
         <separator/>
@@ -928,6 +947,7 @@
     </group>
 
     <group id="EditorTabsEntryPoint" popup="true" icon="AllIcons.Actions.More">
+      <reference ref="RecentFiles"/>
       <reference ref="RecentLocations"/>
       <separator/>
       <reference ref="CloseAllEditors"/>
