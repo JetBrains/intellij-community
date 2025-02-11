@@ -23,11 +23,13 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.maven.dom.MavenDomUtil
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.model.MavenArchetype
@@ -132,10 +134,28 @@ open class MavenModuleBuilderHelper(
     val model = MavenDomUtil.getMavenDomProjectModel(project, aggregatorProjectFile)
     if (model != null) {
       model.packaging.stringValue = "pom"
-      val module = model.modules.addModule()
-      module.value = getPsiFile(project, file)
+      val psiFile = getPsiFile(project, file)
+
+      val useSubprojects = useSubprojects(model)
+      if (useSubprojects) {
+        val subproject = model.subprojects.addSubproject()
+        subproject.value = psiFile
+      }
+      else {
+        val module = model.modules.addModule()
+        module.value = psiFile
+      }
+
       unblockAndSaveDocuments(project, aggregatorProjectFile)
     }
+  }
+
+  private fun useSubprojects(model: MavenDomProjectModel): Boolean {
+    // if any subprojects exist, add subproject; if modules exist, add module; if none exist, check modelVersion
+    if (model.subprojects.subprojects.any()) return true
+    if (model.modules.modules.any()) return false
+    val modelVersion = model.modelVersion.value
+    return VersionComparatorUtil.compare(modelVersion, "4.1.0") >= 0
   }
 
   protected fun updateProjectPom(project: Project, pom: VirtualFile) {
