@@ -410,11 +410,6 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     }
   }
 
-  fun click(button: RemoteMouseButton, count: Int) {
-    LOG.info("Click with $button $count times at $this")
-    withComponent { robot.click(it, button, count) }
-  }
-
   fun moveMouse(point: Point? = null, silent: Boolean = false) {
     if (point != null) {
       if (!silent) {
