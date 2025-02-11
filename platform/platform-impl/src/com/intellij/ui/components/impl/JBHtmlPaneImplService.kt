@@ -39,19 +39,18 @@ internal class JBHtmlPaneImplService : JBHtmlPane.ImplService {
   }
 
   private fun applyCssToView(view: View) {
-    // Recursively traverse child views
     val childCount = view.viewCount
     for (i in 0..<childCount) {
       val childView = view.getView(i)
-      applyCssToView(childView)
-      (childView as? BlockView)?.setPropertiesFromAttributes()
-    }
-  }
-
-  private fun BlockView.setPropertiesFromAttributes() {
-    this::class.java.declaredMethods.find { it.name == "setPropertiesFromAttributes" }?.let {
-      it.isAccessible = true
-      it.invoke(this)
+      if (childView != null) {
+        applyCssToView(childView)
+        if (childView is BlockView) {
+          BlockView::class.java.getDeclaredMethod("setPropertiesFromAttributes").let {
+            it.isAccessible = true
+            it.invoke(childView)
+          }
+        }
+      }
     }
   }
 
