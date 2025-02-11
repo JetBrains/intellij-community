@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-import static com.intellij.codeInsight.daemon.impl.JavaServiceUtil.JAVA_UTIL_SERVICE_LOADER_METHODS;
+import static com.intellij.java.codeserver.core.JavaServiceProviderUtil.JAVA_UTIL_SERVICE_LOADER_METHODS;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SERVICE_LOADER;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveType;
 

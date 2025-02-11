@@ -6,12 +6,12 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.JavaServiceUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddUsesDirectiveFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.java.codeserver.core.JavaServiceProviderUtil;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -272,7 +272,7 @@ final class ModuleHighlightUtil {
           errorSink.accept(info);
         }
 
-        PsiMethod provider = JavaServiceUtil.findServiceProviderMethod(implClass);
+        PsiMethod provider = JavaServiceProviderUtil.findServiceProviderMethod(implClass);
         if (provider != null) {
           PsiType type = provider.getReturnType();
           PsiClass typeClass = type instanceof PsiClassType classType ? classType.resolve() : null;

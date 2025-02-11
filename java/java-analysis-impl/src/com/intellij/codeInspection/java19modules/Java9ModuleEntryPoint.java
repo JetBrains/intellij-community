@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19modules;
 
-import com.intellij.codeInsight.daemon.impl.JavaServiceUtil;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.visibility.EntryPointWithVisibilityLevel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.codeserver.core.JavaServiceProviderUtil;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -53,7 +53,7 @@ public final class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
       return isServiceOrExported(psiClass);
     }
     return psiElement instanceof PsiMethod method &&
-           (isDefaultConstructor(method) || JavaServiceUtil.isServiceProviderMethod(method)) &&
+           (isDefaultConstructor(method) || JavaServiceProviderUtil.isServiceProviderMethod(method)) &&
            isServiceOrExported(method.getContainingClass());
   }
 

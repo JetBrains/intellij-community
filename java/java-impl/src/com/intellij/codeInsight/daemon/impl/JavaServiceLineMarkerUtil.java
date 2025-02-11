@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.codeserver.core.JavaServiceProviderUtil;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.NlsSafe;
@@ -24,42 +25,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SERVICE_LOADER;
 
 /**
- * Utility for working with Java services (jigsaw)
+ * Utility for generating JPMS service provider line markers
  */
-public final class JavaServiceUtil {
-  public static final String PROVIDER = "provider";
-  public static final Set<String> JAVA_UTIL_SERVICE_LOADER_METHODS = Set.of("load", "loadInstalled");
+final class JavaServiceLineMarkerUtil {
 
   static final CallMatcher SERVICE_LOADER_LOAD = CallMatcher.staticCall(JAVA_UTIL_SERVICE_LOADER,
-                                                                        ArrayUtil.toStringArray(JAVA_UTIL_SERVICE_LOADER_METHODS));
-
-  /**
-   * Checks if the given method is a service provider method.
-   *
-   * @param method for checking
-   * @return true if the method is a service provider method, false otherwise
-   */
-  public static boolean isServiceProviderMethod(@NotNull PsiMethod method) {
-    return PROVIDER.equals(method.getName()) &&
-           method.getParameterList().isEmpty() &&
-           method.hasModifierProperty(PsiModifier.PUBLIC) &&
-           method.hasModifierProperty(PsiModifier.STATIC);
-  }
-
-  /**
-   * Finds a service provider method within a given PsiClass.
-   *
-   * @param psiClass to search for the service provider method
-   * @return service provider method, or null if not found
-   */
-  public static @Nullable PsiMethod findServiceProviderMethod(@NotNull PsiClass psiClass) {
-    return ContainerUtil.find(psiClass.findMethodsByName("provider", false), JavaServiceUtil::isServiceProviderMethod);
-  }
+                                                                        ArrayUtil.toStringArray(
+                                                                          JavaServiceProviderUtil.JAVA_UTIL_SERVICE_LOADER_METHODS));
 
   static @NotNull List<LineMarkerInfo<PsiElement>> collectServiceProviderMethod(@NotNull PsiMethod method) {
     PsiClass containingClass = method.getContainingClass();
@@ -68,7 +48,7 @@ public final class JavaServiceUtil {
   }
 
   static @NotNull List<LineMarkerInfo<PsiElement>> collectServiceImplementationClass(@NotNull PsiClass psiClass) {
-    if (findServiceProviderMethod(psiClass) != null) return Collections.emptyList();
+    if (JavaServiceProviderUtil.findServiceProviderMethod(psiClass) != null) return Collections.emptyList();
     for (PsiMethod constructor : psiClass.getConstructors()) {
       if (!constructor.hasParameters()) return createJavaServiceLineMarkerInfo(constructor.getNameIdentifier(), psiClass, psiClass);
     }
