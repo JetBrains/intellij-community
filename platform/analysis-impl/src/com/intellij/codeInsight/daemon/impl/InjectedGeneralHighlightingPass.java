@@ -28,6 +28,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.LongList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,8 @@ import java.util.*;
 /**
  * Perform injections, run highlight visitors and annotators on discovered injected files
  */
-final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
+@ApiStatus.Internal
+public final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
   private final @Nullable List<? extends @NotNull TextRange> myReducedRanges;
   private final boolean myUpdateAll;
   private final ProperTextRange myPriorityRange;
