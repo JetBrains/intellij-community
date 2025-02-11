@@ -39,6 +39,7 @@ import javax.swing.event.DocumentEvent
 /**
  * Panel with dump of coroutines
  */
+@Deprecated("Coroutine dump will be shown in ThreadDumpPanel along with the regular Java thread dump, see IDEA-355724")
 class CoroutineDumpPanel(
     project: Project,
     consoleView: ConsoleView,
