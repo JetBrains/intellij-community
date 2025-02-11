@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jdom;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -252,31 +252,7 @@ final class ImmutableElement extends Element {
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public Element clone() {
-    Element element = new Element();
-
-    element.attributes = new AttributeList(element);
-    element.name = getName();
-    element.namespace = getNamespace();
-
-    // Cloning attributes
-    List<Attribute> attributes = getAttributes();
-    if (attributes != null) {
-      for (final Attribute attribute : attributes) {
-        element.attributes.add(attribute.clone());
-      }
-    }
-
-    // Cloning additional namespaces
-    if (additionalNamespaces != null) {
-      element.additionalNamespaces = new ArrayList<>(additionalNamespaces);
-    }
-
-    // Cloning content
-    for (Content c : myContent) {
-      element.content.add(c.clone());
-    }
-
-    return element;
+    return createClone(this, myContent, myAttributes);
   }
 
   @Override
