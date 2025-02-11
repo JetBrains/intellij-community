@@ -153,44 +153,59 @@ public final class LibraryDependenciesUpdater {
       JpsBuildBundle.message("progress.message.updating.library.state", libsRootsToUpdate.size(), count(deletedLibRoots), chunk.getPresentableShortName()))
     );
 
-    Delta delta = graph.createDelta(map(libsRootsToUpdate.keySet(), pathMapper::toNodeSource), map(deletedLibRoots, pathMapper::toNodeSource), false);
-    LibraryNodesBuilder nodesBuilder = new LibraryNodesBuilder(graphConfig);
-    for (Map.Entry<Path, String> entry : libsRootsToUpdate.entrySet()) {
-      Path libRoot = entry.getKey();
-      NodeSource src = pathMapper.toNodeSource(libRoot);
-      Set<NodeSource> sources = Set.of(src);
-      for (Node<?, ?> node : nodesBuilder.processLibraryRoot(entry.getValue(), src)) {
-        delta.associate(node, sources);
+    try {
+      Delta delta = graph.createDelta(map(libsRootsToUpdate.keySet(), pathMapper::toNodeSource), map(deletedLibRoots, pathMapper::toNodeSource), false);
+      LibraryNodesBuilder nodesBuilder = new LibraryNodesBuilder(graphConfig);
+      for (Map.Entry<Path, String> entry : libsRootsToUpdate.entrySet()) {
+        Path libRoot = entry.getKey();
+        NodeSource src = pathMapper.toNodeSource(libRoot);
+        Set<NodeSource> sources = Set.of(src);
+        int nodeCount = 0;
+        for (Node<?, ?> node : nodesBuilder.processLibraryRoot(entry.getValue(), src)) {
+          nodeCount++;
+          delta.associate(node, sources);
+        }
+        context.processMessage(new ProgressMessage(
+          JpsBuildBundle.message("progress.message.processing.library", libRoot.getFileName(), nodeCount)
+        ));
       }
-    }
 
-    DifferentiateParameters diffParams = DifferentiateParametersBuilder.create("libraries of " + chunk.getName())
-      .withAffectionFilter(s -> !LibraryDef.isLibraryPath(s))
-      .calculateAffected(!isFullRebuild)
-      .withChunkStructureFilter(chunkStructureFilter)
-      .get();
-    DifferentiateResult diffResult = graph.differentiate(delta, diffParams);
+      DifferentiateParameters diffParams = DifferentiateParametersBuilder.create("libraries of " + chunk.getName())
+        .withAffectionFilter(s -> !LibraryDef.isLibraryPath(s))
+        .calculateAffected(!isFullRebuild)
+        .withChunkStructureFilter(chunkStructureFilter)
+        .get();
+      DifferentiateResult diffResult = graph.differentiate(delta, diffParams);
 
-    if (!diffResult.isIncremental()) {
-      if (!isFullRebuild) {
-        final String messageText = JpsBuildBundle.message("progress.message.marking.0.and.direct.dependants.for.recompilation", chunk.getPresentableShortName());
-        LOG.info("Non-incremental mode: " + messageText);
-        context.processMessage(new ProgressMessage(messageText));
-        FSOperations.markDirtyRecursively(context, CompilationRound.CURRENT, chunk, null);
+      if (!diffResult.isIncremental()) {
+        if (!isFullRebuild) {
+          final String messageText = JpsBuildBundle.message("progress.message.marking.0.and.direct.dependants.for.recompilation", chunk.getPresentableShortName());
+          LOG.info("Non-incremental mode: " + messageText);
+          context.processMessage(new ProgressMessage(messageText));
+          FSOperations.markDirtyRecursively(context, CompilationRound.CURRENT, chunk, null);
+        }
       }
+      else if (diffParams.isCalculateAffected()) {
+        Iterable<NodeSource> affectedSources = diffResult.getAffectedSources();
+        final String infoMessage = JpsBuildBundle.message("progress.message.dependency.analysis.found.0.affected.files", count(affectedSources));
+        LOG.info(infoMessage);
+        context.processMessage(new ProgressMessage(infoMessage));
+
+        markAffectedFilesDirty(context, map(affectedSources, ns -> pathMapper.toPath(ns)));
+      }
+
+      graph.integrate(diffResult);
+
+      return diffResult.isIncremental();
     }
-    else if (diffParams.isCalculateAffected()) {
-      Iterable<NodeSource> affectedSources = diffResult.getAffectedSources();
-      final String infoMessage = JpsBuildBundle.message("progress.message.dependency.analysis.found.0.affected.files", count(affectedSources));
-      LOG.info(infoMessage);
-      context.processMessage(new ProgressMessage(infoMessage));
-
-      markAffectedFilesDirty(context, map(affectedSources, ns -> pathMapper.toPath(ns)));
+    catch (Throwable e) {
+      for (Path path : libsRootsToUpdate.keySet()) {
+        // data from these libraries can be updated only partially
+        // ensure they will be parsed next time
+        libraryRoots.remove(path);
+      }
+      throw e;
     }
-
-    graph.integrate(diffResult);
-
-    return diffResult.isIncremental();
   }
 
   private @NotNull String getCompoundLibraryName(Path libRoot) {
