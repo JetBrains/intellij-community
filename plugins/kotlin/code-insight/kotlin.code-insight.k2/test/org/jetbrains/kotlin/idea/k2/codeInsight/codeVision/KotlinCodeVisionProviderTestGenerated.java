@@ -61,6 +61,11 @@ public class KotlinCodeVisionProviderTestGenerated extends AbstractKotlinCodeVis
         runTest("../../idea/tests/testData/codeInsight/codeVision/ClassUsages.kt");
     }
 
+    @TestMetadata("EnumClassUsages.kt")
+    public void testEnumClassUsages() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/codeVision/EnumClassUsages.kt");
+    }
+
     @TestMetadata("GlobalFunctionUsages.kt")
     public void testGlobalFunctionUsages() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/codeVision/GlobalFunctionUsages.kt");

@@ -259,6 +259,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
                 element?.element?.takeIf { (it as? KtConstructor<*>)?.containingClass()?.isEnum() == true }?.let { el ->
                     val klass = (el as KtConstructor<*>).containingClass() as KtClass
+                    if (!effectiveSearchScope.contains(klass.containingFile.virtualFile)) return@let
                     klass.declarations.filterIsInstance<KtEnumEntry>().forEach { enumEntry ->
                         enumEntry.descendantsOfType<KtEnumEntrySuperclassReferenceExpression>().forEach { superEntry ->
                             val target = analyze(superEntry) {

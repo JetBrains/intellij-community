@@ -19,6 +19,7 @@ import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
@@ -177,7 +178,9 @@ open class CodeVisionHost(val project: Project) {
   @TestOnly
   fun calculateCodeVisionSync(editor: Editor, testRootDisposable: Disposable) {
     calculateFrontendLenses(testRootDisposable.createLifetime(), editor, inTestSyncMode = true) { lenses, _ ->
-      editor.lensContext?.setResults(lenses)
+      ApplicationManager.getApplication().invokeAndWait {
+        editor.lensContext?.setResults(lenses)
+      }
     }
   }
 
@@ -533,7 +536,7 @@ open class CodeVisionHost(val project: Project) {
       }
     }
     else {
-      runnable()
+      ActionUtil.underModalProgress(project, "") { runnable() }
     }
 
     return indicator
