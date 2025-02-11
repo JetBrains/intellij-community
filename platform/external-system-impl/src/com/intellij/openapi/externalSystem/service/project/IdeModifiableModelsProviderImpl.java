@@ -26,7 +26,6 @@ import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal;
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.platform.workspace.storage.VersionedEntityStorage;
-import com.intellij.util.containers.ClassMap;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
@@ -218,22 +217,5 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   private void setIdeModelsProviderForModule(@NotNull Module module) {
     module.putUserData(MODIFIABLE_MODELS_PROVIDER_KEY, this);
-  }
-
-  // temporarily open access to state for the proxy
-  public ClassMap<ModifiableModel> getModifiableModels() {
-    return myModifiableModels;
-  }
-
-  public Map<Library, Library.ModifiableModel> getModifiableLibraryModels() {
-    return myModifiableLibraryModels;
-  }
-
-  public Map<Module, ModifiableFacetModel> getModifiableFacetModels() {
-    return myModifiableFacetModels;
-  }
-
-  public void forceUpdateSubstitutions() {
-    updateSubstitutions();
   }
 }
