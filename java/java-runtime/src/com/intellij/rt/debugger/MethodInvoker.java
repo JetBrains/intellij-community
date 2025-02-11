@@ -12,12 +12,14 @@ import java.util.List;
 
 @SuppressWarnings({"SSBasedInspection", "unused"})
 public final class MethodInvoker {
-  private static final ThreadLocal<List<Object>> keptValues = new ThreadLocal<List<Object>>() {
-    @Override
-    protected List<Object> initialValue() {
-      return new LinkedList<>(); // LinkedList for fast elements removal
-    }
-  };
+  private static final ThreadLocal<List<Object>> keptValues = new ThreadLocal<>();
+  // Do not create an anonymous class here to simplify helper class loading into the target process
+  //{
+  //  @Override
+  //  protected List<Object> initialValue() {
+  //    return new LinkedList<>(); // LinkedList for fast elements removal
+  //  }
+  //};
 
   public static Object invoke0(MethodHandles.Lookup lookup, Class<?> cls, Object obj, String nameAndDescriptor, ClassLoader loader)
     throws Throwable {
@@ -234,6 +236,10 @@ public final class MethodInvoker {
 
   private static Object keepReference(Object ref, boolean soft) {
     List<Object> objects = keptValues.get();
+    if (objects == null) {
+      objects = new LinkedList<>();
+      keptValues.set(objects);
+    }
     removeStaleReferences(objects);
     Object wrapper = soft ? new SoftReference<>(ref) : new Object[]{ref};
     objects.add(wrapper);
