@@ -5664,6 +5664,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/member/funWithNullableTypeParameter.kt");
                     }
 
+                    @TestMetadata("funWithSameTypesParams.kt")
+                    public void testFunWithSameTypesParams() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/member/funWithSameTypesParams.kt");
+                    }
+
                     @TestMetadata("implicitThisInLocalClassWithTypeParameterFromExtensionParent.kt")
                     public void testImplicitThisInLocalClassWithTypeParameterFromExtensionParent() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/member/implicitThisInLocalClassWithTypeParameterFromExtensionParent.kt");
