@@ -191,7 +191,7 @@ public final class LibraryDependenciesUpdater {
         LOG.info(infoMessage);
         context.processMessage(new ProgressMessage(infoMessage));
 
-        markAffectedFilesDirty(context, map(affectedSources, ns -> pathMapper.toPath(ns)));
+        markAffectedFilesDirty(context, chunk, map(affectedSources, pathMapper::toPath));
       }
 
       graph.integrate(diffResult);
@@ -223,7 +223,7 @@ public final class LibraryDependenciesUpdater {
     return attribs == NULL_ATTRIBUTES? null : attribs;
   }
 
-  private static void markAffectedFilesDirty(CompileContext context, Iterable<? extends Path> affectedFiles) throws IOException {
+  private static void markAffectedFilesDirty(CompileContext context, ModuleChunk chunk, Iterable<? extends Path> affectedFiles) throws IOException {
     if (isEmpty(affectedFiles)) {
       return;
     }
@@ -245,6 +245,9 @@ public final class LibraryDependenciesUpdater {
       else {
         FSOperations.markDirtyIfNotDeleted(context, CompilationRound.CURRENT, path);
       }
+    }
+    if (find(chunk.getTargets(), targetsToMark::contains) != null) {
+      targetsToMark.addAll(chunk.getTargets()); // ensure all chunk's targets are compiled together
     }
     for (ModuleBuildTarget target : targetsToMark) {
       context.markNonIncremental(target);

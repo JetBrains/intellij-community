@@ -24,6 +24,7 @@ import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.JpsJavaDependenciesEnumeratorImpl;
+import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleDependency;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
@@ -269,7 +270,11 @@ public class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescri
       enumerator = enumerator.withoutSdk();
     }
     if (JavaBuilderUtil.isTrackLibraryDependenciesEnabled()) {
-      // when enabled, libraries are tracked by DepGraph
+      // when enabled, library roots will be tracked by DepGraph
+      for (JpsLibrary library : enumerator.getLibraries()) {
+        // include only library names in correct order
+        hash.putString(library.getName());
+      }
       enumerator = enumerator.withoutLibraries();
     }
 
