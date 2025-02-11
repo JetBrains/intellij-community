@@ -31,6 +31,12 @@
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackagePartProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinPackagePartProviderFactory"/>
     <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAccessibilityChecker"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.java.IdeKotlinJavaModuleAccessibilityChecker"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAnnotationsProvider"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.java.IdeKotlinJavaModuleAnnotationsProvider"/>
+    <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinByModulesResolutionScopeProvider"/>
     <projectService
