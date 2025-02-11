@@ -24,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.toCompleteCoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineDumpPanel
 
@@ -38,7 +39,8 @@ class CoroutineDumpAction : AnAction() {
         executeOnDMT(suspendContext) {
             val states = CoroutineDebugProbesProxy(suspendContext).dumpCoroutines()
             if (states.isOk()) {
-                val coroutines = states.cache
+                // WA: pass complete coroutine info data to CoroutineDumpPanel to avoid computation of stacktraces on the UI thread.
+                val coroutines = states.cache.map { it.toCompleteCoroutineInfoData() }
                 withContext(Dispatchers.EDT) {
                     val ui = session.xDebugSession?.ui ?: return@withContext
                     addCoroutineDump(project, coroutines, ui, session.searchScope)

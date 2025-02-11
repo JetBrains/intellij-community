@@ -139,14 +139,7 @@ class CompleteCoroutineInfoData(
     lastObservedThread = activeThread,
     debugCoroutineInfoRef = null,
     stackFrameProvider = null
-) {
-    override val continuationStackFrames: List<CoroutineStackFrameItem> by lazy {
-        continuationStackFrames
-    }
-    override val creationStackFrames: List<CreationCoroutineStackFrameItem> by lazy {
-        creationStackFrames
-    }
-}
+)
 
 @Deprecated("Please use CoroutineInfoData API instead.")
 fun CoroutineInfoData.toCompleteCoroutineInfoData() =
