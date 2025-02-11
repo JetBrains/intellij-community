@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.changes.IgnoreSettingsType
 import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
 import com.intellij.openapi.vcs.changes.IgnoredFileProvider
 import com.intellij.openapi.vcs.changes.ignore.IgnoredFileGeneratorImpl
@@ -130,7 +131,7 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
       return events.asSequence()
         .mapNotNull(VFileEvent::getFile)
         .filter(VirtualFile::isInLocalFileSystem)
-        .any { file -> file.exists() && inStoreDir(projectConfigDirPath, file.path) }
+        .any { file -> file.exists() && inStoreDir(projectConfigDirPath, file.path, true) }
     }
   }
 
@@ -246,10 +247,10 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
 
   private fun inStoreDir(projectConfigDirPath: @SystemIndependent String, ignore: IgnoredFileDescriptor): Boolean {
     val path = ignore.path ?: return false
-    return inStoreDir(projectConfigDirPath, path)
+    return inStoreDir(projectConfigDirPath, path, ignore.type != IgnoreSettingsType.MASK)
   }
 
-  private fun inStoreDir(projectConfigDirPath: @SystemIndependent String, path: @SystemIndependent String): Boolean {
-    return FileUtil.isAncestor(projectConfigDirPath, path, true)
+  private fun inStoreDir(projectConfigDirPath: @SystemIndependent String, path: @SystemIndependent String, strict: Boolean): Boolean {
+    return FileUtil.isAncestor(projectConfigDirPath, path, strict)
   }
 }

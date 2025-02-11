@@ -1229,6 +1229,7 @@ f:com.intellij.openapi.vcs.changes.IgnoredBeanFactory
 - s:ignoreFile(java.lang.String,com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.IgnoredFileBean
 - s:ignoreUnderDirectory(java.lang.String,com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.IgnoredFileBean
 - s:withMask(java.lang.String):com.intellij.openapi.vcs.changes.IgnoredFileBean
+- s:withMask(java.lang.String,java.lang.String):com.intellij.openapi.vcs.changes.IgnoredFileBean
 f:com.intellij.openapi.vcs.changes.IgnoredFileBean
 - com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
 - equals(java.lang.Object):Z
