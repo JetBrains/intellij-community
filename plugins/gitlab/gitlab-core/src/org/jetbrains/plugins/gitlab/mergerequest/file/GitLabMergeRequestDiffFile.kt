@@ -54,14 +54,7 @@ internal data class GitLabMergeRequestDiffFile(
   override fun isValid(): Boolean = isFileValid(project, connectionId)
 
   override fun createViewer(project: Project): DiffEditorViewer {
-    val processor = if (CodeReviewAdvancedSettings.isCombinedDiffEnabled()) {
-      project.service<GitLabMergeRequestDiffService>().createGitLabCombinedDiffProcessor(connectionId, mergeRequestIid)
-    }
-    else {
-      project.service<GitLabMergeRequestDiffService>().createDiffRequestProcessor(connectionId, mergeRequestIid)
-    }
-    processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CodeReviewAdvancedSettings.CodeReviewCombinedDiffToggle)
-    return processor
+    return project.service<GitLabMergeRequestDiffService>().createGitLabDiffRequestProcessor(connectionId, mergeRequestIid)
   }
 }
 
@@ -75,30 +68,43 @@ private fun isFileValid(project: Project, connectionId: String): Boolean =
 
 @Service(Service.Level.PROJECT)
 private class GitLabMergeRequestDiffService(private val project: Project, private val cs: CoroutineScope) {
-  fun createDiffRequestProcessor(connectionId: String, mergeRequestIid: String): DiffRequestProcessor {
-    val vmFlow = findDiffVm(project, connectionId, mergeRequestIid)
-    return AsyncDiffRequestProcessorFactory.createIn(cs, project, vmFlow, ::createDiffContext, ::getChangeDiffVmPresentation)
-  }
-
-  fun createGitLabCombinedDiffProcessor(connectionId: String, mergeRequestIid: String): CombinedDiffComponentProcessor {
-    val vmFlow = findDiffVm(project, connectionId, mergeRequestIid)
-    return AsyncDiffRequestProcessorFactory.createCombinedIn(cs, project, vmFlow, ::createDiffContext, ::getChangeDiffVmPresentation)
-  }
-
-  private fun createDiffContext(vm: GitLabMergeRequestDiffViewModel): List<KeyValuePair<*>> = buildList {
-    add(KeyValuePair(GitLabMergeRequestDiffViewModel.KEY, vm))
-    add(KeyValuePair(DiffUserDataKeys.DATA_PROVIDER, GenericDataProvider().apply {
-      putData(GitLabMergeRequestReviewViewModel.DATA_KEY, vm)
-    }))
-    add(KeyValuePair(DiffUserDataKeys.CONTEXT_ACTIONS,
-                     listOf(ActionManager.getInstance().getAction("GitLab.MergeRequest.Review.Submit"))))
-  }
-
-  private fun getChangeDiffVmPresentation(changeVm: GitLabMergeRequestDiffChangeViewModel): PresentableChange =
-    object : PresentableChange {
-      override fun getFilePath(): FilePath = changeVm.change.filePath
-      override fun getFileStatus(): FileStatus = changeVm.change.fileStatus
+  fun createGitLabDiffRequestProcessor(connectionId: String, mergeRequestIid: String): DiffEditorViewer {
+    val processor = if (CodeReviewAdvancedSettings.isCombinedDiffEnabled()) {
+      createCombinedDiffProcessor(project, cs, connectionId, mergeRequestIid)
     }
+    else {
+      createDiffRequestProcessor(project, cs, connectionId, mergeRequestIid)
+    }
+    processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CodeReviewAdvancedSettings.CodeReviewCombinedDiffToggle)
+    return processor
+  }
+
+  companion object {
+    fun createDiffRequestProcessor(project: Project, cs: CoroutineScope, connectionId: String, mergeRequestIid: String): DiffRequestProcessor {
+      val vmFlow = findDiffVm(project, connectionId, mergeRequestIid)
+      return AsyncDiffRequestProcessorFactory.createIn(cs, project, vmFlow, ::createDiffContext, ::getChangeDiffVmPresentation)
+    }
+
+    fun createCombinedDiffProcessor(project: Project, cs: CoroutineScope, connectionId: String, mergeRequestIid: String): CombinedDiffComponentProcessor {
+      val vmFlow = findDiffVm(project, connectionId, mergeRequestIid)
+      return AsyncDiffRequestProcessorFactory.createCombinedIn(cs, project, vmFlow, ::createDiffContext, ::getChangeDiffVmPresentation)
+    }
+
+    private fun createDiffContext(vm: GitLabMergeRequestDiffViewModel): List<KeyValuePair<*>> = buildList {
+      add(KeyValuePair(GitLabMergeRequestDiffViewModel.KEY, vm))
+      add(KeyValuePair(DiffUserDataKeys.DATA_PROVIDER, GenericDataProvider().apply {
+        putData(GitLabMergeRequestReviewViewModel.DATA_KEY, vm)
+      }))
+      add(KeyValuePair(DiffUserDataKeys.CONTEXT_ACTIONS,
+                       listOf(ActionManager.getInstance().getAction("GitLab.MergeRequest.Review.Submit"))))
+    }
+
+    private fun getChangeDiffVmPresentation(changeVm: GitLabMergeRequestDiffChangeViewModel): PresentableChange =
+      object : PresentableChange {
+        override fun getFilePath(): FilePath = changeVm.change.filePath
+        override fun getFileStatus(): FileStatus = changeVm.change.fileStatus
+      }
+  }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
