@@ -9,9 +9,11 @@ import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.impl.FileStatusProvider
 import com.intellij.openapi.vfs.VirtualFile
 
-class SettingsFileEditorProvider : FileEditorProvider, DumbAware {
+class SettingsFileEditorProvider : FileEditorProvider, FileStatusProvider, DumbAware {
   companion object{
     const val ID = "SettingsFileEditor"
   }
@@ -41,5 +43,13 @@ class SettingsFileEditorProvider : FileEditorProvider, DumbAware {
 
   override fun disposeEditor(editor: FileEditor) {
     Disposer.dispose(editor as SettingsFileEditor)
+  }
+
+  override fun getFileStatus(virtualFile: VirtualFile): FileStatus? {
+    val isModified = (virtualFile as? SettingsVirtualFile)?.isModified() ?: return null
+    return if (isModified)
+      FileStatus.MODIFIED
+    else
+      FileStatus.NOT_CHANGED
   }
 }

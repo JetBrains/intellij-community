@@ -51,7 +51,7 @@ internal class SettingsFileEditor(
   override fun setState(state: FileEditorState) {}
 
   override fun isModified(): Boolean {
-    return false
+    return settingsFile.isModified()
   }
 
   override fun isValid(): Boolean {

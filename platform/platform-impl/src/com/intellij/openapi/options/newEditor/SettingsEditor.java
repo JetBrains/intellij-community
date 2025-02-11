@@ -21,6 +21,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.ui.IdeUICustomization;
@@ -500,9 +501,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     filter.updateSpotlight(configurable == null);
     if (editor != null) {
       ConfigurationException exception = filter.context.getErrors().get(configurable);
-      boolean hasModified = filter.context.getModified().isEmpty();
-      editor.getApplyAction().setEnabled(!hasModified);
-      myResetAllAction.setEnabled(!hasModified);
+      boolean isModified = isModified();
+      editor.getApplyAction().setEnabled(isModified);
+      myResetAllAction.setEnabled(isModified);
       editor.getResetAction().setEnabled(filter.context.isModified(configurable) || exception != null);
       editor.setError(exception);
       editor.revalidate();
@@ -514,6 +515,10 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
         }
       });
     }
+  }
+
+  public boolean isModified() {
+    return !filter.context.getModified().isEmpty();
   }
 
   private void updateController(@Nullable Configurable configurable) {
