@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.recentFiles.frontend
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.actions
 
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.IdeBundle.message
+import com.intellij.ide.actions.Switcher.SwitcherPanel
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -10,20 +11,20 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
-import com.intellij.ui.components.JBList
+import com.intellij.util.BitUtil.isSet
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.*
 import java.util.function.Consumer
 import javax.swing.AbstractAction
 import javax.swing.JList
+import javax.swing.KeyStroke
 
 private fun forward(event: AnActionEvent) = true != event.inputEvent?.isShiftDown
 
 
 internal class ShowSwitcherForwardAction : BaseSwitcherAction(true)
 internal class ShowSwitcherBackwardAction : BaseSwitcherAction(false)
-
 @ApiStatus.Internal
 abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
   private fun isControlTab(event: KeyEvent?) = event?.run { isControlDown && keyCode == KeyEvent.VK_TAB } ?: false

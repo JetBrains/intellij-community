@@ -1,25 +1,34 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.recentFiles.frontend
+package com.intellij.ide.actions
 
+import com.intellij.codeInsight.daemon.HighlightingPassesCache
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.actions.OpenInRightSplitAction.Companion.openInRightSplit
+import com.intellij.ide.actions.SwitcherLogger.NAVIGATED
+import com.intellij.ide.actions.SwitcherLogger.NAVIGATED_INDEXES
+import com.intellij.ide.actions.SwitcherLogger.NAVIGATED_ORIGINAL_INDEXES
+import com.intellij.ide.actions.SwitcherLogger.SHOWN_TIME_ACTIVITY
+import com.intellij.ide.actions.SwitcherSpeedSearch.Companion.installOn
 import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit
+import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil
+import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.gotoByName.QuickSearchComponent
-import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.impl.EditorWindow
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
-import com.intellij.openapi.fileEditor.impl.getOpenMode
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
+import com.intellij.openapi.fileEditor.impl.*
+import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil.getCustomEditorTabTitle
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.LightEditActionFactory
@@ -30,18 +39,17 @@ import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
+import com.intellij.openapi.vcs.FileStatusManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
-import com.intellij.platform.project.projectId
-import com.intellij.platform.recentFiles.frontend.SwitcherLogger.NAVIGATED
-import com.intellij.platform.recentFiles.frontend.SwitcherLogger.NAVIGATED_INDEXES
-import com.intellij.platform.recentFiles.frontend.SwitcherLogger.NAVIGATED_ORIGINAL_INDEXES
-import com.intellij.platform.recentFiles.frontend.SwitcherLogger.SHOWN_TIME_ACTIVITY
-import com.intellij.platform.recentFiles.frontend.SwitcherSpeedSearch.Companion.installOn
-import com.intellij.platform.recentFiles.shared.FileSwitcherApi
-import com.intellij.platform.recentFiles.frontend.model.PreservingSelectionModel
-import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -50,32 +58,38 @@ import com.intellij.ui.hover.ListHoverListener
 import com.intellij.ui.popup.PopupUpdateProcessorBase
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.FilteringListModel
+import com.intellij.ui.speedSearch.NameFilteringListModel
+import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.SwingTextTrimmer
 import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.components.BorderLayoutPanel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.await
+import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.InputEvent
 import java.awt.event.ItemEvent
 import java.awt.event.ItemListener
 import java.awt.event.MouseEvent
+import java.io.File
 import java.util.*
 import javax.swing.*
-import javax.swing.event.ListDataEvent
-import javax.swing.event.ListDataListener
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
+import kotlin.io.path.Path
+import kotlin.io.path.pathString
 import kotlin.math.max
+import kotlin.math.min
 
 private const val ACTION_PLACE = "Switcher"
 
@@ -94,12 +108,11 @@ object Switcher : BaseSwitcherAction(null) {
     onlyEditedFiles: Boolean?,
     forward: Boolean,
   ) : BorderLayoutPanel(), UiDataProvider, QuickSearchComponent, Disposable {
-
     val popup: JBPopup?
-    private val activity = SHOWN_TIME_ACTIVITY.started(project)
+    val activity = SHOWN_TIME_ACTIVITY.started(project)
     private var navigationData: SwitcherLogger.NavigationData? = null
     internal val toolWindows: JBList<SwitcherListItem>
-    internal val files: JBList<SwitcherVirtualFile>
+    val files: JBList<SwitcherVirtualFile>
     val cbShowOnlyEditedFiles: JCheckBox?
     private val pathLabel: JLabel = HintUtil.createAdComponent(
       " ",
