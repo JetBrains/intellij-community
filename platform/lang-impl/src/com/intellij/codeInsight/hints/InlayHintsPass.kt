@@ -169,9 +169,6 @@ class InlayHintsPass(
           BlockInlayRenderer(factory, presentations)
         ) ?: break
         postprocessInlay(inlay, isPlaceholder)
-        if (!showAbove) {
-          break
-        }
       }
     }
 
