@@ -7,6 +7,7 @@
 
   <content>
     <module name="intellij.platform.tips"/>
+    <module name="intellij.settingsSync.core"/>
   </content>
 
 </idea-plugin>
