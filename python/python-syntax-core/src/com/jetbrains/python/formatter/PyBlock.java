@@ -451,40 +451,7 @@ public class PyBlock implements ASTBlock {
         }
       }
     }
-    if (childType == PyElementTypes.KEY_VALUE_EXPRESSION && isChildOfDictLiteral(child)) {
-      childWrap = myDictWrapping;
-    }
-    if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION &&
-        childType != PyTokenTypes.COMMA &&
-        childType != PyTokenTypes.LBRACKET &&
-        childType != PyTokenTypes.RBRACKET) {
-      childWrap = myListWrapping;
-    }
-    if (parentType == PyElementTypes.SET_LITERAL_EXPRESSION &&
-        childType != PyTokenTypes.COMMA &&
-        childType != PyTokenTypes.LBRACE &&
-        childType != PyTokenTypes.RBRACE) {
-      childWrap = mySetWrapping;
-    }
-    if (parentType == PyElementTypes.TUPLE_EXPRESSION &&
-         grandparentType == PyElementTypes.PARENTHESIZED_EXPRESSION &&
-         childType != PyTokenTypes.COMMA &&
-         childType != PyTokenTypes.LPAR &&
-         childType != PyTokenTypes.RPAR) {
-      childWrap = myTupleWrapping;
-    }
-    if (parentType == PyElementTypes.PARAMETER_LIST &&
-        childType != PyTokenTypes.COMMA &&
-        childType != PyTokenTypes.LPAR &&
-        childType != PyTokenTypes.RPAR) {
-      childWrap = myParameterListWrapping;
-    }
-    if (parentType == PyElementTypes.ARGUMENT_LIST &&
-        childType != PyTokenTypes.COMMA &&
-        childType != PyTokenTypes.LPAR &&
-        childType != PyTokenTypes.RPAR) {
-      childWrap = myArgumentListWrapping;
-    }
+    childWrap = getSpecialWrapForContainers(child, childType, childWrap, parentType);
 
     if (isAfterStatementList(child) &&
         !hasLineBreaksBeforeInSameParent(child, 2) &&
@@ -537,6 +504,32 @@ public class PyBlock implements ASTBlock {
     }
 
     return new PyBlock(this, child, childAlignment, childIndent, childWrap, myContext);
+  }
+
+  private @Nullable Wrap getSpecialWrapForContainers(@NotNull ASTNode child,
+                                           @NotNull IElementType childType,
+                                           @Nullable Wrap childWrap,
+                                           @Nullable IElementType parentType) {
+    if (childType != PyTokenTypes.COMMA && childType != PyTokenTypes.END_OF_LINE_COMMENT) {
+      // (...)
+      if (childType != PyTokenTypes.LPAR && childType != PyTokenTypes.RPAR) {
+        if (parentType == PyElementTypes.TUPLE_EXPRESSION) return myTupleWrapping;
+        if (parentType == PyElementTypes.PARAMETER_LIST) return myParameterListWrapping;
+        if (parentType == PyElementTypes.ARGUMENT_LIST) return myArgumentListWrapping;
+      }
+      // [...]
+      if (childType != PyTokenTypes.LBRACKET && childType != PyTokenTypes.RBRACKET) {
+        if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION) return myListWrapping;
+      }
+      // {...}
+      if (childType != PyTokenTypes.LBRACE && childType != PyTokenTypes.RBRACE) {
+        if (parentType == PyElementTypes.SET_LITERAL_EXPRESSION) return mySetWrapping;
+      }
+    }
+    if (childType == PyElementTypes.KEY_VALUE_EXPRESSION && isChildOfDictLiteral(child)) {
+      return myDictWrapping;
+    }
+    return childWrap;
   }
 
   private static boolean isInsideWithStatementParentheses(@NotNull ASTNode withStatement, @NotNull ASTNode node) {

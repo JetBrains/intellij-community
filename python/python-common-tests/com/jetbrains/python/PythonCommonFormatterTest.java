@@ -1560,4 +1560,14 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
     getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
     doTest();
   }
+
+  public void testWrappingInCollectionsCommentsStayOnTheSameLine() {
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getPythonCodeStyleSettings().DICT_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getPythonCodeStyleSettings().SET_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getCodeStyleSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getCodeStyleSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doTest();
+  }
 }
