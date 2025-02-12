@@ -9,7 +9,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -29,10 +28,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -111,15 +108,7 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
     if (!enabled) {
       return;
     }
-    info.startComputeQuickFixes(computation -> {
-      return ReadAction.nonBlocking(()->{
-        AtomicReference<List<HighlightInfo.IntentionActionDescriptor>> result = new AtomicReference<>(List.of());
-        ((ApplicationEx)ApplicationManager.getApplication()).executeByImpatientReader(
-          () -> result.set(info.doComputeLazyQuickFixes(editor.getDocument(), computation)));
-        return result.get();
-      }).submit(ForkJoinPool.commonPool());
-      }
-    );
+    info.startComputeQuickFixes(editor.getDocument());
   }
 
   @TestOnly

@@ -19,6 +19,8 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.editor.Document;
@@ -52,10 +54,11 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import static com.intellij.openapi.util.NlsContexts.Tooltip;
@@ -529,17 +532,22 @@ public class HighlightInfo implements Segment {
     if (getStartOffset() != startOffset || getEndOffset() != endOffset) {
       s += "; created as: (" + startOffset + "," + endOffset + ")";
     }
-    if (highlighter != null) s += " text='" + StringUtil.first(getText(), 40, true) + "'";
-    if (getDescription() != null) s += ", description='" + getDescription() + "'";
+    if (highlighter != null) {
+      s += "; text='" + StringUtil.first(getText(), 40, true) + "'";
+      if (!highlighter.isValid()) {
+        s += "; highlighter: ("+highlighter.getStartOffset()+", "+highlighter.getEndOffset()+") is invalid";
+      }
+    }
+    if (getDescription() != null) {
+      s += ", description='" + getDescription() + "'";
+    }
     s += "; severity=" + getSeverity();
     synchronized (this) {
       if (!getIntentionActionDescriptors().isEmpty()) {
-        s += "; quickFixes: " + StringUtil.join(
-          getIntentionActionDescriptors(), q -> {
+        s += "; quickFixes: " + StringUtil.join(getIntentionActionDescriptors(), q -> {
             Class<?> quickClassName = ReportingClassSubstitutor.getClassToReport(q.myAction);
             return isFqdn ? quickClassName.getName() : quickClassName.getSimpleName();
-          },
-          ", ");
+          }, ", ");
       }
     }
     if (gutterIconRenderer != null) {
@@ -1164,7 +1172,7 @@ public class HighlightInfo implements Segment {
                                                   @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
                                                   long textRange) {
     return range2markerCache.computeIfAbsent(textRange, __ -> document.createRangeMarker(TextRangeScalarUtil.startOffset(textRange),
-                                                                                           TextRangeScalarUtil.endOffset(textRange)));
+                                                                                         TextRangeScalarUtil.endOffset(textRange)));
   }
 
   // convert ranges to markers: from quickFixRanges -> quickFixMarkers and fixRange -> fixMarker
@@ -1302,8 +1310,9 @@ public class HighlightInfo implements Segment {
     }
   }
 
-  @NotNull List<IntentionActionDescriptor> doComputeLazyQuickFixes(@NotNull Document document,
-                                                                   @NotNull Consumer<? super QuickFixActionRegistrar> computation) {
+  @NotNull
+  private List<IntentionActionDescriptor> doComputeLazyQuickFixes(@NotNull Document document,
+                                                                  @NotNull Consumer<? super QuickFixActionRegistrar> computation) {
     List<IntentionActionDescriptor> descriptors = new ArrayList<>();
     QuickFixActionRegistrar registrarDelegate = new QuickFixActionRegistrar() {
       @Override
@@ -1324,14 +1333,23 @@ public class HighlightInfo implements Segment {
     return descriptors;
   }
 
-  synchronized void startComputeQuickFixes(@NotNull Function<? super Consumer<? super QuickFixActionRegistrar>, ? extends Future<? extends @NotNull List<IntentionActionDescriptor>>> futureStarter) {
+  /**
+   * Starts computing lazy quick fixes in the background.
+   * The result will be stored back in {@link #myLazyQuickFixes} inside {@link LazyFixDescription#future}
+   */
+  synchronized void startComputeQuickFixes(@NotNull Document document) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     List<LazyFixDescription> newPairs = ContainerUtil.map(myLazyQuickFixes, description -> {
       Future<? extends List<IntentionActionDescriptor>> future = description.future();
       if (future == null) {
         Consumer<? super QuickFixActionRegistrar> computer = description.fixesComputer();
-        future = futureStarter.apply(computer);
+        future = ReadAction.nonBlocking(()->{
+          AtomicReference<List<IntentionActionDescriptor>> result = new AtomicReference<>(List.of());
+          ((ApplicationEx)ApplicationManager.getApplication()).executeByImpatientReader(
+            () -> result.set(doComputeLazyQuickFixes(document, computer)));
+          return result.get();
+        }).submit(ForkJoinPool.commonPool());
         return new LazyFixDescription(computer, future);
       }
       return description;
