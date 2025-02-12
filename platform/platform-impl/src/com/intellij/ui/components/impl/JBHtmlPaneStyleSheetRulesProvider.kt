@@ -62,7 +62,7 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
   }
 
   fun getStyleSheet(paneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
-    styleSheetCache.get(Triple(paneBackgroundColor.rgb and 0xffffff, scale(1), configuration))
+    styleSheetCache.get(Triple(paneBackgroundColor.rgb and 0xffffff, scale(100), configuration))
 
   private val inlineCodeStyling = ControlColorStyleBuilder(
     ElementKind.CodeInline,
