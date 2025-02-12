@@ -14,10 +14,10 @@ class DeclarativeIndentedBlockInlayRenderer(
   fontMetricsStorage: InlayTextMetricsStorage,
   providerId: String,
   sourceId: String,
-  indentAnchorOffsetHint: Int,
+  initialIndentAnchorOffset: Int,
 ) : DeclarativeInlayRendererBase<List<InlayData>>(providerId, sourceId, fontMetricsStorage) {
 
-  override val view = IndentedDeclarativeHintView(MultipleDeclarativeHintsView(inlayData), indentAnchorOffsetHint)
+  override val view = IndentedDeclarativeHintView(MultipleDeclarativeHintsView(inlayData), initialIndentAnchorOffset)
 
   override val presentationLists get() = view.view.presentationLists
 
