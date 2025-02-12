@@ -52,6 +52,7 @@ interface GitLabConnectedProjectViewModel {
   fun reloadMergeRequestDetails(mergeRequestId: String)
   fun getDiffViewModel(mrIid: String): Flow<Result<GitLabMergeRequestDiffViewModel>>
   fun getTimelineViewModel(mrIid: String): Flow<Result<GitLabMergeRequestTimelineViewModel>>
+  fun getDetailsViewModel(mrIid: String): Flow<Result<GitLabMergeRequestDetailsViewModel>>
   fun openMergeRequestDetails(mrIid: String?, place: GitLabStatistics.ToolWindowOpenTabActionPlace, focus: Boolean = false)
   fun viewMergeRequestList()
   fun closeNewMergeRequestDetails()
@@ -143,7 +144,7 @@ abstract class GitLabConnectedProjectViewModelBase(
       if (id == null) flowOf(null) else mergeRequestsVms[id].map { it.getOrNull()?.editorReviewVm }
     }
 
-  fun getDetailsViewModel(mrIid: String): Flow<Result<GitLabMergeRequestDetailsViewModel>> =
+  override fun getDetailsViewModel(mrIid: String): Flow<Result<GitLabMergeRequestDetailsViewModel>> =
     mergeRequestsVms[mrIid].mapCatching { it.detailsVm }
 
   override fun getTimelineViewModel(mrIid: String): Flow<Result<GitLabMergeRequestTimelineViewModel>> =

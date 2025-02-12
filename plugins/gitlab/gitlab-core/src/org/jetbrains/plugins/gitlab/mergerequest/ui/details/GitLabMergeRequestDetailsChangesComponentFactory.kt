@@ -14,6 +14,7 @@ import com.intellij.ui.ScrollableContentBorder
 import com.intellij.ui.Side
 import com.intellij.ui.components.panels.Wrapper
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestActionPlaces
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangeListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangesViewModel
@@ -23,7 +24,8 @@ import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
-internal object GitLabMergeRequestDetailsChangesComponentFactory {
+@ApiStatus.Internal
+object GitLabMergeRequestDetailsChangesComponentFactory {
 
   fun create(cs: CoroutineScope, vm: GitLabMergeRequestChangesViewModel): JComponent {
     val wrapper = Wrapper(LoadingLabel()).apply {
