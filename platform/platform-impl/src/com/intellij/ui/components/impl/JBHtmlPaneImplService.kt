@@ -13,6 +13,7 @@ import java.awt.Color
 import java.awt.Image
 import java.net.URL
 import java.util.*
+import javax.swing.text.LabelView
 import javax.swing.text.View
 import javax.swing.text.html.BlockView
 import javax.swing.text.html.StyleSheet
@@ -45,14 +46,22 @@ internal class JBHtmlPaneImplService : JBHtmlPane.ImplService {
       if (childView != null) {
         applyCssToView(childView)
         if (childView is BlockView) {
-          setPropertiesFromAttributesMethod.invoke(childView)
+          blockViewSetPropertiesFromAttributesMethod.invoke(childView)
+        } else if (childView is LabelView) {
+          labelViewSetPropertiesFromAttributesMethod.invoke(childView)
         }
       }
     }
   }
 
-  private val setPropertiesFromAttributesMethod by lazy {
+  private val blockViewSetPropertiesFromAttributesMethod by lazy {
     BlockView::class.java.getDeclaredMethod("setPropertiesFromAttributes").also {
+      it.isAccessible = true
+    }
+  }
+
+  private val labelViewSetPropertiesFromAttributesMethod by lazy {
+    LabelView::class.java.getDeclaredMethod("setPropertiesFromAttributes").also {
       it.isAccessible = true
     }
   }
