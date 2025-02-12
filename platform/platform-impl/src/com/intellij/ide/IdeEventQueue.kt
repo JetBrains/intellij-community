@@ -461,7 +461,9 @@ class IdeEventQueue private constructor() : EventQueue() {
       // app activation can call methods that need write intent (like project saving)
       threadingSupport.runWriteIntentReadAction<Unit, Throwable> { processAppActivationEvent(e) }
     }
-    if (dispatchByCustomDispatchers(e)) {
+
+    // IJPL-177735 Remove Write-Intent lock from IdeEventQueue.EventDispatcher
+    if (threadingSupport.runWriteIntentReadAction<Boolean, Throwable> { dispatchByCustomDispatchers(e) }) {
       return
     }
     if (e is InputMethodEvent && SystemInfoRt.isMac && keyEventDispatcher.isWaitingForSecondKeyStroke) {
