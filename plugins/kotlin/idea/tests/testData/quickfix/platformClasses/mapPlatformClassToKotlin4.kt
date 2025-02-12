@@ -1,4 +1,4 @@
-// "Change all usages of 'java.lang.Iterable<T>' in this file to a Kotlin class" "true"
+// "/Change all usages of 'java.lang.Iterable<T>' in this file to (a Kotlin class|'kotlin.collections.Iterable<T>')/" "true"
 import java.lang.*
 import java.lang.Iterable
 import java.lang.Iterable
@@ -25,3 +25,4 @@ fun e() : Iterable<String>? {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MapPlatformClassToKotlinFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.MapPlatformClassToKotlinFixFactory$MapPlatformClassToKotlinFix

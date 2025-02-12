@@ -111,7 +111,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
 
         //remove filtering when KTIJ-29195 is fixed
         val isIJProject = IntelliJProjectUtil.isIntelliJPlatformProject(file.project)
-        val analysis = file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+        val analysis = file.collectDiagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
         val filteredAnalysisResult = analysis
             .filterOutCodeFragmentVisibilityErrors(file)
             .filterNot { isIJProject && it.diagnosticClass == KaFirDiagnostic.ContextReceiversDeprecated::class }

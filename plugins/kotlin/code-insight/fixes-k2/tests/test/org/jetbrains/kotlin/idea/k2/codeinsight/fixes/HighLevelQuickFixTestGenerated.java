@@ -11077,7 +11077,39 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/platformClasses")
+    public static class PlatformClasses extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("mapPlatformClassToKotlin1.kt")
+        public void testMapPlatformClassToKotlin1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/platformClasses/mapPlatformClassToKotlin1.kt");
+        }
+
+        @TestMetadata("mapPlatformClassToKotlin2.kt")
+        public void testMapPlatformClassToKotlin2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/platformClasses/mapPlatformClassToKotlin2.kt");
+        }
+
+        @TestMetadata("mapPlatformClassToKotlin3.kt")
+        public void testMapPlatformClassToKotlin3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/platformClasses/mapPlatformClassToKotlin3.kt");
+        }
+
+        @TestMetadata("mapPlatformClassToKotlin4.kt")
+        public void testMapPlatformClassToKotlin4() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/platformClasses/mapPlatformClassToKotlin4.kt");
+        }
+    }
 
 
 

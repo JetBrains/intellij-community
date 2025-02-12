@@ -521,6 +521,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeMemberFunctionSignatureFixFactory.nothingToOverrideFixFactory)
         registerFactory(OverrideAccessorFunctionFixFactory.nothingToOverrideFixFactory)
 
+        registerFactory(MapPlatformClassToKotlinFixFactory.mapPlatformClassToKotlinFixFactory)
+
         registerFactory(ReplaceJvmFieldWithConstFixFactory.inapplicableJvmField)
 
         registerFactory(ConvertExtensionToFunctionTypeFixFactory.superTypeIsExtensionFunctionType)
