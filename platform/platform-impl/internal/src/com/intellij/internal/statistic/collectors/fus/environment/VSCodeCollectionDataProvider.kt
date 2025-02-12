@@ -84,7 +84,7 @@ internal class VSCodeCollectionDataProvider : ExternalEditorCollectionDataProvid
         val time = Files.getLastModifiedTime(databasePath)
         val isVSCodeUsedRecently = time.toInstant() > Instant.now() - maxTimeSinceLastModificationToBeRecent
         logger.debug { "Is VSCode used recently: $isVSCodeUsedRecently" }
-        isVSCodeUsedRecently
+        return isVSCodeUsedRecently
       }
 
       logger.debug { "VSCode is not used recently - database path doesn't exist" }
