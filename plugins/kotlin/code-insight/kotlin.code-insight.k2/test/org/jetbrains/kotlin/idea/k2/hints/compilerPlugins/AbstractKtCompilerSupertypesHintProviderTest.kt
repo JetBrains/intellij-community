@@ -16,14 +16,7 @@ abstract class AbstractKtCompilerSupertypesHintProviderTest : AbstractKotlinInla
     override fun inlayHintsProvider(): InlayHintsProvider =
         KtCompilerSupertypesHintProvider()
 
-    private val serializationCoreJar: File by lazy {
-        project.loadSingleJarFromMaven(KOTLINX_SERIALIZATION_CORE_JVM_MAVEN_COORDINATES)
-    }
-
     override fun doTest(testPath: String) {
-        ConfigLibraryUtil.addLibrary(module, "serialization-core") {
-            addRoot(serializationCoreJar, OrderRootType.CLASSES)
-        }
         module.withCompilerPlugin(
             KotlinK2BundledCompilerPlugins.KOTLINX_SERIALIZATION_COMPILER_PLUGIN,
         ) {
