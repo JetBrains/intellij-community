@@ -175,16 +175,16 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
             "local.properties",
             """
                 |sdk.dir=${KotlinTestUtils.getAndroidSdkSystemIndependentPath()}
-                |org.gradle.java.home=${requireJdkHome()}
+                |org.gradle.java.home=${findJdkPath()}
             """.trimMargin()
         )
     }
 
-    final override fun requireJdkHome(): String {
+    final override fun findJdkPath(): String {
         return System.getenv("JDK_17") ?: System.getenv("JDK_17_0") ?: System.getenv("JAVA17_HOME") ?: run {
             val message = "Missing JDK_17 or JDK_17_0 or JAVA17_HOME  environment variable"
             if (IS_UNDER_TEAMCITY) LOG.error(message) else LOG.warn(message)
-            super.requireJdkHome()
+            super.findJdkPath()
         }
     }
 
@@ -204,7 +204,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
 
         context.testProject = myProject
         context.testProjectRoot = myProjectRoot.toNioPath().toFile()
-        context.gradleJdkPath = File(requireJdkHome())
+        context.gradleJdkPath = File(findJdkPath())
     }
 
     override fun configureGradleVmOptions(options: MutableSet<String>) {

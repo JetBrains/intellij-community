@@ -10,16 +10,14 @@ import org.jetbrains.kotlin.idea.gradleJava.toolchain.GradleDaemonJvmCriteriaMig
 import org.jetbrains.plugins.gradle.service.coroutine.GradleCoroutineScopeProvider
 import java.util.concurrent.CompletableFuture
 
-class GradleAddDownloadToolchainRepositoryQuickFix(
-    private val externalProjectPath: String
-) : BuildIssueQuickFix {
+object GradleAddDownloadToolchainRepositoryQuickFix : BuildIssueQuickFix {
 
     override val id: String = "add_download_toolchain_repository"
 
     override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
         return GradleCoroutineScopeProvider.getInstance(project).cs
             .launch {
-                GradleDaemonJvmCriteriaMigrationHelper.applyDefaultToolchainResolverPlugin(project, externalProjectPath)
+                GradleDaemonJvmCriteriaMigrationHelper.applyDefaultToolchainResolverPlugin(project)
             }.asCompletableFuture()
     }
 }

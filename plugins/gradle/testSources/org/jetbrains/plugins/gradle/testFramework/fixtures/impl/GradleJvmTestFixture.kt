@@ -11,8 +11,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import org.gradle.util.GradleVersion
-import org.jetbrains.jps.model.java.JdkVersionDetector
-import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
@@ -30,21 +28,12 @@ class GradleJvmTestFixture(
 
   private lateinit var sdk: Sdk
 
-  lateinit var gradleJvm: String
-    private set
-
-  lateinit var gradleJvmPath: String
-    private set
-
-  lateinit var gradleJvmInfo: JdkVersionInfo
-    private set
+  val gradleJvm: String
+    get() = sdk.name
 
   override fun setUp() {
     fixtureDisposable = Disposer.newDisposable()
     sdk = GradleJvmResolver.resolveGradleJvm(gradleVersion, fixtureDisposable, javaVersionRestriction)
-    gradleJvm = sdk.name
-    gradleJvmPath = sdk.homePath!!
-    gradleJvmInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(gradleJvmPath)!!
   }
 
   override fun tearDown() {

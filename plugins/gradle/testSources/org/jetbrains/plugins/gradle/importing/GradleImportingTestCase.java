@@ -261,12 +261,17 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return myProjectRoot;
   }
 
+  protected void assumeTestJavaRuntime(@NotNull JavaVersion javaRuntimeVersion) {
+  }
+
   @NotNull
   private String requireRealJdkHome() {
     if (myWSLDistribution != null) {
       return requireWslJdkHome(myWSLDistribution);
     }
-    return requireJdkHome();
+    JavaVersion javaRuntimeVersion = JavaVersion.current();
+    assumeTestJavaRuntime(javaRuntimeVersion);
+    return findJdkPath();
   }
 
   private static String requireWslJdkHome(@NotNull WSLDistribution distribution) {
@@ -277,14 +282,12 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return distribution.getWindowsPath(jdkPath);
   }
 
-  public @NotNull String requireJdkHome() {
-    return requireJdkHome(getCurrentGradleVersion(), myTargetJavaVersionWatcher.getRestriction());
+  public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion) {
+    return requireJdkHome(gradleVersion, JavaVersionRestriction.NO);
   }
 
-  public static @NotNull String requireJdkHome(
-    @NotNull GradleVersion gradleVersion,
-    @NotNull JavaVersionRestriction javaVersionRestriction
-  ) {
+  public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion,
+                                               @NotNull JavaVersionRestriction javaVersionRestriction) {
     if (GradleJvmSupportMatrix.isSupported(gradleVersion, JavaVersion.current()) &&
         !javaVersionRestriction.isRestricted(gradleVersion, JavaVersion.current())) {
       return IdeaTestUtil.requireRealJdkHome();
@@ -292,6 +295,10 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     return GradleJvmResolver.resolveGradleJvmHomePath(gradleVersion, javaVersionRestriction);
+  }
+
+  public String findJdkPath() {
+    return requireJdkHome(getCurrentGradleVersion(), myTargetJavaVersionWatcher.getRestriction());
   }
 
   protected void collectAllowedRoots(final List<String> roots, PathAssembler.LocalDistribution distribution) {
