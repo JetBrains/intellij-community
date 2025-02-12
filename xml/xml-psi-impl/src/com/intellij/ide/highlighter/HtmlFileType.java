@@ -67,7 +67,9 @@ public class HtmlFileType extends XmlLikeFileType {
   }
 
   @Override
-  public Charset extractCharsetFromFileContent(final @Nullable Project project, final @Nullable VirtualFile file, final @NotNull CharSequence content) {
+  public Charset extractCharsetFromFileContent(final @Nullable Project project,
+                                               final @Nullable VirtualFile file,
+                                               final @NotNull CharSequence content) {
     String name = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     Charset charset = CharsetToolkit.forName(name);
 
