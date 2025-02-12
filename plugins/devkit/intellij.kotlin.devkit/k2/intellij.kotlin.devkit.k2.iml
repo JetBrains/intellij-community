@@ -32,5 +32,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.devkit" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="kotlin.refactorings.move.k2" />
+    <orderEntry type="module" module-name="intellij.devkit.core" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions.k2" />
   </component>
 </module>

@@ -82,9 +82,6 @@
     <lightServiceMustBeFinalErrorMessageProvider
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.LightServiceMustNotBeOpenErrorMessageProvider"/>
-    <appServiceAsStaticFinalFieldOrPropertyVisitorProvider
-      language="kotlin"
-      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider"/>
     <uElementAsPsiCheckProvider
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtUElementAsPsiCheckProvider"/>

@@ -11,4 +11,10 @@
       serviceImplementation="org.jetbrains.idea.devkit.kotlin.k1.K1CompanionObjectInExtensionInspectionSupport"/>
   </extensions>
 
+  <extensions defaultExtensionNs="DevKit.lang">
+    <appServiceAsStaticFinalFieldOrPropertyVisitorProvider
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.k1.K1AppServiceAsStaticFinalFieldOrPropertyVisitorProvider"/>
+  </extensions>
+
 </idea-plugin>
