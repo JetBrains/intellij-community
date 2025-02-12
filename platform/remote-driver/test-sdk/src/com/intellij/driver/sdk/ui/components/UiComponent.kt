@@ -69,27 +69,6 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     }
 
 
-
-    /**
-     * Waits until the element specified is not found within the parent search context.
-     *
-     * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
-     */
-    fun <T : UiComponent> T.waitNotFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT) {
-      waitFor(message = "No ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
-              timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
-              interval = 1.seconds) {
-        !present()
-      }
-    }
-
-    /**
-     * Asserts that the calling UiComponent is not found in the hierarchy.
-     */
-    fun <T : UiComponent> T.assertNotFound() {
-      assert(!present()) { "Component '$this' should not be found" }
-    }
-
     fun <T : UiComponent> T.waitIsFocusOwner(timeout: Duration = DEFAULT_FIND_TIMEOUT): T {
       waitFor("Component '$this' is focus owner", timeout = timeout) {
         component.isFocusOwner()
@@ -106,12 +85,32 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   /**
+   * Asserts that the calling UiComponent is not found in the hierarchy.
+   */
+  fun assertNotFound() {
+    assert(!present()) { "Component '$this' should not be found" }
+  }
+
+  /**
    * Asserts that the current UI component is found. Doesn't check visibility.
    *
    * @return The current UI component.
    */
   fun assertFound() {
     assert(present()) { "Component '$this' should be found" }
+  }
+
+  /**
+   * Waits until the element specified is not found within the parent search context.
+   *
+   * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
+   */
+  fun waitNotFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT) {
+    waitFor(message = "No ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
+            timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
+            interval = 1.seconds) {
+      !present()
+    }
   }
 
   override fun toString(): String {
