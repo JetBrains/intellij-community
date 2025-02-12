@@ -5,25 +5,13 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.waitFor
 import kotlin.time.Duration
 
-// should
-fun <T : UiComponent> T.should(condition: T.() -> Boolean): T {
-  return should(timeout = DEFAULT_FIND_TIMEOUT, condition = condition)
-}
-
-// should not
 fun <T : UiComponent> T.shouldNot(condition: T.() -> Boolean): T {
   return should(timeout = DEFAULT_FIND_TIMEOUT, condition = { !condition() })
 }
 
-// should
 fun <T : UiComponent> T.shouldBe(condition: T.() -> Boolean): T {
   return should(timeout = DEFAULT_FIND_TIMEOUT, condition = condition)
 }
-
-fun <T : UiComponent> T.shouldBeNoExceptions(condition: T.() -> Unit): T {
-  return shouldBeNoExceptions(timeout = DEFAULT_FIND_TIMEOUT, condition = condition)
-}
-
 
 fun <T : UiComponent> T.shouldBe(message: String, condition: T.() -> Boolean, timeout: Duration): T {
   return should(message = message, timeout = timeout, condition = condition)
@@ -60,6 +48,10 @@ fun <T : UiComponent> T.shouldBeNoExceptions(
     throw WaitForException(e.timeout, e.errorMessage)
   }
   return this
+}
+
+fun <T : UiComponent> T.should(condition: T.() -> Boolean): T {
+  return should(timeout = DEFAULT_FIND_TIMEOUT, condition = condition)
 }
 
 fun <T : UiComponent> T.should(message: String? = null,
