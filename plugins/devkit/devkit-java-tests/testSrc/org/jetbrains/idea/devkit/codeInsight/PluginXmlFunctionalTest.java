@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -748,6 +748,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     LookupElement[] lookupElements = myFixture.getLookupElements();
     assertLookupElement(lookupElements, "actionId", " \"ActionId Text\"", "ActionId description");
     assertLookupElement(lookupElements, "actionId.localized", " \"Action Localized Text\"", "Action localized description");
+    assertLookupElement(lookupElements, "BarAction", " \"Action without ID Localized Text\"", "Action without ID localized description");
     assertLookupElement(lookupElements, "actionId.missing.localized", null, null);
   }
 

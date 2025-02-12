@@ -19,10 +19,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomTarget;
-import com.intellij.util.xml.ElementPresentationManager;
-import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -101,7 +98,7 @@ public final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<
     }
 
     final List<PsiElement> psiElements =
-      ContainerUtil.mapNotNull(processor.getResults(), actionOrGroup -> getDomTargetPsi(actionOrGroup));
+      ContainerUtil.mapNotNull(processor.getResults(), actionOrGroup -> getActionOrGroupDomTargetPsi(actionOrGroup));
     return PsiElementResolveResult.createResults(psiElements);
   }
 
@@ -172,8 +169,8 @@ public final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<
     final GlobalSearchScope domSearchScope = PluginRelatedLocatorsUtils.getCandidatesScope(project);
     IdeaPluginRegistrationIndex.processAllActionOrGroup(project, domSearchScope, actionOrGroup -> {
       if (isRelevantForVariant(actionOrGroup)) {
-        PsiElement psiElement = getDomTargetPsi(actionOrGroup);
-        String name = StringUtil.notNullize(actionOrGroup.getId().getStringValue(),
+        PsiElement psiElement = getActionOrGroupDomTargetPsi(actionOrGroup);
+        String name = StringUtil.notNullize(actionOrGroup.getEffectiveId(),
                                             DevKitBundle.message("plugin.xml.convert.action.or.group.invalid.name"));
         LookupElementBuilder builder = LookupElementBuilder.create(psiElement, name)
           .withRenderer(ActionOrGroupLookupRenderer.INSTANCE);
@@ -243,6 +240,12 @@ public final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<
       case NO -> group instanceof Group;
       case UNSURE -> true;
     };
+  }
+
+  private static PsiElement getActionOrGroupDomTargetPsi(ActionOrGroup actionOrGroup) {
+    DomTarget target = DomTarget.getTarget(actionOrGroup, actionOrGroup.getEffectiveIdAttribute());
+    assert target != null;
+    return PomService.convertToPsi(target);
   }
 
   private static PsiElement getDomTargetPsi(DomElement domElement) {
