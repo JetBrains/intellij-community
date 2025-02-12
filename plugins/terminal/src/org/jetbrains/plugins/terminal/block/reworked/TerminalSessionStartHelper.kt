@@ -59,11 +59,11 @@ internal object TerminalSessionStartHelper {
     project: Project,
     widget: TerminalWidget,
     options: ShellStartupOptions,
-    tabId: Int,
+    sessionTab: TerminalSessionTab,
     deferSessionStartUntilUiShown: Boolean,
   ) {
     val doStart = Runnable {
-      doStartTerminalSessionForWidget(project, widget, options, tabId)
+      doStartTerminalSessionForWidget(project, widget, options, sessionTab)
     }
     if (deferSessionStartUntilUiShown) {
       // Can't use coroutine `launchOnceOnShow` here because terminal toolwindow is adding and removing component
@@ -78,23 +78,33 @@ internal object TerminalSessionStartHelper {
     project: Project,
     widget: TerminalWidget,
     options: ShellStartupOptions,
-    tabId: Int,
+    sessionTab: TerminalSessionTab,
   ) {
     terminalProjectScope(project).launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
-      val initialSizeFuture = widget.getTerminalSizeInitializedFuture()
-      val initialSize = initialSizeFuture.await()
-      val optionsWithSize = if (initialSize != null) {
-        options.builder().initialTermSize(initialSize).build()
+      val sessionId = if (sessionTab.sessionId != null) {
+        // Session is already started for this tab, reuse it
+        sessionTab.sessionId
       }
-      else options
-
-      val sessionId = withContext(Dispatchers.IO) {
-        startTerminalSessionForTab(project, optionsWithSize, tabId)
+      else {
+        // Start new terminal session
+        val optionsWithSize = updateTerminalSizeFromWidget(options, widget)
+        withContext(Dispatchers.IO) {
+          startTerminalSessionForTab(project, optionsWithSize, sessionTab.id)
+        }
       }
 
       val session = FrontendTerminalSession(sessionId)
       widget.connectToSession(session)
     }
+  }
+
+  private suspend fun updateTerminalSizeFromWidget(options: ShellStartupOptions, widget: TerminalWidget): ShellStartupOptions {
+    val initialSizeFuture = widget.getTerminalSizeInitializedFuture()
+    val initialSize = initialSizeFuture.await()
+    return if (initialSize != null) {
+      options.builder().initialTermSize(initialSize).build()
+    }
+    else options
   }
 
   private suspend fun startTerminalSessionForTab(project: Project, options: ShellStartupOptions, tabId: Int): TerminalSessionId {
