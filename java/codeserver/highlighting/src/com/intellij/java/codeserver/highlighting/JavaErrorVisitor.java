@@ -461,6 +461,10 @@ final class JavaErrorVisitor extends JavaElementVisitor {
           }
         }
       }
+      if (!hasErrorResults() && aClass != null) {
+        var error = myGenericsChecker.computeOverrideEquivalentMethodErrors(aClass).get(method);
+        if (error != null) report(error);
+      }
     }
     else if (parent instanceof PsiClass aClass) {
       if (!hasErrorResults()) myClassChecker.checkDuplicateNestedClass(aClass);
@@ -478,6 +482,10 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       }
       if (!hasErrorResults()) myClassChecker.checkCyclicInheritance(aClass);
       if (!hasErrorResults()) myMethodChecker.checkOverrideEquivalentInheritedMethods(aClass);
+      if (!hasErrorResults()) {
+        var error = myGenericsChecker.computeOverrideEquivalentMethodErrors(aClass).get(aClass);
+        if (error != null) report(error);
+      }
     }
   }
 
@@ -743,6 +751,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myGenericsChecker.checkInterfaceMultipleInheritance(aClass);
     if (!hasErrorResults()) myGenericsChecker.checkClassSupersAccessibility(aClass);
     if (!hasErrorResults()) myRecordChecker.checkRecordHeader(aClass);
+    if (!hasErrorResults()) myGenericsChecker.checkTypeParameterOverrideEquivalentMethods(aClass);
   }
 
   @Override
@@ -1016,6 +1025,10 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
     if (parent instanceof PsiAnonymousClass psiAnonymousClass && ref.equals(psiAnonymousClass.getBaseClassReference())) {
       if (!hasErrorResults()) myGenericsChecker.checkGenericCannotExtendException(psiAnonymousClass);
+      if (!hasErrorResults()) {
+        var error = myGenericsChecker.computeOverrideEquivalentMethodErrors(psiAnonymousClass).get(psiAnonymousClass);
+        if (error != null) report(error);
+      }
     }
     if (!hasErrorResults() && resolved instanceof PsiClass psiClass) myExpressionChecker.checkRestrictedIdentifierReference(ref, psiClass);
     if (!hasErrorResults()) myExpressionChecker.checkMemberReferencedBeforeConstructorCalled(ref, resolved);

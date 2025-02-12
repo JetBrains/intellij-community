@@ -6,7 +6,7 @@ class A {
     }
 
     interface I {
-        <error descr="'with(Class<T>)' clashes with 'with(Class<Long>)'; both methods have same erasure"><T> T with(Class<T> aClass)</error>;
+        <error descr="'with(Class<T>)' clashes with 'with(Class<Long>)'; both methods have same erasure"><T> T with(Class<T> aClass);</error>
         long with(Class<Long> aClass);
     }
 }

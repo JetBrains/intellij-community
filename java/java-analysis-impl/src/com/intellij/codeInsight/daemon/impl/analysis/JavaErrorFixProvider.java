@@ -285,6 +285,9 @@ final class JavaErrorFixProvider {
         sink.accept(addModifierFix(aClass, PsiModifier.ABSTRACT));
       }
     });
+    fix(METHOD_GENERIC_CLASH, error ->
+      error.context().method() instanceof SyntheticElement ?
+      null : myFactory.createSameErasureButDifferentMethodsFix(error.context().method(), error.context().superMethod()));
   }
 
   private void createExceptionFixes() {

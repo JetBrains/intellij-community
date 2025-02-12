@@ -24,10 +24,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.VisibilityUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -659,14 +656,25 @@ public final class JavaErrorKinds {
       })
       .withRawDescription((psi, ctx) -> message(
         "method.inheritance.weaker.privileges",
-        formatClashMethodMessage(ctx.method(), ctx.superMethod(), true),
+        ctx.clashMessage(),
         VisibilityUtil.toPresentableText(PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(ctx.method().getModifierList()))),
         VisibilityUtil.toPresentableText(PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(ctx.superMethod().getModifierList())))));
+  public static final Parameterized<PsiMember, OverrideClashContext> METHOD_GENERIC_CLASH =
+    parameterized(PsiMember.class, OverrideClashContext.class, "method.generic.same.erasure")
+      .withRange((member, ctx) -> getMemberDeclarationTextRange(member))
+      .withRawDescription((member, ctx) -> {
+        @NonNls String key = ctx.sameClass() ? "method.generic.same.erasure" :
+                             ctx.method().hasModifierProperty(PsiModifier.STATIC) ?
+                             "method.generic.same.erasure.hide" :
+                             "method.generic.same.erasure.override";
+        return message(key, ctx.clashMessage());
+      });
+    
   public static final Parameterized<PsiClass, @NotNull OverrideClashContext> METHOD_INHERITANCE_CLASH_UNRELATED_RETURN_TYPES =
     parameterized(PsiClass.class, OverrideClashContext.class, "method.inheritance.clash.unrelated.return.types")
       .withRange((cls, ctx) -> getClassDeclarationTextRange(cls))
       .withRawDescription((cls, ctx) -> message("method.inheritance.clash.unrelated.return.types",
-                                                formatClashMethodMessage(ctx.superMethod(), ctx.method(), true)));
+                                                formatClashMethodMessage(ctx.superMethod(), ctx.method())));
   public static final Parameterized<PsiMember, @NotNull IncompatibleOverrideReturnTypeContext>
     METHOD_INHERITANCE_CLASH_INCOMPATIBLE_RETURN_TYPES =
     parameterized(PsiMember.class, IncompatibleOverrideReturnTypeContext.class, "method.inheritance.clash.incompatible.return.types")
@@ -686,7 +694,7 @@ public final class JavaErrorKinds {
         return getMemberDeclarationTextRange(psi);
       })
       .withRawDescription((cls, ctx) -> message("method.inheritance.clash.incompatible.return.types",
-                                                formatClashMethodMessage(ctx.method(), ctx.superMethod(), true)));
+                                                formatClashMethodMessage(ctx.method(), ctx.superMethod())));
   public static final Parameterized<PsiMember, @NotNull IncompatibleOverrideExceptionContext>
     METHOD_INHERITANCE_CLASH_DOES_NOT_THROW =
     parameterized(PsiMember.class, IncompatibleOverrideExceptionContext.class, "method.inheritance.clash.does.not.throw")
@@ -694,7 +702,7 @@ public final class JavaErrorKinds {
                    ctx.exceptionReference() != null ? ctx.exceptionReference().getTextRange().shiftLeft(psi.getTextRange().getStartOffset()) :
                    getMemberDeclarationTextRange(psi))
       .withRawDescription((cls, ctx) -> message("method.inheritance.clash.does.not.throw",
-                                                formatClashMethodMessage(ctx.method(), ctx.superMethod(), true),
+                                                formatClashMethodMessage(ctx.method(), ctx.superMethod()),
                                                 formatType(ctx.exceptionType())));
   public static final Parameterized<PsiMethod, String> METHOD_MISSING_RETURN_TYPE =
     parameterized(PsiMethod.class, String.class, "method.missing.return.type")
@@ -1481,6 +1489,15 @@ public final class JavaErrorKinds {
   }
 
   public record OverrideClashContext(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
+    boolean sameClass() {
+      PsiClass cls1 = method.getContainingClass();
+      PsiClass cls2 = superMethod.getContainingClass();
+      return cls1 != null && cls2 != null && cls1.isEquivalentTo(cls2);
+    }
+
+    @NotNull @Nls String clashMessage() {
+      return formatClashMethodMessage(method, superMethod);
+    }
   }
   
   public record InheritTypeClashContext(@NotNull PsiClass superClass, @Nullable PsiType type1, @Nullable PsiType type2) {}
