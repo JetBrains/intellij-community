@@ -25,7 +25,6 @@ internal class ShadowedCallablesFilter {
         val newImportStrategy: ImportStrategy? = null,
     )
 
-    private val processedSignatures = HashSet<KaCallableSignature<*>>()
     private val processedSimplifiedSignatures = HashMap<SimplifiedSignature, CompletionSymbolOrigin>()
 
     /**
@@ -45,9 +44,6 @@ internal class ShadowedCallablesFilter {
         importStrategyDetector: ImportStrategyDetector,
         requiresTypeArguments: (KaFunctionSymbol) -> Boolean,
     ): FilterResult {
-        // there is no need to create simplified signature if `KaCallableSignature<*>` is already processed
-        if (!processedSignatures.add(callableSignature)) return FilterResult(excludeFromCompletion = true)
-
         val (importStrategy, insertionStrategy) = options
         fun createSimplifiedSignature(considerContainer: Boolean) = when (callableSignature) {
             is KaVariableSignature<*> -> when (insertionStrategy) {
