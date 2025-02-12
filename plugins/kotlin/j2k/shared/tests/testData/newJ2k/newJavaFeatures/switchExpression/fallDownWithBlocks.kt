@@ -1,6 +1,6 @@
 // ERROR: Initializer type mismatch: expected 'Int', actual 'Unit'.
 // ERROR: 'when' expression must be exhaustive. Add an 'else' branch.
-// ERROR: Argument type mismatch: actual type is 'Unit', but 'Int' was expected.
+// ERROR: Return type mismatch: expected 'Int', actual 'Unit'.
 // ERROR: Type mismatch: inferred type is 'Unit', but 'Int' was expected.
 object C {
     @JvmStatic
