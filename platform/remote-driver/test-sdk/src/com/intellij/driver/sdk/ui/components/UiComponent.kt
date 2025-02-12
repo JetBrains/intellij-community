@@ -68,15 +68,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       return this
     }
 
-    /**
-     * Asserts that the current UI component is found. Doesn't check visibility.
-     *
-     * @return The current UI component.
-     */
-    fun <T : UiComponent> T.assertFound(): T {
-      assert(present()) { "Component '$this' should be found" }
-      return this
-    }
+
 
     /**
      * Waits until the element specified is not found within the parent search context.
@@ -111,6 +103,15 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       }
       return this
     }
+  }
+
+  /**
+   * Asserts that the current UI component is found. Doesn't check visibility.
+   *
+   * @return The current UI component.
+   */
+  fun assertFound() {
+    assert(present()) { "Component '$this' should be found" }
   }
 
   override fun toString(): String {
