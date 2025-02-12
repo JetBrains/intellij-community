@@ -172,8 +172,10 @@ internal class TerminalCursorPainter private constructor(
 
     final override fun installCursorHighlighter(offset: Int): RangeHighlighter {
       val attributes = TextAttributes(cursorForeground, null, null, null, Font.PLAIN)
-      val endOffset = if (offset + 1 < editor.document.textLength) offset + 1 else offset
-      val highlighter = editor.markupModel.addRangeHighlighter(offset, endOffset, HighlighterLayer.LAST,
+      // offset == textLength is allowed (it means that the cursor is at the end, a very common case)
+      val startOffset = offset.coerceIn(0..editor.document.textLength)
+      val endOffset = (offset + 1).coerceIn(0..editor.document.textLength)
+      val highlighter = editor.markupModel.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.LAST,
                                                                attributes, HighlighterTargetArea.EXACT_RANGE)
       highlighter.setCustomRenderer { _, _, g ->
         val offset = highlighter.startOffset
