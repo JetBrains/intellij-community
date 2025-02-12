@@ -12,6 +12,7 @@ import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.PyError.ExecException
 import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.VersionFormatException
+import java.nio.file.Path
 
 /**
  * Handles hatch-specific errors, runs [transformer] only on outputs with codes 0 or 1 without tracebacks.
@@ -143,7 +144,7 @@ class HatchCli(private val runtime: HatchRuntime) {
    */
   fun shell(): Result<Unit, ExecException> = TODO()
 
-  data class HatchStatus(val project: String, val location: String, val config: String)
+  data class HatchStatus(val project: String, val location: Path, val config: Path)
 
   /**
    * Show information about the current environment
@@ -153,7 +154,12 @@ class HatchCli(private val runtime: HatchRuntime) {
 
     return runtime.executeAndMatch("status", expectedOutput = expectedOutput, outputContentSupplier = { it.stderr }) { matchResult ->
       val (project, location, config) = matchResult.destructured
-      Result.success(HatchStatus(project, location, config))
+      try {
+        Result.success(HatchStatus(project, Path.of(location), Path.of(config)))
+      }
+      catch (e: Exception) {
+        Result.failure(e.localizedMessage)
+      }
     }
   }
 
