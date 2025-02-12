@@ -212,17 +212,14 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   }
 
   private void withExecutionProgressManager(@NotNull ThrowableRunnable<Exception> runnable) {
-    var projectPath = myExternalProjectPath;
-    var id = myId;
-
     var progressManager = ExternalSystemProgressNotificationManagerImpl.getInstanceImpl();
     try {
-      progressManager.onStart(projectPath, id);
+      progressManager.onStart(getId(), myExternalProjectPath);
       runnable.run();
-      progressManager.onSuccess(projectPath, id);
+      progressManager.onSuccess(getId());
     }
     catch (ProcessCanceledException exception) {
-      progressManager.onCancel(projectPath, id);
+      progressManager.onCancel(getId());
 
       Throwable cause = exception.getCause();
       if (cause == null || cause instanceof ExternalSystemException) {
@@ -231,20 +228,20 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
       throw new ProcessCanceledException(new ExternalSystemException(cause));
     }
     catch (ExternalSystemException exception) {
-      progressManager.onFailure(projectPath, id, exception);
+      progressManager.onFailure(getId(), exception);
       throw exception;
     }
     catch (Exception exception) {
-      progressManager.onFailure(projectPath, id, exception);
+      progressManager.onFailure(getId(), exception);
       throw new ExternalSystemException(exception);
     }
     catch (Throwable throwable) {
       var exception = new ExternalSystemException(throwable);
-      progressManager.onFailure(projectPath, id, exception);
+      progressManager.onFailure(getId(), exception);
       throw exception;
     }
     finally {
-      progressManager.onEnd(projectPath, id);
+      progressManager.onEnd(getId());
     }
   }
 
@@ -255,7 +252,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
       return runnable.compute();
     }
     finally {
-      progressManager.onCancel(myExternalProjectPath, getId());
+      progressManager.onCancel(getId());
     }
   }
 
@@ -321,8 +318,8 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
       }
 
       @Override
-      public void onEnd(@NotNull String projectPath, @NotNull ExternalSystemTaskId id) {
-        updater.onTaskEnd(id);
+      public void onEnd(@NotNull ExternalSystemTaskId id) {
+          updater.onTaskEnd(id);
       }
     };
   }

@@ -51,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
-import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper;
 import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
@@ -141,13 +140,11 @@ public final class GradleManager
                                                                    distributionType,
                                                                    settings.getGradleVmOptions(),
                                                                    settings.isOfflineWork());
-      if (projectLevelSettings == null || !GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectLevelSettings)) {
-        String javaHome = gradleInstallationManager.getGradleJvmPath(project, rootProjectPath);
-        if (!StringUtil.isEmpty(javaHome)) {
-          LOG.info("Instructing gradle to use java from " + javaHome);
-        }
-        result.setJavaHome(javaHome);
+      String javaHome = gradleInstallationManager.getGradleJvmPath(project, rootProjectPath);
+      if (!StringUtil.isEmpty(javaHome)) {
+        LOG.info("Instructing gradle to use java from " + javaHome);
       }
+      result.setJavaHome(javaHome);
       GradleSystemSettings systemSettings = GradleSystemSettings.getInstance();
       String vmOptions = Objects.requireNonNullElse(settings.getGradleVmOptions(), "");
       if (vmOptions.contains("-Didea.gradle.download.sources.force=false")) {

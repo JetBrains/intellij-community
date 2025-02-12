@@ -90,7 +90,7 @@ private class JarSdkConfigurator(val extraJars: List<String>) : UnknownSdkFixCon
 
 private val LOG = logger<JdkAuto>()
 
-class JdkAuto : UnknownSdkResolver {
+class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
   override fun supportsResolution(sdkTypeId: SdkTypeId): Boolean = notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType().value(sdkTypeId)
 
   override fun createResolver(project: Project?, indicator: ProgressIndicator): UnknownSdkLookup? {
@@ -243,7 +243,7 @@ class JdkAuto : UnknownSdkResolver {
           val jdkInstaller = JdkInstaller.getInstance()
           val homeDir = jdkInstaller.defaultInstallDir(jdkToDownload, projectWslDistribution)
           val request = jdkInstaller.prepareJdkInstallation(jdkToDownload, homeDir)
-          return JdkDownloadTask(jdkToDownload, request, project)
+          return JdkDownloaderBase.newDownloadTask(jdkToDownload, request, project)
         }
 
         override fun toString() = "UnknownSdkDownloadableFix{${jdkToDownload.fullPresentationText}, wsl=${projectWslDistribution}}"
@@ -268,7 +268,7 @@ class JdkAuto : UnknownSdkResolver {
           val jdkInstaller = JdkInstaller.getInstance()
           val path = homeDir ?: jdkInstaller.defaultInstallDir(item, projectWslDistribution)
           val request = jdkInstaller.prepareJdkInstallation(item, path)
-          return JdkDownloadTask(item, request, project)
+          return JdkDownloaderBase.newDownloadTask(item, request, project)
         }
 
         override fun toString() = "UnknownSdkMultipleDownloadsFix{${items.joinToString(" / ") { it.fullPresentationText }}, wsl=${projectWslDistribution}}"

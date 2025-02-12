@@ -16,7 +16,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
-import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.JavaHomeValidationStatus.Success
@@ -29,10 +28,6 @@ fun getGradleJvmLookupProvider(project: Project, projectSettings: GradleProjectS
   SdkLookupProvider.getInstance(project, GradleJvmProviderId(projectSettings))
 
 fun setupGradleJvm(project: Project, projectSettings: GradleProjectSettings, gradleVersion: GradleVersion) {
-  // Projects using Daemon JVM criteria with a compatible Gradle version will skip the
-  // Gradle JVM setup since this will be delegated to Gradle
-  if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectSettings)) return
-
   val resolutionContext = GradleJvmResolutionContext(project, Paths.get(projectSettings.externalProjectPath), gradleVersion)
   projectSettings.gradleJvm = resolutionContext.findGradleJvm()
   if (projectSettings.gradleJvm != null) {
@@ -90,7 +85,6 @@ fun updateGradleJvm(project: Project, externalProjectPath: String) {
   val projectRootManager = ProjectRootManager.getInstance(project)
   val projectSdk = projectRootManager.projectSdk ?: return
   if (projectSdk.name != gradleJvm) return
-  if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectSettings)) return
   projectSettings.gradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK
 }
 

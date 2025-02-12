@@ -371,7 +371,7 @@ class ProjectWizardJdkComboBox(
 
     val jdkInstaller = JdkInstaller.getInstance()
     val request = JdkInstallRequestInfo(item, jdkInstaller.defaultInstallDir(item))
-    val task = JdkDownloadTask(item, request, null)
+    val task = JdkDownloaderBase.newDownloadTask(item, request, null)
 
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       insertItemAt(DownloadJdk(task), lastRegisteredJdkIndex)

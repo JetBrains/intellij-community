@@ -35,21 +35,11 @@ public final class ScrollPaneFactory implements ScrollPaneConstants {
     return new JBScrollPane(view, vsbPolicy, hsbPolicy);
   }
 
-  public static @NotNull JScrollPane createScrollPane(Component view,
-                                                      @JdkConstants.VerticalScrollBarPolicy int vsbPolicy,
-                                                      @JdkConstants.HorizontalScrollBarPolicy int hsbPolicy,
-                                                      boolean withoutBorder) {
-    JBScrollPane scrollPane = new JBScrollPane(view, vsbPolicy, hsbPolicy);
-    if (withoutBorder) {
-      setScrollPaneEmptyBorder(scrollPane);
-    }
-    return scrollPane;
-  }
-
   public static @NotNull JScrollPane createScrollPane(Component view, boolean withoutBorder) {
     JBScrollPane scrollPane = new JBScrollPane(view);
     if (withoutBorder) {
-      setScrollPaneEmptyBorder(scrollPane);
+      scrollPane.setBorder(JBUI.Borders.empty()); // set empty border, because setting null doesn't always take effect
+      scrollPane.setViewportBorder(JBUI.Borders.empty());
     }
     return scrollPane;
   }
@@ -67,10 +57,5 @@ public final class ScrollPaneFactory implements ScrollPaneConstants {
     JBScrollPane scrollPane = new JBScrollPane(view);
     scrollPane.setBorder(IdeBorderFactory.createBorder(borders));
     return scrollPane;
-  }
-
-  private static void setScrollPaneEmptyBorder(JBScrollPane scrollPane) {
-    scrollPane.setBorder(JBUI.Borders.empty()); // set empty border, because setting null doesn't always take effect
-    scrollPane.setViewportBorder(JBUI.Borders.empty());
   }
 }

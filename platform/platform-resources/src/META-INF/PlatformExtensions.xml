@@ -1256,7 +1256,7 @@ Android Studio: b/285867050 -->
 
     <registryKey key="java.detector.enabled" defaultValue="true" description="Toggles JDK detection features"/>
 
-    <sdkDownload implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownload"/>
+    <sdkDownload implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloader"/>
     <unknownSdkResolver implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkAuto"/>
     <projectService serviceImplementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkAutoHintService"
                     configurationSchemaKey="java"

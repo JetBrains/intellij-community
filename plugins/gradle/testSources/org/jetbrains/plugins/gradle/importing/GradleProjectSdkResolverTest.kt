@@ -7,7 +7,6 @@ import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.assertU
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.withRegisteredSdks
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 class GradleProjectSdkResolverTest : GradleProjectSdkResolverTestCase() {
@@ -60,24 +59,6 @@ class GradleProjectSdkResolverTest : GradleProjectSdkResolverTestCase() {
             reloadProject()
             assertSdks(sdk, "project", "project.main", "project.test")
           }
-        }
-      }
-    }
-  }
-
-  @Test
-  @TargetVersions("8.8+")
-  fun `test project using Daemon Jvm criteria`() = runBlocking {
-    val jdk = resolveRealTestSdk()
-    val sdk = TestSdkGenerator.createNextSdk()
-    createGradleSubProject()
-    createDaemonJvmPropertiesFile(jdk)
-
-    environment.withVariables(JAVA_HOME to sdk.homePath) {
-      withRegisteredSdks(jdk, sdk) {
-        assertUnexpectedSdksRegistration {
-          loadProject()
-          assertSdks(jdk, "project", "project.main", "project.test")
         }
       }
     }

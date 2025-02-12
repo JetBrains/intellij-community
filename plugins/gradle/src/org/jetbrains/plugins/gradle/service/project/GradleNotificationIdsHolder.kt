@@ -8,7 +8,6 @@ class GradleNotificationIdsHolder : NotificationIdsHolder {
     const val jvmConfigured = "gradle.jvm.configured"
     const val jvmInvalid = "gradle.jvm.invalid"
     const val configurationError = "gradle.configuration.error"
-    const val daemonToolchainMigration = "gradle.daemon.toolchain.migration"
   }
 
   override fun getNotificationIds(): List<String> {
