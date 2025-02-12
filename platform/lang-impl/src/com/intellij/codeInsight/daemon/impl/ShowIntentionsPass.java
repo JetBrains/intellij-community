@@ -98,30 +98,25 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
 
   @ApiStatus.Internal
   public static void addAvailableFixesForGroups(@NotNull HighlightInfo info,
-                                                 @NotNull Editor editor,
-                                                 @NotNull PsiFile file,
-                                                 @NotNull List<? super HighlightInfo.IntentionActionDescriptor> outList,
-                                                 int group,
-                                                 int offset,
-                                                 boolean checkOffset) {
+                                                @NotNull Editor editor,
+                                                @NotNull PsiFile file,
+                                                @NotNull List<? super HighlightInfo.IntentionActionDescriptor> outList,
+                                                int group,
+                                                int offset,
+                                                boolean checkOffset) {
     if (group != -1 && group != info.getGroup()) return;
-    boolean fixRangeIsEmpty = info.getFixTextRange().isEmpty();
     Editor[] injectedEditor = {null};
     PsiFile[] injectedFile = {null};
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
 
     boolean[] hasAvailableAction = {false};
     HighlightInfo.IntentionActionDescriptor[] unavailableAction = {null};
-    info.findRegisteredQuickFix((descriptor, range) -> {
-      if (!fixRangeIsEmpty && isEmpty(range)) {
-        return null;
-      }
-
+    info.findRegisteredQuickFix((descriptor, fixRange) -> {
       if (!DumbService.getInstance(file.getProject()).isUsableInCurrentContext(descriptor.getAction())) {
         return null;
       }
 
-      if (checkOffset && !range.contains(offset) && offset != range.getEndOffset()) {
+      if (checkOffset && !fixRange.contains(offset) && offset != fixRange.getEndOffset()) {
         return null;
       }
       Editor editorToUse;

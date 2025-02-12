@@ -69,36 +69,31 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
     // compute unresolved refs suggestions from the caret to two pages down (in case the user is scrolling down, which is often the case)
     int startOffset = Math.max(0, visibleRange.getStartOffset());
     int endOffset = Math.min(document.getTextLength(), visibleRange.getEndOffset()+visibleRange.getLength());
-    List<HighlightInfo> unresolvedInfos = new ArrayList<>(); // collect unresolved-ref infos into intermediate collection to avoid messing with HighlightInfo lock under the markup lock
     int caret = editor.getCaretModel().getOffset();
     TextRange caretLine = DocumentUtil.getLineTextRange(document, document.getLineNumber(caret));
     if (caretLine.getStartOffset() < startOffset || caretLine.getEndOffset() >= endOffset) {
       // in case the caret line is scrolled out of sight it would be useful if the quick fixes are ready there nevertheless
-      DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR, caretLine.getStartOffset(), caretLine.getEndOffset(), context, info -> {
-        if (info.hasLazyQuickFixes()) {
-          unresolvedInfos.add(info);
-        }
-        return true;
-      });
+      startLazyFixJobs(editor, project,context, caretLine.getStartOffset(), caretLine.getEndOffset());
     }
-    DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR, startOffset, endOffset, context, info -> {
-      if (info.hasLazyQuickFixes()) {
-        unresolvedInfos.add(info);
-      }
-      return true;
-    });
+    startLazyFixJobs(editor, project, context, startOffset, endOffset);
     if (!ClientId.isLocal(ClientEditorManager.getClientId(editor))) {
       // for non-local editor its visible area is unreliable, so ignore all optimizations there
       // (see IJPL-163871 Intentions sometimes don't appear in Remote Dev and Code With Me)
-      DaemonCodeAnalyzerEx.processHighlights(document, project, HighlightSeverity.ERROR, 0, document.getTextLength(), context, info -> {
-        if (info.hasLazyQuickFixes()) {
-          unresolvedInfos.add(info);
-        }
-        return true;
-      });
+      startLazyFixJobs(editor, project, context, 0, document.getTextLength());
     }
-    for (HighlightInfo info : unresolvedInfos) {
-      startJob(info, editor);
+  }
+
+  private void startLazyFixJobs(@NotNull Editor editor, @NotNull Project project, @NotNull CodeInsightContext context, int startOffset, int endOffset) {
+    List<HighlightInfo> infos = new ArrayList<>();
+    DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, HighlightSeverity.ERROR, startOffset, endOffset,context, info -> {
+      infos.add(info);
+      return true;
+    });
+    // query hasLazyQuickFixes outside MarkupModel lock
+    for (HighlightInfo info : infos) {
+      if (info.hasLazyQuickFixes()) {
+        startJob(info, editor);
+      }
     }
   }
 

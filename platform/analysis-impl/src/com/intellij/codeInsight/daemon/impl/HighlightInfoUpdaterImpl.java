@@ -1239,11 +1239,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     TextAttributes infoAttributes = newInfo.getTextAttributes(psiFile, session.getColorsScheme());
     com.intellij.util.Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
       BackgroundUpdateHighlightersUtil.changeAttributes(finalHighlighter, newInfo, session.getColorsScheme(), psiFile, infoAttributes);
-
-      CodeInsightContext context = session.getCodeInsightContext();
-      CodeInsightContextHighlightingUtil.installCodeInsightContext(finalHighlighter, session.getProject(), context);
-
-      newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
     };
     if (LOG.isDebugEnabled()) {
       LOG.debug("remap: create " + (recycled == null ? "(new RH)" : "(recycled)") + newInfo + currentProgressInfo());
@@ -1254,6 +1249,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       // create new
       if (isFileLevel) {
         highlighter = createOrReuseFakeFileLevelHighlighter(MANAGED_HIGHLIGHT_INFO_GROUP, newInfo, null, markup);
+        newInfo.setHighlighter(highlighter);
         ((HighlightingSessionImpl)session).addFileLevelHighlight(newInfo, highlighter);
       }
       else {
@@ -1261,23 +1257,31 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
                                                       HighlighterTargetArea.EXACT_RANGE, false,
                                                       changeAttributes);
+        newInfo.setHighlighter(highlighter);
+        CodeInsightContext context = session.getCodeInsightContext();
+        CodeInsightContextHighlightingUtil.installCodeInsightContext(highlighter, session.getProject(), context);
+        newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
       }
     }
     else {
       // recycle
       HighlightInfo oldInfo = recycled.info();
       highlighter = oldInfo.getHighlighter();
+      newInfo.setHighlighter(highlighter);
       if (isFileLevel) {
         highlighter = createOrReuseFakeFileLevelHighlighter(MANAGED_HIGHLIGHT_INFO_GROUP, newInfo, highlighter, markup);
         ((HighlightingSessionImpl)session).replaceFileLevelHighlight(oldInfo, newInfo, highlighter);
       }
       else {
         markup.changeAttributesInBatch(highlighter, changeAttributes);
+        CodeInsightContext context = session.getCodeInsightContext();
+        CodeInsightContextHighlightingUtil.installCodeInsightContext(highlighter, session.getProject(), context);
+        newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
+
       }
       oldInfo.copyComputedLazyFixesTo(newInfo, session.getDocument());
       assert oldInfo.getGroup() == MANAGED_HIGHLIGHT_INFO_GROUP: oldInfo;
     }
-    newInfo.setHighlighter(highlighter);
     range2markerCache.put(finalInfoRange, highlighter);
   }
 

@@ -311,6 +311,69 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
+  static final RangeMarker WHOLE_FILE_DIRTY_MARKER =
+    new RangeMarker() {
+      @Override
+      public @NotNull Document getDocument() {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public int getStartOffset() {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public int getEndOffset() {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean isValid() {
+        return false;
+      }
+
+      @Override
+      public void setGreedyToLeft(boolean greedy) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void setGreedyToRight(boolean greedy) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean isGreedyToRight() {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean isGreedyToLeft() {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void dispose() {
+        // ignore
+      }
+
+      @Override
+      public <T> T getUserData(@NotNull Key<T> key) {
+        return null;
+      }
+
+      @Override
+      public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public @NonNls String toString() {
+        return "WHOLE_FILE";
+      }
+    };
+
   // logging
   private static final ConcurrentMap<Thread, Integer> threads = CollectionFactory.createConcurrentWeakMap();
 
