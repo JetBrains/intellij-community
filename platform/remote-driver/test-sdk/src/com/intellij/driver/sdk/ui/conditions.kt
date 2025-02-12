@@ -7,21 +7,21 @@ import com.intellij.driver.sdk.waitFor
 import kotlin.time.Duration
 
 // should
-infix fun <T : UiComponent> T.should(condition: T.() -> Boolean): T {
+fun <T : UiComponent> T.should(condition: T.() -> Boolean): T {
   return should(timeout = DEFAULT_FIND_TIMEOUT, condition = condition)
 }
 
 // should not
-infix fun <T : UiComponent> T.shouldNot(condition: T.() -> Boolean): T {
+fun <T : UiComponent> T.shouldNot(condition: T.() -> Boolean): T {
   return should(timeout = DEFAULT_FIND_TIMEOUT, condition = { !condition() })
 }
 
 // should
-infix fun <T : UiComponent> T.shouldBe(condition: T.() -> Boolean): T {
+fun <T : UiComponent> T.shouldBe(condition: T.() -> Boolean): T {
   return should(timeout = DEFAULT_FIND_TIMEOUT, condition = condition)
 }
 
-infix fun <T : UiComponent> T.shouldBeNoExceptions(condition: T.() -> Unit): T {
+fun <T : UiComponent> T.shouldBeNoExceptions(condition: T.() -> Unit): T {
   return shouldBeNoExceptions(timeout = DEFAULT_FIND_TIMEOUT, condition = condition)
 }
 
@@ -39,7 +39,7 @@ fun <T : UiComponent> T.shouldBe(condition: T.() -> Boolean, timeout: Duration):
 }
 
 // should
-infix fun <T : UiComponent> T.shouldHave(condition: T.() -> Boolean): T {
+fun <T : UiComponent> T.shouldHave(condition: T.() -> Boolean): T {
   return should(timeout = DEFAULT_FIND_TIMEOUT, condition = condition)
 }
 
