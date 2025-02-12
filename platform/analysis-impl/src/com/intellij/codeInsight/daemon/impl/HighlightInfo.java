@@ -394,7 +394,10 @@ public class HighlightInfo implements Segment {
     return isFlagSet(FILE_LEVEL_ANNOTATION_MASK);
   }
 
-  // todo remove along with DefaultHighlightInfoProcessor
+  /**
+   * @deprecated do not use
+   * todo remove along with DefaultHighlightInfoProcessor
+   */
   @Deprecated
   void setVisitingTextRange(@NotNull PsiFile psiFile, @NotNull Document document, long range) {
   }

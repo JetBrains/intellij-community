@@ -138,7 +138,7 @@ public final class InspectionVisitorOptimizer {
     SELF_AND_SUPERS.clear();
   }
 
-  private static final ClearableClassValue<Class<?>[]> SELF_AND_SUPERS = new ClearableClassValue<Class<?>[]>() {
+  private static final ClearableClassValue<Class<?>[]> SELF_AND_SUPERS = new ClearableClassValue<>() {
     @Override
     public Class<?> @NotNull [] computeValueImpl(@NotNull Class<?> type) {
       return getAllSupers(type);

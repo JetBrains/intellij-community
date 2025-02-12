@@ -146,11 +146,11 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   @ApiStatus.Internal
   public static <E extends Throwable> void runInDebugMode(@NotNull ThrowableRunnable<E> runnable) throws E {
     try {
-      DaemonProgressIndicator.debug.incrementAndGet();
+      debug.incrementAndGet();
       runnable.run();
     }
     finally {
-      DaemonProgressIndicator.debug.decrementAndGet();
+      debug.decrementAndGet();
     }
   }
 

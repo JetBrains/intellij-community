@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.multiverse.*;
@@ -231,28 +230,6 @@ public final class UpdateHighlightersUtil {
     }
   }
 
-  static boolean shouldRemoveHighlighter(@NotNull RangeHighlighterEx highlighter, @NotNull HighlightingSession session) {
-    return !session.isEssentialHighlightingOnly()
-           || shouldRemoveInfoEvenInEssentialMode(highlighter);
-  }
-
-  private static boolean shouldRemoveInfoEvenInEssentialMode(@NotNull RangeHighlighterEx highlighter) {
-    HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
-    if (info == null) return true;
-    int group = info.getGroup();
-    if (group != Pass.LOCAL_INSPECTIONS
-        && group != Pass.EXTERNAL_TOOLS
-        && group != Pass.UPDATE_ALL
-        && group != GeneralHighlightingPass.POST_UPDATE_ALL
-    ) {
-      return true;
-    }
-
-    // update highlight if it's a symbol type (field/statics/etc), otherwise don't touch it (could have been e.g., unused symbol highlight)
-    return group == Pass.UPDATE_ALL && (
-      info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY || info.getSeverity() == HighlightSeverity.ERROR);
-  }
-
   static boolean isWarningCoveredByError(@NotNull HighlightInfo info,
                                          @NotNull SeverityRegistrar severityRegistrar,
                                          @NotNull Collection<? extends HighlightInfo> overlappingIntervals) {
@@ -266,13 +243,15 @@ public final class UpdateHighlightersUtil {
     return false;
   }
 
-  static boolean isCovered(@NotNull HighlightInfo warning, @NotNull SeverityRegistrar severityRegistrar, @NotNull HighlightInfo candidate) {
+  private static boolean isCovered(@NotNull HighlightInfo warning,
+                                   @NotNull SeverityRegistrar severityRegistrar,
+                                   @NotNull HighlightInfo candidate) {
     if (!isCoveredByOffsets(warning, candidate)) return false;
     if (candidate.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY) return false; // syntax should not interfere with warnings
     return isSevere(candidate, severityRegistrar);
   }
 
-  static boolean isSevere(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {
+  private static boolean isSevere(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {
     HighlightSeverity severity = info.getSeverity();
     return severityRegistrar.compare(HighlightSeverity.ERROR, severity) <= 0 || severity == HighlightInfoType.SYMBOL_TYPE_SEVERITY;
   }

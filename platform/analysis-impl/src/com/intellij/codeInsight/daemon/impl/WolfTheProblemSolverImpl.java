@@ -157,6 +157,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
 
     AtomicReference<HighlightInfo> error = new AtomicReference<>();
     boolean hasErrorElement = false;
+    //noinspection IncorrectCancellationExceptionHandling
     try {
       ProperTextRange visibleRange = new ProperTextRange(0, document.getTextLength());
       HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, context, (DaemonProgressIndicator)progressIndicator, visibleRange,

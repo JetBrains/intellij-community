@@ -562,7 +562,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   }
 
   @NotNull
-  Collection<HighlightInfo> getInfosFromMarkup(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
+  private Collection<HighlightInfo> getInfosFromMarkup(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
     if (!isAssertInvariants()) return Set.of();
     Project project = psiFile.getProject();
     Document hostDocument;
@@ -588,7 +588,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       .collect(Collectors.toList());
   }
 
-  synchronized void assertMarkupDataConsistent(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
+  private synchronized void assertMarkupDataConsistent(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
     if (!isAssertInvariants()) return;
     Collection<HighlightInfo> fromMarkup = getInfosFromMarkup(psiFile, toolIdPredicate);
     // todo ijpl-339 process top level infos

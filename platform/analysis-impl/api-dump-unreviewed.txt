@@ -573,7 +573,6 @@ c:com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 f:com.intellij.codeInsight.daemon.impl.DefaultHighlightUtil
 - <init>():V
 - s:checkBadCharacter(com.intellij.psi.PsiElement):com.intellij.codeInsight.daemon.impl.HighlightInfo
-- s:checkUnicodeBadCharacter(com.intellij.psi.PsiElement):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
 f:com.intellij.codeInsight.daemon.impl.FileStatusMap
 - com.intellij.openapi.Disposable
 - sf:CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING:java.lang.String
@@ -777,7 +776,6 @@ a:com.intellij.codeInsight.daemon.impl.SeveritiesProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - a:getSeveritiesHighlightInfoTypes():java.util.List
-- getTrafficRendererColor(com.intellij.openapi.editor.markup.TextAttributes):java.awt.Color
 - isGotoBySeverityEnabled(com.intellij.lang.annotation.HighlightSeverity):Z
 f:com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 - com.intellij.openapi.util.ModificationTracker

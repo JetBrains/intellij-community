@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.FileViewProvider;
@@ -34,7 +33,6 @@ import java.util.function.Predicate;
  */
 @ApiStatus.Internal
 public final class Divider {
-  private static final Logger LOG = Logger.getInstance(Divider.class);
   private static final int STARTING_TREE_HEIGHT = 10;
 
   public record DividedElements(@NotNull PsiFile psiRoot, long priorityRange,

@@ -49,18 +49,18 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   permits NasueousGeneralHighlightingPass {
   static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
-  public static final Predicate<? super PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> {
+  static final Predicate<? super PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> {
     HighlightingLevelManager manager = HighlightingLevelManager.getInstance(file.getProject());
     return manager != null && manager.shouldHighlight(file);
   };
   private static final Random RESTART_DAEMON_RANDOM = new Random();
 
   private final boolean myUpdateAll;
-  final @NotNull ProperTextRange myPriorityRange;
+  private final @NotNull ProperTextRange myPriorityRange;
 
-  final List<HighlightInfo> myHighlights = Collections.synchronizedList(new ArrayList<>());
+  private final List<HighlightInfo> myHighlights = Collections.synchronizedList(new ArrayList<>());
 
-  protected volatile boolean myHasErrorElement;
+  private volatile boolean myHasErrorElement;
   private volatile boolean myHasErrorSeverity;
   private final boolean myRunAnnotators;
   private final HighlightInfoUpdater myHighlightInfoUpdater;
@@ -93,7 +93,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     myHighlightVisitorRunner = new HighlightVisitorRunner(psiFile, globalScheme, runVisitors, highlightErrorElements);
   }
 
-  public boolean hasErrorElement() {
+  boolean hasErrorElement() {
     return myHasErrorElement;
   }
 
