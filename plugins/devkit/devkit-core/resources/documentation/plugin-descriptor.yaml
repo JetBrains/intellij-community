@@ -156,7 +156,9 @@ elements:
                   requirement:
                     required: yes
                   #language=Markdown
-                  description: A major version in a special number format.
+                  description: |
+                    A major version in a specific number format, for example, `20242` for the 2024.2 major release.<br/>
+                    See [`release-version` constraints](https://plugins.jetbrains.com/docs/marketplace/versioning-of-paid-plugins.html#release-version-constraints) for more details.
               - attribute:
                   name: optional
                   requirement:
