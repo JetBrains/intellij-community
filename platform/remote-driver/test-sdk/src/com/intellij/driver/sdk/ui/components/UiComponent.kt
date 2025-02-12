@@ -34,6 +34,29 @@ data class ComponentData(
 private val LOG = logger<UiComponent>()
 
 open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
+  private var cachedComponent: Component? = null
+
+  val component: Component
+    get() = data.foundComponent
+            ?: kotlin.runCatching { cachedComponent?.takeIf { it.isShowing() } }.getOrNull()
+            ?: findThisComponent().apply { cachedComponent = this }
+
+  override val driver: Driver = data.driver
+  override val searchService: SearchService = data.searchService
+  override val robotProvider: RobotProvider = data.robotProvider
+
+  val robot: Robot by lazy {
+    data.robotProvider.getRobotFor(component)
+  }
+
+  override val searchContext: SearchContext = object : SearchContext {
+    override val context: String = data.parentSearchContext.context + data.xpath
+
+    override fun findAll(xpath: String): List<Component> {
+      return withComponent { searchService.findAll(xpath, it) }
+    }
+  }
+
   companion object {
     /**
      * Waits until the element specified is found within the parent search context. Doesn't guaranty visibility.
@@ -94,13 +117,6 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     return this::class.simpleName + "[xpath=${data.xpath}]"
   }
 
-  private var cachedComponent: Component? = null
-
-  val component: Component
-    get() = data.foundComponent
-            ?: kotlin.runCatching { cachedComponent?.takeIf { it.isShowing() } }.getOrNull()
-            ?: findThisComponent().apply { cachedComponent = this }
-
   fun setFocus() {
     withComponent { robot.focus(it) }
   }
@@ -112,22 +128,6 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       interval = 1.seconds,
       getter = { data.parentSearchContext.findAll(data.xpath) }
     )
-
-  override val driver: Driver = data.driver
-  override val searchService: SearchService = data.searchService
-  override val robotProvider: RobotProvider = data.robotProvider
-
-  val robot: Robot by lazy {
-    data.robotProvider.getRobotFor(component)
-  }
-
-  override val searchContext: SearchContext = object : SearchContext {
-    override val context: String = data.parentSearchContext.context + data.xpath
-
-    override fun findAll(xpath: String): List<Component> {
-      return withComponent { searchService.findAll(xpath, it) }
-    }
-  }
 
   fun <T> withComponent(action: (Component) -> T): T {
     var lastException: Exception? = null
