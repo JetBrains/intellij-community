@@ -976,7 +976,13 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkExtendsDuplicate(ref, resolved);
     if (!hasErrorResults()) myClassChecker.checkClassExtendsForeignInnerClass(ref, resolved);
     if (!hasErrorResults()) myGenericsChecker.checkSelectStaticClassFromParameterizedType(resolved, ref);
-    if (!hasErrorResults() && parent instanceof PsiNewExpression newExpression) myGenericsChecker.checkDiamondTypeNotAllowed(newExpression);
+    if (parent instanceof PsiNewExpression newExpression) {
+      if (!hasErrorResults()) myGenericsChecker.checkDiamondTypeNotAllowed(newExpression);
+      if (!hasErrorResults() && !(resolved instanceof PsiClass) && resolved instanceof PsiNamedElement &&
+          newExpression.getClassOrAnonymousClassReference() == ref) {
+        report(JavaErrorKinds.REFERENCE_UNRESOLVED.create(ref));
+      }
+    }
     if (!hasErrorResults() && (!(parent instanceof PsiNewExpression newExpression) || !newExpression.isArrayCreation())) {
       myGenericsChecker.checkParameterizedReferenceTypeArguments(resolved, ref, result.getSubstitutor());
     }
@@ -1013,6 +1019,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
     if (!hasErrorResults() && resolved instanceof PsiClass psiClass) myExpressionChecker.checkRestrictedIdentifierReference(ref, psiClass);
     if (!hasErrorResults()) myExpressionChecker.checkMemberReferencedBeforeConstructorCalled(ref, resolved);
+    if (!hasErrorResults()) myExpressionChecker.checkPackageAndClassConflict(ref);
     return result;
   }
 

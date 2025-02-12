@@ -29,7 +29,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
@@ -524,36 +523,6 @@ public final class HighlightUtil {
     if (element instanceof PsiField psiField) return formatField(psiField);
     if (element instanceof PsiLabeledStatement statement) return statement.getName() + ':';
     return ElementDescriptionUtil.getElementDescription(element, HighlightUsagesDescriptionLocation.INSTANCE);
-  }
-
-  private static @NotNull PsiJavaCodeReferenceElement getOuterReferenceParent(@NotNull PsiJavaCodeReferenceElement ref) {
-    PsiJavaCodeReferenceElement element = ref;
-    while (true) {
-      PsiElement parent = element.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement) {
-        element = (PsiJavaCodeReferenceElement)parent;
-      }
-      else {
-        break;
-      }
-    }
-    return element;
-  }
-
-  static HighlightInfo.Builder checkPackageAndClassConflict(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {
-    if (ref.isQualified() && getOuterReferenceParent(ref).getParent() instanceof PsiPackageStatement) {
-      Module module = ModuleUtilCore.findModuleForFile(containingFile);
-      if (module != null) {
-        GlobalSearchScope scope = module.getModuleWithDependenciesAndLibrariesScope(false);
-        PsiClass aClass = JavaPsiFacade.getInstance(ref.getProject()).findClass(ref.getCanonicalText(), scope);
-        if (aClass != null) {
-          String message = JavaErrorBundle.message("package.clashes.with.class", ref.getText());
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(message);
-        }
-      }
-    }
-
-    return null;
   }
 
   static HighlightInfo.Builder checkClassReferenceAfterQualifier(@NotNull PsiReferenceExpression expression, @Nullable PsiElement resolved) {

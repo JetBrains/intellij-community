@@ -284,7 +284,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     JavaResolveResult result = resolveOptimised(ref, myFile);
     if (result == null) return null;
 
-    PsiElement resolved = result.getElement();
     PsiElement parent = ref.getParent();
 
     add(HighlightUtil.checkReference(ref, result));
@@ -294,22 +293,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(psiAnonymousClass));
     }
 
-    if (parent instanceof PsiNewExpression newExpression &&
-        !(resolved instanceof PsiClass) &&
-        resolved instanceof PsiNamedElement namedElement &&
-        newExpression.getClassOrAnonymousClassReference() == ref) {
-      String text = JavaErrorBundle.message("cannot.resolve.symbol", namedElement.getName());
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(text);
-      if (HighlightUtil.isCallToStaticMember(newExpression)) {
-        var action = new RemoveNewKeywordFix(newExpression);
-        info.registerFix(action, null, null, null, null);
-      }
-      add(info);
-    }
-
-    if (!hasErrorResults()) {
-      add(HighlightUtil.checkPackageAndClassConflict(ref, myFile));
-    }
     return result;
   }
 

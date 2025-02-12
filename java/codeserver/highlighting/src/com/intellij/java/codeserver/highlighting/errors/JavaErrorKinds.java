@@ -320,6 +320,9 @@ public final class JavaErrorKinds {
       .withAnchor(cls -> requireNonNullElse(cls.getNameIdentifier(), cls))
       .withHighlightType(cls -> cls instanceof PsiImplicitClass ? JavaErrorHighlightType.FILE_LEVEL_ERROR : JavaErrorHighlightType.ERROR)
       .withRawDescription(cls -> message("class.clashes.with.package", cls.getQualifiedName()));
+  public static final Simple<PsiJavaCodeReferenceElement> PACKAGE_CLASHES_WITH_CLASS =
+    error(PsiJavaCodeReferenceElement.class, "package.clashes.with.class")
+      .withRawDescription(ref -> message("package.clashes.with.class", ref.getText()));
   public static final Simple<PsiClass> CLASS_WRONG_FILE_NAME =
     error(PsiClass.class, "class.wrong.filename")
       .withRange(JavaErrorFormatUtil::getClassDeclarationTextRange)
