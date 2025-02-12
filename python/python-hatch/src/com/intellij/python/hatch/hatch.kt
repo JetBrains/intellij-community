@@ -8,8 +8,8 @@ import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.WhatToExec
 import com.jetbrains.python.Result
-import java.nio.file.Path
 import com.jetbrains.python.errorProcessing.PyError
+import java.nio.file.Path
 
 sealed class HatchError(message: @NlsSafe String) : PyError.Message(message)
 
@@ -31,10 +31,10 @@ suspend fun createHatchRuntime(
   val hatchExecutable = HatchConfiguration.getOrDetectHatchExecutablePath(eelApi).getOr { return it }
 
   val defaultVariables = mapOf(
+    HatchConstants.AppEnvVars.NO_COLOR to "1",
+    HatchConstants.AppEnvVars.VERBOSE to "1",
+    HatchConstants.AppEnvVars.INTERACTIVE to "0",
     "TERM" to "dumb",
-    "NO_COLOR" to "1",
-    "HATCH_VERBOSE" to "1",
-    "HATCH_INTERACTIVE" to "0",
     "COLUMNS" to "${0x7FFF}",
     "LINES" to "${0x7FFF}",
   )

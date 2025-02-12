@@ -25,6 +25,16 @@ class HatchRuntime(
     return HatchRuntime(this.hatchBinary, execOptions)
   }
 
+  fun withBasePythonPath(basePythonPath: Path): HatchRuntime {
+    val execOptions = with(this.execOptions) {
+      val modifiedEnv = env + mapOf(
+        HatchConstants.AppEnvVars.PYTHON to basePythonPath.toString()
+      )
+      ExecOptions(modifiedEnv, workingDirectory, processDescription, timeout)
+    }
+    return HatchRuntime(this.hatchBinary, execOptions)
+  }
+
   /**
    * Pure execution of [hatchBinary] with command line [arguments] and [execOptions] by [execService]
    * Doesn't make any validation of stdout/stderr content.
