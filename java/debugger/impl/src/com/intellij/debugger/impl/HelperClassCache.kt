@@ -8,7 +8,9 @@ import com.sun.jdi.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.IOException
+import java.net.URLClassLoader
 import java.util.*
+import kotlin.io.path.Path
 import kotlin.time.Duration.Companion.seconds
 
 private sealed interface ClassLoaderInfo {
@@ -71,36 +73,36 @@ internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: D
 
   fun getHelperClass(
     evaluationContext: EvaluationContextImpl, forceNewClassLoader: Boolean,
-    cls: Class<*>, vararg additionalClassesToLoad: String,
+    className: String, vararg additionalClassesToLoad: String,
   ): ClassType? {
     val currentClassLoader = evaluationContext.classLoader
     val classLoaderInfo = evaluationClassLoaderMapping[currentClassLoader]
     return when (classLoaderInfo) {
       is ClassLoaderInfo.LoadFailedMarker -> null
       is ClassLoaderInfo.DefinedInCompanionClassLoader? -> {
-        loadHelperClassWithClassLoaderCaching(classLoaderInfo, evaluationContext, forceNewClassLoader, cls, *additionalClassesToLoad)
+        loadHelperClassWithClassLoaderCaching(classLoaderInfo, evaluationContext, forceNewClassLoader, className, *additionalClassesToLoad)
       }
     }
   }
 
   private fun loadHelperClassWithClassLoaderCaching(
     currentInfo: ClassLoaderInfo.DefinedInCompanionClassLoader?, evaluationContext: EvaluationContextImpl,
-    forceNewClassLoader: Boolean, cls: Class<*>, vararg additionalClassesToLoad: String,
+    forceNewClassLoader: Boolean, className: String, vararg additionalClassesToLoad: String,
   ): ClassType? {
     val preferNewClassLoader = forceNewClassLoader || currentInfo != null
     val currentClassLoader = evaluationContext.classLoader
     if (!preferNewClassLoader) {
-      val type = tryLoadInClassLoader(evaluationContext, cls.name, currentClassLoader)
+      val type = tryLoadInClassLoader(evaluationContext, className, currentClassLoader)
       if (type != null) return type
     }
     if (!preferNewClassLoader && currentClassLoader != null) {
       val parentClassLoader = getTopClassloader(evaluationContext, currentClassLoader)
-      val type = tryToDefineInClassLoader(evaluationContext, parentClassLoader, currentClassLoader, cls, *additionalClassesToLoad)
+      val type = tryToDefineInClassLoader(evaluationContext, parentClassLoader, currentClassLoader, className, *additionalClassesToLoad)
       if (type != null) return type
     }
     val companionClassLoader = currentInfo?.classLoader
                                ?: ClassLoadingUtils.getClassLoader(evaluationContext, evaluationContext.debugProcess)
-    val type = tryToDefineInClassLoader(evaluationContext, companionClassLoader, companionClassLoader, cls, *additionalClassesToLoad)
+    val type = tryToDefineInClassLoader(evaluationContext, companionClassLoader, companionClassLoader, className, *additionalClassesToLoad)
     if (type != null) {
       if (currentInfo == null) {
         DebuggerUtilsImpl.disableCollection(companionClassLoader)
@@ -114,15 +116,15 @@ internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: D
   private fun tryToDefineInClassLoader(
     evaluationContext: EvaluationContextImpl,
     loaderForDefine: ClassLoaderReference, loaderForLookup: ClassLoaderReference,
-    cls: Class<*>, vararg additionalClassesToLoad: String,
+    className: String, vararg additionalClassesToLoad: String,
   ): ClassType? {
-    val alreadyDefined = tryLoadInClassLoader(evaluationContext, cls.name, loaderForDefine)
+    val alreadyDefined = tryLoadInClassLoader(evaluationContext, className, loaderForDefine)
     if (alreadyDefined == null) {
-      for (className in listOf(cls.name, *additionalClassesToLoad)) {
-        if (!defineClass(className, cls, evaluationContext, loaderForDefine)) return null
+      for (className in listOf(className, *additionalClassesToLoad)) {
+        if (!defineClass(className, evaluationContext, loaderForDefine)) return null
       }
     }
-    return tryLoadInClassLoader(evaluationContext, cls.name, loaderForLookup)
+    return tryLoadInClassLoader(evaluationContext, className, loaderForLookup)
   }
 
   private fun tryLoadInClassLoader(evaluationContext: EvaluationContextImpl, className: String, classLoader: ClassLoaderReference?): ClassType? {
@@ -167,14 +169,16 @@ private fun getTopClassloader(
   }
 }
 
+private val ideaRtPath by lazy { Path(DebuggerUtilsImpl.getIdeaRtPath()).toUri().toURL() }
+
 private fun defineClass(
   name: String,
-  cls: Class<*>,
   evaluationContext: EvaluationContextImpl,
   classLoader: ClassLoaderReference?,
 ): Boolean {
   try {
-    cls.getResourceAsStream("/${name.replace('.', '/')}.class").use { stream ->
+    val rtJarClassLoader = URLClassLoader(arrayOf(ideaRtPath), null)
+    rtJarClassLoader.getResourceAsStream("${name.replace('.', '/')}.class").use { stream ->
       if (stream == null) return false
       ClassLoadingUtils.defineClass(name, stream.readAllBytes(), evaluationContext, evaluationContext.debugProcess, classLoader)
       return true
