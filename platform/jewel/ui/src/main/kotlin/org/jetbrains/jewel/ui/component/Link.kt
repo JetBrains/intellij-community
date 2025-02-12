@@ -202,12 +202,10 @@ private fun LinkImpl(
             textStyle.merge(textDecoration = decoration, color = textColor)
         }
 
-    val pointerChangeModifier = Modifier.pointerHoverIcon(PointerIcon(Cursor(Cursor.HAND_CURSOR)))
-
     Row(
         modifier =
             modifier
-                .thenIf(linkState.isEnabled) { pointerChangeModifier }
+                .thenIf(linkState.isEnabled) { pointerHoverIcon(PointerIcon(Cursor(Cursor.HAND_CURSOR))) }
                 .clickable(
                     onClick = {
                         linkState = linkState.copy(visited = true)
