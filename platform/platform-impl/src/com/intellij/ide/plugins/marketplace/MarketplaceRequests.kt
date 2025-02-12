@@ -66,6 +66,7 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.seconds
 
@@ -526,12 +527,13 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   }
 
   /**
+   * @param cacheDir path to a cache directory where downloaded sources will be stored; if null, a default location is used
    * @return null if failed to download brokenPlugins from the Marketplace
    */
-  fun getBrokenPlugins(currentBuild: BuildNumber): Map<PluginId, Set<String>>? {
+  fun getBrokenPlugins(currentBuild: BuildNumber, cacheDir: Path? = null): Map<PluginId, Set<String>>? {
     val brokenPlugins = try {
       readOrUpdateFile(
-        Paths.get(PathManager.getPluginTempPath(), "brokenPlugins.json"),
+        Paths.get(cacheDir?.absolutePathString() ?: PathManager.getPluginTempPath(), "brokenPlugins.json"),
         MarketplaceUrls.getBrokenPluginsJsonUrl(),
         null,
         ""
