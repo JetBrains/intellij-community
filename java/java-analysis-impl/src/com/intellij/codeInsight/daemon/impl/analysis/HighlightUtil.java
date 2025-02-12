@@ -19,7 +19,6 @@ import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.util.*;
@@ -539,24 +538,13 @@ public final class HighlightUtil {
     return null;
   }
 
-  public static void registerIncreaseLanguageLevelFixes(@NotNull PsiElement element,
-                                                        @NotNull JavaFeature feature,
-                                                        HighlightInfo.Builder info) {
+  static void registerIncreaseLanguageLevelFixes(@NotNull PsiElement element,
+                                                 @NotNull JavaFeature feature,
+                                                 HighlightInfo.Builder info) {
     if (info == null) return;
-    for (CommonIntentionAction action : getIncreaseLanguageLevelFixes(element, feature)) {
+    for (CommonIntentionAction action : HighlightFixUtil.getIncreaseLanguageLevelFixes(element, feature)) {
       info.registerFix(action.asIntention(), null, null, null, null);
     }
-  }
-
-  public static @NotNull List<CommonIntentionAction> getIncreaseLanguageLevelFixes(
-    @NotNull PsiElement element, @NotNull JavaFeature feature) {
-    if (PsiUtil.isAvailable(feature, element)) return List.of();
-    if (feature.isLimited()) return List.of(); //no reason for applying it because it can be outdated
-    LanguageLevel applicableLevel = getApplicableLevel(element.getContainingFile(), feature);
-    if (applicableLevel == LanguageLevel.JDK_X) return List.of(); // do not suggest to use experimental level
-    return List.of(getFixFactory().createIncreaseLanguageLevelFix(applicableLevel),
-                   getFixFactory().createUpgradeSdkFor(applicableLevel),
-                   getFixFactory().createShowModulePropertiesFix(element));
   }
 
   private static @NotNull @NlsContexts.DetailedDescription String getUnsupportedFeatureMessage(@NotNull JavaFeature feature,

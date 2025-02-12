@@ -97,8 +97,8 @@ final class JavaErrorFixProvider {
   }
 
   JavaErrorFixProvider() {
-    multi(UNSUPPORTED_FEATURE, error -> HighlightUtil.getIncreaseLanguageLevelFixes(error.psi(), error.context()));
-    multi(PREVIEW_API_USAGE, error -> HighlightUtil.getIncreaseLanguageLevelFixes(error.psi(), error.context().feature()));
+    multi(UNSUPPORTED_FEATURE, error -> HighlightFixUtil.getIncreaseLanguageLevelFixes(error.psi(), error.context()));
+    multi(PREVIEW_API_USAGE, error -> HighlightFixUtil.getIncreaseLanguageLevelFixes(error.psi(), error.context().feature()));
     JavaFixProvider<PsiElement, Object> genericRemover = error -> myFactory.createDeleteFix(error.psi());
     for (JavaErrorKind<?, ?> kind : List.of(ANNOTATION_MEMBER_THROWS_NOT_ALLOWED, ANNOTATION_ATTRIBUTE_DUPLICATE,
                                             ANNOTATION_NOT_ALLOWED_EXTENDS, ANNOTATION_NOT_ALLOWED_IN_PERMIT_LIST, 
@@ -595,7 +595,7 @@ final class JavaErrorFixProvider {
       String text = QuickFixBundle.message("remove.modifier.fix", name, VisibilityUtil.toPresentableText(PsiModifier.ABSTRACT));
       return myFactory.createAddMethodBodyFix(method, text);
     });
-    multi(CALL_CONSTRUCTOR_MUST_BE_FIRST_STATEMENT, error -> HighlightUtil.getIncreaseLanguageLevelFixes(
+    multi(CALL_CONSTRUCTOR_MUST_BE_FIRST_STATEMENT, error -> HighlightFixUtil.getIncreaseLanguageLevelFixes(
       error.psi(), JavaFeature.STATEMENTS_BEFORE_SUPER));
     fix(STRING_TEMPLATE_PROCESSOR_MISSING, error -> new MissingStrProcessorFix(error.psi()));
     fixes(UNARY_OPERATOR_NOT_APPLICABLE, (error, sink) -> {

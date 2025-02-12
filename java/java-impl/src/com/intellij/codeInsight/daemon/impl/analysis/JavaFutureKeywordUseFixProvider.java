@@ -48,7 +48,7 @@ public final class JavaFutureKeywordUseFixProvider extends UnresolvedReferenceQu
   private static void registerIncreaseLevelFixes(@NotNull PsiJavaCodeReferenceElement ref,
                                                  @NotNull JavaFeature feature,
                                                  @NotNull QuickFixActionRegistrar registrar) {
-    for (CommonIntentionAction fix : HighlightUtil.getIncreaseLanguageLevelFixes(ref, feature)) {
+    for (CommonIntentionAction fix : HighlightFixUtil.getIncreaseLanguageLevelFixes(ref, feature)) {
       registrar.register(fix.asIntention());
     }
   }
