@@ -618,7 +618,8 @@ public class HighlightInfo implements Segment {
 
     /**
      * @param element element to highlight
-     * @param rangeInElement range within element
+     * @param rangeInElement range within element,
+     *                       meaning that the following must hold: {@code rangeInElement.getStartOffset() >= 0 && rangeInElement.getEndOffset() <= element.getTextRange().getLength()}
      * @return this builder
      */
     @NotNull Builder range(@NotNull PsiElement element, @NotNull TextRange rangeInElement);
