@@ -8,14 +8,20 @@ import com.intellij.lang.documentation.DocumentationMarkup.CLASS_GRAYED
 import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER
 import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_PLACEHOLDER
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
@@ -45,24 +51,34 @@ const val CODE_BLOCK_CLASS: String = "code-block"
 @Service(Service.Level.APP)
 internal class JBHtmlPaneStyleSheetRulesProvider {
 
+  fun getStyleSheet(paneBackgroundColor: Color, scaleFactor: Float, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
+    styleSheetCache.get(Triple(paneBackgroundColor.rgb and 0xffffff, scaleFactor, configuration))
+
   init {
     // Editor color scheme, referenced from JBHtmlPaneStyleConfiguration, can contain references to projects and editors.
     // Drop caches if projects or editors are closed to avoid memory leaks.
     val messageBus = ApplicationManager.getApplication().messageBus.connect()
-    messageBus.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+    messageBus.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
       override fun projectClosed(project: Project) {
-        styleSheetCache.invalidateAll()
+        invalidateCache()
       }
     })
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorReleased(event: EditorFactoryEvent) {
-        styleSheetCache.invalidateAll()
+        invalidateCache()
       }
     }, messageBus)
+    // Drop caches on global colors scheme change
+    messageBus.subscribe(EditorColorsManager.TOPIC, object : EditorColorsListener {
+      override fun globalSchemeChange(scheme: EditorColorsScheme?) {
+        invalidateCache()
+      }
+    })
   }
 
-  fun getStyleSheet(paneBackgroundColor: Color, scaleFactor: Float, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
-    styleSheetCache.get(Triple(paneBackgroundColor.rgb and 0xffffff, scaleFactor, configuration))
+  private fun invalidateCache() {
+    styleSheetCache.invalidateAll()
+  }
 
   private val inlineCodeStyling = ControlColorStyleBuilder(
     ElementKind.CodeInline,

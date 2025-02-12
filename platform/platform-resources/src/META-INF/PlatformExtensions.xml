@@ -628,7 +628,7 @@
     <applicationService
       serviceInterface="com.intellij.platform.ide.productInfo.IdeProductInfo"
       serviceImplementation="com.intellij.platform.ide.impl.productInfo.IdeProductInfoImpl"/>
-    
+
     <applicationService serviceInterface="com.intellij.openapi.options.advanced.AdvancedSettings"
                         serviceImplementation="com.intellij.openapi.options.advanced.AdvancedSettingsImpl"/>
 
@@ -1841,7 +1841,7 @@
                         serviceImplementation="com.intellij.auth.LocalGenericAuthService"
                         client="local"/>
     <project.projectIdResolver implementation="com.intellij.ide.lightEdit.project.LightEditProjectIdResolver" />
-    
+
     <actionGroupCustomization
       implementation="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarActionGroupCustomization" />
 
