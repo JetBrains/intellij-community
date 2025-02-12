@@ -119,6 +119,7 @@ object DeclarativeHintsDumpUtil {
       when (renderType) {
         InlayDumpPlacement.Inline -> hintBuilder.position = InlineInlayPosition(inlayOffset, true)
         InlayDumpPlacement.BlockAbove -> hintBuilder.position = AboveLineIndentedPosition(inlayOffset, verticalPriorityCounter++)
+        InlayDumpPlacement.BlockBelow -> error("Block below is not supported")
       }
       if (renderType == InlayDumpPlacement.Inline) {
         val parts = inlayContentParser.parse("[$inlayContent]")
