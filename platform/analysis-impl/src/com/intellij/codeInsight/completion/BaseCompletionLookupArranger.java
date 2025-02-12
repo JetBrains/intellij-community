@@ -3,7 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
-import com.intellij.codeInsight.completion.impl.LookupCompletionSorterKeys;
+import com.intellij.codeInsight.completion.impl.LookupCompletionPriorityItemKeys;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem;
 import com.intellij.injected.editor.EditorWindow;
@@ -418,7 +418,15 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   @ApiStatus.Internal
   @Override
   final protected boolean isTopPriorityItem(@Nullable LookupElement item) {
-    return item != null && Boolean.TRUE.equals(item.getUserData(LookupCompletionSorterKeys.TOP_PRIORITY_ITEM));
+    return item != null && Boolean.TRUE.equals(item.getUserData(LookupCompletionPriorityItemKeys.TOP_PRIORITY_ITEM));
+  }
+
+  /**
+   * @see LookupCompletionPriorityItemKeys#NEVER_AUTOSELECT_TOP_PRIORITY_ITEM
+   */
+  private boolean isNeverAutoselectedTopPriorityItem(@Nullable LookupElement item) {
+    if (item == null || !isTopPriorityItem(item)) return false;
+    return Boolean.TRUE.equals(item.getUserData(LookupCompletionPriorityItemKeys.NEVER_AUTOSELECT_TOP_PRIORITY_ITEM));
   }
 
   private void freezeTopItems(LookupElementListPresenter lookup, LinkedHashSet<? extends LookupElement> model) {
@@ -563,13 +571,18 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   }
 
   private @Nullable LookupElement findMostRelevantItem(Iterable<? extends LookupElement> sorted) {
+    LookupElement candidate = null;
     for (LookupElement element : sorted) {
-      if (!mySkippedItems.contains(element)) {
+      if (mySkippedItems.contains(element)) continue;
+      if (!isNeverAutoselectedTopPriorityItem(element)) {
         return element;
+      }
+      if (candidate == null) {
+        candidate = element;
       }
     }
 
-    return null;
+    return candidate;
   }
 
   private boolean shouldSkip(LookupElement element) {
