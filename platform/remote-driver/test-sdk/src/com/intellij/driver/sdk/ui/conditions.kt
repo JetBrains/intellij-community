@@ -2,7 +2,6 @@ package com.intellij.driver.sdk.ui
 
 import com.intellij.driver.sdk.WaitForException
 import com.intellij.driver.sdk.ui.components.UiComponent
-import com.intellij.driver.sdk.ui.components.elements.button
 import com.intellij.driver.sdk.waitFor
 import kotlin.time.Duration
 
@@ -111,6 +110,3 @@ val present: UiComponent.() -> Boolean = { present() }
 val notPresent: UiComponent.() -> Boolean = { notPresent() }
 
 fun haveText(value: String): UiComponent.() -> Boolean = { hasText(value) }
-
-fun haveButton(value: String): UiComponent.() -> Boolean = { button(value).present() }
-
