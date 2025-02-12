@@ -54,12 +54,16 @@ public class ErrorHandler {
   }
 
   public void add(@NotNull ErrorInfo errorInfo) {
-    add(errorInfo, false);
+    add(errorInfo, true);
   }
 
-  public void add(@NotNull ErrorInfo errorInfo, boolean needToWarn) {
+  public void add(@NotNull ErrorInfo errorInfo, boolean withCustomProviders) {
+    add(errorInfo, false, withCustomProviders);
+  }
+
+  public void add(@NotNull ErrorInfo errorInfo, boolean needToWarn, boolean withCustomProviders) {
     addError(errorInfo.getMessage(), null);
-    myFixes.addAll(ThrowableInfoUtil.getAllFixes(errorInfo));
+    myFixes.addAll(ThrowableInfoUtil.getAllFixes(errorInfo, withCustomProviders));
     Throwable throwable = errorInfo.getOriginalThrowable();
     if (needToWarn && throwable != null) LOG.warn(throwable);
   }
