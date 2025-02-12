@@ -328,10 +328,6 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     return !present()
   }
 
-  fun hasText(predicate: (UiText) -> Boolean): Boolean {
-    return getAllTexts().any(predicate)
-  }
-
   fun isVisible(): Boolean {
     return withComponent { it.isVisible() }
   }
