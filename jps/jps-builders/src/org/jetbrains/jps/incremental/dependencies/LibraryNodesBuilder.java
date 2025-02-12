@@ -26,7 +26,7 @@ final class LibraryNodesBuilder {
     myGraphConfig = graphConfig;
   }
 
-  public Iterable<Node<?, ?>> processLibraryRoot(final String libName, NodeSource libRoot) throws IOException {
+  public Iterable<Node<?, ?>> processLibraryRoot(final String namespace, NodeSource libRoot) throws IOException {
     if (!LibraryDef.isLibraryPath(libRoot)) {
       return Collections.emptyList();
     }
@@ -39,7 +39,7 @@ final class LibraryNodesBuilder {
           @Override
           public FileVisitResult visitFile(@NotNull Path file, BasicFileAttributes attrs) throws IOException {
             if (LibraryDef.isClassFile(getFileName(file))) {
-              addNode(file, libName, nodes);
+              addNode(file, namespace, nodes);
             }
             return FileVisitResult.CONTINUE;
           }
@@ -49,9 +49,9 @@ final class LibraryNodesBuilder {
     return nodes;
   }
 
-  private static void addNode(@NotNull Path classFile, String libraryName, List<Node<?, ?>> acc) throws IOException {
+  private static void addNode(@NotNull Path classFile, String namespace, List<Node<?, ?>> acc) throws IOException {
     FailSafeClassReader reader = new FailSafeClassReader(Files.readAllBytes(classFile));
-    JVMClassNode<?, ?> node = JvmClassNodeBuilder.createForLibrary("$" + libraryName + FileUtil.toSystemIndependentName(classFile.toString()), reader).getResult();
+    JVMClassNode<?, ?> node = JvmClassNodeBuilder.createForLibrary("$" + namespace + FileUtil.toSystemIndependentName(classFile.toString()), reader).getResult();
     if (node.getFlags().isPublic()) {
       // todo: maybe too restrictive
       acc.add(node);

@@ -3,13 +3,11 @@ package org.jetbrains.jps.incremental.dependencies;
 
 import com.dynatrace.hash4j.hashing.HashStream64;
 import com.dynatrace.hash4j.hashing.Hashing;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SmartHashSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.JpsBuildBundle;
@@ -31,37 +29,29 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 
 import java.io.IOException;
-import java.lang.reflect.Proxy;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import static org.jetbrains.jps.javac.Iterators.*;
 
 /**
  * Update state of libraries used in the given project. Detect API changes and mark sources depending on changed APIs for recompilation
+ *
  */
+// todo: implement as a Builder?
 public final class LibraryDependenciesUpdater {
   private static final Logger LOG = Logger.getInstance(LibraryDependenciesUpdater.class);
   
   private static final String MODULE_INFO_FILE = "module-info.java";
 
-  private static final BasicFileAttributes NULL_ATTRIBUTES =
-    (BasicFileAttributes)Proxy.newProxyInstance(LibraryDependenciesUpdater.class.getClassLoader(), new Class[]{BasicFileAttributes.class}, (proxy, method, args) -> null);
-  private static final int ATTRIBUTES_CACHE_SIZE = 1024;
-  private final LoadingCache<Path, BasicFileAttributes> myFileAttributesCache;
-
-  private boolean myIsDeletedLibrariesProcessed;
-  private final Map<Path, Collection<String>> myLibraryNameIndex = new HashMap<>(); // libraryRoot -> collection of library names, which include the root
+  private boolean myIsInitialized;
+  private final Map<String, List<Path>> myDeletedRoots = new HashMap<>(); // namespace -> collection of roots, not associated with any module in the project
+  private final Map<Path, String> myNamespaces = new HashMap<>(); // library root -> namespace
   private final Set<Path> myProcessedRoots = new HashSet<>();
-
-  public LibraryDependenciesUpdater() {
-    myFileAttributesCache = Caffeine.newBuilder().maximumSize(ATTRIBUTES_CACHE_SIZE).build(path -> {
-      BasicFileAttributes attr = FSOperations.getAttributes(path);
-      return attr != null? attr : NULL_ATTRIBUTES;
-    });
-  }
+  private long myTotalTimeNano = 0L;
 
   /**
    * @return true if can continue incrementally, false if non-incremental
@@ -71,6 +61,7 @@ public final class LibraryDependenciesUpdater {
     if (!JavaBuilderUtil.isTrackLibraryDependenciesEnabled() || context.isCanceled()) {
       return true;
     }
+    long start = System.nanoTime();
 
     ProjectDescriptor pd = context.getProjectDescriptor();
     BuildDataManager dataManager = pd.dataManager;
@@ -80,88 +71,100 @@ public final class LibraryDependenciesUpdater {
     NodeSourcePathMapper pathMapper = graphConfig.getPathMapper();
     boolean isFullRebuild = JavaBuilderUtil.isForcedRecompilationAllJavaModules(context);
 
-    Set<Path> deletedLibRoots;
-    Map<Path, String> libsRootsToUpdate = new HashMap<>();
+    Set<Path> deletedRoots = new SmartHashSet<>();
+    Set<Path> updatedRoots = new SmartHashSet<>();
     LibraryRoots libraryRoots = dataManager.getLibraryRoots();
-    
-    if (myIsDeletedLibrariesProcessed) {
-      deletedLibRoots = new SmartHashSet<>();
-    }
-    else {
-      myIsDeletedLibrariesProcessed = true;
-      deletedLibRoots = libraryRoots.getRoots(new HashSet<>());
-      Set<Path> presentPaths = new HashSet<>();
-      for (JpsLibrary library : JpsJavaExtensionService.dependencies(pd.getProject()).getLibraries()) { // all libraries currently used in the project
-        for (Path libRoot : filter(library.getPaths(JpsOrderRootType.COMPILED), LibraryDef::isLibraryPath)) {
-          presentPaths.add(libRoot);
-          myLibraryNameIndex.computeIfAbsent(libRoot, p -> new SmartHashSet<>()).add(library.getName());
-        }
-      }
-      for (Path libRoot : presentPaths) {
-        String oldLibName = libraryRoots.getLibraryName(libRoot);
-        if (oldLibName != null) { // the root existed before
-          String presentLibName = getCompoundLibraryName(libRoot);
-          if (!oldLibName.equals(presentLibName)) { // the root is now associated with a different set of libraries
-            libsRootsToUpdate.put(libRoot, presentLibName);
-          }
-        }
-      }
-
-      deletedLibRoots.removeAll(presentPaths);
-      for (Path deletedPath : deletedLibRoots) {
-        libraryRoots.remove(deletedPath);
-      }
-    }
-
-    for (JpsLibrary library : uniqueBy(flat(map(chunk.getModules(), m -> JpsJavaExtensionService.dependencies(m).recursivelyExportedOnly().getLibraries())), () -> {
-      Set<String> processed = new HashSet<>();
-      return lib -> processed.add(lib.getName());
-    })) {
-      for (Path libRoot : flat(filter(library.getPaths(JpsOrderRootType.COMPILED), LibraryDef::isLibraryPath), Set.copyOf(libsRootsToUpdate.keySet()))) {
-        if (!myProcessedRoots.add(libRoot)) {
-          continue;
-        }
-        BasicFileAttributes attribs = getFileAttributes(libRoot);
-        if (attribs != null) {
-          if (attribs.isRegularFile()) {
-            long currentStamp = FSOperations.lastModified(libRoot, attribs);
-            String libName = libsRootsToUpdate.get(libRoot); // might be already marked for update
-            if (libName == null) {
-              libName = getCompoundLibraryName(libRoot);
-            }
-            if (libraryRoots.update(libRoot, libName, currentStamp)) {
-              // if actually exists, is not a directory and is not up-to-date
-              libsRootsToUpdate.put(libRoot, libName);
-            }
-          }
-        }
-        else {
-          // the library is defined in the project, but does not exist on disk => is effectively deleted
-          if (libraryRoots.remove(libRoot)) {
-            libsRootsToUpdate.remove(libRoot); // might be already marked for update
-            deletedLibRoots.add(libRoot);
-          }
-        }
-      }
-    }
-
-    if (libsRootsToUpdate.isEmpty() && isEmpty(deletedLibRoots)) {
-      return true;
-    }
-
-    context.processMessage(new ProgressMessage(
-      JpsBuildBundle.message("progress.message.updating.library.state", libsRootsToUpdate.size(), count(deletedLibRoots), chunk.getPresentableShortName()))
-    );
 
     try {
-      Delta delta = graph.createDelta(map(libsRootsToUpdate.keySet(), pathMapper::toNodeSource), map(deletedLibRoots, pathMapper::toNodeSource), false);
+      if (!myIsInitialized) {
+        myIsInitialized = true;
+
+        Map<Path, List<String>> present = new HashMap<>(); // libraryRoot -> collection of library names, which include the root
+        for (JpsLibrary library : JpsJavaExtensionService.dependencies(pd.getProject()).getLibraries()) { // all libraries currently used in the project
+          for (Path libRoot : filter(library.getPaths(JpsOrderRootType.COMPILED), LibraryDef::isLibraryPath)) {
+            present.computeIfAbsent(libRoot, k -> new SmartList<>()).add(library.getName());
+          }
+        }
+
+        HashStream64 hash = null;
+        for (Map.Entry<Path, List<String>> entry : present.entrySet()) {
+          if (hash == null) {
+            hash = Hashing.komihash5_0().hashStream();
+          }
+          else {
+            hash.reset();
+          }
+          List<String> libNames = entry.getValue();
+          Collections.sort(libNames);
+          for (String name : libNames) {
+            hash.putString(name);
+          }
+          myNamespaces.put(entry.getKey(), Long.toUnsignedString(hash.getAsLong(), Character.MAX_RADIX));
+        }
+
+        Set<Path> past = libraryRoots.getRoots(new HashSet<>());
+        past.removeAll(present.keySet());
+        for (Path deletedRoot : past) {
+          myDeletedRoots.computeIfAbsent(libraryRoots.getNamespace(deletedRoot), k -> new SmartList<>()).add(deletedRoot);
+        }
+
+        Set<String> deletedNamespaces = new HashSet<>(myDeletedRoots.keySet());
+        deletedNamespaces.removeAll(myNamespaces.values());
+        // add all deleted roots that won't fit in any namespace
+        for (String ns : deletedNamespaces) {
+          deletedRoots.addAll(myDeletedRoots.remove(ns));
+        }
+
+        LOG.info("LibraryDependencyUpdater initialized in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + " ms");
+      }
+
+      for (JpsLibrary library : uniqueBy(flat(map(chunk.getModules(), m -> JpsJavaExtensionService.dependencies(m).recursivelyExportedOnly().getLibraries())), () -> {
+        Set<String> processed = new HashSet<>();
+        return lib -> processed.add(lib.getName());
+      })) {
+        for (Path libRoot : filter(library.getPaths(JpsOrderRootType.COMPILED), LibraryDef::isLibraryPath)) {
+          if (!myProcessedRoots.add(libRoot)) {
+            continue;
+          }
+          String namespace = myNamespaces.get(libRoot);
+
+          // include in the Delta those deleted roots that produced nodes for the same namespace, where libsRootsToUpdate are going to contribute to
+          Collection<Path> deleted = myDeletedRoots.remove(namespace);
+          if (deleted != null) {
+            deletedRoots.addAll(deleted);
+          }
+
+          BasicFileAttributes attribs = FSOperations.getAttributes(libRoot);
+          if (attribs != null) {
+            if (attribs.isRegularFile() && libraryRoots.update(libRoot, namespace, FSOperations.lastModified(libRoot, attribs))) {
+              // if actually exists, is not a directory and has at lest namespace or timestamp changed
+              updatedRoots.add(libRoot);
+            }
+          }
+          else {
+            // the library is defined in the project, but does not exist on disk => is effectively deleted
+            deletedRoots.add(libRoot);
+          }
+        }
+      }
+
+      if (updatedRoots.isEmpty() && isEmpty(deletedRoots)) {
+        return true;
+      }
+
+      context.processMessage(new ProgressMessage(
+        JpsBuildBundle.message("progress.message.updating.library.state", updatedRoots.size(), count(deletedRoots), chunk.getPresentableShortName()))
+      );
+
+      List<Pair<Path, NodeSource>> toUpdate = collect(map(updatedRoots, root -> Pair.create(root, pathMapper.toNodeSource(root))), new ArrayList<>());
+      Delta delta = graph.createDelta(map(toUpdate, p -> p.getSecond()), map(deletedRoots, pathMapper::toNodeSource), false);
       LibraryNodesBuilder nodesBuilder = new LibraryNodesBuilder(graphConfig);
-      for (Map.Entry<Path, String> entry : libsRootsToUpdate.entrySet()) {
-        Path libRoot = entry.getKey();
-        NodeSource src = pathMapper.toNodeSource(libRoot);
+      for (var pair : toUpdate) {
+        Path libRoot = pair.getFirst();
+        NodeSource src = pair.getSecond();
         Set<NodeSource> sources = Set.of(src);
         int nodeCount = 0;
-        for (Node<?, ?> node : nodesBuilder.processLibraryRoot(entry.getValue(), src)) {
+        for (Node<?, ?> node : nodesBuilder.processLibraryRoot(myNamespaces.get(libRoot), src)) {
           nodeCount++;
           delta.associate(node, sources);
         }
@@ -196,31 +199,26 @@ public final class LibraryDependenciesUpdater {
 
       graph.integrate(diffResult);
 
+      for (Path deletedRoot : deletedRoots) {
+        libraryRoots.remove(deletedRoot);
+      }
+
       return diffResult.isIncremental();
     }
     catch (Throwable e) {
-      for (Path path : libsRootsToUpdate.keySet()) {
+      for (Path path : updatedRoots) {
         // data from these libraries can be updated only partially
         // ensure they will be parsed next time
         libraryRoots.remove(path);
       }
       throw e;
     }
-  }
-
-  private @NotNull String getCompoundLibraryName(Path libRoot) {
-    List<String> libNames = collect(myLibraryNameIndex.getOrDefault(libRoot, List.of()), new SmartList<>());
-    Collections.sort(libNames);
-    HashStream64 hash = Hashing.komihash5_0().hashStream();
-    for (String name : libNames) {
-      hash.putString(name);
+    finally {
+      myTotalTimeNano += (System.nanoTime() - start);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("LibraryDependencyUpdater took " + TimeUnit.NANOSECONDS.toSeconds(myTotalTimeNano) + " seconds so far");
+      }
     }
-    return Long.toUnsignedString(hash.getAsLong(), Character.MAX_RADIX);
-  }
-
-  private BasicFileAttributes getFileAttributes(Path libRoot) {
-    BasicFileAttributes attribs = myFileAttributesCache.get(libRoot);
-    return attribs == NULL_ATTRIBUTES? null : attribs;
   }
 
   private static void markAffectedFilesDirty(CompileContext context, ModuleChunk chunk, Iterable<? extends Path> affectedFiles) throws IOException {
