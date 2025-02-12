@@ -1222,7 +1222,7 @@ public class HighlightInfo implements Segment {
         descriptor.myFixRange = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(tr));
       }
       else if (descriptorFixRange == null) {
-        descriptor.myFixRange = getFixTextRange();
+        descriptor.myFixRange = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(getFixTextRange()));
       }
     }
   }
