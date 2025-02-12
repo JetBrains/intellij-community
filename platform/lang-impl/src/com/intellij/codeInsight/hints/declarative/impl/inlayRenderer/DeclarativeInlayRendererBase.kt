@@ -72,9 +72,18 @@ abstract class DeclarativeInlayRendererBase<Model>(
     return "DummyActionGroup"
   }
 
-  internal fun toInlayData(): List<InlayData> {
-    val inlay = this.inlay // will be initialized here because this method is called only on the renderer got from the inlay instance
-    return presentationLists.map { it.model.copyAndUpdatePosition(inlay) }
+  internal fun toInlayData(needUpToDateOffsets: Boolean = true): List<InlayData> {
+    // this.inlay should always be initialized right after construction.
+    // However, InlayModel.Listener.onAdded will be called before that can happen,
+    // and someone (e.g., rem-dev backend) might want to serialize right away;
+    // it is not a problem, though, because at that moment,
+    // the offsets of the original declared position are still actual.
+    return if (needUpToDateOffsets && this::inlay.isInitialized) {
+      presentationLists.map { it.model.copyAndUpdatePosition(inlay) }
+    }
+    else {
+      presentationLists.map { it.model }
+    }
   }
 }
 
