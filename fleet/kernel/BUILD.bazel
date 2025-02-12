@@ -27,6 +27,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//fleet/preferences",
     "//fleet/reporting/api:fleet-reporting-api",
+    "//fleet/multiplatform.shims:multiplatform-shims",
     "@lib//:fastutil-min",
   ],
   exports = [

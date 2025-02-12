@@ -20,6 +20,7 @@ jvm_library(
   deps = [
     "//fleet/reporting/api:fleet-reporting-api",
     "//fleet/preferences",
+    "//fleet/multiplatform.shims:multiplatform-shims",
     "@lib//:kotlin-reflect",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",

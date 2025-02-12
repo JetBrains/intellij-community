@@ -55,6 +55,10 @@ jvm_library(
     "//python/python-venv:community-impl-venv",
     "//python/python-venv:community-impl-venv_test_lib",
     "//python/setup-test-environment:community-testFramework-testEnv",
+    "@lib//:io-mockk",
+    "@lib//:io-mockk-jvm",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
   ]
 )
 

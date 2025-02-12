@@ -2465,8 +2465,8 @@ java_import(
 
 java_import(
   name = "jb-jdi",
-  jars = ["@jb-jdi-2_40_http//file"],
-  srcjar = "@jb-jdi-2_40-sources_http//file",
+  jars = ["@jb-jdi-2_41_http//file"],
+  srcjar = "@jb-jdi-2_41-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

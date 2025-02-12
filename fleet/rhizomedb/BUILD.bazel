@@ -17,6 +17,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "//fleet/util/core:fleet-util-core",
+    "//fleet/multiplatform.shims:multiplatform-shims",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:jetbrains-annotations",
