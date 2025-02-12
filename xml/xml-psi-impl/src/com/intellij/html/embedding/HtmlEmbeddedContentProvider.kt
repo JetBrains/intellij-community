@@ -5,6 +5,7 @@ import com.intellij.lexer.HtmlRawTextLexer
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.xml.XmlElementType
 import com.intellij.psi.xml.XmlTokenType
 
 interface HtmlEmbeddedContentProvider {
@@ -24,7 +25,7 @@ interface HtmlEmbeddedContentProvider {
 
     @JvmField
     val RAW_TEXT_FORMATTABLE_EMBEDMENT: HtmlEmbedmentInfo = object : HtmlEmbedmentInfo {
-      override fun getElementType(): IElementType = HtmlRawTextElementType
+      override fun getElementType(): IElementType = XmlElementType.HTML_RAW_TEXT
       override fun createHighlightingLexer(): Lexer = HtmlRawTextLexer()
     }
   }
