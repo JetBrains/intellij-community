@@ -21,10 +21,6 @@ fun <T : UiComponent> T.shouldBe(message: String, condition: T.() -> Boolean): T
   return should(message = message, timeout = DEFAULT_FIND_TIMEOUT, condition = condition)
 }
 
-fun <T : UiComponent> T.shouldBe(condition: T.() -> Boolean, timeout: Duration): T {
-  return should(timeout = timeout, condition = condition)
-}
-
 fun <T : UiComponent> T.shouldBeNoExceptions(
   message: String? = null,
   timeout: Duration = DEFAULT_FIND_TIMEOUT,
