@@ -658,6 +658,8 @@ final class JavaErrorFixProvider {
     };
     fix(REFERENCE_MEMBER_BEFORE_CONSTRUCTOR, qualifyFix);
     fix(CALL_MEMBER_BEFORE_CONSTRUCTOR, qualifyFix);
+    fix(CLASS_OR_PACKAGE_EXPECTED, error -> myFactory.createRemoveQualifierFix(
+      requireNonNull(error.psi().getQualifierExpression()), error.psi(), error.context()));
   }
 
   private void createAccessFixes() {

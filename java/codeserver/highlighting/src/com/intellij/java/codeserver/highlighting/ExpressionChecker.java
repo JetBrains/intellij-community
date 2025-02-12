@@ -871,6 +871,32 @@ final class ExpressionChecker {
     }
   }
 
+  void checkClassReferenceAfterQualifier(@NotNull PsiReferenceExpression expression, @Nullable PsiElement resolved) {
+    if (!(resolved instanceof PsiClass psiClass)) return;
+    PsiExpression qualifier = expression.getQualifierExpression();
+    if (qualifier == null) return;
+    if (qualifier instanceof PsiReferenceExpression qExpression) {
+      PsiElement qualifierResolved = qExpression.resolve();
+      if (qualifierResolved instanceof PsiClass || qualifierResolved instanceof PsiPackage) return;
+
+      if (qualifierResolved == null) {
+        while (true) {
+          PsiElement qResolve = qExpression.resolve();
+          if (qResolve == null || qResolve instanceof PsiClass || qResolve instanceof PsiPackage) {
+            PsiExpression qualifierExpression = qExpression.getQualifierExpression();
+            if (qualifierExpression == null) return;
+            if (qualifierExpression instanceof PsiReferenceExpression ref) {
+              qExpression = ref;
+              continue;
+            }
+          }
+          break;
+        }
+      }
+    }
+    myVisitor.report(JavaErrorKinds.CLASS_OR_PACKAGE_EXPECTED.create(expression, psiClass));
+  }
+
   private static boolean hasYield(@NotNull PsiSwitchExpression switchExpression, @NotNull PsiElement scope) {
     class YieldFinder extends JavaRecursiveElementWalkingVisitor {
       private boolean hasYield;

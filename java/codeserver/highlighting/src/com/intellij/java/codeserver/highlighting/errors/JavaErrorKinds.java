@@ -430,6 +430,9 @@ public final class JavaErrorKinds {
         ctx.subClass().getName(),
         ctx.subClass().isInterface() == ctx.superClass().isInterface() ? 1 : 2,
         ctx.superClass().getName()));
+  public static final Parameterized<PsiReferenceExpression, PsiClass> CLASS_OR_PACKAGE_EXPECTED =
+    parameterized(PsiReferenceExpression.class, PsiClass.class, "class.or.package.expected")
+      .withAnchor(ref -> ref.getQualifierExpression());
 
   public static final Simple<PsiJavaCodeReferenceElement> VALUE_CLASS_EXTENDS_NON_ABSTRACT = error("value.class.extends.non.abstract");
   

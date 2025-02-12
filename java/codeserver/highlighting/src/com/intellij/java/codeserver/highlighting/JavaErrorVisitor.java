@@ -475,11 +475,6 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       if (!hasErrorResults()) {
         myClassChecker.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass);
       }
-      //if (!hasErrorResults()) add(HighlightMethodUtil.checkOverrideEquivalentInheritedMethods(aClass, myFile, myLanguageLevel));
-      if (!hasErrorResults()) {
-        //GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(aClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
-        //myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(aClass));
-      }
       if (!hasErrorResults()) myClassChecker.checkCyclicInheritance(aClass);
       if (!hasErrorResults()) myMethodChecker.checkOverrideEquivalentInheritedMethods(aClass);
       if (!hasErrorResults()) {
@@ -828,6 +823,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
     if (!hasErrorResults()) myGenericsChecker.checkAccessStaticFieldFromEnumConstructor(expression, result);
     myExpressionChecker.checkUnqualifiedSuperInDefaultMethod(expression, qualifierExpression);
+    if (!hasErrorResults()) myExpressionChecker.checkClassReferenceAfterQualifier(expression, resolved);
     if (!hasErrorResults() && resolved instanceof PsiModifierListOwner) checkPreviewFeature(expression);
   }
   

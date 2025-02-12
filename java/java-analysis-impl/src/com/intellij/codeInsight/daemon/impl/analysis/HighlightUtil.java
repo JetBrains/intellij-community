@@ -525,55 +525,6 @@ public final class HighlightUtil {
     return ElementDescriptionUtil.getElementDescription(element, HighlightUsagesDescriptionLocation.INSTANCE);
   }
 
-  static HighlightInfo.Builder checkClassReferenceAfterQualifier(@NotNull PsiReferenceExpression expression, @Nullable PsiElement resolved) {
-    if (!(resolved instanceof PsiClass)) return null;
-    PsiExpression qualifier = expression.getQualifierExpression();
-    if (qualifier == null) return null;
-    if (qualifier instanceof PsiReferenceExpression qExpression) {
-      PsiElement qualifierResolved = qExpression.resolve();
-      if (qualifierResolved instanceof PsiClass || qualifierResolved instanceof PsiPackage) return null;
-
-      if (qualifierResolved == null) {
-        while (true) {
-          PsiElement qResolve = qExpression.resolve();
-          if (qResolve == null || qResolve instanceof PsiClass || qResolve instanceof PsiPackage) {
-            PsiExpression qualifierExpression = qExpression.getQualifierExpression();
-            if (qualifierExpression == null) return null;
-            if (qualifierExpression instanceof PsiReferenceExpression) {
-              qExpression = (PsiReferenceExpression)qualifierExpression;
-              continue;
-            }
-          }
-          break;
-        }
-      }
-    }
-    String description = JavaErrorBundle.message("expected.class.or.package");
-    HighlightInfo.Builder info =
-      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(description);
-    IntentionAction action = getFixFactory().createRemoveQualifierFix(qualifier, expression, (PsiClass)resolved);
-    info.registerFix(action, null, null, null, null);
-    return info;
-  }
-
-  private static @NotNull LanguageLevel getApplicableLevel(@NotNull PsiFile file, @NotNull JavaFeature feature) {
-    LanguageLevel standardLevel = feature.getStandardLevel();
-    LanguageLevel featureLevel = feature.getMinimumLevel();
-    if (featureLevel.isPreview()) {
-      JavaSdkVersion sdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(file);
-      if (sdkVersion != null) {
-        if (standardLevel != null && sdkVersion.isAtLeast(JavaSdkVersion.fromLanguageLevel(standardLevel))) {
-          return standardLevel;
-        }
-        LanguageLevel previewLevel = sdkVersion.getMaxLanguageLevel().getPreviewLevel();
-        if (previewLevel != null && previewLevel.isAtLeast(featureLevel)) {
-          return previewLevel;
-        }
-      }
-    }
-    return featureLevel;
-  }
-
   static @Nullable HighlightInfo.Builder checkFeature(@NotNull PsiElement element,
                                                       @NotNull JavaFeature feature,
                                                       @NotNull LanguageLevel level,

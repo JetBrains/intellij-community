@@ -246,13 +246,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) add(ModuleHighlightUtil.checkModuleReference(statement));
   }
 
-  private void doVisitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
-    JavaResolveResult result = resolveOptimised(ref, myFile);
-    if (result != null) {
-      add(HighlightUtil.checkReference(ref, result));
-    }
-  }
-
   static @Nullable JavaResolveResult resolveOptimised(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {
     try {
       if (ref instanceof PsiReferenceExpressionImpl) {
@@ -267,36 +260,18 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
-  private JavaResolveResult @Nullable [] resolveOptimised(@NotNull PsiReferenceExpression expression) {
-    try {
-      if (expression instanceof PsiReferenceExpressionImpl) {
-        PsiReferenceExpressionImpl.OurGenericsResolver resolver = PsiReferenceExpressionImpl.OurGenericsResolver.INSTANCE;
-        return JavaResolveUtil.resolveWithContainingFile(expression, resolver, true, true, myFile);
-      }
-      else {
-        return expression.multiResolve(true);
-      }
-    }
-    catch (IndexNotReadyException e) {
-      return null;
-    }
-  }
-
   @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-    doVisitReferenceElement(expression);
+    JavaResolveResult result = resolveOptimised(expression, myFile);
+    if (result != null) {
+      add(HighlightUtil.checkReference(expression, result));
+    }
 
     if (!hasErrorResults()) {
       visitElement(expression);
       if (hasErrorResults()) return;
     }
 
-    JavaResolveResult[] results = resolveOptimised(expression);
-    if (results == null) return;
-    JavaResolveResult result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
-
-    PsiElement resolved = result.getElement();
-    if (!hasErrorResults()) add(HighlightUtil.checkClassReferenceAfterQualifier(expression, resolved));
     PsiExpression qualifierExpression = expression.getQualifierExpression();
     if (!hasErrorResults() && myJavaModule == null && qualifierExpression != null) {
       add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));
@@ -386,7 +361,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
     super.visitReferenceElement(ref);
     if (!(ref instanceof PsiExpression)) {
-      doVisitReferenceElement(ref);
+      JavaResolveResult result = resolveOptimised(ref, myFile);
+      if (result != null) {
+        add(HighlightUtil.checkReference(ref, result));
+      }
     }
   }
 
