@@ -11,6 +11,15 @@ import kotlin.io.path.exists
 
 private val logger = logger<ZedCollectionDataProvider>()
 
+/**
+ * Collects anonymous data about the presense of Zed editor to improve the "Import settings from external editor" feature
+ * and prioritize support for popular editors.
+ *
+ * This includes:
+ * - Detecting if Zed editor is installed across platforms (Windows, macOS, Linux).
+ *
+ * The data is completely anonymized and no personally identifiable information is captured.
+ */
 internal class ZedCollectionDataProvider : ExternalEditorCollectionDataProvider() {
 
   private val zedHomePath: Path? = getZedHomePath()
