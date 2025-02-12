@@ -4,7 +4,7 @@ package com.intellij.ide.highlighter;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.xml.psi.XmlPsiBundle;
+import com.intellij.xml.XmlCoreBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,7 +23,7 @@ public final class DTDFileType extends LanguageFileType {
 
   @Override
   public @NotNull String getDescription() {
-    return XmlPsiBundle.message("filetype.dtd.description");
+    return XmlCoreBundle.message("filetype.dtd.description");
   }
 
   @Override

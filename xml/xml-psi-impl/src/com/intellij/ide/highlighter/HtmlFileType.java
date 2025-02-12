@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.XmlCharsetDetector;
-import com.intellij.xml.psi.XmlPsiBundle;
+import com.intellij.xml.XmlCoreBundle;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,7 @@ public class HtmlFileType extends XmlLikeFileType {
 
   @Override
   public @NotNull String getDescription() {
-    return XmlPsiBundle.message("filetype.html.description");
+    return XmlCoreBundle.message("filetype.html.description");
   }
 
   @Override

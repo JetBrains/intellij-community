@@ -4,7 +4,7 @@ package com.intellij.ide.highlighter;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.OSFileIdeAssociation;
-import com.intellij.xml.psi.XmlPsiBundle;
+import com.intellij.xml.XmlCoreBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,7 +26,7 @@ public final class XmlFileType extends XmlLikeFileType implements DomSupportEnab
 
   @Override
   public @NotNull String getDescription() {
-    return XmlPsiBundle.message("filetype.xml.description");
+    return XmlCoreBundle.message("filetype.xml.description");
   }
 
   @Override
