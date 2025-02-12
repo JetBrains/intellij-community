@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util
 
-import java.util.Locale
+import fleet.util.multiplatform.linkToActual
 
-fun String.capitalizeWithCurrentLocale(): String = replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-fun String.lowercaseWithCurrentLocale(): String = lowercase(Locale.getDefault())
-fun String.uppercaseWithCurrentLocale(): String = uppercase(Locale.getDefault())
+fun String.capitalizeWithCurrentLocale(): String = linkToActual()
+fun String.lowercaseWithCurrentLocale(): String = linkToActual()
+fun String.uppercaseWithCurrentLocale(): String = linkToActual()
 
 fun String.capitalizeLocaleAgnostic(): String = replaceFirstChar {
   if (it.isLowerCase()) it.titlecase() else it.toString()

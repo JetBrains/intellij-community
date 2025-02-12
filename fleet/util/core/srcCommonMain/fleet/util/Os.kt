@@ -1,19 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util
 
+import fleet.util.multiplatform.linkToActual
+
 class Os private constructor() {
   enum class Type {
     Windows, Linux, MacOS, Unknown
   }
 
   val name: String
-    get() = System.getProperty("os.name")
+    get() = getName()
 
   val version: String
-    get() = System.getProperty("os.version").lowercase()
+    get() = getVersion()
 
   val arch: String
-    get() = System.getProperty("os.arch")
+    get() = getArch()
 
   val type: Type
     get() {
@@ -51,3 +53,9 @@ class Os private constructor() {
     val INSTANCE: Os = Os()
   }
 }
+
+internal fun getName(): String = linkToActual()
+
+internal fun getVersion(): String = linkToActual()
+
+internal fun getArch(): String = linkToActual()
