@@ -13,6 +13,7 @@ import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.k2.codeinsight.hints.collectInlaysWithErrorsLogging
 import org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declarationCanBeModifiedByCompilerPlugins
 import org.jetbrains.kotlin.psi.KtClassBody
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -25,7 +26,9 @@ internal class KtCompilerPluginGeneratedDeclarationsInlayHintsProviderCollector(
 
     override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
         if (element is KtClassOrObject) {
-            collect(element, sink)
+            collectInlaysWithErrorsLogging(element) {
+                collect(element, sink)
+            }
         }
         return true
     }
