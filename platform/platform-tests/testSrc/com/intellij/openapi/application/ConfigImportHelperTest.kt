@@ -6,6 +6,7 @@ import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.SpecialConfigFiles
 import com.intellij.ide.plugins.PluginBuilder
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService
+import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.TestFor
@@ -13,22 +14,28 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil.useAppConfigDir
+import com.intellij.testFramework.junit5.http.url
+import com.intellij.testFramework.replaceService
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.createDirectories
+import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.io.IOException
+import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Predicate
 import java.util.function.Supplier
 import kotlin.io.path.isDirectory
@@ -568,5 +575,52 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
         fail("A restart must not be required!", ex)
       }
     }
+  }
+
+  @Test fun `uses broken plugins from marketplace by default`() {
+    val server = HttpServer.create();
+    server.bind(InetSocketAddress( 0), 1);
+    server.start();
+    testRootDisposable.whenDisposed { server.stop(0) }
+
+    val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
+    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val builder = PluginBuilder()
+      .version("1.0")
+      .buildJar(oldPluginsDir.resolve("my-plugin.jar"))
+    val builder2 = PluginBuilder()
+      .version("1.0")
+      .buildJar(oldPluginsDir.resolve("my-plugin-2.jar"))
+
+    val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
+    val newPluginsDir = newConfigDir.resolve("plugins")
+
+    val brokenPluginsDownloaded = AtomicInteger()
+    server.createContext("/files/brokenPlugins.json") { exchange ->
+      brokenPluginsDownloaded.incrementAndGet()
+      exchange.sendResponseHeaders(200, 0)
+      exchange.responseBody.writer().use {
+        it.write("""
+          [{"id": "${builder.id}", "version": "1.0", "since": "999.0", "until": "999.0", "originalSince": "1.0", "originalUntil": "999.9999"},
+          {"id": "${builder2.id}", "version": "1.0", "since": "200.0", "until": "203.0", "originalSince": "1.0", "originalUntil": "999.9999"}]
+        """.trimIndent())
+      }
+    }
+    ApplicationManager.getApplication().replaceService(MarketplaceCustomizationService::class.java, object : MarketplaceCustomizationService {
+      override fun getPluginManagerUrl(): String = server.url
+      override fun getPluginDownloadUrl(): String = server.url + "/404"
+      override fun getPluginsListUrl(): String  = throw AssertionError("unexpected")
+      override fun getPluginHomepageUrl(pluginId: PluginId): String?  = throw AssertionError("unexpected")
+    }, testRootDisposable)
+
+    brokenPluginsFetcherStub.unset() // enable marketplace fetching
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true } // reinstantiate
+    options.compatibleBuildNumber = BuildNumber.fromString("201.1")
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+
+    assertThat(brokenPluginsDownloaded).hasValue(1)
+    assertThat(newPluginsDir).exists()
+      .isDirectoryContaining { it.fileName.toString() == "my-plugin-2.jar" }
+      .isDirectoryNotContaining { it.fileName.toString() == "my-plugin.jar" }
   }
 }
