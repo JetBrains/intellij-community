@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.FeedbackSurvey
@@ -18,6 +17,7 @@ import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotificat
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
 import kotlin.math.abs
 
@@ -25,6 +25,7 @@ internal const val USER_CONSIDERED_NEW_DAYS = 30
 internal const val NEW_USER_SURVEY_PERIOD = 29
 internal const val EXISTING_USER_SURVEY_PERIOD = 97
 internal const val CSAT_SURVEY_LAST_FEEDBACK_DATE_KEY = "csat.survey.last.feedback.date"
+internal const val CSAT_SURVEY_LAST_NOTIFICATION_DATE_KEY = "csat.survey.last.notification.date"
 
 internal class CsatFeedbackSurvey : FeedbackSurvey() {
   override val feedbackSurveyType: InIdeFeedbackSurveyType<InIdeFeedbackSurveyConfig> =
@@ -38,6 +39,7 @@ internal class CsatFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
   override val surveyId: String = "csat_feedback"
   override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2050, Month.JANUARY, 1)
   override val requireIdeEAP: Boolean = false
+  override val isIndefinite: Boolean = true
 
   override fun checkIdeIsSuitable(): Boolean = Registry.`is`("csat.survey.enabled")
 
@@ -50,13 +52,25 @@ internal class CsatFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
   }
 
   override fun checkExtraConditionSatisfied(project: Project): Boolean {
-    if (ConfigImportHelper.isFirstSession()) return false
+    if (ConfigImportHelper.isFirstSession()) {
+      LOG.debug("It's a first user session, skip the survey")
+      return false
+    }
 
     val today = getCsatToday()
     LOG.debug("Today is ${today.format(DateTimeFormatter.ISO_LOCAL_DATE)}")
 
+    PropertiesComponent.getInstance().getValue(CSAT_SURVEY_LAST_NOTIFICATION_DATE_KEY)
+      ?.let { tryParseDate(it) }
+      ?.let {
+        if (it.isEqual(today)) {
+          LOG.debug("Already notified today, skip the survey")
+          return false
+        }
+      }
+
     val lastFeedbackDate = PropertiesComponent.getInstance().getValue(CSAT_SURVEY_LAST_FEEDBACK_DATE_KEY)
-      ?.let { java.time.LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE) }
+      ?.let { tryParseDate(it) }
     if (lastFeedbackDate != null && lastFeedbackDate.plusDays(EXISTING_USER_SURVEY_PERIOD.toLong()).isAfter(today)) {
       LOG.debug("User recently filled the survey, vacation period is in progress")
       return false
@@ -70,10 +84,9 @@ internal class CsatFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
       LOG.debug("User is a new user")
     }
 
-    val surveyPeriod = if (isNewUser) NEW_USER_SURVEY_PERIOD else EXISTING_USER_SURVEY_PERIOD
-
-    val productHash = abs((ApplicationInfo.getInstance().versionName + MachineIdManager.getAnonymizedMachineId("CSAT Survey")).hashCode()) % surveyPeriod
-    val daysHash = abs(ChronoUnit.DAYS.between(java.time.LocalDate.of(1970, 1, 1), today).toInt()) % surveyPeriod
+    val surveyPeriod = getSurveyPeriod(isNewUser)
+    val productHash = getProductHash(surveyPeriod)
+    val daysHash = getDaysHash(today, surveyPeriod)
 
     if (productHash != daysHash) {
       LOG.debug("Periods do not match: $productHash / $daysHash, is not yet suitable date for the survey")
@@ -97,19 +110,54 @@ internal class CsatFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
   }
 
   override fun updateStateAfterNotificationShowed(project: Project) {
+    PropertiesComponent.getInstance().setValue(CSAT_SURVEY_LAST_NOTIFICATION_DATE_KEY,
+                                               getCsatToday().format(DateTimeFormatter.ISO_LOCAL_DATE))
   }
 }
 
+private fun getDaysHash(today: java.time.LocalDate, surveyPeriod: Int): Int {
+  return abs(ChronoUnit.DAYS.between(java.time.LocalDate.of(1970, 1, 1), today).toInt()) % surveyPeriod
+}
+
+private fun getProductHash(surveyPeriod: Int): Int {
+  return abs((ApplicationInfo.getInstance().versionName + MachineIdManager.getAnonymizedMachineId("CSAT Survey")).hashCode()) % surveyPeriod
+}
+
+internal data class NextDate(
+  val isNewUser: Boolean,
+  val date: java.time.LocalDate
+)
+
+internal fun getNextCsatDay(): NextDate {
+  val today = getCsatToday()
+  val userCreatedDate = getCsatUserCreatedDate()
+
+  val isNewUser = userCreatedDate?.let { isNewUser(today, userCreatedDate) } ?: false
+  val surveyPeriod = getSurveyPeriod(isNewUser)
+
+  for (i in 0..364) {
+    val date = today.plusDays(i.toLong())
+
+    val productHash = getProductHash(surveyPeriod)
+    val daysHash = getDaysHash(date, surveyPeriod)
+
+    if (productHash == daysHash) {
+      return NextDate(isNewUser, date)
+    }
+  }
+
+  throw IllegalStateException("No suitable date found")
+}
+
+private fun getSurveyPeriod(isNewUser: Boolean): Int {
+  return if (isNewUser) NEW_USER_SURVEY_PERIOD else EXISTING_USER_SURVEY_PERIOD
+}
+
 internal fun getCsatToday(): java.time.LocalDate {
-  try {
-    Registry.stringValue("csat.survey.today")
-      .takeIf { it.isNotBlank() }
-      ?.let { java.time.LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE) }
-      ?.let { return it }
-  }
-  catch (e: Exception) {
-    fileLogger().error(e)
-  }
+  Registry.stringValue("csat.survey.today")
+    .takeIf { it.isNotBlank() }
+    ?.let { tryParseDate(it) }
+    ?.let { return it }
 
   return java.time.LocalDate.now()
 }
@@ -156,4 +204,13 @@ internal fun flipACoin(productCode: String, newUser: Boolean): Boolean {
 
 internal fun isNewUser(today: java.time.LocalDate, userCreatedDate: java.time.LocalDate): Boolean {
   return today.isBefore(userCreatedDate.plusDays(USER_CONSIDERED_NEW_DAYS.toLong()))
+}
+
+internal fun tryParseDate(it: String): java.time.LocalDate? {
+  return try {
+    java.time.LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE)
+  }
+  catch (_: DateTimeParseException) {
+    return null
+  }
 }

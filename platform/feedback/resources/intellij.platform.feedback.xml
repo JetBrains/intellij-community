@@ -68,5 +68,7 @@
     <action class="com.intellij.platform.feedback.demo.ShowInIdeDemoFeedbackWithStatsAction" internal="true"/>
     <action class="com.intellij.platform.feedback.csat.CsatFeedbackAction" internal="true"
             text="Show CSAT Feedback Dialog"/>
+    <action class="com.intellij.platform.feedback.csat.CsatFeedbackNextDayAction" internal="true"
+            text="Show Next Date for CSAT Feedback Dialog"/>
   </actions>
 </idea-plugin>

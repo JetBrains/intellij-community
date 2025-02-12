@@ -7,12 +7,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
+import java.time.format.DateTimeFormatter.ISO_LOCAL_DATE
 
 internal const val CSAT_NEW_USER_CREATED_AT_PROPERTY = "csat.user.created.at"
-
-internal val CSAT_TS_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE
 
 internal class CsatNewUserTracker : ProjectActivity {
   override suspend fun execute(project: Project) {
@@ -21,7 +18,7 @@ internal class CsatNewUserTracker : ProjectActivity {
 
       if (!propertiesComponent.isValueSet(CSAT_NEW_USER_CREATED_AT_PROPERTY)) {
         propertiesComponent.setValue(CSAT_NEW_USER_CREATED_AT_PROPERTY,
-                                     LocalDate.now().format(CSAT_TS_FORMAT))
+                                     LocalDate.now().format(ISO_LOCAL_DATE))
       }
     }
   }
@@ -30,19 +27,9 @@ internal class CsatNewUserTracker : ProjectActivity {
 internal fun getCsatUserCreatedDate(): LocalDate? {
   val mocked = Registry.stringValue("csat.survey.user.created.date")
   if (!mocked.isBlank()) {
-    return try {
-      LocalDate.parse(mocked, CSAT_TS_FORMAT)
-    }
-    catch (_: DateTimeParseException) {
-      null
-    }
+    return tryParseDate(mocked)
   }
 
   val date = PropertiesComponent.getInstance().getValue(CSAT_NEW_USER_CREATED_AT_PROPERTY) ?: return null
-  return try {
-    LocalDate.parse(date, CSAT_TS_FORMAT)
-  }
-  catch (_: DateTimeParseException) {
-    null
-  }
+  return tryParseDate(date)
 }
