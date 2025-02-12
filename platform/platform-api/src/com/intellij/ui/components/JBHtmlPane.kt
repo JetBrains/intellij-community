@@ -33,6 +33,7 @@ import javax.swing.text.EditorKit
 import javax.swing.text.StyledDocument
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.StyleSheet
+import kotlin.math.roundToInt
 
 /**
  * The [JBHtmlPane] allows to render HTML according to the IntelliJ UI guidelines.
@@ -231,6 +232,11 @@ open class JBHtmlPane : JEditorPane, Disposable {
 
   /**
    * Override to provide an alternate scale factor for pane contents.
+   *
+   * Note: the control font must already be scaled by this factor because
+   * some Swing internals render contents directly using the default
+   * font size, ignoring CSS settings. Such an example is the list
+   * view rendering logic.
    */
   protected open val contentsScaleFactor: Float
     get() = JBUIScale.scale(1.0f)
@@ -249,7 +255,11 @@ open class JBHtmlPane : JEditorPane, Disposable {
       ?.let { editorStyleSheet.removeStyleSheet(it) }
     val newStyleSheet = StyleSheet()
       .also { myCurrentDefaultStyleSheet = it }
-    newStyleSheet.addStyleSheet(service.getDefaultStyleSheet(background, contentsScaleFactor, myStyleConfiguration))
+
+    val contentsScaleFactor = contentsScaleFactor
+    val baseFontSize = (font.size / contentsScaleFactor).roundToInt()
+
+    newStyleSheet.addStyleSheet(service.getDefaultStyleSheet(background, contentsScaleFactor, baseFontSize, myStyleConfiguration))
     newStyleSheet.addStyleSheet(service.getEditorColorsSchemeStyleSheet(myStyleConfiguration.colorScheme))
     myPaneConfiguration.customStyleSheetProviders.forEach {
       newStyleSheet.addStyleSheet(it(this))
@@ -290,7 +300,7 @@ open class JBHtmlPane : JEditorPane, Disposable {
 
     fun defaultEditorCssFontResolver(): CSSFontResolver
 
-    fun getDefaultStyleSheet(paneBackgroundColor: Color, scaleFactor: Float, configuration: JBHtmlPaneStyleConfiguration): StyleSheet
+    fun getDefaultStyleSheet(paneBackgroundColor: Color, scaleFactor: Float, baseFontSize: Int, configuration: JBHtmlPaneStyleConfiguration): StyleSheet
 
     fun getEditorColorsSchemeStyleSheet(editorColorsScheme: EditorColorsScheme): StyleSheet
 

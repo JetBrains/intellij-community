@@ -8,7 +8,6 @@ import com.intellij.lang.documentation.DocumentationMarkup.CLASS_GRAYED
 import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -21,14 +20,12 @@ import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementKind
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementProperty
 import com.intellij.util.containers.addAllIfNotNull
-import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.StyleSheetUtil
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
@@ -51,8 +48,8 @@ const val CODE_BLOCK_CLASS: String = "code-block"
 @Service(Service.Level.APP)
 internal class JBHtmlPaneStyleSheetRulesProvider {
 
-  fun getStyleSheet(paneBackgroundColor: Color, scaleFactor: Float, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
-    styleSheetCache.get(Triple(paneBackgroundColor.rgb and 0xffffff, scaleFactor, configuration))
+  fun getStyleSheet(paneBackgroundColor: Color, scaleFactor: Float, baseFontSize: Int, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
+    styleSheetCache.get(JBHtmlPaneStylesheetParameters(paneBackgroundColor.rgb and 0xffffff, scaleFactor, baseFontSize, configuration))
 
   init {
     // Editor color scheme, referenced from JBHtmlPaneStyleConfiguration, can contain references to projects and editors.
@@ -106,13 +103,13 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
     fallbackToEditorBorder = true,
   )
 
-  private val styleSheetCache: LoadingCache<Triple<Int, Float, JBHtmlPaneStyleConfiguration>, StyleSheet> = Caffeine.newBuilder()
+  private val styleSheetCache: LoadingCache<JBHtmlPaneStylesheetParameters, StyleSheet> = Caffeine.newBuilder()
     .maximumSize(20)
-    .build { (bgColor, scaleFactor, configuration) -> buildStyleSheet(Color(bgColor), { (it * scaleFactor).roundToInt() }, configuration) }
+    .build { (bgColor, scaleFactor, baseFontSize, configuration) -> buildStyleSheet(Color(bgColor), { (it * scaleFactor).roundToInt() }, baseFontSize, configuration) }
 
-  private fun buildStyleSheet(paneBackgroundColor: Color, scale: (Int) -> Int, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
+  private fun buildStyleSheet(paneBackgroundColor: Color, scale: (Int) -> Int, baseFontSize: Int, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
     StyleSheetUtil.loadStyleSheet(sequenceOf(
-      getDefaultFormattingStyles(configuration, scale),
+      getDefaultFormattingStyles(configuration, scale, baseFontSize),
       getCodeRules(paneBackgroundColor, configuration, scale),
       getShortcutRules(paneBackgroundColor, configuration, scale)
     ).joinToString("\n"))
@@ -120,8 +117,8 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
   private fun getDefaultFormattingStyles(
     configuration: JBHtmlPaneStyleConfiguration,
     scale: (Int) -> Int,
+    baseFontSize: Int,
   ): String {
-    val fontSize = StartupUiUtil.labelFont.size
     val spacingBefore = scale(configuration.spaceBeforeParagraph)
     val spacingAfter = scale(configuration.spaceAfterParagraph)
     val hrColor = ColorUtil.toHtmlColor(UIUtil.getTooltipSeparatorColor())
@@ -130,12 +127,13 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
 
     @Language("CSS")
     val styles = """
-      h6 { font-size: ${fontSize + 1}}
-      h5 { font-size: ${fontSize + 2}}
-      h4 { font-size: ${fontSize + 3}}
-      h3 { font-size: ${fontSize + 4}}
-      h2 { font-size: ${fontSize + 6}}
-      h1 { font-size: ${fontSize + 8}}
+      body, p, p-implied, li, ol, ul, th, tr, td, table { font-size: ${scale(baseFontSize)} }
+      h6 { font-size: ${scale(baseFontSize + 1)} }
+      h5 { font-size: ${scale(baseFontSize + 2)} }
+      h4 { font-size: ${scale(baseFontSize + 3)} }
+      h3 { font-size: ${scale(baseFontSize + 4)} }
+      h2 { font-size: ${scale(baseFontSize + 6)} }
+      h1 { font-size: ${scale(baseFontSize + 8)} }
       h1, h2, h3, h4, h5, h6 {margin: ${scale(4)}px 0 0 0; ${paragraphSpacing}; }
       p { margin: 0 0 0 0; ${paragraphSpacing}; line-height: 125%; }
       ul { margin: 0 0 0 ${scale(10)}px; ${paragraphSpacing};}
@@ -246,6 +244,13 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
     private fun toHtmlColor(color: Color): String =
       toHexString(color.rgb and 0xFFFFFF)
   }
+
+  private data class JBHtmlPaneStylesheetParameters(
+    val bgColor: Int,
+    val scaleFactor: Float,
+    val baseFontSize: Int,
+    val configuration: JBHtmlPaneStyleConfiguration
+  )
 
   private data class ControlColorStyleBuilder(
     val elementKind: ElementKind,

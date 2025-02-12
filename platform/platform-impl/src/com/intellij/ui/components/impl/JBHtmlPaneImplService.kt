@@ -26,8 +26,8 @@ internal class JBHtmlPaneImplService : JBHtmlPane.ImplService {
   override fun defaultEditorCssFontResolver(): CSSFontResolver =
     EditorCssFontResolver.getGlobalInstance()
 
-  override fun getDefaultStyleSheet(paneBackgroundColor: Color, scaleFactor: Float, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
-    ApplicationManager.getApplication().service<JBHtmlPaneStyleSheetRulesProvider>().getStyleSheet(paneBackgroundColor, scaleFactor, configuration)
+  override fun getDefaultStyleSheet(paneBackgroundColor: Color, scaleFactor: Float, baseFontSize: Int, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
+    ApplicationManager.getApplication().service<JBHtmlPaneStyleSheetRulesProvider>().getStyleSheet(paneBackgroundColor, scaleFactor, baseFontSize, configuration)
 
   override fun getEditorColorsSchemeStyleSheet(editorColorsScheme: EditorColorsScheme): StyleSheet =
     EditorColorsSchemeStyleSheet(editorColorsScheme)
