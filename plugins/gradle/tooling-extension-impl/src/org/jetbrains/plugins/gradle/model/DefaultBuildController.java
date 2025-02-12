@@ -130,7 +130,7 @@ public class DefaultBuildController implements BuildController {
   }
 
   @Override
-  public void send(Object value) {
+  public <T> void send(T value) {
     myDelegate.send(value);
   }
 
