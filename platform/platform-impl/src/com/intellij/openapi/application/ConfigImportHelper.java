@@ -1191,6 +1191,7 @@ public final class ConfigImportHelper {
     }
   }
 
+  /** @param incompatiblePlugins elements for which updates are successfully processed are _removed_ from the list */
   private static void downloadUpdatesForIncompatiblePlugins(Path newPluginsDir,  ConfigImportOptions options, List<IdeaPluginDescriptor> incompatiblePlugins) {
     if (options.headless) {
       runSynchronouslyInBackground(() -> {
@@ -1218,17 +1219,7 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static void runSynchronouslyInBackground(Runnable runnable) {
-    try {
-      var thread = new Thread(runnable, "Plugin downloader");
-      thread.start();
-      thread.join();
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
+  /** @param incompatiblePlugins elements for which updates are successfully processed are _removed_ from the list */
   private static void downloadUpdatesForIncompatiblePlugins(Path newPluginsDir,
                                                             ConfigImportOptions options,
                                                             List<IdeaPluginDescriptor> incompatiblePlugins,
@@ -1269,6 +1260,17 @@ public final class ConfigImportHelper {
     }
     Set<String> versions = brokenPluginVersions.get(descriptor.getPluginId());
     return versions != null && versions.contains(descriptor.getVersion());
+  }
+
+  private static void runSynchronouslyInBackground(Runnable runnable) {
+    try {
+      var thread = new Thread(runnable, "Plugin downloader");
+      thread.start();
+      thread.join();
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static boolean isEmptyDirectory(Path newPluginsDir) {
