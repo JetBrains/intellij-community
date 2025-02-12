@@ -135,7 +135,7 @@ public class GradleInstallationManager implements Disposable {
    * @param gradleHome gradle sdk home
    * @return file handles for the gradle binaries; {@code null} if gradle is not discovered
    */
-  public @Nullable Collection<File> getAllLibraries(@Nullable File gradleHome) {
+  private @Nullable Collection<File> getAllLibraries(@Nullable File gradleHome) {
 
     if (gradleHome == null || !gradleHome.isDirectory()) {
       return null;
@@ -268,7 +268,7 @@ public class GradleInstallationManager implements Disposable {
    *
    * @return file handle for the gradle directory if it's possible to deduce from the system path; {@code null} otherwise
    */
-  public @Nullable File getGradleHomeFromPath(@Nullable Project project) {
+  private @Nullable File getGradleHomeFromPath(@Nullable Project project) {
     Ref<File> ref = myCachedGradleHomeFromPath;
     if (ref != null) {
       return ref.get();
@@ -301,27 +301,13 @@ public class GradleInstallationManager implements Disposable {
    *
    * @return file handle for the gradle directory deduced from the environment where the project is located
    */
-  public @Nullable File getGradleHomeFromEnvProperty(@Nullable Project project) {
+  private @Nullable File getGradleHomeFromEnvProperty(@Nullable Project project) {
     String path = System.getenv(GRADLE_ENV_PROPERTY_NAME);
     if (path == null) {
       return null;
     }
     File candidate = new File(path);
     return isGradleSdkHome(project, candidate) ? candidate : null;
-  }
-
-  /**
-   * Does the same job as {@link #isGradleSdkHome(Project, File)} for the given virtual file.
-   *
-   * @param project current IDE project
-   * @param file gradle installation home candidate
-   * @return {@code true} if given file points to the gradle installation; {@code false} otherwise
-   */
-  public boolean isGradleSdkHome(@Nullable Project project, @Nullable VirtualFile file) {
-    if (file == null) {
-      return false;
-    }
-    return isGradleSdkHome(project, new File(file.getPath()));
   }
 
   /**
@@ -332,6 +318,17 @@ public class GradleInstallationManager implements Disposable {
    * @return {@code true} if we consider that given file actually points to the gradle installation root;
    * {@code false} otherwise
    */
+  public boolean isGradleSdkHome(@Nullable Project project, @Nullable Path path) {
+    if (path == null) {
+      return false;
+    }
+    return isGradleSdkHome(project, path.toFile());
+  }
+
+  /**
+   * @deprecated Use {@link GradleInstallationManager#isGradleSdkHome(Project, Path)} instead.
+   */
+  @Deprecated
   public boolean isGradleSdkHome(@Nullable Project project, @Nullable File file) {
     if (file == null) {
       return false;
@@ -348,17 +345,6 @@ public class GradleInstallationManager implements Disposable {
       }
     }
     return false;
-  }
-
-  /**
-   * Allows to answer if given virtual file points to the gradle installation root.
-   *
-   * @param gradleHomePath gradle installation root candidate
-   * @return {@code true} if we consider that given file actually points to the gradle installation root;
-   * {@code false} otherwise
-   */
-  public boolean isGradleSdkHome(@Nullable Project project, String gradleHomePath) {
-    return isGradleSdkHome(project, new File(gradleHomePath));
   }
 
   /**

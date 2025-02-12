@@ -417,7 +417,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       }
       else {
         Project project = myProjectRef.get();
-        if (GradleInstallationManager.getInstance().isGradleSdkHome(project, myGradleHomePathField.getText())) {
+        if (GradleInstallationManager.getInstance().isGradleSdkHome(project, Path.of(myGradleHomePathField.getText()))) {
           myGradleHomeSettingType = GradleLocationSettingType.EXPLICIT_CORRECT;
         }
         else {
