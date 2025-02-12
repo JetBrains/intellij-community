@@ -197,10 +197,7 @@ internal class KtCompilerPluginsProviderIdeImpl(
 
             with(pluginRegistrar) {
                 try {
-                    val configuration = KotlinFirCompilerPluginConfigurationForIdeProvider.getCompilerConfigurationWithCustomOptions(
-                        pluginRegistrar, compilerConfiguration
-                    ) ?: compilerConfiguration
-                    storage.registerExtensions(configuration)
+                    storage.registerExtensions(compilerConfiguration)
                 }
                 catch (e : ProcessCanceledException) {
                     throw e

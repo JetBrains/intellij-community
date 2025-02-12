@@ -95,10 +95,6 @@
     <extensionPoint qualifiedName="org.jetbrains.kotlin.bundledFirCompilerPluginProvider"
                     interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinBundledFirCompilerPluginProvider"
                     dynamic="true"/>
-
-    <extensionPoint qualifiedName="org.jetbrains.kotlin.firCompilerPluginConfigurationProvider"
-                    interface="org.jetbrains.kotlin.idea.fir.extensions.KotlinFirCompilerPluginConfigurationForIdeProvider"
-                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
