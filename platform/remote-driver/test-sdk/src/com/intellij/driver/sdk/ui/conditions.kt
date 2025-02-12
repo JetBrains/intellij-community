@@ -37,23 +37,6 @@ fun <T : UiComponent> T.shouldBe(condition: T.() -> Boolean, timeout: Duration):
   return should(timeout = timeout, condition = condition)
 }
 
-// should
-fun <T : UiComponent> T.shouldHave(condition: T.() -> Boolean): T {
-  return should(timeout = DEFAULT_FIND_TIMEOUT, condition = condition)
-}
-
-fun <T : UiComponent> T.shouldHave(message: String, condition: T.() -> Boolean): T {
-  return should(message = message, timeout = DEFAULT_FIND_TIMEOUT, condition = condition)
-}
-
-fun <T : UiComponent> T.shouldHave(condition: T.() -> Boolean, timeout: Duration): T {
-  return should(timeout = timeout, condition = condition)
-}
-
-fun <T : UiComponent> T.shouldHave(message: String, condition: T.() -> Boolean, timeout: Duration): T {
-  return should(message = message, timeout = timeout, condition = condition)
-}
-
 fun <T : UiComponent> T.shouldBeNoExceptions(
   message: String? = null,
   timeout: Duration = DEFAULT_FIND_TIMEOUT,
