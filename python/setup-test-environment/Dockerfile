@@ -7,6 +7,7 @@ LABEL maintainer="Ilya Kazakevich"
 
 # Pythons will go here
 ENV PYCHARM_PYTHONS=/pythons/
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
     apt-get install -y curl gcc make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget pgp \
@@ -21,13 +22,14 @@ RUN ./gradlew build
 ############################
 
 FROM $BASE_IMAGE AS runner
+ENV DEBIAN_FRONTEND=noninteractive
 COPY --from=builder /docker-archive-keyring.gpg /usr/share/keyrings/docker-archive-keyring.gpg
 RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian bookworm stable" > /etc/apt/sources.list.d/docker.list 
 
 # xterm installs freetype, xlib, cb etc. GL is also required by some python tests
 # First, install certs to install docker. Then update, then install docker and other tools
 # Docker cli is used in tests
-RUN apt-get update && apt-get install -y ca-certificates && apt upgrade && apt-get update && apt-get install -y openssl libgl1 xterm locales libsqlite3-dev apt-transport-https ca-certificates curl software-properties-common docker-ce-cli && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates && apt-get upgrade -y && apt-get update && apt-get install -y openssl libgl1 xterm locales libsqlite3-dev apt-transport-https ca-certificates curl software-properties-common docker-ce-cli && rm -rf /var/lib/apt/lists/*
 
 # UTF locale is required for testFileEncoding
 # libsqlite3 is for Django
