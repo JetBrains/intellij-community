@@ -71,9 +71,9 @@ inline fun <T : Any, R> computeSafeIfAny(ep: ExtensionPointName<T>, processor: (
 
 // TODO: move into VirtualMachineProxyImpl when converted to kotlin
 fun preloadAllClasses(vm: VirtualMachine) {
-  DebuggerManagerThreadImpl.Companion.assertIsManagerThread()
+  DebuggerManagerThreadImpl.assertIsManagerThread()
   val allClasses = DebuggerUtilsAsync.allCLasses(vm)
-  if (!Registry.Companion.`is`("debugger.preload.types.hierarchy", true)) return
+  if (!Registry.`is`("debugger.preload.types.hierarchy", true)) return
 
   val channel = Channel<ReferenceType>(capacity = Channel.Factory.UNLIMITED)
   try {
@@ -95,8 +95,4 @@ fun preloadAllClasses(vm: VirtualMachine) {
       delay(1)
     }
   }
-}
-
-fun computeInDMT() {
-
 }
