@@ -1049,6 +1049,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Undeploy = load("expui/actions/undeploy.svg", "nodes/undeploy.svg", -1692132469, 0);
     /** 16x16 */ public static final @NotNull Icon Unknown = load("expui/nodes/unknown.svg", "nodes/unknown.svg", 1061055855, 0);
     /** 16x16 */ public static final @NotNull Icon UnknownJdk = load("nodes/unknownJdk.svg", 1986945606, 0);
+    /** 16x16 */ public static final @NotNull Icon UnloadedProject = load("expui/nodes/unloadedProject.svg", 793315583, 2);
     /** 16x16 */ public static final @NotNull Icon UpFolder = load("expui/nodes/upFolder.svg", "nodes/upFolder.svg", -98764899, 0);
     /** 16x16 */ public static final @NotNull Icon UpLevel = load("expui/nodes/upLevel.svg", "nodes/upLevel.svg", -1993017141, 0);
     /** 16x16 */ public static final @NotNull Icon Variable = load("expui/nodes/variable.svg", "nodes/variable.svg", 1782176763, 0);
