@@ -30,7 +30,7 @@ class JavaCommandCompletionFactory implements CommandCompletionFactory, DumbAwar
     return true;
   }
 
-  public static class JavaIntentionCommandSkipper implements IntentionCommandSkipper {
+  static class JavaIntentionCommandSkipper implements IntentionCommandSkipper {
     @Override
     public boolean skip(@NotNull CommonIntentionAction action, @NotNull PsiFile psiFile, int offset) {
       if (action instanceof ExpensivePsiIntentionAction) return true;
