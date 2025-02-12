@@ -50,7 +50,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     checkProductProperties(context)
     checkPluginModules(mainPluginModules, "mainPluginModules", context)
     copyDependenciesFile(context)
-    val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context.productProperties.productLayout)
+    val pluginsToPublish = getPluginLayoutsByJpsModuleNames(mainPluginModules, context.productProperties.productLayout, toPublish = true)
     val distState = createDistributionBuilderState(pluginsToPublish, context)
     context.compileModules(null)
 
@@ -324,7 +324,7 @@ private suspend fun buildSourcesArchive(contentReport: ContentReport, context: B
 
 private suspend fun createDistributionState(context: BuildContext): DistributionBuilderState {
   val productLayout = context.productProperties.productLayout
-  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(productLayout.pluginModulesToPublish, productLayout)
+  val pluginsToPublish = getPluginLayoutsByJpsModuleNames(productLayout.pluginModulesToPublish, productLayout, toPublish = true)
   filterPluginsToPublish(pluginsToPublish, context)
 
   val enabledPluginModules = getEnabledPluginModules(pluginsToPublish, context)
@@ -412,6 +412,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
       val pluginsToPublish = getPluginLayoutsByJpsModuleNames(
         context.productProperties.productLayout.pluginModulesToPublish,
         context.productProperties.productLayout,
+        toPublish = true
       )
       buildNonBundledPlugins(pluginsToPublish, context.options.compressZipFiles, buildPlatformLibJob = null, distributionState, buildSearchableOptions(context), context)
       return@coroutineScope

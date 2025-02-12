@@ -620,26 +620,21 @@ private val PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE: Comparator<PluginLayout> = 
 @VisibleForTesting
 class PluginRepositorySpec(@JvmField val pluginZip: Path, @JvmField val pluginXml: ByteArray /* content of plugin.xml */)
 
-fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout: ProductModulesLayout): MutableSet<PluginLayout> {
+fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout: ProductModulesLayout, toPublish: Boolean = false): MutableSet<PluginLayout> {
   if (modules.isEmpty()) {
     return createPluginLayoutSet(expectedSize = 0)
   }
 
-  val pluginLayouts = productLayout.pluginLayouts
-  val pluginLayoutsByMainModule = pluginLayouts.groupByTo(HashMap()) { it.mainModule }
+  val layoutsByMainModule = productLayout.pluginLayouts.groupByTo(HashMap()) { it.mainModule }
   val result = createPluginLayoutSet(modules.size)
   for (moduleName in modules) {
-    val customLayouts = pluginLayoutsByMainModule.get(moduleName)
-    if (customLayouts == null) {
-      check(moduleName == "kotlin-ultimate.kmm-plugin" || result.add(PluginLayout.pluginAuto(listOf(moduleName)))) {
-        "Plugin layout for module $moduleName is already added (duplicated module name?)"
-      }
+    val layouts = layoutsByMainModule[moduleName] ?: mutableListOf(PluginLayout.pluginAuto(listOf(moduleName)))
+    if (toPublish && layouts.size == 2 && layouts[0].bundlingRestrictions != layouts[1].bundlingRestrictions) {
+      layouts.retainAll { it.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
     }
-    else {
-      for (layout in customLayouts) {
-        check(layout.mainModule == "kotlin-ultimate.kmm-plugin" || result.add(layout)) {
-          "Plugin layout for module $moduleName is already added (duplicated module name?)"
-        }
+    for (layout in layouts) {
+      check(layout.mainModule == "kotlin-ultimate.kmm-plugin" || result.add(layout)) {
+        "Plugin layout for module ${moduleName} is already added (duplicated module name?)"
       }
     }
   }
