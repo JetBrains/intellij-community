@@ -108,17 +108,55 @@ import javax.swing.text.html.StyleSheet
  */
 @Experimental
 @Suppress("LeakingThis")
-open class JBHtmlPane(
-  private val myStyleConfiguration: JBHtmlPaneStyleConfiguration,
-  private val myPaneConfiguration: JBHtmlPaneConfiguration,
-) : JEditorPane(), Disposable {
+open class JBHtmlPane : JEditorPane, Disposable {
 
   private val service: ImplService = ApplicationManager.getApplication().service()
   private var myText: @Nls String = "" // getText() surprisingly crashes…, let's cache the text
   private var myCurrentDefaultStyleSheet: StyleSheet? = null
-  private val mutableBackgroundFlow: MutableStateFlow<Color>
+  private val mutableBackgroundFlow: MutableStateFlow<Color> = MutableStateFlow(background)
+  private val myStyleConfiguration: JBHtmlPaneStyleConfiguration
+  private val myPaneConfiguration: JBHtmlPaneConfiguration
 
-  init {
+  /**
+   * Use this constructor to provide configuration for [com.intellij.ui.components.JBHtmlPane] upfront,
+   * without the requirement to extend this class.
+   * When this constructor is used, [initializePaneConfiguration] and [initializeStyleConfiguration]
+   * methods are not called.
+   */
+  constructor(
+    styleConfiguration: JBHtmlPaneStyleConfiguration,
+    paneConfiguration: JBHtmlPaneConfiguration,
+  ): super() {
+    this.myStyleConfiguration = styleConfiguration
+    this.myPaneConfiguration = paneConfiguration
+    init()
+  }
+
+  /**
+   * Default constructor, the pane configuration is initialized using [initializePaneConfiguration]
+   * and [initializeStyleConfiguration] methods.
+   */
+  constructor(): super() {
+    myStyleConfiguration = JBHtmlPaneStyleConfiguration.builder().also { initializeStyleConfiguration(it)}.build()
+    myPaneConfiguration = JBHtmlPaneConfiguration.builder().also { initializePaneConfiguration(it)}.build()
+    init()
+  }
+
+  /**
+   * Use the provided builder to initialize pane configuration. This method is called only if [JBHtmlPane]
+   * is constructed using parameter-less constructor.
+   */
+  protected open fun initializePaneConfiguration(builder: JBHtmlPaneConfiguration.Builder) {
+  }
+
+  /**
+   * Use the provided builder to initialize pane style configuration. This method is called only if [JBHtmlPane]
+   *    * is constructed using parameter-less constructor.
+   */
+  protected open fun initializeStyleConfiguration(builder: JBHtmlPaneStyleConfiguration.Builder) {
+  }
+
+  private fun init() {
     enableEvents(AWTEvent.KEY_EVENT_MASK)
     isEditable = false
     if (ScreenReader.isActive()) {
@@ -130,7 +168,6 @@ open class JBHtmlPane(
 
       UIUtil.doNotScrollToCaret(this)
     }
-    mutableBackgroundFlow = MutableStateFlow(background)
     val extensions = ArrayList(myPaneConfiguration.extensions)
     extensions.addAllIfNotNull(
       icons { key: String -> myPaneConfiguration.iconResolver(key) },
