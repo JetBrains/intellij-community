@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
+import com.intellij.codeInsight.completion.impl.LookupCompletionSorterKeys;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem;
 import com.intellij.injected.editor.EditorWindow;
@@ -240,6 +241,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
       Iterator<LookupElement> iterator = sortByRelevance(groupItemsBySorter(items)).iterator();
 
       Set<LookupElement> retainedSet = new ReferenceOpenHashSet<>();
+      retainedSet.addAll(getTopPriorityItems());
       retainedSet.addAll(getPrefixItems(true));
       retainedSet.addAll(getPrefixItems(false));
       retainedSet.addAll(myFrozenItems);
@@ -388,6 +390,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
 
     final LinkedHashSet<LookupElement> model = new LinkedHashSet<>();
 
+    addTopPriorityItems(model);
     addPrefixItems(model);
     addFrozenItems(items, model);
     if (model.size() < MAX_PREFERRED_COUNT) {
@@ -412,6 +415,12 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     }
   }
 
+  @ApiStatus.Internal
+  @Override
+  final protected boolean isTopPriorityItem(@Nullable LookupElement item) {
+    return item != null && Boolean.TRUE.equals(item.getUserData(LookupCompletionSorterKeys.TOP_PRIORITY_ITEM));
+  }
+
   private void freezeTopItems(LookupElementListPresenter lookup, LinkedHashSet<? extends LookupElement> model) {
     myFrozenItems.clear();
     if (lookup.isShown()) {
@@ -422,6 +431,12 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   private void addFrozenItems(Set<? extends LookupElement> items, LinkedHashSet<? super LookupElement> model) {
     myFrozenItems.removeIf(element -> !element.isValid() || !items.contains(element));
     model.addAll(myFrozenItems);
+  }
+
+  private void addTopPriorityItems(LinkedHashSet<? super LookupElement> model) {
+    List<LookupElement> priorityItems = getTopPriorityItems();
+    if (priorityItems.isEmpty()) return;
+    ContainerUtil.addAll(model, sortByRelevance(groupItemsBySorter(priorityItems)));
   }
 
   private void addPrefixItems(LinkedHashSet<? super LookupElement> model) {

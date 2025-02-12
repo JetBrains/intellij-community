@@ -23,6 +23,7 @@ public abstract class LookupArranger implements WeighingContext {
   private final List<LookupElement> myMatchingItems = new ArrayList<>();
   private final List<LookupElement> myExactPrefixItems = new ArrayList<>();
   private final List<LookupElement> myInexactPrefixItems = new ArrayList<>();
+  private final List<LookupElement> myTopPriorityItems = new ArrayList<>();
   private final Key<PrefixMatcher> myMatcherKey = Key.create("LookupArrangerMatcher");
   private volatile @Nullable Predicate<LookupElement> myAdditionalMatcher;
   private volatile String myAdditionalPrefix = "";
@@ -38,6 +39,9 @@ public abstract class LookupArranger implements WeighingContext {
     }
     myMatchingItems.add(item);
 
+    if (isTopPriorityItem(item)) {
+      myTopPriorityItems.add(item);
+    }
     if (isPrefixItem(item, true)) {
       myExactPrefixItems.add(item);
     } else if (isPrefixItem(item, false)) {
@@ -120,10 +124,20 @@ public abstract class LookupArranger implements WeighingContext {
     myMatchingItems.clear();
     myExactPrefixItems.clear();
     myInexactPrefixItems.clear();
+    myTopPriorityItems.clear();
 
     for (LookupElement item : myItems) {
       updateCache(item);
     }
+  }
+
+  /**
+   * Returns true, if item must be placed at the very top of the lookup ignoring sorting order.
+   * It is placed before fully matched lookup items.
+   */
+  @ApiStatus.Internal
+  protected boolean isTopPriorityItem(@Nullable LookupElement item) {
+    return false;
   }
 
   protected List<LookupElement> retainItems(final Set<LookupElement> retained) {
@@ -145,6 +159,11 @@ public abstract class LookupArranger implements WeighingContext {
 
   protected List<LookupElement> getPrefixItems(boolean exactly) {
     return Collections.unmodifiableList(exactly ? myExactPrefixItems : myInexactPrefixItems);
+  }
+
+  @ApiStatus.Internal
+  protected List<LookupElement> getTopPriorityItems() {
+    return Collections.unmodifiableList(myTopPriorityItems);
   }
 
   protected boolean isPrefixItem(LookupElement item, final boolean exactly) {
