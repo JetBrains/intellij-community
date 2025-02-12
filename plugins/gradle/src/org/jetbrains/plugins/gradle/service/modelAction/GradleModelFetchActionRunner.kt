@@ -68,6 +68,7 @@ class GradleModelFetchActionRunner private constructor(
    * Creates the [BuildActionExecuter] to be used to run the [GradleModelFetchAction].
    */
   private fun runPhasedBuildAction(resultHandler: GradleModelFetchActionResultHandlerBridge) {
+    if(Registry.`is`("gradle.declarative.preimport.only")) return
     modelFetchAction.isUseProjectsLoadedPhase = true
     connection.action()
       .projectsLoaded(modelFetchAction, resultHandler.asProjectLoadedResultHandler())
