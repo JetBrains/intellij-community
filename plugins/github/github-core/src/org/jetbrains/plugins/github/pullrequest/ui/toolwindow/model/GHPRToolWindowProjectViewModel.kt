@@ -21,7 +21,9 @@ import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRFilesManagerImpl
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModelBase
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateViewModelImpl
@@ -131,5 +133,11 @@ class GHPRToolWindowProjectViewModel internal constructor(
     cs.launch(Dispatchers.EDT) {
       filesManager.createAndOpenDiffFile(id, requestFocus)
     }
+  }
+}
+
+internal class GHPRToolWindowProjectViewModelFactory: GHPRConnectedProjectViewModelFactory {
+  override fun create(project: Project, cs: CoroutineScope, connection: GHRepositoryConnection, activateProject: () -> Unit): GHPRConnectedProjectViewModel {
+    return GHPRToolWindowProjectViewModel(project, cs, connection, activateProject)
   }
 }

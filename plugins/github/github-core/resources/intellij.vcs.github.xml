@@ -31,6 +31,9 @@
 
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GHPersistentAccounts"/>
 
+    <projectService serviceInterface="org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModelFactory"
+                    serviceImplementation="org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModelFactory"/>
+
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GHAnnotationGutterActionProvider"/>
     <projectConfigurable parentId="project.propVCSSupport.Mappings" groupWeight="-500"
                          instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"

@@ -20,7 +20,6 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.GHRepositoryConnectionManager
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.ui.selector.GHRepositoryAndAccountSelectorViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
@@ -93,9 +92,11 @@ class GHPRProjectViewModel(private val project: Project, parentCs: CoroutineScop
     }
   }
 
+  private val vmFactory = project.service<GHPRConnectedProjectViewModelFactory>()
+
   val connectedProjectVm: StateFlow<GHPRConnectedProjectViewModel?> by lazy {
     project.service<GHRepositoryConnectionManager>().connectionState
-      .mapScoped { ctx -> ctx?.let { GHPRToolWindowProjectViewModel(project, this, it, ::activate) } }
+      .mapScoped { ctx -> ctx?.let { vmFactory.create(project, this, it, ::activate) } }
       .stateIn(cs, SharingStarted.Lazily, null)
   }
 
