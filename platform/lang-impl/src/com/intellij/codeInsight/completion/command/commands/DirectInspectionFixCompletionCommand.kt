@@ -15,7 +15,9 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.codeInspection.ex.QuickFixWrapper.wrap
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.jobToIndicator
@@ -58,39 +60,44 @@ internal class DirectInspectionFixCompletionCommand(
       if (inspectionTool !is LocalInspectionToolWrapper) return@runWithModalProgressBlocking null
       val lineRange = getLineRange(topLevelFile, topLevelOffset)
       val indicator = EmptyProgressIndicator()
-      val inspectionResult = jobToIndicator(coroutineContext.job, indicator) {
-        if (!isInjected) {
-          inspectEx(listOf(inspectionTool), topLevelFile, lineRange, lineRange, true, isInjected, true,
-                    indicator,
-                    fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
-                      return true
-                    })
-        }
-        else {
-          val textRange = getLineRange(psiFile, offset)
-          InspectionEngine.inspectElements(listOf(inspectionTool), psiFile, textRange, true, true, indicator,
-                                           PsiTreeUtil.collectElements(psiFile) { it.textRange.intersects(textRange) }.toList(), fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
-            return true
-          })
-        }
-      }
-      for (entry: MutableMap.MutableEntry<LocalInspectionToolWrapper?, List<ProblemDescriptor?>?> in inspectionResult.entries) {
-        val descriptors = entry.value ?: continue
-        for (descriptor in descriptors) {
-          if (descriptor !is ProblemDescriptorBase) continue
-          val descriptorRange = descriptor.textRange ?: continue
-          if (!isInjected && highlightInfo.range != descriptorRange) continue
-          if (isInjected && highlightInfo.range != injectedLanguageManager.injectedToHost(psiFile, descriptorRange)) continue
-          val fixes = descriptor.fixes ?: continue
-          for (i in 0..fixes.size - 1) {
-            val intentionAction = wrap(descriptor, i)
-            if (intentionAction.text == name && availableFor(psiFile, editor, offset, intentionAction)) {
-              return@runWithModalProgressBlocking intentionAction
-            }
+      val inspectionResult = readAction {
+        jobToIndicator(currentThreadContext().job, indicator) {
+          if (!isInjected) {
+            inspectEx(listOf(inspectionTool), topLevelFile, lineRange, lineRange, true, isInjected, true,
+                      indicator,
+                      fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
+                        return true
+                      })
+          }
+          else {
+            val textRange = getLineRange(psiFile, offset)
+            InspectionEngine.inspectElements(listOf(inspectionTool), psiFile, textRange, true, true, indicator,
+                                             PsiTreeUtil.collectElements(psiFile) { it.textRange.intersects(textRange) }.toList(), fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
+              return true
+            })
           }
         }
       }
-      return@runWithModalProgressBlocking null
+      val result = readAction {
+        for (entry: MutableMap.MutableEntry<LocalInspectionToolWrapper?, List<ProblemDescriptor?>?> in inspectionResult.entries) {
+          val descriptors = entry.value ?: continue
+          for (descriptor in descriptors) {
+            if (descriptor !is ProblemDescriptorBase) continue
+            val descriptorRange = descriptor.textRange ?: continue
+            if (!isInjected && highlightInfo.range != descriptorRange) continue
+            if (isInjected && highlightInfo.range != injectedLanguageManager.injectedToHost(psiFile, descriptorRange)) continue
+            val fixes = descriptor.fixes ?: continue
+            for (i in 0..fixes.size - 1) {
+              val intentionAction = wrap(descriptor, i)
+              if (intentionAction.text == name && availableFor(psiFile, editor, offset, intentionAction)) {
+                return@readAction intentionAction
+              }
+            }
+          }
+        }
+        null
+      }
+      return@runWithModalProgressBlocking result
     }
     if (action == null) return
     ShowIntentionActionsHandler.chooseActionAndInvoke(topLevelFile, topLevelEditor, action, name)
