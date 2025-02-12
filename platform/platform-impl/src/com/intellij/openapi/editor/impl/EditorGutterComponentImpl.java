@@ -455,7 +455,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
         if (ExperimentalUI.isNewUI() && myPaintBackground && !DistractionFreeModeController.shouldMinimizeCustomHeader()) {
           if (!myEditor.isStickyLinePainting()) { // suppress vertical line between gutter and editor on the sticky lines panel
             g.setColor(getEditor().getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
-            LinePainter2D.paint(g, gutterSeparatorX, clip.y, gutterSeparatorX, clip.y + clip.height);
+            int separatorX = gutterSeparatorX;
+            if (JBUIScale.scale(1f) > 1) {
+              separatorX++;
+            }
+            LinePainter2D.paint(g, separatorX, clip.y, separatorX, clip.y + clip.height);
           }
         }
 
