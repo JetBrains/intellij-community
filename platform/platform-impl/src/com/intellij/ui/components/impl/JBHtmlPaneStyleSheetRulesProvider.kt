@@ -36,7 +36,7 @@ import javax.swing.UIManager
 import javax.swing.text.html.StyleSheet
 
 @ApiStatus.Internal
-const val CODE_BLOCK_CLASS = "code-block"
+const val CODE_BLOCK_CLASS: String = "code-block"
 
 /**
  * Provides list of default CSS rules for JBHtmlPane
@@ -117,12 +117,12 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
       h3 { font-size: ${fontSize + 4}}
       h2 { font-size: ${fontSize + 6}}
       h1 { font-size: ${fontSize + 8}}
-      h1, h2, h3, h4, h5, h6 {margin: 0 0 0 0; ${paragraphSpacing}; }
+      h1, h2, h3, h4, h5, h6 {margin: ${scale(4)}px 0 0 0; ${paragraphSpacing}; }
       p { margin: 0 0 0 0; ${paragraphSpacing}; line-height: 125%; }
       ul { margin: 0 0 0 ${scale(10)}px; ${paragraphSpacing};}
       ol { margin: 0 0 0 ${scale(20)}px; ${paragraphSpacing};}
-      li { padding: ${scale(1)}px 0 ${scale(2)}px 0; }
-      li p { padding-top: 0; padding-bottom: 0; }
+      li { padding: ${scale(4)}px 0 ${scale(2)}px 0; }
+      li p, li p-implied { padding-top: 0; padding-bottom: 0; line-height: 125%; }
       th { text-align: left; }
       tr, table { margin: 0 0 0 0; padding: 0 0 0 0; }
       td { margin: 0 0 0 0; padding: ${spacingBefore}px ${spacingBefore + spacingAfter}px ${spacingAfter}px 0; }
