@@ -4,6 +4,7 @@ package com.intellij.platform.feedback.dialog
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.internal.statistic.utils.platformPlugin
 import com.intellij.openapi.application.ApplicationInfo
@@ -21,11 +22,12 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
+import org.jetbrains.annotations.Nls
 import java.text.SimpleDateFormat
 import java.util.*
 
 /** This number should be increased when [CommonFeedbackSystemData] fields changing */
-const val COMMON_FEEDBACK_SYSTEM_INFO_VERSION = 2
+const val COMMON_FEEDBACK_SYSTEM_INFO_VERSION: Int = 3
 
 @Serializable
 data class CommonFeedbackSystemData(
@@ -39,7 +41,8 @@ data class CommonFeedbackSystemData(
   private val isInternalModeEnabled: Boolean,
   private val registry: List<String>,
   private val disabledBundledPlugins: List<String>,
-  private val nonBundledPlugins: List<String>
+  private val nonBundledPlugins: List<String>,
+  private val isRemoteDevelopmentHost: Boolean,
 ) : SystemDataJsonSerializable {
   companion object {
     fun getCurrentData(): CommonFeedbackSystemData {
@@ -54,7 +57,8 @@ data class CommonFeedbackSystemData(
         getIsInternalMode(),
         getRegistryKeys(),
         getDisabledPlugins(),
-        getNonBundledPlugins()
+        getNonBundledPlugins(),
+        AppMode.isRemoteDevHost()
       )
     }
 
@@ -120,8 +124,10 @@ data class CommonFeedbackSystemData(
         .toList()
   }
 
-  fun getMemorySizeForDialog() = memorySize.toString() + "M"
-  fun getLicenseRestrictionsForDialog() = if (licenseRestrictions.isEmpty())
+  fun getMemorySizeForDialog(): String = memorySize.toString() + "M"
+
+  @Suppress("HardCodedStringLiteral")
+  fun getLicenseRestrictionsForDialog(): @Nls String = if (licenseRestrictions.isEmpty())
     CommonFeedbackBundle.message("dialog.feedback.system.info.panel.license.no.info")
   else
     licenseRestrictions.joinToString("\n")
@@ -201,6 +207,8 @@ data class CommonFeedbackSystemData(
       appendLine(getDisabledBundledPluginsForDialog())
       appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.nonbundled.plugins"))
       appendLine(getNonBundledPluginsForDialog())
+      appendLine(CommonFeedbackBundle.message("dialog.feedback.system.info.panel.remote.dev.host"))
+      appendLine(isRemoteDevelopmentHost.toString())
     }
   }
 }
