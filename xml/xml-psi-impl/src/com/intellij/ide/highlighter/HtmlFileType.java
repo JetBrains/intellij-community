@@ -18,7 +18,7 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import static com.intellij.ide.highlighter.CharsetDetector.detectCharsetFromMetaTag;
+import static com.intellij.xml.util.CharsetDetector.detectCharsetFromMetaTag;
 
 public class HtmlFileType extends XmlLikeFileType {
   public static final @NonNls String DOT_DEFAULT_EXTENSION = ".html";

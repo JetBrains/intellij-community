@@ -3,7 +3,6 @@ package com.intellij.xml.util;
 
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
-import com.intellij.ide.highlighter.CharsetDetector;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.javaee.ExternalResourceManagerEx;
