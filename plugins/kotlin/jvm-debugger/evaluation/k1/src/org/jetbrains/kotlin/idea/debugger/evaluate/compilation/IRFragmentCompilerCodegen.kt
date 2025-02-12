@@ -45,6 +45,7 @@ internal class IRFragmentCompilerCodegen {
         val evaluatorFragmentInfo = EvaluatorFragmentInfo(
             classDescriptor,
             methodDescriptor,
+            null,
             parameterInfo.smartParameters.map { EvaluatorFragmentParameterInfo(it.targetDescriptor, it.isLValue) }
         )
         return JvmIrCodegenFactory(

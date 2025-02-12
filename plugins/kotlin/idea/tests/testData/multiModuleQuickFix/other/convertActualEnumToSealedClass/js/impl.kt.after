@@ -1,5 +1,4 @@
 // "Convert to sealed class" "true"
-// IGNORE_K2
 
 actual sealed class <caret>E {
     actual data object A : E()
