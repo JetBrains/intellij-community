@@ -85,6 +85,7 @@ public final class GitBranchUtil {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.TAG);
     h.addParameters("-l");
     h.setSilent(true);
+    h.setEnableInteractiveCallbacks(false);
 
     List<String> tags = new ArrayList<>();
     h.addLineListener(new GitLineHandlerListener() {

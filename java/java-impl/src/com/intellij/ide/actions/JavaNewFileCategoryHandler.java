@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeView;
+import com.intellij.java.library.LibraryWithMavenCoordinatesProperties;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -11,8 +12,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.ThreeState;
@@ -33,20 +36,36 @@ final class JavaNewFileCategoryHandler implements NewFileActionCategoryHandler {
 
     if (project == null || view == null) return ThreeState.UNSURE;
 
-    ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    var projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     for (PsiDirectory dir : view.getDirectories()) {
       VirtualFile dirVirtualFile = dir.getVirtualFile();
 
       if (isInContentRoot(dirVirtualFile, projectFileIndex)) { // cannot distinguish module root from source root
         return ThreeState.YES;
       }
+
       if (projectFileIndex.isUnderSourceRootOfType(dirVirtualFile, JavaModuleSourceRootTypes.SOURCES)) {
         var module = ModuleUtilCore.findModuleForFile(dirVirtualFile, project);
         if (module == null) return ThreeState.YES;
 
-        Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+        ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+        Sdk sdk = moduleRootManager.getSdk();
         if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
-          return ThreeState.NO;
+          Ref<Boolean> hasAnyMavenDependencies = new Ref<>(false);
+
+          // make sure it is not false positive inherited Project SDK and look for Maven dependencies
+          OrderEnumerator.orderEntries(module).recursively()
+            .forEachLibrary(library -> {
+              if (library instanceof LibraryEx
+                  && ((LibraryEx)library).getProperties() instanceof LibraryWithMavenCoordinatesProperties) {
+                hasAnyMavenDependencies.set(true);
+                return false;
+              }
+
+              return true;
+            });
+
+          if (hasAnyMavenDependencies.get()) return ThreeState.NO;
         }
       }
     }

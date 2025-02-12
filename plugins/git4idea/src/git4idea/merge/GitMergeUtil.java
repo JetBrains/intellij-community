@@ -250,7 +250,9 @@ public final class GitMergeUtil {
           || (m.startsWith("fatal: Path '") && m.contains("' exists on disk, but not in '"))
           || m.contains("is in the index, but not at stage ")
           || m.contains("bad revision")
-          || m.startsWith("fatal: Not a valid object name")) {
+          || m.startsWith("fatal: Not a valid object name")
+          || m.startsWith("error: cannot read object")) {
+        LOG.warn("Failed to load revision content for %s (stage %d): '%s'\nAssuming missing side".formatted(path, stageNum, m));
         return null; // assume missing side of 'Deleted-Modified', 'Deleted-Deleted', 'Added-Added' conflicts
       }
       else {

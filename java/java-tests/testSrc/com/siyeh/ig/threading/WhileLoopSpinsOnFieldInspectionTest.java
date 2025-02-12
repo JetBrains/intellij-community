@@ -16,6 +16,12 @@ public class WhileLoopSpinsOnFieldInspectionTest extends LightJavaInspectionTest
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, this::doTest);
   }
 
+  public void testConditionBoundedBuffer() {
+    // Sample from JCIP
+    // See IDEA-364908
+    doTest();
+  }
+
   public void testMultiFileFix() {
     myFixture.addFileToProject("F1.java", """
       public class F1 {

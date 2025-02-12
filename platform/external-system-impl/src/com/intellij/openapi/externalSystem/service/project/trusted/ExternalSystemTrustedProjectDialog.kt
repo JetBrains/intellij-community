@@ -18,7 +18,7 @@ object ExternalSystemTrustedProjectDialog {
     return TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject(
       projectRoot,
       project,
-      title = IdeBundle.message("untrusted.project.link.dialog.title", systemId.readableName, projectRoot.fileName),
+      title = IdeBundle.message("untrusted.project.link.dialog.title", systemId.readableName, projectRoot.fileName ?: projectRoot.toString()),
       cancelButtonText = IdeBundle.message("untrusted.project.link.dialog.cancel.button"))
   }
 

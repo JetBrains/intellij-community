@@ -317,7 +317,7 @@ public class UsageViewImpl implements UsageViewEx {
   public int getId() {
     return myUniqueIdentifier;
   }
-  
+
   @ApiStatus.Internal
   public JTree getTree() {
     return myTree;
@@ -1138,16 +1138,26 @@ public class UsageViewImpl implements UsageViewEx {
     ThreadingAssertions.assertEventDispatchThread();
     //always expand the last level group
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTree.getModel().getRoot();
-    for (int i = root.getChildCount() - 1; i >= 0; i--) {
-      DefaultMutableTreeNode child = (DefaultMutableTreeNode)root.getChildAt(i);
-      if (child instanceof GroupNode) {
-        TreePath treePath = new TreePath(child.getPath());
-        myTree.expandPath(treePath);
+    try {
+      if (myTree instanceof Tree jbTree) {
+        jbTree.suspendExpandCollapseAccessibilityAnnouncements();
+      }
+      for (int i = root.getChildCount() - 1; i >= 0; i--) {
+        DefaultMutableTreeNode child = (DefaultMutableTreeNode)root.getChildAt(i);
+        if (child instanceof GroupNode) {
+          TreePath treePath = new TreePath(child.getPath());
+          myTree.expandPath(treePath);
+        }
+      }
+      myTree.getSelectionModel().clearSelection();
+      for (UsageState usageState : states) {
+        usageState.restore();
       }
     }
-    myTree.getSelectionModel().clearSelection();
-    for (UsageState usageState : states) {
-      usageState.restore();
+    finally {
+      if (myTree instanceof Tree jbTree) {
+        jbTree.resumeExpandCollapseAccessibilityAnnouncements();
+      }
     }
   }
 

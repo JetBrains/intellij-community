@@ -12,12 +12,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.packaging.pip.PipBasedPackageManager
+import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.targetEnvConfiguration
@@ -27,52 +27,38 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Experimental
-class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(project, sdk) {
-  override val repositoryManager: CondaRepositoryManger = CondaRepositoryManger(project, sdk)
+class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
+  @Volatile
+  override var installedPackages: List<PythonPackage> = emptyList()
+  override val repositoryManager = CondaRepositoryManger(project, sdk)
 
   override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String> =
-    if (specification is CondaPackageSpecification) {
-      try {
-        Result.success(runConda("install", specification.buildInstallationString() + "-y" + options, message("conda.packaging.install.progress", specification.name)))
-      }
-      catch (ex: ExecutionException) {
-        Result.failure(ex)
-      }
+    try {
+      Result.success(runConda("install", specification.buildInstallationString() + "-y" + options, message("conda.packaging.install.progress", specification.name)))
     }
-    else {
-      super.installPackageCommand(specification, options)
+    catch (ex: ExecutionException) {
+      Result.failure(ex)
     }
 
   override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String> =
-    if (specification is CondaPackageSpecification) {
-      try {
-        Result.success(runConda("update", listOf(specification.name, "-y"), message("conda.packaging.update.progress", specification.name)))
-      }
-      catch (ex: ExecutionException) {
-        Result.failure(ex)
-      }
+    try {
+      Result.success(runConda("update", listOf(specification.name, "-y"), message("conda.packaging.update.progress", specification.name)))
     }
-    else {
-      super.updatePackageCommand(specification)
+    catch (ex: ExecutionException) {
+      Result.failure(ex)
     }
-
 
   override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String> =
-    if (pkg is CondaPackage && !pkg.installedWithPip) {
-      try {
-        Result.success(runConda("uninstall", listOf(pkg.name, "-y"), message("conda.packaging.uninstall.progress", pkg.name)))
-      }
-      catch (ex: ExecutionException) {
-        Result.failure(ex)
-      }
+    try {
+      Result.success(runConda("uninstall", listOf(pkg.name, "-y"), message("conda.packaging.uninstall.progress", pkg.name)))
     }
-    else {
-      super.uninstallPackageCommand(pkg)
+    catch (ex: ExecutionException) {
+      Result.failure(ex)
     }
 
   override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> =
     try {
-      val output =runConda("list", emptyList(), message("conda.packaging.list.progress"))
+      val output = runConda("list", emptyList(), message("conda.packaging.list.progress"))
       Result.success(parseCondaPackageList(output))
     }
     catch (ex: ExecutionException) {
@@ -111,7 +97,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
       val handler = CapturingProcessHandler(process, targetedCommandLine.charset, commandLineString)
 
       val result = withBackgroundProgress(project, text, true) {
-        withRawProgressReporter<ProcessOutput?> {
+        reportRawProgress<ProcessOutput?> {
           handler.runProcess(10 * 60 * 1000)
         } as ProcessOutput
       }

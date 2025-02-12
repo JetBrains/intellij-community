@@ -5,6 +5,7 @@ import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.diagnostic.logs.DebugLogLevel
 import com.intellij.diagnostic.logs.LogCategory
@@ -13,7 +14,6 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.diagnostic.Logger
@@ -109,9 +109,14 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     if (port != null) {
       LOG.info("Queue creating protocol on $hostAddress:$port")
       coroutineScope.launch {
+        val coroutineDumperOnTimeout = launch {
+          delay(20.seconds)
+          LOG.warn("LoadingState.COMPONENTS_LOADED has not occurred in 20 seconds: ${dumpCoroutines()}")
+        }
         while (!LoadingState.COMPONENTS_LOADED.isOccurred) {
           delay(10.milliseconds)
         }
+        coroutineDumperOnTimeout.cancel()
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           createProtocol(hostAddress, port)
         }
@@ -168,7 +173,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           // Tell test we are running it inside an agent
           val agentInfo = AgentInfo(session.agentInfo, session.testClassName, session.testMethodName)
-          val (actionsMap, dimensionRequests) = testClassObject.initAgent(agentInfo)
+          val (actionsMap, getComponentDataRequests) = testClassObject.initAgent(agentInfo)
 
           // Play test method
           val testMethod = testClass.getMethod(session.testMethodName)
@@ -234,8 +239,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           session.runNextActionGetComponentData.setSuspendPreserveClientId { _, parameters ->
             val actionTitle = parameters.title
-            val queue = dimensionRequests[actionTitle]
-                        ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
+            val queue = getComponentDataRequests[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
             val action = queue.remove()
             val timeout = action.timeout
 
@@ -512,15 +516,10 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 }
 
 @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
-private fun showNotification(text: String?): Notification? {
+private fun showNotification(text: String?) {
   if (ApplicationManager.getApplication().isHeadlessEnvironment || text.isNullOrBlank()) {
-    return null
+    return
   }
 
-  val notification = Notification("TestFramework",
-                                  "Test Framework",
-                                  text,
-                                  NotificationType.INFORMATION)
-  Notifications.Bus.notify(notification)
-  return notification
+  Notification("TestFramework", "Test Framework", text, NotificationType.INFORMATION).notify(null)
 }

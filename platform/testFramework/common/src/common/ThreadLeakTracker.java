@@ -65,6 +65,8 @@ public final class ThreadLeakTracker {
       "AWT-EventQueue-",
       "AWT-Shutdown",
       "AWT-Windows",
+      "BaseDataReader: error stream of embeddings-server",
+      "BaseDataReader: output stream of embeddings-server",
       "BatchSpanProcessor_WorkerThread", // io.opentelemetry.sdk.trace.export.BatchSpanProcessor.WORKER_THREAD_NAME
       "Batik CleanerThread",
       "BC Entropy Daemon",
@@ -74,11 +76,13 @@ public final class ThreadLeakTracker {
       "CompilerThread0",
       "Coroutines Debugger Cleaner", // kotlinx.coroutines.debug.internal.DebugProbesImpl.startWeakRefCleanerThread
       "dockerjava-netty",
+      "embeddings-server",
       "External compiler",
       FilePageCacheLockFree.DEFAULT_HOUSEKEEPER_THREAD_NAME,
       "Finalizer",
       FlushingDaemon.NAME,
       "grpc-default-worker-",  // grpc_netty_shaded
+      "grpc-nio-worker-",
       "HttpClient-",  // JRE's HttpClient thread pool is not supposed to be disposed - to reuse connections
       ProcessIOExecutorService.POOLED_THREAD_PREFIX,
       "IDEA Test Case Thread",
@@ -100,6 +104,7 @@ public final class ThreadLeakTracker {
       "Okio Watchdog", // Dockers "okio.AsyncTimeout.Watchdog"
       "Periodic tasks thread", // com.intellij.util.concurrency.AppDelayQueue.TransferThread
       "process reaper", // Thread[#46,process reaper(pid7496),10,InnocuousThreadGroup] (since JDK-8279488 part of InnocuousThreadGroup)
+      "qtp", // used in tests for mocking via WireMock in integration testing
       "rd throttler", // daemon thread created by com.jetbrains.rd.util.AdditionalApiKt.getTimer
       "Reference Handler",
       "RMI GC Daemon",

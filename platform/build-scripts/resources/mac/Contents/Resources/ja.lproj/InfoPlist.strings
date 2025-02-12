@@ -1,12 +1,13 @@
 CFBundleGetInfoString = "@@bundle_name@@ @@version@@、ビルド @@build@@、Copyright JetBrains s.r.o., (c) 2000-@@year@@";
 
 NSCameraUsageDescription = "@@bundle_name@@ のアプリケーションがデバイスのカメラへのアクセス許可をリクエストしています。";
-NSMicrophoneUsageDescription = "@@bundle_name@@ のアプリケーションがデバイスのマイクへのアクセスをリクエストしています。";
-NSLocationUsageDescription = "@@bundle_name@@ のアプリケーションがユーザー位置情報へのアクセス許可をリクエストしています。";
-NSDesktopFolderUsageDescription = "@@bundle_name@@ のアプリケーションがデバイスのデスクトップフォルダーへのアクセスをリクエストしています。";
+NSMicrophoneUsageDescription = "@@bundle_name@@ のアプリケーションがデバイスのマイクへのアクセス許可をリクエストしています。";
+NSLocationUsageDescription = "@@bundle_name@@ のアプリケーションがユーザーの位置情報へのアクセス許可をリクエストしています。";
+NSDesktopFolderUsageDescription = "@@bundle_name@@ のアプリケーションがユーザーのデスクトップフォルダーへのアクセス許可をリクエストしています。";
 NSDocumentsFolderUsageDescription = "@@bundle_name@@ のアプリケーションがユーザーのドキュメントフォルダーへのアクセス許可をリクエストしています。";
-NSDownloadsFolderUsageDescription = "@@bundle_name@@ のアプリケーションがデバイスのダウンロードフォルダーへのアクセスをリクエストしています。";
-NSNetworkVolumesUsageDescription = "@@bundle_name@@ のアプリケーションがボリュームにあるファイルへのアクセスをリクエストしています。";
-NSRemovableVolumesUsageDescription = "@@bundle_name@@ のアプリケーションが取り外し可能なボリュームにあるファイルへのアクセスをリクエストしています。";
+NSDownloadsFolderUsageDescription = "@@bundle_name@@ のアプリケーションがデバイスのダウンロードフォルダーへのアクセス許可をリクエストしています。";
+NSNetworkVolumesUsageDescription = "@@bundle_name@@ のアプリケーションがネットワークボリュームにあるファイルへのアクセス許可をリクエストしています。";
+NSRemovableVolumesUsageDescription = "@@bundle_name@@ のアプリケーションがリムーバブルボリュームにあるファイルへのアクセス許可をリクエストしています。";
 NSBluetoothAlwaysUsageDescription = "@@bundle_name@@ のアプリケーションが Bluetooth へのアクセス許可をリクエストしています。";
 NSAppleEventsUsageDescription = "@@bundle_name@@ のアプリケーションが Apple イベントを送信する機能をリクエストしています。";
+NSLocalNetworkUsageDescription = "SSH やデータベース接続などの @@bundle_name@@ の機能には、ローカルネットワークにアクセスし、ブロードキャストリクエストを送信するための権限が必要です。";

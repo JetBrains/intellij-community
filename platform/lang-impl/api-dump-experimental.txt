@@ -205,6 +205,8 @@ f:com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 *f:com.intellij.codeInsight.hints.InlayHintsUtils
 - sf:INSTANCE:com.intellij.codeInsight.hints.InlayHintsUtils
 - f:computeCodeVisionUnderReadAction(kotlin.jvm.functions.Function0):com.intellij.codeInsight.codeVision.CodeVisionState
+- f:computeCodeVisionUnderReadAction(Z,kotlin.jvm.functions.Function0):com.intellij.codeInsight.codeVision.CodeVisionState
+- bs:computeCodeVisionUnderReadAction$default(com.intellij.codeInsight.hints.InlayHintsUtils,Z,kotlin.jvm.functions.Function0,I,java.lang.Object):com.intellij.codeInsight.codeVision.CodeVisionState
 - f:getDefaultInlayHintsProviderPopupActions(com.intellij.codeInsight.hints.SettingsKey,java.util.function.Supplier):java.util.List
 - f:getTextRangeWithoutLeadingCommentsAndWhitespaces(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
 - sf:isFirstInLine(com.intellij.psi.PsiElement):Z

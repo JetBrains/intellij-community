@@ -1,12 +1,13 @@
 CFBundleGetInfoString = "@@bundle_name@@ @@version@@, 빌드 @@build@@. Copyright JetBrains s.r.o., (c) 2000-@@year@@";
 
-NSCameraUsageDescription = "@@bundle_name@@ 내의 애플리케이션이 장치의 카메라에 대한 액세스를 요청합니다.";
-NSMicrophoneUsageDescription = "@@bundle_name@@ 내의 애플리케이션이 장치의 마이크에 대한 액세스를 요청합니다.";
-NSLocationUsageDescription = "@@bundle_name@@ 내의 애플리케이션이 사용자의 위치 정보에 대한 액세스를 요청합니다.";
-NSDesktopFolderUsageDescription = "@@bundle_name@@ 내의 애플리케이션이 장치의 데스크탑 폴더에 대한 액세스를 요청합니다.";
-NSDocumentsFolderUsageDescription = "@@bundle_name@@ 내의 애플리케이션이 사용자의 문서 폴더에 대한 액세스를 요청합니다.";
-NSDownloadsFolderUsageDescription = "@@bundle_name@@ 내의 애플리케이션이 사용자의 다운로드 폴더에 대한 액세스를 요청합니다.";
-NSNetworkVolumesUsageDescription = "@@bundle_name@@ 내의 애플리케이션이 네트워크 볼륨 상에 있는 파일에 대한 액세스를 요청합니다.";
-NSRemovableVolumesUsageDescription = "@@bundle_name@@ 내의 애플리케이션이 이동식 볼륨에 대한 액세스를 요청합니다.";
-NSBluetoothAlwaysUsageDescription = "@@bundle_name@@ 내의 애플리케이션이 블루투스 액세스를 요청합니다.";
-NSAppleEventsUsageDescription = "@@bundle_name@@ 내의 애플리케이션이 Apple 이벤트를 보낼 권한을 요청합니다.";
+NSCameraUsageDescription = "@@bundle_name@@의 애플리케이션이 기기의 카메라에 대한 액세스를 요청합니다.";
+NSMicrophoneUsageDescription = "@@bundle_name@@의 애플리케이션이 기기의 마이크에 대한 액세스를 요청합니다.";
+NSLocationUsageDescription = "@@bundle_name@@의 애플리케이션이 사용자의 위치 정보에 대한 액세스를 요청합니다.";
+NSDesktopFolderUsageDescription = "@@bundle_name@@의 애플리케이션이 기기의 데스크톱 폴더에 대한 액세스를 요청합니다.";
+NSDocumentsFolderUsageDescription = "@@bundle_name@@의 애플리케이션이 사용자의 문서 폴더에 대한 액세스를 요청합니다.";
+NSDownloadsFolderUsageDescription = "@@bundle_name@@의 애플리케이션이 사용자의 다운로드 폴더에 대한 액세스를 요청합니다.";
+NSNetworkVolumesUsageDescription = "@@bundle_name@@의 애플리케이션이 네트워크 볼륨상의 파일에 대한 액세스를 요청합니다.";
+NSRemovableVolumesUsageDescription = "@@bundle_name@@의 애플리케이션이 이동식 볼륨상의 파일에 대한 액세스를 요청합니다.";
+NSBluetoothAlwaysUsageDescription = "@@bundle_name@@의 애플리케이션이 블루투스에 대한 액세스를 요청합니다.";
+NSAppleEventsUsageDescription = "@@bundle_name@@의 애플리케이션이 Apple 이벤트를 전송할 권한을 요청합니다.";
+NSLocalNetworkUsageDescription = "SSH 및 데이터베이스 연결과 같은 @@bundle_name@@ 기능을 사용하려면 로컬 네트워크 액세스 및 브로드캐스트 요청 전송 권한이 필요합니다.";

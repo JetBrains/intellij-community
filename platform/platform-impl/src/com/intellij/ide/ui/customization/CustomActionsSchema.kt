@@ -449,7 +449,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
         continue
       }
 
-      initActionIcon(anAction = action, actionId = actionId, actionSupplier = { actionManager.getActionOrStub(it) })
+      initActionIcon(anAction = action, actionId = actionId, actionSupplier = { actionManager.getAction(it) })
       PresentationFactory.updatePresentation(action)
     }
   }

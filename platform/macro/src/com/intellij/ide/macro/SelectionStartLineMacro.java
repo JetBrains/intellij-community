@@ -3,11 +3,18 @@ package com.intellij.ide.macro;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 
 public class SelectionStartLineMacro extends EditorMacro {
   public SelectionStartLineMacro() {
-    super("SelectionStartLine", ExecutionBundle.message("ide.macro.selected.text.start.line.number"));
+    super("SelectionStartLine");
+  }
+
+  @Override
+  @NotNull
+  public String getDescription() {
+    return ExecutionBundle.message("ide.macro.selected.text.start.line.number");
   }
 
   @Override

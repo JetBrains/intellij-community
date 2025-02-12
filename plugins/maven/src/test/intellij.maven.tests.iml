@@ -35,5 +35,6 @@
     <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="hash4j" level="project" />
+    <orderEntry type="library" name="kotlin-reflect" level="project" />
   </component>
 </module>

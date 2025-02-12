@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.UserDataHolder
 import com.jetbrains.python.sdk.add.PyAddSdkProvider
+import com.jetbrains.python.sdk.pipenv.ui.PyAddPipEnvPanel
 
 class PyAddPipEnvSdkProvider : PyAddSdkProvider {
   override fun createView(project: Project?,

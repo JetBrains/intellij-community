@@ -6,7 +6,7 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.FileViewProviderFactory
 import com.intellij.psi.PsiManager
 
-internal class DefaultMarkdownFileViewProviderFactory: FileViewProviderFactory {
+class DefaultMarkdownFileViewProviderFactory: FileViewProviderFactory {
   override fun createFileViewProvider(
     file: VirtualFile,
     language: Language?,

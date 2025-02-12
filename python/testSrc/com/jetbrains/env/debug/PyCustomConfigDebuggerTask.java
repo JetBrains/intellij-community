@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.debug;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -14,6 +15,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.*;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
@@ -26,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -57,6 +61,102 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
 
   @Override
   public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
+    if (Registry.is("python.debug.use.single.port")) {
+      runTestInClientMode(sdkHome, existingSdk);
+    }
+    else {
+      runTestInServerMode(sdkHome, existingSdk);
+    }
+  }
+
+  private void runTestInServerMode(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
+    Project project = getProject();
+
+    myRunConfiguration = createRunConfiguration(sdkHome, existingSdk);
+
+    WriteAction.runAndWait(() -> {
+      RunManager runManager = RunManager.getInstance(project);
+      runManager.addConfiguration(mySettings);
+      runManager.setSelectedConfiguration(mySettings);
+      Assert.assertSame(mySettings, runManager.getSelectedConfiguration());
+    });
+
+    PyDebugRunner runner = (PyDebugRunner)ProgramRunner.getRunner(getExecutorId(), mySettings.getConfiguration());
+    Assert.assertTrue(runner.canRun(getExecutorId(), myRunConfiguration));
+
+    Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
+    ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, mySettings, project);
+
+    PythonCommandLineState pyState = (PythonCommandLineState)myRunConfiguration.getState(executor, env);
+
+    assert pyState != null;
+    pyState.setMultiprocessDebug(isMultiprocessDebug());
+
+    try (ServerSocket serverSocket = new ServerSocket(0)) {
+      int serverLocalPort = serverSocket.getLocalPort();
+      RunProfile profile = env.getRunProfile();
+
+      createExceptionBreak(myFixture, false, false, false); //turn off exception breakpoints by default
+
+      before();
+
+      myTerminateSemaphore = new Semaphore(0);
+
+      WriteAction.runAndWait(() -> {
+        myExecutionResult =
+          pyState.execute(executor, createCommandLinePatchers(runner, pyState, profile, serverLocalPort));
+
+        mySession = XDebuggerManager.getInstance(getProject()).
+          startSession(env, new XDebugProcessStarter() {
+            @Override
+            @NotNull
+            public XDebugProcess start(@NotNull final XDebugSession session) {
+              myDebugProcess =
+                new PyDebugProcess(session, serverSocket, myExecutionResult.getExecutionConsole(), myExecutionResult.getProcessHandler(),
+                                   isMultiprocessDebug());
+              myDebugProcess.getProcessHandler().addProcessListener(new ProcessAdapter() {
+                @Override
+                public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+                  myOutputBuilder.append(event.getText());
+                  if (outputType == ProcessOutputType.STDERR) {
+                    myStdErrBuilder.append(event.getText());
+                  }
+                }
+
+                @Override
+                public void processTerminated(@NotNull ProcessEvent event) {
+                  myTerminateSemaphore.release();
+                  if (event.getExitCode() != 0 && !myProcessCanTerminate) {
+                    Assert.fail("Process terminated unexpectedly\n" + myOutputBuilder);
+                  }
+                }
+              });
+
+              myDebugProcess.getProcessHandler().startNotify();
+              return myDebugProcess;
+            }
+          });
+      });
+
+      myPausedSemaphore = new Semaphore(0);
+
+      mySession.addSessionListener(new XDebugSessionListener() {
+        @Override
+        public void sessionPaused() {
+          if (myPausedSemaphore != null) {
+            myPausedSemaphore.release();
+          }
+        }
+      });
+
+      doTest(null);
+    }
+    catch (IOException e) {
+      throw new ExecutionException("Failed to find free socket port", e); // NON-NLS
+    }
+  }
+
+  private void runTestInClientMode(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
     Project project = getProject();
 
     myRunConfiguration = createRunConfiguration(sdkHome, existingSdk);
@@ -242,7 +342,8 @@ public abstract class PyCustomConfigDebuggerTask extends PyBaseDebuggerTask {
    * Toggles multiple breakpoints with {@link PyDebuggerTask#toggleBreakpoint(String, int)}.
    */
   protected void toggleBreakpoints(@NotNull String file, int... lines) {
-    for(int line : lines)
+    for (int line : lines) {
       toggleBreakpoint(file, line);
+    }
   }
 }

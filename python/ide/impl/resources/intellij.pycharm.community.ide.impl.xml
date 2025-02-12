@@ -104,7 +104,10 @@
       id="environmentYml"/>
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyPipfileSdkConfiguration"
                                       id="pipfile" order="before requirementsTxtOrSetupPy"/>
-    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyPoetrySdkConfiguration"/>
+    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyPoetrySdkConfiguration"
+                                      id="poetry"/>
+    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyUvSdkConfiguration"
+                                      id="uv" order="after poetry"/>
   </extensions>
 
   <actions resource-bundle="messages.ActionsBundle">

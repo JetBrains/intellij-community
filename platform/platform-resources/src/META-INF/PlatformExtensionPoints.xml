@@ -600,5 +600,6 @@
                     interface="com.intellij.auth.GenericAuthProviderExtension" dynamic="true"/>
     <extensionPoint name="findInDirectoryScopeProvider" interface="com.intellij.find.impl.FindInDirectoryScopeProvider" dynamic="true"/>
 
+    <extensionPoint name="logLevelConfigurationListener" interface="com.intellij.diagnostic.logs.LogLevelConfigurationManager$Listener" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

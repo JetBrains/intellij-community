@@ -194,8 +194,7 @@ public final class AboutDialog extends DialogWrapper {
     myInfo.add(MessageFormat.format("VM: {0} by {1}", vmVersion, vmVendor));
 
     //Print extra information from plugins
-    ExtensionPointName<AboutPopupDescriptionProvider> ep = new ExtensionPointName<>("com.intellij.aboutPopupDescriptionProvider");
-    for (AboutPopupDescriptionProvider aboutInfoProvider : ep.getExtensions()) {
+    for (AboutPopupDescriptionProvider aboutInfoProvider : EP_NAME.getExtensionList()) {
       String description = aboutInfoProvider.getDescription();
       if (description != null) {
         lines.add(description);
@@ -287,7 +286,7 @@ public final class AboutDialog extends DialogWrapper {
     text.append(SystemInfo.getOsNameAndVersion()).append('\n');
 
     for (var aboutInfoProvider : EP_NAME.getExtensionList()) {
-      var description = aboutInfoProvider.getDescription();
+      var description = aboutInfoProvider.getExtendedDescription();
       if (description != null) {
         text.append(description).append('\n');
       }

@@ -596,6 +596,7 @@ final class ImageEditorUI extends JPanel implements UiDataProvider, CopyProvider
 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.COPY_PROVIDER, this);
     sink.set(DATA_KEY, editor != null ? editor : this);
     if (editor == null) return;
     Project project = editor.getProject();
@@ -604,7 +605,6 @@ final class ImageEditorUI extends JPanel implements UiDataProvider, CopyProvider
     sink.set(CommonDataKeys.PROJECT, project);
     sink.set(CommonDataKeys.VIRTUAL_FILE, file);
     sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, new VirtualFile[]{file});
-    sink.set(PlatformDataKeys.COPY_PROVIDER, this);
     if (copyPasteSupport != null) {
       sink.set(PlatformDataKeys.CUT_PROVIDER, copyPasteSupport.getCutProvider());
     }

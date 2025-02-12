@@ -51,7 +51,7 @@ final class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<In
             LOG.info((dryRun ? "[dry run]" : "") + "equal trees: inputId=" + myInputId +
                      ",myTreeLen=" + myCurrentTree.myTreeByteLength +
                      ",myStubLen=" + myCurrentTree.myIndexedStubByteLength +
-                     ",newTreeLen=" + newSerializedStubTree.myIndexedStubByteLength +
+                     ",newTreeLen=" + newSerializedStubTree.myTreeByteLength +
                      ",newStubLen=" + newSerializedStubTree.myIndexedStubByteLength);
           }
           return false;

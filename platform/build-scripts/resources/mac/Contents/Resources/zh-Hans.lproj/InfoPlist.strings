@@ -1,12 +1,13 @@
-CFBundleGetInfoString = "@@bundle_name@@ @@version@@，内部版本 @@build@@. Copyright JetBrains s.r.o., (c) 2000-@@year@@";
+CFBundleGetInfoString = "@@bundle_name@@ @@version@@，内部版本号 @@build@@. Copyright JetBrains s.r.o., (c) 2000-@@year@@";
 
-NSCameraUsageDescription = "@@bundle_name@@ 中的应用程序请求访问设备的摄像头。";
-NSMicrophoneUsageDescription = "@@bundle_name@@ 中的应用程序请求访问设备的麦克风。";
-NSLocationUsageDescription = "@@bundle_name@@ 中的应用程序请求访问用户的位置信息。";
+NSCameraUsageDescription = "@@bundle_name@@ 中的应用程序请求使用设备的摄像头。";
+NSMicrophoneUsageDescription = "@@bundle_name@@ 中的应用程序请求使用设备的麦克风。";
+NSLocationUsageDescription = "@@bundle_name@@ 中的应用程序请求使用用户的位置信息。";
 NSDesktopFolderUsageDescription = "@@bundle_name@@ 中的应用程序请求访问用户的“桌面”文件夹。";
 NSDocumentsFolderUsageDescription = "@@bundle_name@@ 中的应用程序请求访问用户的“文档”文件夹。";
 NSDownloadsFolderUsageDescription = "@@bundle_name@@ 中的应用程序请求访问用户的“下载”文件夹。";
 NSNetworkVolumesUsageDescription = "@@bundle_name@@ 中的应用程序请求访问网络卷上的文件。";
 NSRemovableVolumesUsageDescription = "@@bundle_name@@ 中的应用程序请求访问可移动卷上的文件。";
-NSBluetoothAlwaysUsageDescription = "@@bundle_name@@ 中的应用程序请求访问蓝牙。";
+NSBluetoothAlwaysUsageDescription = "@@bundle_name@@ 中的应用程序请求使用蓝牙。";
 NSAppleEventsUsageDescription = "@@bundle_name@@ 中的应用程序请求发送 Apple 事件的功能。";
+NSLocalNetworkUsageDescription = "@@bundle_name@@ 的功能(如 SSH 和数据库连接)需要权限以访问本地网络和发送广播请求。";

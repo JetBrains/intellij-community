@@ -48,8 +48,10 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
     val stamp = ModificationStampUtil.getModificationStamp(editor)
     if (stamp != null && cached?.modificationStamp == stamp) return CodeVisionState.Ready(cached.codeVisionEntries)
 
-    return InlayHintsUtils.computeCodeVisionUnderReadAction {
-      if (DumbService.isDumb(project)) return@computeCodeVisionUnderReadAction CodeVisionState.NotReady
+    return InlayHintsUtils.computeCodeVisionUnderReadAction(expectsIndicator = true) ra@{
+      if (DumbService.isDumb(project)) {
+        return@ra CodeVisionState.NotReady
+      }
       recomputeLenses(editor, project, stamp, cacheService)
     }
   }

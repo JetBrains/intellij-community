@@ -469,8 +469,18 @@ public final class ActionsTree {
     }
 
     public void restorePaths() {
-      for (DefaultMutableTreeNode node : getNodesByPaths(myPathsToExpand)) {
-        myTree.expandPath(new TreePath(node.getPath()));
+      try {
+        if (myTree instanceof Tree jbTree) {
+          jbTree.suspendExpandCollapseAccessibilityAnnouncements();
+        }
+        for (DefaultMutableTreeNode node : getNodesByPaths(myPathsToExpand)) {
+          myTree.expandPath(new TreePath(node.getPath()));
+        }
+      }
+      finally {
+        if (myTree instanceof Tree jbTree) {
+          jbTree.resumeExpandCollapseAccessibilityAnnouncements();
+        }
       }
 
       if (myTree.getSelectionModel().getSelectionCount() == 0) {

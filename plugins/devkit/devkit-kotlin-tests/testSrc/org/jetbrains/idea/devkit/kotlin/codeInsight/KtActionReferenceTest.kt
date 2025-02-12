@@ -1,23 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.codeInsight
 
+import com.intellij.codeInspection.LocalInspectionEP
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.ui.components.JBList
+import com.intellij.util.PathUtil
 import org.jetbrains.idea.devkit.inspections.UnresolvedPluginConfigReferenceInspection
 
 class KtActionReferenceTest : LightJavaCodeInsightFixtureTestCase() {
 
   override fun setUp() {
     super.setUp()
-    myFixture.addClass("package com.intellij.ui.components; public class JBList {}");
-    myFixture.addClass("package com.intellij.openapi.actionSystem; public abstract class AnAction {}");
-    myFixture.addClass("""
-      package com.intellij.openapi.actionSystem;
-      
-      public abstract class ActionManager {
-          public abstract AnAction getAction(@NonNls @NotNull String actionId);
-      }
-            
-    """.trimIndent())
+    PsiTestUtil.addLibrary(myFixture.module, PathUtil.getJarPathForClass(JBList::class.java))
+    PsiTestUtil.addLibrary(myFixture.module, PathUtil.getJarPathForClass(ActionManager::class.java))
+    PsiTestUtil.addLibrary(myFixture.module,
+                           PathManager.getResourceRoot(LocalInspectionEP::class.java, "/idea/PlatformActions.xml")!!)
   }
 
   private fun pluginXmlActions(actionsText: String): String {
@@ -30,6 +30,42 @@ class KtActionReferenceTest : LightJavaCodeInsightFixtureTestCase() {
         </actions>
       </idea-plugin>  
     """
+  }
+
+  fun testResolveDuplicateActionId() {
+    val pluginXmlActions = pluginXmlActions("""
+      <action id="myAction"/>
+    """.trimIndent())
+    myFixture.createFile("plugin.xml", pluginXmlActions)
+    myFixture.createFile("anotherPlugin.xml", pluginXmlActions)
+    myFixture.configureByText("Caller.kt", """
+      fun usage(actionManager: com.intellij.openapi.actionSystem.ActionManager){
+      
+         actionManager.getAction("my<caret>Action")
+      
+      }
+    """.trimIndent())
+    myFixture.enableInspections(UnresolvedPluginConfigReferenceInspection::class.java)
+    myFixture.testHighlighting()
+  }
+
+  fun testResolveLibrariActionId() {
+    val pluginXmlActions = pluginXmlActions("""
+      <action id="myAction"/>
+    """.trimIndent())
+    myFixture.createFile("plugin.xml", pluginXmlActions)
+    myFixture.createFile("anotherPlugin.xml", pluginXmlActions)
+    myFixture.configureByText("Caller.kt", """
+      fun usage(actionManager: com.intellij.openapi.actionSystem.ActionManager){
+      
+         actionManager.getAction("$DLR{"\$DLR"}Undo")
+         actionManager.getAction("Find")
+         actionManager.getAction("<error>Unknown1</error>")
+      
+      }
+    """.trimIndent())
+    myFixture.enableInspections(UnresolvedPluginConfigReferenceInspection::class.java)
+    myFixture.testHighlighting()
   }
 
   fun testRenameAction() {
@@ -70,7 +106,6 @@ class KtActionReferenceTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testInvalidActionOrGroupReference() {
-    val DLR = '$'.toString()
     myFixture.enableInspections(UnresolvedPluginConfigReferenceInspection::class.java)
     myFixture.createFile("plugin.xml", pluginXmlActions("""
               <group id="myGroup"></group>
@@ -110,5 +145,7 @@ class KtActionReferenceTest : LightJavaCodeInsightFixtureTestCase() {
               """
     ), true)
   }
+
+  val DLR = '$'.toString()
 
 }

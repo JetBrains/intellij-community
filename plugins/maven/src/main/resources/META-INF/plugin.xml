@@ -393,7 +393,7 @@
     <registryKey key="maven.shade.plugin.remap.uber.jar" defaultValue="false"
                  description="During sync, remap classes in uber jars for Maven projects that use Maven Shade plugin"/>
 
-    <registryKey key="maven.sync.refresh.resolved.artifacts" defaultValue="false"
+    <registryKey key="maven.sync.refresh.resolved.artifacts" defaultValue="true"
                  description="Refresh resolved artifacts after Maven sync"/>
 
     <registryKey key="maven.incremental.sync.resolve.dependencies.incrementally" defaultValue="true"

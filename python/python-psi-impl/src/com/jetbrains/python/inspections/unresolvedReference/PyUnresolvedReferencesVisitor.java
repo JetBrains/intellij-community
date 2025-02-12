@@ -67,6 +67,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   private final Set<PyImportedNameDefiner> myAllImports = Collections.synchronizedSet(new HashSet<>());
   private final Set<PyImportedNameDefiner> myImportsInsideGuard = Collections.synchronizedSet(new HashSet<>());
   private final Set<PyImportedNameDefiner> myUsedImports = Collections.synchronizedSet(new HashSet<>());
+  private final Set<PyImportedNameDefiner> myUnresolvedImports = Collections.synchronizedSet(new HashSet<>());
   private final ImmutableSet<String> myIgnoredIdentifiers;
   private final PyInspection myInspection;
   private volatile Boolean myIsEnabled = null;
@@ -226,8 +227,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         registerUnresolvedReferenceProblem(node, reference, severity);
       }
       // don't highlight unresolved imports as unused
-      if (node.getParent() instanceof PyImportElement) {
-        myAllImports.remove(node.getParent());
+      if (node.getParent() instanceof PyImportElement importElement) {
+        myUnresolvedImports.add(importElement);
       }
     }
     else if (reference instanceof PyImportReference &&
@@ -605,6 +606,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
 
     Set<PyImportedNameDefiner> unusedImports = new HashSet<>(getAllImports());
     unusedImports.removeAll(getUsedImports());
+    unusedImports.removeAll(myUnresolvedImports);
 
     // Remove those unsed, that are reported to be skipped by extension points
     final Set<PyImportedNameDefiner> unusedImportToSkip = new HashSet<>();

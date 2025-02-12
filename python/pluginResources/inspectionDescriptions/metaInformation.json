@@ -13,6 +13,10 @@
       "codeQualityCategory": "Sanity"
     },
     {
+      "id": "UvPackageVersionsInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
       "id": "PyStubPackagesCompatibilityInspection",
       "codeQualityCategory": "Sanity"
     },

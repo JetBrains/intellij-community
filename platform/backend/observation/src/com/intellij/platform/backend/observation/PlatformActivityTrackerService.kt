@@ -122,6 +122,10 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
       removeObservedComputation(currentJob)
       currentJob.complete()
     }
+
+    override fun childCanceled(context: CoroutineContext) {
+      afterChildCompleted(context)
+    }
   }
 
   private fun enterConfiguration(kind: ActivityKey) : Any {

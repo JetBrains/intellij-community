@@ -3,7 +3,9 @@ package com.intellij.diagnostic.logs
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.logging.Level
 
 /**
@@ -28,6 +30,20 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
     fun getInstance(): LogLevelConfigurationManager = service()
   }
 
+  @Internal
+  interface Listener {
+    /**
+     * Instead of sending changes diff,
+     * it is supposed that implementations look at [com.intellij.openapi.diagnostic.Logger.isDebugEnabled] themselves.
+     */
+    fun onCategoriesChanged()
+
+    companion object {
+      @JvmField
+      val EP_NAME: ExtensionPointName<Listener> = ExtensionPointName.create("com.intellij.logLevelConfigurationListener")
+    }
+  }
+
   private val customizedLoggers = mutableListOf<java.util.logging.Logger>()
   private val lock = Object()
 
@@ -41,6 +57,7 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
     updateState {
       it.copy(categories = appliedCategories)
     }
+    Listener.EP_NAME.forEachExtensionSafe { it.onCategoriesChanged() }
   }
 
   private fun String.toTrimmed(): String = trimStart('#')

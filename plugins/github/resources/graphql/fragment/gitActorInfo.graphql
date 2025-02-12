@@ -4,6 +4,6 @@ fragment gitActorInfo on GitActor {
   avatarUrl
   date
   user {
-    ...userInfo
+    ...user
   }
 }

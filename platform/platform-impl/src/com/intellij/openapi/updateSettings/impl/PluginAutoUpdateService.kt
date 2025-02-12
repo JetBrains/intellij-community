@@ -68,11 +68,14 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
   private fun CoroutineScope.launchDownloadManager(): Job {
     return launch(CoroutineName("Download manager")) {
       for (downloaders in pendingDownloads) {
-        ensureActive()
         if (!isAutoUpdateEnabled()) {
-          throw CancellationException(("auto-update disabled"))
+          currentCoroutineContext().cancel()
         }
+        ensureActive()
         LOG.debug { "new plugin updates: ${downloaders.joinToString { it.pluginName }}" }
+        if (downloaders.isEmpty()) {
+          continue
+        }
         val activeProject = ProjectUtil.getActiveProject()
         val downloadedList = if (activeProject != null) {
           withBackgroundProgress(activeProject, IdeBundle.message("update.downloading.plugins.progress"), true) {
@@ -101,7 +104,9 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
 
   private suspend fun downloadUpdates(downloaders: List<PluginDownloader>): List<PluginDownloader> {
     val downloadedList = mutableListOf<PluginDownloader>()
-    val enabledModules = PluginManagerCore.getPluginSet().moduleGraph.nodes.flatMap { listOf(it.pluginId) + it.pluginAliases }.toSet()
+    val enabledPluginsAndModules: Set<String> = PluginManagerCore.getPluginSet().getEnabledModules().flatMap {
+      listOf(it.moduleName ?: it.pluginId.idString) + it.pluginAliases.map { id -> id.idString }
+    }.toSet()
     val downloaders = downloaders.filter { downloader ->
       val existingUpdateState = updatesState[downloader.id]
       if (PluginManagerCore.getPlugin(downloader.id) == null) {
@@ -114,7 +119,7 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
       }
       val unsatisfiedDependencies = findUnsatisfiedDependencies(
         updateDescriptor = downloader.toPluginNode().dependencies,
-        enabledModules = enabledModules,
+        enabledPluginsAndModulesIds = enabledPluginsAndModules,
       )
       if (unsatisfiedDependencies.isNotEmpty()) {
         LOG.debug {
@@ -169,7 +174,7 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
              "(${updatesState.size} updates are prepared in total)")
   }
 
-  fun onPluginUpdatesCheck(updates: List<PluginDownloader>) {
+  fun onPluginUpdatesChecked(updates: List<PluginDownloader>) {
     LOG.debug { "onPluginUpdateCheck: ${updates.joinToString { it.pluginName }}" }
     val sent = pendingDownloads.trySend(updates)
     if (sent.isFailure) {
@@ -229,13 +234,13 @@ private val LOG
 @ApiStatus.Internal
 fun findUnsatisfiedDependencies(
   updateDescriptor: Collection<IdeaPluginDependency>,
-  enabledModules: Collection<PluginId>,
+  enabledPluginsAndModulesIds: Collection<String>,
 ): List<IdeaPluginDependency> {
   return updateDescriptor.filter { dep ->
     if (dep.isOptional) {
       return@filter false
     }
-    val dependencySatisfied = enabledModules.any { it == dep.pluginId }
+    val dependencySatisfied = enabledPluginsAndModulesIds.any { it == dep.pluginId.idString }
     !dependencySatisfied
   }
 }

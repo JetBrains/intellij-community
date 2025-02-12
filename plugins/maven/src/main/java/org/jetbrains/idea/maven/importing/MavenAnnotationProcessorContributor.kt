@@ -20,7 +20,7 @@ internal class MavenAnnotationProcessorContributor : MavenProjectResolutionContr
     val config = MavenJDOMUtil.findChildByPath(pluginConfiguration, "annotationProcessorPaths")
     if (config == null) return
 
-    val artifactsInfo = getProcessorArtifactInfos(config)
+    val artifactsInfo = getProcessorArtifactInfos(config, mavenProject)
     if (artifactsInfo.isEmpty()) {
       return
     }

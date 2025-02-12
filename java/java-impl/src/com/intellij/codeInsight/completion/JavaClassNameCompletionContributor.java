@@ -213,8 +213,10 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
   private static @NotNull MultiMap<String, PsiClass> getAllAnnotationClasses(PsiElement context, PrefixMatcher matcher) {
     MultiMap<String, PsiClass> map = new MultiMap<>();
     GlobalSearchScope scope = context.getResolveScope();
-    PsiClass annotation = JavaPsiFacade.getInstance(context.getProject()).findClass(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, scope);
-    if (annotation != null) {
+    Project project = context.getProject();
+    PsiClass[] annotations = JavaPsiFacade.getInstance(project).findClasses(
+      CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, GlobalSearchScope.allScope(project));
+    for (PsiClass annotation : annotations) {
       DirectClassInheritorsSearch.search(annotation, scope, false).forEach(psiClass -> {
         if (!psiClass.isAnnotationType() || psiClass.getQualifiedName() == null) return true;
 

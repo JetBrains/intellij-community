@@ -3,9 +3,7 @@
 
 package com.intellij.platform.ijent
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.map2Array
 
 /**
@@ -17,23 +15,12 @@ fun getIjentGrpcArgv(
   selfDeleteOnExit: Boolean = false,
   usrBinEnv: String = "/usr/bin/env",
 ): List<String> {
-  val debuggingLogLevel = when {
-    LOG.isTraceEnabled &&
-    (ApplicationManager.getApplication()?.isUnitTestMode == true || System.getProperty("ijent.trace.all") == "true") ->
-      "trace-all"
-
-    LOG.isTraceEnabled -> "trace"
-    LOG.isDebugEnabled -> "debug"
-    else -> "info"
-  }
-
   return listOfNotNull(
     usrBinEnv,
     *additionalEnv.entries.map2Array { (k, v) -> "$k=$v" },
     // "gdbserver", "0.0.0.0:12345",  // https://sourceware.org/gdb/onlinedocs/gdb/Connecting.html
     remotePathToIjent,
     "grpc-stdio-server",
-    "--log-level", debuggingLogLevel,
     if (selfDeleteOnExit) "--self-delete-on-exit" else null,
   )
 }

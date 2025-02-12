@@ -14,6 +14,7 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -51,7 +52,7 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk> {
-    savePathToExecutableToProperties()
+    savePathToExecutableToProperties(null)
 
     // todo think about better error handling
     val selectedBasePython = model.state.baseInterpreter.get()!!
@@ -66,9 +67,13 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
                              ProjectJdkTable.getInstance().allJdks.asList(),
                              model.myProjectPathFlows.projectPathWithDefault.first().toString(),
                              homePath,
-                             false)!!
+                             false)
+      .getOrElse { return Result.failure(it) }
     addSdk(newSdk)
+
+    module?.excludeInnerVirtualEnv(newSdk)
     model.addInterpreter(newSdk)
+
     return Result.success(newSdk)
   }
 
@@ -112,13 +117,11 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
   private fun installExecutable() {
     val pythonExecutable = model.state.baseInterpreter.get()?.homePath ?: getPythonExecutableString()
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", name, "via pip")) {
-      installPipIfNeeded(pythonExecutable)
-
       if (installationScript != null) {
-        installExecutableViaPythonScript(installationScript!!, pythonExecutable)
-      }
-      else {
-        installExecutableViaPip(name, pythonExecutable)
+        val executablePath = installExecutableViaPythonScript(installationScript, pythonExecutable, "-n", name).getOrNull()
+        if (executablePath != null) {
+          savePathToExecutableToProperties(executablePath)
+        }
       }
     }
   }
@@ -132,11 +135,17 @@ abstract class CustomNewEnvironmentCreator(private val name: String, model: Pyth
    *
    * If this property is not null, the provided script will be used for installation instead of the default pip installation.
    */
-  internal abstract val installationScript: Path?
+  private val installationScript: Path? = PythonHelpersLocator.findPathInHelpers("pycharm_package_installer.py")
 
-  internal abstract fun savePathToExecutableToProperties()
 
-  protected abstract fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Sdk?
+  /**
+   * Saves the provided path to an executable in the properties of the environment
+   *
+   * @param [path] The path to the executable that needs to be saved. This may be null when tries to find automatically.
+   */
+  internal abstract fun savePathToExecutableToProperties(path: Path?)
+
+  protected abstract suspend fun setupEnvSdk(project: Project?, module: Module?, baseSdks: List<Sdk>, projectPath: String, homePath: String?, installPackages: Boolean): Result<Sdk>
 
   internal abstract suspend fun detectExecutable()
 }

@@ -159,6 +159,28 @@ public class PyOverloadsResolutionTest extends PyTestCase {
              """);
   }
 
+  // PY-77167
+  public void testFirstMatchingFunctionOverloadWhenNotFollowedByImplementationInPyFile() {
+    doTest("str",
+           """
+             from typing import overload
+             
+             @overload
+             def func(x: int) -> int:
+                 pass
+             
+             @overload
+             def func(x: str) -> str:
+                 pass
+             
+             @overload
+             def func(x: object) -> object:
+                 pass
+             
+             expr = func("foo")
+             """);
+  }
+
   private void doTest(@NotNull String expectedType, @NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

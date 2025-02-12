@@ -4,6 +4,7 @@ import ai.grazie.nlp.tokenizer.sentence.StandardSentenceTokenizer
 import com.intellij.grazie.text.TextContent.TextDomain.COMMENTS
 import com.intellij.grazie.text.TextContent.TextDomain.DOCUMENTATION
 import com.intellij.grazie.utils.Text
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.PsiTodoSearchHelper
@@ -53,6 +54,7 @@ internal class CommentProblemFilter : ProblemFilter() {
 
   // the _todo_ word spoils the grammar of what follows
   private fun isTodoComment(file: PsiFile, text: TextContent): Boolean {
+    if (DumbService.getInstance(file.project).isDumb) return false
     val todos = CachedValuesManager.getProjectPsiDependentCache(file) {
       PsiTodoSearchHelper.getInstance(it.project).findTodoItems(it)
     }

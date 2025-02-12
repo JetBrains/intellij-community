@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
@@ -40,14 +40,15 @@ public final class JavaSdkUtil {
     }
   }
 
+  /// Returns the expected path to JUnit 4.13.2 location inside `.m2`.
+  /// @deprecated JUnit 4 is not included in the IDEA distribution anymore
+  @Deprecated
   public static @NotNull String getJunit4JarPath() {
-    return PathUtil.getJarPathForClass(ReflectionUtil.forName("org.junit.Test"));
+    return Path.of(SystemProperties.getUserHome(), ".m2/repository/junit/junit/4.13.2/junit-4.13.2.jar").toAbsolutePath().toString();
   }
 
-  /**
-   * @deprecated currently IDEA distribution includes junit3 library, but it may be removed in the future, so it's better not to rely on this;
-   * if you really need to get a path to JUnit3 you need to take it from some other place.
-   */
+  /// Returns the path for JUnit 3 jar, or the expected path to JUnit 3.8.2 location inside `.m2`.
+  /// @deprecated JUnit 3 is not included in the IDEA distribution anymore
   @Deprecated
   public static @NotNull String getJunit3JarPath() {
     try {
@@ -55,7 +56,7 @@ public final class JavaSdkUtil {
     }
     catch (Exception e) {
       //IDEA started from sources won't have JUnit3 library in classpath, so let's take it from Maven repository
-      return new File(SystemProperties.getUserHome(), ".m2/repository/junit/junit/3.8.1/junit-3.8.1.jar").getAbsolutePath();
+      return Path.of(SystemProperties.getUserHome(), ".m2/repository/junit/junit/3.8.2/junit-3.8.2.jar").toAbsolutePath().toString();
     }
   }
 

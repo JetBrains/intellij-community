@@ -4,11 +4,13 @@ package com.intellij.util.concurrency;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.AccessToken;
 import kotlin.Unit;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 final class ContextCallable<V> implements Callable<V> {
@@ -19,6 +21,7 @@ final class ContextCallable<V> implements Callable<V> {
   private final boolean myRoot;
   private final @NotNull ChildContext myChildContext;
   private final @NotNull Callable<? extends V> myCallable;
+  private final @NotNull AtomicBoolean myTracker;
 
   static class RunResult<V, E extends Exception> {
     Object result;
@@ -46,15 +49,23 @@ final class ContextCallable<V> implements Callable<V> {
   }
 
   @Async.Schedule
-  ContextCallable(boolean root, @NotNull ChildContext context, @NotNull Callable<? extends V> callable) {
+  ContextCallable(boolean root,
+                  @NotNull ChildContext context,
+                  @NotNull Callable<? extends V> callable,
+                  @NotNull AtomicBoolean cancellationTracker) {
     myRoot = root;
     myChildContext = context;
     myCallable = callable;
+    myTracker = cancellationTracker;
   }
 
   @Async.Execute
   @Override
   public V call() throws Exception {
+    if (myTracker.getAndSet(true)) {
+      // todo: add a cause of cancellation here as a suppressed runnable?
+      throw new ProcessCanceledException();
+    }
     RunResult<V, Exception> result;
     if (myRoot) {
       result = myChildContext.runInChildContext(true, () -> {

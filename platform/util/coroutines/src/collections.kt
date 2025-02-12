@@ -133,6 +133,18 @@ suspend fun <T, R> Collection<T>.mapConcurrent(
 }
 
 /**
+ * Maps each item of [this] collection to another item with [action] concurrently using [transformConcurrent] and collects non-null results.
+ */
+suspend fun <T, R> Collection<T>.mapNotNullConcurrent(
+  concurrency: Int = DEFAULT_CONCURRENCY,
+  action: suspend (T) -> R?
+): Collection<R> {
+  return transformConcurrent(concurrency) { v ->
+    action(v)?.let { mv -> out(mv) }
+  }
+}
+
+/**
  * Filters items of [this] collection according to [action] concurrently using [transformConcurrent].
  */
 suspend fun <T> Collection<T>.filterConcurrent(

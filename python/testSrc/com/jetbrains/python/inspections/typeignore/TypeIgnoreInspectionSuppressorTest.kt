@@ -96,7 +96,7 @@ class TypeIgnoreInspectionSuppressorTest : PyTestCase() {
   fun testIgnoreUnresolvedReferenceImport() {
     doTestByText("""
       import frobnicate  # type: ignore
-      <warning descr="Unused import statement 'import frobnicate1'">import <error descr="No module named 'frobnicate1'">frobnicate1</error></warning>
+      import <error descr="No module named 'frobnicate1'">frobnicate1</error>
     """)
   }
 

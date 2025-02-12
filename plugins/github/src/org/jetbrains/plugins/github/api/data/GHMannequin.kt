@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.api.data
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 
-@GraphQLFragment("/graphql/fragment/mannequinInfo.graphql")
+@GraphQLFragment("/graphql/fragment/actorInfo.graphql")
 class GHMannequin(
   id: String,
   override val login: String,

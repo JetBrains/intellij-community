@@ -27,7 +27,7 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
     productLayout.productImplementationModules = listOf(
       "intellij.platform.starter",
       "intellij.pycharm.community",
-      "intellij.platform.whatsNew",
+      "intellij.platform.whatsNew"
     )
     productLayout.bundledPluginModules +=
       sequenceOf(

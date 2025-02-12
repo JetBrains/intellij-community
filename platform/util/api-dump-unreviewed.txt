@@ -95,6 +95,7 @@ a:com.intellij.execution.process.BaseProcessHandler
 - pf:myProcess:java.lang.Process
 - pf:myWaitFor:com.intellij.execution.process.ProcessWaitFor
 - <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset):V
+- p:createWaitFor():com.intellij.execution.process.ProcessWaitFor
 - p:destroyProcessImpl():V
 - detachIsDefault():Z
 - p:detachProcessImpl():V

@@ -2,8 +2,10 @@
 package com.jetbrains.python.packaging.pipenv
 
 import com.intellij.execution.ExecutionException
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageManagerUI
@@ -16,25 +18,30 @@ class PyPipEnvPackageManagementService(project: Project, sdk: Sdk) : PyPackageMa
 
   override fun canInstallToUser() = false
 
+  @RequiresBackgroundThread
   override fun getAllPackages(): List<RepoPackage> {
-    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(sdk.pipFileLockSources, false)
+    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(runBlockingCancellable { pipFileLockSources(sdk) }, false)
     return allPackagesCached
   }
 
+  @RequiresBackgroundThread
   override fun reloadAllPackages(): List<RepoPackage> {
-    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(sdk.pipFileLockSources, true)
+    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(runBlockingCancellable { pipFileLockSources(sdk) }, true)
     return allPackagesCached
   }
 
+  @RequiresBackgroundThread
   override fun getAllPackagesCached(): List<RepoPackage> =
-    PyPIPackageUtil.INSTANCE.getAdditionalPackages(sdk.pipFileLockSources)
+    PyPIPackageUtil.INSTANCE.getAdditionalPackages(runBlockingCancellable { pipFileLockSources(sdk) })
 
-  override fun installPackage(repoPackage: RepoPackage,
-                              version: String?,
-                              forceUpgrade: Boolean,
-                              extraOptions: String?,
-                              listener: Listener,
-                              installToUser: Boolean) {
+  override fun installPackage(
+    repoPackage: RepoPackage,
+    version: String?,
+    forceUpgrade: Boolean,
+    extraOptions: String?,
+    listener: Listener,
+    installToUser: Boolean,
+  ) {
     val ui = PyPackageManagerUI(project, sdk, object : PyPackageManagerUI.Listener {
       override fun started() {
         listener.operationStarted(repoPackage.name)
@@ -45,9 +52,9 @@ class PyPipEnvPackageManagementService(project: Project, sdk: Sdk) : PyPackageMa
       }
     })
     val requirement = when {
-      version != null -> PyRequirementParser.fromLine("${repoPackage.name}==$version")
-      else -> PyRequirementParser.fromLine(repoPackage.name)
-    } ?: return
+                        version != null -> PyRequirementParser.fromLine("${repoPackage.name}==$version")
+                        else -> PyRequirementParser.fromLine(repoPackage.name)
+                      } ?: return
     val extraArgs = extraOptions?.split(" +".toRegex()) ?: emptyList()
     ui.install(listOf(requirement), extraArgs)
   }

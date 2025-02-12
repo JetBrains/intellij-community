@@ -1,3 +1,0 @@
-fragment mannequinInfo on Mannequin {
-  ...actorInfo
-}

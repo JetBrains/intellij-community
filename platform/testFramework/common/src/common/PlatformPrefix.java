@@ -26,6 +26,7 @@ public final class PlatformPrefix {
     "DataGrip",
     "Ruby",
     "PhpStorm",
+    "RustRover",
     "UltimateLangXml", "Idea", "PlatformLangXml"
     */
   };
