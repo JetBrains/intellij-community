@@ -4,13 +4,16 @@ package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.BranchedUnfoldingUtils
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.types.Variance
 
 class UnfoldPropertyToWhenIntention: KotlinApplicableModCommandAction<KtProperty, UnfoldPropertyToWhenIntention.Context>(KtProperty::class) {
     class Context(val propertyExplicitType: String?)
@@ -60,6 +63,7 @@ class UnfoldPropertyToWhenIntention: KotlinApplicableModCommandAction<KtProperty
         return initializer.entries.none { it.expression == null }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun KaSession.prepareContext(element: KtProperty): Context? {
         val initializer = element.initializer ?: return null
 
@@ -67,8 +71,7 @@ class UnfoldPropertyToWhenIntention: KotlinApplicableModCommandAction<KtProperty
 
         val propertyExplicitType = analyze(initializer) {
             val initializerType = initializer.expressionType ?: return@analyze null
-            val typeAsString = initializerType.expandedSymbol?.classId?.asFqNameString() ?: return@analyze null
-            if (initializerType.isMarkedNullable) "$typeAsString?" else typeAsString
+            initializerType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, Variance.INVARIANT)
         }
         return Context(propertyExplicitType)
     }

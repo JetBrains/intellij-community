@@ -3256,6 +3256,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("generics.kt")
+            public void testGenerics() throws Exception {
+                runTest("../testData/intentions/unfolding/propertyToWhen/generics.kt");
+            }
+
             @TestMetadata("nonLocalProperty.kt")
             public void testNonLocalProperty() throws Exception {
                 runTest("../testData/intentions/unfolding/propertyToWhen/nonLocalProperty.kt");
