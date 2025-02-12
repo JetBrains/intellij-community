@@ -128,7 +128,7 @@ internal suspend fun buildDistribution(
 
 private suspend fun buildBundledPluginsForAllPlatforms(
   state: DistributionBuilderState,
-  pluginLayouts: MutableSet<PluginLayout>,
+  pluginLayouts: Set<PluginLayout>,
   isUpdateFromSources: Boolean,
   buildPlatformJob: Deferred<List<DistributionFileEntry>>,
   searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
@@ -641,9 +641,8 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
   return result
 }
 
-private fun basePath(buildContext: BuildContext, moduleName: String): Path {
-  return Path.of(JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first()))
-}
+private fun basePath(buildContext: BuildContext, moduleName: String): Path =
+  Path.of(JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first()))
 
 suspend fun buildLib(
   moduleOutputPatcher: ModuleOutputPatcher,
@@ -707,9 +706,8 @@ private suspend fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutp
   moduleOutputPatcher.patchModuleOutput(moduleName, relativePath, text)
 }
 
-fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture, context: BuildContext): Path {
-  return context.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}")
-}
+fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture, context: BuildContext): Path =
+  context.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}")
 
 private suspend fun checkOutputOfPluginModules(
   mainPluginModule: String,

@@ -24,19 +24,15 @@ internal data class ContentReport(
     }
   }
 
-  fun all(): Sequence<DistributionFileEntry> {
-    return sequence {
-      yieldAll(platform)
-      yieldAll(bundledPlugins.flatMap { it.second })
-      yieldAll(nonBundledPlugins.flatMap { it.second })
-    }
+  fun all(): Sequence<DistributionFileEntry> = sequence {
+    yieldAll(platform)
+    yieldAll(bundledPlugins.flatMap { it.second })
+    yieldAll(nonBundledPlugins.flatMap { it.second })
   }
 
-  fun bundled(): Sequence<DistributionFileEntry> {
-    return sequence {
-      yieldAll(platform)
-      yieldAll(bundledPlugins.flatMap { it.second })
-    }
+  fun bundled(): Sequence<DistributionFileEntry> = sequence {
+    yieldAll(platform)
+    yieldAll(bundledPlugins.flatMap { it.second })
   }
 }
 
@@ -73,7 +69,7 @@ internal data class CustomAssetEntry(
 }
 
 /**
- * Represents a file in module-level library
+ * Represents a file in a module-level library
  */
 internal data class ModuleLibraryFileEntry(
   override val path: Path,

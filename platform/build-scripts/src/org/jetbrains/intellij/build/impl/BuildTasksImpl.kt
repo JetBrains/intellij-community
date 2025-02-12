@@ -398,11 +398,10 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
   copyDependenciesFile(context)
 
   logFreeDiskSpace("before compilation", context)
-  // compile all
-  context.compileModules(null)
+  context.compileModules(moduleNames = null) // compile all
+  logFreeDiskSpace("after compilation", context)
 
   val distributionState = createDistributionState(context)
-  logFreeDiskSpace("after compilation", context)
 
   coroutineScope {
     createMavenArtifactJob(context, distributionState)
@@ -419,7 +418,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
     }
 
     val contentReport = spanBuilder("build platform and plugin JARs").use {
-      val contentReport = buildDistribution(state = distributionState, context)
+      val contentReport = buildDistribution(distributionState, context)
       if (context.productProperties.buildSourcesArchive) {
         buildSourcesArchive(contentReport, context)
       }
