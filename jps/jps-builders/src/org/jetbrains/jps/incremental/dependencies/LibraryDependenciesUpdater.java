@@ -4,6 +4,7 @@ package org.jetbrains.jps.incremental.dependencies;
 import com.dynatrace.hash4j.hashing.HashStream64;
 import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
@@ -152,8 +153,8 @@ public final class LibraryDependenciesUpdater {
         return true;
       }
 
-      context.processMessage(new ProgressMessage(
-        JpsBuildBundle.message("progress.message.updating.library.state", updatedRoots.size(), count(deletedRoots), chunk.getPresentableShortName()))
+      sendProgress(
+        context, JpsBuildBundle.message("progress.message.updating.library.state", updatedRoots.size(), count(deletedRoots), chunk.getPresentableShortName())
       );
 
       List<Pair<Path, NodeSource>> toUpdate = collect(map(updatedRoots, root -> Pair.create(root, pathMapper.toNodeSource(root))), new ArrayList<>());
@@ -168,9 +169,9 @@ public final class LibraryDependenciesUpdater {
           nodeCount++;
           delta.associate(node, sources);
         }
-        context.processMessage(new ProgressMessage(
-          JpsBuildBundle.message("progress.message.processing.library", libRoot.getFileName(), nodeCount)
-        ));
+        sendProgress(
+          context, JpsBuildBundle.message("progress.message.processing.library", libRoot.getFileName(), nodeCount)
+        );
       }
 
       DifferentiateParameters diffParams = DifferentiateParametersBuilder.create("libraries of " + chunk.getName())
@@ -182,18 +183,17 @@ public final class LibraryDependenciesUpdater {
 
       if (!diffResult.isIncremental()) {
         if (!isFullRebuild) {
-          final String messageText = JpsBuildBundle.message("progress.message.marking.0.and.direct.dependants.for.recompilation", chunk.getPresentableShortName());
-          LOG.info("Non-incremental mode: " + messageText);
-          context.processMessage(new ProgressMessage(messageText));
+          sendProgress(
+            context, "Non-incremental mode: " + JpsBuildBundle.message("progress.message.marking.0.and.direct.dependants.for.recompilation", chunk.getPresentableShortName())
+          );
           FSOperations.markDirtyRecursively(context, CompilationRound.CURRENT, chunk, null);
         }
       }
       else if (diffParams.isCalculateAffected()) {
         Iterable<NodeSource> affectedSources = diffResult.getAffectedSources();
-        final String infoMessage = JpsBuildBundle.message("progress.message.dependency.analysis.found.0.affected.files", count(affectedSources));
-        LOG.info(infoMessage);
-        context.processMessage(new ProgressMessage(infoMessage));
-
+        sendProgress(
+          context, JpsBuildBundle.message("progress.message.dependency.analysis.found.0.affected.files", count(affectedSources))
+        );
         markAffectedFilesDirty(context, chunk, map(affectedSources, pathMapper::toPath));
       }
 
@@ -253,4 +253,8 @@ public final class LibraryDependenciesUpdater {
     }
   }
 
+  private static void sendProgress(CompileContext context, @NlsSafe String message) {
+    LOG.info(message);
+    context.processMessage(new ProgressMessage(message));
+  }
 }
