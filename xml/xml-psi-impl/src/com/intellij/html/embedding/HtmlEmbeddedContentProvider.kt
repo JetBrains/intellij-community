@@ -18,7 +18,7 @@ interface HtmlEmbeddedContentProvider {
   companion object {
     @JvmField
     val RAW_TEXT_EMBEDMENT: HtmlEmbedmentInfo = object : HtmlEmbedmentInfo {
-      override fun getElementType(): IElementType? = XmlTokenType.XML_DATA_CHARACTERS
+      override fun getElementType(): IElementType = XmlTokenType.XML_DATA_CHARACTERS
       override fun createHighlightingLexer(): Lexer = HtmlRawTextLexer()
     }
 
