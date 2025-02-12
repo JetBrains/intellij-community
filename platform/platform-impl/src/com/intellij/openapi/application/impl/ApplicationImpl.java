@@ -1254,6 +1254,11 @@ public final class ApplicationImpl extends ClientAwareComponentManager
   }
 
   @Override
+  public boolean isTopmostReadAccessAllowed() {
+    return getThreadingSupport().isInTopmostReadAction();
+  }
+
+  @Override
   public void writeIntentReadActionStarted(@NotNull Class<?> action) {
     myWriteIntentReadActionListenerDispatcher.getMulticaster().writeIntentReadActionStarted(action);
   }
