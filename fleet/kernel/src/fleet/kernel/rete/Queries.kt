@@ -444,8 +444,8 @@ data class BoundQuery<T>(val key: Any, val query: Query<T>) : Query<T> by query
  * [Producer]s of interned queries are shared between their dependant queries, allowing to share the work and save memory.
  * It makes sense to [intern] query if it is used to construct more than one other query.
  * */
-fun <T> Query<T>.intern(vararg key: Any): Query<T> =
-  internImpl(listOf(*key))
+fun <T> Query<T>.intern(firstKey: Any, vararg keys: Any): Query<T> =
+  internImpl(listOf(firstKey, *keys))
 
 @PublishedApi
 internal fun <T> Query<T>.internImpl(key: Any): Query<T> = 
