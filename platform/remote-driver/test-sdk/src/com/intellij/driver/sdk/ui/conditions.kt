@@ -79,5 +79,3 @@ val notEnabled: UiComponent.() -> Boolean = { !isEnabled() }
 val present: UiComponent.() -> Boolean = { present() }
 
 val notPresent: UiComponent.() -> Boolean = { notPresent() }
-
-fun haveText(value: String): UiComponent.() -> Boolean = { hasText(value) }
