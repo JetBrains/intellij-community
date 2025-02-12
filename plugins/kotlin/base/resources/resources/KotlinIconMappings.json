@@ -38,6 +38,7 @@
                             "kotlinToolWindow.svg": "org/jetbrains/kotlin/idea/icons/kotlin13.svg",
                             "kotlinGradleScript.svg": "org/jetbrains/kotlin/idea/icons/kotlin_gradle_script.svg",
                             "kotlinJs.svg": "org/jetbrains/kotlin/idea/icons/kotlin_js.svg",
+                            "kotlinNative.svg": "org/jetbrains/kotlin/idea/icons/kotlin_native.svg",
                             "kotlinScript.svg": "org/jetbrains/kotlin/idea/icons/kotlin_script.svg",
                             "lambda.svg": "org/jetbrains/kotlin/idea/icons/lambda.svg",
                             "objectKotlin.svg": "org/jetbrains/kotlin/idea/icons/objectKotlin.svg",
