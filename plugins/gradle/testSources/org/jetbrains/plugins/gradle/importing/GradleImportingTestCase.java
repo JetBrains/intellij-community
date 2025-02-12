@@ -589,8 +589,4 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     }
     return null;
   }
-
-  protected String convertToLibraryName(VirtualFile fsRoot) {
-    return "Gradle: " + fsRoot.getName();
-  }
 }

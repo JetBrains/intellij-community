@@ -733,17 +733,6 @@ public final class GradleProjectResolverUtil {
         for (File artifact : projectDependency.getProjectDependencyArtifacts()) {
           libraryDependencyData.getTarget().addPath(LibraryPathType.BINARY, artifact.getPath());
         }
-
-        if (projectDependency.getProjectDependencyArtifacts().size() == 1) {
-          projectDependency.getProjectDependencyArtifacts().stream()
-            .findFirst()
-            .filter(file -> file.getName().endsWith(".jar"))
-            .ifPresent(file -> {
-              String fileName = file.getName();
-              libraryDependencyData.getTarget().setInternalName("Gradle: " + fileName);
-              libraryDependencyData.getTarget().setExternalName(fileName);
-            });
-        }
         resultDataNode = ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
       }
       else {
@@ -886,17 +875,6 @@ public final class GradleProjectResolverUtil {
           defaultFCDep.isExcludedFromIndexing()) {
         library.addPath(LibraryPathType.EXCLUDED, file.getPath());
       }
-    }
-
-    if (fileCollectionDependency.getFiles().size() == 1) {
-      fileCollectionDependency.getFiles().stream()
-        .findFirst()
-        .filter(file -> file.getName().endsWith(".jar"))
-        .ifPresent(file -> {
-          String fileName = file.getName();
-          library.setInternalName("Gradle: " + fileName);//
-          library.setExternalName(fileName);
-        });
     }
 
     ownerDataNode.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData);
