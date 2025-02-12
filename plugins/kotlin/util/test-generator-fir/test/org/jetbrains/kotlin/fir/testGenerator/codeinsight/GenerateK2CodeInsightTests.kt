@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateToStringActionTe
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyTest
 import org.jetbrains.kotlin.idea.k2.hierarchy.AbstractFirHierarchyWithLibTest
 import org.jetbrains.kotlin.idea.k2.hints.*
+import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractKtCompilerDeclarationsHintProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractKtCompilerPluginModalityHintProviderTest
 import org.jetbrains.kotlin.idea.k2.hints.compilerPlugins.AbstractKtCompilerSupertypesHintProviderTest
 import org.jetbrains.kotlin.idea.k2.moveUpDown.AbstractFirMoveLeftRightTest
@@ -159,6 +160,10 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
 
         testClass<AbstractKtCompilerPluginModalityHintProviderTest> {
             model("hints/compilerPlugins/modality", pattern = inlayHintsFileRegexp)
+        }
+
+        testClass<AbstractKtCompilerDeclarationsHintProviderTest> {
+            model("hints/compilerPlugins/declarations", pattern = inlayHintsFileRegexp)
         }
 
         testClass<AbstractKtCompilerSupertypesHintProviderTest> {

@@ -292,6 +292,11 @@
             nameKey="hints.settings.default.parameters"
             descriptionKey="inlay.kotlin.default.parameters.hints"/>
 
+    <codeInsight.inlayProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.compilerPlugins.declaration.KtCompilerPluginGeneratedDeclarationsInlayHintsProvider"
+            id="kotlin.compiler.plugins.declarations"/>
+
     <vcs.codeVisionLanguageContext language="kotlin"
                                    implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinVcsCodeVisionContext"/>
     <codeInsight.codeVisionProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KotlinReferencesCodeVisionProvider"/>

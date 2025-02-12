@@ -82,6 +82,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//plugins/kotlin/kotlin.searching:searching-k2",
     "//plugins/kotlin/base/statistics",
+    "//platform/editor-ui-ex:editor-ex",
   ],
   runtime_deps = [":kotlin-code-insight-k2_resources"]
 )
@@ -164,6 +165,7 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//java/testFramework",
     "//plugins/kotlin/base/statistics",
+    "//platform/editor-ui-ex:editor-ex",
     "//plugins/kotlin/bundled-compiler-plugins-support",
     "//plugins/kotlin/base/scripting/scripting.k2",
   ],

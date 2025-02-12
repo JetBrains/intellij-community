@@ -119,8 +119,9 @@ class InlayTextMetrics(
   val ideScale: Float,
 ) {
   companion object {
-    internal fun create(editor: Editor, size: Float, fontType: Int, context: FontRenderContext) : InlayTextMetrics {
-      val font = if (EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays) {
+    @ApiStatus.Internal
+    fun create(editor: Editor, size: Float, fontType: Int, context: FontRenderContext, isUseEditorFontInInlays: Boolean) : InlayTextMetrics {
+      val font = if (isUseEditorFontInInlays) {
         val editorFont = EditorUtil.getEditorFont()
         editorFont.deriveFont(fontType, size)
       } else {
@@ -132,6 +133,10 @@ class InlayTextMetrics(
       val fontHeight = ceil(font.createGlyphVector(context, "Albpq@").visualBounds.height).toInt()
       val fontBaseline = ceil(font.createGlyphVector(context, "Alb").visualBounds.height).toInt()
       return InlayTextMetrics(editor, fontHeight, fontBaseline, metrics, fontType, UISettings.getInstance().ideScale)
+    }
+
+    internal fun create(editor: Editor, size: Float, fontType: Int, context: FontRenderContext) : InlayTextMetrics {
+      return create(editor, size, fontType, context, EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays)
     }
   }
 
@@ -163,7 +168,8 @@ class InlayTextMetrics(
   }
 }
 
-private fun getFontRenderContext(editorComponent: JComponent): FontRenderContext {
+@ApiStatus.Internal
+fun getFontRenderContext(editorComponent: JComponent): FontRenderContext {
   val editorContext = FontInfo.getFontRenderContext(editorComponent)
   return FontRenderContext(editorContext.transform,
                            AntialiasingType.getKeyForCurrentScope(false),
