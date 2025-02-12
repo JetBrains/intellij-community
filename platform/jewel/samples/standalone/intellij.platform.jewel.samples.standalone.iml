@@ -14,9 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.10/kotlin-compose-compiler-plugin-2.1.10.jar</arg>
-              </args>
+              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.10/kotlin-compose-compiler-plugin-2.1.10.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -70,20 +68,15 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
-    <orderEntry type="module" module-name="intellij.libraries.skiko" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.autolink" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.decoratedWindow" />
     <orderEntry type="module" module-name="intellij.platform.jewel.intUi.decoratedWindow" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.core" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.autolink" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmAlerts" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmStrikethrough" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmTables" />
+    <orderEntry type="module" module-name="intellij.libraries.skiko" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.decoratedWindow" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.intUiStandaloneStyling" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.samples.showcase" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.core" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmAlerts" />
     <orderEntry type="library" scope="RUNTIME" name="jna" level="project" />
     <orderEntry type="module-library" scope="RUNTIME">
       <library name="org.lwjgl.lwjgl" type="repository">
@@ -139,5 +132,10 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.samples.showcase" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmTables" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmStrikethrough" />
   </component>
 </module>

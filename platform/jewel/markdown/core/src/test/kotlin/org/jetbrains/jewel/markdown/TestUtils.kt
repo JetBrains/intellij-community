@@ -18,7 +18,7 @@ import org.junit.Assert.assertTrue
 public fun List<MarkdownBlock>.assertEquals(vararg expected: MarkdownBlock) {
     val differences = findDifferences(expected.toList(), indentSize = 0)
     assertTrue(
-        "The following differences were found:\n\n" + "${differences.joinToString("\n").replace('\t', '→')}\n\n",
+        "The following differences were found:\n\n" + "${differences.joinToString("\n").replace('\t', '?')}\n\n",
         differences.isEmpty(),
     )
 }

@@ -179,6 +179,7 @@ object CommunityLibraryLicenses {
       .additionalLibraryNames(
         "commonmark.ext.autolink",
         "commonmark.ext.gfm.tables",
+        "commonmark.ext.gfm.strikethrough",
         "org.commonmark.commonmark"
       )
       .copyrightText("Copyright (c) 2015, Atlassian Pty Ltd")
