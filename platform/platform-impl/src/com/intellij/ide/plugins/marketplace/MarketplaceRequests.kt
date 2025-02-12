@@ -525,7 +525,10 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     }
   }
 
-  fun getBrokenPlugins(currentBuild: BuildNumber): Map<PluginId, Set<String>> {
+  /**
+   * @return null if failed to download brokenPlugins from the Marketplace
+   */
+  fun getBrokenPlugins(currentBuild: BuildNumber): Map<PluginId, Set<String>>? {
     val brokenPlugins = try {
       readOrUpdateFile(
         Paths.get(PathManager.getPluginTempPath(), "brokenPlugins.json"),
@@ -536,7 +539,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     }
     catch (e: Exception) {
       LOG.infoOrDebug("Can not get broken plugins file from Marketplace", e)
-      return emptyMap()
+      return null
     }
 
     val brokenPluginsMap = HashMap<PluginId, MutableSet<String>>()

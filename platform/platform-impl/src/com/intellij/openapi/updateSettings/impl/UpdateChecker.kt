@@ -251,7 +251,7 @@ object UpdateChecker {
     indicator?.text = IdeBundle.message("updates.checking.plugins")
     if (!PluginEnabler.HEADLESS.isIgnoredDisabledPlugins) {
       val brokenPlugins = MarketplaceRequests.getInstance().getBrokenPlugins(ApplicationInfo.getInstance().build)
-      if (brokenPlugins.isNotEmpty()) {
+      if (!brokenPlugins.isNullOrEmpty()) {
         updateBrokenPlugins(brokenPlugins)
       }
     }
