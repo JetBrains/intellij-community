@@ -21,8 +21,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -274,55 +272,6 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     void clear() {
       clearUserData();
     }
-  }
-
-  @Override
-  public void commit() {
-    ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
-      if (ExternalProjectsWorkspaceImpl.isDependencySubstitutionEnabled()) {
-        updateSubstitutions();
-      }
-      for (Map.Entry<Library, Library.ModifiableModel> entry: myModifiableLibraryModels.entrySet()) {
-        Library fromLibrary = entry.getKey();
-        Library.ModifiableModel modifiableModel = entry.getValue();
-        // removed and (previously) not committed library is being disposed by LibraryTableBase.LibraryModel.removeLibrary
-        // the modifiable model of such library shouldn't be committed
-        if ((fromLibrary instanceof LibraryEx && ((LibraryEx)fromLibrary).isDisposed()) ||
-            (getModifiableWorkspace() != null && getModifiableWorkspace().isSubstituted(fromLibrary.getName()))) {
-          Disposer.dispose(modifiableModel);
-        }
-        else {
-          modifiableModel.commit();
-        }
-      }
-      getModifiableProjectLibrariesModel().commit();
-
-      Collection<ModifiableRootModel> rootModels = myModifiableRootModels.values();
-      ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[0]);
-      for (ModifiableRootModel model: rootModels1) {
-        assert !model.isDisposed() : "Already disposed: " + model;
-      }
-
-      if (myModifiableModuleModel != null) {
-        ModifiableModelCommitter.multiCommit(rootModels1, myModifiableModuleModel);
-      }
-      else {
-        for (ModifiableRootModel model: rootModels1) {
-          model.commit();
-        }
-      }
-      for (Map.Entry<Module, String> entry: myProductionModulesForTestModules.entrySet()) {
-        TestModuleProperties.getInstance(entry.getKey()).setProductionModuleName(entry.getValue());
-      }
-
-      for (Map.Entry<Module, ModifiableFacetModel> each: myModifiableFacetModels.entrySet()) {
-        if (!each.getKey().isDisposed()) {
-          each.getValue().commit();
-        }
-      }
-      myModifiableModels.values().forEach(ModifiableModel::commit);
-    });
-    myUserData.clear();
   }
 
   @Override

@@ -510,7 +510,6 @@ a:com.intellij.openapi.externalSystem.service.project.AbstractIdeModifiableModel
 - pf:myProductionModulesForTestModules:java.util.Map
 - pf:myUserData:com.intellij.openapi.externalSystem.service.project.AbstractIdeModifiableModelsProvider$MyUserDataHolderBase
 - <init>(com.intellij.openapi.project.Project):V
-- commit():V
 - createLibrary(java.lang.String):com.intellij.openapi.roots.libraries.Library
 - createLibrary(java.lang.String,com.intellij.openapi.roots.ProjectModelExternalSource):com.intellij.openapi.roots.libraries.Library
 - dispose():V
