@@ -368,6 +368,7 @@ a:com.intellij.ui.ColoredTreeCellRenderer
 - <init>(com.intellij.ui.components.JBHtmlPaneStyleConfiguration,com.intellij.ui.components.JBHtmlPaneConfiguration):V
 - dispose():V
 - f:getBackgroundFlow():kotlinx.coroutines.flow.StateFlow
+- p:getContentsScaleFactor():F
 - getText():java.lang.String
 - p:initializePaneConfiguration(com.intellij.ui.components.JBHtmlPaneConfiguration$Builder):V
 - p:initializeStyleConfiguration(com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder):V

@@ -21,7 +21,6 @@ import com.intellij.ui.Gray
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementKind
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementProperty
-import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.StyleSheetUtil
@@ -34,6 +33,7 @@ import java.awt.Color
 import java.lang.Integer.toHexString
 import javax.swing.UIManager
 import javax.swing.text.html.StyleSheet
+import kotlin.math.roundToInt
 
 @ApiStatus.Internal
 const val CODE_BLOCK_CLASS: String = "code-block"
@@ -61,8 +61,8 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
     }, messageBus)
   }
 
-  fun getStyleSheet(paneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
-    styleSheetCache.get(Triple(paneBackgroundColor.rgb and 0xffffff, scale(100), configuration))
+  fun getStyleSheet(paneBackgroundColor: Color, scaleFactor: Float, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
+    styleSheetCache.get(Triple(paneBackgroundColor.rgb and 0xffffff, scaleFactor, configuration))
 
   private val inlineCodeStyling = ControlColorStyleBuilder(
     ElementKind.CodeInline,
@@ -90,18 +90,21 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
     fallbackToEditorBorder = true,
   )
 
-  private val styleSheetCache: LoadingCache<Triple<Int, Int, JBHtmlPaneStyleConfiguration>, StyleSheet> = Caffeine.newBuilder()
+  private val styleSheetCache: LoadingCache<Triple<Int, Float, JBHtmlPaneStyleConfiguration>, StyleSheet> = Caffeine.newBuilder()
     .maximumSize(20)
-    .build { (bgColor, _, configuration) -> buildStyleSheet(Color(bgColor), configuration) }
+    .build { (bgColor, scaleFactor, configuration) -> buildStyleSheet(Color(bgColor), { (it * scaleFactor).roundToInt() }, configuration) }
 
-  private fun buildStyleSheet(paneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
+  private fun buildStyleSheet(paneBackgroundColor: Color, scale: (Int) -> Int, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
     StyleSheetUtil.loadStyleSheet(sequenceOf(
-      getDefaultFormattingStyles(configuration),
-      getCodeRules(paneBackgroundColor, configuration),
-      getShortcutRules(paneBackgroundColor, configuration)
+      getDefaultFormattingStyles(configuration, scale),
+      getCodeRules(paneBackgroundColor, configuration, scale),
+      getShortcutRules(paneBackgroundColor, configuration, scale)
     ).joinToString("\n"))
 
-  private fun getDefaultFormattingStyles(configuration: JBHtmlPaneStyleConfiguration): String {
+  private fun getDefaultFormattingStyles(
+    configuration: JBHtmlPaneStyleConfiguration,
+    scale: (Int) -> Int,
+  ): String {
     val fontSize = StartupUiUtil.labelFont.size
     val spacingBefore = scale(configuration.spaceBeforeParagraph)
     val spacingAfter = scale(configuration.spaceAfterParagraph)
@@ -157,6 +160,7 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
   private fun getShortcutRules(
     paneBackgroundColor: Color,
     configuration: JBHtmlPaneStyleConfiguration,
+    scale: (Int) -> Int,
   ): String {
     val fontName = if (configuration.useFontLigaturesInCode) EDITOR_FONT_NAME_PLACEHOLDER else EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER
     val contentCodeFontSizePercent = getMonospaceFontSizeCorrection(true)
@@ -168,7 +172,7 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
         font-family:"$fontName"; 
         padding: ${scale(1)}px ${scale(6)}px; 
         margin: ${scale(1)}px 0px;
-        ${shortcutStyling.getCssStyle(paneBackgroundColor, configuration)}
+        ${shortcutStyling.getCssStyle(paneBackgroundColor, configuration, scale)}
       }
       """.trimIndent()
     return result
@@ -177,6 +181,7 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
   private fun getCodeRules(
     paneBackgroundColor: Color,
     configuration: JBHtmlPaneStyleConfiguration,
+    scale: (Int) -> Int,
   ): String {
     val result = mutableListOf<String>()
     val spacingBefore = scale(configuration.spaceBeforeParagraph)
@@ -195,7 +200,7 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
     }
     if (configuration.enableInlineCodeBackground) {
       val selectors = configuration.inlineCodeParentSelectors.asSequence().map { "$it code" }.joinToString(", ")
-      result.add("$selectors { ${inlineCodeStyling.getCssStyle(paneBackgroundColor, configuration)} }")
+      result.add("$selectors { ${inlineCodeStyling.getCssStyle(paneBackgroundColor, configuration, scale)} }")
       result.add("$selectors { padding: ${scale(1)}px ${scale(4)}px; margin: ${scale(1)}px 0px; }")
     }
     if (configuration.enableCodeBlocksBackground) {
@@ -206,7 +211,7 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
         )
       else
         blockCodeStyling
-      result.add("div.code-block { ${blockCodeStyling.getCssStyle(paneBackgroundColor, configuration)} }")
+      result.add("div.code-block { ${blockCodeStyling.getCssStyle(paneBackgroundColor, configuration, scale)} }")
       result.add("div.code-block { margin: ${spacingBefore}px 0 ${spacingAfter}px 0; padding: ${scale(10)}px ${scale(13)}px ${scale(10)}px ${scale(13)}px; }")
       result.add("div.code-block pre { padding: 0px; margin: 0px; line-height: 120%; }")
     }
@@ -251,7 +256,11 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
 
     private fun getBorderRadius(configuration: JBHtmlPaneStyleConfiguration): Int? = getInt(configuration, ElementProperty.BorderRadius)
 
-    fun getCssStyle(editorPaneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): String {
+    fun getCssStyle(
+      editorPaneBackgroundColor: Color,
+      configuration: JBHtmlPaneStyleConfiguration,
+      scale: (Int) -> Int,
+    ): String {
       val result = StringBuilder()
 
       if (configuration.editorInlineContext) {

@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.ui.*
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions.icons
@@ -126,7 +127,7 @@ open class JBHtmlPane : JEditorPane, Disposable {
   constructor(
     styleConfiguration: JBHtmlPaneStyleConfiguration,
     paneConfiguration: JBHtmlPaneConfiguration,
-  ): super() {
+  ) : super() {
     this.myStyleConfiguration = styleConfiguration
     this.myPaneConfiguration = paneConfiguration
     init()
@@ -136,9 +137,9 @@ open class JBHtmlPane : JEditorPane, Disposable {
    * Default constructor, the pane configuration is initialized using [initializePaneConfiguration]
    * and [initializeStyleConfiguration] methods.
    */
-  constructor(): super() {
-    myStyleConfiguration = JBHtmlPaneStyleConfiguration.builder().also { initializeStyleConfiguration(it)}.build()
-    myPaneConfiguration = JBHtmlPaneConfiguration.builder().also { initializePaneConfiguration(it)}.build()
+  constructor() : super() {
+    myStyleConfiguration = JBHtmlPaneStyleConfiguration.builder().also { initializeStyleConfiguration(it) }.build()
+    myPaneConfiguration = JBHtmlPaneConfiguration.builder().also { initializePaneConfiguration(it) }.build()
     init()
   }
 
@@ -228,6 +229,16 @@ open class JBHtmlPane : JEditorPane, Disposable {
   val backgroundFlow: StateFlow<Color>
     get() = mutableBackgroundFlow
 
+  /**
+   * Override to provide an alternate scale factor for pane contents.
+   */
+  protected open val contentsScaleFactor: Float
+    get() = JBUIScale.scale(1.0f)
+
+  /**
+   * Forces all stylesheets to be regenerated if anything changed,
+   * and reapplies CSS to all controls again.
+   */
   fun reloadCssStylesheets() {
     updateDocumentationPaneDefaultCssRules(editorKit as HTMLEditorKit)
   }
@@ -238,7 +249,7 @@ open class JBHtmlPane : JEditorPane, Disposable {
       ?.let { editorStyleSheet.removeStyleSheet(it) }
     val newStyleSheet = StyleSheet()
       .also { myCurrentDefaultStyleSheet = it }
-    newStyleSheet.addStyleSheet(service.getDefaultStyleSheet(background, myStyleConfiguration))
+    newStyleSheet.addStyleSheet(service.getDefaultStyleSheet(background, contentsScaleFactor, myStyleConfiguration))
     newStyleSheet.addStyleSheet(service.getEditorColorsSchemeStyleSheet(myStyleConfiguration.colorScheme))
     myPaneConfiguration.customStyleSheetProviders.forEach {
       newStyleSheet.addStyleSheet(it(this))
@@ -279,7 +290,7 @@ open class JBHtmlPane : JEditorPane, Disposable {
 
     fun defaultEditorCssFontResolver(): CSSFontResolver
 
-    fun getDefaultStyleSheet(paneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): StyleSheet
+    fun getDefaultStyleSheet(paneBackgroundColor: Color, scaleFactor: Float, configuration: JBHtmlPaneStyleConfiguration): StyleSheet
 
     fun getEditorColorsSchemeStyleSheet(editorColorsScheme: EditorColorsScheme): StyleSheet
 
