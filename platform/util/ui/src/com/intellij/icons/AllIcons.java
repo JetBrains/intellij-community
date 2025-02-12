@@ -985,7 +985,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Module = load("expui/nodes/module.svg", "nodes/Module.svg", -1084587309, 0);
     /** 8x8 */ public static final @NotNull Icon Module8x8 = load("expui/nodes/module8x8.svg", -887506793, 2);
     /** 16x16 */ public static final @NotNull Icon ModuleGroup = load("expui/nodes/moduleGroup.svg", "nodes/moduleGroup.svg", 612825130, 0);
-    /** 16x16 */ public static final @NotNull Icon MultipleTypeDefinitions = load("nodes/multipleTypeDefinitions.svg", 255042021, 0);
+    /** 16x16 */ public static final @NotNull Icon MultipleTypeDefinitions = load("expui/nodes/multipleTypeDefinitions.svg", "nodes/multipleTypeDefinitions.svg", 255042021, 0);
     /** 16x16 */ public static final @NotNull Icon NativeLibrariesFolder = load("nodes/nativeLibrariesFolder.svg", -934491736, 0);
     /** 16x16 */ public static final @NotNull Icon NewParameter = load("expui/nodes/parameter.svg", "nodes/newParameter.svg", 812802746, 0);
     /** 16x16 */ public static final @NotNull Icon NodePlaceholder = load("nodes/nodePlaceholder.svg", 1483179468, 0);
