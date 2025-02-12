@@ -565,7 +565,12 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     if (project instanceof LightEditCompatible) {
       return Collections.emptyList();
     }
-    return IndexableFilesIndex.getInstance(project).getIndexingIterators();
+    if (Registry.is("use.workspace.file.index.to.generate.iterators")) {
+      return IndexingIteratorsProvider.Companion.getInstance(project).getIndexingIterators();
+    }
+    else {
+      return IndexableFilesIndex.getInstance(project).getIndexingIterators();
+    }
   }
 
   private @Nullable <K, V> IntSet collectFileIdsContainingAllKeys(@NotNull ID<K, V> indexId,

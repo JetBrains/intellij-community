@@ -128,8 +128,12 @@
                  description="Use specialized Eel API for working with remote filesystems. This may result in a signigicant performance improvement and better CPU utilization"/>
     <registryKey defaultValue="true" key="cache.nulls.for.pushed.properties" restartRequired="true"
                  description="Cache null values for pushed properties to avoid reading nulls from disk every time."/>
+    <registryKey defaultValue="true" key="use.workspace.file.index.to.generate.iterators" restartRequired="true"
+                 description="Use WorkspaceFileIndex instead of IndexableFileIndex to generate IndexingIterators"/>
     <projectService serviceInterface="com.intellij.util.indexing.IndexableFilesIndex"
                     serviceImplementation="com.intellij.util.indexing.roots.IndexableFilesIndexImpl"/>
+    <projectService serviceInterface="com.intellij.util.indexing.IndexingIteratorsProvider"
+                    serviceImplementation="com.intellij.util.indexing.roots.IndexingIteratorsProviderImpl"/>
     <postStartupActivity implementation="com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHealthCheckStarter"/>
     <projectService serviceImplementation="com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHealthCheck"/>
 

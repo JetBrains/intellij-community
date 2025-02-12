@@ -54,6 +54,10 @@ interface IndexingRootHolder {
     fun fromFile(root: VirtualFile): IndexingRootHolder {
       return IndexingRootHolderImpl(listOf(root), emptyList())
     }
+
+    fun fromFileNonRecursive(root: VirtualFile): IndexingRootHolder {
+      return IndexingRootHolderImpl(emptyList(), listOf(root))
+    }
   }
 }
 
