@@ -13,10 +13,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.ExceptionBreakpoint;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionTestCase;
-import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -158,8 +155,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       assertNotNull("Debug process was not started", debugProcess);
 
       myBreakpointProvider = new BreakpointProvider(myDebugProcess);
-      DebugProcessListener processListener = new DelayedEventsProcessListener(myBreakpointProvider);
-      debugProcess.addDebugProcessListener(processListener, getTestRootDisposable());
+      debugProcess.addDebugProcessListener(myBreakpointProvider, getTestRootDisposable());
     }
     return myBreakpointProvider;
   }
@@ -557,50 +553,6 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
     else {
       runnable.run();
-    }
-  }
-
-  protected static class DelayedEventsProcessListener implements DebugProcessListener {
-    private final DebugProcessAdapterImpl myTarget;
-
-    public DelayedEventsProcessListener(DebugProcessAdapterImpl target) {
-      myTarget = target;
-    }
-
-    @Override
-    public void paused(@NotNull SuspendContext suspendContext) {
-      pauseExecution();
-      myTarget.paused(suspendContext);
-    }
-
-    @Override
-    public void resumed(SuspendContext suspendContext) {
-      pauseExecution();
-      myTarget.resumed(suspendContext);
-    }
-
-    @Override
-    public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
-      myTarget.processDetached(process, closedByUser);
-    }
-
-    @Override
-    public void processAttached(@NotNull DebugProcess process) {
-      myTarget.processAttached(process);
-    }
-
-    @Override
-    public void connectorIsReady() {
-      myTarget.connectorIsReady();
-    }
-
-    @Override
-    public void attachException(RunProfileState state, ExecutionException exception, RemoteConnection remoteConnection) {
-      myTarget.attachException(state, exception, remoteConnection);
-    }
-
-    private static void pauseExecution() {
-      TimeoutUtil.sleep(10);
     }
   }
 
