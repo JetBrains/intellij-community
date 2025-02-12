@@ -673,6 +673,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitImportModuleStatement(@NotNull PsiImportModuleStatement statement) {
     super.visitImportModuleStatement(statement);
     if (!hasErrorResults()) checkFeature(statement, JavaFeature.MODULE_IMPORT_DECLARATIONS);
+    if (!hasErrorResults()) myImportChecker.checkImportModuleInModuleInfo(statement);
   }
 
   @Override

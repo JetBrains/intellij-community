@@ -1,4 +1,4 @@
-// Copyright 20castTypeJetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting.errors;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -1219,6 +1219,8 @@ public final class JavaErrorKinds {
       .withRawDescription(
         (psi, result) -> message("access.generic.problem", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
 
+  public static final Simple<PsiImportModuleStatement> MODULE_IMPORT_STATEMENT_NOT_ALLOWED = error(PsiImportModuleStatement.class, "import.module.not.allowed")
+    .withRawDescription(ref -> message("import.module.not.allowed"));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> IMPORT_SINGLE_CLASS_CONFLICT =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "import.single.class.conflict")
       .withRawDescription((ref, cls) -> message("import.single.class.conflict", cls.getQualifiedName()));
