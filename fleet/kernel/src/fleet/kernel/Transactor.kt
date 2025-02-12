@@ -6,6 +6,7 @@ import com.jetbrains.rhizomedb.impl.*
 import fleet.kernel.rebase.OfferContributorEntity
 import fleet.kernel.rebase.RemoteKernelConnectionEntity
 import fleet.kernel.rebase.WorkspaceClockEntity
+import fleet.multiplatform.shims.newHighPriorityCoroutineDispatcher
 import fleet.reporting.shared.runtime.currentSpan
 import fleet.reporting.shared.tracing.completeWithResult
 import fleet.rpc.client.RpcClientDisconnectedException
@@ -353,13 +354,6 @@ suspend fun <T> withTransactor(
                                                         extraBufferCapacity = ChangesBufferSize,
                                                         onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-    val changesThread = Executors.newSingleThreadExecutor { runnable ->
-      Thread(runnable, "Kernel event loop thread ${kernelId}").apply {
-        isDaemon = true
-        priority = Thread.MAX_PRIORITY
-      }
-    }
-
     val dbState = object : StateFlow<DB> {
       override val replayCache: List<DB>
         get() = sharedFlow.replayCache.map { it.db() }
@@ -476,80 +470,81 @@ suspend fun <T> withTransactor(
 
     sharedFlow.emit(TransactorEvent.Init(timestamp = 0L, db = initialDb))
 
-    launch(coroutineNameAppended("Changes processing job for $transactor") + changesThread.asCoroutineDispatcher(),
-           start = CoroutineStart.ATOMIC) {
-      spannedScope("kernel changes") {
-        var ts = 1L
-        consumeEach(priorityDispatchChannel, backgroundDispatchChannel) { changeTask ->
-          val changeResult = runCatching {
-            // cancellation exception thrown from here means that the coroutiune issued the change is cancelled
-            // we should not rethrow it here as it will destroy kernel's event loop
-            // in a sense the cancellation is a rogue one, we should treat it as a simple change failure, and thus keep it INSIDE runCatching
-            changeTask.rendezvous.await()
-            measureTimedValue {
-              val dbBefore = dbState.value
-              span("change", {
-                set("ts", (dbBefore.timestamp + 1).toString())
-                cause = changeTask.causeSpan
-              }) {
-                dbBefore.change(defaultPart) {
-                  meta[DeferredChangeKey] = changeTask.resultDeferred
-                  meta[SpanChangeKey] = currentSpan
-                  middleware.run { performChange(changeTask.f) }
-                  DbTimestamp.single()[DbTimestamp.Timestamp]++
-                }
-              }
-            }
-          }
-
-          changeResult
-            .onSuccess { timedChange ->
-              val slowReporter = transactor.meta[SlowChangeReporterKernelKey]
-              checkDuration(coroutineContext = currentCoroutineContext(),
-                            slowReporter = slowReporter,
-                            duration = timedChange.duration,
-                            location = changeTask.causeSpan)
-              val change = timedChange.value
-              Transactor.logger.trace { "[$transactor] broadcasting change $change" }
-              sharedFlow.emit(TransactorEvent.SequentialChange(timestamp = ts++,
-                                                               change = change))
-              change.meta[OnCompleteKey]?.forEach { onComplete ->
-                catching {
-                  asOf(change.dbAfter) {
-                    onComplete(transactor)
+    newHighPriorityCoroutineDispatcher("Kernel event loop thread ${kernelId}").use { coroutineDispatcher ->
+      launch(coroutineNameAppended("Changes processing job for $transactor") + coroutineDispatcher,
+             start = CoroutineStart.ATOMIC) {
+        spannedScope("kernel changes") {
+          var ts = 1L
+          consumeEach(priorityDispatchChannel, backgroundDispatchChannel) { changeTask ->
+            val changeResult = runCatching {
+              // cancellation exception thrown from here means that the coroutiune issued the change is cancelled
+              // we should not rethrow it here as it will destroy kernel's event loop
+              // in a sense the cancellation is a rogue one, we should treat it as a simple change failure, and thus keep it INSIDE runCatching
+              changeTask.rendezvous.await()
+              measureTimedValue {
+                val dbBefore = dbState.value
+                span("change", {
+                  set("ts", (dbBefore.timestamp + 1).toString())
+                  cause = changeTask.causeSpan
+                }) {
+                  dbBefore.change(defaultPart) {
+                    meta[DeferredChangeKey] = changeTask.resultDeferred
+                    meta[SpanChangeKey] = currentSpan
+                    middleware.run { performChange(changeTask.f) }
+                    DbTimestamp.single()[DbTimestamp.Timestamp]++
                   }
-                }.onFailure { e ->
-                  Transactor.logger.error(e) { "ChangeScope.onComplete action failed" }
-                }
-              }
-              changeTask.resultDeferred.complete(change)
-            }
-            .onFailure { x ->
-              changeTask.resultDeferred.completeExceptionally(x)
-              if (x !is CancellationException) {
-                Transactor.logger.error(x) {
-                  "$transactor change has failed"
                 }
               }
             }
+
+            changeResult
+              .onSuccess { timedChange ->
+                val slowReporter = transactor.meta[SlowChangeReporterKernelKey]
+                checkDuration(coroutineContext = currentCoroutineContext(),
+                              slowReporter = slowReporter,
+                              duration = timedChange.duration,
+                              location = changeTask.causeSpan)
+                val change = timedChange.value
+                Transactor.logger.trace { "[$transactor] broadcasting change $change" }
+                sharedFlow.emit(TransactorEvent.SequentialChange(timestamp = ts++,
+                                                                 change = change))
+                change.meta[OnCompleteKey]?.forEach { onComplete ->
+                  catching {
+                    asOf(change.dbAfter) {
+                      onComplete(transactor)
+                    }
+                  }.onFailure { e ->
+                    Transactor.logger.error(e) { "ChangeScope.onComplete action failed" }
+                  }
+                }
+                changeTask.resultDeferred.complete(change)
+              }
+              .onFailure { x ->
+                changeTask.resultDeferred.completeExceptionally(x)
+                if (x !is CancellationException) {
+                  Transactor.logger.error(x) {
+                    "$transactor change has failed"
+                  }
+                }
+              }
+          }
         }
-      }
-    }.apply {
-      invokeOnCompletion { x ->
-        check(sharedFlow.tryEmit(TransactorEvent.TheEnd(x))) {
-          "changeFlow should have been created with drop-oldest"
+      }.apply {
+        invokeOnCompletion { x ->
+          check(sharedFlow.tryEmit(TransactorEvent.TheEnd(x))) {
+            "changeFlow should have been created with drop-oldest"
+          }
         }
-      }
-    }.use {
-      try {
-        withContext(transactor + DbSource.ContextElement(FlowDbSource(transactor.dbState, debugName = "kernel $transactor")) + coroutineNameAppended("withKernel")) {
-          body(transactor)
+      }.use {
+        try {
+          withContext(transactor + DbSource.ContextElement(FlowDbSource(transactor.dbState, debugName = "kernel $transactor")) + coroutineNameAppended("withKernel")) {
+            body(transactor)
+          }
         }
-      }
-      finally {
-        Transactor.logger.info { "shutting down kernel $transactor" }
-        priorityDispatchChannel.close(); backgroundDispatchChannel.close()
-        changesThread.shutdown()
+        finally {
+          Transactor.logger.info { "shutting down kernel $transactor" }
+          priorityDispatchChannel.close(); backgroundDispatchChannel.close()
+        }
       }
     }
   }
