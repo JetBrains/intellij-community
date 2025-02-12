@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,10 +33,13 @@ public interface LazyQuickFixUpdater {
    * Wait until the background calculation of unresolved reference quickfixes for {@code info} is completed.
    * This method might be needed when that information is required synchronously, e.g., when user pressed Alt-Enter.
    */
+  @RequiresBackgroundThread
   void waitQuickFixesSynchronously(@NotNull PsiFile file, @NotNull Editor editor, @NotNull HighlightInfo info);
 
   /**
    * Start background computation of quick fixes for unresolved references in the {@code file} at the current caret offset
    */
+  @RequiresBackgroundThread
+  @RequiresReadLock
   void startComputingNextQuickFixes(@NotNull PsiFile file, @NotNull Editor editor, @NotNull ProperTextRange visibleRange);
 }
