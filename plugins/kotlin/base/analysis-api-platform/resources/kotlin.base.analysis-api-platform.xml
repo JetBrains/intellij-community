@@ -1,7 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.base.analysisApiPlatform">
   <extensions defaultExtensionNs="com.intellij">
     <registryKey
-            defaultValue="false"
+            defaultValue="true"
             description="Enables support for Analysis API-based resolution during dumb mode."
             key="kotlin.analysis.allowRestrictedAnalysis"
             restartRequired="false"

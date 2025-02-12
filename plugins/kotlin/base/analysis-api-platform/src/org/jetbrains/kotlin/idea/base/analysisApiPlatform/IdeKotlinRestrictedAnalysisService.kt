@@ -17,7 +17,7 @@ internal class IdeKotlinRestrictedAnalysisService(private val project: Project) 
     override val isRestrictedAnalysisAllowed: Boolean
         get() {
             // The flag should not be cached by the service because it can be changed without a restart.
-            return Registry.`is`("kotlin.analysis.allowRestrictedAnalysis", false)
+            return Registry.`is`("kotlin.analysis.allowRestrictedAnalysis", true)
         }
 
     override fun rejectRestrictedAnalysis(): Nothing {
