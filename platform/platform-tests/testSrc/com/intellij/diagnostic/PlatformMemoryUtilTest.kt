@@ -9,11 +9,6 @@ import org.junit.Test
 class PlatformMemoryUtilTest {
   @Test
   fun `test memory stats are available`() {
-    val isSupportedPlatform = SystemInfo.isLinux
-                              || SystemInfo.isWin10OrNewer && CpuArch.isIntel64()
-                              || SystemInfo.isMac && CpuArch.isArm64()
-    if (!isSupportedPlatform) return
-
     assertNotNull("Platform memory stats are unavailable",
                   PlatformMemoryUtil.getInstance().getCurrentProcessMemoryStats())
   }
