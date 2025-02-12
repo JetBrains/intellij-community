@@ -167,14 +167,6 @@ public final class HtmlUtil {
     return EMPTY_TAGS_MAP.contains(caseSensitive ? tagName : StringUtil.toLowerCase(tagName));
   }
 
-  /**
-   * @deprecated Unclear distinction whether tag should be case-sensitive. Use {@link #isSingleHtmlTag(String, boolean)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isSingleHtmlTag(String tagName) {
-    return isSingleHtmlTag(tagName, false);
-  }
-
   public static boolean isTagWithOptionalEnd(@NotNull String tagName, boolean caseSensitive) {
     return OPTIONAL_END_TAGS_MAP.contains(caseSensitive ? tagName : StringUtil.toLowerCase(tagName));
   }
@@ -208,14 +200,6 @@ public final class HtmlUtil {
 
   public static boolean isHtmlBlockTag(String tagName, boolean caseSensitive) {
     return BLOCK_TAGS_MAP.contains(caseSensitive ? tagName : StringUtil.toLowerCase(tagName));
-  }
-
-  /**
-   * @deprecated Unclear distinction whether tag should be case-sensitive. Use {@link #isHtmlBlockTag(String, boolean)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isHtmlBlockTag(String tagName) {
-    return isHtmlBlockTag(tagName, false);
   }
 
   public static boolean isPossiblyInlineTag(@NotNull String tagName) {
