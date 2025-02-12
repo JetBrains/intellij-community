@@ -35,14 +35,8 @@
     <vfs.asyncListener implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRootWatcher"/>
     <projectService
       serviceInterface="com.intellij.openapi.module.ModuleManager"
-      serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge"/>
-    <workspace.bridgeInitializer
-      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridgeInitializer"/>
+      serviceImplementation="com.intellij.openapi.module.EmptyModuleManager"/>
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher"/>
-
-    <initProjectActivity
-      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge$ModuleManagerInitProjectActivity"
-      order="first"/>
 
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.WindowDressingStartupActivity" />
 
@@ -193,18 +187,6 @@
     <!---->
 
   </extensions>
-
-  <!--suppress PluginXmlDynamicPlugin -->
-  <module-components>
-    <component>
-      <interface-class>com.intellij.openapi.roots.ModuleRootManager</interface-class>
-      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.facet.FacetManager</interface-class>
-      <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge</implementation-class>
-    </component>
-  </module-components>
 
   <applicationListeners>
     <listener class="com.intellij.openapi.command.impl.UndoManagerImpl$MyCommandListener"
