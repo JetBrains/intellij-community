@@ -4,6 +4,8 @@
   <vendor>JetBrains</vendor>
   <category>Other Tools</category>
   <description>Provides the core functionality, APIs, and extension points for stream debugger plugin development.</description>
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.modules.xdebugger</depends>
 
   <resource-bundle>messages.StreamDebuggerBundle</resource-bundle>
 
