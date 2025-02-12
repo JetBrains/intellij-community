@@ -32,6 +32,7 @@ import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jdi.Method;
+import com.sun.jdi.request.StepRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
@@ -88,12 +89,16 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     return myDebugProcess;
   }
 
-  protected void resume(SuspendContextImpl context) {
+  private void performDebuggerCommand(String logPrefix, SuspendContextImpl context, Runnable action) {
     if (myLogAllCommands) {
-      printContext("Resuming ", context);
+      printContext(logPrefix, context);
     }
-    DebugProcessImpl debugProcess = context.getDebugProcess();
-    context.getManagerThread().schedule(debugProcess.createResumeCommand(context, PrioritizedTask.Priority.LOWEST));
+    DebuggerInvocationUtil.invokeLater(myProject, action);
+  }
+
+  protected void resume(SuspendContextImpl context) {
+    performDebuggerCommand("Resuming ", context,
+                           () -> myDebugProcess.getSession().resumeSuspendContext(context, PrioritizedTask.Priority.LOWEST));
   }
 
   protected void stepInto(SuspendContextImpl context) {
@@ -101,27 +106,18 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   }
 
   protected void stepInto(SuspendContextImpl context, boolean ignoreFilters) {
-    if (myLogAllCommands) {
-      printContext("Stepping into ", context);
-    }
-    DebugProcessImpl debugProcess = context.getDebugProcess();
-    context.getManagerThread().schedule(debugProcess.createStepIntoCommand(context, ignoreFilters, null));
+    performDebuggerCommand("Stepping into ", context,
+                            () -> myDebugProcess.getSession().stepInto(context, ignoreFilters, null, StepRequest.STEP_LINE));
   }
 
   protected void stepOver(SuspendContextImpl context) {
-    if (myLogAllCommands) {
-      printContext("Stepping over ", context);
-    }
-    DebugProcessImpl debugProcess = context.getDebugProcess();
-    context.getManagerThread().schedule(debugProcess.createStepOverCommand(context, false));
+    performDebuggerCommand("Stepping over ", context,
+                           () -> myDebugProcess.getSession().stepOver(context, false, null, StepRequest.STEP_LINE));
   }
 
   protected void stepOut(SuspendContextImpl context) {
-    if (myLogAllCommands) {
-      printContext("Stepping out ", context);
-    }
-    DebugProcessImpl debugProcess = context.getDebugProcess();
-    context.getManagerThread().schedule(debugProcess.createStepOutCommand(context));
+    performDebuggerCommand("Stepping out ", context,
+                           () -> myDebugProcess.getSession().stepOut(context, StepRequest.STEP_LINE));
   }
 
   @Override
@@ -576,13 +572,19 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     @Override
     public void paused(SuspendContextImpl suspendContext) {
       // Need to add SuspendContextCommandImpl because the stepping pause is not now in SuspendContextCommandImpl
-      DebuggerManagerThreadImpl debuggerManagerThread = suspendContext.getManagerThread();
-      debuggerManagerThread.invokeNow(new SuspendContextCommandImpl(suspendContext) {
-        @Override
-        public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-          pausedImpl(suspendContext);
-        }
-      });
+      if (suspendContext.myInProgress) { // already inside SuspendContextCommand
+        assertTrue(DebuggerManagerThreadImpl.getCurrentCommand() instanceof SuspendContextCommandImpl);
+        pausedImpl(suspendContext);
+      }
+      else {
+        DebuggerManagerThreadImpl debuggerManagerThread = suspendContext.getManagerThread();
+        debuggerManagerThread.invokeNow(new SuspendContextCommandImpl(suspendContext) {
+          @Override
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
+            pausedImpl(suspendContext);
+          }
+        });
+      }
     }
 
     private void pausedImpl(SuspendContextImpl suspendContext) {
@@ -621,13 +623,9 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     @Override
     public void resumed(SuspendContextImpl suspendContext) {
       SuspendContextImpl pausedContext = myDebugProcess.getSuspendManager().getPausedContext();
-      if (pausedContext != null) {
-        suspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(pausedContext) {
-          @Override
-          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
-            paused(pausedContext);
-          }
-        });
+      // do not switch context on resume inside stepping
+      if (pausedContext != null && myDebugProcess.getSession().getSteppingThread(suspendContext) == null) {
+        paused(pausedContext);
       }
     }
   }
