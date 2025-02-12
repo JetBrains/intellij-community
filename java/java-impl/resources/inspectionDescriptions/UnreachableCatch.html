@@ -2,8 +2,8 @@
 <body>
 Reports catch sections which are never executed, despite being allowed by the Java language specification.
 <p>
-  While normally unreachable catch sections are disallowed by Java compiler and reported as compilation errors,
-  in some rare cases the analysis mandated by the Java language specification is not complete. 
+  While unreachable catch sections are normally disallowed by Java compiler and reported as compilation errors, 
+  the analysis mandated by the Java language is not complete for some cases.
   This inspection provides enhanced analysis and reports some unreachable catch sections which are not reported by the compiler.
   Such sections are redundant and could be safely removed.
 </p>
