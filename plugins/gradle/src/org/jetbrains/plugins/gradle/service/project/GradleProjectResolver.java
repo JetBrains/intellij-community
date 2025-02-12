@@ -869,16 +869,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         }
 
         for (var contentRootNode : findAll(sourceSetNode, ProjectKeys.CONTENT_ROOT)) {
-          // Android Studio (b/375699186): Workaround added for IDEA-361876 to avoid the ContentRootData
-          // representation of AndroidManifest to get removed from ProjectKeys.CONTENT_ROOT node since
-          // ExternalSystemSourceType isn't specified.
-          if (!hasPaths(contentRootNode)) {
-            var root = new File(contentRootNode.getData().getRootPath());
-            if (!ContainerUtil.exists(contentRootPaths, contentPath -> FileUtil.isAncestor(contentPath, root.getParent(), false))) {
-              var ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, root.getParent());
-              contentRootNodes.set(root.getParent(), ideContentRoot);
-            }
-          }
           for (var sourceRootType : ExternalSystemSourceType.values()) {
             for (var sourceRoot : contentRootNode.getData().getPaths(sourceRootType)) {
               var sourceRootPath = sourceRoot.getPath();
@@ -914,14 +904,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       var externalContentRootNodes = new ArrayList<ContentRootData>();
 
       for (var contentRootNode : findAll(moduleNode, ProjectKeys.CONTENT_ROOT)) {
-        // Android Studio (b/375699186): workaround added for IDEA-361876 to avoid the ContentRootData
-        // representation of AndroidManifest to get removed from ProjectKeys.CONTENT_ROOT node since
-        // ExternalSystemSourceType isn't specified.
-        if (!hasPaths(contentRootNode)) {
-          var root = new File(contentRootNode.getData().getRootPath());
-          var ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, root.getParent());
-          externalContentRootNodes.add(ideContentRoot);
-        }
         for (var sourceRootType : ExternalSystemSourceType.values()) {
           for (var sourceRoot : contentRootNode.getData().getPaths(sourceRootType)) {
             var sourceRootPath = sourceRoot.getPath();
@@ -944,15 +926,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         moduleNode.createChild(ProjectKeys.CONTENT_ROOT, externalContentRootData);
       }
     }
-  }
-
-  private static boolean hasPaths(@NotNull DataNode<ContentRootData> contentRootNode) {
-    for (var sourceRootType : ExternalSystemSourceType.values()) {
-      if (!contentRootNode.getData().getPaths(sourceRootType).isEmpty()) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private final class ProjectConnectionDataNodeFunction implements Function<ProjectConnection, DataNode<ProjectData>> {
