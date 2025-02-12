@@ -5,9 +5,10 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import java.time.format.DateTimeFormatter
 
-internal class CsatFeedbackAction : AnAction() {
+internal class CsatFeedbackAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     if (project != null) {
@@ -16,7 +17,7 @@ internal class CsatFeedbackAction : AnAction() {
   }
 }
 
-internal class CsatFeedbackNextDayAction : AnAction() {
+internal class CsatFeedbackNextDayAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend {
   @Suppress("HardCodedStringLiteral")
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
