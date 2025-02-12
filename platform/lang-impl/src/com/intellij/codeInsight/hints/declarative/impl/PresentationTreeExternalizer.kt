@@ -8,13 +8,17 @@ import com.intellij.util.io.DataInputOutputUtil.readINT
 import com.intellij.util.io.DataInputOutputUtil.writeINT
 import com.intellij.util.io.IOUtil.readUTF
 import com.intellij.util.io.IOUtil.writeUTF
+import org.jetbrains.annotations.ApiStatus
 import java.io.DataInput
 import java.io.DataOutput
 
-internal object PresentationTreeExternalizer : TinyTree.Externalizer<Any?>() {
+@ApiStatus.Internal
+abstract class PresentationTreeExternalizer : TinyTree.Externalizer<Any?>() {
 
-  // increment on format changed
-  private const val SERDE_VERSION = 1
+  companion object {
+    // increment on format changed
+    private const val SERDE_VERSION = 1
+  }
 
   override fun serdeVersion(): Int = SERDE_VERSION + super.serdeVersion()
 
@@ -42,10 +46,10 @@ internal object PresentationTreeExternalizer : TinyTree.Externalizer<Any?>() {
     when (type) {
       0 -> {
         val string = readNullableString(input) ?: return null
-        return decorateIfDebug(string)
+        return decorateContent(string)
       }
       1 -> {
-        val content = decorateIfDebug(readUTF(input))
+        val content = decorateContent(readUTF(input))
         return ActionWithContent(readInlayActionData(input), content)
       }
       2 -> {
@@ -72,47 +76,20 @@ internal object PresentationTreeExternalizer : TinyTree.Externalizer<Any?>() {
     }
   }
 
-  private fun writeInlayActionData(output: DataOutput, inlayActionData: InlayActionData) {
+  open fun writeInlayActionData(output: DataOutput, inlayActionData: InlayActionData) {
     writeUTF(output, inlayActionData.handlerId)
     writeInlayActionPayload(output, inlayActionData.payload)
   }
 
-  private fun readInlayActionData(input: DataInput): InlayActionData {
+  open fun readInlayActionData(input: DataInput): InlayActionData {
     val handlerId = readUTF(input)
     val payload = readInlayActionPayload(input)
     return InlayActionData(payload, handlerId)
   }
 
-  fun writeInlayActionPayload(output: DataOutput, actionPayload: InlayActionPayload) {
-    when(actionPayload) {
-      is StringInlayActionPayload -> {
-        writeINT(output, 0)
-        writeUTF(output, actionPayload.text)
-      }
-      is PsiPointerInlayActionPayload -> {
-        writeINT(output, 1)
-      }
-      is SymbolPointerInlayActionPayload -> {
-        writeINT(output, 2)
-      }
-    }
-  }
+  abstract fun writeInlayActionPayload(output: DataOutput, actionPayload: InlayActionPayload)
 
-  fun readInlayActionPayload(input: DataInput): InlayActionPayload {
-    val type = readINT(input)
-    return when (type) {
-      0 -> StringInlayActionPayload(readUTF(input))
-      1 -> PsiPointerInlayActionPayload(ZombieSmartPointer())
-      2 -> SymbolPointerInlayActionPayload(ZombieSymbolPointer())
-      else -> throw IllegalStateException("unknown inlay action payload type: $type")
-    }
-  }
+  abstract fun readInlayActionPayload(input: DataInput): InlayActionPayload
 
-  private fun decorateIfDebug(content: String): String {
-    return if (Registry.`is`("cache.markup.debug")) {
-      "$content?"
-    } else {
-      content
-    }
-  }
+  protected open fun decorateContent(content: String): String = content
 }
