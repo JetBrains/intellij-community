@@ -1570,4 +1570,11 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
     getCodeStyleSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     doTest();
   }
+
+  // PY-31689
+  public void testDoNotWrapListsAndTuplesInsideSubscriptionExpressions() {
+    getPythonCodeStyleSettings().TUPLE_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getPythonCodeStyleSettings().LIST_WRAPPING = CommonCodeStyleSettings.WRAP_ALWAYS;
+    doTest();
+  }
 }

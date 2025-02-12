@@ -513,13 +513,13 @@ public class PyBlock implements ASTBlock {
     if (childType != PyTokenTypes.COMMA && childType != PyTokenTypes.END_OF_LINE_COMMENT) {
       // (...)
       if (childType != PyTokenTypes.LPAR && childType != PyTokenTypes.RPAR) {
-        if (parentType == PyElementTypes.TUPLE_EXPRESSION) return myTupleWrapping;
         if (parentType == PyElementTypes.PARAMETER_LIST) return myParameterListWrapping;
         if (parentType == PyElementTypes.ARGUMENT_LIST) return myArgumentListWrapping;
+        if (parentType == PyElementTypes.TUPLE_EXPRESSION && !isInsideSubscriptionExpression(child)) return myTupleWrapping;
       }
       // [...]
       if (childType != PyTokenTypes.LBRACKET && childType != PyTokenTypes.RBRACKET) {
-        if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION) return myListWrapping;
+        if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION && !isInsideSubscriptionExpression(child)) return myListWrapping;
       }
       // {...}
       if (childType != PyTokenTypes.LBRACE && childType != PyTokenTypes.RBRACE) {
@@ -530,6 +530,10 @@ public class PyBlock implements ASTBlock {
       return myDictWrapping;
     }
     return childWrap;
+  }
+
+  private static boolean isInsideSubscriptionExpression(ASTNode child) {
+    return PsiTreeUtil.getParentOfType(child.getPsi(), PyAstSubscriptionExpression.class) != null;
   }
 
   private static boolean isInsideWithStatementParentheses(@NotNull ASTNode withStatement, @NotNull ASTNode node) {
