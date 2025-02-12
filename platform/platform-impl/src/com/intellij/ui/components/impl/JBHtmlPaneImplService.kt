@@ -45,12 +45,15 @@ internal class JBHtmlPaneImplService : JBHtmlPane.ImplService {
       if (childView != null) {
         applyCssToView(childView)
         if (childView is BlockView) {
-          BlockView::class.java.getDeclaredMethod("setPropertiesFromAttributes").let {
-            it.isAccessible = true
-            it.invoke(childView)
-          }
+          setPropertiesFromAttributesMethod.invoke(childView)
         }
       }
+    }
+  }
+
+  private val setPropertiesFromAttributesMethod by lazy {
+    BlockView::class.java.getDeclaredMethod("setPropertiesFromAttributes").also {
+      it.isAccessible = true
     }
   }
 
