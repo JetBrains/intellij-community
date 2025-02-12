@@ -1180,7 +1180,7 @@ class PyTypeHintsInspection : PyInspection() {
       PythonSdkUtil.findPythonSdk(ModuleUtilCore.findModuleForPsiElement(element)) != null
 
     private fun isParamSpecOrConcatenate(expression: PyExpression, context: TypeEvalContext): Boolean {
-      if (expression !is PyReferenceExpression) return false
+      if (expression !is PyReferenceExpression && expression !is PySubscriptionExpression) return false
       val parametersType = Ref.deref(PyTypingTypeProvider.getType(expression, context))
       return parametersType is PyParamSpecType || parametersType is PyConcatenateType
     } 
