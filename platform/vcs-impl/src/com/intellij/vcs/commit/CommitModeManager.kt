@@ -88,6 +88,10 @@ class CommitModeManager(private val project: Project, private val coroutineScope
 
     if (activeVcses.isEmpty()) return CommitMode.PendingCommitMode
 
+    if (System.getProperty("vcs.force.modal.commit").toBoolean()) {
+      return CommitMode.ModalCommitMode
+    }
+
     val forcedCommitMode = singleVcs?.forcedCommitMode
     if (forcedCommitMode != null) {
       return forcedCommitMode
