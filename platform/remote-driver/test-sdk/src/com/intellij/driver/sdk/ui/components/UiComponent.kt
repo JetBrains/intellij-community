@@ -257,7 +257,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   fun hasText(text: String): Boolean {
-    return getAllTexts().filter { it.text == text }.isNotEmpty()
+    return getAllTexts().any { it.text == text }
   }
 
 
