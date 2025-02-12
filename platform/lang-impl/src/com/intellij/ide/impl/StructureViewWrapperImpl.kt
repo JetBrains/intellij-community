@@ -388,6 +388,7 @@ class StructureViewWrapperImpl(
   }
 
   private suspend fun rebuildImpl() {
+    if (myToolWindow.isDisposed) return
     val container: Container = myToolWindow.component
     val contentManager = myToolWindow.contentManager
     var wasFocused: Boolean
