@@ -424,9 +424,7 @@ class EditorWindow internal constructor(
         withContext(Dispatchers.EDT) {
           if (tab.tabPaneActions != tabActions) {
             tab.setTabPaneActions(tabActions)
-            if (tab == tabbedPane.editorTabs.selectedInfo) {
-              tabbedPane.editorTabs.updateEntryPointToolbar(tabActionGroup = tabActions)
-            }
+            tabbedPane.editorTabs.updateEntryPointToolbar(tabActionGroup = tabActions)
           }
         }
       }
