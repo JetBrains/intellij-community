@@ -68,36 +68,12 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       return this
     }
 
-
-    fun <T : UiComponent> T.waitIsFocusOwner(timeout: Duration = DEFAULT_FIND_TIMEOUT): T {
-      waitFor("Component '$this' is focus owner", timeout = timeout) {
-        component.isFocusOwner()
-      }
-      return this
-    }
-
     fun <T : UiComponent> T.waitVisible(timeout: Duration = DEFAULT_FIND_TIMEOUT): T {
       waitFor("Component '$this' is visible", timeout = timeout) {
         component.isVisible()
       }
       return this
     }
-  }
-
-  /**
-   * Asserts that the calling UiComponent is not found in the hierarchy.
-   */
-  fun assertNotFound() {
-    assert(!present()) { "Component '$this' should not be found" }
-  }
-
-  /**
-   * Asserts that the current UI component is found. Doesn't check visibility.
-   *
-   * @return The current UI component.
-   */
-  fun assertFound() {
-    assert(present()) { "Component '$this' should be found" }
   }
 
   /**
@@ -326,6 +302,10 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   fun notPresent(): Boolean {
     return !present()
+  }
+
+  fun isFocusOwner(): Boolean {
+    return withComponent { it.isFocusOwner() }
   }
 
   fun isVisible(): Boolean {

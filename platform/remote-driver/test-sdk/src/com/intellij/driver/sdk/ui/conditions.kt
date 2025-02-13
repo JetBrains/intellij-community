@@ -79,3 +79,5 @@ val notEnabled: UiComponent.() -> Boolean = { !isEnabled() }
 val present: UiComponent.() -> Boolean = { present() }
 
 val notPresent: UiComponent.() -> Boolean = { notPresent() }
+
+val focusOwner: UiComponent.() -> Boolean = { isFocusOwner() }
