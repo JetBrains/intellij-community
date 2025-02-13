@@ -3,14 +3,9 @@
 
 package org.jetbrains.bazel.jvm.jps
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.withContext
-import org.jetbrains.bazel.jvm.abi.JarContentToProcess
-import org.jetbrains.bazel.jvm.abi.writeAbi
 import java.nio.file.Path
 
-val emptyStringArray: Array<String> = emptyArray()
+internal val emptyStringArray: Array<String> = emptyArray()
 
 data class SourceDescriptor(
   // absolute and normalized
@@ -37,11 +32,3 @@ data class SourceDescriptor(
     return result
   }
 }
-
-suspend fun packageToJar(abiJar: Path) {
-  val classChannel = Channel<JarContentToProcess>(capacity = 8)
-  withContext(Dispatchers.IO) {
-    writeAbi(abiJar, classChannel)
-  }
-}
-

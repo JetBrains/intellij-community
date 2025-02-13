@@ -6,14 +6,13 @@ import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.io.writeZipUsingTempFile
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassWriter
-import java.nio.ByteBuffer
 import java.nio.file.Path
 import kotlin.metadata.jvm.KotlinModuleMetadata
 import kotlin.metadata.jvm.UnstableMetadataApi
 
 class JarContentToProcess(
   @JvmField val name: ByteArray,
-  @JvmField val data: ByteBuffer,
+  @JvmField val data: ByteArray,
   @JvmField val isKotlinModuleMetadata: Boolean,
   @JvmField val isKotlin: Boolean,
 )
@@ -39,7 +38,7 @@ suspend fun writeAbi(abiJar: Path, classChannel: ReceiveChannel<JarContentToProc
   }
 }
 
-private fun createAbi(item: JarContentToProcess, classesToBeDeleted: HashSet<String>): ByteBuffer? {
+private fun createAbi(item: JarContentToProcess, classesToBeDeleted: HashSet<String>): ByteArray? {
   val data = item.data
   if (item.isKotlin) {
     // check that Java ABI works
@@ -51,9 +50,9 @@ private fun createAbi(item: JarContentToProcess, classesToBeDeleted: HashSet<Str
   else {
     val classWriter = ClassWriter(0)
     val abiClassVisitor = JavaAbiClassVisitor(classWriter, classesToBeDeleted)
-    ClassReader(data.array(), data.arrayOffset() + data.position(), data.remaining()).accept(abiClassVisitor, ClassReader.SKIP_FRAMES or ClassReader.SKIP_CODE)
+    ClassReader(data).accept(abiClassVisitor, ClassReader.SKIP_FRAMES or ClassReader.SKIP_CODE)
     if (abiClassVisitor.isApiClass) {
-      return ByteBuffer.wrap(classWriter.toByteArray())
+      return classWriter.toByteArray()
     }
   }
   return null
@@ -65,9 +64,7 @@ private fun writeKotlinModuleMetadata(
   classesToBeDeleted: HashSet<String>,
   stream: ZipArchiveOutputStream
 ) {
-  val bytes = kotlinModuleMetadata.data.array()
-  require(kotlinModuleMetadata.data.position() == 0)
-  require(kotlinModuleMetadata.data.remaining() == bytes.size)
+  val bytes = kotlinModuleMetadata.data
   val parsed = requireNotNull(KotlinModuleMetadata.read(bytes)) {
     "Unsuccessful parsing of Kotlin module metadata for ABI generation: ${kotlinModuleMetadata.name.decodeToString()}"
   }
@@ -86,5 +83,5 @@ private fun writeKotlinModuleMetadata(
   }
 
   val newData = if (isChanged) parsed.write() else bytes
-  stream.writeDataRawEntryWithoutCrc(kotlinModuleMetadata.name, ByteBuffer.wrap(newData))
+  stream.writeDataRawEntryWithoutCrc(kotlinModuleMetadata.name, newData)
 }

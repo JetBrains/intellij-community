@@ -5,6 +5,7 @@
 package org.jetbrains.bazel.jvm.kotlin
 
 import com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE
+import org.jetbrains.bazel.jvm.ArgMap
 import org.jetbrains.kotlin.backend.common.output.OutputFileCollection
 import org.jetbrains.kotlin.backend.common.phaser.then
 import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory

@@ -17,4 +17,5 @@ def get_jvm_flags(flags):
         # kotlin compiler
         "-Dkotlin.environment.keepalive=true",
         "-Didea.io.use.nio2=true",
+        "-Dio.netty.allocator.type=pooled",
     ] + flags

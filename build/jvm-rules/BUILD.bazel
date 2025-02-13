@@ -88,7 +88,7 @@ jvm_import(
     visibility = ["//visibility:public"],
     runtime_deps = [
         "@lib//:jetbrains-annotations",
-        ":kotlinx-coroutines-core"
+        "@lib//:kotlinx-coroutines-core"
     ],
 )
 

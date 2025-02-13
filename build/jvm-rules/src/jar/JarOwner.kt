@@ -36,7 +36,7 @@ private fun writeManifest(manifest: Manifest, out: ZipArchiveOutputStream) {
 
   val manifestOut = ByteArrayOutputStream()
   manifest.write(manifestOut)
-  out.writeDataRawEntryWithoutCrc(name = MANIFEST_NAME_BYTES, data = ByteBuffer.wrap(manifestOut.toByteArray()))
+  out.writeDataRawEntryWithoutCrc(name = MANIFEST_NAME_BYTES, data = manifestOut.toByteArray())
 }
 
 fun createJar(
@@ -65,7 +65,7 @@ fun createJar(
 
     for (outputFile in outputFiles.asList()) {
       val data = outputFile.asByteArray()
-      out.writeDataRawEntryWithoutCrc(name = outputFile.relativePath.toByteArray(), data = ByteBuffer.wrap(data))
+      out.writeDataRawEntryWithoutCrc(name = outputFile.relativePath.toByteArray(), data = data)
     }
   }
 }

@@ -4,9 +4,9 @@
 package org.jetbrains.bazel.jvm.jps.java
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader
+import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufOutputStream
 import io.netty.buffer.ByteBufUtil
-import io.netty.buffer.PooledByteBufAllocator
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import org.jetbrains.bazel.jvm.jps.OutputSink
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
@@ -40,7 +40,6 @@ internal class BazelJpsJavacFileProvider(
 
   fun registerOutputs(context: CompileContext) {
     val successfullyCompiled = ObjectLinkedOpenHashSet<File>(outputs.size)
-    outputSink.registerJavacOutput(outputs)
     for (fileObject in outputs) {
       val content = fileObject.content
       val sourceIoFile = fileObject.source
@@ -66,6 +65,7 @@ internal class BazelJpsJavacFileProvider(
         mappingsCallback.associate(fileObject.path, listOf(sourceIoFile.invariantSeparatorsPath), reader, false)
       }
     }
+    outputSink.registerJavacOutput(outputs)
 
     outputConsumer.addRegisteredSourceCount(successfullyCompiled.size)
     JavaBuilderUtil.registerSuccessfullyCompiled(context, successfullyCompiled)
@@ -126,7 +126,7 @@ internal class InMemoryJavaOutputFileObject(
   override fun getName(): String = path
 
   override fun openOutputStream(): OutputStream {
-    val buffer = PooledByteBufAllocator.DEFAULT.buffer()
+    val buffer = ByteBufAllocator.DEFAULT.buffer()
     return object : ByteBufOutputStream(buffer, false) {
       private var isClosed = false
 

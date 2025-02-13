@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.kotlin
 
+import com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.cli.common.CLICompiler
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -14,7 +15,6 @@ import org.jetbrains.kotlin.cli.pipeline.PipelineArtifactWithExitCode
 import org.jetbrains.kotlin.cli.pipeline.PipelineContext
 import org.jetbrains.kotlin.cli.pipeline.PipelineStepException
 import org.jetbrains.kotlin.cli.pipeline.SuccessfulPipelineExecutionException
-import com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.config.phaser.PhaseConfig
 import org.jetbrains.kotlin.config.phaser.invokeToplevel

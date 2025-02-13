@@ -7,19 +7,19 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
+import org.jetbrains.bazel.jvm.jps.OutputSink
+import org.jetbrains.bazel.jvm.jps.impl.BazelDirtyFileHolder
+import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
+import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuilder
 import org.jetbrains.bazel.jvm.kotlin.configureModule
 import org.jetbrains.bazel.jvm.kotlin.createJvmPipeline
 import org.jetbrains.bazel.jvm.kotlin.executeJvmPipeline
 import org.jetbrains.bazel.jvm.kotlin.prepareCompilerConfiguration
 import org.jetbrains.jps.ModuleChunk
-import org.jetbrains.jps.builders.DirtyFilesHolder
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
-import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 import org.jetbrains.jps.incremental.BuilderCategory
 import org.jetbrains.jps.incremental.CompileContext
-import org.jetbrains.jps.incremental.ModuleBuildTarget
-import org.jetbrains.jps.incremental.ModuleLevelBuilder
 import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.CompilerMessage
@@ -30,18 +30,20 @@ import java.io.File
 
 internal class NonIncrementalKotlinBuilder(
   private val job: Job,
-  private val module: JpsModule,
   private val span: Span,
-) : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
+) : BazelTargetBuilder(BuilderCategory.SOURCE_PROCESSOR) {
   override fun getPresentableName() = "Kotlin Non-Incremental Builder"
 
   override fun getCompilableFileExtensions() = arrayListOf("kt")
 
-  override fun build(
+  override suspend fun build(
     context: CompileContext,
+    module: JpsModule,
     chunk: ModuleChunk,
-    dirtyFilesHolder: DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget>,
-    outputConsumer: OutputConsumer,
+    target: BazelModuleBuildTarget,
+    dirtyFilesHolder: BazelDirtyFileHolder,
+    outputConsumer: BazelTargetBuildOutputConsumer,
+    outputSink: OutputSink
   ): ExitCode {
     val messageCollector = MessageCollectorAdapter(context, span)
     val builder = Services.Builder()
@@ -68,7 +70,7 @@ internal class NonIncrementalKotlinBuilder(
     )
 
     val pipeline = createJvmPipeline(config) {
-      (outputConsumer as BazelTargetBuildOutputConsumer).registerKotlincOutput(context, it.asList())
+      outputConsumer.registerKotlincOutput(context, it.asList())
     }
     val exitCode = executeJvmPipeline(pipeline, bazelConfigurationHolder.kotlinArgs, builder.build(), messageCollector)
     if (exitCode == org.jetbrains.kotlin.cli.common.ExitCode.INTERNAL_ERROR) {

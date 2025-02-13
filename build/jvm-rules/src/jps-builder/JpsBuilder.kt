@@ -10,46 +10,20 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.bazel.jvm.WorkRequestExecutor
+import org.jetbrains.bazel.jvm.*
 import org.jetbrains.bazel.jvm.abi.JarContentToProcess
 import org.jetbrains.bazel.jvm.abi.writeAbi
-import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
-import org.jetbrains.bazel.jvm.jps.impl.BazelBuildRootIndex
-import org.jetbrains.bazel.jvm.jps.impl.BazelBuildTargetIndex
-import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
-import org.jetbrains.bazel.jvm.jps.impl.BazelCompileScope
-import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
-import org.jetbrains.bazel.jvm.jps.impl.JpsTargetBuilder
-import org.jetbrains.bazel.jvm.jps.impl.NoopIgnoredFileIndex
-import org.jetbrains.bazel.jvm.jps.impl.NoopModuleExcludeIndex
-import org.jetbrains.bazel.jvm.jps.impl.RequestLog
-import org.jetbrains.bazel.jvm.jps.impl.createPathRelativizer
+import org.jetbrains.bazel.jvm.jps.impl.*
 import org.jetbrains.bazel.jvm.jps.java.BazelJavaBuilder
 import org.jetbrains.bazel.jvm.jps.kotlin.IncrementalKotlinBuilder
 import org.jetbrains.bazel.jvm.jps.kotlin.NonIncrementalKotlinBuilder
-import org.jetbrains.bazel.jvm.jps.state.LoadStateResult
-import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
-import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestProperty
-import org.jetbrains.bazel.jvm.jps.state.createInitialSourceMap
-import org.jetbrains.bazel.jvm.jps.state.loadBuildState
-import org.jetbrains.bazel.jvm.jps.state.saveBuildState
-import org.jetbrains.bazel.jvm.kotlin.ArgMap
+import org.jetbrains.bazel.jvm.jps.state.*
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
-import org.jetbrains.bazel.jvm.processRequests
-import org.jetbrains.bazel.jvm.span
-import org.jetbrains.bazel.jvm.use
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
 import org.jetbrains.jps.builders.logging.BuildLoggingManager
@@ -360,51 +334,68 @@ private suspend fun nonIncrementalBuildUsingJps(
     coroutineContext = coroutineContext,
   )
 
-  val outputSink = OutputSink()
-  val exitCode = tracer.spanBuilder("compile").use { span ->
-    val builders = arrayOf(
-      BazelJavaBuilder(isIncremental = false, tracer = tracer, isDebugEnabled =  isDebugEnabled, out = log.out),
-      //NotNullInstrumentingBuilder(),
-      NonIncrementalKotlinBuilder(job = coroutineContext.job, module = moduleTarget.module, span = span),
-    )
-    builders.sortBy { it.category.ordinal }
+  // non-incremental build - oldJar is always as null (no need to copy old unchanged files)
+  OutputSink.createOutputSink(oldJar = null).use { outputSink ->
+    val exitCode = tracer.spanBuilder("compile").use { span ->
+      val builders = arrayOf(
+        BazelJavaBuilder(isIncremental = false, tracer = tracer, isDebugEnabled = isDebugEnabled, out = log.out),
+        //NotNullInstrumentingBuilder(),
+        NonIncrementalKotlinBuilder(job = coroutineContext.job, span = span),
+      )
+      builders.sortBy { it.category.ordinal }
 
-    JpsTargetBuilder(
-      log = log,
-      isCleanBuild = true,
-      dataManager = null,
-      tracer = tracer,
-    ).build(
-      context = context,
-      moduleTarget = moduleTarget,
-      builders = builders,
-      buildState = null,
-      outputSink = outputSink,
-      parentSpan = span,
-    )
+      JpsTargetBuilder(
+        log = log,
+        isCleanBuild = true,
+        dataManager = null,
+        tracer = tracer,
+      ).build(
+        context = context,
+        moduleTarget = moduleTarget,
+        builders = builders,
+        buildState = null,
+        outputSink = outputSink,
+        parentSpan = span,
+      )
+    }
+    if (exitCode == 0) {
+      writeJarAndAbi(tracer = tracer, outputSink = outputSink, outJar = outJar, abiJar = abiJar, sourceDescriptors = null)
+    }
+    return exitCode
   }
-  if (exitCode == 0) {
-    writeJarAndAbi(tracer = tracer, outputSink = outputSink, outJar = outJar, abiJar = abiJar)
-  }
-  return exitCode
 }
 
 private suspend fun writeJarAndAbi(
   tracer: Tracer,
   outputSink: OutputSink,
   outJar: Path,
-  abiJar: Path?
+  abiJar: Path?,
+  sourceDescriptors: Array<SourceDescriptor>?,
 ) {
   coroutineScope {
-    // pack to jar
-    tracer.span("write output JAR") { span ->
-      outputSink.writeToZip(outJar)
+    if (abiJar == null) {
+      tracer.span("write output JAR") {
+        outputSink.writeToZip(outJar = outJar, classChannel = null, outputToSource = emptyMap())
+      }
     }
-    if (abiJar != null) {
-      tracer.span("create output JAR and ABI JAR") { span ->
-        val classChannel = Channel<JarContentToProcess>(capacity = 8)
+    else {
+      val outputToSource = if (sourceDescriptors != null) {
+        val outputToSource = hashMap<String, String>(sourceDescriptors.size)
+        for (sourceDescriptor in sourceDescriptors) {
+          for (output in sourceDescriptor.outputs) {
+            outputToSource.put(output, sourceDescriptor.sourceFile.toString())
+          }
+        }
+        outputToSource
+      }
+      else {
+        emptyMap()
+      }
+
+      tracer.span("create output JAR and ABI JAR") {
+        val classChannel = Channel<JarContentToProcess>(capacity = 16)
         launch {
-          outputSink.writeAbi(classChannel)
+          outputSink.writeToZip(outJar = outJar, classChannel = classChannel, outputToSource = outputToSource)
           classChannel.close()
         }
         withContext(Dispatchers.IO) {
@@ -485,81 +476,76 @@ private suspend fun initAndBuild(
         coroutineContext = coroutineContext,
       )
 
-      val outputSink = OutputSink()
-      val exitCode = tracer.spanBuilder("compile")
-        .setAttribute(AttributeKey.booleanKey("isRebuild"), isRebuild)
-        .use { span ->
-          val builders = arrayOf(
-            if (compileScope.isIncrementalCompilation) {
-              IncrementalKotlinBuilder(
-                isKotlinBuilderInDumbMode = false,
-                isRebuild = isRebuild,
-                span = span,
-                dataManager = buildDataProvider,
-              )
-            }
-            else {
-              NonIncrementalKotlinBuilder(job = coroutineContext.job, module = moduleTarget.module, span = span)
-            },
-            BazelJavaBuilder(
-              isIncremental = compileScope.isIncrementalCompilation,
+      // We remove `outJar` if a rebuild is detected as necessary.
+      // Therefore, the `Files.exists` condition is enough.
+      // However, it is still better to avoid unnecessary I/O calls.
+      OutputSink.createOutputSink(oldJar = if (isRebuild) null else outJar.takeIf { Files.exists(it) }).use { outputSink ->
+        val exitCode = tracer.spanBuilder("compile")
+          .setAttribute(AttributeKey.booleanKey("isRebuild"), isRebuild)
+          .use { span ->
+            val builders = arrayOf(
+              if (compileScope.isIncrementalCompilation) {
+                IncrementalKotlinBuilder(isRebuild = isRebuild, span = span, dataManager = buildDataProvider)
+              }
+              else {
+                NonIncrementalKotlinBuilder(job = coroutineContext.job, span = span)
+              },
+              BazelJavaBuilder(
+                isIncremental = compileScope.isIncrementalCompilation,
+                tracer = tracer,
+                isDebugEnabled = isDebugEnabled,
+                out = messageHandler.out,
+              ),
+              //NotNullInstrumentingBuilder(),
+              JavaBackwardReferenceIndexBuilder(),
+              KotlinCompilerReferenceIndexBuilder(),
+            )
+            builders.sortBy { it.category.ordinal }
+
+            JpsTargetBuilder(
+              log = messageHandler,
+              isCleanBuild = storageInitializer.isCleanBuild,
+              dataManager = buildDataProvider,
               tracer = tracer,
-              isDebugEnabled = isDebugEnabled,
-              out = messageHandler.out,
-            ),
-            //NotNullInstrumentingBuilder(),
-            JavaBackwardReferenceIndexBuilder(),
-            KotlinCompilerReferenceIndexBuilder(),
-          )
-          builders.sortBy { it.category.ordinal }
-
-          JpsTargetBuilder(
-            log = messageHandler,
-            isCleanBuild = storageInitializer.isCleanBuild,
-            dataManager = buildDataProvider,
-            tracer = tracer,
-          ).build(
-            context = context,
-            moduleTarget = moduleTarget,
-            builders = builders,
-            buildState = buildState,
-            outputSink = outputSink,
-            parentSpan = span,
-          )
-        }
-      try {
-        coroutineScope {
-          launch {
-            // pack to jar
-            tracer.span("write output JAR") { span ->
-              outputSink.writeToZip(outJar)
-            }
+            ).build(
+              context = context,
+              moduleTarget = moduleTarget,
+              builders = builders,
+              buildState = buildState,
+              outputSink = outputSink,
+              parentSpan = span,
+            )
           }
-
-          postBuild(
-            success = exitCode == 0,
-            moduleTarget = moduleTarget,
-            outJar = outJar,
-            abiJar = abiJar,
-            context = context,
-            targetDigests = targetDigests,
-            buildDataProvider = buildDataProvider,
-            tracer = tracer,
-            outputSink = outputSink,
-            parentSpan = parentSpan,
-          )
+        try {
+          coroutineScope {
+            postBuild(
+              success = exitCode == 0,
+              moduleTarget = moduleTarget,
+              outJar = outJar,
+              abiJar = abiJar,
+              context = context,
+              targetDigests = targetDigests,
+              buildDataProvider = buildDataProvider,
+              tracer = tracer,
+              outputSink = outputSink,
+              // We remove `outJar` if a rebuild is detected as necessary.
+              // Therefore, the `Files.exists` condition is enough.
+              // However, it is still better to avoid unnecessary I/O calls.
+              parentSpan = parentSpan,
+            )
+          }
         }
-      }
-      catch (e: Throwable) {
-        // in case of any error during packaging - clear build
-        //storageManager.forceClose()
-        //projectDescriptor.release()
+        catch (e: Throwable) {
+          // in case of any error during packaging - clear build
+          //storageManager.forceClose()
+          //projectDescriptor.release()
 
-        //storageInitializer.clearStorage()
+          //storageInitializer.clearStorage()
 
-        throw e
+          throw e
+        }
+        return exitCode
       }
-      return exitCode
     }
     catch (e: RebuildRequestedException) {
       parentSpan.recordException(e)
@@ -613,10 +599,8 @@ private fun CoroutineScope.postBuild(
     )
   }
 
-  if (success) {
-    launch {
-      writeJarAndAbi(tracer = tracer, outputSink = outputSink, outJar = outJar, abiJar = abiJar)
-    }
+  launch {
+    writeJarAndAbi(tracer = tracer, outputSink = outputSink, outJar = outJar, abiJar = abiJar, sourceDescriptors = sourceDescriptors)
   }
 
   launch(CoroutineName("report build state")) {

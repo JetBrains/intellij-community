@@ -5,6 +5,7 @@ import androidx.compose.compiler.plugins.kotlin.ComposeCommandLineProcessor
 import androidx.compose.compiler.plugins.kotlin.ComposePluginRegistrar
 import io.bazel.kotlin.plugin.jdeps.JdepsGenCommandLineProcessor
 import io.bazel.kotlin.plugin.jdeps.JdepsGenComponentRegistrar
+import org.jetbrains.bazel.jvm.ArgMap
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser.RegisteredPluginInfo
 import org.jetbrains.kotlin.compiler.plugin.CliOptionValue
 import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor

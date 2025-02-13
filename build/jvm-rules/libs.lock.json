@@ -86,9 +86,5 @@
   "org.jetbrains.kotlin:kotlin-util-klib:2.1.20-Beta2": [
     "3323354cff5c1e10e5ce3a57a0eb9475b20868264689543b7bc80cf4797423ca",
     "4aa4da6df01507c0fe9b48ff4f3d2a5eb5edf5f894850169c90efc89330a9d8b"
-  ],
-  "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.1": [
-    "069c5988633230e074ec0d39321ec3cdaa4547c49e90ba936c63d8fc91c8c00d",
-    "3faa298de8000d68744a179f7d413ab1672acf1d77cb8d6be57a78544657edd2"
   ]
 }

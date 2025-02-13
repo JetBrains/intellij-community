@@ -48,7 +48,7 @@ internal fun cleanOutputsCorrespondingToChangedFiles(
   val delta = context.projectDescriptor.fsState.getEffectiveFilesDelta(context, target)
   delta.lockData()
   try {
-    for (entry in delta.getSourceMapToRecompile().entries) {
+    for (entry in delta.sourceMapToRecompile.entries) {
       for (sourceFile in entry.value) {
         val outputs = sourceToOutputMapping.getAndClearOutputs(sourceFile)?.takeIf { it.isNotEmpty() } ?: continue
         outputSink.removeAll(outputs)

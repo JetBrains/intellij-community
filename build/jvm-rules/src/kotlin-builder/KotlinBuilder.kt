@@ -2,6 +2,7 @@
 package org.jetbrains.bazel.jvm.kotlin
 
 import io.opentelemetry.api.trace.Tracer
+import org.jetbrains.bazel.jvm.ArgMap
 import org.jetbrains.bazel.jvm.WorkRequest
 import org.jetbrains.bazel.jvm.WorkRequestExecutor
 import org.jetbrains.bazel.jvm.WorkRequestReaderWithoutDigest

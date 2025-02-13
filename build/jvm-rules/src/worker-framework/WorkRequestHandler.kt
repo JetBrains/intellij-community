@@ -4,7 +4,7 @@
 package org.jetbrains.bazel.jvm
 
 import com.google.protobuf.CodedOutputStream
-import io.netty.buffer.PooledByteBufAllocator
+import io.netty.buffer.ByteBufAllocator
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -19,12 +19,26 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor
 import io.opentelemetry.sdk.trace.samplers.Sampler
 import io.opentelemetry.semconv.ServiceAttributes
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.bazel.jvm.WorkRequestState.*
-import java.io.*
+import java.io.InterruptedIOException
+import java.io.OutputStream
+import java.io.PrintWriter
+import java.io.Writer
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
@@ -161,7 +175,7 @@ internal class WorkRequestHandler<T : WorkRequest> internal constructor(
     try {
       val isTracingEnabled = tracer != noopTracer
       // Bazel already ensures that tasks are submitted at a manageable rate (ensures the system isn’t overwhelmed),
-      // no need to use channel
+      // no need to use a channel
       tracer.span("read requests") { span ->
         coroutineScope {
           while (coroutineContext.isActive) {
@@ -226,7 +240,7 @@ internal class WorkRequestHandler<T : WorkRequest> internal constructor(
                 catch (e: CancellationException) {
                   ensureActive()
 
-                  // ok, only this task was cancelled
+                  // ok, only this task was canceled
                   span.recordException(e, Attributes.of(
                     AttributeKey.stringKey("message"), "request cancelled",
                     AttributeKey.longKey("id"), requestId.toLong(),
@@ -300,7 +314,7 @@ internal class WorkRequestHandler<T : WorkRequest> internal constructor(
     }
 
     val messageSizeWithSizePrefix = CodedOutputStream.computeUInt32SizeNoTag(size) + size
-    val buffer = PooledByteBufAllocator.DEFAULT.heapBuffer(messageSizeWithSizePrefix, messageSizeWithSizePrefix)
+    val buffer = ByteBufAllocator.DEFAULT.heapBuffer(messageSizeWithSizePrefix, messageSizeWithSizePrefix)
     try {
       val codedOutput = CodedOutputStream.newInstance(buffer.array(), buffer.arrayOffset(), messageSizeWithSizePrefix)
       codedOutput.writeUInt32NoTag(size)

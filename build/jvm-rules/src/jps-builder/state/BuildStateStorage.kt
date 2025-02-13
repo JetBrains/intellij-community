@@ -20,9 +20,9 @@ import org.apache.arrow.vector.types.pojo.FieldType
 import org.apache.arrow.vector.types.pojo.Schema
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.bazel.jvm.jps.SourceDescriptor
-import org.jetbrains.bazel.jvm.jps.emptyList
+import org.jetbrains.bazel.jvm.emptyList
 import org.jetbrains.bazel.jvm.jps.emptyStringArray
-import org.jetbrains.bazel.jvm.jps.hashMap
+import org.jetbrains.bazel.jvm.hashMap
 import org.jetbrains.intellij.build.io.writeFileUsingTempFile
 import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
 import org.jetbrains.jps.incremental.storage.RelativePathType

@@ -13,20 +13,20 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.ensureActive
+import org.jetbrains.bazel.jvm.emptyList
+import org.jetbrains.bazel.jvm.emptyMap
+import org.jetbrains.bazel.jvm.hashSet
 import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.jps.OutputSink
-import org.jetbrains.bazel.jvm.jps.emptyList
-import org.jetbrains.bazel.jvm.jps.emptyMap
-import org.jetbrains.bazel.jvm.jps.hashSet
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildTargetIndex
 import org.jetbrains.bazel.jvm.jps.impl.BazelDirtyFileHolder
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
+import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuilder
 import org.jetbrains.bazel.jvm.use
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.ProjectPaths
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
-import org.jetbrains.jps.builders.DirtyFilesHolder
 import org.jetbrains.jps.builders.FileProcessor
 import org.jetbrains.jps.builders.JpsBuildBundle
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase
@@ -39,7 +39,6 @@ import org.jetbrains.jps.incremental.BuilderCategory
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.GlobalContextKey
 import org.jetbrains.jps.incremental.ModuleBuildTarget
-import org.jetbrains.jps.incremental.ModuleLevelBuilder
 import org.jetbrains.jps.incremental.StopBuildException
 import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.jps.incremental.java.CustomOutputDataListener
@@ -119,7 +118,7 @@ internal class BazelJavaBuilder(
   private val isDebugEnabled: Boolean,
   private val tracer: Tracer,
   private val out: Appendable,
-) : ModuleLevelBuilder(BuilderCategory.TRANSLATOR) {
+) : BazelTargetBuilder(BuilderCategory.TRANSLATOR) {
   private val refRegistrars = ArrayList<JavacFileReferencesRegistrar>()
 
   override fun getPresentableName(): String = "java"
@@ -158,16 +157,7 @@ internal class BazelJavaBuilder(
 
   override fun getCompilableFileExtensions(): List<String> = COMPILABLE_EXTENSIONS
 
-  override fun build(
-    context: CompileContext,
-    chunk: ModuleChunk,
-    dirtyFilesHolder: DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget>,
-    outputConsumer: OutputConsumer,
-  ): ExitCode? {
-    throw IllegalStateException("Should not be called")
-  }
-
-  suspend fun build(
+  override suspend fun build(
     context: CompileContext,
     module: JpsModule,
     chunk: ModuleChunk,
@@ -175,7 +165,7 @@ internal class BazelJavaBuilder(
     dirtyFilesHolder: BazelDirtyFileHolder,
     outputConsumer: BazelTargetBuildOutputConsumer,
     outputSink: OutputSink,
-  ): ExitCode? {
+  ): ExitCode {
     val filesToCompile: Sequence<Path> = if (isIncremental) {
       val modified = ArrayList<Path>()
       dirtyFilesHolder.processFilesToRecompile { file ->

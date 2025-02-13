@@ -11,17 +11,17 @@ import io.opentelemetry.api.trace.Tracer
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import kotlinx.coroutines.ensureActive
+import org.jetbrains.bazel.jvm.hashMap
 import org.jetbrains.bazel.jvm.jps.OutputSink
-import org.jetbrains.bazel.jvm.jps.hashMap
-import org.jetbrains.bazel.jvm.jps.java.BazelJavaBuilder
-import org.jetbrains.bazel.jvm.jps.linkedSet
 import org.jetbrains.bazel.jvm.jps.state.LoadStateResult
 import org.jetbrains.bazel.jvm.jps.state.RemovedFileInfo
+import org.jetbrains.bazel.jvm.linkedSet
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.bazel.jvm.use
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.BuildRootDescriptor
 import org.jetbrains.jps.builders.BuildTarget
+import org.jetbrains.jps.builders.DirtyFilesHolder
 import org.jetbrains.jps.builders.FileProcessor
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
@@ -29,6 +29,7 @@ import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException
 import org.jetbrains.jps.incremental.BuildListener
 import org.jetbrains.jps.incremental.Builder
+import org.jetbrains.jps.incremental.BuilderCategory
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.FSOperations
 import org.jetbrains.jps.incremental.ModuleBuildTarget
@@ -46,6 +47,7 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent
 import org.jetbrains.jps.incremental.messages.ProgressMessage
+import org.jetbrains.jps.model.module.JpsModule
 import java.io.IOException
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
@@ -54,6 +56,27 @@ import kotlin.coroutines.coroutineContext
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import kotlin.time.toJavaDuration
+
+internal abstract class BazelTargetBuilder(category: BuilderCategory) : ModuleLevelBuilder(category) {
+  abstract suspend fun build(
+    context: CompileContext,
+    module: JpsModule,
+    chunk: ModuleChunk,
+    target: BazelModuleBuildTarget,
+    dirtyFilesHolder: BazelDirtyFileHolder,
+    outputConsumer: BazelTargetBuildOutputConsumer,
+    outputSink: OutputSink,
+  ): ExitCode
+
+  final override fun build(
+    context: CompileContext,
+    chunk: ModuleChunk,
+    dirtyFilesHolder: DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget>,
+    outputConsumer: OutputConsumer,
+  ): ExitCode? {
+    throw IllegalStateException("Should not be called")
+  }
+}
 
 internal class JpsTargetBuilder(
   private val log: RequestLog,
@@ -67,7 +90,7 @@ internal class JpsTargetBuilder(
   suspend fun build(
     context: CompileContext,
     moduleTarget: BazelModuleBuildTarget,
-    builders: Array<ModuleLevelBuilder>,
+    builders: Array<out ModuleLevelBuilder>,
     buildState: LoadStateResult?,
     outputSink: OutputSink,
     parentSpan: Span,
@@ -138,7 +161,7 @@ internal class JpsTargetBuilder(
   private suspend fun runModuleLevelBuilders(
     context: CompileContext,
     target: BazelModuleBuildTarget,
-    builders: Array<ModuleLevelBuilder>,
+    builders: Array<out ModuleLevelBuilder>,
     outputSink: OutputSink,
     parentSpan: Span,
   ): Boolean {
@@ -182,8 +205,8 @@ internal class JpsTargetBuilder(
 
             val start = System.nanoTime()
             val processedSourcesBefore = outputConsumer.getNumberOfProcessedSources()
-            val buildResult = tracer.span("runModuleLevelBuilder") { span ->
-              if (builder is BazelJavaBuilder) {
+            val buildResult = tracer.span("runBuilder") { span ->
+              if (builder is BazelTargetBuilder) {
                 builder.build(
                   context = context,
                   module = target.module,
@@ -204,7 +227,7 @@ internal class JpsTargetBuilder(
               processedFiles = outputConsumer.getNumberOfProcessedSources() - processedSourcesBefore,
             )
 
-            if (buildResult != null && buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE) {
+            if (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE) {
               doneSomething = true
             }
             if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
@@ -265,7 +288,7 @@ internal class JpsTargetBuilder(
   private suspend fun buildTarget(
     context: CompileContext,
     target: BazelModuleBuildTarget,
-    builders: Array<ModuleLevelBuilder>,
+    builders: Array<out ModuleLevelBuilder>,
     buildState: LoadStateResult?,
     outputSink: OutputSink,
   ) {
@@ -436,10 +459,8 @@ private fun deleteOutputsAssociatedWithDeletedPaths(
   for (item in deletedFiles) {
     val deletedOutputFiles = ArrayList<String>(item.outputs.size)
     for (output in item.outputs) {
-      val deleted = outputSink.remove(output)
-      if (deleted) {
-        deletedOutputFiles.add(output)
-      }
+      outputSink.remove(output)
+      deletedOutputFiles.add(output)
     }
     if (!deletedOutputFiles.isEmpty()) {
       doneSomething = true

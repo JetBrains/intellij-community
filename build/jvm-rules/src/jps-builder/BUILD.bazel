@@ -5,19 +5,21 @@ load("//:src/jvm-args.bzl", "get_jvm_flags")
 
 kt_jvm_library(
     name = "worker-lib",
-    srcs = glob(["*.kt", "impl/*.kt", "state/*.kt", "kotlin/*.kt", "java/*.kt"]),
+    srcs = glob(["**/*.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
         "@lib//:kotlin-stdlib",
         "@lib//:fastutil-min",
+        "//zip:build-zip",
         "@lib//:opentelemetry",
+        "//src/worker-util",
         ":jps-standalone",
-        "//src/compiler-util",
+        "//src/abi",
+        "//src/kotlin-compiler",
         "//src/worker-framework",
         # before kotlin-jps-plugin
         "//:kotlin-compiler",
         "//:kotlin-jps-plugin",
-        "//src/jps-builder/packager",
         "@lib//:hash4j",
         "@lib//:mvstore",
         "//:arrow-vector",
@@ -44,8 +46,6 @@ kt_jvm_library(
         "//:kotlin-metadata",
         "//:kotlin-util-klib",
         "//:kotlin-util-klib-metadata",
-        # kotlin compilers uses Guava :(
-#         "@lib//:guava",
     ],
     visibility = ["//visibility:public"],
 )

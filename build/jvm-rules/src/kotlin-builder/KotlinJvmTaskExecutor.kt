@@ -4,6 +4,7 @@ package org.jetbrains.bazel.jvm.kotlin
 import com.google.devtools.build.lib.view.proto.Deps
 import com.google.devtools.build.lib.view.proto.Deps.Dependencies
 import kotlinx.coroutines.ensureActive
+import org.jetbrains.bazel.jvm.ArgMap
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments

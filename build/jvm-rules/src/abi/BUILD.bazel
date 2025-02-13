@@ -7,12 +7,12 @@ kt_jvm_library(
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
         "@lib//:kotlin-stdlib",
-        "//:kotlinx-coroutines-core",
+        "@lib//:kotlinx-coroutines-core",
         "@lib//:asm",
         "//:kotlin-metadata",
         "//zip:build-zip",
     ],
-    visibility = ["//src/jps-builder/packager:__pkg__"],
+    visibility = ["//src/jps-builder:__pkg__"],
 )
 
 java_binary(

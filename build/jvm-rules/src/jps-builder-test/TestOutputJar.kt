@@ -16,30 +16,30 @@ class TestOutputJar {
 }
 
 private fun testOutputJar() {
-  val outputSink = OutputSink()
+  OutputSink.createOutputSink(null).use { outputSink ->
+    outputSink.registerKotlincOutput(listOf(
+      outputFile("a/b/c/a"),
+      outputFile("a/b/c/b"),
+      outputFile("a/b/c/c/r"),
+      outputFile("a/b/d/c/r"),
+      outputFile("a/b/c/!special"),
+      outputFile("a/b/c/!special/test"),
+    ))
 
-  outputSink.registerKotlincOutput(listOf(
-    outputFile("a/b/c/a"),
-    outputFile("a/b/c/b"),
-    outputFile("a/b/c/c/r"),
-    outputFile("a/b/d/c/r"),
-    outputFile("a/b/c/!special"),
-    outputFile("a/b/c/!special/test"),
-  ))
+    assertThat(outputSink.findByPackage("a.b.c", recursive = false).map { it.first }.toList()).containsExactly(
+      "a/b/c/!special",
+      "a/b/c/a",
+      "a/b/c/b",
+    )
 
-  assertThat(outputSink.findByPackage("a.b.c", recursive = false).map { it.first }.toList()).containsExactly(
-    "a/b/c/!special",
-    "a/b/c/a",
-    "a/b/c/b",
-  )
-
-  assertThat(outputSink.findByPackage("a.b.c", recursive = true).map { it.first }.toList()).containsExactly(
-    "a/b/c/!special",
-    "a/b/c/!special/test",
-    "a/b/c/a",
-    "a/b/c/b",
-    "a/b/c/c/r",
-  )
+    assertThat(outputSink.findByPackage("a.b.c", recursive = true).map { it.first }.toList()).containsExactly(
+      "a/b/c/!special",
+      "a/b/c/!special/test",
+      "a/b/c/a",
+      "a/b/c/b",
+      "a/b/c/c/r",
+    )
+  }
 }
 
 private fun OutputSink.findByPackage(packageName: String, recursive: Boolean): List<Pair<String, ByteArray>> {

@@ -1,0 +1,12 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+    name = "worker-util",
+    srcs = glob(["*.kt"]),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    deps = [
+      "@lib//:kotlin-stdlib",
+      "@lib//:fastutil-min",
+    ],
+    visibility = ["//visibility:public"],
+)

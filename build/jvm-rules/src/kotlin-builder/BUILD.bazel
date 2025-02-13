@@ -10,7 +10,7 @@ kt_jvm_library(
         "//:kotlin-compiler",
         "//src/worker-framework",
         "//src/jar",
-        "//src/compiler-util",
+        "//src/kotlin-compiler",
         "//zip:build-zip",
         # we parse `jdeps` to support reduced classpath building and checking for unused deps
         # (both features are disabled by default for now)

@@ -2,7 +2,7 @@
 package org.jetbrains.bazel.jvm
 
 import com.google.protobuf.CodedInputStream
-import io.netty.buffer.PooledByteBufAllocator
+import io.netty.buffer.ByteBufAllocator
 import java.io.InputStream
 
 open class WorkRequest(
@@ -56,7 +56,7 @@ inline fun <T : WorkRequest> doReadWorkRequestFromStream(
   }
 
   val size = CodedInputStream.readRawVarint32(firstByte, input)
-  val buffer = PooledByteBufAllocator.DEFAULT.heapBuffer(size, size)
+  val buffer = ByteBufAllocator.DEFAULT.heapBuffer(size, size)
   try {
     var toRead = size
     while (toRead > 0) {
