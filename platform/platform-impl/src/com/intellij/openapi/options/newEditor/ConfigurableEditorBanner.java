@@ -2,51 +2,30 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.ActionLink;
-import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
-import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 final class ConfigurableEditorBanner extends SimpleBanner {
   private final JLabel myProjectIcon = new JLabel();
-  private final Breadcrumbs myBreadcrumbs = new Breadcrumbs() {
-    @Override
-    protected int getFontStyle(Crumb crumb) {
-      return Font.BOLD;
-    }
-  };
+  // breadcrumbs for dialog, label for editor-based settings (non-modal)
+  public final JComponent myHeaderText;
 
-  ConfigurableEditorBanner(Action action) {
+  ConfigurableEditorBanner(Action action, JComponent jLabel) {
+    myHeaderText = jLabel;
     myProjectIcon.setMinimumSize(new Dimension(0, 0));
     myProjectIcon.setIcon(AllIcons.General.ProjectConfigurable);
     myProjectIcon.setForeground(UIUtil.getContextHelpForeground());
     showProject(false);
     myLeftPanel.removeAll();
-    myLeftPanel.add(myBreadcrumbs);
+    myLeftPanel.add(myHeaderText);
     myLeftPanel.add(myProjectIcon);
     myLeftPanel.add(myProgress);
     add(new ActionLink(action), BorderLayout.EAST);
-  }
-
-  void setText(@NotNull Collection<@NlsContexts.ConfigurableName String> names) {
-    List<Crumb> crumbs = new ArrayList<>();
-    if (!names.isEmpty()) {
-      List<Action> actions = CopySettingsPathAction.createSwingActions(() -> names);
-      for (@NlsContexts.ConfigurableName String name : names) {
-        crumbs.add(new Crumb.Impl(null, name, null, actions));
-      }
-    }
-    myBreadcrumbs.setCrumbs(crumbs);
   }
 
   void setProjectText(@Nullable @Nls String projectText) {
@@ -64,11 +43,11 @@ final class ConfigurableEditorBanner extends SimpleBanner {
   @Override
   void setLeftComponent(Component component) {
     super.setLeftComponent(component);
-    myBreadcrumbs.setVisible(component == null);
+    myHeaderText.setVisible(component == null);
   }
 
   @Override
   Component getBaselineTemplate() {
-    return myBreadcrumbs;
+    return myHeaderText;
   }
 }
