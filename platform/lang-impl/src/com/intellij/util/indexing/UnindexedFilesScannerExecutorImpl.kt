@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.checkCanceled
@@ -160,7 +161,13 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
             checkCanceled() // this will re-throw cancellation
 
             // other exceptions: log and forget
-            logError("Failed to execute task $task", t)
+            if (t is ControlFlowException || t is CancellationException) {
+              LOG.infoWithDebug(prepareLogMessage("Task was cancelled: $task. " +
+                                                  "(enable debug log to see cancellation trace)"), RuntimeException(t))
+            }
+            else {
+              logError("Failed to execute task $task", t)
+            }
           }
           finally {
             task.close()

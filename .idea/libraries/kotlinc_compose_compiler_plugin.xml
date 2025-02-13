@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.compose-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:compose-compiler-plugin-for-ide:2.2.0-dev-3086">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:compose-compiler-plugin-for-ide:2.2.0-dev-4882">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.0-dev-3086/compose-compiler-plugin-for-ide-2.2.0-dev-3086.jar">
-          <sha256sum>c94963d5b833ff1df8e9d8aaeccb35e5def727d3487475a8a88d321bd0aa96cf</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.0-dev-4882/compose-compiler-plugin-for-ide-2.2.0-dev-4882.jar">
+          <sha256sum>b13003110e140096f37ad7716d0b429a4344013b2138c8de41bef2c5790036b8</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.0-dev-3086/compose-compiler-plugin-for-ide-2.2.0-dev-3086.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.0-dev-4882/compose-compiler-plugin-for-ide-2.2.0-dev-4882.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.0-dev-3086/compose-compiler-plugin-for-ide-2.2.0-dev-3086-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2.2.0-dev-4882/compose-compiler-plugin-for-ide-2.2.0-dev-4882-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

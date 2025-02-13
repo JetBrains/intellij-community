@@ -32,7 +32,6 @@ import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
-import io.opentelemetry.semconv.ExceptionAttributes
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
@@ -136,11 +135,9 @@ internal inline fun <T> Span.use(operation: (Span) -> T): T {
     return operation(this)
   }
   catch (e: CancellationException) {
-    recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
     throw e
   }
   catch (e: Throwable) {
-    recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
     setStatus(StatusCode.ERROR)
     throw e
   }

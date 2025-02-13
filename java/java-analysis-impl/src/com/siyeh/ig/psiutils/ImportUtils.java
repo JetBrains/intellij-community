@@ -372,6 +372,7 @@ public final class ImportUtils {
                                                                  boolean checkModules) {
     final String shortName = ClassUtil.extractClassName(fqName);
     final String packageName = ClassUtil.extractPackageName(fqName);
+    @Nullable PsiClass importedClass = JavaPsiFacade.getInstance(javaFile.getProject()).findClass(packageName, javaFile.getResolveScope());
     for (final PsiImportStatementBase importStatement : importStatements) {
       if (!importStatement.isOnDemand()) {
         continue;
@@ -459,7 +460,15 @@ public final class ImportUtils {
               continue;
             }
             final String qualifiedName = containingClass.getQualifiedName() + '.' + method.getName();
-            if (!fqName.equals(qualifiedName) && (!strict || memberReferenced(method, javaFile))) {
+            boolean theSameMethod = fqName.equals(qualifiedName)
+                                    ||
+                                    //can reference through inheritances
+                                    (!containingClass.isInterface() && importedClass != null &&
+                                     importedClass.isInheritor(containingClass, true));
+            if (theSameMethod) {
+              break;
+            }
+            if (!strict || memberReferenced(method, javaFile)) {
               return ThreeState.YES;
             }
           }
@@ -502,7 +511,7 @@ public final class ImportUtils {
     final Project project = file.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiPackage filePackage = psiFacade.findPackage(filePackageName);
-    return filePackage != null && filePackage.containsClassNamed(shortName);
+    return filePackage != null && filePackage.hasClassWithShortName(shortName, file.getResolveScope());
   }
 
   /**

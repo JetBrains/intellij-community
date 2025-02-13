@@ -278,6 +278,7 @@
                         client="local"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.JBPopupFactory"
                         serviceImplementation="com.intellij.ui.popup.PopupFactoryImpl"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ui.popup.ActionGroupPopupCollector"/>
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.ex.FileEditorProviderManager"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl"/>
 
@@ -628,7 +629,7 @@
     <applicationService
       serviceInterface="com.intellij.platform.ide.productInfo.IdeProductInfo"
       serviceImplementation="com.intellij.platform.ide.impl.productInfo.IdeProductInfoImpl"/>
-    
+
     <applicationService serviceInterface="com.intellij.openapi.options.advanced.AdvancedSettings"
                         serviceImplementation="com.intellij.openapi.options.advanced.AdvancedSettingsImpl"/>
 
@@ -1841,7 +1842,7 @@
                         serviceImplementation="com.intellij.auth.LocalGenericAuthService"
                         client="local"/>
     <project.projectIdResolver implementation="com.intellij.ide.lightEdit.project.LightEditProjectIdResolver" />
-    
+
     <actionGroupCustomization
       implementation="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarActionGroupCustomization" />
 

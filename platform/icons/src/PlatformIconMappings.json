@@ -697,6 +697,7 @@
         "actions/moduleDirectory.svg"
       ],
       "moduleJava.svg": "nodes/javaModule.svg",
+      "multipleTypeDefinitions.svg": "nodes/multipleTypeDefinitions.svg",
       "moduleGroup.svg": "nodes/moduleGroup.svg",
       "package.svg": "nodes/package.svg",
       "parameter.svg": [

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
@@ -69,6 +69,17 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
       highlight("Test.java", """
         <error descr="Module Import Declarations are not supported at language level '23'">import module java.sql;</error>
         class Test {}
+      """.trimIndent())
+    }
+  }
+
+  fun testModuleImportDeclarationInModuleInfoFile() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
+      highlight("module-info.java", """
+        <error descr="Import module is not allowed">import module M2;</error>
+        module my.module {
+          requires M2;
+        }
       """.trimIndent())
     }
   }

@@ -5,8 +5,8 @@ import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.evaluable.AIA_RESPONSE
 import com.intellij.cce.evaluable.AIA_USER_PROMPT
-import com.intellij.cce.evaluable.REFERENCE_PROPERTY
 import com.intellij.cce.evaluable.LLM_JUDGE_RESPONSE
+import com.intellij.cce.evaluable.REFERENCE_PROPERTY
 import com.intellij.cce.metric.util.Bootstrap
 import com.intellij.cce.metric.util.LLMJudge
 import com.intellij.cce.metric.util.computeBleuScore
@@ -25,6 +25,9 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Metric {
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
     get() = totalMatched / totalExpected
+
+  override val maximumSessions: Int
+    get() = 10000
 
   override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { values ->
     values.sumOf { it.first } / values.sumOf { it.second }

@@ -9,8 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.XmlCharsetDetector;
-import com.intellij.xml.psi.XmlPsiBundle;
-import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.XmlCoreBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+
+import static com.intellij.xml.util.CharsetDetector.detectCharsetFromMetaTag;
 
 public class HtmlFileType extends XmlLikeFileType {
   public static final @NonNls String DOT_DEFAULT_EXTENSION = ".html";
@@ -39,7 +40,7 @@ public class HtmlFileType extends XmlLikeFileType {
 
   @Override
   public @NotNull String getDescription() {
-    return XmlPsiBundle.message("filetype.html.description");
+    return XmlCoreBundle.message("filetype.html.description");
   }
 
   @Override
@@ -62,18 +63,20 @@ public class HtmlFileType extends XmlLikeFileType {
 
     if (charset != null) return charset;
     @NonNls String strContent = new String(content, StandardCharsets.ISO_8859_1);
-    Charset c = HtmlUtil.detectCharsetFromMetaTag(strContent);
+    Charset c = detectCharsetFromMetaTag(strContent);
     return c == null ? null : c.name();
   }
 
   @Override
-  public Charset extractCharsetFromFileContent(final @Nullable Project project, final @Nullable VirtualFile file, final @NotNull CharSequence content) {
+  public Charset extractCharsetFromFileContent(final @Nullable Project project,
+                                               final @Nullable VirtualFile file,
+                                               final @NotNull CharSequence content) {
     String name = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     Charset charset = CharsetToolkit.forName(name);
 
     if (charset != null) {
       return charset;
     }
-    return HtmlUtil.detectCharsetFromMetaTag(content);
+    return detectCharsetFromMetaTag(content);
   }
 }

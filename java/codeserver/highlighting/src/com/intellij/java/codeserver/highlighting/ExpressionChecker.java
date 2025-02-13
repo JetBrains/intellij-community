@@ -4,6 +4,8 @@ package com.intellij.java.codeserver.highlighting;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.*;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.Pair;
@@ -18,6 +20,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ImplicitClassSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -868,6 +871,32 @@ final class ExpressionChecker {
     }
   }
 
+  void checkClassReferenceAfterQualifier(@NotNull PsiReferenceExpression expression, @Nullable PsiElement resolved) {
+    if (!(resolved instanceof PsiClass psiClass)) return;
+    PsiExpression qualifier = expression.getQualifierExpression();
+    if (qualifier == null) return;
+    if (qualifier instanceof PsiReferenceExpression qExpression) {
+      PsiElement qualifierResolved = qExpression.resolve();
+      if (qualifierResolved instanceof PsiClass || qualifierResolved instanceof PsiPackage) return;
+
+      if (qualifierResolved == null) {
+        while (true) {
+          PsiElement qResolve = qExpression.resolve();
+          if (qResolve == null || qResolve instanceof PsiClass || qResolve instanceof PsiPackage) {
+            PsiExpression qualifierExpression = qExpression.getQualifierExpression();
+            if (qualifierExpression == null) return;
+            if (qualifierExpression instanceof PsiReferenceExpression ref) {
+              qExpression = ref;
+              continue;
+            }
+          }
+          break;
+        }
+      }
+    }
+    myVisitor.report(JavaErrorKinds.CLASS_OR_PACKAGE_EXPECTED.create(expression, psiClass));
+  }
+
   private static boolean hasYield(@NotNull PsiSwitchExpression switchExpression, @NotNull PsiElement scope) {
     class YieldFinder extends JavaRecursiveElementWalkingVisitor {
       private boolean hasYield;
@@ -1666,5 +1695,18 @@ final class ExpressionChecker {
                JavaErrorKinds.CALL_MEMBER_BEFORE_CONSTRUCTOR : 
                JavaErrorKinds.REFERENCE_MEMBER_BEFORE_CONSTRUCTOR;
     myVisitor.report(kind.create(expression, resolvedName));
+  }
+
+  void checkPackageAndClassConflict(@NotNull PsiJavaCodeReferenceElement ref) {
+    if (ref.isQualified() && getOuterReferenceParent(ref).getParent() instanceof PsiPackageStatement) {
+      Module module = ModuleUtilCore.findModuleForFile(myVisitor.file());
+      if (module != null) {
+        GlobalSearchScope scope = module.getModuleWithDependenciesAndLibrariesScope(false);
+        PsiClass aClass = JavaPsiFacade.getInstance(ref.getProject()).findClass(ref.getCanonicalText(), scope);
+        if (aClass != null) {
+          myVisitor.report(JavaErrorKinds.PACKAGE_CLASHES_WITH_CLASS.create(ref));
+        }
+      }
+    }
   }
 }

@@ -6,8 +6,10 @@ import com.intellij.notebooks.visualization.getCell
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeListener
 import com.intellij.notebooks.visualization.ui.EditorCellInput
+import com.intellij.notebooks.visualization.ui.computeFirstLineForHighlighter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
@@ -54,15 +56,11 @@ class EditorCellDraggableBar(
         it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY
       }?.bounds ?: return@let
 
-      val upperInlayBounds = inlays.lastOrNull {
-        it.properties.isShownAbove == true &&
-        it.properties.priority == editor.notebookAppearance.JUPYTER_CELL_SPACERS_INLAY_PRIORITY
-      }?.bounds ?: return@let
-
       val x = editor.gutterComponentEx.iconAreaOffset
       val width = editor.gutterComponentEx.getIconsAreaWidth()
 
-      val y = upperInlayBounds.y + upperInlayBounds.height + editor.lineHeight
+      val firstLine = cellInput.interval.computeFirstLineForHighlighter(editor)
+      val y = editor.logicalPositionToXY(LogicalPosition(firstLine, 0)).y + editor.lineHeight
       val height = lowerInlayBounds.y + lowerInlayBounds.height - y
 
       it.setBounds(x, y, width, height)
@@ -72,7 +70,7 @@ class EditorCellDraggableBar(
   private fun createAndAddDraggableBar() {
     val panel = DraggableBarComponent()
     editor.gutterComponentEx.add(panel)
-    editor.gutterComponentEx.setComponentZOrder(panel, editor.gutterComponentEx.componentCount - 1)
+    editor.gutterComponentEx.setComponentZOrder(panel, 0)
     this.panel = panel
     updateBounds()
   }
@@ -162,7 +160,6 @@ class EditorCellDraggableBar(
     fun getCellUnderCursor(editorPoint: Point): CellDropTarget {
       val notebookCellManager = NotebookCellInlayManager.get(editor) ?: return CellDropTarget.NoCell
 
-      // Check if the point is below the bounds of the last cell
       notebookCellManager.getCell(notebookCellManager.cells.lastIndex).view?.calculateBounds()?.let { lastCellBounds ->
         if (editorPoint.y > lastCellBounds.maxY) return CellDropTarget.BelowLastCell
       }

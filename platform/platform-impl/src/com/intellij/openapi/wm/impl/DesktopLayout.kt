@@ -24,10 +24,10 @@ class DesktopLayout(
   /**
    * @param paneId the ID of the tool window pane that this anchor is attached to
    * @param anchor anchor of the stripe.
-   * @return maximum ordinal number in the specified stripe. Returns `-1` if there is no tool window with the specified anchor.
+   * @return the next available ordinal number in the specified stripe. Returns `0` if there is no tool window with the specified anchor.
    */
-  internal fun getMaxOrder(paneId: String, anchor: ToolWindowAnchor): Int {
-    return idToInfo.values.asSequence().filter { paneId == it.safeToolWindowPaneId && anchor == it.anchor }.maxOfOrNull { it.order } ?: -1
+  internal fun getNextOrder(paneId: String, anchor: ToolWindowAnchor): Int {
+    return idToInfo.values.asSequence().filter { paneId == it.safeToolWindowPaneId && anchor == it.anchor }.maxOfOrNull { it.order }?.plus(1) ?: 0
   }
 
   fun copy(): DesktopLayout = DesktopLayout(
@@ -77,7 +77,7 @@ class DesktopLayout(
 
     // if order isn't defined, then the window will be the last in the stripe
     if (newOrder == -1) {
-      newOrder = getMaxOrder(newPaneId, newAnchor) + 1
+      newOrder = getNextOrder(newPaneId, newAnchor)
     }
     else {
       // shift order to the right in the target stripe
@@ -191,7 +191,7 @@ internal val windowInfoComparator: Comparator<WindowInfo> = Comparator { o1, o2 
 /**
  * Normalizes the order of windows in the array. Order of a first window will be `0`.
  */
-private fun normalizeOrder(list: MutableList<WindowInfoImpl>) {
+internal fun normalizeOrder(list: MutableList<WindowInfoImpl>) {
   list.sortWith(windowInfoComparator)
   var order = 0
   var lastAnchor = ToolWindowAnchor.TOP

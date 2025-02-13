@@ -19,7 +19,6 @@ import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.util.*;
@@ -29,7 +28,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
@@ -526,85 +524,6 @@ public final class HighlightUtil {
     return ElementDescriptionUtil.getElementDescription(element, HighlightUsagesDescriptionLocation.INSTANCE);
   }
 
-  private static @NotNull PsiJavaCodeReferenceElement getOuterReferenceParent(@NotNull PsiJavaCodeReferenceElement ref) {
-    PsiJavaCodeReferenceElement element = ref;
-    while (true) {
-      PsiElement parent = element.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement) {
-        element = (PsiJavaCodeReferenceElement)parent;
-      }
-      else {
-        break;
-      }
-    }
-    return element;
-  }
-
-  static HighlightInfo.Builder checkPackageAndClassConflict(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {
-    if (ref.isQualified() && getOuterReferenceParent(ref).getParent() instanceof PsiPackageStatement) {
-      Module module = ModuleUtilCore.findModuleForFile(containingFile);
-      if (module != null) {
-        GlobalSearchScope scope = module.getModuleWithDependenciesAndLibrariesScope(false);
-        PsiClass aClass = JavaPsiFacade.getInstance(ref.getProject()).findClass(ref.getCanonicalText(), scope);
-        if (aClass != null) {
-          String message = JavaErrorBundle.message("package.clashes.with.class", ref.getText());
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(message);
-        }
-      }
-    }
-
-    return null;
-  }
-
-  static HighlightInfo.Builder checkClassReferenceAfterQualifier(@NotNull PsiReferenceExpression expression, @Nullable PsiElement resolved) {
-    if (!(resolved instanceof PsiClass)) return null;
-    PsiExpression qualifier = expression.getQualifierExpression();
-    if (qualifier == null) return null;
-    if (qualifier instanceof PsiReferenceExpression qExpression) {
-      PsiElement qualifierResolved = qExpression.resolve();
-      if (qualifierResolved instanceof PsiClass || qualifierResolved instanceof PsiPackage) return null;
-
-      if (qualifierResolved == null) {
-        while (true) {
-          PsiElement qResolve = qExpression.resolve();
-          if (qResolve == null || qResolve instanceof PsiClass || qResolve instanceof PsiPackage) {
-            PsiExpression qualifierExpression = qExpression.getQualifierExpression();
-            if (qualifierExpression == null) return null;
-            if (qualifierExpression instanceof PsiReferenceExpression) {
-              qExpression = (PsiReferenceExpression)qualifierExpression;
-              continue;
-            }
-          }
-          break;
-        }
-      }
-    }
-    String description = JavaErrorBundle.message("expected.class.or.package");
-    HighlightInfo.Builder info =
-      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(description);
-    IntentionAction action = getFixFactory().createRemoveQualifierFix(qualifier, expression, (PsiClass)resolved);
-    info.registerFix(action, null, null, null, null);
-    return info;
-  }
-
-  private static @NotNull LanguageLevel getApplicableLevel(@NotNull PsiFile file, @NotNull JavaFeature feature) {
-    LanguageLevel standardLevel = feature.getStandardLevel();
-    LanguageLevel featureLevel = feature.getMinimumLevel();
-    if (featureLevel.isPreview()) {
-      JavaSdkVersion sdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(file);
-      if (sdkVersion != null) {
-        if (standardLevel != null && sdkVersion.isAtLeast(JavaSdkVersion.fromLanguageLevel(standardLevel))) {
-          return standardLevel;
-        }
-        LanguageLevel previewLevel = sdkVersion.getMaxLanguageLevel().getPreviewLevel();
-        if (previewLevel != null && previewLevel.isAtLeast(featureLevel)) {
-          return previewLevel;
-        }
-      }
-    }
-    return featureLevel;
-  }
-
   static @Nullable HighlightInfo.Builder checkFeature(@NotNull PsiElement element,
                                                       @NotNull JavaFeature feature,
                                                       @NotNull LanguageLevel level,
@@ -619,24 +538,13 @@ public final class HighlightUtil {
     return null;
   }
 
-  public static void registerIncreaseLanguageLevelFixes(@NotNull PsiElement element,
-                                                        @NotNull JavaFeature feature,
-                                                        HighlightInfo.Builder info) {
+  static void registerIncreaseLanguageLevelFixes(@NotNull PsiElement element,
+                                                 @NotNull JavaFeature feature,
+                                                 HighlightInfo.Builder info) {
     if (info == null) return;
-    for (CommonIntentionAction action : getIncreaseLanguageLevelFixes(element, feature)) {
+    for (CommonIntentionAction action : HighlightFixUtil.getIncreaseLanguageLevelFixes(element, feature)) {
       info.registerFix(action.asIntention(), null, null, null, null);
     }
-  }
-
-  public static @NotNull List<CommonIntentionAction> getIncreaseLanguageLevelFixes(
-    @NotNull PsiElement element, @NotNull JavaFeature feature) {
-    if (PsiUtil.isAvailable(feature, element)) return List.of();
-    if (feature.isLimited()) return List.of(); //no reason for applying it because it can be outdated
-    LanguageLevel applicableLevel = getApplicableLevel(element.getContainingFile(), feature);
-    if (applicableLevel == LanguageLevel.JDK_X) return List.of(); // do not suggest to use experimental level
-    return List.of(getFixFactory().createIncreaseLanguageLevelFix(applicableLevel),
-                   getFixFactory().createUpgradeSdkFor(applicableLevel),
-                   getFixFactory().createShowModulePropertiesFix(element));
   }
 
   private static @NotNull @NlsContexts.DetailedDescription String getUnsupportedFeatureMessage(@NotNull JavaFeature feature,

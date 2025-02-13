@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.UnifiedToolWindowWeights
 import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.openapi.wm.impl.WindowManagerImpl
+import com.intellij.openapi.wm.impl.normalizeOrder
 import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.ui.ExperimentalUI
 import kotlinx.serialization.Serializable
@@ -249,7 +250,7 @@ private fun convertUnifiedWeightsToDescriptor(unifiedToolWindowWeights: UnifiedT
 }
 
 private fun convertWindowDescriptorsToWindowInfos(list: List<ToolWindowDescriptor>): MutableMap<String, WindowInfoImpl> {
-  return list.associateTo(hashMapOf()) { descriptor ->
+  val result = list.associateTo(hashMapOf()) { descriptor ->
     descriptor.id to WindowInfoImpl().apply {
       id = descriptor.id
       order = descriptor.order
@@ -282,6 +283,9 @@ private fun convertWindowDescriptorsToWindowInfos(list: List<ToolWindowDescripto
       }
     }
   }
+  val windowInfoList = result.values.toMutableList()
+  normalizeOrder(windowInfoList)
+  return result
 }
 
 private fun convertUnifiedWeightsDescriptorToUnifiedWeights(unifiedWeightsDescriptor: Map<String, Float>): UnifiedToolWindowWeights {

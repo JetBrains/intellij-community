@@ -39,6 +39,10 @@
     <xi:fallback/>
   </xi:include>
 
+  <xi:include href="command-completion-k2.xml">
+    <xi:fallback/>
+  </xi:include>
+
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.ModuleScriptAdditionalIdeaDependenciesProvider"/>
 

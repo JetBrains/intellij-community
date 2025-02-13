@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.remote.CredentialsType
 import com.intellij.util.PathMappingSettings
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.io.File
 import java.util.function.Consumer
@@ -90,6 +91,7 @@ interface PyProjectSynchronizer {
 /**
  * Plugin registers [PyProjectSynchronizer] for [CredentialsType]
  */
+@ApiStatus.Internal
 interface PyProjectSynchronizerProvider {
   fun getSynchronizer(credsType: CredentialsType<*>, sdk: Sdk): PyProjectSynchronizer?
 

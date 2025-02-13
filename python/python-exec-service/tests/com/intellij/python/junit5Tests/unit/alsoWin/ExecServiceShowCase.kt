@@ -27,6 +27,40 @@ class ExecServiceShowCase {
 
   private val eel = localEel // TODO: Check other eels
 
+  @Test
+  fun testDataTransformer(): Unit = timeoutRunBlocking {
+    data class Record(val name: String, val age: Int)
+
+    val echoCommand = WhatToExec.Command(eel, "echo")
+    val args = listOf("Alice,25\nBob,48\n")
+
+    val records = ExecService().execute(echoCommand, args) { output ->
+      when {
+        output.exitCode == 123 -> {
+          Result.success(emptyList())
+        }
+        output.exitCode != 0 -> {
+          Result.failure(null)
+        }
+        output.stdout == "SOME_BUSINESS_ERROR" -> {
+          Result.failure("My Business Error Description")
+        }
+        else -> {
+          val records = output.stdoutLines.map {
+            val (name, age) = it.split(',')
+            Record(name, age.toInt())
+          }
+          Result.success(records)
+        }
+      }
+    }
+
+    assertEquals(
+      listOf(Record("Alice", 25), Record("Bob", 48)),
+      records.getOrThrow()
+    )
+  }
+
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun tesSunnyDay(useLocalPath: Boolean): Unit = timeoutRunBlocking {

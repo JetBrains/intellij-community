@@ -13,6 +13,7 @@ import java.awt.Color
 import java.awt.Image
 import java.net.URL
 import java.util.*
+import javax.swing.text.LabelView
 import javax.swing.text.View
 import javax.swing.text.html.BlockView
 import javax.swing.text.html.StyleSheet
@@ -25,8 +26,8 @@ internal class JBHtmlPaneImplService : JBHtmlPane.ImplService {
   override fun defaultEditorCssFontResolver(): CSSFontResolver =
     EditorCssFontResolver.getGlobalInstance()
 
-  override fun getDefaultStyleSheet(paneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
-    ApplicationManager.getApplication().service<JBHtmlPaneStyleSheetRulesProvider>().getStyleSheet(paneBackgroundColor, configuration)
+  override fun getDefaultStyleSheet(paneBackgroundColor: Color, scaleFactor: Float, baseFontSize: Int, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
+    ApplicationManager.getApplication().service<JBHtmlPaneStyleSheetRulesProvider>().getStyleSheet(paneBackgroundColor, scaleFactor, baseFontSize, configuration)
 
   override fun getEditorColorsSchemeStyleSheet(editorColorsScheme: EditorColorsScheme): StyleSheet =
     EditorColorsSchemeStyleSheet(editorColorsScheme)
@@ -45,12 +46,23 @@ internal class JBHtmlPaneImplService : JBHtmlPane.ImplService {
       if (childView != null) {
         applyCssToView(childView)
         if (childView is BlockView) {
-          BlockView::class.java.getDeclaredMethod("setPropertiesFromAttributes").let {
-            it.isAccessible = true
-            it.invoke(childView)
-          }
+          blockViewSetPropertiesFromAttributesMethod.invoke(childView)
+        } else if (childView is LabelView) {
+          labelViewSetPropertiesFromAttributesMethod.invoke(childView)
         }
       }
+    }
+  }
+
+  private val blockViewSetPropertiesFromAttributesMethod by lazy {
+    BlockView::class.java.getDeclaredMethod("setPropertiesFromAttributes").also {
+      it.isAccessible = true
+    }
+  }
+
+  private val labelViewSetPropertiesFromAttributesMethod by lazy {
+    LabelView::class.java.getDeclaredMethod("setPropertiesFromAttributes").also {
+      it.isAccessible = true
     }
   }
 

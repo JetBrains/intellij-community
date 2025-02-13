@@ -116,4 +116,10 @@ final class ImportChecker {
       myVisitor.report(JavaErrorKinds.IMPORT_LIST_EXTRA_SEMICOLON.create(token));
     }
   }
+
+  void checkImportModuleInModuleInfo(@NotNull PsiImportModuleStatement statement) {
+    if (statement.getContainingFile() instanceof PsiJavaFile javaFile && javaFile.getModuleDeclaration() != null) {
+      myVisitor.report(JavaErrorKinds.MODULE_IMPORT_STATEMENT_NOT_ALLOWED.create(statement));
+    }
+  }
 }

@@ -65,6 +65,6 @@
       <action class="com.jetbrains.test.SomeAction1Class" id="SomeAction1" icon="AllIcons.Actions.Back"/>
       <add-to-group group-id="MainMenu"/>
     </group>
-    <action class="com.jetbrains.test.SomeAction2Class" id="SomeAction2"/>
+    <action class="com.jetbrains.test.SomeAction2Class"/>
   </actions>
 </idea-plugin>

@@ -510,6 +510,8 @@
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.RegistryKeyIdReferenceContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.ActionOrGroupIdReferenceContributor"/>
     <referenceInjector implementation="org.jetbrains.idea.devkit.references.ActionOrGroupIdReferenceInjector"/>
+    <referencesSearch implementation="org.jetbrains.idea.devkit.references.ActionWithoutIdReferencesQueryExecutor"/>
+
     <psi.referenceContributor language="UAST"
                               implementation="org.jetbrains.idea.devkit.references.NotificationGroupIdReferenceContributor"/>
     <psi.referenceContributor language="UAST"

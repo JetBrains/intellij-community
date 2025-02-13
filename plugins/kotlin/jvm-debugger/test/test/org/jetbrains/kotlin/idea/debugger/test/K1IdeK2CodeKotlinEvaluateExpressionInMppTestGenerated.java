@@ -2414,6 +2414,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/singleBreakpoint/withSerializationPlugin.kt");
             }
 
+            @TestMetadata("withSerializationPlugin_ver_1.7.1.kt")
+            public void testWithSerializationPlugin_ver_1_7_1() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/withSerializationPlugin_ver_1.7.1.kt");
+            }
+
             @TestMetadata(".kt.kt")
             public void test_kt() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/.kt.kt");

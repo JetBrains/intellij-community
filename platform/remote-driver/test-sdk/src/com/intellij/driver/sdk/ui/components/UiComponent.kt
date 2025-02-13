@@ -34,84 +34,12 @@ data class ComponentData(
 private val LOG = logger<UiComponent>()
 
 open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
-  companion object {
-    /**
-     * Waits until the element specified is found within the parent search context. Doesn't guaranty visibility.
-     *
-     * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
-     */
-    fun <T : UiComponent> T.waitFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT): T {
-      findThisComponent(timeout)
-      return this
-    }
-
-    /**
-     * Asserts that the current UI component is found. Doesn't check visibility.
-     *
-     * @return The current UI component.
-     */
-    fun <T : UiComponent> T.assertFound(): T {
-      assert(present()) { "Component '$this' should be found" }
-      return this
-    }
-
-    /**
-     * Waits until the element specified is not found within the parent search context.
-     *
-     * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
-     */
-    fun <T : UiComponent> T.waitNotFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT) {
-      waitFor(message = "No ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
-              timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
-              interval = 1.seconds) {
-        !present()
-      }
-    }
-
-    /**
-     * Asserts that the calling UiComponent is not found in the hierarchy.
-     */
-    fun <T : UiComponent> T.assertNotFound() {
-      assert(!present()) { "Component '$this' should not be found" }
-    }
-
-    fun <T : UiComponent> T.waitIsFocusOwner(timeout: Duration = DEFAULT_FIND_TIMEOUT): T {
-      waitFor("Component '$this' is focus owner", timeout = timeout) {
-        component.isFocusOwner()
-      }
-      return this
-    }
-
-    fun <T : UiComponent> T.waitVisible(timeout: Duration = DEFAULT_FIND_TIMEOUT): T {
-      waitFor("Component '$this' is visible", timeout = timeout) {
-        component.isVisible()
-      }
-      return this
-    }
-  }
-
-  override fun toString(): String {
-    return this::class.simpleName + "[xpath=${data.xpath}]"
-  }
-
   private var cachedComponent: Component? = null
 
   val component: Component
     get() = data.foundComponent
             ?: kotlin.runCatching { cachedComponent?.takeIf { it.isShowing() } }.getOrNull()
             ?: findThisComponent().apply { cachedComponent = this }
-
-  fun setFocus() {
-    withComponent { robot.focus(it) }
-  }
-
-  private fun findThisComponent(timeout: Duration? = DEFAULT_FIND_TIMEOUT): Component =
-    waitForOne(
-      message = "Find ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
-      timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
-      interval = 1.seconds,
-      getter = { data.parentSearchContext.findAll(data.xpath) }
-    )
 
   override val driver: Driver = data.driver
   override val searchService: SearchService = data.searchService
@@ -128,6 +56,54 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       return withComponent { searchService.findAll(xpath, it) }
     }
   }
+
+  companion object {
+    /**
+     * Waits until the element specified is found within the parent search context. Doesn't guaranty visibility.
+     *
+     * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
+     */
+    fun <T : UiComponent> T.waitFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT): T {
+      findThisComponent(timeout)
+      return this
+    }
+
+    fun <T : UiComponent> T.waitVisible(timeout: Duration = DEFAULT_FIND_TIMEOUT): T {
+      waitFor("Component '$this' is visible", timeout = timeout) {
+        component.isVisible()
+      }
+      return this
+    }
+  }
+
+  /**
+   * Waits until the element specified is not found within the parent search context.
+   *
+   * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
+   */
+  fun waitNotFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT) {
+    waitFor(message = "No ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
+            timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
+            interval = 1.seconds) {
+      !present()
+    }
+  }
+
+  override fun toString(): String {
+    return this::class.simpleName + "[xpath=${data.xpath}]"
+  }
+
+  fun setFocus() {
+    withComponent { robot.focus(it) }
+  }
+
+  private fun findThisComponent(timeout: Duration? = DEFAULT_FIND_TIMEOUT): Component =
+    waitForOne(
+      message = "Find ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
+      timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
+      interval = 1.seconds,
+      getter = { data.parentSearchContext.findAll(data.xpath) }
+    )
 
   fun <T> withComponent(action: (Component) -> T): T {
     var lastException: Exception? = null
@@ -257,7 +233,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   fun hasText(text: String): Boolean {
-    return getAllTexts().filter { it.text == text }.isNotEmpty()
+    return getAllTexts().any { it.text == text }
   }
 
 
@@ -328,8 +304,8 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     return !present()
   }
 
-  fun hasText(predicate: (UiText) -> Boolean): Boolean {
-    return getAllTexts().any(predicate)
+  fun isFocusOwner(): Boolean {
+    return withComponent { it.isFocusOwner() }
   }
 
   fun isVisible(): Boolean {
@@ -408,11 +384,6 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       }
       withComponent { robot.rightClick(it) }
     }
-  }
-
-  fun click(button: RemoteMouseButton, count: Int) {
-    LOG.info("Click with $button $count times at $this")
-    withComponent { robot.click(it, button, count) }
   }
 
   fun moveMouse(point: Point? = null, silent: Boolean = false) {

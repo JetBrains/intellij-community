@@ -212,6 +212,9 @@ object CommunityRepositoryModules {
     pluginAuto(listOf("intellij.performanceTesting.ui")),
     githubPlugin("intellij.vcs.github.community", productCode = "IC"),
     gitlabPlugin("intellij.vcs.gitlab.community", productCode = "IC"),
+    pluginAuto("intellij.vcs.git.commit.modal") { spec ->
+      spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
+    }
   )
 
   val CONTRIB_REPOSITORY_PLUGINS: List<PluginLayout> = java.util.List.of(

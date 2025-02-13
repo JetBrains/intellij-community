@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-build-common-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-common-tests-for-ide:2.2.0-dev-3086">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-common-tests-for-ide:2.2.0-dev-4882">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.0-dev-3086/kotlin-build-common-tests-for-ide-2.2.0-dev-3086.jar">
-          <sha256sum>a325d97156f8ed0c89bda6fb65426cf1860325991cf371f45cdd6f7b829a5963</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.0-dev-4882/kotlin-build-common-tests-for-ide-2.2.0-dev-4882.jar">
+          <sha256sum>172d2fe7e476b3924641b110191e1d9111d5d2a0c98c0206852771381f92c783</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.0-dev-3086/kotlin-build-common-tests-for-ide-2.2.0-dev-3086.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.0-dev-4882/kotlin-build-common-tests-for-ide-2.2.0-dev-4882.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.0-dev-3086/kotlin-build-common-tests-for-ide-2.2.0-dev-3086-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common-tests-for-ide/2.2.0-dev-4882/kotlin-build-common-tests-for-ide-2.2.0-dev-4882-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -3,7 +3,7 @@ package com.intellij.ide.highlighter;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.xhtml.XHTMLLanguage;
-import com.intellij.xml.psi.XmlPsiBundle;
+import com.intellij.xml.XmlCoreBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -22,7 +22,7 @@ public final class XHtmlFileType extends HtmlFileType {
 
   @Override
   public @NotNull String getDescription() {
-    return XmlPsiBundle.message("filetype.xhtml.description");
+    return XmlCoreBundle.message("filetype.xhtml.description");
   }
 
   @Override

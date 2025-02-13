@@ -10,8 +10,10 @@ import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection.runA
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass.addAvailableFixesForGroups
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.jobToIndicator
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -47,21 +49,23 @@ internal class DirectErrorFixCompletionCommand(
     }
     val action: IntentionAction? = runWithModalProgressBlocking(topLevelPsiFile.project, message("scanning.scope.progress.title")) {
       val indicator = DaemonProgressIndicator()
-      jobToIndicator(coroutineContext.job, indicator) {
-        val highlightings = runAnnotatorsInGeneralHighlighting(topLevelPsiFile, true, true, true)
-        for (info in highlightings) {
-          if (!(info.startOffset == highlightInfo.range.startOffset && info.endOffset == highlightInfo.range.endOffset)) {
-            continue
-          }
-          val fixes: MutableList<IntentionActionDescriptor> = ArrayList()
-          addAvailableFixesForGroups(info, topLevelEditor, topLevelPsiFile, fixes, -1, topLevelOffset, false)
-          for (fix in fixes) {
-            if (fix.action.text == name) {
-              return@jobToIndicator fix.action
+      readAction {
+        jobToIndicator(currentThreadContext().job, indicator) {
+          val highlightings = runAnnotatorsInGeneralHighlighting(topLevelPsiFile, true, true, true)
+          for (info in highlightings) {
+            if (!(info.startOffset == highlightInfo.range.startOffset && info.endOffset == highlightInfo.range.endOffset)) {
+              continue
+            }
+            val fixes: MutableList<IntentionActionDescriptor> = ArrayList()
+            addAvailableFixesForGroups(info, topLevelEditor, topLevelPsiFile, fixes, -1, topLevelOffset, false)
+            for (fix in fixes) {
+              if (fix.action.text == name) {
+                return@jobToIndicator fix.action
+              }
             }
           }
+          return@jobToIndicator null
         }
-        return@jobToIndicator null
       }
     }
     if (action == null) return

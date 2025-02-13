@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.i18n;
 
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl;
@@ -180,9 +180,6 @@ final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   }
 
   private static void highlightActionOrGroup(@NotNull DomElementAnnotationHolder holder, @NotNull ActionOrGroup actionOrGroup) {
-    String id = actionOrGroup.getId().getStringValue();
-    if (id == null) return;
-
     String text = actionOrGroup.getText().getStringValue();
     String desc = actionOrGroup.getDescription().getStringValue();
     if (text == null && desc == null) return;
@@ -540,6 +537,13 @@ final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       }
     }
 
+    @Nullable
+    private static String getEffectiveActionOrGroupId(@Nullable XmlTag tag) {
+      ActionOrGroup actionOrGroup = DomUtil.findDomElement(tag, ActionOrGroup.class);
+      assert actionOrGroup != null;
+      return actionOrGroup.getEffectiveId();
+    }
+
     private static void extractTextAndDescription(@NotNull Project project,
                                                   Collection<XmlTag> tags,
                                                   PropertiesFile propertiesFile,
@@ -552,10 +556,10 @@ final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
 
         String id;
         if (tag.getName().equals("override-text")) {
-          id = Objects.requireNonNull(tag.getParentTag()).getAttributeValue("id") + "." + tag.getAttributeValue("place");
+          id = getEffectiveActionOrGroupId(tag.getParentTag()) + "." + tag.getAttributeValue("place");
         }
         else {
-          id = tag.getAttributeValue("id");
+          id = getEffectiveActionOrGroupId(tag);
         }
 
         List<PropertiesFile> propertiesFiles = Collections.singletonList(propertiesFile);

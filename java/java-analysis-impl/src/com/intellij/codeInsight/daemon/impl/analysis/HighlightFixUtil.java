@@ -16,7 +16,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -863,6 +866,36 @@ public final class HighlightFixUtil {
       }
     }
     registerChangeParameterClassFix(lType, rType, sink);
+  }
+
+  private static @NotNull LanguageLevel getApplicableLevel(@NotNull PsiFile file, @NotNull JavaFeature feature) {
+    LanguageLevel standardLevel = feature.getStandardLevel();
+    LanguageLevel featureLevel = feature.getMinimumLevel();
+    if (featureLevel.isPreview()) {
+      JavaSdkVersion sdkVersion = JavaSdkVersionUtil.getJavaSdkVersion(file);
+      if (sdkVersion != null) {
+        if (standardLevel != null && sdkVersion.isAtLeast(JavaSdkVersion.fromLanguageLevel(standardLevel))) {
+          return standardLevel;
+        }
+        LanguageLevel previewLevel = sdkVersion.getMaxLanguageLevel().getPreviewLevel();
+        if (previewLevel != null && previewLevel.isAtLeast(featureLevel)) {
+          return previewLevel;
+        }
+      }
+    }
+    return featureLevel;
+  }
+
+  public static @NotNull List<CommonIntentionAction> getIncreaseLanguageLevelFixes(
+    @NotNull PsiElement element, @NotNull JavaFeature feature) {
+    if (PsiUtil.isAvailable(feature, element)) return List.of();
+    if (feature.isLimited()) return List.of(); //no reason for applying it because it can be outdated
+    LanguageLevel applicableLevel = getApplicableLevel(element.getContainingFile(), feature);
+    if (applicableLevel == LanguageLevel.JDK_X) return List.of(); // do not suggest to use experimental level
+    QuickFixFactory factory = QuickFixFactory.getInstance();
+    return List.of(factory.createIncreaseLanguageLevelFix(applicableLevel),
+                   factory.createUpgradeSdkFor(applicableLevel),
+                   factory.createShowModulePropertiesFix(element));
   }
 
   private static final class ReturnModel {

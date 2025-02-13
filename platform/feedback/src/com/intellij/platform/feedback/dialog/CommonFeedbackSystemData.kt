@@ -73,6 +73,8 @@ data class CommonFeedbackSystemData(
       if (edition != null) {
         appVersion += " ($edition)"
       }
+
+      // todo remove dev host info
       val appBuild = appInfo.build
       appVersion += CommonFeedbackBundle.message("dialog.feedback.system.info.panel.app.version.build", appBuild.asString())
       val timestamp: Date = appInfo.buildDate.time
