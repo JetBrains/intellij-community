@@ -5,7 +5,6 @@ import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 import com.intellij.openapi.diagnostic.thisLogger
-import kotlin.math.max
 
 fun createFilterReasonMetrics(sessions: List<Session>): List<Metric> = listOf(
   AllProposalsMetric(),
@@ -18,7 +17,6 @@ fun createFilterReasonMetrics(sessions: List<Session>): List<Metric> = listOf(
 
   GroupingOfIdenticalSuggestionsMetric(),
   MaxSuggestionsForAnalysisLimitMetric(),
-  MultipleFailureReasonsMetric(),
 ) + generateFilterMetrics(sessions)
 
 private fun generateFilterMetrics(sessions: List<Session>): List<Metric> =
@@ -133,16 +131,6 @@ class MaxSuggestionsForAnalysisLimitMetric : SessionFilterReasonMetric("maxSugge
   }
 }
 
-class MultipleFailureReasonsMetric : SessionFilterReasonMetric("multiple failure reasons") {
-  override fun compute(lookups: List<Lookup>): Int {
-    return lookups.sumOf { lookup ->
-      lookup.rawFilteredDebugMessagesList
-        .map { it.size }
-        .sumOf { size -> max(0, size - 1) }
-    }
-  }
-}
-
 private val Lookup.rawProposalsList: List<String>
   get() = this.additionalInfo["raw_proposals"] as? List<String> ?: emptyList()
 
@@ -155,13 +143,13 @@ private val Lookup.analyzedFilteredList: List<String>
 private val Lookup.rawFilteredDebugMessagesList: List<List<String>>
   get() = (this.additionalInfo["raw_filtered"] as? List<String> ?: emptyList<Any>()).map { element ->
     val mapItem = element as? Map<String, List<String>> ?: emptyMap()
-    (mapItem["second"] as? List<String>) ?: emptyList<String>()
+    ((mapItem["second"] as? List<String>) ?: emptyList<String>()).take(1)
   }
 
 private val Lookup.analyzedFilteredDebugMessagesList: List<List<String>>
   get() = (this.additionalInfo["analyzed_filtered"] as? List<*> ?: emptyList<Any>()).map { element ->
     val mapItem = element as? Map<String, List<String>> ?: emptyMap()
-    (mapItem["second"] as? List<String>) ?: emptyList<String>()
+    ((mapItem["second"] as? List<String>) ?: emptyList<String>()).take(1)
   }
 
 private data class Branch(val head: String, val lambda: String? = null, val underFlow: String? = null, val children: List<Any> = emptyList())
@@ -187,9 +175,6 @@ fun generateJsonStructureForSankeyChart(metrics: List<MetricInfo>): String {
                                    .filter { it.name.contains(FilteredProposalsMetric.debugDescription.filter { it.isLetterOrDigit() || it == '_' }) }
                                    .map { it.name })
 
-  val multipleFailureReasonsBranch = Branch("Multiple Failure Reasons",
-                                            children = listOf(MultipleFailureReasonsMetric().name))
-
   val modelFilterBranch = Branch("Model Filter",
                                  children = listOf(
                                    FilteredByModelProposalsMetric("filter").name,
@@ -206,7 +191,6 @@ fun generateJsonStructureForSankeyChart(metrics: List<MetricInfo>): String {
                                   children = listOf(
                                     suggestionsBranch,
                                     wordFiltersBranch,
-                                    multipleFailureReasonsBranch,
                                     modelFilterBranch,
                                     preProcessingBranch))
 

@@ -152,7 +152,7 @@ function filterOutSummaryMetric(unfilteredDatasets) {
   return unfilteredDatasets.filter(dataset => !dataset.label.match(/summary/i))
 }
 
-function redrawCharts() {
+function redrawMetricsCharts() {
   chartList = []
   const unfilteredDatasets = fetchUnfilteredDatasets()
 
@@ -277,38 +277,8 @@ function generateSankeyEdges(structure) {
   return sankeyData
 }
 
-function multipleFailureReasonEdgeCase(sankeyData) {
-  const MultipleFailureReasonsFlow = getValueOfMetricsFromTabulatorTable("FilterReasonmultiplefailurereasons").reduce((sum, column) => sum + column.flow, 0)
-
-  for (let i = 0; i < sankeyData.length; i++) {
-    if (sankeyData[i].from === "Multiple Failure Reasons") {
-      sankeyData[i].to = "Proposal Filter"
-    }
-    else if (sankeyData[i].to === "Proposal Filter") {
-      sankeyData[i].flow -= MultipleFailureReasonsFlow
-    }
-    if (sankeyData[i].to === "Multiple Failure Reasons") {
-      sankeyData.splice(i, 1)
-      i--
-    }
-    if (sankeyData[i].to === "unaccounted for proposals") {
-      sankeyData[i].flow += 2 * MultipleFailureReasonsFlow
-      if (sankeyData[i].flow === 0) {
-        sankeyData.splice(i, 1)
-        i--
-      }
-    }
-  }
-}
-
-function addFullLineEdgeCases(sankeyData) {
-  multipleFailureReasonEdgeCase(sankeyData)
-
-  return sankeyData
-}
-
 function populateSankeyChart(chart, structure) {
-  const sankeyData = addFullLineEdgeCases(generateSankeyEdges(structure))
+  const sankeyData = generateSankeyEdges(structure)
 
   chart.data.datasets = [{
     data: sankeyData,
@@ -339,7 +309,11 @@ function getColorTo(name) {
   return colorsTo[name] || "rgba(120, 120, 160, 1)"
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+function redrawCharts() {
   redrawSankeyChart()
-  //redrawCharts() // control the drawing of regular (reports comparison) charts
+  // redrawMetricsCharts() // control the drawing of regular (reports comparison) charts
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  redrawCharts()
 })
