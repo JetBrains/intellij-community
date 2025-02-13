@@ -345,18 +345,20 @@ final class DirectoryLock {
   }
 
   private void acceptConnections() {
-    var serverChannel = myServerChannel;
-    if (serverChannel == null) return;
-    while (true) {
+    var channel = (ServerSocketChannel)null;
+    while ((channel = myServerChannel) != null) {
       try {
-        var socketChannel = serverChannel.accept();
+        if (LOG.isDebugEnabled()) LOG.debug("accepting connections at " + channel.getLocalAddress());
+        var socketChannel = channel.accept();
         if (LOG.isDebugEnabled()) LOG.debug("accepted connection " + socketChannel);
         ProcessIOExecutorService.INSTANCE.execute(() -> handleConnection(socketChannel));
       }
-      catch (ClosedChannelException e) { break; }
-      catch (IOException e) {
-        LOG.warn(e);
+      catch (ClosedChannelException e) {
+        LOG.debug(e);
         break;
+      }
+      catch (Throwable t) {
+        LOG.error(t);
       }
     }
   }
