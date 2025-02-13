@@ -138,8 +138,10 @@ public final class ActionHint {
     if(myShouldPresent) {
       if(result == null) {
         fail(exceptionHeader(lastStep) + " not found\nAvailable actions: " +
-             commonActions.stream().map(ca -> {
-               return ca instanceof ModCommandAction mca && context != null ? Objects.requireNonNull(mca.getPresentation(context)).name() :
+             commonActions.stream()
+               .filter(ca -> !(ca instanceof ModCommandAction mca) || context != null && mca.getPresentation(context) != null)
+               .map(ca -> {
+               return ca instanceof ModCommandAction mca ? Objects.requireNonNull(mca.getPresentation(context)).name() :
                       ca.asIntention().getText();
              }).collect(Collectors.joining(", ", "[", "]\n")) +
              infoSupplier.get());
