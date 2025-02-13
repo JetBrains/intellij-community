@@ -16,6 +16,7 @@ optional dependency on the module 'com.intellij.modules.androidstudio' declared 
   <content>
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
+    <module name="intellij.settingsSync.core"/>
     <!-- From CLionPlugin.xml: -->
     <module name="intellij.rml.dfa.impl"/>
     <!-- GRPC is normally only included in IntelliJ Ultimate, but we need it for the Android plugin. -->
