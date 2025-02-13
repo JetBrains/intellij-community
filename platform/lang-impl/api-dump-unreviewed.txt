@@ -9294,6 +9294,17 @@ f:com.intellij.ide.extensionResources.ExtensionsRootType
 - getOwner(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.extensions.PluginId
 - s:regularFileFilter():java.util.function.Predicate
 - substituteName(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- updateBundledResources(com.intellij.openapi.extensions.PluginId):V
+- updatePluginResources(com.intellij.openapi.extensions.PluginId):V
+f:com.intellij.ide.extensionResources.ExternalResourcesUnpackExtensionBean
+- com.intellij.openapi.extensions.PluginAware
+- unpackTo:java.lang.String
+- <init>():V
+- s:allPluginsWithExtension():java.util.List
+- s:getPluginBeans(com.intellij.openapi.extensions.PluginId):java.util.List
+- getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
+- s:getPluginsBeUnpackedTo(com.intellij.openapi.extensions.PluginId):java.util.List
+- setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
 com.intellij.ide.fileTemplates.CreateFromTemplateActionReplacer
 - sf:CREATE_FROM_TEMPLATE_REPLACER:com.intellij.openapi.extensions.ExtensionPointName
 - a:replaceCreateFromFileTemplateAction(com.intellij.ide.fileTemplates.FileTemplate):com.intellij.openapi.actionSystem.AnAction
