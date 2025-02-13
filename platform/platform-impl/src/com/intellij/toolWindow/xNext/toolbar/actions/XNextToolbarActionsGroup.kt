@@ -8,9 +8,13 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 internal class XNextToolbarActionsGroup : ActionGroup(), DumbAware {
-  private val actionList = arrayListOf<AnAction>(ActionManager.getInstance().getAction("MiniAiChat.Toggle"))
+  private val actionList = arrayListOf<AnAction>()
 
   init {
+    ActionManager.getInstance().getAction("MiniAiChat.Toggle")?.let {
+      actionList.add(AnActionWrapper(it) )
+    }
+
     ActionManager.getInstance().getAction("HideAllWindows")?.let {
       actionList.add(object : AnActionWrapper(it) {
         init {
