@@ -89,6 +89,13 @@ internal class TerminalCursorPainter private constructor(
     // 3. As a result, the logical offset of the cursor stayed the same, but we still need to repaint it.
     outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
       override fun afterContentChanged(startOffset: Int) {
+        // This listener exists to handle the case when the offset has not changed,
+        // but it must also work correctly when the offset has in fact changed.
+        // In that case, the offset is updated before this listener is invoked,
+        // but it may not have been collected yet,
+        // because the collector might be called in an invokeLater by the coroutine dispatcher.
+        // Therefore, the flow is guaranteed to have the correct value, but curCursorState is not.
+        curCursorState = curCursorState.copy(offset = outputModel.cursorOffsetState.value)
         updateCursor(curCursorState)
       }
     })
