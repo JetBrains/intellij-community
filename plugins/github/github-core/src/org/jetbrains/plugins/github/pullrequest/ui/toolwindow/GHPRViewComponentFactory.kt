@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsComponentFactory
@@ -21,22 +22,18 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetail
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRInfoViewModel
 import javax.swing.JComponent
 
-internal class GHPRViewComponentFactory(actionManager: ActionManager,
-                                        private val project: Project,
-                                        private val vm: GHPRInfoViewModel) {
+@ApiStatus.Internal
+class GHPRViewComponentFactory(
+  actionManager: ActionManager,
+  private val project: Project,
+  private val vm: GHPRInfoViewModel,
+) {
 
   private val reloadDetailsAction = actionManager.getAction("Github.PullRequest.Details.Reload")
 
   fun create(cs: CoroutineScope): JComponent =
     cs.createInfoLoadingComponent().apply {
-      DataManager.registerDataProvider(this) { dataId ->
-        when {
-          GHPRActionKeys.PULL_REQUEST_ID.`is`(dataId) -> vm.pullRequest
-          GHPRActionKeys.PULL_REQUEST_URL.`is`(dataId) -> vm.pullRequestUrl
-          GHPRDetailsLoadingViewModel.DATA_KEY.`is`(dataId) -> vm
-          else -> null
-        }
-      }
+      registerDataProvider(this, vm)
     }
 
   private fun CoroutineScope.createInfoLoadingComponent(): JComponent {
@@ -48,7 +45,7 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
       bindContentIn(cs, vm.detailsVm) { result ->
         result.result?.fold(
           onSuccess = { createInfoComponent(it) },
-          onFailure = { createInfoErrorComponent(it) }
+          onFailure = { createInfoErrorComponent(vm, it) }
         ) ?: LoadingLabel()
       }
     }
@@ -64,12 +61,25 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
     }
   }
 
-  private fun createInfoErrorComponent(error: Throwable): JComponent {
-    val errorPresenter = ErrorStatusPresenter.simple(
-      GithubBundle.message("cannot.load.details"),
-      actionProvider = vm.detailsLoadingErrorHandler::getActionForError
-    )
-    val errorPanel = ErrorStatusPanelFactory.create(error, errorPresenter)
-    return CollaborationToolsUIUtil.moveToCenter(errorPanel)
+  companion object {
+    fun registerDataProvider(component: JComponent, vm: GHPRInfoViewModel) {
+      DataManager.registerDataProvider(component) { dataId ->
+        when {
+          GHPRActionKeys.PULL_REQUEST_ID.`is`(dataId) -> vm.pullRequest
+          GHPRActionKeys.PULL_REQUEST_URL.`is`(dataId) -> vm.pullRequestUrl
+          GHPRDetailsLoadingViewModel.DATA_KEY.`is`(dataId) -> vm
+          else -> null
+        }
+      }
+    }
+
+    fun createInfoErrorComponent(vm: GHPRInfoViewModel, error: Throwable): JComponent {
+      val errorPresenter = ErrorStatusPresenter.simple(
+        GithubBundle.message("cannot.load.details"),
+        actionProvider = vm.detailsLoadingErrorHandler::getActionForError
+      )
+      val errorPanel = ErrorStatusPanelFactory.create(error, errorPresenter)
+      return CollaborationToolsUIUtil.moveToCenter(errorPanel)
+    }
   }
 }

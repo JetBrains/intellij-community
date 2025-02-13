@@ -29,6 +29,7 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -40,7 +41,8 @@ import org.jetbrains.plugins.github.ui.util.addGithubHyperlinkListener
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal object GHPRDetailsComponentFactory {
+@ApiStatus.Internal
+object GHPRDetailsComponentFactory {
 
   fun create(
     scope: CoroutineScope,
@@ -92,7 +94,7 @@ internal object GHPRDetailsComponentFactory {
       })
   }
 
-  private fun createCommitsAndBranchesComponent(project: Project, cs: CoroutineScope, detailsVm: GHPRDetailsViewModel): JComponent {
+  fun createCommitsAndBranchesComponent(project: Project, cs: CoroutineScope, detailsVm: GHPRDetailsViewModel): JComponent {
     return JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
       add(CodeReviewDetailsCommitsComponentFactory.create(cs, detailsVm.changesVm) { commit: GHCommit ->
@@ -119,7 +121,7 @@ internal object GHPRDetailsComponentFactory {
   )
 
 
-  private fun createCommitFilesBrowserComponent(cs: CoroutineScope, changesVm: GHPRChangesViewModel): JComponent {
+  fun createCommitFilesBrowserComponent(cs: CoroutineScope, changesVm: GHPRChangesViewModel): JComponent {
     return Wrapper(LoadingLabel()).apply {
       bindContentIn(cs, changesVm.changeListVm) { res ->
         res.result?.let {
