@@ -12,10 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import kotlin.Pair;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -579,6 +576,16 @@ public final class ConsentOptions implements ModificationTracker {
     if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       ApplicationManager.getApplication().getMessageBus().syncPublisher(DataSharingSettingsChangeListener.TOPIC).consentsUpdated();
     }
+  }
+
+  @TestOnly
+  public static @NotNull Path getDefaultConsentsFileForTests() {
+    return getDefaultConsentsFile();
+  }
+
+  @TestOnly
+  public static @NotNull Path getConfirmedConsentsFileForTests() {
+    return getConfirmedConsentsFile();
   }
 
   protected interface IOBackend {
