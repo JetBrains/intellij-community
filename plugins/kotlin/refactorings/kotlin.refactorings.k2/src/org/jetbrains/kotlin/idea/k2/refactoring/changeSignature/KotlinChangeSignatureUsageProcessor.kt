@@ -98,17 +98,17 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             primaryElements
         )
         ExpectActualUtils.withExpectedActuals(ktCallableDeclaration).forEach { ktCallableDeclaration ->
-            if (ktCallableDeclaration is KtNamedDeclaration) {
-                primaryElements.add(ktCallableDeclaration)
-                findUsages(ktCallableDeclaration, changeInfo, result)
-            }
-
             if (ktCallableDeclaration is KtCallableDeclaration) {
                 KotlinChangeSignatureUsageSearcher.findInternalUsages(ktCallableDeclaration, changeInfo, result)
             }
 
             if (ktCallableDeclaration is KtPrimaryConstructor) {
                 findConstructorPropertyUsages(ktCallableDeclaration, changeInfo, result)
+            }
+
+            if (ktCallableDeclaration is KtNamedDeclaration) {
+                primaryElements.add(ktCallableDeclaration)
+                findUsages(ktCallableDeclaration, changeInfo, result)
             }
         }
 
