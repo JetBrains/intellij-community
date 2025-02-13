@@ -223,6 +223,7 @@ public class HighlightInfo implements Segment {
   /**
    * Find the quickfix (among ones added by {@link #registerFixes}) selected by returning non-null value from the {@code predicate}
    * and return that value, or null if the quickfix was not found.
+   * @param predicate called with the found {@link IntentionActionDescriptor}, and its fix range, and returns a value.
    */
   public <T> T findRegisteredQuickFix(@NotNull BiFunction<? super @NotNull IntentionActionDescriptor, ? super @NotNull TextRange, ? extends @Nullable T> predicate) {
     List<IntentionActionDescriptor> descriptors = getIntentionActionDescriptors();
@@ -1041,8 +1042,10 @@ public class HighlightInfo implements Segment {
 
     /**
      * {@link HighlightInfo#fixRange} of original {@link HighlightInfo}
-     * Used to check intention's availability at given offset
+     * Used to check intention's availability at given offset.
+     * Can be null, in which case the fix range is the same as {@link HighlightInfo}'s fix range, which can be retrieved via {@link HighlightInfo#findRegisteredQuickFix}
      */
+    @ApiStatus.Internal
     public TextRange getFixRange() {
       Segment range = myFixRange;
       return range instanceof TextRange tr ? tr : range instanceof RangeMarker marker ? marker.getTextRange() : null;

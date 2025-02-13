@@ -655,7 +655,6 @@ c:com.intellij.codeInsight.daemon.impl.HighlightInfo$IntentionActionDescriptor
 - equals(java.lang.Object):Z
 - getAction():com.intellij.codeInsight.intention.IntentionAction
 - getDisplayName():java.lang.String
-- getFixRange():com.intellij.openapi.util.TextRange
 - getIcon():javax.swing.Icon
 - getOptions(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Editor):java.lang.Iterable
 - getToolId():java.lang.String
