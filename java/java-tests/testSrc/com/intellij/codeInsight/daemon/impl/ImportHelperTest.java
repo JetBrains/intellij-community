@@ -640,10 +640,11 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     List<HighlightInfo> errors = ContainerUtil.sorted(highlightErrors(), Segment.BY_START_OFFSET_THEN_END_OFFSET);
     assertSize(1000, errors);
     LazyQuickFixUpdaterImpl updater = (LazyQuickFixUpdaterImpl)LazyQuickFixUpdater.getInstance(getProject());
+    long deadline = System.currentTimeMillis() + 60_000;
     for (int i = 0; i < errors.size(); i++) {
       HighlightInfo error = errors.get(i);
       if (visibleRange.contains(error)) { // we care only for visible errors; invisible ones may or may not be computed
-        updater.waitForBackgroundJobIfStartedInTests(getFile(), editor, error, 60, TimeUnit.SECONDS);
+        updater.waitForBackgroundJobIfStartedInTests(getFile(), editor, error, deadline - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         if (!error.hasHint()) {
           List<HintAction> hints = ShowAutoImportPass.extractHints(error);
           String message = error + ": " + i + " hasHints: "+error.hasHint() + "; hints:" + hints + "; visibleRange:" + visibleRange + "; contains: " + visibleRange.contains(error);
