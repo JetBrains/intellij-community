@@ -196,7 +196,7 @@ public final class AddExceptionToThrowsFix extends PsiBasedModCommandAction<PsiE
   }
 
   private static @Nullable List<PsiClassType> getUnhandledExceptions(@Nullable PsiElement element, PsiElement topElement, PsiMethod targetMethod) {
-    if (element == null || element == topElement && !(topElement instanceof PsiMethodReferenceExpression) && !(topElement instanceof PsiMethod)) return null;
+    if (element == null || element instanceof PsiFile || element == topElement && !(topElement instanceof PsiMethodReferenceExpression) && !(topElement instanceof PsiMethod)) return null;
     List<PsiClassType> unhandledExceptions = ExceptionUtil.getUnhandledExceptions(element);
      if (!filterInProjectExceptions(targetMethod, unhandledExceptions).isEmpty()) {
       return unhandledExceptions;
