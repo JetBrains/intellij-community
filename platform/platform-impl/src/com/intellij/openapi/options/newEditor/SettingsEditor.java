@@ -24,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.ui.components.panels.VerticalLayout;
@@ -50,6 +49,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.options.newEditor.SettingsDialogExtensionsKt.createWrapperPanel;
 
 @ApiStatus.Internal
 public final class SettingsEditor extends AbstractEditor implements UiDataProvider, Place.Navigator {
@@ -269,9 +270,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     searchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     JComponent left = new JPanel(new BorderLayout());
     left.add(BorderLayout.CENTER, treeView);
-    left.setMinimumSize(new Dimension(96, 0));
-    left.setPreferredSize(new Dimension(256, 1024));
-    left.setMaximumSize(new Dimension(300, 32767));
+    left.setMinimumSize(JBUI.size(96, left.getMinimumSize().height));
+    left.setPreferredSize(JBUI.size(256, left.getPreferredSize().height));
+    left.setMaximumSize(JBUI.size(300, left.getMaximumSize().height));
     JComponent right = new JPanel(new BorderLayout());
     right.add(BorderLayout.CENTER, loadingDecorator.getComponent());
     mySplitter = new OnePixelSplitter(false, properties.getFloat(SPLITTER_PROPORTION, SPLITTER_PROPORTION_DEFAULT_VALUE));
@@ -292,12 +293,13 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       myBanner.setBorder(JBUI.Borders.empty(8, 5));
       mySplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
       mySplitter.setHonorComponentsPreferredSize(true);
+      add(BorderLayout.CENTER, createWrapperPanel(this, mySplitter));
     } else {
       right.add(BorderLayout.NORTH, withHistoryToolbar(myBanner));
       left.add(BorderLayout.NORTH, searchPanel);
       editor.setPreferredSize(JBUI.size(800, 600));
+      add(BorderLayout.CENTER, mySplitter);
     }
-    add(BorderLayout.CENTER, mySplitter);
 
     spotlightPainter = spotlightPainterFactory.createSpotlightPainter(project, editor, this, (painter) -> {
       Configurable currentConfigurable = this.filter.context.getCurrentConfigurable();
