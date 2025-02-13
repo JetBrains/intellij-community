@@ -44,6 +44,7 @@ import org.jetbrains.jps.model.module.JpsDependenciesList
 import org.jetbrains.jps.model.module.impl.JpsModuleImpl
 import org.jetbrains.jps.model.module.impl.JpsModuleSourceRootImpl
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
 import java.io.File
@@ -56,6 +57,8 @@ private val jpsElementFactory = JpsElementFactory.getInstance()
 
 private val javaHome = Path.of(System.getProperty("java.home")).normalize() ?: error("No java.home system property")
 
+private val KOTLINC_VERSION_HASH = Hashing.xxh3_64().hashBytesToLong((KotlinCompilerVersion.getVersion() ?: "@snapshot@").toByteArray())
+
 internal fun loadJpsModel(
   sources: List<Path>,
   args: ArgMap<JvmBuilderFlags>,
@@ -65,6 +68,7 @@ internal fun loadJpsModel(
   val model = jpsElementFactory.createModel()
 
   val digests = TargetConfigurationDigestContainer()
+  digests.set(TargetConfigurationDigestProperty.KOTLIN_VERSION, KOTLINC_VERSION_HASH)
   digests.set(TargetConfigurationDigestProperty.TOOL_VERSION, 1)
 
   // properties not needed for us (not implemented for java)

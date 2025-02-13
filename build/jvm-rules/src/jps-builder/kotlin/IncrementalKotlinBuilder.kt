@@ -30,6 +30,7 @@ import org.jetbrains.jps.incremental.BuilderCategory
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.ModuleLevelBuilder
+import org.jetbrains.jps.incremental.ModuleLevelBuilder.OutputConsumer
 import org.jetbrains.jps.incremental.RebuildRequestedException
 import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.jps.model.module.JpsModule
@@ -299,6 +300,7 @@ internal class IncrementalKotlinBuilder(
       incrementalCaches = incrementalCaches,
       messageCollector = messageCollector,
       outputConsumer = outputConsumer,
+      span = span,
     )
 
     if (generatedFiles == null) {
@@ -321,6 +323,8 @@ internal class IncrementalKotlinBuilder(
       fsOperations = fsOperations,
     )
 
+    // we do not save cache version - TargetConfigurationDigestProperty.KOTLIN_VERSION is used to rebuild in case of kotlinc update
+
     if (kotlinContext.hasKotlinMarker.get(target) == null) {
       fsOperations.markChunk(excludeFiles = dirtyByTarget.dirty.keys)
     }
@@ -328,9 +332,7 @@ internal class IncrementalKotlinBuilder(
     kotlinContext.hasKotlinMarker.set(target, true)
     kotlinContext.rebuildAfterCacheVersionChanged.clean(target)
 
-    for (target in kotlinChunk.targets) {
-      target.doAfterBuild()
-    }
+    kotlinChunk.targets.single().doAfterBuild()
 
     representativeTarget.updateChunkMappings(
       localContext = context,
@@ -383,193 +385,194 @@ internal class IncrementalKotlinBuilder(
 
     return ModuleLevelBuilder.ExitCode.OK
   }
+}
 
-  // todo(1.2.80): got rid of ModuleChunk (replace with KotlinChunk)
-  // todo(1.2.80): introduce KotlinRoundCompileContext, move dirtyFilesHolder, fsOperations, environment to it
-  private fun doCompileModuleChunk(
-    chunk: KotlinChunk,
-    representativeTarget: KotlinModuleBuildTarget<*>,
-    context: CompileContext,
-    targetDirtyFiles: TargetFiles?,
-    fsOperations: BazelKotlinFsOperationsHelper,
-    environment: JpsCompilerEnvironment,
-    incrementalCaches: Map<KotlinModuleBuildTarget<*>, JpsIncrementalCache>,
-    messageCollector: MessageCollectorAdapter,
-    outputConsumer: OutputConsumer,
-    outputItemCollector: OutputItemsCollectorImpl,
-  ): List<GeneratedFile>? {
-    val target = chunk.targets.single() as KotlinJvmModuleBuildTarget
-    target.nextRound(context)
+// todo(1.2.80): got rid of ModuleChunk (replace with KotlinChunk)
+// todo(1.2.80): introduce KotlinRoundCompileContext, move dirtyFilesHolder, fsOperations, environment to it
+private fun doCompileModuleChunk(
+  chunk: KotlinChunk,
+  representativeTarget: KotlinModuleBuildTarget<*>,
+  context: CompileContext,
+  targetDirtyFiles: TargetFiles?,
+  fsOperations: BazelKotlinFsOperationsHelper,
+  environment: JpsCompilerEnvironment,
+  incrementalCaches: Map<KotlinModuleBuildTarget<*>, JpsIncrementalCache>,
+  messageCollector: MessageCollectorAdapter,
+  outputConsumer: OutputConsumer,
+  outputItemCollector: OutputItemsCollectorImpl,
+  span: Span,
+): List<GeneratedFile>? {
+  val target = chunk.targets.single() as KotlinJvmModuleBuildTarget
+  target.nextRound(context)
 
-    val cache = incrementalCaches.get(target)
-    val jpsTarget = target.jpsModuleBuildTarget
+  val cache = incrementalCaches.get(target)
+  val jpsTarget = target.jpsModuleBuildTarget
 
-    if (cache != null && targetDirtyFiles != null) {
-      val complementaryFiles = cache.getComplementaryFilesRecursive(targetDirtyFiles.dirty.keys + targetDirtyFiles.removed)
-      context.testingContext?.buildLogger?.markedAsComplementaryFiles(complementaryFiles.toList())
-      fsOperations.markFilesForCurrentRound(target = jpsTarget, files = complementaryFiles.map { it.toPath() }, targetDirtyFiles = targetDirtyFiles)
+  if (cache != null && targetDirtyFiles != null) {
+    val complementaryFiles = cache.getComplementaryFilesRecursive(targetDirtyFiles.dirty.keys + targetDirtyFiles.removed)
+    context.testingContext?.buildLogger?.markedAsComplementaryFiles(complementaryFiles.toList())
+    fsOperations.markFilesForCurrentRound(target = jpsTarget, files = complementaryFiles.map { it.toPath() }, targetDirtyFiles = targetDirtyFiles)
 
-      cache.markDirty(targetDirtyFiles.dirty.keys + targetDirtyFiles.removed)
-    }
+    cache.markDirty(targetDirtyFiles.dirty.keys + targetDirtyFiles.removed)
+  }
 
-    if (targetDirtyFiles != null) {
-      val allDirtyFiles = targetDirtyFiles.dirty.keys
-      if (span.isRecording) {
-        span.addEvent("compiling files", Attributes.of(AttributeKey.stringArrayKey("allDirtyFiles"), allDirtyFiles.map { it.path }))
-      }
-      registerFilesToCompile(context, allDirtyFiles)
-    }
-
-    require(chunk.representativeTarget == representativeTarget)
-    val filesSet = targetDirtyFiles?.dirty?.keys ?: emptySet()
-    val changedSources = targetDirtyFiles?.dirty?.values ?: emptyList()
-    val removedFiles = targetDirtyFiles?.removed ?: emptyList()
-    if (changedSources.isEmpty() && removedFiles.isEmpty()) {
-      span.addEvent("not compiling, because no files affected")
-      return null
-    }
-
+  if (targetDirtyFiles != null) {
+    val allDirtyFiles = targetDirtyFiles.dirty.keys
     if (span.isRecording) {
-      span.addEvent("compiling", Attributes.of(
-        AttributeKey.stringArrayKey("files"), changedSources.map { it.file.path },
-        AttributeKey.longKey("fileCount"), filesSet.size.toLong(),
-        AttributeKey.longKey("removedFileCount"), removedFiles.size.toLong(),
-      ))
+      span.addEvent("compiling files", Attributes.of(AttributeKey.stringArrayKey("allDirtyFiles"), allDirtyFiles.map { it.path }))
     }
-
-    val module = jpsTarget.module
-    val bazelConfigurationHolder = module.container.getChild(BazelConfigurationHolder.KIND)!!
-    val config = prepareCompilerConfiguration(
-      args = bazelConfigurationHolder.args,
-      kotlinArgs = bazelConfigurationHolder.kotlinArgs,
-      baseDir = bazelConfigurationHolder.classPathRootDir,
-    )
-    configureModule(
-      moduleName = module.name,
-      config = config,
-      outFileOrDirPath = "",
-      args = bazelConfigurationHolder.args,
-      baseDir = bazelConfigurationHolder.classPathRootDir,
-      allSources = bazelConfigurationHolder.sources,
-      changedKotlinSources = changedSources.asSequence().map { it.file.path },
-      classPath = bazelConfigurationHolder.classPath.asList(),
-    )
-
-    var outputs: List<OutputFile> = emptyList()
-    val pipeline = createJvmPipeline(config) {
-      outputs = it.asList()
-      (outputConsumer as BazelTargetBuildOutputConsumer).registerKotlincOutput(context, outputs)
-    }
-
-    val exitCode = executeJvmPipeline(pipeline, bazelConfigurationHolder.kotlinArgs, environment.services, messageCollector)
-    @Suppress("RemoveRedundantQualifierName")
-    if (org.jetbrains.kotlin.cli.common.ExitCode.INTERNAL_ERROR == exitCode) {
-      messageCollector.report(CompilerMessageSeverity.ERROR, "Compiler terminated with internal error")
-    }
-
-    require(outputItemCollector.outputs.isEmpty()) {
-      throw IllegalStateException("Not expected that outputItemCollector is used: ${outputItemCollector.outputs}")
-    }
-
-    val result = Array(outputs.size) {
-      val output = outputs.get(it)
-      if (output.relativePath.endsWith(".class")) {
-        GeneratedJvmClass(
-          data = output.asByteArray(),
-          sourceFiles = output.sourceFiles,
-          outputFile = File(output.relativePath),
-          metadataVersionFromLanguageVersion = MetadataVersion.INSTANCE,
-        )
-      }
-      else {
-        GeneratedFile(sourceFiles = output.sourceFiles, outputFile = File(output.relativePath), data = output.asByteArray())
-      }
-    }
-    result.sortBy { it.outputFile.path }
-    return result.asList()
+    registerFilesToCompile(context, allDirtyFiles)
   }
 
-  private fun createCompileEnvironment(
-    context: CompileContext,
-    kotlinModuleBuilderTarget: KotlinModuleBuildTarget<*>,
-    incrementalCaches: Map<KotlinModuleBuildTarget<*>, JpsIncrementalCache>,
-    lookupTracker: LookupTracker,
-    exceptActualTracer: ExpectActualTracker,
-    inlineConstTracker: InlineConstTracker,
-    enumWhenTracker: EnumWhenTracker,
-    importTracker: ImportTracker,
-    chunk: ModuleChunk,
-    messageCollector: MessageCollectorAdapter,
-    outputItemCollector: OutputItemsCollectorImpl
-  ): JpsCompilerEnvironment? {
-    val builder = Services.Builder()
-    builder.register(LookupTracker::class.java, implementation = lookupTracker)
-    builder.register(ExpectActualTracker::class.java, implementation = exceptActualTracer)
-    builder.register(CompilationCanceledStatus::class.java, object : CompilationCanceledStatus {
-      override fun checkCanceled() {
-        if (kotlinModuleBuilderTarget.jpsGlobalContext.cancelStatus.isCanceled) {
-          throw CancellationException()
-        }
-      }
-    })
-    builder.register(InlineConstTracker::class.java, implementation = inlineConstTracker)
-    builder.register(EnumWhenTracker::class.java, implementation = enumWhenTracker)
-    builder.register(ImportTracker::class.java, implementation = importTracker)
-    builder.register(
-      IncrementalCompilationComponents::class.java,
-      @Suppress("UNCHECKED_CAST")
-      IncrementalCompilationComponentsImpl(incrementalCaches.mapKeys { it.key.targetId } as Map<TargetId, IncrementalCache>)
-    )
-    return JpsCompilerEnvironment(
-      kotlinPaths = DummyKotlinPaths,
-      services = builder.build(),
-      classesToLoadByParent = classesToLoadByParent,
-      messageCollector = messageCollector,
-      outputItemsCollector = outputItemCollector,
-      progressReporter = ProgressReporterImpl(context, chunk)
-    )
+  require(chunk.representativeTarget == representativeTarget)
+  val filesSet = targetDirtyFiles?.dirty?.keys ?: emptySet()
+  val changedSources = targetDirtyFiles?.dirty?.values ?: emptyList()
+  val removedFiles = targetDirtyFiles?.removed ?: emptyList()
+  if (changedSources.isEmpty() && removedFiles.isEmpty()) {
+    span.addEvent("not compiling, because no files affected")
+    return null
   }
 
-  private fun updateLookupStorage(
-    lookupTracker: LookupTracker,
-    lookupStorageManager: JpsLookupStorageManager,
-    dirtyFiles: TargetFiles,
-  ) {
-    if (lookupTracker !is LookupTrackerImpl) {
-      throw AssertionError("Lookup tracker is expected to be LookupTrackerImpl, got ${lookupTracker::class.java}")
-    }
-
-    lookupStorageManager.withLookupStorage { lookupStorage ->
-      lookupStorage.removeLookupsFrom(dirtyFiles.dirty.keys.asSequence() + dirtyFiles.removed)
-      lookupStorage.addAll(lookupTracker.lookups, lookupTracker.pathInterner.values)
-    }
+  if (span.isRecording) {
+    span.addEvent("compiling", Attributes.of(
+      AttributeKey.stringArrayKey("files"), changedSources.map { it.file.path },
+      AttributeKey.longKey("fileCount"), filesSet.size.toLong(),
+      AttributeKey.longKey("removedFileCount"), removedFiles.size.toLong(),
+    ))
   }
 
-  private fun markDirtyComplementaryMultifileClasses(
-    files: List<GeneratedFile>,
-    incrementalCaches: Map<KotlinModuleBuildTarget<*>, JpsIncrementalCache>,
-    fsOperations: BazelKotlinFsOperationsHelper,
-    kotlinModuleBuilderTarget: KotlinModuleBuildTarget<*>,
-  ) {
-    val cache = incrementalCaches.get(kotlinModuleBuilderTarget) as? IncrementalJvmCache ?: return
-    val generated = files.filterIsInstance<GeneratedJvmClass>()
-    val multifileClasses = generated.filter { it.outputClass.classHeader.kind == KotlinClassHeader.Kind.MULTIFILE_CLASS }
-    val expectedAllParts = multifileClasses.flatMap { cache.getAllPartsOfMultifileFacade(it.outputClass.className).orEmpty() }
-    if (multifileClasses.isEmpty()) {
-      return
-    }
+  val module = jpsTarget.module
+  val bazelConfigurationHolder = module.container.getChild(BazelConfigurationHolder.KIND)!!
+  val config = prepareCompilerConfiguration(
+    args = bazelConfigurationHolder.args,
+    kotlinArgs = bazelConfigurationHolder.kotlinArgs,
+    baseDir = bazelConfigurationHolder.classPathRootDir,
+  )
+  configureModule(
+    moduleName = module.name,
+    config = config,
+    outFileOrDirPath = "",
+    args = bazelConfigurationHolder.args,
+    baseDir = bazelConfigurationHolder.classPathRootDir,
+    allSources = bazelConfigurationHolder.sources,
+    changedKotlinSources = changedSources.asSequence().map { it.file.path },
+    classPath = bazelConfigurationHolder.classPath.asList(),
+  )
 
-    val actualParts = generated
-      .asSequence()
-      .filter { it.outputClass.classHeader.kind == KotlinClassHeader.Kind.MULTIFILE_CLASS_PART }
-      .map { it.outputClass.className.toString() }
-      .toList()
-    if (!actualParts.containsAll(expectedAllParts)) {
-      fsOperations.markFiles(
-        expectedAllParts.asSequence().flatMap { cache.sourcesByInternalName(it) }.map { it.toPath() }
-          + multifileClasses.asSequence().flatMap { it.sourceFiles }.map { it.toPath() }
+  var outputs: List<OutputFile> = emptyList()
+  val pipeline = createJvmPipeline(config) {
+    outputs = it.asList()
+    (outputConsumer as BazelTargetBuildOutputConsumer).registerKotlincOutput(context, outputs)
+  }
+
+  val exitCode = executeJvmPipeline(pipeline, bazelConfigurationHolder.kotlinArgs, environment.services, messageCollector)
+  @Suppress("RemoveRedundantQualifierName")
+  if (org.jetbrains.kotlin.cli.common.ExitCode.INTERNAL_ERROR == exitCode) {
+    messageCollector.report(CompilerMessageSeverity.ERROR, "Compiler terminated with internal error")
+  }
+
+  require(outputItemCollector.outputs.isEmpty()) {
+    throw IllegalStateException("Not expected that outputItemCollector is used: ${outputItemCollector.outputs}")
+  }
+
+  val result = Array(outputs.size) {
+    val output = outputs.get(it)
+    if (output.relativePath.endsWith(".class")) {
+      GeneratedJvmClass(
+        data = output.asByteArray(),
+        sourceFiles = output.sourceFiles,
+        outputFile = File(output.relativePath),
+        metadataVersionFromLanguageVersion = MetadataVersion.INSTANCE,
       )
     }
+    else {
+      GeneratedFile(sourceFiles = output.sourceFiles, outputFile = File(output.relativePath), data = output.asByteArray())
+    }
+  }
+  result.sortBy { it.outputFile.path }
+  return result.asList()
+}
+
+private fun createCompileEnvironment(
+  context: CompileContext,
+  kotlinModuleBuilderTarget: KotlinModuleBuildTarget<*>,
+  incrementalCaches: Map<KotlinModuleBuildTarget<*>, JpsIncrementalCache>,
+  lookupTracker: LookupTracker,
+  exceptActualTracer: ExpectActualTracker,
+  inlineConstTracker: InlineConstTracker,
+  enumWhenTracker: EnumWhenTracker,
+  importTracker: ImportTracker,
+  chunk: ModuleChunk,
+  messageCollector: MessageCollectorAdapter,
+  outputItemCollector: OutputItemsCollectorImpl
+): JpsCompilerEnvironment? {
+  val builder = Services.Builder()
+  builder.register(LookupTracker::class.java, implementation = lookupTracker)
+  builder.register(ExpectActualTracker::class.java, implementation = exceptActualTracer)
+  builder.register(CompilationCanceledStatus::class.java, object : CompilationCanceledStatus {
+    override fun checkCanceled() {
+      if (kotlinModuleBuilderTarget.jpsGlobalContext.cancelStatus.isCanceled) {
+        throw CancellationException()
+      }
+    }
+  })
+  builder.register(InlineConstTracker::class.java, implementation = inlineConstTracker)
+  builder.register(EnumWhenTracker::class.java, implementation = enumWhenTracker)
+  builder.register(ImportTracker::class.java, implementation = importTracker)
+  builder.register(
+    IncrementalCompilationComponents::class.java,
+    @Suppress("UNCHECKED_CAST")
+    IncrementalCompilationComponentsImpl(incrementalCaches.mapKeys { it.key.targetId } as Map<TargetId, IncrementalCache>)
+  )
+  return JpsCompilerEnvironment(
+    kotlinPaths = DummyKotlinPaths,
+    services = builder.build(),
+    classesToLoadByParent = classesToLoadByParent,
+    messageCollector = messageCollector,
+    outputItemsCollector = outputItemCollector,
+    progressReporter = ProgressReporterImpl(context, chunk)
+  )
+}
+
+private fun updateLookupStorage(
+  lookupTracker: LookupTracker,
+  lookupStorageManager: JpsLookupStorageManager,
+  dirtyFiles: TargetFiles,
+) {
+  if (lookupTracker !is LookupTrackerImpl) {
+    throw AssertionError("Lookup tracker is expected to be LookupTrackerImpl, got ${lookupTracker::class.java}")
+  }
+
+  lookupStorageManager.withLookupStorage { lookupStorage ->
+    lookupStorage.removeLookupsFrom(dirtyFiles.dirty.keys.asSequence() + dirtyFiles.removed)
+    lookupStorage.addAll(lookupTracker.lookups, lookupTracker.pathInterner.values)
+  }
+}
+
+private fun markDirtyComplementaryMultifileClasses(
+  files: List<GeneratedFile>,
+  incrementalCaches: Map<KotlinModuleBuildTarget<*>, JpsIncrementalCache>,
+  fsOperations: BazelKotlinFsOperationsHelper,
+  kotlinModuleBuilderTarget: KotlinModuleBuildTarget<*>,
+) {
+  val cache = incrementalCaches.get(kotlinModuleBuilderTarget) as? IncrementalJvmCache ?: return
+  val generated = files.filterIsInstance<GeneratedJvmClass>()
+  val multifileClasses = generated.filter { it.outputClass.classHeader.kind == KotlinClassHeader.Kind.MULTIFILE_CLASS }
+  val expectedAllParts = multifileClasses.flatMap { cache.getAllPartsOfMultifileFacade(it.outputClass.className).orEmpty() }
+  if (multifileClasses.isEmpty()) {
+    return
+  }
+
+  val actualParts = generated
+    .asSequence()
+    .filter { it.outputClass.classHeader.kind == KotlinClassHeader.Kind.MULTIFILE_CLASS_PART }
+    .map { it.outputClass.className.toString() }
+    .toList()
+  if (!actualParts.containsAll(expectedAllParts)) {
+    fsOperations.markFiles(
+      expectedAllParts.asSequence().flatMap { cache.sourcesByInternalName(it) }.map { it.toPath() }
+        + multifileClasses.asSequence().flatMap { it.sourceFiles }.map { it.toPath() }
+    )
   }
 }
 

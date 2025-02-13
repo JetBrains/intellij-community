@@ -3,13 +3,11 @@
 
 package org.jetbrains.bazel.jvm
 
-import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
-import io.opentelemetry.semconv.ExceptionAttributes
 import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -38,11 +36,9 @@ suspend inline fun <T> SpanBuilder.use(crossinline block: suspend (Span) -> T): 
     }
   }
   catch (e: CancellationException) {
-    span.recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
     throw e
   }
   catch (e: Throwable) {
-    span.recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
     span.setStatus(StatusCode.ERROR)
     throw e
   }

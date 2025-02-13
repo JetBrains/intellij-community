@@ -223,132 +223,132 @@ http_file(
 
 http_file(
     name = "arrow-format",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-format/18.1.0/arrow-format-18.1.0.jar",
-    sha256 = "004181b3877d8dabb2cb3bc00a9d1f535c1aab750cc8b6050d16bd2dc9ed29dd",
-    downloaded_file_path = "arrow-format-18.1.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-format/18.2.0/arrow-format-18.2.0.jar",
+    sha256 = "6d977352a232559c97a38dfdd786f014e87489d3bb3f33f12cfed30bdd164669",
+    downloaded_file_path = "arrow-format-18.2.0.jar",
 )
 http_file(
     name = "arrow-format-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-format/18.1.0/arrow-format-18.1.0-sources.jar",
-    sha256 = "d9dfee9b5fcaa5fba16d35f4c7d94183e8dca19de969a7f0f718726bb5026b4c",
-    downloaded_file_path = "arrow-format-18.1.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-format/18.2.0/arrow-format-18.2.0-sources.jar",
+    sha256 = "6b0e19b1d0270a5fd51182d815738e7b2aba4f00b6cf9a3a41d13aebb4e12d0a",
+    downloaded_file_path = "arrow-format-18.2.0-sources.jar",
 )
 
 http_file(
     name = "arrow-algorithm",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-algorithm/18.1.0/arrow-algorithm-18.1.0.jar",
-    sha256 = "8627d00c1fa3341ff49d894fb88f003e9a7ca4a3846527e31d881c162cf146ff",
-    downloaded_file_path = "arrow-algorithm-18.1.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-algorithm/18.2.0/arrow-algorithm-18.2.0.jar",
+    sha256 = "0c4089bde0ce62f00720d64dc0b7f08a6cb23e96c424ec7e061b4c4e6e4bba82",
+    downloaded_file_path = "arrow-algorithm-18.2.0.jar",
 )
 http_file(
     name = "arrow-algorithm-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-algorithm/18.1.0/arrow-algorithm-18.1.0-sources.jar",
-    sha256 = "d5c6c4ed38c33a55e126f86bccfb4d7c87341d23b5f820392b332e011d22c7a0",
-    downloaded_file_path = "arrow-algorithm-18.1.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-algorithm/18.2.0/arrow-algorithm-18.2.0-sources.jar",
+    sha256 = "c596851108722c8a5165e24d0fb8775fc5768305623f2b91d23e7b9b903055ec",
+    downloaded_file_path = "arrow-algorithm-18.2.0-sources.jar",
 )
 
 http_file(
     name = "arrow-vector",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-vector/18.1.0/arrow-vector-18.1.0.jar",
-    sha256 = "abfef148779957f34430c14e9b9a98872ea8064336bc82998d53668a0ded7d2a",
-    downloaded_file_path = "arrow-vector-18.1.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-vector/18.2.0/arrow-vector-18.2.0.jar",
+    sha256 = "29fe15fac68e30fdd59364bcd8b5058490cc85269fd47fb460abaff1fb61243d",
+    downloaded_file_path = "arrow-vector-18.2.0.jar",
 )
 http_file(
     name = "arrow-vector-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-vector/18.1.0/arrow-vector-18.1.0-sources.jar",
-    sha256 = "d1fd0853979b6670f073fb95f83794c5792706e179a686a6471ee3a6450bf716",
-    downloaded_file_path = "arrow-vector-18.1.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-vector/18.2.0/arrow-vector-18.2.0-sources.jar",
+    sha256 = "90709044e442c5998d68ce146e487ba89d1eb859c4ddf67defa2d8131390e10e",
+    downloaded_file_path = "arrow-vector-18.2.0-sources.jar",
 )
 
 http_file(
     name = "arrow-memory-core",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-core/18.1.0/arrow-memory-core-18.1.0.jar",
-    sha256 = "bc42ead76b54879bee621608727b19c24bc58dc1eb5d760eafc8aa8519ec427c",
-    downloaded_file_path = "arrow-memory-core-18.1.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-core/18.2.0/arrow-memory-core-18.2.0.jar",
+    sha256 = "f2867e5267d0ae4eb97ea5cac47bba90ca73522c53aa702a23258f9754ca8b8e",
+    downloaded_file_path = "arrow-memory-core-18.2.0.jar",
 )
 http_file(
     name = "arrow-memory-core-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-core/18.1.0/arrow-memory-core-18.1.0-sources.jar",
-    sha256 = "3b6b1d90b876fb5de2f7229bb4baa9f4cf9ffffb4c1c79bb163cbb7bba0a2ae0",
-    downloaded_file_path = "arrow-memory-core-18.1.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-core/18.2.0/arrow-memory-core-18.2.0-sources.jar",
+    sha256 = "badccb602f0184e27e55f58f1c4c5cd8a4eb5f5a257ae4d21a444ce57091ce38",
+    downloaded_file_path = "arrow-memory-core-18.2.0-sources.jar",
 )
 
 http_file(
     name = "arrow-memory-netty",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-netty/18.1.0/arrow-memory-netty-18.1.0.jar",
-    sha256 = "17448652b4bba123b6e901d1d7ddf63b776387c98295de93247c9461605da6f7",
-    downloaded_file_path = "arrow-memory-netty-18.1.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-netty/18.2.0/arrow-memory-netty-18.2.0.jar",
+    sha256 = "ff6c4900356e594411269ebc511ce3a98d881d67adc61e9b620f8ba9184694b7",
+    downloaded_file_path = "arrow-memory-netty-18.2.0.jar",
 )
 http_file(
     name = "arrow-memory-netty-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-netty/18.1.0/arrow-memory-netty-18.1.0-sources.jar",
-    sha256 = "574c3dcb951dc2ee7366030c79d07ec4736c3fc299070c08efa00da216ae36ea",
-    downloaded_file_path = "arrow-memory-netty-18.1.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-netty/18.2.0/arrow-memory-netty-18.2.0-sources.jar",
+    sha256 = "2788604690613113ddcdd15b9d1d86f6ea00c260d5f2368236209d4595969782",
+    downloaded_file_path = "arrow-memory-netty-18.2.0-sources.jar",
 )
 
 http_file(
     name = "arrow-memory-netty-buffer-patch",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-netty-buffer-patch/18.1.0/arrow-memory-netty-buffer-patch-18.1.0.jar",
-    sha256 = "472e5621551278de99cab9bd1b929c8db053fe603a732c259e42d48df3c77911",
-    downloaded_file_path = "arrow-memory-netty-buffer-patch-18.1.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-netty-buffer-patch/18.2.0/arrow-memory-netty-buffer-patch-18.2.0.jar",
+    sha256 = "9c5f242b6484ebfadc7d17f19554bd725afa1658d9cf824e59f1678618d263c2",
+    downloaded_file_path = "arrow-memory-netty-buffer-patch-18.2.0.jar",
 )
 http_file(
     name = "arrow-memory-netty-buffer-patch-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-netty-buffer-patch/18.1.0/arrow-memory-netty-buffer-patch-18.1.0-sources.jar",
-    sha256 = "ef22d12cd2c7f250373e381db176657eceb0be2fd3b01abc85e8c2f41feb970b",
-    downloaded_file_path = "arrow-memory-netty-buffer-patch-18.1.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/arrow/arrow-memory-netty-buffer-patch/18.2.0/arrow-memory-netty-buffer-patch-18.2.0-sources.jar",
+    sha256 = "9feb87fdbcb00d99ede9bc648c88ffbd4fd5858a879f60f405c583786660f1fa",
+    downloaded_file_path = "arrow-memory-netty-buffer-patch-18.2.0-sources.jar",
 )
 
 http_file(
     name = "opentelemetry-exporter-logging-otlp",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-logging-otlp/1.46.0/opentelemetry-exporter-logging-otlp-1.46.0.jar",
-    sha256 = "afbed5afecd48ebc66ffe16c438cd92da31759af56bdcbde0f260b131e43042a",
-    downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.46.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-logging-otlp/1.47.0/opentelemetry-exporter-logging-otlp-1.47.0.jar",
+    sha256 = "aa49634f2f46bd8fa13ec952c35a264295324aaedc1a585958529953861e9269",
+    downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.47.0.jar",
 )
 http_file(
     name = "opentelemetry-exporter-logging-otlp-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-logging-otlp/1.46.0/opentelemetry-exporter-logging-otlp-1.46.0-sources.jar",
-    sha256 = "10c69d372df6c0e80486edb3cbd4191b75a99325e5faba10406242b3e609311e",
-    downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.46.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-logging-otlp/1.47.0/opentelemetry-exporter-logging-otlp-1.47.0-sources.jar",
+    sha256 = "2ae0bff948fd5a1f4f4f47e83a50546fd8e335927e2e6576d173c9172045afde",
+    downloaded_file_path = "opentelemetry-exporter-logging-otlp-1.47.0-sources.jar",
 )
 
 http_file(
     name = "opentelemetry-sdk-extension-autoconfigure-spi",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.46.0/opentelemetry-sdk-extension-autoconfigure-spi-1.46.0.jar",
-    sha256 = "ffe8ac4ddce31b13eab1c6280dc18dcf734fbbeb0cf86feacc084ac7ca3f6725",
-    downloaded_file_path = "opentelemetry-sdk-extension-autoconfigure-spi-1.46.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.47.0/opentelemetry-sdk-extension-autoconfigure-spi-1.47.0.jar",
+    sha256 = "94348d4263e2c59c7039630cad379d969b62644ed09b6178fa952988559b396a",
+    downloaded_file_path = "opentelemetry-sdk-extension-autoconfigure-spi-1.47.0.jar",
 )
 http_file(
     name = "opentelemetry-sdk-extension-autoconfigure-spi-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.46.0/opentelemetry-sdk-extension-autoconfigure-spi-1.46.0-sources.jar",
-    sha256 = "d3f7b7f5b2041a7c7d3f31b3619336f4c72f945d89e5c90a83292e308431fe67",
-    downloaded_file_path = "opentelemetry-sdk-extension-autoconfigure-spi-1.46.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.47.0/opentelemetry-sdk-extension-autoconfigure-spi-1.47.0-sources.jar",
+    sha256 = "e2eea857013276cb59d4b3ad6463901a8bce5cb324e071f6b3996d2f8e53a262",
+    downloaded_file_path = "opentelemetry-sdk-extension-autoconfigure-spi-1.47.0-sources.jar",
 )
 
 http_file(
     name = "opentelemetry-exporter-otlp",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp/1.46.0/opentelemetry-exporter-otlp-1.46.0.jar",
-    sha256 = "9df3776f9bb2ca5e63058006931b2806c177cd74e77e2875fdc54a49302ba733",
-    downloaded_file_path = "opentelemetry-exporter-otlp-1.46.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp/1.47.0/opentelemetry-exporter-otlp-1.47.0.jar",
+    sha256 = "0bf93192631d8d069f865707abf456432bb8fca316d5a7fd0ff5d1302414c651",
+    downloaded_file_path = "opentelemetry-exporter-otlp-1.47.0.jar",
 )
 http_file(
     name = "opentelemetry-exporter-otlp-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp/1.46.0/opentelemetry-exporter-otlp-1.46.0-sources.jar",
-    sha256 = "1703983de4b3820336f2e2b55f9cd4e2323996863e0c8ba59d44397d780a7d22",
-    downloaded_file_path = "opentelemetry-exporter-otlp-1.46.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-otlp/1.47.0/opentelemetry-exporter-otlp-1.47.0-sources.jar",
+    sha256 = "aafc09eaaa3cf90a02f1c9670cb1c00ba73f86ed13e6ad91cc47efb1f3cabe62",
+    downloaded_file_path = "opentelemetry-exporter-otlp-1.47.0-sources.jar",
 )
 
 http_file(
     name = "opentelemetry-exporter-sender-jdk",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.46.0/opentelemetry-exporter-sender-jdk-1.46.0.jar",
-    sha256 = "ae7f7b4ec65b814e45f8388863ccf453d3ae0c4fc513c8dc6127bec4507524a0",
-    downloaded_file_path = "opentelemetry-exporter-sender-jdk-1.46.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.47.0/opentelemetry-exporter-sender-jdk-1.47.0.jar",
+    sha256 = "17c8e65e017e506ba520811009a37a64eceb2ceb0d15cd1d0e0cb074e54821cc",
+    downloaded_file_path = "opentelemetry-exporter-sender-jdk-1.47.0.jar",
 )
 http_file(
     name = "opentelemetry-exporter-sender-jdk-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.46.0/opentelemetry-exporter-sender-jdk-1.46.0-sources.jar",
-    sha256 = "13eb527901c0d3e0b1760f1f5ade26b340f61a31ff72a6e5c0fcafb2c81206d7",
-    downloaded_file_path = "opentelemetry-exporter-sender-jdk-1.46.0-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/opentelemetry/opentelemetry-exporter-sender-jdk/1.47.0/opentelemetry-exporter-sender-jdk-1.47.0-sources.jar",
+    sha256 = "cf54580e7cc05a59cfbb14ecf673fdd82e2ed014717653434cb99cf093193450",
+    downloaded_file_path = "opentelemetry-exporter-sender-jdk-1.47.0-sources.jar",
 )
 
 ### auto-generated section `libraries` end

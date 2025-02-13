@@ -1,6 +1,7 @@
 package org.jetbrains.bazel.jvm.jps.state
 
 internal enum class TargetConfigurationDigestProperty(@JvmField val description: String) {
+  KOTLIN_VERSION("kotlinc version"),
   TOOL_VERSION("bazel builder version or storage version"),
   COMPILER("kotlinc/javac configuration"),
   DEPENDENCY_PATH_LIST("dependency path list"),
