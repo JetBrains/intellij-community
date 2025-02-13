@@ -7,7 +7,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.util.findParentOfType
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.startOffset
 import com.intellij.util.containers.sequenceOfNotNull
@@ -45,7 +44,6 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleParameterPosit
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.isFirstStatement
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.yieldIfNotNull
@@ -74,7 +72,10 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
             if (positionContext.explicitReceiver != null) return
 
             val nameExpression = positionContext.nameExpression
-            if (!nameExpression.isFirstStatement()) return
+            val functionLiteral = nameExpression.parentOfType<KtFunctionLiteral>()
+                ?: return
+
+            if (functionLiteral.bodyExpression?.firstStatement != nameExpression) return
 
             super.complete(
                 position = nameExpression,
@@ -120,19 +121,19 @@ internal sealed class FirTrailingFunctionParameterNameCompletionContributorBase<
         existingParameterNames: Set<String>,
         weighingContext: WeighingContext,
     ) {
-        val callExpression = position.parentOfType<KtCallExpression>()
+        val functionLiteral = originalKtFile.findElementAt(position.startOffset)
+            ?.parentOfType<KtFunctionLiteral>()
             ?: return
 
-        if (callExpression.lambdaArguments
-                .firstOrNull()
-                ?.getLambdaExpression()
-                ?.functionLiteral
-                ?.arrow != null
-        ) return
+        if (functionLiteral.hasParameterSpecification()) return
 
-        val candidateChecker = originalKtFile.findElementAt(position.startOffset)
-            ?.findParentOfType<KtFunctionLiteral>()
-            ?.let { createExtensionCandidateChecker(it) }
+        val bodyExpression = functionLiteral.bodyExpression
+            ?: return
+
+        val callExpression = functionLiteral.parentOfType<KtCallExpression>()
+            ?: return
+
+        val candidateChecker = createExtensionCandidateChecker(bodyExpression)
             ?: return
 
         callExpression.resolveToCallCandidates()
@@ -405,12 +406,9 @@ private val KaType.text: String
 
 context(KaCompletionCandidateChecker)
 private fun createExtensionCandidateChecker(
-    functionLiteral: KtFunctionLiteral,
+    bodyExpression: KtBlockExpression,
 ): KtCompletionExtensionCandidateChecker? {
-    val bodyExpression = functionLiteral.bodyExpression
-        ?: return null
-
-    val codeFragment = KtPsiFactory(functionLiteral.project)
+    val codeFragment = KtPsiFactory(bodyExpression.project)
         .createBlockCodeFragment(
             text = StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.asString(),
             context = bodyExpression,
