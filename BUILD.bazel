@@ -231,6 +231,7 @@ java_library(
     "//plugins/search-everywhere-ml/typos:searchEverywhereMl-typos",
     "//plugins/grazie",
     "//plugins/compose:compose-ide-plugin",
+    "//plugins/git-modal-commit:vcs-git-commit-modal",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main` end
