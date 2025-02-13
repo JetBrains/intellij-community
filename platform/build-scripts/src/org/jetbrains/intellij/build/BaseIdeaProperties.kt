@@ -40,6 +40,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + seq
   "intellij.gradle.java.maven",
   "intellij.gradle.analysis",
   "intellij.vcs.git",
+  "intellij.vcs.git.commit.modal",
   "intellij.vcs.svn",
   "intellij.vcs.hg",
   "intellij.groovy",
