@@ -78,7 +78,7 @@ internal class ReworkedTerminalView(
       coroutineScope.cancel()
     }
 
-    sessionModel = TerminalSessionModelImpl(settings)
+    sessionModel = TerminalSessionModelImpl()
     encodingManager = TerminalKeyEncodingManager(sessionModel, coroutineScope.childScope("TerminalKeyEncodingManager"))
 
     terminalInput = TerminalInput(sessionFuture, sessionModel, coroutineScope.childScope("TerminalInput"))
