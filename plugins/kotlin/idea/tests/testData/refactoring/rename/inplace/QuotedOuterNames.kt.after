@@ -1,0 +1,11 @@
+// NEW_NAME: Foo
+// RENAME: member
+
+object `Foo-Bar` {
+    class Foo
+    fun m() {
+        println(Foo().toString())
+    }
+}
+
+class Foo

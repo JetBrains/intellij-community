@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.k2.refactoring.getThisQualifier
 import org.jetbrains.kotlin.idea.refactoring.conflicts.filterCandidates
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerRetargetJobOnPotentialCandidates
@@ -306,7 +307,7 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
                     } else if (containingSymbol == null) {
                         (symbol?.psi as? KtElement)?.containingKtFile?.packageFqName
                     } else null
-                containerFQN?.asString()?.takeIf { it.isNotEmpty() }
+                containerFQN?.quoteIfNeeded()?.asString()?.takeIf { it.isNotEmpty() }
             }
         } ?: return null
 
