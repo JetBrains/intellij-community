@@ -1385,6 +1385,8 @@ f:com.intellij.openapi.components.ServiceManager
 - s:getServiceIfCreated(com.intellij.openapi.project.Project,java.lang.Class):java.lang.Object
 f:com.intellij.openapi.components.ServicesKt
 - sf:serviceNotFoundError(com.intellij.openapi.components.ComponentManager,java.lang.Class):java.lang.IllegalStateException
+f:com.intellij.openapi.editor.CharacterSequences
+- sf:codePointAt(java.lang.CharSequence,I):I
 com.intellij.openapi.editor.Document
 - com.intellij.openapi.util.UserDataHolder
 - sf:EMPTY_ARRAY:com.intellij.openapi.editor.Document[]
