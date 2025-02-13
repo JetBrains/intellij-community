@@ -1082,7 +1082,7 @@ public final class ConfigImportHelper {
 
     pluginsToDownload.removeIf(hasPendingUpdate);
     if (!pluginsToDownload.isEmpty()) {
-      downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, pluginsToDownload, brokenPluginVersions);
+      downloadUpdatesForPlugins(newPluginsDir, options, pluginsToDownload, brokenPluginVersions);
 
       // migrating plugins for which we weren't able to download updates
       migratePlugins(newPluginsDir, pluginsToDownload, log);
@@ -1201,15 +1201,15 @@ public final class ConfigImportHelper {
     }
   }
 
-  /** @param incompatiblePlugins elements for which updates are successfully processed are _removed_ from the list */
-  private static void downloadUpdatesForIncompatiblePlugins(Path newPluginsDir,
-                                                            ConfigImportOptions options,
-                                                            List<IdeaPluginDescriptor> incompatiblePlugins,
-                                                            Map<PluginId, Set<String>> brokenPluginVersions) {
+  /** @param plugins elements for which updates are successfully processed are _removed_ from the list */
+  private static void downloadUpdatesForPlugins(Path newPluginsDir,
+                                                ConfigImportOptions options,
+                                                List<IdeaPluginDescriptor> plugins,
+                                                Map<PluginId, Set<String>> brokenPluginVersions) {
     if (options.headless) {
       runSynchronouslyInBackground(() -> {
         var indicator = options.headlessProgressIndicator == null ? new EmptyProgressIndicator(ModalityState.nonModal()) : options.headlessProgressIndicator;
-        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, brokenPluginVersions, indicator);
+        downloadUpdatesForPlugins(newPluginsDir, options, plugins, brokenPluginVersions, indicator);
       });
     }
     else {
@@ -1221,7 +1221,7 @@ public final class ConfigImportHelper {
       hideSplash();
       runSynchronouslyInBackground(() -> {
         try {
-          downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, brokenPluginVersions, dialog.getIndicator());
+          downloadUpdatesForPlugins(newPluginsDir, options, plugins, brokenPluginVersions, dialog.getIndicator());
         }
         catch (Throwable e) {
           options.log.info("Failed to download updates for plugins", e);
@@ -1232,15 +1232,15 @@ public final class ConfigImportHelper {
     }
   }
 
-  /** @param incompatiblePlugins elements for which updates are successfully processed are _removed_ from the list */
-  private static void downloadUpdatesForIncompatiblePlugins(Path newPluginsDir,
-                                                            ConfigImportOptions options,
-                                                            List<IdeaPluginDescriptor> incompatiblePlugins,
-                                                            Map<PluginId, Set<String>> brokenPluginVersions,
-                                                            ProgressIndicator indicator) {
+  /** @param plugins elements for which updates are successfully processed are _removed_ from the list */
+  private static void downloadUpdatesForPlugins(Path newPluginsDir,
+                                                ConfigImportOptions options,
+                                                List<IdeaPluginDescriptor> plugins,
+                                                Map<PluginId, Set<String>> brokenPluginVersions,
+                                                ProgressIndicator indicator) {
     ThreadingAssertions.assertBackgroundThread();
     Logger log = options.log;
-    for (Iterator<IdeaPluginDescriptor> iterator = incompatiblePlugins.iterator(); iterator.hasNext(); ) {
+    for (Iterator<IdeaPluginDescriptor> iterator = plugins.iterator(); iterator.hasNext(); ) {
       IdeaPluginDescriptor descriptor = iterator.next();
       PluginId pluginId = descriptor.getPluginId();
 
