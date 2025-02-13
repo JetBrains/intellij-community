@@ -15,7 +15,7 @@ public abstract class SeveritiesProvider {
   /**
    * @see com.intellij.openapi.editor.colors.TextAttributesKey#createTextAttributesKey(String, TextAttributes)
    */
-  public abstract @NotNull List<HighlightInfoType> getSeveritiesHighlightInfoTypes();
+  public abstract @NotNull List<@NotNull HighlightInfoType> getSeveritiesHighlightInfoTypes();
 
   public boolean isGotoBySeverityEnabled(HighlightSeverity minSeverity) {
     return minSeverity != HighlightSeverity.INFORMATION;

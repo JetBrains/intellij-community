@@ -13,8 +13,8 @@ import java.util.function.Supplier
 import javax.swing.Icon
 
 class TextProblemSeverities: SeveritiesProvider() {
-  override fun getSeveritiesHighlightInfoTypes(): MutableList<HighlightInfoType> {
-    return mutableListOf(
+  override fun getSeveritiesHighlightInfoTypes(): List<HighlightInfoType> {
+    return listOf(
       TextHighlightInfoType(STYLE_ERROR, STYLE_ERROR_ATTRIBUTES, GrazieIcons.StyleError),
       TextHighlightInfoType(STYLE_WARNING, STYLE_WARNING_ATTRIBUTES, GrazieIcons.StyleWarning),
       TextHighlightInfoType(STYLE_SUGGESTION, STYLE_SUGGESTION_ATTRIBUTES, GrazieIcons.StyleSuggestion),
