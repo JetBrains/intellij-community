@@ -51,10 +51,9 @@ public final class BasicHtmlUtil {
   private static final String HTML_TAG_REGEXP = "\\s*</?\\w+\\s*(\\w+\\s*=.*)?>.*";
   private static final Pattern HTML_TAG_PATTERN = Pattern.compile(HTML_TAG_REGEXP);
 
-  private BasicHtmlUtil() {
-  }
+  private BasicHtmlUtil() { }
 
-  private static final Set<String> EMPTY_TAGS_MAP = Set.of(
+  public static final Set<String> EMPTY_TAGS_MAP = Set.of(
     "area", "base", "basefont", "br", "col", "embed", "frame", "hr", "meta", "img", "input", "isindex", "link", "param", "source", "track",
     "wbr"
   );

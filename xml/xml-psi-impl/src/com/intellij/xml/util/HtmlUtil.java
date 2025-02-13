@@ -77,7 +77,7 @@ public final class HtmlUtil {
 
   public static boolean isSingleHtmlTag(@NotNull XmlTag tag, boolean toLowerCase) {
     final String name = tag.getName();
-    boolean result = EMPTY_TAGS_MAP.contains(!toLowerCase || tag.isCaseSensitive()
+    boolean result = BasicHtmlUtil.EMPTY_TAGS_MAP.contains(!toLowerCase || tag.isCaseSensitive()
                                              ? name : StringUtil.toLowerCase(name));
     return result && !XmlCustomElementDescriptor.isCustomElement(tag);
   }
