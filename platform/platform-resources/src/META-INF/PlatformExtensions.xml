@@ -1182,6 +1182,8 @@
       serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.GlobalIgnoredPluginSuggestionState"/>
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateRequestParametersProvider"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.DefaultUpdateRequestParametersProvider"/>
+    <applicationService serviceInterface="com.intellij.frontend.HostIdeInfoService"
+                        serviceImplementation="com.intellij.frontend.DefaultHostIdeInfoService"/>
     <dependencyCollector kind="executable"
                          implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.EnvironmentDependencyCollector"/>
 
