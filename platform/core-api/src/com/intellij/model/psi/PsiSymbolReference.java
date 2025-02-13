@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.psi;
 
 import com.intellij.model.Symbol;
@@ -15,6 +15,7 @@ import java.util.Collection;
  *
  * @see PsiCompletableReference
  * @see PsiSymbolReferenceProvider
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/declarations-and-references.html">Declarations and Reference (IntelliJ Platform Docs)</a>
  */
 public interface PsiSymbolReference {
 
@@ -26,7 +27,7 @@ public interface PsiSymbolReference {
 
   /**
    * @return range in {@link #getElement() element} which is considered a reference,
-   * e.g. range of `bar` in `foo.bar` qualified reference expression
+   * e.g., range of `bar` in `foo.bar` qualified reference expression
    */
   @NotNull
   TextRange getRangeInElement();
