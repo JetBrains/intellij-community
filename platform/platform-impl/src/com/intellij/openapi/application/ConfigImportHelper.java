@@ -68,7 +68,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -897,8 +896,8 @@ public final class ConfigImportHelper {
     boolean mergeVmOptions = false;
     MarketplacePluginDownloadService downloadService;
     /** should be exception-safe */
-    @NotNull Supplier<@Nullable Map<PluginId, Set<String>>> brokenPluginsFetcher =
-      testBrokenPluginsFetcherStub != null ? testBrokenPluginsFetcherStub : () -> fetchBrokenPluginsFromMarketplace(this, 3000);
+    @NotNull BrokenPluginsFetcher brokenPluginsFetcher =
+      testBrokenPluginsFetcherStub != null ? testBrokenPluginsFetcherStub : (configDir) -> fetchBrokenPluginsFromMarketplace(this, configDir, 3000);
 
     @Nullable ProgressIndicator headlessProgressIndicator = null;
 
@@ -936,6 +935,11 @@ public final class ConfigImportHelper {
 
     public void setImportSettings(@Nullable ConfigImportSettings importSettings) {
       this.importSettings = importSettings;
+    }
+
+    @FunctionalInterface
+    public interface BrokenPluginsFetcher {
+      @Nullable Map<PluginId, Set<String>> fetchBrokenPlugins(@NotNull Path configDir);
     }
   }
 
@@ -1037,7 +1041,7 @@ public final class ConfigImportHelper {
     List<IdeaPluginDescriptor> pluginsToMigrate = new ArrayList<>();
     List<IdeaPluginDescriptor> pluginsToDownload = new ArrayList<>();
 
-    @Nullable Map<PluginId, Set<String>> brokenPluginVersions = options.brokenPluginsFetcher.get();
+    @Nullable Map<PluginId, Set<String>> brokenPluginVersions = options.brokenPluginsFetcher.fetchBrokenPlugins(newConfigDir);
     try {
       PluginLoadingResult result = PluginDescriptorLoader.loadDescriptorsFromOtherIde(
         oldPluginsDir, options.bundledPluginPath, brokenPluginVersions, options.compatibleBuildNumber);
@@ -1272,24 +1276,29 @@ public final class ConfigImportHelper {
     return versions != null && versions.contains(descriptor.getVersion());
   }
 
-  /**
-   * uses a temporary dir to not accidentally mess up some "this dir is not expected to exist yet" condition
-   * TODO wastes ~250kb of downloaded data
-   */
-  static @Nullable Map<PluginId, Set<String>> fetchBrokenPluginsFromMarketplace(ConfigImportOptions options, long timeoutMs) {
+  static @Nullable Map<PluginId, Set<String>> fetchBrokenPluginsFromMarketplace(ConfigImportOptions options, Path newConfigDir, long timeoutMs) {
     try {
-      var tempDir = Files.createTempDirectory("brokenPlugins-" + UUID.randomUUID());
       var buildNumber =
         options.compatibleBuildNumber != null ? options.compatibleBuildNumber : ApplicationInfoImpl.getShadowInstance().getBuild();
       AtomicReference<Map<PluginId, Set<String>>> fetchedBrokenPlugins = new AtomicReference<>();
       var start = System.currentTimeMillis();
       runSynchronouslyInBackgroundWithTimeout(() -> {
         fetchedBrokenPlugins.set(
-          MarketplaceRequests.Companion.getBrokenPlugins(buildNumber, tempDir)
+          MarketplaceRequests.Companion.getBrokenPlugins(buildNumber)
         );
       }, timeoutMs);
       options.log.info("Fetched broken plugins in " + (System.currentTimeMillis() - start) + " ms");
-      return fetchedBrokenPlugins.get();
+      var brokenPlugins = fetchedBrokenPlugins.get();
+      if (brokenPlugins != null && !brokenPlugins.isEmpty()) {
+        try {
+          Files.createDirectories(newConfigDir);
+          BrokenPluginFileKt.writeBrokenPlugins(brokenPlugins, newConfigDir);
+          BrokenPluginFileKt.dropInMemoryBrokenPluginsCache(); // just in case
+        } catch (Exception e) {
+          options.log.error("Failed to write broken plugins", e);
+        }
+      }
+      return brokenPlugins;
     }
     catch (TimeoutException e) {
       options.log.warn("Failed to fetch broken plugins: timed out");
@@ -1634,5 +1643,5 @@ public final class ConfigImportHelper {
   }
 
   @VisibleForTesting
-  static @Nullable Supplier<@Nullable Map<PluginId, Set<String>>> testBrokenPluginsFetcherStub = null;
+  static @Nullable ConfigImportOptions.BrokenPluginsFetcher testBrokenPluginsFetcherStub = null;
 }

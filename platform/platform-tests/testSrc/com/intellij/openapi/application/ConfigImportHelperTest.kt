@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationServic
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.TestFor
+import com.intellij.openapi.application.ConfigImportHelper.ConfigImportOptions.BrokenPluginsFetcher
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.logger
@@ -37,7 +38,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Predicate
-import java.util.function.Supplier
 import kotlin.io.path.isDirectory
 import kotlin.io.path.readLines
 import kotlin.io.path.writeLines
@@ -270,7 +270,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
     val newPluginsDir = newConfigDir.resolve("plugins")
 
-    options.brokenPluginsFetcher = Supplier { mapOf(PluginId.getId(builder.id) to setOf("1.0")) }
+    options.brokenPluginsFetcher = BrokenPluginsFetcher { mapOf(PluginId.getId(builder.id) to setOf("1.0")) }
 
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
     assertThat(newPluginsDir).doesNotExist()
@@ -578,11 +578,6 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   }
 
   @Test fun `uses broken plugins from marketplace by default`() {
-    val server = HttpServer.create();
-    server.bind(InetSocketAddress( 0), 1);
-    server.start();
-    testRootDisposable.whenDisposed { server.stop(0) }
-
     val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
     val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
     val builder = PluginBuilder()
@@ -596,6 +591,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newPluginsDir = newConfigDir.resolve("plugins")
 
     val brokenPluginsDownloaded = AtomicInteger()
+    val server = createTestServer()
     server.createContext("/files/brokenPlugins.json") { exchange ->
       brokenPluginsDownloaded.incrementAndGet()
       exchange.sendResponseHeaders(200, 0)
@@ -622,5 +618,13 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     assertThat(newPluginsDir).exists()
       .isDirectoryContaining { it.fileName.toString() == "my-plugin-2.jar" }
       .isDirectoryNotContaining { it.fileName.toString() == "my-plugin.jar" }
+  }
+
+  private fun createTestServer(): HttpServer {
+    val server = HttpServer.create()!!
+    server.bind(InetSocketAddress(0), 1)
+    server.start()
+    testRootDisposable.whenDisposed { server.stop(0) }
+    return server
   }
 }

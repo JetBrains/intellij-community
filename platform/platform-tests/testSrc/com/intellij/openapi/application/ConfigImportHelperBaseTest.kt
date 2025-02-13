@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application
 
+import com.intellij.openapi.application.ConfigImportHelper.ConfigImportOptions.BrokenPluginsFetcher
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.InMemoryFsRule
@@ -13,7 +13,6 @@ import org.junit.rules.ExternalResource
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
-import java.util.function.Supplier
 
 abstract class ConfigImportHelperBaseTest : BareTestFixtureTestCase() {
   @JvmField @Rule val memoryFs = InMemoryFsRule(SystemInfo.isWindows)
@@ -44,10 +43,10 @@ abstract class ConfigImportHelperBaseTest : BareTestFixtureTestCase() {
   class BrokenPluginsFetcherStub : ExternalResource() {
     override fun before() {
       assert(ConfigImportHelper.testBrokenPluginsFetcherStub == null)
-      ConfigImportHelper.testBrokenPluginsFetcherStub = Supplier { null } // force use of brokenPlugins from the distribution
+      ConfigImportHelper.testBrokenPluginsFetcherStub = BrokenPluginsFetcher { null } // force use of brokenPlugins from the distribution
     }
 
-    fun set(fetcher: Supplier<Map<PluginId, Set<String>>?>?) {
+    fun set(fetcher: BrokenPluginsFetcher?) {
       ConfigImportHelper.testBrokenPluginsFetcherStub = fetcher
     }
 
