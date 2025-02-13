@@ -292,7 +292,6 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       right.add(BorderLayout.NORTH, myBanner);
       myBanner.setBorder(JBUI.Borders.empty(8, 5));
       mySplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
-      mySplitter.setHonorComponentsPreferredSize(true);
       add(BorderLayout.CENTER, createWrapperPanel(this, mySplitter));
     } else {
       right.add(BorderLayout.NORTH, withHistoryToolbar(myBanner));
