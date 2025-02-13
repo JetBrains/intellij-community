@@ -37,7 +37,7 @@ internal fun SettingsDialog.createEditorToolbar(actions: List<Action>): DialogPa
   val editorToolbar = panel {
     row {
       val action = object : DumbAwareAction({ ActionsBundle.message("action.SettingsEditor.ToggleSidebar.text") },
-                                            AllIcons.General.LayoutEditorOnly) {
+                                            AllIcons.General.Menu) {
         override fun actionPerformed(e: AnActionEvent) {
           forceShowSidebar.set(!forceShowSidebar.get())
           repaint()
