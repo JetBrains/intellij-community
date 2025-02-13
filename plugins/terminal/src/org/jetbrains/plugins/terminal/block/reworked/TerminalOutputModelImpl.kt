@@ -8,11 +8,13 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Computable
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.terminal.session.StyleRange
+import com.intellij.terminal.session.TerminalOutputModelState
 import com.intellij.util.EventDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
@@ -36,8 +38,11 @@ class TerminalOutputModelImpl(
 
   private val dispatcher = EventDispatcher.create(TerminalOutputModelListener::class.java)
 
-  private var trimmedLinesCount: Int = 0
-  private var trimmedCharsCount: Int = 0
+  @VisibleForTesting
+  var trimmedLinesCount: Int = 0
+
+  @VisibleForTesting
+  var trimmedCharsCount: Int = 0
 
   private var contentUpdateInProgress: Boolean = false
 
@@ -162,6 +167,28 @@ class TerminalOutputModelImpl(
     dispatcher.addListener(listener, parentDisposable)
   }
 
+  override fun dumpState(): TerminalOutputModelState {
+    return TerminalOutputModelState(
+      text = document.text,
+      trimmedLinesCount = trimmedLinesCount,
+      trimmedCharsCount = trimmedCharsCount,
+      cursorOffset = cursorOffsetState.value,
+      highlightings = highlightingsModel.dumpState()
+    )
+  }
+
+  override fun restoreFromState(state: TerminalOutputModelState) {
+    changeDocumentContent {
+      trimmedLinesCount = state.trimmedLinesCount
+      trimmedCharsCount = state.trimmedCharsCount
+      document.setText(state.text)
+      highlightingsModel.restoreFromState(state.highlightings)
+      mutableCursorOffsetState.value = state.cursorOffset
+
+      0  // the document is changed from right from the start
+    }
+  }
+
   private inner class HighlightingsModel {
     private val colorPalette: TerminalColorPalette = BlockTerminalColorPalette()
 
@@ -242,6 +269,17 @@ class TerminalOutputModelImpl(
       repeat(removeUntilHighlightingIndex) {
         styleRanges.removeAt(0)
       }
+
+      highlightingsSnapshot = null
+    }
+
+    fun dumpState(): List<StyleRange> {
+      return styleRanges.toList()
+    }
+
+    fun restoreFromState(state: List<StyleRange>) {
+      styleRanges.clear()
+      styleRanges.addAll(state)
 
       highlightingsSnapshot = null
     }

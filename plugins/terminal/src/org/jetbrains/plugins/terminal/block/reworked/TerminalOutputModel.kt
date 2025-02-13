@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.reworked
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.terminal.session.StyleRange
+import com.intellij.terminal.session.TerminalOutputModelState
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
@@ -36,4 +37,8 @@ interface TerminalOutputModel {
   fun updateCursorPosition(absoluteLineIndex: Int, columnIndex: Int)
 
   fun addListener(parentDisposable: Disposable, listener: TerminalOutputModelListener)
+
+  fun dumpState(): TerminalOutputModelState
+
+  fun restoreFromState(state: TerminalOutputModelState)
 }

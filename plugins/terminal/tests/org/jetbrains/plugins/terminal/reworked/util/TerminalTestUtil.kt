@@ -5,6 +5,7 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.terminal.session.StyleRange
+import com.intellij.terminal.session.TerminalOutputModelState
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
 
@@ -15,17 +16,21 @@ internal object TerminalTestUtil {
   }
 
   suspend fun TerminalOutputModel.update(absoluteLineIndex: Int, text: String, styles: List<StyleRange> = emptyList()) {
-    writeAction {
-      CommandProcessor.getInstance().runUndoTransparentAction {
-        updateContent(absoluteLineIndex, text, styles)
-      }
-    }
+    updateOutputModel { updateContent(absoluteLineIndex, text, styles) }
   }
 
   suspend fun TerminalOutputModel.updateCursor(absoluteLineIndex: Int, column: Int) {
+    updateOutputModel { updateCursorPosition(absoluteLineIndex, column) }
+  }
+
+  suspend fun TerminalOutputModel.restore(state: TerminalOutputModelState) {
+    updateOutputModel { restoreFromState(state) }
+  }
+
+  private suspend fun updateOutputModel(action: () -> Unit) {
     writeAction {
       CommandProcessor.getInstance().runUndoTransparentAction {
-        updateCursorPosition(absoluteLineIndex, column)
+        action()
       }
     }
   }
