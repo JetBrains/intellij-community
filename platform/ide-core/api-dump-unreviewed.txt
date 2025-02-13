@@ -176,6 +176,14 @@ com.intellij.ide.AppLifecycleListener
 - projectFrameClosed():V
 - projectOpenFailed():V
 - welcomeScreenDisplayed():V
+f:com.intellij.ide.CliResult
+- java.lang.Record
+- sf:OK:com.intellij.ide.CliResult
+- <init>(I,java.lang.String):V
+- f:equals(java.lang.Object):Z
+- exitCode():I
+- f:hashCode():I
+- message():java.lang.String
 f:com.intellij.ide.GeneralLocalSettings
 - com.intellij.openapi.components.SimplePersistentStateComponent
 - sf:Companion:com.intellij.ide.GeneralLocalSettings$Companion
