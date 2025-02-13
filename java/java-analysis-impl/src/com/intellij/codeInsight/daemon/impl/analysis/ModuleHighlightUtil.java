@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.JavaModuleSystemEx;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix;
@@ -11,28 +10,28 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AddUsesDirectiveFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.java.codeserver.core.JavaServiceProviderUtil;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
 import com.intellij.psi.impl.IncompleteModelUtil;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
+
+import static java.util.Objects.requireNonNullElse;
 
 // generates HighlightInfoType.ERROR-like HighlightInfos for modularity-related (Jigsaw) problems
 final class ModuleHighlightUtil {
@@ -56,7 +55,8 @@ final class ModuleHighlightUtil {
             if (!exports.contains(packageName) && !uses.contains(className)) {
               String message = JavaErrorBundle.message("module.service.unused");
               HighlightInfo.Builder info =
-                HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).descriptionAndTooltip(message);
+                HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(
+                  requireNonNullElse(ref.getReferenceNameElement(), ref)).descriptionAndTooltip(message);
               ModCommandAction action1 = new AddExportsDirectiveFix(module, packageName, "");
               info.registerFix(action1, null, null, null, null);
               ModCommandAction action = new AddUsesDirectiveFix(module, className);
@@ -195,91 +195,5 @@ final class ModuleHighlightUtil {
     else {
       return PsiUtil.isPackageEmpty(directories, packageName);
     }
-  }
-
-  static void checkServiceImplementations(@NotNull PsiProvidesStatement statement, @NotNull PsiFile file,
-                                          @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    PsiReferenceList implRefList = statement.getImplementationList();
-    if (implRefList == null) return;
-
-    PsiJavaCodeReferenceElement intRef = statement.getInterfaceReference();
-    PsiElement intTarget = intRef != null ? intRef.resolve() : null;
-
-    Set<String> filter = new HashSet<>();
-    for (PsiJavaCodeReferenceElement implRef : implRefList.getReferenceElements()) {
-      String refText = implRef.getQualifiedName();
-      if (!filter.add(refText)) {
-        String message = JavaErrorBundle.message("module.duplicate.impl", refText);
-        HighlightInfo.Builder info = createDuplicateReference(implRef, message);
-        errorSink.accept(info);
-        continue;
-      }
-
-      if (!(intTarget instanceof PsiClass psiClass)) continue;
-
-      PsiElement implTarget = implRef.resolve();
-      if (implTarget instanceof PsiClass implClass) {
-        Module fileModule = ModuleUtilCore.findModuleForFile(file);
-        Module implModule = ModuleUtilCore.findModuleForFile(implClass.getContainingFile());
-        if (fileModule != implModule && !JavaMultiReleaseUtil.areMainAndAdditionalMultiReleaseModules(implModule, fileModule)) {
-          String message = JavaErrorBundle.message("module.service.alien");
-          HighlightInfo.Builder info =
-            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message);
-          errorSink.accept(info);
-        }
-
-        PsiMethod provider = JavaServiceProviderUtil.findServiceProviderMethod(implClass);
-        if (provider != null) {
-          PsiType type = provider.getReturnType();
-          PsiClass typeClass = type instanceof PsiClassType classType ? classType.resolve() : null;
-          if (!InheritanceUtil.isInheritorOrSelf(typeClass, psiClass, true)) {
-            String message = JavaErrorBundle.message("module.service.provider.type", implClass.getName());
-            HighlightInfo.Builder info =
-              HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message);
-            errorSink.accept(info);
-          }
-        }
-        else if (InheritanceUtil.isInheritorOrSelf(implClass, psiClass, true)) {
-          if (implClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-            String message = JavaErrorBundle.message("module.service.abstract", implClass.getName());
-            HighlightInfo.Builder info =
-              HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message);
-            errorSink.accept(info);
-          }
-          else if (!(ClassUtil.isTopLevelClass(implClass) || implClass.hasModifierProperty(PsiModifier.STATIC))) {
-            String message = JavaErrorBundle.message("module.service.inner", implClass.getName());
-            HighlightInfo.Builder info =
-              HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message);
-            errorSink.accept(info);
-          }
-          else if (!PsiUtil.hasDefaultConstructor(implClass)) {
-            String message = JavaErrorBundle.message("module.service.no.ctor", implClass.getName());
-            HighlightInfo.Builder info =
-              HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message);
-            errorSink.accept(info);
-          }
-        }
-        else {
-          String message = JavaErrorBundle.message("module.service.impl");
-          HighlightInfo.Builder info =
-            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message);
-          PsiClassType type = JavaPsiFacade.getElementFactory(file.getProject()).createType(psiClass);
-          IntentionAction action = QuickFixFactory.getInstance().createExtendsListFix(implClass, type, true);
-          info.registerFix(action, null, null, null, null);
-          errorSink.accept(info);
-        }
-      }
-    }
-  }
-
-  private static @NotNull PsiElement range(@NotNull PsiJavaCodeReferenceElement refElement) {
-    return ObjectUtils.notNull(refElement.getReferenceNameElement(), refElement);
-  }
-
-  private static @NotNull HighlightInfo.Builder createDuplicateReference(@NotNull PsiElement refElement, @NotNull @NlsContexts.DetailedDescription String message) {
-    HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message);
-    IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(refElement, QuickFixBundle.message("delete.reference.fix.text"));
-    info.registerFix(action, null, null, null, null);
-    return info;
   }
 }

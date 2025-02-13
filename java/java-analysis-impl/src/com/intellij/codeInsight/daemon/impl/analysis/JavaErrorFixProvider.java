@@ -152,6 +152,8 @@ final class JavaErrorFixProvider {
         error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
     fix(MODULE_DUPLICATE_OPENS_TARGET,
         error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
+    fix(MODULE_DUPLICATE_IMPLEMENTATION,
+        error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
     multi(MODULE_NOT_ON_PATH, error -> {
       PsiJavaModuleReference ref = error.psi().getReference();
       if (ref != null) {
@@ -160,6 +162,10 @@ final class JavaErrorFixProvider {
         return registrar;
       }
       return List.of();
+    });
+    fix(MODULE_SERVICE_IMPLEMENTATION_TYPE, error -> {
+      PsiClassType type = JavaPsiFacade.getElementFactory(error.project()).createType(error.context().superClass());
+      return myFactory.createExtendsListFix(error.context().subClass(), type, true);
     });
   }
 
@@ -951,7 +957,7 @@ final class JavaErrorFixProvider {
     fix(ANNOTATION_NOT_ALLOWED_STATIC, error -> new MoveAnnotationOnStaticMemberQualifyingTypeFix(error.psi()));
     fix(ANNOTATION_MISSING_ATTRIBUTE, error -> myFactory.createAddMissingRequiredAnnotationParametersFix(
       error.psi(), PsiMethod.EMPTY_ARRAY, error.context()));
-    multi(ANNOTATION_ATTRIBUTE_ANNOTATION_NAME_IS_MISSING, error -> myFactory.createAddAnnotationAttributeNameFixes(error.psi()));
+    multi(ANNOTATION_ATTRIBUTE_NAME_MISSING, error -> myFactory.createAddAnnotationAttributeNameFixes(error.psi()));
     multi(ANNOTATION_ATTRIBUTE_UNKNOWN_METHOD, error -> {
       PsiNameValuePair pair = error.psi();
       if (pair.getName() != null) return List.of();

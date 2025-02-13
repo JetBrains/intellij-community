@@ -366,12 +366,4 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
   }
-
-  @Override
-  public void visitProvidesStatement(@NotNull PsiProvidesStatement statement) {
-    super.visitProvidesStatement(statement);
-    if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
-      if (!hasErrorResults()) ModuleHighlightUtil.checkServiceImplementations(statement, myFile, myErrorSink);
-    }
-  }
 }

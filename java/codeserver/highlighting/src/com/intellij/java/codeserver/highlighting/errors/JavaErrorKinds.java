@@ -38,7 +38,19 @@ import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
 /**
- * All possible Java error kinds
+ * All possible Java error kinds.
+ * <p>
+ * The constants generally should be named as the corresponding properties from {@link JavaCompilationErrorBundle}, 
+ * uppercased and having dots replaced with underscores.
+ * <p>
+ * While not all the names follow the convention described below, it's preferred to follow. In general, they
+ * should not read like an English sentence. Instead, the first part should denote a group of errors (like statement,
+ * or construct the error relates to), optionally followed by a more specific subgroup, 
+ * and the rest should describe the situation shortly (no prepositions, etc.). 
+ * Avoid abbreviating words (e.g., IMPL instead of IMPLEMENTATION, etc.)
+ * <p>
+ * An example of a good name: ANNOTATION_ATTRIBUTE_NAME_MISSING. Here, ANNOTATION is a group, ATTRIBUTE is a subgroup,
+ * and NAME_MISSING is the description.
  */
 public final class JavaErrorKinds {
   private JavaErrorKinds() {}
@@ -89,8 +101,8 @@ public final class JavaErrorKinds {
   public static final Simple<PsiAnnotation> ANNOTATION_NOT_ALLOWED_STATIC = error("annotation.not.allowed.static");
   public static final Simple<PsiJavaCodeReferenceElement> ANNOTATION_TYPE_EXPECTED = error("annotation.type.expected");
   public static final Simple<PsiReferenceExpression> ANNOTATION_REPEATED_TARGET = error("annotation.repeated.target");
-  public static final Simple<PsiNameValuePair> ANNOTATION_ATTRIBUTE_ANNOTATION_NAME_IS_MISSING =
-    error("annotation.attribute.annotation.name.is.missing");
+  public static final Simple<PsiNameValuePair> ANNOTATION_ATTRIBUTE_NAME_MISSING =
+    error("annotation.attribute.name.missing");
   public static final Simple<PsiAnnotationMemberValue> ANNOTATION_ATTRIBUTE_NON_CLASS_LITERAL =
     error("annotation.attribute.non.class.literal");
   public static final Simple<PsiExpression> ANNOTATION_ATTRIBUTE_NON_ENUM_CONSTANT = error("annotation.attribute.non.enum.constant");
@@ -1239,8 +1251,8 @@ public final class JavaErrorKinds {
       .withRawDescription(
         (psi, result) -> message("access.generic.problem", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
 
-  public static final Simple<PsiImportModuleStatement> MODULE_IMPORT_STATEMENT_NOT_ALLOWED = error(PsiImportModuleStatement.class, "import.module.not.allowed")
-    .withRawDescription(ref -> message("import.module.not.allowed"));
+  public static final Simple<PsiImportModuleStatement> IMPORT_MODULE_NOT_ALLOWED =
+    error(PsiImportModuleStatement.class, "import.module.not.allowed");
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> IMPORT_SINGLE_CLASS_CONFLICT =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "import.single.class.conflict")
       .withRawDescription((ref, cls) -> message("import.single.class.conflict", cls.getQualifiedName()));
@@ -1399,6 +1411,9 @@ public final class JavaErrorKinds {
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "module.service.enum")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
       .withRawDescription((ref, cls) -> message("module.service.enum", cls.getName()));
+  public static final Simple<PsiJavaCodeReferenceElement> MODULE_SERVICE_ALIEN =
+    error(PsiJavaCodeReferenceElement.class, "module.service.alien")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref));
   public static final Simple<PsiJavaModuleReferenceElement> MODULE_NOT_FOUND =
     error(PsiJavaModuleReferenceElement.class, "module.not.found")
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
@@ -1412,6 +1427,29 @@ public final class JavaErrorKinds {
       .withRawDescription(
         (ref, modules) -> message("module.cyclic.dependence", modules.stream().map(PsiJavaModule::getName)
           .sorted().collect(Collectors.joining(", "))));
+  public static final Simple<PsiJavaCodeReferenceElement> MODULE_DUPLICATE_IMPLEMENTATION =
+    error(PsiJavaCodeReferenceElement.class, "module.duplicate.implementation")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription(ref -> message("module.duplicate.implementation", ref.getQualifiedName()));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> MODULE_SERVICE_PROVIDER_TYPE =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "module.service.provider.type")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription((ref, impl) -> message("module.service.provider.type", impl.getName()));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> MODULE_SERVICE_NO_CONSTRUCTOR =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "module.service.no.constructor")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription((ref, impl) -> message("module.service.no.constructor", impl.getName()));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> MODULE_SERVICE_ABSTRACT =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "module.service.abstract")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription((ref, impl) -> message("module.service.abstract", impl.getName()));
+  public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> MODULE_SERVICE_INNER =
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "module.service.inner")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
+      .withRawDescription((ref, impl) -> message("module.service.inner", impl.getName()));
+  public static final Parameterized<PsiJavaCodeReferenceElement, SuperclassSubclassContext> MODULE_SERVICE_IMPLEMENTATION_TYPE =
+    parameterized(PsiJavaCodeReferenceElement.class, SuperclassSubclassContext.class, "module.service.implementation.type")
+      .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref));
 
   public static final Simple<PsiJavaModuleReferenceElement> MODULE_DUPLICATE_EXPORTS_TARGET =
     error(PsiJavaModuleReferenceElement.class, "module.duplicate.exports.target")

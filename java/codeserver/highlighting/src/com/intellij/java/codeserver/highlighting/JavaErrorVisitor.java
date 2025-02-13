@@ -642,9 +642,17 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitProvidesStatement(@NotNull PsiProvidesStatement statement) {
+    super.visitProvidesStatement(statement);
+    if (isApplicable(JavaFeature.MODULES)) {
+      if (!hasErrorResults()) myModuleChecker.checkServiceImplementations(statement);
+    }
+  }
+
+  @Override
   public void visitRequiresStatement(@NotNull PsiRequiresStatement statement) {
     super.visitRequiresStatement(statement);
-    if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
+    if (isApplicable(JavaFeature.MODULES)) {
       if (!hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_10)) myModuleChecker.checkModifiers(statement);
       if (!hasErrorResults()) myModuleChecker.checkModuleReference(statement);
     }
@@ -653,7 +661,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   @Override
   public void visitPackageAccessibilityStatement(@NotNull PsiPackageAccessibilityStatement statement) {
     super.visitPackageAccessibilityStatement(statement);
-    if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
+    if (isApplicable(JavaFeature.MODULES)) {
       if (!hasErrorResults()) myModuleChecker.checkHostModuleStrength(statement);
       if (!hasErrorResults()) myModuleChecker.checkDuplicateModuleReferences(statement);
     }
@@ -668,7 +676,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   @Override
   public void visitUsesStatement(@NotNull PsiUsesStatement statement) {
     super.visitUsesStatement(statement);
-    if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
+    if (isApplicable(JavaFeature.MODULES)) {
       if (!hasErrorResults()) myModuleChecker.checkServiceReference(statement.getClassReference());
     }
   }
@@ -1310,7 +1318,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   void checkFeature(@NotNull PsiElement element, @NotNull JavaFeature feature) {
-    if (!feature.isSufficient(myLanguageLevel)) {
+    if (!isApplicable(feature)) {
       report(JavaErrorKinds.UNSUPPORTED_FEATURE.create(element, feature));
     }
   }
@@ -1320,9 +1328,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     JavaPreviewFeatureUtil.PreviewFeatureUsage usage = JavaPreviewFeatureUtil.getPreviewFeatureUsage(element);
     if (usage == null || usage.isReflective()) return;
 
-    if (!usage.feature().isSufficient(myLanguageLevel)) {
+    if (!isApplicable(usage.feature())) {
       report(PREVIEW_API_USAGE.create(element, usage));
     }
   }
-
 }
