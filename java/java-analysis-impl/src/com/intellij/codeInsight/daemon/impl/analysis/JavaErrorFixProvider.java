@@ -152,7 +152,7 @@ final class JavaErrorFixProvider {
         error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
     fix(MODULE_DUPLICATE_OPENS_TARGET,
         error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
-    fix(MODULE_IMPORT_STATEMENT_NOT_ALLOWED, error -> myFactory.createReplaceOnDemandImport(error.psi(), QuickFixBundle.message("replace.import.module.fix.text")));
+    fix(IMPORT_MODULE_NOT_ALLOWED, error -> myFactory.createReplaceOnDemandImport(error.psi(), QuickFixBundle.message("replace.import.module.fix.text")));
     fix(MODULE_DUPLICATE_IMPLEMENTATION,
         error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
     multi(MODULE_NOT_ON_PATH, error -> {
