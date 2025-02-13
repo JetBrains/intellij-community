@@ -152,6 +152,7 @@ final class JavaErrorFixProvider {
         error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
     fix(MODULE_DUPLICATE_OPENS_TARGET,
         error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
+    fix(MODULE_IMPORT_STATEMENT_NOT_ALLOWED, error -> myFactory.createReplaceOnDemandImport(error.psi(), QuickFixBundle.message("replace.import.module.fix.text")));
     fix(MODULE_DUPLICATE_IMPLEMENTATION,
         error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
     multi(MODULE_NOT_ON_PATH, error -> {
@@ -683,9 +684,9 @@ final class JavaErrorFixProvider {
   private void createTypeFixes() {
     fixes(TYPE_INCOMPATIBLE, (error, sink) -> 
       HighlightFixUtil.registerIncompatibleTypeFixes(sink, error.psi(), error.context().lType(), error.context().rType()));
-    fixes(SWITCH_EXPRESSION_INCOMPATIBLE_TYPE, (error, sink) -> 
+    fixes(SWITCH_EXPRESSION_INCOMPATIBLE_TYPE, (error, sink) ->
       HighlightFixUtil.registerIncompatibleTypeFixes(sink,
-                                                     requireNonNull(PsiTreeUtil.getParentOfType(error.psi(), PsiSwitchExpression.class)), 
+                                                     requireNonNull(PsiTreeUtil.getParentOfType(error.psi(), PsiSwitchExpression.class)),
                                                      error.context().lType(), error.context().rType()));
     fixes(CALL_TYPE_INFERENCE_ERROR, (error, sink) -> {
       if (error.psi() instanceof PsiMethodCallExpression callExpression) {

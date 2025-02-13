@@ -84,7 +84,24 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     }
   }
 
-  fun testModuleImportDeclarationUnresolvedModule() {
+  fun testModuleImportDeclarationInModuleInfoFileFix() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
+      myFixture.configureFromExistingVirtualFile(addFile("module-info.java", """
+        <error descr="Import module is not allowed">import module <caret>M2;</error>
+        module my.module {
+          requires M2;
+        }
+      """.trimIndent()))
+
+      val availableIntentions = myFixture.availableIntentions
+      val available = availableIntentions
+        .map { (it.asModCommandAction() ?: IntentionActionDelegate.unwrap(it))::class.java }
+        .map { it.simpleName }
+      assertThat(available).describedAs(availableIntentions.toString()).contains("ReplaceOnDemandImportAction")
+    }
+  }
+
+    fun testModuleImportDeclarationUnresolvedModule() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW) {
       addFile("moodule-info.java", "module current.module.name {}")
       highlight("Test.java", """
