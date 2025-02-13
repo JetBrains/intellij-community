@@ -2,6 +2,7 @@
 package com.intellij.openapi.application
 
 import com.intellij.openapi.application.ConfigImportHelper.ConfigImportOptions.BrokenPluginsFetcher
+import com.intellij.openapi.application.ConfigImportHelper.ConfigImportOptions.LastCompatiblePluginUpdatesFetcher
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
@@ -17,7 +18,7 @@ import java.nio.file.attribute.FileTime
 abstract class ConfigImportHelperBaseTest : BareTestFixtureTestCase() {
   @JvmField @Rule val memoryFs = InMemoryFsRule(SystemInfo.isWindows)
   @JvmField @Rule val localTempDir = TempDirectory()
-  @JvmField @Rule val brokenPluginsFetcherStub = BrokenPluginsFetcherStub()
+  @JvmField @Rule val configImportMarketplaceStub = ConfigImportMarketplaceStub()
 
   protected fun createConfigDir(version: String, modern: Boolean = version >= "2020.1", product: String = "IntelliJIdea", storageTS: Long = 0): Path {
     val path = when {
@@ -40,22 +41,21 @@ abstract class ConfigImportHelperBaseTest : BareTestFixtureTestCase() {
   protected fun findConfigDirectories(newConfigPath: Path): List<Path> = ConfigImportHelper.findConfigDirectories(newConfigPath).paths
 
   // disables broken plugins fetcher from the Marketplace by default
-  class BrokenPluginsFetcherStub : ExternalResource() {
+  class ConfigImportMarketplaceStub : ExternalResource() {
     override fun before() {
       assert(ConfigImportHelper.testBrokenPluginsFetcherStub == null)
       ConfigImportHelper.testBrokenPluginsFetcherStub = BrokenPluginsFetcher { null } // force use of brokenPlugins from the distribution
-    }
-
-    fun set(fetcher: BrokenPluginsFetcher?) {
-      ConfigImportHelper.testBrokenPluginsFetcherStub = fetcher
+      assert(ConfigImportHelper.testLastCompatiblePluginUpdatesFetcher == null)
+      ConfigImportHelper.testLastCompatiblePluginUpdatesFetcher = LastCompatiblePluginUpdatesFetcher { null }
     }
 
     fun unset() {
       ConfigImportHelper.testBrokenPluginsFetcherStub = null
+      ConfigImportHelper.testLastCompatiblePluginUpdatesFetcher = null
     }
 
     override fun after() {
-      ConfigImportHelper.testBrokenPluginsFetcherStub = null
+      unset()
     }
   }
 }

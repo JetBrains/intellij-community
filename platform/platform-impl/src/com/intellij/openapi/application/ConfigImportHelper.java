@@ -91,6 +91,7 @@ public final class ConfigImportHelper {
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
   private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
+  private static final String UPDATE_ONLY_INCOMPATIBLE_PLUGINS_PROPERTY = "idea.config.import.update.incompatible.plugins.only"; // if true, only incompatible will be updated
 
   private static final String CONFIG = "config";
   private static final String[] OPTIONS = {
@@ -898,6 +899,8 @@ public final class ConfigImportHelper {
     /** should be exception-safe */
     @NotNull BrokenPluginsFetcher brokenPluginsFetcher =
       testBrokenPluginsFetcherStub != null ? testBrokenPluginsFetcherStub : (configDir) -> fetchBrokenPluginsFromMarketplace(this, configDir, 3000);
+    @NotNull LastCompatiblePluginUpdatesFetcher pluginUpdatesFetcher =
+      testLastCompatiblePluginUpdatesFetcher != null ? testLastCompatiblePluginUpdatesFetcher : (pluginIds) -> fetchPluginUpdatesFromMarketplace(this, pluginIds, 3000);
 
     @Nullable ProgressIndicator headlessProgressIndicator = null;
 
@@ -940,6 +943,11 @@ public final class ConfigImportHelper {
     @FunctionalInterface
     public interface BrokenPluginsFetcher {
       @Nullable Map<PluginId, Set<String>> fetchBrokenPlugins(@NotNull Path configDir);
+    }
+
+    @FunctionalInterface
+    public interface LastCompatiblePluginUpdatesFetcher {
+      @Nullable Map<PluginId, PluginNode> fetchLastCompatiblePluginUpdates(Set<PluginId> pluginIds);
     }
   }
 
@@ -1042,16 +1050,10 @@ public final class ConfigImportHelper {
     List<IdeaPluginDescriptor> pluginsToDownload = new ArrayList<>();
 
     @Nullable Map<PluginId, Set<String>> brokenPluginVersions = options.brokenPluginsFetcher.fetchBrokenPlugins(newConfigDir);
+    @Nullable PluginLoadingResult oldIdeLoadingResult = null;
     try {
-      PluginLoadingResult result = PluginDescriptorLoader.loadDescriptorsFromOtherIde(
+      oldIdeLoadingResult = PluginDescriptorLoader.loadDescriptorsFromOtherIde(
         oldPluginsDir, options.bundledPluginPath, brokenPluginVersions, options.compatibleBuildNumber);
-
-      partitionNonBundled(result.getIdMap().values(), pluginsToDownload, pluginsToMigrate, descriptor -> {
-        Set<String> brokenVersions = brokenPluginVersions != null ? brokenPluginVersions.get(descriptor.getPluginId()) : null;
-        return brokenVersions != null && brokenVersions.contains(descriptor.getVersion());
-      });
-
-      partitionNonBundled(result.getIncompleteIdMap().values(), pluginsToDownload, pluginsToMigrate, __ -> true);
     }
     catch (ExecutionException | InterruptedException e) {
       log.info("Error loading list of plugins from old dir, migrating entire plugin directory");
@@ -1061,6 +1063,36 @@ public final class ConfigImportHelper {
     catch (IOException e) {
       log.info("Non-existing plugins directory: " + oldPluginsDir, e);
     }
+
+    if (oldIdeLoadingResult != null) {
+      if (System.getProperty(UPDATE_ONLY_INCOMPATIBLE_PLUGINS_PROPERTY, "false").equals("true")) {
+        partitionNonBundled(oldIdeLoadingResult.getIdMap().values(), pluginsToDownload, pluginsToMigrate, descriptor -> {
+          Set<String> brokenVersions = brokenPluginVersions != null ? brokenPluginVersions.get(descriptor.getPluginId()) : null;
+          return brokenVersions != null && brokenVersions.contains(descriptor.getVersion());
+        });
+        partitionNonBundled(oldIdeLoadingResult.getIncompleteIdMap().values(), pluginsToDownload, pluginsToMigrate, __ -> true);
+      } else {
+        // The first partition in the branch above puts only broken plugins to pluginsToDownload.
+        // Here we also put there plugins for which updates are available (or they are broken).
+        // So the only difference between these two is that here we try to download more plugins.
+        var nonBundledPlugins = new ArrayList<IdeaPluginDescriptor>();
+        partitionNonBundled(oldIdeLoadingResult.getIdMap().values(), nonBundledPlugins, pluginsToMigrate, __ -> true);
+        partitionNonBundled(oldIdeLoadingResult.getIncompleteIdMap().values(), nonBundledPlugins, pluginsToMigrate, __ -> true);
+        var updates = options.pluginUpdatesFetcher.fetchLastCompatiblePluginUpdates(
+          ContainerUtil.map2Set(nonBundledPlugins, d -> d.getPluginId())
+        );
+
+        partitionNonBundled(oldIdeLoadingResult.getIdMap().values(), pluginsToDownload, pluginsToMigrate, d -> {
+          if (updates != null && updates.containsKey(d.getPluginId()) && !updates.get(d.getPluginId()).getVersion().equals(d.getVersion())) {
+            return true;
+          }
+          Set<String> brokenVersions = brokenPluginVersions != null ? brokenPluginVersions.get(d.getPluginId()) : null;
+          return brokenVersions != null && brokenVersions.contains(d.getVersion());
+        });
+        partitionNonBundled(oldIdeLoadingResult.getIncompleteIdMap().values(), pluginsToDownload, pluginsToMigrate, __ -> true);
+      }
+    }
+
     Path disabledPluginsFile = oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME);
     Set<PluginId> disabledPlugins =
       Files.exists(disabledPluginsFile) ? DisabledPluginsState.Companion.loadDisabledPlugins(disabledPluginsFile) : Set.of();
@@ -1201,7 +1233,7 @@ public final class ConfigImportHelper {
     }
   }
 
-  /** @param plugins elements for which updates are successfully processed are _removed_ from the list */
+  /** @param plugins elements for which updates are successfully processed are _removed_ from the list; broken plugins are removed too */
   private static void downloadUpdatesForPlugins(Path newPluginsDir,
                                                 ConfigImportOptions options,
                                                 List<IdeaPluginDescriptor> plugins,
@@ -1232,7 +1264,7 @@ public final class ConfigImportHelper {
     }
   }
 
-  /** @param plugins elements for which updates are successfully processed are _removed_ from the list */
+  /** @param plugins elements for which updates are successfully processed are _removed_ from the list; broken plugins are removed too */
   private static void downloadUpdatesForPlugins(Path newPluginsDir,
                                                 ConfigImportOptions options,
                                                 List<IdeaPluginDescriptor> plugins,
@@ -1265,6 +1297,37 @@ public final class ConfigImportHelper {
       catch (IOException e) {
         log.info("Failed to download and install compatible version of '" + pluginId + "': " + e.getMessage());
       }
+    }
+  }
+
+  private static @Nullable Map<PluginId, PluginNode> fetchPluginUpdatesFromMarketplace(ConfigImportOptions options,
+                                                                                       Set<PluginId> pluginIds,
+                                                                                       long timeoutMs) {
+    try {
+      AtomicReference<List<PluginNode>> fetchedUpdates = new AtomicReference<>();
+      runSynchronouslyInBackgroundWithTimeout(() -> {
+        fetchedUpdates.set(
+          MarketplaceRequests.loadLastCompatiblePluginDescriptors(
+            pluginIds,
+            options.compatibleBuildNumber
+          )
+        );
+      }, timeoutMs);
+      var updates = fetchedUpdates.get();
+      if (updates == null) {
+        return null;
+      }
+      var updatesMap = new HashMap<PluginId, PluginNode>();
+      for (var update : updates) {
+        updatesMap.put(update.getPluginId(), update);
+      }
+      return updatesMap;
+    } catch (TimeoutException e) {
+      options.log.warn("Failed to fetch updates for plugins: time-out");
+      return null;
+    } catch (Throwable e) {
+      options.log.warn("Failed to fetch updates for plugins", e);
+      return null;
     }
   }
 
@@ -1644,4 +1707,6 @@ public final class ConfigImportHelper {
 
   @VisibleForTesting
   static @Nullable ConfigImportOptions.BrokenPluginsFetcher testBrokenPluginsFetcherStub = null;
+  @VisibleForTesting
+  static @Nullable ConfigImportOptions.LastCompatiblePluginUpdatesFetcher testLastCompatiblePluginUpdatesFetcher = null;
 }

@@ -4,13 +4,17 @@ package com.intellij.openapi.application
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.SpecialConfigFiles
+import com.intellij.ide.plugins.DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate
 import com.intellij.ide.plugins.PluginBuilder
+import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.TestFor
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ConfigImportHelper.ConfigImportOptions.BrokenPluginsFetcher
+import com.intellij.openapi.application.ConfigImportHelper.ConfigImportOptions.LastCompatiblePluginUpdatesFetcher
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.logger
@@ -25,12 +29,15 @@ import com.intellij.testFramework.junit5.http.url
 import com.intellij.testFramework.replaceService
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.createDirectories
+import com.intellij.util.queryParameters
 import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
 import org.junit.Assume.assumeTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
@@ -39,12 +46,14 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Predicate
 import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readLines
 import kotlin.io.path.writeLines
 import kotlin.test.fail
 
+private val LOG = logger<ConfigImportHelperTest>()
+
 class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
-  private val LOG = logger<ConfigImportHelperTest>()
   val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true; }
 
   @Test fun `config directory is valid for import`() {
@@ -591,11 +600,11 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newPluginsDir = newConfigDir.resolve("plugins")
 
     val brokenPluginsDownloaded = AtomicInteger()
-    val server = createTestServer()
-    server.createContext("/files/brokenPlugins.json") { exchange ->
+    val server = createTestServer(testRootDisposable)
+    server.createContext("/files/brokenPlugins.json") { handler ->
       brokenPluginsDownloaded.incrementAndGet()
-      exchange.sendResponseHeaders(200, 0)
-      exchange.responseBody.writer().use {
+      handler.sendResponseHeaders(200, 0)
+      handler.responseBody.writer().use {
         it.write("""
           [{"id": "${builder.id}", "version": "1.0", "since": "999.0", "until": "999.0", "originalSince": "1.0", "originalUntil": "999.9999"},
           {"id": "${builder2.id}", "version": "1.0", "since": "200.0", "until": "203.0", "originalSince": "1.0", "originalUntil": "999.9999"}]
@@ -609,7 +618,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       override fun getPluginHomepageUrl(pluginId: PluginId): String?  = throw AssertionError("unexpected")
     }, testRootDisposable)
 
-    brokenPluginsFetcherStub.unset() // enable marketplace fetching
+    configImportMarketplaceStub.unset() // enable marketplace fetching
     val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true } // reinstantiate
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
@@ -619,12 +628,105 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       .isDirectoryContaining { it.fileName.toString() == "my-plugin-2.jar" }
       .isDirectoryNotContaining { it.fileName.toString() == "my-plugin.jar" }
   }
+}
 
-  private fun createTestServer(): HttpServer {
-    val server = HttpServer.create()!!
-    server.bind(InetSocketAddress(0), 1)
-    server.start()
-    testRootDisposable.whenDisposed { server.stop(0) }
-    return server
+@RunWith(Parameterized::class)
+class ConfigImportHelperPluginUpdateModeTest(val updateIncompatibleOnly: Boolean) : ConfigImportHelperBaseTest() {
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "updateIncompatibleOnly={0}")
+    fun data() = listOf(false, true)
+  }
+
+  @Test
+  fun `update plugins mode`() {
+    // com.intellij.openapi.application.ConfigImportHelper.UPDATE_INCOMPATIBLE_PLUGINS_PROPERTY
+    setSystemPropertyForTest("idea.config.import.update.incompatible.plugins.only", updateIncompatibleOnly.toString(), testRootDisposable)
+
+    val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
+    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val broken = PluginBuilder().id("broken").version("1.0").buildJar(oldPluginsDir.resolve("broken.jar"))
+    val update = PluginBuilder().id("update").version("1.0").buildJar(oldPluginsDir.resolve("update.jar"))
+    val migrate = PluginBuilder().id("migrate").version("1.0").buildJar(oldPluginsDir.resolve("migrate.jar"))
+    val disabled = PluginBuilder().id("disabled").version("1.0").buildJar(oldPluginsDir.resolve("disabled.jar"))
+
+    val repoDir = localTempDir.newDirectory("repo").toPath()
+    broken.version("1.1").buildJar(repoDir.resolve("broken.jar"))
+    update.version("1.1").buildJar(repoDir.resolve("update.jar"))
+    disabled.version("1.1").buildJar(repoDir.resolve("disabled.jar"))
+
+    saveDisabledPluginsAndInvalidate(oldConfigDir, listOf(disabled.id))
+
+    val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
+    val newPluginsDir = newConfigDir.resolve("plugins")
+
+    val server = createTestServer(testRootDisposable)
+    server.createContext("/files/brokenPlugins.json") { handler ->
+      handler.sendResponseHeaders(200, 0)
+      handler.responseBody.writer().use {
+        it.write("""
+          [{"id": "${broken.id}", "version": "1.0", "since": "999.0", "until": "999.0", "originalSince": "1.0", "originalUntil": "999.9999"},
+          {"id": "${broken.id}", "version": "1.1", "since": "999.0", "until": "999.0", "originalSince": "1.0", "originalUntil": "999.9999"}]
+        """.trimIndent())
+      }
+    }
+    server.createContext("/download") { handler ->
+      val id = handler.requestURI.queryParameters["id"]!!
+      if (id == "broken") {
+        handler.sendResponseHeaders(404, -1) // incompatible
+        return@createContext
+      }
+      val content = repoDir.resolve("$id.jar").toFile().readBytes()
+      handler.responseHeaders.add("Content-Disposition", "attachment; filename=$id.jar")
+      handler.sendResponseHeaders(200, content.size.toLong())
+      handler.responseBody.use {
+        it.write(content)
+      }
+    }
+    ApplicationManager.getApplication().replaceService(MarketplaceCustomizationService::class.java, object : MarketplaceCustomizationService {
+      override fun getPluginManagerUrl(): String = server.url
+      override fun getPluginDownloadUrl(): String = server.url.trimEnd('/') + "/download"
+      override fun getPluginsListUrl(): String  = throw AssertionError("unexpected")
+      override fun getPluginHomepageUrl(pluginId: PluginId): String?  = throw AssertionError("unexpected")
+    }, testRootDisposable)
+
+    configImportMarketplaceStub.unset() // enable marketplace fetching
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true } // reinstantiate
+    options.compatibleBuildNumber = BuildNumber.fromString("201.1")
+    options.pluginUpdatesFetcher = LastCompatiblePluginUpdatesFetcher {
+      buildMap {
+        for (id in listOf("update", "disabled", "migrate")) {
+          val pid = PluginId.getId(id)
+          val node = PluginNode(pid)
+          node.version = if (id == "migrate") "1.0" else "1.1"
+          put(pid, node)
+        }
+      }
+    }
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+
+    assertThat(newPluginsDir).exists()
+    assertThat(newPluginsDir.listDirectoryEntries())
+      .containsExactlyInAnyOrder(newPluginsDir.resolve("update.jar"), newPluginsDir.resolve("migrate.jar"), newPluginsDir.resolve("disabled.jar"))
+    assertThat(newPluginsDir.resolve("update.jar")).hasSameBinaryContentAs((if (updateIncompatibleOnly) oldPluginsDir else repoDir).resolve("update.jar"))
+    assertThat(newPluginsDir.resolve("migrate.jar")).hasSameBinaryContentAs(oldPluginsDir.resolve("migrate.jar"))
+    assertThat(newPluginsDir.resolve("disabled.jar")).hasSameBinaryContentAs((if (updateIncompatibleOnly) oldPluginsDir else repoDir).resolve("disabled.jar"))
+  }
+}
+
+private fun createTestServer(disposable: Disposable): HttpServer {
+  val server = HttpServer.create()!!
+  server.bind(InetSocketAddress(0), 1)
+  server.start()
+  disposable.whenDisposed { server.stop(0) }
+  return server
+}
+
+private fun setSystemPropertyForTest(key: String, value: String, disposable: Disposable) {
+  val old = System.getProperty(key)
+  System.setProperty(key, value)
+  disposable.whenDisposed {
+    if (old != null) System.setProperty(key, old)
+    else System.clearProperty(key)
   }
 }
