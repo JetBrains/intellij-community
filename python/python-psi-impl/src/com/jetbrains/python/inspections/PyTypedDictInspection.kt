@@ -186,10 +186,11 @@ class PyTypedDictInspection : PyInspection() {
           if (expr !is PySubscriptionExpression) continue
           val type = myTypeEvalContext.getType(expr.operand)
           if (type is PyTypedDictType) {
-            val index = PyEvaluator.evaluate(expr.indexExpression, String::class.java)
-            if (index == null || index !in type.fields) continue
-            if (type.fields[index]!!.qualifiers.isRequired == true) {
-              registerProblem(expr.indexExpression, PyPsiBundle.message("INSP.typeddict.key.cannot.be.deleted", index, type.name))
+            val possibleIndexValues = getIndexExpressionValueOptions(expr.indexExpression) ?: emptyList()
+            for (index in possibleIndexValues) {
+              if (type.fields[index]?.qualifiers?.isRequired == true) {
+                registerProblem(expr.indexExpression, PyPsiBundle.message("INSP.typeddict.key.cannot.be.deleted", index, type.name))
+              }
             }
           }
         }
@@ -266,21 +267,22 @@ class PyTypedDictInspection : PyInspection() {
         if (target !is PySubscriptionExpression) return@forEach
         val targetType = myTypeEvalContext.getType(target.operand)
         if (targetType !is PyTypedDictType) return@forEach
-        val indexString = PyEvaluator.evaluate(target.indexExpression, String::class.java)
-        if (indexString == null) return@forEach
-        if (targetType.fields[indexString]?.qualifiers?.isReadOnly == true) {
-          registerProblem(target, PyPsiBundle.message("INSP.typeddict.typeddict.field.is.readonly", indexString))
-        }
+        val possibleIndexValues = getIndexExpressionValueOptions(target.indexExpression) ?: emptyList()
+        for (indexString in possibleIndexValues) {
+          if (targetType.fields[indexString]?.qualifiers?.isReadOnly == true) {
+            registerProblem(target, PyPsiBundle.message("INSP.typeddict.typeddict.field.is.readonly", indexString))
+          }
 
-        val expected = targetType.getElementType(indexString)
-        val actualExpressions = targetsToValuesMapping.filter { it.first == target }.map { it.second }
-        actualExpressions.forEach { actual ->
-          val actualType = myTypeEvalContext.getType(actual)
-          if (!PyTypeChecker.match(expected, actualType, myTypeEvalContext)) {
-            val expectedTypeName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext)
-            val actualTypeName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
-            registerProblem(actual,
-                            PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedTypeName, actualTypeName))
+          val expected = targetType.getElementType(indexString)
+          val actualExpressions = targetsToValuesMapping.filter { it.first == target }.map { it.second }
+          actualExpressions.forEach { actual ->
+            val actualType = myTypeEvalContext.getType(actual)
+            if (!PyTypeChecker.match(expected, actualType, myTypeEvalContext)) {
+              val expectedTypeName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext)
+              val actualTypeName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
+              registerProblem(actual,
+                              PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedTypeName, actualTypeName))
+            }
           }
         }
       }
@@ -336,8 +338,7 @@ class PyTypedDictInspection : PyInspection() {
           .map { if (it is PyLiteralType) PyEvaluator.evaluateNoResolve(it.expression, String::class.java) else null }
           .toList()
         return if (members.contains(null)) null
-        else members
-          .filterNotNull()
+        else members.filterNotNull()
       }
       else {
         return listOf(indexExprValue)
