@@ -51,6 +51,7 @@ public final class PythonIcons {
     /** 16x16 */ public static final @NotNull Icon TemplateRoot = load("icons/com/jetbrains/pythonCore/python/expui/templateRoot.svg", "icons/com/jetbrains/pythonCore/python/templateRoot.svg", 6261950, 0);
     /** 16x16 */ public static final @NotNull Icon TensorFlow = load("icons/com/jetbrains/pythonCore/python/tensorFlow.svg", 1673568687, 2);
     /** 16x16 */ public static final @NotNull Icon Vagrant = load("icons/com/jetbrains/pythonCore/python/expui/vagrant.svg", "icons/com/jetbrains/pythonCore/python/vagrant.svg", -820295927, 0);
+    /** 16x16 */ public static final @NotNull Icon ViewAsImage = load("icons/com/jetbrains/pythonCore/python/viewAsImage.svg", -384883859, 2);
     /** 16x16 */ public static final @NotNull Icon Virtualenv = load("icons/com/jetbrains/pythonCore/python/expui/virtualEnv.svg", "icons/com/jetbrains/pythonCore/python/virtualenv.svg", 758230626, 0);
   }
 
