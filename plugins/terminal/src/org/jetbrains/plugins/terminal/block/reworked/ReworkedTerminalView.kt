@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl
 import com.intellij.openapi.editor.impl.softwrap.EmptySoftWrapPainter
+import com.intellij.openapi.observable.util.addFocusListener
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -42,6 +43,8 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
 import java.awt.event.KeyEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -131,7 +134,7 @@ internal class ReworkedTerminalView(
     listenPanelSizeChanges()
     listenAlternateBufferSwitch()
 
-    TerminalVfsSynchronizer.install(controller, this)
+    TerminalVfsSynchronizer.install(controller, this, this)
   }
 
   override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
@@ -333,8 +336,26 @@ internal class ReworkedTerminalView(
 
   override fun dispose() {}
 
+  fun addFocusListener(parentDisposable: Disposable, listener: FocusListener) {
+    terminalPanel.addFocusListener(parentDisposable, listener)
+  }
+
   private inner class TerminalPanel(initialContent: Editor) : JBLayeredPane(), UiDataProvider {
     private var curEditor: Editor = initialContent
+
+    private val delegatingFocusListener = object : FocusListener {
+      override fun focusGained(e: FocusEvent) {
+        for (focusListener in focusListeners) {
+          focusListener.focusGained(e)
+        }
+      }
+
+      override fun focusLost(e: FocusEvent?) {
+        for (focusListener in focusListeners) {
+          focusListener.focusLost(e)
+        }
+      }
+    }
 
     init {
       setTerminalContent(initialContent)
@@ -347,10 +368,12 @@ internal class ReworkedTerminalView(
       val prevEditor = curEditor
       @Suppress("SENSELESS_COMPARISON") // called from init when curEditor == null
       if (prevEditor != null) {
+        prevEditor.contentComponent.removeFocusListener(delegatingFocusListener)
         remove(curEditor.component)
       }
       curEditor = editor
       addToLayer(editor.component, DEFAULT_LAYER)
+      editor.contentComponent.addFocusListener(delegatingFocusListener)
     }
 
     override fun uiDataSnapshot(sink: DataSink) {
