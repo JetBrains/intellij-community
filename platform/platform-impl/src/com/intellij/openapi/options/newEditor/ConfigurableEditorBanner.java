@@ -3,6 +3,7 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.components.ActionLink;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
@@ -18,14 +19,15 @@ final class ConfigurableEditorBanner extends SimpleBanner {
   ConfigurableEditorBanner(Action action, JComponent jLabel) {
     myHeaderText = jLabel;
     myProjectIcon.setMinimumSize(new Dimension(0, 0));
+    myProjectIcon.setBorder(JBUI.Borders.empty(8, 4, 8, 8));
     myProjectIcon.setIcon(AllIcons.General.ProjectConfigurable);
     myProjectIcon.setForeground(UIUtil.getContextHelpForeground());
     showProject(false);
     myLeftPanel.removeAll();
     myLeftPanel.add(myHeaderText);
     myLeftPanel.add(myProjectIcon);
+    myLeftPanel.add(new ActionLink(action)/*, BorderLayout.EAST*/);
     myLeftPanel.add(myProgress);
-    add(new ActionLink(action), BorderLayout.EAST);
   }
 
   void setProjectText(@Nullable @Nls String projectText) {
