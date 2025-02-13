@@ -341,68 +341,44 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   // Mouse
-  fun click(point: Point? = null, silent: Boolean = false) {
+  fun click(point: Point? = null) {
+    LOG.info("Click at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
-      if (!silent) {
-        LOG.info("Click at $this: $point")
-      }
       withComponent { robot.click(it, point) }
     }
     else {
-      if (!silent) {
-        LOG.info("Click at '$this'")
-      }
       withComponent { robot.click(it) }
     }
   }
 
-  fun doubleClick(point: Point? = null, silent: Boolean = false) {
+  fun doubleClick(point: Point? = null) {
+    LOG.info("Double click at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
-      if (!silent) {
-        LOG.info("Double click at $this: $point")
-      }
       withComponent { robot.click(it, point, RemoteMouseButton.LEFT, 2) }
     }
     else {
-      if (!silent) {
-        LOG.info("Double click at '$this'")
-      }
       withComponent { robot.doubleClick(it) }
     }
   }
 
-  fun rightClick(point: Point? = null, silent: Boolean = false) {
+  fun rightClick(point: Point? = null) {
+    LOG.info("Right click at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
-      if (!silent) {
-        LOG.info("Right click at $this: $point")
-      }
       withComponent { robot.click(it, point, RemoteMouseButton.RIGHT, 1) }
     }
     else {
-      if (!silent) {
-        LOG.info("Right click at $this")
-      }
       withComponent { robot.rightClick(it) }
     }
   }
 
-  fun moveMouse(point: Point? = null, silent: Boolean = false) {
+  fun moveMouse(point: Point? = null) {
+    LOG.info("Move mouse to $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
-      if (!silent) {
-        LOG.info("Move mouse to $this: $point")
-      }
       withComponent { robot.moveMouse(it, point) }
     }
     else {
-      if (!silent) {
-        LOG.info("Move mouse to $this")
-      }
       withComponent { robot.moveMouse(it) }
     }
-  }
-
-  fun hasFocus(): Boolean {
-    return withComponent { it.isFocusOwner() }
   }
 
   fun mousePressMoveRelease(from: Point, to: Point) {
@@ -414,6 +390,12 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       releaseMouse(RemoteMouseButton.LEFT)
     }
   }
+
+  fun hasFocus(): Boolean {
+    return withComponent { it.isFocusOwner() }
+  }
+
+
 
   fun getBackgroundColor(): Color {
     return withComponent { Color(it.getBackground().getRGB()) }
