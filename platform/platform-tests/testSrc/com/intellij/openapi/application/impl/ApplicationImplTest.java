@@ -402,7 +402,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     ProgressManager.getInstance().runProcessWithProgressSynchronously((ThrowableComputable<Void, Exception>)() -> {
       try {
         assertFalse(ApplicationManager.getApplication().holdsReadLock());
-        assertEquals(isLockStoredInContext(), ApplicationManager.getApplication().isReadAccessAllowed());
+        assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
         assertFalse(ApplicationManager.getApplication().isDispatchThread());
         ApplicationManager.getApplication().assertIsNonDispatchThread();
 

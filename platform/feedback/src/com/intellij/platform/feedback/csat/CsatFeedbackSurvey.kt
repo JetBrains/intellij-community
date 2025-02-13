@@ -2,6 +2,7 @@
 package com.intellij.platform.feedback.csat
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ConfigImportHelper
@@ -14,6 +15,7 @@ import com.intellij.platform.feedback.InIdeFeedbackSurveyType
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
+import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import java.time.format.DateTimeFormatter
@@ -41,7 +43,11 @@ internal class CsatFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
   override val requireIdeEAP: Boolean = false
   override val isIndefinite: Boolean = true
 
-  override fun checkIdeIsSuitable(): Boolean = Registry.`is`("csat.survey.enabled")
+  override fun checkIdeIsSuitable(): Boolean {
+    return Registry.`is`("csat.survey.enabled")
+           && !AppMode.isRemoteDevHost()
+           && !ScreenReader.isActive()
+  }
 
   override fun createFeedbackDialog(project: Project, forTest: Boolean): BlockBasedFeedbackDialog<out SystemDataJsonSerializable> {
     return CsatFeedbackDialog(project, forTest)

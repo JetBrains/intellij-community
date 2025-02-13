@@ -84,7 +84,7 @@ public open class ScrollSyncMarkdownBlockRenderer(
 
         val content = block.content
         val highlightedCode by
-            LocalCodeHighlighter.current.highlight(content, mimeType).collectAsState(AnnotatedString(content))
+            LocalCodeHighlighter.current.highlight(content, block.mimeType).collectAsState(AnnotatedString(content))
         val actualBlock by rememberUpdatedState(block)
 
         AutoScrollableBlock(actualBlock, synchronizer) {

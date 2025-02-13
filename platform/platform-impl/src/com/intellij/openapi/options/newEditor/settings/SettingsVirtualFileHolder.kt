@@ -4,9 +4,6 @@ package com.intellij.openapi.options.newEditor.settings
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
@@ -20,8 +17,6 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.newEditor.OptionsEditorColleague
 import com.intellij.openapi.options.newEditor.SettingsDialog
 import com.intellij.openapi.options.newEditor.SettingsEditor
-import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder.SettingsVirtualFile
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
@@ -81,6 +76,9 @@ internal class SettingsVirtualFileHolder private constructor(private val project
       Disposer.register(dialog.disposable, Disposable {
         val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx;
         fileEditorManager.closeFile(this)
+        wasModified.set(false)
+        val manager = project.getServiceIfCreated(FileStatusManager::class.java)
+        manager?.fileStatusChanged(this@SettingsVirtualFile)
       })
 
       val settingsEditor = dialog.editor as? SettingsEditor
@@ -143,24 +141,5 @@ internal class SettingsVirtualFileHolder private constructor(private val project
     override fun getIcon() = AllIcons.General.Settings
     override fun isBinary(): Boolean = true
     override fun isReadOnly(): Boolean = true
-  }
-}
-
-private class CloseSettingsAction : DumbAwareAction() {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = getSettingsVirtualFile(e) != null
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
-    val settingsVirtualFile = getSettingsVirtualFile(e) ?: return
-    settingsVirtualFile.getOrCreateDialog().doCancelAction(e.inputEvent)
-  }
-
-  private fun getSettingsVirtualFile(e: AnActionEvent): SettingsVirtualFile? {
-    val fileEditor = (PlatformDataKeys.FILE_EDITOR.getData(e.dataContext)
-                      ?: PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.getData(e.dataContext)) as? SettingsFileEditor ?: return null
-    return fileEditor.file as? SettingsVirtualFile
   }
 }

@@ -431,8 +431,6 @@
       <action id="OpenInAssociatedApplication" class="com.intellij.ide.actions.OpenInAssociatedApplicationAction"/>
     </group>
 
-    <action id="CloseSettings" class="com.intellij.openapi.options.newEditor.settings.CloseSettingsAction" use-shortcut-of="CloseDiffEditor"/>
-
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">

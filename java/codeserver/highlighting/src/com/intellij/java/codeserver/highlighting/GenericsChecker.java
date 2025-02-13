@@ -2,6 +2,7 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -24,10 +25,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static java.util.Objects.*;
+import static java.util.Objects.requireNonNull;
 
 final class GenericsChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
+  private final Set<PsiClass> myOverrideEquivalentMethodsVisitedClasses = new HashSet<>();
+  // stored "clashing signatures" errors for the method (if the key is a PsiModifierList of the method), or the class (if the key is a PsiModifierList of the class)
+  private final Map<PsiMember, JavaCompilationError<PsiMember, ?>> myOverrideEquivalentMethodsErrors = new HashMap<>();
 
   GenericsChecker(@NotNull JavaErrorVisitor visitor) { myVisitor = visitor; }
 
@@ -770,6 +774,155 @@ final class GenericsChecker {
           }
         }
         myVisitor.report(JavaErrorKinds.ARRAY_GENERIC.create(element));
+      }
+    }
+  }
+
+  Map<PsiMember, JavaCompilationError<PsiMember, ?>> computeOverrideEquivalentMethodErrors(@NotNull PsiClass aClass) {
+    if (myOverrideEquivalentMethodsVisitedClasses.add(aClass)) {
+      Collection<HierarchicalMethodSignature> signaturesWithSupers = aClass.getVisibleSignatures();
+      PsiManager manager = aClass.getManager();
+      Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods =
+        MethodSignatureUtil.createErasedMethodSignatureMap();
+
+      Set<MethodSignature> foundProblems = MethodSignatureUtil.createErasedMethodSignatureSet();
+      for (HierarchicalMethodSignature signature : signaturesWithSupers) {
+        JavaCompilationError<PsiMember, ?> error =
+          checkSameErasureNotSubSignatureInner(signature, manager, aClass, sameErasureMethods);
+        if (error != null && foundProblems.add(signature)) {
+          myOverrideEquivalentMethodsErrors.put(error.psi(), error);
+        }
+        if (aClass instanceof PsiTypeParameter) {
+          error = MethodChecker.getMethodIncompatibleReturnType(aClass, signature, signature.getSuperSignatures());
+          if (error != null) {
+            myOverrideEquivalentMethodsErrors.put(aClass, error);
+          }
+        }
+      }
+    }
+    return myOverrideEquivalentMethodsErrors;
+  }
+
+  private static JavaCompilationError<PsiMember, ?> checkSameErasureNotSubSignatureInner(
+    @NotNull HierarchicalMethodSignature signature,
+    @NotNull PsiManager manager,
+    @NotNull PsiClass aClass,
+    @NotNull Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods) {
+    PsiMethod method = signature.getMethod();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    if (!facade.getResolveHelper().isAccessible(method, aClass, null)) return null;
+    MethodSignature signatureToErase = method.getSignature(PsiSubstitutor.EMPTY);
+    MethodSignatureBackedByPsiMethod sameErasure = sameErasureMethods.get(signatureToErase);
+    if (sameErasure == null) {
+      sameErasureMethods.put(signatureToErase, signature);
+    }
+    else if (aClass instanceof PsiTypeParameter ||
+             MethodSignatureUtil.findMethodBySuperMethod(aClass, sameErasure.getMethod(), false) != null ||
+             !(InheritanceUtil.isInheritorOrSelf(sameErasure.getMethod().getContainingClass(), method.getContainingClass(), true) ||
+               InheritanceUtil.isInheritorOrSelf(method.getContainingClass(), sameErasure.getMethod().getContainingClass(), true))) {
+      JavaCompilationError<PsiMember, ?> error = checkSameErasureNotSubSignatureOrSameClass(sameErasure, signature, aClass, method);
+      if (error != null) return error;
+    }
+    List<HierarchicalMethodSignature> supers = signature.getSuperSignatures();
+    for (HierarchicalMethodSignature superSignature : supers) {
+      JavaCompilationError<PsiMember, ?> error =
+        checkSameErasureNotSubSignatureInner(superSignature, manager, aClass, sameErasureMethods);
+      if (error != null) return error;
+
+      if (superSignature.isRaw() && !signature.isRaw()) {
+        PsiType[] parameterTypes = signature.getParameterTypes();
+        PsiType[] erasedTypes = superSignature.getErasedParameterTypes();
+        for (int i = 0; i < erasedTypes.length; i++) {
+          if (!Comparing.equal(parameterTypes[i], erasedTypes[i])) {
+            return getSameErasureMessage(method, superSignature.getMethod(), aClass);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static JavaCompilationError<PsiMember, ?> checkSameErasureNotSubSignatureOrSameClass(@NotNull MethodSignatureBackedByPsiMethod signatureToCheck,
+                                                                                               @NotNull HierarchicalMethodSignature superSignature,
+                                                                                               @NotNull PsiClass aClass,
+                                                                                               @NotNull PsiMethod superMethod) {
+    PsiMethod checkMethod = signatureToCheck.getMethod();
+    if (superMethod.equals(checkMethod)) return null;
+    PsiClass checkContainingClass = requireNonNull(checkMethod.getContainingClass());
+    PsiClass superContainingClass = superMethod.getContainingClass();
+    boolean checkEqualsSuper = checkContainingClass.equals(superContainingClass);
+    if (checkMethod.isConstructor()) {
+      if (!superMethod.isConstructor() || !checkEqualsSuper) return null;
+    }
+    else if (superMethod.isConstructor()) return null;
+
+    JavaVersionService javaVersionService = JavaVersionService.getInstance();
+    boolean atLeast17 = javaVersionService.isAtLeast(aClass, JavaSdkVersion.JDK_1_7);
+    if (checkMethod.hasModifierProperty(PsiModifier.STATIC) && !checkEqualsSuper && !atLeast17) {
+      return null;
+    }
+
+    if (superMethod.hasModifierProperty(PsiModifier.STATIC) && superContainingClass != null &&
+        superContainingClass.isInterface() && !checkEqualsSuper &&
+        PsiUtil.isAvailable(JavaFeature.STATIC_INTERFACE_CALLS, superContainingClass)) {
+      return null;
+    }
+
+    PsiType retErasure1 = TypeConversionUtil.erasure(checkMethod.getReturnType());
+    PsiType retErasure2 = TypeConversionUtil.erasure(superMethod.getReturnType());
+
+    boolean differentReturnTypeErasure = !Comparing.equal(retErasure1, retErasure2);
+    if (checkEqualsSuper && atLeast17 && retErasure1 != null && retErasure2 != null) {
+      differentReturnTypeErasure = !TypeConversionUtil.isAssignable(retErasure1, retErasure2);
+    }
+
+    if (differentReturnTypeErasure &&
+        !TypeConversionUtil.isVoidType(retErasure1) &&
+        !TypeConversionUtil.isVoidType(retErasure2) &&
+        !(checkEqualsSuper && Arrays.equals(superSignature.getParameterTypes(), signatureToCheck.getParameterTypes())) &&
+        !atLeast17) {
+      int idx = 0;
+      PsiType[] erasedTypes = signatureToCheck.getErasedParameterTypes();
+      boolean erasure = erasedTypes.length > 0;
+      for (PsiType type : superSignature.getParameterTypes()) {
+        erasure &= Comparing.equal(type, erasedTypes[idx]);
+        idx++;
+      }
+
+      if (!erasure) return null;
+    }
+
+    if (!checkEqualsSuper && MethodSignatureUtil.isSubsignature(superSignature, signatureToCheck)) {
+      return null;
+    }
+    if (!javaVersionService.isCompilerVersionAtLeast(aClass, JavaSdkVersion.JDK_1_7)) {
+      //javac <= 1.6 didn't check transitive overriding rules for interfaces
+      if (superContainingClass != null &&
+          !superContainingClass.isInterface() &&
+          checkContainingClass.isInterface() &&
+          !aClass.equals(superContainingClass)) {
+        return null;
+      }
+    }
+    PsiMember anchor = aClass.equals(checkContainingClass) ? checkMethod : aClass;
+    return getSameErasureMessage(checkMethod, superMethod, anchor);
+  }
+
+  private static JavaCompilationError<PsiMember, ?> getSameErasureMessage(@NotNull PsiMethod method,
+                                                                          @NotNull PsiMethod superMethod,
+                                                                          @NotNull PsiMember anchor) {
+    return JavaErrorKinds.METHOD_GENERIC_CLASH.create(anchor, new JavaErrorKinds.OverrideClashContext(method, superMethod));
+  }
+
+  void checkTypeParameterOverrideEquivalentMethods(@NotNull PsiClass typeParameter) {
+    if (typeParameter instanceof PsiTypeParameter && myVisitor.languageLevel().isAtLeast(LanguageLevel.JDK_1_7)) {
+      PsiReferenceList extendsList = typeParameter.getExtendsList();
+      if (extendsList.getReferenceElements().length > 1) {
+        //todo suppress erased methods which come from the same class
+        var error = computeOverrideEquivalentMethodErrors(typeParameter).get(typeParameter);
+        if (error != null) {
+          myVisitor.report(error);
+        }
       }
     }
   }

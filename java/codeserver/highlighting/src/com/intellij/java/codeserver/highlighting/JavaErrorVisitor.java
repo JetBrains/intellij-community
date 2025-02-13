@@ -461,6 +461,10 @@ final class JavaErrorVisitor extends JavaElementVisitor {
           }
         }
       }
+      if (!hasErrorResults() && aClass != null) {
+        var error = myGenericsChecker.computeOverrideEquivalentMethodErrors(aClass).get(method);
+        if (error != null) report(error);
+      }
     }
     else if (parent instanceof PsiClass aClass) {
       if (!hasErrorResults()) myClassChecker.checkDuplicateNestedClass(aClass);
@@ -471,13 +475,12 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       if (!hasErrorResults()) {
         myClassChecker.checkClassDoesNotCallSuperConstructorOrHandleExceptions(aClass);
       }
-      //if (!hasErrorResults()) add(HighlightMethodUtil.checkOverrideEquivalentInheritedMethods(aClass, myFile, myLanguageLevel));
-      if (!hasErrorResults()) {
-        //GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(aClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
-        //myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(aClass));
-      }
       if (!hasErrorResults()) myClassChecker.checkCyclicInheritance(aClass);
       if (!hasErrorResults()) myMethodChecker.checkOverrideEquivalentInheritedMethods(aClass);
+      if (!hasErrorResults()) {
+        var error = myGenericsChecker.computeOverrideEquivalentMethodErrors(aClass).get(aClass);
+        if (error != null) report(error);
+      }
     }
   }
 
@@ -673,6 +676,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   public void visitImportModuleStatement(@NotNull PsiImportModuleStatement statement) {
     super.visitImportModuleStatement(statement);
     if (!hasErrorResults()) checkFeature(statement, JavaFeature.MODULE_IMPORT_DECLARATIONS);
+    if (!hasErrorResults()) myImportChecker.checkImportModuleInModuleInfo(statement);
   }
 
   @Override
@@ -742,6 +746,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myGenericsChecker.checkInterfaceMultipleInheritance(aClass);
     if (!hasErrorResults()) myGenericsChecker.checkClassSupersAccessibility(aClass);
     if (!hasErrorResults()) myRecordChecker.checkRecordHeader(aClass);
+    if (!hasErrorResults()) myGenericsChecker.checkTypeParameterOverrideEquivalentMethods(aClass);
   }
 
   @Override
@@ -818,6 +823,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
     if (!hasErrorResults()) myGenericsChecker.checkAccessStaticFieldFromEnumConstructor(expression, result);
     myExpressionChecker.checkUnqualifiedSuperInDefaultMethod(expression, qualifierExpression);
+    if (!hasErrorResults()) myExpressionChecker.checkClassReferenceAfterQualifier(expression, resolved);
     if (!hasErrorResults() && resolved instanceof PsiModifierListOwner) checkPreviewFeature(expression);
   }
   
@@ -975,7 +981,13 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) myClassChecker.checkExtendsDuplicate(ref, resolved);
     if (!hasErrorResults()) myClassChecker.checkClassExtendsForeignInnerClass(ref, resolved);
     if (!hasErrorResults()) myGenericsChecker.checkSelectStaticClassFromParameterizedType(resolved, ref);
-    if (!hasErrorResults() && parent instanceof PsiNewExpression newExpression) myGenericsChecker.checkDiamondTypeNotAllowed(newExpression);
+    if (parent instanceof PsiNewExpression newExpression) {
+      if (!hasErrorResults()) myGenericsChecker.checkDiamondTypeNotAllowed(newExpression);
+      if (!hasErrorResults() && !(resolved instanceof PsiClass) && resolved instanceof PsiNamedElement &&
+          newExpression.getClassOrAnonymousClassReference() == ref) {
+        report(JavaErrorKinds.REFERENCE_UNRESOLVED.create(ref));
+      }
+    }
     if (!hasErrorResults() && (!(parent instanceof PsiNewExpression newExpression) || !newExpression.isArrayCreation())) {
       myGenericsChecker.checkParameterizedReferenceTypeArguments(resolved, ref, result.getSubstitutor());
     }
@@ -1009,9 +1021,14 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     }
     if (parent instanceof PsiAnonymousClass psiAnonymousClass && ref.equals(psiAnonymousClass.getBaseClassReference())) {
       if (!hasErrorResults()) myGenericsChecker.checkGenericCannotExtendException(psiAnonymousClass);
+      if (!hasErrorResults()) {
+        var error = myGenericsChecker.computeOverrideEquivalentMethodErrors(psiAnonymousClass).get(psiAnonymousClass);
+        if (error != null) report(error);
+      }
     }
     if (!hasErrorResults() && resolved instanceof PsiClass psiClass) myExpressionChecker.checkRestrictedIdentifierReference(ref, psiClass);
     if (!hasErrorResults()) myExpressionChecker.checkMemberReferencedBeforeConstructorCalled(ref, resolved);
+    if (!hasErrorResults()) myExpressionChecker.checkPackageAndClassConflict(ref);
     return result;
   }
 

@@ -28,6 +28,7 @@ import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
@@ -251,7 +252,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
         settings.select(configurable);
       }
     };
-    editor.setPreferredSize(JBUI.size(800, 600));
+
     loadingDecorator = new LoadingDecorator(editor, this, 10, true);
     loadingDecorator.setOverlayBackground(LoadingDecorator.OVERLAY_BACKGROUND);
     myBanner = new Banner(editor.getResetAction());
@@ -277,6 +278,14 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     if (IdeFrameDecorator.Companion.isCustomDecorationActive()) {
       mySplitter.getDivider().setOpaque(false);
     }
+    if (SettingsDialog.useNonModalSettingsWindow()) {
+      mySplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
+      mySplitter.setHonorComponentsPreferredSize(true);
+      add(BorderLayout.CENTER, new JBScrollPane(mySplitter));
+    } else {
+      editor.setPreferredSize(JBUI.size(800, 600));
+      add(BorderLayout.CENTER, mySplitter);
+    }
 
     spotlightPainter = spotlightPainterFactory.createSpotlightPainter(project, editor, this, (painter) -> {
       Configurable currentConfigurable = this.filter.context.getCurrentConfigurable();
@@ -285,7 +294,6 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       }
       return Unit.INSTANCE;
     });
-    add(BorderLayout.CENTER, mySplitter);
 
     if (configurable == null) {
       String id = properties.getValue(SELECTED_CONFIGURABLE);

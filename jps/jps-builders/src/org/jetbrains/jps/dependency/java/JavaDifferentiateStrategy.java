@@ -874,7 +874,9 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
   public boolean processAddedModule(DifferentiateContext context, JvmModule addedModule, Utils future, Utils present) {
     // after module has been added, the whole target should be rebuilt
     // because necessary 'require' directives may be missing from the newly added module-info file
-    affectModule(context, future, addedModule);
+    if (!addedModule.isLibrary()) {
+      affectModule(context, future, addedModule);
+    }
     return true;
   }
 
@@ -941,7 +943,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
       }
     }
 
-    if (affectSelf) {
+    if (affectSelf && !change.getNow().isLibrary()) {
       affectModule(context, present, changedModule);
     }
 

@@ -130,6 +130,30 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
                                 PySyntaxBundle.message("formatter.from.import.statements.force.comma.if.multline"),
                                 PySyntaxBundle.message("formatter.from.import.statements"));
 
+      consumer.showCustomOption(PyCodeStyleSettings.class, "LIST_WRAPPING",
+                                PySyntaxBundle.message("formatter.list.literals"), null, getInstance().WRAP_OPTIONS, WRAP_VALUES);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "LIST_NEW_LINE_AFTER_LEFT_BRACKET",
+                                ApplicationBundle.message("wrapping.new.line.after.lbracket"), PySyntaxBundle.message("formatter.list.literals"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "LIST_NEW_LINE_BEFORE_RIGHT_BRACKET",
+                                ApplicationBundle.message("wrapping.rbracket.on.new.line"), PySyntaxBundle.message("formatter.list.literals"));
+
+      consumer.showCustomOption(PyCodeStyleSettings.class, "SET_WRAPPING",
+                                PySyntaxBundle.message("formatter.set.literals"), null, getInstance().WRAP_OPTIONS, WRAP_VALUES);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "SET_NEW_LINE_AFTER_LEFT_BRACE",
+                                ApplicationBundle.message("wrapping.new.line.after.lbrace"), PySyntaxBundle.message("formatter.set.literals"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "SET_NEW_LINE_BEFORE_RIGHT_BRACE",
+                                ApplicationBundle.message("wrapping.rbrace.on.new.line"), PySyntaxBundle.message("formatter.set.literals"));
+
+      consumer.showCustomOption(PyCodeStyleSettings.class, "TUPLE_WRAPPING",
+                                PySyntaxBundle.message("formatter.parenthesized.tuples"), null, getInstance().WRAP_OPTIONS, WRAP_VALUES);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS",
+                                ApplicationBundle.message("wrapping.new.line.after.lpar"), PySyntaxBundle.message(
+          "formatter.parenthesized.tuples"));
+      consumer.showCustomOption(PyCodeStyleSettings.class, "TUPLE_NEW_LINE_BEFORE_RIGHT_PARENTHESIS",
+                                ApplicationBundle.message("wrapping.rpar.on.new.line"), PySyntaxBundle.message(
+          "formatter.parenthesized.tuples"));
+
+
       consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_WRAPPING",
                                 PySyntaxBundle.message("formatter.dictionary.literals"), null, getInstance().WRAP_OPTIONS, WRAP_VALUES);
       consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_NEW_LINE_AFTER_LEFT_BRACE",
@@ -222,6 +246,14 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
     )
     attrs = [e.attr for e in
         items]
+    
+    num_dict = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5}
+    
+    colors = ['red', 'green', 'blue', 'black', 'white', 'gray']
+    
+    star_names = {"Sirius", "Betelgeuse", "Polaris", "Vega", "Arcturus", "Aldebaran"}
+    
+    planets = ("Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune")
 
     ingredients = [
         'green',

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.icons.AllIcons;
@@ -63,8 +63,8 @@ public final class PluginDescriptorStructureUtil {
       return safeGetTagDisplayText(tag);
     }
 
-    if (element instanceof Action) {
-      String actionId = ((Action)element).getId().getStringValue();
+    if (element instanceof Action action) {
+      String actionId = action.getEffectiveId();
       if (StringUtil.isNotEmpty(actionId)) {
         return actionId;
       }
@@ -196,7 +196,7 @@ public final class PluginDescriptorStructureUtil {
   }
 
   private static @Nullable String getGroupLocation(ActionOrGroup element) {
-    return element.getId().getStringValue();
+    return element.getEffectiveId();
   }
 
   private static @Nullable String getAddToGroupLocation(AddToGroup element) {

@@ -2414,6 +2414,11 @@ public abstract class IndyLambdaIrKotlinEvaluateExpressionTestGenerated extends 
                 runTest("testData/evaluation/singleBreakpoint/withSerializationPlugin.kt");
             }
 
+            @TestMetadata("withSerializationPlugin_ver_1.7.1.kt")
+            public void testWithSerializationPlugin_ver_1_7_1() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/withSerializationPlugin_ver_1.7.1.kt");
+            }
+
             @TestMetadata(".kt.kt")
             public void test_kt() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/.kt.kt");
@@ -2781,6 +2786,11 @@ public abstract class IndyLambdaIrKotlinEvaluateExpressionTestGenerated extends 
             @TestMetadata("internalMembersInInlinedLambda.kt")
             public void testInternalMembersInInlinedLambda() throws Exception {
                 runTest("testData/evaluation/jvmMultiModule/internalMembersInInlinedLambda.kt");
+            }
+
+            @TestMetadata("objectsInInlineFunctions.kt")
+            public void testObjectsInInlineFunctions() throws Exception {
+                runTest("testData/evaluation/jvmMultiModule/objectsInInlineFunctions.kt");
             }
         }
     }

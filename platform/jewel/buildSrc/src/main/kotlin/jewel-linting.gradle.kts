@@ -26,7 +26,6 @@ dependencies {
 
 tasks {
     named("detekt") {
-        println("Setting up ${project.name}")
         if (!project.name.startsWith("detekt-plugin")) {
             dependsOn(":detekt-plugin:build")
         }

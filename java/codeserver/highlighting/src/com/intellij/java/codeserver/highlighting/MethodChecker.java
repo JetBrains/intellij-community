@@ -3,6 +3,7 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.openapi.project.Project;
@@ -284,10 +285,20 @@ final class MethodChecker {
 
   void checkMethodIncompatibleReturnType(@NotNull PsiMember anchor, @NotNull MethodSignatureBackedByPsiMethod methodSignature,
                                          @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures) {
+    JavaCompilationError<?, ?> error = getMethodIncompatibleReturnType(anchor, methodSignature, superMethodSignatures);
+    if (error != null) {
+      myVisitor.report(error);
+    }
+  }
+
+  @Nullable
+  static JavaCompilationError<PsiMember, ?> getMethodIncompatibleReturnType(@NotNull PsiMember anchor,
+                                                                            @NotNull MethodSignatureBackedByPsiMethod methodSignature,
+                                                                            @NotNull List<? extends HierarchicalMethodSignature> superMethodSignatures) {
     PsiMethod method = methodSignature.getMethod();
     PsiType returnType = methodSignature.getSubstitutor().substitute(method.getReturnType());
     PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return;
+    if (aClass == null) return null;
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
       PsiType declaredReturnType = superMethod.getReturnType();
@@ -296,24 +307,27 @@ final class MethodChecker {
       if (returnType == null || superReturnType == null || method == superMethod) continue;
       PsiClass superClass = superMethod.getContainingClass();
       if (superClass == null) continue;
-      checkSuperMethodSignature(anchor, superMethod, superMethodSignature, superReturnType, method, methodSignature, returnType);
+      JavaCompilationError<PsiMember, ?> error =
+        getSuperMethodSignatureError(anchor, superMethod, superMethodSignature, superReturnType, method, methodSignature, returnType);
+      if (error != null) return error;
     }
+    return null;
   }
 
-  private void checkSuperMethodSignature(@NotNull PsiMember anchor,
-                                         @NotNull PsiMethod superMethod,
-                                         @NotNull MethodSignatureBackedByPsiMethod superMethodSignature,
-                                         @NotNull PsiType superReturnType,
-                                         @NotNull PsiMethod method,
-                                         @NotNull MethodSignatureBackedByPsiMethod methodSignature,
-                                         @NotNull PsiType returnType) {
+  private static @Nullable JavaCompilationError<PsiMember, ?> getSuperMethodSignatureError(@NotNull PsiMember anchor,
+                                                                                           @NotNull PsiMethod superMethod,
+                                                                                           @NotNull MethodSignatureBackedByPsiMethod superMethodSignature,
+                                                                                           @NotNull PsiType superReturnType,
+                                                                                           @NotNull PsiMethod method,
+                                                                                           @NotNull MethodSignatureBackedByPsiMethod methodSignature,
+                                                                                           @NotNull PsiType returnType) {
     PsiClass superContainingClass = superMethod.getContainingClass();
     if (superContainingClass != null &&
         CommonClassNames.JAVA_LANG_OBJECT.equals(superContainingClass.getQualifiedName()) &&
         !superMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
       PsiClass containingClass = method.getContainingClass();
       if (containingClass != null && containingClass.isInterface() && !superContainingClass.isInterface()) {
-        return;
+        return null;
       }
     }
 
@@ -332,17 +346,17 @@ final class MethodChecker {
       substitutedSuperReturnType = TypeConversionUtil.erasure(superMethodSignature.getSubstitutor().substitute(superReturnType));
     }
 
-    if (returnType.equals(substitutedSuperReturnType)) return;
+    if (returnType.equals(substitutedSuperReturnType)) return null;
     if (!(returnType instanceof PsiPrimitiveType) && substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType) {
       if (hasGenerics && LambdaUtil.performWithSubstitutedParameterBounds(
         methodSignature.getTypeParameters(), methodSignature.getSubstitutor(),
         () -> TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType))) {
-        return;
+        return null;
       }
     }
 
-    myVisitor.report(JavaErrorKinds.METHOD_INHERITANCE_CLASH_INCOMPATIBLE_RETURN_TYPES.create(
-      anchor, new JavaErrorKinds.IncompatibleOverrideReturnTypeContext(method, returnType, superMethod, substitutedSuperReturnType)));
+    return JavaErrorKinds.METHOD_INHERITANCE_CLASH_INCOMPATIBLE_RETURN_TYPES.create(
+      anchor, new JavaErrorKinds.IncompatibleOverrideReturnTypeContext(method, returnType, superMethod, substitutedSuperReturnType));
   }
 
   private void checkInterfaceInheritedMethodsReturnTypes(@NotNull PsiClass aClass,

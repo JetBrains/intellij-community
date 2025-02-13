@@ -22,6 +22,8 @@ jvm_library(
     "//plugins/kotlin/idea",
     "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
     "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/devkit/devkit-core:core",
+    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
   ],
   runtime_deps = [":kotlin-devkit-k1_resources"]
 )
@@ -51,6 +53,8 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/devkit/devkit-core:core",
+    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
   ],
   runtime_deps = [":kotlin-devkit-k1_resources"]
 )

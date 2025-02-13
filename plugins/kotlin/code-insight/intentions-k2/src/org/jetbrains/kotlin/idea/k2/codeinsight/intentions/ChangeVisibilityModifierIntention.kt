@@ -30,14 +30,19 @@ class ChangeVisibilityModifierIntentionChooser : PsiBasedModCommandAction<KtDecl
         context: ActionContext,
         element: KtDeclaration
     ): Presentation? {
-        if (modCommands.all { it.getPresentation(context) == null }) return null
-        return Presentation.of("${KotlinBundle.message("change.visibility", element.name.toString())}…")
+        return if (modCommands.any { it.getPresentation(context) != null }) {
+            Presentation.of("${KotlinBundle.message("change.visibility", element.name.toString())}…")
+        } else {
+            null
+        }
     }
 
     override fun perform(
         context: ActionContext,
         element: KtDeclaration
-    ): ModCommand = chooseAction(KotlinBundle.message("change.visibility.popup"), modCommands)
+    ): ModCommand {
+        return chooseAction(KotlinBundle.message("change.visibility.popup"), modCommands)
+    }
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("change.visibility")
 }
@@ -138,7 +143,8 @@ sealed class ChangeVisibilityModifierIntention(
         updater: ModPsiUpdater,
     ) {
         val psiFactory = KtPsiFactory(actionContext.project)
-        (element.actualsForExpect() + element.expectDeclarationIfAny() + element).filterNotNull().forEach {
+        val declarations = element.actualsForExpect() + element.expectDeclarationIfAny() + element
+        declarations.filterNotNull().forEach {
             val declaration = updater.getWritable(it)
             declaration.setVisibility(modifier)
             if (declaration is KtPropertyAccessor) {

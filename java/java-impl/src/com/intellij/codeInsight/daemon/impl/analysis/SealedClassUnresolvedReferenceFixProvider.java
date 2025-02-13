@@ -17,7 +17,7 @@ public final class SealedClassUnresolvedReferenceFixProvider extends UnresolvedR
   @Override
   public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
     if (!PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, ref) && ref.textMatches(PsiKeyword.SEALED)) {
-      for (CommonIntentionAction intention : HighlightUtil.getIncreaseLanguageLevelFixes(ref, JavaFeature.SEALED_CLASSES)) {
+      for (CommonIntentionAction intention : HighlightFixUtil.getIncreaseLanguageLevelFixes(ref, JavaFeature.SEALED_CLASSES)) {
         registrar.register(intention.asIntention());
       }
     }

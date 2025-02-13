@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -80,15 +80,13 @@ final class LineMarkerInfoHelper {
   static RelatedItemLineMarkerInfo<?> createActionLineMarkerInfo(List<? extends ActionCandidate> targets, PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.action"),
-                                      (NullableFunction<Action, String>)action ->
-                                        ObjectUtils.chooseNotNull(action.getId().getStringValue(), action.getClazz().getStringValue()));
+                                      (NullableFunction<Action, String>)action -> action.getEffectiveId());
   }
 
   static RelatedItemLineMarkerInfo<?> createActionGroupLineMarkerInfo(List<? extends ActionCandidate> targets, PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.action.group"),
-                                      (NullableFunction<Group, String>)group ->
-                                        ObjectUtils.chooseNotNull(group.getId().getStringValue(), group.getClazz().getStringValue()));
+                                      (NullableFunction<Group, String>)group -> group.getEffectiveId());
   }
 
   static RelatedItemLineMarkerInfo<?> createComponentLineMarkerInfo(List<? extends ComponentCandidate> targets, PsiElement element) {

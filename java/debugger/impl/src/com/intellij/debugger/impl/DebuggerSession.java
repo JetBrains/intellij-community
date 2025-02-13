@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.*;
@@ -292,7 +292,10 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   }
 
   public void stepOut(int stepSize) {
-    SuspendContextImpl suspendContext = getSuspendContext();
+    stepOut(getSuspendContext(), stepSize);
+  }
+
+  public void stepOut(SuspendContextImpl suspendContext, int stepSize) {
     DebugProcessImpl.ResumeCommand cmd =
       DebugUtilsKt.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
                                          handler -> handler.getStepOutCommand(suspendContext, stepSize));
@@ -308,7 +311,10 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   }
 
   public void stepOver(boolean ignoreBreakpoints, @Nullable MethodFilter methodFilter, int stepSize) {
-    SuspendContextImpl suspendContext = getSuspendContext();
+    stepOver(getSuspendContext(), ignoreBreakpoints, methodFilter, stepSize);
+  }
+
+  public void stepOver(SuspendContextImpl suspendContext, boolean ignoreBreakpoints, @Nullable MethodFilter methodFilter, int stepSize) {
     DebugProcessImpl.ResumeCommand cmd =
       DebugUtilsKt.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
                                          handler -> handler.getStepOverCommand(suspendContext, ignoreBreakpoints, stepSize));
@@ -327,8 +333,11 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     stepOver(ignoreBreakpoints, StepRequest.STEP_LINE);
   }
 
-  public void stepInto(final boolean ignoreFilters, final @Nullable MethodFilter smartStepFilter, int stepSize) {
-    final SuspendContextImpl suspendContext = getSuspendContext();
+  public void stepInto(boolean ignoreFilters, @Nullable MethodFilter smartStepFilter, int stepSize) {
+    stepInto(getSuspendContext(), ignoreFilters, smartStepFilter, stepSize);
+  }
+
+  public void stepInto(SuspendContextImpl suspendContext, boolean ignoreFilters, @Nullable MethodFilter smartStepFilter, int stepSize) {
     DebugProcessImpl.ResumeCommand cmd =
       DebugUtilsKt.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
                                          handler -> handler.getStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize));
@@ -379,13 +388,13 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   public void resume() {
     final SuspendContextImpl suspendContext = getSuspendContext();
     if (suspendContext != null) {
-      resumeSuspendContext(suspendContext);
+      resumeSuspendContext(suspendContext, PrioritizedTask.Priority.HIGH);
     }
   }
 
-  public void resumeSuspendContext(SuspendContextImpl suspendContext) {
+  public void resumeSuspendContext(SuspendContextImpl suspendContext, PrioritizedTask.Priority priority) {
     clearSteppingThrough();
-    resumeAction(myDebugProcess.createResumeCommand(suspendContext), Event.RESUME);
+    resumeAction(myDebugProcess.createResumeCommand(suspendContext, priority), Event.RESUME);
   }
 
   public void resetIgnoreStepFiltersFlag() {
@@ -670,20 +679,10 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     @Override
     public void resumed(SuspendContextImpl suspendContext) {
       SuspendContextImpl context = getProcess().getSuspendManager().getPausedContext();
-      ThreadReferenceProxyImpl steppingThread;
-      // single thread stepping
-      if (context != null
-          && suspendContext != null
-          && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD
-          && isSteppingThrough(suspendContext.getThread())) {
-        steppingThread = suspendContext.getThread();
-      }
-      else {
-        steppingThread = null;
-      }
+      ThreadReferenceProxyImpl steppingThread = getSteppingThread(suspendContext);
 
       DebuggerInvocationUtil.invokeLater(getProject(), () -> {
-        if (steppingThread != null) {
+        if (steppingThread != null && context != null) {
           DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(DebuggerSession.this, null, steppingThread, null);
           getContextManager().setState(debuggerContext, State.IN_STEPPING, Event.CONTEXT, getDescription(debuggerContext));
         }
@@ -760,6 +759,13 @@ public final class DebuggerSession implements AbstractDebuggerSession {
         contextManager.fireStateChanged(contextManager.getContext(), Event.THREADS_REFRESH);
       });
     }
+  }
+
+  public @Nullable ThreadReferenceProxyImpl getSteppingThread(@NotNull SuspendContextImpl suspendContext) {
+    if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && isSteppingThrough(suspendContext.getThread())) {
+      return suspendContext.getThread();
+    }
+    return null;
   }
 
   private static class BreakpointReachedNotificationListener extends NotificationListener.Adapter {

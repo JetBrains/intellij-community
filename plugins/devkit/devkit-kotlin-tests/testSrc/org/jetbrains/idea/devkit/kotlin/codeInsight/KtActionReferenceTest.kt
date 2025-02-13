@@ -106,6 +106,7 @@ class KtActionReferenceTest : JavaCodeInsightFixtureTestCase() {
     myFixture.createFile("plugin.xml", pluginXmlActions("""
               <group id="myGroup"></group>
               <action id="myAction" class="foo.bar.BarAction"></action>
+              <action class="foo.bar.myActionWithoutExplicitId"/>
               """
     ));
     myFixture.configureByText("Caller.kt", """
@@ -115,7 +116,7 @@ class KtActionReferenceTest : JavaCodeInsightFixtureTestCase() {
       
       }
     """.trimIndent())
-    assertSameElements(myFixture.getCompletionVariants("Caller.kt").orEmpty(), "myAction", "myGroup")
+    assertSameElements(myFixture.getCompletionVariants("Caller.kt").orEmpty(), "myAction", "myGroup", "myActionWithoutExplicitId")
   }
 
   fun testActionReferenceHighlighting() {

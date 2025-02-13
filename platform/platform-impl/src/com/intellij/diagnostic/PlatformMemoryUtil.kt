@@ -110,11 +110,10 @@ abstract class PlatformMemoryUtil {
 
   companion object {
     private val INSTANCE: PlatformMemoryUtil = try {
-      val force = SystemProperties.getBooleanProperty("com.intellij.diagnostic.memory.util.enabled", false)
       when {
         SystemInfo.isLinux -> LinuxMemoryUtil()
-        SystemInfo.isWin10OrNewer && (CpuArch.isIntel64() || force) -> WindowsMemoryUtil()
-        SystemInfo.isMac && (CpuArch.isArm64() || force) -> MacosMemoryUtil()
+        SystemInfo.isWin10OrNewer -> WindowsMemoryUtil()
+        SystemInfo.isMac -> MacosMemoryUtil()
         else -> DummyMemoryUtil()
       }
     }

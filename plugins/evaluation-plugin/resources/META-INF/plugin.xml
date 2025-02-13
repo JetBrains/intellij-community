@@ -39,6 +39,9 @@
   </extensions>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.cce.command"
+                    interface="com.intellij.cce.commands.EvaluationCommandExtension"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.cce.completionEvaluationVisitor"
                     interface="com.intellij.cce.visitor.EvaluationVisitor"
                     dynamic="true"/>

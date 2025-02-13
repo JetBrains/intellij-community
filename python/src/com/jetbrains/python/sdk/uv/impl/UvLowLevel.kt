@@ -32,6 +32,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
       initArgs.add("--no-pin-python")
       initArgs.add("--vcs")
       initArgs.add("none")
+      initArgs.add("--no-project")
 
       uvCli.runUv(cwd, *initArgs.toTypedArray())
         .onFailure { return Result.failure(it) }
@@ -80,7 +81,7 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     val mapper = jacksonObjectMapper()
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     val packages = mapper.readValue<List<PackageInfo>>(out).map {
-      PythonPackage(it.name, it.version, true)
+      PythonPackage(it.name, it.version, false)
     }
 
     return Result.success(packages)

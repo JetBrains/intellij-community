@@ -1,3 +1,5 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the
+// Apache 2.0 license.
 package org.jetbrains.jewel.markdown.rendering
 
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,6 +14,7 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced.InfoPosition.BottomCenter
@@ -34,6 +37,8 @@ public class MarkdownStyling(
     public val thematicBreak: ThematicBreak,
     public val htmlBlock: HtmlBlock,
 ) {
+    @ExperimentalJewelApi public val baseInlinesStyling: InlinesStyling = paragraph.inlinesStyling
+
     @GenerateDataFunctions
     public class Paragraph(override val inlinesStyling: InlinesStyling) : WithInlinesStyling {
         override fun equals(other: Any?): Boolean {

@@ -6,5 +6,4 @@ properties:
 profile:
   path: .idea/inspectionProfiles/qodana_zero_tolerance_profanity_check.yml
 plugins:
-  - id: com.intellij.platform.ide.provisioner
   - id: com.intellij.grazie.pro

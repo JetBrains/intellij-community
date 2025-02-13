@@ -7,9 +7,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.NamedColorUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,6 +29,12 @@ final class ErrorComponent extends JEditorPane {
     UIUtil.convertToLabel(this);
     setCaret(EmptyCaret.INSTANCE);
 
+    HTMLEditorKit htmlEditorKit =
+      new HTMLEditorKitBuilder()
+        .withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.ICONS,
+                                   ExtendableHTMLViewFactory.Extensions.WORD_WRAP)
+        .build();
+    setEditorKit(htmlEditorKit);
     StyleSheet sheet = ((HTMLEditorKit)getEditorKit()).getStyleSheet();
     sheet.addRule("span {color: " + ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground()) + "}");
     sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}");
@@ -51,7 +55,10 @@ final class ErrorComponent extends JEditorPane {
     setVisible(!errors.isEmpty());
 
     if (isVisible()) {
-      setText(toHtml(errors));
+      var content = errors.stream().collect(HtmlChunk.toFragment(HtmlChunk.nbsp()));
+      content = content.wrapWith(HtmlChunk.body()).wrapWith(HtmlChunk.html());
+      String string = content.toString();
+      setText(string);
       putClientProperty(KEY, enableCallback);
     }
   }

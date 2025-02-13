@@ -7,9 +7,11 @@ f:org.jetbrains.jewel.markdown.InlineMarkdown$Code
 - equals(java.lang.Object):Z
 - getContent():java.lang.String
 - hashCode():I
-org.jetbrains.jewel.markdown.InlineMarkdown$CustomNode
+org.jetbrains.jewel.markdown.InlineMarkdown$CustomDelimitedNode
 - org.jetbrains.jewel.markdown.InlineMarkdown
-- contentOrNull():java.lang.String
+- org.jetbrains.jewel.markdown.WithInlineMarkdown
+- getClosingDelimiter():java.lang.String
+- a:getOpeningDelimiter():java.lang.String
 f:org.jetbrains.jewel.markdown.InlineMarkdown$Emphasis
 - org.jetbrains.jewel.markdown.InlineMarkdown
 - org.jetbrains.jewel.markdown.WithInlineMarkdown
@@ -204,12 +206,12 @@ org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
 org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension
 - a:canRender(org.jetbrains.jewel.markdown.MarkdownBlock$CustomBlock):Z
 - a:render(org.jetbrains.jewel.markdown.MarkdownBlock$CustomBlock,org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer,org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0,androidx.compose.runtime.Composer,I):V
-org.jetbrains.jewel.markdown.extensions.MarkdownInlineProcessorExtension
-- a:canProcess(org.commonmark.node.CustomNode):Z
-- a:processInlineMarkdown(org.commonmark.node.CustomNode,org.jetbrains.jewel.markdown.processing.MarkdownProcessor):org.jetbrains.jewel.markdown.InlineMarkdown$CustomNode
-org.jetbrains.jewel.markdown.extensions.MarkdownInlineRendererExtension
-- a:canRender(org.jetbrains.jewel.markdown.InlineMarkdown$CustomNode):Z
-- a:render(org.jetbrains.jewel.markdown.InlineMarkdown$CustomNode,org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer,Z):V
+org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension
+- a:canProcess(org.commonmark.node.Delimited):Z
+- a:processDelimitedInline(org.commonmark.node.Delimited,org.jetbrains.jewel.markdown.processing.MarkdownProcessor):org.jetbrains.jewel.markdown.InlineMarkdown$CustomDelimitedNode
+org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineRendererExtension
+- a:canRender(org.jetbrains.jewel.markdown.InlineMarkdown$CustomDelimitedNode):Z
+- a:render(org.jetbrains.jewel.markdown.InlineMarkdown$CustomDelimitedNode,org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer,org.jetbrains.jewel.markdown.rendering.InlinesStyling,Z,kotlin.jvm.functions.Function1):androidx.compose.ui.text.AnnotatedString
 f:org.jetbrains.jewel.markdown.extensions.MarkdownKt
 - sf:getLocalMarkdownBlockRenderer():androidx.compose.runtime.ProvidableCompositionLocal
 - sf:getLocalMarkdownMode():androidx.compose.runtime.ProvidableCompositionLocal
@@ -221,12 +223,12 @@ f:org.jetbrains.jewel.markdown.extensions.MarkdownKt
 - sf:getMarkdownStyling(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
 - getBlockProcessorExtension():org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
-- getInlineProcessorExtension():org.jetbrains.jewel.markdown.extensions.MarkdownInlineProcessorExtension
+- getDelimitedInlineProcessorExtension():org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineProcessorExtension
 - getParserExtension():org.commonmark.parser.Parser$ParserExtension
 - getTextRendererExtension():org.commonmark.renderer.text.TextContentRenderer$TextContentRendererExtension
 org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 - getBlockRenderer():org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension
-- getInlineRenderer():org.jetbrains.jewel.markdown.extensions.MarkdownInlineRendererExtension
+- getDelimitedInlineRenderer():org.jetbrains.jewel.markdown.extensions.MarkdownDelimitedInlineRendererExtension
 f:org.jetbrains.jewel.markdown.processing.MarkdownParserFactory
 - sf:$stable:I
 - sf:INSTANCE:org.jetbrains.jewel.markdown.processing.MarkdownParserFactory
@@ -237,19 +239,22 @@ f:org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 - <init>():V
 - <init>(java.util.List,org.jetbrains.jewel.markdown.MarkdownMode,org.commonmark.parser.Parser):V
 - b:<init>(java.util.List,org.jetbrains.jewel.markdown.MarkdownMode,org.commonmark.parser.Parser,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getBlockExtensions():java.util.List
+- f:getDelimitedInlineExtensions():java.util.List
 - f:getExtensions():java.util.List
+- f:plus(org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension):org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 - f:processChildren(org.commonmark.node.Node):java.util.List
 - f:processMarkdownDocument(java.lang.String):java.util.List
+- f:withExtension(org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension):org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 f:org.jetbrains.jewel.markdown.processing.ProcessingUtilKt
-- sf:readInlineContent(org.commonmark.node.Node,org.jetbrains.jewel.markdown.processing.MarkdownProcessor):java.util.List
+- sf:readInlineMarkdown(org.commonmark.node.Node,org.jetbrains.jewel.markdown.processing.MarkdownProcessor):java.util.List
 - sf:toInlineMarkdownOrNull(org.commonmark.node.Node,org.jetbrains.jewel.markdown.processing.MarkdownProcessor):org.jetbrains.jewel.markdown.InlineMarkdown
 c:org.jetbrains.jewel.markdown.rendering.DefaultInlineMarkdownRenderer
 - org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer
 - sf:$stable:I
-- sf:Companion:org.jetbrains.jewel.markdown.rendering.DefaultInlineMarkdownRenderer$Companion
 - <init>(java.util.List):V
+- pf:getDelimitedNodeRendererExtensions():java.util.List
 - renderAsAnnotatedString(java.lang.Iterable,org.jetbrains.jewel.markdown.rendering.InlinesStyling,Z,kotlin.jvm.functions.Function1):androidx.compose.ui.text.AnnotatedString
-f:org.jetbrains.jewel.markdown.rendering.DefaultInlineMarkdownRenderer$Companion
 c:org.jetbrains.jewel.markdown.rendering.DefaultMarkdownBlockRenderer
 - org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 - sf:$stable:I
@@ -328,6 +333,7 @@ f:org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 - sf:$stable:I
 - sf:Companion:org.jetbrains.jewel.markdown.rendering.MarkdownStyling$Companion
 - equals(java.lang.Object):Z
+- f:getBaseInlinesStyling():org.jetbrains.jewel.markdown.rendering.InlinesStyling
 - f:getBlockQuote():org.jetbrains.jewel.markdown.rendering.MarkdownStyling$BlockQuote
 - f:getBlockVerticalSpacing-D9Ej5fM():F
 - f:getCode():org.jetbrains.jewel.markdown.rendering.MarkdownStyling$Code

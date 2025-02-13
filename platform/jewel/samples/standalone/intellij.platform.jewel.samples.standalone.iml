@@ -14,9 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.10/kotlin-compose-compiler-plugin-2.1.10.jar</arg>
-              </args>
+              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.1.10/kotlin-compose-compiler-plugin-2.1.10.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -138,5 +136,6 @@
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
     <orderEntry type="module" module-name="intellij.platform.jewel.samples.showcase" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmTables" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extension.gfmStrikethrough" />
   </component>
 </module>

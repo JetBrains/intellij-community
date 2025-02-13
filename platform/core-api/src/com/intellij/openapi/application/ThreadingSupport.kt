@@ -326,4 +326,7 @@ interface ThreadingSupport {
 
   @ApiStatus.Internal
   fun hasPermitAsContextElement(context: CoroutineContext): Boolean
+
+  @ApiStatus.Internal
+  fun isInTopmostReadAction(): Boolean
 }

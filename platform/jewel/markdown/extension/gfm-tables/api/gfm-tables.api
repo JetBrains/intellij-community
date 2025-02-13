@@ -57,7 +57,7 @@ public final class org/jetbrains/jewel/markdown/extensions/github/tables/GitHubT
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/markdown/extensions/github/tables/GitHubTableProcessorExtension;
 	public fun getBlockProcessorExtension ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownBlockProcessorExtension;
-	public fun getInlineProcessorExtension ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownInlineProcessorExtension;
+	public fun getDelimitedInlineProcessorExtension ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownDelimitedInlineProcessorExtension;
 	public fun getParserExtension ()Lorg/commonmark/parser/Parser$ParserExtension;
 	public fun getTextRendererExtension ()Lorg/commonmark/renderer/text/TextContentRenderer$TextContentRendererExtension;
 }
@@ -66,7 +66,7 @@ public final class org/jetbrains/jewel/markdown/extensions/github/tables/GitHubT
 	public static final field $stable I
 	public fun <init> (Lorg/jetbrains/jewel/markdown/extensions/github/tables/GfmTableStyling;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;)V
 	public fun getBlockRenderer ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownBlockRendererExtension;
-	public fun getInlineRenderer ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownInlineRendererExtension;
+	public fun getDelimitedInlineRenderer ()Lorg/jetbrains/jewel/markdown/extensions/MarkdownDelimitedInlineRendererExtension;
 }
 
 public final class org/jetbrains/jewel/markdown/extensions/github/tables/RowBackgroundStyle : java/lang/Enum {

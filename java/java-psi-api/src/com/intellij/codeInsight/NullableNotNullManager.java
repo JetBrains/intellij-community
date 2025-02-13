@@ -300,9 +300,6 @@ public abstract class NullableNotNullManager {
    */
   public @Nullable NullabilityAnnotationInfo findDefaultTypeUseNullability(@Nullable PsiElement context) {
     if (context == null) return null;
-    if (context.getParent() instanceof PsiTypeElement && context.getParent().getParent() instanceof PsiLocalVariable) {
-      return null;
-    }
     return findNullabilityDefault(context, PsiAnnotation.TargetType.TYPE_USE);
   }
 

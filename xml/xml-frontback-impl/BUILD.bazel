@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.xml.frontback.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "frontback-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "frontback-impl",
@@ -9,8 +15,11 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//platform/util",
+    "//platform/util:util-ui",
     "//xml/xml-parser:parser",
-  ]
+  ],
+  runtime_deps = [":frontback-impl_resources"]
 )
 ### auto-generated section `build intellij.xml.frontback.impl` end

@@ -3658,26 +3658,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         LOG.info("Skipping attempt to set color scheme without EditorColorsManager");
         return;
       }
-      final EditorColorsScheme globalScheme = colorsManager.getGlobalScheme();
-      EditorColorsScheme rawScheme = scheme;
-      boolean isGlobal = (rawScheme == globalScheme);
-      boolean isBounded = (rawScheme instanceof MyColorSchemeDelegate);
-      while (!isGlobal && !isBounded && rawScheme instanceof DelegateColorScheme) {
-        rawScheme = ((DelegateColorScheme)rawScheme).getDelegate();
-        if (rawScheme == globalScheme) isGlobal = true;
-        if (rawScheme instanceof MyColorSchemeDelegate) {
-          isBounded = true;
-        }
-      }
-      if (isGlobal && !isBounded) {
-        LOG.warn("Attempted to set unbounded global scheme to editor '%s' (presentationMode=%b)"
-                    .formatted(finalEditor, UISettings.getInstance().getPresentationMode()));
-        LOG.debug(ExceptionUtil.currentStackTrace());
-      }
-      if (rawScheme instanceof MyColorSchemeDelegate) {
-        myScheme = (MyColorSchemeDelegate)rawScheme;
+      if (scheme instanceof MyColorSchemeDelegate) {
+        myScheme = (MyColorSchemeDelegate)scheme;
       } else {
-        myScheme = new MyColorSchemeDelegate(rawScheme);
+        myScheme = new MyColorSchemeDelegate(scheme);
       }
       reinitSettings();
     });

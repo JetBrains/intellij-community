@@ -1,5 +1,6 @@
 // NEW_NAME: C
 // RENAME: member
+// SHOULD_FAIL_WITH: Class 'R' will be shadowed by class 'C'
 class Receiver{
     inner class <caret>R {}
 }

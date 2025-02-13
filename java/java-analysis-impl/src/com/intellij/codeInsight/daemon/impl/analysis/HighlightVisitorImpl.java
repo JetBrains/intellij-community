@@ -38,10 +38,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
@@ -64,9 +61,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private final @NotNull Consumer<? super HighlightInfo.Builder> myErrorSink = builder -> add(builder);
 
-  private final Set<PsiClass> myOverrideEquivalentMethodsVisitedClasses = new HashSet<>();
-  // stored "clashing signatures" errors for the method (if the key is a PsiModifierList of the method), or the class (if the key is a PsiModifierList of the class)
-  private final Map<PsiMember, HighlightInfo.Builder> myOverrideEquivalentMethodsErrors = new HashMap<>();
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
   protected HighlightVisitorImpl() {
@@ -130,8 +124,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myFile = null;
       myHolder = null;
       myCollector = null;
-      myOverrideEquivalentMethodsVisitedClasses.clear();
-      myOverrideEquivalentMethodsErrors.clear();
     }
 
     return true;
@@ -228,13 +220,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitClass(@NotNull PsiClass aClass) {
-    super.visitClass(aClass);
-    if (aClass instanceof PsiSyntheticClass) return;
-    if (!hasErrorResults()) GenericsHighlightUtil.checkTypeParameterOverrideEquivalentMethods(aClass, myLanguageLevel, myErrorSink, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
-  }
-
-  @Override
   public void visitIdentifier(@NotNull PsiIdentifier identifier) {
     PsiElement parent = identifier.getParent();
     if (parent instanceof PsiClass aClass) {
@@ -261,58 +246,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!hasErrorResults()) add(ModuleHighlightUtil.checkModuleReference(statement));
   }
 
-  @Override
-  public void visitModifierList(@NotNull PsiModifierList list) {
-    super.visitModifierList(list);
-    PsiElement parent = list.getParent();
-    if (parent instanceof PsiMethod method) {
-      PsiClass aClass = method.getContainingClass();
-      if (!hasErrorResults() && aClass != null) {
-        GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(aClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
-        myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(method));
-      }
-    }
-    else if (parent instanceof PsiClass aClass) {
-      if (!hasErrorResults()) {
-        GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(aClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
-        myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(aClass));
-      }
-    }
-  }
-
-  private JavaResolveResult doVisitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
-    JavaResolveResult result = resolveOptimised(ref, myFile);
-    if (result == null) return null;
-
-    PsiElement resolved = result.getElement();
-    PsiElement parent = ref.getParent();
-
-    add(HighlightUtil.checkReference(ref, result));
-
-    if (parent instanceof PsiAnonymousClass psiAnonymousClass && ref.equals(psiAnonymousClass.getBaseClassReference())) {
-      GenericsHighlightUtil.computeOverrideEquivalentMethodErrors(psiAnonymousClass, myOverrideEquivalentMethodsVisitedClasses, myOverrideEquivalentMethodsErrors);
-      myErrorSink.accept(myOverrideEquivalentMethodsErrors.get(psiAnonymousClass));
-    }
-
-    if (parent instanceof PsiNewExpression newExpression &&
-        !(resolved instanceof PsiClass) &&
-        resolved instanceof PsiNamedElement namedElement &&
-        newExpression.getClassOrAnonymousClassReference() == ref) {
-      String text = JavaErrorBundle.message("cannot.resolve.symbol", namedElement.getName());
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(text);
-      if (HighlightUtil.isCallToStaticMember(newExpression)) {
-        var action = new RemoveNewKeywordFix(newExpression);
-        info.registerFix(action, null, null, null, null);
-      }
-      add(info);
-    }
-
-    if (!hasErrorResults()) {
-      add(HighlightUtil.checkPackageAndClassConflict(ref, myFile));
-    }
-    return result;
-  }
-
   static @Nullable JavaResolveResult resolveOptimised(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {
     try {
       if (ref instanceof PsiReferenceExpressionImpl) {
@@ -327,36 +260,18 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
-  private JavaResolveResult @Nullable [] resolveOptimised(@NotNull PsiReferenceExpression expression) {
-    try {
-      if (expression instanceof PsiReferenceExpressionImpl) {
-        PsiReferenceExpressionImpl.OurGenericsResolver resolver = PsiReferenceExpressionImpl.OurGenericsResolver.INSTANCE;
-        return JavaResolveUtil.resolveWithContainingFile(expression, resolver, true, true, myFile);
-      }
-      else {
-        return expression.multiResolve(true);
-      }
-    }
-    catch (IndexNotReadyException e) {
-      return null;
-    }
-  }
-
   @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-    doVisitReferenceElement(expression);
+    JavaResolveResult result = resolveOptimised(expression, myFile);
+    if (result != null) {
+      add(HighlightUtil.checkReference(expression, result));
+    }
 
     if (!hasErrorResults()) {
       visitElement(expression);
       if (hasErrorResults()) return;
     }
 
-    JavaResolveResult[] results = resolveOptimised(expression);
-    if (results == null) return;
-    JavaResolveResult result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
-
-    PsiElement resolved = result.getElement();
-    if (!hasErrorResults()) add(HighlightUtil.checkClassReferenceAfterQualifier(expression, resolved));
     PsiExpression qualifierExpression = expression.getQualifierExpression();
     if (!hasErrorResults() && myJavaModule == null && qualifierExpression != null) {
       add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));
@@ -446,7 +361,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
     super.visitReferenceElement(ref);
     if (!(ref instanceof PsiExpression)) {
-      doVisitReferenceElement(ref);
+      JavaResolveResult result = resolveOptimised(ref, myFile);
+      if (result != null) {
+        add(HighlightUtil.checkReference(ref, result));
+      }
     }
   }
 

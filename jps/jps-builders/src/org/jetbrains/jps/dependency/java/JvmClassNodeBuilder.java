@@ -494,6 +494,9 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     if (myIsGenerated) {
       flags = flags.deriveIsGenerated();
     }
+    if (myIsLibraryMode) {
+      flags = flags.deriveIsLibrary();
+    }
 
     if (myIsModule) {
       if (!myIsLibraryMode) {
@@ -522,9 +525,6 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
           addUsage(usage);
         }
       }
-    }
-    else {
-      flags = flags.deriveIsLibrary();
     }
 
     var fields = myIsLibraryMode? Iterators.filter(myFields, f -> !f.isPrivate()) : myFields;

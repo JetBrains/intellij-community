@@ -6,10 +6,16 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.lang.impl.modcommand.ModCommandActionWrapper
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModChooseAction
+import com.intellij.modcommand.ModCommandWithContext
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.FileType
@@ -21,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
@@ -28,6 +35,7 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.intentions.computeOnBackground
 import org.jetbrains.kotlin.idea.quickfix.utils.findInspectionFile
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
@@ -365,7 +373,31 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
                     TestCase.fail("Action '$text' is available (but must not) in test $testFilePath")
                 }
 
-                CodeInsightTestFixtureImpl.invokeIntention(action, psiFile, editor)
+
+                val unwrap = IntentionActionDelegate.unwrap(action)
+                if (unwrap is ModCommandActionWrapper) {
+                    val modCommandAction = unwrap.asModCommandAction()
+                    val actionContext = ActionContext.from(editor, psiFile)
+                    val project = psiFile.project
+                    project.computeOnBackground {
+                        runReadAction {
+                            val modCommand = modCommandAction.perform(actionContext)
+                            if (modCommand is ModChooseAction) {
+                                val firstAvailableChoose = modCommand.actions.firstOrNull { it.getPresentation(actionContext) != null }
+                                firstAvailableChoose?.perform(actionContext)
+                            } else {
+                                modCommand
+                            }
+                        }
+                    }?.let { command ->
+                        val commandWithContext = ModCommandWithContext(actionContext, command)
+                        runInEdtAndWait {
+                            commandWithContext.executeInteractively(editor)
+                        }
+                    }
+                } else {
+                    CodeInsightTestFixtureImpl.invokeIntention(action, psiFile, editor)
+                }
 
                 if (!shouldBeAvailableAfterExecution) {
                     val afterAction = pattern.findActionByPattern(getAvailableActions(), acceptMatchByFamilyName = true)

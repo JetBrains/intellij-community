@@ -29,6 +29,7 @@ import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor
 import com.intellij.util.textCompletion.TextCompletionProviderBase
 import com.intellij.util.textCompletion.TextFieldWithCompletion
+import com.intellij.util.ui.JBUI
 import git4idea.GitBranchesUsageCollector.branchDialogRepositoryManuallySelected
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
@@ -108,7 +109,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
                                                   /*oneLineMode*/ true,
                                                   /*autoPopup*/ true,
                                                   /*forceAutoPopup*/ false,
-                                                  /*showHint*/ false)
+                                                  /*showHint*/ false).apply { minimumSize = JBUI.size(332, 0) }
     row(GitBundle.message("new.branch.dialog.branch.name")) {
       cell(branchNameField)
         .bind({ c -> c.text }, { c, v -> c.text = v }, ::branchName.toMutableProperty())

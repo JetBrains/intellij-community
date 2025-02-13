@@ -26,6 +26,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.lang.Runnable
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.time.Duration.Companion.seconds
 
@@ -444,6 +445,57 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
   private class MyTestService {
     init {
       assertTrue { application.isReadAccessAllowed }
+    }
+  }
+
+  @Suppress("ForbiddenInSuspectContextMethod")
+  @Test
+  fun `RA and WA are mutually exclusive inside modal progress`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val writeCoroutineStarted = Job()
+    val writeActionCanStart = Job()
+
+    val inWaCounter = AtomicBoolean(false)
+
+    writeIntentReadAction {
+      runWithModalProgressBlocking {
+        launch(Dispatchers.EDT) {
+          writeCoroutineStarted.complete()
+          writeActionCanStart.join()
+          writeAction {
+            inWaCounter.set(true)
+          }
+        }
+        ReadAction.nonBlocking<Unit> {
+          writeCoroutineStarted.asCompletableFuture().join()
+          writeActionCanStart.complete()
+          Thread.sleep(100)
+          assertFalse(inWaCounter.get())
+        }.executeSynchronously()
+      }
+    }
+  }
+
+  @Test
+  fun `read access is not allowed by default within modal progress`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    writeIntentReadAction {
+      runWithModalProgressBlocking {
+        assertFalse(ApplicationManager.getApplication().isReadAccessAllowed)
+        readAction {
+          assertTrue(ApplicationManager.getApplication().isReadAccessAllowed)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `write intent read access is not allowed by default within modal progress`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    writeIntentReadAction {
+      runWithModalProgressBlocking {
+        assertFalse(ApplicationManager.getApplication().isWriteIntentLockAcquired)
+        withContext(Dispatchers.EDT) {
+          assertTrue(ApplicationManager.getApplication().isWriteIntentLockAcquired)
+        }
+      }
     }
   }
 }

@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.max
+import org.jetbrains.jewel.foundation.modifier.thenIf
 
 /**
  * A simple table that sizes columns to take as much room as they need. If the horizontal space available is less than
@@ -34,7 +35,7 @@ import kotlin.math.max
  * @param rowCount The number of rows this table has.
  * @param columnCount The number of columns this table has.
  * @param cellBorderColor The color of the cell borders. Set to [Color.Unspecified] to avoid drawing the borders — in
- *   which case, the [cellBorderWidth] acts as padding.
+ *   which case, the [cellBorderWidth] acts as a padding.
  * @param modifier Modifier to apply to the table.
  * @param cellBorderWidth The width of the table's borders.
  * @param rows The rows that make up the table. Each row is a list of composables, one per row cell.
@@ -214,7 +215,3 @@ private fun Modifier.drawTableBorders(
         )
     }
 }
-
-// TODO remove this once thenIf is moved to foundation
-private inline fun Modifier.thenIf(precondition: Boolean, action: Modifier.() -> Modifier): Modifier =
-    if (precondition) action() else this

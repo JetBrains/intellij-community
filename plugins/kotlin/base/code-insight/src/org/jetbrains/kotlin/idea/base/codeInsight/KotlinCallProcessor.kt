@@ -166,6 +166,9 @@ object KotlinCallProcessor {
         override val signature: C get() = withValidityAssertion { backingSignature }
         override val dispatchReceiver: KaReceiverValue? get() = withValidityAssertion { null }
         override val extensionReceiver: KaReceiverValue? get() = withValidityAssertion { null }
+
+        @KaExperimentalApi
+        override val contextArguments: List<KaReceiverValue> get() = withValidityAssertion { emptyList() }
         override val token: KaLifetimeToken get() = backingSignature.token
     }
 

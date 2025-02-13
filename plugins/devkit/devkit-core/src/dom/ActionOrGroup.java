@@ -5,6 +5,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupReferencingConverter;
 
 import java.util.List;
@@ -12,6 +13,25 @@ import java.util.function.Function;
 
 public interface ActionOrGroup extends DomElement {
 
+  /**
+   * @return possibly fallback ID if {@link #getId()} is not specified
+   * @see #getEffectiveIdAttribute()
+   */
+  @Nullable
+  default String getEffectiveId() {
+    return getId().getStringValue();
+  }
+
+  /**
+   * @return underlying attribute for {@link #getEffectiveId()}, used for navigation purposes
+   */
+  default GenericAttributeValue<?> getEffectiveIdAttribute() {
+    return getId();
+  }
+
+  /**
+   * @see #getEffectiveId()
+   */
   @NotNull
   @NameValue
   @Stubbed
@@ -96,12 +116,12 @@ public interface ActionOrGroup extends DomElement {
     }
 
     public String getMessageKey(ActionOrGroup actionOrGroup) {
-      return getMessageKeyPrefix(actionOrGroup) + actionOrGroup.getId().getStringValue() +
+      return getMessageKeyPrefix(actionOrGroup) + actionOrGroup.getEffectiveId() +
              myPropertyKeySuffix;
     }
 
     public String getMessageKey(ActionOrGroup actionOrGroup, @NotNull OverrideText overrideText) {
-      return getMessageKeyPrefix(actionOrGroup) + actionOrGroup.getId().getStringValue() +
+      return getMessageKeyPrefix(actionOrGroup) + actionOrGroup.getEffectiveId() +
              "." + overrideText.getPlace().getStringValue() +
              myPropertyKeySuffix;
     }

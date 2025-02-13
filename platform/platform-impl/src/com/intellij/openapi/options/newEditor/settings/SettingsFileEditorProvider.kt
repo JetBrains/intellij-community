@@ -26,6 +26,9 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.tabs.impl.TabLabel
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
+import java.awt.event.KeyEvent
+import javax.swing.KeyStroke
+
 
 @ApiStatus.Internal
 class SettingsFileEditorProvider : FileEditorProvider, FileStatusProvider, EditorTabTitleProvider, DumbAware {
@@ -41,19 +44,14 @@ class SettingsFileEditorProvider : FileEditorProvider, FileStatusProvider, Edito
     val settingsFile = file as SettingsVirtualFile
     val dialog = settingsFile.getOrCreateDialog()
     val tree = (dialog.editor as? SettingsEditor)?.treeView?.tree
-    installCloseGotItHookIfNecessary(project, dialog.disposable)
+    installCloseGotItHookIfNecessary(project, settingsFile, dialog.disposable)
     return SettingsFileEditor(settingsFile, dialog.rootPane, tree, dialog.disposable)
   }
 
-  private fun installCloseGotItHookIfNecessary(project: Project, parentDisposable: Disposable) {
+  private fun installCloseGotItHookIfNecessary(project: Project, settingsFile: SettingsVirtualFile, parentDisposable: Disposable) {
     val gotItTooltip = GotItTooltip("close.non.modal.settings",
                    UIBundle.message("settings.tab.close.gotit.text"),
                    parentDisposable = parentDisposable).withTimeout()
-    if (!gotItTooltip.canShow()) {
-      Disposer.dispose(gotItTooltip)
-      return
-    }
-    Disposer.register(gotItTooltip) { gotItTooltip.gotIt() }
     val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
     val curWin = fileEditorManager.currentWindow ?: return
     val currentTabLabelComponent: TabLabel = curWin.tabbedPane.editorTabs.selectedLabel ?: return
@@ -63,7 +61,7 @@ class SettingsFileEditorProvider : FileEditorProvider, FileStatusProvider, Edito
         action
       }
       else {
-        GotItAwareCloseTab(action, currentTabLabelComponent, gotItTooltip)
+        GotItAwareCloseTab(action, currentTabLabelComponent, gotItTooltip, settingsFile)
       }
     } ?: return
     val updatedGroup = DefaultActionGroup(children)
@@ -110,9 +108,14 @@ class SettingsFileEditorProvider : FileEditorProvider, FileStatusProvider, Edito
     private val closeTabAction: CloseTab,
     private val currentTabLabelComponent: TabLabel,
     private val gotItTooltip: GotItTooltip,
+    private val settingsFile: SettingsVirtualFile,
   ) : AnAction(), DumbAware {
+    private var clicked = false
     init {
       copyFrom(closeTabAction)
+      val shortcut: Shortcut = KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false), null)
+      shortcutSet = CustomShortcutSet(shortcut)
+      registerCustomShortcutSet(shortcutSet, settingsFile.getOrCreateDialog().editor)
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread {
@@ -124,9 +127,13 @@ class SettingsFileEditorProvider : FileEditorProvider, FileStatusProvider, Edito
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      if (!gotItTooltip.canShow()) {
+      if (!gotItTooltip.canShow() || clicked || !settingsFile.isModified()) {
+        if (clicked) {
+          gotItTooltip.gotIt()
+        }
         return closeTabAction.actionPerformed(e)
       }
+      clicked = true
       gotItTooltip
         .withHeader(UIBundle.message("settings.tab.close.gotit.header"))
         .withPosition(Balloon.Position.below)
@@ -134,7 +141,6 @@ class SettingsFileEditorProvider : FileEditorProvider, FileStatusProvider, Edito
           val dimension = component.size
           Point(dimension.width - 16, dimension.height - 12)
         }
-      gotItTooltip.gotIt()
     }
 
   }

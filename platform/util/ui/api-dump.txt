@@ -541,6 +541,7 @@ f:com.intellij.icons.AllIcons$General
 - sf:LinkDropTriangle:javax.swing.Icon
 - sf:LocalizationSettings:javax.swing.Icon
 - sf:Locate:javax.swing.Icon
+- sf:Menu:javax.swing.Icon
 - sf:Modified:javax.swing.Icon
 - sf:ModifiedSelected:javax.swing.Icon
 - sf:MoreTabs:javax.swing.Icon
@@ -978,6 +979,7 @@ f:com.intellij.icons.AllIcons$Nodes
 - sf:Undeploy:javax.swing.Icon
 - sf:Unknown:javax.swing.Icon
 - sf:UnknownJdk:javax.swing.Icon
+- sf:UnloadedProject:javax.swing.Icon
 - sf:UpFolder:javax.swing.Icon
 - sf:UpLevel:javax.swing.Icon
 - sf:Variable:javax.swing.Icon

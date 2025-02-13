@@ -247,15 +247,19 @@ public final class DfaPsiUtil {
     if (type == null || type instanceof PsiPrimitiveType) return null;
 
     Ref<NullabilityAnnotationInfo> result = Ref.create(null);
+    boolean local = type instanceof PsiClassType classType &&
+                    classType.getPsiContext() instanceof PsiJavaCodeReferenceElement ref &&
+                    ref.getParent() instanceof PsiTypeElement typeElement &&
+                    typeElement.getParent() instanceof PsiLocalVariable;
     InheritanceUtil.processSuperTypes(type, true, eachType -> {
-      result.set(getTypeOwnNullability(eachType));
+      result.set(getTypeOwnNullability(eachType, local));
       return result.get() == null &&
              (!(type instanceof PsiClassType) || PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter);
     });
     return result.get();
   }
 
-  private static @Nullable NullabilityAnnotationInfo getTypeOwnNullability(PsiType eachType) {
+  private static @Nullable NullabilityAnnotationInfo getTypeOwnNullability(@NotNull PsiType eachType, boolean local) {
     for (PsiAnnotation annotation : eachType.getAnnotations()) {
       String qualifiedName = annotation.getQualifiedName();
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());
@@ -266,8 +270,8 @@ public final class DfaPsiUtil {
         return new NullabilityAnnotationInfo(annotation, nullability, false);
       }
     }
-    if (eachType instanceof PsiClassType) {
-      PsiElement context = ((PsiClassType)eachType).getPsiContext();
+    if (eachType instanceof PsiClassType classType && !local) {
+      PsiElement context = classType.getPsiContext();
       if (context != null) {
         return NullableNotNullManager.getInstance(context.getProject()).findDefaultTypeUseNullability(context);
       }

@@ -12,6 +12,7 @@ import com.intellij.openapi.application.isLockStoredInContext
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.progress.*
 import com.intellij.platform.util.progress.internalCreateRawHandleFromContextStepIfExistsAndFresh
 import com.intellij.platform.util.progress.reportRawProgress
@@ -469,14 +470,14 @@ private fun assertBackgroundThreadAndNoWriteAction() {
   }
 
   val app = ApplicationManager.getApplication()
-  if (!app.isDispatchThread || app.isUnitTestMode) {
+  if (!app.isDispatchThread || (app.isUnitTestMode && !Registry.`is`("ide.run.blocking.cancellable.assert.in.tests", false))) {
     return // OK
   }
 
-  if (app.isWriteAccessAllowed) {
+  if (app.isWriteAccessAllowed && !app.isTopmostReadAccessAllowed) {
     LOG.error(IllegalStateException(
-      "This method is forbidden in write-action because it implies that a long-running action is being executed in a non-cancellable region." +
-      "This can introduce UI freezes."
+      "'runBlockingCancellable' is forbidden in the Write Action because it may start a long-running computation. This can cause UI freezes.\n" +
+      "Consider running this 'runBlockingCancellable' under a read action outside your Write Action'"
     ))
     return
   }

@@ -67,6 +67,7 @@ fun KaScope.findSiblingsByName(
 
 context(KaSession)
 fun filterCandidates(symbol: KaDeclarationSymbol, candidateSymbol: KaDeclarationSymbol): Boolean {
+    if (symbol == candidateSymbol) return false
     if (candidateSymbol is KaFunctionSymbol) {
         val skipCandidate = when (symbol) {
             is KaFunctionSymbol -> !areSameSignatures(candidateSymbol, symbol)

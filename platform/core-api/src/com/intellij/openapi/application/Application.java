@@ -701,4 +701,13 @@ public interface Application extends ComponentManager {
   default boolean hasLockStateInContext(CoroutineContext context) {
     return false;
   }
+
+  /**
+   * TODO: IJPL-177760 We need to revoke read access from a runnable properly
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Obsolete
+  default boolean isTopmostReadAccessAllowed() {
+    return isReadAccessAllowed();
+  }
 }

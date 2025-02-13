@@ -12,7 +12,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.intellij.lang.annotations.Language
 import java.awt.Point
-import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -51,19 +50,15 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
     ignoreUnknownKeys = true
   }
 
-  fun getYOffset(): Double {
-    return callJs("window.pageYOffset.toString()").toDouble()
-  }
-
   fun findElement(@Language("XPath") xpath: String, wait: Duration = 5.seconds): DomElement {
     return waitForOne("Find element by '$xpath' in the embedded browser($component)", wait,
-            getter = { findElements(xpath) } )
+                      getter = { findElements(xpath) })
   }
 
   fun findElements(@Language("xpath") xpath: String): List<DomElement> {
     val response = callJs("""window.elementFinder.findElements("${xpath.escapeXpath()}")""")
     return json.decodeFromString<ElementDataList>("""{ "elements": $response}""").elements.map {
-      DomElement(this, it)
+      DomElement(this, it, json)
     }
   }
 
@@ -86,15 +81,12 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
   fun exist(@Language("XPath") xpath: String): Boolean = findElements(xpath).isNotEmpty()
 
   fun scrollTo(@Language("XPath") xpath: String) {
-    val result = callJs("""window.elementFinder.scrollByXpath("${xpath.escapeXpath()}")""")
-    if (result != "success") {
-      throw IllegalStateException("Failed to scroll to the element[$xpath]")
-    }
+    callJs("""window.elementFinder.scrollByXpath("${xpath.escapeXpath()}")""")
   }
 
   fun hasDocument(): Boolean = jcefWorker.hasDocument()
 
-  fun getUrl(): String =  jcefWorker.getUrl()
+  fun getUrl(): String = jcefWorker.getUrl()
 
   fun getHtml(): String {
     return callJs("""document.documentElement.outerHTML""")
@@ -118,13 +110,47 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
   }
 
   @Serializable
-  data class Location(val x: Double, val y: Double, val width: Double, val height: Double)
+  data class DomRectangle(val x: Double, val y: Double, val width: Double, val height: Double, val top: Double, val bottom: Double)
 
   @Serializable
-  data class ElementData(val tag: String, val html: String, val location: Location, val xpath: String)
+  data class ElementData(val tag: String, val html: String, val xpath: String)
+
+  class DomElement(val browser: JCefUI, val elementData: ElementData, private val decoder: Json) {
+
+    fun click() {
+      check(isVisible()) { "Element '${elementData.xpath}' is not visible" }
+      val elementCenter = getBounds().let { Point((it.x + it.width / 2).toInt(), (it.y + it.height / 2).toInt()) }
+      browser.click(elementCenter)
+    }
+
+    fun scrollAndClick() {
+      scroll()
+      click()
+    }
+
+    fun scroll() {
+      browser.scrollTo(elementData.xpath)
+    }
+
+    fun isVisible(): Boolean {
+      val bounds = getBounds()
+      val innerHeight = browser.callJs("window.innerHeight").toInt()
+      return bounds.top >= 0 && bounds.bottom <= innerHeight
+    }
+
+    fun getBounds(): DomRectangle {
+      return decoder.decodeFromString<DomRectangle>(
+        browser.callJs("""JSON.stringify(window.elementFinder.findElement("${elementData.xpath}").getBoundingClientRect())""")
+      )
+    }
+
+    override fun toString(): String {
+      return elementData.html
+    }
+  }
 
   @Serializable
-  data class ElementDataList(val elements: List<ElementData>)
+  private data class ElementDataList(val elements: List<ElementData>)
 
   companion object {
     /**
@@ -137,7 +163,6 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
     function Element(element) {
       this.tag = element.tagName
       this.html = element.outerHTML
-      this.location = element.getBoundingClientRect()
       this.xpath = '/' + window.elementFinder.getPathTo(element).toLowerCase()
     };
     
@@ -148,7 +173,6 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
     window.elementFinder.scrollByXpath = (xpath) => {
       const element = window.elementFinder.findElement(xpath)
       element.scrollIntoView()
-      return "success"
     };
     
     window.elementFinder.findElements = (xpath) => {
@@ -187,50 +211,4 @@ private interface JcefComponentWrapper {
   fun callJs(@Language("JavaScript") js: String, executeTimeoutMs: Long): String
   fun hasDocument(): Boolean
   fun getUrl(): String
-}
-
-
-class DomElement(val browser: JCefUI, private var elementData: JCefUI.ElementData) {
-  private val x
-    get() = elementData.location.x.roundToInt()
-
-  private val y
-    get() = elementData.location.y.roundToInt()
-
-  private val width
-    get() = elementData.location.width.roundToInt()
-
-  private val height
-    get() = elementData.location.height.roundToInt()
-
-  private val centerX
-    get() = x + width / 2
-
-  private val centerY
-    get() = y + height / 2
-
-  private val xpath
-    get() = elementData.xpath
-
-  val html
-    get() = elementData.html
-
-  fun clickAtCenter() {
-    scroll()
-    browser.click(Point(centerX, centerY))
-  }
-
-  fun click() {
-    scroll()
-    browser.click(Point(x + height / 2, centerY))
-  }
-
-  fun scroll() {
-    browser.scrollTo(xpath)
-    elementData = browser.findElement(xpath).elementData
-  }
-
-  override fun toString(): String {
-    return elementData.html
-  }
 }

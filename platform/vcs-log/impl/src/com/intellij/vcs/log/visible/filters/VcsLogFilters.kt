@@ -24,7 +24,7 @@ import java.util.regex.PatternSyntaxException
 object VcsLogFilterObject {
   private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters")
 
-  const val ME = "*"
+  const val ME: String = "*"
 
   @JvmStatic
   fun fromPattern(text: String, isRegexpAllowed: Boolean = false, isMatchCase: Boolean = false): VcsLogTextFilter {
@@ -32,7 +32,7 @@ object VcsLogFilterObject {
       try {
         return VcsLogRegexTextFilter(Pattern.compile(text, if (isMatchCase) 0 else Pattern.CASE_INSENSITIVE))
       }
-      catch (ignored: PatternSyntaxException) {
+      catch (_: PatternSyntaxException) {
       }
     }
     return VcsLogTextFilterImpl(text, isMatchCase)
@@ -217,7 +217,7 @@ object VcsLogFilterObject {
   }
 
   @JvmField
-  val EMPTY_COLLECTION = collection()
+  val EMPTY_COLLECTION: VcsLogFilterCollection = collection()
 }
 
 fun VcsLogFilterCollection.with(filter: VcsLogFilter?): VcsLogFilterCollection {
@@ -243,7 +243,7 @@ fun <T : VcsLogFilter> VcsLogFilterCollection.without(filterClass: Class<T>): Vc
   return without { filterClass.isInstance(it) }
 }
 
-val VcsLogFilterCollection.keysToSet get() = this.filters.mapTo(mutableSetOf()) { it.key }
+val VcsLogFilterCollection.keysToSet: Set<FilterKey<*>> get() = this.filters.mapTo(mutableSetOf()) { it.key }
 
 fun VcsLogFilterCollection.matches(vararg filterKey: FilterKey<*>): Boolean = matches(filterKey.toSet())
 
@@ -301,11 +301,5 @@ internal object HashSeparatorCharFilter : CharFilter {
   }
 
   @JvmStatic
-  fun invert(): CharFilter {
-    return object : CharFilter {
-      override fun accept(ch: Char): Boolean {
-        return !HashSeparatorCharFilter.accept(ch)
-      }
-    }
-  }
+  fun invert(): CharFilter = CharFilter { ch -> !accept(ch) }
 }

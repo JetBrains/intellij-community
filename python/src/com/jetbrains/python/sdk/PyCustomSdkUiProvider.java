@@ -6,12 +6,14 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public abstract class PyCustomSdkUiProvider {
   public static final ExtensionPointName<PyCustomSdkUiProvider> EP_NAME =
     ExtensionPointName.create("Pythonid.pyCustomSdkUiProvider");

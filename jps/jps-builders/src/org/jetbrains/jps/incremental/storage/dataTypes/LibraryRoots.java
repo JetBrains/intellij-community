@@ -56,17 +56,17 @@ public class LibraryRoots implements StorageOwner {
   /**
    * @return true, if root data has been changed after the update, otherwise false
    */
-  public synchronized boolean update(Path root, String libName, long stamp) {
-    RootData update = RootData.create(libName, stamp);
+  public synchronized boolean update(Path root, String namespace, long stamp) {
+    RootData update = RootData.create(namespace, stamp);
     boolean changed = !update.equals(getLibraryRoots().put(root, update));
     myChanged |= changed;
     return changed;
   }
 
   @Nullable
-  public synchronized String getLibraryName(Path root) {
+  public synchronized String getNamespace(Path root) {
     RootData rootData = getLibraryRoots().get(root);
-    return rootData != null? rootData.libName : null;
+    return rootData != null? rootData.namespace : null;
   }
 
   @Override
@@ -129,7 +129,7 @@ public class LibraryRoots implements StorageOwner {
         }
         else {
           Files.createDirectories(myFile.getParent());
-          Files.write(myFile, Iterators.map(roots.entrySet(), entry -> String.join(TIMESTAMP_DELIMITER, Long.toString(entry.getValue().stamp), entry.getValue().libName, myRelativizer.toRelative(entry.getKey()))), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+          Files.write(myFile, Iterators.map(roots.entrySet(), entry -> String.join(TIMESTAMP_DELIMITER, Long.toString(entry.getValue().stamp), entry.getValue().namespace, myRelativizer.toRelative(entry.getKey()))), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         }
       }
     }
@@ -154,11 +154,11 @@ public class LibraryRoots implements StorageOwner {
 
   private static final class RootData {
     @NotNull
-    final String libName;
+    final String namespace;
     final long stamp;
 
-    private RootData(@NotNull String libName, long stamp) {
-      this.libName = libName;
+    private RootData(@NotNull String namespace, long stamp) {
+      this.namespace = namespace;
       this.stamp = stamp;
     }
 
@@ -173,12 +173,12 @@ public class LibraryRoots implements StorageOwner {
       }
 
       final RootData rootData = (RootData)o;
-      return stamp == rootData.stamp && libName.equals(rootData.libName);
+      return stamp == rootData.stamp && namespace.equals(rootData.namespace);
     }
 
     @Override
     public int hashCode() {
-      int result = libName.hashCode();
+      int result = namespace.hashCode();
       result = 31 * result + Long.hashCode(stamp);
       return result;
     }

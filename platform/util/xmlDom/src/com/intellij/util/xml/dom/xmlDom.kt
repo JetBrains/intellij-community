@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlDomReader")
 @file:Suppress("ReplacePutWithAssignment")
 @file:Internal
@@ -79,10 +79,7 @@ fun readXmlAsModel(reader: XMLStreamReader2, rootName: String?, interner: XmlInt
         val name = interner.name(reader.localName)
         val attributes = readAttributes(reader, interner = interner)
         if (reader.isEmptyElement) {
-          current.children.add(XmlElement(name = name,
-                                          attributes = attributes,
-                                          children = Collections.emptyList(),
-                                          content = null))
+          current.children.add(XmlElement(name = name, attributes = attributes, children = Collections.emptyList(), content = null))
           reader.skipElement()
           continue
         }
@@ -183,6 +180,6 @@ private fun nextTag(reader: XMLStreamReader2): Int {
       }
       XMLStreamConstants.START_ELEMENT, XMLStreamConstants.END_ELEMENT -> return next
     }
-    throw WFCException("Received event " + ErrorConsts.tokenTypeDesc(next) + ", instead of START_ELEMENT or END_ELEMENT.", reader.location)
+    throw WFCException("Received event ${ErrorConsts.tokenTypeDesc(next)}, instead of START_ELEMENT or END_ELEMENT.", reader.location)
   }
 }

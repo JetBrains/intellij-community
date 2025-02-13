@@ -1,5 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProjectStructureUtils")
+@file:OptIn(UnsafeCastFunction::class)
+
 package org.jetbrains.kotlin.idea.base.util
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
@@ -35,6 +37,7 @@ import org.jetbrains.kotlin.config.ALL_KOTLIN_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 val KOTLIN_FILE_EXTENSIONS: Set<String> = setOf("kt", "kts")

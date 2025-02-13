@@ -45,6 +45,7 @@ jvm_library(
     "//libraries/compose-foundation-desktop",
     "//platform/jewel/samples/showcase:jewel-samples-showcase",
     "//platform/jewel/markdown/extension/gfm-tables:jewel-markdown-extension-gfmTables",
+    "//platform/jewel/markdown/extension/gfm-strikethrough:jewel-markdown-extension-gfmStrikethrough",
   ],
   runtime_deps = [
     ":jewel-samples-standalone_resources",
