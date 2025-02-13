@@ -65,7 +65,8 @@ internal class NonIncrementalKotlinBuilder(
       outFileOrDirPath = "",
       args = bazelConfigurationHolder.args,
       baseDir = bazelConfigurationHolder.classPathRootDir,
-      sources = bazelConfigurationHolder.sources,
+      allSources = bazelConfigurationHolder.sources,
+      changedKotlinSources = null,
       classPath = bazelConfigurationHolder.classPath.asList(),
     )
 

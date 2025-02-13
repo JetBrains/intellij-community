@@ -184,15 +184,15 @@ private fun configureKotlinCompiler(
   }
 
   kotlinArgs.classpath = classPathFiles.joinToString(separator = File.pathSeparator, transform = { it.toString() })
-  kotlinArgs.javaSourceRoots = run {
-    val result = ArrayList<String>()
-    for (file in sources) {
-      if (file.toString().endsWith(".java")) {
-        result.add(file.toString())
-      }
-    }
-    result.toTypedArray()
-  }
+  //kotlinArgs.javaSourceRoots = run {
+  //  val result = ArrayList<String>()
+  //  for (file in sources) {
+  //    if (file.toString().endsWith(".java")) {
+  //      result.add(file.toString())
+  //    }
+  //  }
+  //  result.toTypedArray()
+  //}
   kotlinArgs.freeArgs = sources.map { it.toString() }
 
   module.container.setChild(JpsKotlinFacetModuleExtension.KIND, JpsKotlinFacetModuleExtension(kotlinFacetSettings))

@@ -22,8 +22,6 @@ import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.BuildRootDescriptor
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.DirtyFilesHolder
-import org.jetbrains.jps.builders.FileProcessor
-import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException
@@ -38,7 +36,6 @@ import org.jetbrains.jps.incremental.ProjectBuildException
 import org.jetbrains.jps.incremental.RebuildRequestedException
 import org.jetbrains.jps.incremental.StopBuildException
 import org.jetbrains.jps.incremental.Utils
-import org.jetbrains.jps.incremental.fs.BuildFSState
 import org.jetbrains.jps.incremental.fs.BuildFSState.CURRENT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.fs.BuildFSState.NEXT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.fs.CompilationRound
@@ -378,38 +375,6 @@ internal class JpsTargetBuilder(
   private fun storeBuilderStatistics(builder: Builder, elapsedTime: Long, processedFiles: Int) {
     builderToDuration.computeIfAbsent(builder) { AtomicLong() }.addAndGet(elapsedTime)
     numberOfSourcesProcessedByBuilder.computeIfAbsent(builder) { AtomicInteger() }.addAndGet(processedFiles)
-  }
-}
-
-internal class BazelDirtyFileHolder(
-  @JvmField val context: CompileContext,
-  @JvmField val fsState: BuildFSState,
-  private val target: BazelModuleBuildTarget
-) : DirtyFilesHolderBase<JavaSourceRootDescriptor, ModuleBuildTarget>(context) {
-  override fun processDirtyFiles(processor: FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>) {
-    fsState.processFilesToRecompile(context, target, processor)
-  }
-
-  inline fun processFilesToRecompile(processor: (Path) -> Boolean): Boolean {
-    val scope = context.scope
-    val delta = fsState.getEffectiveFilesDelta(context, target)
-    delta.lockData()
-    try {
-      for (entry in delta.sourceMapToRecompile.entries) {
-        for (file in entry.value) {
-          if (!scope.isAffected(target, file)) {
-            continue
-          }
-          if (!processor(file)) {
-            return false
-          }
-        }
-      }
-      return true
-    }
-    finally {
-      delta.unlockData()
-    }
   }
 }
 

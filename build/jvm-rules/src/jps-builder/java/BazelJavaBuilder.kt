@@ -461,8 +461,7 @@ private class DiagnosticSink(
     }
   }
 
-  override fun report(diagnostic: Diagnostic<out JavaFileObject>) {
-    val kind = when (diagnostic.kind) {
+  override fun report(diagnostic: Diagnostic<out JavaFileObject>) { val kind = when (diagnostic.kind) {
       Diagnostic.Kind.ERROR -> {
         myErrorCount.incrementAndGet()
         BuildMessage.Kind.ERROR

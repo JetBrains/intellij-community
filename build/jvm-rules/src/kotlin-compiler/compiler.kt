@@ -98,7 +98,9 @@ fun configureModule(
   outFileOrDirPath: String,
   args: ArgMap<JvmBuilderFlags>,
   baseDir: Path,
-  sources: List<Path>,
+  allSources: List<Path>,
+  // if incremental compilation
+  changedKotlinSources: Sequence<String>?,
   classPath: List<Path>
 ) {
   var isJava9Module = false
@@ -113,7 +115,7 @@ fun configureModule(
   }
 
   val moduleInfoNameSuffix = File.separatorChar + MODULE_INFO_FILE
-  for (source in sources) {
+  for (source in allSources) {
     val path = source.toString()
     if (path.endsWith(".java")) {
       module.addJavaSourceRoot(JavaRootPath(path, null))
@@ -122,7 +124,15 @@ fun configureModule(
         isJava9Module = path.endsWith(moduleInfoNameSuffix)
       }
     }
-    else {
+    else if (changedKotlinSources == null) {
+      module.addSourceFiles(path)
+      config.addKotlinSourceRoot(path = path, isCommon = false, hmppModuleName = null)
+    }
+  }
+
+  if (changedKotlinSources != null) {
+    for (path in changedKotlinSources) {
+      require(!path.endsWith(".java"))
       module.addSourceFiles(path)
       config.addKotlinSourceRoot(path = path, isCommon = false, hmppModuleName = null)
     }

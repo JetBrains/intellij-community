@@ -64,7 +64,8 @@ internal suspend fun compileKotlinForJvm(
     outFileOrDirPath = outFilePath,
     args = args,
     baseDir = baseDir,
-    sources = sources,
+    allSources = sources,
+    changedKotlinSources = null,
     classPath = classPath,
   )
 

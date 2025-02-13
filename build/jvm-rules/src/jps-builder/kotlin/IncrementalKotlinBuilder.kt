@@ -8,7 +8,12 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.jps.OutputSink
-import org.jetbrains.bazel.jvm.jps.impl.*
+import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
+import org.jetbrains.bazel.jvm.jps.impl.BazelDirtyFileHolder
+import org.jetbrains.bazel.jvm.jps.impl.BazelKotlinFsOperationsHelper
+import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
+import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
+import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuilder
 import org.jetbrains.bazel.jvm.kotlin.configureModule
 import org.jetbrains.bazel.jvm.kotlin.createJvmPipeline
 import org.jetbrains.bazel.jvm.kotlin.executeJvmPipeline
@@ -20,7 +25,12 @@ import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.JavaBuilderUtil.registerFilesToCompile
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
-import org.jetbrains.jps.incremental.*
+import org.jetbrains.jps.incremental.BuilderCategory
+import org.jetbrains.jps.incremental.CompileContext
+import org.jetbrains.jps.incremental.ModuleBuildTarget
+import org.jetbrains.jps.incremental.ModuleLevelBuilder
+import org.jetbrains.jps.incremental.RebuildRequestedException
+import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.kotlin.build.GeneratedFile
 import org.jetbrains.kotlin.build.GeneratedJvmClass
@@ -29,12 +39,36 @@ import org.jetbrains.kotlin.build.report.ICReporter.ReportSeverity
 import org.jetbrains.kotlin.build.report.ICReporterBase
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
-import org.jetbrains.kotlin.compilerRunner.*
+import org.jetbrains.kotlin.compilerRunner.CompilerRunnerUtil
+import org.jetbrains.kotlin.compilerRunner.DummyKotlinPaths
+import org.jetbrains.kotlin.compilerRunner.JpsCompilerEnvironment
+import org.jetbrains.kotlin.compilerRunner.OutputItemsCollectorImpl
+import org.jetbrains.kotlin.compilerRunner.ProgressReporterImpl
+import org.jetbrains.kotlin.compilerRunner.toGeneratedFile
 import org.jetbrains.kotlin.config.Services
-import org.jetbrains.kotlin.incremental.*
-import org.jetbrains.kotlin.incremental.components.*
-import org.jetbrains.kotlin.jps.build.*
+import org.jetbrains.kotlin.incremental.ChangesCollector
+import org.jetbrains.kotlin.incremental.EnumWhenTrackerImpl
+import org.jetbrains.kotlin.incremental.ExpectActualTrackerImpl
+import org.jetbrains.kotlin.incremental.ImportTrackerImpl
+import org.jetbrains.kotlin.incremental.IncrementalCacheCommon
+import org.jetbrains.kotlin.incremental.IncrementalCompilationComponentsImpl
+import org.jetbrains.kotlin.incremental.IncrementalJvmCache
+import org.jetbrains.kotlin.incremental.InlineConstTrackerImpl
+import org.jetbrains.kotlin.incremental.LookupTrackerImpl
+import org.jetbrains.kotlin.incremental.components.EnumWhenTracker
+import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
+import org.jetbrains.kotlin.incremental.components.ImportTracker
+import org.jetbrains.kotlin.incremental.components.InlineConstTracker
+import org.jetbrains.kotlin.incremental.components.LookupTracker
+import org.jetbrains.kotlin.incremental.getChangedAndImpactedSymbols
+import org.jetbrains.kotlin.incremental.mapClassesFqNamesToFiles
+import org.jetbrains.kotlin.incremental.mapLookupSymbolsToFiles
+import org.jetbrains.kotlin.jps.build.KotlinChunk
+import org.jetbrains.kotlin.jps.build.KotlinCompileContext
+import org.jetbrains.kotlin.jps.build.KotlinDirtySourceFilesHolder
 import org.jetbrains.kotlin.jps.build.KotlinDirtySourceFilesHolder.TargetFiles
+import org.jetbrains.kotlin.jps.build.kotlin
+import org.jetbrains.kotlin.jps.build.testingContext
 import org.jetbrains.kotlin.jps.incremental.CacheStatus
 import org.jetbrains.kotlin.jps.incremental.JpsIncrementalCache
 import org.jetbrains.kotlin.jps.incremental.JpsLookupStorageManager
@@ -105,8 +139,10 @@ internal class IncrementalKotlinBuilder(
     val incrementalCaches = kotlinChunk.loadCaches(loadDependent = false)
 
     val messageCollector = MessageCollectorAdapter(context, span, representativeTarget)
+    val outputItemCollector = OutputItemsCollectorImpl()
     val environment = createCompileEnvironment(
       context = kotlinContext.jpsContext,
+      outputItemCollector = outputItemCollector,
       kotlinModuleBuilderTarget = representativeTarget,
       incrementalCaches = incrementalCaches,
       lookupTracker = LookupTracker.DO_NOTHING,
@@ -115,7 +151,7 @@ internal class IncrementalKotlinBuilder(
       enumWhenTracker = EnumWhenTracker.DoNothing,
       importTracker = ImportTracker.DoNothing,
       chunk = chunk,
-      messageCollector = messageCollector
+      messageCollector = messageCollector,
     ) ?: return
 
     val removedClasses = HashSet<String>()
@@ -230,26 +266,24 @@ internal class IncrementalKotlinBuilder(
 
     val project = context.projectDescriptor.project
     val lookupTracker = LookupTrackerImpl(project.testingContext?.lookupTracker ?: LookupTracker.DO_NOTHING)
-    val exceptActualTracker = ExpectActualTrackerImpl()
-    val incrementalCaches = kotlinChunk.loadCaches(loadDependent = false)
-    val inlineConstTracker = InlineConstTrackerImpl()
-    val enumWhenTracker = EnumWhenTrackerImpl()
-    val importTracker = ImportTrackerImpl()
+    val incrementalCaches = kotlinChunk.loadCaches()
 
+    val outputItemCollector = OutputItemsCollectorImpl()
     val environment = createCompileEnvironment(
       context = context,
+      outputItemCollector = outputItemCollector,
       kotlinModuleBuilderTarget = representativeTarget,
       incrementalCaches = incrementalCaches,
       lookupTracker = lookupTracker,
-      exceptActualTracer = exceptActualTracker,
-      inlineConstTracker = inlineConstTracker,
-      enumWhenTracker = enumWhenTracker,
-      importTracker = importTracker,
+      exceptActualTracer = ExpectActualTrackerImpl(),
+      inlineConstTracker = InlineConstTrackerImpl(),
+      enumWhenTracker = EnumWhenTrackerImpl(),
+      importTracker = ImportTrackerImpl(),
       chunk = chunk,
       messageCollector = messageCollector
     ) ?: return ModuleLevelBuilder.ExitCode.ABORT
 
-    val outputItemCollector = doCompileModuleChunk(
+    val doneSomething = doCompileModuleChunk(
       chunk = kotlinChunk,
       representativeTarget = representativeTarget,
       context = context,
@@ -261,7 +295,7 @@ internal class IncrementalKotlinBuilder(
       outputConsumer = outputConsumer,
     )
 
-    if (outputItemCollector == null) {
+    if (!doneSomething) {
       return ModuleLevelBuilder.ExitCode.NOTHING_DONE
     }
 
@@ -274,7 +308,7 @@ internal class IncrementalKotlinBuilder(
       JavaBuilderUtil.registerSuccessfullyCompiled(context, dirtyByTarget.dirty.keys.toList())
     }
 
-    val generatedFiles = environment.outputItemsCollector.outputs
+    val generatedFiles = outputItemCollector.outputs
       .sortedBy { it.outputFile }
       .groupBy(keySelector = { chunk.representativeTarget() }, valueTransform = { it.toGeneratedFile(MetadataVersion.INSTANCE) })
 
@@ -353,7 +387,7 @@ internal class IncrementalKotlinBuilder(
     incrementalCaches: Map<KotlinModuleBuildTarget<*>, JpsIncrementalCache>,
     messageCollector: MessageCollectorAdapter,
     outputConsumer: OutputConsumer,
-  ): OutputItemsCollector? {
+  ): Boolean {
     val target = chunk.targets.single() as KotlinJvmModuleBuildTarget
     target.nextRound(context)
 
@@ -377,17 +411,17 @@ internal class IncrementalKotlinBuilder(
     }
 
     require(chunk.representativeTarget == representativeTarget)
-    val filesSet = if (targetDirtyFiles == null) emptySet() else targetDirtyFiles.dirty.keys
-    val sources = targetDirtyFiles?.dirty?.values ?: emptyList()
+    val filesSet = targetDirtyFiles?.dirty?.keys ?: emptySet()
+    val changedSources = targetDirtyFiles?.dirty?.values ?: emptyList()
     val removedFiles = targetDirtyFiles?.removed ?: emptyList()
-    if (sources.isEmpty() && removedFiles.isEmpty()) {
+    if (changedSources.isEmpty() && removedFiles.isEmpty()) {
       span.addEvent("not compiling, because no files affected")
-      return null
+      return false
     }
 
     if (span.isRecording) {
       span.addEvent("compiling", Attributes.of(
-        AttributeKey.stringArrayKey("files"), sources.map { it.file.path },
+        AttributeKey.stringArrayKey("files"), changedSources.map { it.file.path },
         AttributeKey.longKey("fileCount"), filesSet.size.toLong(),
         AttributeKey.longKey("removedFileCount"), removedFiles.size.toLong(),
       ))
@@ -406,7 +440,8 @@ internal class IncrementalKotlinBuilder(
       outFileOrDirPath = "",
       args = bazelConfigurationHolder.args,
       baseDir = bazelConfigurationHolder.classPathRootDir,
-      sources = sources.map { it.file.toPath() },
+      allSources = bazelConfigurationHolder.sources,
+      changedKotlinSources = changedSources.asSequence().map { it.file.path },
       classPath = bazelConfigurationHolder.classPath.asList(),
     )
 
@@ -419,7 +454,7 @@ internal class IncrementalKotlinBuilder(
     if (org.jetbrains.kotlin.cli.common.ExitCode.INTERNAL_ERROR == exitCode) {
       messageCollector.report(CompilerMessageSeverity.ERROR, "Compiler terminated with internal error")
     }
-    return environment.outputItemsCollector
+    return true
   }
 
   private fun createCompileEnvironment(
@@ -432,7 +467,8 @@ internal class IncrementalKotlinBuilder(
     enumWhenTracker: EnumWhenTracker,
     importTracker: ImportTracker,
     chunk: ModuleChunk,
-    messageCollector: MessageCollectorAdapter
+    messageCollector: MessageCollectorAdapter,
+    outputItemCollector: OutputItemsCollectorImpl
   ): JpsCompilerEnvironment? {
     val builder = Services.Builder()
     builder.register(LookupTracker::class.java, implementation = lookupTracker)
@@ -457,7 +493,7 @@ internal class IncrementalKotlinBuilder(
       services = builder.build(),
       classesToLoadByParent = classesToLoadByParent,
       messageCollector = messageCollector,
-      outputItemsCollector = OutputItemsCollectorImpl(),
+      outputItemsCollector = outputItemCollector,
       progressReporter = ProgressReporterImpl(context, chunk)
     )
   }
@@ -490,8 +526,11 @@ internal class IncrementalKotlinBuilder(
       val multifileClasses = generated.filter { it.outputClass.classHeader.kind == KotlinClassHeader.Kind.MULTIFILE_CLASS }
       val expectedAllParts = multifileClasses.flatMap { cache.getAllPartsOfMultifileFacade(it.outputClass.className).orEmpty() }
       if (multifileClasses.isEmpty()) continue
-      val actualParts = generated.filter { it.outputClass.classHeader.kind == KotlinClassHeader.Kind.MULTIFILE_CLASS_PART }
+      val actualParts = generated
+        .asSequence()
+        .filter { it.outputClass.classHeader.kind == KotlinClassHeader.Kind.MULTIFILE_CLASS_PART }
         .map { it.outputClass.className.toString() }
+        .toList()
       if (!actualParts.containsAll(expectedAllParts)) {
         fsOperations.markFiles(
           expectedAllParts.asSequence().flatMap { cache.sourcesByInternalName(it) }.map { it.toPath() }
