@@ -55,6 +55,9 @@ internal class TerminalSessionController(
 
   private suspend fun handleEvent(event: TerminalOutputEvent) {
     when (event) {
+      is TerminalInitialStateEvent -> {
+        TODO()
+      }
       is TerminalContentUpdatedEvent -> {
         updateOutputModel { model ->
           val styles = event.styles.map { it.toStyleRange() }

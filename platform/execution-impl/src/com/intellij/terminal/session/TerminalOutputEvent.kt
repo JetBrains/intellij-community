@@ -2,6 +2,8 @@
 package com.intellij.terminal.session
 
 import com.intellij.terminal.session.dto.StyleRangeDto
+import com.intellij.terminal.session.dto.TerminalBlocksModelStateDto
+import com.intellij.terminal.session.dto.TerminalOutputModelStateDto
 import com.intellij.terminal.session.dto.TerminalStateDto
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -36,6 +38,15 @@ data object TerminalBeepEvent : TerminalOutputEvent
 @ApiStatus.Internal
 @Serializable
 data object TerminalSessionTerminatedEvent : TerminalOutputEvent
+
+@ApiStatus.Internal
+@Serializable
+data class TerminalInitialStateEvent(
+  val sessionState: TerminalStateDto,
+  val outputModelState: TerminalOutputModelStateDto,
+  val alternateBufferState: TerminalOutputModelStateDto,
+  val blocksModelState: TerminalBlocksModelStateDto,
+) : TerminalOutputEvent
 
 // Shell Integration Events
 
