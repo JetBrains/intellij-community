@@ -21,12 +21,16 @@ import org.jetbrains.annotations.Nullable;
  * @see PyRecursiveTypeVisitor
  * @see PyCloningTypeVisitor
  * @see PyType#acceptTypeVisitor(PyTypeVisitor)
- * @see #visitPyType(PyType, PyTypeVisitor) 
+ * @see #visit(PyType, PyTypeVisitor) 
  * @see #visitUnknownType()
  */
 @ApiStatus.Experimental
 public abstract class PyTypeVisitor<T> {
-  public static <T> T visitPyType(@Nullable PyType type, @NotNull PyTypeVisitor<T> visitor) {
+  /**
+   * Use this method instead of {@link PyType#acceptTypeVisitor(PyTypeVisitor)} to take into account
+   * "unknown" {@code null} types, for which {@link #visitUnknownType()} should be called.
+   */
+  public static <T> T visit(@Nullable PyType type, @NotNull PyTypeVisitor<T> visitor) {
     return type == null ? visitor.visitUnknownType() : type.acceptTypeVisitor(visitor);
   }
 

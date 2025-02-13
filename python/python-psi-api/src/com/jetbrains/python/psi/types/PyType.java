@@ -75,7 +75,7 @@ public interface PyType {
   void assertValid(String message);
 
   /**
-   * For nullable {@code PyType} instance use {@link PyTypeVisitor#visitPyType(PyType, PyTypeVisitor)}
+   * For nullable {@code PyType} instance use {@link PyTypeVisitor#visit(PyType, PyTypeVisitor)}
    * to visit {@code null} values with {@link PyTypeVisitor#visitUnknownType()}.
    */
   @ApiStatus.Experimental

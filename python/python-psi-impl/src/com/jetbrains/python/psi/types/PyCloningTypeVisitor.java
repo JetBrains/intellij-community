@@ -55,7 +55,7 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
     }
     try {
       //noinspection unchecked
-      return (T)visitPyType(type, this);
+      return (T)visit(type, this);
     }
     finally {
       cloning.remove(type);

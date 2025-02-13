@@ -48,13 +48,13 @@ public final class PyRecursiveTypeVisitor extends PyTypeVisitorExt<PyRecursiveTy
       return Traversal.CONTINUE;
     }
     try {
-      Traversal next = visitPyType(type, myTraverser);
+      Traversal next = visit(type, myTraverser);
       if (next == Traversal.TERMINATE) {
         return Traversal.TERMINATE;
       }
       if (next != Traversal.PRUNE) {
-        for (@Nullable PyType childType : visitPyType(type, myComponentsStrategy)) {
-          if (visitPyType(childType, this) == Traversal.TERMINATE) {
+        for (@Nullable PyType childType : visit(type, myComponentsStrategy)) {
+          if (visit(childType, this) == Traversal.TERMINATE) {
             return Traversal.TERMINATE;
           }
         }
@@ -112,7 +112,7 @@ public final class PyRecursiveTypeVisitor extends PyTypeVisitorExt<PyRecursiveTy
   }
 
   public static void traverse(@Nullable PyType type, @NotNull TypeEvalContext context, @NotNull PyTypeTraverser delegate) {
-    visitPyType(type, new PyRecursiveTypeVisitor(delegate, context));
+    visit(type, new PyRecursiveTypeVisitor(delegate, context));
   }
 
   /**
