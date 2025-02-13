@@ -51,6 +51,7 @@ fun <A : RemoteApi<*>> FleetClient.proxy(remoteApiDescriptor: RemoteApiDescripto
 fun fleetClient(
   clientId: ClientId,
   transportFactory: FleetTransportFactory,
+  abortOnError: Boolean,
   delayStrategy: DelayStrategy = Exponential,
   requestInterceptor: RpcInterceptor = RpcInterceptor,
 ): Resource<FleetClient> =
@@ -58,7 +59,7 @@ fun fleetClient(
     val stats = MutableStateFlow(TransportStats())
     connectionLoop<IRpcClient>(delayStrategy) { c ->
       transportFactory.connect(stats) { transport ->
-        rpcClient(transport, clientId.uid, requestInterceptor) { rpcClient ->
+        rpcClient(transport, clientId.uid, requestInterceptor, abortOnError) { rpcClient ->
           c(rpcClient)
         }
       }
@@ -77,11 +78,12 @@ fun fleetClient(
 suspend fun withFleetClient(
   clientId: ClientId,
   transportFactory: FleetTransportFactory,
+  abortOnError: Boolean,
   delayStrategy: DelayStrategy = Exponential,
   requestInterceptor: RpcInterceptor = RpcInterceptor,
   body: suspend CoroutineScope.(FleetClient) -> Unit,
 ) {
-  fleetClient(clientId, transportFactory, delayStrategy, requestInterceptor).use { fleetClient ->
+  fleetClient(clientId, transportFactory, abortOnError, delayStrategy, requestInterceptor).use { fleetClient ->
     withContext(fleetClient) {
       body(fleetClient)
     }

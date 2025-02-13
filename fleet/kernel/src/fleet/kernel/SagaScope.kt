@@ -28,6 +28,9 @@ object FailFastMarker : CoroutineContext.Element, CoroutineContext.Key<FailFastM
   override val key: CoroutineContext.Key<*> get() = this
 }
 
+val CoroutineContext.shouldFailFast: Boolean
+  get() = this[FailFastMarker] != null
+
 data class SagaScopeEntity(override val eid: EID) : Entity {
   companion object : EntityType<SagaScopeEntity>(SagaScopeEntity::class, ::SagaScopeEntity) {
     val logger = logger<SagaScopeEntity>()

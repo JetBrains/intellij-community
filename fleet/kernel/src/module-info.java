@@ -7,7 +7,6 @@ module fleet.kernel {
   requires transitive fleet.util.core;
   requires transitive fleet.rpc;
   requires kotlinx.coroutines.core;
-  requires fleet.preferences;
   requires fleet.reporting.api;
   requires fleet.reporting.shared;
   requires fleet.multiplatform.shims;

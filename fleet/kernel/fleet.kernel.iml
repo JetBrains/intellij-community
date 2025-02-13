@@ -41,7 +41,6 @@
     <orderEntry type="module" module-name="fleet.util.core" exported="" />
     <orderEntry type="module" module-name="fleet.rpc" exported="" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
-    <orderEntry type="module" module-name="fleet.preferences" />
     <orderEntry type="module" module-name="fleet.reporting.api" />
     <orderEntry type="module" module-name="fleet.reporting.shared" />
     <orderEntry type="module" module-name="fleet.multiplatform.shims" />

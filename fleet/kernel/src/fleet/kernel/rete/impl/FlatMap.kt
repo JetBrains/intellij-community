@@ -6,8 +6,6 @@ import com.jetbrains.rhizomedb.Q
 import com.jetbrains.rhizomedb.ReadTrackingContext
 import com.jetbrains.rhizomedb.withReadTrackingContext
 import fleet.kernel.rete.*
-import fleet.preferences.FleetFromSourcesPaths
-import fleet.preferences.isFleetTestMode
 import fleet.util.logging.logger
 import fleet.fastutil.longs.LongOpenHashSet
 import fleet.fastutil.longs.LongSet
@@ -16,9 +14,7 @@ private object FlatMap {
   val logger = logger<FlatMap>()
 }
 
-private val assertionsEnabled = FleetFromSourcesPaths.isRunningFromSources || isFleetTestMode
-
-internal fun <T, U> SubscriptionScope.flatMap(producer: Producer<T>, f: (Match<T>) -> Set<U>): Producer<U> {
+internal fun <T, U> QueryScope.flatMap(producer: Producer<T>, f: (Match<T>) -> Set<U>): Producer<U> {
   data class MatchInfo(
     val matches: AdaptiveMap<U, Match<U>>,
     val subscription: Subscription,
@@ -40,7 +36,7 @@ internal fun <T, U> SubscriptionScope.flatMap(producer: Producer<T>, f: (Match<T
       }
       true -> {
         val (us, patterns) = trackReads { f(input) }
-        if (assertionsEnabled) {
+        if (shouldFailFast) {
           val us2 = f(input)
           val funIsPure = us.size == us2.size && us.all { it in us2 }
           //          check(funIsPure) {

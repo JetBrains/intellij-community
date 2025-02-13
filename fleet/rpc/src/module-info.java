@@ -8,7 +8,6 @@ module fleet.rpc {
   requires kotlinx.coroutines.core;
   requires java.net.http;
   requires org.jetbrains.annotations;
-  requires fleet.preferences;
   requires fleet.reporting.api;
   requires fleet.reporting.shared;
   requires fleet.multiplatform.shims;

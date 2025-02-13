@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 
 fun RequestDispatcher.directRpcClient(
   interceptor: RpcInterceptor,
+  abortOnError: Boolean,
 ): Resource<IRpcClient> =
   resource { cc ->
     val (dispatcherSend, clientReceive) = channels<TransportMessage>(Channel.BUFFERED)
@@ -30,7 +31,8 @@ fun RequestDispatcher.directRpcClient(
     }.use {
       rpcClient(transport = Transport(outgoing = clientSend, incoming = clientReceive),
                 origin = origin,
-                requestInterceptor = interceptor) { rpcClient ->
+                requestInterceptor = interceptor,
+                abortOnError = abortOnError) { rpcClient ->
         cc(rpcClient)
       }
     }
@@ -38,9 +40,10 @@ fun RequestDispatcher.directRpcClient(
 
 suspend fun RequestDispatcher.withDirectRpcClient(
   interceptor: RpcInterceptor,
+  abortOnError: Boolean,
   body: suspend CoroutineScope.(IRpcClient) -> Unit,
 ) {
-  directRpcClient(interceptor)
+  directRpcClient(interceptor, abortOnError)
     .async()
     .use { rpcClientDeferred ->
       body(promisingRpcClient(rpcClientDeferred))

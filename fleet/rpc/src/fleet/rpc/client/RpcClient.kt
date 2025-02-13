@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.rpc.client
 
-import fleet.preferences.isFleetTestMode
 import fleet.rpc.RemoteApiDescriptor
 import fleet.rpc.RemoteKind
 import fleet.rpc.client.proxy.*
@@ -43,6 +42,7 @@ suspend fun <T> rpcClient(
   transport: Transport<TransportMessage>,
   origin: UID,
   requestInterceptor: RpcInterceptor = RpcInterceptor,
+  abortOnError: Boolean,
   body: suspend CoroutineScope.(RpcClient) -> T,
 ): T =
   newSingleThreadContext("rpc-client-$origin").use { executor ->
@@ -51,7 +51,7 @@ suspend fun <T> rpcClient(
                              transport = transport,
                              origin = origin,
                              requestInterceptor = requestInterceptor)
-      launch(start = CoroutineStart.ATOMIC, context = executor) { client.work() }
+      launch(start = CoroutineStart.ATOMIC, context = executor) { client.work(abortOnError) }
         .use {
           body(client)
         }
@@ -137,7 +137,7 @@ class RpcClient internal constructor(
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  internal suspend fun work() {
+  internal suspend fun work(abortOnError: Boolean) {
     supervisorScope {
       val receiver = async(start = CoroutineStart.ATOMIC) {
         consumeAll(transport.incoming, eventLoopChannel) {
@@ -187,7 +187,7 @@ class RpcClient internal constructor(
             }
             catch (t: Throwable) {
               logger.error(t) { "Exception during processing incoming message" }
-              if (isFleetTestMode) {
+              if (abortOnError) {
                 throw AssertionError("Exception during processing incoming message", t)
               }
             }

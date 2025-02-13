@@ -58,6 +58,7 @@ annotation class ReteDsl
 @ReteDsl
 interface QueryScope : SubscriptionScope {
   fun <T> Query<T>.producer(): Producer<T>
+  val shouldFailFast: Boolean
 }
 
 /**

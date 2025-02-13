@@ -289,6 +289,8 @@ internal class ReteNetworkImpl(
             }
         }
       }
+
+      override val shouldFailFast: Boolean = failWhenPropagationFailed
     }
 
   override fun <T> observeQuery(
