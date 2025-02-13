@@ -309,6 +309,9 @@ interface ThreadingSupport {
   @ApiStatus.Internal
   fun setLockAcquisitionListener(listener: LockAcquisitionListener)
 
+  @ApiStatus.Internal
+  fun setSuspendingWriteActionListener(listener: SuspendingWriteActionListener)
+
   /**
    * Removes a [LockAcquisitionListener].
    *

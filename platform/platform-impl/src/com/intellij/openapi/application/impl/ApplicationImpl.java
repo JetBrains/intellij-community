@@ -77,7 +77,8 @@ import static com.intellij.util.concurrency.Propagation.isContextAwareComputatio
 
 @ApiStatus.Internal
 public final class ApplicationImpl extends ClientAwareComponentManager
-  implements ApplicationEx, ReadActionListener, WriteActionListener, WriteIntentReadActionListener, LockAcquisitionListener {
+  implements ApplicationEx, ReadActionListener, WriteActionListener, WriteIntentReadActionListener, LockAcquisitionListener,
+             SuspendingWriteActionListener {
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(ApplicationImpl.class);
   }
@@ -95,6 +96,9 @@ public final class ApplicationImpl extends ClientAwareComponentManager
 
   private final EventDispatcher<LockAcquisitionListener> myLockAcquisitionListenerDispatcher =
     EventDispatcher.create(LockAcquisitionListener.class);
+
+  private final EventDispatcher<SuspendingWriteActionListener> mySuspendingWriteActionListenerEventDispatcher =
+    EventDispatcher.create(SuspendingWriteActionListener.class);
 
   private final boolean myTestModeFlag;
   private final boolean myHeadlessMode;
@@ -1190,6 +1194,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager
     getThreadingSupport().setWriteActionListener(app);
     getThreadingSupport().setWriteIntentReadActionListener(app);
     getThreadingSupport().setLockAcquisitionListener(app);
+    getThreadingSupport().setSuspendingWriteActionListener(app);
 
     app.addApplicationListener(new ApplicationListener() {
       @Override
@@ -1279,6 +1284,16 @@ public final class ApplicationImpl extends ClientAwareComponentManager
   @Override
   public void afterWriteIntentReadActionFinished(@NotNull Class<?> action) {
     myWriteIntentReadActionListenerDispatcher.getMulticaster().afterWriteIntentReadActionFinished(action);
+  }
+
+  @Override
+  public void beforeWriteLockReacquired() {
+    mySuspendingWriteActionListenerEventDispatcher.getMulticaster().beforeWriteLockReacquired();
+  }
+
+  @Override
+  public void addSuspendingWriteActionListener(@NotNull SuspendingWriteActionListener listener, @NotNull Disposable parentDisposable) {
+    mySuspendingWriteActionListenerEventDispatcher.addListener(listener, parentDisposable);
   }
 
   @Override

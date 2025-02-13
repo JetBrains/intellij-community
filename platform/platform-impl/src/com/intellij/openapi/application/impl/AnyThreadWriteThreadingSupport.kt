@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.internal.runSuspend
@@ -121,6 +120,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   private var myWriteActionListener: WriteActionListener? = null
   private var myWriteIntentActionListener: WriteIntentReadActionListener? = null
   private var myLockAcquisitionListener: LockAcquisitionListener? = null
+  private var mySuspendingWriteActionListener: SuspendingWriteActionListener? = null
 
   private val myWriteActionsStack = Stack<Class<*>>()
   private var myWriteStackBase = 0
@@ -618,6 +618,13 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   }
 
   @ApiStatus.Internal
+  override fun setSuspendingWriteActionListener(listener: SuspendingWriteActionListener) {
+    if (mySuspendingWriteActionListener != null)
+      error("WriteActionListener already registered")
+    mySuspendingWriteActionListener = listener
+  }
+
+  @ApiStatus.Internal
   override fun removeLockAcquisitionListener(listener: LockAcquisitionListener) {
     if (myLockAcquisitionListener != listener)
       error("WriteActionListener is not registered")
@@ -756,7 +763,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       runWithTemporaryThreadLocal(ts) { action() }
     }
     finally {
-      ProgressIndicatorUtils.cancelActionsToBeCancelledBeforeWrite()
+      mySuspendingWriteActionListener?.beforeWriteLockReacquired()
       ts.acquire(getWritePermit(ts))
       myWriteAcquired = Thread.currentThread()
       myWriteStackBase = prevBase
