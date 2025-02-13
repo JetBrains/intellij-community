@@ -282,9 +282,9 @@ function multipleFailureReasonEdgeCase(sankeyData) {
 
   for (let i = 0; i < sankeyData.length; i++) {
     if (sankeyData[i].from === "Multiple Failure Reasons") {
-      sankeyData[i].to = "Hard Filters"
+      sankeyData[i].to = "Proposal Filter"
     }
-    else if (sankeyData[i].to === "Hard Filters") {
+    else if (sankeyData[i].to === "Proposal Filter") {
       sankeyData[i].flow -= MultipleFailureReasonsFlow
     }
     if (sankeyData[i].to === "Multiple Failure Reasons") {
@@ -293,6 +293,10 @@ function multipleFailureReasonEdgeCase(sankeyData) {
     }
     if (sankeyData[i].to === "unaccounted for proposals") {
       sankeyData[i].flow += 2 * MultipleFailureReasonsFlow
+      if (sankeyData[i].flow === 0) {
+        sankeyData.splice(i, 1)
+        i--
+      }
     }
   }
 }
@@ -337,5 +341,5 @@ function getColorTo(name) {
 
 document.addEventListener("DOMContentLoaded", () => {
   redrawSankeyChart()
-  redrawCharts()
+  //redrawCharts() // control the drawing of regular (reports comparison) charts
 })
