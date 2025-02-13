@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.codePointAt
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
@@ -211,7 +212,7 @@ internal class TerminalCursorPainter private constructor(
       highlighter.setCustomRenderer { _, _, g ->
         val offset = highlighter.startOffset
         val point = editor.offsetToPoint2D(offset)
-        val text = editor.document.text
+        val text = editor.document.immutableCharSequence
         val codePoint = if (offset in text.indices) text.codePointAt(offset) else 'W'.code
         val cursorWidth = (editor as EditorImpl).view.getCodePointWidth(codePoint)
         val cursorHeight = editor.lineHeight
