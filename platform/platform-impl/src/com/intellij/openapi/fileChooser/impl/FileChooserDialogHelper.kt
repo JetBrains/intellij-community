@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl
 
 import com.intellij.core.CoreFileTypeRegistry
@@ -6,7 +6,6 @@ import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.command.CommandProcessorEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -81,9 +80,8 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
   }
 
   fun showNativeDialog(fileDialog: FileDialog) {
-    val commandProcessor = if (ApplicationManager.getApplication() != null) CommandProcessorEx.getInstance() as CommandProcessorEx else null
-    if (commandProcessor != null) {
-      commandProcessor.enterModal()
+    val app = ApplicationManager.getApplication()
+    if (app != null) {
       LaterInvocator.enterModal(fileDialog)
     }
     val previousFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
@@ -91,8 +89,7 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
       fileDialog.isVisible = true
     }
     finally {
-      if (commandProcessor != null) {
-        commandProcessor.leaveModal()
+      if (app != null) {
         LaterInvocator.leaveModal(fileDialog)
         if (previousFocusOwner != null) {
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { previousFocusOwner.requestFocus() }
