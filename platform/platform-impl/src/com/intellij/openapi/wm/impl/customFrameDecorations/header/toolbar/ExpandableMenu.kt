@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.RootPaneUtil
 import com.intellij.platform.ide.menu.IdeJMenuBar
+import com.intellij.ui.SideBorder
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
@@ -25,6 +26,7 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 import javax.swing.event.ChangeListener
 
+
 private const val ALPHA = (255 * 0.6).toInt()
 
 internal class ExpandableMenu(
@@ -37,7 +39,7 @@ internal class ExpandableMenu(
   private val ideMenuHelper = IdeMenuHelper(menu = ideMenu, coroutineScope = null)
   private var expandedMenuBar: JPanel? = null
   private var headerColorfulPanel: HeaderColorfulPanel? = null
-  private val shadowComponent = ShadowComponent(shouldBeColored?.invoke() ?: true)
+  private val shadowComponent = ShadowComponent()
   private val rootPane: JRootPane?
     get() = SwingUtilities.getRootPane(headerContent)
   private var hideMenu = false
@@ -152,12 +154,10 @@ internal class ExpandableMenu(
     val location = SwingUtilities.convertPoint(headerContent, 0, 0, rootPaneCopy)
     if (location == null) {
       headerColorfulPanel?.horizontalOffset = 0
-      shadowComponent.horizontalOffset = headerColorfulPanel?.preferredSize?.width ?: 0
     }
     else {
       val insets = headerContent.insets
       headerColorfulPanel?.horizontalOffset = location.x + insets.left
-      shadowComponent.horizontalOffset = (headerColorfulPanel?.preferredSize?.width ?: 0) + (headerColorfulPanel?.horizontalOffset?: 0)
       expandedMenuBar?.let {
         val rootPaneInsets = rootPaneCopy.insets
         it.bounds = Rectangle(location.x + insets.left - rootPaneInsets.left, location.y + insets.top - rootPaneInsets.top,
@@ -185,8 +185,14 @@ private class HeaderColorfulPanel(component: JComponent, private val isColored: 
       // Deny background painting by super.paint()
       isOpaque = false
       layout = BorderLayout()
+      border = SideBorder(background, SideBorder.RIGHT, 1)
       add(component, BorderLayout.CENTER)
     }
+
+  override fun getPreferredSize(): Dimension? {
+    val size = super.getPreferredSize()
+    return Dimension(size.width + 12, size.height)
+  }
 
     override fun paint(g: Graphics?) {
       g as Graphics2D
@@ -202,8 +208,7 @@ private class HeaderColorfulPanel(component: JComponent, private val isColored: 
     }
   }
 
-  private inner class ShadowComponent(private val isColored: Boolean) : JComponent() {
-    var horizontalOffset = 0
+  private inner class ShadowComponent : JComponent() {
     init {
       isOpaque = false
 
@@ -215,15 +220,9 @@ private class HeaderColorfulPanel(component: JComponent, private val isColored: 
     }
 
     override fun paint(g: Graphics?) {
-      g as? Graphics2D ?: return
+      if (g !is Graphics2D) return
       g.color = background
       g.fillRect(0, 0, width, height)
-      if (isColored) {
-        g.translate(-horizontalOffset, 0)
-        val root = SwingUtilities.getRoot(this) as? Window
-        if (root != null) ProjectWindowCustomizerService.getInstance().paint(root, this, g)
-        g.translate(horizontalOffset, 0)
-      }
     }
   }
 }
