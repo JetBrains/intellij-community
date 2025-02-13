@@ -3,7 +3,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
-import com.intellij.codeInsight.completion.impl.LookupCompletionPriorityItemKeys;
+import com.intellij.codeInsight.completion.impl.TopPriorityLookupElement;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem;
 import com.intellij.injected.editor.EditorWindow;
@@ -418,15 +418,15 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   @ApiStatus.Internal
   @Override
   final protected boolean isTopPriorityItem(@Nullable LookupElement item) {
-    return item != null && Boolean.TRUE.equals(item.getUserData(LookupCompletionPriorityItemKeys.TOP_PRIORITY_ITEM));
+    return item != null && Boolean.TRUE.equals(item.getUserData(TopPriorityLookupElement.TOP_PRIORITY_ITEM));
   }
 
   /**
-   * @see LookupCompletionPriorityItemKeys#NEVER_AUTOSELECT_TOP_PRIORITY_ITEM
+   * @see TopPriorityLookupElement#NEVER_AUTOSELECT_TOP_PRIORITY_ITEM
    */
   private boolean isNeverAutoselectedTopPriorityItem(@Nullable LookupElement item) {
     if (item == null || !isTopPriorityItem(item)) return false;
-    return Boolean.TRUE.equals(item.getUserData(LookupCompletionPriorityItemKeys.NEVER_AUTOSELECT_TOP_PRIORITY_ITEM));
+    return Boolean.TRUE.equals(item.getUserData(TopPriorityLookupElement.NEVER_AUTOSELECT_TOP_PRIORITY_ITEM));
   }
 
   private void freezeTopItems(LookupElementListPresenter lookup, LinkedHashSet<? extends LookupElement> model) {
