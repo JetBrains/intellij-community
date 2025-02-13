@@ -484,7 +484,7 @@ private fun checkDirectory(directory: Path, kind: Int, property: String): Boolea
   return true
 }
 
-private suspend fun lockSystemDirs(args: List<String>) {
+private fun lockSystemDirs(args: List<String>) {
   val directoryLock = DirectoryLock(PathManager.getConfigDir(), PathManager.getSystemDir()) { processorArgs ->
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
@@ -501,7 +501,7 @@ private suspend fun lockSystemDirs(args: List<String>) {
 
   try {
     val currentDir = Path.of("").toAbsolutePath().normalize()
-    val result = withContext(Dispatchers.IO) { directoryLock.lockOrActivate(currentDir, args) }
+    val result = directoryLock.lockOrActivate(currentDir, args)
     if (result == null) {
       ShutDownTracker.getInstance().registerShutdownTask {
         try {
