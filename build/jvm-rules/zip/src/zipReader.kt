@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import java.io.EOFException
@@ -84,8 +84,8 @@ internal inline fun readCentralDirectory(buffer: ByteBuffer, centralDirPosition:
   byteBufferAllocator.use {
     while (offset < endOffset) {
       if (buffer.getInt(offset) != 33639248) {
-        throw EOFException("Expected central directory size " + centralDirSize +
-                           " but only at " + offset + " no valid central directory file header signature")
+        throw EOFException("Expected central directory size $centralDirSize" +
+                           " but only at $offset no valid central directory file header signature")
       }
       val compressedSize = buffer.getInt(offset + 20)
       val uncompressedSize = buffer.getInt(offset + 24)
@@ -234,10 +234,12 @@ private inline fun readZipEntries(buffer: ByteBuffer, fileSize: Int, entryProces
     centralDirSize = buffer.getInt(offset + 12)
     centralDirPosition = buffer.getInt(offset + 16)
   }
-  readCentralDirectory(buffer = buffer,
-                       centralDirPosition = centralDirPosition,
-                       centralDirSize = centralDirSize,
-                       entryProcessor = entryProcessor)
+  readCentralDirectory(
+    buffer = buffer,
+    centralDirPosition = centralDirPosition,
+    centralDirSize = centralDirSize,
+    entryProcessor = entryProcessor,
+  )
   buffer.clear()
 }
 

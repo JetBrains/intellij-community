@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ConstPropertyName", "DuplicatedCode")
 
 package org.jetbrains.intellij.build.io
@@ -39,28 +39,9 @@ fun ZipArchiveOutputStream.file(nameString: String, file: Path) {
     val size = channel.size()
     assert(size <= Int.MAX_VALUE)
     writeEntryHeaderWithoutCrc(name = name, size = size.toInt())
-    transferFrom(channel, size.toLong())
+    transferFrom(channel, size)
   }
   return
-}
-
-@Suppress("DuplicatedCode")
-fun ZipArchiveOutputStream.fileAndGetData(name: ByteArray, file: Path): ByteArray {
-  return FileChannel.open(file, READ).use { channel ->
-    val size = channel.size()
-    assert(size <= Int.MAX_VALUE)
-    writeEntryHeaderWithoutCrc(name = name, size = size.toInt())
-    transferFrom(channel, size.toLong())
-
-    val buffer = ByteBuffer.allocate(size.toInt())
-    while (buffer.hasRemaining()) {
-      val bytesRead = channel.read(buffer, 0)
-      if (bytesRead == -1) {
-        throw EOFException("End of stream reached before filling the buffer")
-      }
-    }
-    buffer.array()
-  }
 }
 
 fun transformZipUsingTempFile(file: Path, indexWriter: IkvIndexBuilder?, task: (ZipFileWriter) -> Unit) {
@@ -104,7 +85,6 @@ class ZipFileWriter(
   internal val resultStream = ZipArchiveOutputStream(channel = channel, zipIndexWriter = zipIndexWriter)
   private val crc32 = CRC32()
 
-  private val bufferAllocator = ByteBufferAllocator()
   private val deflateBufferAllocator = if (deflater == null) null else ByteBufferAllocator()
 
   val channelPosition: Long
@@ -311,7 +291,23 @@ class ZipFileWriter(
   }
 
   fun uncompressedData(nameString: String, data: String) {
-    uncompressedData(nameString = nameString, data = ByteBuffer.wrap(data.toByteArray()))
+    uncompressedData(nameString = nameString, data = data.toByteArray())
+  }
+
+  fun uncompressedData(nameString: String, data: ByteArray) {
+    val name = nameString.toByteArray()
+
+    val size = data.size
+    if (size == 0) {
+      resultStream.writeEmptyFile(name)
+      return
+    }
+
+    crc32.reset()
+    crc32.update(data)
+    val crc = crc32.value
+
+    resultStream.writeDataRawEntry(name = name, data = data, size = size, crc = crc)
   }
 
   fun uncompressedData(nameString: String, data: ByteBuffer) {
@@ -329,21 +325,15 @@ class ZipFileWriter(
     val crc = crc32.value
     data.reset()
 
-    resultStream.writeDataRawEntry(
-      data = data,
-      name = name,
-      size = size,
-      compressedSize = size,
-      method = ZipEntry.STORED,
-      crc = crc,
-    )
+    resultStream.writeDataRawEntry(data = data, name = name, size = size, compressedSize = size, method = ZipEntry.STORED, crc = crc)
   }
 
   fun uncompressedData(nameString: String, maxSize: Int, dataWriter: (ByteBuf) -> Unit) {
     val name = nameString.toByteArray()
     val headerSize = 30 + name.size
 
-    ByteBufAllocator.DEFAULT.directBuffer(headerSize + maxSize).use { data ->
+    val bufCapacity = headerSize + maxSize
+    ByteBufAllocator.DEFAULT.ioBuffer(bufCapacity, bufCapacity).use { data ->
       data.writerIndex(headerSize)
       dataWriter(data)
       val size = data.readableBytes() - headerSize
@@ -375,7 +365,6 @@ class ZipFileWriter(
   override fun close() {
     @Suppress("ConvertTryFinallyToUseCall")
     try {
-      bufferAllocator.close()
       deflateBufferAllocator?.close()
       deflater?.end()
     }
