@@ -17,7 +17,6 @@ fun CompletableSpan.completeWithResult(result: Result<*>) {
     }.onFailure { ex ->
       when (ex) {
         is CancellationException -> complete(SpanStatus.Cancelled, null)
-        is InterruptedException -> complete(SpanStatus.Cancelled, null)
         else -> complete(SpanStatus.Failed(ex), null)
       }
     }
