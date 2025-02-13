@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -28,7 +29,8 @@ internal class CopyOnSelectionHandler(private val settings: JBTerminalSystemSett
       clipboard.setContents(StringSelection(text), null)
       return true
     }
-    catch (_: Exception) {
+    catch (e: Exception) {
+      LOG.warn("Failed to copy to the system selection clipboard, falling back to the regular one", e)
       return false
     }
   }
@@ -47,3 +49,5 @@ internal class CopyOnSelectionHandler(private val settings: JBTerminalSystemSett
     }
   }
 }
+
+private val LOG = logger<CopyOnSelectionHandler>()
