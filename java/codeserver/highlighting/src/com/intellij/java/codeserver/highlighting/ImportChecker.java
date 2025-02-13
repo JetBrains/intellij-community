@@ -118,7 +118,7 @@ final class ImportChecker {
   }
 
   void checkImportModuleInModuleInfo(@NotNull PsiImportModuleStatement statement) {
-    if (statement.getContainingFile() instanceof PsiJavaFile javaFile && javaFile.getModuleDeclaration() != null) {
+    if (PsiUtil.isModuleFile(statement.getContainingFile())) {
       myVisitor.report(JavaErrorKinds.IMPORT_MODULE_NOT_ALLOWED.create(statement));
     }
   }
