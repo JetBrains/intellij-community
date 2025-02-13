@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.terminal.reworked
 
 import com.intellij.openapi.application.EDT
+import com.intellij.terminal.session.TerminalBlocksModelState
+import com.intellij.terminal.session.TerminalOutputBlock
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -283,6 +285,132 @@ internal class TerminalBlocksModelTest : BasePlatformTestCase() {
 
     val secondBlock = blocksModel.blocks[1]
     assertEquals("myPrompt: \n", outputModel.getText(secondBlock.startOffset, secondBlock.endOffset))
+  }
+
+  @Test
+  fun `check state is dumped correctly`() = runBlocking(Dispatchers.EDT) {
+    val outputModel = TerminalTestUtil.createOutputModel()
+    val blocksModel = TerminalBlocksModelImpl(outputModel.document)
+
+    // Prepare
+    outputModel.update(0, "\n\n\n")
+    blocksModel.promptStarted(0)
+    outputModel.update(0, "myPrompt: \n\n\n")
+    blocksModel.promptFinished(10)
+    outputModel.update(0, "myPrompt: myCommand\n\n\n")
+    blocksModel.commandStarted(20)
+    outputModel.update(1, "someOutput\n\n")
+    blocksModel.promptStarted(31)
+    outputModel.update(2, "updatedPrompt: \n")
+    blocksModel.promptFinished(46)
+
+    // Test
+    val state = blocksModel.dumpState()
+
+    assertEquals(3, state.blockIdCounter)
+    assertEquals(2, state.blocks.size)
+
+    val expectedFirstBlock = TerminalOutputBlock(
+      id = 1,
+      startOffset = 0,
+      commandStartOffset = 10,
+      outputStartOffset = 20,
+      endOffset = 31,
+      exitCode = null
+    )
+    assertEquals(expectedFirstBlock, state.blocks[0])
+
+    val expectedSecondBlock = TerminalOutputBlock(
+      id = 2,
+      startOffset = 31,
+      commandStartOffset = 46,
+      outputStartOffset = -1,
+      endOffset = 47,
+      exitCode = null
+    )
+    assertEquals(expectedSecondBlock, state.blocks[1])
+  }
+
+  @Test
+  fun `check state is restored correctly`() = runBlocking(Dispatchers.EDT) {
+    val outputModel = TerminalTestUtil.createOutputModel()
+    val blocksModel = TerminalBlocksModelImpl(outputModel.document)
+
+    val firstBlock = TerminalOutputBlock(
+      id = 1,
+      startOffset = 0,
+      commandStartOffset = 10,
+      outputStartOffset = 20,
+      endOffset = 31,
+      exitCode = null
+    )
+    val secondBlock = TerminalOutputBlock(
+      id = 2,
+      startOffset = 31,
+      commandStartOffset = 46,
+      outputStartOffset = -1,
+      endOffset = 47,
+      exitCode = null
+    )
+    val state = TerminalBlocksModelState(
+      blocks = listOf(firstBlock, secondBlock),
+      blockIdCounter = 3
+    )
+
+    blocksModel.restoreFromState(state)
+
+    assertEquals(3, blocksModel.blockIdCounter)
+    val blocks = blocksModel.blocks
+    assertEquals(2, blocks.size)
+    assertEquals(firstBlock, blocks[0])
+    assertEquals(secondBlock, blocks[1])
+  }
+
+  @Test
+  fun `check state is restored correctly after applying dumped state`() = runBlocking(Dispatchers.EDT) {
+    val sourceOutputModel = TerminalTestUtil.createOutputModel()
+    val sourceBlocksModel = TerminalBlocksModelImpl(sourceOutputModel.document)
+
+    // Prepare
+    sourceOutputModel.update(0, "\n\n\n")
+    sourceBlocksModel.promptStarted(0)
+    sourceOutputModel.update(0, "myPrompt: \n\n\n")
+    sourceBlocksModel.promptFinished(10)
+    sourceOutputModel.update(0, "myPrompt: myCommand\n\n\n")
+    sourceBlocksModel.commandStarted(20)
+    sourceOutputModel.update(1, "someOutput\n\n")
+    sourceBlocksModel.promptStarted(31)
+    sourceOutputModel.update(2, "updatedPrompt: \n")
+    sourceBlocksModel.promptFinished(46)
+
+    // Test
+    val state = sourceBlocksModel.dumpState()
+    val newOutputModel = TerminalTestUtil.createOutputModel()
+    val newBlocksModel = TerminalBlocksModelImpl(newOutputModel.document)
+    newBlocksModel.restoreFromState(state)
+
+    assertEquals(3, state.blockIdCounter)
+    assertEquals(2, state.blocks.size)
+
+    val expectedFirstBlock = TerminalOutputBlock(
+      id = 1,
+      startOffset = 0,
+      commandStartOffset = 10,
+      outputStartOffset = 20,
+      endOffset = 31,
+      exitCode = null
+    )
+    assertEquals(expectedFirstBlock, state.blocks[0])
+
+    val expectedSecondBlock = TerminalOutputBlock(
+      id = 2,
+      startOffset = 31,
+      commandStartOffset = 46,
+      outputStartOffset = -1,
+      endOffset = 47,
+      exitCode = null
+    )
+    assertEquals(expectedSecondBlock, state.blocks[1])
   }
 
   private fun TerminalOutputModel.getText(startOffset: Int, endOffset: Int): String {

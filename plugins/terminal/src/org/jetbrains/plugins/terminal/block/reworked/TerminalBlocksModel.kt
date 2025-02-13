@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked
 
+import com.intellij.terminal.session.TerminalBlocksModelState
 import com.intellij.terminal.session.TerminalOutputBlock
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.SharedFlow
@@ -28,4 +29,10 @@ interface TerminalBlocksModel {
 
   @RequiresEdt
   fun commandFinished(exitCode: Int)
+
+  @RequiresEdt
+  fun dumpState(): TerminalBlocksModelState
+
+  @RequiresEdt
+  fun restoreFromState(state: TerminalBlocksModelState)
 }
