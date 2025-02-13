@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-final class Banner extends SimpleBanner {
+final class ConfigurableEditorBanner extends SimpleBanner {
   private final JLabel myProjectIcon = new JLabel();
   private final Breadcrumbs myBreadcrumbs = new Breadcrumbs() {
     @Override
@@ -26,7 +26,7 @@ final class Banner extends SimpleBanner {
     }
   };
 
-  Banner(Action action) {
+  ConfigurableEditorBanner(Action action) {
     myProjectIcon.setMinimumSize(new Dimension(0, 0));
     myProjectIcon.setIcon(AllIcons.General.ProjectConfigurable);
     myProjectIcon.setForeground(UIUtil.getContextHelpForeground());

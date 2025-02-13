@@ -21,7 +21,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.ui.IdeUICustomization;
@@ -68,7 +67,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   private final OnePixelSplitter mySplitter;
   private final SpotlightPainter spotlightPainter;
   private final LoadingDecorator loadingDecorator;
-  private final @NotNull Banner myBanner;
+  private final @NotNull ConfigurableEditorBanner myBanner;
   private final History myHistory = new History(this);
 
   private final Map<Configurable, ConfigurableController> controllers = new HashMap<>();
@@ -255,7 +254,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
     loadingDecorator = new LoadingDecorator(editor, this, 10, true);
     loadingDecorator.setOverlayBackground(LoadingDecorator.OVERLAY_BACKGROUND);
-    myBanner = new Banner(editor.getResetAction());
+    myBanner = new ConfigurableEditorBanner(editor.getResetAction());
     searchPanel.setBorder(JBUI.Borders.empty(7, 5, 6, 5));
     myBanner.setBorder(JBUI.Borders.empty(11, 6, 0, 10));
     search.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
