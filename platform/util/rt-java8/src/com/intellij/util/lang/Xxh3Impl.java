@@ -143,10 +143,6 @@ public final class Xxh3Impl {
   private static final int nbStripesPerBlock = (192 - 64) / 8;
   private static final int block_len = 64 * nbStripesPerBlock;
 
-  static int getBlockLength() {
-    return block_len;
-  }
-
   public static <T> long hash(final T input, final Access<T> access, final int off, final int length, final long seed) {
     if (length <= 16) {
       // len_0to16_64b

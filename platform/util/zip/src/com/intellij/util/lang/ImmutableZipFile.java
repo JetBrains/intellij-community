@@ -124,23 +124,23 @@ public final class ImmutableZipFile implements ZipFile {
 
   @Override
   public @Nullable InputStream getInputStream(@NotNull String path) throws IOException {
-    ByteBuffer byteBuffer = ikv.getValue(Xxh3.hash(path));
+    ByteBuffer byteBuffer = ikv.getValue(Xxh3.hash(path.getBytes(StandardCharsets.UTF_8)));
     return byteBuffer == null ? null : new DirectByteBufferBackedInputStream(byteBuffer, false);
   }
 
   @Override
   public byte @Nullable [] getData(@NotNull String path) throws IOException {
-    return ikv.getByteArray(Xxh3.hash(path));
+    return ikv.getByteArray(Xxh3.hash(path.getBytes(StandardCharsets.UTF_8)));
   }
 
   @Override
   public ByteBuffer getByteBuffer(@NotNull String path) throws IOException {
-    return ikv.getValue(Xxh3.hash(path));
+    return ikv.getValue(Xxh3.hash(path.getBytes(StandardCharsets.UTF_8)));
   }
 
   @Override
   public @Nullable ZipResource getResource(String path) {
-    long pair = ikv.getOffsetAndSize(Xxh3.hash(path));
+    long pair = ikv.getOffsetAndSize(Xxh3.hash(path.getBytes(StandardCharsets.UTF_8)));
     return pair == -1 ? null : new MyZipResource(pair, ikv, path);
   }
 
