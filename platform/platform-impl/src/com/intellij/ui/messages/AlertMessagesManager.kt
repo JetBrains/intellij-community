@@ -10,6 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DoNotAskOption
+import com.intellij.openapi.ui.ExitActionType
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.openapi.util.NlsContexts
@@ -64,9 +65,10 @@ internal class AlertMessagesManager {
                         icon: Icon?,
                         doNotAskOption: DoNotAskOption?,
                         helpId: String?,
-                        invocationPlace: String?): Int {
+                        invocationPlace: String?,
+                        exitActionTypes: Array<ExitActionType>): Int {
     val dialog = AlertDialog(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, getIcon(icon),
-                             doNotAskOption, helpId, invocationPlace)
+                             doNotAskOption, helpId, invocationPlace, exitActionTypes)
     AppIcon.getInstance().requestAttention(project, true)
     dialog.show()
     return dialog.exitCode
@@ -102,7 +104,8 @@ class AlertDialog(project: Project?,
                   icon: Icon,
                   doNotAskOption: com.intellij.openapi.ui.DoNotAskOption?,
                   val myHelpId: String?,
-                  invocationPlace: String? = null) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE, false) {
+                  invocationPlace: String? = null,
+                  val exitActionTypes: Array<ExitActionType> = emptyArray()) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE, false) {
 
   private val myIsTitleComponent = SystemInfoRt.isMac || !Registry.`is`("ide.message.dialogs.as.swing.alert.show.title.bar", false)
 
@@ -471,9 +474,10 @@ class AlertDialog(project: Project?,
     val actions: MutableList<Action> = ArrayList()
     for (i in myOptions.indices) {
       val option = myOptions[i]
+      val exitActionType = if (exitActionTypes.size > i) exitActionTypes[i] else ExitActionType.UNDEFINED
       val action: Action = object : AbstractAction(UIUtil.replaceMnemonicAmpersand(option)) {
         override fun actionPerformed(e: ActionEvent) {
-          close(i, true)
+          close(i, true, exitActionType)
         }
       }
       if (i == myDefaultOptionIndex) {
@@ -542,7 +546,7 @@ class AlertDialog(project: Project?,
     return null
   }
 
-  override fun doCancelAction() = close(-1, false)
+  override fun doCancelAction() = close(-1, false, ExitActionType.CANCEL)
 
   override fun createHelpButton(insets: Insets): JButton {
     val helpButton = super.createHelpButton(insets)

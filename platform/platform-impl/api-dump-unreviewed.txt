@@ -15713,7 +15713,7 @@ c:com.intellij.ui.messages.MessagesServiceImpl
 - showErrorDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):V
 - showInputDialog(com.intellij.openapi.project.Project,java.awt.Component,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.ui.InputValidator,com.intellij.openapi.util.TextRange,java.lang.String):java.lang.String
 - showInputDialogWithCheckBox(java.lang.String,java.lang.String,java.lang.String,Z,Z,javax.swing.Icon,java.lang.String,com.intellij.openapi.ui.InputValidator):com.intellij.openapi.util.Pair
-- showMessageDialog(com.intellij.openapi.project.Project,java.awt.Component,java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,Z,java.lang.String,java.lang.String):I
+- showMessageDialog(com.intellij.openapi.project.Project,java.awt.Component,java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,Z,java.lang.String,java.lang.String,com.intellij.openapi.ui.ExitActionType[]):I
 - showMoreInfoMessageDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon):I
 - showMultilineInputDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.InputValidator):java.lang.String
 - showPasswordDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.ui.InputValidator):java.lang.String

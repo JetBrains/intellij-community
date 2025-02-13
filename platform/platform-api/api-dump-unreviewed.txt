@@ -3415,7 +3415,9 @@ a:com.intellij.openapi.ui.DialogWrapper
 - centerRelativeToParent():V
 - clickDefaultButton():V
 - f:close(I):V
+- f:close(I,com.intellij.openapi.ui.ExitActionType):V
 - f:close(I,Z):V
+- f:close(I,Z,com.intellij.openapi.ui.ExitActionType):V
 - p:continuousValidation():Z
 - p:createActions():javax.swing.Action[]
 - p:createButtonsPanel(java.util.List):javax.swing.JPanel
@@ -4351,6 +4353,7 @@ f:com.intellij.openapi.ui.cellvalidators.ValidationUtils
 c:com.intellij.openapi.ui.messages.MessageDialog
 - com.intellij.openapi.ui.DialogWrapper
 - p:myDefaultOptionIndex:I
+- p:myExitActionTypes:com.intellij.openapi.ui.ExitActionType[]
 - p:myFocusedOptionIndex:I
 - p:myIcon:javax.swing.Icon
 - p:myMessage:java.lang.String
@@ -4359,12 +4362,12 @@ c:com.intellij.openapi.ui.messages.MessageDialog
 - p:<init>(com.intellij.openapi.project.Project):V
 - <init>(com.intellij.openapi.project.Project,java.awt.Component,java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,Z):V
 - <init>(com.intellij.openapi.project.Project,java.awt.Component,java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,Z,java.lang.String):V
-- <init>(com.intellij.openapi.project.Project,java.awt.Component,java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,Z,java.lang.String,java.lang.String):V
+- <init>(com.intellij.openapi.project.Project,java.awt.Component,java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,Z,java.lang.String,java.lang.String,com.intellij.openapi.ui.ExitActionType[]):V
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon,Z):V
 - <init>(com.intellij.openapi.project.Project,Z):V
 - <init>(java.lang.String,java.lang.String,java.lang.String[],I,javax.swing.Icon):V
 - p:_init(java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,java.lang.String):V
-- p:_init(java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,java.lang.String,java.lang.String):V
+- p:_init(java.lang.String,java.lang.String,java.lang.String[],I,I,javax.swing.Icon,com.intellij.openapi.ui.DoNotAskOption,java.lang.String,java.lang.String,com.intellij.openapi.ui.ExitActionType[]):V
 - p:createActions():javax.swing.Action[]
 - p:createCenterPanel():javax.swing.JComponent
 - p:createIconPanel():javax.swing.JPanel

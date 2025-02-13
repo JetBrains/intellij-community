@@ -1825,6 +1825,16 @@ a:com.intellij.openapi.ui.DoNotAskOption$Adapter
 - a:rememberChoice(Z,I):V
 - f:setToBeShown(Z,I):V
 - shouldSaveOptionsOnCancel():Z
+e:com.intellij.openapi.ui.ExitActionType
+- java.lang.Enum
+- sf:CANCEL:com.intellij.openapi.ui.ExitActionType
+- sf:NO:com.intellij.openapi.ui.ExitActionType
+- sf:OK:com.intellij.openapi.ui.ExitActionType
+- sf:UNDEFINED:com.intellij.openapi.ui.ExitActionType
+- sf:YES:com.intellij.openapi.ui.ExitActionType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.ui.ExitActionType
+- s:values():com.intellij.openapi.ui.ExitActionType[]
 f:com.intellij.openapi.ui.MessageConstants
 - sf:CANCEL:I
 - sf:NO:I
