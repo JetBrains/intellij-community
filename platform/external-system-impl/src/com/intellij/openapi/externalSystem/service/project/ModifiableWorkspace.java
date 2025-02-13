@@ -154,8 +154,8 @@ public final class ModifiableWorkspace {
   }
 
   private void register(@NotNull Module module) {
-    Arrays.stream(ExternalProjectsWorkspaceImpl.EP_NAME.getExtensions())
-      .map(contributor -> contributor.findProjectId(module))
+    Arrays.stream(ExternalSystemCoordinateContributor.EP_NAME.getExtensions())
+      .map(contributor -> contributor.findModuleCoordinate(module))
       .filter(Objects::nonNull)
       .findFirst()
       .ifPresent(id -> register(id, module));

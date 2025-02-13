@@ -22,8 +22,6 @@ import java.util.function.Supplier;
 @ApiStatus.Internal
 @State(name = "externalSubstitutions", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 final class ExternalProjectsWorkspaceImpl implements PersistentStateComponent<ExternalProjectsWorkspaceImpl.State> {
-  static final ExtensionPointName<ExternalSystemWorkspaceContributor> EP_NAME =
-    ExtensionPointName.create("com.intellij.externalSystemWorkspaceContributor");
 
   static class State {
     @Property(surroundWithTag = false)

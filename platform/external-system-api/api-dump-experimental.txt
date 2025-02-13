@@ -46,10 +46,12 @@ c:com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 - com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
 - <init>(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.build.events.BuildEvent):V
 - getBuildEvent():com.intellij.build.events.BuildEvent
+*:com.intellij.openapi.externalSystem.service.project.ExternalSystemCoordinateContributor
+- *sf:Companion:com.intellij.openapi.externalSystem.service.project.ExternalSystemCoordinateContributor$Companion
+- findModuleCoordinate(com.intellij.openapi.module.Module):com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
+*f:com.intellij.openapi.externalSystem.service.project.ExternalSystemCoordinateContributor$Companion
 com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
 - *:resolveProjectInfo(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,java.lang.String,Z,com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings,com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy,com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener):com.intellij.openapi.externalSystem.model.DataNode
-*:com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkspaceContributor
-- a:findProjectId(com.intellij.openapi.module.Module):com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
 com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 - com.intellij.openapi.externalSystem.service.project.IdeModelsProvider
 - com.intellij.openapi.util.UserDataHolder
