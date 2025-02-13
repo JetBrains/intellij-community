@@ -3,9 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -110,3 +108,11 @@ fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): K
 context(KaSession)
 fun KaCallableSymbol.canBeUsedAsExtension(): Boolean =
     isExtension || this is KaVariableSymbol && (returnType as? KaFunctionType)?.hasReceiver == true
+
+context (KaSession)
+fun KtExpression.resolveExpression(): KaSymbol? {
+    val reference = mainReference?:(this as? KtThisExpression)?.instanceReference?.mainReference
+    reference?.resolveToSymbol()?.let { return it }
+    val call = resolveToCall()?.calls?.singleOrNull() ?: return null
+    return if (call is KaCallableMemberCall<*, *>) call.symbol else null
+}

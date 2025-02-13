@@ -22,9 +22,6 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.*
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQualifierRenderer.WITH_SHORT_NAMES_WITH_NESTED_CLASSIFIERS
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.calls
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
@@ -36,8 +33,8 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.caches.resolve.KtFileClassProviderImpl
+import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -65,14 +62,6 @@ object K2CreateFunctionFromUsageUtil {
 
     context (KaSession)
     internal fun KaType.canRefactor(): Boolean = expandedSymbol?.psi?.canRefactorElement() == true
-
-    context (KaSession)
-    fun KtExpression.resolveExpression(): KaSymbol? {
-        val reference = mainReference?:(this as? KtThisExpression)?.instanceReference?.mainReference
-        reference?.resolveToSymbol()?.let { return it }
-        val call = resolveToCall()?.calls?.singleOrNull() ?: return null
-        return if (call is KaCallableMemberCall<*, *>) call.symbol else null
-    }
 
     context (KaSession)
     internal fun KaType.convertToClass(): KtClass? = expandedSymbol?.psi as? KtClass
