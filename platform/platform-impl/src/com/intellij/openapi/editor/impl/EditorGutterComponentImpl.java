@@ -171,7 +171,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   private static final JBValue GAP_BETWEEN_AREAS = JBVG.value(5);
   private static final JBValue GAP_BETWEEN_ANNOTATIONS = JBVG.value(5);
   static final JBValue EMPTY_ANNOTATION_AREA_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.emptyAnnotationAreaWidth());
-  static final JBValue GAP_AFTER_VCS_MARKERS_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.gapAfterVcsMarkersWidth());
   static final JBValue GAP_AFTER_LINE_NUMBERS_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.gapAfterLineNumbersWidth());
   private static final JBValue GAP_AFTER_ICONS_WIDTH = JBVG.value(() -> (float)JBUI.CurrentTheme.Editor.Gutter.gapAfterIconsWidth());
   private static final TooltipGroup GUTTER_TOOLTIP_GROUP = new TooltipGroup("GUTTER_TOOLTIP_GROUP", 0);
