@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 class MyTest {
 
     public List<Integer> someMethod() {
-        <error descr="Cannot infer type: 'var' on variable without initializer">var</error> listOfInteger;
+        <error descr="Cannot infer type: 'var' on variable without an initializer">var</error> listOfInteger;
         Integer[] arrayOfInteger = {2, 4, 8};
         listOfInteger = Arrays.stream(arrayOfInteger)
                 .filter(number -> number >= 4)

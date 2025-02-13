@@ -118,7 +118,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testPackageStatement() {
     highlight("package pkg;")
     highlight("""
-        <error descr="A module file should not have 'package' statement">package pkg;</error>
+        <error descr="A module file should not have a 'package' statement">package pkg;</error>
         module M { }""".trimIndent())
     fixes("<caret>package pkg;\nmodule M { }", arrayOf("DeleteElementFix", "FixAllHighlightingProblems"))
   }
@@ -221,8 +221,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("""
         module M1 {
           requires <error descr="Module not found: M.missing">M.missing</error>;
-          requires <error descr="Cyclic dependence: M1">M1</error>;
-          requires <error descr="Cyclic dependence: M1, M2">M2</error>;
+          requires <error descr="Cyclic dependency: M1">M1</error>;
+          requires <error descr="Cyclic dependency: M1, M2">M2</error>;
           requires <error descr="Module is not in dependencies: M3">M3</error>;
           requires <warning descr="Ambiguous module reference: lib.auto">lib.auto</warning>;
           requires lib.multi.release;

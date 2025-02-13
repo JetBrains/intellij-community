@@ -52,7 +52,7 @@ class TryWithResources {
   }
 
   void testMoreUsefulParseForIncorrectExpression() {
-    try (<error descr="Declaration, final or effectively final variable expected">new Resource()</error>) {}
-    try (<error descr="Declaration, final or effectively final variable expected">Resource.create()</error>) {}
+    try (<error descr="Declaration, final, or effectively final variable expected">new Resource()</error>) {}
+    try (<error descr="Declaration, final, or effectively final variable expected">Resource.create()</error>) {}
   }
 }

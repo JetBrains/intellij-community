@@ -3,7 +3,7 @@ interface MyCloneable {
     //protected method from java.lang.Object is not implicitly declared in interface with no base interfaces
     int clone();
 
-    <error descr="'toString()' in 'MyCloneable' clashes with 'toString()' in 'java.lang.Object'; attempting to use incompatible return type">int</error> toString();
+    <error descr="'toString()' in 'MyCloneable' clashes with 'toString()' in 'java.lang.Object'; incompatible return type">int</error> toString();
 }
 
 interface MyCloneable1 {
