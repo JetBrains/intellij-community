@@ -1,18 +1,11 @@
 <component name="libraryTable">
-  <library name="kotlinc.android-extensions-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:android-extensions-compiler-plugin-for-ide:2.2.0-dev-4882">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/2.2.0-dev-4882/android-extensions-compiler-plugin-for-ide-2.2.0-dev-4882.jar">
-          <sha256sum>0c70387a833da47727d3e78ed41cdb6ed1d9ed14d5e343d26f5e1849fd0d5ede</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+  <library name="kotlinc.android-extensions-compiler-plugin">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/2.2.0-dev-4882/android-extensions-compiler-plugin-for-ide-2.2.0-dev-4882.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/2.2.255-dev-255/android-extensions-compiler-plugin-for-ide-2.2.255-dev-255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/2.2.0-dev-4882/android-extensions-compiler-plugin-for-ide-2.2.0-dev-4882-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/2.2.255-dev-255/android-extensions-compiler-plugin-for-ide-2.2.255-dev-255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
