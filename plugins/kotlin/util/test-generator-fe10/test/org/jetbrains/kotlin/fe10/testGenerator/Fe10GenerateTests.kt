@@ -439,6 +439,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                 excludedDirectories = listOf(
                     "addAnnotationUseSiteTargetForConstructorParameter",
                     "simplifyExpression",
+                    "redundantInterpolationPrefix", // K2-only multi-dollar interpolation
                 )
             )
         }
