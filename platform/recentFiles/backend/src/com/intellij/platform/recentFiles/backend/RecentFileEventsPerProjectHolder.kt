@@ -15,6 +15,7 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 
 @Service(Service.Level.PROJECT)
@@ -31,6 +32,7 @@ internal class RecentFileEventsPerProjectHolder {
 
     recentFiles.emit(RecentFilesEvent.AllItemsRemoved())
     recentFiles.emitAll(fetchRecentFiles(searchRequest))
+    recentFiles.emit(RecentFilesEvent.EndOfUpdates())
   }
 
   suspend fun hideAlreadyShownFile(hideFileRequest: RecentFilesBackendRequest.HideFile) {

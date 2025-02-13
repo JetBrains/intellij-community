@@ -72,4 +72,7 @@ sealed interface RecentFilesEvent {
 
   @Serializable
   class AllItemsRemoved : RecentFilesEvent
+
+  @Serializable
+  class EndOfUpdates : RecentFilesEvent
 }

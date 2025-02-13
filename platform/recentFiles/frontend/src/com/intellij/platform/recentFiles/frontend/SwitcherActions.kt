@@ -68,7 +68,7 @@ internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boole
       existingPanel.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected }
     }
     else {
-      createAndShowNewSwitcher(onlyEditedFiles,null, message("title.popup.recent.files"), project)
+      createAndShowNewSwitcher(onlyEditedFiles, null, message("title.popup.recent.files"), project)
     }
   }
 }
@@ -190,21 +190,19 @@ internal class SwitcherListFocusAction(val fromList: JList<*>, val toList: JList
 }
 
 
-@ApiStatus.Internal
-class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Consumer<InputEvent>) : KeyAdapter() {
-  private val wasAltDown = true == event?.isAltDown
-  private val wasAltGraphDown = true == event?.isAltGraphDown
-  private val wasControlDown = true == event?.isControlDown
-  private val wasMetaDown = true == event?.isMetaDown
-  val isEnabled: Boolean = wasAltDown || wasAltGraphDown || wasControlDown || wasMetaDown
-
-  private val initialModifiers = if (!isEnabled) null
-  else StringBuilder().apply {
-    if (wasAltDown) append("alt ")
-    if (wasAltGraphDown) append("altGraph ")
-    if (wasControlDown) append("control ")
-    if (wasMetaDown) append("meta ")
-  }.toString()
+internal class SwitcherKeyReleaseListener(private val launchParameters: SwitcherLaunchEventParameters?, private val consumer: Consumer<InputEvent>) : KeyAdapter() {
+  private val initialModifiers =
+    if (launchParameters?.isEnabled != true) {
+      null
+    }
+    else {
+      StringBuilder().apply {
+        if (launchParameters.wasAltDown) append("alt ")
+        if (launchParameters.wasAltGraphDown) append("altGraph ")
+        if (launchParameters.wasControlDown) append("control ")
+        if (launchParameters.wasMetaDown) append("meta ")
+      }.toString()
+    }
 
   fun getShortcuts(vararg keys: String): CustomShortcutSet {
     val modifiers = initialModifiers ?: return CustomShortcutSet.fromString(*keys)
@@ -216,10 +214,10 @@ class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Consumer<Inpu
 
   override fun keyReleased(keyEvent: KeyEvent) {
     when (keyEvent.keyCode) {
-      KeyEvent.VK_ALT -> if (wasAltDown) consumer.accept(keyEvent)
-      KeyEvent.VK_ALT_GRAPH -> if (wasAltGraphDown) consumer.accept(keyEvent)
-      KeyEvent.VK_CONTROL -> if (wasControlDown) consumer.accept(keyEvent)
-      KeyEvent.VK_META -> if (wasMetaDown) consumer.accept(keyEvent)
+      KeyEvent.VK_ALT -> if (launchParameters?.wasAltDown == true) consumer.accept(keyEvent)
+      KeyEvent.VK_ALT_GRAPH -> if (launchParameters?.wasAltGraphDown == true) consumer.accept(keyEvent)
+      KeyEvent.VK_CONTROL -> if (launchParameters?.wasControlDown == true) consumer.accept(keyEvent)
+      KeyEvent.VK_META -> if (launchParameters?.wasMetaDown == true) consumer.accept(keyEvent)
     }
   }
 }

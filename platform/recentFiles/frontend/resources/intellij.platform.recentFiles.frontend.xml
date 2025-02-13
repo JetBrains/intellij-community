@@ -5,6 +5,10 @@
     <module name="intellij.platform.recentFiles"/>
   </dependencies>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="switcher.preload.timeout.ms" defaultValue="300"
+                 description="Maximum amount of time allowed to wait for the files list loading before displaying the UI"/>
+  </extensions>
   <actions>
     <group id="SwitcherAndRecentFiles">
       <action id="Switcher" class="com.intellij.platform.recentFiles.frontend.Switcher"/>
