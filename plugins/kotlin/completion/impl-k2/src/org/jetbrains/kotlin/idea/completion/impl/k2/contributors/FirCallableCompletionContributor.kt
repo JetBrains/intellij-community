@@ -133,7 +133,6 @@ internal open class FirCallableCompletionContributor(
 
             else -> collectDotCompletion(positionContext, scopesContext, receiver, extensionChecker)
         }.filterIfInsideAnnotationEntryArgument(positionContext.position, expectedType)
-            .filter(uniqueSignatures())
             .mapNotNull(shadowIfNecessary(expectedType))
             .filterNot(isUninitializedCallable(positionContext.position))
             .flatMap { callableWithMetadata ->
@@ -649,14 +648,6 @@ internal open class FirCallableCompletionContributor(
         return { callable: CallableWithMetadataForCompletion ->
             callable.signature.symbol.psi in uninitializedCallablesForPosition
         }
-    }
-
-    private fun uniqueSignatures() = object : Function1<CallableWithMetadataForCompletion, Boolean> {
-
-        private val processed = HashSet<KaCallableSignature<*>>()
-
-        override fun invoke(callableWithMetadata: CallableWithMetadataForCompletion): Boolean =
-            processed.add(callableWithMetadata.signature)
     }
 
     context(KaSession)

@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaWeigher.hasTrailingLambda
 import org.jetbrains.kotlin.idea.completion.lookups.*
+import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject.Companion.hasReceiver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
@@ -48,15 +50,14 @@ internal object FunctionLookupElementFactory {
     ): LookupElementBuilder {
         val valueParameters = signature.valueParameters
 
+        val symbol = signature.symbol
         val lookupObject = FunctionCallLookupObject(
             shortName = shortName,
             options = options,
             renderedDeclaration = CompletionShortNamesRenderer.renderFunctionParameters(valueParameters),
+            hasReceiver = signature.hasReceiver,
             inputValueArgumentsAreRequired = valueParameters.isNotEmpty(),
-            inputTypeArgumentsAreRequired = !FunctionInsertionHelper.functionCanBeCalledWithoutExplicitTypeArguments(
-                symbol = signature.symbol,
-                expectedType = expectedType
-            ),
+            inputTypeArgumentsAreRequired = !FunctionInsertionHelper.functionCanBeCalledWithoutExplicitTypeArguments(symbol, expectedType),
         )
 
         return createLookupElement(signature, lookupObject)
@@ -131,6 +132,7 @@ internal object FunctionLookupElementFactory {
             shortName = shortName,
             options = options,
             renderedDeclaration = CompletionShortNamesRenderer.renderTrailingFunction(trailingFunctionSignature, trailingFunctionType),
+            hasReceiver = signature.hasReceiver,
             inputTrailingLambdaIsRequired = true,
         )
 
@@ -267,10 +269,19 @@ internal data class FunctionCallLookupObject(
     override val shortName: Name,
     override val options: CallableInsertionOptions,
     override val renderedDeclaration: String,
+    val hasReceiver: Boolean, // todo find a better solution
     val inputValueArgumentsAreRequired: Boolean = false,
     val inputTypeArgumentsAreRequired: Boolean = false,
     val inputTrailingLambdaIsRequired: Boolean = false,
-) : KotlinCallableLookupObject()
+) : KotlinCallableLookupObject() {
+
+    companion object {
+
+        val KaCallableSignature<*>.hasReceiver: Boolean
+            get() = receiverType != null
+                    || callableId?.classId != null
+    }
+}
 
 internal object FunctionInsertionHandler : QuotedNamesAwareInsertionHandler() {
 

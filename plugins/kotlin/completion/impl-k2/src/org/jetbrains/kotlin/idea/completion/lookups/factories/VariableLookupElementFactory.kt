@@ -59,10 +59,12 @@ internal object VariableLookupElementFactory {
                 val lookupObject = FunctionCallLookupObject(
                     shortName = name,
                     options = options,
-                    renderedDeclaration = rendered,
+                    renderedDeclaration = "()",
+                    hasReceiver = functionalType.hasReceiver,
                     inputValueArgumentsAreRequired = functionalType.parameterTypes.isNotEmpty(),
                 )
 
+                // todo reuse rendered/renderedDeclaration
                 val tailText = getTailTextForVariableCall(functionalType, signature)
 
                 LookupElementBuilder.create(lookupObject, lookupString)
