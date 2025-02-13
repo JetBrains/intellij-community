@@ -2,14 +2,14 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.psi.impl
 
-import com.intellij.debugger.streams.psi.ChainTransformer
+import com.intellij.debugger.streams.core.psi.ChainTransformer
+import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.core.wrapper.CallArgument
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.core.wrapper.QualifierExpression
+import com.intellij.debugger.streams.core.wrapper.StreamChain
+import com.intellij.debugger.streams.core.wrapper.impl.*
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
-import com.intellij.debugger.streams.wrapper.CallArgument
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
-import com.intellij.debugger.streams.wrapper.QualifierExpression
-import com.intellij.debugger.streams.wrapper.StreamChain
-import com.intellij.debugger.streams.wrapper.impl.*
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade

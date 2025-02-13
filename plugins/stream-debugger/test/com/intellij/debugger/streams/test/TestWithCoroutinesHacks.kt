@@ -25,7 +25,7 @@ import kotlin.time.Duration
  * https://jetbrains.slack.com/archives/CMDBCUBGE/p1738151573576619
  */
 
-val frameworkLogger = Logger.getInstance("#com.intellij.debugger.streams.test")
+val frameworkLogger = Logger.getInstance("#com.intellij.debugger.streams.testFramework")
 
 @RequiresBlockingContext
 fun <T> runBlockingWithFlushing(id: String, timeout: Duration, action: suspend CoroutineScope.() -> T): T {

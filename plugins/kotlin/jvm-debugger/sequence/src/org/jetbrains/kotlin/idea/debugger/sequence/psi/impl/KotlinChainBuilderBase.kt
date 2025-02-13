@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.psi.impl
 
-import com.intellij.debugger.streams.psi.ChainTransformer
+import com.intellij.debugger.streams.core.psi.ChainTransformer
+import com.intellij.debugger.streams.core.wrapper.StreamChain
+import com.intellij.debugger.streams.core.wrapper.StreamChainBuilder
 import com.intellij.debugger.streams.psi.PsiUtil
-import com.intellij.debugger.streams.wrapper.StreamChain
-import com.intellij.debugger.streams.wrapper.StreamChainBuilder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.psi.*

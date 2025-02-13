@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.interpret
 
-import com.intellij.debugger.streams.trace.*
-import com.intellij.debugger.streams.trace.impl.TraceElementImpl
-import com.intellij.debugger.streams.trace.impl.interpret.ValuesOrderInfo
-import com.intellij.debugger.streams.trace.impl.interpret.ex.UnexpectedValueTypeException
-import com.intellij.debugger.streams.wrapper.StreamCall
+import com.intellij.debugger.streams.core.trace.*
+import com.intellij.debugger.streams.core.trace.impl.TraceElementImpl
+import com.intellij.debugger.streams.core.trace.impl.interpret.ValuesOrderInfo
+import com.intellij.debugger.streams.core.trace.impl.interpret.ex.UnexpectedValueTypeException
+import com.intellij.debugger.streams.core.wrapper.StreamCall
 
 class FilterTraceInterpreter(private val predicateValueToAccept: Boolean) : CallTraceInterpreter {
     override fun resolve(call: StreamCall, value: Value): TraceInfo {

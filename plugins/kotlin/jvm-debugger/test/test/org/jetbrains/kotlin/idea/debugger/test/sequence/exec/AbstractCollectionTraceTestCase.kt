@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.test.sequence.exec
 
-import com.intellij.debugger.streams.lib.LibrarySupportProvider
+import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
 import org.jetbrains.kotlin.idea.debugger.sequence.lib.collections.KotlinCollectionSupportProvider
 
 @Suppress("unused")

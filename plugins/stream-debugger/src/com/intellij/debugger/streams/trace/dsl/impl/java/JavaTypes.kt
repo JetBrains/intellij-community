@@ -1,8 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.trace.dsl.impl.java
 
-import com.intellij.debugger.streams.trace.dsl.Types
-import com.intellij.debugger.streams.trace.impl.handler.type.*
+import com.intellij.debugger.streams.core.trace.dsl.Types
+import com.intellij.debugger.streams.core.trace.impl.handler.type.*
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiType

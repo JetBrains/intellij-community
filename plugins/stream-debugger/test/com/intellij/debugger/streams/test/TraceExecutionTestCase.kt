@@ -3,11 +3,13 @@ package com.intellij.debugger.streams.test
 
 import com.intellij.debugger.DebuggerTestCase
 import com.intellij.debugger.impl.OutputChecker
-import com.intellij.debugger.streams.lib.LibrarySupportProvider
+import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
+import com.intellij.debugger.streams.core.psi.DebuggerPositionResolver
+import com.intellij.debugger.streams.core.psi.impl.DebuggerPositionResolverImpl
+import com.intellij.debugger.streams.core.testFramework.ChainSelector
+import com.intellij.debugger.streams.core.testFramework.ChainSelector.Companion.byIndex
+import com.intellij.debugger.streams.core.testFramework.TraceExecutionTestHelper
 import com.intellij.debugger.streams.lib.impl.StandardLibrarySupportProvider
-import com.intellij.debugger.streams.psi.DebuggerPositionResolver
-import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl
-import com.intellij.debugger.streams.test.ChainSelector.Companion.byIndex
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.ApplicationManager

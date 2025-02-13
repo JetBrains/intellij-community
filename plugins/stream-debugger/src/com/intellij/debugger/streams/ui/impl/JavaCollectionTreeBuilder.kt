@@ -4,10 +4,10 @@ package com.intellij.debugger.streams.ui.impl
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.memory.utils.InstanceJavaValue
-import com.intellij.debugger.streams.trace.CollectionTreeBuilder
-import com.intellij.debugger.streams.trace.DebuggerCommandLauncher
-import com.intellij.debugger.streams.trace.TraceElement
-import com.intellij.debugger.streams.trace.Value
+import com.intellij.debugger.streams.core.trace.CollectionTreeBuilder
+import com.intellij.debugger.streams.core.trace.DebuggerCommandLauncher
+import com.intellij.debugger.streams.core.trace.TraceElement
+import com.intellij.debugger.streams.core.trace.Value
 import com.intellij.debugger.streams.trace.impl.JavaDebuggerCommandLauncher
 import com.intellij.debugger.streams.trace.impl.JvmValue
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl

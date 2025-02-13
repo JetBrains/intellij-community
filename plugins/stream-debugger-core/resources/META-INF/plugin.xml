@@ -7,13 +7,13 @@
   <resource-bundle>messages.StreamDebuggerBundle</resource-bundle>
 
   <extensionPoints>
-    <extensionPoint name="librarySupport" interface="com.intellij.debugger.streams.lib.LibrarySupportProvider" dynamic="true"/>
+    <extensionPoint name="librarySupport" interface="com.intellij.debugger.streams.core.lib.LibrarySupportProvider" dynamic="true"/>
   </extensionPoints>
 
   <actions>
     <action id="StreamTracerAction"
-            class="com.intellij.debugger.streams.action.TraceStreamAction"
-            icon="JavaDebuggerStreamsIcons.Stream_debugger">
+            class="com.intellij.debugger.streams.core.action.TraceStreamAction"
+            icon="com.intellij.debugger.streams.core.icons.DebuggerStreamsCoreIcons.Stream_debugger">
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="after" relative-to-action="EvaluateExpression"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
     </action>

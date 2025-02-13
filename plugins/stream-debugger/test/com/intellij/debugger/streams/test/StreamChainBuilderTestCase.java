@@ -2,11 +2,11 @@
 package com.intellij.debugger.streams.test;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.streams.core.wrapper.StreamChain;
+import com.intellij.debugger.streams.core.wrapper.StreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.JavaChainTransformerImpl;
 import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.PackageChainDetector;
-import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.Computable;

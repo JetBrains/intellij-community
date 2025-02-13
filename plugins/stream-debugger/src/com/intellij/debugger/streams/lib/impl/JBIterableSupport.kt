@@ -1,10 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.lib.impl
 
-import com.intellij.debugger.streams.resolve.AppendResolver
-import com.intellij.debugger.streams.resolve.FilteredMapResolver
-import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctByKeyHandler
-import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctTraceHandler
+import com.intellij.debugger.streams.core.lib.impl.*
+import com.intellij.debugger.streams.core.resolve.AppendResolver
+import com.intellij.debugger.streams.core.resolve.FilteredMapResolver
+import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctByKeyHandler
+import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctTraceHandler
 
 /**
  * @author Vitaliy.Bibaev

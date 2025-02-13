@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
-import com.intellij.debugger.streams.trace.dsl.*
-import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
-import com.intellij.debugger.streams.trace.dsl.impl.common.MapVariableBase
-import com.intellij.debugger.streams.trace.impl.handler.type.MapType
+import com.intellij.debugger.streams.core.trace.dsl.*
+import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
+import com.intellij.debugger.streams.core.trace.dsl.impl.common.MapVariableBase
+import com.intellij.debugger.streams.core.trace.impl.handler.type.MapType
 
 class KotlinMapVariable(type: MapType, name: String) : MapVariableBase(type, name) {
     override operator fun get(key: Expression): Expression = this.call("getValue", key)

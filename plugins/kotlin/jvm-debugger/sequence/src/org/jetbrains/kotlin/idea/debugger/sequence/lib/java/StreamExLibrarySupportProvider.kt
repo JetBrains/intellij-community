@@ -2,12 +2,12 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.lib.java
 
-import com.intellij.debugger.streams.lib.LibrarySupport
+import com.intellij.debugger.streams.core.lib.LibrarySupport
+import com.intellij.debugger.streams.core.trace.TraceExpressionBuilder
+import com.intellij.debugger.streams.core.trace.dsl.impl.DslImpl
+import com.intellij.debugger.streams.core.wrapper.StreamChainBuilder
 import com.intellij.debugger.streams.lib.impl.JvmLibrarySupportProvider
 import com.intellij.debugger.streams.lib.impl.StreamExLibrarySupport
-import com.intellij.debugger.streams.trace.TraceExpressionBuilder
-import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
-import com.intellij.debugger.streams.wrapper.StreamChainBuilder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.impl.KotlinChainTransformerImpl

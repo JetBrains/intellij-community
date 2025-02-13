@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.debugger.test.sequence.exec
 
-import com.intellij.debugger.streams.lib.LibrarySupportProvider
-import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl
-import com.intellij.debugger.streams.test.ChainSelector
+import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
+import com.intellij.debugger.streams.core.psi.impl.DebuggerPositionResolverImpl
+import com.intellij.debugger.streams.core.testFramework.ChainSelector
 import com.intellij.debugger.streams.test.ExecutionTestCaseHelper
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.application.ApplicationManager

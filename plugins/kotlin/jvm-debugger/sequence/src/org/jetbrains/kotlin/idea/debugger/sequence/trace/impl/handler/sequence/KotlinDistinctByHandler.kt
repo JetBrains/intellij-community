@@ -2,15 +2,15 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.sequence
 
-import com.intellij.debugger.streams.trace.dsl.*
-import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
-import com.intellij.debugger.streams.trace.impl.handler.type.ClassTypeImpl
-import com.intellij.debugger.streams.trace.impl.handler.unified.HandlerBase
-import com.intellij.debugger.streams.trace.impl.handler.unified.PeekTraceHandler
-import com.intellij.debugger.streams.wrapper.CallArgument
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
-import com.intellij.debugger.streams.wrapper.impl.CallArgumentImpl
-import com.intellij.debugger.streams.wrapper.impl.IntermediateStreamCallImpl
+import com.intellij.debugger.streams.core.trace.dsl.*
+import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ClassTypeImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.unified.HandlerBase
+import com.intellij.debugger.streams.core.trace.impl.handler.unified.PeekTraceHandler
+import com.intellij.debugger.streams.core.wrapper.CallArgument
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.core.wrapper.impl.CallArgumentImpl
+import com.intellij.debugger.streams.core.wrapper.impl.IntermediateStreamCallImpl
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinSequenceTypes
 
 /**

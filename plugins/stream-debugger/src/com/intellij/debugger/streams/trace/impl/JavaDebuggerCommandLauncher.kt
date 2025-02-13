@@ -3,7 +3,7 @@ package com.intellij.debugger.streams.trace.impl
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.withDebugContext
-import com.intellij.debugger.streams.trace.DebuggerCommandLauncher
+import com.intellij.debugger.streams.core.trace.DebuggerCommandLauncher
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

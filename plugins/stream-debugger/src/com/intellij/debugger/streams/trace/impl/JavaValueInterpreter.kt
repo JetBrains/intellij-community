@@ -3,8 +3,8 @@ package com.intellij.debugger.streams.trace.impl
 
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JavaValue
-import com.intellij.debugger.streams.StreamDebuggerBundle
-import com.intellij.debugger.streams.trace.XValueInterpreter
+import com.intellij.debugger.streams.core.StreamDebuggerBundle
+import com.intellij.debugger.streams.core.trace.XValueInterpreter
 import com.intellij.psi.CommonClassNames
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XValue

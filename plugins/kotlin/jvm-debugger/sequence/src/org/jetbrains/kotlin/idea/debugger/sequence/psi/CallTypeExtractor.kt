@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.psi
 
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
 import org.jetbrains.kotlin.idea.core.receiverType
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinSequenceTypes

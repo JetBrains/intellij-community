@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
-import com.intellij.debugger.streams.trace.dsl.Variable
-import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
+import com.intellij.debugger.streams.core.trace.dsl.Variable
+import com.intellij.debugger.streams.core.trace.dsl.VariableDeclaration
 
 class KotlinVariableDeclaration(
     override val variable: Variable,

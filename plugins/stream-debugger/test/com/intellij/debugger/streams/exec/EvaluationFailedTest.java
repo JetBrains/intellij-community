@@ -1,14 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.exec;
 
+import com.intellij.debugger.streams.core.testFramework.TraceExecutionTestHelper;
+import com.intellij.debugger.streams.core.trace.TraceExpressionBuilder;
+import com.intellij.debugger.streams.core.trace.TracingResult;
+import com.intellij.debugger.streams.core.wrapper.StreamChain;
 import com.intellij.debugger.streams.test.ExecutionTestCaseHelper;
-import com.intellij.debugger.streams.test.TraceExecutionTestHelper;
-import com.intellij.debugger.streams.trace.TraceExpressionBuilder;
-import com.intellij.debugger.streams.trace.TracingResult;
-import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.ui.impl.watch.CompilingEvaluator;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.NotNull;

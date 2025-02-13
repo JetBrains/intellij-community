@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
-import com.intellij.debugger.streams.trace.dsl.Expression
-import com.intellij.debugger.streams.trace.dsl.ListVariable
-import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
-import com.intellij.debugger.streams.trace.dsl.impl.VariableImpl
-import com.intellij.debugger.streams.trace.impl.handler.type.ListType
+import com.intellij.debugger.streams.core.trace.dsl.Expression
+import com.intellij.debugger.streams.core.trace.dsl.ListVariable
+import com.intellij.debugger.streams.core.trace.dsl.VariableDeclaration
+import com.intellij.debugger.streams.core.trace.dsl.impl.VariableImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.type.ListType
 
 class KotlinListVariable(override val type: ListType, name: String) : VariableImpl(type, name), ListVariable {
     override operator fun get(index: Expression): Expression = call("get", index)

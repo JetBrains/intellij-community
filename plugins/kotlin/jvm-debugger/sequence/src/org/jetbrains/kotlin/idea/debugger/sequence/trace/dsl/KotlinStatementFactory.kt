@@ -2,12 +2,12 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
-import com.intellij.debugger.streams.trace.dsl.*
-import com.intellij.debugger.streams.trace.dsl.impl.AssignmentStatement
-import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
-import com.intellij.debugger.streams.trace.dsl.impl.VariableImpl
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.core.trace.dsl.*
+import com.intellij.debugger.streams.core.trace.dsl.impl.AssignmentStatement
+import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
+import com.intellij.debugger.streams.core.trace.dsl.impl.VariableImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import org.jetbrains.annotations.NonNls
 
 class KotlinStatementFactory(private val peekCallFactory: PeekCallFactory) : StatementFactory {
@@ -37,8 +37,8 @@ class KotlinStatementFactory(private val peekCallFactory: PeekCallFactory) : Sta
         KotlinForEachLoop(iterateVariable, collection, loopBody)
 
     override fun createForLoop(
-        initialization: VariableDeclaration, condition: Expression,
-        afterThought: Expression, loopBody: ForLoopBody
+      initialization: VariableDeclaration, condition: Expression,
+      afterThought: Expression, loopBody: ForLoopBody
     ): Convertable =
         KotlinForLoop(initialization, condition, afterThought, loopBody)
 

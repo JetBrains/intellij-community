@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
-import com.intellij.debugger.streams.trace.dsl.Expression
-import com.intellij.debugger.streams.trace.dsl.LambdaBody
-import com.intellij.debugger.streams.trace.dsl.StatementFactory
+import com.intellij.debugger.streams.core.trace.dsl.Expression
+import com.intellij.debugger.streams.core.trace.dsl.LambdaBody
+import com.intellij.debugger.streams.core.trace.dsl.StatementFactory
 
 class KotlinLambdaBody(override val lambdaArg: Expression, statementFactory: StatementFactory) :
     KotlinCodeBlock(statementFactory), LambdaBody
