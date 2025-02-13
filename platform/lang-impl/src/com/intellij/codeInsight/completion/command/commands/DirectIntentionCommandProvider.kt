@@ -57,12 +57,23 @@ import java.util.function.Predicate
 internal class DirectIntentionCommandProvider : CommandProvider {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     if (!Registry.`is`("ide.completion.command.enabled")) return emptyList()
+    val originalEditor = context.originalEditor
+    val psiFile = context.psiFile
+    val offset = context.offset
+    val editor = context.editor
+    val originalPsiFile = context.originalPsiFile
+
+    //doesn't work for empty line
+    val fileDocument = psiFile.fileDocument
+    val lineNumber = fileDocument.getLineNumber(offset)
+    val lineStartOffset = fileDocument.getLineStartOffset(lineNumber)
+    val lineEndOffset = fileDocument.getLineEndOffset(lineNumber)
+    val subSequence = fileDocument.charsSequence.subSequence(lineStartOffset, lineEndOffset)
+    if (subSequence.isBlank()) {
+      return emptyList()
+    }
+
     return runBlockingCancellable {
-      val originalEditor = context.originalEditor
-      val psiFile = context.psiFile
-      val offset = context.offset
-      val editor = context.editor
-      val originalPsiFile = context.originalPsiFile
       val result: MutableList<CompletionCommand> = ArrayList()
 
       val errorCache = originalEditor.getUserData(ERROR_CACHE)

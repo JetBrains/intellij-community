@@ -361,6 +361,11 @@ internal class CommandCompletionCharFilter : CharFilter() {
         editor.document.immutableCharSequence[offset - 1] == completionFactory.suffix() &&
         lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) != true && !lookup.isFocused) return Result.ADD_TO_PREFIX
     val element = lookup.currentItem ?: return null
+    if (c == ' ' &&
+        findCommandCompletionType(completionFactory, false, offset, editor) is InvocationCommandType.FullLine &&
+        !lookup.isFocused) {
+      return Result.ADD_TO_PREFIX
+    }
     element.`as`(CommandCompletionLookupElement::class.java) ?: return null
     return Result.ADD_TO_PREFIX
   }

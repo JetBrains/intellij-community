@@ -173,42 +173,6 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     return weigher
   }
 
-  private fun findCommandCompletionType(
-    factory: CommandCompletionFactory,
-    isNonWritten: Boolean,
-    offset: Int,
-    editor: Editor,
-  ): InvocationCommandType? {
-    val suffix = factory.suffix().toString() + (factory.filterSuffix() ?: "")
-    val text = editor.document.immutableCharSequence
-    if (isNonWritten) {
-      return InvocationCommandType.FullSuffix("", editor.document.immutableCharSequence.substring(0, editor.caretModel.offset))
-    }
-    val indexOf = findActualIndex(suffix, text, offset)
-    if (offset - indexOf < 0) return null
-    if (indexOf == 1) {
-      //one point
-      return InvocationCommandType.PartialSuffix(text.substring(offset - indexOf + 1, offset),
-                                                 text.substring(offset - indexOf, offset - indexOf + 1))
-    }
-    //two points
-    else if (offset - indexOf + 2 <= text.length && text.substring(offset - indexOf, offset - indexOf + 2) == suffix) {
-      return InvocationCommandType.FullSuffix(text.substring(offset - indexOf + 2, offset),
-                                              text.substring(offset - indexOf, offset - indexOf + 2))
-    }
-    if (indexOf > 0 && text.substring(offset - indexOf, offset - indexOf + 2).contains(factory.suffix())) {
-      //force call with one point
-      return InvocationCommandType.PartialSuffix(text.substring(offset - indexOf + 1, offset),
-                                                 text.substring(offset - indexOf, offset - indexOf + 1))
-    }
-    if (!Registry.`is`("ide.completion.command.full.line.enabled")) return null
-    if (indexOf > 0) {
-      //full empty line
-      return InvocationCommandType.FullLine(text.substring(offset - indexOf, offset), "")
-    }
-    return null
-  }
-
   private fun processCommandsForContext(
     commandCompletionFactory: CommandCompletionFactory,
     project: Project,
@@ -391,4 +355,40 @@ internal fun findActualIndex(suffix: String, text: CharSequence, offset: Int): I
     if (currentIndex >= 0) indexOf = currentIndex
   }
   return indexOf
+}
+
+internal fun findCommandCompletionType(
+  factory: CommandCompletionFactory,
+  isNonWritten: Boolean,
+  offset: Int,
+  editor: Editor,
+): InvocationCommandType? {
+  val suffix = factory.suffix().toString() + (factory.filterSuffix() ?: "")
+  val text = editor.document.immutableCharSequence
+  if (isNonWritten) {
+    return InvocationCommandType.FullSuffix("", editor.document.immutableCharSequence.substring(0, editor.caretModel.offset))
+  }
+  val indexOf = findActualIndex(suffix, text, offset)
+  if (offset - indexOf < 0) return null
+  if (indexOf == 1) {
+    //one point
+    return InvocationCommandType.PartialSuffix(text.substring(offset - indexOf + 1, offset),
+                                               text.substring(offset - indexOf, offset - indexOf + 1))
+  }
+  //two points
+  else if (offset - indexOf + 2 <= text.length && text.substring(offset - indexOf, offset - indexOf + 2) == suffix) {
+    return InvocationCommandType.FullSuffix(text.substring(offset - indexOf + 2, offset),
+                                            text.substring(offset - indexOf, offset - indexOf + 2))
+  }
+  if (indexOf > 0 && text.substring(offset - indexOf, offset - indexOf + 2).contains(factory.suffix())) {
+    //force call with one point
+    return InvocationCommandType.PartialSuffix(text.substring(offset - indexOf + 1, offset),
+                                               text.substring(offset - indexOf, offset - indexOf + 1))
+  }
+  if (!Registry.`is`("ide.completion.command.full.line.enabled")) return null
+  if (indexOf > 0) {
+    //full empty line
+    return InvocationCommandType.FullLine(text.substring(offset - indexOf, offset), "")
+  }
+  return null
 }
