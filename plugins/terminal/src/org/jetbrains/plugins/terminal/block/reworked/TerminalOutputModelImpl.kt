@@ -170,7 +170,7 @@ class TerminalOutputModelImpl(
      * Indexes of the ranges are absolute to support trimming the start of the list
      * without reassigning indexes for the remaining ranges: [removeBefore].
      */
-    private val highlightings: MutableList<HighlightingInfo> = ArrayDeque()
+    private val styleRanges: MutableList<StyleRange> = ArrayDeque()
 
     /**
      * Contains sorted ranges of the highlightings that cover all document length.
@@ -183,8 +183,8 @@ class TerminalOutputModelImpl(
         return highlightingsSnapshot!!
       }
 
-      val documentRelativeHighlightings = highlightings.map {
-        HighlightingInfo(it.startOffset - trimmedCharsCount, it.endOffset - trimmedCharsCount, it.textAttributesProvider)
+      val documentRelativeHighlightings = styleRanges.map {
+        HighlightingInfo(it.startOffset - trimmedCharsCount, it.endOffset - trimmedCharsCount, TextStyleAdapter(it.style, colorPalette))
       }
       val snapshot = TerminalOutputHighlightingsSnapshot(document, documentRelativeHighlightings)
       highlightingsSnapshot = snapshot
@@ -194,12 +194,12 @@ class TerminalOutputModelImpl(
     fun addHighlightings(documentOffset: Int, styles: List<StyleRange>) {
       val absoluteOffset = documentOffset + trimmedCharsCount
 
-      check(highlightings.isEmpty() || highlightings.last().endOffset <= absoluteOffset) { "New highlightings overlap with existing" }
+      check(styleRanges.isEmpty() || styleRanges.last().endOffset <= absoluteOffset) { "New highlightings overlap with existing" }
 
-      val newHighlightings = styles.map {
-        HighlightingInfo(absoluteOffset + it.startOffset, absoluteOffset + it.endOffset, TextStyleAdapter(it.style, colorPalette))
+      val adjustedStyles = styles.map {
+        StyleRange(absoluteOffset + it.startOffset, absoluteOffset + it.endOffset, it.style)
       }
-      highlightings.addAll(newHighlightings)
+      styleRanges.addAll(adjustedStyles)
 
       highlightingsSnapshot = null
     }
@@ -211,13 +211,13 @@ class TerminalOutputModelImpl(
     fun insertEmptyHighlightings(documentOffset: Int, length: Int) {
       val absoluteOffset = documentOffset + trimmedCharsCount
 
-      val highlightingIndex = highlightings.binarySearch { it.startOffset.compareTo(absoluteOffset) }
-      val updateFromIndex = if (highlightingIndex < 0) -highlightingIndex - 1 else highlightingIndex
+      val styleIndex = styleRanges.binarySearch { it.startOffset.compareTo(absoluteOffset) }
+      val updateFromIndex = if (styleIndex < 0) -styleIndex - 1 else styleIndex
 
-      if (updateFromIndex < highlightings.size) {
-        for (ind in (updateFromIndex until highlightings.size)) {
-          val cur = highlightings[ind]
-          highlightings[ind] = HighlightingInfo(cur.startOffset + length, cur.endOffset + length, cur.textAttributesProvider)
+      if (updateFromIndex < styleRanges.size) {
+        for (ind in (updateFromIndex until styleRanges.size)) {
+          val cur = styleRanges[ind]
+          styleRanges[ind] = StyleRange(cur.startOffset + length, cur.endOffset + length, cur.style)
         }
 
         highlightingsSnapshot = null
@@ -226,10 +226,10 @@ class TerminalOutputModelImpl(
 
     fun removeAfter(documentOffset: Int) {
       val absoluteOffset = documentOffset + trimmedCharsCount
-      val highlightingIndex = highlightings.binarySearch { it.endOffset.compareTo(absoluteOffset) }
-      val removeFromIndex = if (highlightingIndex < 0) -highlightingIndex - 1 else highlightingIndex + 1
-      for (ind in (highlightings.size - 1) downTo removeFromIndex) {
-        highlightings.removeAt(ind)
+      val styleIndex = styleRanges.binarySearch { it.endOffset.compareTo(absoluteOffset) }
+      val removeFromIndex = if (styleIndex < 0) -styleIndex - 1 else styleIndex + 1
+      for (ind in (styleRanges.size - 1) downTo removeFromIndex) {
+        styleRanges.removeAt(ind)
       }
 
       highlightingsSnapshot = null
@@ -237,10 +237,10 @@ class TerminalOutputModelImpl(
 
     fun removeBefore(documentOffset: Int) {
       val absoluteOffset = documentOffset + trimmedCharsCount
-      val highlightingIndex = highlightings.binarySearch { it.startOffset.compareTo(absoluteOffset) }
-      val removeUntilHighlightingIndex = if (highlightingIndex < 0) -highlightingIndex - 1 else highlightingIndex
+      val styleIndex = styleRanges.binarySearch { it.startOffset.compareTo(absoluteOffset) }
+      val removeUntilHighlightingIndex = if (styleIndex < 0) -styleIndex - 1 else styleIndex
       repeat(removeUntilHighlightingIndex) {
-        highlightings.removeAt(0)
+        styleRanges.removeAt(0)
       }
 
       highlightingsSnapshot = null
