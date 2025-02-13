@@ -677,6 +677,10 @@ final class JavaErrorFixProvider {
   private void createTypeFixes() {
     fixes(TYPE_INCOMPATIBLE, (error, sink) -> 
       HighlightFixUtil.registerIncompatibleTypeFixes(sink, error.psi(), error.context().lType(), error.context().rType()));
+    fixes(SWITCH_EXPRESSION_INCOMPATIBLE_TYPE, (error, sink) -> 
+      HighlightFixUtil.registerIncompatibleTypeFixes(sink,
+                                                     requireNonNull(PsiTreeUtil.getParentOfType(error.psi(), PsiSwitchExpression.class)), 
+                                                     error.context().lType(), error.context().rType()));
     fixes(CALL_TYPE_INFERENCE_ERROR, (error, sink) -> {
       if (error.psi() instanceof PsiMethodCallExpression callExpression) {
         HighlightFixUtil.registerCallInferenceFixes(callExpression, sink);

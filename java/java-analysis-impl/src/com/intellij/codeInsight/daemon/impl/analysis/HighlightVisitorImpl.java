@@ -310,7 +310,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
     checkSwitchBlock(expression);
-    if (!hasErrorResults()) HighlightUtil.checkSwitchExpressionReturnTypeCompatible(expression, myErrorSink);
     if (!hasErrorResults()) super.visitSwitchExpression(expression);
   }
 

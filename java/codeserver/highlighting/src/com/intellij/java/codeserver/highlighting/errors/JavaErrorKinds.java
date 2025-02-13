@@ -905,6 +905,12 @@ public final class JavaErrorKinds {
   public static final Simple<PsiSwitchExpression> SWITCH_EXPRESSION_SHOULD_PRODUCE_RESULT = 
     error(PsiSwitchExpression.class, "switch.expression.should.produce.result")
       .withAnchor(switchExpression -> requireNonNullElse(tryCast(switchExpression.getFirstChild(), PsiKeyword.class), switchExpression));
+  public static final Simple<PsiSwitchExpression> SWITCH_EXPRESSION_CANNOT_BE_VOID = 
+    error(PsiSwitchExpression.class, "switch.expression.cannot.be.void")
+      .withAnchor(switchExpression -> requireNonNullElse(tryCast(switchExpression.getFirstChild(), PsiKeyword.class), switchExpression));
+  public static final Parameterized<PsiExpression, JavaIncompatibleTypeErrorContext> SWITCH_EXPRESSION_INCOMPATIBLE_TYPE = 
+    parameterized(PsiExpression.class, JavaIncompatibleTypeErrorContext.class, "switch.expression.incompatible.type")
+      .withRawDescription((expr, context) -> message("switch.expression.incompatible.type", formatType(context.rType()), formatType(context.lType())));
   
   public static final Simple<PsiReferenceExpression> EXPRESSION_EXPECTED = error("expression.expected");
   public static final Parameterized<PsiReferenceExpression, PsiSuperExpression> EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD = 
