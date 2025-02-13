@@ -15,11 +15,13 @@ import fleet.kernel.DurableEntityType
 import kotlinx.serialization.builtins.serializer
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.lang.Deprecated
 
 private typealias Att<T> = Attributes<AdDocumentEntity>.Required<T>
 
-@Internal
 @Experimental
+@Internal
+@Deprecated(forRemoval = true)
 class AdDocumentEntity(override val eid: EID) : Entity {
   val text: Text by TextAttr
   val modStamp: Long by ModStampAttr
