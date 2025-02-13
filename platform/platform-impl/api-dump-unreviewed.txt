@@ -9217,18 +9217,6 @@ f:com.intellij.openapi.keymap.impl.SystemShortcuts$ConflictItem
 - getActionIds():java.lang.String[]
 - getSysActionDesc():java.lang.String
 - getSysKeyStroke():javax.swing.KeyStroke
-f:com.intellij.openapi.keymap.impl.UpdateResult
-- <init>(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,J):V
-- f:component1():com.intellij.openapi.actionSystem.AnAction
-- f:component2():com.intellij.openapi.actionSystem.AnActionEvent
-- f:component3():J
-- f:copy(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,J):com.intellij.openapi.keymap.impl.UpdateResult
-- bs:copy$default(com.intellij.openapi.keymap.impl.UpdateResult,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent,J,I,java.lang.Object):com.intellij.openapi.keymap.impl.UpdateResult
-- equals(java.lang.Object):Z
-- f:getAction():com.intellij.openapi.actionSystem.AnAction
-- f:getEvent():com.intellij.openapi.actionSystem.AnActionEvent
-- f:getStartedAt():J
-- hashCode():I
 f:com.intellij.openapi.keymap.impl.ui.ActionsTree
 - <init>():V
 - addTreeSelectionListener(javax.swing.event.TreeSelectionListener):V
