@@ -39,7 +39,7 @@ import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.jps.incremental.fs.BuildFSState.CURRENT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.fs.BuildFSState.NEXT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.fs.CompilationRound
-import org.jetbrains.jps.incremental.messages.BuildMessage
+import org.jetbrains.jps.incremental.messages.BuildMessage.Kind
 import org.jetbrains.jps.incremental.messages.CompilerMessage
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent
@@ -47,6 +47,7 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage
 import org.jetbrains.jps.model.module.JpsModule
 import java.io.IOException
 import java.nio.file.Path
+import java.util.Map
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.coroutineContext
@@ -238,7 +239,10 @@ internal class JpsTargetBuilder(
             }
             else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
               if (!rebuildFromScratchRequested && !isCleanBuild) {
-                notifyChunkRebuildRequested(context, chunk, builder)
+                var infoMessage = "Builder \"${builder.presentableName}\" requested rebuild of module chunk \"${chunk.name}\""
+                infoMessage += ".\n"
+                infoMessage += "Consider building whole project or rebuilding the module."
+                context.processMessage(CompilerMessage("", Kind.INFO, infoMessage))
                 // allow rebuild from scratch only once per chunk
                 rebuildFromScratchRequested = true
                 // forcibly mark all files in the chunk dirty
@@ -275,7 +279,7 @@ internal class JpsTargetBuilder(
         builder.chunkBuildFinished(context, chunk)
       }
       if (Utils.errorsDetected(context)) {
-        context.processMessage(CompilerMessage("", BuildMessage.Kind.JPS_INFO, "Errors occurred while compiling module ${chunk.presentableShortName}"))
+        context.processMessage(CompilerMessage("", Kind.JPS_INFO, "Errors occurred while compiling module ${chunk.presentableShortName}"))
       }
     }
 
@@ -311,7 +315,7 @@ internal class JpsTargetBuilder(
             require(context.getUserData(NEXT_ROUND_DELTA_KEY) == null)
             val buildRootIndex = projectDescriptor.buildRootIndex as BazelBuildRootIndex
             if (buildState.changedFiles.isEmpty()) {
-              fsState.getDelta(target).initRecompile(java.util.Map.of())
+              fsState.getDelta(target).initRecompile(Map.of())
             }
             else {
               val k = Array<BuildRootDescriptor>(buildState.changedFiles.size) {
@@ -441,13 +445,13 @@ private fun deleteOutputsAssociatedWithDeletedPaths(
 
   val removedSources = context.getUserData(Utils.REMOVED_SOURCES_KEY)?.get(target)
   if (removedSources == null) {
-    Utils.REMOVED_SOURCES_KEY.set(context, java.util.Map.of(target, deletedFiles.map { it.sourceFile } as Collection<Path>))
+    Utils.REMOVED_SOURCES_KEY.set(context, Map.of(target, deletedFiles.map { it.sourceFile } as Collection<Path>))
   }
   else {
     val set = linkedSet<Path>()
     set.addAll(removedSources)
     deletedFiles.mapTo(set) { it.sourceFile }
-    context.putUserData(Utils.REMOVED_SOURCES_KEY, java.util.Map.of(target, set as Collection<Path>))
+    context.putUserData(Utils.REMOVED_SOURCES_KEY, Map.of(target, set as Collection<Path>))
   }
 
   return doneSomething
@@ -484,37 +488,22 @@ private fun completeRecompiledSourcesSet(context: CompileContext, target: BazelM
   }
 
   // one output can be produced by different sources, so, we find intersection by outputs
-  val affectedSourceFiles = sourceToOut.findAffectedSources(affected)
-  if (affectedSourceFiles.isEmpty()) {
+  val affectedSources = sourceToOut.findAffectedSources(affected)
+  if (affectedSources.isEmpty()) {
     return
   }
 
   val fileToDescriptors = (context.projectDescriptor.buildRootIndex as BazelBuildRootIndex).fileToDescriptors
-  val stampStorage = dataManager.stampStorage
-  val fsState = context.projectDescriptor.fsState
-  for (file in affectedSourceFiles) {
-    val rootDescriptor = fileToDescriptors.get(file) ?: continue
-    fsState.markDirtyIfNotDeleted(
-      context,
-      CompilationRound.CURRENT,
-      file,
-      rootDescriptor,
-      stampStorage,
-    )
+  val currentRoundFileDelta = context.getUserData(CURRENT_ROUND_DELTA_KEY)
+  val fileDelta = context.projectDescriptor.fsState.getDelta(target)
+  for (sourceDescriptor in affectedSources) {
+    val sourceFile = sourceDescriptor.sourceFile
+    val rootDescriptor = fileToDescriptors.get(sourceFile) ?: continue
+    val marked = fileDelta.markRecompileIfNotDeleted(rootDescriptor, sourceFile)
+    if (marked) {
+      sourceDescriptor.isChanged = true
+      currentRoundFileDelta?.markRecompile(rootDescriptor, sourceFile)
+    }
   }
 }
 
-private fun notifyChunkRebuildRequested(context: CompileContext, chunk: ModuleChunk, builder: ModuleLevelBuilder) {
-  var infoMessage = "Builder \"${builder.presentableName}\" requested rebuild of module chunk \"${chunk.name}\""
-  var kind = BuildMessage.Kind.JPS_INFO
-  val scope = context.scope
-  for (target in chunk.targets) {
-    if (!scope.isWholeTargetAffected(target)) {
-      infoMessage += ".\n"
-      infoMessage += "Consider building whole project or rebuilding the module."
-      kind = BuildMessage.Kind.INFO
-      break
-    }
-  }
-  context.processMessage(CompilerMessage("", kind, infoMessage))
-}

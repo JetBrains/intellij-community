@@ -208,13 +208,18 @@ internal class BazelSourceToOutputMapping(
     return synchronized(map) { map.get(sourceFile) }
   }
 
-  fun findAffectedSources(affectedSources: List<Array<String>>): List<Path> {
-    val result = ArrayList<Path>(affectedSources.size)
+  fun findAffectedSources(affectedSources: List<Array<String>>): List<SourceDescriptor> {
+    val result = ArrayList<SourceDescriptor>(affectedSources.size)
     synchronized(map) {
       for (descriptor in map.values) {
         for (output in descriptor.outputs) {
-          if (affectedSources.any { it.contains(output) }) {
-            result.add(descriptor.sourceFile)
+          // hack for KTIJ-197
+          // Change of only one input of *.kotlin_module files didn't trigger recompilation of all inputs in old behaviour.
+          // Now it does.
+          // It isn't yet obvious whether it is right or wrong behaviour.
+          // Let's leave old behaviour for a while for safety and keeping kotlin incremental JPS tests green
+          if (!output.endsWith(".kotlin_module") && affectedSources.any { it.contains(output) }) {
+            result.add(descriptor)
             break
           }
         }
