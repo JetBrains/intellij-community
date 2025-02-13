@@ -15,7 +15,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.Stack;
 import com.intellij.xml.parsing.XmlParserBundle;
-import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.util.BasicHtmlUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -471,22 +471,22 @@ public class HtmlParsing {
   }
 
   protected boolean isSingleTag(@NotNull HtmlTagInfo tagInfo) {
-    return HtmlUtil.isSingleHtmlTag(tagInfo.getNormalizedName(), true);
+    return BasicHtmlUtil.isSingleHtmlTag(tagInfo.getNormalizedName(), true);
   }
 
   protected boolean isEndTagRequired(@NotNull HtmlTagInfo tagInfo) {
-    return !HtmlUtil.isTagWithOptionalEnd(tagInfo.getNormalizedName(), true)
+    return !BasicHtmlUtil.isTagWithOptionalEnd(tagInfo.getNormalizedName(), true)
            && !"html".equals(tagInfo.getNormalizedName())
            && !"body".equals(tagInfo.getNormalizedName());
   }
 
   protected @NotNull ThreeState canOpeningTagAutoClose(@NotNull HtmlParsing.HtmlTagInfo tagToClose,
                                                        @NotNull HtmlParsing.HtmlTagInfo openingTag) {
-    return HtmlUtil.canOpeningTagAutoClose(tagToClose.getNormalizedName(), openingTag.getNormalizedName(), true);
+    return BasicHtmlUtil.canOpeningTagAutoClose(tagToClose.getNormalizedName(), openingTag.getNormalizedName(), true);
   }
 
   protected boolean canClosingTagAutoClose(@NotNull HtmlParsing.HtmlTagInfo tagToClose, @NotNull String closingTag) {
-    return HtmlUtil.canClosingTagAutoClose(tagToClose.getNormalizedName(), closingTag, true);
+    return BasicHtmlUtil.canClosingTagAutoClose(tagToClose.getNormalizedName(), closingTag, true);
   }
 
   protected @NotNull PsiBuilder.Marker startText(@Nullable PsiBuilder.Marker xmlText) {
