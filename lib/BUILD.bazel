@@ -1904,8 +1904,8 @@ java_import(
 
 java_import(
   name = "hash4j",
-  jars = ["@hash4j-0_19_0_http//file"],
-  srcjar = "@hash4j-0_19_0-sources_http//file",
+  jars = ["@hash4j-0_20_0_http//file"],
+  srcjar = "@hash4j-0_20_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -3054,8 +3054,8 @@ java_import(
 
 java_import(
   name = "jsoup",
-  jars = ["@jsoup-1_18_1_http//file"],
-  srcjar = "@jsoup-1_18_1-sources_http//file",
+  jars = ["@jsoup-1_18_3_http//file"],
+  srcjar = "@jsoup-1_18_3-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -7276,64 +7276,57 @@ kt_jvm_import(
 java_library(
   name = "opentelemetry",
   exports = [
-    ":opentelemetry-sdk-1_46_0_http_import",
-    ":opentelemetry-api-1_46_0_http_import",
-    ":opentelemetry-context-1_46_0_http_import",
-    ":opentelemetry-sdk-common-1_46_0_http_import",
-    ":opentelemetry-sdk-trace-1_46_0_http_import",
-    ":opentelemetry-api-incubator-1_46_0-alpha_http_import",
-    ":opentelemetry-sdk-metrics-1_46_0_http_import",
-    ":opentelemetry-sdk-logs-1_46_0_http_import",
+    ":opentelemetry-sdk-1_47_0_http_import",
+    ":opentelemetry-api-1_47_0_http_import",
+    ":opentelemetry-context-1_47_0_http_import",
+    ":opentelemetry-sdk-common-1_47_0_http_import",
+    ":opentelemetry-sdk-trace-1_47_0_http_import",
+    ":opentelemetry-sdk-metrics-1_47_0_http_import",
+    ":opentelemetry-sdk-logs-1_47_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 java_import(
-  name = "opentelemetry-sdk-1_46_0_http_import",
-  jars = ["@opentelemetry-sdk-1_46_0_http//file"],
-  srcjar = "@opentelemetry-sdk-1_46_0-sources_http//file"
+  name = "opentelemetry-sdk-1_47_0_http_import",
+  jars = ["@opentelemetry-sdk-1_47_0_http//file"],
+  srcjar = "@opentelemetry-sdk-1_47_0-sources_http//file"
 )
 
 java_import(
-  name = "opentelemetry-api-1_46_0_http_import",
-  jars = ["@opentelemetry-api-1_46_0_http//file"],
-  srcjar = "@opentelemetry-api-1_46_0-sources_http//file"
+  name = "opentelemetry-api-1_47_0_http_import",
+  jars = ["@opentelemetry-api-1_47_0_http//file"],
+  srcjar = "@opentelemetry-api-1_47_0-sources_http//file"
 )
 
 java_import(
-  name = "opentelemetry-context-1_46_0_http_import",
-  jars = ["@opentelemetry-context-1_46_0_http//file"],
-  srcjar = "@opentelemetry-context-1_46_0-sources_http//file"
+  name = "opentelemetry-context-1_47_0_http_import",
+  jars = ["@opentelemetry-context-1_47_0_http//file"],
+  srcjar = "@opentelemetry-context-1_47_0-sources_http//file"
 )
 
 java_import(
-  name = "opentelemetry-sdk-common-1_46_0_http_import",
-  jars = ["@opentelemetry-sdk-common-1_46_0_http//file"],
-  srcjar = "@opentelemetry-sdk-common-1_46_0-sources_http//file"
+  name = "opentelemetry-sdk-common-1_47_0_http_import",
+  jars = ["@opentelemetry-sdk-common-1_47_0_http//file"],
+  srcjar = "@opentelemetry-sdk-common-1_47_0-sources_http//file"
 )
 
 java_import(
-  name = "opentelemetry-sdk-trace-1_46_0_http_import",
-  jars = ["@opentelemetry-sdk-trace-1_46_0_http//file"],
-  srcjar = "@opentelemetry-sdk-trace-1_46_0-sources_http//file"
+  name = "opentelemetry-sdk-trace-1_47_0_http_import",
+  jars = ["@opentelemetry-sdk-trace-1_47_0_http//file"],
+  srcjar = "@opentelemetry-sdk-trace-1_47_0-sources_http//file"
 )
 
 java_import(
-  name = "opentelemetry-api-incubator-1_46_0-alpha_http_import",
-  jars = ["@opentelemetry-api-incubator-1_46_0-alpha_http//file"],
-  srcjar = "@opentelemetry-api-incubator-1_46_0-alpha-sources_http//file"
+  name = "opentelemetry-sdk-metrics-1_47_0_http_import",
+  jars = ["@opentelemetry-sdk-metrics-1_47_0_http//file"],
+  srcjar = "@opentelemetry-sdk-metrics-1_47_0-sources_http//file"
 )
 
 java_import(
-  name = "opentelemetry-sdk-metrics-1_46_0_http_import",
-  jars = ["@opentelemetry-sdk-metrics-1_46_0_http//file"],
-  srcjar = "@opentelemetry-sdk-metrics-1_46_0-sources_http//file"
-)
-
-java_import(
-  name = "opentelemetry-sdk-logs-1_46_0_http_import",
-  jars = ["@opentelemetry-sdk-logs-1_46_0_http//file"],
-  srcjar = "@opentelemetry-sdk-logs-1_46_0-sources_http//file"
+  name = "opentelemetry-sdk-logs-1_47_0_http_import",
+  jars = ["@opentelemetry-sdk-logs-1_47_0_http//file"],
+  srcjar = "@opentelemetry-sdk-logs-1_47_0-sources_http//file"
 )
 
 java_library(
@@ -7346,28 +7339,28 @@ java_library(
 java_library(
   name = "opentelemetry-exporter-otlp-common",
   exports = [
-    ":opentelemetry-exporter-otlp-common-1_46_0_http_import",
-    ":opentelemetry-exporter-common-1_46_0_http_import",
+    ":opentelemetry-exporter-otlp-common-1_47_0_http_import",
+    ":opentelemetry-exporter-common-1_47_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 java_import(
-  name = "opentelemetry-exporter-otlp-common-1_46_0_http_import",
-  jars = ["@opentelemetry-exporter-otlp-common-1_46_0_http//file"],
-  srcjar = "@opentelemetry-exporter-otlp-common-1_46_0-sources_http//file"
+  name = "opentelemetry-exporter-otlp-common-1_47_0_http_import",
+  jars = ["@opentelemetry-exporter-otlp-common-1_47_0_http//file"],
+  srcjar = "@opentelemetry-exporter-otlp-common-1_47_0-sources_http//file"
 )
 
 java_import(
-  name = "opentelemetry-exporter-common-1_46_0_http_import",
-  jars = ["@opentelemetry-exporter-common-1_46_0_http//file"],
-  srcjar = "@opentelemetry-exporter-common-1_46_0-sources_http//file"
+  name = "opentelemetry-exporter-common-1_47_0_http_import",
+  jars = ["@opentelemetry-exporter-common-1_47_0_http//file"],
+  srcjar = "@opentelemetry-exporter-common-1_47_0-sources_http//file"
 )
 
 kt_jvm_import(
   name = "opentelemetry-extension-kotlin",
-  jar = "@opentelemetry-extension-kotlin-1_46_0_http//file",
-  srcjar = "@opentelemetry-extension-kotlin-1_46_0-sources_http//file",
+  jar = "@opentelemetry-extension-kotlin-1_47_0_http//file",
+  srcjar = "@opentelemetry-extension-kotlin-1_47_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -7380,8 +7373,8 @@ java_library(
 
 java_import(
   name = "opentelemetry-semconv",
-  jars = ["@opentelemetry-semconv-1_29_0-alpha_http//file"],
-  srcjar = "@opentelemetry-semconv-1_29_0-alpha-sources_http//file",
+  jars = ["@opentelemetry-semconv-1_30_0-rc_1_http//file"],
+  srcjar = "@opentelemetry-semconv-1_30_0-rc_1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
