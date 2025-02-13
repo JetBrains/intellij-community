@@ -130,6 +130,8 @@ internal class ReworkedTerminalView(
     listenSearchController()
     listenPanelSizeChanges()
     listenAlternateBufferSwitch()
+
+    TerminalVfsSynchronizer.install(controller, this)
   }
 
   override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {

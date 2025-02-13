@@ -7,6 +7,7 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -24,6 +25,8 @@ internal class TerminalSessionController(
 ) {
 
   private val terminationListeners: DisposableWrapperList<Runnable> = DisposableWrapperList()
+  private val shellIntegrationEventDispatcher: EventDispatcher<TerminalShellIntegrationEventsListener> =
+    EventDispatcher.create(TerminalShellIntegrationEventsListener::class.java)
 
   fun handleEvents(channel: ReceiveChannel<List<TerminalOutputEvent>>) {
     coroutineScope.launch {
@@ -72,26 +75,31 @@ internal class TerminalSessionController(
       }
       TerminalShellIntegrationInitializedEvent -> {
         // TODO
+        shellIntegrationEventDispatcher.multicaster.initialized()
       }
       TerminalPromptStartedEvent -> {
         withContext(Dispatchers.EDT) {
           blocksModel.promptStarted(outputModel.cursorOffsetState.value)
         }
+        shellIntegrationEventDispatcher.multicaster.promptStarted()
       }
       TerminalPromptFinishedEvent -> {
         withContext(Dispatchers.EDT) {
           blocksModel.promptFinished(outputModel.cursorOffsetState.value)
         }
+        shellIntegrationEventDispatcher.multicaster.promptFinished()
       }
       is TerminalCommandStartedEvent -> {
         withContext(Dispatchers.EDT) {
           blocksModel.commandStarted(outputModel.cursorOffsetState.value)
         }
+        shellIntegrationEventDispatcher.multicaster.commandStarted(event.command)
       }
       is TerminalCommandFinishedEvent -> {
         withContext(Dispatchers.EDT) {
           blocksModel.commandFinished(event.exitCode)
         }
+        shellIntegrationEventDispatcher.multicaster.commandFinished(event.command, event.exitCode)
       }
     }
   }
@@ -123,5 +131,9 @@ internal class TerminalSessionController(
         thisLogger().error("Unhandled exception in termination listener", t)
       }
     }
+  }
+
+  fun addShellIntegrationListener(parentDisposable: Disposable, listener: TerminalShellIntegrationEventsListener) {
+    shellIntegrationEventDispatcher.addListener(listener, parentDisposable)
   }
 }
