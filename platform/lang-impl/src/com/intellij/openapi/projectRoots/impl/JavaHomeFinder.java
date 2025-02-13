@@ -4,7 +4,6 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
@@ -17,7 +16,6 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,8 +62,6 @@ public abstract class JavaHomeFinder {
       return SystemInfoRt.isFileSystemCaseSensitive;
     }
   }
-
-  public static final Key<JdkVersionDetector.JdkVersionInfo> JDK_VERSION_KEY = new Key<>("jdk.version.info");
 
   /**
    * Tries to find existing Java SDKs on this computer.
@@ -116,14 +112,8 @@ public abstract class JavaHomeFinder {
       return Comparing.compare(path, o.path);
     }
 
-    public @NotNull KeyFMap toFMap() {
-      var map = KeyFMap.EMPTY_MAP.plus(SdkType.HOMEPATH_KEY, path);
-      if (versionInfo != null) {
-        map = map
-          .plus(JDK_VERSION_KEY, versionInfo)
-          .plus(SdkType.VERSION_KEY, versionInfo.displayVersionString());
-      }
-      return map;
+    public @NotNull SdkType.SdkEntry toSdkEntry() {
+      return new SdkType.SdkEntry(path, versionInfo != null ? versionInfo.displayVersionString() : null);
     }
   }
 

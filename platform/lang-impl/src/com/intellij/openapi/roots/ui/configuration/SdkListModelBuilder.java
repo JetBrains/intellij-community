@@ -25,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
@@ -351,12 +350,12 @@ public final class SdkListModelBuilder {
 
       @Override
       public void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home) {
-        onSdkDetected(type, version, home, KeyFMap.EMPTY_MAP);
+        onSdkDetected(type, new SdkType.SdkEntry(version, home));
       }
 
       @Override
-      public void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home, @NotNull KeyFMap info) {
-        SuggestedItem item = new SuggestedItem(type, version, home, info);
+      public void onSdkDetected(@NotNull SdkType type, @NotNull SdkType.SdkEntry entry) {
+        SuggestedItem item = new SuggestedItem(type, entry);
 
         if (!mySuggestedItemsFilter.value(item)) return;
         mySuggestions = ImmutableList.<SuggestedItem>builder()

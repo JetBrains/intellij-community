@@ -13908,8 +13908,8 @@ c:com.intellij.openapi.roots.ui.configuration.SdkDetector
 - getDetectedSdksWithUpdate(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,com.intellij.openapi.application.ModalityState,com.intellij.openapi.roots.ui.configuration.SdkDetector$DetectedSdkListener):V
 - s:getInstance():com.intellij.openapi.roots.ui.configuration.SdkDetector
 com.intellij.openapi.roots.ui.configuration.SdkDetector$DetectedSdkListener
+- onSdkDetected(com.intellij.openapi.projectRoots.SdkType,com.intellij.openapi.projectRoots.SdkType$SdkEntry):V
 - a:onSdkDetected(com.intellij.openapi.projectRoots.SdkType,java.lang.String,java.lang.String):V
-- onSdkDetected(com.intellij.openapi.projectRoots.SdkType,java.lang.String,java.lang.String,com.intellij.util.keyFMap.KeyFMap):V
 - onSearchCompleted():V
 - onSearchStarted():V
 a:com.intellij.openapi.roots.ui.configuration.SdkListItem
@@ -13960,7 +13960,7 @@ f:com.intellij.openapi.roots.ui.configuration.SdkListItem$SdkReferenceItem
 f:com.intellij.openapi.roots.ui.configuration.SdkListItem$SuggestedItem
 - com.intellij.openapi.roots.ui.configuration.SdkListItem
 - f:homePath:java.lang.String
-- f:info:com.intellij.util.keyFMap.KeyFMap
+- f:isSymlink:java.lang.Boolean
 - f:sdkType:com.intellij.openapi.projectRoots.SdkType
 - f:version:java.lang.String
 f:com.intellij.openapi.roots.ui.configuration.SdkListModel
