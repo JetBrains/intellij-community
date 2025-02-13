@@ -5,6 +5,7 @@ import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
@@ -19,6 +20,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentW
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.LineSeparator
+import com.intellij.util.asSafely
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
 import kotlinx.coroutines.coroutineScope
@@ -65,7 +67,10 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
   }
 
   final override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
-    (serviceAsync<JpsGlobalModelSynchronizer>() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities()
+    app.asSafely<ApplicationImpl>()
+      ?.getServiceAsyncIfDefined(JpsGlobalModelSynchronizer::class.java)
+      ?.asSafely<JpsGlobalModelSynchronizerImpl>()
+      ?.saveGlobalEntities()
 
     coroutineScope {
       launch {
