@@ -10,7 +10,7 @@ object PythonNewInterpreterAddedCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("python.new.interpreter.added", 2)
+  private val GROUP = EventLogGroup("python.new.interpreter.added", 3)
   private val PROJECT_GENERATED_EVENT = GROUP.registerVarargEvent("interpreted.added",
                                                                   INTERPRETER_TYPE,
                                                                   EXECUTION_TYPE,
