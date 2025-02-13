@@ -158,6 +158,13 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - pf:isApplicableToProject(I,com.intellij.psi.PsiFile):Z
 - f:setActionId(java.lang.String):V
+*a:com.intellij.codeInsight.completion.command.commands.AbstractChangeSignatureCompletionCommand
+- com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
+- <init>():V
+- execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
+- a:findChangeSignatureOffset(I,com.intellij.psi.PsiFile):java.lang.Integer
+- isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- f:supportsReadOnly():Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractCopyFQNCompletionCommand
 - com.intellij.codeInsight.completion.command.commands.AbstractActionCompletionCommand
 - <init>():V
