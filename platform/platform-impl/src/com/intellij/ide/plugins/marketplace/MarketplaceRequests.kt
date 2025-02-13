@@ -270,7 +270,6 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     }
 
     /**
-     * @param cacheDir path to a cache directory where downloaded sources will be stored; if null, a default location is used
      * @return null if failed to download brokenPlugins from the Marketplace
      */
     fun getBrokenPlugins(currentBuild: BuildNumber): Map<PluginId, Set<String>>? {
