@@ -1,1 +1,2 @@
-// INSPECTION_CLASS: org.jetbrains.kotlin.idea.inspections.RecursivePropertyAccessorInspection
+// INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RecursivePropertyAccessorInspection
+// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RecursivePropertyAccessorInspection

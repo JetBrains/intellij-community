@@ -9505,25 +9505,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inspectionsLocal/recursivePropertyAccessor")
-    public static class RecursivePropertyAccessor extends AbstractLocalInspectionTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K1;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("extensionProperty.kt")
-        public void testExtensionProperty() throws Exception {
-            runTest("testData/inspectionsLocal/recursivePropertyAccessor/extensionProperty.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantCompanionReference")
     public static class RedundantCompanionReference extends AbstractLocalInspectionTest {
         @java.lang.Override
