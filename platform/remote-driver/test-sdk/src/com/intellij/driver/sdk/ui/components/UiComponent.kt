@@ -391,12 +391,6 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     }
   }
 
-  fun hasFocus(): Boolean {
-    return withComponent { it.isFocusOwner() }
-  }
-
-
-
   fun getBackgroundColor(): Color {
     return withComponent { Color(it.getBackground().getRGB()) }
   }
