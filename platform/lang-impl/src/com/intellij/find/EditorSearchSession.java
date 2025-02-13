@@ -643,7 +643,7 @@ public class EditorSearchSession implements SearchSession,
   }
 
   public void selectAllOccurrences() {
-    FindUtil.selectSearchResultsInEditor(myEditor, mySearchResults.getOccurrences().iterator(), -1);
+    FindUtil.selectSearchResultsInEditor(myEditor, mySearchResults.getOccurrences().iterator(), -1, !FindSettings.getInstance().isScrollToResultsDuringTyping());
   }
 
   public void removeOccurrence() {

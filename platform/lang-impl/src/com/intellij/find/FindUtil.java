@@ -48,6 +48,7 @@ import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -979,6 +980,20 @@ public final class FindUtil {
   public static void selectSearchResultsInEditor(@NotNull Editor editor,
                                                  @NotNull Iterator<? extends FindResult> resultIterator,
                                                  int caretShiftFromSelectionStart) {
+    selectSearchResultsInEditor(editor, resultIterator, caretShiftFromSelectionStart, false);
+  }
+
+  /**
+   * Creates a selection in editor per each search result. Existing carets and selections in editor are discarded.
+   *
+   * @param caretShiftFromSelectionStart if non-negative, defines caret position relative to selection start, for each created selection.
+   *                                     if negative, carets will be positioned at selection ends
+   */
+  public static void selectSearchResultsInEditor(@NotNull Editor editor,
+                                                 @NotNull Iterator<? extends FindResult> resultIterator,
+                                                 int caretShiftFromSelectionStart,
+                                                 boolean scrollToNextResult) {
+    LogicalPosition caretPositionBefore = editor.getCaretModel().getLogicalPosition();
     ArrayList<CaretState> caretStates = new ArrayList<>();
     while (resultIterator.hasNext()) {
       FindResult findResult = resultIterator.next();
@@ -997,6 +1012,16 @@ public final class FindUtil {
     }
     else if (!caretStates.isEmpty()){
       editor.getCaretModel().setCaretsAndSelections(caretStates);
+      if (scrollToNextResult) {
+        CaretState nextState = ContainerUtil.find(caretStates, caretState -> {
+          LogicalPosition position = caretState.getCaretPosition();
+          return position != null && position.compareTo(caretPositionBefore) >= 0;
+        });
+        LogicalPosition newPosition = nextState == null ? null : nextState.getCaretPosition();
+        if (nextState != null) {
+          editor.getScrollingModel().scrollTo(newPosition, ScrollType.CENTER);
+        }
+      }
     }
   }
 
