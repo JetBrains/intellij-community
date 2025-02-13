@@ -1705,6 +1705,9 @@
     <applicationService serviceInterface="com.intellij.diagnostic.PerformanceWatcher"
                         serviceImplementation="com.intellij.diagnostic.PerformanceWatcherImpl"/>
 
+    <applicationService serviceInterface="com.intellij.diagnostic.WriteLockMeasurer"
+                        serviceImplementation="com.intellij.diagnostic.WriteLockMeasurerImpl"/>
+
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.headertoolbar.OpenProjectSelectionPredicateSupplier"
                         serviceImplementation="com.intellij.openapi.wm.impl.headertoolbar.DefaultOpenProjectSelectionPredicateSupplier"/>
 

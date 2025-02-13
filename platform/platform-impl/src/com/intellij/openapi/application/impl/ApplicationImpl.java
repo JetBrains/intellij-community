@@ -77,7 +77,7 @@ import static com.intellij.util.concurrency.Propagation.isContextAwareComputatio
 
 @ApiStatus.Internal
 public final class ApplicationImpl extends ClientAwareComponentManager
-  implements ApplicationEx, ReadActionListener, WriteActionListener, WriteIntentReadActionListener {
+  implements ApplicationEx, ReadActionListener, WriteActionListener, WriteIntentReadActionListener, LockAcquisitionListener {
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(ApplicationImpl.class);
   }
@@ -92,6 +92,9 @@ public final class ApplicationImpl extends ClientAwareComponentManager
 
   private final EventDispatcher<WriteIntentReadActionListener> myWriteIntentReadActionListenerDispatcher =
     EventDispatcher.create(WriteIntentReadActionListener.class);
+
+  private final EventDispatcher<LockAcquisitionListener> myLockAcquisitionListenerDispatcher =
+    EventDispatcher.create(LockAcquisitionListener.class);
 
   private final boolean myTestModeFlag;
   private final boolean myHeadlessMode;
@@ -109,12 +112,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager
   private volatile boolean myExitInProgress;
 
   private final @Nullable Disposable myLastDisposable;  // the last to be disposed
-
-  // defer reading isUnitTest flag until it's initialized
-  static final class Holder {
-    static final int ourDumpThreadsOnLongWriteActionWaiting =
-      ApplicationManager.getApplication().isUnitTestMode() ? 0 : Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
-  }
 
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
@@ -1192,6 +1189,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager
     getThreadingSupport().setReadActionListener(app);
     getThreadingSupport().setWriteActionListener(app);
     getThreadingSupport().setWriteIntentReadActionListener(app);
+    getThreadingSupport().setLockAcquisitionListener(app);
 
     app.addApplicationListener(new ApplicationListener() {
       @Override
@@ -1254,6 +1252,11 @@ public final class ApplicationImpl extends ClientAwareComponentManager
   }
 
   @Override
+  public void addLockAcquisitionListener(@NotNull LockAcquisitionListener listener, @NotNull Disposable parentDisposable) {
+    myLockAcquisitionListenerDispatcher.addListener(listener, parentDisposable);
+  }
+
+  @Override
   public boolean isTopmostReadAccessAllowed() {
     return getThreadingSupport().isInTopmostReadAction();
   }
@@ -1287,6 +1290,16 @@ public final class ApplicationImpl extends ClientAwareComponentManager
   public void afterWriteActionFinished(@NotNull Class<?> action) {
     fireAfterWriteActionFinished(action);
     otelMonitor.get().writeActionExecuted();
+  }
+
+  @Override
+  public void beforeWriteLockAcquired() {
+    myLockAcquisitionListenerDispatcher.getMulticaster().beforeWriteLockAcquired();
+  }
+
+  @Override
+  public void afterWriteLockAcquired() {
+    myLockAcquisitionListenerDispatcher.getMulticaster().afterWriteLockAcquired();
   }
 
   @Override

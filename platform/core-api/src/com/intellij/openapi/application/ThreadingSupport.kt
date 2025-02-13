@@ -300,6 +300,26 @@ interface ThreadingSupport {
   fun prohibitWriteActionsInside(): AccessToken
 
   /**
+   * Adds a [LockAcquisitionListener].
+   *
+   * Only one listener can be set. It is an error to set the second listener.
+   *
+   * @param listener the listener to set
+   */
+  @ApiStatus.Internal
+  fun setLockAcquisitionListener(listener: LockAcquisitionListener)
+
+  /**
+   * Removes a [LockAcquisitionListener].
+   *
+   * It is error to remove listener which was not set early.
+   *
+   * @param listener the listener to remove
+   */
+  @ApiStatus.Internal
+  fun removeLockAcquisitionListener(listener: LockAcquisitionListener)
+
+  /**
    * DO NOT USE
    */
   @ApiStatus.Internal

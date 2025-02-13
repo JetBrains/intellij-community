@@ -5,18 +5,15 @@ import com.intellij.codeWithMe.ClientId.Companion.decorateCallable
 import com.intellij.codeWithMe.ClientId.Companion.decorateRunnable
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.core.rwmutex.*
-import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.ex.ApplicationUtil
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.internal.runSuspend
@@ -28,7 +25,6 @@ import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BooleanSupplier
 import kotlin.coroutines.CoroutineContext
@@ -124,6 +120,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   private var myReadActionListener: ReadActionListener? = null
   private var myWriteActionListener: WriteActionListener? = null
   private var myWriteIntentActionListener: WriteIntentReadActionListener? = null
+  private var myLockAcquisitionListener: LockAcquisitionListener? = null
 
   private val myWriteActionsStack = Stack<Class<*>>()
   private var myWriteStackBase = 0
@@ -613,6 +610,20 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     myWriteActionListener = null
   }
 
+  @ApiStatus.Internal
+  override fun setLockAcquisitionListener(listener: LockAcquisitionListener) {
+    if (myLockAcquisitionListener != null)
+      error("WriteActionListener already registered")
+    myLockAcquisitionListener = listener
+  }
+
+  @ApiStatus.Internal
+  override fun removeLockAcquisitionListener(listener: LockAcquisitionListener) {
+    if (myLockAcquisitionListener != listener)
+      error("WriteActionListener is not registered")
+    myLockAcquisitionListener = null
+  }
+
   override fun <T> runWriteAction(clazz: Class<*>, action: () -> T): T {
     return runWriteAction(clazz, ThrowableComputable(action))
   }
@@ -669,11 +680,11 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       val last = sps.lastOrNull()
       when (last) {
         null -> {
-          sps.add(measureWriteLock { getWritePermit(sharedLock) })
+          sps.add(processWriteLockAcquisition { getWritePermit(sharedLock) })
           releaseSecondary = true
         }
         is WriteIntentPermit -> {
-          sps.add(measureWriteLock { runSuspend { last.acquireWritePermit() } })
+          sps.add(processWriteLockAcquisition { runSuspend { last.acquireWritePermit() } })
           releaseSecondary = true
         }
         is ReadPermit -> {
@@ -687,14 +698,14 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
     when (ts.permit) {
       null -> {
-        ts.acquire(measureWriteLock { getWritePermit(ts) })
+        ts.acquire(processWriteLockAcquisition { getWritePermit(ts) })
         release = true
       }
       // Read permit is impossible here, as it is first check before all "pendings"
       is ReadPermit -> {}
       is WriteIntentPermit -> {
         // Upgrade main permit
-        ts.acquire(measureWriteLock { getWritePermit(ts) })
+        ts.acquire(processWriteLockAcquisition { getWritePermit(ts) })
         release = true
         checkWriteFromRead("Write", "Write Intent")
       }
@@ -823,38 +834,14 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     return getThreadState().writeIntentReleased
   }
 
-  private fun measureWriteLock(acquisitor: () -> WritePermit) : WritePermit {
-    val delay = ApplicationImpl.Holder.ourDumpThreadsOnLongWriteActionWaiting
-    val reportSlowWrite: Future<*>? = if (delay <= 0 || PerformanceWatcher.getInstanceIfCreated() == null) null
-    else AppExecutorUtil.getAppScheduledExecutorService()
-      .scheduleWithFixedDelay({
-                                val path = PerformanceWatcher.getInstance().dumpThreads("waiting", true, true)
-                                if (path != null && ApplicationManagerEx.isInIntegrationTest()) {
-                                  val message = "Long write action takes more than ${ApplicationImpl.Holder.ourDumpThreadsOnLongWriteActionWaiting}ms, details saved to $path"
-                                  logger.error(message)
-                                }
-                              },
-                              delay.toLong(), delay.toLong(), TimeUnit.MILLISECONDS)
-    val t = System.currentTimeMillis()
-    val permit = acquisitor()
-    val elapsed = System.currentTimeMillis() - t
+  private fun processWriteLockAcquisition(acquisitor: () -> WritePermit): WritePermit {
+    myLockAcquisitionListener?.beforeWriteLockAcquired()
     try {
-      WriteDelayDiagnostics.registerWrite(elapsed)
+      return acquisitor()
     }
-    catch (thr: Throwable) {
-      // we can be canceled here, it is an expected behavior
-      if (thr !is ControlFlowException) {
-        // Warn instead of error to avoid breaking acquiring the lock
-        logger.warn("Failed to register write lock in diagnostics service", thr)
-      }
+    finally {
+      myLockAcquisitionListener?.afterWriteLockAcquired()
     }
-    if (logger.isDebugEnabled) {
-      if (elapsed != 0L) {
-        logger.debug("Write action wait time: $elapsed")
-      }
-    }
-    reportSlowWrite?.cancel(false)
-    return permit
   }
 
   private fun fireBeforeReadActionStart(clazz: Class<*>) {
