@@ -111,6 +111,7 @@ internal suspend fun XValueEntity.toXValueDto(): XValueDto {
 
   return XValueDto(
     xValueId,
+    xValue.xValueDescriptorAsync?.asDeferred(),
     canNavigateToSource = xValue.canNavigateToSource(),
     canNavigateToTypeSource = xValue.canNavigateToTypeSourceAsync().asDeferred(),
     canBeModified = xValue.modifierAsync.thenApply { modifier -> modifier != null }.asDeferred(),
