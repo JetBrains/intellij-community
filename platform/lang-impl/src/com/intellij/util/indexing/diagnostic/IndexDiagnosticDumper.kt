@@ -55,7 +55,7 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
       ExtensionPointName("com.intellij.projectIndexingActivityHistoryListener")
 
     private val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean
-      get() = SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.for.interrupted.index.updaters", false)
+      get() = SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.for.interrupted.index.updaters", true)
 
     @JvmStatic
     private val indexingDiagnosticsLimitOfFiles: Int
