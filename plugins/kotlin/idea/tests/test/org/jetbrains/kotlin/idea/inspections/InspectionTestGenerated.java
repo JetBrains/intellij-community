@@ -241,11 +241,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/publicApiImplicitType/inspectionData/inspections.test");
         }
 
-        @TestMetadata("recursivePropertyAccessor/inspectionData/inspections.test")
-        public void testRecursivePropertyAccessor_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/recursivePropertyAccessor/inspectionData/inspections.test");
-        }
-
         @TestMetadata("redundantIf/inspectionData/inspections.test")
         public void testRedundantIf_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/redundantIf/inspectionData/inspections.test");

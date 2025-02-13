@@ -1,68 +1,138 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-package org.jetbrains.kotlin.idea.inspections
-
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElementVisitor
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RecursivePropertyAccessorInspection.Context
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.BindingContext.DECLARATION_TO_DESCRIPTOR
-import org.jetbrains.kotlin.resolve.BindingContext.REFERENCE_TARGET
-import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
-import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
-import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
-class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
+class RecursivePropertyAccessorInspection : KotlinApplicableInspectionBase<KtSimpleNameExpression, Context>() {
+    enum class Context { RECURSIVE_PROPERTY_ACCESS, RECURSIVE_SYNTHETIC_PROPERTY_ACCESS }
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return simpleNameExpressionVisitor { expression ->
-            if (isRecursivePropertyAccess(expression, anyRecursionTypes = false)) {
-                val isExtensionProperty = expression.getStrictParentOfType<KtProperty>()?.receiverTypeReference != null
-                val fixes = if (isExtensionProperty) LocalQuickFix.EMPTY_ARRAY else arrayOf<LocalQuickFix>(ReplaceWithFieldFix())
-                holder.registerProblem(
-                    expression,
-                    KotlinBundle.message("recursive.property.accessor"),
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                    *fixes
-                )
-            } else if (isRecursiveSyntheticPropertyAccess(expression)) {
-                holder.registerProblem(
-                    expression,
-                    KotlinBundle.message("recursive.synthetic.property.accessor"),
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-                )
+    private fun getProblemDescription(context: Context): @InspectionMessage String = when (context) {
+        Context.RECURSIVE_PROPERTY_ACCESS -> KotlinBundle.message("recursive.property.accessor")
+        Context.RECURSIVE_SYNTHETIC_PROPERTY_ACCESS -> KotlinBundle.message("recursive.synthetic.property.accessor")
+    }
+
+    private fun createQuickFix(element: KtSimpleNameExpression): KotlinModCommandQuickFix<KtSimpleNameExpression>? {
+        // Skip if the property is an extension property.
+        val isExtensionProperty = element.getStrictParentOfType<KtProperty>()?.receiverTypeReference != null
+        if (isExtensionProperty) return null
+
+        return object : KotlinModCommandQuickFix<KtSimpleNameExpression>() {
+            override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with.field.fix.text")
+
+            override fun applyFix(
+                project: Project, element: KtSimpleNameExpression, updater: ModPsiUpdater,
+            ) {
+                val factory = KtPsiFactory(project)
+                element.replace(factory.createExpression("field"))
             }
         }
     }
 
-    class ReplaceWithFieldFix : LocalQuickFix {
+    override fun InspectionManager.createProblemDescriptor(
+        element: KtSimpleNameExpression, context: Context, rangeInElement: TextRange?, onTheFly: Boolean
+    ): ProblemDescriptor = createQuickFix(element)?.let {
+        createProblemDescriptor(
+            /* psiElement = */ element,
+            /* rangeInElement = */ rangeInElement,
+            /* descriptionTemplate = */ getProblemDescription(context),
+            /* highlightType = */ ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+            /* onTheFly = */ onTheFly,
+            /* ...fixes = */ it,
+        )
+    } ?: createProblemDescriptor(
+        /* psiElement = */ element,
+        /* rangeInElement = */ rangeInElement,
+        /* descriptionTemplate = */ getProblemDescription(context),
+        /* highlightType = */ ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+        /* onTheFly = */ onTheFly,
+    )
 
-        override fun getName() = KotlinBundle.message("replace.with.field.fix.text")
+    override fun buildVisitor(
+        holder: ProblemsHolder, isOnTheFly: Boolean,
+    ): KtVisitor<*, *> = simpleNameExpressionVisitor { visitTargetElement(it, holder, isOnTheFly) }
 
-        override fun getFamilyName() = name
-
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val expression = descriptor.psiElement as KtExpression
-            val factory = KtPsiFactory(project)
-            expression.replace(factory.createExpression("field"))
-        }
+    override fun isApplicableByPsi(element: KtSimpleNameExpression): Boolean {
+        return isApplicablePropertyAccessPsi(element) || isApplicableSyntheticPropertyAccessPsi(element)
     }
 
-    @Suppress("CompanionObjectInExtension") // API is used from a third-party plugin
+    override fun KaSession.prepareContext(element: KtSimpleNameExpression): Context? {
+        if (element.isRecursivePropertyAccess(false)) return Context.RECURSIVE_PROPERTY_ACCESS
+        if (isRecursiveSyntheticPropertyAccess(element)) return Context.RECURSIVE_SYNTHETIC_PROPERTY_ACCESS
+        return null
+    }
+
     companion object {
+        @ApiStatus.ScheduledForRemoval
+        @Deprecated(
+            "use isRecursivePropertyAccess(KtElement, Boolean) instead",
+            replaceWith = ReplaceWith("isRecursivePropertyAccess(element, false)")
+        )
+        fun isRecursivePropertyAccess(element: KtElement): Boolean = isRecursivePropertyAccess(element, false)
+
+        fun isRecursivePropertyAccess(element: KtElement, anyRecursionTypes: Boolean): Boolean {
+            if (element !is KtSimpleNameExpression) return false
+            return isApplicablePropertyAccessPsi(element) && element.isRecursivePropertyAccess(anyRecursionTypes)
+        }
+
+        fun isRecursiveSyntheticPropertyAccess(element: KtElement): Boolean {
+            if (element !is KtSimpleNameExpression) return false
+            return isApplicableSyntheticPropertyAccessPsi(element) && element.isRecursiveSyntheticPropertyAccess()
+        }
+
+        private fun isApplicablePropertyAccessPsi(element: KtSimpleNameExpression): Boolean {
+            val propertyAccessor = element.getParentOfType<KtDeclarationWithBody>(true) as? KtPropertyAccessor ?: return false
+            if (element.text != propertyAccessor.property.name) return false
+            return element.parent !is KtCallableReferenceExpression
+        }
+
+        private fun isApplicableSyntheticPropertyAccessPsi(element: KtSimpleNameExpression): Boolean {
+            val namedFunction = element.getParentOfType<KtDeclarationWithBody>(true) as? KtNamedFunction ?: return false
+            val name = namedFunction.name ?: return false
+            val referencedName = element.text.capitalizeAsciiOnly()
+            val isGetter = name == "get$referencedName"
+            val isSetter = name == "set$referencedName"
+            if (!isGetter && !isSetter) return false
+            return element.parent !is KtCallableReferenceExpression
+        }
+
+        private fun KaSession.hasThisAsReceiver(expression: KtQualifiedExpression) =
+            expression.receiverExpression.textMatches(KtTokens.THIS_KEYWORD.value)
+
+        private fun KaSession.hasObjectReceiver(expression: KtQualifiedExpression): Boolean {
+            val receiver = expression.receiverExpression as? KtReferenceExpression ?: return false
+            val receiverAsClassSymbol = receiver.resolveExpression() as? KaClassSymbol ?: return false
+            return receiverAsClassSymbol.classKind.isObject
+        }
 
         private fun KtBinaryExpression?.isAssignmentTo(expression: KtSimpleNameExpression): Boolean =
             this != null && KtPsiUtil.isAssignment(this) && PsiTreeUtil.isAncestor(left, expression, false)
@@ -86,59 +156,47 @@ class RecursivePropertyAccessorInspection : AbstractKotlinInspection() {
             return false
         }
 
-        @ApiStatus.ScheduledForRemoval
-        @Deprecated("use isRecursivePropertyAccess(KtElement, Boolean) instead",
-                    replaceWith = ReplaceWith("isRecursivePropertyAccess(element, false)"))
-        fun isRecursivePropertyAccess(element: KtElement): Boolean =
-            isRecursivePropertyAccess(element, false)
+        private fun KtSimpleNameExpression.isRecursivePropertyAccess(anyRecursionTypes: Boolean): Boolean {
+            val propertyAccessor = getParentOfType<KtDeclarationWithBody>(true) as? KtPropertyAccessor ?: return false
+            analyze(this) {
+                val propertySymbol = resolveToCall()?.successfulVariableAccessCall()?.symbol as? KaPropertySymbol ?: return false
+                if (propertySymbol != propertyAccessor.property.symbol) return false
 
-        fun isRecursivePropertyAccess(element: KtElement, anyRecursionTypes: Boolean): Boolean {
-            if (element !is KtSimpleNameExpression) return false
-            val propertyAccessor = element.getParentOfType<KtDeclarationWithBody>(true) as? KtPropertyAccessor ?: return false
-            if (element.text != propertyAccessor.property.name) return false
-            if (element.parent is KtCallableReferenceExpression) return false
-            val bindingContext = element.analyze()
-            val target = bindingContext[REFERENCE_TARGET, element]
-            if (target != bindingContext[DECLARATION_TO_DESCRIPTOR, propertyAccessor.property]) return false
-            (element.parent as? KtQualifiedExpression)?.let {
-                val targetReceiverType = (target as? PropertyDescriptor)?.extensionReceiverParameter?.value?.type
-                val receiverKotlinType = bindingContext.getType(it.receiverExpression)?.makeNotNullable()
-                if (anyRecursionTypes) {
-                    if (receiverKotlinType != null && targetReceiverType != null && !receiverKotlinType.isSubtypeOf(targetReceiverType)) {
-                        return false
-                    }
-                } else {
-                    if (!it.receiverExpression.textMatches(KtTokens.THIS_KEYWORD.value) &&
-                        !it.hasObjectReceiver(bindingContext) &&
-                        (targetReceiverType == null || receiverKotlinType?.isSubtypeOf(targetReceiverType) == false)) {
-                        return false
+                (parent as? KtQualifiedExpression)?.let {
+                    val propertyReceiverType = propertySymbol.receiverType
+                    val receiverType = it.receiverExpression.expressionType?.withNullability(KaTypeNullability.NON_NULLABLE)
+                    if (anyRecursionTypes) {
+                        if (receiverType != null && propertyReceiverType != null && !receiverType.isSubtypeOf(propertyReceiverType)) {
+                            return false
+                        }
+                    } else {
+                        if (!hasThisAsReceiver(it) && !hasObjectReceiver(it) && (propertyReceiverType == null || receiverType?.isSubtypeOf(
+                                propertyReceiverType
+                            ) == false)
+                        ) {
+                            return false
+                        }
                     }
                 }
             }
-            return isSameAccessor(element, propertyAccessor.isGetter)
+            return isSameAccessor(this, propertyAccessor.isGetter)
         }
 
-        fun isRecursiveSyntheticPropertyAccess(element: KtElement): Boolean {
-            if (element !is KtSimpleNameExpression) return false
-            val namedFunction = element.getParentOfType<KtDeclarationWithBody>(true) as? KtNamedFunction ?: return false
+        private fun KtSimpleNameExpression.isRecursiveSyntheticPropertyAccess(): Boolean {
+            val namedFunction = getParentOfType<KtDeclarationWithBody>(true) as? KtNamedFunction ?: return false
+
+            analyze(this) {
+                val syntheticSymbol = mainReference.resolveToSymbol() as? KaSyntheticJavaPropertySymbol ?: return false
+                val namedFunctionSymbol = namedFunction.symbol
+                if (namedFunctionSymbol != syntheticSymbol.javaGetterSymbol && namedFunctionSymbol != syntheticSymbol.javaSetterSymbol) {
+                    return false
+                }
+            }
+
             val name = namedFunction.name ?: return false
-            val referencedName = element.text.capitalizeAsciiOnly()
+            val referencedName = text.capitalizeAsciiOnly()
             val isGetter = name == "get$referencedName"
-            val isSetter = name == "set$referencedName"
-            if (!isGetter && !isSetter) return false
-            if (element.parent is KtCallableReferenceExpression) return false
-            val bindingContext = element.analyze()
-            val syntheticDescriptor = bindingContext[REFERENCE_TARGET, element] as? SyntheticJavaPropertyDescriptor ?: return false
-            val namedFunctionDescriptor = bindingContext[DECLARATION_TO_DESCRIPTOR, namedFunction]
-            if (namedFunctionDescriptor != syntheticDescriptor.getMethod &&
-                namedFunctionDescriptor != syntheticDescriptor.setMethod
-            ) return false
-            return isSameAccessor(element, isGetter)
-        }
-
-        private fun KtQualifiedExpression.hasObjectReceiver(context: BindingContext): Boolean {
-            val receiver = receiverExpression as? KtReferenceExpression ?: return false
-            return (context[REFERENCE_TARGET, receiver] as? ClassDescriptor)?.kind == ClassKind.OBJECT
+            return isSameAccessor(this, isGetter)
         }
     }
 }

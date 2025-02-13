@@ -326,6 +326,29 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspections/recursivePropertyAccessor")
+        public abstract static class RecursivePropertyAccessor extends AbstractSharedK1InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspections/recursivePropertyAccessor/inspectionData")
+            public static class InspectionData extends AbstractSharedK1InspectionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../testData/inspections/recursivePropertyAccessor/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspections/redundantSamConstructor")
         public abstract static class RedundantSamConstructor extends AbstractSharedK1InspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
