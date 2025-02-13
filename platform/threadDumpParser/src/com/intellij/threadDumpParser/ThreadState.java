@@ -2,7 +2,6 @@
 package com.intellij.threadDumpParser;
 
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;

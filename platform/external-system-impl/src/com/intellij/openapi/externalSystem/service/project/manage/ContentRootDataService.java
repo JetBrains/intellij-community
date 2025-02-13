@@ -31,7 +31,6 @@ import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;

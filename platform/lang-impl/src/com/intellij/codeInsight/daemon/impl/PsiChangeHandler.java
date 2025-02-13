@@ -2,8 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ChangeLocalityDetector;
-import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.Document;

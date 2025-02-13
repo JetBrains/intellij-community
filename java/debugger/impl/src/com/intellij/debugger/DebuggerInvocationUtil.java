@@ -4,7 +4,6 @@ package com.intellij.debugger;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;

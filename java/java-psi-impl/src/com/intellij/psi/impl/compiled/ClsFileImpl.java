@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.JavaFileType;

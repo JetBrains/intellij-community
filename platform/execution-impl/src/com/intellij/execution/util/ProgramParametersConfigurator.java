@@ -33,7 +33,6 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
 import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
