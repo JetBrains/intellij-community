@@ -485,6 +485,13 @@ public final class DebuggerUtilsAsync {
     return completedFuture(null);
   }
 
+  public static CompletableFuture<Boolean> isCollected(ObjectReference reference) {
+    if (reference instanceof ObjectReferenceImpl objectReferenceImpl && isAsyncEnabled()) {
+      return objectReferenceImpl.isCollectedAsync();
+    }
+    return toCompletableFuture(() -> reference.isCollected());
+  }
+
   /**
    * Schedule future completion in a separate command with the same priority and suspend context (if available)
    * as in the command being processed at the moment
