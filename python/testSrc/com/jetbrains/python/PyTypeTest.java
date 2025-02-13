@@ -46,6 +46,16 @@ public class PyTypeTest extends PyTestCase {
     doTest("str",
            "t = ('a', 2)\n" +
            "expr = t[0]");
+    doTest("List[bool]",
+           """
+             from typing import List, Literal
+             def foo(t: tuple[int, str, List[bool]], i: Literal[2]):
+                 expr = t[i]""");
+    doTest("Union[int, List[bool]]",
+           """
+             from typing import List, Literal
+             def foo(t: tuple[int, str, List[bool]], i: Literal[0, -1]):
+                 expr = t[i]""");
   }
 
   public void testTupleAssignmentType() {
@@ -3858,6 +3868,23 @@ public class PyTypeTest extends PyTestCase {
                      x: int
                  a: A = {'x': 42}
                  expr = a['x']""");
+        doTest("str",
+               """
+                 from typing import Literal, TypedDict
+                 class TD(TypedDict):
+                     a: int
+                     b: str
+                 def foo(v: TD, k: Literal['b']):
+                     expr = v[k]""");
+        doTest("bool | str",
+               """
+                 from typing import Literal, TypedDict
+                 class TD(TypedDict):
+                     a: int
+                     b: str
+                     c: bool
+                 def foo(v: TD, k: Literal['c', 'b']):
+                     expr = v[k]""");
       }
     );
   }
