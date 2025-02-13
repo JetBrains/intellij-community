@@ -30,6 +30,7 @@ import com.intellij.psi.*
 import com.intellij.psi.JavaModuleSystem.*
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.JavaMultiReleaseUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
@@ -312,7 +313,7 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
   private fun inSameMultiReleaseModule(current: ModuleInfo, target: ModuleInfo): Boolean {
     val placeModule = current.jpsModule ?: return false
     val targetModule = target.jpsModule ?: return false
-    return com.intellij.codeInsight.daemon.impl.analysis.areMainAndAdditionalMultiReleaseModules(targetModule, placeModule)
+    return JavaMultiReleaseUtil.areMainAndAdditionalMultiReleaseModules(targetModule, placeModule)
   }
 
   private fun detectAutomaticModule(current: ModuleInfo): PsiJavaModule? {

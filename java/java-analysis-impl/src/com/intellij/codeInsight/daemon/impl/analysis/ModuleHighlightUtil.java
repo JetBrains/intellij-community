@@ -23,6 +23,7 @@ import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -155,7 +156,7 @@ final class ModuleHighlightUtil {
         if (target instanceof PsiPackage psiPackage) {
           boolean inTests = ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(file.getVirtualFile());
           directories = psiPackage.getDirectories(module.getModuleScope(inTests));
-          Module mainMultiReleaseModule = MultiReleaseUtil.getMainMultiReleaseModule(module);
+          Module mainMultiReleaseModule = JavaMultiReleaseUtil.getMainMultiReleaseModule(module);
           if (mainMultiReleaseModule != null) {
             directories = ArrayUtil.mergeArrays(directories, psiPackage.getDirectories(mainMultiReleaseModule.getModuleScope(inTests)));
           }
@@ -220,7 +221,7 @@ final class ModuleHighlightUtil {
       if (implTarget instanceof PsiClass implClass) {
         Module fileModule = ModuleUtilCore.findModuleForFile(file);
         Module implModule = ModuleUtilCore.findModuleForFile(implClass.getContainingFile());
-        if (fileModule != implModule && !MultiReleaseUtil.areMainAndAdditionalMultiReleaseModules(implModule, fileModule)) {
+        if (fileModule != implModule && !JavaMultiReleaseUtil.areMainAndAdditionalMultiReleaseModules(implModule, fileModule)) {
           String message = JavaErrorBundle.message("module.service.alien");
           HighlightInfo.Builder info =
             HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message);
