@@ -1,15 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.helpers
 
 import com.intellij.openapi.util.ThrowableNotNullFunction
 import com.intellij.util.ThrowableConsumer
-import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
-import io.opentelemetry.semconv.ExceptionAttributes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -89,11 +87,9 @@ inline fun <T> Span.useWithoutActiveScope(operation: (Span) -> T): T {
     return operation(this)
   }
   catch (e: CancellationException) {
-    recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
     throw e
   }
   catch (e: Throwable) {
-    recordException(e, Attributes.of(ExceptionAttributes.EXCEPTION_ESCAPED, true))
     setStatus(StatusCode.ERROR)
     throw e
   }
