@@ -16,10 +16,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.UIBundle
@@ -36,10 +34,10 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
   @Suppress("SpellCheckingInspection")
   private val ZIP_FS_TYPE = "zipfs"
 
-  private val localFs = lazy<VirtualFileSystem> {
+  private val localFs = lazy {
     ApplicationManager.getApplication()?.let { StandardFileSystems.local() } ?: CoreLocalFileSystem()
   }
-  private val jarFs = lazy<VirtualFileSystem> {
+  private val jarFs = lazy {
     ApplicationManager.getApplication()?.let { StandardFileSystems.jar() } ?: CoreJarFileSystem()
   }
 
@@ -52,9 +50,7 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
     }
   }
 
-  override fun dispose() {
-
-  }
+  override fun dispose() { }
 
   fun setNativeDialogProperties() {
     if (OS.CURRENT == OS.Windows) {
@@ -91,10 +87,8 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
     finally {
       if (app != null) {
         LaterInvocator.leaveModal(fileDialog)
-        if (previousFocusOwner != null) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { previousFocusOwner.requestFocus() }
-        }
       }
+      previousFocusOwner?.requestFocus()
       Disposer.dispose(this)
     }
   }
