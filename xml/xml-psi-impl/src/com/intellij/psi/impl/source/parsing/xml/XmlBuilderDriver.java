@@ -19,7 +19,7 @@ import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.util.BasicXmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -165,7 +165,7 @@ public class XmlBuilderDriver {
       }
     }
 
-    CharSequence localName = XmlUtil.getLocalName(tagName);
+    CharSequence localName = BasicXmlUtil.getLocalName(tagName);
     String namespace = getNamespace(tagName);
 
     XmlBuilder.ProcessingOrder order = builder.startTag(localName, namespace, node.getStartOffset(), node.getEndOffset(), headerEndOffset);
@@ -217,7 +217,7 @@ public class XmlBuilderDriver {
         processTextNode(structure, child, builder);
       }
       else if (tt == XmlTokenType.XML_CHAR_ENTITY_REF) {
-        builder.textElement(new String(new char[]{XmlUtil.getCharFromEntityRef(physical.toString())}), physical, start, end);
+        builder.textElement(new String(new char[]{BasicXmlUtil.getCharFromEntityRef(physical.toString())}), physical, start, end);
       }
       else {
         builder.textElement(physical, physical, start, end);
