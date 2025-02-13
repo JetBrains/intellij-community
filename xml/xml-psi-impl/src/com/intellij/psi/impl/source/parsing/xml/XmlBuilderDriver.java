@@ -106,7 +106,9 @@ public class XmlBuilderDriver {
         }
         else if (token.getTokenType() != TokenType.WHITE_SPACE && token.getTokenType() != XmlElementType.XML_COMMENT) {
           if (token.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
-            if (afterPublic) publicId = getTokenText(token);
+            if (afterPublic) {
+              publicId = getTokenText(token);
+            }
             else if (afterSystem) systemId = getTokenText(token);
           }
           afterPublic = afterSystem = false;
@@ -215,7 +217,7 @@ public class XmlBuilderDriver {
         processTextNode(structure, child, builder);
       }
       else if (tt == XmlTokenType.XML_CHAR_ENTITY_REF) {
-        builder.textElement(new String(new char[] {XmlUtil.getCharFromEntityRef(physical.toString())}), physical, start, end);
+        builder.textElement(new String(new char[]{XmlUtil.getCharFromEntityRef(physical.toString())}), physical, start, end);
       }
       else {
         builder.textElement(physical, physical, start, end);
@@ -225,8 +227,15 @@ public class XmlBuilderDriver {
     structure.disposeChildren(children, count);
   }
 
-  private void processAttributeNode(final LighterASTNode attrNode, FlyweightCapableTreeStructure<LighterASTNode> structure, XmlBuilder builder) {
-    builder.attribute(getAttributeName(attrNode, structure), getAttributeValue(attrNode, structure), attrNode.getStartOffset(), attrNode.getEndOffset());
+  private void processAttributeNode(final LighterASTNode attrNode,
+                                    FlyweightCapableTreeStructure<LighterASTNode> structure,
+                                    XmlBuilder builder) {
+    builder.attribute(
+      getAttributeName(attrNode, structure),
+      getAttributeValue(attrNode, structure),
+      attrNode.getStartOffset(),
+      attrNode.getEndOffset()
+    );
   }
 
   private String getNamespace(final CharSequence tagName) {
@@ -294,5 +303,4 @@ public class XmlBuilderDriver {
 
     return name;
   }
-
 }
