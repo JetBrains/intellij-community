@@ -6,14 +6,13 @@ import com.intellij.ide.rpc.document
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.kernel.backend.*
-import com.intellij.xdebugger.Obsolescent
+import com.intellij.platform.project.asProject
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator.XEvaluationCallback
-import com.intellij.xdebugger.frame.*
-import com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCallback
+import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluator
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
@@ -34,23 +33,22 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
 import org.jetbrains.concurrency.asDeferred
-import java.awt.Font
 
 internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
   override suspend fun evaluate(evaluatorId: XDebuggerEvaluatorId, expression: String, position: XSourcePositionDto?): Deferred<XEvaluationResult> {
-    return evaluate(evaluatorId) { evaluator, callback ->
+    return evaluate(evaluatorId) { project, evaluator, callback ->
       evaluator.evaluate(expression, callback, position?.sourcePosition())
     }
   }
 
   override suspend fun evaluateXExpression(evaluatorId: XDebuggerEvaluatorId, expression: XExpressionDto, position: XSourcePositionDto?): Deferred<XEvaluationResult> {
-    return evaluate(evaluatorId) { evaluator, callback ->
+    return evaluate(evaluatorId) { project, evaluator, callback ->
       evaluator.evaluate(expression.xExpression(), callback, position?.sourcePosition())
     }
   }
 
   override suspend fun evaluateInDocument(evaluatorId: XDebuggerEvaluatorId, documentId: DocumentId, offset: Int, type: ValueHintType): Deferred<XEvaluationResult> {
-    return evaluate(evaluatorId) { evaluator, callback ->
+    return evaluate(evaluatorId) { project, evaluator, callback ->
       val document = documentId.document()!!
       if (evaluator is XDebuggerDocumentOffsetEvaluator) {
         evaluator.evaluate(document, offset, type, callback)
@@ -63,7 +61,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
 
   private suspend fun evaluate(
     evaluatorId: XDebuggerEvaluatorId,
-    evaluateFun: suspend (XDebuggerEvaluator, XEvaluationCallback) -> Unit,
+    evaluateFun: suspend (Project, XDebuggerEvaluator, XEvaluationCallback) -> Unit,
   ): Deferred<XEvaluationResult> {
     val evaluatorEntity = entity(XDebuggerEvaluatorEntity.EvaluatorId, evaluatorId)
                           ?: return CompletableDeferred(XEvaluationResult.EvaluationError(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.no.evaluator.id")))
@@ -80,7 +78,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
           evaluationResult.completeExceptionally(EvaluationException(errorMessage))
         }
       }
-      evaluateFun(evaluator, callback)
+      evaluateFun(evaluatorEntity.sessionEntity.projectEntity.asProject(), evaluator, callback)
     }
     val evaluationCoroutineScope = EvaluationCoroutineScopeProvider.getInstance().cs
 

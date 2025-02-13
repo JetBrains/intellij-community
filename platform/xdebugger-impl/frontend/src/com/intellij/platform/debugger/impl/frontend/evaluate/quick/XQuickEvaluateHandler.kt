@@ -43,11 +43,16 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
     val documentCoroutineScope = editor.childCoroutineScope("XQuickEvaluateHandler#valueHint")
     val projectId = project.projectId()
     val editorId = editor.editorId()
+    val adjustedOffsetDeferred = documentCoroutineScope.async(Dispatchers.IO) {
+      XDebuggerValueLookupHintsRemoteApi.getInstance().adjustOffset(projectId, editorId, offset)
+    }
     val expressionInfoDeferred = documentCoroutineScope.async(Dispatchers.IO) {
+      val adjustedOffset = adjustedOffsetDeferred.await()
       val remoteApi = XDebuggerValueLookupHintsRemoteApi.getInstance()
-      remoteApi.getExpressionInfo(projectId, editorId, offset, type)
+      remoteApi.getExpressionInfo(projectId, editorId, adjustedOffset, type)
     }
     val hintDeferred: Deferred<AbstractValueHint?> = documentCoroutineScope.async(Dispatchers.IO) {
+      val adjustedOffset = adjustedOffsetDeferred.await()
       val expressionInfo = expressionInfoDeferred.await()
       val textLength = document.textLength
       if (expressionInfo == null) {
@@ -65,10 +70,10 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
         val valueMarkers = currentSession.valueMarkers
         val editorsProvider = currentSession.editorsProvider
         // TODO[IJPL-160146]: support passing currentPosition
-        XValueHint(project, editorsProvider, editor, point, type, offset, expressionInfo, frontendEvaluator, valueMarkers, null, false)
+        XValueHint(project, editorsProvider, editor, point, type, adjustedOffset, expressionInfo, frontendEvaluator, valueMarkers, null, false)
       }
       else if (frontendType is FrontendType.RemoteDev) {
-        RemoteValueHint(project, projectId, editor, point, type, offset, expressionInfo, fromPlugins = false)
+        RemoteValueHint(project, projectId, editor, point, type, adjustedOffset, expressionInfo, fromPlugins = false)
       }
       else {
         val session = XDebuggerManager.getInstance(project).getCurrentSession()
@@ -79,7 +84,7 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
         if (evaluator == null) {
           return@async null
         }
-        XValueHint(project, editor, point, type, offset, expressionInfo, evaluator, session, false)
+        XValueHint(project, editor, point, type, adjustedOffset, expressionInfo, evaluator, session, false)
       }
     }
     hintDeferred.invokeOnCompletion {
