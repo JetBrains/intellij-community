@@ -9,7 +9,7 @@ import com.intellij.html.embedding.HtmlTagEmbeddedContentProvider
 import com.intellij.lang.Language
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.xml.util.HtmlUtil
+import com.intellij.xml.util.BasicHtmlUtil
 
 class HtmlDefaultEmbeddedContentSupport : HtmlEmbeddedContentSupport {
 
@@ -20,8 +20,8 @@ class HtmlDefaultEmbeddedContentSupport : HtmlEmbeddedContentSupport {
 
 open class HtmlRawTextTagContentProvider(lexer: BaseHtmlLexer) : HtmlTagEmbeddedContentProvider(lexer) {
   override fun isInterestedInTag(tagName: CharSequence): Boolean =
-    (namesEqual(tagName, HtmlUtil.TITLE_TAG_NAME)
-     || namesEqual(tagName, HtmlUtil.TEXTAREA_TAG_NAME))
+    (namesEqual(tagName, BasicHtmlUtil.TITLE_TAG_NAME)
+     || namesEqual(tagName, BasicHtmlUtil.TEXTAREA_TAG_NAME))
     && !lexer.isPossiblyCustomTagName(tagName)
 
 
@@ -34,21 +34,21 @@ open class HtmlScriptStyleEmbeddedContentProvider(lexer: BaseHtmlLexer) : HtmlTa
   private val infoCache = HashMap<Pair<String, String?>, HtmlEmbedmentInfo?>()
 
   override fun isInterestedInTag(tagName: CharSequence): Boolean =
-    namesEqual(tagName, HtmlUtil.SCRIPT_TAG_NAME)
-    || namesEqual(tagName, HtmlUtil.STYLE_TAG_NAME)
+    namesEqual(tagName, BasicHtmlUtil.SCRIPT_TAG_NAME)
+    || namesEqual(tagName, BasicHtmlUtil.STYLE_TAG_NAME)
 
   override fun isInterestedInAttribute(attributeName: CharSequence): Boolean =
-    (namesEqual(attributeName, HtmlUtil.TYPE_ATTRIBUTE_NAME)
-     || (namesEqual(attributeName, HtmlUtil.LANGUAGE_ATTRIBUTE_NAME) && namesEqual(tagName, HtmlUtil.SCRIPT_TAG_NAME)))
+    (namesEqual(attributeName, BasicHtmlUtil.TYPE_ATTRIBUTE_NAME)
+     || (namesEqual(attributeName, BasicHtmlUtil.LANGUAGE_ATTRIBUTE_NAME) && namesEqual(tagName, BasicHtmlUtil.SCRIPT_TAG_NAME)))
 
   override fun createEmbedmentInfo(): HtmlEmbedmentInfo? {
     val attributeValue = attributeValue?.trim()?.toString()
     return infoCache.getOrPut(Pair(tagName!!.toString(), attributeValue)) {
       when {
-        namesEqual(tagName, HtmlUtil.STYLE_TAG_NAME) -> styleLanguage(attributeValue)?.let {
+        namesEqual(tagName, BasicHtmlUtil.STYLE_TAG_NAME) -> styleLanguage(attributeValue)?.let {
           HtmlEmbeddedContentSupport.getStyleTagEmbedmentInfo(it)
         }
-        namesEqual(tagName, HtmlUtil.SCRIPT_TAG_NAME) -> scriptEmbedmentInfo(attributeValue)
+        namesEqual(tagName, BasicHtmlUtil.SCRIPT_TAG_NAME) -> scriptEmbedmentInfo(attributeValue)
         else -> null
       } ?: HtmlEmbeddedContentProvider.RAW_TEXT_EMBEDMENT
     }
