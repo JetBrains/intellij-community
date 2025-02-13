@@ -158,7 +158,7 @@ public class EditorSearchSession implements SearchSession,
           }
           EditorSearchSession.this.updateUIWithFindModel();
           mySearchResults.clear();
-          EditorSearchSession.this.updateResults(true);
+          EditorSearchSession.this.updateResults(FindSettings.getInstance().isScrollToResultsDuringTyping());
           FindUtil.updateFindInFileModel(EditorSearchSession.this.getProject(), myFindModel, !ConsoleViewUtil.isConsoleViewEditor(editor));
         }
         finally {
@@ -361,7 +361,6 @@ public class EditorSearchSession implements SearchSession,
     setMatchesLimit(LivePreviewController.MATCHES_LIMIT);
     String text = myComponent.getSearchTextComponent().getText();
     myFindModel.setStringToFind(text);
-    updateResults(FindSettings.getInstance().isScrollToResultsDuringTyping());
     updateMultiLineStateIfNeeded();
   }
 
