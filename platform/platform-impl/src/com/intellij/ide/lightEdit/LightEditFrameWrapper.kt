@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.*
-import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
 import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.adaptV2Widget
@@ -212,9 +211,7 @@ private suspend fun allocateLightEditFrame(project: Project,
     uiFrame.extendedState = frameInfo.extendedState
   }
   uiFrame.isVisible = true
-  if (isFullScreenSupportedInCurrentOs() && frameInfo != null && frameInfo.fullScreen) {
-    frame.toggleFullScreen(true)
-  }
+  frame.updateFullScreenState(frameInfo?.fullScreen == true)
   uiFrame.addComponentListener(FrameStateListener(windowManager.defaultFrameInfoHelper))
   installAppMenuIfNeeded(uiFrame)
 

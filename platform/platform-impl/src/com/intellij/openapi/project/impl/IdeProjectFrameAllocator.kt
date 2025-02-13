@@ -10,10 +10,7 @@ import com.intellij.diagnostic.StartUpPerformanceService
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
-import com.intellij.ide.IdeBundle
-import com.intellij.ide.RecentProjectMetaInfo
-import com.intellij.ide.RecentProjectsManager
-import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.ide.*
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.util.runOnceForProject
 import com.intellij.openapi.application.*
@@ -214,7 +211,7 @@ internal class IdeProjectFrameAllocator(
         val frameHelper = IdeProjectFrameHelper(frame = frame, loadingState = loadingState)
         completeFrameAndCloseOnCancel(frameHelper) {
           if (options.forceOpenInNewFrame) {
-            updateFullScreenState(frameHelper, frameInfo.fullScreen)
+            frameHelper.updateFullScreenState(frameInfo.fullScreen)
           }
           span("ProjectFrameHelper.init") {
             frameHelper.init()
@@ -227,7 +224,7 @@ internal class IdeProjectFrameAllocator(
         // must be after preInit (frame decorator is required to set a full-screen mode)
         frameHelper.frame.isVisible = true
         completeFrameAndCloseOnCancel(frameHelper) {
-          updateFullScreenState(frameHelper, frameInfo.fullScreen)
+          frameHelper.updateFullScreenState(frameInfo.fullScreen)
 
           span("ProjectFrameHelper.init") {
             frameHelper.init()
@@ -266,12 +263,6 @@ internal class IdeProjectFrameAllocator(
     return options.frameInfo
            ?: (serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase).getProjectMetaInfo(projectStoreBaseDir)?.frame
            ?: FrameInfo()
-  }
-
-  private fun updateFullScreenState(frameHelper: ProjectFrameHelper, isFullScreen: Boolean) {
-    if (isFullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
-      frameHelper.toggleFullScreen(true)
-    }
   }
 
   override suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
@@ -440,7 +431,7 @@ private fun setDefaultSize(frame: JFrame, screen: Rectangle = ScreenUtil.getMain
 }
 
 @ApiStatus.Internal
-internal fun createIdeFrame(frameInfo: FrameInfo): IdeFrameImpl {
+fun createIdeFrame(frameInfo: FrameInfo): IdeFrameImpl {
   val deviceBounds = frameInfo.bounds
   if (deviceBounds == null) {
     val frame = IdeFrameImpl()
@@ -474,18 +465,6 @@ internal fun createIdeFrame(frameInfo: FrameInfo): IdeFrameImpl {
     return frame
   }
 }
-
-internal val OpenProjectTask.frameInfo: FrameInfo?
-  get() = (implOptions as OpenProjectImplOptions?)?.frameInfo
-
-internal val OpenProjectTask.frame: IdeFrameImpl?
-  get() = (implOptions as OpenProjectImplOptions?)?.frame
-
-internal data class OpenProjectImplOptions(
-  @JvmField val recentProjectMetaInfo: RecentProjectMetaInfo,
-  @JvmField val frameInfo: FrameInfo? = null,
-  @JvmField val frame: IdeFrameImpl? = null,
-)
 
 private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob: Job) {
   if (!serviceAsync<RegistryManager>().`is`("ide.open.project.view.on.startup")) {

@@ -611,14 +611,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   private suspend fun doOpenAsync(options: OpenProjectTask, projectStoreBaseDir: Path): Project? {
-    val app = ApplicationManager.getApplication()
-    val frameAllocator = if (app.isHeadlessEnvironment || app.isUnitTestMode) {
-      HeadlessProjectFrameAllocator()
-    }
-    else {
-      IdeProjectFrameAllocator(options, projectStoreBaseDir)
-    }
-
+    val frameAllocator = createFrameAllocator(projectStoreBaseDir, options)
+    val unitTestMode = ApplicationManager.getApplication().isUnitTestMode
     val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()
     var module: Module? = null
     var result: Project? = null
@@ -723,7 +717,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         }
       }
 
-      if (app.isUnitTestMode) {
+      if (unitTestMode) {
         throw e
       }
 
@@ -736,7 +730,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     val project = result!!
-    if (!app.isUnitTestMode) {
+    if (!unitTestMode) {
       val openTimestamp = System.currentTimeMillis()
       (project as ProjectImpl).getCoroutineScope().launch {
         (RecentProjectsManager.getInstance() as? RecentProjectsManagerBase)?.projectOpened(project, openTimestamp)
@@ -755,6 +749,16 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     jpsMetrics.endSpan("project.opening")
     return project
+  }
+
+  protected open fun createFrameAllocator(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectFrameAllocator {
+    val app = ApplicationManager.getApplication()
+    return if (app.isHeadlessEnvironment || app.isUnitTestMode) {
+      HeadlessProjectFrameAllocator()
+    }
+    else {
+      IdeProjectFrameAllocator(options, projectStoreBaseDir)
+    }
   }
 
   private suspend fun cancelProjectOpening(project: Project?, e: CancellationException? = null) {

@@ -274,7 +274,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     return null
   }
 
-  internal fun removeAndGetRootFrame(): IdeFrameImpl? {
+  @Internal
+  fun removeAndGetRootFrame(): IdeFrameImpl? {
     return frameToReuse.getAndSet(null)
   }
 

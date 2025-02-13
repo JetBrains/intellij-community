@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
@@ -26,7 +27,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -76,6 +76,8 @@ abstract class ProjectFrameHelper internal constructor(
   val frame: IdeFrameImpl,
   loadingState: FrameLoadingState? = null,
 ) : IdeFrameEx, AccessibleContextAccessor, UiDataProvider {
+  @Internal
+  constructor(frame: IdeFrameImpl) : this(frame, null)
 
   @Suppress("SSBasedInspection")
   @Internal
@@ -382,7 +384,8 @@ abstract class ProjectFrameHelper internal constructor(
   override fun getProject(): Project? = project
 
   // any activities that will not access a workspace model
-  internal suspend fun setRawProject(project: Project) {
+  @Internal
+  suspend fun setRawProject(project: Project) {
     LOG.info("Setting project frame to $project")
 
     if (this.project === project) {
@@ -405,7 +408,8 @@ abstract class ProjectFrameHelper internal constructor(
     LOG.info("Project frame set to $project")
   }
 
-  internal open suspend fun setProject(project: Project) {
+  @Internal
+  open suspend fun setProject(project: Project) {
     frameHeaderHelper.setProject(project)
     statusBar?.let {
       project.messageBus.simpleConnect().subscribe(StatusBar.Info.TOPIC, it)
@@ -415,8 +419,9 @@ abstract class ProjectFrameHelper internal constructor(
     }
   }
 
+  @Internal
   @RequiresEdt
-  internal fun setInitBounds(bounds: Rectangle?) {
+  fun setInitBounds(bounds: Rectangle?) {
     if (bounds != null && frame.isInFullScreen) {
       checkForNonsenseBounds("ProjectFrameHelper.setInitBounds.bounds", bounds)
       frame.rootPane.putClientProperty(INIT_BOUNDS_KEY, bounds)
@@ -552,6 +557,13 @@ abstract class ProjectFrameHelper internal constructor(
 
   open fun windowClosing(project: Project) {
     CloseProjectWindowHelper().windowClosing(project)
+  }
+}
+
+@Internal
+fun ProjectFrameHelper.updateFullScreenState(isFullScreen: Boolean) {
+  if (isFullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
+    toggleFullScreen(true)
   }
 }
 
