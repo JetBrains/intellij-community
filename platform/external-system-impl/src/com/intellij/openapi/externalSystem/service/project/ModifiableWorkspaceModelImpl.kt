@@ -1,11 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project
 
-import com.intellij.openapi.externalSystem.ExternalSystemManager
-import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleOrderEntry
@@ -19,7 +15,6 @@ import java.util.*
 
 @ApiStatus.Internal
 class ModifiableWorkspaceModelImpl internal constructor(
-  private val project: Project,
   private val state: ExternalProjectsWorkspace.State,
   private val modelsProvider: IdeModifiableModelsProvider,
 ) : ModifiableWorkspaceModel {
@@ -61,16 +56,11 @@ class ModifiableWorkspaceModelImpl internal constructor(
 
   private fun buildLibraryToCoordinateMap(): Map<String, ProjectCoordinate> {
     val result = HashMap<String, ProjectCoordinate>()
-    val projectDataManager = ProjectDataManager.getInstance()
-    ExternalSystemManager.EP_NAME.forEachExtensionSafe { manager ->
-      val projectsData = projectDataManager.getExternalProjectsData(project, manager.systemId)
-      for (projectInfo in projectsData) {
-        val projectStructure = projectInfo.externalProjectStructure ?: continue
-        val libraryNodes = ExternalSystemApiUtil.findAll(projectStructure, ProjectKeys.LIBRARY)
-        for (libraryNode in libraryNodes) {
-          val libraryData = libraryNode.getData()
-          result.put(libraryData.internalName, libraryData)
-        }
+    ExternalSystemCoordinateContributor.EP_NAME.forEachExtensionSafe { contributor ->
+      for (library in modelsProvider.allLibraries) {
+        val libraryName = library.name ?: continue
+        val libraryCoordinate = contributor.findLibraryCoordinate(library) ?: continue
+        result.put(libraryName, libraryCoordinate)
       }
     }
     return result

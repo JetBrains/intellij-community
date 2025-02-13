@@ -13,9 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 @State(name = "ExternalProjectsWorkspace", storages = [Storage(CACHE_FILE)])
-class ExternalProjectsWorkspace(
-  private val project: Project,
-) : SimplePersistentStateComponent<ExternalProjectsWorkspace.State>(State()) {
+class ExternalProjectsWorkspace : SimplePersistentStateComponent<ExternalProjectsWorkspace.State>(State()) {
 
   class State : BaseState() {
 
@@ -31,7 +29,7 @@ class ExternalProjectsWorkspace(
     if (!Registry.`is`("external.system.substitute.library.dependencies")) {
       return ModifiableWorkspaceModel.NOP
     }
-    return ModifiableWorkspaceModelImpl(project, state, modelProvider)
+    return ModifiableWorkspaceModelImpl(state, modelProvider)
   }
 
   companion object {

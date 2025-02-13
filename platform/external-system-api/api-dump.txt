@@ -1014,6 +1014,7 @@ com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallba
 - onSuccess(com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId,com.intellij.openapi.externalSystem.model.DataNode):V
 com.intellij.openapi.externalSystem.service.project.ExternalSystemCoordinateContributor
 - sf:Companion:com.intellij.openapi.externalSystem.service.project.ExternalSystemCoordinateContributor$Companion
+- findLibraryCoordinate(com.intellij.openapi.roots.libraries.Library):com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
 - findModuleCoordinate(com.intellij.openapi.module.Module):com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
 f:com.intellij.openapi.externalSystem.service.project.ExternalSystemCoordinateContributor$Companion
 com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver

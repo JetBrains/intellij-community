@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.project
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -19,6 +20,16 @@ interface ExternalSystemCoordinateContributor {
    * @return found external artifact coordinates.
    */
   fun findModuleCoordinate(module: Module): ProjectCoordinate? {
+    return null
+  }
+
+  /**
+   * Finds maven-like artifact coordinates for external library that corresponding to the given library.
+   *
+   * @param library is a library to find artifact coordinates of a corresponding external library.
+   * @return found external artifact coordinates.
+   */
+  fun findLibraryCoordinate(library: Library): ProjectCoordinate? {
     return null
   }
 
