@@ -51,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Callable;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoByDescriptor;
 
@@ -163,13 +162,12 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
   }
 
   private static @NotNull List<EventPair<?>> computeDataInReadAction(@NotNull Project project) {
-    return ReadAction.nonBlocking((Callable<List<EventPair<?>>>)() -> {
+    return ReadAction.compute(() -> {
         boolean isDumb = DumbService.isDumb(project);
         IncompleteDependenciesService service = project.getService(IncompleteDependenciesService.class);
         DependenciesState incompleteDependenciesMode = service.getState();
         return Arrays.asList(EventFields.Dumb.with(isDumb), INCOMPLETE_DEPENDENCIES_MODE.with(incompleteDependenciesMode));
-      }).expireWith(project)
-      .executeSynchronously();
+      });
   }
 
   public static void triggerClosed(@NotNull Project project, @NotNull VirtualFile file) {
