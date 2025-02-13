@@ -152,7 +152,8 @@ function filterOutSummaryMetric(unfilteredDatasets) {
   return unfilteredDatasets.filter(dataset => !dataset.label.match(/summary/i))
 }
 
-function redrawMetricsCharts() {
+function redrawCharts() {
+  if (!enableMetricsCharts) return
   chartList = []
   const unfilteredDatasets = fetchUnfilteredDatasets()
 
@@ -202,6 +203,7 @@ function createSankeyChart(title) {
 }
 
 function redrawSankeyChart() {
+  if (!enableSankeyChart) return
   filterReasonSankeyChart = createSankeyChart("FilterReasons")
 
   populateSankeyChart(filterReasonSankeyChart, sankeyChartStructure)
@@ -309,11 +311,10 @@ function getColorTo(name) {
   return colorsTo[name] || "rgba(120, 120, 160, 1)"
 }
 
-function redrawCharts() {
-  redrawSankeyChart()
-  // redrawMetricsCharts() // control the drawing of regular (reports comparison) charts
-}
+const enableMetricsCharts = false
+const enableSankeyChart = true
 
 document.addEventListener("DOMContentLoaded", () => {
   redrawCharts()
+  redrawSankeyChart()
 })
