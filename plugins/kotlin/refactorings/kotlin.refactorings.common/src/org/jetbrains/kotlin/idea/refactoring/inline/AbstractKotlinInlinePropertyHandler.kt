@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.inline
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ExitActionType
 import com.intellij.psi.PsiReference
 import com.intellij.refactoring.HelpID
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
@@ -73,7 +74,7 @@ abstract class AbstractKotlinInlinePropertyHandler(protected val withPrompt: Boo
             try {
                 dialog.doAction()
             } finally {
-                dialog.close(DialogWrapper.OK_EXIT_CODE, true)
+                dialog.close(DialogWrapper.OK_EXIT_CODE, true, ExitActionType.OK)
             }
         }
     }
