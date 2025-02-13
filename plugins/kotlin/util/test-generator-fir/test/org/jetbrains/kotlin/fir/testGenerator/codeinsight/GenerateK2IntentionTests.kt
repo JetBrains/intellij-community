@@ -127,7 +127,6 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertToIndexedFunctionCall", pattern = pattern, isIgnored = true)
             model("${idea}intentions/samConversionToAnonymousObject", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertFunctionTypeReceiverToParameter", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/introduceBackingProperty", pattern = pattern, isIgnored = true)
             model("${idea}intentions/addLabeledReturnInLambda", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertFilteringFunctionWithDemorgansLaw", pattern = pattern, isIgnored = true)
             model("${idea}intentions/removeExplicitSuperQualifier", pattern = pattern, isIgnored = true)
