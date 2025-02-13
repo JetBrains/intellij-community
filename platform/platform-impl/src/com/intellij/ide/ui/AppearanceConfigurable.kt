@@ -510,12 +510,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             )
             twoColumnsRow(
               {
-                checkBox(cdWidescreenToolWindowLayout).apply {
-                  enabled(!NotRoamableUiSettings.getInstance().xNextStripe)
-                  if(NotRoamableUiSettings.getInstance().xNextStripe) {
-                    comment(message("xnext.comment.unavailable"))
-                  }
-                }
+                checkBox(cdWidescreenToolWindowLayout)
                   .gap(RightGap.SMALL)
                 contextHelp(message("checkbox.widescreen.tool.window.layout.description"))
               },
