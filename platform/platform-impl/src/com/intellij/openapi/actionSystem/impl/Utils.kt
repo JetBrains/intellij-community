@@ -372,6 +372,7 @@ object Utils {
     }
   }
 
+  @JvmStatic
   fun <T> computeWithProgressIcon(dataContext: DataContext,
                                   place: String,
                                   task: suspend () -> T): T {
