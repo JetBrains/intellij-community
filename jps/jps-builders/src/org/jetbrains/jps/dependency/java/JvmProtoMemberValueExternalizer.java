@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.Nullable;
@@ -146,6 +146,50 @@ enum JvmProtoMemberValueExternalizer implements Externalizer<Object> {
         return boolean.class;
       }
       return dataType;
+    }
+  },
+  BOOLEAN(Boolean.class) {
+    @Override
+    public void save(GraphDataOutput out, Object v) throws IOException {
+      out.writeBoolean((Boolean)v);
+    }
+
+    @Override
+    public Object load(GraphDataInput in) throws IOException {
+      return in.readBoolean();
+    }
+  },
+  CHARACTER(Character.class) {
+    @Override
+    public void save(GraphDataOutput out, Object v) throws IOException {
+      out.writeChar((Character)v);
+    }
+
+    @Override
+    public Object load(GraphDataInput in) throws IOException {
+      return in.readChar();
+    }
+  },
+  BYTE(Byte.class) {
+    @Override
+    public void save(GraphDataOutput out, Object v) throws IOException {
+      out.writeByte((Byte)v);
+    }
+
+    @Override
+    public Object load(GraphDataInput in) throws IOException {
+      return in.readByte();
+    }
+  },
+  SHORT(Short.class) {
+    @Override
+    public void save(GraphDataOutput out, Object v) throws IOException {
+      out.writeShort((Short)v);
+    }
+
+    @Override
+    public Object load(GraphDataInput in) throws IOException {
+      return in.readShort();
     }
   }
   ;
