@@ -11,10 +11,6 @@
     "db06fa9f6b43bb7d386420f854f41aa55a11023de36bad68e043c3ac3f33b8d5",
     "495063fbf5a1989435ee15ed6c6caf39b7dc7af22dd495e38fc7e6e7c00f1fcc"
   ],
-  "dev.drewhamilton.poko:poko-compiler-plugin:0.18.2": [
-    "08edf341dfa4dd0a9e15b83a2a74850baad3a4a3ca2f93aed05ca6a481b1f394",
-    "02f7ac954f3a9574b37a54d7bdc79190325b9ee38a3244256a84d6d760eb6f1f"
-  ],
   "io.opentelemetry:opentelemetry-exporter-logging-otlp:1.46.0": [
     "afbed5afecd48ebc66ffe16c438cd92da31759af56bdcbde0f260b131e43042a",
     "10c69d372df6c0e80486edb3cbd4191b75a99325e5faba10406242b3e609311e"

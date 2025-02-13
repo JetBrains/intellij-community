@@ -115,13 +115,6 @@ jvm_import(
 )
 
 jvm_import(
-    name = "poko-compiler-plugin",
-    jar = "@poko-compiler-plugin//file",
-    source_jar = "@poko-compiler-plugin-sources//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
     name = "kotlinx-coroutines-core",
     jar = "@kotlinx-coroutines-core-jvm//file",
     source_jar = "@kotlinx-coroutines-core-jvm-sources//file",

@@ -72,15 +72,6 @@ internal fun configurePlugins(
         ))
       }
 
-      "dev.drewhamilton.poko.poko-compiler-plugin" -> {
-        addPlugin(RegisteredPluginInfo(
-          componentRegistrar = null,
-          compilerPluginRegistrar = PokoCompilerPluginRegistrar(),
-          commandLineProcessor = PokoCommandLineProcessor(),
-          pluginOptions = emptyList(),
-        ))
-      }
-
       else -> throw IllegalArgumentException("plugin requires classpath: $id")
     }
   }

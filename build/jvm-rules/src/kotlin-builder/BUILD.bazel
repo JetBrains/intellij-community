@@ -19,7 +19,6 @@ kt_jvm_library(
         "//src/kotlin-plugins/jdeps",
         "//src/kotlin-plugins/abi",
         "//:kotlin-compose-compiler-plugin",
-        "//:poko-compiler-plugin",
         "//:kotlin-serialization-compiler-plugin",
     ],
     visibility = ["//visibility:public"],

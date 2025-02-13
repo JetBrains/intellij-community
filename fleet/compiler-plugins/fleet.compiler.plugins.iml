@@ -8,7 +8,6 @@
     <orderEntry type="library" scope="RUNTIME" name="noria-compiler-plugin" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="rhizomedb-compiler-plugin" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="rpc-compiler-plugin" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="poko-compiler-plugin" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jetbrains.kotlin.compose.compiler.plugin" level="project" />
   </component>
 </module>

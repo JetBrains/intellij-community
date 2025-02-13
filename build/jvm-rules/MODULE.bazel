@@ -195,19 +195,6 @@ http_file(
 )
 
 http_file(
-    name = "poko-compiler-plugin",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/drewhamilton/poko/poko-compiler-plugin/0.18.2/poko-compiler-plugin-0.18.2.jar",
-    sha256 = "08edf341dfa4dd0a9e15b83a2a74850baad3a4a3ca2f93aed05ca6a481b1f394",
-    downloaded_file_path = "poko-compiler-plugin-0.18.2.jar",
-)
-http_file(
-    name = "poko-compiler-plugin-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/dev/drewhamilton/poko/poko-compiler-plugin/0.18.2/poko-compiler-plugin-0.18.2-sources.jar",
-    sha256 = "02f7ac954f3a9574b37a54d7bdc79190325b9ee38a3244256a84d6d760eb6f1f",
-    downloaded_file_path = "poko-compiler-plugin-0.18.2-sources.jar",
-)
-
-http_file(
     name = "kotlinx-coroutines-core-jvm",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.10.1/kotlinx-coroutines-core-jvm-1.10.1.jar",
     sha256 = "069c5988633230e074ec0d39321ec3cdaa4547c49e90ba936c63d8fc91c8c00d",

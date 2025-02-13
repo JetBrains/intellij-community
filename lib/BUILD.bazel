@@ -30,16 +30,6 @@ kt_compiler_plugin(
   visibility = ["//visibility:public"]
 )
 
-kt_compiler_plugin(
-  name = "poko-plugin",
-  id = "dev.drewhamilton.poko.poko-compiler-plugin",
-  # todo options
-#   options = {
-#       "pokoAnnotation": "org/jetbrains/jewel/foundation/GenerateDataFunctions",
-#   },
-  visibility = ["//visibility:public"]
-)
-
 java_binary(
   name = "manifest_updater",
   srcs = ["ManifestUpdater.java"],
