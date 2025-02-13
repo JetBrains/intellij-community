@@ -21,6 +21,7 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyMakeReturnsExplicitFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
@@ -71,9 +72,20 @@ public class PyTypeCheckerInspection extends PyInspection {
     @Override
     public void visitPySubscriptionExpression(@NotNull PySubscriptionExpression node) {
       // TODO: Support slice PySliceExpressions
+
+      PyType operandType = myTypeEvalContext.getType(node.getOperand());
+      if (operandType instanceof PyTupleType tupleType && !tupleType.isHomogeneous()) {
+        PyExpression indexExpression = node.getIndexExpression();
+        for (int index : PySubscriptionExpressionImpl.getIndexExpressionPossibleValues(indexExpression, myTypeEvalContext, Integer.class)) {
+          int count = tupleType.getElementCount();
+          if (index < -count || index >= count) {
+            registerProblem(indexExpression, PyPsiBundle.message("INSP.type.checker.tuple.index.out.of.range"));
+          }
+        }
+      }
       // Type check in TypedDict subscription expressions cannot be properly done because each key should have its own value type,
       // so this case is covered by PyTypedDictInspection
-      if (myTypeEvalContext.getType(node.getOperand()) instanceof PyTypedDictType) return;
+      if (operandType instanceof PyTypedDictType) return;
       // Don't type check __class_getitem__ calls inside type hints. Normally these are not type hinted as a construct 
       // special-cased by type checkers
       if (PyTypingTypeProvider.isInsideTypeHint(node, myTypeEvalContext)) return;

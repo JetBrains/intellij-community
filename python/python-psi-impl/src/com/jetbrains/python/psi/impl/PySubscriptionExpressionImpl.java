@@ -51,20 +51,17 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     final PyType type = indexExpression != null ? context.getType(getOperand()) : null;
     if (type instanceof PyTupleType tupleType) {
       List<Integer> indexPossibleValues = getIndexExpressionPossibleValues(indexExpression, context, Integer.class);
-      if (indexPossibleValues != null) {
-        List<@Nullable PyType> possibleTypes = ContainerUtil.map(indexPossibleValues, index -> {
-          if (!tupleType.isHomogeneous() && index < 0) {
-            index += tupleType.getElementCount();
-          }
-          return tupleType.getElementType(index);
-        });
-        return PyUnionType.union(possibleTypes);
-      }
-      return null;
+      List<@Nullable PyType> possibleTypes = ContainerUtil.map(indexPossibleValues, index -> {
+        if (!tupleType.isHomogeneous() && index < 0) {
+          index += tupleType.getElementCount();
+        }
+        return tupleType.getElementType(index);
+      });
+      return PyUnionType.union(possibleTypes);
     }
     if (type instanceof PyTypedDictType typedDictType) {
       List<String> indexPossibleValues = getIndexExpressionPossibleValues(indexExpression, context, String.class);
-      return indexPossibleValues != null ? PyUnionType.union(ContainerUtil.map(indexPossibleValues, typedDictType::getElementType)) : null;
+      return PyUnionType.union(ContainerUtil.map(indexPossibleValues, typedDictType::getElementType));
     }
     if (type instanceof PyClassType) {
       PyType parameterizedType = Ref.deref(PyTypingTypeProvider.getType(this, context));
@@ -76,11 +73,11 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   }
 
   @ApiStatus.Internal
-  public static <T> @Nullable List<T> getIndexExpressionPossibleValues(@Nullable PyExpression indexExpression,
-                                                                       @NotNull TypeEvalContext context,
-                                                                       @NotNull Class<T> indexType) {
+  public static <T> @NotNull List<T> getIndexExpressionPossibleValues(@Nullable PyExpression indexExpression,
+                                                                      @NotNull TypeEvalContext context,
+                                                                      @NotNull Class<T> indexType) {
     if (indexExpression == null) {
-      return null;
+      return List.of();
     }
     T indexExprValue = PyEvaluator.evaluate(indexExpression, indexType);
     if (indexExprValue != null) {
@@ -88,16 +85,16 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     }
     PyType type = context.getType(indexExpression);
     if (type == null) {
-      return null;
+      return List.of();
     }
     List<T> result = new ArrayList<>();
     for (PyType subType : PyTypeUtil.toStream(type)) {
       if (!(subType instanceof PyLiteralType literalType)) {
-        return null;
+        return List.of();
       }
       T val = PyEvaluator.evaluateNoResolve(literalType.getExpression(), indexType);
       if (val == null) {
-        return null;
+        return List.of();
       }
       result.add(val);
     }

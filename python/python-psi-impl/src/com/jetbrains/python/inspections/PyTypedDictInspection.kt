@@ -37,7 +37,7 @@ class PyTypedDictInspection : PyInspection() {
 
       val indexExpression = node.indexExpression
       val indexExpressionValueOptions = PySubscriptionExpressionImpl.getIndexExpressionPossibleValues(indexExpression, myTypeEvalContext, String::class.java)
-      if (indexExpressionValueOptions.isNullOrEmpty()) {
+      if (indexExpressionValueOptions.isEmpty()) {
         if (!operandType.isDefinition) {
           val keyList = operandType.fields.keys.joinToString(transform = { "'$it'" })
           registerProblem(indexExpression, PyPsiBundle.message("INSP.typeddict.typeddict.key.must.be.string.literal.expected.one", keyList))
@@ -187,9 +187,7 @@ class PyTypedDictInspection : PyInspection() {
           if (expr !is PySubscriptionExpression) continue
           val type = myTypeEvalContext.getType(expr.operand)
           if (type is PyTypedDictType) {
-            val possibleIndexValues = PySubscriptionExpressionImpl.getIndexExpressionPossibleValues(expr.indexExpression, myTypeEvalContext, String::class.java)
-                                      ?: emptyList()
-            for (index in possibleIndexValues) {
+            for (index in PySubscriptionExpressionImpl.getIndexExpressionPossibleValues(expr.indexExpression, myTypeEvalContext, String::class.java)) {
               if (type.fields[index]?.qualifiers?.isRequired == true) {
                 registerProblem(expr.indexExpression, PyPsiBundle.message("INSP.typeddict.key.cannot.be.deleted", index, type.name))
               }
@@ -269,9 +267,7 @@ class PyTypedDictInspection : PyInspection() {
         if (target !is PySubscriptionExpression) return@forEach
         val targetType = myTypeEvalContext.getType(target.operand)
         if (targetType !is PyTypedDictType) return@forEach
-        val possibleIndexValues = PySubscriptionExpressionImpl.getIndexExpressionPossibleValues(target.indexExpression, myTypeEvalContext, String::class.java)
-                                  ?: emptyList()
-        for (indexString in possibleIndexValues) {
+        for (indexString in PySubscriptionExpressionImpl.getIndexExpressionPossibleValues(target.indexExpression, myTypeEvalContext, String::class.java)) {
           if (targetType.fields[indexString]?.qualifiers?.isReadOnly == true) {
             registerProblem(target, PyPsiBundle.message("INSP.typeddict.typeddict.field.is.readonly", indexString))
           }

@@ -2502,4 +2502,21 @@ def foo(param: str | int) -> TypeGuard[str]:
                    asdict(<warning descr="Expected type 'DataclassInstance', got 'str' instead">"Bob"</warning>)
                    """);
   }
+
+  public void testTupleIndexOutOfRange() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   def foo(t: tuple[int, str], i: Literal[1], j: Literal[3], k: Literal[-3]):
+                       t[i]
+                       t[-1]
+                       t[<warning descr="Tuple index out of range">j</warning>]
+                       t[<warning descr="Tuple index out of range">2</warning>]
+                       t[<warning descr="Tuple index out of range">k</warning>]
+                       t[<warning descr="Tuple index out of range">-4</warning>]
+                   
+                   def bar(t: tuple[int, ...]):
+                       t[10]
+                   """);
+  }
 }
