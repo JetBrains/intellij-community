@@ -553,6 +553,10 @@ a:com.intellij.openapi.externalSystem.service.project.AbstractIdeModifiableModel
 pc:com.intellij.openapi.externalSystem.service.project.AbstractIdeModifiableModelsProvider$MyUserDataHolderBase
 - com.intellij.openapi.util.UserDataHolderBase
 - p:<init>():V
+f:com.intellij.openapi.externalSystem.service.project.ExternalSystemModuleDataIndex
+- sf:INSTANCE:com.intellij.openapi.externalSystem.service.project.ExternalSystemModuleDataIndex
+- sf:findModuleNode(com.intellij.openapi.module.Module):com.intellij.openapi.externalSystem.model.DataNode
+- sf:findModuleNode(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.externalSystem.model.DataNode
 f:com.intellij.openapi.externalSystem.service.project.ExternalSystemOperationDescriptor
 - java.io.Serializable
 - sf:OPERATION_DESCRIPTOR_KEY:com.intellij.openapi.externalSystem.model.Key
