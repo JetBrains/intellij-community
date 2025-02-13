@@ -66,10 +66,7 @@
 
   <projectListeners>
     <listener
-            class="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModulePackageNamesProvider$ModuleStateModificationListener"
-            topic="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationListener"/>
-    <listener
-            class="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModulePackageNamesProvider$GlobalModuleStateModificationListener"
-            topic="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModuleStateModificationListener"/>
+            class="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModulePackageNamesProvider$ModificationEventListener"
+            topic="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventListener"/>
   </projectListeners>
 </idea-plugin>

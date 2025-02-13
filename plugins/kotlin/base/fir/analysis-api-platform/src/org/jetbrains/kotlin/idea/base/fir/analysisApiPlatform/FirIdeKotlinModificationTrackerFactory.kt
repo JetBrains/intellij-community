@@ -8,10 +8,11 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceOutOfBlockModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceOutOfBlockModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventListener
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleOutOfBlockModificationListener
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleOutOfBlockModificationEvent
 
 internal class FirIdeKotlinModificationTrackerFactory(private val project: Project) : KotlinModificationTrackerFactory, Disposable {
     /**
@@ -24,15 +25,17 @@ internal class FirIdeKotlinModificationTrackerFactory(private val project: Proje
         get() = JavaLibraryModificationTracker.getInstance(project) as JavaLibraryModificationTracker
 
     init {
-        val busConnection = project.analysisMessageBus.connect(this)
+        project.analysisMessageBus.connect(this).subscribe(
+            KotlinModificationEvent.TOPIC,
+            KotlinModificationEventListener { event ->
+                when (event) {
+                    is KotlinModuleOutOfBlockModificationEvent,
+                    is KotlinGlobalSourceOutOfBlockModificationEvent ->
+                        projectOutOfBlockModificationTracker.incModificationCount()
 
-        busConnection.subscribe(
-            KotlinModificationTopics.MODULE_OUT_OF_BLOCK_MODIFICATION,
-            KotlinModuleOutOfBlockModificationListener { module -> projectOutOfBlockModificationTracker.incModificationCount() },
-        )
-        busConnection.subscribe(
-            KotlinModificationTopics.GLOBAL_SOURCE_OUT_OF_BLOCK_MODIFICATION,
-            KotlinGlobalSourceOutOfBlockModificationListener { projectOutOfBlockModificationTracker.incModificationCount() },
+                    else -> {}
+                }
+            }
         )
     }
 
