@@ -130,7 +130,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
         @Override
         public @NotNull List<TerminalAction> getPopupMenuGroup(@NotNull MouseEvent event) {
           ActionGroup group = ((HyperlinkWithPopupMenuInfo)info).getPopupMenuGroup(event);
-          AnAction[] actions = group != null ? group.getChildren(null) : AnAction.EMPTY_ARRAY;
+          AnAction[] actions = expandGroup(group);
           return ContainerUtil.map(actions, action -> TerminalActionUtil.createTerminalAction(JBTerminalWidget.this, action));
         }
       });
@@ -149,6 +149,14 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
       });
     }
     return builder.build();
+  }
+
+  private static AnAction @NotNull [] expandGroup(@Nullable ActionGroup group) {
+    if (group == null) return AnAction.EMPTY_ARRAY;
+    if (group instanceof DefaultActionGroup defaultActionGroup) {
+      return defaultActionGroup.getChildren(ActionManager.getInstance());
+    }
+    return group.getChildren(null);
   }
 
   public JBTerminalWidgetListener getListener() {
