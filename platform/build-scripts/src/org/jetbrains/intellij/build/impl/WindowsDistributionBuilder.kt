@@ -42,11 +42,7 @@ internal class WindowsDistributionBuilder(
 
       copyDir(sourceBinDir.resolve(arch.dirName), distBinDir)
 
-      val includeBreakGenLibraries = context.includeBreakGenLibraries()
-      copyDir(sourceDir = sourceBinDir, targetDir = distBinDir, dirFilter = { it == sourceBinDir }, fileFilter = { file ->
-        @Suppress("SpellCheckingInspection")
-        includeBreakGenLibraries || !file.name.startsWith("breakgen")
-      })
+      copyDir(sourceBinDir, distBinDir, dirFilter = { it == sourceBinDir })
 
       copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, arch), distBinDir)
 
