@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.headertoolbar
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ExpandableMenu
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode.Companion.isMergedMainMenu
@@ -79,7 +80,7 @@ class MainMenuWithButton(
       }
 
       while (availableWidth > widthLimit && toolbarMainMenu.hasInvisibleItems()) {
-        val item = toolbarMainMenu.pollLastInvisibleItem() ?: break // Remove the last item (LIFO order)
+        val item = toolbarMainMenu.pollNextInvisibleItem(mainMenuButton.expandableMenu) ?: break // Remove the last item (LIFO order)
         val itemWidth = item.size.width
         if (availableWidth - itemWidth < widthLimit) {
           toolbarMainMenu.addInvisibleItem(item)
@@ -120,7 +121,16 @@ class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame): IdeJMenuBar
     invisibleItems.offerLast(item) // Add to removed items (LIFO behavior)
   }
 
-  fun pollLastInvisibleItem(): ActionMenu? = invisibleItems.pollLast()
+  internal fun pollNextInvisibleItem(expandableMenu: ExpandableMenu?): ActionMenu? {
+    val expandableMenuNextItem = expandableMenu?.ideMenu?.rootMenuItems?.getOrNull(rootMenuItems.size)
+    val lastItem = invisibleItems.last()
+    val matchingItem = if (lastItem.text == expandableMenuNextItem?.text) lastItem else invisibleItems.find { it.text == expandableMenuNextItem?.text }
+    matchingItem?.let {
+      invisibleItems.remove(it)
+    }
+    return matchingItem
+
+  }
 
   fun hasInvisibleItems(): Boolean = invisibleItems.isNotEmpty()
 
