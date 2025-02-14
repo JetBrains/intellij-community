@@ -1,282 +1,214 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.options;
+package com.intellij.openapi.options
 
-import com.intellij.ide.ui.search.BooleanOptionDescription;
-import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Setter;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.dsl.builder.Panel;
-import com.intellij.util.containers.ContainerUtil;
-import kotlin.reflect.KMutableProperty0;
-import org.jetbrains.annotations.*;
+import com.intellij.ide.ui.search.BooleanOptionDescription
+import com.intellij.ide.ui.search.OptionDescription
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Getter
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.Setter
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.dsl.builder.Panel
+import org.jetbrains.annotations.NonNls
+import java.util.function.Function
+import java.util.function.Supplier
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import kotlin.reflect.KMutableProperty0
 
-import javax.swing.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Function;
-import java.util.function.Supplier;
+abstract class BeanConfigurable<T : Any> protected constructor(protected val instance: T) : UnnamedConfigurable, ConfigurableWithOptionDescriptors, UiDslUnnamedConfigurable {
+  var title: @NlsContexts.BorderTitle String? = null
+    protected set
 
-public abstract class BeanConfigurable<T> implements UnnamedConfigurable, ConfigurableWithOptionDescriptors, UiDslUnnamedConfigurable {
+  private val myFields: MutableList<CheckboxField> = ArrayList<CheckboxField>()
 
-  private final @NotNull T myInstance;
-  private @NlsContexts.BorderTitle @Nullable String myTitle;
-
-  private final List<CheckboxField> myFields = new ArrayList<>();
-
-  protected BeanConfigurable(@NotNull T beanInstance) {
-    myInstance = beanInstance;
+  protected constructor(beanInstance: T, title: @NlsContexts.BorderTitle String?) : this(beanInstance) {
+    this.title = title
   }
 
-  protected BeanConfigurable(@NotNull T beanInstance, @NlsContexts.BorderTitle @Nullable String title) {
-    this(beanInstance);
-    setTitle(title);
+  private abstract class BeanPropertyAccessor {
+    abstract fun getBeanValue(instance: Any): Boolean
+
+    abstract fun setBeanValue(instance: Any, value: Boolean)
   }
 
-  private abstract static class BeanPropertyAccessor {
-    abstract @NotNull Boolean getBeanValue(@NotNull Object instance);
-
-    abstract void setBeanValue(@NotNull Object instance, @NotNull Boolean value);
-  }
-
-  private static final class BeanFieldAccessor extends BeanPropertyAccessor {
-    private final @NotNull String myFieldName;
-
-    private BeanFieldAccessor(@NotNull String fieldName) {
-      myFieldName = fieldName;
+  private class BeanFieldAccessor(private val myFieldName: String) : BeanPropertyAccessor() {
+    fun getterName(): @NonNls String {
+      return "is" + StringUtil.capitalize(myFieldName)
     }
 
-    private @NonNls String getterName() {
-      return "is" + StringUtil.capitalize(myFieldName);
-    }
-
-    @Override
-    @NotNull Boolean getBeanValue(@NotNull Object instance) {
+    override fun getBeanValue(instance: Any): Boolean {
       try {
-        Field field = instance.getClass().getField(myFieldName);
-        return (Boolean)field.get(instance);
+        val field = instance.javaClass.getField(myFieldName)
+        return field.get(instance) as Boolean
       }
-      catch (NoSuchFieldException e) {
+      catch (_: NoSuchFieldException) {
         try {
-          final Method method = instance.getClass().getMethod(getterName());
-          return (Boolean)method.invoke(instance);
+          val method = instance.javaClass.getMethod(getterName())
+          return method.invoke(instance) as Boolean
         }
-        catch (Exception e1) {
-          throw new RuntimeException(e1);
+        catch (e1: Exception) {
+          throw RuntimeException(e1)
         }
       }
-      catch (IllegalAccessException e) {
-        throw new RuntimeException(e);
+      catch (e: IllegalAccessException) {
+        throw RuntimeException(e)
       }
     }
 
-    @Override
-    void setBeanValue(@NotNull Object instance, @NotNull Boolean value) {
+    override fun setBeanValue(instance: Any, value: Boolean) {
       try {
-        Field field = instance.getClass().getField(myFieldName);
-        field.set(instance, value);
+        val field = instance.javaClass.getField(myFieldName)
+        field.set(instance, value)
       }
-      catch (NoSuchFieldException e) {
+      catch (_: NoSuchFieldException) {
         try {
-          final Method method = instance.getClass().getMethod("set" + StringUtil.capitalize(myFieldName), boolean.class);
-          method.invoke(instance, value);
+          val method = instance.javaClass.getMethod("set" + StringUtil.capitalize(myFieldName), Boolean::class.java)
+          method.invoke(instance, value)
         }
-        catch (Exception e1) {
-          throw new RuntimeException(e1);
+        catch (e1: Exception) {
+          throw RuntimeException(e1)
         }
       }
-      catch (IllegalAccessException e) {
-        throw new RuntimeException(e);
+      catch (e: IllegalAccessException) {
+        throw RuntimeException(e)
       }
     }
   }
 
-  private static final class BeanMethodAccessor extends BeanPropertyAccessor {
-    private final @NotNull Supplier<Boolean> myGetter;
-    private final @NotNull Setter<? super Boolean> mySetter;
-
-    private BeanMethodAccessor(@NotNull Supplier<Boolean> getter, @NotNull Setter<? super Boolean> setter) {
-      myGetter = getter;
-      mySetter = setter;
+  private class BeanMethodAccessor(
+    private val myGetter: Supplier<Boolean>,
+    private val mySetter: Setter<in Boolean>,
+  ) : BeanPropertyAccessor() {
+    override fun getBeanValue(instance: Any): Boolean {
+      return myGetter.get()
     }
 
-    @Override
-    @NotNull Boolean getBeanValue(@NotNull Object instance) {
-      return myGetter.get();
-    }
-
-    @Override
-    void setBeanValue(@NotNull Object instance, @NotNull Boolean value) {
-      //noinspection unchecked
-      mySetter.set(value);
+    override fun setBeanValue(instance: Any, value: Boolean) {
+      mySetter.set(value)
     }
   }
 
-  private static final class BeanKPropertyAccessor extends BeanPropertyAccessor {
-    private final @NotNull KMutableProperty0<Boolean> myProperty;
-
-    private BeanKPropertyAccessor(@NotNull KMutableProperty0<Boolean> property) {
-      myProperty = property;
+  private class BeanKPropertyAccessor(private val myProperty: KMutableProperty0<Boolean>) : BeanPropertyAccessor() {
+    override fun getBeanValue(instance: Any): Boolean {
+      return myProperty.get()
     }
 
-    @Override
-    @NotNull Boolean getBeanValue(@NotNull Object instance) {
-      return myProperty.get();
-    }
-
-    @Override
-    void setBeanValue(@NotNull Object instance, @NotNull Boolean value) {
-      //noinspection unchecked
-      myProperty.set(value);
+    override fun setBeanValue(instance: Any, value: Boolean) {
+      myProperty.set(value)
     }
   }
 
-  private static class CheckboxField {
+  private class CheckboxField {
+    private val myAccessor: BeanPropertyAccessor
+    val title: @NlsContexts.Checkbox String?
 
-    private final @NotNull BeanPropertyAccessor myAccessor;
-    private final @NlsContexts.Checkbox String myTitle;
-    private @Nullable JCheckBox myComponent;
-
-    private CheckboxField(String fieldName, @NlsContexts.Checkbox String title) {
-      myAccessor = new BeanFieldAccessor(fieldName);
-      myTitle = title;
+    constructor(fieldName: String, title: @NlsContexts.Checkbox String?) {
+      myAccessor = BeanFieldAccessor(fieldName)
+      this.title = title
     }
 
-    private CheckboxField(@NotNull BeanPropertyAccessor accessor, @NlsContexts.Checkbox @NotNull String title) {
-      myAccessor = accessor;
-      myTitle = title;
+    constructor(accessor: BeanPropertyAccessor, title: @NlsContexts.Checkbox String) {
+      myAccessor = accessor
+      this.title = title
     }
 
-    private String getTitle() {
-      return myTitle;
+    fun setValue(settingsInstance: Any, value: Boolean) {
+      myAccessor.setBeanValue(settingsInstance, value)
     }
 
-    private void setValue(Object settingsInstance, boolean value) {
-      myAccessor.setBeanValue(settingsInstance, value);
+    fun getValue(settingsInstance: Any): Boolean {
+      return myAccessor.getBeanValue(settingsInstance)
     }
 
-    private boolean getValue(Object settingsInstance) {
-      return myAccessor.getBeanValue(settingsInstance);
+    val component: JCheckBox by lazy { JCheckBox(title) }
+
+    fun isModified(instance: Any): Boolean {
+      val beanValue = myAccessor.getBeanValue(instance)
+      return !Comparing.equal(componentValue, beanValue)
     }
 
-    private @NotNull JCheckBox getComponent() {
-      if (myComponent == null) {
-        myComponent = new JCheckBox(myTitle);
-      }
-      return myComponent;
+    fun apply(instance: Any) {
+      myAccessor.setBeanValue(instance, componentValue)
     }
 
-    boolean isModified(@NotNull Object instance) {
-      Object beanValue = myAccessor.getBeanValue(instance);
-      return !Comparing.equal(getComponentValue(), beanValue);
+    fun reset(instance: Any) {
+      componentValue = myAccessor.getBeanValue(instance)
     }
 
-    void apply(@NotNull Object instance) {
-      myAccessor.setBeanValue(instance, getComponentValue());
-    }
-
-    void reset(@NotNull Object instance) {
-      setComponentValue(myAccessor.getBeanValue(instance));
-    }
-
-    @NotNull Boolean getComponentValue() {
-      return getComponent().isSelected();
-    }
-
-    void setComponentValue(@NotNull Boolean value) {
-      getComponent().setSelected(value);
-    }
+    var componentValue: Boolean
+      get() = component.isSelected
+      set(value) = component.setSelected(value)
   }
 
-  public @Nullable String getTitle() {
-    return myTitle;
-  }
-
-  protected void setTitle(@NlsContexts.BorderTitle @Nullable String title) {
-    myTitle = title;
-  }
-
-  protected @NotNull T getInstance() {
-    return myInstance;
+  @Deprecated("use {@link #checkBox(String, Getter, Setter)} instead")
+  protected fun checkBox(fieldName: @NonNls String, title: @NlsContexts.Checkbox String?) {
+    myFields.add(CheckboxField(fieldName, title))
   }
 
   /**
-   * @deprecated use {@link #checkBox(String, Getter, Setter)} instead
+   * Adds check box with given `title`.
+   * Initial checkbox value is obtained from `getter`.
+   * After the apply, the value from the check box is written back to model via `setter`.
    */
-  @Deprecated(forRemoval = true)
-  protected void checkBox(@NonNls String fieldName, @NlsContexts.Checkbox String title) {
-    myFields.add(new CheckboxField(fieldName, title));
+  protected fun checkBox(
+    title: @NlsContexts.Checkbox String,
+    getter: Getter<Boolean>,
+    setter: Setter<in Boolean>,
+  ) {
+    val field = CheckboxField(BeanMethodAccessor(getter, setter), title)
+    myFields.add(field)
   }
 
-  /**
-   * Adds check box with given {@code title}.
-   * Initial checkbox value is obtained from {@code getter}.
-   * After the apply, the value from the check box is written back to model via {@code setter}.
-   */
-  protected void checkBox(@NlsContexts.Checkbox @NotNull String title,
-                          @NotNull Getter<Boolean> getter,
-                          @NotNull Setter<? super Boolean> setter) {
-    CheckboxField field = new CheckboxField(new BeanMethodAccessor(getter, setter), title);
-    myFields.add(field);
+  protected fun checkBox(title: @NlsContexts.Checkbox String, prop: KMutableProperty0<Boolean>) {
+    myFields.add(CheckboxField(BeanKPropertyAccessor(prop), title))
   }
 
-  protected void checkBox(@NlsContexts.Checkbox @NotNull String title, @NotNull KMutableProperty0<Boolean> prop) {
-    myFields.add(new CheckboxField(new BeanKPropertyAccessor(prop), title));
-  }
+  override fun getOptionDescriptors(
+    configurableId: String,
+    nameConverter: Function<in String?, String?>,
+  ): List<OptionDescription> {
+    return myFields.map {
+      object : BooleanOptionDescription(nameConverter.apply(it.title), configurableId) {
+        override fun isOptionEnabled(): Boolean {
+          return it.getValue(instance)
+        }
 
-  @Override
-  public @Unmodifiable @NotNull List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
-                                                                             @NotNull Function<? super String, @Nls String> nameConverter) {
-    return ContainerUtil.map(myFields, box -> new BooleanOptionDescription(nameConverter.apply(box.getTitle()), configurableId) {
-      @Override
-      public boolean isOptionEnabled() {
-        return box.getValue(myInstance);
+        override fun setOptionState(enabled: Boolean) {
+          it.setValue(instance, enabled)
+        }
       }
-
-      @Override
-      public void setOptionState(boolean enabled) {
-        box.setValue(myInstance, enabled);
-      }
-    });
-  }
-
-  @Override
-  public JComponent createComponent() {
-    return ConfigurableBuilderHelper.createBeanPanel(this, getComponents());
-  }
-
-  @Override
-  public void createContent(@NotNull Panel rootPanel) {
-    ConfigurableBuilderHelper.integrateBeanPanel(rootPanel, this, getComponents());
-  }
-
-  @Override
-  public boolean isModified() {
-    for (CheckboxField field : myFields) {
-      if (field.isModified(myInstance)) return true;
-    }
-    return false;
-  }
-
-  @Override
-  public void apply() throws ConfigurationException {
-    for (CheckboxField field : myFields) {
-      field.apply(myInstance);
     }
   }
 
-  @Override
-  public void reset() {
-    for (CheckboxField field : myFields) {
-      field.reset(myInstance);
+  override fun createComponent(): JComponent {
+    return ConfigurableBuilderHelper.createBeanPanel(this, components)
+  }
+
+  override fun Panel.createContent() {
+    ConfigurableBuilderHelper.integrateBeanPanel(this, this@BeanConfigurable, this@BeanConfigurable.components)
+  }
+
+  override fun isModified(): Boolean {
+    for (field in myFields) {
+      if (field.isModified(instance)) return true
+    }
+    return false
+  }
+
+  @Throws(ConfigurationException::class)
+  override fun apply() {
+    for (field in myFields) {
+      field.apply(instance)
     }
   }
 
-  private @Unmodifiable List<JComponent> getComponents() {
-    return ContainerUtil.map(myFields, field -> field.getComponent());
+  override fun reset() {
+    for (field in myFields) {
+      field.reset(instance)
+    }
   }
+
+  private val components: List<JComponent>
+    get() = myFields.map { it.component }
 }

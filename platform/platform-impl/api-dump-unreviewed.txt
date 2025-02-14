@@ -9382,17 +9382,17 @@ a:com.intellij.openapi.options.BeanConfigurable
 - p:<init>(java.lang.Object):V
 - p:<init>(java.lang.Object,java.lang.String):V
 - apply():V
-- p:checkBox(java.lang.String,com.intellij.openapi.util.Getter,com.intellij.openapi.util.Setter):V
-- p:checkBox(java.lang.String,java.lang.String):V
-- p:checkBox(java.lang.String,kotlin.reflect.KMutableProperty0):V
+- pf:checkBox(java.lang.String,com.intellij.openapi.util.Getter,com.intellij.openapi.util.Setter):V
+- pf:checkBox(java.lang.String,java.lang.String):V
+- pf:checkBox(java.lang.String,kotlin.reflect.KMutableProperty0):V
 - createComponent():javax.swing.JComponent
 - createContent(com.intellij.ui.dsl.builder.Panel):V
-- p:getInstance():java.lang.Object
+- pf:getInstance():java.lang.Object
 - getOptionDescriptors(java.lang.String,java.util.function.Function):java.util.List
-- getTitle():java.lang.String
+- f:getTitle():java.lang.String
 - isModified():Z
 - reset():V
-- p:setTitle(java.lang.String):V
+- pf:setTitle(java.lang.String):V
 a:com.intellij.openapi.options.BoundCompositeConfigurable
 - com.intellij.openapi.options.BoundConfigurable
 - <init>(java.lang.String,java.lang.String):V
