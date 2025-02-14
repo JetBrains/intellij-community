@@ -252,7 +252,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
         if (isWindows()) "mvnw.cmd" else "./mvnw"
       }
       else {
-        if (isWindows()) "$relativePath/mvnw.cmd" else "$relativePath/mvnw"
+        if (isWindows()) relativePath.replace("/", "\\") + "\\mvnw.cmd" else "$relativePath/mvnw"
       }
     }
 
