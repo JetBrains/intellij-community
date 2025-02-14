@@ -9,7 +9,8 @@ import com.intellij.cce.execution.ExecutionMode
 import com.intellij.cce.execution.manager.CodeExecutionManager
 import com.intellij.cce.execution.output.ProcessExecutionLog
 import com.intellij.cce.python.execution.coverage.PythonTestCoverageProcessor
-import com.intellij.cce.python.execution.output.PythonErrorLogProcessorFactory
+import com.intellij.cce.python.execution.output.PythonJunitProcessor
+
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
@@ -67,7 +68,7 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     return ProcessExecutionLog("", "", 0)
   }
 
-  override fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?, testingFramework: String?, unitUnderTest: PsiNamedElement?): ProcessExecutionLog {
+  override fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?, unitUnderTest: PsiNamedElement?): ProcessExecutionLog {
     if (sdk?.sdkType !is PythonSdkType) return ProcessExecutionLog("", "Python SDK not found", -1)
 
     val runFile = File("$basePath/run_tests.sh")
@@ -81,11 +82,14 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
       .removeSuffix(".py")
 
     val coverageFilePath = "$basePath/$testName-coverage"
+    val junitFilePath = "$basePath/$testName-junit"
     try {
       val executionLog = runPythonProcess(basePath, ProcessBuilder("/bin/bash", runFile.path.toString(), testName, target), sdk)
-      // Collect Test Success Ratio, different testing frameworks outputs information about tests into different streams
-      val errorLogProcessor = PythonErrorLogProcessorFactory().createProcessor(testingFramework)
-      val successRatio = errorLogProcessor.getTestExecutionSuccessRate(executionLog)
+
+      // Collect success ratio
+      val junitFile = File(junitFilePath)
+      val junitData = if (junitFile.exists()) junitFile.readText(Charsets.UTF_8) else ""
+      val successRatio = PythonJunitProcessor().getTestExecutionSuccessRate(junitData)
       collectedInfo.put(AIA_EXECUTION_SUCCESS_RATIO, successRatio)
 
       // Collect Coverage
@@ -98,6 +102,7 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
 
       // Remove cumulative coverage data for all the tests
       File(coverageFilePath).delete()
+      File(junitFilePath).delete()
       File("$basePath/.coverage").delete()
       return executionLog
     }
