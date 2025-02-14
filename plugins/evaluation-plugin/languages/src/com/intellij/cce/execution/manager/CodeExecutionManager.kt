@@ -55,7 +55,7 @@ abstract class CodeExecutionManager {
     }
   }
 
-  fun compileAndExecute(project: Project, code: String, target: String, testingFramework: String?, unitUnderTest: PsiNamedElement?): ProcessExecutionLog {
+  fun compileAndExecute(project: Project, code: String, target: String, unitUnderTest: PsiNamedElement?): ProcessExecutionLog {
     // Clear collectedInfo
     clear()
     val basePath = project.basePath
