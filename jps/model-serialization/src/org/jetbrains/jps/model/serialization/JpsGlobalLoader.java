@@ -14,6 +14,10 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.serialization.impl.JpsPathVariablesConfigurationImpl;
 
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public class JpsGlobalLoader {
@@ -48,9 +52,13 @@ public class JpsGlobalLoader {
       global.setPathMapper(new JpsWslPathMapper());
       return;
     }
-    String pathPrefix = System.getProperty("ide.jps.remote.path.prefix");
-    if (pathPrefix != null && !pathPrefix.isEmpty()) {
-      global.setPathMapper(new JpsPrefixCuttingPathMapper(pathPrefix));
+    Set<String> pathPrefixes = Optional.ofNullable(System.getProperty("ide.jps.remote.path.prefixes"))
+      .map(s -> s.split(";"))
+      .stream()
+      .flatMap(Arrays::stream)
+      .collect(Collectors.toSet());
+    if (!pathPrefixes.isEmpty()) {
+      global.setPathMapper(new JpsPrefixesCuttingPathMapper(pathPrefixes));
     }
   }
 

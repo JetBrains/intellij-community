@@ -4,15 +4,20 @@ package org.jetbrains.jps.model.serialization;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Internal
-public class JpsPrefixCuttingPathMapper implements JpsPathMapper {
-  private final String myPrefix;
+import java.util.Set;
 
-  public JpsPrefixCuttingPathMapper(String prefix) { myPrefix = prefix; }
+@ApiStatus.Internal
+public class JpsPrefixesCuttingPathMapper implements JpsPathMapper {
+  private final Set<String> myPrefixes;
+
+  public JpsPrefixesCuttingPathMapper(Set<String> prefixes) { myPrefixes = prefixes; }
 
   @Override
   public @Nullable String mapUrl(@Nullable String url) {
     if (url == null) return null;
-    return url.replace(myPrefix, "");
+    for (String prefix : myPrefixes) {
+      url = url.replace(prefix, "");
+    }
+    return url;
   }
 }
