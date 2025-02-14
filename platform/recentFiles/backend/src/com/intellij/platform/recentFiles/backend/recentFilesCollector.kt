@@ -3,12 +3,13 @@ package com.intellij.platform.recentFiles.backend
 
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FileStatusManager
@@ -28,13 +29,14 @@ import kotlin.io.path.pathString
 import kotlin.math.max
 
 @RequiresReadLock
-internal fun getFilesToShow(project: Project, onlyEdited: Boolean, pinned: Boolean): List<SwitcherRpcDto.File> {
+internal fun getFilesToShow(project: Project, onlyEdited: Boolean, pinned: Boolean, filesFromFrontendEditorSelectionHistory: List<VirtualFileId>): List<SwitcherRpcDto.File> {
   val filesData = ArrayList<SwitcherRpcDto.File>()
   val editors = ArrayList<SwitcherRpcDto.File>()
   val addedFiles = LinkedHashSet<SwitcherRpcDto.File>()
   if (!pinned) {
-    for (pair in (FileEditorManager.getInstance(project) as FileEditorManagerImpl).getSelectionHistoryList()) {
-      editors.add(createRecentFileViewModel(pair.first, project))
+    for (hint in filesFromFrontendEditorSelectionHistory) {
+      val virtualFile = hint.virtualFile() ?: continue
+      editors.add(createRecentFileViewModel(virtualFile, project))
     }
 
     for (editor in editors) {

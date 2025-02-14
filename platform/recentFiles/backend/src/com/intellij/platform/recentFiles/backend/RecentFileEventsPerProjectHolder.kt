@@ -15,7 +15,6 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 
 @Service(Service.Level.PROJECT)
@@ -61,7 +60,7 @@ internal class RecentFileEventsPerProjectHolder {
       val project = filter.projectId.findProjectOrNull() ?: return@flow
 
       val collectedFiles = readAction {
-        getFilesToShow(project, filter.onlyEdited, filter.pinned)
+        getFilesToShow(project, filter.onlyEdited, filter.pinned, filter.frontendEditorSelectionHistory)
       }
       LOG.debug("Switcher collected ${collectedFiles.size} recent files")
 

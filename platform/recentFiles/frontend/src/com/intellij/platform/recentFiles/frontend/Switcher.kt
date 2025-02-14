@@ -509,7 +509,7 @@ object Switcher : BaseSwitcherAction(null) {
 
     private fun updateFilesByCheckBox(event: ItemEvent) {
       val onlyEdited = ItemEvent.SELECTED == event.stateChange
-      scheduleBackendRecentFilesUpdate(RecentFilesBackendRequest.NewSearchWithParameters(onlyEdited, pinned, project.projectId()))
+      scheduleBackendRecentFilesUpdate(createFilesSearchRequestRequest(onlyEdited, pinned, project))
     }
 
     fun navigate(e: InputEvent?) {

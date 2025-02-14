@@ -34,7 +34,7 @@ sealed interface RecentFilesBackendRequest {
   val projectId: ProjectId
 
   @Serializable
-  data class NewSearchWithParameters(val onlyEdited: Boolean, val pinned: Boolean, override val projectId: ProjectId) : RecentFilesBackendRequest
+  data class NewSearchWithParameters(val onlyEdited: Boolean, val pinned: Boolean, val frontendEditorSelectionHistory: List<VirtualFileId>, override val projectId: ProjectId) : RecentFilesBackendRequest
 
   @Serializable
   data class HideFile(val fileToHide: SwitcherRpcDto.File, override val projectId: ProjectId) : RecentFilesBackendRequest

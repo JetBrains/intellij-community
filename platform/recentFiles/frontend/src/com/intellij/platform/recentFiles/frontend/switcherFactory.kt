@@ -36,7 +36,7 @@ suspend fun createAndShowNewSwitcherSuspend(onlyEditedFiles: Boolean?, event: An
   val remoteApi = FileSwitcherApi.getInstance()
   val parameters = SwitcherLaunchEventParameters(event?.inputEvent)
   recentFilesServiceScope.launch(start = CoroutineStart.UNDISPATCHED) {
-    remoteApi.updateRecentFilesBackendState(RecentFilesBackendRequest.NewSearchWithParameters(true == onlyEditedFiles, !parameters.isEnabled, project.projectId()))
+    remoteApi.updateRecentFilesBackendState(createFilesSearchRequestRequest(true == onlyEditedFiles, !parameters.isEnabled, project))
   }
   dataModel.awaitModelPopulation(durationMillis = Registry.intValue("switcher.preload.timeout.ms", 300).toLong())
   return withContext(Dispatchers.EDT) {
