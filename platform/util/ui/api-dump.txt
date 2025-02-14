@@ -4822,7 +4822,6 @@ f:com.intellij.util.ui.ListUiUtil$WithTallRow
 - f:alternativeBackground(Z,Z):java.awt.Color
 - f:background(javax.swing.JList,Z,Z):java.awt.Color
 - f:foreground(Z,Z):java.awt.Color
-- f:secondaryForeground(javax.swing.JList,Z):java.awt.Color
 - f:secondaryForeground(Z,Z):java.awt.Color
 f:com.intellij.util.ui.LocationOnDragTracker
 - s:startDrag(java.awt.event.MouseEvent):com.intellij.util.ui.LocationOnDragTracker
@@ -5178,7 +5177,6 @@ f:com.intellij.util.ui.UIUtil
 - s:getCheckBoxTextHorizontalOffset(javax.swing.JCheckBox):I
 - s:getClientProperty(java.awt.Component,java.lang.Class):java.lang.Object
 - s:getClientProperty(java.lang.Object,com.intellij.openapi.util.Key):java.lang.Object
-- s:getClientProperty(java.lang.Object,java.lang.Object):java.lang.Object
 - s:getComboBoxDisabledBackground():java.awt.Color
 - s:getComboBoxDisabledForeground():java.awt.Color
 - s:getComboBoxPopup(javax.swing.JComboBox):javax.swing.plaf.basic.ComboPopup
@@ -5355,10 +5353,8 @@ f:com.intellij.util.ui.UIUtil
 - s:isToUseDottedCellBorder():Z
 - s:isToggleListSelectionEvent(java.awt.event.MouseEvent):Z
 - s:isUnderAquaBasedLookAndFeel():Z
-- s:isUnderAquaLookAndFeel():Z
 - s:isUnderDarcula():Z
 - s:isUnderDefaultMacTheme():Z
-- s:isUnderGTKLookAndFeel():Z
 - s:isUnderIntelliJLaF():Z
 - s:isUnderNativeMacLookAndFeel():Z
 - s:isUnderNimbusLookAndFeel():Z

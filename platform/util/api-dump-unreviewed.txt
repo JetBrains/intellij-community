@@ -909,7 +909,6 @@ a:com.intellij.openapi.util.RecursionGuard
 - a:computePreventingRecursion(java.lang.Object,Z,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - a:currentStack():java.util.List
 - doPreventingRecursion(java.lang.Object,Z,com.intellij.openapi.util.Computable):java.lang.Object
-- markStack():com.intellij.openapi.util.RecursionGuard$StackStamp
 - a:prohibitResultCaching(java.lang.Object):V
 com.intellij.openapi.util.RecursionGuard$StackStamp
 - a:mayCacheNow():Z
@@ -940,10 +939,6 @@ a:com.intellij.openapi.util.SimpleFieldCache
 f:com.intellij.openapi.util.StackOverflowPreventedException
 - java.lang.RuntimeException
 - <init>(java.lang.String):V
-f:com.intellij.openapi.util.StaticGetter
-- com.intellij.openapi.util.Getter
-- <init>(java.lang.Object):V
-- get():java.lang.Object
 f:com.intellij.openapi.util.SystemInfo
 - sf:JAVA_RUNTIME_VERSION:java.lang.String
 - sf:JAVA_VENDOR:java.lang.String
@@ -1677,7 +1672,6 @@ Fc:com.intellij.openapi.util.text.StringUtil
 - s:firstLast(java.lang.String,I):java.lang.String
 - s:fixVariableNameDerivedFromPropertyName(java.lang.String):java.lang.String
 - s:formatDuration(J):java.lang.String
-- s:formatDuration(J,java.lang.String):java.lang.String
 - s:formatDuration(java.time.Duration):java.lang.String
 - s:formatFileSize(J):java.lang.String
 - s:formatFileSize(J,java.lang.String):java.lang.String
@@ -3102,7 +3096,6 @@ f:com.intellij.util.containers.ContainerUtil
 - s:sorted(java.util.Collection,java.util.Comparator):java.util.List
 - s:splitListToChunks(java.util.List,I):java.util.stream.Stream
 - s:startsWith(java.util.List,java.util.List):Z
-- s:stringMap(java.lang.String[]):java.util.Map
 - s:subArrayAsList(java.lang.Object[],I,I):java.util.List
 - s:subList(java.util.List,I):java.util.List
 - s:subtract(java.util.Collection,java.util.Collection):java.util.Collection

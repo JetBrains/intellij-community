@@ -1606,17 +1606,6 @@ public class StringUtil {
   }
 
   /**
-   * Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456, "") = "2m 3s 456ms"}).
-   * @deprecated use NlsMessages#formatDurationApproximateNarrow for localized output
-   */
-  @Contract(pure = true)
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static @NotNull @NonNls String formatDuration(long duration, @NotNull String unitSeparator) {
-    return Formats.formatDuration(duration, unitSeparator);
-  }
-
-  /**
    * Returns unpluralized variant using English based heuristics like properties -> property, names -> name, children -> child.
    * Returns {@code null} if failed to match appropriate heuristic.
    *
