@@ -25,7 +25,6 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.LocalTimeCounter
-import com.intellij.util.asDisposable
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.*
@@ -41,11 +40,7 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Component
 import java.awt.Dimension
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
-import java.awt.event.FocusEvent
-import java.awt.event.FocusListener
-import java.awt.event.KeyEvent
+import java.awt.event.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JScrollPane
@@ -226,7 +221,7 @@ internal class ReworkedTerminalView(
   ): TerminalOutputModel {
     val model = TerminalOutputModelImpl(editor.document, maxOutputLength)
 
-    val parentDisposable = coroutineScope.asDisposable()
+    val parentDisposable = this
 
     // Document modifications can change the scroll position.
     // Mark them with the corresponding flag to indicate that this change is not caused by the explicit user action.
