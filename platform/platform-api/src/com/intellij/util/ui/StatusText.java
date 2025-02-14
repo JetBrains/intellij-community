@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -296,7 +296,11 @@ public abstract class StatusText {
     return appendText(true, Math.max(0, myPrimaryColumn.fragments.size() - 1), text, attrs, listener);
   }
 
-  public StatusText appendText(boolean isPrimaryColumn, int row, @NlsContexts.StatusText String text, SimpleTextAttributes attrs, ActionListener listener) {
+  public StatusText appendText(boolean isPrimaryColumn,
+                               int row,
+                               @NlsContexts.StatusText String text,
+                               SimpleTextAttributes attrs,
+                               ActionListener listener) {
     return appendText(isPrimaryColumn, row, null, text, attrs, listener);
   }
 
@@ -334,7 +338,7 @@ public abstract class StatusText {
     if (myCenterAlignText) {
       for (int i = 0; i < column.fragments.size(); i++) {
         Fragment fragment = column.fragments.get(i);
-        fragment.boundsInColumn.x += (size.width - fragment.boundsInColumn.width)/2;
+        fragment.boundsInColumn.x += (size.width - fragment.boundsInColumn.width) / 2;
       }
     }
     column.preferredSize.setSize(size);
@@ -432,8 +436,8 @@ public abstract class StatusText {
   /**
    * Forces the vertical gap to appear even after the last line.
    *
-   * @deprecated exists only to emulate an old bug because there's a test that relies on that bug
    * @return {@code this} instance
+   * @deprecated exists only to emulate an old bug because there's a test that relies on that bug
    */
   @ApiStatus.Internal
   @Deprecated(forRemoval = true)
