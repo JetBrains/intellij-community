@@ -22,7 +22,7 @@ def f() -> Optional[str]:
     elif x == 0:
         return 'abc'
     else:
-        <warning descr="Function returning 'str | None' has implicit 'return None'">return</warning>
+        return
 
 def g(x) -> int:
     if x:

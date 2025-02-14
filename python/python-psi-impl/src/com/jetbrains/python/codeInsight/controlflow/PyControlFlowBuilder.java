@@ -811,10 +811,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     // assert False
     if (args.length >= 1) {
       if (!PyEvaluator.evaluateAsBooleanNoResolve(args[0], true)) {
+        myBuilder.addNode(new PyRaiseInstruction(myBuilder, node));
         myBuilder.addPendingEdge(null, myBuilder.prevInstruction);
-      myBuilder.flowAbrupted();
-      return;
-    }
+        myBuilder.flowAbrupted();
+        return;
+      }
 
       TransparentInstruction trueNode = addTransparentInstruction();
       TransparentInstruction falseNode = addTransparentInstruction();

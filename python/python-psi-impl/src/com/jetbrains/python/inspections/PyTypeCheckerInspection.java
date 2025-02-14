@@ -109,15 +109,6 @@ public class PyTypeCheckerInspection extends PyInspection {
 
           // We cannot just match annotated and inferred types, as we cannot promote inferred to Literal
           PyExpression returnExpr = node.getExpression();
-          if (returnExpr == null && !(expected instanceof PyNoneType) && PyTypeChecker.match(expected, PyNoneType.INSTANCE, myTypeEvalContext)) {
-            final String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
-            getHolder()
-              .problem(node, PyPsiBundle.message("INSP.type.checker.returning.type.has.implicit.return", expectedName))
-              .fix(new PyMakeReturnsExplicitFix(function))
-              .register();
-            return;
-          }
-
           if (expected instanceof PyTypedDictType expectedTypedDictType) {
             if (returnExpr != null && PyTypedDictType.isDictExpression(returnExpr, myTypeEvalContext)) {
               reportTypedDictProblems(expectedTypedDictType, returnExpr);
