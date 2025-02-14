@@ -26,7 +26,6 @@
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
-    <orderEntry type="module" module-name="intellij.platform.trialPromotion" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
