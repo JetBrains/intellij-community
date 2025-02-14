@@ -2,8 +2,11 @@
 
 package org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty
 
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.Utils
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -12,6 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.extractMethod.newImpl.inplace.EditorState
+import com.intellij.ui.awt.RelativePoint
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -101,7 +105,6 @@ class KotlinIntroducePropertyHandler(
         )
     }
 
-    @OptIn(KaAllowAnalysisOnEdt::class)
     fun doInvoke(project: Project, editor: Editor, file: KtFile, elements: List<PsiElement>, targetSibling: PsiElement) {
         val adjustedElements = (elements.singleOrNull() as? KtBlockExpression)?.statements ?: elements
         if (adjustedElements.isNotEmpty()) {
@@ -122,10 +125,16 @@ class KotlinIntroducePropertyHandler(
             engine.run(editor, extractionData) {
                 val property = it.declaration as KtProperty
                 val descriptor = it.config.descriptor
-                val exprType = allowAnalysisOnEdt { analyze (property) { CallableReturnTypeUpdaterUtils.TypeInfo.createByKtTypes(property.returnType) } }
-
-                editor.caretModel.moveToOffset(property.textOffset)
+                val offset = property.textOffset
+                editor.caretModel.moveToOffset(offset)
                 editor.selectionModel.removeSelection()
+
+                val component = editor.component
+                val point = RelativePoint(component, editor.logicalPositionToXY(editor.offsetToLogicalPosition(offset)))
+                val exprType = Utils.computeWithProgressIcon(point, component, ActionPlaces.UNKNOWN) {
+                    readAction { analyze (property) { CallableReturnTypeUpdaterUtils.TypeInfo.createByKtTypes(property.returnType) } }
+                }
+
                 if (editor.settings.isVariableInplaceRenameEnabled && !isUnitTestMode()) {
                     with(PsiDocumentManager.getInstance(project)) {
                         commitDocument(editor.document)
