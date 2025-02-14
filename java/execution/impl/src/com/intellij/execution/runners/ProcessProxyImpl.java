@@ -59,10 +59,7 @@ final class ProcessProxyImpl implements ProcessProxy {
   public void attach(@NotNull ProcessHandler processHandler) {
     processHandler.putUserData(KEY, this);
     execute(() -> {
-      int pid = -1;
-      if (SystemInfo.isUnix && processHandler instanceof BaseOSProcessHandler) {
-        pid = (int)((BaseOSProcessHandler)processHandler).getProcess().pid();
-      }
+      int pid = processHandler instanceof BaseOSProcessHandler bh ? (int)bh.getProcess().pid() : -1;
       synchronized (myLock) {
         myPid = pid;
       }
@@ -81,13 +78,9 @@ final class ProcessProxyImpl implements ProcessProxy {
 
   @Override
   public boolean canSendBreak() {
-    if (SystemInfo.isUnix) {
-      synchronized (myLock) {
-        return myPid > 0;
-      }
+    synchronized (myLock) {
+      return myPid > 0;
     }
-
-    return false;
   }
 
   @Override
