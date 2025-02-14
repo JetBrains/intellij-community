@@ -22,7 +22,8 @@ import java.util.List;
 public abstract class RefJavaManager implements RefManagerExtension<RefJavaManager> {
   public static final @NonNls String CLASS = "class";
   public static final @NonNls String METHOD = "method";
-  static final @NonNls String IMPLICIT_CONSTRUCTOR = "implicit.constructor";
+  @ApiStatus.Internal
+  public static final @NonNls String IMPLICIT_CONSTRUCTOR = "implicit.constructor";
   public static final @NonNls String FIELD = "field";
   @ApiStatus.Internal
   public static final @NonNls String PARAMETER = "parameter";

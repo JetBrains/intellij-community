@@ -258,7 +258,8 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
     return annotatorRunner.runAnnotatorsAsync(elements1, elements2, runnable, resultSink);
   }
 
-  static final int POST_UPDATE_ALL = 5;
+  @ApiStatus.Internal
+  public static final int POST_UPDATE_ALL = 5;
   private static final AtomicInteger RESTART_REQUESTS = new AtomicInteger();
 
   @TestOnly
