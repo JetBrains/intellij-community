@@ -18,19 +18,27 @@ class DotEnvKeyReferenceUsageSearcher : UsageSearcher {
         val symbolPointer = symbol.createPointer()
         val usages = SearchService.getInstance()
             .searchWord(parameters.project, symbol.name).caseSensitive(true)
-            .inContexts(SearchContext.IN_CODE, SearchContext.IN_STRINGS)
+            .inContexts(SearchContext.inCode(), SearchContext.inStrings())
             .inScope(parameters.searchScope)
-            .buildQuery(LeafOccurrenceMapper.withPointer(symbolPointer, ::validateReferences))
+            .buildQuery(LeafOccurrenceMapper.withPointer(symbolPointer, ::validateUsageSearchReferences))
             .mapping { PsiUsage.textUsage(it.element.containingFile, it.element.textRange) }
         return listOf(usages)
     }
 
-    fun validateReferences(symbol: DotEnvKeySymbol, leafOccurrence: LeafOccurrence): Collection<DotEnvKeyReference> {
-        if (leafOccurrence.start.parent is DotEnvKey) {
-            return emptyList()
-        }
-        val referenceCandidate = DotEnvKeyReference(leafOccurrence.start)
-        return if (referenceCandidate.resolvesTo(symbol)) listOf(referenceCandidate) else emptyList()
-    }
-
 }
+
+private fun validateUsageSearchReferences(symbol: DotEnvKeySymbol, leafOccurrence: LeafOccurrence): Collection<DotEnvKeyReference> {
+    return validateReferences(symbol, leafOccurrence, false)
+}
+
+internal fun validateReferences(symbol: DotEnvKeySymbol, leafOccurrence: LeafOccurrence, allowDeclarations: Boolean): Collection<DotEnvKeyReference> {
+    val dismissDeclaration = !allowDeclarations && leafOccurrence.start.parent is DotEnvKey
+    val symbolRefersToLeafOccurrence = symbol.file == leafOccurrence.start.containingFile
+                                       && symbol.rangeInFile == leafOccurrence.start.textRange
+    if (dismissDeclaration || symbolRefersToLeafOccurrence) {
+        return emptyList()
+    }
+    val referenceCandidate = DotEnvKeyReference(leafOccurrence.start)
+    return if (referenceCandidate.resolvesTo(symbol)) listOf(referenceCandidate) else emptyList()
+}
+

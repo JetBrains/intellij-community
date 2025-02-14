@@ -4,14 +4,8 @@ package ru.adelf.idea.dotenv.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
-import com.intellij.openapi.util.NlsSafe;
+import com.intellij.model.psi.PsiExternalReferenceHost;
 
-public interface DotEnvNestedVariableKey extends DotEnvNestedVariableKeyCapabilities {
-
-  @NlsSafe @Nullable String getName();
-
-  @Nullable PsiElement setName(@NlsSafe @NotNull String name);
-
-  @Nullable PsiElement getNameIdentifier();
+public interface DotEnvNestedVariableKey extends PsiExternalReferenceHost {
 
 }

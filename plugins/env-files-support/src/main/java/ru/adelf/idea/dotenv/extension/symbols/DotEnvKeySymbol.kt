@@ -3,11 +3,8 @@ package ru.adelf.idea.dotenv.extension.symbols
 import com.intellij.dotenv.icons.DotenvIcons
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
-import com.intellij.find.usages.api.UsageOptions
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
-import com.intellij.navigation.NavigatableSymbol
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -15,16 +12,20 @@ import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.Nls
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.SearchScope
+import com.intellij.refactoring.rename.api.RenameTarget
 
 class DotEnvKeySymbol(
     val name: @NlsSafe String,
     val file: PsiFile,
     val rangeInFile: TextRange,
-) : Symbol, SearchTarget, NavigationTarget, NavigatableSymbol {
+) : Symbol, NavigationTarget, SearchTarget, RenameTarget {
 
-    override fun createPointer(): Pointer<DotEnvKeySymbol> = Pointer.fileRangePointer(file, rangeInFile) { restoredFile, restoredRange ->
-        DotEnvKeySymbol(name, file, restoredRange)
+    override fun createPointer(): Pointer<DotEnvKeySymbol> {
+        return Pointer.fileRangePointer(file, rangeInFile) { restoredFile, restoredRange ->
+            DotEnvKeySymbol(name, file, rangeInFile)
+        }
     }
 
     override fun computePresentation(): TargetPresentation = TargetPresentation.builder(name)
@@ -43,12 +44,15 @@ class DotEnvKeySymbol(
 
     override fun hashCode(): Int = name.hashCode()
 
-    override val usageHandler: UsageHandler = object : UsageHandler {
-        override fun getSearchString(options: UsageOptions): @Nls(capitalization = Nls.Capitalization.Title) String = name
-    }
+    override val usageHandler: UsageHandler
+        get() = UsageHandler.createEmptyUsageHandler(name)
 
-    override fun getNavigationTargets(project: Project): Collection<NavigationTarget?> {
-        return emptyList()
-    }
+    override val maximalSearchScope: SearchScope
+        get() = GlobalSearchScope.projectScope(file.project)
+
+    override val targetName: String
+        get() = name
+
+    fun declarationUsage(): DotEnvKeyDeclarationUsage = DotEnvKeyDeclarationUsage(file, rangeInFile)
 
 }

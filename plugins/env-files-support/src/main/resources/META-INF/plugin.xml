@@ -58,6 +58,9 @@
         <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
                   implementationClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeyReferenceUsageSearcher"/>
 
+        <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
+                  implementationClass="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeySymbolRenameUsageSearcher"/>
+
         <psi.declarationProvider implementation="ru.adelf.idea.dotenv.extension.symbols.DotEnvKeySymbolDeclarationProvider"/>
 
         <psi.symbolReferenceProvider hostElementClass="ru.adelf.idea.dotenv.psi.DotEnvNestedVariableKey"

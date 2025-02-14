@@ -26,7 +26,7 @@ public class DotEnvReferencesSearcher  extends QueryExecutorBase<PsiReference, R
     }
 
     private static void addPropertyUsages(@NotNull DotEnvProperty property, @NotNull SearchScope scope, @NotNull SearchRequestCollector collector) {
-        final String propertyName = property.getName();
+        final String propertyName = property.getKeyText();
         if (StringUtil.isNotEmpty(propertyName)) {
             /*SearchScope additional = GlobalSearchScope.EMPTY_SCOPE;
             for (CustomPropertyScopeProvider provider : CustomPropertyScopeProvider.EP_NAME.getExtensionList()) {

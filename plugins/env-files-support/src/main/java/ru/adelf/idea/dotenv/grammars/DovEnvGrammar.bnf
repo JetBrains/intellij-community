@@ -22,14 +22,13 @@ private item_ ::= (EXPORT? property|COMMENT|CRLF)
 key ::= KEY_CHARS
 nested_variable_key ::= KEY_CHARS {
     name="property key"
-    implements="ru.adelf.idea.dotenv.psi.DotEnvNestedVariableKeyCapabilities"
-    mixin="ru.adelf.idea.dotenv.psi.DotEnvNestedVariableKeyMixin"
-    methods=[getName setName getNameIdentifier]
+    implements="com.intellij.model.psi.PsiExternalReferenceHost"
 }
 
 private quoted_value ::= (NESTED_VARIABLE_START nested_variable_key? NESTED_VARIABLE_END) | VALUE_CHARS
 
 value ::= VALUE_CHARS+ | QUOTE quoted_value* QUOTE?
 
-property ::= (key SEPARATOR value? COMMENT?) | key COMMENT? {mixin="ru.adelf.idea.dotenv.psi.DotEnvNamedElementImpl"
-    implements="ru.adelf.idea.dotenv.psi.DotEnvNamedElement" methods=[getKeyText getValueText getName setName getNameIdentifier]}
+property ::= (key SEPARATOR value? COMMENT?) | key COMMENT? {
+  methods=[getKeyText getValueText]
+}

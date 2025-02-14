@@ -17,14 +17,14 @@ class UndefinedNestedVariableInspection : LocalInspectionTool() {
         return object : PsiElementVisitor() {
             override fun visitElement(element: PsiElement) {
                 (element as? DotEnvNestedVariableKey)?.let { key ->
-                    val isUndefinedProperty = FileBasedIndex.getInstance().processValues<String?, String?>(
+                    val isUndefinedProperty = FileBasedIndex.getInstance().processValues(
                         DotEnvKeyValuesIndex.KEY,
                         element.text, null,
                         FileBasedIndex.ValueProcessor { file: VirtualFile?, value: String? -> false },
                         GlobalSearchScope.allScope(element.project)
                     )
                     if (isUndefinedProperty) {
-                        holder.registerProblem(element, DotEnvBundle.message("inspection.name.undefined.nested.variable", element.name))
+                        holder.registerProblem(element, DotEnvBundle.message("inspection.name.undefined.nested.variable", element.text))
                     }
                 }
                 super.visitElement(element)
