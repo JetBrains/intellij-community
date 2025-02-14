@@ -51,6 +51,8 @@ public abstract class VcsDirtyScopeManager {
    * Requests an asynchronous file status update for all files under the specified root.
    *
    * @param root the root for which the file status update is requested.
+   *             
+   * @see com.intellij.openapi.vcs.ProjectLevelVcsManager#getVcsRootFor(VirtualFile)
    */
   public abstract void rootDirty(@NotNull VirtualFile root);
 
