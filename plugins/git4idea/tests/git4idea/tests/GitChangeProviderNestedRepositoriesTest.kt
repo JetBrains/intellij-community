@@ -110,22 +110,24 @@ class GitChangeProviderNestedRepositoriesTest : GitPlatformTest() {
     repo.addCommit("commit in repo")
     subrepo.addCommit("commit in subrepo")
 
+    val repoPath = VcsUtil.getFilePath(repo.root)
+    val repoFilePath = VcsUtil.getFilePath(repo.root, "a.txt")
+
+    val subRepoPath = VcsUtil.getFilePath(subrepo.root)
+    val subRepoFilePath = VcsUtil.getFilePath(subrepo.root, "sub.txt")
+
     changeListManager.ensureUpToDate()
     dirtyScopeManager.rootDirty(repo.root)
 
-    val subRepoPath = VcsUtil.getFilePath(subrepo.root)
-    val sutTxtPath = VcsUtil.getFilePath(subrepo.root, "sub.txt")
-
-    var paths = dirtyScopeManager.whatFilesDirty(listOf(subRepoPath, sutTxtPath))
-
-    assertTrue(paths.isEmpty())
+    var dirtyFiles = dirtyScopeManager.whatFilesDirty(listOf(repoPath, repoFilePath, subRepoPath, subRepoFilePath))
+    assertContainsElements(dirtyFiles, repoPath, repoFilePath)
+    assertDoesntContain(dirtyFiles, subRepoPath, subRepoFilePath)
 
     changeListManager.ensureUpToDate()
     dirtyScopeManager.dirDirtyRecursively(repo.root)
 
-    paths = dirtyScopeManager.whatFilesDirty(listOf(subRepoPath, sutTxtPath))
-
-    assertEquals(2, paths.size)
+    dirtyFiles = dirtyScopeManager.whatFilesDirty(listOf(repoPath, repoFilePath, subRepoPath, subRepoFilePath))
+    assertContainsElements(dirtyFiles, repoPath, repoFilePath, subRepoPath, subRepoFilePath)
   }
 
   private fun assertFileStatus(relativePath: String, fileStatus: FileStatus) {
