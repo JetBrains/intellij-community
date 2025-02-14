@@ -6,15 +6,17 @@ import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.actions.ToolWindowsGroup
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
+import com.intellij.openapi.wm.impl.AbstractSquareStripeButton
+import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.toolWindow.ToolWindowDragHelper
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManager
+import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
@@ -51,14 +53,13 @@ private class XNextToolWindowAction(val toolWindowAction: ActivateToolWindowActi
                                                                                       DumbAware, Toggleable,
                                                                                       CustomComponentAction {
   companion object {
-    private val toolWindowKey = Key<ToolWindow>("XNextToolWindowAction.toolWindowKey")
+    private val toolWindowKey = Key<ToolWindowImpl>("XNextToolWindowAction.toolWindowKey")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val state = !isSelected(e)
     setSelected(e, state)
     Toggleable.setSelected(e.presentation, state)
-    super.actionPerformed(e)
   }
 
   override fun update(e: AnActionEvent) {
@@ -67,7 +68,7 @@ private class XNextToolWindowAction(val toolWindowAction: ActivateToolWindowActi
     val project = e.project ?: return
     val twm = ToolWindowManager.getInstance(project)
     val toolWindowId = toolWindowAction.toolWindowId
-    val toolWindow = twm.getToolWindow(toolWindowId)
+    val toolWindow = twm.getToolWindow(toolWindowId) as? ToolWindowImpl ?: return
     e.presentation.putClientProperty(toolWindowKey, toolWindow)
   }
 
@@ -102,21 +103,27 @@ private class XNextToolWindowAction(val toolWindowAction: ActivateToolWindowActi
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     if (component !is MyButton) return
-    component.toolWindow = presentation.getClientProperty(toolWindowKey)
+    component.myToolWindow = presentation.getClientProperty(toolWindowKey)
   }
 
-  private class MyButton(action: XNextToolWindowAction, presentation: Presentation, place: String) : ActionButton(action, presentation, place, ActionToolbar.experimentalToolbarMinimumButtonSize()), UiDataProvider {
-    var toolWindow: ToolWindow? = null
+  private class MyButton(action: XNextToolWindowAction, presentation: Presentation, place: String) :
+    AbstractSquareStripeButton(action, presentation, { ActionToolbar.experimentalToolbarMinimumButtonSize() }), ToolWindowDragHelper.ToolWindowProvider, UiDataProvider {
+
+      var myToolWindow = presentation.getClientProperty(toolWindowKey)
+
+    override val toolWindow: ToolWindowImpl?
+      get() = myToolWindow
 
     init {
       PopupHandler.installPopupMenu(this,
                                     DefaultActionGroup(
                                       MyPinAction(action.toolWindowAction.toolWindowId),
                                       ToolWindowMoveAction.Group()), "XNextStatusBar.Popup")
+      MouseDragHelper.setComponentDraggable(this, true)
     }
 
     override fun uiDataSnapshot(sink: DataSink) {
-      sink[PlatformDataKeys.TOOL_WINDOW] = toolWindow
+      sink[PlatformDataKeys.TOOL_WINDOW] = myToolWindow
     }
   }
 

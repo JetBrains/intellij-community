@@ -15,6 +15,8 @@ internal class XNextToolbarActionsGroup : ActionGroup(), DumbAware {
       actionList.add(AnActionWrapper(it) )
     }
 
+    actionList.add(Separator.create())
+
     ActionManager.getInstance().getAction("HideAllWindows")?.let {
       actionList.add(object : AnActionWrapper(it) {
         init {
