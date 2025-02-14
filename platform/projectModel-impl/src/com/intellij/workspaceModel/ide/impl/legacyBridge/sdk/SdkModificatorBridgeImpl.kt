@@ -20,6 +20,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import org.jdom.Element
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
@@ -54,7 +55,13 @@ internal class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Bu
 
   override fun setHomePath(path: String?) {
     modifiedSdkEntity.homePath = if (path != null) {
-      val descriptor = Path.of(path).getEelDescriptor()
+      val descriptor = try {
+        Path.of(path).getEelDescriptor()
+      }
+      catch (_: InvalidPathException) {
+        // sometimes (in Ruby) the SDK home is set to 'temp:///root/nostubs'
+        LocalEelDescriptor
+      }
       val globalInstance = GlobalWorkspaceModel.getInstance(descriptor).getVirtualFileUrlManager()
       globalInstance.getOrCreateFromUrl(path)
     } else {
