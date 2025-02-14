@@ -177,8 +177,10 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
         val url = URI(MarketplaceUrls.getSearchPluginsUpdatesUrl())
         val os = URLEncoder.encode(OS.CURRENT.name + " " + OS.CURRENT.version, CharsetToolkit.UTF8)
-        val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates") // same as regular updates
-          .takeIf { !PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false) }
+        val machineId = if (LoadingState.COMPONENTS_LOADED.isOccurred) {
+          MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates") // same as regular updates
+            .takeIf { !PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false) }
+        } else null
 
         val query = buildString {
           append("build=${ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber)}")
