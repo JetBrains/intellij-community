@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode
+import com.intellij.openapi.wm.impl.headertoolbar.MergedMainMenu
 import com.intellij.util.concurrency.ThreadingAssertions
 import javax.swing.MenuSelectionManager
 
@@ -16,7 +16,7 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
   override suspend fun doUpdateVisibleActions(newVisibleActions: List<ActionGroup>, forceRebuild: Boolean) {
     ThreadingAssertions.assertEventDispatchThread()
     val menuBarComponent = menuBar.component
-    if (!forceRebuild && (newVisibleActions == visibleActions || visibleActions.isNotEmpty() && ShowMode.isMergedMainMenu()) && !presentationFactory.isNeedRebuild) {
+    if (!forceRebuild && (newVisibleActions == visibleActions) && !presentationFactory.isNeedRebuild) {
       val enableMnemonics = !UISettings.getInstance().disableMnemonics
       for (child in menuBarComponent.components) {
         if (child is ActionMenu) {
@@ -30,6 +30,8 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
     val changeBarVisibility = newVisibleActions.isEmpty() || visibleActions.isEmpty()
     visibleActions = newVisibleActions
     menuBarComponent.removeAll()
+    val countOfInvisibleItems = (menuBarComponent as? MergedMainMenu)?.getInvisibleItemsCount() ?: 0
+    (menuBarComponent as? MergedMainMenu)?.clearInvisibleItems()
 
     if (!newVisibleActions.isEmpty()) {
       val enableMnemonics = !UISettings.getInstance().disableMnemonics
@@ -45,6 +47,10 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
         if (isCustomDecorationActive) {
           actionMenu.isOpaque = false
           actionMenu.isFocusable = false
+        }
+        if (countOfInvisibleItems > 0 && newVisibleActions.indexOf(action) >= visibleActions.size - countOfInvisibleItems - 1) {
+          (menuBarComponent as? MergedMainMenu)?.addInvisibleItem(actionMenu)
+          continue
         }
         menuBarComponent.add(actionMenu)
       }

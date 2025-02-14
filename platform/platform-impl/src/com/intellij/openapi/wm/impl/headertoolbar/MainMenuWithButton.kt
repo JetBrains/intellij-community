@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.headertoolbar
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.wm.impl.RootPaneUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode.Companion.isMergedMainMenu
@@ -17,6 +16,7 @@ import com.intellij.ui.util.width
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentLinkedDeque
 import javax.swing.Icon
 import javax.swing.JFrame
@@ -26,13 +26,12 @@ class MainMenuWithButton(
   val coroutineScope: CoroutineScope, private val frame: JFrame,
 ) : NonOpaquePanel(GridLayout()) {
   val mainMenuButton: MainMenuButton = MainMenuButton(coroutineScope, getButtonIcon()) { if (ShowMode.isMergedMainMenu()) toolbarMainMenu.menuCount else 0 }
-  val toolbarMainMenu: IdeJMenuBar = RootPaneUtil.createMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = null).apply {
+  val toolbarMainMenu: MergedMainMenu = MergedMainMenu(coroutineScope = coroutineScope, frame = frame).apply {
     addUpdateGlobalMenuRootsListener { components.forEach { (it as JMenu).isOpaque = false } }
     isOpaque = false
     isVisible = ShowMode.getCurrent() == ShowMode.TOOLBAR_WITH_MENU
     border = null
   }
-  private val removedItems = ConcurrentLinkedDeque<ActionMenu>()
 
   init {
     isOpaque = false
@@ -46,13 +45,12 @@ class MainMenuWithButton(
     val isMergedMenu = isMergedMainMenu()
     toolbarMainMenu.isVisible = isMergedMenu
     mainMenuButton.button.presentation.icon = getButtonIcon()
-    mainMenuButton.button.isVisible = !isMergedMenu || removedItems.isNotEmpty()
+    mainMenuButton.button.isVisible = !isMergedMenu || toolbarMainMenu.hasInvisibleItems()
 
     if (!isMergedMenu) return
 
     coroutineScope.launch(Dispatchers.EDT) {
-      val menuItemTexts = toolbarMainMenu.rootMenuItems.map { it.text }
-      removedItems.removeIf { removedItem -> menuItemTexts.contains(removedItem.text) }
+      toolbarMainMenu.clearDuplicates()
 
       var wasChanged = false
       val toolbarPrefWidth = (toolbar?.calculatePreferredWidth() ?: return@launch) + (toolbar.parent?.insets?.width ?: 0)
@@ -71,7 +69,7 @@ class MainMenuWithButton(
           if (toolbarMainMenu.rootMenuItems.size <= 1 || widthToFree <= 0) break
 
           val item = rootMenuItems[i]
-          removedItems.offerLast(item) // Add to removed items (LIFO behavior)
+          toolbarMainMenu.addInvisibleItem(item) // Add to removed items (LIFO behavior)
           toolbarMainMenu.remove(item)
           widthToFree -= item.size.width
           wasChanged = true
@@ -80,11 +78,11 @@ class MainMenuWithButton(
         availableWidth = 0 // Adjust to reflect that we've made space
       }
 
-      while (availableWidth > widthLimit && removedItems.isNotEmpty()) {
-        val item = removedItems.pollLast() ?: break // Remove the last item (LIFO order)
+      while (availableWidth > widthLimit && toolbarMainMenu.hasInvisibleItems()) {
+        val item = toolbarMainMenu.pollLastInvisibleItem() ?: break // Remove the last item (LIFO order)
         val itemWidth = item.size.width
         if (availableWidth - itemWidth < widthLimit) {
-          removedItems.offerLast(item)
+          toolbarMainMenu.addInvisibleItem(item)
           break
         }
 
@@ -93,7 +91,7 @@ class MainMenuWithButton(
         wasChanged = true
       }
 
-      menuButton.isVisible = removedItems.isNotEmpty()
+      menuButton.isVisible = toolbarMainMenu.hasInvisibleItems()
       if (wasChanged) {
         toolbarMainMenu.rootMenuItems.forEach { it.updateUI() }
         toolbar.revalidate()
@@ -106,6 +104,30 @@ class MainMenuWithButton(
   fun getButtonIcon(): Icon = if (isMergedMainMenu()) AllIcons.General.ChevronRight else AllIcons.General.WindowsMenu_20x20
 
   fun clearRemovedItems() {
-    removedItems.clear()
+    toolbarMainMenu.clearInvisibleItems()
+  }
+}
+
+@ApiStatus.Internal
+class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame): IdeJMenuBar(coroutineScope = coroutineScope, frame = frame) {
+  private val invisibleItems: ConcurrentLinkedDeque<ActionMenu> = ConcurrentLinkedDeque<ActionMenu>()
+
+  fun clearInvisibleItems() {
+    invisibleItems.clear()
+  }
+
+  fun addInvisibleItem(item: ActionMenu) {
+    invisibleItems.offerLast(item) // Add to removed items (LIFO behavior)
+  }
+
+  fun pollLastInvisibleItem(): ActionMenu? = invisibleItems.pollLast()
+
+  fun hasInvisibleItems(): Boolean = invisibleItems.isNotEmpty()
+
+  fun getInvisibleItemsCount(): Int = invisibleItems.size
+
+  fun clearDuplicates() {
+    val menuItemTexts = rootMenuItems.map { it.text }
+    invisibleItems.removeIf { removedItem -> menuItemTexts.contains(removedItem.text) }
   }
 }
