@@ -2,17 +2,23 @@ package com.jetbrains.python
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.getOr
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.exec
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PySdkBundle.message
 import com.jetbrains.python.Result.Companion.failure
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor.PYTHON_VERSION_ARG
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
+import kotlin.io.path.name
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.seconds
 
@@ -54,4 +60,21 @@ suspend fun PythonBinary.executeWithResult(vararg args: String): Result<@NlsSafe
   else {
     Result.success(output.stdoutString)
   }
+}
+
+@RequiresBackgroundThread
+fun PythonBinary.resolvePythonHome(): PythonHomePath = when (getEelDescriptor().operatingSystem) {
+  EelPath.OS.WINDOWS -> parent.takeIf { it.name.lowercase() != "scripts" } ?: parent.parent
+  EelPath.OS.UNIX -> parent.takeIf { it.name != "bin" } ?: parent.parent
+}
+
+@RequiresBackgroundThread
+fun PythonBinary.resolvePythonTool(name: String): Path = when (getEelDescriptor().operatingSystem) {
+  EelPath.OS.WINDOWS -> resolve("Scripts/$name.exe")
+  EelPath.OS.UNIX -> resolve("bin/$name")
+}
+
+@RequiresBackgroundThread
+fun PythonHomePath.resolvePythonBinary(): PythonBinary? {
+  return VirtualEnvReader(isWindows = getEelDescriptor().operatingSystem == EelPath.OS.WINDOWS).findPythonInPythonRoot(this)
 }

@@ -9,6 +9,8 @@ import com.intellij.python.community.impl.poetry.poetryPath
 import com.intellij.python.community.testFramework.testEnv.TypeVanillaPython3
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.resolvePythonHome
+import com.jetbrains.python.resolvePythonTool
 import java.nio.file.Path
 
 /**
@@ -25,18 +27,10 @@ internal class VanillaPythonEnvExtension : PythonEnvExtensionBase<PythonBinary, 
 ) {
   private companion object {
     val checkedPoetries = mutableMapOf<Path, Unit>()
-
-    private fun resolveToolBinary(env: PythonBinary, name: String) =
-      if (SystemInfoRt.isWindows) {
-        env.parent.resolveSibling("Script/${name}.exe")
-      }
-      else {
-        env.resolveSibling(name)
-      }
   }
 
   override fun onEnvFound(env: PythonBinary) {
-    val poetry = resolveToolBinary(env, "poetry")
+    val poetry = env.resolvePythonHome().resolvePythonTool("poetry")
     if (poetry !in checkedPoetries) {
       val output = CapturingProcessHandler(GeneralCommandLine(poetry.toString(), "--version")).runProcess(60_000, true)
       assert(output.exitCode == 0) { "$poetry seems to be broken, output: $output. For Windows check `fix_path.cmd`" }
@@ -46,8 +40,7 @@ internal class VanillaPythonEnvExtension : PythonEnvExtensionBase<PythonBinary, 
     // There is no API that accepts path to poetry: only this global object is used
     PropertiesComponent.getInstance().poetryPath = poetry.toString()
 
-    // TODO: find a way to extract this logic into one place to provide a uniform way to resolve python tool binaries
-    val uv = resolveToolBinary(env, "uv")
+    val uv = env.resolvePythonHome().resolvePythonTool("uv")
     PropertiesComponent.getInstance().setValue(
       "PyCharm.Uv.Path",
       uv.toString()
