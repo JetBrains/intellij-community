@@ -45,10 +45,11 @@
     <orderEntry type="module" module-name="intellij.platform.kernel.backend" />
     <orderEntry type="module" module-name="intellij.platform.project" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
-    <orderEntry type="library" scope="TEST" name="Guava" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="library" scope="TEST" name="Guava" level="project" />
   </component>
 </module>

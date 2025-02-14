@@ -119,7 +119,9 @@ internal class TerminalTabsManager(private val project: Project, private val cor
    */
   private suspend fun startTerminalSession(options: ShellStartupOptions, scope: CoroutineScope): Pair<TerminalSessionId, ShellStartupOptions> {
     val (session, configuredOptions) = startTerminalSession(project, options, JBTerminalSystemSettingsProvider(), scope)
-    val sessionEntity = newValueEntity(session)
+    val stateAwareSession = StateAwareTerminalSession(session)
+
+    val sessionEntity = newValueEntity(stateAwareSession)
 
     scope.awaitCancellationAndInvoke {
       sessionEntity.delete()

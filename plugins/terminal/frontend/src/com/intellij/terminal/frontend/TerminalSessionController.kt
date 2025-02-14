@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.session.*
+import com.intellij.terminal.session.dto.toState
 import com.intellij.terminal.session.dto.toStyleRange
 import com.intellij.terminal.session.dto.toTerminalState
 import com.intellij.util.EventDispatcher
@@ -57,7 +58,12 @@ internal class TerminalSessionController(
   private suspend fun handleEvent(event: TerminalOutputEvent) {
     when (event) {
       is TerminalInitialStateEvent -> {
-        TODO()
+        sessionModel.updateTerminalState(event.sessionState.toTerminalState())
+        updateOutputModel {
+          outputModel.restoreFromState(event.outputModelState.toState())
+          alternateBufferModel.restoreFromState(event.alternateBufferState.toState())
+          blocksModel.restoreFromState(event.blocksModelState.toState())
+        }
       }
       is TerminalContentUpdatedEvent -> {
         updateOutputModel { model ->
