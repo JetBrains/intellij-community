@@ -17,7 +17,7 @@ class UiText(private val component: UiComponent, private val textData: TextData)
   val bundleKey get(): String = textData.bundleKey
 
   override fun toString(): String {
-    return "UiText[$text]"
+    return text
   }
 
   fun click() {
