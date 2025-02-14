@@ -306,6 +306,16 @@ object Switcher : BaseSwitcherAction(null) {
 
       files = JBListWithOpenInRightSplit.createListWithOpenInRightSplitter<SwitcherVirtualFile>(maybeSearchableModel, null)
         .apply { selectionModel = preservingSelectionModel }
+      if (files.model.size > 0) {
+        val fileFromSelectedEditor = FileEditorManager.getInstance(project).selectedEditor?.file
+        val firstFileInList = files.model.getElementAt(0).virtualFileId.virtualFile()
+        if (firstFileInList != null && firstFileInList == fileFromSelectedEditor) {
+          files.setSelectedIndex(1)
+        }
+        else {
+          files.setSelectedIndex(0)
+        }
+      }
 
       val filesSelectionListener = object : ListSelectionListener {
         override fun valueChanged(e: ListSelectionEvent) {
