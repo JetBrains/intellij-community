@@ -13,30 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.command.undo;
+package com.intellij.openapi.command.undo
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.openapi.util.Key
+import org.jetbrains.annotations.ApiStatus
 
-/**
- * @deprecated Use {@link UndoUtil} instead
- */
 @ApiStatus.ScheduledForRemoval
-@Deprecated
-public interface UndoConstants {
-  /**
-   * @deprecated Use {@link UndoUtil#forceUndoIn(VirtualFile, Runnable)} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  Key<Boolean> FORCE_RECORD_UNDO = Key.create("FORCE_RECORD_UNDO");
+@Deprecated("Use {@link UndoUtil} instead")
+interface UndoConstants {
 
-  /**
-   * @deprecated Use {@link UndoUtil#disableUndoIn(Document, Runnable)} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  Key<Boolean> DONT_RECORD_UNDO = Key.create("DONT_RECORD_UNDO");
+  companion object {
+
+    @JvmField
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated("Use {@link UndoUtil#forceUndoIn(VirtualFile, Runnable)} instead")
+    val FORCE_RECORD_UNDO: Key<Boolean> = Key.create<Boolean>("FORCE_RECORD_UNDO")
+
+    @JvmField
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated("Use {@link UndoUtil#disableUndoIn(Document, Runnable)} instead")
+    val DONT_RECORD_UNDO: Key<Boolean> = Key.create<Boolean>("DONT_RECORD_UNDO")
+  }
 }

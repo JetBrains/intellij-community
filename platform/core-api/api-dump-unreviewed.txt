@@ -1311,8 +1311,10 @@ a:com.intellij.openapi.command.WriteCommandAction$Simple
 - pa:run():V
 - p:run(com.intellij.openapi.application.Result):V
 com.intellij.openapi.command.undo.UndoConstants
+- sf:Companion:com.intellij.openapi.command.undo.UndoConstants$Companion
 - sf:DONT_RECORD_UNDO:com.intellij.openapi.util.Key
 - sf:FORCE_RECORD_UNDO:com.intellij.openapi.util.Key
+f:com.intellij.openapi.command.undo.UndoConstants$Companion
 f:com.intellij.openapi.command.undo.UndoUtil
 - s:disableUndoFor(com.intellij.openapi.editor.Document):V
 - s:disableUndoFor(com.intellij.openapi.vfs.VirtualFile):V
