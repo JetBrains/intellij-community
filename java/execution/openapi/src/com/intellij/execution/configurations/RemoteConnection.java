@@ -60,24 +60,6 @@ public class RemoteConnection {
     return myApplicationAddress;
   }
 
-  /**
-   * @deprecated use {@link #setApplicationHostName(String)} or {@link #setDebuggerHostName(String)} instead depending on your needs
-   */
-  @Deprecated(forRemoval = true)
-  public void setHostName(String hostName) {
-    myApplicationHostName = hostName;
-    myDebuggerHostName = hostName;
-  }
-
-  /**
-   * @deprecated use {@link #setApplicationAddress(String)} or {@link #setDebuggerAddress(String)} instead depending on your needs
-   */
-  @Deprecated(forRemoval = true)
-  public void setAddress(String address) {
-    myApplicationAddress = address;
-    myDebuggerAddress = address;
-  }
-
   public String getApplicationHostName() {
     return myApplicationHostName;
   }
