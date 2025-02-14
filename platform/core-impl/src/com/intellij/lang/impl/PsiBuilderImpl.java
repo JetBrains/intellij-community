@@ -45,7 +45,9 @@ import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance(PsiBuilderImpl.class);
   private long myLexingTimeNs = 0;
-  static PsiBuilderDiagnostics DIAGNOSTICS;
+  @SuppressWarnings("StaticNonFinalField")
+  @ApiStatus.Internal
+  public static PsiBuilderDiagnostics DIAGNOSTICS;
 
   // function stored in PsiBuilderImpl's user data that is called during reparse when the algorithm is not sure what to merge
   public static final Key<TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>>
@@ -94,7 +96,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
   }
 
-  @SuppressWarnings("ClassEscapesDefinedScope")
   public PsiBuilderImpl(@Nullable Project project,
                         @Nullable PsiFile containingFile,
                         @NotNull ParserDefinition parserDefinition,
