@@ -210,7 +210,7 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public @Unmodifiable @NotNull Collection<SdkEntry> collectSdkEntries(@Nullable Project project) {
-    return ContainerUtil.map(
+    return ContainerUtil.mapNotNull(
       JavaHomeFinder.findJdks(getEelDescriptor(project), false),
       JavaHomeFinder.JdkEntry::toSdkEntry
     );

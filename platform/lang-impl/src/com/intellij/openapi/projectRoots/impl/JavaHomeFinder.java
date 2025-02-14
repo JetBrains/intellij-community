@@ -112,8 +112,9 @@ public abstract class JavaHomeFinder {
       return Comparing.compare(path, o.path);
     }
 
-    public @NotNull SdkType.SdkEntry toSdkEntry() {
-      return new SdkType.SdkEntry(path, versionInfo != null ? versionInfo.displayVersionString() : null);
+    public @Nullable SdkType.SdkEntry toSdkEntry() {
+      if (versionInfo == null) return null;
+      return new SdkType.SdkEntry(path, versionInfo.displayVersionString());
     }
   }
 
