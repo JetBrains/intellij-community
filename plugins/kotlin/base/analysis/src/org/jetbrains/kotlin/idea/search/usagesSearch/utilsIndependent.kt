@@ -10,6 +10,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -120,6 +121,7 @@ private fun processClassDelegationCallsToSpecifiedConstructor(
     return true
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use ReferencesSearch directly to avoid light classes involvement")
 fun PsiElement.searchReferencesOrMethodReferences(): Collection<PsiReference> {
     val lightMethods = toLightMethods()
