@@ -631,7 +631,7 @@ class UnindexedFilesScanner (
     }
     catch (e: Throwable) {
       logInfo("Scanning is interrupted (scanning id=${scanningHistory.scanningSessionId}). ${e.message}")
-      scanningHistory.setWasInterrupted()
+      scanningHistory.setWasInterrupted(e.message)
       throw e
     }
     finally {

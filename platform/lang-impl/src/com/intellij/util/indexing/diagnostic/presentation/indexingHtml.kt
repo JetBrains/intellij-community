@@ -177,6 +177,7 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
               tr { td("Dumb mode time with pauses"); td(times.dumbWallTimeWithPauses.presentableDuration()) }
               tr { td("Dumb mode time w/o pauses"); td(times.dumbWallTimeWithoutPauses.presentableDuration()) }
               tr { td("Was interrupted"); td(times.wasInterrupted.toString()) }
+              tr { td("Interruption reason"); td(times.interruptionReason ?: "") }
 
               tr { td(TITLE_NUMBER_OF_FILE_PROVIDERS); td(fileCount.numberOfFileProviders.toString()) }
               tr { td(TITLE_NUMBER_OF_SCANNED_FILES); td(fileCount.numberOfScannedFiles.toString()) }
@@ -445,6 +446,10 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               tr {
                 td("Was interrupted")
                 td(times.wasInterrupted.toString())
+              }
+              tr {
+                td("Interruption reason")
+                td(times.interruptionReason ?: "")
               }
 
               tr {

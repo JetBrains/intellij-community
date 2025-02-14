@@ -105,6 +105,7 @@ fun ScanningTimes.toJson(): JsonProjectScanningHistoryTimes =
     updatingEnd = JsonDateTime(updatingEnd),
     wallTimeOnPause = JsonDuration(pausedDuration.toNanos()),
     wasInterrupted = wasInterrupted,
+    interruptionReason = interruptionReason,
     dumbModeStart = dumbModeStart?.let { JsonDateTime(it) },
     dumbWallTimeWithoutPauses = JsonDuration(dumbModeWithoutPausesDuration.toNanos()),
     dumbWallTimeWithPauses = JsonDuration(dumbModeWithPausesDuration.toNanos())
@@ -120,7 +121,8 @@ fun DumbIndexingTimes.toJson(): JsonProjectDumbIndexingHistoryTimes =
     updatingStart = JsonDateTime(updatingStart),
     updatingEnd = JsonDateTime(updatingEnd),
     wallTimeOnPause = JsonDuration(pausedDuration.toNanos()),
-    wasInterrupted = wasInterrupted
+    wasInterrupted = wasInterrupted,
+    interruptionReason = interruptionReason,
   )
 
 private fun calculatePercentages(part: Long, total: Long): JsonPercentages = JsonPercentages(part, total)
