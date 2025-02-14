@@ -239,6 +239,9 @@
     <orderEntry type="module" module-name="intellij.grazie" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.community.wintools" scope="TEST" />
     <orderEntry type="module" module-name="intellij.compose.ide.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.compose.ide.plugin.k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.compose.ide.plugin.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.compose.ide.plugin.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.commit.modal" scope="RUNTIME" />
   </component>
