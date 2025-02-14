@@ -5927,7 +5927,6 @@ c:com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 - p:<init>(kotlinx.coroutines.CoroutineScope):V
 - f:addActionPopup(java.lang.Object):V
 - f:addActionPopupMenuListener(com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener,com.intellij.openapi.Disposable):V
-- addAnActionListener(com.intellij.openapi.actionSystem.ex.AnActionListener):V
 - f:addTimerListener(com.intellij.openapi.actionSystem.TimerListener):V
 - f:addToGroup(com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.Constraints):V
 - f:asActionRuntimeRegistrar():com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar

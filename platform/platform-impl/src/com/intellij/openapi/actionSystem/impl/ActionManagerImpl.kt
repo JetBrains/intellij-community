@@ -101,7 +101,6 @@ private val DEFAULT_ACTION_GROUP_CLASS_NAME = DefaultActionGroup::class.java.nam
 
 open class ActionManagerImpl protected constructor(private val coroutineScope: CoroutineScope) : ActionManagerEx() {
   private val notRegisteredInternalActionIds = ArrayList<String>()
-  private val actionListeners = ContainerUtil.createLockFreeCopyOnWriteList<AnActionListener>()
   private val actionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList<ActionPopupMenuListener>()
   private val popups = ArrayList<Any>()
   private var timer: MyTimer? = null
@@ -1064,11 +1063,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   fun getParentGroupIds(actionId: String): Collection<String> = actionPostInitRegistrar.state.getParentGroupIds(actionId)
 
-  @Suppress("removal", "OVERRIDE_DEPRECATION")
-  override fun addAnActionListener(listener: AnActionListener) {
-    actionListeners.add(listener)
-  }
-
   override fun fireBeforeActionPerformed(action: AnAction, event: AnActionEvent) {
     prevPreformedActionId = lastPreformedActionId
     lastPreformedActionId = getId(action)
@@ -1077,9 +1071,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
     IdeaLogger.ourLastActionId = lastPreformedActionId
     ProhibitAWTEvents.start("fireBeforeActionPerformed").use {
-      for (listener in actionListeners) {
-        listener.beforeActionPerformed(action, event)
-      }
       publisher().beforeActionPerformed(action, event)
       onBeforeActionInvoked(action, event)
     }
@@ -1091,9 +1082,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     IdeaLogger.ourLastActionId = lastPreformedActionId
     ProhibitAWTEvents.start("fireAfterActionPerformed").use {
       onAfterActionInvoked(action, event, result)
-      for (listener in actionListeners) {
-        listener.afterActionPerformed(action, event, result)
-      }
       publisher().afterActionPerformed(action, event, result)
     }
   }
@@ -1112,9 +1100,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   override fun fireBeforeEditorTyping(c: Char, dataContext: DataContext) {
     lastTimeEditorWasTypedIn = System.currentTimeMillis()
-    for (listener in actionListeners) {
-      listener.beforeEditorTyping(c, dataContext)
-    }
     //maybe readaction
     WriteIntentReadAction.run {
       publisher().beforeEditorTyping(c, dataContext)
@@ -1122,9 +1107,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   }
 
   override fun fireAfterEditorTyping(c: Char, dataContext: DataContext) {
-    for (listener in actionListeners) {
-      listener.afterEditorTyping(c, dataContext)
-    }
     //maybe readaction
     WriteIntentReadAction.run {
       publisher().afterEditorTyping(c, dataContext)

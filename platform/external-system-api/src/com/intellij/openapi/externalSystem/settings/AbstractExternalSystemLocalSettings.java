@@ -147,15 +147,6 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     }
   }
 
-
-  @Deprecated(forRemoval = true)
-  public void fillState(@NotNull State otherState) {
-    otherState.recentTasks.clear();
-    otherState.availableProjects = state.availableProjects;
-    otherState.modificationStamps = state.modificationStamps;
-    otherState.projectSyncType = state.projectSyncType;
-  }
-
   public static class State {
     public final List<ExternalTaskExecutionInfo> recentTasks = new SmartList<>();
     public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> availableProjects = CollectionFactory.createSmallMemoryFootprintMap();
