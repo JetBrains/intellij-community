@@ -106,7 +106,7 @@ object XmlElementType {
 
   @JvmField
   val HTML_EMBEDDED_CONTENT: IElementType =
-    factory.getElementType("HTML_EMBEDDED_CONTENT")
+    EmbeddedHtmlContentElementType()
 
   @JvmField
   val HTML_RAW_TEXT: IElementType =

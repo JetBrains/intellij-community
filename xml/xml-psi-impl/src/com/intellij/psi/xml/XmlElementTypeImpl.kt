@@ -12,10 +12,6 @@ private object XmlElementTypeImpl {
     HTMLParserDefinition.FILE_ELEMENT_TYPE
 
   @JvmField
-  val HTML_EMBEDDED_CONTENT: IElementType =
-    EmbeddedHtmlContentElementType()
-
-  @JvmField
   val HTML_RAW_TEXT: IElementType =
     HtmlRawTextElementType
 }
