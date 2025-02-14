@@ -150,7 +150,7 @@ private fun initializeThreadState(suspendContext: SuspendContextImpl): ObjectRef
 private fun booleanValue(suspendContext: SuspendContextImpl, b: Boolean): BooleanValue = suspendContext.virtualMachineProxy.mirrorOf(b)
 
 private fun <T> invokeInSuspendCommand(suspendContext: SuspendContextImpl, action: () -> T): T? {
-  if (DebuggerManagerThreadImpl.getCurrentCommand() is SuspendContextCommandImpl) {
+  if (DebugProcessImpl.isInSuspendCommand(suspendContext)) {
     return action()
   }
   var result: T? = null

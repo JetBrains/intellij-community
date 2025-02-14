@@ -2803,8 +2803,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
            || DebuggerImplicitEvaluationContextUtil.getImplicitEvaluationThread(this) != null;
   }
 
+  public static boolean isInSuspendCommand(SuspendContextImpl suspendContext) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    DebuggerCommandImpl command = DebuggerManagerThreadImpl.getCurrentCommand();
+    return command instanceof SuspendContextCommandImpl suspendContextCommand
+           && suspendContextCommand.getSuspendContext() == suspendContext;
+  }
+
   public boolean isEvaluationPossible(SuspendContextImpl suspendContext) {
-    return mySuspendManager.hasPausedContext(suspendContext);
+    return isInSuspendCommand(suspendContext) && mySuspendManager.hasPausedContext(suspendContext);
   }
 
   public void startWatchingMethodReturn(ThreadReferenceProxyImpl thread) {
