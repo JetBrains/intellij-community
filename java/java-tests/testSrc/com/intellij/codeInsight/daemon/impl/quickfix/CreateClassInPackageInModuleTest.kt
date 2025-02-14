@@ -3,10 +3,16 @@ package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.intention.impl.CreateClassInPackageInModuleFix
+import com.intellij.codeInspection.java19modules.JavaModuleDefinitionInspection
 import com.intellij.psi.PsiJavaFile
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class CreateClassInPackageInModuleTest : LightJavaCodeInsightFixtureTestCase() {
+
+  override fun setUp() {
+    super.setUp()
+    myFixture.enableInspections(JavaModuleDefinitionInspection())
+  }
 
   fun testExportsMissingDir(): Unit = doTestMissingDir("exports")
   fun testOpensMissingDir(): Unit = doTestMissingDir("opens")

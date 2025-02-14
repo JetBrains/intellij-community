@@ -23,6 +23,8 @@ import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
@@ -168,6 +170,13 @@ final class JavaErrorFixProvider {
       PsiClassType type = JavaPsiFacade.getElementFactory(error.project()).createType(error.context().superClass());
       return myFactory.createExtendsListFix(error.context().subClass(), type, true);
     });
+    JavaFixProvider<PsiPackageAccessibilityStatement, Void> createClassInPackage = error -> {
+      String packageName = error.psi().getPackageName();
+      Module module = ModuleUtilCore.findModuleForFile(error.psi().getContainingFile());
+      return module == null ? null : myFactory.createCreateClassInPackageInModuleFix(module, packageName);
+    };
+    fix(MODULE_REFERENCE_PACKAGE_NOT_FOUND, createClassInPackage);
+    fix(MODULE_REFERENCE_PACKAGE_EMPTY, createClassInPackage);
   }
 
   private void createStatementFixes() {

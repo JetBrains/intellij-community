@@ -1457,6 +1457,14 @@ public final class JavaErrorKinds {
   public static final Simple<PsiJavaModuleReferenceElement> MODULE_DUPLICATE_OPENS_TARGET =
     error(PsiJavaModuleReferenceElement.class, "module.duplicate.opens.target")
       .withRawDescription(ref -> message("module.duplicate.opens.target", ref.getReferenceText()));
+  public static final Simple<PsiPackageAccessibilityStatement> MODULE_REFERENCE_PACKAGE_NOT_FOUND =
+    error(PsiPackageAccessibilityStatement.class, "module.reference.package.not.found")
+      .withAnchor(st -> st.getPackageReference())
+      .withRawDescription(st -> message("module.reference.package.not.found", st.getPackageName()));
+  public static final Simple<PsiPackageAccessibilityStatement> MODULE_REFERENCE_PACKAGE_EMPTY =
+    error(PsiPackageAccessibilityStatement.class, "module.reference.package.empty")
+      .withAnchor(st -> st.getPackageReference())
+      .withRawDescription(st -> message("module.reference.package.empty", st.getPackageName()));
 
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(
     @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {

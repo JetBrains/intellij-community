@@ -322,28 +322,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitModule(@NotNull PsiJavaModule module) {
-    super.visitModule(module);
-    if (!hasErrorResults()) ModuleHighlightUtil.checkUnusedServices(module, myFile, myErrorSink);
-  }
-
-  @Override
-  public void visitRequiresStatement(@NotNull PsiRequiresStatement statement) {
-    super.visitRequiresStatement(statement);
-    if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
-      if (!hasErrorResults()) add(ModuleHighlightUtil.checkModuleReference(statement));
-    }
-  }
-
-  @Override
-  public void visitPackageAccessibilityStatement(@NotNull PsiPackageAccessibilityStatement statement) {
-    super.visitPackageAccessibilityStatement(statement);
-    if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
-      if (!hasErrorResults()) add(ModuleHighlightUtil.checkPackageReference(statement, myFile));
-    }
-  }
-
-  @Override
   public void visitModuleReferenceElement(@NotNull PsiJavaModuleReferenceElement refElement) {
     super.visitModuleReferenceElement(refElement);
     PsiJavaModuleReference ref = refElement.getReference();

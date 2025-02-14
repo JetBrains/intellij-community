@@ -664,6 +664,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (isApplicable(JavaFeature.MODULES)) {
       if (!hasErrorResults()) myModuleChecker.checkHostModuleStrength(statement);
       if (!hasErrorResults()) myModuleChecker.checkDuplicateModuleReferences(statement);
+      if (!hasErrorResults()) myModuleChecker.checkPackageReference(statement);
     }
   }
 

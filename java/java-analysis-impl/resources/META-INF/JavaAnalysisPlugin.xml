@@ -89,6 +89,10 @@
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions"
                      bundle="messages.JavaAnalysisBundle" key="inspection.java.module.naming"
                      implementationClass="com.intellij.codeInspection.java19modules.JavaModuleNamingInspection"/>
+    <localInspection language="JAVA" shortName="JavaModuleDefinition" enabledByDefault="true" level="WARNING"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy"
+                     bundle="messages.JavaAnalysisBundle" key="inspection.java.module.definition"
+                     implementationClass="com.intellij.codeInspection.java19modules.JavaModuleDefinitionInspection"/>
     <localInspection language="JAVA" shortName="JavaRequiresAutoModule" enabledByDefault="true" level="WARNING"
                      groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids9"
