@@ -212,7 +212,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     myComments = tokens;
   }
 
-  @SuppressWarnings("ClassEscapesDefinedScope")
   @Override
   public @Nullable StartMarker getLatestDoneMarker() {
     int index = myProduction.size() - 1;
