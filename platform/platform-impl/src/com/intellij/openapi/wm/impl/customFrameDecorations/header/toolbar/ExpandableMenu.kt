@@ -145,6 +145,7 @@ internal class ExpandableMenu(
   fun updateColor() {
     val color = headerContent.background
     headerColorfulPanel?.background = color
+    headerColorfulPanel?.border = SideBorder(color, SideBorder.RIGHT, 1)
     @Suppress("UseJBColor")
     shadowComponent.background = Color(color.red, color.green, color.blue, ALPHA)
   }
@@ -185,7 +186,6 @@ private class HeaderColorfulPanel(component: JComponent, private val isColored: 
       // Deny background painting by super.paint()
       isOpaque = false
       layout = BorderLayout()
-      border = SideBorder(background, SideBorder.RIGHT, 1)
       add(component, BorderLayout.CENTER)
     }
 
