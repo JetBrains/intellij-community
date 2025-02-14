@@ -17,14 +17,14 @@ import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER
 import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_PLACEHOLDER
 import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
-import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementKind
-import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementProperty
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.*
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.ui.StyleSheetUtil
 import com.intellij.util.ui.UIUtil
@@ -34,6 +34,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import java.awt.Color
 import java.lang.Integer.toHexString
+import java.util.*
 import javax.swing.UIManager
 import javax.swing.text.html.StyleSheet
 import kotlin.math.roundToInt
@@ -49,10 +50,13 @@ const val CODE_BLOCK_CLASS: String = "code-block"
 internal class JBHtmlPaneStyleSheetRulesProvider {
 
   fun getStyleSheet(paneBackgroundColor: Color, scaleFactor: Float, baseFontSize: Int, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
-    styleSheetCache.get(JBHtmlPaneStylesheetParameters(paneBackgroundColor.rgb and 0xffffff, scaleFactor, baseFontSize, configuration))
+    styleSheetCache.get(JBHtmlPaneStylesheetParameters(paneBackgroundColor.rgb and 0xffffff, scaleFactor,
+                                                       baseFontSize, JBHtmlPaneStyleConfigurationSnapshot(configuration)))
 
   init {
-    // Editor color scheme, referenced from JBHtmlPaneStyleConfiguration, can contain references to projects and editors.
+    // Editor color scheme can be referenced from JBHtmlPaneStyleConfiguration,
+    // through linked stylesheets e.g., EditorColorsSchemeStyleSheet,
+    // which can contain references to projects and editors.
     // Drop caches if projects or editors are closed to avoid memory leaks.
     val messageBus = ApplicationManager.getApplication().messageBus.connect()
     messageBus.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
@@ -107,7 +111,7 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
     .maximumSize(20)
     .build { (bgColor, scaleFactor, baseFontSize, configuration) -> buildStyleSheet(Color(bgColor), { (it * scaleFactor).roundToInt() }, baseFontSize, configuration) }
 
-  private fun buildStyleSheet(paneBackgroundColor: Color, scale: (Int) -> Int, baseFontSize: Int, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
+  private fun buildStyleSheet(paneBackgroundColor: Color, scale: (Int) -> Int, baseFontSize: Int, configuration: JBHtmlPaneStyleConfigurationSnapshot): StyleSheet =
     StyleSheetUtil.loadStyleSheet(sequenceOf(
       getDefaultFormattingStyles(configuration, scale, baseFontSize),
       getCodeRules(paneBackgroundColor, configuration, scale),
@@ -115,7 +119,7 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
     ).joinToString("\n"))
 
   private fun getDefaultFormattingStyles(
-    configuration: JBHtmlPaneStyleConfiguration,
+    configuration: JBHtmlPaneStyleConfigurationSnapshot,
     scale: (Int) -> Int,
     baseFontSize: Int,
   ): String {
@@ -173,7 +177,7 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
 
   private fun getShortcutRules(
     paneBackgroundColor: Color,
-    configuration: JBHtmlPaneStyleConfiguration,
+    configuration: JBHtmlPaneStyleConfigurationSnapshot,
     scale: (Int) -> Int,
   ): String {
     val fontName = if (configuration.useFontLigaturesInCode) EDITOR_FONT_NAME_PLACEHOLDER else EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER
@@ -194,7 +198,7 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
 
   private fun getCodeRules(
     paneBackgroundColor: Color,
-    configuration: JBHtmlPaneStyleConfiguration,
+    configuration: JBHtmlPaneStyleConfigurationSnapshot,
     scale: (Int) -> Int,
   ): String {
     val result = mutableListOf<String>()
@@ -242,14 +246,14 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
       )
 
     private fun toHtmlColor(color: Color): String =
-      toHexString(color.rgb and 0xFFFFFF)
+      ColorUtil.toHex(color)
   }
 
   private data class JBHtmlPaneStylesheetParameters(
     val bgColor: Int,
     val scaleFactor: Float,
     val baseFontSize: Int,
-    val configuration: JBHtmlPaneStyleConfiguration
+    val configuration: JBHtmlPaneStyleConfigurationSnapshot,
   )
 
   private data class ControlColorStyleBuilder(
@@ -265,27 +269,27 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
     val fallbackToEditorBorder: Boolean = false,
   ) {
 
-    private fun getBackgroundColor(configuration: JBHtmlPaneStyleConfiguration): Color? = getColor(configuration, ElementProperty.BackgroundColor)
+    private fun getBackgroundColor(configuration: JBHtmlPaneStyleConfigurationSnapshot): Color? = getColor(configuration, ElementProperty.BackgroundColor)
 
-    private fun getForegroundColor(configuration: JBHtmlPaneStyleConfiguration): Color? = getColor(configuration, ElementProperty.ForegroundColor)
+    private fun getForegroundColor(configuration: JBHtmlPaneStyleConfigurationSnapshot): Color? = getColor(configuration, ElementProperty.ForegroundColor)
 
-    private fun getBorderColor(configuration: JBHtmlPaneStyleConfiguration): Color? = getColor(configuration, ElementProperty.BorderColor)
+    private fun getBorderColor(configuration: JBHtmlPaneStyleConfigurationSnapshot): Color? = getColor(configuration, ElementProperty.BorderColor)
 
-    private fun getBackgroundOpacity(configuration: JBHtmlPaneStyleConfiguration): Int? = getInt(configuration, ElementProperty.BackgroundOpacity)
+    private fun getBackgroundOpacity(configuration: JBHtmlPaneStyleConfigurationSnapshot): Int? = getInt(configuration, ElementProperty.BackgroundOpacity)
 
-    private fun getBorderWidth(configuration: JBHtmlPaneStyleConfiguration): Int? = getInt(configuration, ElementProperty.BorderWidth)
+    private fun getBorderWidth(configuration: JBHtmlPaneStyleConfigurationSnapshot): Int? = getInt(configuration, ElementProperty.BorderWidth)
 
-    private fun getBorderRadius(configuration: JBHtmlPaneStyleConfiguration): Int? = getInt(configuration, ElementProperty.BorderRadius)
+    private fun getBorderRadius(configuration: JBHtmlPaneStyleConfigurationSnapshot): Int? = getInt(configuration, ElementProperty.BorderRadius)
 
     fun getCssStyle(
       editorPaneBackgroundColor: Color,
-      configuration: JBHtmlPaneStyleConfiguration,
+      configuration: JBHtmlPaneStyleConfigurationSnapshot,
       scale: (Int) -> Int,
     ): String {
       val result = StringBuilder()
 
       if (configuration.editorInlineContext) {
-        val attributes = configuration.colorScheme.getAttributes(elementKind.colorSchemeKey, false)
+        val attributes = configuration.colorScheme.getAttributes(elementKind)
         if (attributes != null) {
           attributes.backgroundColor?.let { result.append("background-color: #${toHtmlColor(it)};") }
           attributes.foregroundColor?.let { result.append("color: #${toHtmlColor(it)};") }
@@ -358,13 +362,13 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
       )
     }
 
-    private fun getColor(configuration: JBHtmlPaneStyleConfiguration, property: ElementProperty): Color? =
+    private fun getColor(configuration: JBHtmlPaneStyleConfigurationSnapshot, property: ElementProperty): Color? =
       UIManager.getColor(getKey(configuration, property))
 
-    private fun getInt(configuration: JBHtmlPaneStyleConfiguration, property: ElementProperty): Int? =
+    private fun getInt(configuration: JBHtmlPaneStyleConfigurationSnapshot, property: ElementProperty): Int? =
       UIManager.get(getKey(configuration, property)) as Int?
 
-    private fun getKey(configuration: JBHtmlPaneStyleConfiguration, property: ElementProperty): String {
+    private fun getKey(configuration: JBHtmlPaneStyleConfigurationSnapshot, property: ElementProperty): String {
       val themeOverrides = configuration.elementStyleOverrides
       val suffix = if (themeOverrides != null && themeOverrides.overrides[elementKind]?.contains(property) == true) {
         "." + themeOverrides.elementKindThemePropertySuffix
@@ -375,4 +379,69 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
 
   }
 
+}
+
+private class JBHtmlPaneStyleConfigurationSnapshot(configuration: JBHtmlPaneStyleConfiguration) {
+
+  val colorScheme: EditorColorsSchemeSnapshot = EditorColorsSchemeSnapshot(configuration.colorSchemeProvider())
+  val editorInlineContext: Boolean = configuration.editorInlineContext
+  val inlineCodeParentSelectors: List<String> = configuration.inlineCodeParentSelectors
+  val largeCodeFontSizeSelectors: List<String> = configuration.largeCodeFontSizeSelectors
+  val enableInlineCodeBackground: Boolean = configuration.enableInlineCodeBackground
+  val enableCodeBlocksBackground: Boolean = configuration.enableCodeBlocksBackground
+  val useFontLigaturesInCode: Boolean = configuration.useFontLigaturesInCode
+  val spaceBeforeParagraph: Int = configuration.spaceBeforeParagraph
+  val spaceAfterParagraph: Int = configuration.spaceAfterParagraph
+  val elementStyleOverrides: ElementStyleOverrides? = configuration.elementStyleOverrides
+
+  override fun toString(): String =
+    "JBHtmlPaneStyleConfigurationSnapshot(\n  colorScheme=$colorScheme,\n  editorInlineContext=$editorInlineContext,\n  inlineCodeParentSelectors=$inlineCodeParentSelectors,\n  largeCodeFontSizeSelectors=$largeCodeFontSizeSelectors,\n  enableInlineCodeBackground=$enableInlineCodeBackground,\n  enableCodeBlocksBackground=$enableCodeBlocksBackground,\n  useFontLigaturesInCode=$useFontLigaturesInCode,\n  spaceBeforeParagraph=$spaceBeforeParagraph,\n  spaceAfterParagraph=$spaceAfterParagraph,\n  elementStyleOverrides=$elementStyleOverrides\n)"
+
+  override fun equals(other: Any?): Boolean =
+    other === this
+    || other is JBHtmlPaneStyleConfigurationSnapshot
+    && colorScheme == other.colorScheme
+    && inlineCodeParentSelectors == other.inlineCodeParentSelectors
+    && largeCodeFontSizeSelectors == other.largeCodeFontSizeSelectors
+    && enableInlineCodeBackground == other.enableInlineCodeBackground
+    && enableCodeBlocksBackground == other.enableCodeBlocksBackground
+    && useFontLigaturesInCode == other.useFontLigaturesInCode
+    && spaceBeforeParagraph == other.spaceBeforeParagraph
+    && spaceAfterParagraph == other.spaceAfterParagraph
+
+  override fun hashCode(): Int =
+    Objects.hash(colorScheme,
+                 inlineCodeParentSelectors, largeCodeFontSizeSelectors,
+                 enableInlineCodeBackground, enableCodeBlocksBackground,
+                 useFontLigaturesInCode, spaceBeforeParagraph, spaceAfterParagraph)
+}
+
+private class EditorColorsSchemeSnapshot(scheme: EditorColorsScheme) {
+
+  val defaultBackground: Color = scheme.defaultBackground
+  val defaultForeground: Color = scheme.defaultForeground
+
+  private val attributes = ElementKind.entries.associateWith {
+    scheme.getAttributes(it.colorSchemeKey, false)
+  }
+
+  fun getAttributes(kind: ElementKind): TextAttributes? =
+    attributes[kind]
+
+  override fun toString(): String =
+    "EditorColorsSchemeSnapshot(\n    defaultBackground=#${toHexString(defaultBackground.rgb and 0xffffff)},\n    defaultForeground=#${toHexString(defaultForeground.rgb and 0xffffff)}, \n    attributes=$attributes\n  )"
+
+  override fun hashCode(): Int =
+    Objects.hash(
+      defaultBackground.rgb and 0xffffff,
+      defaultForeground.rgb and 0xffffff,
+    )
+
+  override fun equals(other: Any?): Boolean =
+    // Update here when more colors are used from the colorScheme
+    other === this
+    || other is EditorColorsSchemeSnapshot
+    && defaultBackground.rgb == other.defaultBackground.rgb
+    && defaultForeground.rgb == other.defaultForeground.rgb
+    && attributes == other.attributes
 }

@@ -260,7 +260,7 @@ open class JBHtmlPane : JEditorPane, Disposable {
     val baseFontSize = (font.size / contentsScaleFactor).roundToInt()
 
     newStyleSheet.addStyleSheet(service.getDefaultStyleSheet(background, contentsScaleFactor, baseFontSize, myStyleConfiguration))
-    newStyleSheet.addStyleSheet(service.getEditorColorsSchemeStyleSheet(myStyleConfiguration.colorScheme))
+    newStyleSheet.addStyleSheet(service.getEditorColorsSchemeStyleSheet(myStyleConfiguration.colorSchemeProvider()))
     myPaneConfiguration.customStyleSheetProviders.forEach {
       newStyleSheet.addStyleSheet(it(this))
     }
