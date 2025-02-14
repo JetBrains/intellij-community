@@ -7,9 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
-object DeletePsiElementOfInterestFix : PsiUpdateModCommandQuickFix() {
-    override fun getName(): String = KotlinBundle.message("fix.text")
-    override fun getFamilyName(): String = name
+object RemoveRedundantSemicolonFix : PsiUpdateModCommandQuickFix() {
+    override fun getFamilyName(): String = KotlinBundle.message("redundant.semicolon.text")
 
     override fun applyFix(
         project: Project,
