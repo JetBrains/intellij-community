@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -81,7 +81,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
     if (value instanceof ObjectReference) {
       DebuggerUtils.ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
     }
-    BatchEvaluator.getBatchEvaluator(evaluationContext.getDebugProcess()).invoke(new ToStringCommand(evaluationContext, value) {
+    BatchEvaluator.getBatchEvaluator(evaluationContext).invoke(new ToStringCommand(evaluationContext, value) {
       @Override
       public void evaluationResult(String message) {
         valueDescriptor.setValueLabel(

@@ -980,7 +980,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           myReturnValueWatcher = null;
           myNodeRenderersMap.clear();
           myRenderers.clear();
-          DebuggerUtils.cleanupAfterProcessFinish(this);
           myState.compareAndSet(State.DETACHING, State.DETACHED);
           try {
             forEachSafe(myDebugProcessListeners, it -> it.processDetached(this, closedByUser));
