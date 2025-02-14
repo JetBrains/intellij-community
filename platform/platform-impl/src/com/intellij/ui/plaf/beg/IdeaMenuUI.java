@@ -57,7 +57,7 @@ public class IdeaMenuUI extends BasicMenuUI {
     }
     else if (IdeaPopupMenuUI.isMenuBarItem(c)) {
       if (ShowMode.Companion.isMergedMainMenu()) {
-        outerInsets = JBUI.insets(height / 8, 0);
+        outerInsets = JBUI.insets(height / JBUIScale.scale(8), 0);
         radius = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().get();
       }
       else {
