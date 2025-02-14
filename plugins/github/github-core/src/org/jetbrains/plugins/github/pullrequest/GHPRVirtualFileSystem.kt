@@ -5,25 +5,29 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import com.intellij.vcs.editor.GsonComplexPathSerializer
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 
 internal class GHPRVirtualFileSystem : ComplexPathVirtualFileSystem<GHPRVirtualFileSystem.GHPRFilePath>(
   GsonComplexPathSerializer(GHPRFilePath::class.java)
 ) {
   override fun getProtocol() = PROTOCOL
 
+  private val filesCache = ContainerUtil.createWeakValueMap<GHPRFilePath, VirtualFile>()
+
   override fun findOrCreateFile(project: Project, path: GHPRFilePath): VirtualFile? {
-    val projectVm = project.service<GHPRToolWindowViewModel>().projectVm.value ?: return null
-    val filesManager = projectVm.takeIf { it.repository == path.repository }?.filesManager ?: return null
-    val pullRequest = path.prId
-    return when {
-      pullRequest != null -> if (path.isDiff) filesManager.findDiffFile(pullRequest) else filesManager.findTimelineFile(pullRequest)
-      path.isDiff -> filesManager.createOrGetNewPRDiffFile()
-      else -> null
+    return filesCache.getOrPut(path) {
+      when {
+        path.prId != null -> {
+          if (path.isDiff) GHPRDiffVirtualFile(path.sessionId, project, path.repository, path.prId)
+          else GHPRTimelineVirtualFile(path.sessionId, project, path.repository, path.prId)
+        }
+        path.isDiff -> GHNewPRDiffVirtualFile(path.sessionId, project, path.repository)
+        else -> null
+      }
     }
   }
 

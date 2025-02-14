@@ -12,6 +12,8 @@ import com.intellij.collaboration.util.computeEmitting
 import com.intellij.collaboration.util.onFailure
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -22,10 +24,12 @@ import git4idea.remote.hosting.findHostedRemoteBranchTrackedByCurrent
 import git4idea.remote.hosting.knownRepositories
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.ai.GHPRAIReviewViewModel
 import org.jetbrains.plugins.github.ai.GHPRAISummaryViewModel
@@ -94,7 +98,9 @@ class GHPRToolWindowProjectViewModel internal constructor(
         awaitCancellation()
       }
       finally {
-        Disposer.dispose(filesManager)
+        withContext(NonCancellable + ModalityState.any().asContextElement()) {
+          filesManager.closeAllFiles()
+        }
       }
     }
   }

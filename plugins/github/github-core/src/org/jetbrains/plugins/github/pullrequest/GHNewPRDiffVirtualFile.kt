@@ -14,10 +14,10 @@ import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffService
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 
-internal data class GHNewPRDiffVirtualFile(private val fileManagerId: String,
+internal data class GHNewPRDiffVirtualFile(override val fileManagerId: String,
                                            private val project: Project,
                                            private val repository: GHRepositoryCoordinates)
-  : CodeReviewDiffVirtualFile(getFileName()) {
+  : CodeReviewDiffVirtualFile(getFileName()), GHPRVirtualFile {
 
   override fun getFileSystem(): ComplexPathVirtualFileSystem<*> = GHPRVirtualFileSystem.getInstance()
 
