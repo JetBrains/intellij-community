@@ -180,7 +180,7 @@ a:com.intellij.application.options.colors.ColorAndFontSettingsListener$Abstract
 f:com.intellij.application.options.colors.ColorSettingsUtil
 - s:getAllAttributeDescriptors(com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider):java.util.List
 - s:getAllColorDescriptors(com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider):java.util.List
-- s:getErrorTextAttributes():java.util.ArrayList
+- s:getErrorTextAttributes():java.util.List
 - s:keyToDisplayTextMap(com.intellij.openapi.options.colors.ColorSettingsPage):java.util.Map
 c:com.intellij.application.options.colors.CompositeColorDescriptionPanel
 - javax.swing.JPanel
