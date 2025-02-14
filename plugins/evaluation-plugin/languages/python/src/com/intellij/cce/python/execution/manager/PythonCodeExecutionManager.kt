@@ -50,7 +50,7 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
   }
 
   private fun extractCodeDirectory(code: String): String? {
-    // Regular expression to match the comment line with directory
+    // Regular expression to match the comment line with the directory
     val pattern = Regex("""^#\s*(?:[Ff]ile:\s*)?(.*)""") // Accepts both # file: <directory> and  # <directory>
 
     // Split the code into lines, take the first line, and trim it
@@ -78,7 +78,6 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
       .removePrefix(basePath)
       .removePrefix("/")
       .removeSuffix(".py")
-      .replace("/", ".")
 
     val coverageFilePath = "$basePath/$testName-coverage"
     try {
