@@ -294,7 +294,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     abstract int getLexemeIndex(boolean done);
   }
 
-  static class StartMarker extends ProductionMarker implements Marker, LighterASTSyntaxTreeBuilderBackedNode {
+  // exposed via getLatestDoneMarker method (used by Perl plugin)
+  @ApiStatus.Internal
+  public static class StartMarker extends ProductionMarker implements Marker, LighterASTSyntaxTreeBuilderBackedNode {
     private IElementType myType;
     private int myDoneLexeme = -1;
     private ProductionMarker myFirstChild;
