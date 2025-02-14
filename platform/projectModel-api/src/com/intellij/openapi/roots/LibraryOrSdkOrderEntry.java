@@ -41,14 +41,4 @@ public interface LibraryOrSdkOrderEntry extends OrderEntry {
   default VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type) {
     return getRootFiles(type);
   }
-
-  /**
-   * @deprecated use {@link #getRootUrls(OrderRootType)} instead; meaning of this method coming from the base {@link OrderEntry} interface
-   * is unclear.
-   */
-  @Deprecated(forRemoval = true)
-  @Override
-  default String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
-    return getRootUrls(rootType);
-  }
 }

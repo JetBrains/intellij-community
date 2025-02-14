@@ -182,11 +182,6 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     }
 
     @Override
-    public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
     public @NotNull String getPresentableName() {
       throw new IncorrectOperationException();
     }

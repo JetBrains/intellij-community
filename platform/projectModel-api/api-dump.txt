@@ -538,7 +538,6 @@ com.intellij.openapi.roots.LibraryOrSdkOrderEntry
 - getFiles(com.intellij.openapi.roots.OrderRootType):com.intellij.openapi.vfs.VirtualFile[]
 - a:getRootFiles(com.intellij.openapi.roots.OrderRootType):com.intellij.openapi.vfs.VirtualFile[]
 - a:getRootUrls(com.intellij.openapi.roots.OrderRootType):java.lang.String[]
-- getUrls(com.intellij.openapi.roots.OrderRootType):java.lang.String[]
 com.intellij.openapi.roots.LibraryOrderEntry
 - com.intellij.openapi.roots.ExportableOrderEntry
 - com.intellij.openapi.roots.LibraryOrSdkOrderEntry
@@ -672,7 +671,6 @@ com.intellij.openapi.roots.OrderEntry
 - a:getFiles(com.intellij.openapi.roots.OrderRootType):com.intellij.openapi.vfs.VirtualFile[]
 - a:getOwnerModule():com.intellij.openapi.module.Module
 - a:getPresentableName():java.lang.String
-- a:getUrls(com.intellij.openapi.roots.OrderRootType):java.lang.String[]
 - a:isValid():Z
 a:com.intellij.openapi.roots.OrderEnumerationHandler
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

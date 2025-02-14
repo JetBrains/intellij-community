@@ -40,16 +40,6 @@ public interface OrderEntry extends Synthetic, Comparable<OrderEntry> {
   VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type);
 
   /**
-   * Returns the list of roots of the given type for this entry.
-   *
-   * @deprecated the meaning of this method is unclear.
-   * If this instance represents dependency on a library or an SDK, use {@link LibraryOrSdkOrderEntry#getRootUrls(OrderRootType)} instead.
-   * In other cases, use {@link OrderEnumerator} and specify what files from dependencies of a module you want to get.
-   */
-  @Deprecated(forRemoval = true)
-  String @NotNull [] getUrls(@NotNull OrderRootType rootType);
-
-  /**
    * Returns the user-visible name of this OrderEntry.
    *
    * @return name of this OrderEntry to be shown to user.
