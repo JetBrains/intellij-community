@@ -92,7 +92,7 @@ enum JvmProtoMemberValueExternalizer implements Externalizer<Object> {
     @Override
     public void save(GraphDataOutput out, Object val) throws IOException {
       final int length = Array.getLength(val);
-      JvmProtoMemberValueExternalizer ext = find(length > 0? Array.get(val, 0).getClass() : val.getClass().getComponentType());
+      JvmProtoMemberValueExternalizer ext = find(getDataType(length > 0? Array.get(val, 0).getClass() : val.getClass().getComponentType()));
       out.writeInt(ext.ordinal());
       if (ext != NONE) {
         out.writeInt(length);
@@ -146,6 +146,34 @@ enum JvmProtoMemberValueExternalizer implements Externalizer<Object> {
         return boolean.class;
       }
       return dataType;
+    }
+
+    private Class<?> getDataType(Class<?> arrayElementType) {
+      if (char.class.equals(arrayElementType)) {
+        return Character.class;
+      }
+      if (byte.class.equals(arrayElementType)) {
+        return Byte.class;
+      }
+      if (short.class.equals(arrayElementType)) {
+        return Short.class;
+      }
+      if (int.class.equals(arrayElementType)) {
+        return Integer.class;
+      }
+      if (long.class.equals(arrayElementType)) {
+        return Long.class;
+      }
+      if (float.class.equals(arrayElementType)) {
+        return Float.class;
+      }
+      if (double.class.equals(arrayElementType)) {
+        return Double.class;
+      }
+      if (boolean.class.equals(arrayElementType)) {
+        return Boolean.class;
+      }
+      return arrayElementType;
     }
   },
   BOOLEAN(Boolean.class) {
