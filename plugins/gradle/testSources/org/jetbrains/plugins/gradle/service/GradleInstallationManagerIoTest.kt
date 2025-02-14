@@ -23,8 +23,8 @@ class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
         .withJavaPlugin()
         .generate()
     )
-    val actualGradleHome = GradleInstallationManager.getInstance().getGradleHome(project, projectPath)
-    assertEquals(calculateGradleDistributionRoot(), actualGradleHome!!.toPath())
+    val actualGradleHome = GradleInstallationManager.getInstance().getGradleHomePath(project, projectPath)
+    assertEquals(calculateGradleDistributionRoot(), actualGradleHome)
   }
 
   @Test
@@ -69,7 +69,7 @@ class GradleInstallationManagerIoTest : GradleInstallationManagerTestCase() {
     )
     val actual = GradleInstallationManager.getInstance().getClassRoots(myProject, projectPath)
                   ?.stream()
-                  ?.map { it.name }
+                  ?.map { it.fileName.toString() }
                   ?.toList() ?: throw IllegalStateException("Gradle class roots must not be null")
     val expected = getExpectedGradleClassRoots()
     assertThat(actual).containsAll(expected)

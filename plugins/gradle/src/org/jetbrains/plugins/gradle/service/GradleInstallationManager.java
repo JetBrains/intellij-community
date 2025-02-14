@@ -49,6 +49,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -88,7 +89,7 @@ public class GradleInstallationManager implements Disposable {
     return ApplicationManager.getApplication().getService(GradleInstallationManager.class);
   }
 
-  private @Nullable Ref<File> myCachedGradleHomeFromPath;
+  private @Nullable Ref<Path> myCachedGradleHomeFromPath;
   private final Map<String, BuildLayoutParameters> myBuildLayoutParametersCache = new ConcurrentHashMap<>();
 
   private static String getDefaultProjectKey(Project project) {
@@ -129,69 +130,22 @@ public class GradleInstallationManager implements Disposable {
     });
   }
 
-  /**
-   * Allows to get file handles for the gradle binaries to use.
-   *
-   * @param gradleHome gradle sdk home
-   * @return file handles for the gradle binaries; {@code null} if gradle is not discovered
-   */
-  private @Nullable Collection<File> getAllLibraries(@Nullable File gradleHome) {
-
-    if (gradleHome == null || !gradleHome.isDirectory()) {
+  public @Nullable Path getGradleHomePath(@Nullable Project project, @NotNull String linkedProjectPath) {
+    if (project == null) {
       return null;
     }
-
-    List<File> result = new ArrayList<>();
-
-    File libs = new File(gradleHome, "lib");
-    File[] files = libs.listFiles();
-    if (files != null) {
-      for (File file : files) {
-        if (file.getName().endsWith(".jar")) {
-          result.add(file);
-        }
-      }
-    }
-
-    File plugins = new File(libs, "plugins");
-    files = plugins.listFiles();
-    if (files != null) {
-      for (File file : files) {
-        if (file.getName().endsWith(".jar")) {
-          result.add(file);
-        }
-      }
-    }
-    return result.isEmpty() ? null : result;
-  }
-
-  public @Nullable File getGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
-    if (project == null) return null;
     BuildLayoutParameters buildLayoutParameters = guessBuildLayoutParameters(project, linkedProjectPath);
-    Path gradleHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleHome());
-    return gradleHome != null ? gradleHome.toFile() : null;
-  }
-
-  public @Nullable String getGradleJvmPath(@NotNull Project project, @NotNull String linkedProjectPath) {
-    final GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath);
-    if (settings == null) return getAvailableJavaHome(project);
-
-    String gradleJvm = settings.getGradleJvm();
-    SdkLookupProvider sdkLookupProvider = getGradleJvmLookupProvider(project, settings);
-    SdkInfo sdkInfo = nonblockingResolveGradleJvmInfo(sdkLookupProvider, project, linkedProjectPath, gradleJvm);
-    if (sdkInfo instanceof SdkInfo.Resolved) return ((SdkInfo.Resolved)sdkInfo).getHomePath();
-    return null;
+    return GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleHome());
   }
 
   /**
-   * Allows to execute gradle tasks in non imported gradle project
-   *
-   * @see <a href="https://youtrack.jetbrains.com/issue/IDEA-199979">IDEA-199979</a>
+   * @deprecated Use {@link #getGradleHomePath(Project, String)} instead
    */
-  private static @Nullable String getAvailableJavaHome(@NotNull Project project) {
-    Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(project);
-    if (ExternalSystemJdkUtil.isValidJdk(sdkPair.second)) {
-      return sdkPair.second.getHomePath();
+  @Deprecated
+  public @Nullable File getGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
+    Path mayBePath = getGradleHomePath(project, linkedProjectPath);
+    if (mayBePath != null) {
+      return mayBePath.toFile();
     }
     return null;
   }
@@ -201,8 +155,8 @@ public class GradleInstallationManager implements Disposable {
    *
    * @return gradle home deduced from the current environment (if any); {@code null} otherwise
    */
-  public @Nullable File getAutodetectedGradleHome(@Nullable Project project) {
-    File result = getGradleHomeFromPath(project);
+  public @Nullable Path getAutodetectedGradleHome(@Nullable Project project) {
+    Path result = getGradleHomeFromPath(project);
     if (result != null) return result;
 
     result = getGradleHomeFromEnvProperty(project);
@@ -214,51 +168,32 @@ public class GradleInstallationManager implements Disposable {
     return null;
   }
 
-  private static @Nullable File getGradleHomeFromBrew() {
-    try {
-      try (DirectoryStream<Path> ds = Files.newDirectoryStream(BREW_GRADLE_LOCATION)) {
-        Path bestPath = null;
-        Version highestVersion = null;
-        for (Path path : ds) {
-          String fileName = path.getFileName().toString();
-          try {
-            Version version = Version.parseVersion(fileName);
-            if (version == null) continue;
-            if (highestVersion == null || version.compareTo(highestVersion) > 0) {
-              highestVersion = version;
-              bestPath = path;
-            }
-          }
-          catch (NumberFormatException ignored) {
-          }
-        }
-        if (bestPath != null) {
-          Path libexecPath = bestPath.resolve(LIBEXEC);
-          if (Files.exists(libexecPath)) {
-            return libexecPath.toFile();
-          }
-        }
+  /**
+   * Tries to suggest a better path for the Gradle home
+   *
+   * @param homePath expected path to gradle home
+   * @return proper in terms of {@link #isGradleSdkHome(Project, Path)} path or {@code null} if it is impossible to fix path
+   */
+  public @NlsSafe Path suggestBetterGradleHomePath(@Nullable Project project, @NotNull Path path) {
+    if (path.startsWith(BREW_GRADLE_LOCATION)) {
+      Path libexecPath = path.resolve(LIBEXEC);
+      if (isGradleSdkHome(project, libexecPath)) {
+        return libexecPath;
       }
-    }
-    catch (Exception ignored) {
     }
     return null;
   }
 
-  /**
-   * Tries to suggest better path to gradle home
-   *
-   * @param homePath expected path to gradle home
-   * @return proper in terms of {@link #isGradleSdkHome(Project, File)} path or {@code null} if it is impossible to fix path
-   */
-  public @NlsSafe String suggestBetterGradleHomePath(@Nullable Project project, @NotNull String homePath) {
-    Path path = Paths.get(homePath);
-    if (path.startsWith(BREW_GRADLE_LOCATION)) {
-      Path libexecPath = path.resolve(LIBEXEC);
-      File libexecFile = libexecPath.toFile();
-      if (isGradleSdkHome(project, libexecFile)) {
-        return libexecPath.toString();
-      }
+  public @Nullable String getGradleJvmPath(@NotNull Project project, @NotNull String linkedProjectPath) {
+    final GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath);
+    if (settings == null) {
+      return getAvailableJavaHome(project);
+    }
+    String gradleJvm = settings.getGradleJvm();
+    SdkLookupProvider sdkLookupProvider = getGradleJvmLookupProvider(project, settings);
+    SdkInfo sdkInfo = nonblockingResolveGradleJvmInfo(sdkLookupProvider, project, linkedProjectPath, gradleJvm);
+    if (sdkInfo instanceof SdkInfo.Resolved) {
+      return ((SdkInfo.Resolved)sdkInfo).getHomePath();
     }
     return null;
   }
@@ -268,8 +203,8 @@ public class GradleInstallationManager implements Disposable {
    *
    * @return file handle for the gradle directory if it's possible to deduce from the system path; {@code null} otherwise
    */
-  private @Nullable File getGradleHomeFromPath(@Nullable Project project) {
-    Ref<File> ref = myCachedGradleHomeFromPath;
+  private @Nullable Path getGradleHomeFromPath(@Nullable Project project) {
+    Ref<Path> ref = myCachedGradleHomeFromPath;
     if (ref != null) {
       return ref.get();
     }
@@ -278,14 +213,14 @@ public class GradleInstallationManager implements Disposable {
       return null;
     }
     for (String pathEntry : path.split(File.pathSeparator)) {
-      File dir = new File(pathEntry);
-      if (!dir.isDirectory()) {
+      Path dir = Path.of(pathEntry);
+      if (!Files.isDirectory(dir)) {
         continue;
       }
       for (String fileName : GRADLE_START_FILE_NAMES) {
-        File startFile = new File(dir, fileName);
-        if (startFile.isFile()) {
-          File candidate = dir.getParentFile();
+        Path startFile = dir.resolve(fileName);
+        if (Files.isRegularFile(startFile)) {
+          Path candidate = dir.getParent();
           if (isGradleSdkHome(project, candidate)) {
             myCachedGradleHomeFromPath = new Ref<>(candidate);
             return candidate;
@@ -301,12 +236,12 @@ public class GradleInstallationManager implements Disposable {
    *
    * @return file handle for the gradle directory deduced from the environment where the project is located
    */
-  private @Nullable File getGradleHomeFromEnvProperty(@Nullable Project project) {
+  private @Nullable Path getGradleHomeFromEnvProperty(@Nullable Project project) {
     String path = System.getenv(GRADLE_ENV_PROPERTY_NAME);
     if (path == null) {
       return null;
     }
-    File candidate = new File(path);
+    Path candidate = Path.of(path);
     return isGradleSdkHome(project, candidate) ? candidate : null;
   }
 
@@ -318,18 +253,7 @@ public class GradleInstallationManager implements Disposable {
    * @return {@code true} if we consider that given file actually points to the gradle installation root;
    * {@code false} otherwise
    */
-  public boolean isGradleSdkHome(@Nullable Project project, @Nullable Path path) {
-    if (path == null) {
-      return false;
-    }
-    return isGradleSdkHome(project, path.toFile());
-  }
-
-  /**
-   * @deprecated Use {@link GradleInstallationManager#isGradleSdkHome(Project, Path)} instead.
-   */
-  @Deprecated
-  public boolean isGradleSdkHome(@Nullable Project project, @Nullable File file) {
+  public boolean isGradleSdkHome(@Nullable Project project, @Nullable Path file) {
     if (file == null) {
       return false;
     }
@@ -340,11 +264,28 @@ public class GradleInstallationManager implements Disposable {
     }
     for (ExternalSystemExecutionAware executionAware : ExternalSystemExecutionAware.getExtensions(GradleConstants.SYSTEM_ID)) {
       if (!(executionAware instanceof GradleExecutionAware gradleExecutionAware)) continue;
-      if (gradleExecutionAware.isGradleInstallationHomeDir(project, file.toPath())) {
+      if (gradleExecutionAware.isGradleInstallationHomeDir(project, file)) {
         return true;
       }
     }
     return false;
+  }
+
+  public @Nullable List<Path> getClassRoots(@Nullable Project project, @Nullable String rootProjectPath) {
+    if (project == null) {
+      return null;
+    }
+    if (rootProjectPath == null) {
+      for (Module module : ModuleManager.getInstance(project).getModules()) {
+        rootProjectPath = ExternalSystemModulePropertyManager.getInstance(module).getRootProjectPath();
+        List<Path> result = findGradleSdkClasspath(project, rootProjectPath);
+        if (!result.isEmpty()) return result;
+      }
+    }
+    else {
+      return findGradleSdkClasspath(project, rootProjectPath);
+    }
+    return null;
   }
 
   /**
@@ -353,62 +294,102 @@ public class GradleInstallationManager implements Disposable {
    * @param files files to process
    * @return {@code true} if one of the given files is from the gradle installation; {@code false} otherwise
    */
-  public boolean isGradleSdk(VirtualFile @Nullable ... files) {
+  public boolean isGradleSdk(VirtualFile... files) {
     if (files == null) {
       return false;
     }
-    File[] arg = new File[files.length];
-    for (int i = 0; i < files.length; i++) {
-      arg[i] = new File(files[i].getPresentableUrl());
+    for (VirtualFile file : files) {
+      if (findGradleJar(file.toNioPath()) != null) {
+        return true;
+      }
     }
-    return isGradleSdk(arg);
+    return false;
   }
 
-  private static boolean isGradleSdk(File @Nullable ... files) {
-    return findGradleJar(files) != null;
+  private List<Path> findGradleSdkClasspath(@NotNull Project project, @Nullable String rootProjectPath) {
+    if (rootProjectPath == null) {
+      return Collections.emptyList();
+    }
+    Path gradleHome = getGradleHomePath(project, rootProjectPath);
+    if (gradleHome == null || !Files.isDirectory(gradleHome)) {
+      return Collections.emptyList();
+    }
+    List<Path> result = new ArrayList<>();
+    Path src = gradleHome.resolve("src");
+    if (Files.isDirectory(src)) {
+      if (Files.isDirectory(src.resolve("org"))) {
+        addRoots(result, src);
+      }
+      else {
+        listFolder(src, file -> addRoots(result, file));
+      }
+    }
+    final Collection<Path> libraries = getAllLibraries(gradleHome);
+    if (libraries == null) {
+      return result;
+    }
+    for (Path file : libraries) {
+      if (isGradleBuildClasspathLibrary(file)) {
+        ContainerUtil.addIfNotNull(result, file);
+      }
+    }
+    return result;
   }
 
-  private static @Nullable File findGradleJar(File @Nullable ... files) {
-    if (files == null) {
+  private static void listFolder(@Nullable Path folder, @NotNull Consumer<Path> pathConsumer) {
+    if (folder == null || !Files.isDirectory(folder)) {
+      return;
+    }
+    try (Stream<Path> files = Files.list(folder)) {
+      files.forEach(pathConsumer);
+    }
+    catch (IOException e) {
+      throw new IllegalStateException("Unable to list files in folder " + folder, e);
+    }
+  }
+
+  /**
+   * Allows to get file handles for the gradle binaries to use.
+   *
+   * @param gradleHome gradle sdk home
+   * @return file handles for the gradle binaries; {@code null} if gradle is not discovered
+   */
+  private static @Nullable Collection<Path> getAllLibraries(@Nullable Path gradleHome) {
+    if (gradleHome == null || !Files.isDirectory(gradleHome)) {
       return null;
     }
-    for (File file : files) {
-      if (GRADLE_JAR_FILE_PATTERN.matcher(file.getName()).matches()) {
-        return file;
+    List<Path> result = new ArrayList<>();
+    listFolder(gradleHome.resolve("lib"), file -> {
+      if (file.getFileName().toString().endsWith(".jar")) {
+        result.add(file);
       }
-    }
+    });
+    listFolder(gradleHome.resolve("lib/plugins"), library -> {
+      if (library.getFileName().toString().endsWith(".jar")) {
+        result.add(library);
+      }
+    });
+    return result.isEmpty() ? null : result;
+  }
 
+  private static @Nullable Path findGradleJar(@Nullable Path file) {
+    if (file == null) {
+      return null;
+    }
+    if (GRADLE_JAR_FILE_PATTERN.matcher(file.getFileName().toString()).matches()) {
+      return file;
+    }
     if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
       StringBuilder filesInfo = new StringBuilder();
-      for (File file : files) {
-        filesInfo.append(file.getAbsolutePath()).append(';');
-      }
+      filesInfo.append(file).append(';');
       if (!filesInfo.isEmpty()) {
         filesInfo.setLength(filesInfo.length() - 1);
       }
       GradleLog.LOG.info(String.format(
         "Gradle sdk check fails. Reason: no one of the given files matches gradle JAR pattern (%s). Files: %s",
-        GRADLE_JAR_FILE_PATTERN.toString(), filesInfo
+        GRADLE_JAR_FILE_PATTERN, filesInfo
       ));
     }
-
-    return null;
-  }
-
-  public @Nullable List<File> getClassRoots(@Nullable Project project, @Nullable String rootProjectPath) {
-    if (project == null) return null;
-
-    if (rootProjectPath == null) {
-      for (Module module : ModuleManager.getInstance(project).getModules()) {
-        rootProjectPath = ExternalSystemModulePropertyManager.getInstance(module).getRootProjectPath();
-        List<File> result = findGradleSdkClasspath(project, rootProjectPath);
-        if (!result.isEmpty()) return result;
-      }
-    }
-    else {
-      return findGradleSdkClasspath(project, rootProjectPath);
-    }
-
     return null;
   }
 
@@ -452,53 +433,52 @@ public class GradleInstallationManager implements Disposable {
     return getGradleVersion(nioGradleHome);
   }
 
-  private List<File> findGradleSdkClasspath(Project project, String rootProjectPath) {
-    List<File> result = new ArrayList<>();
-
-    if (StringUtil.isEmpty(rootProjectPath)) return result;
-
-    File gradleHome = getGradleHome(project, rootProjectPath);
-
-    if (gradleHome == null || !gradleHome.isDirectory()) {
-      return result;
-    }
-
-    File src = new File(gradleHome, "src");
-    if (src.isDirectory()) {
-      if (new File(src, "org").isDirectory()) {
-        addRoots(result, src);
-      }
-      else {
-        addRoots(result, src.listFiles());
-      }
-    }
-
-    final Collection<File> libraries = getAllLibraries(gradleHome);
-    if (libraries == null) {
-      return result;
-    }
-
-    for (File file : libraries) {
-      if (isGradleBuildClasspathLibrary(file)) {
-        ContainerUtil.addIfNotNull(result, file);
+  private static @Nullable Path getGradleHomeFromBrew() {
+    try {
+      try (DirectoryStream<Path> ds = Files.newDirectoryStream(BREW_GRADLE_LOCATION)) {
+        Path bestPath = null;
+        Version highestVersion = null;
+        for (Path path : ds) {
+          String fileName = path.getFileName().toString();
+          try {
+            Version version = Version.parseVersion(fileName);
+            if (version == null) continue;
+            if (highestVersion == null || version.compareTo(highestVersion) > 0) {
+              highestVersion = version;
+              bestPath = path;
+            }
+          }
+          catch (NumberFormatException ignored) {
+          }
+        }
+        if (bestPath != null) {
+          Path libexecPath = bestPath.resolve(LIBEXEC);
+          if (Files.exists(libexecPath)) {
+            return libexecPath;
+          }
+        }
       }
     }
+    catch (Exception ignored) {
 
-    return result;
+    }
+    return null;
   }
 
-  private static boolean isGradleBuildClasspathLibrary(File file) {
-    String fileName = file.getName();
+  private static boolean isGradleBuildClasspathLibrary(@NotNull Path file) {
+    String fileName = file.getFileName().toString();
     return ANY_GRADLE_JAR_FILE_PATTERN.matcher(fileName).matches()
            || ANT_JAR_PATTERN.matcher(fileName).matches()
            || IVY_JAR_PATTERN.matcher(fileName).matches()
            || isGroovyJar(fileName);
   }
 
-  private static void addRoots(@NotNull List<? super File> result, File @Nullable ... files) {
+  private static void addRoots(@NotNull List<? super Path> result, Path... files) {
     if (files == null) return;
-    for (File file : files) {
-      if (file == null || !file.isDirectory()) continue;
+    for (Path file : files) {
+      if (file == null || !Files.isDirectory(file)) {
+        continue;
+      }
       result.add(file);
     }
   }
@@ -506,6 +486,19 @@ public class GradleInstallationManager implements Disposable {
   private static boolean isGroovyJar(@NotNull String name) {
     name = StringUtil.toLowerCase(name);
     return name.startsWith("groovy-") && name.endsWith(".jar") && !name.contains("src") && !name.contains("doc");
+  }
+
+  /**
+   * Allows to execute gradle tasks in non imported gradle project
+   *
+   * @see <a href="https://youtrack.jetbrains.com/issue/IDEA-199979">IDEA-199979</a>
+   */
+  private static @Nullable String getAvailableJavaHome(@NotNull Project project) {
+    Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(project);
+    if (ExternalSystemJdkUtil.isValidJdk(sdkPair.second)) {
+      return sdkPair.second.getHomePath();
+    }
+    return null;
   }
 
   public static @Nullable GradleVersion guessGradleVersion(@NotNull GradleProjectSettings settings) {
