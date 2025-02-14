@@ -7,18 +7,12 @@ import com.intellij.openapi.util.io.FileUtilRt
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.bazel.jvm.hashMap
+import org.jetbrains.bazel.jvm.jps.OutputSink
 import org.jetbrains.bazel.jvm.linkedSet
 import org.jetbrains.jps.ModuleChunk
-import org.jetbrains.jps.builders.FileProcessor
-import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase
-import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
-import org.jetbrains.jps.incremental.BuildOperations
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.FSOperations.addCompletelyMarkedDirtyTarget
-import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.fs.CompilationRound
-import org.jetbrains.kotlin.jps.build.KotlinDirtySourceFilesHolder
 import org.jetbrains.kotlin.jps.build.KotlinDirtySourceFilesHolder.TargetFiles
 import java.io.File
 import java.nio.file.Files
@@ -60,55 +54,40 @@ internal class BazelKotlinFsOperationsHelper(
     }
   }
 
-  internal fun markFilesForCurrentRound(files: Sequence<Path>, dirtyFilesHolder: KotlinDirtySourceFilesHolder) {
-    val buildRootIndex = context.projectDescriptor.buildRootIndex as BazelBuildRootIndex
-    for (file in files) {
-      val root = buildRootIndex.fileToDescriptors.get(file)
-      if (root != null) {
-        dirtyFilesHolder.byTarget.get(root.target)?._markDirty(file, root)
-      }
-    }
-
-    markFilesImpl(files, currentRound = true, span = span) { it.exists() }
-  }
-
-  /**
-   * Marks given [files] as dirty for current round and given [target] of [chunk].
-   */
-  fun markFilesForCurrentRound(target: ModuleBuildTarget, files: Collection<Path>, targetDirtyFiles: TargetFiles?) {
-    require(target in chunk.targets)
-
-    val dirtyFileToRoot = hashMap<Path, JavaSourceRootDescriptor>()
+  fun markFilesForCurrentRound(files: Sequence<Path>, targetDirtyFiles: TargetFiles?) {
     val buildRootIndex = context.projectDescriptor.buildRootIndex as BazelBuildRootIndex
     for (file in files) {
       val root = buildRootIndex.fileToDescriptors.get(file) ?: continue
-      targetDirtyFiles._markDirty(file, root)
-      dirtyFileToRoot.put(file, root)
+      targetDirtyFiles?._markDirty(file, root)
+    }
+
+    markFilesImpl(files = files, currentRound = true, span = span) { it.exists() }
+  }
+
+  /**
+   * Marks given [files] as dirty for current round.
+   */
+  fun markFilesForCurrentRound(
+    files: Collection<Path>,
+    targetDirtyFiles: TargetFiles?,
+    outputSink: OutputSink,
+    parentSpan: Span,
+  ) {
+    val buildRootIndex = context.projectDescriptor.buildRootIndex as BazelBuildRootIndex
+    for (file in files) {
+      targetDirtyFiles._markDirty(file, buildRootIndex.fileToDescriptors.get(file) ?: continue)
     }
 
     markFilesImpl(files.asSequence(), currentRound = true, span = span) { Files.exists(it) }
-    cleanOutputsForNewDirtyFilesInCurrentRound(target, dirtyFileToRoot)
-  }
-
-  private fun cleanOutputsForNewDirtyFilesInCurrentRound(target: ModuleBuildTarget, dirtyFiles: Map<Path, JavaSourceRootDescriptor>) {
-    val dirtyFilesHolder = object : DirtyFilesHolderBase<JavaSourceRootDescriptor, ModuleBuildTarget>(context) {
-      override fun processDirtyFiles(processor: FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>) {
-        for ((file, root) in dirtyFiles) {
-          processor.apply(target, file.toFile(), root)
-        }
-      }
-
-      override fun hasDirtyFiles(): Boolean = dirtyFiles.isNotEmpty()
-    }
-    BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, dirtyFilesHolder)
+    cleanOutputsCorrespondingToChangedFiles(files = files, dataManager = dataManager, outputSink = outputSink, parentSpan = parentSpan)
   }
 
   fun markFiles(files: Sequence<Path>) {
-    markFilesImpl(files, currentRound = false, span = span) { it.exists() }
+    markFilesImpl(files = files, currentRound = false, span = span) { it.exists() }
   }
 
   fun markInChunkOrDependents(files: Sequence<Path>, excludeFiles: Set<Path>) {
-    markFilesImpl(files, currentRound = false, span = span) {
+    markFilesImpl(files = files, currentRound = false, span = span) {
       !excludeFiles.contains(it) && it.exists()
     }
   }
@@ -133,18 +112,17 @@ internal class BazelKotlinFsOperationsHelper(
     }
 
     val projectDescriptor = context.projectDescriptor
+    val fileToDescriptors = (projectDescriptor.buildRootIndex as BazelBuildRootIndex).fileToDescriptors
     for (fileToMark in filesToMark) {
-      val rootDescriptor = (projectDescriptor.buildRootIndex as BazelBuildRootIndex).fileToDescriptors.get(fileToMark)
-      if (rootDescriptor != null) {
-        projectDescriptor.fsState.markDirty(
-          context,
-          compilationRound,
-          fileToMark,
-          rootDescriptor,
-          projectDescriptor.dataManager.getFileStampStorage(rootDescriptor.target),
-          false
-        )
-      }
+      val rootDescriptor = fileToDescriptors.get(fileToMark) ?: continue
+      projectDescriptor.fsState.markDirty(
+        /* context = */ context,
+        /* round = */ compilationRound,
+        /* file = */ fileToMark,
+        /* buildRootDescriptor = */ rootDescriptor,
+        /* stampStorage = */ projectDescriptor.dataManager.getFileStampStorage(rootDescriptor.target),
+        /* saveEventStamp = */ false,
+      )
     }
     span.addEvent("mark dirty", Attributes.of(
       AttributeKey.stringArrayKey("filesToMark"), filesToMark.map { it.toString() },

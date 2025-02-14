@@ -10,20 +10,48 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.bazel.jvm.*
+import org.jetbrains.bazel.jvm.ArgMap
+import org.jetbrains.bazel.jvm.WorkRequestExecutor
 import org.jetbrains.bazel.jvm.abi.JarContentToProcess
 import org.jetbrains.bazel.jvm.abi.writeAbi
-import org.jetbrains.bazel.jvm.jps.impl.*
+import org.jetbrains.bazel.jvm.emptyMap
+import org.jetbrains.bazel.jvm.hashMap
+import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
+import org.jetbrains.bazel.jvm.jps.impl.BazelBuildRootIndex
+import org.jetbrains.bazel.jvm.jps.impl.BazelBuildTargetIndex
+import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
+import org.jetbrains.bazel.jvm.jps.impl.BazelCompileScope
+import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
+import org.jetbrains.bazel.jvm.jps.impl.JpsTargetBuilder
+import org.jetbrains.bazel.jvm.jps.impl.NoopIgnoredFileIndex
+import org.jetbrains.bazel.jvm.jps.impl.NoopModuleExcludeIndex
+import org.jetbrains.bazel.jvm.jps.impl.RequestLog
+import org.jetbrains.bazel.jvm.jps.impl.createPathRelativizer
 import org.jetbrains.bazel.jvm.jps.java.BazelJavaBuilder
 import org.jetbrains.bazel.jvm.jps.kotlin.IncrementalKotlinBuilder
 import org.jetbrains.bazel.jvm.jps.kotlin.NonIncrementalKotlinBuilder
-import org.jetbrains.bazel.jvm.jps.state.*
+import org.jetbrains.bazel.jvm.jps.state.LoadStateResult
+import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
+import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestProperty
+import org.jetbrains.bazel.jvm.jps.state.createInitialSourceMap
+import org.jetbrains.bazel.jvm.jps.state.loadBuildState
+import org.jetbrains.bazel.jvm.jps.state.saveBuildState
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
+import org.jetbrains.bazel.jvm.processRequests
+import org.jetbrains.bazel.jvm.span
+import org.jetbrains.bazel.jvm.use
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
 import org.jetbrains.jps.builders.logging.BuildLoggingManager
@@ -485,7 +513,7 @@ private suspend fun initAndBuild(
           .use { span ->
             val builders = arrayOf(
               if (compileScope.isIncrementalCompilation) {
-                IncrementalKotlinBuilder(isRebuild = isRebuild, span = span, dataManager = buildDataProvider)
+                IncrementalKotlinBuilder(isRebuild = isRebuild, span = span, dataManager = buildDataProvider, jpsTarget = moduleTarget)
               }
               else {
                 NonIncrementalKotlinBuilder(job = coroutineContext.job, span = span)

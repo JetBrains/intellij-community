@@ -71,6 +71,30 @@ internal fun cleanOutputsCorrespondingToChangedFiles(
   }
 }
 
+internal fun cleanOutputsCorrespondingToChangedFiles(
+  files: Collection<Path>,
+  dataManager: BazelBuildDataProvider,
+  outputSink: OutputSink,
+  parentSpan: Span,
+) {
+  val deletedOutputFiles = ArrayList<String>()
+  val sourceToOutputMapping = dataManager.sourceToOutputMapping
+  for (sourceFile in files) {
+    val outputs = sourceToOutputMapping.getAndClearOutputs(sourceFile)?.takeIf { it.isNotEmpty() } ?: continue
+    outputSink.removeAll(outputs)
+    deletedOutputFiles.addAll(outputs)
+  }
+
+  if (!deletedOutputFiles.isEmpty()) {
+    if (parentSpan.isRecording) {
+      parentSpan.addEvent("deletedOutputs", Attributes.of(
+        AttributeKey.stringArrayKey("deletedOutputFiles"), deletedOutputFiles,
+      ))
+    }
+    //context.processMessage(FileDeletedEvent(deletedOutputFiles.map { it.toString() }))
+  }
+}
+
 internal suspend fun markTargetUpToDate(
   context: CompileContext,
   target: ModuleBuildTarget,
