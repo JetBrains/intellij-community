@@ -21,9 +21,16 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
 
   private val left = ToolWindowLeftToolbar(paneId, isPrimary)
   private val right = ToolWindowRightToolbar(paneId, isPrimary)
+  private var showButtons = true
+  private var isStripesOverlaid = false
 
   override val isNewUi: Boolean
     get() = true
+
+  init {
+    left.addVisibleButtonsListener { updateToolStripesVisibility() }
+    right.addVisibleButtonsListener { updateToolStripesVisibility() }
+  }
 
   override fun setupToolWindowPane(pane: JComponent) {
     left.topStripe.bottomAnchorDropAreaComponent = pane
@@ -41,10 +48,16 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
   }
 
   override fun updateToolStripesVisibility(showButtons: Boolean, state: ToolWindowPaneState): Boolean {
+    this.showButtons = showButtons
+    this.isStripesOverlaid = state.isStripesOverlaid
+    return updateToolStripesVisibility()
+  }
+
+  private fun updateToolStripesVisibility(): Boolean {
     val oldSquareVisible = left.isVisible && right.isVisible
-    val visible = showButtons || state.isStripesOverlaid
-    left.isVisible = visible
-    right.isVisible = visible
+    val visible = this.showButtons || this.isStripesOverlaid
+    left.isVisible = visible && left.hasVisibleButtons()
+    right.isVisible = visible && right.hasVisibleButtons()
     left.updateNamedState()
     right.updateNamedState()
     return oldSquareVisible != visible

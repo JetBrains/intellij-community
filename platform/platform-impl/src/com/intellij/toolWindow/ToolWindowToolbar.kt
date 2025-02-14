@@ -18,6 +18,8 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.JComponent
@@ -35,6 +37,9 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
 
   private val myResizeManager = ResizeStripeManager(this)
 
+  private var hasVisibleButtons = false
+  private val visibleButtonsListeners = mutableListOf<() -> Unit>()
+
   protected open fun init() {
     layout = myResizeManager.createLayout()
     isOpaque = true
@@ -51,6 +56,31 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
     topWrapper.add(topStripe, BorderLayout.NORTH)
     add(topWrapper, BorderLayout.NORTH)
     add(bottomStripe, BorderLayout.SOUTH)
+
+    topStripe.addButtonAddedRemovedListener { updateVisibleButtons() }
+    bottomStripe.addButtonAddedRemovedListener { updateVisibleButtons() }
+    moreButton.addComponentListener(object : ComponentAdapter() {
+      override fun componentShown(e: ComponentEvent?) {
+        updateVisibleButtons()
+      }
+
+      override fun componentHidden(e: ComponentEvent?) {
+        updateVisibleButtons()
+      }
+    })
+    updateVisibleButtons()
+  }
+
+  private fun updateVisibleButtons() {
+    val hasVisibleButtons = hasButtons() || moreButton.isVisible
+    if (this.hasVisibleButtons != hasVisibleButtons) {
+      this.hasVisibleButtons = hasVisibleButtons
+      visibleButtonsListeners.forEach { it() }
+    }
+  }
+
+  internal fun addVisibleButtonsListener(listener: () -> Unit) {
+    this.visibleButtonsListeners.add(listener)
   }
 
   fun initMoreButton(project: Project) {
@@ -93,6 +123,8 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
   }
 
   fun hasButtons(): Boolean = topStripe.getButtons().isNotEmpty() || bottomStripe.getButtons().isNotEmpty()
+
+  fun hasVisibleButtons(): Boolean = hasVisibleButtons
 
   fun reset() {
     topStripe.reset()
