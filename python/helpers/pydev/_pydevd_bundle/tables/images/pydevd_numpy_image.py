@@ -16,6 +16,8 @@ def get_bytes(arr):
         from PIL import Image
 
         arr_to_convert = arr
+        arr_to_convert = np.where(arr_to_convert == None, 0, arr_to_convert)
+        arr_to_convert = np.nan_to_num(arr_to_convert, nan=0)
 
         if not (np.issubdtype(arr_to_convert.dtype, np.floating) or np.issubdtype(arr_to_convert.dtype, np.integer)):
             raise ValueError("Only non-complex numeric array types are supported.")
