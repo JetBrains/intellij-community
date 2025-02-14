@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -215,18 +214,5 @@ fun <T : Any> extensionPointFixture(epName: ExtensionPointName<T>, extension: T)
   epName.point.registerExtension(extension, disposable)
   initialized(extension) {
     Disposer.dispose(disposable)
-  }
-}
-
-/**
- * Ensures [registryValue] has [value] state during the lifetime of the fixture.
- * After the fixture is disposed, the previous value is restored.
- */
-@TestOnly
-fun registryValueFixture(registryValue: RegistryValue, value: Boolean): TestFixture<Unit> = testFixture {
-  val prevValue = registryValue.asBoolean()
-  registryValue.setValue(value)
-  initialized(Unit) {
-    registryValue.setValue(prevValue)
   }
 }
