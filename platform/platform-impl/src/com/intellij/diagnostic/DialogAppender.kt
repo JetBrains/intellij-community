@@ -2,6 +2,7 @@
 package com.intellij.diagnostic
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
+import com.intellij.ide.AndroidStudioSystemHealthMonitorAdapter
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.idea.AppMode
@@ -85,6 +86,10 @@ class DialogAppender : Handler() {
       if (app == null || app.isExitInProgress || app.isDisposed()) return
 
       val oomErrorKind = DefaultIdeaErrorLogger.getOOMErrorKind(throwable)
+
+      if( AndroidStudioSystemHealthMonitorAdapter.handleExceptionEvent(IdeaLoggingEvent(message, throwable), oomErrorKind))
+        return
+
       if (oomErrorKind != null) {
         LowMemoryNotifier.showNotification(oomErrorKind, true)
       }
