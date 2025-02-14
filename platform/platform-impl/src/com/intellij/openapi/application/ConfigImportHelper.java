@@ -900,7 +900,7 @@ public final class ConfigImportHelper {
     @NotNull BrokenPluginsFetcher brokenPluginsFetcher =
       testBrokenPluginsFetcherStub != null ? testBrokenPluginsFetcherStub : (configDir) -> fetchBrokenPluginsFromMarketplace(this, configDir, 3000);
     @NotNull LastCompatiblePluginUpdatesFetcher pluginUpdatesFetcher =
-      testLastCompatiblePluginUpdatesFetcher != null ? testLastCompatiblePluginUpdatesFetcher : (pluginIds) -> fetchPluginUpdatesFromMarketplace(this, pluginIds, 3000);
+      testLastCompatiblePluginUpdatesFetcher != null ? testLastCompatiblePluginUpdatesFetcher : (pluginIds) -> fetchPluginUpdatesFromMarketplace(this, pluginIds, 7000);
 
     @Nullable ProgressIndicator headlessProgressIndicator = null;
 
@@ -1305,6 +1305,7 @@ public final class ConfigImportHelper {
                                                                                        long timeoutMs) {
     try {
       AtomicReference<List<PluginNode>> fetchedUpdates = new AtomicReference<>();
+      var start = System.currentTimeMillis();
       runSynchronouslyInBackgroundWithTimeout(() -> {
         fetchedUpdates.set(
           MarketplaceRequests.loadLastCompatiblePluginDescriptors(
@@ -1313,6 +1314,7 @@ public final class ConfigImportHelper {
           )
         );
       }, timeoutMs);
+      options.log.info("Fetched " + fetchedUpdates.get().size() + " latest compatible plugin updates in " + (System.currentTimeMillis() - start) + " ms");
       var updates = fetchedUpdates.get();
       if (updates == null) {
         return null;
