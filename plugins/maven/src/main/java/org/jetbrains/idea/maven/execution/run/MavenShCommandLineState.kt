@@ -12,10 +12,7 @@ import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
-import com.intellij.execution.configurations.ParametersList
-import com.intellij.execution.configurations.RemoteConnection
-import com.intellij.execution.configurations.RemoteState
-import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.configurations.*
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
@@ -52,7 +49,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.function.Function
 import kotlin.io.path.Path
 
-class MavenShCommandLineState(val environment: ExecutionEnvironment, private val myConfiguration: MavenRunConfiguration) : RunProfileState, RemoteState {
+class MavenShCommandLineState(val environment: ExecutionEnvironment, private val myConfiguration: MavenRunConfiguration) : RunProfileState, RemoteState, PatchedRunnableState {
   private var myRemoteConnection: MavenRemoteConnection? = null
 
   @Throws(ExecutionException::class)
