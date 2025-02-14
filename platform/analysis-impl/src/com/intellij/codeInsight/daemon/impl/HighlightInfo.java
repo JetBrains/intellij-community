@@ -71,7 +71,7 @@ public class HighlightInfo implements Segment {
    * it doesn't have "disable" or "suppress" quickfixes
    */
   @ApiStatus.Internal
-  static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
+  public static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
   // optimization: if tooltip contains this marker object, then it replaced with description field in getTooltip()
   private static final String DESCRIPTION_PLACEHOLDER = "\u0000";
 
@@ -121,7 +121,7 @@ public class HighlightInfo implements Segment {
   private @Unmodifiable @NotNull List<IntentionActionDescriptor> myIntentionActionDescriptors = List.of(); // guarded by this
   // list of (code fragment to be executed in BGT, and their execution result future)
   // future == null means the code was never executed, not-null means the execution has started, .isDone() means it's completed
-  private @NotNull @Unmodifiable List<? extends LazyFixDescription> myLazyQuickFixes; // guarded by this
+  private @NotNull @Unmodifiable List<LazyFixDescription> myLazyQuickFixes; // guarded by this
   private record LazyFixDescription(
     @NotNull Consumer<? super QuickFixActionRegistrar> fixesComputer,
     // null means the computation is not started yet
