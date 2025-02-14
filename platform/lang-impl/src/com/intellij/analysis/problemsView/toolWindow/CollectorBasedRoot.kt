@@ -5,8 +5,10 @@ import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.ProblemsListener
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 
-internal class CollectorBasedRoot(panel: ProblemsViewPanel, val collector: ProblemsCollector) : Root(panel) {
+@ApiStatus.Internal
+class CollectorBasedRoot(panel: ProblemsViewPanel, val collector: ProblemsCollector) : Root(panel) {
   internal constructor(panel: ProblemsViewPanel) : this(panel, ProblemsCollector.getInstance(panel.project)) {
     panel.project.messageBus.connect(this).subscribe(ProblemsListener.TOPIC, this)
   }
