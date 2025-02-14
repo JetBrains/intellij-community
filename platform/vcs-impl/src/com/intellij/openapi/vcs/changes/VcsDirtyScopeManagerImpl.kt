@@ -234,7 +234,7 @@ class VcsDirtyScopeManagerImpl(private val project: Project, coroutineScope: Cor
 
     synchronized(LOCK) {
       if (isReady) {
-        hasSomethingDirty = dirtBuilder.addDirtyRoot(vcsRoot, root)
+        hasSomethingDirty = dirtBuilder.addDirtyRoot(vcsRoot)
       }
     }
 
