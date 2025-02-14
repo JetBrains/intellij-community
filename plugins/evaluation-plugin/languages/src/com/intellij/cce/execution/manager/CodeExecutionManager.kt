@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.psi.PsiNamedElement
 import java.io.File
 
 abstract class CodeExecutionManager {
@@ -44,7 +45,7 @@ abstract class CodeExecutionManager {
   protected abstract fun getGeneratedCodeFile(basePath: String, code: String): File
   protected abstract fun compileGeneratedCode(): ProcessExecutionLog
   protected abstract fun setupEnvironment(project: Project): ProcessExecutionLog
-  protected abstract fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?, testingFramework: String?): ProcessExecutionLog
+  protected abstract fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?, testingFramework: String?, unitUnderTest: PsiNamedElement?): ProcessExecutionLog
 
   // Protected since there can be language-specific metrics
   protected fun clear() {
@@ -54,7 +55,7 @@ abstract class CodeExecutionManager {
     }
   }
 
-  fun compileAndExecute(project: Project, code: String, target: String, testingFramework: String?): ProcessExecutionLog {
+  fun compileAndExecute(project: Project, code: String, target: String, testingFramework: String?, unitUnderTest: PsiNamedElement?): ProcessExecutionLog {
     // Clear collectedInfo
     clear()
     val basePath = project.basePath
@@ -75,7 +76,7 @@ abstract class CodeExecutionManager {
     val compilationExecutionLog = compileGeneratedCode()
     if (compilationExecutionLog.exitCode != 0) return compilationExecutionLog
     // Execute
-    val executionLog = executeGeneratedCode(target, basePath, codeFile, sdk, testingFramework)
+    val executionLog = executeGeneratedCode(target, basePath, codeFile, sdk, testingFramework, unitUnderTest)
     // Clean the temp file containing the generated code
     codeFile.delete()
 

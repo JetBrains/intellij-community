@@ -13,6 +13,7 @@ import com.intellij.cce.python.execution.output.PythonErrorLogProcessorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.psi.PsiNamedElement
 import com.jetbrains.python.sdk.PythonSdkType
 import java.io.File
 
@@ -66,7 +67,7 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
     return ProcessExecutionLog("", "", 0)
   }
 
-  override fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?, testingFramework: String?): ProcessExecutionLog {
+  override fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?, testingFramework: String?, unitUnderTest: PsiNamedElement?): ProcessExecutionLog {
     if (sdk?.sdkType !is PythonSdkType) return ProcessExecutionLog("", "Python SDK not found", -1)
 
     val runFile = File("$basePath/run_tests.sh")
@@ -90,11 +91,10 @@ class PythonCodeExecutionManager() : CodeExecutionManager() {
       // Collect Coverage
       val coverageFile = File(coverageFilePath)
       val coverageData = if (coverageFile.exists()) coverageFile.readText(Charsets.UTF_8) else ""
-      val coverageProcessor = PythonTestCoverageProcessor(coverageData)
-      val lineCoverage = coverageProcessor.getLineCoverage()
-      collectedInfo.put(AIA_TEST_LINE_COVERAGE, lineCoverage)
-      val branchCoverage = coverageProcessor.getBranchCoverage()
-      collectedInfo.put(AIA_TEST_BRANCH_COVERAGE, branchCoverage)
+      val coverageProcessor = PythonTestCoverageProcessor(coverageData, target)
+
+      collectedInfo.put(AIA_TEST_LINE_COVERAGE, coverageProcessor.getLineCoverage(unitUnderTest))
+      collectedInfo.put(AIA_TEST_BRANCH_COVERAGE, coverageProcessor.getBranchCoverage(unitUnderTest))
 
       // Remove cumulative coverage data for all the tests
       File(coverageFilePath).delete()
