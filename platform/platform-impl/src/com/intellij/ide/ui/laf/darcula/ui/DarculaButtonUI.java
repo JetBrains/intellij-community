@@ -320,18 +320,10 @@ public class DarculaButtonUI extends BasicButtonUI {
       int width = isComboAction(c) ? prefSize.width :
                   Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, minimumSize.width + i.left + i.right);
       int height = Math.max(prefSize.height,
-                            (isSmallVariant(c) ? ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height : getMinimumHeight()) + i.top + i.bottom);
+                            (isSmallVariant(c) ? ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height : JBUI.CurrentTheme.Button.minimumSize().height) + i.top + i.bottom);
 
       return new Dimension(width, height);
     }
-  }
-
-  /**
-   * @deprecated Use correspondent to {@link JBUI.CurrentTheme.Button#minimumSize()} property
-   */
-  @Deprecated(forRemoval = true)
-  protected int getMinimumHeight() {
-    return JBUI.CurrentTheme.Button.minimumSize().height;
   }
 
   @Override

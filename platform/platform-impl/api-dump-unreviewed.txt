@@ -870,7 +870,6 @@ f:com.intellij.diagnostic.ReportMessages
 - s:getErrorReport():java.lang.String
 f:com.intellij.diagnostic.VMOptions
 - s:canWriteOptions():Z
-- s:getWriteFile():java.nio.file.Path
 - s:parseMemoryOption(java.lang.String):J
 - s:read():java.lang.String
 - s:readOption(com.intellij.diagnostic.VMOptions$MemoryKind,Z):I
@@ -4586,7 +4585,6 @@ c:com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 - p:getDefaultButtonColorEnd():java.awt.Color
 - p:getDefaultButtonColorStart():java.awt.Color
 - s:getDisabledTextColor():java.awt.Color
-- p:getMinimumHeight():I
 - p:getMnemonicIndex(javax.swing.AbstractButton):I
 - f:getPreferredSize(javax.swing.JComponent):java.awt.Dimension
 - installDefaults(javax.swing.AbstractButton):V
@@ -4657,7 +4655,6 @@ c:com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
 - p:createPropertyListener():java.beans.PropertyChangeListener
 - p:createRenderer():javax.swing.ListCellRenderer
 - s:createUI(javax.swing.JComponent):javax.swing.plaf.ComponentUI
-- p:getArrowButtonFillColor(java.awt.Color):java.awt.Color
 - getBorderInsets(java.awt.Component):java.awt.Insets
 - p:getInnerShape(java.awt.Rectangle,F,F,F):java.awt.geom.RectangularShape
 - getMinimumSize(javax.swing.JComponent):java.awt.Dimension
@@ -4672,7 +4669,6 @@ c:com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
 - f:isBorderOpaque():Z
 - isFocusTraversable(javax.swing.JComboBox):Z
 - isPaintArrowButton():Z
-- ps:isTableCellEditor(javax.swing.JComponent):Z
 - p:layoutEditor():V
 - paint(java.awt.Graphics,javax.swing.JComponent):V
 - p:paintArrow(java.awt.Graphics2D,javax.swing.JButton):V
@@ -9379,7 +9375,6 @@ a:com.intellij.openapi.options.BeanConfigurable
 - p:checkBox(java.lang.String,com.intellij.openapi.util.Getter,com.intellij.openapi.util.Setter):V
 - p:checkBox(java.lang.String,java.lang.String):V
 - p:checkBox(java.lang.String,kotlin.reflect.KMutableProperty0):V
-- p:component(javax.swing.JComponent,com.intellij.openapi.util.Getter,com.intellij.openapi.util.Setter,com.intellij.openapi.util.Getter,com.intellij.openapi.util.Setter):V
 - createComponent():javax.swing.JComponent
 - createContent(com.intellij.ui.dsl.builder.Panel):V
 - p:getInstance():java.lang.Object
@@ -13064,7 +13059,6 @@ f:com.intellij.ui.ColorPicker
 - removeUpdate(javax.swing.event.DocumentEvent):V
 - saveRecentColors():V
 - s:showColorPickerPopup(com.intellij.openapi.project.Project,java.awt.Color,com.intellij.ui.picker.ColorListener):V
-- s:showColorPickerPopup(com.intellij.openapi.project.Project,java.awt.Color,com.intellij.ui.picker.ColorListener,com.intellij.ui.awt.RelativePoint):V
 - s:showColorPickerPopup(com.intellij.openapi.project.Project,java.awt.Color,com.intellij.ui.picker.ColorListener,com.intellij.ui.awt.RelativePoint,Z):V
 - s:showDialog(java.awt.Component,java.lang.String,java.awt.Color,Z,java.util.List,Z):java.awt.Color
 f:com.intellij.ui.ColorPicker$ColorWheelImageProducer

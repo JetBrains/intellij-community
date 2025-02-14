@@ -3353,7 +3353,6 @@ f:com.intellij.openapi.ui.DialogPanel
 - f:apply():V
 - f:getApplyCallbacks():java.util.Map
 - f:getComponentValidateCallbacks():java.util.Map
-- f:getCustomValidationRequestors():java.util.Map
 - f:getPreferredFocusedComponent():javax.swing.JComponent
 - f:getResetCallbacks():java.util.Map
 - f:getValidateCallbacks():java.util.List
@@ -3368,7 +3367,6 @@ f:com.intellij.openapi.ui.DialogPanel
 - f:reset():V
 - f:setApplyCallbacks(java.util.Map):V
 - f:setComponentValidateCallbacks(java.util.Map):V
-- f:setCustomValidationRequestors(java.util.Map):V
 - f:setModifiedCallbacks(java.util.Map):V
 - f:setPreferredFocusedComponent(javax.swing.JComponent):V
 - f:setResetCallbacks(java.util.Map):V
@@ -8548,18 +8546,6 @@ e:com.intellij.ui.dsl.gridLayout.HorizontalAlign
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.gridLayout.HorizontalAlign
 - s:values():com.intellij.ui.dsl.gridLayout.HorizontalAlign[]
-f:com.intellij.ui.dsl.gridLayout.HorizontalGaps
-- <init>():V
-- <init>(I,I):V
-- b:<init>(I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():I
-- f:component2():I
-- f:copy(I,I):com.intellij.ui.dsl.gridLayout.HorizontalGaps
-- bs:copy$default(com.intellij.ui.dsl.gridLayout.HorizontalGaps,I,I,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.HorizontalGaps
-- equals(java.lang.Object):Z
-- f:getLeft():I
-- f:getRight():I
-- hashCode():I
 com.intellij.ui.dsl.gridLayout.UnscaledGaps
 - sf:Companion:com.intellij.ui.dsl.gridLayout.UnscaledGaps$Companion
 - sf:EMPTY:com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -8606,8 +8592,6 @@ e:com.intellij.ui.dsl.gridLayout.VerticalAlign
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.gridLayout.VerticalAlign
 - s:values():com.intellij.ui.dsl.gridLayout.VerticalAlign[]
 f:com.intellij.ui.dsl.gridLayout.VerticalGaps
-- sf:Companion:com.intellij.ui.dsl.gridLayout.VerticalGaps$Companion
-- sf:EMPTY:com.intellij.ui.dsl.gridLayout.VerticalGaps
 - <init>():V
 - <init>(I,I):V
 - b:<init>(I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -8619,7 +8603,6 @@ f:com.intellij.ui.dsl.gridLayout.VerticalGaps
 - f:getBottom():I
 - f:getTop():I
 - hashCode():I
-f:com.intellij.ui.dsl.gridLayout.VerticalGaps$Companion
 f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
 - sf:listCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 - sf:textListCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
@@ -11347,9 +11330,6 @@ f:com.intellij.util.ui.tree.TreeUtil
 - s:visitVisibleRows(javax.swing.JTree,java.util.function.Function,java.util.function.Consumer):V
 com.intellij.util.ui.tree.TreeUtil$Traverse
 - a:accept(java.lang.Object):Z
-a:com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider
-- com.intellij.ui.breadcrumbs.BreadcrumbsProvider
-- <init>():V
 a:com.intellij.xml.breadcrumbs.BreadcrumbsItem
 - <init>():V
 - a:getDisplayText():java.lang.String

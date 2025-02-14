@@ -235,7 +235,6 @@ f:com.intellij.ide.GeneralSettings
 - f:isShowWelcomeScreen():Z
 - f:isSupportScreenReaders():Z
 - f:isSyncOnFrameActivation():Z
-- f:isUseDefaultBrowser():Z
 - f:isUseSafeWrite():Z
 - loadState(com.intellij.ide.GeneralSettingsState):V
 - noStateLoaded():V

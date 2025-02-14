@@ -4,6 +4,7 @@ package com.intellij.ui.components;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ColoredItem;
 import com.intellij.ui.BackgroundSupplier;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.hover.ListHoverListener;
 import com.intellij.ui.list.ListCellBackgroundSupplier;
@@ -197,7 +198,7 @@ public final class WideSelectionListUI extends BasicListUI {
           Component c = renderer.getListCellRendererComponent(list, value, index, false, false);
           rendererPane.add(c);
           Dimension cellSize = c.getPreferredSize();
-          if (UIUtil.getClientProperty(c, JBList.IGNORE_LIST_ROW_HEIGHT) == null) {
+          if (ClientProperty.get(c, JBList.IGNORE_LIST_ROW_HEIGHT) == null) {
             cellSize = UIUtil.updateListRowHeight(cellSize);
           }
           if (fixedCellWidth == -1) {
