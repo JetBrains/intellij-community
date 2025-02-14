@@ -1289,6 +1289,7 @@
     <statistics.gotItTooltipAllowlist prefix="show.diff.in.editor"/>
     <statistics.gotItTooltipAllowlist prefix="reader.mode.got.it"/>
     <statistics.gotItTooltipAllowlist prefix="fragment.hidden"/>
+    <statistics.gotItTooltipAllowlist prefix="trial.state.widget.got.it.id"/>
 
     <!-- Browsers -->
     <applicationService serviceInterface="com.intellij.ide.browsers.BrowserLauncher"
