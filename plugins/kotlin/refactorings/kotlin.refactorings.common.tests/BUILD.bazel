@@ -21,6 +21,7 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//java/openapi:java",
     "//java/java-impl-refactorings:impl-refactorings",
     "@lib//:kotlin-reflect",
     "//java/testFramework",

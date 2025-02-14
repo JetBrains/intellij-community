@@ -18,6 +18,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/util/base",
     "//plugins/yaml",
+    "//platform/analysis-impl",
   ],
   runtime_deps = [":vcs-gitlab-yaml_resources"]
 )
@@ -35,6 +36,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/util/base",
     "//plugins/yaml",
+    "//platform/analysis-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//json/tests:tests_test_lib",

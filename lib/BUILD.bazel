@@ -4605,10 +4605,6 @@ java_library(
   exports = [
     ":ktor-client-cio-jvm-3_0_3_http_import",
     ":ktor-http-cio-jvm-3_0_3_http_import",
-    ":ktor-network-jvm-3_0_3_http_import",
-    ":ktor-io-jvm-3_0_3_http_import",
-    ":kotlinx-io-core-jvm-0_5_4_http_import",
-    ":kotlinx-io-bytestring-jvm-0_5_4_http_import",
     ":ktor-network-tls-jvm-3_0_3_http_import",
   ],
   visibility = ["//visibility:public"]

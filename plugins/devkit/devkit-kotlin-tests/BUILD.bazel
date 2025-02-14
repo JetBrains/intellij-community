@@ -19,6 +19,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/devkit/devkit-java-tests:java-tests_test_lib",
+    "//plugins/properties/properties-psi-api:psi",
     "//plugins/java-i18n",
     "//plugins/java-i18n:java-i18n_test_lib",
     "//java/openapi:java",

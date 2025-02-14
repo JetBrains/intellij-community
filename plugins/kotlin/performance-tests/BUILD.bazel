@@ -35,6 +35,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin:kotlin-base-plugin",
     "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
     "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//java/compiler/openapi:java-compiler",
     "//java/testFramework",
     "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
     "//java/idea-ui:ui",
