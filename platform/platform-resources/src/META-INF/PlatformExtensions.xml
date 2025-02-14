@@ -1445,6 +1445,8 @@
       implementationClass="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.WelcomeScreenPerformanceCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.HotProjectReopenStartUpPerformanceCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.ui.components.trialState.TrialStateWidgetUsageCollector"/>
 
     <postStartupActivity implementation="com.intellij.ide.startup.CheckProjectActivity"/>
     <postStartupActivity implementation="com.intellij.ide.startup.CheckKeysStartupActivity"/>

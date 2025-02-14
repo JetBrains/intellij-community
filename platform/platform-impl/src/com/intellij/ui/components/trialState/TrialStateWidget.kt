@@ -35,6 +35,7 @@ internal class TrialStateWidget : DumbAwareAction(), CustomComponentAction {
   private var tooltip: GotItTooltip? = null
 
   override fun actionPerformed(e: AnActionEvent) {
+    TrialStateWidgetUsageCollector.WIDGET_CLICKED.log()
     TrialStateService.getInstance().setLastShownColorStateClicked()
     TrialStateUtils.openTrailStateTab()
   }
