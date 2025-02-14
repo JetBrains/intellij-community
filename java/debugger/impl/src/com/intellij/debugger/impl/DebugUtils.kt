@@ -75,7 +75,7 @@ fun preloadAllClasses(vm: VirtualMachine) {
   val allClasses = DebuggerUtilsAsync.allCLasses(vm)
   if (!Registry.`is`("debugger.preload.types.hierarchy", true)) return
 
-  val channel = Channel<ReferenceType>(capacity = Channel.Factory.UNLIMITED)
+  val channel = Channel<ReferenceType>(capacity = Channel.UNLIMITED)
   try {
     DebugProcessEvents.enableNonSuspendingRequest(vm.eventRequestManager().createClassPrepareRequest()) { event ->
       channel.trySend((event as ClassPrepareEvent).referenceType())
@@ -90,7 +90,11 @@ fun preloadAllClasses(vm: VirtualMachine) {
     allClasses.forEach { channel.send(it) }
     channel.consumeEach { type ->
       withDebugContext(managerThread, PrioritizedTask.Priority.LOWEST) {
-        DebuggerUtilsAsync.supertypes(type).await()
+        try {
+          DebuggerUtilsAsync.supertypes(type).await()
+        }
+        catch (_: ObjectCollectedException) {
+        }
       }
       delay(1)
     }
