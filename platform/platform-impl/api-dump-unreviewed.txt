@@ -9424,8 +9424,6 @@ a:com.intellij.openapi.options.ConfigurableBuilder
 - p:component(javax.swing.JComponent,java.util.function.Supplier,com.intellij.openapi.util.Setter,java.util.function.Supplier,com.intellij.openapi.util.Setter):V
 - createContent(com.intellij.ui.dsl.builder.Panel):V
 - getOptionDescriptors(java.lang.String,java.util.function.Function):java.util.List
-- getTitle():java.lang.String
-- p:setTitle(java.lang.String):V
 c:com.intellij.openapi.options.SchemeConvertorEPBase
 - com.intellij.serviceContainer.BaseKeyedLazyInstance
 - implementationClass:java.lang.String
