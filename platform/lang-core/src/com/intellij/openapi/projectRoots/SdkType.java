@@ -107,8 +107,9 @@ public abstract class SdkType implements SdkTypeId {
 
   /**
    * Contains information about a detected SDK.
+   * @param isSymlink true iff the SDK path contains a symlink
    */
-  public record SdkEntry(@NotNull String homePath, @NotNull String versionString, @Nullable Boolean isSymlink) {
+  public record SdkEntry(@NotNull String homePath, @NotNull String versionString, boolean isSymlink) {
     public SdkEntry(@NotNull String homePath, @NotNull String versionString) {
       this(homePath, versionString, isSymlink(homePath));
     }
@@ -144,7 +145,7 @@ public abstract class SdkType implements SdkTypeId {
         return null;
       }
 
-      return new SdkEntry(homePath, versionString, null);
+      return new SdkEntry(homePath, versionString);
     });
   }
 
