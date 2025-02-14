@@ -1677,6 +1677,16 @@ public final class PyTypeChecker {
   }
 
   @ApiStatus.Internal
+  public static @Nullable PyType convertToType(@Nullable PyType type, @NotNull PyClassType superType, @NotNull TypeEvalContext context) {
+    MatchContext matchContext = new MatchContext(context, new GenericSubstitutions(), false);
+    Optional<Boolean> matched = match(superType, type, matchContext);
+    if (matched.orElse(false)) {
+      return substitute(superType, matchContext.mySubstitutions, context);
+    }
+    return null;
+  }
+
+  @ApiStatus.Internal
   public static class Generics {
     private final @NotNull Set<PyTypeVarType> typeVars = new LinkedHashSet<>();
 

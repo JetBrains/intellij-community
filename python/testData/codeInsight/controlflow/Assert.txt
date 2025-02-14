@@ -16,5 +16,5 @@
 15(18) ASSERTTYPE ACCESS: s
 16(17) element: null. Condition: isinstance(s, basestring):true
 17(19) ASSERTTYPE ACCESS: s
-18(19) element: null
+18(19) raise: PyAssertStatement
 19() element: null
