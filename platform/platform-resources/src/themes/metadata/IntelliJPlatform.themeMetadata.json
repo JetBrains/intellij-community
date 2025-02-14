@@ -1604,6 +1604,11 @@
       "description": "Color of the border around highlighted items when searching in the Settings dialog"
     },
     {
+      "key": "Settings.Spotlight.backgroundColor",
+      "description": "Color of the background of the highlighted items when searching in the Settings dialog",
+      "since": "2025.1"
+    },
+    {
       "key": "Shortcut.backgroundColor",
       "description": "Shortcut elements background",
       "since": "2024.2"

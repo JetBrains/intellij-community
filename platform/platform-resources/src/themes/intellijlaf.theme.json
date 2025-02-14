@@ -776,7 +776,8 @@
       "separatorColor": "border"
     },
 
-    "Settings.Spotlight.borderColor": "#ffc80064",
+    "Settings.Spotlight.borderColor": "#F2B181FF",
+    "Settings.Spotlight.backgroundColor": "#F7F8FA80",
     "SidePanel.background": "#E6EBF0",
 
     "Slider": {

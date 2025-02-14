@@ -566,7 +566,8 @@
       "separatorColor": "#515151",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI"
     },
-
+    "Settings.Spotlight.borderColor": "#A36B4EFF",
+    "Settings.Spotlight.backgroundColor": "#2B2D3080",
     "Slider": {
       "tickColor": "#666666",
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaSliderUI"
