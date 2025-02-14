@@ -152,7 +152,7 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
       return directory
     }
 
-    private fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<ExistingIndexingActivityDiagnostic>, sizeLimit: Long): Pair<Int, Long> {
+    private fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<FilesAndDiagnostic>, sizeLimit: Long): Pair<Int, Long> {
       thisLogger().assertTrue(sizeLimit > 0)
       var sizeLimitLevel = sizeLimit
       var number = 0
@@ -168,13 +168,9 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
     }
 
     @TestOnly
-    fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<ExistingIndexingActivityDiagnostic>): Int {
+    fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<FilesAndDiagnostic>): Int {
       return getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics,
                                                      indexingDiagnosticsSizeLimitOfFilesInMiBPerProject * 1024 * 1024.toLong()).first
-    }
-
-    private fun <T> fastReadJsonField(jsonFile: Path, propertyName: String, type: Class<T>): T? {
-      return fastReadJsonField(jsonFile.bufferedReader(), propertyName, type)
     }
 
     private fun <T> fastReadJsonField(bufferedReader: Reader, propertyName: String, type: Class<T>): T? {
@@ -328,9 +324,9 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
     return diagnosticJson to diagnosticHtml
   }
 
-  private fun deleteOutdatedActivityDiagnostics(existingDiagnostics: List<ExistingIndexingActivityDiagnostic>):
-    List<ExistingIndexingActivityDiagnostic> {
-    val sortedDiagnostics = existingDiagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }
+  private fun deleteOutdatedActivityDiagnostics(existingDiagnostics: List<FilesAndDiagnostic>):
+    List<FilesAndDiagnostic> {
+    val sortedDiagnostics = existingDiagnostics.sortedByDescending { it.diagnostic.projectIndexingActivityHistory.times.updatingStart.instant }
 
     var sizeLimit = indexingDiagnosticsSizeLimitOfFilesInMiBPerProject * 1024 * 1024.toLong()
     val numberLimit: Int
@@ -359,47 +355,27 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
     return survivedDiagnostics
   }
 
-  private fun parseExistingIndexingActivityDiagnostics(indexDiagnosticDirectory: Path): List<ExistingIndexingActivityDiagnostic> =
+  private fun parseExistingIndexingActivityDiagnostics(indexDiagnosticDirectory: Path): List<FilesAndDiagnostic> =
     Files.list(indexDiagnosticDirectory).use { files ->
       files.asSequence()
         .filter { file -> file.fileName.toString().startsWith(FILE_NAME_PREFIX) && file.extension == "json" }
         .mapNotNull { jsonFile ->
-          val appInfo = fastReadAppInfo(jsonFile.bufferedReader()) ?: return@mapNotNull null
-          val runtimeInfo = fastReadRuntimeInfo(jsonFile.bufferedReader()) ?: return@mapNotNull null
+          val diagnostic = readJsonIndexingActivityDiagnostic(jsonFile) ?: return@mapNotNull null
 
           val htmlFile = jsonFile.resolveSibling(jsonFile.nameWithoutExtension + ".html")
           if (!htmlFile.exists()) {
             return@mapNotNull null
           }
 
-          val diagnosticType = fastReadJsonField(jsonFile, "type", IndexingActivityType::class.java) ?: return@mapNotNull null
-
-          val times: JsonProjectIndexingActivityHistoryTimes
-          val fileCount: JsonProjectIndexingActivityFileCount
-          when (diagnosticType) {
-            IndexingActivityType.Scanning -> {
-              times = fastReadJsonField(jsonFile, "times", JsonProjectScanningHistoryTimes::class.java) ?: return@mapNotNull null
-              fileCount = fastReadJsonField(jsonFile, "fileCount", JsonProjectScanningFileCount::class.java) ?: return@mapNotNull null
-            }
-            IndexingActivityType.DumbIndexing -> {
-              times = fastReadJsonField(jsonFile, "times", JsonProjectDumbIndexingHistoryTimes::class.java) ?: return@mapNotNull null
-              fileCount = fastReadJsonField(jsonFile, "fileCount", JsonProjectDumbIndexingFileCount::class.java) ?: return@mapNotNull null
-            }
-          }
-
-          ExistingIndexingActivityDiagnostic(jsonFile, htmlFile, appInfo, runtimeInfo, diagnosticType, times, fileCount)
+          FilesAndDiagnostic(jsonFile, htmlFile, diagnostic)
         }
         .toList()
     }
 
-  data class ExistingIndexingActivityDiagnostic(
+  data class FilesAndDiagnostic(
     val jsonFile: Path,
     val htmlFile: Path,
-    val appInfo: JsonIndexDiagnosticAppInfo,
-    val runtimeInfo: JsonRuntimeInfo,
-    val type: IndexingActivityType,
-    val indexingTimes: JsonProjectIndexingActivityHistoryTimes,
-    val fileCount: JsonProjectIndexingActivityFileCount
+    val diagnostic: JsonIndexingActivityDiagnostic,
   )
 
   @Synchronized

@@ -14,7 +14,7 @@ import java.util.*
 internal fun createAggregateActivityHtml(
   target: Appendable,
   projectName: String,
-  diagnostics: List<IndexDiagnosticDumper.ExistingIndexingActivityDiagnostic>,
+  filesAndDiagnostics: List<IndexDiagnosticDumper.FilesAndDiagnostic>,
   sharedIndexEvents: List<JsonSharedIndexDiagnosticEvent>,
   changedFilesPushEvents: List<ChangedFilesPushedEvent>
 ) {
@@ -77,8 +77,8 @@ internal fun createAggregateActivityHtml(
               }
             }
             tbody {
-              for (diagnostic in diagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }) {
-                val times = diagnostic.indexingTimes
+              for ((_, htmlFile, diagnostic) in filesAndDiagnostics.sortedByDescending { it.diagnostic.projectIndexingActivityHistory.times.updatingStart.instant }) {
+                val times = diagnostic.projectIndexingActivityHistory.times
 
                 val classes = if (times is JsonProjectScanningHistoryTimes) {
                   "linkable-table-row scanning-table-row"
@@ -87,8 +87,8 @@ internal fun createAggregateActivityHtml(
                   "linkable-table-row"
                 }
                 tr(classes = classes) {
-                  attributes["href"] = diagnostic.htmlFile.fileName.toString()
-                  printIndexingActivityRow(times, diagnostic.fileCount)
+                  attributes["href"] = htmlFile.fileName.toString()
+                  printIndexingActivityRow(times, diagnostic.projectIndexingActivityHistory.fileCount)
                 }
               }
             }
