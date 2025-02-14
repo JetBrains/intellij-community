@@ -230,6 +230,8 @@ class VcsDirtyScopeManagerImpl(private val project: Project, coroutineScope: Cor
     val vcsRoot = vcsManager.getVcsRootObjectFor(root)
     if (vcsRoot == null) return
 
+    LOG.debug { "dirty root: ${vcsRoot}; ${findFirstInterestingCallerClass()}" }
+
     var hasSomethingDirty = false
 
     synchronized(LOCK) {
