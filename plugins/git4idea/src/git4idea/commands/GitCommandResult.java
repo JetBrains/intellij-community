@@ -183,7 +183,7 @@ public class GitCommandResult {
   /**
    * @deprecated {@link GitHandler} throws {@link com.intellij.openapi.progress.ProcessCanceledException} instead of returning this state.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean cancelled() {
     return false;
   }
