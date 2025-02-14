@@ -61,7 +61,7 @@ import java.util.stream.Stream;
 
 public class RefManagerImpl extends RefManager {
   public static final ExtensionPointName<RefGraphAnnotator> EP_NAME = ExtensionPointName.create("com.intellij.refGraphAnnotator");
-  private static final Logger LOG = Logger.getInstance(RefManager.class);
+  private static final Logger LOG = Logger.getInstance(RefManagerImpl.class);
 
   private long myLastUsedMask = 0b1000_00000000_00000000_00000000; // 28th bit, guarded by this
 
@@ -438,7 +438,6 @@ public class RefManagerImpl extends RefManager {
 
   public void buildReferences(RefElement element) {
     if (element.areReferencesBuilt()) return;
-    ((RefElementImpl)element).setReferencesBuilt(true);
     executeTask(() -> {
       element.initializeIfNeeded();
       element.buildReferences();
