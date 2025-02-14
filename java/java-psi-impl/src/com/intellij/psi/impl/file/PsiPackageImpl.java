@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.file;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
 import com.intellij.core.CoreJavaDirectoryService;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -43,6 +44,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private static final Logger LOG = Logger.getInstance(PsiPackageImpl.class);
 
   private volatile CachedValue<PsiModifierList> myAnnotationList;
+  private volatile SoftReference<Map<String, PsiClass[]>> myClassCache;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectoriesWithLibSources;
   private volatile SoftReference<Map<GlobalSearchScope, Map<String, PsiClass[]>>> myDumbModeFullCache;
@@ -171,7 +173,27 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return getCachedClassesInDumbMode(name, scope);
     }
 
-    return findAllClasses(name, scope);
+    if (CodeInsightContextKt.isSharedSourceSupportEnabled(getProject())) {
+      // todo ijpl-339 this line introduces performance degradation, see IDEA-367535
+      return findAllClasses(name, scope);
+    }
+    else {
+      Map<String, PsiClass[]> map = dereference(myClassCache);
+      if (map == null) {
+        myClassCache = new SoftReference<>(map = ContainerUtil.createConcurrentSoftValueMap());
+      }
+      PsiClass[] classes = map.get(name);
+      if (classes != null) {
+        return classes;
+      }
+
+      RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+      classes = findAllClasses(name, GlobalSearchScope.everythingScope(getProject()));
+      if (stamp.mayCacheNow()) {
+        map.put(name, classes);
+      }
+      return classes;
+    }
   }
 
   private PsiClass @NotNull [] findAllClasses(@NotNull String shortName, @NotNull GlobalSearchScope scope) {
