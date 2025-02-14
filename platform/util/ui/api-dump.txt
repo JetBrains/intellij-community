@@ -1262,14 +1262,17 @@ f:com.intellij.icons.AllIcons$Toolwindows
 - sf:Task:javax.swing.Icon
 - sf:ToolWindowAnalyzeDataflow:javax.swing.Icon
 - sf:ToolWindowAnt:javax.swing.Icon
+- sf:ToolWindowAskAI:javax.swing.Icon
 - sf:ToolWindowBookmarks:javax.swing.Icon
 - sf:ToolWindowBuild:javax.swing.Icon
 - sf:ToolWindowChanges:javax.swing.Icon
 - sf:ToolWindowCommander:javax.swing.Icon
 - sf:ToolWindowCommit:javax.swing.Icon
+- sf:ToolWindowComponents:javax.swing.Icon
 - sf:ToolWindowCoverage:javax.swing.Icon
 - sf:ToolWindowDataView:javax.swing.Icon
 - sf:ToolWindowDebugger:javax.swing.Icon
+- sf:ToolWindowDevMode:javax.swing.Icon
 - sf:ToolWindowDuplicates:javax.swing.Icon
 - sf:ToolWindowFavorites:javax.swing.Icon
 - sf:ToolWindowFind:javax.swing.Icon
@@ -1279,6 +1282,7 @@ f:com.intellij.icons.AllIcons$Toolwindows
 - sf:ToolWindowJsonPath:javax.swing.Icon
 - sf:ToolWindowMessages:javax.swing.Icon
 - sf:ToolWindowModuleDependencies:javax.swing.Icon
+- sf:ToolWindowOverflow:javax.swing.Icon
 - sf:ToolWindowPalette:javax.swing.Icon
 - sf:ToolWindowProblems:javax.swing.Icon
 - sf:ToolWindowProblemsEmpty:javax.swing.Icon
