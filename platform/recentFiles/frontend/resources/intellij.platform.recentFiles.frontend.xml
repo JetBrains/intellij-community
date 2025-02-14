@@ -10,7 +10,7 @@
                  description="Maximum amount of time allowed to wait for the files list loading before displaying the UI"/>
     <registryKey key="switcher.preserve.selection.on.model.update" defaultValue="true"
                  description="Attempt to select first file that is not opened in the focused editor while the files list is updating"/>
-    <registryKey key="switcher.use.fallback.in.monolith" defaultValue="true"
+    <registryKey key="switcher.use.fallback.in.monolith" defaultValue="false"
                  description="Use old Switcher/Recent Files implementation in the monolith mode that is not remove dev-native" />
   </extensions>
   <actions>
