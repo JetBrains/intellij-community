@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -36,9 +36,6 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import java.util.*;
 import java.util.stream.Stream;
 
-/**
- * @author anna
- */
 public final class RefJavaManagerImpl extends RefJavaManager {
   private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION =
     Conditions.or(Conditions.instanceOf(PsiFile.class, PsiJavaModule.class),
@@ -430,7 +427,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     return entryPointsManager;
   }
 
-  private class MyJavaElementVisitor extends AbstractUastNonRecursiveVisitor {
+  private final class MyJavaElementVisitor extends AbstractUastNonRecursiveVisitor {
     private final RefJavaUtil myRefUtil = RefJavaUtil.getInstance();
     private final ExternalAnnotationsManager myExternalAnnotationsManager = ExternalAnnotationsManager.getInstance(myRefManager.getProject());
 
