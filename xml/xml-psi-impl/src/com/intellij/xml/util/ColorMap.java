@@ -16,7 +16,7 @@ public final class ColorMap {
   private static final Map<String, String> ourColorNameToHexCodeMap = new HashMap<>(25);
   private static final Map<String, String> ourHexCodeToColorNameMap = new HashMap<>(25);
 
-  static final @NonNls String systemColorsString = """
+  public static final @NonNls String systemColorsString = """
     ActiveBorder
         Active window border.
     ActiveCaption
