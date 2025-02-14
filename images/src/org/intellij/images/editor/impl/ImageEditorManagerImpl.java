@@ -28,6 +28,7 @@ import java.awt.image.BufferedImage;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
+@Internal
 public final class ImageEditorManagerImpl {
   private ImageEditorManagerImpl() {
   }
@@ -49,7 +50,6 @@ public final class ImageEditorManagerImpl {
     return ui;
   }
 
-  @Internal
   public static ImageComponent getImageComponent(ImageEditorUI comp) {
     return comp.getImageComponent();
   }
