@@ -74,7 +74,7 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
    * Also, note that non-deprecated constructor is side effect free, and you should call for {@link TreeTableSpeedSearch#setupListeners()}
    * method to enable speed search
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public TreeTableSpeedSearch(TreeTable tree) {
     this(tree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING);
   }

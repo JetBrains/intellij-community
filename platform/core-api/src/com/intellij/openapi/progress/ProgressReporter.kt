@@ -52,6 +52,7 @@ suspend fun <T> durationStep(
   return durationStep(duration, text, action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Moved to com.intellij.platform.util.progress",
   ReplaceWith("withRawProgressReporter(action)", "com.intellij.platform.util.progress.withRawProgressReporter"),

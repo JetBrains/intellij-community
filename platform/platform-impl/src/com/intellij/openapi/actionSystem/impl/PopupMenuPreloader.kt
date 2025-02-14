@@ -3,12 +3,14 @@ package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.ui.PopupHandler
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyListener
 import java.util.function.Supplier
 import javax.swing.JComponent
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Does nothing", ReplaceWith(""), DeprecationLevel.ERROR)
 @Internal
 class PopupMenuPreloader private constructor() : HierarchyListener {
@@ -16,7 +18,7 @@ class PopupMenuPreloader private constructor() : HierarchyListener {
   }
 
   companion object {
-
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Does nothing", ReplaceWith(""), DeprecationLevel.ERROR)
     @JvmStatic
     fun install(component: JComponent,

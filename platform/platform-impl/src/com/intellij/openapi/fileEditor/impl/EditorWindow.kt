@@ -153,6 +153,7 @@ class EditorWindow internal constructor(
     get() = currentCompositeFlow.value
 
   @Suppress("DEPRECATION")
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use getSelectedComposite", ReplaceWith("getSelectedComposite(ignorePopup)"), level = DeprecationLevel.ERROR)
   fun getSelectedEditor(@Suppress("UNUSED_PARAMETER") ignorePopup: Boolean): EditorWithProviderComposite? {
     return selectedComposite as EditorWithProviderComposite?

@@ -9,7 +9,7 @@ public final class IndexComparator implements Comparator<NodeDescriptor<?>> {
   /**
    * @deprecated use {@link #getInstance()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final IndexComparator INSTANCE = new IndexComparator();
 
   public static IndexComparator getInstance() {

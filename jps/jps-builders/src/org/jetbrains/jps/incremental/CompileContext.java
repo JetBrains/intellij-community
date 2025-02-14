@@ -24,7 +24,7 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
   /**
    * @deprecated use {@link JavaBuilderUtil#isForcedRecompilationAllJavaModules(CompileContext)} for java-related usages
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default boolean isProjectRebuild() {
     return JavaBuilderUtil.isForcedRecompilationAllJavaModules(getScope());
   }

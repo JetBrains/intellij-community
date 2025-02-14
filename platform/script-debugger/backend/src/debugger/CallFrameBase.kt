@@ -22,6 +22,7 @@ import org.jetbrains.annotations.ApiStatus
 const val RECEIVER_NAME: String = "this"
 
 @ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("")
 /**
  * Use kotlin - base class is not required in this case (no boilerplate code)
