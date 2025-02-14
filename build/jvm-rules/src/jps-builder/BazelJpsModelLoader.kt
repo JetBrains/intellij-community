@@ -12,6 +12,7 @@ import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestProperty
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.configureCommonCompilerArgs
+import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.model.JpsCompositeElement
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement
@@ -59,16 +60,19 @@ private val javaHome = Path.of(System.getProperty("java.home")).normalize() ?: e
 
 private val KOTLINC_VERSION_HASH = Hashing.xxh3_64().hashBytesToLong((KotlinCompilerVersion.getVersion() ?: "@snapshot@").toByteArray())
 
+internal val isLibTracked = System.getProperty(GlobalOptions.TRACK_LIBRARY_DEPENDENCIES_ENABLED).toBoolean()
+
 internal fun loadJpsModel(
   sources: List<Path>,
   args: ArgMap<JvmBuilderFlags>,
   classPathRootDir: Path,
-  dependencyFileToDigest: Map<Path, ByteArray>,
+  dependencyFileToDigest: Map<Path, ByteArray>?,
 ): Pair<JpsModel, TargetConfigurationDigestContainer> {
   val model = jpsElementFactory.createModel()
 
   val digests = TargetConfigurationDigestContainer()
   digests.set(TargetConfigurationDigestProperty.KOTLIN_VERSION, KOTLINC_VERSION_HASH)
+  digests.set(TargetConfigurationDigestProperty.JPS_TRACK_LIB_DEPS, if (isLibTracked) 1 else 0)
   digests.set(TargetConfigurationDigestProperty.TOOL_VERSION, 1)
 
   // properties not needed for us (not implemented for java)
@@ -180,7 +184,6 @@ private fun configureKotlinCompiler(
   val plugins = args.optionalList(JvmBuilderFlags.PLUGIN_ID).zip(args.optionalList(JvmBuilderFlags.PLUGIN_CLASSPATH))
   configHash.putInt(plugins.size)
   if (plugins.isNotEmpty()) {
-    //val pluginClassPaths = mutableListOf<String>()
     @Suppress("UnusedVariable")
     for ((id, paths) in plugins) {
       configHash.putString(id)
@@ -188,15 +191,6 @@ private fun configureKotlinCompiler(
   }
 
   kotlinArgs.classpath = classPathFiles.joinToString(separator = File.pathSeparator, transform = { it.toString() })
-  //kotlinArgs.javaSourceRoots = run {
-  //  val result = ArrayList<String>()
-  //  for (file in sources) {
-  //    if (file.toString().endsWith(".java")) {
-  //      result.add(file.toString())
-  //    }
-  //  }
-  //  result.toTypedArray()
-  //}
   kotlinArgs.freeArgs = sources.map { it.toString() }
 
   module.container.setChild(JpsKotlinFacetModuleExtension.KIND, JpsKotlinFacetModuleExtension(kotlinFacetSettings))
@@ -238,7 +232,7 @@ private fun configureClasspath(
   dependencyList: JpsDependenciesList,
   args: ArgMap<JvmBuilderFlags>,
   baseDir: Path,
-  dependencyFileToDigest: Map<Path, ByteArray>,
+  dependencyFileToDigest: Map<Path, ByteArray>?,
   digests: TargetConfigurationDigestContainer,
 ): Array<Path> {
   // no classpath if no source file (jvm_test without own sources)
@@ -255,12 +249,13 @@ private fun configureClasspath(
   digests.set(TargetConfigurationDigestProperty.DEPENDENCY_PATH_LIST, hash.asLong)
   hash.reset()
 
-  // todo JPS should support dependency as JARs, but for now we do include digest into hash
-  for (file in files) {
-    val digest = requireNotNull(dependencyFileToDigest.get(file)) {
-      "Missing digest for $file.\nAvailable digests: ${dependencyFileToDigest.keys.joinToString(separator = ",\n") { it.invariantSeparatorsPathString }}"
+  if (dependencyFileToDigest != null) {
+    for (file in files) {
+      val digest = requireNotNull(dependencyFileToDigest.get(file)) {
+        "Missing digest for $file.\nAvailable digests: ${dependencyFileToDigest.keys.joinToString(separator = ",\n") { it.invariantSeparatorsPathString }}"
+      }
+      hash.putBytes(digest)
     }
-    hash.putBytes(digest)
   }
   hash.putInt(files.size)
 
@@ -285,9 +280,6 @@ private class BazelJpsLibrary(
   private val files: List<Path>,
 ) : JpsNamedCompositeElementBase<BazelJpsLibrary>(name), JpsTypedLibrary<JpsDummyElement> {
   private val properties = JpsElementFactory.getInstance().createDummyElement()
-  //private val roots = files.map {
-  //  JpsLibraryRootImpl("jar://" + it.invariantSeparatorsPathString + "!/", JpsOrderRootType.COMPILED, InclusionOptions.ROOT_ITSELF)
-  //}
 
   override fun getType(): JpsJavaLibraryType = JpsJavaLibraryType.INSTANCE
 

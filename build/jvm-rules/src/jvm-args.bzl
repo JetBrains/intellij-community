@@ -21,4 +21,5 @@ def get_jvm_flags(flags):
         "-Dio.netty.allocator.type=pooled",
         # see TargetConfigurationDigestProperty.KOTLIN_VERSION - we invalidate cache if kotlinc version changed
         "-Dkotlin.jps.skip.cache.version.check=true",
+        "-Djps.track.library.dependencies=true",
     ] + flags

@@ -117,7 +117,7 @@ private suspend fun incrementalBuild(
   writer: Writer,
   allocator: RootAllocator,
 ): Int {
-  val dependencyFileToDigest = hashMap<Path, ByteArray>()
+  val dependencyFileToDigest = if (isLibTracked) hashMap<Path, ByteArray>() else null
   val sourceFileToDigest = hashMap<Path, ByteArray>(request.inputPaths.size)
   val sources = ArrayList<Path>()
   val isDebugEnabled = request.verbosity > 0
@@ -138,7 +138,7 @@ private suspend fun incrementalBuild(
       if (dependencyFileToDigestDebugString != null) {
         appendDebug(dependencyFileToDigestDebugString, input, digest)
       }
-      dependencyFileToDigest.put(baseDir.resolve(input).normalize(), digest)
+      dependencyFileToDigest?.put(baseDir.resolve(input).normalize(), digest)
     }
   }
 
@@ -180,7 +180,7 @@ suspend fun buildUsingJps(
   args: ArgMap<JvmBuilderFlags>,
   out: Writer,
   sources: List<Path>,
-  dependencyFileToDigest: Map<Path, ByteArray>,
+  dependencyFileToDigest: Map<Path, ByteArray>?,
   sourceFileToDigest: Map<Path, ByteArray>,
   isDebugEnabled: Boolean,
   allocator: RootAllocator,

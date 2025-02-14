@@ -50,17 +50,17 @@ kt_jvm_library(
     visibility = ["//visibility:public"],
 )
 
-java_import(
-    name = "jps-standalone",
-    jars = ["jps-build-standalone.jar"],
-    visibility = ["//src/jps-builder:__subpackages__"],
-)
-# jvm_import(
+# java_import(
 #     name = "jps-standalone",
-#     jar = "@jps-standalone_http//file",
-#     source_jar = "@jps-standalone_http//file",
+#     jars = ["jps-build-standalone.jar"],
 #     visibility = ["//src/jps-builder:__subpackages__"],
 # )
+jvm_import(
+    name = "jps-standalone",
+    jar = "@jps-standalone_http//file",
+    source_jar = "@jps-standalone_http//file",
+    visibility = ["//src/jps-builder:__subpackages__"],
+)
 
 java_binary(
     name = "worker-jvm",

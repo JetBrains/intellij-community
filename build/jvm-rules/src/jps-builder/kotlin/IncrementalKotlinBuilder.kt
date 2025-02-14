@@ -357,9 +357,10 @@ internal class IncrementalKotlinBuilder(
     updateLookupStorage(lookupTracker, kotlinContext.lookupStorageManager, dirtyByTarget)
 
     if (!isChunkRebuilding) {
+      val dirtyFilesAsPathList = dirtyByTarget.dirty.keys.mapTo(hashSet(dirtyByTarget.dirty.keys.size)) { it.toPath() }
       doProcessChangesUsingLookups(
         collector = changeCollector,
-        compiledFiles = dirtyByTarget.dirty.keys.mapTo(hashSet()) { it.toPath() },
+        compiledFiles = dirtyFilesAsPathList,
         lookupStorageManager = kotlinContext.lookupStorageManager,
         fsOperations = fsOperations,
         caches = incrementalCaches.values,
