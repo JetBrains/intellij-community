@@ -1,0 +1,7 @@
+// WITH_STDLIB
+import java.lang.*
+import java.lang.Iterable as Foo
+
+fun c() : Iterable<String> {
+    throw Exception()
+}

@@ -1,0 +1,6 @@
+// WITH_STDLIB
+import java.lang.*
+
+fun b() : Comparable<String> {
+    throw Exception()
+}

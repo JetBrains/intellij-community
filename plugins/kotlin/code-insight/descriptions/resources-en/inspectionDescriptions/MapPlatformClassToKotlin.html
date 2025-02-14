@@ -1,0 +1,14 @@
+<!-- Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<html>
+<body>
+Reports platform class usages that can be replaced with Kotlin built-in types.
+<p><b>Example:</b></p>
+<pre><code>
+fun test(): java.lang.Comparable&lt;String&gt; = ...
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+fun test(): Comparable&lt;String&gt; = ...
+</code></pre>
+</body>
+</html>

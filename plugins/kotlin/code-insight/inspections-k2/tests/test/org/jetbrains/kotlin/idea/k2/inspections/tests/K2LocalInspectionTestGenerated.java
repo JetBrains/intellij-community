@@ -10078,6 +10078,40 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/mapPlatformClassToKotlin")
+        public static class MapPlatformClassToKotlin extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("mapPlatformClassToKotlin1.kt")
+            public void testMapPlatformClassToKotlin1() throws Exception {
+                runTest("testData/inspectionsLocal/mapPlatformClassToKotlin/mapPlatformClassToKotlin1.kt");
+            }
+
+            @TestMetadata("mapPlatformClassToKotlin2.kt")
+            public void testMapPlatformClassToKotlin2() throws Exception {
+                runTest("testData/inspectionsLocal/mapPlatformClassToKotlin/mapPlatformClassToKotlin2.kt");
+            }
+
+            @TestMetadata("mapPlatformClassToKotlin3.kt")
+            public void testMapPlatformClassToKotlin3() throws Exception {
+                runTest("testData/inspectionsLocal/mapPlatformClassToKotlin/mapPlatformClassToKotlin3.kt");
+            }
+
+            @TestMetadata("mapPlatformClassToKotlin4.kt")
+            public void testMapPlatformClassToKotlin4() throws Exception {
+                runTest("testData/inspectionsLocal/mapPlatformClassToKotlin/mapPlatformClassToKotlin4.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantModalityModifier")
         public static class RedundantModalityModifier extends AbstractK2LocalInspectionTest {
             @java.lang.Override
