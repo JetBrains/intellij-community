@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.completion;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -336,6 +337,30 @@ public class AutoStaticImportCompletionTest extends NormalCompletionTestCase {
         method.getContainingClass().getQualifiedName().equals("Foo"));
       assertNull(element);
     }
+  }
+
+  @NeedsIndex.Full
+  public void testShowPackage() {
+    addStaticAutoImport("org.example.Foo.bar");
+    myFixture.addClass("""
+                         package org.example;
+                         public final class Foo {
+                           public static void bar() {}
+                         }
+                         """);
+    configure();
+    LookupElement[] elements = myFixture.getLookupElements();
+    if (elements != null) {
+      LookupElement element = ContainerUtil.find(elements, e ->
+        e.getLookupString().equals("bar") &&
+        e.getPsiElement() instanceof PsiMethod method &&
+        method.getContainingClass().getQualifiedName().equals("org.example.Foo"));
+      assertNotNull(element);
+      LookupElementPresentation presentation = new LookupElementPresentation();
+      element.renderElement(presentation);
+      assertTrue(presentation.getTailText().contains("org.example"));
+    }
+    checkResult();
   }
 
   private void addStaticAutoImport(@NotNull String name) {
