@@ -2,14 +2,12 @@
 package com.intellij.platform.recentFiles.frontend
 
 import com.intellij.codeInsight.navigation.LOG
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.project.projectId
 import com.intellij.platform.recentFiles.frontend.Switcher.SwitcherPanel
 import com.intellij.platform.recentFiles.frontend.model.FlowBackedListModel
@@ -33,23 +31,22 @@ internal fun createAndShowNewSwitcher(onlyEditedFiles: Boolean?, event: AnAction
 @OptIn(FlowPreview::class)
 @ApiStatus.Internal
 suspend fun createAndShowNewSwitcherSuspend(onlyEditedFiles: Boolean?, event: AnActionEvent?, @Nls title: String, project: Project): SwitcherPanel {
+  val recentFilesServiceScope = RecentFilesCoroutineScopeProvider.getInstance(project).coroutineScope
+  val dataModel = createReactiveDataModel(recentFilesServiceScope, project)
+  val remoteApi = FileSwitcherApi.getInstance()
+  val parameters = SwitcherLaunchEventParameters(event?.inputEvent)
+  recentFilesServiceScope.launch(start = CoroutineStart.UNDISPATCHED) {
+    remoteApi.updateRecentFilesBackendState(RecentFilesBackendRequest.NewSearchWithParameters(true == onlyEditedFiles, !parameters.isEnabled, project.projectId()))
+  }
+  dataModel.awaitModelPopulation(durationMillis = Registry.intValue("switcher.preload.timeout.ms", 300).toLong())
   return withContext(Dispatchers.EDT) {
-    val dataModel = createReactiveDataModel(this, project)
-    val remoteApi = FileSwitcherApi.getInstance()
-    val parameters = SwitcherLaunchEventParameters(event?.inputEvent)
-    launch(start = CoroutineStart.UNDISPATCHED) {
-      withBackgroundProgress(project, IdeBundle.message("recent.files.fetching.progress.title")) {
-        remoteApi.updateRecentFilesBackendState(RecentFilesBackendRequest.NewSearchWithParameters(true == onlyEditedFiles, !parameters.isEnabled, project.projectId()))
-      }
-    }
     // try waiting for the initial bunch of files to load before displaying the UI
-    dataModel.awaitModelPopulation(durationMillis = Registry.intValue("switcher.preload.timeout.ms", 300).toLong())
     SwitcherPanel(project = project,
                   title = title,
                   launchParameters = parameters,
                   onlyEditedFiles = onlyEditedFiles,
                   givenFilesModel = dataModel,
-                  parentScope = this,
+                  parentScope = recentFilesServiceScope,
                   remoteApi = remoteApi)
   }
 }
