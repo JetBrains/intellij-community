@@ -24,8 +24,10 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
   public static final @NonNls String METHOD = "method";
   static final @NonNls String IMPLICIT_CONSTRUCTOR = "implicit.constructor";
   public static final @NonNls String FIELD = "field";
-  static final @NonNls String PARAMETER = "parameter";
-  static final @NonNls String JAVA_MODULE = "java.module";
+  @ApiStatus.Internal
+  public static final @NonNls String PARAMETER = "parameter";
+  @ApiStatus.Internal
+  public static final @NonNls String JAVA_MODULE = "java.module";
   public static final @NonNls String PACKAGE = "package";
   @ApiStatus.Internal
   public static final String FUNCTIONAL_EXPRESSION = "functional.expression";

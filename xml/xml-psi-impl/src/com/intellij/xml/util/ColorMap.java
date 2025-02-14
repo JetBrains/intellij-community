@@ -79,7 +79,8 @@ public final class ColorMap {
     purple #800080 fuchsia #ff00ff white #ffffff lime #00ff00 green #008000
     navy #000080 blue #0000ff aqua #00ffff teal #008080
     black #000000 silver #c0c0c0 gray #808080""";
-  static final @NonNls String colorsString = """
+  @ApiStatus.Internal
+  public static final @NonNls String colorsString = """
     aliceblue \t#f0f8ff \t240,248,255
       \t  \tantiquewhite \t#faebd7 \t250,235,215
       \t  \taqua \t#00ffff \t0,255,255

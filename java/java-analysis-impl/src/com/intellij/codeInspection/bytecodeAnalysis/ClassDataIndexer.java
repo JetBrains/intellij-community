@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.*;
@@ -48,7 +48,7 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  * Based on <a href="http://meta2014.pereslavl.ru/papers/2014_Klyuchnikov__Nullness_Analysis_of_Java_Bytecode_via_Supercompilation_over_Abstract_Values.pdf">"Nullness Analysis of Java Bytecode via Supercompilation over Abstract Values"</a> 
  * by Ilya Klyuchnikov.
  */
-public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMember, Equations>> {
+public final class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMember, Equations>> {
   static final String STRING_CONCAT_FACTORY = "java/lang/invoke/StringConcatFactory";
 
   public static final Consumer<Map<HMember, Equations>> ourIndexSizeStatistics =
