@@ -14,6 +14,7 @@ import com.intellij.util.indexing.AdditionalIndexableFileSet
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.IndexingIteratorsProvider
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
+import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder
 import com.intellij.util.indexing.roots.origin.MutableIndexingUrlSourceRootHolder
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
@@ -50,6 +51,7 @@ class IndexingIteratorsProviderImpl(
     val virtualFileUrlManager = model.getVirtualFileUrlManager()
 
     val iterators = ArrayList<IndexableFilesIterator>()
+    val libraryOrigins = HashSet<LibraryOrigin>()
 
     index.visitFileSets { fileSet: WorkspaceFileSet, entityPointer, recursive ->
       val files = fileSet as WorkspaceFileSetWithCustomData<*>
@@ -85,7 +87,7 @@ class IndexingIteratorsProviderImpl(
           if (libraryBridge != null) {
             val iterator =
               LibraryIndexableFilesIteratorImpl.createIterator(libraryBridge, libraryRoot, sourceLibraryRoot)
-            if (iterator != null) {
+            if (iterator != null && libraryOrigins.add(iterator.origin)) {
               iterators.add(iterator)
             }
           }

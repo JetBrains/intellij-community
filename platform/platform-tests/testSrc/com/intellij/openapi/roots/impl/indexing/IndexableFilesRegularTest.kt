@@ -23,7 +23,7 @@ import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
-import org.junit.Ignore
+import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -142,7 +142,7 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
     // ClassFile.java and SourceFile.java are iterated by only one of the "file iterators"
     // So they must be skipped when iterating for the second time.
     assertIndexableFiles(expectedNumberOfSkippedFiles = 2,
-      expectedFiles = arrayOf(classFile.file, sourceFile.file, firstLibraryFile.file))
+                         expectedFiles = arrayOf(classFile.file, sourceFile.file, firstLibraryFile.file))
   }
 
   @Test
@@ -371,7 +371,6 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
   }
 
   @Test
-  @Ignore("IndexableFilesIndexImpl.doGetIndexingIterators merges libraries iterators using IndexableSetOrigin, new implementation does not")
   fun `test iterators from different modules for same libs are merged`() {
     val libraryRoot = tempDirectory.newVirtualDirectory("library")
     lateinit var classesDir: DirectorySpec
@@ -393,9 +392,8 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
     }
     val fileBasedIndexEx = FileBasedIndex.getInstance() as FileBasedIndexEx
     val providers = fileBasedIndexEx.getIndexableFilesProviders(project)
-    assertSameElements(providers.map { it.origin },
-                       (IndexableEntityProviderMethods.createModuleContentIterators(module) +
-                        IndexableEntityProviderMethods.createModuleContentIterators(otherModule) +
-                        IndexableEntityProviderMethods.createLibraryIterators("libraryName", project)).map { it.origin })
+
+    assertSameElements(providers.filter { it.origin is LibraryOrigin }.map { it.origin },
+                       IndexableEntityProviderMethods.createLibraryIterators("libraryName", project).map { it.origin })
   }
 }
