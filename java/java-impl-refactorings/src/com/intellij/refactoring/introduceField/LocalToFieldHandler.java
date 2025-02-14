@@ -109,7 +109,7 @@ public abstract class LocalToFieldHandler {
   /**
    * @deprecated Use {@link #isStaticFieldAllowed(PsiClass)} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean mayContainConstants(@NotNull PsiClass aClass) {
     return isStaticFieldAllowed(aClass);
   }
