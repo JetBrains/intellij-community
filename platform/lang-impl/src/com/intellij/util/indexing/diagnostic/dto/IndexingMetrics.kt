@@ -216,3 +216,48 @@ data class AggregatedScanningStatistics(val numberOfScannedFiles: Int = 0, val n
     )
   }
 }
+
+sealed class IndexingMetric(val name: String) {
+  class Duration(name: String, val durationMillis: Int) : IndexingMetric(name)
+  class Counter(name: String, val value: Int) : IndexingMetric(name)
+}
+
+
+fun IndexingMetrics.getListOfIndexingMetrics(): List<IndexingMetric> {
+  val numberOfIndexedFiles = totalNumberOfIndexedFiles
+  val numberOfFilesFullyIndexedByExtensions = totalNumberOfFilesFullyIndexedByExtensions
+  return listOf(
+    IndexingMetric.Duration("indexingTimeWithoutPauses", durationMillis = totalIndexingTimeWithoutPauses.toInt()),
+    IndexingMetric.Duration("scanningTimeWithoutPauses", durationMillis = totalScanFilesTimeWithoutPauses.toInt()),
+    IndexingMetric.Duration("pausedTimeInIndexingOrScanning", durationMillis = totalPausedTime.toInt()),
+    IndexingMetric.Duration("dumbModeTimeWithPauses", durationMillis = totalDumbModeTimeWithPauses.toInt()),
+    IndexingMetric.Counter("numberOfIndexedFiles", value = numberOfIndexedFiles),
+    IndexingMetric.Counter("numberOfIndexedFilesWritingIndexValue", value = totalNumberOfIndexedFilesWritingIndexValues),
+    IndexingMetric.Counter("numberOfIndexedFilesWithNothingToWrite", value = totalNumberOfIndexedFilesWithNothingToWrite),
+    IndexingMetric.Counter("numberOfFilesIndexedByExtensions", value = numberOfFilesFullyIndexedByExtensions),
+    IndexingMetric.Counter("numberOfFilesIndexedWithoutExtensions",
+                                  value = (numberOfIndexedFiles - numberOfFilesFullyIndexedByExtensions)),
+    IndexingMetric.Counter("numberOfRunsOfScannning", value = totalNumberOfRunsOfScanning),
+    IndexingMetric.Counter("numberOfRunsOfIndexing", value = totalNumberOfRunsOfIndexing)
+  ) + getProcessingSpeedOfFileTypes(processingSpeedPerFileTypeAvg, "Avg") +
+         getProcessingSpeedOfFileTypes(processingSpeedPerFileTypeWorst, "Worst") +
+         getProcessingSpeedOfBaseLanguages(processingSpeedPerBaseLanguageAvg, "Avg") +
+         getProcessingSpeedOfBaseLanguages(processingSpeedPerBaseLanguageWorst, "Worst") +
+         getProcessingTimeOfFileType(processingTimePerFileType)
+}
+
+
+private fun getProcessingSpeedOfFileTypes(mapFileTypeToSpeed: Map<String, Int>, suffix: String): List<IndexingMetric> =
+  mapFileTypeToSpeed.map {
+    IndexingMetric.Counter("processingSpeed$suffix#${it.key}", value = it.value)
+  }
+
+private fun getProcessingSpeedOfBaseLanguages(mapBaseLanguageToSpeed: Map<String, Int>, suffix: String): List<IndexingMetric> =
+  mapBaseLanguageToSpeed.map {
+    IndexingMetric.Counter("processingSpeedOfBaseLanguage$suffix#${it.key}", value = it.value)
+  }
+
+private fun getProcessingTimeOfFileType(mapFileTypeToDuration: Map<String, Long>): List<IndexingMetric> =
+  mapFileTypeToDuration.map {
+    IndexingMetric.Duration("processingTime#${it.key}", durationMillis = TimeUnit.NANOSECONDS.toMillis(it.value.toLong()).toInt())
+  }
