@@ -209,7 +209,8 @@ fun TestFixture<PsiFile>.editorFixture(): TestFixture<Editor> = testFixture { _ 
 }
 
 @TestOnly
-fun <T : Any> extensionPointFixture(epName: ExtensionPointName<T>, extension: T): TestFixture<T> = testFixture {
+fun <T : Any> extensionPointFixture(epName: ExtensionPointName<in T>, createExtension: suspend () -> T): TestFixture<T> = testFixture {
+  val extension = createExtension()
   val disposable = Disposer.newDisposable()
   epName.point.registerExtension(extension, disposable)
   initialized(extension) {
