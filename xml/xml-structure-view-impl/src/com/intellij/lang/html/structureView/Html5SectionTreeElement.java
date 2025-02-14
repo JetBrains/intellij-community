@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.html.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -6,13 +6,14 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.HtmlUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-class Html5SectionTreeElement extends PsiTreeElementBase<XmlTag> {
-
+@ApiStatus.Internal
+public final class Html5SectionTreeElement extends PsiTreeElementBase<XmlTag> {
   private final Computable<? extends Collection<StructureViewTreeElement>> myChildrenComputable;
   private final String myHeader;
 

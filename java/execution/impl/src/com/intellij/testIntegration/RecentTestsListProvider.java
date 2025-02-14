@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -15,10 +15,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude.values;
-
-interface ConfigurationByRecordProvider {
-  RunnerAndConfigurationSettings getConfiguration(TestStateStorage.Record record);
-}
 
 final class RunConfigurationByRecordProvider implements ConfigurationByRecordProvider {
   private final Project myProject;
