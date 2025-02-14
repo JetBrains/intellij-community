@@ -9,7 +9,9 @@ import com.intellij.openapi.externalSystem.service.project.ExternalSystemCoordin
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getMavenModuleType
 import org.jetbrains.idea.maven.model.MavenCoordinate
+import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.jps.model.serialization.SerializationConstants
 
@@ -17,10 +19,19 @@ import org.jetbrains.jps.model.serialization.SerializationConstants
 class MavenCoordinateContributor : ExternalSystemCoordinateContributor {
 
   override fun findModuleCoordinate(module: Module): ProjectCoordinate? {
+    val mavenProject = findMavenProject(module) ?: return null
+    val mavenProjectCoordinate = mavenProject.mavenId.toProjectCoordinate()
+    return when (module.getMavenModuleType()) {
+      StandardMavenModuleType.SINGLE_MODULE -> mavenProjectCoordinate
+      StandardMavenModuleType.MAIN_ONLY -> mavenProjectCoordinate
+      else -> null
+    }
+  }
+
+  private fun findMavenProject(module: Module): MavenProject? {
     val project = module.getProject()
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-    val mavenProject = mavenProjectsManager.findProject(module) ?: return null
-    return mavenProject.mavenId.toProjectCoordinate()
+    return mavenProjectsManager.findProject(module)
   }
 
   private fun MavenCoordinate.toProjectCoordinate(): ProjectCoordinate {
