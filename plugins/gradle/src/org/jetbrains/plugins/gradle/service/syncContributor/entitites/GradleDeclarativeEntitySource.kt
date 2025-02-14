@@ -3,7 +3,9 @@ package org.jetbrains.plugins.gradle.service.syncContributor.entitites
 
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
-
+/**
+ * This entity source identifies project entities created by GradleDeclarativeSyncContributor
+ */
 class GradleDeclarativeEntitySource(val projectRootUrl: VirtualFileUrl) : GradleEntitySource {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
