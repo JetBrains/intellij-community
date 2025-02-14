@@ -51,6 +51,7 @@ fun ByteBuffer.toByteArray(isClear: Boolean = false): ByteArray {
   return bytes
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use URLEncoder.encode()")
 @Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
 inline fun String.encodeUrlQueryParameter(): String = URLEncoder.encode(this, Charsets.UTF_8.name())!!
