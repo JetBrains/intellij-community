@@ -5,7 +5,6 @@ import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.FieldVisibilityProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
@@ -294,7 +293,7 @@ public class ClassRenderer extends NodeRendererImpl {
       return false;
     }
 
-    return FieldVisibilityProvider.shouldDisplayField(field);
+    return true;
   }
 
   @Override
