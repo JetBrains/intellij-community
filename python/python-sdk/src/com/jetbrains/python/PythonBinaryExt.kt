@@ -69,12 +69,6 @@ fun PythonBinary.resolvePythonHome(): PythonHomePath = when (getEelDescriptor().
 }
 
 @RequiresBackgroundThread
-fun PythonBinary.resolvePythonTool(name: String): Path = when (getEelDescriptor().operatingSystem) {
-  EelPath.OS.WINDOWS -> resolve("Scripts/$name.exe")
-  EelPath.OS.UNIX -> resolve("bin/$name")
-}
-
-@RequiresBackgroundThread
 fun PythonHomePath.resolvePythonBinary(): PythonBinary? {
   return VirtualEnvReader(isWindows = getEelDescriptor().operatingSystem == EelPath.OS.WINDOWS).findPythonInPythonRoot(this)
 }

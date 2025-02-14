@@ -8,9 +8,9 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.community.impl.poetry.poetryPath
 import com.intellij.python.community.testFramework.testEnv.TypeVanillaPython3
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
+import com.intellij.python.junit5Tests.framework.resolvePythonTool
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.resolvePythonHome
-import com.jetbrains.python.resolvePythonTool
 import java.nio.file.Path
 
 /**
