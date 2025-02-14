@@ -22,6 +22,8 @@
   <xi:include href="/META-INF/CoreImpl.xml"/>
   <xi:include href="/META-INF/Analysis.xml"/>
   <xi:include href="/META-INF/AnalysisImpl.xml"/>
+  <xi:include href="/META-INF/WorkspaceModel.xml"/>
+  <xi:include href="/META-INF/WorkspaceModelImpl.xml"/>
   <xi:include href="/META-INF/ProjectModel.xml"/>
   <xi:include href="/META-INF/ProjectModelImpl.xml"/>
   <xi:include href="/META-INF/ProjectModelPlatform.xml"/>
