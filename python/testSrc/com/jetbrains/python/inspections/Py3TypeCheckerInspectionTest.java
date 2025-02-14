@@ -491,7 +491,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
-  public void testEnumMembers() {
+  public void testTypeNarrowingIsOrEquals() {
     doTestByText(
       """
         from enum import Enum
@@ -508,7 +508,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
         def foo(v: Color | str) -> None:
             if v is Color.RED:
                 r: Literal[Color.R] = v
-            elif v is Color.G:
+            elif v == Color.G:
                 g: Literal[Color.G] = v
             elif v is Color.B:
                 b: Literal[Color.B] = v
@@ -527,6 +527,11 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
             else:
                 s: Literal["1"] = v
                 c: Color = <warning descr="Expected type 'Color', got 'Literal[\\"1\\"]' instead">v</warning>
+        
+        def buz(v: Color):
+            if v is not Color.B and v != Color.RED:
+                g: Literal[Color.G] = v
+                s: str = <warning descr="Expected type 'str', got 'Literal[Color.G]' instead">v</warning>
         """
     );
   }
