@@ -19,21 +19,15 @@ import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 
 internal class ModuleFilesIteratorImpl(
   private val module: Module,
-  private val roots: List<VirtualFile>,
-  private val nonRecursiveRoots: List<VirtualFile>,
+  private val root: VirtualFile,
+  private val recursive: Boolean,
   private val printRootsInDebugName: Boolean,
 ) : IndexableFilesIterator {
 
 
   override fun getDebugName(): String =
     if (printRootsInDebugName) {
-      val rootsDebugStr = if (roots.isEmpty()) {
-        "empty"
-      }
-      else {
-        roots.map { it.name }.sorted().joinToString(", ", limit = 10)
-      }
-      "Module '" + module.name + "' ($rootsDebugStr)"
+      "Module '" + module.name + "' (${root.name})"
     }
     else {
       "Module '${module.name}'"
@@ -53,29 +47,31 @@ internal class ModuleFilesIteratorImpl(
     return IndexingBundle.message("indexable.files.provider.scanning.module.name", module.name)
   }
 
-  override fun getOrigin(): ModuleRootOrigin = ModuleRootOriginImpl(module, roots, nonRecursiveRoots)
+  override fun getOrigin(): ModuleRootOrigin {
+    return if (recursive) {
+      ModuleRootOriginImpl(module, listOf(root), emptyList())
+    }
+    else {
+      ModuleRootOriginImpl(module, emptyList(), listOf(root))
+    }
+  }
 
   override fun iterateFiles(project: Project, fileIterator: ContentIterator, fileFilter: VirtualFileFilter): Boolean {
     val processorEx = toContentIteratorEx(fileIterator)
     val myWorkspaceFileIndex = getInstance(project) as WorkspaceFileIndexEx
 
-    for (root in roots) {
-      if (!iterateContentUnderDirectory(root, processorEx, fileFilter, myWorkspaceFileIndex)) {
-        return false
-      }
+    return if (recursive) {
+      iterateContentUnderDirectory(root, processorEx, fileFilter, myWorkspaceFileIndex)
     }
-    for (root in nonRecursiveRoots) {
-      if ((fileFilter.accept(root)) && processorEx.processFileEx(root) == TreeNodeProcessingResult.STOP) {
-        return false
-      }
+    else {
+      fileFilter.accept(root) && processorEx.processFileEx(root) != TreeNodeProcessingResult.STOP
     }
-    return true
   }
 
   fun iterateContentUnderDirectory(
     dir: VirtualFile,
     processor: ContentIteratorEx,
-    customFilter: VirtualFileFilter?,
+    customFilter: VirtualFileFilter,
     myWorkspaceFileIndex: WorkspaceFileIndexEx,
   ): Boolean {
     return myWorkspaceFileIndex.processContentFilesRecursively(dir, processor, customFilter) { fileSet: WorkspaceFileSetWithCustomData<*> -> !isScopeDisposed() && isInContent(fileSet) }
@@ -85,7 +81,7 @@ internal class ModuleFilesIteratorImpl(
     if (processor is ContentIteratorEx) {
       return processor
     }
-    return ContentIteratorEx { fileOrDir: VirtualFile? -> if (processor.processFile(fileOrDir!!)) TreeNodeProcessingResult.CONTINUE else TreeNodeProcessingResult.STOP }
+    return ContentIteratorEx { fileOrDir: VirtualFile -> if (processor.processFile(fileOrDir)) TreeNodeProcessingResult.CONTINUE else TreeNodeProcessingResult.STOP }
   }
 
   fun isScopeDisposed(): Boolean {

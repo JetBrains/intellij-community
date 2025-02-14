@@ -14,14 +14,9 @@ import com.intellij.util.indexing.AdditionalIndexableFileSet
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.IndexingIteratorsProvider
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
-import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createExternalEntityIterators
-import com.intellij.util.indexing.roots.SdkIndexableFilesIteratorImpl.Companion.createIterator
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder
-import com.intellij.util.indexing.roots.origin.IndexingRootHolder.Companion.fromFile
-import com.intellij.util.indexing.roots.origin.IndexingRootHolder.Companion.fromFileNonRecursive
 import com.intellij.util.indexing.roots.origin.MutableIndexingUrlSourceRootHolder
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex.Companion.getInstance
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
@@ -44,11 +39,12 @@ class IndexingIteratorsProviderImpl(
   }
 
   override fun shouldBeIndexed(file: VirtualFile): Boolean {
-    if (getInstance(project).isInWorkspace(file)) return true
+    if (WorkspaceFileIndex.getInstance(project).isInWorkspace(file)) return true
     return filesFromIndexableSetContributors.isInSet(file)
   }
 
-  private fun doGetIndexingIterators(): MutableList<IndexableFilesIterator> {
+
+  private fun doGetIndexingIterators(): List<IndexableFilesIterator> {
     val model = WorkspaceModel.getInstance(project)
     val index = WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexImpl
     val virtualFileUrlManager = model.getVirtualFileUrlManager()
@@ -60,29 +56,17 @@ class IndexingIteratorsProviderImpl(
       val root = fileSet.root
       val customData = fileSet.data
       if (customData is ModuleRelatedRootData) {
-        val roots = SmartList<VirtualFile>()
-        val nonRecursiveRoot = SmartList<VirtualFile>()
-        if (recursive) {
-          roots.add(root)
-        }
-        else {
-          nonRecursiveRoot.add(root)
-        }
-        val moduleIterator =
-          ModuleFilesIteratorImpl(customData.module, roots, nonRecursiveRoot, true)
-        iterators.add(moduleIterator)
+        iterators.add(ModuleFilesIteratorImpl(customData.module, root, recursive, true))
       }
       else if (files.kind.isContent) {
         val rootHolder: IndexingRootHolder
         if (recursive) {
-          rootHolder = fromFile(root)
+          rootHolder = IndexingRootHolder.fromFile(root)
         }
         else {
-          rootHolder = fromFileNonRecursive(root)
+          rootHolder = IndexingRootHolder.fromFileNonRecursive(root)
         }
-        val iterator =
-          GenericContentEntityIteratorImpl(entityPointer, rootHolder, null)
-        iterators.add(iterator)
+        iterators.add(GenericContentEntityIteratorImpl(entityPointer, rootHolder, null))
       }
       else {
         val storage = model.currentSnapshot
@@ -109,21 +93,18 @@ class IndexingIteratorsProviderImpl(
         else if (entity is SdkEntity) {
           val sdkBridge = storage.sdkMap.getDataByEntity(entity)
           if (sdkBridge != null) {
-            val iterator =
-              createIterator(sdkBridge, listOf(root))
-            iterators.add(iterator)
+            iterators.add(SdkIndexableFilesIteratorImpl.createIterator(sdkBridge, listOf(root)))
           }
         }
         else if (fileSet.kind == WorkspaceFileKind.CUSTOM) {
           val rootHolder: IndexingRootHolder
           if (recursive) {
-            rootHolder = fromFile(root)
+            rootHolder = IndexingRootHolder.fromFile(root)
           }
           else {
-            rootHolder = fromFileNonRecursive(root)
+            rootHolder = IndexingRootHolder.fromFileNonRecursive(root)
           }
-          val iterator = CustomKindEntityIteratorImpl(entityPointer, rootHolder, null)
-          iterators.add(iterator)
+          iterators.add(CustomKindEntityIteratorImpl(entityPointer, rootHolder, null))
         }
         else {
           val virtualFileUrl = root.toVirtualFileUrl(virtualFileUrlManager)
@@ -144,9 +125,9 @@ class IndexingIteratorsProviderImpl(
               holder.nonRecursiveRoots.add(virtualFileUrl)
             }
           }
-          val iterators1 =
-            createExternalEntityIterators(entityPointer, holder, null)
-          iterators.addAll(iterators1)
+          iterators.addAll(
+            IndexableEntityProviderMethods.createExternalEntityIterators(entityPointer, holder, null)
+          )
         }
       }
     }
@@ -170,7 +151,6 @@ class IndexingIteratorsProviderImpl(
         iterators.add(IndexableSetContributorFilesIterator(contributor))
       }
     }
-
     return iterators
   }
 }
