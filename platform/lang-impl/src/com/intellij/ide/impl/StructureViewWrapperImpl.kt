@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
-import com.intellij.icons.AllIcons
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.ide.structureView.StructureView
 import com.intellij.ide.structureView.StructureViewBuilder
@@ -42,8 +42,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isTooLargeForIntellijSense
@@ -72,18 +70,15 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.Container
-import java.awt.KeyboardFocusManager
+import java.awt.*
 import java.awt.event.HierarchyEvent
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
+import kotlin.coroutines.EmptyCoroutineContext
 
 @OptIn(FlowPreview::class)
 class StructureViewWrapperImpl(
@@ -188,20 +183,26 @@ class StructureViewWrapperImpl(
       }
     })
 
-    val clientId = ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER).singleOrNull()?.clientId
-    withExplicitClientId(clientId) {
-      coroutineScope.launch {
-        rebuildRequests
-          .debounce {
-            when (it) {
-              RebuildDelay.NOW -> 0L
-              RebuildDelay.QUEUE -> REBUILD_TIME
+    coroutineScope.launch {
+      rebuildRequests
+        .debounce {
+          when (it) {
+            RebuildDelay.NOW -> 0L
+            RebuildDelay.QUEUE -> REBUILD_TIME
+          }
+        }
+        .collectLatest {
+          val controllerSession = ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER).singleOrNull()
+          // In RemoteDev's backend controller client id should be set explicitly to get correct editors' information
+          if (controllerSession != null) {
+            withContext(controllerSession.clientId.asContextElement()) {
+              rebuildImpl()
             }
           }
-          .collectLatest {
+          else {
             rebuildImpl()
           }
-      }
+        }
     }
   }
 
@@ -212,49 +213,59 @@ class StructureViewWrapperImpl(
     }
     rebuildNow("clear caches")
   }
-
-  private fun checkUpdate() = ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER).singleOrNull()?.clientId.let { clientId ->
-    withExplicitClientId(clientId) {
-      if (project.isDisposed) return@withExplicitClientId
-      val owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
-                  ?: FileEditorManager.getInstance(project)?.takeIf { AppMode.isRemoteDevHost() }?.selectedTextEditor?.contentComponent
-      val insideToolwindow = SwingUtilities.isDescendingFrom(myToolWindow.component, owner)
-                             && (AppMode.isRemoteDevHost() && owner !is IdeFrame)
-      if (insideToolwindow) LOG.debug("inside structure view")
-      if (!myFirstRun && (insideToolwindow || JBPopupFactory.getInstance().isPopupActive)) {
-        return@withExplicitClientId
+  private fun checkUpdate() {
+    val controllerSession = ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER).singleOrNull()
+    if (controllerSession != null) {
+      // If the structure view is running inside RemoteDev's backend to successfully resolve file editors, client id should be set correctly
+      withExplicitClientId(controllerSession.clientId) {
+        checkUpdateWithCorrectClientId(controllerSession.clientId)
       }
-      val dataContext = DataManager.getInstance().getDataContext(owner)
-      if (WRAPPER_DATA_KEY.getData(dataContext) === this) return@withExplicitClientId
-      if (CommonDataKeys.PROJECT.getData(dataContext) !== project) return@withExplicitClientId
-      if (insideToolwindow) {
-        if (myFirstRun) {
-          setFileFromSelectionHistory()
+    } else {
+      checkUpdateWithCorrectClientId(null)
+    }
+  }
+  private fun checkUpdateWithCorrectClientId(clientId: ClientId?) {
+    if (project.isDisposed) return
+    val owner = getFocusOwner()
+
+    val insideToolwindow = SwingUtilities.isDescendingFrom(myToolWindow.component, owner)
+                           // On the remote backend focus could be set to IdeFrame
+                           // if the on the frontend focus set to a frontend-specific component
+                           && (AppMode.isRemoteDevHost() && owner !is IdeFrame)
+    if (insideToolwindow) LOG.debug("inside structure view")
+    if (!myFirstRun && (insideToolwindow || JBPopupFactory.getInstance().isPopupActive)) {
+      return
+    }
+    val dataContext = DataManager.getInstance().getDataContext(owner)
+    if (WRAPPER_DATA_KEY.getData(dataContext) === this) return
+    if (CommonDataKeys.PROJECT.getData(dataContext) !== project) return
+    if (insideToolwindow) {
+      if (myFirstRun) {
+        setFileFromSelectionHistory()
+        myFirstRun = false
+      }
+    }
+    else {
+      val asyncDataContext = Utils.createAsyncDataContext(dataContext)
+      ReadAction.nonBlocking<VirtualFile?> { getTargetVirtualFile(asyncDataContext, owner) }
+        .coalesceBy(this, owner)
+        .finishOnUiThread(ModalityState.defaultModalityState()) { file: VirtualFile? ->
+          val firstRun = myFirstRun
           myFirstRun = false
-        }
-      }
-      else {
-        val asyncDataContext = Utils.createAsyncDataContext(dataContext)
-        ReadAction.nonBlocking<VirtualFile?> { getTargetVirtualFile(asyncDataContext) }
-          .coalesceBy(this, owner)
-          .finishOnUiThread(ModalityState.defaultModalityState()) { file: VirtualFile? ->
-            val firstRun = myFirstRun
-            myFirstRun = false
 
-            coroutineScope.launch {
-              if (file != null) {
-                setFile(file)
-              }
-              else if (firstRun) {
-                setFileFromSelectionHistory()
-              }
-              else {
-                setFile(null)
-              }
+          coroutineScope.launch(context = clientId?.asContextElement() ?: EmptyCoroutineContext) {
+            if (file != null) {
+              setFile(file)
+            }
+            else if (firstRun) {
+              setFileFromSelectionHistory()
+            }
+            else {
+              setFile(null)
             }
           }
-          .submit(AppExecutorUtil.getAppExecutorService())
-      }
+        }
+        .submit(AppExecutorUtil.getAppExecutorService())
     }
   }
 
@@ -273,6 +284,7 @@ class StructureViewWrapperImpl(
       val notInEditor = withContext(Dispatchers.EDT) {
         !project.serviceAsync<FileEditorManager>().selectedFiles.contains(file)
       }
+      LOG.debug("file is NonPhysicalFileSystem + IJU + not in editor: $notInEditor")
       if (notInEditor) return
     }
 
@@ -415,9 +427,8 @@ class StructureViewWrapperImpl(
       return
     }
 
-    val clientId = ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER).singleOrNull()?.clientId
     val file = myFile ?: run {
-      val selectedFiles = withExplicitClientId(clientId) { FileEditorManager.getInstance(project).selectedFiles }
+      val selectedFiles = project.serviceAsync<FileEditorManager>().selectedFiles
       if (selectedFiles.isNotEmpty()) selectedFiles[0] else null
     }
 
@@ -442,7 +453,7 @@ class StructureViewWrapperImpl(
         }
       }
       else {
-        val editor = withExplicitClientId(clientId) { FileEditorManager.getInstance(project).getSelectedEditor(file) }
+        val editor = project.serviceAsync<FileEditorManager>().getSelectedEditor(file)
         val structureViewBuilder = if (editor != null && editor.isValid)
           readAction { editor.structureViewBuilder } else createStructureViewBuilder(file)
         if (structureViewBuilder != null) {
@@ -601,7 +612,7 @@ class StructureViewWrapperImpl(
     private const val REFRESH_TIME = 100 // time to check if a context file selection is changed or not
     private const val REBUILD_TIME = 100L // time to wait and merge requests to rebuild a tree model
 
-    private fun getTargetVirtualFile(asyncDataContext: DataContext): VirtualFile? {
+    private fun getTargetVirtualFile(asyncDataContext: DataContext, focusOwner: Component?): VirtualFile? {
       val explicitlySpecifiedFile = STRUCTURE_VIEW_TARGET_FILE_KEY.getData(asyncDataContext)
       // explicitlySpecifiedFile == null           means no value was specified for this key
       // explicitlySpecifiedFile.isEmpty() == true means target virtual file (and structure view itself) is explicitly suppressed
@@ -612,7 +623,11 @@ class StructureViewWrapperImpl(
       val project = CommonDataKeys.PROJECT.getData(asyncDataContext)
       return when {
         commonFiles != null && commonFiles.size == 1 -> commonFiles[0]
-        AppMode.isRemoteDevHost() && project != null -> FileEditorManager.getInstance(project)?.selectedEditor?.file
+        // In the RemoteDev some editors as well as IdeFrame do not have VirtualFile in the context, so the general fallback is required
+        AppMode.isRemoteDevHost() && project != null -> {
+          LOG.debug("In the data context of the ${focusOwner?.javaClass?.simpleName} there are not virtual files. Fallback to the editor")
+          FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
+        }
         else -> null
       }
     }
@@ -636,5 +651,11 @@ class StructureViewWrapperImpl(
         if (LOG.isTraceEnabled) LOG.trace("$message: finished in ${(System.nanoTime() - startTimeNs) / 1000000} ms")
       }
     }
+  }
+
+  private fun getFocusOwner(): Component? {
+    val focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+    if (focusOwner != null || !AppMode.isRemoteDevHost()) return focusOwner
+    return FileEditorManager.getInstance(project).selectedTextEditor?.contentComponent
   }
 }
