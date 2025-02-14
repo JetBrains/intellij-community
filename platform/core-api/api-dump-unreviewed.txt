@@ -2048,7 +2048,6 @@ a:com.intellij.openapi.progress.Task
 - a:isModal():Z
 - notifyFinished():com.intellij.openapi.progress.Task$NotificationInfo
 - onCancel():V
-- onError(java.lang.Exception):V
 - onFinished():V
 - onSuccess():V
 - onThrowable(java.lang.Throwable):V
