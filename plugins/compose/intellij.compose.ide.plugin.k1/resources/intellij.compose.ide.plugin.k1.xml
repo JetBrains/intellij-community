@@ -3,4 +3,10 @@
     <plugin id="com.intellij.modules.kotlin.k1"/>
     <module name="intellij.compose.ide.plugin.shared" />
   </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="kotlin"
+                            implementationClass="com.intellij.compose.ide.plugin.k1.completion.K1ComposeModifierCompletionContributor"
+                            order="first, before KotlinCompletionContributor"/>
+  </extensions>
 </intellij-plugin>

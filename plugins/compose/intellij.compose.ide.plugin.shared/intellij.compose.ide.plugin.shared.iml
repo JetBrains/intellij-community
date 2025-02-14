@@ -19,5 +19,6 @@
     <orderEntry type="module" module-name="kotlin.base.indices" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.analysis-api" level="project" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
   </component>
 </module>

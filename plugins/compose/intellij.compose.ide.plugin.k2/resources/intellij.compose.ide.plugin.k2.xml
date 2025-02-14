@@ -8,4 +8,10 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <callHighlighterExtension implementation="com.intellij.compose.ide.plugin.k2.highlighting.ComposableFunctionCallHighlighterExtension"/>
   </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="kotlin"
+                            implementationClass="com.intellij.compose.ide.plugin.k2.completion.K2ComposeModifierCompletionContributor"
+                            order="first, before KotlinCompletionContributor"/>
+  </extensions>
 </intellij-plugin>
