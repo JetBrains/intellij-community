@@ -48,7 +48,6 @@ import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.GridBag
 import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.objects.Object2IntMaps
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -63,7 +62,7 @@ open class TrafficLightRenderer private constructor(
 ) : ErrorStripeRenderer, Disposable {
   private val daemonCodeAnalyzer: DaemonCodeAnalyzerImpl
   private val severityRegistrar: SeverityRegistrar
-  private val errorCount = Object2IntMaps.synchronize(Object2IntOpenHashMap<HighlightKey>())
+  private val errorCount = Object2IntOpenHashMap<HighlightKey>() // guarded by errorCount
   @JvmField
   @ApiStatus.Internal
   protected val uiController: UIController
@@ -151,7 +150,7 @@ open class TrafficLightRenderer private constructor(
       for (severity in severities) {
         val severityIndex = severityRegistrar.getSeverityIdx(severity)
         val highlightKey = HighlightKey(severity, context)
-        cachedErrors[severityIndex] = errorCount.getInt(highlightKey)
+        cachedErrors[severityIndex] = synchronized(errorCount) { errorCount.getInt(highlightKey) }
       }
       return cachedErrors
     }
@@ -160,7 +159,9 @@ open class TrafficLightRenderer private constructor(
   }
 
   override fun dispose() {
-    errorCount.clear()
+    synchronized(errorCount) {
+      errorCount.clear()
+    }
   }
 
   private fun incErrorCount(highlighter: RangeHighlighter, delta: Int) {
@@ -178,7 +179,10 @@ open class TrafficLightRenderer private constructor(
         defaultContext()
       }
       val highlightKey = HighlightKey(infoSeverity, context)
-      errorCount.mergeInt(highlightKey, delta, Integer::sum)
+      synchronized(errorCount) {
+        val oldVal = errorCount.getInt(highlightKey)
+        errorCount.put(highlightKey, Math.max(0, oldVal + delta))
+      }
     }
   }
 
