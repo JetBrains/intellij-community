@@ -4,6 +4,7 @@ package com.intellij.terminal.backend
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.EventDispatcher
 import com.jediterm.terminal.Terminal
+import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import java.util.*
 
 internal class TerminalShellIntegrationController(terminalController: Terminal) {

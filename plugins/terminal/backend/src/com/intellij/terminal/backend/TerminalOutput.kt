@@ -13,6 +13,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.block.ui.withLock
 
 internal fun createTerminalOutputFlow(

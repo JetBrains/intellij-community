@@ -14,6 +14,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
 

@@ -1,12 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked
+package com.intellij.terminal.frontend
 
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import org.jetbrains.plugins.terminal.block.reworked.session.output.TerminalShellIntegrationEventsListener
+import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 
