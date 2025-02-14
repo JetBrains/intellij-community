@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.jarRepository.JarRepositoryManager;
@@ -24,6 +24,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
+import org.codehaus.groovy.tools.FileSystemCompiler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -335,7 +336,7 @@ public final class IdeaTestUtil {
 
     if (source.getName().endsWith(".groovy")) {
       try {
-        org.codehaus.groovy.tools.FileSystemCompiler.commandLineCompile(ArrayUtilRt.toStringArray(args));
+        FileSystemCompiler.commandLineCompile(ArrayUtilRt.toStringArray(args));
       }
       catch (Exception e) {
         throw new IllegalStateException(e);

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.jarRepository.JarRepositoryManager;
@@ -59,6 +59,7 @@ public final class MavenDependencyUtil {
 
   /**
    * Adds a Maven library with the default packaging (JAR) to {@code model}
+   *
    * @param additionalRepositories additional Maven repositories where the artifacts should be searched (in addition to repositories
    *                               configured in intellij project)
    */
@@ -73,6 +74,7 @@ public final class MavenDependencyUtil {
 
   /**
    * Adds a Maven library to {@code model}
+   *
    * @param packaging artifact packaging matching {@link org.jetbrains.idea.maven.aether.ArtifactKind} of the requested library
    */
   public static void addFromMaven(@NotNull ModifiableRootModel model,
@@ -97,7 +99,7 @@ public final class MavenDependencyUtil {
     for (OrderRoot root : roots) {
       libraryModel.addRoot(root.getFile(), root.getType());
     }
-    ((LibraryEx.ModifiableModelEx) libraryModel).setProperties(libraryProperties);
+    ((LibraryEx.ModifiableModelEx)libraryModel).setProperties(libraryProperties);
 
     LibraryOrderEntry libraryOrderEntry = model.findLibraryOrderEntry(library);
     if (libraryOrderEntry == null) {
@@ -108,11 +110,11 @@ public final class MavenDependencyUtil {
     libraryModel.commit();
     tableModel.commit();
   }
-  
+
   private static final List<RemoteRepositoryDescription> REPOS_FOR_TESTING = List.of(
-    new RemoteRepositoryDescription("central-proxy", "Maven Central Proxy", 
+    new RemoteRepositoryDescription("central-proxy", "Maven Central Proxy",
                                     "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2"),
-    new RemoteRepositoryDescription("intellij-dependencies", "IntelliJ Dependencies", 
+    new RemoteRepositoryDescription("intellij-dependencies", "IntelliJ Dependencies",
                                     "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies")
   );
 
