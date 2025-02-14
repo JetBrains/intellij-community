@@ -125,6 +125,20 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
+    <group id="SwitcherAndRecentFilesFallback">
+      <action id="SwitcherFallback" class="com.intellij.ide.actions.Switcher" use-shortcut-of="Switcher"/>
+      <action id="SwitcherForwardFallback" class="com.intellij.ide.actions.ShowSwitcherForwardAction" use-shortcut-of="SwitcherForward"/>
+      <action id="SwitcherBackwardFallback" class="com.intellij.ide.actions.ShowSwitcherBackwardAction" use-shortcut-of="SwitcherBackward"/>
+      <action id="SwitcherRecentEditedChangedToggleCheckBoxFallback" class="com.intellij.ide.actions.SwitcherToggleOnlyEditedFilesAction" use-shortcut-of="SwitcherRecentEditedChangedToggleCheckBox"/>
+      <action id="SwitcherIterateItemsFallback" class="com.intellij.ide.actions.SwitcherIterateThroughItemsAction" use-shortcut-of="SwitcherIterateItems"/>
+      <action id="SwitcherNextProblemFallback" use-shortcut-of="GotoNextError" class="com.intellij.ide.actions.SwitcherNextProblemAction"/>
+      <action id="SwitcherPreviousProblemFallback" use-shortcut-of="GotoPreviousError" class="com.intellij.ide.actions.SwitcherPreviousProblemAction"/>
+      <action id="DeleteRecentFilesFallback" use-shortcut-of="$Delete" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+      <action id="RecentFilesFallback" class="com.intellij.ide.actions.ShowRecentFilesAction" use-shortcut-of="RecentFiles"/>
+      <action id="RecentChangedFilesFallback" class="com.intellij.ide.actions.ShowRecentlyEditedFilesAction" use-shortcut-of="RecentChangedFiles"/>
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+
     <action id="CollapseExpandableComponent" icon="AllIcons.General.CollapseComponentHover"
             class="com.intellij.ui.ExpandableActions$Collapse"/>
     <action id="ExpandExpandableComponent" icon="AllIcons.General.ExpandComponentHover"
@@ -651,6 +665,10 @@
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
         <separator/>
         <group id="ViewRecentActions">
+          <reference ref="RecentFilesFallback"/>
+          <reference ref="SwitcherRecentEditedChangedToggleCheckBoxFallback"/>
+          <reference ref="SwitcherIterateItemsFallback"/>
+          <reference ref="RecentChangedFilesFallback"/>
           <action id="RecentLocations" class="com.intellij.ide.actions.RecentLocationsAction"/>
         </group>
         <separator/>
@@ -926,6 +944,7 @@
     </group>
 
     <group id="EditorTabsEntryPoint" popup="true" icon="AllIcons.Actions.More">
+      <reference ref="RecentFilesFallback"/>
       <reference ref="RecentLocations"/>
       <separator/>
       <reference ref="CloseAllEditors"/>

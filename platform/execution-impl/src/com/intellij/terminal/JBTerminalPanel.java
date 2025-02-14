@@ -105,6 +105,8 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     "ShowSettings",
     "RecentFiles",
     "Switcher",
+    "RecentFilesFallback",
+    "SwitcherFallback",
 
     "ResizeToolWindowLeft",
     "ResizeToolWindowRight",

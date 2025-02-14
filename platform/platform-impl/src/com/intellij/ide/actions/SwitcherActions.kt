@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.recentFiles.frontend
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.actions
 
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.IdeBundle.message
-import com.intellij.ide.actions.shouldUseFallbackSwitcher
+import com.intellij.ide.actions.Switcher.SwitcherPanel
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -11,27 +11,27 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
-import com.intellij.ui.components.JBList
+import com.intellij.util.BitUtil.isSet
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.*
 import java.util.function.Consumer
 import javax.swing.AbstractAction
 import javax.swing.JList
+import javax.swing.KeyStroke
 
 private fun forward(event: AnActionEvent) = true != event.inputEvent?.isShiftDown
 
 
 internal class ShowSwitcherForwardAction : BaseSwitcherAction(true)
 internal class ShowSwitcherBackwardAction : BaseSwitcherAction(false)
-
 @ApiStatus.Internal
 abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
   private fun isControlTab(event: KeyEvent?) = event?.run { isControlDown && keyCode == KeyEvent.VK_TAB } ?: false
   private fun isControlTabDisabled(event: AnActionEvent) = ScreenReader.isActive() && isControlTab(event.inputEvent as? KeyEvent)
 
   override fun update(event: AnActionEvent) {
-    if (shouldUseFallbackSwitcher()) {
+    if (!shouldUseFallbackSwitcher()) {
       event.presentation.isEnabledAndVisible = false
       return
     }
@@ -50,7 +50,7 @@ abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
     }
     else {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("switcher")
-      createAndShowNewSwitcher(null, event, message("window.title.switcher"), project)
+      SwitcherPanel(project, message("window.title.switcher"), event.inputEvent, null, forward ?: forward(event))
     }
   }
 }
@@ -60,7 +60,7 @@ internal class ShowRecentFilesAction : LightEditCompatible, BaseRecentFilesActio
 internal class ShowRecentlyEditedFilesAction : BaseRecentFilesAction(true)
 internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boolean) : DumbAwareAction() {
   override fun update(event: AnActionEvent) {
-    if (shouldUseFallbackSwitcher()) {
+    if (!shouldUseFallbackSwitcher()) {
       event.presentation.isEnabledAndVisible = false
       return
     }
@@ -74,23 +74,19 @@ internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boole
 
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
-    val existingPanel = Switcher.SWITCHER_KEY.get(project)
-    if (existingPanel != null) {
-      existingPanel.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected }
-    }
-    else {
-      createAndShowNewSwitcher(onlyEditedFiles, null, message("title.popup.recent.files"), project)
-    }
+    Switcher.SWITCHER_KEY.get(project)?.cbShowOnlyEditedFiles?.apply { isSelected = !isSelected }
+    ?: SwitcherPanel(project, message("title.popup.recent.files"), null, onlyEditedFiles, true)
   }
 }
 
 
 internal class SwitcherIterateThroughItemsAction : DumbAwareAction() {
   override fun update(event: AnActionEvent) {
-    if (shouldUseFallbackSwitcher()) {
+    if (!shouldUseFallbackSwitcher()) {
       event.presentation.isEnabledAndVisible = false
       return
     }
+
     event.presentation.isEnabledAndVisible = Switcher.SWITCHER_KEY.get(event.project) != null
   }
 
@@ -109,10 +105,11 @@ internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction(), Ac
     Switcher.SWITCHER_KEY.get(event.project)?.cbShowOnlyEditedFiles
 
   override fun update(event: AnActionEvent) {
-    if (shouldUseFallbackSwitcher()) {
+    if (!shouldUseFallbackSwitcher()) {
       event.presentation.isEnabledAndVisible = false
       return
     }
+
     event.presentation.isEnabledAndVisible = getCheckBox(event) != null
   }
 
@@ -130,9 +127,8 @@ internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction(), Ac
 internal class SwitcherNextProblemAction : SwitcherProblemAction(true)
 internal class SwitcherPreviousProblemAction : SwitcherProblemAction(false)
 internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareAction() {
-  private fun getFileList(event: AnActionEvent): JBList<SwitcherVirtualFile>? {
-    return Switcher.SWITCHER_KEY.get(event.project)?.let { if (it.pinned) it.files else null }
-  }
+  private fun getFileList(event: AnActionEvent) =
+    Switcher.SWITCHER_KEY.get(event.project)?.let { if (it.pinned) it.files else null }
 
   private fun getErrorIndex(list: JList<SwitcherVirtualFile>): Int? {
     val model = list.model ?: return null
@@ -148,13 +144,13 @@ internal abstract class SwitcherProblemAction(val forward: Boolean) : DumbAwareA
         true -> (start + i).let { if (it > range.last) it - size else it }
         else -> (start - i).let { if (it < range.first) it + size else it }
       }
-      if (model.getElementAt(index)?.rpcModel?.hasProblems == true) return index
+      if (model.getElementAt(index)?.isProblemFile == true) return index
     }
     return null
   }
 
   override fun update(event: AnActionEvent) {
-    if (shouldUseFallbackSwitcher()) {
+    if (!shouldUseFallbackSwitcher()) {
       event.presentation.isEnabledAndVisible = false
       return
     }
@@ -214,19 +210,37 @@ internal class SwitcherListFocusAction(val fromList: JList<*>, val toList: JList
 }
 
 
-internal class SwitcherKeyReleaseListener(private val launchParameters: SwitcherLaunchEventParameters?, private val consumer: Consumer<InputEvent>) : KeyAdapter() {
-  private val initialModifiers =
-    if (launchParameters?.isEnabled != true) {
-      null
-    }
-    else {
-      StringBuilder().apply {
-        if (launchParameters.wasAltDown) append("alt ")
-        if (launchParameters.wasAltGraphDown) append("altGraph ")
-        if (launchParameters.wasControlDown) append("control ")
-        if (launchParameters.wasMetaDown) append("meta ")
-      }.toString()
-    }
+@ApiStatus.Internal
+class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Consumer<InputEvent>) : KeyAdapter() {
+  private val wasAltDown = true == event?.isAltDown
+  private val wasAltGraphDown = true == event?.isAltGraphDown
+  private val wasControlDown = true == event?.isControlDown
+  private val wasMetaDown = true == event?.isMetaDown
+  val isEnabled: Boolean = wasAltDown || wasAltGraphDown || wasControlDown || wasMetaDown
+
+  private val initialModifiers = if (!isEnabled) null
+  else StringBuilder().apply {
+    if (wasAltDown) append("alt ")
+    if (wasAltGraphDown) append("altGraph ")
+    if (wasControlDown) append("control ")
+    if (wasMetaDown) append("meta ")
+  }.toString()
+
+  val forbiddenMnemonic: String? = (event as? KeyEvent)?.keyCode?.let { getMnemonic(it) }
+
+  fun getForbiddenMnemonic(keyStroke: KeyStroke): String? = when {
+    isSet(keyStroke.modifiers, InputEvent.ALT_DOWN_MASK) != wasAltDown -> null
+    isSet(keyStroke.modifiers, InputEvent.ALT_GRAPH_DOWN_MASK) != wasAltGraphDown -> null
+    isSet(keyStroke.modifiers, InputEvent.CTRL_DOWN_MASK) != wasControlDown -> null
+    isSet(keyStroke.modifiers, InputEvent.META_DOWN_MASK) != wasMetaDown -> null
+    else -> getMnemonic(keyStroke.keyCode)
+  }
+
+  private fun getMnemonic(keyCode: Int) = when (keyCode) {
+    in KeyEvent.VK_0..KeyEvent.VK_9 -> keyCode.toChar().toString()
+    in KeyEvent.VK_A..KeyEvent.VK_Z -> keyCode.toChar().toString()
+    else -> null
+  }
 
   fun getShortcuts(vararg keys: String): CustomShortcutSet {
     val modifiers = initialModifiers ?: return CustomShortcutSet.fromString(*keys)
@@ -238,10 +252,10 @@ internal class SwitcherKeyReleaseListener(private val launchParameters: Switcher
 
   override fun keyReleased(keyEvent: KeyEvent) {
     when (keyEvent.keyCode) {
-      KeyEvent.VK_ALT -> if (launchParameters?.wasAltDown == true) consumer.accept(keyEvent)
-      KeyEvent.VK_ALT_GRAPH -> if (launchParameters?.wasAltGraphDown == true) consumer.accept(keyEvent)
-      KeyEvent.VK_CONTROL -> if (launchParameters?.wasControlDown == true) consumer.accept(keyEvent)
-      KeyEvent.VK_META -> if (launchParameters?.wasMetaDown == true) consumer.accept(keyEvent)
+      KeyEvent.VK_ALT -> if (wasAltDown) consumer.accept(keyEvent)
+      KeyEvent.VK_ALT_GRAPH -> if (wasAltGraphDown) consumer.accept(keyEvent)
+      KeyEvent.VK_CONTROL -> if (wasControlDown) consumer.accept(keyEvent)
+      KeyEvent.VK_META -> if (wasMetaDown) consumer.accept(keyEvent)
     }
   }
 }
