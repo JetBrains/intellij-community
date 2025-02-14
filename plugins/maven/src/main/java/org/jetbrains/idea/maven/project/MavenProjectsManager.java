@@ -653,13 +653,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     MavenProjectsManagerUtilKt.scheduleFoldersResolveForAllProjects(myProject);
   }
 
-  /**
-   * @deprecated This method returns immediately. Kept for compatibility reasons.
-   */
-  @Deprecated(forRemoval = true)
-  public void waitForPostImportTasksCompletion() {
-  }
-
   public void updateProjectTargetFolders() {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
