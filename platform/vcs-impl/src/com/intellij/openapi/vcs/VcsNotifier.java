@@ -23,7 +23,7 @@ public class VcsNotifier {
   /**
    * @deprecated Use {@link #toolWindowNotification()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final NotificationGroup NOTIFICATION_GROUP_ID =
     Cancellation.forceNonCancellableSectionInClassInitializer(() -> toolWindowNotification());
 
@@ -44,7 +44,7 @@ public class VcsNotifier {
   /**
    * @deprecated Use {@link #silentNotification()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final NotificationGroup SILENT_NOTIFICATION =
     Cancellation.forceNonCancellableSectionInClassInitializer(() -> silentNotification());
 
