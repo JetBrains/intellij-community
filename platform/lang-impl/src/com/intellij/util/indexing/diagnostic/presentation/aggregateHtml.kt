@@ -44,11 +44,11 @@ internal fun createAggregateActivityHtml(
             }
             thead {
               tr {
-                th("History of scannings and indexings") { colSpan = "14" }
+                th("History of scannings and indexings") { colSpan = "15" }
               }
               tr {
                 th("Time") {
-                  colSpan = "7"
+                  colSpan = "8"
                 }
                 th("Files") {
                   colSpan = "5"
@@ -68,6 +68,7 @@ internal fun createAggregateActivityHtml(
                 th("Time spent on pause")
                 th("Full dumb mode time")
                 th("Dumb mode time w/o pauses")
+                th("Was interrupted")
                 th("Scanned")
                 th("Shared indexes (w/o content loading)")
                 th("Scheduled for indexing")
@@ -199,6 +200,7 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
 
   td(times.dumbWallTimeWithPauses.presentableDuration())
   td(times.dumbWallTimeWithoutPauses.presentableDuration())
+  td(classes = "red-text") { +if (times.wasInterrupted) "true" else "" }
 
   // Files section.
   when (fileCount) {

@@ -16,6 +16,10 @@ table.activity-table {
   width: 100%;
 }
 
+.red-text {
+  color: red;
+}
+
 table.narrow-activity-table {
   width: 80%;
 }
@@ -51,8 +55,8 @@ td {
 }
 
 .aggregate-activity-report-content {
-  margin-left: 15%;
-  margin-right: 15%;
+  margin-left: 10%;
+  margin-right: 10%;
 }
 
 .aggregate-header {
