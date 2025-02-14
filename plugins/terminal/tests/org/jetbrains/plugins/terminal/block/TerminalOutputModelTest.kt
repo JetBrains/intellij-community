@@ -6,8 +6,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.*
 import org.jetbrains.plugins.terminal.block.TerminalTextHighlighterTest.Companion.green
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
-import org.jetbrains.plugins.terminal.block.output.NEW_TERMINAL_OUTPUT_CAPACITY_KB
 import org.jetbrains.plugins.terminal.block.output.TextWithHighlightings
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.NEW_TERMINAL_OUTPUT_CAPACITY_KB
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test

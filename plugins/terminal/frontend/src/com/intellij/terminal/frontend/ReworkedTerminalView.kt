@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl
 import com.intellij.openapi.editor.impl.softwrap.EmptySoftWrapPainter
 import com.intellij.openapi.observable.util.addFocusListener
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
@@ -31,7 +30,6 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.TerminalContentView
-import org.jetbrains.plugins.terminal.block.output.NEW_TERMINAL_OUTPUT_CAPACITY_KB
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.*
@@ -87,7 +85,7 @@ internal class ReworkedTerminalView(
     val outputModel = createOutputModel(
       project,
       editor = outputEditor,
-      maxOutputLength = AdvancedSettings.getInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB).coerceIn(1, 10 * 1024) * 1024,
+      maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength(),
       settings,
       sessionModel,
       encodingManager,

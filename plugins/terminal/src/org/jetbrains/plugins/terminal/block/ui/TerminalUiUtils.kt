@@ -22,10 +22,10 @@ import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
-import com.intellij.openapi.editor.impl.view.DoubleWidthCharacterStrategy
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -274,6 +274,12 @@ object TerminalUiUtils {
 
   fun plainAttributesProvider(foregroundColorIndex: Int, palette: TerminalColorPalette): TextAttributesProvider {
     return TextStyleAdapter(TextStyle(TerminalColor(foregroundColorIndex), null), palette)
+  }
+
+  const val NEW_TERMINAL_OUTPUT_CAPACITY_KB: String = "new.terminal.output.capacity.kb"
+
+  fun getDefaultMaxOutputLength(): Int {
+    return AdvancedSettings.getInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB).coerceIn(1, 10 * 1024) * 1024
   }
 
   private const val TERMINAL_OUTPUT_CONTEXT_MENU = "Terminal.OutputContextMenu"
