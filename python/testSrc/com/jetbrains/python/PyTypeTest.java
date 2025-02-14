@@ -3579,13 +3579,19 @@ public class PyTypeTest extends PyTestCase {
                "from typing_extensions import Final\n" +
                "expr: Final[int] = undefined");
 
-        doTest("int",
+        doTest("Literal[5]",
                "from typing_extensions import Final\n" +
                "expr: Final = 5");
 
         doTest("int",
                "from typing_extensions import Final\n" +
                "expr: Final[int]");
+
+        doTest("List[int]",
+               """
+                 from typing_extensions import Final
+                 expr: Final = [1, 2]
+                 """);
       }
     );
 
@@ -3593,7 +3599,7 @@ public class PyTypeTest extends PyTestCase {
            "from typing_extensions import Final\n" +
            "expr = undefined  # type: Final[int]");
 
-    doTest("int",
+    doTest("Literal[5]",
            "from typing_extensions import Final\n" +
            "expr = 5  # type: Final");
   }
