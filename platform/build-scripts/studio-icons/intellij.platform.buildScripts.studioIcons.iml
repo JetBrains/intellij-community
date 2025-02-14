@@ -9,5 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts" />
     <orderEntry type="module" module-name="intellij.platform.images.build" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
   </component>
 </module>

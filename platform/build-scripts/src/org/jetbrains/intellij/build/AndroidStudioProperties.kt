@@ -69,7 +69,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.java.byteCodeViewer",
       "intellij.marketplaceMl", // Currently experimental and disabled by default anyway (in IJ 2024.2).
       "intellij.maven",
-      "intellij.platform.tracing.ide",
       "intellij.searchEverywhereMl",
     )
   }
