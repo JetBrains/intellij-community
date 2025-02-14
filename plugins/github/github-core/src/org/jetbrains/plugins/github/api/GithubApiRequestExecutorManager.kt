@@ -5,6 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor.Factory
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.util.GHCompatibilityUtil
@@ -13,6 +14,7 @@ import org.jetbrains.plugins.github.util.GHCompatibilityUtil
  * Allows to acquire API executor without exposing the auth token to external code
  */
 @Service
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use org.jetbrains.plugins.github.api.GithubApiRequestExecutor.Factory.Companion directly")
 class GithubApiRequestExecutorManager {
 
@@ -21,6 +23,7 @@ class GithubApiRequestExecutorManager {
     fun getInstance(): GithubApiRequestExecutorManager = service()
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("One-time use executor should not be persisted")
   @RequiresBackgroundThread
   fun getExecutor(account: GithubAccount, project: Project): GithubApiRequestExecutor? {
