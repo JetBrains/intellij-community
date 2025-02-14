@@ -219,7 +219,7 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
       if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
         return
       }
-      if (projectScanningHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
+      if (projectScanningHistory.times.isCancelled && !shouldDumpDiagnosticsForInterruptedUpdaters) {
         return
       }
       unsavedIndexingActivityHistories.add(projectScanningHistory)
@@ -244,7 +244,7 @@ class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Dispos
           projectDumbIndexingHistory.project.isDefault) {
         return
       }
-      if (projectDumbIndexingHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
+      if (projectDumbIndexingHistory.times.isCancelled && !shouldDumpDiagnosticsForInterruptedUpdaters) {
         return
       }
       projectDumbIndexingHistory.indexingFinished()

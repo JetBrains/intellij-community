@@ -12,8 +12,8 @@ sealed interface JsonProjectIndexingActivityHistoryTimes {
   val wallTimeOnPause: JsonDuration
   val totalWallTimeWithoutPauses: JsonDuration
     get() = JsonDuration(totalWallTimeWithPauses.nano - wallTimeOnPause.nano)
-  val wasInterrupted: Boolean
-  val interruptionReason: String?
+  val isCancelled: Boolean
+  val cancellationReason: String?
 
   val dumbModeStart: JsonDateTime?
   val dumbWallTimeWithPauses: JsonDuration
@@ -43,8 +43,8 @@ data class JsonProjectScanningHistoryTimes(
   override val updatingEnd: JsonDateTime = JsonDateTime(),
   override val totalWallTimeWithPauses: JsonDuration = JsonDuration(),
   override val wallTimeOnPause: JsonDuration = JsonDuration(),
-  override val wasInterrupted: Boolean = false,
-  override val interruptionReason: String? = null,
+  override val isCancelled: Boolean = false,
+  override val cancellationReason: String? = null,
 ) : JsonProjectIndexingActivityHistoryTimes
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -59,8 +59,8 @@ data class JsonProjectDumbIndexingHistoryTimes(
   override val updatingEnd: JsonDateTime = JsonDateTime(),
   override val totalWallTimeWithPauses: JsonDuration = JsonDuration(),
   override val wallTimeOnPause: JsonDuration = JsonDuration(),
-  override val wasInterrupted: Boolean = false,
-  override val interruptionReason: String? = null,
+  override val isCancelled: Boolean = false,
+  override val cancellationReason: String? = null,
 ) : JsonProjectIndexingActivityHistoryTimes {
 
   override val dumbModeStart: JsonDateTime

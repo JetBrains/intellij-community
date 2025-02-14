@@ -134,9 +134,9 @@ data class ProjectScanningHistoryImpl(override val project: Project,
       scanningStatistics.sumOf { stat -> stat.timeIndexingWithoutContentViaInfrastructureExtension.nano })
   }
 
-  fun setWasInterrupted(reason: String?) {
-    timesImpl.wasInterrupted = true
-    timesImpl.interruptionReason = reason
+  fun setWasCancelled(reason: String?) {
+    timesImpl.isCancelled = true
+    timesImpl.cancellationReason = reason
   }
 
   private fun createScanningDumbModeCallBack(): Consumer<ZonedDateTime> = Consumer { now ->
@@ -304,8 +304,8 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     override var concurrentFileCheckSumOfThreadTimesWithPauses: Duration = Duration.ZERO,
     override var indexExtensionsDuration: Duration = Duration.ZERO,
     override var pausedDuration: Duration = Duration.ZERO,
-    override var wasInterrupted: Boolean = false,
-    override var interruptionReason: String? = null,
+    override var isCancelled: Boolean = false,
+    override var cancellationReason: String? = null,
   ) : ScanningTimes
 }
 
@@ -400,9 +400,9 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     timesImpl.updatingEnd = timesImpl.updatingStart.plusNanos(timesImpl.totalUpdatingTime)
   }
 
-  fun setWasInterrupted(reason: String) {
-    timesImpl.wasInterrupted = true
-    timesImpl.interruptionReason = reason
+  fun setWasCancelled(reason: String) {
+    timesImpl.isCancelled = true
+    timesImpl.cancellationReason = reason
   }
 
   private fun writeStagesToDurations() {
@@ -456,7 +456,7 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     override var retrievingChangedDuringIndexingFilesDuration: Duration = Duration.ZERO,
     override var pausedDuration: Duration = Duration.ZERO,
     override var separateValueApplicationVisibleTime: TimeNano = 0,
-    override var wasInterrupted: Boolean = false,
-    override var interruptionReason: String? = null,
+    override var isCancelled: Boolean = false,
+    override var cancellationReason: String? = null,
   ) : DumbIndexingTimes
 }

@@ -69,7 +69,7 @@ internal fun createAggregateActivityHtml(
                 th("Time spent on pause")
                 th("Full dumb mode time")
                 th("Dumb mode time w/o pauses")
-                th("Was interrupted")
+                th("Is cancelled")
                 th("Scanned")
                 th("Shared indexes (w/o content loading)")
                 th("Scheduled for indexing")
@@ -219,7 +219,7 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
   td(times.dumbModeStart?.presentableLocalDateTime() ?: DID_NOT_START)
 
   td {
-    if (times.wasInterrupted) {
+    if (times.isCancelled) {
       strong("Cancelled")
       br()
     }
@@ -231,7 +231,7 @@ private fun TR.printIndexingActivityRow(times: JsonProjectIndexingActivityHistor
 
   td(times.dumbWallTimeWithPauses.presentableDuration())
   td(times.dumbWallTimeWithoutPauses.presentableDuration())
-  td(classes = "red-text") { +if (times.wasInterrupted) "true" else "" }
+  td(classes = "red-text") { +if (times.isCancelled) "true" else "" }
 
   // Files section.
   when (fileCount) {
