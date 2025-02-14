@@ -74,15 +74,6 @@ abstract class RunManager {
 
   /**
    * Returns the list of [RunnerAndConfigurationSettings] for all configurations of a specified type.
-   * @param type a run configuration type.
-   * @return settings for all configurations of the type, or an empty array if no configurations of the type are defined.
-   */
-  @Deprecated("", ReplaceWith("getConfigurationSettingsList(type)"))
-  @ApiStatus.ScheduledForRemoval
-  fun getConfigurationSettings(type: ConfigurationType): Array<RunnerAndConfigurationSettings> = getConfigurationSettingsList(type).toTypedArray()
-
-  /**
-   * Returns the list of [RunnerAndConfigurationSettings] for all configurations of a specified type.
    *
    * Template configuration is not included
    * @param type a run configuration type.

@@ -103,11 +103,9 @@ a:com.intellij.execution.ConsoleFolding
 - <init>():V
 - getNestingPriority():I
 - getPlaceholderText(com.intellij.openapi.project.Project,java.util.List):java.lang.String
-- getPlaceholderText(java.util.List):java.lang.String
 - isEnabledForConsole(com.intellij.execution.ui.ConsoleView):Z
 - shouldBeAttachedToThePreviousLine():Z
 - shouldFoldLine(com.intellij.openapi.project.Project,java.lang.String):Z
-- shouldFoldLine(java.lang.String):Z
 com.intellij.execution.DisplayDescriptorChooser
 - sf:Companion:com.intellij.execution.DisplayDescriptorChooser$Companion
 - a:chooseDescriptor(java.util.List,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.ui.RunContentDescriptor
