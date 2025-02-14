@@ -13,7 +13,6 @@ import com.intellij.platform.recentFiles.frontend.Switcher.SwitcherPanel
 import com.intellij.platform.recentFiles.frontend.model.FlowBackedListModel
 import com.intellij.platform.recentFiles.frontend.model.FlowBackedListModelUpdate
 import com.intellij.platform.recentFiles.shared.FileSwitcherApi
-import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent.*
 import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
