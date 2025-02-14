@@ -126,6 +126,7 @@
     "GotItTooltip": {
       "background": "Gray14",
       "borderColor": "Gray14",
+      "borderSimplifiedColor": "Gray10",
       "foreground": "Gray1",
       "stepForeground": "Gray7",
       "secondaryActionForeground": "Gray7",

@@ -837,6 +837,10 @@
       "description": "GotIt tooltip border color if different from ToolTip.borderColor"
     },
     {
+      "key": "GotItTooltip.borderSimplifiedColor",
+      "description": "GotIt tooltip border color if enabled power save mode or we are in RDP session"
+    },
+    {
       "key": "GotItTooltip.linkForeground",
       "description": "GotIt tooltip link foreground color if different from Link.activeForeground"
     },
