@@ -47,6 +47,7 @@ internal class GHPRDetailsViewModelImpl(
   dataContext: GHPRDataContext,
   dataProvider: GHPRDataProvider,
   details: GHPullRequest,
+  openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
 ) : GHPRDetailsViewModel {
   private val cs = parentCs.childScope(javaClass.name)
 
@@ -82,7 +83,7 @@ internal class GHPRDetailsViewModelImpl(
   override val branchesVm = GHPRBranchesViewModel(cs, project, dataContext.repositoryDataService.repositoryMapping, detailsState)
 
   private val reviewVmHelper = GHPRReviewViewModelHelper(cs, dataProvider)
-  override val changesVm = GHPRChangesViewModelImpl(cs, project, dataContext, dataProvider)
+  override val changesVm = GHPRChangesViewModelImpl(cs, project, dataContext, dataProvider, openPullRequestDiff)
 
   private val serverPath = dataContext.repositoryDataService.repositoryMapping.repository.serverPath
   override val statusVm = GHPRStatusViewModelImpl(cs, project, serverPath,

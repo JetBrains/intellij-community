@@ -12,7 +12,6 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.changesComputationState
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRReviewBranchStateSharedViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 
 interface GHPRBranchWidgetViewModel : GHPRReviewViewModel {
   val id: GHPRIdentifier
@@ -32,10 +31,10 @@ internal class GHPRBranchWidgetViewModelImpl(
   parentCs: CoroutineScope,
   private val settings: GithubPullRequestsProjectUISettings,
   dataProvider: GHPRDataProvider,
-  private val projectVm: GHPRToolWindowProjectViewModel,
   private val sharedBranchVm: GHPRReviewBranchStateSharedViewModel,
   private val reviewVmHelper: GHPRReviewViewModelHelper,
-  override val id: GHPRIdentifier
+  override val id: GHPRIdentifier,
+  private val viewPullRequest: (GHPRIdentifier) -> Unit
 ) : GHPRBranchWidgetViewModel, GHPRReviewViewModel by DelegatingGHPRReviewViewModel(reviewVmHelper) {
   private val cs = parentCs.childScope(javaClass.name)
 
@@ -49,7 +48,7 @@ internal class GHPRBranchWidgetViewModelImpl(
   override val updateErrors: SharedFlow<Exception> = sharedBranchVm.updateErrors
 
   override fun showPullRequest() {
-    projectVm.viewPullRequest(id)
+    viewPullRequest(id)
   }
 
   override fun updateBranch() = sharedBranchVm.updateBranch()

@@ -69,13 +69,14 @@ class GHPRToolWindowProjectViewModel internal constructor(
   override val listVm: GHPRListViewModel = GHPRListViewModel(project, cs, connection.dataContext)
 
   private val lazyCreateVm = SynchronizedClearableLazy {
-    GHPRCreateViewModelImpl(project, cs, repoManager, GithubPullRequestsProjectUISettings.getInstance(project), connection.dataContext, this)
+    GHPRCreateViewModelImpl(project, cs, repoManager, GithubPullRequestsProjectUISettings.getInstance(project), connection.dataContext, ::viewPullRequest, ::closeNewPullRequest, ::openPullRequestDiff, ::refreshPrOnCurrentBranch)
   }
+
   internal fun getCreateVmOrNull(): GHPRCreateViewModel? = lazyCreateVm.valueIfInitialized
 
   private val pullRequestsVms = Caffeine.newBuilder().build<GHPRIdentifier, DisposalCountingHolder<GHPRViewModelContainer>> { id ->
     DisposalCountingHolder {
-      GHPRViewModelContainerImpl(project, cs, dataContext, this, id, it)
+      GHPRViewModelContainerImpl(project, cs, dataContext, id, it, ::viewPullRequest, ::viewPullRequest, ::openPullRequestDiff, ::refreshPrOnCurrentBranch)
     }
   }
 
@@ -88,14 +89,12 @@ class GHPRToolWindowProjectViewModel internal constructor(
   override fun selectTab(tab: GHPRToolWindowTab?) = tabsHelper.select(tab)
   override fun closeTab(tab: GHPRToolWindowTab) = tabsHelper.close(tab)
 
-  fun closeTab(tab: GHPRToolWindowTab.NewPullRequest, reset: Boolean = true) {
+  private fun closeNewPullRequest() {
     synchronized(lazyCreateVm) {
-      tabsHelper.close(tab)
-      if (reset) {
-        lazyCreateVm.drop()?.let(Disposer::dispose)
-        cs.launch {
-          dataContext.filesManager.closeNewPrFile()
-        }
+      tabsHelper.close(GHPRToolWindowTab.NewPullRequest)
+      lazyCreateVm.drop()?.let(Disposer::dispose)
+      cs.launch {
+        dataContext.filesManager.closeNewPrFile()
       }
     }
   }
@@ -130,7 +129,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
     }
   }
 
-  fun viewPullRequest(id: GHPRIdentifier, commitOid: String) {
+  private fun viewPullRequest(id: GHPRIdentifier, commitOid: String) {
     twVm.activate()
     tabsHelper.showTab(GHPRToolWindowTab.PullRequest(id), ::createVm) {
       selectCommit(commitOid)
@@ -152,7 +151,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
     }
   }
 
-  fun openPullRequestDiff(id: GHPRIdentifier, requestFocus: Boolean) {
+  fun openPullRequestDiff(id: GHPRIdentifier?, requestFocus: Boolean) {
     cs.launch(Dispatchers.EDT) {
       dataContext.filesManager.createAndOpenDiffFile(id, requestFocus)
     }

@@ -24,6 +24,7 @@ class GHPRInfoViewModel internal constructor(
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
+  private val openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
 ) : GHPRDetailsLoadingViewModel {
   private val cs = parentCs.childScope(javaClass.name)
 
@@ -45,7 +46,7 @@ class GHPRInfoViewModel internal constructor(
         pullRequestUrl = details.url
         val currentVm = vm
         if (currentVm == null) {
-          val newVm = GHPRDetailsViewModelImpl(project, cs.childScope(), dataContext, dataProvider, details)
+          val newVm = GHPRDetailsViewModelImpl(project, cs.childScope(), dataContext, dataProvider, details, openPullRequestDiff)
           vm = newVm
           ComputedResult.success(newVm)
         }

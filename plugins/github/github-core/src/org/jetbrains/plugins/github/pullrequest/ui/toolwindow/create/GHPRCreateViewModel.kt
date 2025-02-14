@@ -116,7 +116,10 @@ internal class GHPRCreateViewModelImpl(
   private val repositoryManager: GHHostedRepositoriesManager,
   private val settings: GithubPullRequestsProjectUISettings,
   private val dataContext: GHPRDataContext,
-  private val projectVm: GHPRToolWindowProjectViewModel,
+  private val viewPullRequest: (GHPRIdentifier, Boolean) -> Unit,
+  private val closeNewPullRequest: () -> Unit,
+  private val openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
+  private val refreshPrOnCurrentBranch: () -> Unit
 ) : GHPRCreateViewModel, Disposable {
   private val cs = parentCs.childScope(javaClass.name)
   override val avatarIconsProvider: GHAvatarIconsProvider = dataContext.avatarIconsProvider
@@ -160,7 +163,7 @@ internal class GHPRCreateViewModelImpl(
         coroutineScope {
           val settings = project.serviceAsync<GithubPullRequestsProjectUISettings>()
           val vm = GHPRCreateChangesViewModel(project, settings, this, dataContext,
-                                              baseBranch, headBranch, commits)
+                                              baseBranch, headBranch, commits, openPullRequestDiff)
           emit(ComputedResult.success(vm))
         }
       }
@@ -367,10 +370,10 @@ internal class GHPRCreateViewModelImpl(
 
         _creationProgress.value = CreationState.Created
 
-        projectVm.viewPullRequest(pullRequest.prId)
+        viewPullRequest(pullRequest.prId, true)
         settings.recentNewPullRequestHead = headRepo.repository
-        projectVm.refreshPrOnCurrentBranch()
-        projectVm.closeTab(GHPRToolWindowTab.NewPullRequest)
+        refreshPrOnCurrentBranch()
+        closeNewPullRequest()
       }
       catch (ce: CancellationException) {
         _creationProgress.value = null
@@ -456,7 +459,7 @@ internal class GHPRCreateViewModelImpl(
     }
     val existingPr = existingPrRequest.await()
     if (existingPr != null) {
-      return BranchesCheckResult.AlreadyExists { projectVm.viewPullRequest(existingPr, true) }
+      return BranchesCheckResult.AlreadyExists { viewPullRequest(existingPr, true) }
     }
     return BranchesCheckResult.OK
   }
