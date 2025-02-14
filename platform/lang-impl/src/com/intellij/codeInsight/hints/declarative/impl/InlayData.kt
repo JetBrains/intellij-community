@@ -11,9 +11,11 @@ import com.intellij.util.io.DataInputOutputUtil.readINT
 import com.intellij.util.io.DataInputOutputUtil.writeINT
 import com.intellij.util.io.IOUtil.readUTF
 import com.intellij.util.io.IOUtil.writeUTF
+import org.jetbrains.annotations.ApiStatus
 import java.io.DataInput
 import java.io.DataOutput
 
+@ApiStatus.Internal
 data class InlayData(
   val position: InlayPosition,
   @NlsContexts.HintText val tooltip: String?,
