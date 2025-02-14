@@ -2829,6 +2829,7 @@ a:com.intellij.codeInspection.reference.RefEntityImpl
 - accept(com.intellij.codeInspection.reference.RefVisitor):V
 - add(com.intellij.codeInspection.reference.RefEntity):V
 - p:addChild(com.intellij.codeInspection.reference.RefEntity):V
+- checkAndSetFlag(J):Z
 - checkFlag(J):Z
 - getChildren():java.util.List
 - getExternalName():java.lang.String
@@ -2866,8 +2867,8 @@ c:com.intellij.codeInspection.reference.RefManagerImpl
 - getContext():com.intellij.codeInspection.GlobalInspectionContext
 - getElements():java.util.List
 - getExtension(com.intellij.openapi.util.Key):java.lang.Object
-- getFromRefTableOrCache(com.intellij.psi.PsiElement,com.intellij.openapi.util.NullableFactory):com.intellij.codeInspection.reference.RefElement
-- getFromRefTableOrCache(com.intellij.psi.PsiElement,com.intellij.openapi.util.NullableFactory,com.intellij.util.Consumer):com.intellij.codeInspection.reference.RefElement
+- getFromRefTableOrCache(com.intellij.psi.PsiElement,java.util.function.Supplier):com.intellij.codeInspection.reference.RefElement
+- getFromRefTableOrCache(com.intellij.psi.PsiElement,java.util.function.Supplier,java.util.function.Consumer):com.intellij.codeInspection.reference.RefElement
 - getGroupName(com.intellij.codeInspection.reference.RefElement):java.lang.String
 - getLastUsedMask():J
 - getProject():com.intellij.openapi.project.Project

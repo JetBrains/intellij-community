@@ -30,7 +30,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -43,7 +42,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
@@ -56,7 +54,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class RefManagerImpl extends RefManager {
@@ -797,12 +797,13 @@ public class RefManagerImpl extends RefManager {
     return null;
   }
 
-  public @Nullable <T extends RefElement> T getFromRefTableOrCache(@NotNull PsiElement element, @NotNull NullableFactory<? extends T> factory) {
+  public @Nullable <T extends RefElement> T getFromRefTableOrCache(@NotNull PsiElement element,
+                                                                   @NotNull Supplier<@Nullable T> factory) {
     return getFromRefTableOrCache(element, factory, null);
   }
 
   public @Nullable <T extends RefElement> T getFromRefTableOrCache(@NotNull PsiElement element,
-                                                                   @NotNull NullableFactory<? extends T> factory,
+                                                                   @NotNull Supplier<@Nullable T> factory,
                                                                    @Nullable Consumer<? super T> whenCached) {
     PsiAnchor psiAnchor = createAnchor(element);
     //noinspection unchecked
@@ -814,7 +815,7 @@ public class RefManagerImpl extends RefManager {
       return null;
     }
 
-    T newElement = factory.create();
+    T newElement = factory.get();
     if (newElement == null) return null;
 
     myCachedSortedRefs = null;
@@ -824,7 +825,7 @@ public class RefManagerImpl extends RefManager {
       return (T)prev;
     }
     if (whenCached != null) {
-      whenCached.consume(newElement);
+      whenCached.accept(newElement);
     }
 
     return newElement;
