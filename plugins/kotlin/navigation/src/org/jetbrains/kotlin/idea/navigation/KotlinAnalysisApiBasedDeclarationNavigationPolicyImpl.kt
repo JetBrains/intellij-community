@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.allDirectDependencies
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
@@ -112,10 +113,17 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         val classId = declaration.getClassId() ?: return null
         val project = module.project
         val targetPlatform = module.targetPlatform
-        val declarations =
-            KotlinFullClassNameIndex[classId.asFqNameString(), project, scope].firstOrNull { it.matchesWithPlatform(targetPlatform) } ?:
-            KotlinTopLevelTypeAliasFqNameIndex[classId.asFqNameString(), project, scope].firstOrNull { it.matchesWithPlatform(targetPlatform) }
-        return declarations
+
+        val classIdName = classId.asFqNameString()
+        val classOrObjects = KotlinFullClassNameIndex[classIdName, project, scope]
+        val targetDeclaration =
+            classOrObjects.firstOrNull { it.matchesWithPlatform(targetPlatform) } ?: run {
+                val typeAliases = KotlinTopLevelTypeAliasFqNameIndex[classIdName, project, scope]
+                typeAliases.firstOrNull { it.matchesWithPlatform(targetPlatform) } ?:
+                    classOrObjects.firstOrNull() ?:
+                    typeAliases.firstOrNull()
+            }
+        return targetDeclaration
     }
 
     private fun getCorrespondingCallableDeclaration(
@@ -297,6 +305,8 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
 
     companion object {
         @KaExperimentalApi
-        private val renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES
+        private val renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+            expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_EXPANDED_TYPE
+        }
     }
 }
