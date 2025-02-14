@@ -935,7 +935,6 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
           }
         }
       }
-      return getAndroidErrorReporter()  /* Android Studio: use Android instead of Jetbrains
       if (plugin == null || PluginManagerCore.isDevelopedByJetBrains(plugin)) {
         for (reporter in reporters) {
           val descriptor = reporter.pluginDescriptor
@@ -945,17 +944,6 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
         }
       }
       return null
-      */
-    }
-
-    private fun getAndroidErrorReporter(): ErrorReportSubmitter? {
-      return try {
-        ERROR_HANDLER_EP.extensionList.firstOrNull { reporter ->
-          reporter.pluginDescriptor?.pluginId?.idString == "org.jetbrains.android"
-        }
-      } catch (t: Throwable) {
-        null
-      }
     }
   }
 }
