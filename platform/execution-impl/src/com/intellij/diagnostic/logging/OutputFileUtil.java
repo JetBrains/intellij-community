@@ -35,7 +35,7 @@ public final class OutputFileUtil {
   private OutputFileUtil() {
   }
 
-  public static File getOutputFile(final @NotNull RunConfigurationBase configuration) {
+    public static File getOutputFile(final @NotNull RunConfigurationBase configuration) {
     String outputFilePath = configuration.getOutputFilePath();
     if (outputFilePath != null) {
       final String filePath = FileUtil.toSystemDependentName(outputFilePath);
