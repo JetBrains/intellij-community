@@ -2503,6 +2503,7 @@ def foo(param: str | int) -> TypeGuard[str]:
                    """);
   }
 
+  // PY-79129
   public void testTupleIndexOutOfRange() {
     doTestByText("""
                    from typing import Literal
