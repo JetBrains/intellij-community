@@ -735,7 +735,6 @@ f:com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 - replaceCommitMessage(java.lang.String,java.lang.String):V
 - scheduleAutomaticEmptyChangeListDeletion(com.intellij.openapi.vcs.changes.LocalChangeList):V
 - scheduleAutomaticEmptyChangeListDeletion(com.intellij.openapi.vcs.changes.LocalChangeList,Z):V
-- scheduleUpdate():V
 - setDefaultChangeList(com.intellij.openapi.vcs.changes.LocalChangeList):V
 - setDefaultChangeList(com.intellij.openapi.vcs.changes.LocalChangeList,Z):V
 - setDefaultChangeList(java.lang.String):V
@@ -3994,10 +3993,6 @@ f:com.intellij.openapi.vcs.impl.VcsEP
 - displayName:java.lang.String
 - name:java.lang.String
 - vcsClass:java.lang.String
-f:com.intellij.openapi.vcs.impl.VcsFileStatusProvider
-- getFileStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.VcsFileStatusProvider
-- refreshFileStatusFromDocument(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document):V
 e:com.intellij.openapi.vcs.impl.VcsInitObject
 - java.lang.Enum
 - sf:AFTER_COMMON:com.intellij.openapi.vcs.impl.VcsInitObject
@@ -4351,7 +4346,6 @@ a:com.intellij.openapi.vcs.vfs.CustomisableUniqueNameEditorTabTitleProvider
 c:com.intellij.openapi.vcs.vfs.VcsFileSystem
 - com.intellij.openapi.vfs.DeprecatedVirtualFileSystem
 - com.intellij.openapi.vfs.NonPhysicalFileSystem
-- sf:COULD_NOT_IMPLEMENT_MESSAGE:java.lang.String
 - <init>():V
 - findFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - fireContentsChanged(java.lang.Object,com.intellij.openapi.vfs.VirtualFile,J):V

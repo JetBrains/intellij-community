@@ -1049,7 +1049,6 @@ a:com.intellij.openapi.vcs.changes.ChangeListManager
 - a:reopenFiles(java.util.List):V
 - a:scheduleAutomaticEmptyChangeListDeletion(com.intellij.openapi.vcs.changes.LocalChangeList):V
 - a:scheduleAutomaticEmptyChangeListDeletion(com.intellij.openapi.vcs.changes.LocalChangeList,Z):V
-- a:scheduleUpdate():V
 - a:setFilesToIgnore(com.intellij.openapi.vcs.changes.IgnoredFileBean[]):V
 com.intellij.openapi.vcs.changes.ChangeListManagerGate
 - a:addChangeList(java.lang.String,java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeList
@@ -1160,7 +1159,6 @@ com.intellij.openapi.vcs.changes.CommitSession
 - canExecute(java.util.Collection,java.lang.String):Z
 - a:execute(java.util.Collection,java.lang.String):V
 - executionCanceled():V
-- getAdditionalConfigurationUI():javax.swing.JComponent
 - getAdditionalConfigurationUI(java.util.Collection,java.lang.String):javax.swing.JComponent
 - getHelpId():java.lang.String
 - validateFields():com.intellij.openapi.ui.ValidationInfo

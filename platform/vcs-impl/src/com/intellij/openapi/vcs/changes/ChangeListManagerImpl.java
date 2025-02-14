@@ -431,11 +431,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     });
   }
 
-  @Override
-  public void scheduleUpdate() {
-    scheduleUpdateImpl();
-  }
-
   @ApiStatus.Internal
   public void scheduleUpdateImpl() {
     myUpdater.schedule();
