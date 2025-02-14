@@ -37,7 +37,7 @@ public class Bundle {
   /**
    * @deprecated use `TextMateService#readBundle#readGrammars` or `TextMateBundleReader`
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull Collection<File> getGrammarFiles() {
     switch (myType) {
       case TEXTMATE -> {

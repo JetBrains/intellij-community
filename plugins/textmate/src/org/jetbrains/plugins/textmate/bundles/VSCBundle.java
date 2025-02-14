@@ -25,7 +25,7 @@ import static org.jetbrains.plugins.textmate.Constants.*;
 /**
  * @deprecated use `{@link VSCBundleReaderKt#readVSCBundle}`
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class VSCBundle extends Bundle {
   private final Map<String, Collection<String>> grammarToExtensions = new LinkedHashMap<>();
   private final Map<String, Collection<String>> configToScopes = new HashMap<>();
