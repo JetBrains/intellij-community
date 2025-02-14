@@ -16,6 +16,10 @@ table.activity-table {
   width: 100%;
 }
 
+table.metrics-table {
+  width: auto;
+}
+
 .red-text {
   color: red;
 }

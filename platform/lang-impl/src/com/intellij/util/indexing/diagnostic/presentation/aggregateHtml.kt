@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic.presentation
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.asSafely
 import com.intellij.util.indexing.diagnostic.ChangedFilesPushedEvent
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
@@ -94,6 +95,36 @@ internal fun createAggregateActivityHtml(
             }
           }
         }
+
+        div {
+          table(classes = "table-with-margin activity-table metrics-table") {
+            thead {
+              tr {
+                th("Metrics") {
+                  colSpan = "2"
+                }
+              }
+            }
+            tbody {
+              val metrics = IndexingMetrics(filesAndDiagnostics.map { it.diagnostic })
+              for (metric in metrics.getListOfIndexingMetrics()) {
+                tr {
+                  when (metric) {
+                    is IndexingMetric.Duration -> {
+                      td(metric.name)
+                      td(StringUtil.formatDuration(metric.durationMillis.toLong()))
+                    }
+                    is IndexingMetric.Counter -> {
+                      td(metric.name)
+                      td(metric.value.toString())
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
 
         if (sharedIndexEvents.isNotEmpty()) {
           val indexIdToEvents = sharedIndexEvents.groupBy { it.chunkUniqueId }
