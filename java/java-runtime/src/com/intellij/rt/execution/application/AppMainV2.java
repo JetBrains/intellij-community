@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.execution.application;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Constructor;
@@ -17,54 +16,24 @@ import java.util.*;
  */
 public final class AppMainV2 {
   public static final String LAUNCHER_PORT_NUMBER = "idea.launcher.port";
-  public static final String LAUNCHER_BIN_PATH = "idea.launcher.bin.path";
   public static final String LAUNCHER_USE_JDK_21_PREVIEW = "idea.launcher.use.21.preview";
   private static final String LAUNCHER_MAIN_CLASS = "idea.launcher.main.class";
 
-  private static native void triggerControlBreak();
-
-  private static boolean loadHelper(String binPath) {
-    String osName = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
-    if (osName.startsWith("windows")) {
-      String arch = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
-      //noinspection SpellCheckingInspection
-      String libName = "x86_64".equals(arch) || "amd64".equals(arch) ? "breakgen64.dll" :
-                       "aarch64".equals(arch) || "arm64".equals(arch) ? "breakgen64a.dll" :
-                       "i386".equals(arch) || "x86".equals(arch) ? "breakgen.dll" :
-                       null;  // see also: `ProcessProxyImpl#canSendBreak`
-      if (libName != null) {
-        File libFile = new File(binPath, libName);
-        if (libFile.isFile()) {
-          System.load(libFile.getAbsolutePath());
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  private static void startMonitor(final int portNumber, final boolean helperLibLoaded) {
+  private static void startMonitor(final int portNumber) {
     Thread t = new Thread("Monitor Ctrl-Break") {
       @Override
       public void run() {
-        try {
-          try (Socket client = new Socket("127.0.0.1", portNumber)) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream(), "US-ASCII"))) {
-              while (true) {
-                String msg = reader.readLine();
-                if (msg == null || "TERM".equals(msg)) {
-                  return;
-                }
-                else if ("BREAK".equals(msg)) {
-                  if (helperLibLoaded) {
-                    triggerControlBreak();
-                  }
-                }
-                else if ("STOP".equals(msg)) {
-                  System.exit(1);
-                }
-              }
+        try (
+          Socket client = new Socket("127.0.0.1", portNumber);
+          BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream(), "US-ASCII"))
+        ) {
+          while (true) {
+            String msg = reader.readLine();
+            if (msg == null || "TERM".equals(msg)) {
+              return;
+            }
+            else if ("STOP".equals(msg)) {
+              System.exit(1);
             }
           }
         }
@@ -77,9 +46,8 @@ public final class AppMainV2 {
 
   public static void main(String[] args) throws Throwable {
     try {
-      boolean helperLibLoaded = loadHelper(System.getProperty(LAUNCHER_BIN_PATH));
       int portNumber = Integer.parseInt(System.getProperty(LAUNCHER_PORT_NUMBER));
-      startMonitor(portNumber, helperLibLoaded);
+      startMonitor(portNumber);
     }
     catch (Throwable t) {
       System.err.println("Launcher failed - \"Dump Threads\" and \"Exit\" actions are unavailable (" + t.getMessage() + ')');
@@ -261,10 +229,8 @@ public final class AppMainV2 {
   public static void premain(String args) {
     try {
       int p = args.indexOf(':');
-      if (p < 0) throw new IllegalArgumentException("incorrect parameter: " + args);
-      boolean helperLibLoaded = loadHelper(args.substring(p + 1));
-      int portNumber = Integer.parseInt(args.substring(0, p));
-      startMonitor(portNumber, helperLibLoaded);
+      int portNumber = Integer.parseInt(p > 0 ? args.substring(0, p) : args);
+      startMonitor(portNumber);
     }
     catch (Throwable t) {
       System.err.println("Launcher failed - \"Dump Threads\" and \"Exit\" actions are unavailable (" + t.getMessage() + ')');
