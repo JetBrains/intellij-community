@@ -100,6 +100,12 @@ internal class BazelStampStorage(private val map: Map<Path, SourceDescriptor>) :
     }
   }
 
+  fun markChanged(sourceFile: Path) {
+    synchronized(map) {
+      map.get(sourceFile)?.isChanged = true
+    }
+  }
+
   override fun getCurrentStampIfUpToDate(file: Path, buildTarget: BuildTarget<*>?, attrs: BasicFileAttributes?): ByteArray? {
     throw UnsupportedOperationException("Must not be used")
   }

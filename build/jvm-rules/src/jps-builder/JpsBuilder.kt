@@ -271,10 +271,7 @@ suspend fun buildUsingJps(
     }
   }
 
-  val buildState = if (isRebuild) null
-  else tracer.span("load and check state") { parentSpan ->
-    computeBuildState(parentSpan)
-  }
+  val buildState = if (isRebuild) null else tracer.span("load and check state") { parentSpan -> computeBuildState(parentSpan) }
 
   var exitCode = initAndBuild(
     compileScope = BazelCompileScope(isIncrementalCompilation = true, isRebuild = isRebuild),

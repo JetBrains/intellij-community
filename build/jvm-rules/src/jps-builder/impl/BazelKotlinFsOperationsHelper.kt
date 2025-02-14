@@ -3,7 +3,6 @@
 
 package org.jetbrains.bazel.jvm.jps.impl
 
-import com.intellij.openapi.util.io.FileUtilRt
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -12,56 +11,55 @@ import org.jetbrains.bazel.jvm.linkedSet
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.FSOperations.addCompletelyMarkedDirtyTarget
+import org.jetbrains.jps.incremental.fs.BuildFSState
 import org.jetbrains.jps.incremental.fs.CompilationRound
+import org.jetbrains.jps.incremental.fs.FilesDelta
 import org.jetbrains.kotlin.jps.build.KotlinDirtySourceFilesHolder.TargetFiles
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.exists
 
 internal class BazelKotlinFsOperationsHelper(
   private val context: CompileContext,
   private val chunk: ModuleChunk,
-  private val span: Span,
-  private val dataManager: BazelBuildDataProvider,
 ) {
   internal var hasMarkedDirty = false
     private set
 
-  fun markChunk(excludeFiles: Set<File>) {
+  fun markChunk(context: CompileContext, excludeFiles: Set<File>, dataManager: BazelBuildDataProvider) {
     val target = chunk.targets.single()
     var completelyMarkedDirty = true
-    val stampStorage = dataManager.getFileStampStorage(target)
-    for (rootDescriptor in (context.projectDescriptor.buildRootIndex as BazelBuildRootIndex).descriptors) {
+    val stampStorage = if (dataManager.isCleanBuild) null else dataManager.stampStorage
+    val projectDescriptor = context.projectDescriptor
+    for (rootDescriptor in (projectDescriptor.buildRootIndex as BazelBuildRootIndex).descriptors) {
       val file = rootDescriptor.rootFile
       val filePath = file.toString()
-      if (!(FileUtilRt.extensionEquals(filePath, "kt") || FileUtilRt.extensionEquals(filePath, "kts")) ||
-        excludeFiles.contains(file.toFile())) {
+      if ((!filePath.endsWith(".kt") && !filePath.endsWith(".kts")) || excludeFiles.contains(file.toFile())) {
         completelyMarkedDirty = false
         continue
       }
 
       hasMarkedDirty = true
 
-      // if it is a full project rebuild, all storages are already completely cleared;
-      // so passing null because there is no need to access the storage to clear non-existing data
-      val marker = if (dataManager.isCleanBuild) null else stampStorage
-      context.projectDescriptor.fsState.markDirty(context, CompilationRound.NEXT, file, rootDescriptor, marker, false)
+      val roundDelta = context.getUserData(BuildFSState.NEXT_ROUND_DELTA_KEY)
+      roundDelta?.markRecompile(rootDescriptor, file)
+
+      val filesDelta = projectDescriptor.fsState.getDelta(target)
+      filesDelta.lockData()
+      try {
+        val marked = filesDelta.markRecompile(rootDescriptor, file)
+        if (marked) {
+          stampStorage?.markChanged(file)
+        }
+      }
+      finally {
+        filesDelta.unlockData()
+      }
     }
 
     if (completelyMarkedDirty) {
       addCompletelyMarkedDirtyTarget(context, target)
     }
-  }
-
-  fun markFilesForCurrentRound(files: Sequence<Path>, targetDirtyFiles: TargetFiles?) {
-    val buildRootIndex = context.projectDescriptor.buildRootIndex as BazelBuildRootIndex
-    for (file in files) {
-      val root = buildRootIndex.fileToDescriptors.get(file) ?: continue
-      targetDirtyFiles?._markDirty(file, root)
-    }
-
-    markFilesImpl(files = files, currentRound = true, span = span) { it.exists() }
   }
 
   /**
@@ -72,61 +70,116 @@ internal class BazelKotlinFsOperationsHelper(
     targetDirtyFiles: TargetFiles?,
     outputSink: OutputSink,
     parentSpan: Span,
+    target: BazelModuleBuildTarget,
+    dataManager: BazelBuildDataProvider,
   ) {
-    val buildRootIndex = context.projectDescriptor.buildRootIndex as BazelBuildRootIndex
+    val fileToDescriptors = (context.projectDescriptor.buildRootIndex as BazelBuildRootIndex).fileToDescriptors
     for (file in files) {
-      targetDirtyFiles._markDirty(file, buildRootIndex.fileToDescriptors.get(file) ?: continue)
+      targetDirtyFiles._markDirty(file.toFile(), fileToDescriptors.get(file) ?: continue)
     }
 
-    markFilesImpl(files.asSequence(), currentRound = true, span = span) { Files.exists(it) }
+    markFiles(
+      files = files.filterTo(linkedSet()) { Files.exists(it) },
+      currentRound = true,
+      dataManager = dataManager,
+      target = target,
+      span = parentSpan,
+    )
     cleanOutputsCorrespondingToChangedFiles(files = files, dataManager = dataManager, outputSink = outputSink, parentSpan = parentSpan)
   }
 
-  fun markFiles(files: Sequence<Path>) {
-    markFilesImpl(files = files, currentRound = false, span = span) { it.exists() }
-  }
-
-  fun markInChunkOrDependents(files: Sequence<Path>, excludeFiles: Set<Path>) {
-    markFilesImpl(files = files, currentRound = false, span = span) {
-      !excludeFiles.contains(it) && it.exists()
-    }
-  }
-
-  private inline fun markFilesImpl(
-    files: Sequence<Path>,
+  fun markFiles(
+    files: Collection<Path>,
     currentRound: Boolean,
+    target: BazelModuleBuildTarget,
+    dataManager: BazelBuildDataProvider,
     span: Span,
-    shouldMark: (Path) -> Boolean
   ) {
-    val filesToMark = files.filterTo(linkedSet(), shouldMark)
-    if (filesToMark.isEmpty()) {
+    if (files.isEmpty()) {
       return
     }
 
+    val roundDelta: FilesDelta?
     val compilationRound = if (currentRound) {
+      roundDelta = context.getUserData(BuildFSState.CURRENT_ROUND_DELTA_KEY)
       CompilationRound.CURRENT
     }
     else {
+      roundDelta = context.getUserData(BuildFSState.NEXT_ROUND_DELTA_KEY)
       hasMarkedDirty = true
       CompilationRound.NEXT
     }
 
     val projectDescriptor = context.projectDescriptor
+    val stampStorage = dataManager.stampStorage
     val fileToDescriptors = (projectDescriptor.buildRootIndex as BazelBuildRootIndex).fileToDescriptors
-    for (fileToMark in filesToMark) {
-      val rootDescriptor = fileToDescriptors.get(fileToMark) ?: continue
-      projectDescriptor.fsState.markDirty(
-        /* context = */ context,
-        /* round = */ compilationRound,
-        /* file = */ fileToMark,
-        /* buildRootDescriptor = */ rootDescriptor,
-        /* stampStorage = */ projectDescriptor.dataManager.getFileStampStorage(rootDescriptor.target),
-        /* saveEventStamp = */ false,
-      )
+
+    val filesDelta = projectDescriptor.fsState.getDelta(target)
+    filesDelta.lockData()
+    try {
+      for (fileToMark in files) {
+        val rootDescriptor = fileToDescriptors.get(fileToMark) ?: continue
+        roundDelta?.markRecompile(rootDescriptor, fileToMark)
+        val marked = filesDelta.markRecompile(rootDescriptor, fileToMark)
+        if (marked) {
+          stampStorage.markChanged(fileToMark)
+        }
+      }
     }
+    finally {
+      filesDelta.unlockData()
+    }
+
+    if (span.isRecording) {
+      span.addEvent("mark dirty", Attributes.of(
+        AttributeKey.stringArrayKey("filesToMark"), files.map { it.toString() },
+        AttributeKey.stringKey("compilationRound"), compilationRound.name,
+      ))
+    }
+  }
+}
+
+internal fun markFilesForCurrentRound(
+  context: CompileContext,
+  files: Set<File>,
+  targetDirtyFiles: TargetFiles?,
+  span: Span,
+  target: BazelModuleBuildTarget,
+  dataManager: BazelBuildDataProvider,
+) {
+  if (files.isEmpty()) {
+    return
+  }
+
+  val buildRootIndex = context.projectDescriptor.buildRootIndex as BazelBuildRootIndex
+  val fileToDescriptors = buildRootIndex.fileToDescriptors
+  for (file in files) {
+    val root = fileToDescriptors.get(file.toPath()) ?: continue
+    targetDirtyFiles?._markDirty(file, root)
+  }
+
+  val stampStorage = dataManager.stampStorage
+  val roundDelta = context.getUserData(BuildFSState.CURRENT_ROUND_DELTA_KEY)
+  val fileDelta = context.projectDescriptor.fsState.getDelta(target)
+  fileDelta.lockData()
+  try {
+    for (ioFile in files) {
+      val file = ioFile.toPath()
+      val rootDescriptor = fileToDescriptors.get(file) ?: continue
+      roundDelta?.markRecompile(rootDescriptor, file)
+      val marked = fileDelta.markRecompile(rootDescriptor, file)
+      if (marked) {
+        stampStorage.markChanged(file)
+      }
+    }
+  }
+  finally {
+    fileDelta.unlockData()
+  }
+  if (span.isRecording) {
     span.addEvent("mark dirty", Attributes.of(
-      AttributeKey.stringArrayKey("filesToMark"), filesToMark.map { it.toString() },
-      AttributeKey.stringKey("compilationRound"), compilationRound.name,
+      AttributeKey.stringArrayKey("filesToMark"), files.map { it.toString() },
+      AttributeKey.stringKey("compilationRound"), "CURRENT",
     ))
   }
 }

@@ -14,10 +14,9 @@ import org.jetbrains.jps.incremental.ModuleLevelBuilder.OutputConsumer
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import java.io.File
 import java.nio.file.Path
-import java.util.*
 
 internal class BazelTargetBuildOutputConsumer(
-  private val dataManager: BazelBuildDataProvider?,
+  @JvmField val dataManager: BazelBuildDataProvider?,
   @JvmField val outputSink: OutputSink,
 ) : OutputConsumer {
   private var registeredSourceCount = 0

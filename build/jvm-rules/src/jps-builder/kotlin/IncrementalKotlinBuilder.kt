@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("HardCodedStringLiteral", "INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "DialogTitleCapitalization", "UnstableApiUsage", "ReplaceGetOrSet")
+@file:Suppress("HardCodedStringLiteral", "DialogTitleCapitalization", "UnstableApiUsage", "ReplaceGetOrSet", "PackageDirectoryMismatch")
 
 package org.jetbrains.bazel.jvm.jps.kotlin
 
@@ -19,6 +19,7 @@ import org.jetbrains.bazel.jvm.jps.impl.BazelKotlinFsOperationsHelper
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuilder
+import org.jetbrains.bazel.jvm.jps.impl.markFilesForCurrentRound
 import org.jetbrains.bazel.jvm.kotlin.configureModule
 import org.jetbrains.bazel.jvm.kotlin.createJvmPipeline
 import org.jetbrains.bazel.jvm.kotlin.executeJvmPipeline
@@ -34,7 +35,6 @@ import org.jetbrains.jps.incremental.BuilderCategory
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.ModuleLevelBuilder
-import org.jetbrains.jps.incremental.RebuildRequestedException
 import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.kotlin.backend.common.output.OutputFile
@@ -73,9 +73,7 @@ import org.jetbrains.kotlin.jps.build.KotlinChunk
 import org.jetbrains.kotlin.jps.build.KotlinCompileContext
 import org.jetbrains.kotlin.jps.build.KotlinDirtySourceFilesHolder
 import org.jetbrains.kotlin.jps.build.KotlinDirtySourceFilesHolder.TargetFiles
-import org.jetbrains.kotlin.jps.build.kotlin
 import org.jetbrains.kotlin.jps.build.testingContext
-import org.jetbrains.kotlin.jps.incremental.CacheStatus
 import org.jetbrains.kotlin.jps.incremental.JpsIncrementalCache
 import org.jetbrains.kotlin.jps.incremental.JpsLookupStorageManager
 import org.jetbrains.kotlin.jps.targets.KotlinJvmModuleBuildTarget
@@ -87,7 +85,6 @@ import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.modules.TargetId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.preloading.ClassCondition
-import org.jetbrains.kotlin.progress.CompilationCanceledException
 import org.jetbrains.kotlin.progress.CompilationCanceledStatus
 import java.io.File
 import java.nio.file.Files
@@ -115,24 +112,19 @@ internal class IncrementalKotlinBuilder(
 
   override fun chunkBuildStarted(context: CompileContext, chunk: ModuleChunk) {
     val kotlinContext = ensureKotlinContextInitialized(context, span)
-    if (isRebuild) {
-      return
-    }
-
-    if (chunk.targets.none { kotlinContext.hasKotlinMarker.get(it) == true }) {
+    if (isRebuild || kotlinContext.hasKotlinMarker.get(chunk.targets.single()) != true) {
       return
     }
 
     val kotlinChunk = kotlinContext.getChunk(chunk) ?: return
-    if (!kotlinContext.rebuildingAllKotlin) {
-      val target = kotlinChunk.targets.single()
-      if (target.initialLocalCacheAttributesDiff.status == CacheStatus.INVALID) {
-        throw RebuildRequestedException(RuntimeException("cache is invalid, rebuilding (diff=${target.initialLocalCacheAttributesDiff}"))
-      }
-
-      if (kotlinChunk.isEnabled) {
-        markAdditionalFilesForInitialRound(kotlinChunk, chunk, kotlinContext, jpsTarget)
-      }
+    if (kotlinChunk.isEnabled) {
+      markAdditionalFilesForInitialRound(
+        kotlinChunk = kotlinChunk,
+        chunk = chunk,
+        kotlinContext = kotlinContext,
+        moduleTarget = jpsTarget,
+        span = span,
+      )
     }
   }
 
@@ -141,6 +133,7 @@ internal class IncrementalKotlinBuilder(
     chunk: ModuleChunk,
     kotlinContext: KotlinCompileContext,
     moduleTarget: BazelModuleBuildTarget,
+    span: Span,
   ) {
     val context = kotlinContext.jpsContext
     val dirtyFilesHolder = KotlinDirtySourceFilesHolder(
@@ -150,7 +143,7 @@ internal class IncrementalKotlinBuilder(
         override fun processDirtyFiles(processor: FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>) {
           context.projectDescriptor.fsState.processFilesToRecompile(context, chunk.targets.single(), processor)
         }
-      }
+      },
     )
 
     val removedClasses = hashSet<String>()
@@ -183,10 +176,13 @@ internal class IncrementalKotlinBuilder(
       reporter = BazelJpsICReporter(span),
     )
 
-    val fsOperations = BazelKotlinFsOperationsHelper(context = context, chunk = chunk, span = span, dataManager = dataManager)
-    fsOperations.markFilesForCurrentRound(
-      files = affectedByRemovedClasses.dirtyFiles.asSequence().map { it.toPath() } + affectedByRemovedClasses.forceRecompileTogether.asSequence().map { it.toPath() },
+    markFilesForCurrentRound(
+      files = affectedByRemovedClasses.dirtyFiles.concat(affectedByRemovedClasses.forceRecompileTogether),
       targetDirtyFiles = targetDirtyFiles,
+      span = span,
+      context = context,
+      target = moduleTarget,
+      dataManager = dataManager,
     )
   }
 
@@ -199,30 +195,26 @@ internal class IncrementalKotlinBuilder(
     outputConsumer: BazelTargetBuildOutputConsumer,
     outputSink: OutputSink
   ): ModuleLevelBuilder.ExitCode {
-    val kotlinTarget = context.kotlin.targetsBinding.get(chunk.representativeTarget()) ?: return ModuleLevelBuilder.ExitCode.OK
-    val fsOperations = BazelKotlinFsOperationsHelper(
-      context = context,
+    val kotlinContext = getKotlinCompileContext(context)
+    val kotlinTarget = kotlinContext.targetsIndex.byJpsTarget.get(jpsTarget) ?: return ModuleLevelBuilder.ExitCode.OK
+    val fsOperations = BazelKotlinFsOperationsHelper(context = context, chunk = chunk)
+    val proposedExitCode = doBuild(
       chunk = chunk,
-      dataManager = dataManager,
-      span = span,
+      representativeTarget = kotlinTarget,
+      context = context,
+      dirtyFilesHolder = dirtyFilesHolder,
+      messageCollector = MessageCollectorAdapter(context, span, kotlinTarget),
+      outputConsumer = outputConsumer,
+      fsOperations = fsOperations,
+      kotlinContext = kotlinContext,
     )
-    val proposedExitCode = try {
-      doBuild(
-        chunk = chunk,
-        representativeTarget = kotlinTarget,
-        context = context,
-        dirtyFilesHolder = dirtyFilesHolder,
-        messageCollector = MessageCollectorAdapter(context, span, kotlinTarget),
-        outputConsumer = outputConsumer,
-        fsOperations = fsOperations,
-      )
-    }
-    catch (e: CompilationCanceledException) {
-      // https://youtrack.jetbrains.com/issue/KTI-2139
-      throw CancellationException(e)
-    }
 
-    val actualExitCode = if (proposedExitCode == ModuleLevelBuilder.ExitCode.OK && fsOperations.hasMarkedDirty) ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED else proposedExitCode
+    val actualExitCode = if (proposedExitCode == ModuleLevelBuilder.ExitCode.OK && fsOperations.hasMarkedDirty) {
+      ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED
+    }
+    else {
+      proposedExitCode
+    }
     context.testingContext?.buildLogger?.buildFinished(actualExitCode)
     return actualExitCode
   }
@@ -235,8 +227,8 @@ internal class IncrementalKotlinBuilder(
     messageCollector: MessageCollectorAdapter,
     outputConsumer: BazelTargetBuildOutputConsumer,
     fsOperations: BazelKotlinFsOperationsHelper,
+    kotlinContext: KotlinCompileContext,
   ): ExitCode {
-    val kotlinContext = context.kotlin
     val kotlinChunk = kotlinContext.getChunk(chunk)!!
     if (!kotlinChunk.isEnabled) {
       return ModuleLevelBuilder.ExitCode.NOTHING_DONE
@@ -247,7 +239,7 @@ internal class IncrementalKotlinBuilder(
     val isChunkRebuilding = isRebuild || kotlinContext.rebuildAfterCacheVersionChanged.get(target) == true
 
     val kotlinDirtyFilesHolder = KotlinDirtySourceFilesHolder(chunk, context, dirtyFilesHolder)
-    val dirtyByTarget = kotlinDirtyFilesHolder.byTarget.get(dirtyFilesHolder.target)
+    val dirtyByTarget = kotlinDirtyFilesHolder.byTarget.get(jpsTarget)
     if (dirtyByTarget == null || (dirtyByTarget.removed.isEmpty() && dirtyByTarget.dirty.isEmpty())) {
       if (isChunkRebuilding) {
         kotlinContext.hasKotlinMarker.set(target, false)
@@ -280,7 +272,6 @@ internal class IncrementalKotlinBuilder(
     val generatedFiles = doCompileModuleChunk(
       chunk = kotlinChunk,
       outputItemCollector = outputItemCollector,
-      representativeTarget = representativeTarget,
       context = context,
       targetDirtyFiles = dirtyByTarget,
       fsOperations = fsOperations,
@@ -304,17 +295,22 @@ internal class IncrementalKotlinBuilder(
       JavaBuilderUtil.registerSuccessfullyCompiled(context, dirtyByTarget.dirty.keys.toList())
     }
 
-    markDirtyComplementaryMultifileClasses(
-      files = generatedFiles,
-      kotlinModuleBuilderTarget = representativeTarget,
-      incrementalCaches = incrementalCaches,
-      fsOperations = fsOperations,
-    )
+    val cache = incrementalCaches.get(representativeTarget)
+    if (cache is IncrementalJvmCache) {
+      markDirtyComplementaryMultifileClasses(
+        files = generatedFiles,
+        cache = cache,
+        fsOperations = fsOperations,
+        target = jpsTarget,
+        dataManager = dataManager,
+        span = span,
+      )
+    }
 
     // we do not save cache version - TargetConfigurationDigestProperty.KOTLIN_VERSION is used to rebuild in case of kotlinc update
 
     if (kotlinContext.hasKotlinMarker.get(target) == null) {
-      fsOperations.markChunk(excludeFiles = dirtyByTarget.dirty.keys)
+      fsOperations.markChunk(context = context, excludeFiles = dirtyByTarget.dirty.keys, dataManager = dataManager)
     }
 
     kotlinContext.hasKotlinMarker.set(target, true)
@@ -363,11 +359,14 @@ internal class IncrementalKotlinBuilder(
     if (!isChunkRebuilding) {
       doProcessChangesUsingLookups(
         collector = changeCollector,
-        compiledFiles = dirtyByTarget.dirty.keys.mapTo(linkedSet()) { it.toPath() },
+        compiledFiles = dirtyByTarget.dirty.keys.mapTo(hashSet()) { it.toPath() },
         lookupStorageManager = kotlinContext.lookupStorageManager,
         fsOperations = fsOperations,
         caches = incrementalCaches.values,
         reporter = BazelJpsICReporter(span),
+        target = jpsTarget,
+        dataManager = dataManager,
+        span = span,
       )
     }
 
@@ -379,7 +378,6 @@ internal class IncrementalKotlinBuilder(
 // todo(1.2.80): introduce KotlinRoundCompileContext, move dirtyFilesHolder, fsOperations, environment to it
 private fun doCompileModuleChunk(
   chunk: KotlinChunk,
-  representativeTarget: KotlinModuleBuildTarget<*>,
   context: CompileContext,
   targetDirtyFiles: TargetFiles?,
   fsOperations: BazelKotlinFsOperationsHelper,
@@ -388,14 +386,13 @@ private fun doCompileModuleChunk(
   messageCollector: MessageCollectorAdapter,
   outputConsumer: BazelTargetBuildOutputConsumer,
   outputItemCollector: OutputItemsCollectorImpl,
-
   span: Span,
 ): List<GeneratedFile>? {
   val target = chunk.targets.single() as KotlinJvmModuleBuildTarget
   target.nextRound(context)
 
   val cache = incrementalCaches.get(target)
-  val jpsTarget = target.jpsModuleBuildTarget
+  val jpsTarget = target.jpsModuleBuildTarget as BazelModuleBuildTarget
 
   if (cache != null && targetDirtyFiles != null) {
     val dirtyFiles = targetDirtyFiles.dirty.keys.concat(targetDirtyFiles.removed)
@@ -406,6 +403,8 @@ private fun doCompileModuleChunk(
       targetDirtyFiles = targetDirtyFiles,
       parentSpan = span,
       outputSink = outputConsumer.outputSink,
+      dataManager = outputConsumer.dataManager!!,
+      target = jpsTarget,
     )
 
     cache.markDirty(dirtyFiles)
@@ -419,7 +418,6 @@ private fun doCompileModuleChunk(
     registerFilesToCompile(context, allDirtyFiles)
   }
 
-  require(chunk.representativeTarget == representativeTarget)
   val filesSet = targetDirtyFiles?.dirty?.keys ?: emptySet()
   val changedSources = targetDirtyFiles?.dirty?.values ?: emptyList()
   val removedFiles = targetDirtyFiles?.removed ?: emptyList()
@@ -546,27 +544,41 @@ private fun updateLookupStorage(
 
 private fun markDirtyComplementaryMultifileClasses(
   files: List<GeneratedFile>,
-  incrementalCaches: Map<KotlinModuleBuildTarget<*>, JpsIncrementalCache>,
+  cache: IncrementalJvmCache,
   fsOperations: BazelKotlinFsOperationsHelper,
-  kotlinModuleBuilderTarget: KotlinModuleBuildTarget<*>,
+  target: BazelModuleBuildTarget,
+  dataManager: BazelBuildDataProvider,
+  span: Span,
 ) {
-  val cache = incrementalCaches.get(kotlinModuleBuilderTarget) as? IncrementalJvmCache ?: return
-  val generated = files.filterIsInstance<GeneratedJvmClass>()
-  val multifileClasses = generated.filter { it.outputClass.classHeader.kind == KotlinClassHeader.Kind.MULTIFILE_CLASS }
-  val expectedAllParts = multifileClasses.flatMap { cache.getAllPartsOfMultifileFacade(it.outputClass.className).orEmpty() }
+  val multifileClasses = files
+    .asSequence()
+    .filterIsInstance<GeneratedJvmClass>()
+    .filter { it.outputClass.classHeader.kind == KotlinClassHeader.Kind.MULTIFILE_CLASS }
+    .toList()
   if (multifileClasses.isEmpty()) {
     return
   }
 
-  val actualParts = generated
+  val actualParts = files
     .asSequence()
+    .filterIsInstance<GeneratedJvmClass>()
     .filter { it.outputClass.classHeader.kind == KotlinClassHeader.Kind.MULTIFILE_CLASS_PART }
     .map { it.outputClass.className.toString() }
     .toList()
+
+  val expectedAllParts = multifileClasses.flatMap { cache.getAllPartsOfMultifileFacade(it.outputClass.className).orEmpty() }
   if (!actualParts.containsAll(expectedAllParts)) {
     fsOperations.markFiles(
-      expectedAllParts.asSequence().flatMap { cache.sourcesByInternalName(it) }.map { it.toPath() }
-        + multifileClasses.asSequence().flatMap { it.sourceFiles }.map { it.toPath() }
+      files = (
+        expectedAllParts.asSequence().flatMap { cache.sourcesByInternalName(it) }
+          + multifileClasses.asSequence().flatMap { it.sourceFiles }
+        )
+        .map { it.toPath() }
+        .filterTo(linkedSet()) { Files.exists(it) },
+      currentRound = false,
+      target = target,
+      dataManager = dataManager,
+      span = span,
     )
   }
 }
@@ -587,26 +599,38 @@ private fun doProcessChangesUsingLookups(
   fsOperations: BazelKotlinFsOperationsHelper,
   caches: Iterable<JpsIncrementalCache>,
   reporter: ICReporter,
+  target: BazelModuleBuildTarget,
+  dataManager: BazelBuildDataProvider,
+  span: Span,
 ) {
-  val allCaches = caches.flatMap { it.thisWithDependentCaches }
-
   val dirtyFiles = getDirtyFiles(
     changeCollector = collector,
-    caches = allCaches,
+    caches = caches.flatMap { it.thisWithDependentCaches },
     lookupStorageManager = lookupStorageManager,
     reporter = reporter,
   )
-  // if a list of inheritors of sealed class has changed it should be recompiled with all the inheritors
+  // If a list of inheritors of sealed class has changed, it should be recompiled with all the inheritors
   // Here we have a small optimization. Do not recompile the bunch if ALL these files were recompiled during the previous round.
-  val excludeFiles = if (compiledFiles.containsAll(dirtyFiles.forceRecompileTogether.map { it.toPath() })) {
+  val forceRecompileTogether = dirtyFiles.forceRecompileTogether
+  val excludeFiles = if (forceRecompileTogether.isEmpty() || compiledFiles.containsAll(forceRecompileTogether.map { it.toPath() })) {
     compiledFiles
   }
   else {
-    compiledFiles.minus(dirtyFiles.forceRecompileTogether.map { it.toPath() })
+    val result = HashSet(compiledFiles)
+    for (file in forceRecompileTogether) {
+      result.remove(file.toPath())
+    }
+    result
   }
-  fsOperations.markInChunkOrDependents(
-    files = (dirtyFiles.dirtyFiles.asSequence().map { it.toPath() } + dirtyFiles.forceRecompileTogether.asSequence().map { it.toPath() }),
-    excludeFiles = excludeFiles,
+
+  fsOperations.markFiles(
+    files = (dirtyFiles.dirtyFiles.asSequence() + forceRecompileTogether.asSequence())
+      .map { it.toPath() }
+      .filterTo(linkedSet()) { !excludeFiles.contains(it) && Files.exists(it) },
+    currentRound = false,
+    dataManager = dataManager,
+    target = target,
+    span = span,
   )
 }
 
@@ -624,6 +648,6 @@ private fun getDirtyFiles(
   }
   return FilesToRecompile(
     dirtyFiles = dirtyFilesFromLookups + mapClassesFqNamesToFiles(caches, dirtyClassFqNames, reporter),
-    forceRecompileTogether = mapClassesFqNamesToFiles(caches, forceRecompile, reporter)
+    forceRecompileTogether = mapClassesFqNamesToFiles(caches, forceRecompile, reporter),
   )
 }

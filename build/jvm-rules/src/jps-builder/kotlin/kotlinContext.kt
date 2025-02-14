@@ -10,54 +10,41 @@ import org.jetbrains.kotlin.jps.build.kotlinCompileContextKey
 import org.jetbrains.kotlin.jps.build.testingContext
 import kotlin.system.measureTimeMillis
 
-/**
- * Ensure Kotlin Context initialized.
- * Kotlin Context should be initialized only when required (before the first kotlin chunk build).
- */
+internal fun getKotlinCompileContext(context: CompileContext): KotlinCompileContext = context.getUserData(kotlinCompileContextKey)!!
+
 internal fun ensureKotlinContextInitialized(context: CompileContext, span: Span): KotlinCompileContext {
   context.getUserData(kotlinCompileContextKey)?.let {
     return it
   }
 
-  // don't synchronize on context, since it is chunk local only
-  synchronized(kotlinCompileContextKey) {
-    context.getUserData(kotlinCompileContextKey)?.let {
-      return it
-    }
-    return initializeKotlinContext(context, span)
+  synchronized(context) {
+    return context.getUserData(kotlinCompileContextKey) ?: initializeKotlinContext(context, span)
   }
 }
 
 internal fun ensureKotlinContextDisposed(context: CompileContext) {
-  if (context.getUserData(kotlinCompileContextKey) != null) {
-    synchronized(kotlinCompileContextKey) {
-      val kotlinCompileContext = context.getUserData(kotlinCompileContextKey)
-      if (kotlinCompileContext != null) {
-        kotlinCompileContext.dispose()
-        context.putUserData(kotlinCompileContextKey, null)
-      }
-    }
+  if (context.getUserData(kotlinCompileContextKey) == null) {
+    return
+  }
+
+  synchronized(context) {
+    val kotlinCompileContext = context.getUserData(kotlinCompileContextKey) ?: return
+    kotlinCompileContext.dispose()
+    context.putUserData(kotlinCompileContextKey, null)
   }
 }
 
 private fun initializeKotlinContext(context: CompileContext, span: Span): KotlinCompileContext {
   lateinit var kotlinContext: KotlinCompileContext
-
   val time = measureTimeMillis {
     kotlinContext = KotlinCompileContext(context)
 
     context.putUserData(kotlinCompileContextKey, kotlinContext)
     context.testingContext?.kotlinCompileContext = kotlinContext
-
-    if (kotlinContext.shouldCheckCacheVersions && kotlinContext.hasKotlin()) {
-      kotlinContext.checkCacheVersions()
-    }
-
     kotlinContext.cleanupCaches()
     kotlinContext.reportUnsupportedTargets()
   }
 
   span.addEvent("total Kotlin global compile context initialization time: $time ms")
-
   return kotlinContext
 }
