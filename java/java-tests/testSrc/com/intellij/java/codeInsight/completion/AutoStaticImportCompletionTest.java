@@ -298,6 +298,46 @@ public class AutoStaticImportCompletionTest extends NormalCompletionTestCase {
     checkResult();
   }
 
+  @NeedsIndex.Full
+  public void testDefaultPackage() {
+    addStaticAutoImport("Foo.bar");
+    myFixture.addClass("""
+                         public final class Foo {
+                           public static void bar() {}
+                         }
+                         """);
+    configure();
+    LookupElement[] elements = myFixture.getLookupElements();
+    if (elements != null) {
+      LookupElement element = ContainerUtil.find(elements, e ->
+        e.getLookupString().equals("bar") &&
+        e.getPsiElement() instanceof PsiMethod method &&
+        method.getContainingClass().getQualifiedName().equals("Foo"));
+      assertNotNull(element);
+      selectItem(element);
+    }
+    checkResult();
+  }
+
+  @NeedsIndex.Full
+  public void testDefaultPackageFromNonDefaultPackage() {
+    addStaticAutoImport("Foo.bar");
+    myFixture.addClass("""
+                         public final class Foo {
+                           public static void bar() {}
+                         }
+                         """);
+    configure();
+    LookupElement[] elements = myFixture.getLookupElements();
+    if (elements != null) {
+      LookupElement element = ContainerUtil.find(elements, e ->
+        e.getLookupString().equals("bar") &&
+        e.getPsiElement() instanceof PsiMethod method &&
+        method.getContainingClass().getQualifiedName().equals("Foo"));
+      assertNull(element);
+    }
+  }
+
   private void addStaticAutoImport(@NotNull String name) {
     JavaProjectCodeInsightSettings.getSettings(getProject()).includedAutoStaticNames.add(name);
   }
