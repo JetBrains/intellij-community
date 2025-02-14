@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
@@ -10,10 +10,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.List;
-import java.util.StringTokenizer;
 
 public class ColorSampleLookupValue {
   private static final int NORMAL_PRIORITY = 0;
@@ -137,13 +135,13 @@ public class ColorSampleLookupValue {
     if (myIsStandard != value.myIsStandard) {
       return false;
     }
-    if (myColor != null ? !myColor.equals(value.myColor) : value.myColor != null) {
+    if (!Objects.equals(myColor, value.myColor)) {
       return false;
     }
-    if (myName != null ? !myName.equals(value.myName) : value.myName != null) {
+    if (!Objects.equals(myName, value.myName)) {
       return false;
     }
-    if (myValue != null ? !myValue.equals(value.myValue) : value.myValue != null) {
+    if (!Objects.equals(myValue, value.myValue)) {
       return false;
     }
 
