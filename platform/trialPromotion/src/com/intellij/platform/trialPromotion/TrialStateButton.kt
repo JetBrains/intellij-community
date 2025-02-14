@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.components.trialState
+package com.intellij.platform.trialPromotion
 
 import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
 import com.intellij.openapi.util.NlsContexts

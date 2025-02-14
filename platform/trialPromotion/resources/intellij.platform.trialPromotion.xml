@@ -1,0 +1,16 @@
+<idea-plugin package="com.intellij.platform.trialPromotion">
+  <actions>
+    <action id="TrialStateWidget" class="com.intellij.platform.trialPromotion.TrialStateWidget">
+      <add-to-group group-id="MainToolbarRight" anchor="last"/>
+    </action>
+  </actions>
+
+  <applicationListeners>
+    <listener class="com.intellij.platform.trialPromotion.TrialStateWidget$TrialStateWidgetUnregister"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.intellij.platform.trialPromotion.vision.TrialTabVisionContentProvider" />
+  </extensions>
+</idea-plugin>

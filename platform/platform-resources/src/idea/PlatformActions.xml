@@ -970,7 +970,6 @@
         <action id="main.toolbar.Filename" class="com.intellij.openapi.wm.impl.headertoolbar.FilenameToolbarWidgetAction"/>
       </group>
       <group id="MainToolbarRight" searchable="false">
-        <action id="TrialStateWidget" class="com.intellij.ui.components.trialState.TrialStateWidget"/>
         <reference ref="SearchEverywhere"/>
         <reference ref="SettingsEntryPoint"/>
       </group>

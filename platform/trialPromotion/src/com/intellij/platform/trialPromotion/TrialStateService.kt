@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.components.trialState
+package com.intellij.platform.trialPromotion
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -13,7 +15,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.GotItTextBuilder
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.LicensingFacade
-import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.RestartDialogImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -36,10 +37,13 @@ internal class TrialStateService(private val scope: CoroutineScope) : Disposable
     GRACE_ENDED
   }
 
+  data class TrialProgressData(val daysRemaining: Int, val daysTotal: Int)
+
   data class State(
     val trialState: TrialState, val trialStateChanged: Boolean,
     val colorState: TrialStateButton.ColorState, private val remainedDays: Int, private val trialLengthDays: Int,
   ) {
+    fun getProgressData(): TrialProgressData = TrialProgressData(remainedDays, trialLengthDays)
 
     fun getButtonText(): @NlsContexts.Button String {
       return when (trialState) {
@@ -99,7 +103,12 @@ internal class TrialStateService(private val scope: CoroutineScope) : Disposable
 
     private fun GotItTooltip.addLearnMoreButton(): GotItTooltip {
       return withButtonLabel(IdeBundle.message("trial.state.got.it.learn.more"))
-        .withGotItButtonAction { TrialStateUtils.openTrailStateTab() }
+        .withGotItButtonAction {
+          val action = ActionManager.getInstance().getAction("TrialStateWidget")
+          if (action != null) {
+            ActionManager.getInstance().tryToExecute(action, null, null, ActionPlaces.MAIN_TOOLBAR, false)
+          }
+        }
     }
   }
 
@@ -108,8 +117,7 @@ internal class TrialStateService(private val scope: CoroutineScope) : Disposable
 
     fun isEnabled(): Boolean {
       // Community IDEs don't have the registry key
-      return Registry.`is`("trial.state.widget", false) &&
-             (PlatformUtils.isPyCharm() || PlatformUtils.isIntelliJ())
+      return Registry.`is`("trial.state.widget", false)
     }
 
     fun isApplicable(): Boolean {

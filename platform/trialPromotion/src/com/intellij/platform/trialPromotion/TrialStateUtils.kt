@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.components.trialState
+package com.intellij.platform.trialPromotion
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionManager
@@ -56,11 +56,6 @@ internal object TrialStateUtils {
     else {
       ApplicationManagerEx.getApplicationEx().restart(true)
     }
-  }
-
-  fun openTrailStateTab() {
-    // todo implement
-    println("openTrailStateTab not implemented")
   }
 
   fun showRegister() {
