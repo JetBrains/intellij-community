@@ -130,6 +130,22 @@ class ProjectJdkEelTest {
     }
   }
 
+  @Test
+  @RegistryKey("ide.workspace.model.per.environment.model.separation", "false")
+  fun `models are fine when separation is disabled`() = timeoutRunBlocking {
+    val localJdkTableView = ProjectJdkTable.getInstance(localProject.get())
+    val eelJdkTableView = ProjectJdkTable.getInstance(eelProject.get())
+
+    withAddedSdk(localJdkTableView, "local sdk", EnvKind.Local) {
+      withAddedSdk(eelJdkTableView, "eel sdk", EnvKind.Eel) {
+        val localModel = getLocalSdkModel()
+        val eelModel = getEelSdkModel()
+        Assertions.assertEquals(1, localModel.sdks.size)
+        Assertions.assertEquals(1, eelModel.sdks.size)
+      }
+    }
+  }
+
 
   @Test
   @RegistryKey("ide.workspace.model.per.environment.model.separation", "true")

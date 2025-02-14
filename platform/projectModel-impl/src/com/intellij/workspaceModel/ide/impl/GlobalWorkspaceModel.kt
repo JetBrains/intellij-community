@@ -31,7 +31,6 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.mutableSdkMap
@@ -400,10 +399,10 @@ class GlobalWorkspaceModelRegistry {
       GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID
     }
     else {
-      EelNioBridgeService.getInstanceSync().tryGetId(descriptor)
-      ?: throw IllegalArgumentException("Descriptor $descriptor must be registered before using in Workspace Model")
+      EelNioBridgeService.getInstanceSync().tryGetId(protectedDescriptor)
+      ?: throw IllegalArgumentException("Descriptor $protectedDescriptor must be registered before using in Workspace Model")
     }
-    return environmentToModel.computeIfAbsent(descriptor) { GlobalWorkspaceModel(descriptor, InternalEnvironmentNameImpl(internalName)) }
+    return environmentToModel.computeIfAbsent(protectedDescriptor) { GlobalWorkspaceModel(protectedDescriptor, InternalEnvironmentNameImpl(internalName)) }
   }
 
   fun getGlobalModelByDescriptorName(name: GlobalWorkspaceModelCache.InternalEnvironmentName): GlobalWorkspaceModel {
@@ -420,7 +419,12 @@ class GlobalWorkspaceModelRegistry {
   }
 
   fun getGlobalModels(): List<GlobalWorkspaceModel> {
-    return environmentToModel.values.toList()
+    return if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
+      environmentToModel.values.toList()
+    }
+    else {
+      listOf(getGlobalModel(LocalEelDescriptor))
+    }
   }
 
   @TestOnly
