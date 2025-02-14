@@ -135,6 +135,10 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean FORMAT_INJECTED_FRAGMENTS = true;
   public boolean ADD_INDENT_INSIDE_INJECTIONS = false;
 
+  public boolean USE_TRAILING_COMMA_IN_COLLECTIONS = false;
+  public boolean USE_TRAILING_COMMA_IN_PARAMETER_LIST = false;
+  public boolean USE_TRAILING_COMMA_IN_ARGUMENTS_LIST = false;
+
   public PyCodeStyleSettings(@NotNull CodeStyleSettings container) {
     super("Python", container);
   }

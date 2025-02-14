@@ -102,6 +102,17 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
                                    "METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE",
                                    "METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE",
                                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS");
+
+      consumer.showCustomOption(PyCodeStyleSettings.class,
+                                "USE_TRAILING_COMMA_IN_ARGUMENTS_LIST",
+                                PySyntaxBundle.message("formatter.force.trailing.comma.if.multiline"),
+                                ApplicationBundle.message("wrapping.method.arguments"));
+
+      consumer.showCustomOption(PyCodeStyleSettings.class,
+                                "USE_TRAILING_COMMA_IN_PARAMETER_LIST",
+                                PySyntaxBundle.message("formatter.force.trailing.comma.if.multiline"),
+                                ApplicationBundle.message("wrapping.method.parameters"));
+
       consumer.showCustomOption(PyCodeStyleSettings.class, "NEW_LINE_AFTER_COLON",
                                 PySyntaxBundle.message("formatter.single.clause.statements"),
                                 PySyntaxBundle.message("formatter.force.new.line.after.colon"));
@@ -110,6 +121,10 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
                                 PySyntaxBundle.message("formatter.force.new.line.after.colon"));
       consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_COLLECTIONS_AND_COMPREHENSIONS",
                                 PySyntaxBundle.message("formatter.align.when.multiline"),
+                                PySyntaxBundle.message("formatter.collections.and.comprehensions"));
+      consumer.showCustomOption(PyCodeStyleSettings.class,
+                                "USE_TRAILING_COMMA_IN_COLLECTIONS",
+                                PySyntaxBundle.message("formatter.force.trailing.comma.if.multiline"),
                                 PySyntaxBundle.message("formatter.collections.and.comprehensions"));
 
       consumer.showCustomOption(PyCodeStyleSettings.class, "FROM_IMPORT_WRAPPING",
@@ -127,7 +142,7 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
                                 PySyntaxBundle.message("formatter.from.import.statements.force.parentheses.if.multiline"),
                                 PySyntaxBundle.message("formatter.from.import.statements"));
       consumer.showCustomOption(PyCodeStyleSettings.class, "FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE",
-                                PySyntaxBundle.message("formatter.from.import.statements.force.comma.if.multline"),
+                                PySyntaxBundle.message("formatter.force.trailing.comma.if.multiline"),
                                 PySyntaxBundle.message("formatter.from.import.statements"));
 
       consumer.showCustomOption(PyCodeStyleSettings.class, "LIST_WRAPPING",
