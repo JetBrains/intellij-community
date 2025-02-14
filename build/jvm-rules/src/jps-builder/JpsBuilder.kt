@@ -117,7 +117,7 @@ private suspend fun incrementalBuild(
   writer: Writer,
   allocator: RootAllocator,
 ): Int {
-  val dependencyFileToDigest = if (isLibTracked) hashMap<Path, ByteArray>() else null
+  val dependencyFileToDigest = if (isLibTracked) null else hashMap<Path, ByteArray>()
   val sourceFileToDigest = hashMap<Path, ByteArray>(request.inputPaths.size)
   val sources = ArrayList<Path>()
   val isDebugEnabled = request.verbosity > 0

@@ -121,13 +121,6 @@ jvm_import(
 )
 
 jvm_import(
-    name = "kotlinx-coroutines-core",
-    jar = "@kotlinx-coroutines-core-jvm//file",
-    source_jar = "@kotlinx-coroutines-core-jvm-sources//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
     name = "flatbuffers-java",
     jar = "@flatbuffers-java//file",
     source_jar = "@flatbuffers-java-sources//file",

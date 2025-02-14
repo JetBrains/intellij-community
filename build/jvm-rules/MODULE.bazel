@@ -196,19 +196,6 @@ http_file(
 )
 
 http_file(
-    name = "kotlinx-coroutines-core-jvm",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.10.1/kotlinx-coroutines-core-jvm-1.10.1.jar",
-    sha256 = "069c5988633230e074ec0d39321ec3cdaa4547c49e90ba936c63d8fc91c8c00d",
-    downloaded_file_path = "kotlinx-coroutines-core-jvm-1.10.1.jar",
-)
-http_file(
-    name = "kotlinx-coroutines-core-jvm-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/1.10.1/kotlinx-coroutines-core-jvm-1.10.1-sources.jar",
-    sha256 = "3faa298de8000d68744a179f7d413ab1672acf1d77cb8d6be57a78544657edd2",
-    downloaded_file_path = "kotlinx-coroutines-core-jvm-1.10.1-sources.jar",
-)
-
-http_file(
     name = "flatbuffers-java",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/flatbuffers/flatbuffers-java/25.1.24/flatbuffers-java-25.1.24.jar",
     sha256 = "dbc103dfd4eb25664f87492968d8e01812c13cf939e5b72db2af38bfce530af3",

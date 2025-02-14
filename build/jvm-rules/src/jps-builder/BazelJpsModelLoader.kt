@@ -68,6 +68,8 @@ internal fun loadJpsModel(
   classPathRootDir: Path,
   dependencyFileToDigest: Map<Path, ByteArray>?,
 ): Pair<JpsModel, TargetConfigurationDigestContainer> {
+  require((dependencyFileToDigest == null) == isLibTracked)
+
   val model = jpsElementFactory.createModel()
 
   val digests = TargetConfigurationDigestContainer()
