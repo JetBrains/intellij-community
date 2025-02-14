@@ -23,6 +23,7 @@ import java.awt.Color
 
 abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: FileStatus?) : ChangesBrowserNode<U>(userObject), PathElementIdProvider {
   private val filePath: FilePath get() = filePath(getUserObject())
+  private val flattenedParents = mutableListOf<SerializablePathElement>()
   private val originInfo: OriginInfo? by lazy(LazyThreadSafetyMode.NONE) { buildOriginInfo() }
 
   protected abstract fun filePath(userObject: U): FilePath
@@ -78,43 +79,20 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
     }
   }
 
-  private fun getRelativePath(): @NlsSafe String? {
-    val path = filePath
-    val isLocal = !path.isNonLocal
-    val parentPath = safeCastToFilePath(getParent())
-    if (parentPath != null) {
-      val caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive
-      return FileUtil.getRelativePath(parentPath.path, path.path, '/', caseSensitive)
-    }
-    else if (isLocal) {
-      val project = guessProject()
-      if (project != null) {
-        return VcsUtil.getPresentablePath(project, path, true, false)
-      }
-      else {
-        return null;
-      }
-    }
-    else {
-      return null
-    }
+  internal fun appendFlattenedParent(parentNode: ChangesBrowserNode<*>) {
+    val parentUserObject = parentNode.userObject
+    if (parentUserObject !is FilePath) return
+    flattenedParents.add(SerializablePathElement(
+      parentUserObject.name,
+      TreeState.defaultPathElementType(parentNode)
+    ))
   }
-
-  private fun guessProject(): Project? =
-    when (val parent = getParent()) {
-      is ChangesBrowserChangeListNode -> parent.project
-      else -> null
-    }
 
   override fun getPathElementId(): String = filePath.name
 
   override fun getFlattenedElements(): List<SerializablePathElement?>? {
-    val relativePath = getRelativePath() ?: return null
-    if (!relativePath.contains('/')) return null
-    val components = FileUtil.splitPath(relativePath, '/')
-    return components.map {
-      SerializablePathElement(it, TreeState.defaultPathElementType(this@AbstractChangesBrowserFilePathNode))
-    }
+    if (flattenedParents.isEmpty()) return null
+    return flattenedParents + SerializablePathElement(getPathElementId(), TreeState.defaultPathElementType(this))
   }
 
   private fun appendOriginText(renderer: ChangesBrowserNodeRenderer) {
