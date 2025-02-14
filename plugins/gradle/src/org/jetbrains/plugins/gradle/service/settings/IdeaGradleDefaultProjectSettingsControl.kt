@@ -25,7 +25,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
-import org.jetbrains.plugins.gradle.service.GradleInstallationManager.getGradleVersionSafe
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager.Companion.getGradleVersionSafe
 import org.jetbrains.plugins.gradle.service.project.open.suggestGradleHome
 import org.jetbrains.plugins.gradle.service.settings.IdeaGradleDefaultProjectSettingsControl.DistributionTypeItem.LOCAL
 import org.jetbrains.plugins.gradle.service.settings.IdeaGradleDefaultProjectSettingsControl.DistributionTypeItem.WRAPPER
