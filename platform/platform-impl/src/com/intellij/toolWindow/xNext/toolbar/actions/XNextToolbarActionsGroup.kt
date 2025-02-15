@@ -20,7 +20,7 @@ internal class XNextToolbarActionsGroup : ActionGroup(), DumbAware {
     ActionManager.getInstance().getAction("HideAllWindows")?.let {
       actionList.add(object : AnActionWrapper(it) {
         init {
-          templatePresentation.icon = AllIcons.General.FitContent
+          templatePresentation.icon = AllIcons.Toolwindows.ToolWindowDevMode
         }
       })
     }

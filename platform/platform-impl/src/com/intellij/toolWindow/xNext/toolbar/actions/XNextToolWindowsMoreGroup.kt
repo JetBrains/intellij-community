@@ -17,7 +17,7 @@ import com.intellij.ui.UIBundle
 internal class XNextToolWindowsMoreGroup : ActionGroup(), DumbAware {
   init {
     isPopup = true
-    templatePresentation.icon = AllIcons.General.Groups
+    templatePresentation.icon = AllIcons.Toolwindows.ToolWindowComponents
     templatePresentation.text = UIBundle.message("more.button.accessible.name")
   }
 
