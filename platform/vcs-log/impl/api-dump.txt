@@ -961,26 +961,15 @@ f:com.intellij.vcs.log.ui.filter.TextFilterModel
 f:com.intellij.vcs.log.ui.filter.TextFilterModel$Companion
 c:com.intellij.vcs.log.ui.filter.UserFilterPopupComponent
 - com.intellij.util.ui.FilterComponent
-- pf:myUiProperties:com.intellij.vcs.log.impl.MainVcsLogUiProperties
 - p:createActionGroup():com.intellij.openapi.actionSystem.ActionGroup
 - p:createFilter(java.util.List):com.intellij.vcs.log.VcsLogUserFilter
-- pa:createFilter(java.util.List):java.lang.Object
 - p:createPopupMenu():com.intellij.openapi.ui.popup.ListPopup
-- p:createRecentItemsActionGroup():java.util.List
-- p:createSelectMultipleValuesAction():com.intellij.openapi.actionSystem.AnAction
 - p:createSpeedSearchActionGroup():com.intellij.openapi.actionSystem.ActionGroup
-- p:getActionName(java.util.List):java.lang.String
 - p:getAllValues():java.util.List
 - p:getFilterValues(com.intellij.vcs.log.VcsLogUserFilter):java.util.List
-- pa:getFilterValues(java.lang.Object):java.util.List
 - p:getLocalizedValues(java.util.Collection):java.util.List
-- p:getRecentValuesFromSettings():java.util.List
 - getTargetComponent():java.awt.Component
-- p:getText(java.lang.Object):java.lang.String
-- p:getToolTip(java.lang.Object):java.lang.String
-- p:getTooltip(java.util.Collection):java.lang.String
 - p:parseLocalizedValues(java.util.Collection):java.util.List
-- p:rememberValuesInSettings(java.util.Collection):V
 - f:showPopupMenu():V
 c:com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 - com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx

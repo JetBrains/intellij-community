@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.git.lesson
 
 import com.intellij.diff.editor.DiffEditorTabFilesManager
@@ -35,7 +35,7 @@ import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.LessonEndInfo
 import java.util.regex.Pattern
 
-class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
+internal class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
   override val sampleFilePath = "git/sphinx_cat.yml"
   override val branchName = "feature"
   private val textToFind = "sphinx"
