@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
@@ -56,13 +56,13 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
                             @NotNull InspectionManager manager,
                             @NotNull GlobalInspectionContext globalContext,
                             @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    if (myLocalInspectionBase.PARAMETER) {
+    if (localInspectionBase.PARAMETER) {
       globalContext.getRefManager().iterate(new RefJavaVisitor() {
         @Override
         public void visitMethod(@NotNull RefMethod refMethod) {
           try {
             if (!globalContext.shouldCheck(refMethod, UnusedDeclarationInspection.this) ||
-                !UnusedDeclarationPresentation.compareVisibilities(refMethod, myLocalInspectionBase.getParameterVisibility())) {
+                !UnusedDeclarationPresentation.compareVisibilities(refMethod, localInspectionBase.getParameterVisibility())) {
               return;
             }
             CommonProblemDescriptor[] descriptors = myUnusedParameters.checkElement(refMethod, scope, manager, globalContext, problemDescriptionsProcessor);
@@ -92,7 +92,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
                                              @NotNull GlobalInspectionContext globalContext,
                                              @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     boolean requests = super.queryExternalUsagesRequests(manager, globalContext, problemDescriptionsProcessor);
-    if (!requests && myLocalInspectionBase.PARAMETER) {
+    if (!requests && localInspectionBase.PARAMETER) {
       myUnusedParameters.queryExternalUsagesRequests(manager, globalContext, problemDescriptionsProcessor);
     }
     return requests;
@@ -117,7 +117,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
   public @NotNull OptPane getOptionsPane() {
     return pane(
       tabs(
-        myLocalInspectionBase.getOptionsPane().asTab(JavaBundle.message("tab.title.members.to.report")).prefix("members"),
+        localInspectionBase.getOptionsPane().asTab(JavaBundle.message("tab.title.members.to.report")).prefix("members"),
         getEntryPointsPane().asTab(JavaBundle.message("tab.title.entry.points"))
       )
     );
@@ -126,7 +126,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
   @Override
   public @NotNull OptionController getOptionController() {
     return super.getOptionController()
-      .onPrefix("members", myLocalInspectionBase.getOptionController())
+      .onPrefix("members", localInspectionBase.getOptionController())
       .onPrefix("ext", idx -> getExtensions().get(Integer.parseInt(idx)).isSelected(),
                 (idx, value) -> {
                   EntryPoint point = getExtensions().get(Integer.parseInt(idx));
