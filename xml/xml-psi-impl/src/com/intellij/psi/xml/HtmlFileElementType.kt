@@ -1,44 +1,49 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.psi.xml;
+package com.intellij.psi.xml
 
-import com.intellij.lang.Language;
-import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.psi.stubs.PsiFileStub;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.lang.Language
+import com.intellij.lang.html.HTMLLanguage
+import com.intellij.psi.stubs.PsiFileStub
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.IStubFileElementType
+import kotlin.concurrent.Volatile
 
-import java.util.Arrays;
+open class HtmlFileElementType(
+  debugName: String,
+  language: Language,
+) : IStubFileElementType<PsiFileStub<*>?>(debugName, language) {
 
-public class HtmlFileElementType extends IStubFileElementType<PsiFileStub<?>> {
+  constructor() :
+    this("html", HTMLLanguage.INSTANCE)
 
-  private static volatile int stubVersion = -1;
+  override fun getStubVersion(): Int =
+    getHtmlStubVersion() + 3
 
-  public HtmlFileElementType() {this("html", HTMLLanguage.INSTANCE);}
+  companion object {
+    @Volatile
+    private var stubVersion = -1
 
-  public HtmlFileElementType(String debugName, Language language) {super(debugName, language);}
+    @JvmStatic
+    fun getHtmlStubVersion(): Int {
+      val version = stubVersion
+      if (version != -1)
+        return version
 
-  @Override
-  public int getStubVersion() {
-    return getHtmlStubVersion() + 3;
-  }
+      val result = enumerate { it is IStubFileElementType<*> && isAcceptable(it) }
+        .sumOf { (it as IStubFileElementType<*>).stubVersion }
 
-  public static int getHtmlStubVersion() {
-    int version = stubVersion;
-    if (version != -1) return version;
-    IElementType[] dataElementTypes = IElementType.enumerate(
-      (elementType) -> elementType instanceof IStubFileElementType && isAcceptable(elementType));
+      stubVersion = result
 
-    int res = Arrays.stream(dataElementTypes).mapToInt((e) -> ((IStubFileElementType<?>)e).getStubVersion()).sum();
-    stubVersion = res;
-    
-    return res;
-  }
+      return result
+    }
 
-  public static boolean isAcceptable(IElementType elementType) {
-    String id = elementType.getLanguage().getID();
-    
-    //hardcoded values as in BaseHtmlLexer
-    //js and css dialect uses the same stub id as the parent language
-    return id.equals("JavaScript") || id.equals("CSS");
+    @JvmStatic
+    fun isAcceptable(elementType: IElementType): Boolean {
+      val id = elementType.language.id
+
+      //hardcoded values as in BaseHtmlLexer
+      //js and css dialect uses the same stub id as the parent language
+      return id == "JavaScript" || id == "CSS"
+    }
   }
 }
