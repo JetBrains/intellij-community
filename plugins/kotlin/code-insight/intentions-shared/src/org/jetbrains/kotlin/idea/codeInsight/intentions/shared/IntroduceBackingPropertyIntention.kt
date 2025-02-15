@@ -2,130 +2,191 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
-import com.intellij.openapi.editor.Editor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.descriptors.impl.SyntheticFieldDescriptor
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.project.Project
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.base.util.reformat
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.getTypeInfo
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateTypeForDeclarationInDummyFile
+import org.jetbrains.kotlin.idea.refactoring.isAbstract
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
-import org.jetbrains.kotlin.idea.util.isExpectDeclaration
+import org.jetbrains.kotlin.idea.util.isBackingFieldRequired
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 
-class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
-    KtProperty::class.java,
-    KotlinBundle.lazyMessage("introduce.backing.property")
-) {
-    override fun isApplicableTo(element: KtProperty, caretOffset: Int): Boolean {
-        if (!canIntroduceBackingProperty(element)) return false
-        return element.nameIdentifier?.textRange?.containsOffset(caretOffset) == true
+class IntroduceBackingPropertyIntention :
+    KotlinApplicableModCommandAction<KtProperty, IntroduceBackingPropertyIntention.Context>(KtProperty::class) {
+    class Context(
+        val typeInfo: TypeInfo,
+        val getterFieldReferences: List<SmartPsiElementPointer<KtSimpleNameExpression>>,
+        val setterFieldReferences: List<SmartPsiElementPointer<KtSimpleNameExpression>>,
+    )
+
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtProperty,
+        elementContext: Context,
+        updater: ModPsiUpdater
+    ) {
+        introduceBackingProperty(element, elementContext, updater)
     }
 
-    override fun applyTo(element: KtProperty, editor: Editor?) = introduceBackingProperty(element)
-}
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("introduce.backing.property")
 
-private fun canIntroduceBackingProperty(property: KtProperty): Boolean {
-    val name = property.name ?: return false
-    if (property.hasModifier(KtTokens.CONST_KEYWORD)) return false
-    if (property.hasJvmFieldAnnotation()) return false
+    override fun KaSession.prepareContext(property: KtProperty): Context? {
+        val name = property.name ?: return null
+        if (!isBackingFieldRequiredAndCanBeUsed(property)) return null
 
-    val bindingContext = property.getResolutionFacade().analyzeWithAllCompilerChecks(property).bindingContext
-    val descriptor = bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, property) as? PropertyDescriptor ?: return false
-    if (bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED, descriptor) != true) return false
-
-    val containingClass = property.getStrictParentOfType<KtClassOrObject>() ?: return false
-    if (containingClass.isExpectDeclaration()) return false
-    return containingClass.declarations.none { it is KtProperty && it.name == "_$name" }
-}
-
-private fun introduceBackingProperty(property: KtProperty) {
-    createBackingProperty(property)
-
-    property.removeModifier(KtTokens.LATEINIT_KEYWORD)
-
-    if (property.typeReference == null) {
-        val type = SpecifyTypeExplicitlyIntention.getTypeForDeclaration(property)
-        SpecifyTypeExplicitlyIntention.addTypeAnnotation(null, property, type)
-    }
-
-    val getter = property.getter
-    if (getter == null) {
-        createGetter(property)
-    } else {
-        replaceFieldReferences(getter, property.name!!)
-    }
-
-    if (property.isVar) {
-        val setter = property.setter
-        if (setter == null) {
-            createSetter(property)
+        val containingClass = property.getStrictParentOfType<KtClassOrObject>() ?: return null
+        if (containingClass.isExpectDeclaration()) return null
+        return if (containingClass.declarations.none { it is KtProperty && it.name == "_$name" }) {
+            val getterFieldReferences = property.getter?.let { collectFieldReferences(it) } ?: emptyList()
+            val setterFieldReferences = if (property.isVar) {
+                property.setter?.let { collectFieldReferences(it) } ?: emptyList()
+            } else {
+                emptyList()
+            }
+            Context(getTypeInfo(property), getterFieldReferences, setterFieldReferences)
         } else {
-            replaceFieldReferences(setter, property.name!!)
+            null
         }
     }
 
-    property.initializer = null
-}
+    override fun isApplicableByPsi(property: KtProperty): Boolean {
+        property.name ?: return false
+        if (property.hasModifier(KtTokens.CONST_KEYWORD)) return false
+        return !property.hasJvmFieldAnnotation()
+    }
 
-private fun createGetter(element: KtProperty) {
-    val body = "get() = ${backingName(element)}"
-    val newGetter = KtPsiFactory(element.project).createProperty("val x $body").getter!!
-    element.addAccessor(newGetter)
-}
+    private fun KaSession.isBackingFieldRequiredAndCanBeUsed(property: KtProperty): Boolean {
+        if (property.isAbstract()) return false
 
-private fun createSetter(element: KtProperty) {
-    val body = "set(value) { ${backingName(element)} = value }"
-    val newSetter = KtPsiFactory(element.project).createProperty("val x $body").setter!!
-    element.addAccessor(newSetter)
-}
+        if (isBackingFieldRequired(property)) return true
 
-private fun KtProperty.addAccessor(newAccessor: KtPropertyAccessor) {
-    val semicolon = node.findChildByType(KtTokens.SEMICOLON)
-    addBefore(newAccessor, semicolon?.psi)
-}
+        val getter = property.getter
+        return property.isVar || getter?.bodyExpression?.evaluate() == null
+    }
 
-private fun createBackingProperty(property: KtProperty) {
-    val backingProperty = KtPsiFactory(property.project).buildDeclaration {
-        appendFixedText("private ")
-        appendFixedText(property.valOrVarKeyword.text)
-        appendFixedText(" ")
-        appendNonFormattedText(backingName(property))
-        if (property.typeReference != null) {
-            appendFixedText(": ")
-            appendTypeReference(property.typeReference)
+    private fun introduceBackingProperty(element: KtProperty, context: Context, updater: ModPsiUpdater) {
+        createBackingProperty(element)
+
+        val project = element.project
+        replaceFieldReferences(project, element.name!!, context, updater)
+
+        val copiedProperty = element.copied()
+        addAccessors(copiedProperty)
+        removeInitializer(project, copiedProperty, context)
+
+        val replaced = element.replaced(copiedProperty)
+        replaced.typeReference?.let { ShortenReferencesFacility.getInstance().shorten(it) }
+        replaced.reformat()
+    }
+
+    private fun replaceFieldReferences(
+        project: Project, propertyName: String, context: IntroduceBackingPropertyIntention.Context, updater: ModPsiUpdater
+    ) {
+        fun replaceFieldReference(reference: SmartPsiElementPointer<KtSimpleNameExpression>) {
+            val writableElement = reference.element?.let { updater.getWritable(it) } ?: return
+            writableElement.replace(KtPsiFactory(project).createSimpleName("_$propertyName"))
         }
-        if (property.initializer != null) {
-            appendFixedText(" = ")
-            appendExpression(property.initializer)
+        for (getterFieldReference in context.getterFieldReferences) {
+            replaceFieldReference(getterFieldReference)
+        }
+        for (setterFieldReference in context.setterFieldReferences) {
+            replaceFieldReference(setterFieldReference)
         }
     }
 
-    if (property.hasModifier(KtTokens.LATEINIT_KEYWORD)) {
-        backingProperty.addModifier(KtTokens.LATEINIT_KEYWORD)
+    private fun removeInitializer(project: Project, property: KtProperty, context: IntroduceBackingPropertyIntention.Context) {
+        property.removeModifier(KtTokens.LATEINIT_KEYWORD)
+        if (property.typeReference == null) {
+            updateTypeForDeclarationInDummyFile(property, context.typeInfo, project)
+        }
+        property.initializer = null
     }
 
-    property.parent.addBefore(backingProperty, property)
-}
+    private fun addAccessors(property: KtProperty) {
+        val getter = property.getter
+        if (getter == null) {
+            createGetter(property)
+        }
 
-private fun backingName(property: KtProperty): String {
-    return if (property.nameIdentifier?.text?.startsWith('`') == true) "`_${property.name}`" else "_${property.name}"
-}
+        if (property.isVar) {
+            val setter = property.setter
+            if (setter == null) {
+                createSetter(property)
+            }
+        }
+    }
 
-private fun replaceFieldReferences(element: KtElement, propertyName: String) {
-    element.acceptChildren(object : KtTreeVisitorVoid() {
-        override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-            val target = expression.resolveToCall()?.resultingDescriptor
-            if (target is SyntheticFieldDescriptor) {
-                expression.replace(KtPsiFactory(element.project).createSimpleName("_$propertyName"))
+    private fun createGetter(element: KtProperty) {
+        val body = "get() = ${backingName(element)}"
+        val newGetter = KtPsiFactory(element.project).createProperty("val x $body").getter!!
+        element.addAccessor(newGetter)
+    }
+
+    private fun createSetter(element: KtProperty) {
+        val body = "set(value) { ${backingName(element)} = value }"
+        val newSetter = KtPsiFactory(element.project).createProperty("val x $body").setter!!
+        element.addAccessor(newSetter)
+    }
+
+    private fun KtProperty.addAccessor(newAccessor: KtPropertyAccessor) {
+        val semicolon = node.findChildByType(KtTokens.SEMICOLON)
+        addBefore(newAccessor, semicolon?.psi)
+    }
+
+    private fun createBackingProperty(property: KtProperty) {
+        val backingProperty = KtPsiFactory(property.project).buildDeclaration {
+            appendFixedText("private ")
+            appendFixedText(property.valOrVarKeyword.text)
+            appendFixedText(" ")
+            appendNonFormattedText(backingName(property))
+            if (property.typeReference != null) {
+                appendFixedText(": ")
+                appendTypeReference(property.typeReference)
+            }
+            if (property.initializer != null) {
+                appendFixedText(" = ")
+                appendExpression(property.initializer)
             }
         }
 
-        override fun visitPropertyAccessor(accessor: KtPropertyAccessor) {
-            // don't go into accessors of properties in local classes because 'field' will mean something different in them
+        if (property.hasModifier(KtTokens.LATEINIT_KEYWORD)) {
+            backingProperty.addModifier(KtTokens.LATEINIT_KEYWORD)
         }
-    })
+
+        property.parent.addBefore(backingProperty, property)
+    }
+
+    private fun backingName(property: KtProperty): String {
+        return if (property.nameIdentifier?.text?.startsWith('`') == true) "`_${property.name}`" else "_${property.name}"
+    }
+
+    private fun KaSession.collectFieldReferences(element: KtElement): List<SmartPsiElementPointer<KtSimpleNameExpression>> {
+        val fieldReferences = mutableListOf<SmartPsiElementPointer<KtSimpleNameExpression>>()
+        element.acceptChildren(object : KtTreeVisitorVoid() {
+            override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+                val variableSymbol = expression.mainReference.resolveToSymbol()
+                if (variableSymbol is KaBackingFieldSymbol) {
+                    fieldReferences.add(expression.createSmartPointer())
+                }
+            }
+        })
+        return fieldReferences
+    }
 }
