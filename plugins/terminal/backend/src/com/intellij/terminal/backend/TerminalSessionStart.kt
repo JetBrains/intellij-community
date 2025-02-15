@@ -73,8 +73,10 @@ internal fun startTerminalSession(
       startTerminalEmulation(services.terminalStarter)
     }
     finally {
-      outputFlow.tryEmit(listOf(TerminalSessionTerminatedEvent))
-      coroutineScope.cancel()
+      coroutineScope.launch {
+        outputFlow.emit(listOf(TerminalSessionTerminatedEvent))
+        coroutineScope.cancel()
+      }
     }
   }
 
