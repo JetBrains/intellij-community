@@ -24,7 +24,7 @@ import java.util.MissingResourceException;
 @ApiStatus.Internal
 public final class ShRenameAllOccurrencesHandler extends EditorActionHandler {
   public static final ShRenameAllOccurrencesHandler INSTANCE = new ShRenameAllOccurrencesHandler();
-  static final Key<TextOccurrencesRenamer> RENAMER_KEY = Key.create("renamer");
+  public static final Key<TextOccurrencesRenamer> RENAMER_KEY = Key.create("renamer");
 
   private ShRenameAllOccurrencesHandler() {
   }
