@@ -117,7 +117,8 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
         logDirChildren.filter(child -> {
             String name = child.toString();
             return name.contains("-metrics")
-                   || name.contains("-meters");
+                   || name.contains("-meters")
+                   || name.endsWith(".jfr");
           })
           .forEach(childToRemove -> {
             try {
