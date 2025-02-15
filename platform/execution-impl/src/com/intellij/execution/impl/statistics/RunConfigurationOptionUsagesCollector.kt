@@ -50,7 +50,7 @@ object RunConfigurationOptionUsagesCollector : CounterUsagesCollector() {
                                                         "Use_Hot_Reload", "Roslyn_Target_Project", "Extra_mlaunch_Parameters",
                                                         "Project_Configuration", "Launch_profile_group", "Platform_Type", // Rider
                                                         "external.system.vm.parameters.fragment", "Runtime", "AutoAttachChildren",
-                                                        "DotnetWatch_AutoAttachChildren", "Redirect_Input"
+                                                        "DotnetWatch_AutoAttachChildren", "Redirect_Input", "MixedModeDebug" // Rider
   ))  // maven
   private val projectSettingsAvailableField = EventFields.Boolean("projectSettingsAvailable")
   private val useProjectSettingsField = EventFields.Boolean("useProjectSettings")
