@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class JsonCachedValues {
   private static final Key<CachedValue<JsonSchemaObject>> JSON_OBJECT_CACHE_KEY = Key.create("JsonSchemaObjectCache");
 
@@ -58,7 +59,7 @@ public final class JsonCachedValues {
     }
   }
 
-  static final String URL_CACHE_KEY = "JsonSchemaUrlCache";
+  public static final String URL_CACHE_KEY = "JsonSchemaUrlCache";
   private static final Key<CachedValue<String>> SCHEMA_URL_KEY = Key.create(URL_CACHE_KEY);
 
   public static @Nullable String getSchemaUrlFromSchemaProperty(@NotNull VirtualFile file,
