@@ -133,7 +133,7 @@ internal class ReworkedTerminalView(
     listenPanelSizeChanges()
     listenAlternateBufferSwitch()
 
-    TerminalVfsSynchronizer.install(controller, this, this)
+    TerminalVfsSynchronizer.install(controller, ::addFocusListener, this)
   }
 
   override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
@@ -338,7 +338,7 @@ internal class ReworkedTerminalView(
 
   override fun dispose() {}
 
-  fun addFocusListener(parentDisposable: Disposable, listener: FocusListener) {
+  private fun addFocusListener(parentDisposable: Disposable, listener: FocusListener) {
     terminalPanel.addFocusListener(parentDisposable, listener)
   }
 
@@ -347,15 +347,11 @@ internal class ReworkedTerminalView(
 
     private val delegatingFocusListener = object : FocusListener {
       override fun focusGained(e: FocusEvent) {
-        for (focusListener in focusListeners) {
-          focusListener.focusGained(e)
-        }
+        focusListeners.forEach { it.focusGained(e) }
       }
 
-      override fun focusLost(e: FocusEvent?) {
-        for (focusListener in focusListeners) {
-          focusListener.focusLost(e)
-        }
+      override fun focusLost(e: FocusEvent) {
+        focusListeners.forEach { it.focusLost(e) }
       }
     }
 

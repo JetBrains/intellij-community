@@ -13,13 +13,17 @@ import java.awt.event.FocusListener
 internal class TerminalVfsSynchronizer private constructor() {
 
   companion object {
-    fun install(sessionController: TerminalSessionController, view: ReworkedTerminalView, parentDisposable: Disposable) {
+    fun install(
+      sessionController: TerminalSessionController,
+      focusListenerRegistrar: (Disposable, FocusListener) -> Unit,
+      parentDisposable: Disposable,
+    ) {
       sessionController.addShellIntegrationListener(parentDisposable, object : TerminalShellIntegrationEventsListener {
         override fun commandFinished(command: String, exitCode: Int) {
           SaveAndSyncHandler.getInstance().scheduleRefresh()
         }
       })
-      view.addFocusListener(parentDisposable, object : FocusListener {
+      focusListenerRegistrar(parentDisposable, object : FocusListener {
         override fun focusGained(e: FocusEvent) {
           if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
             WriteIntentReadAction.run {
