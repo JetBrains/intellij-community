@@ -12,16 +12,17 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.parsing.xml.XmlParser
-import com.intellij.psi.impl.source.xml.XmlFileImpl
-import com.intellij.psi.impl.source.xml.stub.XmlStubBasedElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
-import com.intellij.psi.util.UnsupportedNodeElementTypeException
 import com.intellij.psi.xml.XmlElementType
 import com.intellij.psi.xml.XmlTokenType
 
 open class XMLParserDefinition :
   ParserDefinition {
+
+  protected val elementFactory: BasicXmlElementFactory by lazy {
+    BasicXmlElementFactory()
+  }
 
   override fun createLexer(project: Project?): Lexer =
     XmlLexer()
@@ -41,19 +42,11 @@ open class XMLParserDefinition :
   override fun createParser(project: Project?): PsiParser =
     XmlParser()
 
-  override fun createElement(node: ASTNode): PsiElement {
-    val elementType = node.elementType
-
-    return when (elementType) {
-      is XmlStubBasedElementType<*, *>,
-        -> elementType.createPsi(node)
-
-      else -> throw UnsupportedNodeElementTypeException(node)
-    }
-  }
+  override fun createElement(node: ASTNode): PsiElement =
+    elementFactory.createElement(node)
 
   override fun createFile(viewProvider: FileViewProvider): PsiFile =
-    XmlFileImpl(viewProvider, XmlElementType.XML_FILE)
+    elementFactory.createFile(viewProvider, XmlElementType.XML_FILE)
 
   override fun spaceExistenceTypeBetweenTokens(left: ASTNode, right: ASTNode): SpaceRequirements =
     canStickTokensTogether(left, right)
