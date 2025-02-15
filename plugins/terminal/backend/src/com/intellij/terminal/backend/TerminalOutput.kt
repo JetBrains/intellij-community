@@ -52,8 +52,10 @@ internal fun createTerminalOutputFlow(
       val cursorPositionUpdate = cursorPositionTracker.getCursorPositionUpdate()
       val updates = listOfNotNull(contentUpdate, cursorPositionUpdate, otherEvent)
       if (updates.isNotEmpty()) {
-        // Block the shell output reading if previous output updates are not collected yet.
-        while (!outputFlow.tryEmit(updates)) {
+        // Block the shell output reading if any of the following:
+        // 1. There are no active collectors: then there is no need to read the shell output.
+        // 2. Previous output updates are not collected yet.
+        while (outputFlow.subscriptionCount.value == 0 || !outputFlow.tryEmit(updates)) {
           Thread.sleep(1)
           ensureActive()
         }
