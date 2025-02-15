@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.lang.Language;
@@ -12,14 +12,12 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Jeka
- */
 public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChangeInfo {
   private static final Logger LOG = Logger.getInstance(JavaChangeInfoImpl.class);
 
@@ -54,8 +52,10 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
 
   private final boolean isGenerateDelegate;
   private boolean isFixFieldConflicts = true;
-  final Set<PsiMethod> propagateParametersMethods;
-  final Set<PsiMethod> propagateExceptionsMethods;
+  @ApiStatus.Internal
+  public final Set<PsiMethod> propagateParametersMethods;
+  @ApiStatus.Internal
+  public final Set<PsiMethod> propagateExceptionsMethods;
 
   private boolean myCheckUnusedParameter;
   
@@ -491,7 +491,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     if (checkMethodEquality() && !method.equals(that.method)) return false;
     if (!Arrays.equals(newExceptions, that.newExceptions)) return false;
     if (!newName.equals(that.newName)) return false;
-    if (newNameIdentifier != null ? !newNameIdentifier.equals(that.newNameIdentifier) : that.newNameIdentifier != null) return false;
+    if (!Objects.equals(newNameIdentifier, that.newNameIdentifier)) return false;
     if (!Arrays.equals(newParms, that.newParms)) return false;
     if (newReturnType != null
         ? that.newReturnType == null || !Comparing.strEqual(newReturnType.getTypeText(), that.newReturnType.getTypeText())
@@ -502,7 +502,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     if (!oldName.equals(that.oldName)) return false;
     if (!Arrays.equals(oldParameterNames, that.oldParameterNames)) return false;
     if (!Arrays.equals(oldParameterTypes, that.oldParameterTypes)) return false;
-    if (oldType != null ? !oldType.equals(that.oldType) : that.oldType != null) return false;
+    if (!Objects.equals(oldType, that.oldType)) return false;
     if (!propagateExceptionsMethods.equals(that.propagateExceptionsMethods)) return false;
     if (!propagateParametersMethods.equals(that.propagateParametersMethods)) return false;
     if (!Arrays.equals(toRemoveParm, that.toRemoveParm)) return false;
