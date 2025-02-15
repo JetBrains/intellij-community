@@ -6,12 +6,12 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.isBackingFieldRequired
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -58,21 +58,6 @@ internal class SuspiciousVarPropertyInspection : KotlinApplicableInspectionBase<
             .allOverriddenSymbols
             .filterIsInstance<KaPropertySymbol>()
             .any { !it.isVal }
-
-
-    private fun KaSession.isBackingFieldRequired(property: KtProperty): Boolean {
-        val getter = property.getter
-        val resolvedGetter = getter?.symbol
-        val setter = property.setter
-        val resolvedSetter = setter?.symbol
-
-        if (getter == null) return true
-        if (property.isVar && setter == null) return true
-        if (resolvedSetter != null && !setter.hasBody() && resolvedSetter.modality != KaSymbolModality.ABSTRACT) return true
-        if (!getter.hasBody() && resolvedGetter?.modality != KaSymbolModality.ABSTRACT) return true
-
-        return false
-    }
 
     private fun KaSession.hasBackingFieldReference(accessor: KtPropertyAccessor): Boolean {
         val bodyExpression = accessor.bodyExpression ?: return true

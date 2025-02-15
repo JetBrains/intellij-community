@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
 
@@ -68,6 +69,8 @@ fun KtElement.addAnnotation(annotationClassId: ClassId, annotationInnerText: Str
     }
 }
 
+fun KtAnnotated.hasJvmFieldAnnotation(): Boolean =
+    findAnnotation(JvmAbi.JVM_FIELD_ANNOTATION_CLASS_ID) != null
 
 fun KtAnnotated.findAnnotation(
     annotationClassId: ClassId,

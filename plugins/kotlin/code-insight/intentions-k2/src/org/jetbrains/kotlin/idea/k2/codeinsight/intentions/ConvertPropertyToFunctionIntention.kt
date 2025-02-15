@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingElement
-import org.jetbrains.kotlin.idea.util.findAnnotation
+import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
@@ -327,6 +327,3 @@ private fun KaSession.isOverride(symbol: KaCallableSymbol): Boolean =
 
 private fun String.capitalize(): String =
     replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-
-private fun KtAnnotated.hasJvmFieldAnnotation(): Boolean =
-    findAnnotation(JvmAbi.JVM_FIELD_ANNOTATION_CLASS_ID) != null
