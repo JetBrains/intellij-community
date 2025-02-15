@@ -795,7 +795,7 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
     if (changeInfo.isVisibilityChanged()) {
       PsiModifierList modifierList = method.getModifierList();
       final String targetVisibility;
-      if (isOriginal || changeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)changeInfo).propagateVisibility) {
+      if (isOriginal || changeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)changeInfo).isPropagateVisibility()) {
         targetVisibility = changeInfo.getNewVisibility();
       }
       else {
@@ -1539,7 +1539,7 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
       VisibilityUtil.setVisibility(modifierList, visibility);
 
       searchForHierarchyConflicts(method, conflictDescriptions, visibility);
-      boolean propagateVisibility = myChangeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)myChangeInfo).propagateVisibility;
+      boolean propagateVisibility = myChangeInfo instanceof JavaChangeInfoImpl && ((JavaChangeInfoImpl)myChangeInfo).isPropagateVisibility();
 
       for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
         UsageInfo usageInfo = iterator.next();

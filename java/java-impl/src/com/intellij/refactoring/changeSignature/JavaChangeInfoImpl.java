@@ -22,27 +22,33 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
   private static final Logger LOG = Logger.getInstance(JavaChangeInfoImpl.class);
 
   @PsiModifier.ModifierConstant private final @NotNull String newVisibility;
-  boolean propagateVisibility;
+  private boolean propagateVisibility;
   
   private @NotNull PsiMethod method;
   private final @NotNull String oldName;
   private final String oldType;
-  String[] oldParameterNames;
-  String[] oldParameterTypes;
+  @ApiStatus.Internal
+  public String[] oldParameterNames;
+  @ApiStatus.Internal
+  public String[] oldParameterTypes;
   private final @NotNull String newName;
-  final CanonicalTypes.Type newReturnType;
-  final ParameterInfoImpl[] newParms;
+  @ApiStatus.Internal
+  public final CanonicalTypes.Type newReturnType;
+  @ApiStatus.Internal
+  public final ParameterInfoImpl[] newParms;
   private ThrownExceptionInfo[] newExceptions;
   private final boolean[] toRemoveParm;
   private final boolean isVisibilityChanged;
   private final boolean isNameChanged;
-  boolean isReturnTypeChanged;
+  @ApiStatus.Internal
+  public boolean isReturnTypeChanged;
   private boolean isParameterSetOrOrderChanged;
   private boolean isExceptionSetChanged;
   private boolean isExceptionSetOrOrderChanged;
   private boolean isParameterNamesChanged;
   private boolean isParameterTypesChanged;
-  boolean isPropagationEnabled = true;
+  @ApiStatus.Internal
+  public boolean isPropagationEnabled = true;
   private final boolean wasVararg;
   private final boolean retainsVarargs;
   private final boolean obtainsVarags;
@@ -90,7 +96,16 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     javaChangeInfo.setFixFieldConflicts(fixFieldConflicts);
     return javaChangeInfo;
   }
-  
+
+  @ApiStatus.Internal
+  public boolean isPropagateVisibility() {
+    return propagateVisibility;
+  }
+
+  @ApiStatus.Internal
+  public void setPropagateVisibility(boolean value) {
+    propagateVisibility = value;
+  }
 
   /**
    * @param newExceptions null if not changed
