@@ -826,7 +826,7 @@ public class HighlightInfo implements Segment {
     return h == null || !h.isValid() || isFileLevelAnnotation() ? endOffset : h.getEndOffset();
   }
 
-  public static class IntentionActionDescriptor {
+  public static final class IntentionActionDescriptor {
     private final IntentionAction myAction;
     private volatile List<? extends IntentionAction> myOptions; // null means not initialized yet
     private final @Nullable HighlightDisplayKey myKey;
