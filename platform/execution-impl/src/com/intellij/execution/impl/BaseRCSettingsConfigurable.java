@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.configurationStore.SerializableScheme;
@@ -11,6 +11,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,8 @@ import java.awt.*;
 /**
  * This class provides 'smart' isModified() behavior: it compares original settings with current snapshot by their XML 'externalized' presentations
  */
-abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<RunnerAndConfigurationSettings> {
+@ApiStatus.Internal
+public abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<RunnerAndConfigurationSettings> {
   BaseRCSettingsConfigurable(@NotNull SettingsEditor<RunnerAndConfigurationSettings> editor,
                              @NotNull RunnerAndConfigurationSettings settings) {
     super(editor, settings);
