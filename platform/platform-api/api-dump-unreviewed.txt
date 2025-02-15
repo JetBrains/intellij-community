@@ -3311,13 +3311,10 @@ c:com.intellij.openapi.ui.DialogBuilder
 - title(java.lang.String):com.intellij.openapi.ui.DialogBuilder
 com.intellij.openapi.ui.DialogBuilder$ActionDescriptor
 - a:getAction(com.intellij.openapi.ui.DialogWrapper):javax.swing.Action
-c:com.intellij.openapi.ui.DialogBuilder$CancelActionDescriptor
+f:com.intellij.openapi.ui.DialogBuilder$CancelActionDescriptor
 - com.intellij.openapi.ui.DialogBuilder$ActionDescriptor
 - com.intellij.openapi.ui.DialogBuilder$CustomizableAction
-- p:myText:java.lang.String
 - <init>():V
-- getAction(com.intellij.openapi.ui.DialogWrapper):javax.swing.Action
-- setText(java.lang.String):V
 c:com.intellij.openapi.ui.DialogBuilder$CloseDialogAction
 - com.intellij.openapi.ui.DialogBuilder$DialogActionDescriptor
 - <init>():V
@@ -3336,13 +3333,10 @@ a:com.intellij.openapi.ui.DialogBuilder$DialogActionDescriptor
 - pa:createAction(com.intellij.openapi.ui.DialogWrapper):javax.swing.Action
 - getAction(com.intellij.openapi.ui.DialogWrapper):javax.swing.Action
 - setDefault(Z):V
-c:com.intellij.openapi.ui.DialogBuilder$OkActionDescriptor
+f:com.intellij.openapi.ui.DialogBuilder$OkActionDescriptor
 - com.intellij.openapi.ui.DialogBuilder$ActionDescriptor
 - com.intellij.openapi.ui.DialogBuilder$CustomizableAction
-- p:myText:java.lang.String
 - <init>():V
-- getAction(com.intellij.openapi.ui.DialogWrapper):javax.swing.Action
-- setText(java.lang.String):V
 f:com.intellij.openapi.ui.DialogEarthquakeShaker
 - s:shake(java.awt.Window):V
 - startShake():V
