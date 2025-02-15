@@ -4,7 +4,6 @@
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
     <module name="intellij.platform.collaborationTools"/>
-    <module name="intellij.platform.lvcs.impl"/>
   </dependencies>
 
   <actions resource-bundle="messages.GitBundle">
@@ -421,7 +420,6 @@
       <reference ref="ChangesView.CreatePatchToClipboard"/>
       <separator/>
       <reference ref="Vcs.ShowTabbedFileHistory"/>
-      <reference ref="LocalHistory"/>
     </group>
     <group id="Git.Stage.Local.File.Menu" popup="false">
       <reference ref="Git.Stage.Show.Staged"/>
@@ -483,7 +481,6 @@
       </group>
       <reference ref="Git.Init"/>
       <separator/>
-      <reference ref="LocalHistory.ShowProjectHistory"/>
     </group>
 
     <group id="MainToolbarVCSGroup">
