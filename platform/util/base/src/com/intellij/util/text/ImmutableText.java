@@ -391,7 +391,8 @@ public final class ImmutableText extends ImmutableCharSequence implements CharAr
     return (shorter.length() << 1) < longer.length() && longer instanceof CompositeNode;
   }
 
-  static final class CompositeNode implements CharSequence {
+  @ApiStatus.Internal
+  public static final class CompositeNode implements CharSequence {
     final int count;
     final CharSequence head;
     final CharSequence tail;
