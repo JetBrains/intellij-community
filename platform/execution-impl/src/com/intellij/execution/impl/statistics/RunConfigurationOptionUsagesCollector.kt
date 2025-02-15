@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 object RunConfigurationOptionUsagesCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
-  val GROUP = EventLogGroup("run.configuration.ui.interactions", 20)
+  val GROUP = EventLogGroup("run.configuration.ui.interactions", 21)
 
   val optionId = EventFields.String("option_id", listOf("before.launch.editSettings", "before.launch.openToolWindow", "beforeRunTasks",
                                                         "commandLineParameters", "coverage", "doNotBuildBeforeRun", "environmentVariables",
