@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.fs
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -350,12 +350,12 @@ abstract class PosixNioBasedEelFileSystemApi(
   override suspend fun listDirectoryWithAttrs(path: EelPath, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
     Collection<Pair<String, EelPosixFileInfo>>,
     EelFileSystemApi.ListDirectoryError> =
-    super.listDirectoryWithAttrs(path, symlinkPolicy) as EelResult<Collection<Pair<String, EelPosixFileInfo>>, EelFileSystemApi.ListDirectoryError>
+    super<NioBasedEelFileSystemApi>.listDirectoryWithAttrs(path, symlinkPolicy) as EelResult<Collection<Pair<String, EelPosixFileInfo>>, EelFileSystemApi.ListDirectoryError>
 
   override suspend fun stat(path: EelPath, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
     EelPosixFileInfo,
     EelFileSystemApi.StatError> =
-    super.stat(path, symlinkPolicy) as EelResult<EelPosixFileInfo, EelFileSystemApi.StatError>
+    super<NioBasedEelFileSystemApi>.stat(path, symlinkPolicy) as EelResult<EelPosixFileInfo, EelFileSystemApi.StatError>
 
   override suspend fun changeAttributes(
     path: EelPath,
@@ -417,12 +417,12 @@ abstract class WindowsNioBasedEelFileSystemApi(
   override suspend fun listDirectoryWithAttrs(path: EelPath, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
     Collection<Pair<String, EelWindowsFileInfo>>,
     EelFileSystemApi.ListDirectoryError> =
-    super.listDirectoryWithAttrs(path, symlinkPolicy) as EelResult<Collection<Pair<String, EelWindowsFileInfo>>, EelFileSystemApi.ListDirectoryError>
+    super<NioBasedEelFileSystemApi>.listDirectoryWithAttrs(path, symlinkPolicy) as EelResult<Collection<Pair<String, EelWindowsFileInfo>>, EelFileSystemApi.ListDirectoryError>
 
   override suspend fun stat(path: EelPath, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
     EelWindowsFileInfo,
     EelFileSystemApi.StatError> =
-    super.stat(path, symlinkPolicy) as EelResult<EelWindowsFileInfo, EelFileSystemApi.StatError>
+    super<NioBasedEelFileSystemApi>.stat(path, symlinkPolicy) as EelResult<EelWindowsFileInfo, EelFileSystemApi.StatError>
 
   override suspend fun changeAttributes(
     path: EelPath,

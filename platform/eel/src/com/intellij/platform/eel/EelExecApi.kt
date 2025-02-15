@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
@@ -15,26 +15,52 @@ interface EelExecApi {
   /**
    * Executes the process, returning either an [EelProcess] or an error provided by the remote operating system.
    *
-   * The instance of the [ExecuteProcessOptions] _may_ become invalid after this call.
+   * stdin, stdout and stderr of the process are always forwarded, if there are.
    *
    * The method may throw a RuntimeException only in critical cases like connection loss or a bug.
    *
    * See [executeProcessBuilder]
    */
   @CheckReturnValue
-  suspend fun execute(builder: ExecuteProcessOptions): EelResult<EelProcess, ExecuteProcessError>
+  suspend fun execute(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelResult<EelProcess, ExecuteProcessError>
 
-  /** Docs: [executeProcessBuilder] */
   interface ExecuteProcessOptions {
-    val args: List<String>
-    val env: Map<String, String>
-    val ptyOrStdErrSettings: PtyOrStdErrSettings?
-    val workingDirectory: EelPath?
+    val args: List<String> get() = listOf()
+
+    /**
+     * By default, environment is always inherited, which may be unwanted. [ExecuteProcessOptions.env] allows
+     * to alter some environment variables, it doesn't clear the variables from the parent. When the process should be started in an
+     * environment like in a terminal, the response of [fetchLoginShellEnvVariables] should be put into [ExecuteProcessOptions.env].
+     */
+    val env: Map<String, String> get() = mapOf()
+
+    /**
+     * When set pty, be sure to accept esc codes for a terminal you are emulating.
+     * This terminal should also be set in `TERM` environment variable, so setting it in [env] worth doing.
+     * If not set, `xterm` will be used as a most popular one.
+     *
+     * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
+     */
+    val ptyOrStdErrSettings: PtyOrStdErrSettings? get() = null
+
+    /**
+     * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
+     * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
+     */
+    val workingDirectory: EelPath? get() = null
 
     // TODO: Use EelPath as soon as it will be merged
     //  We cannot do it currently until IJPL-163265 is implemented
+    /**
+     * An **absolute** path to the executable.
+     * TODO Or do relative paths also work?
+     *
+     * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
+     * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
+     */
     val exe: String
 
+    @Deprecated("Use generated builders. See usages of com.intellij.platform.eel.GeneratedBuilder.Result")
     interface Builder {
       fun args(args: List<String>): Builder
       fun env(env: Map<String, String>): Builder
@@ -66,8 +92,10 @@ interface EelExecApi {
        * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
        * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
        */
+      @Deprecated("Use generated builders. See usages of com.intellij.platform.eel.GeneratedBuilder.Result")
       fun Builder(exe: String): Builder = ExecuteProcessBuilderImpl(exe)
 
+      @Deprecated("Use generated builders. See usages of com.intellij.platform.eel.GeneratedBuilder.Result")
       fun Builder(exe: String, arg1: String, vararg args: String): Builder = Builder(exe).args(listOf(arg1, *args))
     }
   }
@@ -105,6 +133,9 @@ suspend inline fun EelExecApi.execute(exe: String, setup: (EelExecApi.ExecutePro
   val builder = EelExecApi.ExecuteProcessOptions.Builder(exe).apply(setup).build()
   return execute(builder)
 }
+
+fun EelExecApi.execute(exe: String, vararg args: String): com_intellij_platform_eel_EelExecApi_execute_OwnedBuilder =
+  execute(exe).args(*args)
 
 /** Docs: [EelExecApi.executeProcessBuilder] */
 @CheckReturnValue

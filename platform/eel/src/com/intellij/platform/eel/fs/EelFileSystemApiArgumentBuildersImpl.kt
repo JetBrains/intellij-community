@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.fs
 
 import com.intellij.platform.eel.fs.EelFileSystemApi.*
 import com.intellij.platform.eel.path.EelPath
 
-internal data class WriteOptionsImpl(
+internal data class WriteOptionsImpl2(
   override val path: EelPath,
   override var append: Boolean = false,
   override var truncateExisting: Boolean = false,
@@ -21,7 +21,7 @@ internal data class WriteOptionsImpl(
   }
 }
 
-internal data class CopyOptionsImpl(
+internal data class CopyOptionsImpl2(
   override val source: EelPath,
   override val target: EelPath,
   override var copyRecursively: Boolean = false,
@@ -47,11 +47,14 @@ internal data class CopyOptionsImpl(
 
 internal data class TimeSinceEpochImpl(override val seconds: ULong, override val nanoseconds: UInt) : TimeSinceEpoch
 
-internal data class ChangeAttributesOptionsImpl(
+internal data class ChangeAttributesOptionsImpl2(
   override var accessTime: TimeSinceEpoch? = null,
   override var modificationTime: TimeSinceEpoch? = null,
   override var permissions: EelFileInfo.Permissions? = null,
 ) : ChangeAttributesOptions, ChangeAttributesOptions.Builder {
+  override val path: EelPath
+    get() = TODO("Not yet implemented")
+
   override fun accessTime(duration: TimeSinceEpoch): ChangeAttributesOptions.Builder = apply { accessTime = duration }
 
   override fun modificationTime(duration: TimeSinceEpoch): ChangeAttributesOptions.Builder = apply { modificationTime = duration }
@@ -63,7 +66,7 @@ internal data class ChangeAttributesOptionsImpl(
   }
 }
 
-internal data class CreateTemporaryEntryOptionsImpl(
+internal data class CreateTemporaryEntryOptionsImpl2(
   override var prefix: String = "tmp",
   override var suffix: String = "",
   override var deleteOnExit: Boolean = false,

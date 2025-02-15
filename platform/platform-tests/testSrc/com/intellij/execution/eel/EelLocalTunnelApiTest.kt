@@ -1,11 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.eel
 
-import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.EelTunnelsApi
-import com.intellij.platform.eel.ReadResult
+import com.intellij.platform.eel.*
 import com.intellij.platform.eel.channels.sendWholeBuffer
-import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.consumeAsInputStream
 import com.intellij.platform.eel.provider.utils.sendWholeText
@@ -38,8 +35,7 @@ class EelLocalTunnelApiTest {
 
   @Test
   fun testCheckFailureConnection(): Unit = timeoutRunBlocking(5.minutes) {
-    when (localEel.tunnels.getConnectionToRemotePort(
-      EelTunnelsApi.HostAddress.Builder(22U).hostname("google.com").connectionTimeout(5.seconds).build())) {
+    when (localEel.tunnels.getConnectionToRemotePort().port(22U).hostname("google.com").timeout(5.seconds).eelIt()) {
       is EelResult.Error -> Unit
       is EelResult.Ok -> Assertions.fail("Connection should fail")
     }
@@ -50,11 +46,10 @@ class EelLocalTunnelApiTest {
     val helper = localEel.exec.execute(clientExecutor.createBuilderToExecuteMain().build()).getOrThrow()
     try {
       val port = helper.stdout.consumeAsInputStream().bufferedReader().readLine().trim().toInt()
-      val address = EelTunnelsApi
-        .HostAddress.Builder(port.toUShort())
-        .preferIPv4()
-        .build()
-      val connection = localEel.tunnels.getConnectionToRemotePort(address).getOrThrow()
+      val connection = localEel.tunnels.getConnectionToRemotePort()
+        .port(port.toUShort())
+        .preferV4()
+        .getOrThrow()
       val buffer = ByteBuffer.allocate(4096)
       connection.receiveChannel.receive(buffer).getOrThrow()
       Assertions.assertEquals(NetworkConstants.HELLO_FROM_SERVER, NetworkConstants.fromByteBuffer(buffer.flip()))
@@ -70,7 +65,7 @@ class EelLocalTunnelApiTest {
   @Test
   fun testServerListensForConnection(): Unit = timeoutRunBlocking(1.minutes) {
     val helper = localEel.exec.execute(serverExecutor.createBuilderToExecuteMain().build()).getOrThrow()
-    val acceptor = localEel.tunnels.getAcceptorForRemotePort(EelTunnelsApi.HostAddress.Builder().build()).getOrThrow()
+    val acceptor = localEel.tunnels.getAcceptorForRemotePort().getOrThrow()
     helper.stdin.sendWholeText(acceptor.boundAddress.port.toString() + "\n").getOrThrow()
     val conn = acceptor.incomingConnections.receive()
     try {

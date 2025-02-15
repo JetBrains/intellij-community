@@ -42,7 +42,7 @@ sealed interface EelTunnelsApi {
    * One should not forget to invoke [Connection.close] when the connection is not needed.
    */
   @CheckReturnValue
-  suspend fun getConnectionToRemotePort(address: HostAddress): EelResult<Connection, EelConnectionError>
+  suspend fun getConnectionToRemotePort(@GeneratedBuilder address: HostAddress): EelResult<Connection, EelConnectionError>
 
 
   sealed interface ResolvedSocketAddress {
@@ -62,18 +62,18 @@ sealed interface EelTunnelsApi {
    * Represents an address to a remote host.
    */
   interface HostAddress {
-    val port: UShort
-    val hostname: String
+    val port: UShort get() = 0u  // TODO Split into two interfaces
+    val hostname: String get() = "localhost"
 
     /**
      * @see [Builder.preferIPv4]
      */
-    val protocolPreference: EelIpPreference
+    val protocolPreference: EelIpPreference get() = EelIpPreference.USE_SYSTEM_DEFAULT
 
     /**
      * @see [Builder.connectionTimeout]
      */
-    val timeout: Duration
+    val timeout: Duration get() = 10.seconds
 
     interface Builder {
 
@@ -223,7 +223,7 @@ sealed interface EelTunnelsApi {
    * One should not forget to invoke [Connection.close] when the connection is not needed.
    */
   @CheckReturnValue
-  suspend fun getAcceptorForRemotePort(address: HostAddress): EelResult<ConnectionAcceptor, EelConnectionError>
+  suspend fun getAcceptorForRemotePort(@GeneratedBuilder address: HostAddress): EelResult<ConnectionAcceptor, EelConnectionError>
 
   /**
    * This is a representation of a remote server bound to [boundAddress].

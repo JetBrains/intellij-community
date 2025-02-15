@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
 sealed interface EelResult<out P, out E> {
@@ -23,6 +23,9 @@ inline fun <T, E> EelResult<T, E>.getOr(action: (EelResult.Error<E>) -> Nothing)
 
 @JvmOverloads
 inline fun <T, E> EelResult<T, E>.getOrThrow(exception: (E) -> Throwable = { if (it is Throwable) it else RuntimeException(it.toString()) }): T = getOr { throw exception(it.error) }
+
+suspend inline fun <T, E, R, O> O.getOrThrow(exception: (E) -> Throwable = { if (it is Throwable) it else RuntimeException(it.toString()) }): T where R : EelResult<T, E>, O : OwnedBuilder<R> =
+  eelIt().getOrThrow(exception)
 
 fun <T, E> EelResult<T, E>.getOrNull(): T? = when (this) {
   is EelResult.Ok -> this.value
