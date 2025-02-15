@@ -8,6 +8,7 @@ import com.intellij.lang.PsiParser
 import com.intellij.lang.xml.XMLParserDefinition.Companion.canStickTokensTogether
 import com.intellij.lexer.HtmlLexer
 import com.intellij.lexer.Lexer
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
@@ -21,7 +22,7 @@ open class HTMLParserDefinition :
   ParserDefinition {
 
   private val elementFactory: BasicHtmlElementFactory by lazy {
-    BasicHtmlElementFactory()
+    service<BasicHtmlElementFactory>()
   }
 
   override fun createLexer(project: Project?): Lexer =
