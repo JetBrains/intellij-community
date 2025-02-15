@@ -8,8 +8,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
-import com.intellij.openapi.fileEditor.FileEditorManagerKeys
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -22,7 +20,6 @@ private open class MoveEditorToOppositeTabGroupAction(
   override fun actionPerformed(event: AnActionEvent) {
     val dataContext = event.dataContext
     val vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext) ?: return
-    val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return
 
     val window = EditorWindow.DATA_KEY.getData(dataContext) ?: return
     val siblings = window.getSiblings()
@@ -30,18 +27,12 @@ private open class MoveEditorToOppositeTabGroupAction(
       return
     }
 
-    val entry = window.selectedComposite?.currentStateAsFileEntry()
-    vFile.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, true)
-    if (closeSource) {
-      window.closeFile(file = vFile, disposeIfNeeded = true, transferFocus = false)
-    }
-    (FileEditorManagerEx.getInstanceEx(project) as FileEditorManagerImpl).openFileImpl(
-      window = siblings.get(0),
-      _file = vFile,
-      entry = entry,
-      options = FileEditorOpenOptions(requestFocus = true),
+    window.moveFile(
+      file = vFile,
+      windowToMoveTo = siblings.first(),
+      disposeIfNeeded = true,
+      transferFocus = true,
     )
-    vFile.putUserData(FileEditorManagerKeys.CLOSING_TO_REOPEN, null)
   }
 
   override fun update(e: AnActionEvent) {
