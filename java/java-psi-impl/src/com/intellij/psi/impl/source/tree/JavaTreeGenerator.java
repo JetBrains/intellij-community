@@ -225,5 +225,6 @@ public final class JavaTreeGenerator implements TreeGenerator {
 
   @ApiStatus.Internal
   public static final Key<PsiClass> REFERENCED_CLASS_KEY = Key.create("REFERENCED_CLASS_KEY");
-  static final Key<PsiMember> REFERENCED_MEMBER_KEY = Key.create("REFERENCED_MEMBER_KEY");
+  @ApiStatus.Internal
+  public static final Key<PsiMember> REFERENCED_MEMBER_KEY = Key.create("REFERENCED_MEMBER_KEY");
 }
