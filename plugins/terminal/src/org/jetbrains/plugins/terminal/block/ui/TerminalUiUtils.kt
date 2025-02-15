@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.command.undo.UndoUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -81,6 +82,10 @@ object TerminalUiUtils {
     settings: JBTerminalSystemSettingsProviderBase,
     installContextMenu: Boolean,
   ): EditorImpl {
+    // Terminal does not need Editor's Undo/Redo functionality.
+    // So, it is better to disable it to not store the document changes in UndoManager cache.
+    UndoUtil.disableUndoFor(document)
+
     val editor = EditorFactory.getInstance().createEditor(document, project, EditorKind.CONSOLE) as EditorImpl
     editor.isScrollToCaret = false
     editor.isRendererMode = true
