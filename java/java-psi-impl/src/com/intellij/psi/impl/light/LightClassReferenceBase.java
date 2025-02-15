@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -6,10 +6,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-abstract class LightClassReferenceBase extends LightElement implements PsiJavaCodeReferenceElement {
-
+@ApiStatus.Internal
+public abstract class LightClassReferenceBase extends LightElement implements PsiJavaCodeReferenceElement {
   protected final String myText;
 
   private LightReferenceParameterList myParameterList;
