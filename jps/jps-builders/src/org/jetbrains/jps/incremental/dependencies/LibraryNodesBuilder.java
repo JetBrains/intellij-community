@@ -29,7 +29,6 @@ final class LibraryNodesBuilder {
     }
 
     Path jarPath = myGraphConfig.getPathMapper().toPath(libRoot);
-    String filePrefix = jarPath + "/";
     HashMapZipFile zipFile = HashMapZipFile.loadIfNotEmpty(jarPath);
     if (zipFile == null) {
       return List.of();
@@ -39,7 +38,7 @@ final class LibraryNodesBuilder {
     try (zipFile) {
       for (ImmutableZipEntry entry : zipFile.getEntries()) {
         if (!entry.isDirectory() && LibraryDef.isClassFile(entry.getName())) {
-          addNode(entry.getData(zipFile), filePrefix + entry.getName(), namespace, nodes);
+          addNode(entry.getData(zipFile), entry.getName(), namespace, nodes);
         }
       }
     }
@@ -55,7 +54,7 @@ final class LibraryNodesBuilder {
   private static void addNode(byte @NotNull [] classFileData, @NotNull String classFileName, @NotNull String namespace, List<Node<?, ?>> acc)
     throws IOException {
     FailSafeClassReader reader = new FailSafeClassReader(classFileData);
-    JVMClassNode<?, ?> node = JvmClassNodeBuilder.createForLibrary("$" + namespace + classFileName, reader).getResult();
+    JVMClassNode<?, ?> node = JvmClassNodeBuilder.createForLibrary("$" + namespace + "/" + classFileName, reader).getResult();
     if (node.getFlags().isPublic()) {
       // todo: maybe too restrictive
       acc.add(node);
