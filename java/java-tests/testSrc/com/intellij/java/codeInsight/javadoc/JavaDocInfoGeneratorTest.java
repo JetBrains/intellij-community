@@ -201,24 +201,12 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     PsiClass outerClass = ((PsiJavaFile) myFile).getClasses()[0];
     verifyJavaDoc(outerClass.getMethods()[0]);
   }
-  public void testMarkdownJepExample(){
-    doTestMethod();
-  }
-  public void testHtmlCodeInMarkdown() {
-    doTestMethod();
-  }
+  public void testMarkdownJepExample(){ doTestMethod(); }
+  public void testHtmlCodeInMarkdown() { doTestMethod(); }
   public void testMarkdownInlineCodeBlock() { doTestClass(); }
-
-  public void testEscapeHtmlCodesInCodeBlock(){
-    doTestClass();
-  }
-  public void testPreTagLeakBeforeCode() {
-    doTestClass();
-  }
-  public void testPreTagStrictBeforeCode(){
-    doTestClass();
-  }
-
+  public void testEscapeHtmlCodesInCodeBlock() { doTestClass(); }
+  public void testPreTagLeakBeforeCode() { doTestClass(); }
+  public void testPreTagStrictBeforeCode(){ doTestClass(); }
 
   public void testRepeatableAnnotations() {
     useJava8();
@@ -237,17 +225,9 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     verifyJavaDoc(method);
   }
 
-  public void testEnumConstant1() {
-    doTestEnumConstant();
-  }
-
-  public void testEnumConstant2() {
-    doTestEnumConstant();
-  }
-
-  public void testEnumConstant3() {
-    doTestEnumConstant();
-  }
+  public void testEnumConstant1() { doTestEnumConstant(); }
+  public void testEnumConstant2() { doTestEnumConstant(); }
+  public void testEnumConstant3() { doTestEnumConstant(); }
 
   public void testClickableFieldReference() {
     PsiClass aClass = getTestClass();
