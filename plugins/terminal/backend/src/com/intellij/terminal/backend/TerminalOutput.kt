@@ -7,24 +7,30 @@ import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.TerminalTextBuffer
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.block.ui.withLock
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal fun createTerminalOutputFlow(
   textBuffer: TerminalTextBuffer,
   terminalDisplay: TerminalDisplayImpl,
   controller: ObservableJediTerminal,
   coroutineScope: CoroutineScope,
+  ensureEmulationActive: () -> Unit,
 ): MutableSharedFlow<List<TerminalOutputEvent>> {
   val outputFlow = MutableSharedFlow<List<TerminalOutputEvent>>(
-    extraBufferCapacity = Int.MAX_VALUE,
-    onBufferOverflow = BufferOverflow.DROP_OLDEST
+    // Do not buffer a lot of events here.
+    // If the buffer is not small, then on large outputs it will always be filled up.
+    // So, the UI will need some time to handle the buffered events.
+    // In this case, new events, emitted in response to user actions (like Ctrl+C), will be placed to the buffer end
+    // and collected from it with only with a noticeable delay.
+    // By having a small buffer, we ensure that response to user actions will be collected as soon as possible.
+    replay = 1,
+    extraBufferCapacity = 0,
+    onBufferOverflow = BufferOverflow.SUSPEND
   )
 
   val discardedHistoryTracker = TerminalDiscardedHistoryTracker(textBuffer)
@@ -36,20 +42,28 @@ internal fun createTerminalOutputFlow(
    * Events should be sent in the following order: content update, cursor position update, other events.
    * This function allows providing content update if it is precalculated, and the other optional event to be sent last.
    */
-  fun collectAndSendEvents(contentUpdateEvent: TerminalContentUpdatedEvent?, otherEvent: TerminalOutputEvent?) {
+  fun collectAndSendEvents(
+    contentUpdateEvent: TerminalContentUpdatedEvent?,
+    otherEvent: TerminalOutputEvent?,
+    ensureActive: () -> Unit = { ensureEmulationActive() },
+  ) {
     textBuffer.withLock {
       val contentUpdate = contentUpdateEvent ?: contentChangesTracker.getContentUpdate()
       val cursorPositionUpdate = cursorPositionTracker.getCursorPositionUpdate()
       val updates = listOfNotNull(contentUpdate, cursorPositionUpdate, otherEvent)
       if (updates.isNotEmpty()) {
-        outputFlow.tryEmit(updates)
+        // Block the shell output reading if previous output updates are not collected yet.
+        while (!outputFlow.tryEmit(updates)) {
+          Thread.sleep(1)
+          ensureActive()
+        }
       }
     }
   }
 
   coroutineScope.launch(Dispatchers.IO) {
     while (true) {
-      collectAndSendEvents(contentUpdateEvent = null, otherEvent = null)
+      collectAndSendEvents(contentUpdateEvent = null, otherEvent = null, ensureActive = { ensureActive(); ensureEmulationActive() })
 
       delay(10)
     }

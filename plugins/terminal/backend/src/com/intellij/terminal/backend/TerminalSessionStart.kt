@@ -28,6 +28,7 @@ import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.ui.withLock
 import org.jetbrains.plugins.terminal.util.STOP_EMULATOR_TIMEOUT
 import org.jetbrains.plugins.terminal.util.waitFor
+import java.util.concurrent.CancellationException
 
 private val LOG: Logger = Logger.getInstance(BackendTerminalSession::class.java)
 
@@ -56,7 +57,13 @@ internal fun startTerminalSession(
   val services: JediTermServices = createJediTermServices(connector, termSize, maxHistoryLinesCount, settings)
 
   val outputScope = coroutineScope.childScope("Terminal output forwarding")
-  val outputFlow = createTerminalOutputFlow(services.textBuffer, services.terminalDisplay, services.controller, outputScope)
+  val outputFlow = createTerminalOutputFlow(
+    services.textBuffer,
+    services.terminalDisplay,
+    services.controller,
+    outputScope,
+    ensureEmulationActive = { ensureEmulationActive(services.terminalStarter) }
+  )
 
   val inputScope = coroutineScope.childScope("Terminal input handling")
   val inputChannel = createTerminalInputChannel(services, inputScope)
@@ -96,7 +103,7 @@ private fun createJediTermServices(
   val controller = ObservableJediTerminal(terminalDisplay, textBuffer, styleState)
   val typeAheadManager = TerminalTypeAheadManager(JediTermTypeAheadModel(controller, textBuffer, settings))
   val executorService = TerminalExecutorServiceManagerImpl()
-  val terminalStarter = TerminalStarter(
+  val terminalStarter = StopAwareTerminalStarter(
     controller,
     connector,
     TtyBasedArrayDataStream(connector),
@@ -174,10 +181,16 @@ private fun startTerminalEmulation(terminalStarter: TerminalStarter) {
   }
 }
 
+private fun ensureEmulationActive(starter: StopAwareTerminalStarter) {
+  if (Thread.interrupted() || starter.isStopped) {
+    throw CancellationException("Terminal emulation was stopped")
+  }
+}
+
 private class JediTermServices(
   val textBuffer: TerminalTextBuffer,
   val terminalDisplay: TerminalDisplayImpl,
   val controller: ObservableJediTerminal,
   val executorService: TerminalExecutorServiceManager,
-  val terminalStarter: TerminalStarter,
+  val terminalStarter: StopAwareTerminalStarter,
 )
