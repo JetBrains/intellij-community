@@ -19,7 +19,6 @@ import com.intellij.psi.impl.source.xml.stub.XmlStubBasedElementType
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.UnsupportedNodeElementTypeException
-import com.intellij.psi.xml.HtmlFileElementType
 import com.intellij.psi.xml.XmlElementType
 import com.intellij.psi.xml.XmlTokenType
 
@@ -66,8 +65,4 @@ open class HTMLParserDefinition :
 
   override fun spaceExistenceTypeBetweenTokens(left: ASTNode, right: ASTNode): SpaceRequirements =
     canStickTokensTogether(left, right)
-
-  companion object {
-    val FILE_ELEMENT_TYPE: IFileElementType = HtmlFileElementType()
-  }
 }

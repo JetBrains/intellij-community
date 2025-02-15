@@ -2,14 +2,13 @@
 package com.intellij.psi.xml
 
 import com.intellij.html.embedding.HtmlRawTextElementType
-import com.intellij.lang.html.HTMLParserDefinition
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
 
 private object XmlElementTypeImpl {
   @JvmField
   val HTML_FILE: IFileElementType =
-    HTMLParserDefinition.FILE_ELEMENT_TYPE
+    HtmlFileElementType.INSTANCE
 
   @JvmField
   val HTML_RAW_TEXT: IElementType =

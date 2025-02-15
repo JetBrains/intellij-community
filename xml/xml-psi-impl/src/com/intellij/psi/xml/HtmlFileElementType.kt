@@ -5,6 +5,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.psi.stubs.PsiFileStub
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.IStubFileElementType
 import kotlin.concurrent.Volatile
 
@@ -13,13 +14,16 @@ open class HtmlFileElementType(
   language: Language,
 ) : IStubFileElementType<PsiFileStub<*>?>(debugName, language) {
 
-  constructor() :
+  protected constructor() :
     this("html", HTMLLanguage.INSTANCE)
 
   override fun getStubVersion(): Int =
     getHtmlStubVersion() + 3
 
   companion object {
+    @JvmField
+    val INSTANCE: IFileElementType = HtmlFileElementType()
+
     @Volatile
     private var stubVersion = -1
 
