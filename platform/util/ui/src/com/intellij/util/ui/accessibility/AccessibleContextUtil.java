@@ -17,19 +17,17 @@ package com.intellij.util.ui.accessibility;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import java.awt.*;
 
 public final class AccessibleContextUtil {
-  //@VisibleForTesting
-  static final String PUNCTUATION_CHARACTER = ".";
-  //@VisibleForTesting
-  static final String PUNCTUATION_SEPARATOR = "  ";
+  @ApiStatus.Internal
+  public static final String PUNCTUATION_CHARACTER = ".";
+  @ApiStatus.Internal
+  public static final String PUNCTUATION_SEPARATOR = "  ";
 
   public static void setName(@NotNull Component component, @Nls String name) {
     setAccessibleName(component, name);
