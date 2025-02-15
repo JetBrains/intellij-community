@@ -81,35 +81,38 @@ internal class ReworkedTerminalView(
 
     terminalInput = TerminalInput(sessionFuture, sessionModel, coroutineScope.childScope("TerminalInput"))
 
-    outputEditor = createOutputEditor(settings, parentDisposable = this)
-    val outputModel = createOutputModel(
-      project,
-      editor = outputEditor,
-      maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength(),
-      settings,
-      sessionModel,
-      encodingManager,
-      terminalInput,
-      coroutineScope.childScope("TerminalOutputModel"),
-      withVerticalScroll = true,
-      withTopAndBottomInsets = true
-    )
-
-    terminalSearchController = TerminalSearchController(project, outputEditor)
-
     alternateBufferEditor = createAlternateBufferEditor(settings, parentDisposable = this)
-    val alternateBufferModel = createOutputModel(
+    val alternateBufferModel = TerminalOutputModelImpl(alternateBufferEditor.document, 0)
+    configureOutputEditor(
       project,
       editor = alternateBufferEditor,
-      maxOutputLength = 0,
+      model = alternateBufferModel,
       settings,
       sessionModel,
       encodingManager,
       terminalInput,
       coroutineScope.childScope("TerminalAlternateBufferModel"),
-      withVerticalScroll = false,
-      withTopAndBottomInsets = false
+      scrollingModel = null,
+      withTopAndBottomInsets = false,
     )
+
+    outputEditor = createOutputEditor(settings, parentDisposable = this)
+    val outputModel = TerminalOutputModelImpl(outputEditor.document, TerminalUiUtils.getDefaultMaxOutputLength())
+    val scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, coroutineScope.childScope("TerminalOutputScrollingModel"))
+    configureOutputEditor(
+      project,
+      editor = outputEditor,
+      model = outputModel,
+      settings,
+      sessionModel,
+      encodingManager,
+      terminalInput,
+      coroutineScope.childScope("TerminalOutputModel"),
+      scrollingModel,
+      withTopAndBottomInsets = true,
+    )
+
+    terminalSearchController = TerminalSearchController(project, outputEditor)
 
     val blocksModel = TerminalBlocksModelImpl(outputEditor.document)
     TerminalBlocksDecorator(outputEditor, blocksModel, coroutineScope.childScope("TerminalBlocksDecorator"))
@@ -202,20 +205,18 @@ internal class ReworkedTerminalView(
     return if (sessionModel.terminalState.value.isAlternateScreenBuffer) alternateBufferEditor else outputEditor
   }
 
-  private fun createOutputModel(
+  private fun configureOutputEditor(
     project: Project,
     editor: EditorEx,
-    maxOutputLength: Int,
+    model: TerminalOutputModel,
     settings: JBTerminalSystemSettingsProviderBase,
     sessionModel: TerminalSessionModel,
     encodingManager: TerminalKeyEncodingManager,
     terminalInput: TerminalInput,
     coroutineScope: CoroutineScope,
-    withVerticalScroll: Boolean,
+    scrollingModel: TerminalOutputScrollingModel?,
     withTopAndBottomInsets: Boolean,
-  ): TerminalOutputModel {
-    val model = TerminalOutputModelImpl(editor.document, maxOutputLength)
-
+  ) {
     val parentDisposable = coroutineScope.asDisposable() // same lifecycle as `this@ReworkedTerminalView`
 
     // Document modifications can change the scroll position.
@@ -239,11 +240,6 @@ internal class ReworkedTerminalView(
 
     TerminalCursorPainter.install(editor, model, sessionModel, coroutineScope.childScope("TerminalCursorPainter"))
 
-    val scrollingModel = if (withVerticalScroll) {
-      TerminalOutputScrollingModelImpl(editor, model, coroutineScope.childScope("TerminalOutputScrollingModel"))
-    }
-    else null
-
     if (withTopAndBottomInsets) {
       addTopAndBottomInsets(editor)
     }
@@ -262,8 +258,6 @@ internal class ReworkedTerminalView(
     ).install(parentDisposable)
 
     (editor.softWrapModel as? SoftWrapModelImpl)?.setSoftWrapPainter(EmptySoftWrapPainter)
-
-    return model
   }
 
   private fun addTopAndBottomInsets(editor: Editor) {
