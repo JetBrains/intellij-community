@@ -83,7 +83,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY;
-import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY;
 
 @Service(Service.Level.PROJECT)
 public final class TerminalToolWindowManager implements Disposable {
@@ -718,9 +717,9 @@ public final class TerminalToolWindowManager implements Disposable {
     TerminalWidgetProvider provider = TerminalWidgetProvider.getProvider();
     if (provider != null &&
         ExperimentalUI.isNewUI() &&
-        Registry.is(REWORKED_BLOCK_TERMINAL_REGISTRY) &&
-        !Registry.is(BLOCK_TERMINAL_REGISTRY) &&
-        terminalRunner == myTerminalRunner) {
+        terminalRunner == myTerminalRunner &&
+        terminalRunner.isGenTwoTerminalEnabled() &&
+        !Registry.is(BLOCK_TERMINAL_REGISTRY)) {
       widget = provider.createTerminalWidget(myProject, parentDisposable);
 
       Consumer<TerminalSessionTab> bindTabIdAndStartSession = (TerminalSessionTab tab) -> {
