@@ -8,8 +8,12 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
  */
 internal interface TerminalOutputScrollingModel {
   /**
-   * Scroll to the cursor forcefully. Should be used only in case of explicit user action.
+   * If [force] is true, the vertical scroll offset will be unconditionally adjusted to make cursor visible on the screen.
+   * [force] option should be used only in response to explicit user action.
+   *
+   * If [force] is false, the vertical scroll offset will be changed only if user now is following the screen end.
+   * If a user's scroll position is somewhere in the history, the scroll request will be ignored.
    */
   @RequiresEdt
-  fun scrollToCursor()
+  fun scrollToCursor(force: Boolean)
 }

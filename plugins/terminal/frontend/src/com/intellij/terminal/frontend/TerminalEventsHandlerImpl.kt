@@ -46,7 +46,7 @@ internal open class TerminalEventsHandlerImpl(
       selectionModel.removeSelection()
     }
 
-    scrollingModel?.scrollToCursor()
+    scrollingModel?.scrollToCursor(force = true)
 
     if (ignoreNextKeyTypedEvent) {
       e.consume()

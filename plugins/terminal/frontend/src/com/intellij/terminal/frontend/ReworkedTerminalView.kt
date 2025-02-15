@@ -115,7 +115,7 @@ internal class ReworkedTerminalView(
     terminalSearchController = TerminalSearchController(project, outputEditor)
 
     val blocksModel = TerminalBlocksModelImpl(outputEditor.document)
-    TerminalBlocksDecorator(outputEditor, blocksModel, coroutineScope.childScope("TerminalBlocksDecorator"))
+    TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))
 
     controller = TerminalSessionController(
       sessionModel,

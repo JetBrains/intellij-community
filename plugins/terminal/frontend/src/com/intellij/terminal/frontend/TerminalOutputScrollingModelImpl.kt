@@ -22,7 +22,7 @@ import kotlin.math.max
  * Manages the vertical scroll offset of the terminal output:
  * 1. Adjusts it to follow the cursor offset or last non-blank line (depending on what is located lower)
  * if the user does not modify scrolling position manually.
- * 2. Provides an ability to scroll to cursor forcefully: [scrollToCursor]
+ * 2. Provides an ability to scroll to cursor: [scrollToCursor]
  *
  * Lifecycle is bound to the provided Coroutine Scope.
  */
@@ -75,9 +75,13 @@ internal class TerminalOutputScrollingModelImpl(
   }
 
   @RequiresEdt
-  override fun scrollToCursor() {
-    shouldScrollToCursor = true
-    scrollToCursor(outputModel.cursorOffsetState.value)
+  override fun scrollToCursor(force: Boolean) {
+    if (force) {
+      shouldScrollToCursor = true
+    }
+    if (shouldScrollToCursor) {
+      scrollToCursor(outputModel.cursorOffsetState.value)
+    }
   }
 
   /**

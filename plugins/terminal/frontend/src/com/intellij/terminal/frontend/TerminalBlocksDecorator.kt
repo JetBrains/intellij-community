@@ -22,6 +22,7 @@ import kotlin.math.max
 internal class TerminalBlocksDecorator(
   private val editor: EditorEx,
   private val blocksModel: TerminalBlocksModel,
+  private val scrollingModel: TerminalOutputScrollingModel,
   coroutineScope: CoroutineScope,
 ) {
   /** Block ID to decoration */
@@ -33,6 +34,8 @@ internal class TerminalBlocksDecorator(
         editor.doTerminalOutputScrollChangingAction {
           handleBlocksModelEvent(event)
         }
+
+        scrollingModel.scrollToCursor(force = false)
       }
     }
 
