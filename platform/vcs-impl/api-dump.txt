@@ -959,17 +959,9 @@ com.intellij.openapi.vcs.changes.FileHolder
 - a:cleanUnderScope(com.intellij.openapi.vcs.changes.VcsDirtyScope):V
 - a:copy():com.intellij.openapi.vcs.changes.FileHolder
 - notifyVcsStarted(com.intellij.openapi.vcs.AbstractVcs):V
-c:com.intellij.openapi.vcs.changes.IgnoredViewDialog
+f:com.intellij.openapi.vcs.changes.IgnoredViewDialog
 - com.intellij.openapi.ui.DialogWrapper
-- pf:myPanel:javax.swing.JPanel
-- pf:myProject:com.intellij.openapi.project.Project
-- pf:myView:com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 - <init>(com.intellij.openapi.project.Project):V
-- p:addCustomActions(com.intellij.openapi.actionSystem.DefaultActionGroup):V
-- p:createActions():javax.swing.Action[]
-- p:createCenterPanel():javax.swing.JComponent
-- p:getDimensionServiceKey():java.lang.String
-- getPreferredFocusedComponent():javax.swing.JComponent
 f:com.intellij.openapi.vcs.changes.LastUnchangedContentTracker
 - <init>():V
 - s:forceSavedContent(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
@@ -1044,17 +1036,9 @@ c:com.intellij.openapi.vcs.changes.ToggleDetailsAction
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-c:com.intellij.openapi.vcs.changes.UnversionedViewDialog
+f:com.intellij.openapi.vcs.changes.UnversionedViewDialog
 - com.intellij.openapi.ui.DialogWrapper
-- pf:myPanel:javax.swing.JPanel
-- pf:myProject:com.intellij.openapi.project.Project
-- pf:myView:com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 - <init>(com.intellij.openapi.project.Project):V
-- p:addCustomActions(com.intellij.openapi.actionSystem.DefaultActionGroup):V
-- p:createActions():javax.swing.Action[]
-- p:createCenterPanel():javax.swing.JComponent
-- p:getDimensionServiceKey():java.lang.String
-- getPreferredFocusedComponent():javax.swing.JComponent
 - s:getUnversionedPopupGroup():com.intellij.openapi.actionSystem.ActionGroup
 - s:getUnversionedToolbarGroup():com.intellij.openapi.actionSystem.ActionGroup
 - s:registerUnversionedPopupGroup(javax.swing.JComponent):com.intellij.openapi.actionSystem.ActionGroup
