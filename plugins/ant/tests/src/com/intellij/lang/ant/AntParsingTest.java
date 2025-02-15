@@ -155,7 +155,7 @@ public class AntParsingTest extends ParsingTestCase {
     doTest(true);
   }
 
-   public void testBuildNumber() {
+  public void testBuildNumber() {
     doTest(true);
   }
 }

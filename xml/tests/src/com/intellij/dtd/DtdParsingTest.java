@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
+import static com.intellij.xml.XmlElementTypeServiceHelper.registerXmlElementTypeServices;
+
 public class DtdParsingTest extends ParsingTestCase {
 
   public DtdParsingTest() {
@@ -30,6 +32,7 @@ public class DtdParsingTest extends ParsingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    registerXmlElementTypeServices(getApplication(), getTestRootDisposable());
     addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, new XmlASTFactory());
     addExplicitExtension(LanguageASTFactory.INSTANCE, DTDLanguage.INSTANCE, new XmlASTFactory());
     registerExtensionPoint(StartTagEndTokenProvider.EP_NAME, StartTagEndTokenProvider.class);
