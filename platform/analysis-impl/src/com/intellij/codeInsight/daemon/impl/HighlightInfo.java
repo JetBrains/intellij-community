@@ -420,13 +420,11 @@ public class HighlightInfo implements Segment {
     return highlighter;
   }
 
-  public void setHighlighter(@NotNull RangeHighlighterEx highlighter) {
-    synchronized (this) {
-      if (this.highlighter != null) {
-        throw new IllegalStateException("Cannot set highlighter to " + highlighter+ " because it already set: "+this.highlighter+". Maybe this HighlightInfo was (incorrectly) stored and reused?");
-      }
-      this.highlighter = highlighter;
+  public synchronized void setHighlighter(@NotNull RangeHighlighterEx highlighter) {
+    if (this.highlighter != null) {
+      throw new IllegalStateException("Cannot set highlighter to " + highlighter+ " because it already set: "+this.highlighter+". Maybe this HighlightInfo was (incorrectly) stored and reused?");
     }
+    this.highlighter = highlighter;
     // as soon as the HighlightInfo is bound to the document, we can replace TextRanges in IntentionActionDescriptor with RangeMarkers
     updateFields(getIntentionActionDescriptors(), highlighter.getDocument());
     assertIntentionActionDescriptorsAreRangeMarkerBased(getIntentionActionDescriptors());
@@ -1098,19 +1096,17 @@ public class HighlightInfo implements Segment {
     registerFixes(List.of(new IntentionActionDescriptor(action, options, displayName, null, key, myProblemGroup, getSeverity(), fixRange)), null);
   }
 
+  // synchronized to avoid concurrent access to quickFix* fields; TODO rework to lock-free
   @ApiStatus.Internal
-  void registerFixes(@NotNull List<? extends @NotNull IntentionActionDescriptor> fixes, @Nullable Document document) {
+  synchronized void registerFixes(@NotNull List<? extends @NotNull IntentionActionDescriptor> fixes, @Nullable Document document) {
     if (fixes.isEmpty()) {
       return;
     }
-    synchronized (this) { // synchronized to avoid concurrent access to quickFix* fields; TODO rework to lock-free
-      List<IntentionActionDescriptor> descriptors = myIntentionActionDescriptors;
-      List<IntentionActionDescriptor> result = new ArrayList<>(descriptors.size() + fixes.size());
-      result.addAll(descriptors);
-      result.addAll(fixes);
-      myIntentionActionDescriptors = List.copyOf(result);
-    }
-
+    List<IntentionActionDescriptor> descriptors = myIntentionActionDescriptors;
+    List<IntentionActionDescriptor> result = new ArrayList<>(descriptors.size() + fixes.size());
+    result.addAll(descriptors);
+    result.addAll(fixes);
+    myIntentionActionDescriptors = List.copyOf(result);
     updateFields(getIntentionActionDescriptors(), document);
   }
 
@@ -1366,7 +1362,9 @@ public class HighlightInfo implements Segment {
       void register(@NotNull Segment fixRange, @NotNull IntentionAction action, @Nullable HighlightDisplayKey key) {
         IntentionActionDescriptor descriptor = new IntentionActionDescriptor(action, null, null, null, key, myProblemGroup, severity, fixRange);
         newDescriptors.add(descriptor);
-        updateFields(List.of(descriptor), document);
+        synchronized (HighlightInfo.this) {
+          updateFields(List.of(descriptor), document);
+        }
       }
     };
     computation.accept(registrarDelegate);
