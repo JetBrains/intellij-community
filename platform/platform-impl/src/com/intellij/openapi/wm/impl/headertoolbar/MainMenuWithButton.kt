@@ -13,7 +13,8 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-import com.intellij.ui.util.width
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.messages.MessageBusConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -33,6 +34,8 @@ class MainMenuWithButton(
     isVisible = ShowMode.getCurrent() == ShowMode.TOOLBAR_WITH_MENU
     border = null
   }
+  private val connection: MessageBusConnection = com.intellij.openapi.application.ApplicationManager.getApplication().messageBus.connect()
+
 
   init {
     isOpaque = false
@@ -40,8 +43,14 @@ class MainMenuWithButton(
       .row(resizable = true)
       .cell(component = toolbarMainMenu, resizableColumn = true)
       .cell(component = mainMenuButton.button)
+    connection.subscribe(ToolbarCompressedNotifier.TOPIC, object : ToolbarCompressedListener {
+      override fun onToolbarCompressed(event: ToolbarCompressedEvent) {
+        recalculateWidth(event.toolbar)
+      }
+    })
   }
 
+  private val toolbarInsetsConst = 20
   fun recalculateWidth(toolbar: MainToolbar?) {
     val isMergedMenu = isMergedMainMenu()
     toolbarMainMenu.isVisible = isMergedMenu
@@ -51,16 +60,14 @@ class MainMenuWithButton(
     if (!isMergedMenu) return
 
     coroutineScope.launch(Dispatchers.EDT) {
-      toolbarMainMenu.clearDuplicates()
-
       var wasChanged = false
-      val toolbarPrefWidth = (toolbar?.calculatePreferredWidth() ?: return@launch) + (toolbar.parent?.insets?.width ?: 0)
+      val toolbarPrefWidth = toolbar?.calculatePreferredWidth() ?: return@launch
       val menuButton = mainMenuButton.button
       val parentPanelWidth = menuButton.parent?.parent?.width ?: return@launch
       val menuWidth = toolbarMainMenu.components.sumOf { it.size.width }
       val menuButtonWidth = menuButton.preferredSize.width
 
-      var availableWidth = parentPanelWidth - menuWidth - (menuButtonWidth.takeIf { menuButton.isVisible } ?: 0) - toolbarPrefWidth
+      var availableWidth = parentPanelWidth - menuWidth - (menuButtonWidth.takeIf { menuButton.isVisible } ?: 0) - toolbarPrefWidth - JBUIScale.scale(toolbarInsetsConst)
       val rootMenuItems = toolbarMainMenu.rootMenuItems
       val widthLimit = if (menuButton.isVisible) 0 else menuButton.preferredSize.width
 
@@ -75,25 +82,29 @@ class MainMenuWithButton(
           widthToFree -= item.size.width
           wasChanged = true
         }
-
-        availableWidth = 0 // Adjust to reflect that we've made space
       }
 
-      while (availableWidth > widthLimit && toolbarMainMenu.hasInvisibleItems()) {
-        val item = toolbarMainMenu.pollNextInvisibleItem(mainMenuButton.expandableMenu) ?: break // Remove the last item (LIFO order)
-        val itemWidth = item.size.width
-        if (availableWidth - itemWidth < widthLimit) {
-          toolbarMainMenu.addInvisibleItem(item)
-          break
-        }
+      else if (availableWidth > widthLimit) {
+        while (availableWidth > widthLimit && toolbarMainMenu.hasInvisibleItems()) {
+          val item = toolbarMainMenu.pollNextInvisibleItem(mainMenuButton.expandableMenu) ?: break // Remove the last item (LIFO order)
+          val itemWidth = item.size.width
+          if (availableWidth - itemWidth < widthLimit) {
+            toolbarMainMenu.addInvisibleItem(item)
+            break
+          }
 
-        toolbarMainMenu.add(item)
-        availableWidth -= itemWidth
-        wasChanged = true
+          toolbarMainMenu.add(item)
+          availableWidth -= itemWidth
+          wasChanged = true
+        }
       }
 
       menuButton.isVisible = toolbarMainMenu.hasInvisibleItems()
       if (wasChanged) {
+        if (toolbarMainMenu.rootMenuItems.isEmpty()) {
+          val item = toolbarMainMenu.pollNextInvisibleItem(mainMenuButton.expandableMenu)
+          toolbarMainMenu.add(item)
+        }
         toolbarMainMenu.rootMenuItems.forEach { it.updateUI() }
         toolbar.revalidate()
         toolbar.repaint()
@@ -135,9 +146,4 @@ class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame): IdeJMenuBar
   fun hasInvisibleItems(): Boolean = invisibleItems.isNotEmpty()
 
   fun getInvisibleItemsCount(): Int = invisibleItems.size
-
-  fun clearDuplicates() {
-    val menuItemTexts = rootMenuItems.map { it.text }
-    invisibleItems.removeIf { removedItem -> menuItemTexts.contains(removedItem.text) }
-  }
 }
