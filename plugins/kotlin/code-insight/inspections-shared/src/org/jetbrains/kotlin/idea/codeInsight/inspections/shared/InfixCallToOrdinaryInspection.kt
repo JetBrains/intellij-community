@@ -21,10 +21,10 @@ internal class InfixCallToOrdinaryInspection : KotlinApplicableInspectionBase.Si
         context: Unit,
     ) = KotlinBundle.message("replace.infix.call.with.ordinary.call")
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtBinaryExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtBinaryExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    ): KotlinModCommandQuickFix<KtBinaryExpression> = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
 
         override fun applyFix(
             project: Project,
@@ -36,7 +36,7 @@ internal class InfixCallToOrdinaryInspection : KotlinApplicableInspectionBase.Si
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.infix.call.with.ordinary.call")
-    })
+    }
 
     override fun buildVisitor(
         holder: ProblemsHolder,

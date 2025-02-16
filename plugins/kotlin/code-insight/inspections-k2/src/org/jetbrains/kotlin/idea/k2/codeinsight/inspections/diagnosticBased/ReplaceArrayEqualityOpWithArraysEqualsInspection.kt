@@ -42,10 +42,10 @@ internal class ReplaceArrayEqualityOpWithArraysEqualsInspection :
         context: Context,
     ): @InspectionMessage String = KotlinBundle.message("dangerous.array.comparison")
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtExpression,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtExpression>() {
+    ): KotlinModCommandQuickFix<KtExpression> = object : KotlinModCommandQuickFix<KtExpression>() {
 
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with.content.equals")
 
@@ -69,7 +69,7 @@ internal class ReplaceArrayEqualityOpWithArraysEqualsInspection :
             }
             element.replace(KtPsiFactory(project).createExpressionByPattern(template, left, right))
         }
-    })
+    }
 
     override fun buildVisitor(
         holder: ProblemsHolder,

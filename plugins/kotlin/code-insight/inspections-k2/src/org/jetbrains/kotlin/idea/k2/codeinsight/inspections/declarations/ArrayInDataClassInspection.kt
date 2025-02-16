@@ -30,8 +30,8 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
         return KotlinBundle.message("array.property.in.data.class.it.s.recommended.to.override.equals.hashcode")
     }
 
-    override fun createQuickFixes(element: KtParameter, context: Context): Array<KotlinModCommandQuickFix<KtParameter>> {
-        return arrayOf(object : KotlinModCommandQuickFix<KtParameter>() {
+    override fun createQuickFix(element: KtParameter, context: Context): KotlinModCommandQuickFix<KtParameter> {
+        return object : KotlinModCommandQuickFix<KtParameter>() {
             override fun getFamilyName(): String =
                 KotlinBundle.message("generate.equals.and.hashcode.fix.text")
 
@@ -50,7 +50,7 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
                 val function = factory.createFunction(text)
                 shortenReferences(containingClass.addDeclaration(function))
             }
-        })
+        }
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> {
@@ -105,7 +105,7 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
                     }
                 }
             }
-            if (declaration.nameAsName == OperatorNameConventions.HASH_CODE && declaration.valueParameters.size == 0) {
+            if (declaration.nameAsName == OperatorNameConventions.HASH_CODE && declaration.valueParameters.isEmpty()) {
                 overriddenHashCode = true
             }
         }

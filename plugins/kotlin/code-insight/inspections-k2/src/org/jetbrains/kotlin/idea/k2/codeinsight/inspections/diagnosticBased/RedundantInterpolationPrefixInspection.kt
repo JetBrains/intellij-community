@@ -50,12 +50,10 @@ internal class RedundantInterpolationPrefixInspection :
         return KotlinBundle.message("inspection.redundant.interpolation.prefix.problem.description")
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtElement,
         context: Unit
-    ): Array<KotlinModCommandQuickFix<KtElement>> {
-        return arrayOf(RemoveRedundantInterpolationQuickFix)
-    }
+    ): KotlinModCommandQuickFix<KtElement> = RemoveRedundantInterpolationQuickFix
 
     override fun buildVisitor(
         holder: ProblemsHolder,

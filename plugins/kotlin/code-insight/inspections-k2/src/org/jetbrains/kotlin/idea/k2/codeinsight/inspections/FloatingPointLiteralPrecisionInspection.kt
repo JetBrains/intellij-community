@@ -46,10 +46,10 @@ internal class FloatingPointLiteralPrecisionInspection : KotlinApplicableInspect
         return KotlinBundle.message("floating.point.literal.precision.inspection")
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtConstantExpression,
         context: String
-    ): Array<KotlinModCommandQuickFix<KtConstantExpression>> = arrayOf(FloatingPointLiteralPrecisionQuickFix(context))
+    ): KotlinModCommandQuickFix<KtConstantExpression> = FloatingPointLiteralPrecisionQuickFix(context)
 
     override fun KaSession.prepareContext(element: KtConstantExpression): String? {
         if (element.elementType == KtConstantExpressionElementType.kindToConstantElementType(ConstantValueKind.FLOAT_CONSTANT)) {
@@ -86,9 +86,9 @@ private class FloatingPointLiteralPrecisionQuickFix(val replacementText: String)
     override fun getFamilyName(): String = name
 
     override fun applyFix(
-            project: Project,
-            element: KtConstantExpression,
-            updater: ModPsiUpdater,
+        project: Project,
+        element: KtConstantExpression,
+        updater: ModPsiUpdater,
     ) {
         element.replace(KtPsiFactory(project).createExpression(replacementText))
     }

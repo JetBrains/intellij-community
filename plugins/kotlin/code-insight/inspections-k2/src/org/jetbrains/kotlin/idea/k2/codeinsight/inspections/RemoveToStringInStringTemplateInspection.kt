@@ -59,10 +59,10 @@ internal class RemoveToStringInStringTemplateInspection : KotlinApplicableInspec
             .asUnit
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtDotQualifiedExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtDotQualifiedExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
+    ): KotlinModCommandQuickFix<KtDotQualifiedExpression> = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.to.string.fix.text")
@@ -84,5 +84,5 @@ internal class RemoveToStringInStringTemplateInspection : KotlinApplicableInspec
                 element.replace(receiverExpression)
             }
         }
-    })
+    }
 }

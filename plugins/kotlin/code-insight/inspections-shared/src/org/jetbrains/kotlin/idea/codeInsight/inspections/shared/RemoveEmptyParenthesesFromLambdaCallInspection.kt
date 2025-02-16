@@ -41,10 +41,10 @@ internal class RemoveEmptyParenthesesFromLambdaCallInspection : KotlinApplicable
             ?.resolveToCall() is KaSuccessCallInfo)
             .asUnit
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtValueArgumentList,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtValueArgumentList>> = arrayOf(object : KotlinModCommandQuickFix<KtValueArgumentList>() {
+    ): KotlinModCommandQuickFix<KtValueArgumentList> = object : KotlinModCommandQuickFix<KtValueArgumentList>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.action.name")
@@ -56,5 +56,5 @@ internal class RemoveEmptyParenthesesFromLambdaCallInspection : KotlinApplicable
         ) {
             removeArgumentList(element)
         }
-    })
+    }
 }

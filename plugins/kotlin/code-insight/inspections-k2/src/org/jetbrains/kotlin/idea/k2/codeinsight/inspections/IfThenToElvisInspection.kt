@@ -26,10 +26,10 @@ internal class IfThenToElvisInspection @JvmOverloads constructor(
     override fun getProblemDescription(element: KtIfExpression, context: IfThenToElvisInspectionData): String =
         KotlinBundle.message("if.then.foldable.to")
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtIfExpression,
         context: IfThenToElvisInspectionData
-    ): Array<KotlinModCommandQuickFix<KtIfExpression>> = arrayOf(IfThenToElviFix(context))
+    ): KotlinModCommandQuickFix<KtIfExpression> = IfThenToElviFix(context)
 
     override fun getApplicableRanges(element: KtIfExpression): List<TextRange> =
         ApplicabilityRanges.ifExpressionExcludingBranches(element)

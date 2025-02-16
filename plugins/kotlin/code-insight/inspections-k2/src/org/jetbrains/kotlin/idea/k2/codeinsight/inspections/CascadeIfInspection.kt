@@ -30,10 +30,10 @@ class CascadeIfInspection : KotlinApplicableInspectionBase.Simple<KtIfExpression
         context: Unit
     ): @InspectionMessage String = KotlinBundle.message("cascade.if.should.be.replaced.with.when")
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtIfExpression,
         context: Unit
-    ): Array<KotlinModCommandQuickFix<KtIfExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtIfExpression>() {
+    ): KotlinModCommandQuickFix<KtIfExpression> = object : KotlinModCommandQuickFix<KtIfExpression>() {
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.if.with.when")
 
         override fun applyFix(
@@ -43,7 +43,7 @@ class CascadeIfInspection : KotlinApplicableInspectionBase.Simple<KtIfExpression
         ) {
             convertIfToWhen(element, updater)
         }
-    })
+    }
 
     override fun getApplicableRanges(element: KtIfExpression): List<TextRange> = ApplicabilityRanges.ifKeyword(element)
 

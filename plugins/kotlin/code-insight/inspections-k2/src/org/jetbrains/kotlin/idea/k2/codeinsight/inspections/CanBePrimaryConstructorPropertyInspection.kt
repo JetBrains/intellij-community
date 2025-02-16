@@ -54,10 +54,10 @@ internal class CanBePrimaryConstructorPropertyInspection :
         return MovePropertyToConstructorInfo.create(element)
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtProperty,
         context: MovePropertyToConstructorInfo,
-    ): Array<KotlinModCommandQuickFix<KtProperty>> = arrayOf(object : KotlinModCommandQuickFix<KtProperty>() {
+    ): KotlinModCommandQuickFix<KtProperty> = object : KotlinModCommandQuickFix<KtProperty>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.can.be.primary.constructor.property.display.name")
@@ -69,5 +69,5 @@ internal class CanBePrimaryConstructorPropertyInspection :
         ) {
             element.moveToConstructor(context.toWritable(updater))
         }
-    })
+    }
 }

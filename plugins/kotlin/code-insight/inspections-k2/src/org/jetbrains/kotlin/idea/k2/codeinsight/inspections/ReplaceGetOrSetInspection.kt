@@ -85,10 +85,10 @@ internal class ReplaceGetOrSetInspection :
         return Context(functionSymbol.name, problemHighlightType)
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtDotQualifiedExpression,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtDotQualifiedExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
+    ): KotlinModCommandQuickFix<KtDotQualifiedExpression> = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.get.or.set.call.with.indexing.operator")
@@ -106,7 +106,7 @@ internal class ReplaceGetOrSetInspection :
                 isSet = context.calleeName == OperatorNameConventions.SET,
             ) { updater.moveCaretTo(it) }
         }
-    })
+    }
 
     context(KaSession)
     private fun KaNamedFunctionSymbol.isExplicitOperator(): Boolean {

@@ -53,11 +53,10 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
         return KotlinBundle.message("call.chain.on.collection.type.may.be.simplified")
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtQualifiedExpression,
         context: CallChainConversion,
-    ): Array<KotlinModCommandQuickFix<KtQualifiedExpression>> = arrayOf(
-        SimplifyCallChainFix(
+    ): KotlinModCommandQuickFix<KtQualifiedExpression> = SimplifyCallChainFix(
         context,
         modifyArguments = { callExpression ->
             if (context.replacement.startsWith(JOIN_TO)) {
@@ -68,7 +67,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
                 }
             }
         }
-    ))
+    )
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> {
         return qualifiedExpressionVisitor { qualifiedExpression ->

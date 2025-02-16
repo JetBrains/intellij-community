@@ -34,14 +34,14 @@ internal class SimplifyBooleanWithConstantsInspection : KotlinApplicableInspecti
         return SimplifyBooleanWithConstantsUtils.areThereExpressionsToBeSimplified(element.topBinary()).asUnit
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtBinaryExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtBinaryExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    ): KotlinModCommandQuickFix<KtBinaryExpression> = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("simplify.boolean.expression")
 
         override fun applyFix(project: Project, element: KtBinaryExpression, updater: ModPsiUpdater) {
             performSimplification(element)
         }
-    })
+    }
 }

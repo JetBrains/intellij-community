@@ -22,7 +22,7 @@ internal class CanBeValInspection : KotlinKtDiagnosticBasedInspectionBase<KtDecl
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean
-    ): KtVisitor<*, *> = declarationVisitor (fun(declaration) {
+    ): KtVisitor<*, *> = declarationVisitor(fun(declaration) {
         if (declaration !is KtProperty && declaration !is KtDestructuringDeclaration) return
         visitTargetElement(declaration, holder, isOnTheFly)
     })
@@ -43,10 +43,10 @@ internal class CanBeValInspection : KotlinKtDiagnosticBasedInspectionBase<KtDecl
         return if (element is KtValVarKeywordOwner) Unit else null
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtDeclaration,
         context: Unit
-    ): Array<KotlinModCommandQuickFix<KtDeclaration>> = arrayOf(object : KotlinModCommandQuickFix<KtDeclaration>() {
+    ): KotlinModCommandQuickFix<KtDeclaration> = object : KotlinModCommandQuickFix<KtDeclaration>() {
 
         override fun getFamilyName(): String = KotlinBundle.message("change.to.val")
 
@@ -60,5 +60,5 @@ internal class CanBeValInspection : KotlinKtDiagnosticBasedInspectionBase<KtDecl
                 KtPsiFactory(project).createValKeyword()
             )
         }
-    })
+    }
 }

@@ -59,10 +59,10 @@ internal class ExplicitThisInspection : KotlinApplicableInspectionBase.Simple<Kt
         return checkShortening(element)
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtThisExpression,
         context: Unit
-    ): Array<KotlinModCommandQuickFix<KtThisExpression>> = arrayOf(ExplicitThisExpressionFix(element.text))
+    ): KotlinModCommandQuickFix<KtThisExpression> = ExplicitThisExpressionFix(element.text)
 }
 
 internal class ExplicitThisExpressionFix(private val text: String) : KotlinModCommandQuickFix<KtThisExpression>() {

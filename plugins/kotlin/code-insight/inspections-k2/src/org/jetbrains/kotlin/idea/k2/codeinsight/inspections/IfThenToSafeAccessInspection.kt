@@ -55,8 +55,8 @@ internal class IfThenToSafeAccessInspection :
         return IfThenTransformationUtils.prepareIfThenTransformationStrategy(element, false)
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtIfExpression,
         context: IfThenTransformationStrategy,
-    ): Array<KotlinModCommandQuickFix<KtIfExpression>> = arrayOf(IfThenToSafeAccessFix(context))
+    ): KotlinModCommandQuickFix<KtIfExpression> = IfThenToSafeAccessFix(context)
 }

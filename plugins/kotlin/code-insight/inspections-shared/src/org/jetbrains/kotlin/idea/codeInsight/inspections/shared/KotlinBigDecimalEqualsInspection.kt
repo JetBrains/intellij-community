@@ -21,7 +21,8 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 
-internal class KotlinBigDecimalEqualsInspection : KotlinApplicableInspectionBase.Simple<KtExpression, KotlinBigDecimalEqualsInspection.Context>(), CleanupLocalInspectionTool {
+internal class KotlinBigDecimalEqualsInspection :
+    KotlinApplicableInspectionBase.Simple<KtExpression, KotlinBigDecimalEqualsInspection.Context>(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid =
         expressionVisitor {
             visitTargetElement(it, holder, isOnTheFly)
@@ -33,11 +34,11 @@ internal class KotlinBigDecimalEqualsInspection : KotlinApplicableInspectionBase
     ): @InspectionMessage String =
         KotlinBundle.message("big.decimal.equals.problem.descriptor")
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtExpression,
         context: Context
-    ): Array<KotlinModCommandQuickFix<KtExpression>> =
-        arrayOf(object : KotlinModCommandQuickFix<KtExpression>() {
+    ): KotlinModCommandQuickFix<KtExpression> =
+        object : KotlinModCommandQuickFix<KtExpression>() {
             override fun getFamilyName(): @IntentionFamilyName String =
                 KotlinBundle.message("big.decimal.equals")
 
@@ -111,7 +112,7 @@ internal class KotlinBigDecimalEqualsInspection : KotlinApplicableInspectionBase
                     }
                 }
             }
-        })
+        }
 
     override fun isApplicableByPsi(element: KtExpression): Boolean =
         // BigDecimal(1.0) == BigDecimal(1) or BigDecimal(1.0) != BigDecimal(1)

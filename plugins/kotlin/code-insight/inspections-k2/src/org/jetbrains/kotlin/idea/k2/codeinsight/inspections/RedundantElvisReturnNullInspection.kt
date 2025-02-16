@@ -66,10 +66,10 @@ internal class RedundantElvisReturnNullInspection : KotlinApplicableInspectionBa
             ?.isMarkedNullable
             ?.asUnit
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtBinaryExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtBinaryExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+    ): KotlinModCommandQuickFix<KtBinaryExpression> = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.redundant.elvis.return.null.text")
@@ -82,5 +82,5 @@ internal class RedundantElvisReturnNullInspection : KotlinApplicableInspectionBa
             val left = element.left ?: return
             element.replace(left)
         }
-    })
+    }
 }

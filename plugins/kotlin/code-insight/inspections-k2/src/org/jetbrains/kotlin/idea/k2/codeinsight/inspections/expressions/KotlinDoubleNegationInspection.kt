@@ -41,10 +41,10 @@ internal class KotlinDoubleNegationInspection : KotlinApplicableInspectionBase.S
             ?.isBooleanType
             ?.asUnit
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtPrefixExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtPrefixExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtPrefixExpression>() {
+    ): KotlinModCommandQuickFix<KtPrefixExpression> = object : KotlinModCommandQuickFix<KtPrefixExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("inspection.kotlin.double.negation.action.name")
@@ -57,7 +57,7 @@ internal class KotlinDoubleNegationInspection : KotlinApplicableInspectionBase.S
             element.baseExpression?.let { element.parentThroughParenthesis.replace(it) }
         }
 
-    })
+    }
 }
 
 private val PsiElement.parentThroughParenthesis: PsiElement
