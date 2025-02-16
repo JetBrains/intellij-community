@@ -4,9 +4,11 @@ package com.jetbrains.python.psi.types
 import com.intellij.openapi.util.Ref
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.resolve.PyResolveContext
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -207,14 +209,6 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
         if (PyTypeUtil.toStream(subLiteralType).all { it is PyLiteralType }) return subLiteralType
       }
 
-      if (expression is PyReferenceExpression && expression.isQualified) {
-        val type = context.getType(expression)
-        if (type is PyLiteralType) {
-          // expression is a reference to an enum member
-          return type
-        }
-      }
-
       if (expression is PyConditionalExpression) {
         return PyUnionType.union(
           listOf(expression.truePart, expression.falsePart).map {
@@ -239,6 +233,14 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
     }
 
     private fun literalType(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyLiteralType? {
+      if (expression is PyReferenceExpression && expression.isQualified) {
+        val type = PyUtil.multiResolveTopPriority(expression, PyResolveContext.defaultContext(context)).firstNotNullOfOrNull {
+          PyStdlibTypeProvider.getEnumMemberType(it, context)
+        }
+        if (type != null) {
+          return type
+        }
+      }
       return classOfAcceptableLiteral(expression, context, index)?.let { PyLiteralType(it, expression) }
     }
 

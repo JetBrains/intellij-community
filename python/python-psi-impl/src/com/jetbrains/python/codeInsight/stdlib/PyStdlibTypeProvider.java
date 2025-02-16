@@ -6,6 +6,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -79,6 +80,14 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       return builtinCache.getStrOrUnicodeType(true);
     }
     return null;
+  }
+
+  /**
+   * If {@code element} is an enum member returns it's {@link PyLiteralType}, otherwise {@code null}.
+   */
+  @ApiStatus.Internal
+  public static @Nullable PyLiteralType getEnumMemberType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    return ObjectUtils.tryCast(Ref.deref(getEnumAttributeType(element, context)), PyLiteralType.class);
   }
 
   private static @Nullable Ref<PyType> getEnumType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context,

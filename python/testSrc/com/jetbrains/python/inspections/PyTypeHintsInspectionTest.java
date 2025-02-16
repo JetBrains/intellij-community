@@ -1215,6 +1215,36 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    g: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">f</warning>]""");
   }
 
+  // PY-79227
+  public void testEnumLiteral() {
+    doTestByText("""
+                   from enum import Enum, member, nonmember
+                   from typing import Literal
+                   
+                   class Color(Enum):
+                       R = 1
+                       G = 2
+                       RED = R
+                   
+                       foo = nonmember(3)
+                   
+                       @member
+                       def bar(self): ...
+                   
+                   class A:
+                       X = Color.R
+                   
+                   v1: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">A.X</warning>]
+                   
+                   X = Color.R
+                   v2: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">X</warning>]
+                   
+                   v3: Literal[Color.G]
+                   v4: Literal[Color.RED]
+                   v5: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">Color.foo</warning>]
+                   v6: Literal[Color.bar]""");
+  }
+
   // PY-35235
   public void testLiteralWithoutArguments() {
     doTestByText("""
