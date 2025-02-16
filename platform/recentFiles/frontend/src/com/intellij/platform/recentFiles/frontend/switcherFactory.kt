@@ -16,6 +16,7 @@ import com.intellij.platform.recentFiles.shared.FileSwitcherApi
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent.*
 import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
@@ -30,11 +31,16 @@ internal fun createAndShowNewSwitcher(onlyEditedFiles: Boolean?, event: AnAction
 @OptIn(FlowPreview::class)
 @ApiStatus.Internal
 suspend fun createAndShowNewSwitcherSuspend(onlyEditedFiles: Boolean?, event: AnActionEvent?, @Nls title: String, project: Project): SwitcherPanel {
-  val recentFilesServiceScope = RecentFilesCoroutineScopeProvider.getInstance(project).coroutineScope
-  val dataModel = createReactiveDataModel(recentFilesServiceScope, project)
+  val serviceScope = RecentFilesCoroutineScopeProvider.getInstance(project).coroutineScope
+
+  val uiUpdateScope = serviceScope.childScope("Switcher UI updates")
+  val backendRequestsScope = serviceScope.childScope("Switcher backend requests")
+
+  val dataModel = createReactiveDataModel(serviceScope, project)
   val remoteApi = FileSwitcherApi.getInstance()
   val parameters = SwitcherLaunchEventParameters(event?.inputEvent)
-  recentFilesServiceScope.launch(start = CoroutineStart.UNDISPATCHED) {
+
+  backendRequestsScope.launch(start = CoroutineStart.UNDISPATCHED) {
     remoteApi.updateRecentFilesBackendState(createFilesSearchRequestRequest(true == onlyEditedFiles, !parameters.isEnabled, project))
   }
   dataModel.awaitModelPopulation(durationMillis = Registry.intValue("switcher.preload.timeout.ms", 300).toLong())
@@ -45,7 +51,8 @@ suspend fun createAndShowNewSwitcherSuspend(onlyEditedFiles: Boolean?, event: An
                   launchParameters = parameters,
                   onlyEditedFiles = onlyEditedFiles,
                   givenFilesModel = dataModel,
-                  parentScope = recentFilesServiceScope,
+                  backendRequestsScope = backendRequestsScope,
+                  uiUpdateScope = uiUpdateScope,
                   remoteApi = remoteApi)
   }
 }
@@ -54,7 +61,8 @@ private suspend fun createReactiveDataModel(parentScope: CoroutineScope, project
   val mappedEvents = FileSwitcherApi.getInstance()
     .getRecentFileEvents(project.projectId())
     .map { recentFilesUpdate -> convertRpcEventToFlowModelEvent(recentFilesUpdate) }
-  return FlowBackedListModel(parentScope, mappedEvents)
+  val modelSubscriptionScope = parentScope.childScope("FlowBackedListModel events subscription")
+  return FlowBackedListModel(modelSubscriptionScope, mappedEvents)
 }
 
 // FIXME: Unnecessary conversion, consider setting up KX serialisation so that generic type parameter's serializer is recognised

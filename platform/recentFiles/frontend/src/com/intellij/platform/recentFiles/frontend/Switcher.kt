@@ -91,13 +91,10 @@ object Switcher : BaseSwitcherAction(null) {
     launchParameters: SwitcherLaunchEventParameters,
     onlyEditedFiles: Boolean?,
     givenFilesModel: CollectionListModel<SwitcherVirtualFile>,
-    parentScope: CoroutineScope,
+    private val uiUpdateScope: CoroutineScope,
+    private val backendRequestsScope: CoroutineScope,
     private val remoteApi: FileSwitcherApi,
   ) : BorderLayoutPanel(), UiDataProvider, QuickSearchComponent, Disposable {
-
-    private val uiUpdateScope = parentScope.childScope("Switcher UI updates")
-    private val backendRequestsScope = parentScope.childScope("Switcher backend requests")
-
     val popup: JBPopup?
     private val activity = SHOWN_TIME_ACTIVITY.started(project)
     private var navigationData: SwitcherLogger.NavigationData? = null

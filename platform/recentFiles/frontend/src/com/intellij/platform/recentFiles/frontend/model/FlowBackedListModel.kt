@@ -33,11 +33,11 @@ enum class FlowBackedListModelState {
 
 @ApiStatus.Internal
 class FlowBackedListModel<Item>(
-  parentScope: CoroutineScope,
+  private val coroutineScope: CoroutineScope,
   private val itemUpdatesFlow: Flow<FlowBackedListModelUpdate<Item>>,
 ) : CollectionListModel<Item>(), Disposable {
 
-  private val coroutineScope = parentScope.childScope("FlowBackedListModel events subscription")
+  private val modelUpdateState = MutableStateFlow(FlowBackedListModelState.CREATED)
 
   init {
     coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -45,7 +45,6 @@ class FlowBackedListModel<Item>(
     }
   }
 
-  private val modelUpdateState = MutableStateFlow(FlowBackedListModelState.CREATED)
 
   suspend fun awaitModelPopulation(durationMillis: Long) {
     val fastPreloadedModelAttempt = withTimeoutOrNull(durationMillis) {
