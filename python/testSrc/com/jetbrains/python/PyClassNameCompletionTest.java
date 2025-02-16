@@ -18,10 +18,8 @@ import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex;
 import one.util.streamex.StreamEx;
@@ -29,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 public class PyClassNameCompletionTest extends PyTestCase {
@@ -217,26 +214,8 @@ public class PyClassNameCompletionTest extends PyTestCase {
       LookupElement[] variants = myFixture.complete(CompletionType.BASIC, 2);
       if (variants == null) {
         StringBuilder sb = new StringBuilder();
-        StubIndex index = StubIndex.getInstance();
-        Collection<String> allKeys = index.getAllKeys(PyExportedModuleAttributeIndex.KEY, myFixture.getProject());
-        if (allKeys.contains("request")) {
-          GlobalSearchScope scope = PySearchUtilBase.defaultSuggestionScope(myFixture.getFile());
-          List<PyElement> elements = new ArrayList<>();
-          for (String key : allKeys) {
-            index.processElements(PyExportedModuleAttributeIndex.KEY, key, myFixture.getProject(), scope, PyElement.class, exported -> {
-              String name = exported.getName();
-              if (name != null && name.contains("request")) {
-                elements.add(exported);
-              }
-              return true;
-            });
-          }
-          sb.append(
-            elements.stream().map(Objects::toString)
-              .collect(Collectors.joining(", ", "Found elements: [", "]\n"))
-          );
-        }
-        else {
+        Collection<String> allKeys = StubIndex.getInstance().getAllKeys(PyExportedModuleAttributeIndex.KEY, myFixture.getProject());
+        if (!allKeys.contains("request")) {
           sb
             .append("'request' key not found\n")
             .append(allKeys.size()).append(" stub index keys total\\n");
