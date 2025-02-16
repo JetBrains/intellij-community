@@ -91,6 +91,7 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
   private final Histogram taskDurationHisto = new Histogram(3);
 
   private void samplingLoop() {
+    UILatencyLogger.MemoryStatsSampler memorySampler = new UILatencyLogger.MemoryStatsSampler();
     try {
       for (int sampleNo = 0;
            !Thread.currentThread().isInterrupted();
@@ -98,6 +99,8 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
         long timeTakenNs = runCpuAndMemoryTask();
 
         taskDurationHisto.recordValue(MathUtil.clamp(timeTakenNs, 0, Long.MAX_VALUE));
+
+        memorySampler.sample();
 
         try {
           //noinspection BusyWait
@@ -111,6 +114,7 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
         if (sampleNo % REPORTING_EACH_N_SAMPLES == REPORTING_EACH_N_SAMPLES - 1) {
           reportAccumulatedStats(taskDurationHisto);
           taskDurationHisto.reset();
+          memorySampler.logToFus();
         }
       }
     }
@@ -118,6 +122,7 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
       LOG.error("Sampling thread exiting because of error", e);
     }
     finally {
+      memorySampler.close();
       LOG.info("Sampling thread exiting normally");
     }
   }

@@ -126,7 +126,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 }
 
 internal object UILatencyLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("performance", 75)
+  private val GROUP = EventLogGroup("performance", 76)
 
   internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
   internal val SWAP_LOAD: IntEventField = Int("swap_load")
@@ -214,6 +214,45 @@ internal object UILatencyLogger : CounterUsagesCollector() {
     SAMPLES_COUNT
   )
 
+  private val MEM_HISTOGRAM_BUCKETS = longArrayOf(
+    1*1024, // 1g
+    5*256, 6*256, 7*256, 8*256, // 2g
+    9*256, 10*256, 11*256, 12*256, // 3g
+    7*512, 8*512, // 4g
+    9*512, 10*512, // 5g
+    6*1024,
+    7*1024,
+    8*1024,
+    9*1024,
+    10*1024,
+    11*1024,
+    12*1024,
+    13*1024,
+    14*1024,
+    15*1024,
+    16*1024,
+  )
+  private val MEM_XMX_FIELD = EventFields.BoundedInt("xmx", intArrayOf(512, 768, 1024, 1536, 2048, 4096, 6000, 8192, 12288, 16384))
+  private val MEM_SAMPLES_FIELD = IntEventField("samples")
+  private val MEM_HISTOGRAM_TOTAL1_FIELD = EventFields.IntList(
+    "ram_minus_file_mappings",
+    description = "OS-provided process memory usage `RAM - FileMappings`; sampled every second, aggregated into a histogram; " +
+                  "buckets=${MEM_HISTOGRAM_BUCKETS.contentToString()}"
+  )
+  private val MEM_HISTOGRAM_TOTAL2_FIELD = EventFields.IntList(
+    "ram_plus_swap_minus_file_mappings",
+    description = "OS-provided process memory usage `RAM + SWAP - FileMappings`; sampled every second, aggregated into a histogram; " +
+                  "buckets=${MEM_HISTOGRAM_BUCKETS.contentToString()}"
+  )
+  private val MEM_HEARTBEAT_EVENT = GROUP.registerVarargEvent(
+    "heartbeat.memory",
+    description = "Reported every hour; sampled every second",
+    MEM_XMX_FIELD,
+    MEM_SAMPLES_FIELD,
+    MEM_HISTOGRAM_TOTAL1_FIELD,
+    MEM_HISTOGRAM_TOTAL2_FIELD,
+  )
+
   override fun getGroup(): EventLogGroup = GROUP
 
   @JvmStatic
@@ -248,5 +287,41 @@ internal object UILatencyLogger : CounterUsagesCollector() {
       LAST_ACTION_FIELD.with(IdeaLogger.ourLastActionId),
       EventFields.Dumb.with(dumbMode)
     )
+  }
+
+  class MemoryStatsSampler {
+    private val provider = PlatformMemoryUtil.getInstance().newMemoryStatsProvider()
+    private var samples: Int = 0
+    private var total1 = newHistogram()
+    private var total2 = newHistogram()
+
+    fun sample() {
+      val stats = provider.getCurrentProcessMemoryStats() ?: return
+      total1.addValue(stats.ramMinusFileMappings / 1024 / 1024)
+      total2.addValue(stats.ramPlusSwapMinusFileMappings / 1024 / 1024)
+      samples++
+    }
+
+    fun logToFus() {
+      val xmxMb = ManagementFactory.getMemoryMXBean().heapMemoryUsage.max / 1024 / 1024
+      MEM_HEARTBEAT_EVENT.log(
+        MEM_XMX_FIELD.with(xmxMb.toInt()),
+        MEM_SAMPLES_FIELD.with(samples),
+        MEM_HISTOGRAM_TOTAL1_FIELD.with(total1.build().buckets.toList()),
+        MEM_HISTOGRAM_TOTAL2_FIELD.with(total2.build().buckets.toList()),
+      )
+
+      samples = 0
+      total1 = newHistogram()
+      total2 = newHistogram()
+    }
+
+    fun close() {
+      provider.close()
+    }
+
+    private fun newHistogram(): FusHistogramBuilder {
+      return FusHistogramBuilder(MEM_HISTOGRAM_BUCKETS, FusHistogramBuilder.RoundingDirection.UP)
+    }
   }
 }
