@@ -83,6 +83,11 @@ class ClassLoaderConfigurator(
   }
 
   fun configureModule(module: IdeaPluginDescriptorImpl): Boolean {
+    val mainDescriptor = pluginSet.findEnabledPlugin(module.pluginId)
+    if (mainDescriptor == null) {
+      log.warn("Module '${module.moduleName}' is not loaded, because plugin ${module.pluginId} is not found in enabled plugins")
+      return false
+    }
     checkPackagePrefixUniqueness(module)
 
     val isMain = module.moduleName == null
@@ -117,7 +122,6 @@ class ClassLoaderConfigurator(
       }
 
       val mainInfo = mainToClassPath.get(module.pluginId) ?: run {
-        val mainDescriptor = pluginSet.findEnabledPlugin(module.pluginId) ?: throw PluginException("Plugin ${module.pluginId} is not found in enabled plugins", module.pluginId)
         configureMainPluginModule(mainDescriptor)
       }
       
