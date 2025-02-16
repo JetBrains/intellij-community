@@ -179,11 +179,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    PyType type = getTargetExpressionType(context);
-    if (type != null) {
-      return type;
-    }
-    return null;
+    return getTargetExpressionType(context);
   }
 
   private @Nullable PyType getTargetTypeFromIterableUnpacking(@NotNull PySequenceExpression topmostContainingTupleOrList,
