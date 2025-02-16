@@ -15,11 +15,15 @@ import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 
 @Service(Service.Level.PROJECT)
 internal class RecentFileEventsPerProjectHolder {
-  private val recentFiles = MutableSharedFlow<RecentFilesEvent>()
+  private val recentFiles = MutableSharedFlow<RecentFilesEvent>(
+    extraBufferCapacity = SWITCHER_ELEMENTS_LIMIT,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST
+  )
 
   fun getRecentFiles(): Flow<RecentFilesEvent> {
     LOG.debug("Switcher get recent files")
