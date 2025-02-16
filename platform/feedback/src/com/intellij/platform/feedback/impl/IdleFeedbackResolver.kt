@@ -10,6 +10,8 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.feedback.FeedbackSurvey
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService
@@ -43,10 +45,15 @@ class IdleFeedbackResolver(private val cs: CoroutineScope) {
       return
     }
 
+    if (WindowManager.getInstance().mostRecentFocusedWindow !is IdeFrame) {
+      thisLogger().debug("There is a dialog shown on top of the IDE frame, not showing the feedback notifications")
+      return
+    }
+
     val feedbackNotifications = NotificationsManager.getNotificationsManager()
       .getNotificationsOfType(RequestFeedbackNotification::class.java, project)
     if (feedbackNotifications.isNotEmpty()) {
-      thisLogger().debug("There is already another request feedback notification shown")
+      thisLogger().debug("There is already another request feedback notification shown, not showing more feedback notifications")
       return
     }
 
