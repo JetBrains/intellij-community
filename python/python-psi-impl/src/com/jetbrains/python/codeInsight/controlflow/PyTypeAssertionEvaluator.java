@@ -87,37 +87,39 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   private void processIsOrEquals(@NotNull PyExpression lhs, @NotNull PyExpression rhs) {
-    final Boolean leftValue = PyEvaluator.evaluateNoResolve(lhs, Boolean.class);
-    final Boolean rightValue = PyEvaluator.evaluateNoResolve(rhs, Boolean.class);
+    final Boolean leftBoolean = PyEvaluator.evaluateNoResolve(lhs, Boolean.class);
+    if (leftBoolean != null) {
+      setPositive(leftBoolean, () -> rhs.accept(this));
+      return;
+    }
 
-    if (leftValue != null && rightValue != null) {
-      return;
-    }
-    if (leftValue != null) {
-      setPositive(leftValue, () -> rhs.accept(this));
-      return;
-    }
-    if (rightValue != null) {
-      setPositive(rightValue, () -> lhs.accept(this));
+    final Boolean rightBoolean = PyEvaluator.evaluateNoResolve(rhs, Boolean.class);
+    if (rightBoolean != null) {
+      setPositive(rightBoolean, () -> lhs.accept(this));
       return;
     }
 
     if (PyLiteralType.isNone(lhs)) {
-      pushAssertion(rhs, lhs);
+      if (rhs instanceof PyReferenceExpression referenceExpr) {
+        pushAssertion(referenceExpr, myPositive, false, context -> PyNoneType.INSTANCE, null);
+      }
+      return;
     }
-    else {
-      pushAssertion(lhs, rhs);
-    }
-  }
 
-  private void pushAssertion(@NotNull PyExpression target, @NotNull PyExpression bound) {
-    if (target instanceof PyReferenceExpression targetRefExpr) {
-      pushAssertion(targetRefExpr, myPositive, false, context -> {
-        final PyType literalType = PyLiteralType.getLiteralType(bound, context);
+    if (PyLiteralType.isNone(rhs)) {
+      if (lhs instanceof PyReferenceExpression referenceExpr) {
+        pushAssertion(referenceExpr, myPositive, false, context -> PyNoneType.INSTANCE, null);
+      }
+      return;
+    }
+
+    if (lhs instanceof PyReferenceExpression referenceExpr) {
+      pushAssertion(referenceExpr, myPositive, false, context -> {
+        final PyType literalType = PyLiteralType.getLiteralType(rhs, context);
         if (literalType != null) {
           return literalType;
         }
-        return ObjectUtils.tryCast(context.getType(bound), PyLiteralType.class);
+        return ObjectUtils.tryCast(context.getType(rhs), PyLiteralType.class);
       }, null);
     }
   }

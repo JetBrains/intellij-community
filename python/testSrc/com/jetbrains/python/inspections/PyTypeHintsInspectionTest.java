@@ -1200,7 +1200,7 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   // PY-35235
   public void testLiteral() {
     doTestByText("""
-                   from typing_extensions import Literal
+                   from typing_extensions import Literal, LiteralString
 
                    a: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">1 + 2</warning>]
                    b: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">4j</warning>]
@@ -1212,7 +1212,24 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
                    e: Literal[Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">A</warning>]]
                    f = Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">A</warning>]
-                   g: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">f</warning>]""");
+                   g: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">f</warning>]
+                   
+                   h: Literal[-1]
+                   i: Literal['abb']
+                   j: Literal[False]
+                   k: Literal[None]
+                   l: Literal[Literal[-3]]
+                   
+                   ONE = Literal[1]
+                   
+                   m = Literal[ONE]
+                   
+                   def f(c: bool):
+                       v: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">1 if c else 2</warning>]
+                   
+                   expr: LiteralString = "aba"
+                   n: Literal[<warning descr="'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, other literal types, or type aliases to other literal types">f"hello {expr}"</warning>]
+                   """);
   }
 
   // PY-79227

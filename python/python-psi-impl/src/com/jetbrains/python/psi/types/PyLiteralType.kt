@@ -42,10 +42,10 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
       when (expression) {
         is PyTupleExpression -> {
           val elements = expression.elements
-          val classes = elements.mapNotNull { toLiteralType(it, context, true) }
+          val classes = elements.mapNotNull { createFromLiteralParameter(it, context) }
           if (elements.size == classes.size) PyUnionType.union(classes) else null
         }
-        else -> toLiteralType(expression, context, true)
+        else -> createFromLiteralParameter(expression, context)
       }
 
     @JvmStatic
@@ -167,10 +167,6 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
              PyEvaluator.evaluateNoResolve(actual.expression, Any::class.java)
     }
 
-    @ApiStatus.Internal
-    @JvmStatic
-    fun getLiteralType(expression: PyExpression, context: TypeEvalContext): PyType? = toLiteralType(expression, context, false)
-
     /**
      * If [expected] type is `typing.Literal[...]`,
      * then tries to infer `typing.Literal[...]` for [expression],
@@ -201,18 +197,24 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
              LanguageLevel.forElement(expression).isPython2
     }
 
-    private fun toLiteralType(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyType? {
+    private fun createFromLiteralParameter(expression: PyExpression, context: TypeEvalContext): PyType? {
       if (isNone(expression)) return PyNoneType.INSTANCE
 
-      if (index && (expression is PyReferenceExpression || expression is PySubscriptionExpression)) {
+      if (expression is PyReferenceExpression || expression is PySubscriptionExpression) {
         val subLiteralType = Ref.deref(PyTypingTypeProvider.getType(expression, context))
         if (PyTypeUtil.toStream(subLiteralType).all { it is PyLiteralType }) return subLiteralType
       }
 
+      return literalType(expression, context, true)
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun getLiteralType(expression: PyExpression, context: TypeEvalContext): PyType? {
       if (expression is PyConditionalExpression) {
         return PyUnionType.union(
           listOf(expression.truePart, expression.falsePart).map {
-            it?.let { literalType(it, context, index) }
+            it?.let { literalType(it, context, false) }
           }
         )
       }
@@ -229,7 +231,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
         }
       }
 
-      return literalType(expression, context, index)
+      return literalType(expression, context, false)
     }
 
     private fun literalType(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyLiteralType? {
