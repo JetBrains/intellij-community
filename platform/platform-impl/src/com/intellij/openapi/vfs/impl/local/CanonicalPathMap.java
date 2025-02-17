@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -23,7 +24,8 @@ import static com.intellij.util.PathUtil.getParentPath;
 /**
  * Unless stated otherwise, all paths are {@link org.jetbrains.annotations.SystemDependent @SystemDependent}.
  */
-final class CanonicalPathMap {
+@ApiStatus.Internal
+public final class CanonicalPathMap {
   private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
     "CanonicalPathMap", ProcessIOExecutorService.INSTANCE, Runtime.getRuntime().availableProcessors());
 
@@ -36,7 +38,7 @@ final class CanonicalPathMap {
   private Collection<Pair<String, String>> myInitialPathMappings;
   private final MultiMap<String, String> myPathMappings;
 
-  CanonicalPathMap(
+  public CanonicalPathMap(
     @NotNull NavigableSet<String> optimizedRecursiveWatchRoots,
     @NotNull NavigableSet<String> optimizedFlatWatchRoots,
     @NotNull Collection<Pair<String, String>> initialPathMappings

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -9,12 +9,14 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import kotlinx.coroutines.Dispatchers;
 import kotlinx.coroutines.ExecutorsKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
 
 @Service
-final class StubStringInterner implements Disposable, UnaryOperator<@Nullable String> {
+@ApiStatus.Internal
+public final class StubStringInterner implements Disposable, UnaryOperator<@Nullable String> {
   private final LoadingCache<String, String> internCache = Caffeine.newBuilder()
     .maximumSize(8192)
     .executor(ExecutorsKt.asExecutor(Dispatchers.getDefault()))
