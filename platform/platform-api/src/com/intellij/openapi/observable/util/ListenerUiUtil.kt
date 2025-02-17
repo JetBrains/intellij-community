@@ -7,15 +7,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.EditorTextComponent
-import com.intellij.ui.PopupMenuListenerAdapter
-import com.intellij.ui.SearchTextField
+import com.intellij.ui.*
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.TableViewModel
 import com.intellij.util.ui.tree.TreeModelAdapter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Component
 import java.awt.Dimension
@@ -129,6 +127,12 @@ fun EditorTextComponent.whenDocumentChanged(parentDisposable: Disposable? = null
       listener(event)
     }
   })
+}
+
+@ApiStatus.Internal
+fun UserActivityProviderComponent.whenChanged(parentDisposable: Disposable? = null, listener: ChangeListener) {
+  addChangeListener(listener)
+  parentDisposable?.whenDisposed { removeChangeListener(listener) }
 }
 
 fun JTextComponent.whenCaretMoved(parentDisposable: Disposable? = null, listener: (CaretEvent) -> Unit) {
