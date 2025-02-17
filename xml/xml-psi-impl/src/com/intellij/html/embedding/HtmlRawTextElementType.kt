@@ -11,8 +11,9 @@ import com.intellij.psi.impl.source.html.HtmlRawTextImpl
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType
 import com.intellij.psi.xml.XmlElementType.XML_TEXT
 
-object HtmlRawTextElementType : HtmlCustomEmbeddedContentTokenType("HTML_RAW_TEXT", HTMLLanguage.INSTANCE),
-                                IStrongWhitespaceHolderElementType {
+object HtmlRawTextElementType :
+  HtmlCustomEmbeddedContentTokenType("HTML_RAW_TEXT", HTMLLanguage.INSTANCE),
+  IStrongWhitespaceHolderElementType {
 
   override fun parse(builder: PsiBuilder) {
     val start = builder.mark()
