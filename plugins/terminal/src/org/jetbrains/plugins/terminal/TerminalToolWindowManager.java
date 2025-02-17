@@ -61,6 +61,7 @@ import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction;
 import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabRightAction;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
+import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
 import org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
@@ -226,6 +227,8 @@ public final class TerminalToolWindowManager implements Disposable {
     TerminalSessionStartHelper.getStoredTerminalTabs(myProject).thenAccept(tabs -> {
       ApplicationManager.getApplication().invokeLater(() -> {
         doRestoreTabsFromBackend(tabs);
+        // Store tabs to the local state too. To not lose the stored tabs in case of disabling the Gen2 Terminal.
+        TerminalArrangementManager.getInstance(myProject).setToolWindow(myToolWindow);
         myTabsRestoredFuture.complete(null);
       }, ModalityState.any());
     });
