@@ -262,15 +262,12 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       }
     }
 
-    val prevImplicitLock = ThreadingAssertions.isImplicitLockOnEDT()
     try {
-      ThreadingAssertions.setImplicitLockOnEDT(false)
       fireWriteIntentActionStarted(computation.javaClass)
       return runWithTemporaryThreadLocal(ts) { computation.compute() }
     }
     finally {
       fireWriteIntentActionFinished(computation.javaClass)
-      ThreadingAssertions.setImplicitLockOnEDT(prevImplicitLock)
       if (release) {
         ts.release()
         myWriteIntentAcquired = null
@@ -430,8 +427,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     // For diagnostic purposes register that we in read action, even if we use stronger lock
     myReadActionsInThread.set(myReadActionsInThread.get() + 1)
 
-    val prevImplicitLock = ThreadingAssertions.isImplicitLockOnEDT()
-    ThreadingAssertions.setImplicitLockOnEDT(false)
     try {
       fireReadActionStarted(clazz)
       val rv = runWithTemporaryThreadLocal(ts) { block.compute() }
@@ -439,7 +434,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
     finally {
       fireReadActionFinished(clazz)
-      ThreadingAssertions.setImplicitLockOnEDT(prevImplicitLock)
 
       myReadActionsInThread.set(myReadActionsInThread.get() - 1)
       if (release) {
@@ -497,8 +491,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     // For diagnostic purposes register that we in read action, even if we use stronger lock
     myReadActionsInThread.set(myReadActionsInThread.get() + 1)
 
-    val prevImplicitLock = ThreadingAssertions.isImplicitLockOnEDT()
-    ThreadingAssertions.setImplicitLockOnEDT(false)
     try {
       fireReadActionStarted(action.javaClass)
       runWithTemporaryThreadLocal(ts) { action.run() }
@@ -506,7 +498,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
     finally {
       fireReadActionFinished(action.javaClass)
-      ThreadingAssertions.setImplicitLockOnEDT(prevImplicitLock)
+
       myReadActionsInThread.set(myReadActionsInThread.get() - 1)
       if (release) {
         ts.release()
@@ -601,14 +593,11 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   private fun <T, E : Throwable?> runWriteAction(clazz: Class<*>, block: ThrowableComputable<T, E>): T {
     val ts = getThreadState()
     val releases = startWrite(ts, clazz)
-    val prevImplicitLock = ThreadingAssertions.isImplicitLockOnEDT()
     return try {
-      ThreadingAssertions.setImplicitLockOnEDT(false)
       runWithTemporaryThreadLocal(ts) { block.compute() }
     }
     finally {
       endWrite(ts, clazz, releases)
-      ThreadingAssertions.setImplicitLockOnEDT(prevImplicitLock)
     }
   }
 
