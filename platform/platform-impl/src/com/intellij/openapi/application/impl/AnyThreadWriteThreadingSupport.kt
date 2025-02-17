@@ -21,7 +21,6 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.internal.runSuspend
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
@@ -693,7 +692,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   }
 
   override fun executeSuspendingWriteAction(action: () -> Unit) {
-    ThreadingAssertions.assertWriteIntentReadAccess()
     val ts = getThreadState()
     if (ts.hasWriteIntent) {
       action()
@@ -723,8 +721,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   override fun isWriteAccessAllowed(): Boolean = myWriteAcquired == Thread.currentThread()
 
   override fun hasWriteAction(actionClass: Class<*>): Boolean {
-    ThreadingAssertions.softAssertReadAccess()
-
     for (i in myWriteActionsStack.size - 1 downTo 0) {
       val action = myWriteActionsStack[i]
       if (actionClass == action || ReflectionUtil.isAssignable(actionClass, action)) {

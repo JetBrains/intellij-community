@@ -1010,6 +1010,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager
 
   @Override
   public boolean hasWriteAction(@NotNull Class<?> actionClass) {
+    ThreadingAssertions.softAssertReadAccess();
     return getThreadingSupport().hasWriteAction(actionClass);
   }
 
@@ -1130,6 +1131,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager
   public void executeSuspendingWriteAction(@Nullable Project project,
                                            @NotNull @NlsContexts.DialogTitle String title,
                                            @NotNull Runnable runnable) {
+    ThreadingAssertions.assertWriteIntentReadAccess();
     getThreadingSupport().executeSuspendingWriteAction(() -> {
       ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
         @Override
