@@ -46,8 +46,8 @@ public class VirtualFilePointerImpl extends TraceableDisposable implements Virtu
       return ((VirtualFile)result).getName();
     }
     String url = (String)result;
-    if (node.myFS instanceof ArchiveFileSystem) {
-      url = ArchiveFileSystem.getLocalPath((ArchiveFileSystem)node.myFS, url);
+    if (node.fs instanceof ArchiveFileSystem) {
+      url = ArchiveFileSystem.getLocalPath((ArchiveFileSystem)node.fs, url);
     }
     int index = url.lastIndexOf('/');
     return index >= 0 ? url.substring(index + 1) : url;

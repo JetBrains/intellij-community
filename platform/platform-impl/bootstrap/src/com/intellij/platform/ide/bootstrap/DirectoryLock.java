@@ -19,10 +19,7 @@ import com.intellij.ui.User32Ex;
 import com.intellij.util.Suppressions;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.tools.attach.VirtualMachine;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.net.*;
@@ -43,8 +40,10 @@ import static java.util.Objects.requireNonNullElse;
  * The class ensures that only one IDE instance is running on the given pair of configuration/cache directories
  * and participates in the CLI bypassing arguments and relaying back exit codes and error messages.
  */
-final class DirectoryLock {
-  static final class CannotActivateException extends Exception implements ExceptionWithAttachments {
+@ApiStatus.Internal
+public final class DirectoryLock {
+  @ApiStatus.Internal
+  public static final class CannotActivateException extends Exception implements ExceptionWithAttachments {
     private final @Nls String myMessage;
     private final Attachment[] myAttachments;
 

@@ -345,7 +345,7 @@ public final class FilePartNodeRoot extends FilePartNode {
 
   void checkConsistency() {
     if (VirtualFilePointerManagerImpl.shouldCheckConsistency()) {
-      doCheckConsistency(null, "", myFS.getProtocol() + URLUtil.SCHEME_SEPARATOR);
+      doCheckConsistency(null, "", fs.getProtocol() + URLUtil.SCHEME_SEPARATOR);
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +23,7 @@ import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
  */
 @ApiStatus.Internal
 public final class AppScheduledExecutorService extends SchedulingWrapper {
-  static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
+  public static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
   private final @NotNull String myName;
   private final LowMemoryWatcherManager myLowMemoryWatcherManager;
 
@@ -135,8 +135,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     ((BackendThreadPoolExecutor)backendExecutorService).superSetCorePoolSize(size);
   }
 
-  static final class BackendThreadPoolExecutor extends ThreadPoolExecutor {
-
+  @ApiStatus.Internal
+  public static final class BackendThreadPoolExecutor extends ThreadPoolExecutor {
     BackendThreadPoolExecutor(@NotNull ThreadFactory factory,
                               long keepAliveTime,
                               @NotNull TimeUnit unit) {

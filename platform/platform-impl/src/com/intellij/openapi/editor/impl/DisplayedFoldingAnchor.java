@@ -20,9 +20,9 @@ public final class DisplayedFoldingAnchor {
   }
 
   final @NotNull FoldRegion foldRegion;
-  final int visualLine;
+  public final int visualLine;
   final int foldRegionVisualLines;
-  final @NotNull Type type;
+  public final @NotNull Type type;
 
   DisplayedFoldingAnchor(@NotNull FoldRegion foldRegion, int visualLine, int foldRegionVisualLines, @NotNull Type type) {
     this.foldRegion = foldRegion;

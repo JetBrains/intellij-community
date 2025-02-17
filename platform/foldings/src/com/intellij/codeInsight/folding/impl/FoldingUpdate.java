@@ -334,8 +334,8 @@ public final class FoldingUpdate {
 
   @ApiStatus.Internal
   public static final class RegionInfo {
-    final @NotNull FoldingDescriptor descriptor;
-    final PsiElement element;
+    public final @NotNull FoldingDescriptor descriptor;
+    public final PsiElement element;
     final String signature;
     final boolean collapsedByDefault;
 

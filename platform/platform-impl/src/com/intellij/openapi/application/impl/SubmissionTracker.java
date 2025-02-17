@@ -23,7 +23,7 @@ public final class SubmissionTracker {
   private static final String TOO_MANY_SUBMISSIONS =
     TOO_MANY_NON_BLOCKING_READ_ACTIONS_SUBMITTED_AT_ONCE + ". " + SUGGESTIONS;
   @VisibleForTesting
-  static final String ARE_CURRENTLY_ACTIVE = " with similar stack traces are currently active";
+  public static final String ARE_CURRENTLY_ACTIVE = " with similar stack traces are currently active";
 
   private final AtomicInteger myCount = new AtomicInteger();
 

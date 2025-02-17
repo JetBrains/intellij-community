@@ -391,13 +391,13 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       toUpdate = root.findOrCreateByFile(file);
     }
     FilePartNode node = toUpdate.node;
-    if (fs != node.myFS) {
+    if (fs != node.fs) {
       if (url != null && (IS_UNDER_UNIT_TEST || IS_INTERNAL)) {
         throw new IllegalArgumentException("Invalid url: '" + url + "'. " +
                                            "Its protocol '" + VirtualFileManager.extractProtocol(url) + "' is from " + fsFromFile +
-                                           " but the path part points to " + node.myFS);
+                                           " but the path part points to " + node.fs);
       }
-      LOG.error("fs=" + fs + "; node.myFS=" + node.myFS+"; url="+url+"; file="+file+"; node="+node);
+      LOG.error("fs=" + fs + "; node.myFS=" + node.fs + "; url=" + url + "; file=" + file + "; node=" + node);
     }
 
     VirtualFilePointerImpl pointer = node.getPointer(listener);
@@ -736,7 +736,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
         FilePartNode parent = toUpdate.parent;
         FilePartNode node = toUpdate.node;
 
-        node.update(parent, getRoot(node.myFS), "VFPMI invalidated VFP during update", toUpdate.myEvent);
+        node.update(parent, getRoot(node.fs), "VFPMI invalidated VFP during update", toUpdate.myEvent);
       }
     }
 
@@ -760,7 +760,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     if (!shouldKill) {
       return false;
     }
-    getRoot(pointer.getNode().myFS).removePointer(pointer);
+    getRoot(pointer.getNode().fs).removePointer(pointer);
     pointer.myNode = null;
     assertConsistency();
     myPointerSetModCount++;

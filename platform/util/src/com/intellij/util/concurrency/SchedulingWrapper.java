@@ -5,10 +5,7 @@ import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,7 +28,8 @@ public class SchedulingWrapper implements ScheduledExecutorService {
   private static final Logger LOG = Logger.getInstance(SchedulingWrapper.class);
   
   private final AtomicBoolean shutdown = new AtomicBoolean();
-  final @NotNull ExecutorService backendExecutorService;
+  @VisibleForTesting
+  public final @NotNull ExecutorService backendExecutorService;
   protected final AppDelayQueue delayQueue;
 
   // make sure transferrerThread doesn't retain a task on its stack

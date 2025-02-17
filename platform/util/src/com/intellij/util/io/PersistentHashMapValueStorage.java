@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,10 +11,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.io.AppendablePersistentMap.ValueDataAppender;
 import com.intellij.util.io.PersistentMapImpl.CompactionRecordInfo;
 import org.jetbrains.annotations.ApiStatus.Internal;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -42,8 +39,8 @@ public final class PersistentHashMapValueStorage {
   private static final int CACHE_PROBATIONAL_QUEUE_SIZE = 20;
   private static final long MAX_RETAINED_LIMIT_WHEN_COMPACTING = 100 * 1024 * 1024;
 
-  static final long SOFT_MAX_RETAINED_LIMIT = 10 * 1024 * 1024;
-  static final int BLOCK_SIZE_TO_WRITE_WHEN_SOFT_MAX_RETAINED_LIMIT_IS_HIT = 1024;
+  public static final long SOFT_MAX_RETAINED_LIMIT = 10 * 1024 * 1024;
+  public static final int BLOCK_SIZE_TO_WRITE_WHEN_SOFT_MAX_RETAINED_LIMIT_IS_HIT = 1024;
 
   /**
    * Default options for {@link PersistentHashMap} and {@link PersistentHashMapValueStorage}.
@@ -64,7 +61,9 @@ public final class PersistentHashMapValueStorage {
     public static final ThreadLocal<Boolean> COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION = new ThreadLocal<>();
     public static final ThreadLocal<Boolean> HAS_NO_CHUNKS = new ThreadLocal<>();
 
-    static final ThreadLocal<Boolean> DO_COMPRESSION = new ThreadLocal<Boolean>() {
+    @VisibleForTesting
+    @Internal
+    public static final ThreadLocal<Boolean> DO_COMPRESSION = new ThreadLocal<Boolean>() {
       @Override
       protected Boolean initialValue() {
         return COMPRESSION_ENABLED;
