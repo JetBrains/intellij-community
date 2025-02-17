@@ -1195,6 +1195,14 @@ public final class ApplicationImpl extends ClientAwareComponentManager
     getThreadingSupport().setWriteIntentReadActionListener(app);
     getThreadingSupport().setLockAcquisitionListener(app);
     getThreadingSupport().setSuspendingWriteActionListener(app);
+    getThreadingSupport().setLegacyIndicatorProvider(() -> {
+      ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+      return indicator == null ? null : () -> {
+        if (indicator.isCanceled()) {
+          throw new ProcessCanceledException();
+        }
+      };
+    });
 
     app.addApplicationListener(new ApplicationListener() {
       @Override

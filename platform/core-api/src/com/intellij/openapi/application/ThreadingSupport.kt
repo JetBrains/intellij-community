@@ -312,6 +312,9 @@ interface ThreadingSupport {
   @ApiStatus.Internal
   fun setSuspendingWriteActionListener(listener: SuspendingWriteActionListener)
 
+  @ApiStatus.Internal
+  fun setLegacyIndicatorProvider(provider: LegacyProgressIndicatorProvider)
+
   /**
    * Removes a [LockAcquisitionListener].
    *

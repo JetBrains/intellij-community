@@ -7,6 +7,7 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.core.rwmutex.*
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.LegacyProgressIndicatorProvider
 import com.intellij.openapi.application.LockAcquisitionListener
 import com.intellij.openapi.application.isLockStoredInContext
 import com.intellij.openapi.application.ThreadingSupport
@@ -20,7 +21,6 @@ import com.intellij.openapi.application.useBackgroundWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
@@ -130,6 +130,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   private var myWriteIntentActionListener: WriteIntentReadActionListener? = null
   private var myLockAcquisitionListener: LockAcquisitionListener? = null
   private var mySuspendingWriteActionListener: SuspendingWriteActionListener? = null
+  private var myLegacyProgressIndicatorProvider: LegacyProgressIndicatorProvider? = null
 
   private val myWriteActionsStack = Stack<Class<*>>()
   private var myWriteStackBase = 0
@@ -443,7 +444,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
 
     // Check for cancellation
-    val indicator = ProgressIndicatorProvider.getGlobalProgressIndicator()
+    val indicator = myLegacyProgressIndicatorProvider?.obtainProgressIndicator()
     // Nothing to check or cannot be canceled
     if (indicator == null || Cancellation.isInNonCancelableSection()) {
       return getReadPermit(lock)
@@ -452,9 +453,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     // Spin & sleep with checking for cancellation
     var iter = 0
     do {
-      if (indicator.isCanceled) {
-        throw ProcessCanceledException()
-      }
+      indicator.checkCanceled()
       if (iter++ < SPIN_TO_WAIT_FOR_LOCK) {
         Thread.yield()
         permit = tryGetReadPermit(lock)
@@ -630,6 +629,14 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     if (mySuspendingWriteActionListener != null)
       error("SuspendingWriteActionListener already registered")
     mySuspendingWriteActionListener = listener
+  }
+
+
+  @ApiStatus.Internal
+  override fun setLegacyIndicatorProvider(provider: LegacyProgressIndicatorProvider) {
+    if (myLegacyProgressIndicatorProvider != null)
+      error("LegacyProgressIndicatorProvider already registered")
+    myLegacyProgressIndicatorProvider = provider
   }
 
   @ApiStatus.Internal
