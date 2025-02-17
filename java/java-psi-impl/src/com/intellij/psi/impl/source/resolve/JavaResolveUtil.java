@@ -336,6 +336,7 @@ public final class JavaResolveUtil {
     if (classHint != null && !classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) return true;
 
     List<PsiPackageAccessibilityStatement> exports = getExportedPackages(place, module);
+    if (PsiTreeUtil.isAncestor(module, place, false)) return true;
     for (PsiPackageAccessibilityStatement export : exports) {
       PsiJavaCodeReferenceElement aPackage = export.getPackageReference();
       if (aPackage == null) continue;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.intellij.lang.annotations.Language;
 
 public class UnusedImportsTest extends LightJavaCodeInsightFixtureTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/unusedImports/";
@@ -89,6 +90,34 @@ public class UnusedImportsTest extends LightJavaCodeInsightFixtureTestCase {
                           public static void foo(String s) {}
                          }""");
     doTest();
+  }
+
+  public void testImportsForUsesAndProvidesInModuleInfo() {
+    myFixture.addClass("""
+                         package pkg.main.api;
+                         public interface Api {}
+                         """);
+    myFixture.addClass("""
+                         package pkg.main.impl;
+                         import module my.module;
+                         public class Impl implements Api {}
+                         """);
+
+    @Language("JAVA")
+    String moduleInfo = """
+      import pkg.main.api.Api;
+      import pkg.main.impl.Impl;
+      
+      module my.module {
+         exports pkg.main.api;
+      
+         uses Api;
+         provides Api with Impl;
+      }
+      """;
+    myFixture.addFileToProject("module-info.java", moduleInfo);
+    myFixture.configureByFile("module-info.java");
+    myFixture.checkHighlighting(true,false, false);
   }
 
   private void doTest() {
