@@ -63,7 +63,6 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Frame
-import java.awt.GraphicsDevice
 import java.awt.Rectangle
 import java.nio.file.Path
 import java.time.Instant
@@ -419,8 +418,6 @@ private suspend fun focusSelectedEditor(editorComponent: EditorsSplitters) {
 }
 
 internal interface ProjectFrameProducer {
-  val device: GraphicsDevice?
-
   fun create(): IdeFrameImpl
 }
 
@@ -455,8 +452,6 @@ internal fun createNewProjectFrameProducer(frameInfo: FrameInfo?): ProjectFrameP
   val deviceBounds = frameInfo?.bounds
   if (deviceBounds == null) {
     return object : ProjectFrameProducer {
-      override val device = null
-
       override fun create(): IdeFrameImpl {
         val frame = IdeFrameImpl()
         setDefaultSize(frame)
@@ -470,10 +465,7 @@ internal fun createNewProjectFrameProducer(frameInfo: FrameInfo?): ProjectFrameP
     val boundsAndDevice = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(deviceBounds)
     val state = frameInfo.extendedState
     val isMaximized = FrameInfoHelper.isMaximized(state)
-    val graphicsDevice = boundsAndDevice?.second
     return object : ProjectFrameProducer {
-      override val device = graphicsDevice
-
       override fun create(): IdeFrameImpl {
         val frame = IdeFrameImpl()
         val restoreNormalBounds = isMaximized && frame.extendedState == Frame.NORMAL && boundsAndDevice != null
