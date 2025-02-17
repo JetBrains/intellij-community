@@ -4,6 +4,7 @@ package com.intellij.java.codeserver.highlighting;
 import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.module.Module;
