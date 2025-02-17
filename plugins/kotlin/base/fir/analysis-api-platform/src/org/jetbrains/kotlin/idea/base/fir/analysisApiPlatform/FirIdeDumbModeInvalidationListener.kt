@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModificationService
+import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
 
 /**
  * When exiting [restricted analysis][org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KotlinRestrictedAnalysisService], the
@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModif
 internal class FirIdeDumbModeInvalidationListener(private val project: Project) : DumbService.DumbModeListener {
     override fun exitDumbMode() {
         runWriteAction {
-             KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+            project.publishGlobalModuleStateModificationEvent()
         }
     }
 }

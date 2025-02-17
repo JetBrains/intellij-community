@@ -32,7 +32,6 @@ import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModificationService
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishModuleStateModificationEvent
@@ -116,7 +115,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
 
         override fun before(events: List<VFileEvent>) {
             if (mayBuiltinsHaveChanged(events) || !project.isInitialized) {
-                KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+                project.publishGlobalModuleStateModificationEvent()
                 return
             }
 
@@ -144,7 +143,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
             // Most modules will depend on an SDK, so its removal constitutes global module state modification. We cannot be more
             // fine-grained here because SDK modules aren't supported by `IdeKotlinModuleDependentsProvider`, so invalidation based on a
             // module-level modification event may not work as expected with an SDK module.
-            KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+            project.publishGlobalModuleStateModificationEvent()
         }
     }
 
@@ -155,7 +154,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
             // The cases described in `isCausedByWorkspaceModelChangesOnly` are rare enough to publish global module state modification
             // events for simplicity. `NonWorkspaceModuleRootListener` can eventually be removed once the APIs described in
             // `isCausedByWorkspaceModelChangesOnly` are removed.
-            KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+            project.publishGlobalModuleStateModificationEvent()
         }
     }
 
@@ -176,20 +175,20 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
             // the `PsiTreeChangeEvent.PROP_UNLOADED_PSI` event. If the PSI was loaded, then `FileManagerImpl.reloadPsiAfterTextChange` is
             // fired which doesn't provide any explicit changes, so we need to publish a global modification event because the file's
             // content may have been changed externally.
-            KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+            project.publishGlobalModuleStateModificationEvent()
         }
     }
 
     internal class MyDynamicPluginListener(private val project: Project) : DynamicPluginListener {
         override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
             runWriteAction {
-                KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+                project.publishGlobalModuleStateModificationEvent()
             }
         }
 
         override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
             runWriteAction {
-                KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+                project.publishGlobalModuleStateModificationEvent()
             }
         }
     }

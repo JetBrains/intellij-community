@@ -2,59 +2,17 @@
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform
 
 import com.intellij.java.library.JavaLibraryModificationTracker
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.openapi.util.SimpleModificationTracker
-import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceOutOfBlockModificationEvent
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEvent
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventListener
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleOutOfBlockModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerByEventFactoryBase
 
-internal class FirIdeKotlinModificationTrackerFactory(private val project: Project) : KotlinModificationTrackerFactory, Disposable {
-    /**
-     * A project-wide out-of-block modification tracker for Kotlin sources which will be incremented on global PSI tree changes, on any
-     * module out-of-block modification, and by tests.
-     */
-    private val projectOutOfBlockModificationTracker: SimpleModificationTracker = SimpleModificationTracker()
-
-    private val libraryModificationTracker
-        get() = JavaLibraryModificationTracker.getInstance(project) as JavaLibraryModificationTracker
-
-    init {
-        project.analysisMessageBus.connect(this).subscribe(
-            KotlinModificationEvent.TOPIC,
-            KotlinModificationEventListener { event ->
-                when (event) {
-                    is KotlinModuleOutOfBlockModificationEvent,
-                    is KotlinGlobalSourceOutOfBlockModificationEvent ->
-                        projectOutOfBlockModificationTracker.incModificationCount()
-
-                    else -> {}
-                }
-            }
-        )
-    }
-
-    override fun createProjectWideOutOfBlockModificationTracker(): ModificationTracker = projectOutOfBlockModificationTracker
-
-    override fun createLibrariesWideModificationTracker(): ModificationTracker = libraryModificationTracker
-
-    override fun dispose() {}
-
-    @TestOnly
-    internal fun incrementModificationsCount(includeBinaryTrackers: Boolean) {
-        projectOutOfBlockModificationTracker.incModificationCount()
-        if (includeBinaryTrackers) {
-            libraryModificationTracker.incModificationCount()
-        }
-    }
-
-    companion object {
-        fun getInstance(project: Project): FirIdeKotlinModificationTrackerFactory =
-            KotlinModificationTrackerFactory.getInstance(project) as FirIdeKotlinModificationTrackerFactory
+internal class FirIdeKotlinModificationTrackerFactory(private val project: Project) : KotlinModificationTrackerByEventFactoryBase(project) {
+    override fun createLibrariesWideModificationTracker() = ModificationTracker {
+        // We want the libraries-wide modification tracker to react to `JavaLibraryModificationTracker`, as this has historically been the
+        // case and the modification tracker can e.g. be incremented in tests. We shouldn't use `JavaLibraryModificationTracker` as the
+        // modification tracker that's incremented when receiving Kotlin modification events, because (1) its `incModificationCount`
+        // function is test-only and (2) Kotlin modification events shouldn't affect IJ platform-wide modification trackers. Hence, we need
+        // to provide a composite modification tracker here.
+        eventLibrariesModificationTracker.modificationCount + JavaLibraryModificationTracker.getInstance(project).modificationCount
     }
 }

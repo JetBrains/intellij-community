@@ -5,9 +5,6 @@
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform.Fe10KotlinModificationTrackerFactory"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModificationService"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform.Fe10KotlinGlobalModificationService"/>
-    <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinAnchorModuleProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.analysisApiPlatform.K1IdeKotlinAnchorModuleProvider"/>
     <projectService
