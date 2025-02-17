@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.JavaExecutionUtil;
@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UClass;
@@ -89,7 +90,8 @@ public final class RefactoringListeners {
     }
   }
 
-  private abstract static class RenameElement<T extends PsiElement> extends RefactoringElementAdapter
+  @ApiStatus.Internal
+  public abstract static class RenameElement<T extends PsiElement> extends RefactoringElementAdapter
                                                                     implements UndoRefactoringElementListener{
     private final Accessor<? super T> myAccessor;
     private final String myPath;
