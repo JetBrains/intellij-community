@@ -1366,7 +1366,7 @@
         <component>IntentionsCollector</component>
         <component>ActionsCollector</component>
         <component>FUSApplicationUsageTrigger</component>
-        <component>EventLogWhitelist</component>
+        <component>EventLogAllowedList</component>
         <component>PhpLanguageFeatureUsagesStatistics</component>
       </components>
     </obsoleteStorage>

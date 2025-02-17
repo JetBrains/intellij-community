@@ -3,9 +3,9 @@ package com.intellij.internal.statistic.eventLog.validator.storage.persistence;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -16,7 +16,10 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.*;
 
 @ApiStatus.Internal
-@State(name = "EventLogWhitelist", storages = @Storage(StoragePathMacros.CACHE_FILE))
+@State(
+  name = "EventLogAllowedList",
+  storages = @Storage(value = "EventLogAllowedList.xml", roamingType = RoamingType.LOCAL)
+)
 public final class EventLogMetadataSettingsPersistence implements PersistentStateComponent<Element> {
   private static final String MODIFY = "update";
   private static final String RECORDER_ID = "recorder-id";
@@ -29,6 +32,8 @@ public final class EventLogMetadataSettingsPersistence implements PersistentStat
   private static final String OPTION_NAME = "name";
   private static final String OPTION_VALUE = "value";
   private static final String INTERNAL = "internal";
+  private static final String BUILD = "build";
+  private static final String BUILD_NUMBER = "build-number";
 
   private final Object optionsLock = new Object();
 
@@ -36,6 +41,7 @@ public final class EventLogMetadataSettingsPersistence implements PersistentStat
   private final Map<String, Long> lastModifications = new HashMap<>();
   private final Map<String, EventsSchemePathSettings> recorderToPathSettings = new HashMap<>();
   private final Map<String, EventLogExternalOptions> options = new HashMap<>();
+  private final Map<String, String> recorderToBuildNumber = new HashMap<>();
 
   public static EventLogMetadataSettingsPersistence getInstance() {
     return ApplicationManager.getApplication().getService(EventLogMetadataSettingsPersistence.class);
@@ -98,40 +104,57 @@ public final class EventLogMetadataSettingsPersistence implements PersistentStat
     recorderToPathSettings.put(recorderId, settings);
   }
 
+  public @Nullable String getBuildNumber(@NotNull String recorderId) {
+    return recorderToBuildNumber.get(recorderId);
+  }
+
+  public void setBuildNumber(@NotNull String recorderId, @NotNull String buildNumber) {
+    recorderToBuildNumber.put(recorderId, buildNumber);
+  }
+
   @Override
   public void loadState(final @NotNull Element element) {
-    Element internalElement = element.getChild(INTERNAL);
-    internal = internalElement != null && Boolean.parseBoolean(internalElement.getValue());
+      Element internalElement = element.getChild(INTERNAL);
+      internal = internalElement != null && Boolean.parseBoolean(internalElement.getValue());
 
-    lastModifications.clear();
-    for (Element update : element.getChildren(MODIFY)) {
-      final String recorder = update.getAttributeValue(RECORDER_ID);
-      if (StringUtil.isNotEmpty(recorder)) {
-        final long lastUpdate = parseLastUpdate(update);
-        lastModifications.put(recorder, lastUpdate);
-      }
-    }
-
-    recorderToPathSettings.clear();
-    for (Element path : element.getChildren(PATH)) {
-      final String recorder = path.getAttributeValue(RECORDER_ID);
-      if (StringUtil.isNotEmpty(recorder)) {
-        String customPath = path.getAttributeValue(CUSTOM_PATH);
-        if (customPath == null) continue;
-        boolean useCustomPath = parseUseCustomPath(path);
-        recorderToPathSettings.put(recorder, new EventsSchemePathSettings(customPath, useCustomPath));
-      }
-    }
-
-    synchronized (optionsLock) {
-      options.clear();
-      for (Element options : element.getChildren(OPTIONS)) {
-        String recorderId = options.getAttributeValue(RECORDER_ID);
-        if (recorderId != null) {
-          this.options.put(recorderId, new EventLogExternalOptions().deserialize(options));
+      lastModifications.clear();
+      for (Element update : element.getChildren(MODIFY)) {
+        final String recorder = update.getAttributeValue(RECORDER_ID);
+        if (StringUtil.isNotEmpty(recorder)) {
+          final long lastUpdate = parseLastUpdate(update);
+          lastModifications.put(recorder, lastUpdate);
         }
       }
-    }
+
+      recorderToBuildNumber.clear();
+      for (Element build : element.getChildren(BUILD)) {
+        final String recorder = build.getAttributeValue(RECORDER_ID);
+        if (StringUtil.isNotEmpty(recorder)) {
+          final String buildNumber = build.getAttributeValue(BUILD_NUMBER);
+          recorderToBuildNumber.put(recorder, buildNumber);
+        }
+      }
+
+      recorderToPathSettings.clear();
+      for (Element path : element.getChildren(PATH)) {
+        final String recorder = path.getAttributeValue(RECORDER_ID);
+        if (StringUtil.isNotEmpty(recorder)) {
+          String customPath = path.getAttributeValue(CUSTOM_PATH);
+          if (customPath == null) continue;
+          boolean useCustomPath = parseUseCustomPath(path);
+          recorderToPathSettings.put(recorder, new EventsSchemePathSettings(customPath, useCustomPath));
+        }
+      }
+
+      synchronized (optionsLock) {
+        options.clear();
+        for (Element options : element.getChildren(OPTIONS)) {
+          String recorderId = options.getAttributeValue(RECORDER_ID);
+          if (recorderId != null) {
+            this.options.put(recorderId, new EventLogExternalOptions().deserialize(options));
+          }
+        }
+      }
   }
 
   private static boolean parseUseCustomPath(@NotNull Element update) {
@@ -168,6 +191,13 @@ public final class EventLogMetadataSettingsPersistence implements PersistentStat
       update.setAttribute(RECORDER_ID, entry.getKey());
       update.setAttribute(LAST_MODIFIED, String.valueOf(entry.getValue()));
       element.addContent(update);
+    }
+
+    for (Map.Entry<String, String> entry : recorderToBuildNumber.entrySet()) {
+      final Element build = new Element(BUILD);
+      build.setAttribute(RECORDER_ID, entry.getKey());
+      build.setAttribute(BUILD_NUMBER, entry.getValue());
+      element.addContent(build);
     }
 
     for (Map.Entry<String, EventsSchemePathSettings> entry : recorderToPathSettings.entrySet()) {
