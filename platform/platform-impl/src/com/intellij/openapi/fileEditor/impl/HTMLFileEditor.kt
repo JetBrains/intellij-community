@@ -46,6 +46,7 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
   private val initial = AtomicBoolean(true)
   private val navigating = AtomicBoolean(false)
   private val htmlTabScope = (project as ComponentManagerEx).getCoroutineScope().childScope("HTMLFileEditor[${file.name}]")
+  private var jsRouter: CefMessageRouter? = null
 
   private val multiPanel = object : MultiPanel() {
     override fun create(key: Int): JComponent = when (key) {
@@ -103,8 +104,8 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
     val queryHandler = request.queryHandler
     if (queryHandler != null) {
       val config = CefMessageRouter.CefMessageRouterConfig(HTMLEditorProvider.JS_FUNCTION_NAME, "${HTMLEditorProvider.JS_FUNCTION_NAME}Cancel")
-      val jsRouter = JBCefApp.getInstance().createMessageRouter(config)
-      jsRouter.addHandler(object : CefMessageRouterHandlerAdapter() {
+      jsRouter = JBCefApp.getInstance().createMessageRouter(config)
+      jsRouter!!.addHandler(object : CefMessageRouterHandlerAdapter() {
         override fun onQuery(browser: CefBrowser, frame: CefFrame, id: Long, request: String?, persistent: Boolean, callback: CefQueryCallback): Boolean {
           htmlTabScope.launch {
             runCatching { queryHandler.query(id, request ?: "") }
@@ -150,7 +151,10 @@ internal class HTMLFileEditor(private val project: Project, private val file: Li
   override fun isValid(): Boolean = true
   override fun addPropertyChangeListener(listener: PropertyChangeListener) { }
   override fun removePropertyChangeListener(listener: PropertyChangeListener) { }
-  override fun dispose() { htmlTabScope.cancel() }
+  override fun dispose() {
+    htmlTabScope.cancel()
+    contentPanel.jbCefClient.cefClient.removeMessageRouter(jsRouter)
+  }
   override fun getFile(): VirtualFile = file
 
   private companion object {
