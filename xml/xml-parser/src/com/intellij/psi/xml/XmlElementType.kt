@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.xml
 
+import com.intellij.html.embedding.HtmlRawTextElementType
 import com.intellij.lang.dtd.DTDLanguage
 import com.intellij.lang.xhtml.XHTMLLanguage
 import com.intellij.lang.xml.XMLLanguage
@@ -9,8 +10,6 @@ import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.xml.IXmlElementType
 
 object XmlElementType {
-  private val factory = BasicXmlElementTypeFactory()
-
   @JvmField
   val XML_DOCUMENT: IElementType =
     IXmlElementType("XML_DOCUMENT")
@@ -110,7 +109,7 @@ object XmlElementType {
 
   @JvmField
   val HTML_RAW_TEXT: IElementType =
-    factory.getElementType("HTML_RAW_TEXT")
+    HtmlRawTextElementType
 
   @JvmField
   val XML_TEXT: IElementType =
