@@ -5226,6 +5226,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("classField.kt")
+        public void testClassField() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/classField.kt");
+        }
+
         @TestMetadata("collected.kt")
         public void testCollected() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/collected.kt");
@@ -5259,6 +5264,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("nestedUsed.kt")
         public void testNestedUsed() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/nestedUsed.kt");
+        }
+
+        @TestMetadata("operatorFun.kt")
+        public void testOperatorFun() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow/operatorFun.kt");
         }
 
         @TestMetadata("passedToFunction.kt")
