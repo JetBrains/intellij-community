@@ -20,6 +20,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.GHRepositoryConnectionManager
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.selector.GHRepositoryAndAccountSelectorViewModel
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
@@ -113,7 +114,7 @@ class GHPRToolWindowViewModel internal constructor(private val project: Project,
     _activationRequests.tryEmit(Unit)
   }
 
-  fun activateAndAwaitProject(action: GHPRToolWindowProjectViewModel.() -> Unit) {
+  fun activateAndAwaitProject(action: GHPRConnectedProjectViewModel.() -> Unit) {
     cs.launch {
       _activationRequests.emit(Unit)
       projectVm.filterNotNull().first().action()

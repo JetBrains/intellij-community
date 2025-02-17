@@ -104,7 +104,7 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
 
       coroutineScope {
         toolWindow.contentManager.addDataProvider(EdtNoGetDataProvider { sink ->
-          sink[GHPRActionKeys.PULL_REQUESTS_PROJECT_VM] = vm.projectVm.value
+          sink[GHPRActionKeys.PULL_REQUESTS_CONNECTED_PROJECT_VM] = vm.projectVm.value
         })
 
         // so it's not closed when all content is removed

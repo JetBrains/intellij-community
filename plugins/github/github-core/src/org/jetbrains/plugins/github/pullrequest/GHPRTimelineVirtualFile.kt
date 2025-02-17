@@ -9,7 +9,7 @@ import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.Icon
@@ -40,7 +40,7 @@ internal data class GHPRTimelineVirtualFile(
 
   override fun setValid(valid: Boolean) = Unit
 
-  fun findProjectVm(): GHPRToolWindowProjectViewModel? =
+  fun findProjectVm(): GHPRConnectedProjectViewModel? =
     project.service<GHPRToolWindowViewModel>().projectVm.value?.takeIf { it.repository == repository }
 
   private fun findDetails(): GHPullRequestShort? = findProjectVm()?.findDetails(pullRequest)

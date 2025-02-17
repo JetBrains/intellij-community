@@ -11,14 +11,14 @@ private class GHPROpenPullRequestAction : DumbAwareAction(GithubBundle.messagePo
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val vm = e.getData(GHPRActionKeys.PULL_REQUESTS_PROJECT_VM)
+    val vm = e.getData(GHPRActionKeys.PULL_REQUESTS_CONNECTED_PROJECT_VM)
     val id = e.getData(GHPRActionKeys.PULL_REQUEST_ID)
 
     e.presentation.isEnabledAndVisible = vm != null && id != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val vm = e.getData(GHPRActionKeys.PULL_REQUESTS_PROJECT_VM) ?: return
+    val vm = e.getData(GHPRActionKeys.PULL_REQUESTS_CONNECTED_PROJECT_VM) ?: return
     val id = e.getData(GHPRActionKeys.PULL_REQUEST_ID) ?: return
 
     vm.viewPullRequest(id)

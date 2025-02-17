@@ -3,8 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.openapi.actionSystem.DataKey
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.list.GHPRListController
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 
 internal object GHPRActionKeys {
   @JvmStatic
@@ -17,6 +17,6 @@ internal object GHPRActionKeys {
   val PULL_REQUESTS_LIST_CONTROLLER = DataKey.create<GHPRListController>("org.jetbrains.plugins.github.pullrequest.list.controller")
 
   @JvmStatic
-  val PULL_REQUESTS_PROJECT_VM = DataKey.create<GHPRToolWindowProjectViewModel>(
-    "org.jetbrains.plugins.github.pullrequest.project.vm")
+  val PULL_REQUESTS_CONNECTED_PROJECT_VM = DataKey.create<GHPRConnectedProjectViewModel>(
+    "org.jetbrains.plugins.github.pullrequest.connected.project.vm")
 }

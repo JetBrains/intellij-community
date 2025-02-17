@@ -37,9 +37,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateViewModel.*
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.component.LabeledListPanelViewModel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
@@ -50,8 +48,8 @@ import kotlin.concurrent.withLock
 
 private typealias NewBranchNameCallback = suspend (suggestedName: String) -> String
 
-@ApiStatus.Experimental
-internal interface GHPRCreateViewModel {
+@ApiStatus.Internal
+interface GHPRCreateViewModel {
   val project: Project
   val avatarIconsProvider: GHAvatarIconsProvider
 
@@ -177,7 +175,7 @@ internal class GHPRCreateViewModelImpl(
     dataContext.repositoryDataService.loadTemplate()
   }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
 
-  override val titleAndDescriptionGenerationVm =
+  override val titleAndDescriptionGenerationVm: StateFlow<GHPRCreateTitleAndDescriptionGenerationViewModel?> =
     GHPRTitleAndDescriptionGeneratorExtension.EP_NAME.extensionListFlow()
       .mapNotNull { it.firstOrNull() }
       .flatMapLatest { extension ->

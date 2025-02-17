@@ -12,9 +12,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 
-internal class GHPRCreateDiffViewModel(private val project: Project, parentCs: CoroutineScope) : CodeReviewDiffProcessorViewModel<GHPRCreateDiffChangeViewModel> {
+@ApiStatus.Internal
+class GHPRCreateDiffViewModel(private val project: Project, parentCs: CoroutineScope) : CodeReviewDiffProcessorViewModel<GHPRCreateDiffChangeViewModel> {
   private val cs = parentCs.childScope(javaClass.name)
 
   private val changesSorter = GithubPullRequestsProjectUISettings.getInstance(project).changesGroupingState

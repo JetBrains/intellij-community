@@ -23,9 +23,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsFull
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRFileEditorComponentFactory
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import java.awt.BorderLayout
 import java.awt.LayoutManager
@@ -33,7 +33,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class GHPRTimelineFileEditor(parentCs: CoroutineScope,
-                                      private val projectVm: GHPRToolWindowProjectViewModel,
+                                      private val projectVm: GHPRConnectedProjectViewModel,
                                       private val file: GHPRTimelineVirtualFile)
   : FileEditorBase() {
   private val cs = parentCs

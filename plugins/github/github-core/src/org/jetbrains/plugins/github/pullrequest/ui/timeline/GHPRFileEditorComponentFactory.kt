@@ -42,10 +42,10 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.ai.GHPRAISummaryExtension
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRConnectedProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsFull
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.emoji.GHReactionsPickerComponentFactory
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.addGithubHyperlinkListener
 import javax.swing.JComponent
@@ -57,7 +57,7 @@ import javax.swing.event.ChangeListener
 internal class GHPRFileEditorComponentFactory(
   private val cs: CoroutineScope,
   private val project: Project,
-  private val projectVm: GHPRToolWindowProjectViewModel,
+  private val projectVm: GHPRConnectedProjectViewModel,
   private val timelineVm: GHPRTimelineViewModel,
   private val initialDetails: GHPRDetailsFull,
 ) {
