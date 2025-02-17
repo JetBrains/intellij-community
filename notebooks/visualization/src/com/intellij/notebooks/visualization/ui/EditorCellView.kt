@@ -105,6 +105,13 @@ class EditorCellView(
       updateDraggableBarVisibility()
     }
 
+  var isUnderDiff: Boolean = false
+    set(value) {
+      if (field == value) return
+      field = value
+      updateCellActionsToolbarVisibility()
+    }
+
   init {
     cell.source.afterChange(this) {
       updateInput()
@@ -404,6 +411,7 @@ class EditorCellView(
 
   private fun updateCellActionsToolbarVisibility() {
     val toolbarManager = input.cellActionsToolbar ?: return
+    if ((isUnderDiff == true)) return
     val targetComponent = _controllers.filterIsInstance<DataProviderComponent>().firstOrNull()?.retrieveDataProvider() ?: return
     val tracker = NotebookCellActionsToolbarStateTracker.get(editor) ?: return
     when {
