@@ -1228,9 +1228,6 @@
     <statistics.validation.customValidationRule implementation="com.intellij.usages.impl.ScopeRuleValidator"/>
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.ui.ListValidationRule"/>
 
-    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.IJMapperEventLoggerProvider"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.eventLog.IJFUSMapper"/>
-
     <statistics.projectUsagesCollector implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetUsagesCollector"/>
