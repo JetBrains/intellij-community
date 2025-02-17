@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.*
 @Service(Service.Level.PROJECT)
 internal class RecentFileEventsPerProjectHolder {
   private val recentFiles = MutableSharedFlow<RecentFilesEvent>(
-    extraBufferCapacity = SWITCHER_ELEMENTS_LIMIT,
+    extraBufferCapacity = 100,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
 
