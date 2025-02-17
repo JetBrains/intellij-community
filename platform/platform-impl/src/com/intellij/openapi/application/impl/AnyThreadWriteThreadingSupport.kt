@@ -5,7 +5,6 @@ import com.intellij.codeWithMe.ClientId.Companion.decorateCallable
 import com.intellij.codeWithMe.ClientId.Companion.decorateRunnable
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.core.rwmutex.*
-import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.LegacyProgressIndicatorProvider
 import com.intellij.openapi.application.LockAcquisitionListener
@@ -799,7 +798,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
   @Deprecated("Use `runReadAction` instead")
   override fun acquireReadActionLock(): AccessToken {
-    PluginException.reportDeprecatedUsage("ThreadingSupport.acquireReadActionLock", "Use `runReadAction()` instead")
+    logger.error("`ThreadingSupport.acquireReadActionLock` is deprecated and going to be removed soon. Use `runReadAction()` instead")
     val ts = getThreadState()
     if (ts.hasWrite) {
       throw IllegalStateException("Write Action can not request Read Access Token")
@@ -813,7 +812,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
   @Deprecated("Use `runWriteAction`, `WriteAction.run`, or `WriteAction.compute` instead")
   override fun acquireWriteActionLock(marker: Class<*>): AccessToken {
-    PluginException.reportDeprecatedUsage("ThreadingSupport.acquireWriteActionLock", "Use `runWriteAction()` instead")
+    logger.error("`ThreadingSupport.acquireWriteActionLock` is deprecated and going to be removed soon. Use `runWriteAction()` instead")
     return WriteAccessToken(marker)
   }
 
