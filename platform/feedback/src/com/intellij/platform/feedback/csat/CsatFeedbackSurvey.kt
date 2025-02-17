@@ -6,6 +6,9 @@ import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.client.currentSessionOrNull
+import com.intellij.openapi.client.sessions
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -26,8 +29,6 @@ import kotlin.math.abs
 internal const val USER_CONSIDERED_NEW_DAYS = 30
 internal const val NEW_USER_SURVEY_PERIOD = 29
 internal const val EXISTING_USER_SURVEY_PERIOD = 97
-internal const val CSAT_SURVEY_LAST_FEEDBACK_DATE_KEY = "csat.survey.last.feedback.date"
-internal const val CSAT_SURVEY_LAST_NOTIFICATION_DATE_KEY = "csat.survey.last.notification.date"
 
 internal class CsatFeedbackSurvey : FeedbackSurvey() {
   override val feedbackSurveyType: InIdeFeedbackSurveyType<InIdeFeedbackSurveyConfig> =
@@ -54,10 +55,19 @@ internal class CsatFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
   }
 
   override fun updateStateAfterDialogClosedOk(project: Project) {
-    PropertiesComponent.getInstance().setValue(CSAT_SURVEY_LAST_FEEDBACK_DATE_KEY, getCsatToday().format(DateTimeFormatter.ISO_LOCAL_DATE))
+    CsatGlobalSettings.getInstance().lastFeedbackDate = getCsatToday().format(DateTimeFormatter.ISO_LOCAL_DATE)
   }
 
   override fun checkExtraConditionSatisfied(project: Project): Boolean {
+    if (project.currentSessionOrNull?.isGuest == true) {
+      LOG.debug("We are a CWM guest, do not really need CSAT")
+      return false
+    }
+    if (project.sessions(ClientKind.GUEST).isNotEmpty()) {
+      LOG.debug("We are the CWM host at the moment, not the perfect time for CSAT")
+      return false
+    }
+
     if (ConfigImportHelper.isFirstSession()) {
       LOG.debug("It's a first user session, skip the survey")
       return false
@@ -66,7 +76,7 @@ internal class CsatFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
     val today = getCsatToday()
     LOG.debug("Today is ${today.format(DateTimeFormatter.ISO_LOCAL_DATE)}")
 
-    PropertiesComponent.getInstance().getValue(CSAT_SURVEY_LAST_NOTIFICATION_DATE_KEY)
+    CsatGlobalSettings.getInstance().lastNotificationDate
       ?.let { tryParseDate(it) }
       ?.let {
         if (it.isEqual(today)) {
@@ -75,7 +85,7 @@ internal class CsatFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
         }
       }
 
-    val lastFeedbackDate = PropertiesComponent.getInstance().getValue(CSAT_SURVEY_LAST_FEEDBACK_DATE_KEY)
+    val lastFeedbackDate = CsatGlobalSettings.getInstance().lastFeedbackDate
       ?.let { tryParseDate(it) }
     if (lastFeedbackDate != null && lastFeedbackDate.plusDays(EXISTING_USER_SURVEY_PERIOD.toLong()).isAfter(today)) {
       LOG.debug("User recently filled the survey, vacation period is in progress")
@@ -116,10 +126,10 @@ internal class CsatFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
   }
 
   override fun updateStateAfterNotificationShowed(project: Project) {
-    val propertiesComponent = PropertiesComponent.getInstance()
-    propertiesComponent.setValue(CSAT_SURVEY_LAST_NOTIFICATION_DATE_KEY, getCsatToday().format(DateTimeFormatter.ISO_LOCAL_DATE))
+    CsatGlobalSettings.getInstance().lastNotificationDate = getCsatToday().format(DateTimeFormatter.ISO_LOCAL_DATE)
+
     // disable an automatic Evaluate Feedback form so we don't have them both shown
-    propertiesComponent.setValue("evaluation.feedback.enabled", "false")
+    PropertiesComponent.getInstance().setValue("evaluation.feedback.enabled", "false")
   }
 }
 
