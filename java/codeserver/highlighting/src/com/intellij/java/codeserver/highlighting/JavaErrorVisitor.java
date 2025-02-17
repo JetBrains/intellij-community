@@ -628,6 +628,17 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (!hasErrorResults()) checkFeature(expression, JavaFeature.SWITCH_EXPRESSION);
     if (!hasErrorResults()) myExpressionChecker.checkSwitchExpressionReturnTypeCompatible(expression);
     if (!hasErrorResults()) myExpressionChecker.checkSwitchExpressionHasResult(expression);
+    checkSwitchBlock(expression);
+  }
+
+  @Override
+  public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
+    super.visitSwitchStatement(statement);
+    checkSwitchBlock(statement);
+  }
+
+  private void checkSwitchBlock(@NotNull PsiSwitchBlock block) {
+    if (!hasErrorResults()) myExpressionChecker.checkSwitchBlockStatements(block);
   }
 
   @Override

@@ -223,6 +223,10 @@ final class JavaErrorFixProvider {
         error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.unreachable.statement.fix.text")));
     fix(STATEMENT_UNREACHABLE_LOOP_BODY, error -> myFactory.createSimplifyBooleanFix(error.psi(), false));
     fix(FOREACH_NOT_APPLICABLE, error -> myFactory.createNotIterableForEachLoopFix(error.psi()));
+    fix(SWITCH_LABEL_EXPECTED, error -> {
+      PsiSwitchLabeledRuleStatement previousRule = PsiTreeUtil.getPrevSiblingOfType(error.psi(), PsiSwitchLabeledRuleStatement.class);
+      return previousRule == null ? null : myFactory.createWrapSwitchRuleStatementsIntoBlockFix(previousRule);
+    });
   }
 
   private void createMethodFixes() {

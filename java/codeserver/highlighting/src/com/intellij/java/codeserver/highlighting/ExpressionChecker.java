@@ -1729,4 +1729,63 @@ final class ExpressionChecker {
       }
     }
   }
+
+  void checkSwitchBlockStatements(@NotNull PsiSwitchBlock block) {
+    PsiCodeBlock body = block.getBody();
+    if (body == null) return;
+    PsiElement first = PsiTreeUtil.skipWhitespacesAndCommentsForward(body.getLBrace());
+    if (first != null && !(first instanceof PsiSwitchLabelStatementBase) && !PsiUtil.isJavaToken(first, JavaTokenType.RBRACE)) {
+      myVisitor.report(JavaErrorKinds.SWITCH_LABEL_EXPECTED.create(first));
+    }
+    PsiElement element = first;
+    PsiStatement alien = null;
+    boolean classicLabels = false;
+    boolean enhancedLabels = false;
+    boolean levelChecked = false;
+    while (element != null && !PsiUtil.isJavaToken(element, JavaTokenType.RBRACE)) {
+      if (element instanceof PsiSwitchLabeledRuleStatement) {
+        if (!levelChecked) {
+          myVisitor.checkFeature(element, JavaFeature.ENHANCED_SWITCH);
+          if (myVisitor.hasErrorResults()) return;
+          levelChecked = true;
+        }
+        if (classicLabels) {
+          alien = (PsiStatement)element;
+          break;
+        }
+        enhancedLabels = true;
+      }
+      else if (element instanceof PsiStatement statement) {
+        if (enhancedLabels) {
+          //let's not highlight twice
+          if (statement instanceof PsiSwitchLabelStatement labelStatement &&
+              labelStatement.getChildren().length != 0 &&
+              labelStatement.getChildren()[labelStatement.getChildren().length - 1] instanceof PsiErrorElement errorElement &&
+              errorElement.getErrorDescription().startsWith(JavaPsiBundle.message("expected.colon.or.arrow"))) {
+            break;
+          }
+          alien = statement;
+          break;
+        }
+        classicLabels = true;
+      }
+
+      if (!levelChecked && element instanceof PsiSwitchLabelStatementBase label) {
+        @Nullable PsiCaseLabelElementList values = label.getCaseLabelElementList();
+        if (values != null && values.getElementCount() > 1) {
+          myVisitor.checkFeature(values, JavaFeature.ENHANCED_SWITCH);
+          if (myVisitor.hasErrorResults()) return;
+          levelChecked = true;
+        }
+      }
+
+      element = PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
+    }
+    if (alien == null) return;
+    if (enhancedLabels && !(alien instanceof PsiSwitchLabelStatementBase)) {
+      myVisitor.report(JavaErrorKinds.SWITCH_LABEL_EXPECTED.create(alien));
+      return;
+    }
+    myVisitor.report(JavaErrorKinds.SWITCH_DIFFERENT_CASE_KINDS.create(alien));
+  }
 }

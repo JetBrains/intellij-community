@@ -11,15 +11,15 @@ class SwitchStatement {
     switch (0) {
       ////////////////
       /** */
-      <error descr="Statement must be prepended with case label">System.out.println();</error>
+      <error descr="Statement must be prepended with a case label">System.out.println();</error>
     }
 
     switch (0) {
-      <error descr="Statement must be prepended with case label">break;</error>
+      <error descr="Statement must be prepended with a case label">break;</error>
     }
 
     switch (0) {
-      <error descr="Statement must be prepended with case label">return;</error>
+      <error descr="Statement must be prepended with a case label">return;</error>
     }
 
     switch (0) {

@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
-import com.intellij.core.JavaPsiBundle;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -78,77 +77,6 @@ public class SwitchBlockHighlightingModel {
       }
     });
     return found.get();
-  }
-
-  void checkSwitchBlockStatements(@NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    PsiCodeBlock body = myBlock.getBody();
-    if (body == null) return;
-    PsiElement first = PsiTreeUtil.skipWhitespacesAndCommentsForward(body.getLBrace());
-    if (first != null && !(first instanceof PsiSwitchLabelStatementBase) && !PsiUtil.isJavaToken(first, JavaTokenType.RBRACE)) {
-      errorSink.accept(createError(first, JavaErrorBundle.message("statement.must.be.prepended.with.case.label")));
-    }
-    PsiElement element = first;
-    PsiStatement alien = null;
-    boolean classicLabels = false;
-    boolean enhancedLabels = false;
-    boolean levelChecked = false;
-    while (element != null && !PsiUtil.isJavaToken(element, JavaTokenType.RBRACE)) {
-      if (element instanceof PsiSwitchLabeledRuleStatement) {
-        if (!levelChecked) {
-          HighlightInfo.Builder info = HighlightUtil.checkFeature(element, JavaFeature.ENHANCED_SWITCH, myLevel, myFile);
-          if (info != null) {
-            errorSink.accept(info);
-            return;
-          }
-          levelChecked = true;
-        }
-        if (classicLabels) {
-          alien = (PsiStatement)element;
-          break;
-        }
-        enhancedLabels = true;
-      }
-      else if (element instanceof PsiStatement statement) {
-        if (enhancedLabels) {
-          //let's not highlight twice
-          if (statement instanceof PsiSwitchLabelStatement labelStatement &&
-              labelStatement.getChildren().length != 0 &&
-              labelStatement.getChildren()[labelStatement.getChildren().length - 1] instanceof PsiErrorElement errorElement &&
-              errorElement.getErrorDescription().startsWith(JavaPsiBundle.message("expected.colon.or.arrow"))) {
-            break;
-          }
-          alien = statement;
-          break;
-        }
-        classicLabels = true;
-      }
-
-      if (!levelChecked && element instanceof PsiSwitchLabelStatementBase label) {
-        @Nullable PsiCaseLabelElementList values = label.getCaseLabelElementList();
-        if (values != null && values.getElementCount() > 1) {
-          HighlightInfo.Builder info = HighlightUtil.checkFeature(values, JavaFeature.ENHANCED_SWITCH, myLevel, myFile);
-          if (info != null) {
-            errorSink.accept(info);
-            return;
-          }
-          levelChecked = true;
-        }
-      }
-
-      element = PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
-    }
-    if (alien == null) return;
-    if (enhancedLabels && !(alien instanceof PsiSwitchLabelStatementBase)) {
-      PsiSwitchLabeledRuleStatement previousRule = PsiTreeUtil.getPrevSiblingOfType(alien, PsiSwitchLabeledRuleStatement.class);
-      HighlightInfo.Builder info = createError(alien, JavaErrorBundle.message("statement.must.be.prepended.with.case.label"));
-      if (previousRule != null) {
-        IntentionAction action = getFixFactory().createWrapSwitchRuleStatementsIntoBlockFix(previousRule);
-        info.registerFix(action, null, null, null, null);
-      }
-      errorSink.accept(info);
-      return;
-    }
-    errorSink.accept(createError(alien, JavaErrorBundle.message("different.case.kinds.in.switch")));
   }
 
   void checkSwitchSelectorType(@NotNull Consumer<? super HighlightInfo.Builder> errorSink) {

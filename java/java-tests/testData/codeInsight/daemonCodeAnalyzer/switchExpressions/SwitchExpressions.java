@@ -10,9 +10,9 @@ class SwitchExpressions {
 
     System.out.println(switch (<error descr="'switch' expression does not have any case clauses">new Random().nextInt()</error>) { });
 
-    System.out.println(switch (new Random().nextInt()) {
+    System.out.println(switch (<error descr="'switch' expression does not cover all possible input values">new Random().nextInt()</error>) {
       case 0 -> throw new IllegalStateException("no args");
-      <error descr="Different 'case' kinds used in 'switch'">case 1:</error> yield "lone";
+      case 1: yield "lone";
     });
 
     System.out.println(
