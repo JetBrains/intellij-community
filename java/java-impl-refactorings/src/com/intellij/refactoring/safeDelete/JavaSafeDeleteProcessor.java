@@ -532,7 +532,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     if (element instanceof PsiParameter parameter && element.getParent() instanceof PsiParameterList parameterList) {
       PsiMethod method = ObjectUtils.tryCast(parameterList.getParent(), PsiMethod.class);
       if (method != null) {
-        PsiAnnotation contract = method.getModifierList().findAnnotation(JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+        PsiAnnotation contract = JavaMethodContractUtil.findContractAnnotation(method);
         if (contract != null) {
           ParameterInfoImpl[] info = ParameterInfoImpl.fromMethodExceptParameter(method, parameter);
           try {
