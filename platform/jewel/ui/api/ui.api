@@ -1032,7 +1032,7 @@ public final class org/jetbrains/jewel/ui/component/TabStripState$Companion {
 
 public final class org/jetbrains/jewel/ui/component/TabsKt {
 	public static final fun SimpleTabContent-A5h6_LM (Lorg/jetbrains/jewel/ui/component/TabContentScope;Ljava/lang/String;JLandroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/painter/Painter;Landroidx/compose/runtime/Composer;II)V
-	public static final fun SimpleTabContent-OOOwjN0 (Lorg/jetbrains/jewel/ui/component/TabContentScope;Ljava/lang/String;JLandroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
+	public static final fun SimpleTabContent-OOOwjN0 (Lorg/jetbrains/jewel/ui/component/TabContentScope;Ljava/lang/String;J[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Landroidx/compose/runtime/Composer;II)V
 	public static final fun SimpleTabContent-iMiKU5w (Lorg/jetbrains/jewel/ui/component/TabContentScope;JLandroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 
