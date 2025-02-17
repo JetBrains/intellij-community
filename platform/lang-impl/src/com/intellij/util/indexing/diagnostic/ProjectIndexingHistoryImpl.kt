@@ -400,7 +400,7 @@ data class ProjectDumbIndexingHistoryImpl(override val project: Project) : Proje
     timesImpl.updatingEnd = timesImpl.updatingStart.plusNanos(timesImpl.totalUpdatingTime)
   }
 
-  fun setWasCancelled(reason: String) {
+  fun setWasCancelled(reason: String?) {
     timesImpl.isCancelled = true
     timesImpl.cancellationReason = reason
   }
