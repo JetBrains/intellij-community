@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.OrderedSet;
 import org.apache.velocity.runtime.parser.ParseException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,8 @@ import java.util.Set;
 public abstract class FileTemplateBase implements FileTemplate {
   static final boolean DEFAULT_REFORMAT_CODE_VALUE = true;
   static final boolean DEFAULT_ENABLED_VALUE = true;
-  static final String TEMPLATE_CHILDREN_SUFFIX = ".child.";
+  @ApiStatus.Internal
+  public static final String TEMPLATE_CHILDREN_SUFFIX = ".child.";
   private @Nullable String myText;
   private boolean myShouldReformatCode = DEFAULT_REFORMAT_CODE_VALUE;
   private boolean myLiveTemplateEnabled;

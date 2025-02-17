@@ -32,6 +32,11 @@ public class VirtualFilePointerImpl extends TraceableDisposable implements Virtu
     myListener = listener;
   }
 
+  @ApiStatus.Internal
+  public FilePartNode getNode() {
+    return myNode;
+  }
+
   @Override
   public @NotNull String getFileName() {
     FilePartNode node = checkDisposed(myNode);

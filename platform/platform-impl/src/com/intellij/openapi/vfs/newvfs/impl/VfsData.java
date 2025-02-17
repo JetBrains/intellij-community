@@ -222,7 +222,6 @@ public final class VfsData {
 
     final @NotNull VfsData owningVfsData;
 
-
     /** user data (KeyFMap) for files, {@link DirectoryData} for folders */
     private final AtomicReferenceArray<Object> objectFieldsArray;
 
@@ -236,7 +235,6 @@ public final class VfsData {
      * file attribute/content/etc change.
      */
     private final AtomicIntegerArray intFieldsArray;
-
 
     /** the reference is synchronized by read-write lock; clients outside read-action deserve to get outdated result */
     @Nullable Segment replacement;
@@ -362,8 +360,7 @@ public final class VfsData {
 
 
     /** @return offset of field #fieldNo of file=fileId in a {@link #intFieldsArray} */
-    private static int fieldOffset(int fileId,
-                                   int fieldNo) {
+    private static int fieldOffset(int fileId, int fieldNo) {
       if (fileId <= 0) {
         throw new IllegalArgumentException("invalid fileId: " + fileId);
       }
@@ -389,7 +386,8 @@ public final class VfsData {
   }
 
   // non-final field accesses are synchronized on this instance, but this happens in VirtualDirectoryImpl
-  static final class DirectoryData {
+  @ApiStatus.Internal
+  public static final class DirectoryData {
     private static final AtomicFieldUpdater<DirectoryData, KeyFMap> USER_MAP_UPDATER =
       AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
     volatile @NotNull KeyFMap userMap = KeyFMap.EMPTY_MAP;

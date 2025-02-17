@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.Comparing;
@@ -21,6 +21,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,8 @@ import java.util.function.Consumer;
  * Trie data structure for succinct storage and fast retrieval of file pointers.
  * File pointer "a/b/x.txt" is stored in the tree with nodes a->b->x.txt
  */
-class FilePartNode {
+@ApiStatus.Internal
+public class FilePartNode {
   public static final FilePartNode[] EMPTY_ARRAY = new FilePartNode[0];
   static final int JAR_SEPARATOR_NAME_ID = -2;
   private final int nameId; // name id of the VirtualFile corresponding to this node
@@ -456,7 +458,7 @@ class FilePartNode {
   }
 
   void addAllPointersTo(@NotNull Collection<? super VirtualFilePointerImpl> outList) {
-    processPointers(p->{ if (p.myNode != null) outList.add(p); });
+    processPointers(p->{ if (p.getNode() != null) outList.add(p); });
   }
 
   void processPointers(@NotNull Consumer<? super VirtualFilePointerImpl> processor) {
