@@ -21,10 +21,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -35,7 +32,8 @@ import java.util.regex.Pattern;
 public abstract class TextExtractor {
   private static final Logger LOG = Logger.getInstance(TextExtractor.class);
   @VisibleForTesting
-  static final LanguageExtension<TextExtractor> EP = new LanguageExtension<>("com.intellij.grazie.textExtractor");
+  @ApiStatus.Internal
+  public static final LanguageExtension<TextExtractor> EP = new LanguageExtension<>("com.intellij.grazie.textExtractor");
   private static final Key<CachedValue<Cache>> COMMON_PARENT_CACHE = Key.create("TextExtractor common parent cache");
   private static final Key<CachedValue<Cache>> QUERY_CACHE = Key.create("TextExtractor query cache");
   private static final Key<Boolean> IGNORED = Key.create("TextExtractor ignored");

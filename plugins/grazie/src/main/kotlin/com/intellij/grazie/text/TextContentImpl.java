@@ -15,13 +15,15 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.ranges.IntRange;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Pattern;
 
-class TextContentImpl extends UserDataHolderBase implements TextContent {
+@ApiStatus.Internal
+public final class TextContentImpl extends UserDataHolderBase implements TextContent {
   private final TextDomain domain;
   final List<TokenInfo> tokens;
   private volatile String text;
