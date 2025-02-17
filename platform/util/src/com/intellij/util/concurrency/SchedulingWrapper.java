@@ -2,7 +2,6 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.concurrency.ContextAwareRunnable;
-import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -288,7 +287,7 @@ public class SchedulingWrapper implements ScheduledExecutorService {
     @Override
     protected void setException(Throwable t) {
       try {
-        if (!(t instanceof ControlFlowException)) {
+        if (!Logger.shouldRethrow(t)) {
           LOG.error(t);
         }
       }
