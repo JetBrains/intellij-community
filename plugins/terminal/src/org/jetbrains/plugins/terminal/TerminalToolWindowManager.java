@@ -436,24 +436,6 @@ public final class TerminalToolWindowManager implements Disposable {
     panel.updateDFState();
 
     content.setPreferredFocusedComponent(() -> finalWidget.getPreferredFocusableComponent());
-
-    Disposer.register(widget, new Disposable() {
-      @Override
-      public void dispose() {
-        // Backend terminal session tab lifecycle is not directly bound to the Tool Window tab lifecycle.
-        // We need to close the backend tab when the tool window tab is closed explicitly.
-        // And don't need it when a user is closing the project leaving the terminal tabs opened: to be able to reconnect back.
-        // So we send close event only if the tab is closed explicitly: backend will close it on its termination.
-        // It is not easy to determine whether it is explicit closing or not, so we use the heuristic.
-        Integer sessionTabId = getTabIdByWidget(finalWidget);
-        boolean isProjectClosing = toolWindow.getContentManager().isDisposed();
-        if (sessionTabId != null && !isProjectClosing) {
-          TerminalSessionStartHelper.closeTerminalTab(myProject, sessionTabId);
-          bindTabIdToWidget(finalWidget, null);
-        }
-      }
-    });
-
     return content;
   }
 
@@ -721,6 +703,23 @@ public final class TerminalToolWindowManager implements Disposable {
         terminalRunner.isGenTwoTerminalEnabled() &&
         !Registry.is(BLOCK_TERMINAL_REGISTRY)) {
       widget = provider.createTerminalWidget(myProject, parentDisposable);
+
+      Disposer.register(widget, new Disposable() {
+        @Override
+        public void dispose() {
+          // Backend terminal session tab lifecycle is not directly bound to the Tool Window tab lifecycle.
+          // We need to close the backend tab when the tool window tab is closed explicitly.
+          // And don't need it when a user is closing the project leaving the terminal tabs opened: to be able to reconnect back.
+          // So we send close event only if the tab is closed explicitly: backend will close it on its termination.
+          // It is not easy to determine whether it is explicit closing or not, so we use the heuristic.
+          Integer sessionTabId = getTabIdByWidget(widget);
+          boolean isProjectClosing = myToolWindow.getContentManager().isDisposed();
+          if (sessionTabId != null && !isProjectClosing) {
+            TerminalSessionStartHelper.closeTerminalTab(myProject, sessionTabId);
+            bindTabIdToWidget(widget, null);
+          }
+        }
+      });
 
       Consumer<TerminalSessionTab> bindTabIdAndStartSession = (TerminalSessionTab tab) -> {
         bindTabIdToWidget(widget, tab.getId());
