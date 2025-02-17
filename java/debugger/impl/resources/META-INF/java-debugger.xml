@@ -83,6 +83,8 @@
                     interface="com.intellij.debugger.ui.tree.ExtraDebugNodesProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.steppingListener"
                     interface="com.intellij.debugger.engine.SteppingListener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.debugger.dumpItemsProvider"
+                    interface="com.intellij.debugger.impl.ExtendedThreadDumpItemsProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
