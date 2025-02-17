@@ -13,7 +13,6 @@ import com.sun.jdi.*
 import com.sun.jdi.event.ClassPrepareEvent
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
@@ -86,17 +85,20 @@ fun preloadAllClasses(vm: VirtualMachine) {
 
   val managerThread = InvokeThread.currentThread() as DebuggerManagerThreadImpl
   managerThread.coroutineScope.launch {
-    val allClasses = allClasses.await()
-    allClasses.forEach { channel.send(it) }
+    launch {
+      val classes = allClasses.await()
+      for (type in classes) {
+        channel.trySend(type)
+      }
+    }
     channel.consumeEach { type ->
       withDebugContext(managerThread, PrioritizedTask.Priority.LOWEST) {
         try {
-          DebuggerUtilsAsync.supertypes(type).await()
+          DebuggerUtilsAsync.supertypes(type)
         }
         catch (_: ObjectCollectedException) {
         }
       }
-      delay(1)
     }
   }
 }
