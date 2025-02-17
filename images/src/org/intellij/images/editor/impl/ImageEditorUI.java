@@ -152,7 +152,7 @@ public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyP
     JComponent toolbarPanel = null;
     if (!isEmbedded) {
       ActionManager actionManager = ActionManager.getInstance();
-      ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ImageEditorActions.GROUP_TOOLBAR);
+      ActionGroup actionGroup = (ActionGroup)actionManager.getAction(ImageEditorActions.GROUP_TOOLBAR_WITH_SCIENTIFIC);
       ActionToolbar actionToolbar = actionManager.createActionToolbar(ImageEditorActions.ACTION_PLACE, actionGroup, true);
       actionToolbar.setTargetComponent(this);
 
