@@ -1982,7 +1982,8 @@ public class PyTypingTest extends PyTestCase {
   public void testBitwiseOrUnionIsInstanceUnionInTuple() {
     doTest("str | list | dict | bool | None",
            """
-             a = 42
+             from typing import Literal
+             a: Literal[42] = 42
              if isinstance(a, (str, (list | dict), bool | None)):
                  expr = a""");
   }
@@ -1991,8 +1992,8 @@ public class PyTypingTest extends PyTestCase {
   public void testBitwiseOrUnionOfUnionsIsInstance() {
     doTest("dict | str | bool | list",
            """
-             from typing import Union
-             a = 42
+             from typing import Union, Literal
+             a: Literal[42] = 42
              if isinstance(a, Union[dict, Union[str, Union[bool, list]]]):
                  expr = a""");
   }

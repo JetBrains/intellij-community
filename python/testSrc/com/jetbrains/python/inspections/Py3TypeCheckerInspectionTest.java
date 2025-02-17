@@ -536,6 +536,70 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-79164
+  public void testTypeNarrowingIn() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   def expects_bad_status(status: Literal["MALFORMED", "ABORTED"]): ...
+                   
+                   def expects_pending_status(status: Literal["PENDING"]): ...
+                   
+                   def parse_status(status: str) -> None:
+                       if status in ("MALFORMED", "ABORTED"):
+                           return expects_bad_status(status)
+                   
+                       if status == "PENDING":
+                           expects_pending_status(status)
+                   """);
+    doTestByText("""
+                   from typing import Literal
+                   from enum import Enum
+                   
+                   class Color(Enum):
+                       R = 1
+                       G == 2
+                       B == 3
+                       RED = R
+                       BLUE = B
+                   
+                   def expects_red_or_blue(v: Literal[Color.RED, Color.B]): ...
+                   
+                   def expects_green(v: Literal[Color.G]): ...
+                   
+                   def foo(v: Color):
+                       if v in (Color.R, Color.BLUE):
+                           expects_red_or_blue(v)
+                       else:
+                           expects_green(v)
+                   
+                       if v not in (Color.R, Color.BLUE):
+                           expects_green(v)
+                       else:
+                           expects_red_or_blue(v)
+                   """);
+
+    doTestByText("""
+                   from enum import Enum
+                   
+                   class MyEnum(Enum):
+                       A = 1
+                       B = 2
+                       C = 3
+                       D = 4
+                   
+                   def foo(v: MyEnum):
+                       if v == MyEnum.A:
+                           pass
+                       elif v in (MyEnum.B, MyEnum.C):
+                           b_or_c: Literal[MyEnum.B, MyEnum.C] = v
+                           s: int = <warning descr="Expected type 'int', got 'Literal[MyEnum.B, MyEnum.C]' instead">v</warning>
+                       else:
+                           d: Literal[MyEnum.D] = v
+                           s: int = <warning descr="Expected type 'int', got 'Literal[MyEnum.D]' instead">v</warning>
+                   """);
+  }
+
   // PY-77937
   public void testListOfEnumMembers() {
     doTestByText(

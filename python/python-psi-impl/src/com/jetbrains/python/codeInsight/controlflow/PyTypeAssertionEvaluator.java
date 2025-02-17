@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyNames;
@@ -14,6 +13,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,6 +84,10 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     if (isOrEqualsOperator || node.isOperator("isnot") || PyTokenTypes.NE.equals(operator) || PyTokenTypes.NE_OLD.equals(operator)) {
       setPositive(isOrEqualsOperator, () -> processIsOrEquals(lhs, rhs));
     }
+
+    if (PyTokenTypes.IN_KEYWORD.equals(operator) || node.isOperator("notin")) {
+      setPositive(PyTokenTypes.IN_KEYWORD.equals(operator), () -> processIn(lhs, rhs));
+    }
   }
 
   private void processIsOrEquals(@NotNull PyExpression lhs, @NotNull PyExpression rhs) {
@@ -114,14 +118,33 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     }
 
     if (lhs instanceof PyReferenceExpression referenceExpr) {
+      pushAssertion(referenceExpr, myPositive, false, context -> getLiteralType(rhs, context), null);
+    }
+  }
+
+  private void processIn(@NotNull PyExpression lhs, @NotNull PyExpression rhs) {
+    if (lhs instanceof PyReferenceExpression referenceExpr && rhs instanceof PyTupleExpression tupleExpr) {
       pushAssertion(referenceExpr, myPositive, false, context -> {
-        final PyType literalType = PyLiteralType.getLiteralType(rhs, context);
-        if (literalType != null) {
-          return literalType;
+        PyExpression[] elements = tupleExpr.getElements();
+        List<PyType> types = new ArrayList<>(elements.length);
+        for (PyExpression element : elements) {
+          PyType type = PyLiteralType.isNone(element) ? PyNoneType.INSTANCE : getLiteralType(element, context);
+          if (type == null) {
+            return null;
+          }
+          types.add(type);
         }
-        return ObjectUtils.tryCast(context.getType(rhs), PyLiteralType.class);
+        return PyUnionType.union(types);
       }, null);
     }
+  }
+
+  private static @Nullable PyType getLiteralType(@NotNull PyExpression element, @NotNull TypeEvalContext context) {
+    PyType type = PyLiteralType.getLiteralType(element, context);
+    if (type == null) {
+      type = context.getType(element);
+    }
+    return PyTypeUtil.toStream(type).allMatch(subtype -> subtype instanceof PyLiteralType) ? type : null;
   }
 
   private void setPositive(boolean positive, @NotNull Runnable runnable) {
@@ -143,18 +166,17 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
                                                           boolean positive,
                                                           @NotNull TypeEvalContext context) {
     if (positive) {
-      if (!(initial instanceof PyUnionType) && match(suggested, initial, context)) {
-        return Ref.create(initial);
-      }
-      if (initial instanceof PyUnionType unionType) {
-        if (!unionType.isWeak()) {
-          var matched = ContainerUtil.filter(unionType.getMembers(), member -> match(suggested, member, context));
-          if (!matched.isEmpty()) {
-            return Ref.create(PyUnionType.union(matched));
-          }
-        }
-      }
-      return Ref.create(suggested);
+      List<PyType> initialSubtypes = PyTypeUtil.toStream(initial)
+        .filter(initialSubtype -> match(suggested, initialSubtype, context))
+        .toList();
+
+      StreamEx<PyType> suggestedSubtypes = PyTypeUtil.toStream(suggested)
+        .filter(suggestedSubtype -> match(initial, suggestedSubtype, context))
+        .filter(suggestedSubtype -> !ContainerUtil.exists(initialSubtypes,
+                                                          initialSubtype -> match(initialSubtype, suggestedSubtype, context)));
+
+      List<PyType> types = StreamEx.of(initialSubtypes).append(suggestedSubtypes).toList();
+      return Ref.create(types.isEmpty() ? suggested : PyUnionType.union(types));
     }
     else {
       if (initial instanceof PyUnionType unionType) {

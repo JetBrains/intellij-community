@@ -590,7 +590,7 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
-  public void testLiteralTypeNarrowing() {
+  public void testLiteralTypeNarrowingEquals() {
     doTest("Literal[\"abba\"]",
            """
              from typing import Literal
@@ -611,6 +611,53 @@ public class Py3TypeTest extends PyTestCase {
              abc: Literal["abc"] = "abc"
              def foo(v: str):
                  if (v == abc):
+                     expr = v
+             """);
+  }
+
+  public void testLiteralTypeNarrowingIn() {
+    doTest("Literal[1, 2]",
+           """
+             def f(a: int):
+                 if a in (1, 2, ""):
+                     expr = a
+             """);
+    doTest("Literal[-10, \"a\"]",
+           """
+             from enum import Enum
+             class E(Enum):
+                 A = 1
+             def f(a: int | str):
+                 if a in (-10, E.A, "a"):
+                     expr = a
+             """);
+    doTest("Literal[\"abb\"]",
+           """
+             from typing import Literal
+             def f(a: Literal[3, "abb", "ab", False]):
+                 if a in ("abb", True):
+                     expr = a
+             """);
+    doTest("Literal[3, \"ab\"]",
+           """
+             from typing import Literal
+             def f(a: Literal[3, "abb", "ab", False]):
+                 if a not in ("abb", False):
+                     expr = a
+             """);
+    doTest("Literal[\"abb\", False]",
+           """
+             from typing import Literal
+             def f(a: Literal[10, "abb", "ab", False]):
+                 if a not in ("abb", False):
+                     pass
+                 else:
+                     expr = a
+             """);
+    doTest("Literal[-1] | None",
+           """
+             def f(v: object):
+                 if v in (-1, None):
                      expr = v
              """);
   }
