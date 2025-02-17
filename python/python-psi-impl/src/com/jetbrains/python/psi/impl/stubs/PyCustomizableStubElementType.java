@@ -4,14 +4,15 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.jetbrains.python.psi.PyElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
 
-interface PyCustomizableStubElementType<Psi extends PyElement, Stub extends PyCustomStub, StubType extends PyCustomStubType<Psi, ? extends Stub>> {
-
+@ApiStatus.Internal
+public interface PyCustomizableStubElementType<Psi extends PyElement, Stub extends PyCustomStub, StubType extends PyCustomStubType<Psi, ? extends Stub>> {
   @NotNull
   List<StubType> getExtensions();
 
