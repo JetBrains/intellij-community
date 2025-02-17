@@ -405,10 +405,14 @@ internal class KotlinIdeDeclarationRenderer(
                             typeRenderer.renderType(analysisSession, it, printer)
                             printer.append(highlight(".") { asDot })
                         }
-                        printCollection(type.parameterTypes,
+                        printCollection(type.parameters,
                                         prefix = highlight("(") { asParentheses },
-                                        postfix = highlight(") ") { asParentheses }) {
-                            typeRenderer.renderType(analysisSession, it, this)
+                                        postfix = highlight(") ") { asParentheses }) { valueParameter ->
+                            valueParameter.name?.let { name ->
+                                typeRenderer.typeNameRenderer.renderName(analysisSession, name, valueParameter.type, typeRenderer, this)
+                                append(": ")
+                            }
+                            typeRenderer.renderType(analysisSession, valueParameter.type, this)
                         }
                         printer.append(highlight("->".escape()) { asArrow }).append(" ")
                         typeRenderer.renderType(analysisSession, type.returnType, printer)
