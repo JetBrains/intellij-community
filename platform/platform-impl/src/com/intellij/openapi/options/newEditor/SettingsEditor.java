@@ -1,8 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -49,8 +52,10 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.options.newEditor.SettingsDialogExtensionsKt.createWrapperPanel;
+import static com.intellij.openapi.options.newEditor.SettingsDialogExtensionsKt.paneWithCorner;
 
 @ApiStatus.Internal
 public final class SettingsEditor extends AbstractEditor implements UiDataProvider, Place.Navigator {
@@ -94,7 +99,8 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
                  @NotNull Project project,
                  @NotNull List<? extends ConfigurableGroup> groups,
                  @Nullable Configurable configurable,
-                 String filter,
+                 @Nullable String filter,
+                 @Nullable Supplier<JButton> helpButtonSupplier,
                  @NotNull ISettingsTreeViewFactory factory,
                  @NotNull SpotlightPainterFactory spotlightPainterFactory) {
     super(parent);
@@ -273,18 +279,23 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     left.setMinimumSize(JBUI.size(96, left.getMinimumSize().height));
     left.setPreferredSize(JBUI.size(256, left.getPreferredSize().height));
     left.setMaximumSize(JBUI.size(300, left.getMaximumSize().height));
-    JComponent right = new JPanel(new BorderLayout());
+    JPanel right = new JPanel(new BorderLayout());
     right.add(BorderLayout.CENTER, loadingDecorator.getComponent());
     mySplitter = new OnePixelSplitter(false, properties.getFloat(SPLITTER_PROPORTION, SPLITTER_PROPORTION_DEFAULT_VALUE));
     mySplitter.setHonorComponentsMinimumSize(true);
     mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_FIRST_MIN_SIZE);
     mySplitter.setFirstComponent(left);
-    mySplitter.setSecondComponent(right);
 
     if (IdeFrameDecorator.Companion.isCustomDecorationActive()) {
       mySplitter.getDivider().setOpaque(false);
     }
     if (SettingsDialog.useNonModalSettingsWindow()) {
+      if (helpButtonSupplier != null) {
+        JButton helpButton = helpButtonSupplier.get();
+        mySplitter.setSecondComponent(paneWithCorner(this, right, helpButton));
+      } else {
+        mySplitter.setSecondComponent(right);
+      }
       RelativeFont.HUGE.install(myHeaderLabel);
       RelativeFont.BOLD.install(myHeaderLabel);
       myHeaderLabel.setAlignmentY(CENTER_ALIGNMENT);
@@ -294,6 +305,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       mySplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
       add(BorderLayout.CENTER, createWrapperPanel(this, mySplitter));
     } else {
+      mySplitter.setSecondComponent(right);
       right.add(BorderLayout.NORTH, withHistoryToolbar(myBanner));
       left.add(BorderLayout.NORTH, searchPanel);
       editor.setPreferredSize(JBUI.size(800, 600));
@@ -505,6 +517,14 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   protected JComponent getPreferredFocusedComponent() {
     return treeView != null ? treeView.getTree() : editor;
   }
+
+  void setHelpTooltip(@NotNull JButton helpButton) {
+    //noinspection SpellCheckingInspection
+    if (UISettings.isIdeHelpTooltipEnabled()) {
+      new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
+    }
+  }
+
 
   @Nullable
   Collection<@NlsContexts.ConfigurableName String> getPathNames() {

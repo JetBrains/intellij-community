@@ -80,7 +80,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
                         @Nullable String filter) {
     super(project, parentComponent, true, IdeModalityType.IDE, true, false);
     dimensionServiceKey = DIMENSION_KEY;
-    editor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory, this::spotlightPainterFactory);
+    editor = new SettingsEditor(myDisposable, project, groups, configurable, filter, () -> createHelpButton(JBInsets.emptyInsets()), this::treeViewFactory, this::spotlightPainterFactory);
     isApplyButtonNeeded = true;
     isResetButtonNeeded = false;
     init(null, project);
@@ -146,8 +146,12 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
   @Override
   protected void setHelpTooltip(@NotNull JButton helpButton) {
     //noinspection SpellCheckingInspection
-    if (UISettings.isIdeHelpTooltipEnabled()) {
-      new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
+    if (UISettings.isIdeHelpTooltipEnabled() ) {
+      if (shouldBeNonModal()) {
+        ((SettingsEditor)editor).setHelpTooltip(helpButton);
+      } else {
+        new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
+      }
     }
     else {
       super.setHelpTooltip(helpButton);
