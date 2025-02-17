@@ -276,10 +276,10 @@ private fun doShowFrame(savedBounds: Rectangle, backgroundColor: Color, extended
   val frame = IdeFrameImpl()
   frame.isAutoRequestFocus = false
   frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
-  val devicePair = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(savedBounds)
+  val bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(savedBounds)
   // this functionality under the flag - fully correct behavior is unnecessary here (that's default is not applied if null)
-  if (devicePair != null) {
-    frame.bounds = devicePair.first
+  if (bounds != null) {
+    frame.bounds = bounds
   }
   frame.extendedState = extendedState
   frame.minimumSize = Dimension(340, frame.minimumSize.getHeight().toInt())

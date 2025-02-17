@@ -185,7 +185,7 @@ private suspend fun allocateLightEditFrame(project: Project,
       windowManager.defaultFrameInfoHelper.copyFrom(frameInfo)
     }
     frameInfo.bounds?.let {
-      applyBoundsOrDefault(frame.frame, FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it)?.first)
+      applyBoundsOrDefault(frame.frame, FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it))
     }
   }
 

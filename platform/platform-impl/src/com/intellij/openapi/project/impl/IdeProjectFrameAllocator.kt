@@ -462,25 +462,25 @@ internal fun createNewProjectFrameProducer(frameInfo: FrameInfo?): ProjectFrameP
   }
   else {
     checkForNonsenseBounds("IdeProjectFrameAllocatorKt.createNewProjectFrameProducer.deviceBounds", deviceBounds)
-    val boundsAndDevice = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(deviceBounds)
+    val bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(deviceBounds)
     val state = frameInfo.extendedState
     val isMaximized = FrameInfoHelper.isMaximized(state)
     return object : ProjectFrameProducer {
       override fun create(): IdeFrameImpl {
         val frame = IdeFrameImpl()
-        val restoreNormalBounds = isMaximized && frame.extendedState == Frame.NORMAL && boundsAndDevice != null
+        val restoreNormalBounds = isMaximized && frame.extendedState == Frame.NORMAL && bounds != null
 
         // On macOS, setExtendedState(maximized) may UN-maximize the frame if the restored bounds are too large
         // (so the OS will "autodetect" it as already maximized).
         // Therefore, we only restore the location and use the default size (which is always computed to be less than the screen).
-        applyBoundsOrDefault(frame, boundsAndDevice?.first, restoreOnlyLocation = isMaximized && SystemInfo.isMac)
+        applyBoundsOrDefault(frame, bounds, restoreOnlyLocation = isMaximized && SystemInfo.isMac)
         frame.extendedState = state
         frame.minimumSize = Dimension(340, frame.minimumSize.height)
 
         // This has to be done after restoring the actual state, as otherwise setExtendedState() may overwrite the normal bounds.
         if (restoreNormalBounds) {
-          frame.normalBounds = boundsAndDevice.first
-          frame.screenBounds = ScreenUtil.getScreenDevice(boundsAndDevice.first)?.defaultConfiguration?.bounds
+          frame.normalBounds = bounds
+          frame.screenBounds = ScreenUtil.getScreenDevice(bounds!!)?.defaultConfiguration?.bounds
           if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
             IDE_FRAME_EVENT_LOG.debug("Loaded saved normal bounds ${frame.normalBounds} for the screen ${frame.screenBounds}")
           }

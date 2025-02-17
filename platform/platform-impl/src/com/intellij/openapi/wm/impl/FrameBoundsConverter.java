@@ -6,7 +6,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.scale.JBUIScale;
-import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +27,7 @@ public final class FrameBoundsConverter {
    * @param bounds the bounds in the device space
    * @return the bounds in the user space
    */
-  public static @Nullable Pair<@NotNull Rectangle, @Nullable GraphicsDevice> convertFromDeviceSpaceAndFitToScreen(@NotNull Rectangle bounds) {
+  public static @Nullable Rectangle convertFromDeviceSpaceAndFitToScreen(@NotNull Rectangle bounds) {
     int tolerance = Registry.intValue("ide.project.frame.screen.bounds.tolerance", 10);
     Rectangle b = bounds.getBounds();
     // Protect against incorrectly saved meaningless values.
@@ -69,7 +68,7 @@ public final class FrameBoundsConverter {
         if (IDE_FRAME_EVENT_LOG.isDebugEnabled()) { // avoid unnecessary concatenation
           IDE_FRAME_EVENT_LOG.debug("Found the screen " + screen + " for the loaded bounds " + bounds);
         }
-        return new Pair<>(b, gd);
+        return b;
       }
     }
 
