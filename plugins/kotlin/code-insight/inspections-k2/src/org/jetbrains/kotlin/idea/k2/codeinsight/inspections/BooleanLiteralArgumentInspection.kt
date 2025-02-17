@@ -104,10 +104,10 @@ internal class BooleanLiteralArgumentInspection(
         }
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtValueArgument,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtValueArgument>> = arrayOf(object : KotlinModCommandQuickFix<KtValueArgument>() {
+    ): KotlinModCommandQuickFix<KtValueArgument> = object : KotlinModCommandQuickFix<KtValueArgument>() {
         override fun getFamilyName(): @IntentionFamilyName String = context.familyName
 
         override fun applyFix(
@@ -121,7 +121,7 @@ internal class BooleanLiteralArgumentInspection(
                 }
             )
         }
-    })
+    }
 }
 
 private fun KtExpression.isBooleanLiteral(): Boolean = this is KtConstantExpression && node.elementType == KtNodeTypes.BOOLEAN_CONSTANT

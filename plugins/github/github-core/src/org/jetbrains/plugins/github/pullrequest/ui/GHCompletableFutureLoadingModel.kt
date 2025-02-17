@@ -6,9 +6,11 @@ import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates.observable
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Deprecated with migration to coroutines and view models")
 class GHCompletableFutureLoadingModel<T>(parentDisposable: Disposable)
   : GHSimpleLoadingModel<T>(), Disposable {

@@ -405,10 +405,11 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   }
 
   private fun ValidationInfoBuilder.validateGradleHome(withDialog: Boolean): ValidationInfo? {
-    if (!GradleInstallationManager.getInstance().isGradleSdkHome(context.project, gradleHome)) {
+    val gradleHomePath = Path.of(gradleHome)
+    if (!GradleInstallationManager.getInstance().isGradleSdkHome(context.project, gradleHomePath)) {
       return error(GradleBundle.message("gradle.project.settings.distribution.invalid"))
     }
-    val gradleVersion = GradleInstallationManager.getGradleVersion(Path.of(gradleHome))
+    val gradleVersion = GradleInstallationManager.getGradleVersion(gradleHomePath)
     if (gradleVersion == null) {
       return error(GradleBundle.message("gradle.project.settings.distribution.version.invalid"))
     }

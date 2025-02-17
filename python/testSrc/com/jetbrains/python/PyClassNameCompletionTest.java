@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StubIndex;
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -18,18 +17,16 @@ import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
-import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 
 public class PyClassNameCompletionTest extends PyTestCase {
@@ -215,35 +212,6 @@ public class PyClassNameCompletionTest extends PyTestCase {
       myFixture.copyDirectoryToProject(getTestName(true) + "/src", "");
       myFixture.configureByFile("main.py");
       LookupElement[] variants = myFixture.complete(CompletionType.BASIC, 2);
-      if (variants == null) {
-        StringBuilder sb = new StringBuilder();
-        StubIndex index = StubIndex.getInstance();
-        Collection<String> allKeys = index.getAllKeys(PyExportedModuleAttributeIndex.KEY, myFixture.getProject());
-        if (allKeys.contains("request")) {
-          GlobalSearchScope scope = PySearchUtilBase.defaultSuggestionScope(myFixture.getFile());
-          List<PyElement> elements = new ArrayList<>();
-          for (String key : allKeys) {
-            index.processElements(PyExportedModuleAttributeIndex.KEY, key, myFixture.getProject(), scope, PyElement.class, exported -> {
-              String name = exported.getName();
-              if (name != null && name.contains("request")) {
-                elements.add(exported);
-              }
-              return true;
-            });
-          }
-          sb.append(
-            elements.stream().map(Objects::toString)
-              .collect(Collectors.joining(", ", "Found elements: [", "]\n"))
-          );
-        }
-        else {
-          sb
-            .append("'request' key not found\n")
-            .append(allKeys.size()).append(" stub index keys total\\n");
-        }
-        sb.append("Text:\n").append(myFixture.getFile().getText());
-        fail(sb.toString());
-      }
       assertNotNull(variants);
       List<String> variantQNames = ContainerUtil.mapNotNull(variants, PyClassNameCompletionTest::getElementQualifiedName);
       assertDoesntContain(variantQNames, "pip._vendor.requests", "pip._vendor.requests.request");

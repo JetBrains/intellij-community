@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -15,7 +16,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
-class TextOccurrencesRenamer {
+@ApiStatus.Internal
+public final class TextOccurrencesRenamer {
   private final Editor myEditor;
   private final String myOldName;
   private final List<TextRange> myOccurrences;

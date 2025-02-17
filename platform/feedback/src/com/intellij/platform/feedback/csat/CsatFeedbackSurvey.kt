@@ -116,8 +116,10 @@ internal class CsatFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
   }
 
   override fun updateStateAfterNotificationShowed(project: Project) {
-    PropertiesComponent.getInstance().setValue(CSAT_SURVEY_LAST_NOTIFICATION_DATE_KEY,
-                                               getCsatToday().format(DateTimeFormatter.ISO_LOCAL_DATE))
+    val propertiesComponent = PropertiesComponent.getInstance()
+    propertiesComponent.setValue(CSAT_SURVEY_LAST_NOTIFICATION_DATE_KEY, getCsatToday().format(DateTimeFormatter.ISO_LOCAL_DATE))
+    // disable an automatic Evaluate Feedback form so we don't have them both shown
+    propertiesComponent.setValue("evaluation.feedback.enabled", "false")
   }
 }
 

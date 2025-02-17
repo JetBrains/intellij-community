@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceparameterobject;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -21,6 +21,7 @@ import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -346,7 +347,8 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     }
   }
 
-  private static class ParameterBean {
+  @ApiStatus.Internal
+  public static final class ParameterBean {
     private PsiField myField;
     private String myGetter;
     private String mySetter;

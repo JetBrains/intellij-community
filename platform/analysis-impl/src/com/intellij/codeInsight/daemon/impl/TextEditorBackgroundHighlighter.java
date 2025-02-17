@@ -5,6 +5,9 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -25,6 +28,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -63,7 +67,11 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
       LOG.error(document + documentManager.someDocumentDebugInfo(document));
     }
 
-    PsiFile psiFile = renewFile(project, document);
+    CodeInsightContext context = editor != null
+                                 ? EditorContextManager.getEditorContext(editor, project)
+                                 : CodeInsightContextKt.anyContext();
+
+    PsiFile psiFile = renewFile(project, document, context);
     if (psiFile == null) return List.of();
 
     int[] effectivePassesToIgnore =
@@ -102,8 +110,8 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
   }
 
   @ApiStatus.Internal
-  public static PsiFile renewFile(@NotNull Project project, @NotNull Document document)  {
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+  public static @Nullable PsiFile renewFile(@NotNull Project project, @NotNull Document document, @NotNull CodeInsightContext context)  {
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document, context);
     if (psiFile instanceof PsiCompiledFile compiled) {
       psiFile = compiled.getDecompiledPsiFile();
     }
@@ -117,9 +125,11 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
    * Guarantees no expensive PSI creation/decompilation ops are performed here
    */
   @ApiStatus.Internal
-  public static PsiFile getCachedFileToHighlight(@NotNull Project project, @NotNull VirtualFile virtualFile)  {
+  public static @Nullable PsiFile getCachedFileToHighlight(@NotNull Project project,
+                                                           @NotNull VirtualFile virtualFile,
+                                                           @NotNull CodeInsightContext context) {
     PsiDocumentManagerBase psiDocumentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
-    PsiFile psiFile = psiDocumentManager.getRawCachedFile(virtualFile);
+    PsiFile psiFile = psiDocumentManager.getRawCachedFile(virtualFile, context);
     if (psiFile instanceof PsiCompiledFile compiled) {
       psiFile = (PsiFile)compiled.getCachedMirror();
     }

@@ -148,7 +148,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   public static TargetType @NotNull [] getApplicableElementTypeFields(PsiElement owner) {
     if (owner instanceof PsiClass aClass) {
       if (aClass.isAnnotationType()) {
-        return new TargetType[]{TargetType.ANNOTATION_TYPE, TargetType.TYPE};
+        return addTypeUseIfApplicable(owner, TargetType.ANNOTATION_TYPE, TargetType.TYPE);
       }
       else if (aClass instanceof GrTypeParameter) {
         return addTypeUseIfApplicable(owner, TargetType.TYPE_PARAMETER);
@@ -159,7 +159,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     }
     if (owner instanceof GrMethod) {
       if (((PsiMethod)owner).isConstructor()) {
-        return addTypeUseIfApplicable(owner,TargetType.CONSTRUCTOR);
+        return addTypeUseIfApplicable(owner, TargetType.CONSTRUCTOR);
       }
       else {
         return addTypeUseIfApplicable(owner, TargetType.METHOD);
@@ -194,11 +194,15 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     return TargetType.EMPTY_ARRAY;
   }
 
-  private static TargetType[] addTypeUseIfApplicable(@NotNull PsiElement element, @NotNull TargetType baseTargetType) {
+  private static TargetType[] addTypeUseIfApplicable(@NotNull PsiElement element, TargetType @NotNull ... baseTargetTypeArray) {
     if (GroovyConfigUtils.isAtLeastGroovy40(element)) {
-      return new TargetType[]{baseTargetType, TargetType.TYPE_USE};
+      int length = baseTargetTypeArray.length;
+      TargetType[] newTargetTypeArray = new TargetType[length + 1];
+      System.arraycopy(baseTargetTypeArray, 0, newTargetTypeArray, 0, length);
+      newTargetTypeArray[length] = TargetType.TYPE_USE;
+      return newTargetTypeArray;
     } else {
-      return new TargetType[]{baseTargetType};
+      return baseTargetTypeArray;
     }
   }
 

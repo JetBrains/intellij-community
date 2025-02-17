@@ -60,9 +60,9 @@ internal class PyPackagesTable(
     addMouseListener(PyPackageTableMouseAdapter(this))
 
     selectionModel.addListSelectionListener {
-      tablesView.removeSelectionNotFormTable(this)
       val pkg = selectedItem()
       if (pkg != null && pkg !is ExpandResultNode) {
+        tablesView.removeSelectionNotFormTable(this)
         controller.packageSelected(pkg)
       }
       else {

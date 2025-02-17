@@ -55,11 +55,14 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
   private var projectDictionary: ProjectDictionary? = null
   private var appDictionary: EditableDictionary? = null
 
-  internal val projectDictionaryPath: String by lazy {
+  @get:Internal
+  val projectDictionaryPath: String by lazy {
     val projectStoreDir = project.takeIf { !it.isDefault }?.stateStore?.directoryStorePath
-    projectStoreDir?.toAbsolutePath()?.resolve(PROJECT_DICTIONARY_PATH)?.toString() ?: ""
+    projectStoreDir?.toAbsolutePath()?.resolve(getProjectDictionaryPath())?.toString() ?: ""
   }
-  internal val appDictionaryPath: String by lazy {
+
+  @get:Internal
+  val appDictionaryPath: String by lazy {
     PathManager.getOptionsPath() + File.separator + CACHED_DICTIONARY_FILE
   }
 
@@ -96,7 +99,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
 
   companion object {
     private const val MAX_METRICS = 1
-    private val PROJECT_DICTIONARY_PATH = "dictionaries${File.separator}${System.getProperty("user.name").replace('.', '_')}.xml"
+
     private const val CACHED_DICTIONARY_FILE = "spellchecker-dictionary.xml"
 
     @JvmStatic
@@ -209,7 +212,8 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
     val dictionaryState = project.service<ProjectDictionaryState>()
     dictionaryState.addProjectDictListener { restartInspections() }
     projectDictionary = dictionaryState.projectDictionary
-    projectDictionary!!.setActiveName(System.getProperty("user.name"))
+    projectDictionary!!.setActiveName(getProjectDictionaryName())
+
     spellChecker.addModifiableDictionary(projectDictionary!!)
   }
 
@@ -459,4 +463,15 @@ private class StreamLoader(private val name: String, private val loaderClass: Cl
   }
 
   override fun getName() = name
+}
+
+private fun getProjectDictionaryPath(): String {
+  return "dictionaries${File.separator}${getProjectDictionaryName().replace('.', '_')}.xml"
+}
+
+internal fun getProjectDictionaryName(): String {
+  return if (Registry.`is`("spellchecker.use.standard.project.dictionary.name"))
+    ProjectDictionary.DEFAULT_CURRENT_DICT_NAME
+  else
+    System.getProperty("user.name")
 }

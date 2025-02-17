@@ -23,9 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.stream.IntStream;
@@ -51,7 +49,6 @@ public class XxHash3Test {
   }
 
   private static void testString(String s, long expected) {
-    assertThat(Xxh3.hash(s)).describedAs("Hash as string of: " + s).isEqualTo(expected);
     assertThat(Xxh3.hash(s.getBytes(StandardCharsets.UTF_8))).describedAs("Hash as bytes of: " + s).isEqualTo(expected);
   }
 
@@ -110,12 +107,7 @@ public class XxHash3Test {
   }
 
   private static void checkHashing(byte[] bytes) throws IOException {
-    long newHashValue;
-    try (InputStream inputStream = new ByteArrayInputStream(bytes)) {
-      newHashValue = Xxh3.hash(inputStream, bytes.length);
-    }
-    assertThat(newHashValue).isEqualTo(Xxh3.hash(bytes));
-    assertThat(newHashValue).isEqualTo(Hashing.xxh3_64().hashBytesToLong(bytes));
+    assertThat(Xxh3.hash(bytes)).isEqualTo(Hashing.xxh3_64().hashBytesToLong(bytes));
   }
 
   @SuppressWarnings("SameParameterValue")

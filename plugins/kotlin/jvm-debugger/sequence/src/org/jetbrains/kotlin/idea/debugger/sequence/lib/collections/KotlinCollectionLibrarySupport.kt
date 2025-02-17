@@ -2,17 +2,17 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.lib.collections
 
-import com.intellij.debugger.streams.lib.IntermediateOperation
-import com.intellij.debugger.streams.lib.TerminalOperation
-import com.intellij.debugger.streams.lib.impl.LibrarySupportBase
-import com.intellij.debugger.streams.resolve.FilterResolver
-import com.intellij.debugger.streams.resolve.ValuesOrderResolver
-import com.intellij.debugger.streams.trace.CallTraceInterpreter
-import com.intellij.debugger.streams.trace.IntermediateCallHandler
-import com.intellij.debugger.streams.trace.TerminatorCallHandler
-import com.intellij.debugger.streams.trace.dsl.Dsl
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
-import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
+import com.intellij.debugger.streams.core.lib.IntermediateOperation
+import com.intellij.debugger.streams.core.lib.TerminalOperation
+import com.intellij.debugger.streams.core.lib.impl.LibrarySupportBase
+import com.intellij.debugger.streams.core.resolve.FilterResolver
+import com.intellij.debugger.streams.core.resolve.ValuesOrderResolver
+import com.intellij.debugger.streams.core.trace.CallTraceInterpreter
+import com.intellij.debugger.streams.core.trace.IntermediateCallHandler
+import com.intellij.debugger.streams.core.trace.TerminatorCallHandler
+import com.intellij.debugger.streams.core.trace.dsl.Dsl
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.collections.BothSemanticHandlerWrapper
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.collections.BothSemanticsHandler
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler.collections.FilterCallHandler

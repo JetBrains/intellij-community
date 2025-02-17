@@ -572,8 +572,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     @Override
     public void paused(SuspendContextImpl suspendContext) {
       // Need to add SuspendContextCommandImpl because the stepping pause is not now in SuspendContextCommandImpl
-      if (suspendContext.myInProgress) { // already inside SuspendContextCommand
-        assertTrue(DebuggerManagerThreadImpl.getCurrentCommand() instanceof SuspendContextCommandImpl);
+      if (DebugProcessImpl.isInSuspendCommand(suspendContext)) {
         pausedImpl(suspendContext);
       }
       else {

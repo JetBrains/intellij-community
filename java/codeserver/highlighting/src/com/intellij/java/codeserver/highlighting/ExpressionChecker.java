@@ -1709,4 +1709,24 @@ final class ExpressionChecker {
       }
     }
   }
+
+  void checkSwitchExpressionReturnTypeCompatible(@NotNull PsiSwitchExpression switchExpression) {
+    if (!PsiPolyExpressionUtil.isPolyExpression(switchExpression)) {
+      return;
+    }
+    PsiType switchExpressionType = switchExpression.getType();
+    if (switchExpressionType != null) {
+      for (PsiExpression expression : PsiUtil.getSwitchResultExpressions(switchExpression)) {
+        PsiType expressionType = expression.getType();
+        if (expressionType != null && !TypeConversionUtil.areTypesAssignmentCompatible(switchExpressionType, expression)) {
+          myVisitor.report(JavaErrorKinds.SWITCH_EXPRESSION_INCOMPATIBLE_TYPE.create(
+            expression, new JavaIncompatibleTypeErrorContext(switchExpressionType, expressionType)));
+        }
+      }
+
+      if (PsiTypes.voidType().equals(switchExpressionType)) {
+        myVisitor.report(JavaErrorKinds.SWITCH_EXPRESSION_CANNOT_BE_VOID.create(switchExpression));
+      }
+    }
+  }
 }

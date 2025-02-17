@@ -121,9 +121,12 @@ class EditorCellView(
     editor.notebookAppearance.codeCellBackgroundColor.afterChange(this) { backgroundColor ->
       updateCellHighlight(force = true)
     }
-    editor.notebook?.readOnly?.afterChange(this) {
+    cell.notebook.readOnly.afterChange(this) {
       updateRunButtonVisibility()
       updateDraggableBarVisibility()
+    }
+    cell.notebook.showCellToolbar.afterChange(this) {
+      updateCellActionsToolbarVisibility()
     }
     recreateControllers()
     updateSelection(false)
@@ -404,6 +407,7 @@ class EditorCellView(
     val targetComponent = _controllers.filterIsInstance<DataProviderComponent>().firstOrNull()?.retrieveDataProvider() ?: return
     val tracker = NotebookCellActionsToolbarStateTracker.get(editor) ?: return
     when {
+      !cell.notebook.showCellToolbar.get() -> toolbarManager.hideToolbar()
       mouseOver -> toolbarManager.showToolbar(targetComponent)
       selected -> {
         // we show the toolbar only for the last selected cell

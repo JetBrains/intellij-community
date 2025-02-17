@@ -193,7 +193,7 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
 
   override fun getAffectedChangeListsIds(): List<String> {
     return documentTracker.readLock {
-      assert(!affectedChangeLists.isEmpty)
+      assert(!affectedChangeLists.isEmpty())
       affectedChangeLists.toList()
     }
   }

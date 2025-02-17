@@ -1,11 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
+import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
@@ -19,9 +22,9 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ForEachParameterNotUsedInspection.UnusedForEachParameterInfo
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ForEachParameterNotUsedInspection.UnusedForEachParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.util.setParameterListIfAny
 import org.jetbrains.kotlin.name.CallableId
@@ -30,15 +33,23 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
 internal class ForEachParameterNotUsedInspection :
-    KotlinApplicableInspectionBase.Multiple<KtCallExpression, UnusedForEachParameterInfo>() {
+    KotlinApplicableInspectionBase<KtCallExpression, UnusedForEachParameterInfo>() {
 
-    override fun getProblemDescription(
+    override fun InspectionManager.createProblemDescriptor(
         element: KtCallExpression,
         context: UnusedForEachParameterInfo,
-    ): @InspectionMessage String =
-        KotlinBundle.message("loop.parameter.0.is.unused", context.paramName)
+        rangeInElement: TextRange?,
+        onTheFly: Boolean
+    ): ProblemDescriptor = createProblemDescriptor(
+        /* psiElement = */ element,
+        /* rangeInElement = */ rangeInElement,
+        /* descriptionTemplate = */ KotlinBundle.message("loop.parameter.0.is.unused", context.paramName),
+        /* highlightType = */ ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+        /* onTheFly = */ onTheFly,
+        /* ...fixes = */ *createQuickFixes(element, context).toTypedArray()
+    )
 
-    override fun createQuickFixes(
+    private fun createQuickFixes(
         element: KtCallExpression,
         context: UnusedForEachParameterInfo,
     ): Collection<KotlinModCommandQuickFix<KtCallExpression>> {

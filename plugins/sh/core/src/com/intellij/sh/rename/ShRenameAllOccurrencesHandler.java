@@ -14,15 +14,17 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.sh.highlighting.ShTextOccurrencesUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.MissingResourceException;
 
-final class ShRenameAllOccurrencesHandler extends EditorActionHandler {
+@ApiStatus.Internal
+public final class ShRenameAllOccurrencesHandler extends EditorActionHandler {
   public static final ShRenameAllOccurrencesHandler INSTANCE = new ShRenameAllOccurrencesHandler();
-  static final Key<TextOccurrencesRenamer> RENAMER_KEY = Key.create("renamer");
+  public static final Key<TextOccurrencesRenamer> RENAMER_KEY = Key.create("renamer");
 
   private ShRenameAllOccurrencesHandler() {
   }

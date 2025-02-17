@@ -9,6 +9,7 @@ import io.opentelemetry.api.trace.Tracer
 import org.jetbrains.jps.incremental.MessageHandler
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.CompilerMessage
+import org.jetbrains.jps.incremental.messages.CustomBuilderMessage
 import org.jetbrains.jps.incremental.messages.ProgressMessage
 
 internal class RequestLog(
@@ -33,6 +34,14 @@ internal class RequestLog(
         }
       }
       is ProgressMessage -> return
+      is CustomBuilderMessage -> {
+        if (message.messageType == "processed module") {
+          return
+        }
+        else {
+          message.messageText
+        }
+      }
 
       else -> message.messageText
     }

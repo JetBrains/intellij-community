@@ -7,9 +7,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.apache.arrow.memory.RootAllocator
-import org.apache.arrow.vector.BaseValueVector
 import org.apache.arrow.vector.BitVector
-import org.apache.arrow.vector.FixedSizeBinaryVector
 import org.apache.arrow.vector.VarBinaryVector
 import org.apache.arrow.vector.VarCharVector
 import org.apache.arrow.vector.VectorSchemaRoot
@@ -22,9 +20,9 @@ import org.apache.arrow.vector.types.pojo.FieldType
 import org.apache.arrow.vector.types.pojo.Schema
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.bazel.jvm.jps.SourceDescriptor
-import org.jetbrains.bazel.jvm.jps.emptyList
+import org.jetbrains.bazel.jvm.emptyList
 import org.jetbrains.bazel.jvm.jps.emptyStringArray
-import org.jetbrains.bazel.jvm.jps.hashMap
+import org.jetbrains.bazel.jvm.hashMap
 import org.jetbrains.intellij.build.io.writeFileUsingTempFile
 import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
 import org.jetbrains.jps.incremental.storage.RelativePathType
@@ -34,7 +32,6 @@ import java.nio.channels.FileChannel
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import kotlin.collections.iterator
 
 // https://observablehq.com/@huggingface/apache-arrow-quick-view
 
@@ -212,7 +209,6 @@ fun saveBuildState(
   }
 }
 
-// do not use an open-addressing hash map or immutable map - see https://stackoverflow.com/a/16303438
 data class LoadStateResult(
   @JvmField val rebuildRequested: String?,
 
@@ -223,7 +219,7 @@ data class LoadStateResult(
 
 class RemovedFileInfo(
   @JvmField val sourceFile: Path,
-  @JvmField val outputs: List<Path>,
+  @JvmField val outputs: Array<String>,
 )
 
 @OptIn(ExperimentalStdlibApi::class)
@@ -252,7 +248,7 @@ private fun doLoad(
     val start = outputListVector.getElementStartIndex(rowIndex)
     val end = outputListVector.getElementEndIndex(rowIndex)
     val size = end - start
-    val outputs = if (size == 0) null else Array<String>(size) {
+    val outputs = if (size == 0) null else Array(size) {
       String(outputListInnerVector.get(it + start))
     }
 
@@ -261,10 +257,7 @@ private fun doLoad(
     if (actualDigest == null) {
       // removed
       if (outputs != null) {
-        deletedFiles.add(RemovedFileInfo(
-          sourceFile = sourceFile,
-          outputs = outputs.map { relativizer.toAbsoluteFile(it, RelativePathType.OUTPUT) },
-        ))
+        deletedFiles.add(RemovedFileInfo(sourceFile = sourceFile, outputs = outputs))
       }
     }
     else {

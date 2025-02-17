@@ -31,7 +31,7 @@ import java.util.Objects;
 
 import static com.intellij.database.extractors.FormatterCreator.getDateKey;
 
-public class DefaultDateEditorFactory extends DefaultTemporalEditorFactory {
+public final class DefaultDateEditorFactory extends DefaultTemporalEditorFactory {
   private static final Logger LOG = Logger.getInstance(DefaultDateEditorFactory.class);
 
   @Override

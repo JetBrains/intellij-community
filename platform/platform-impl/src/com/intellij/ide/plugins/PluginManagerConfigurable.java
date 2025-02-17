@@ -16,6 +16,7 @@ import com.intellij.ide.plugins.marketplace.ranking.MarketplaceLocalRanker;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -356,7 +357,8 @@ public final class PluginManagerConfigurable
 
   private void createGearGotIt() {
     if (!PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed() ||
-        UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled()) {
+        UpdateSettings.getInstance().getState().isPluginsAutoUpdateEnabled() ||
+        AppMode.isRemoteDevHost()) {
       return;
     }
 

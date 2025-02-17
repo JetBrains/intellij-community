@@ -104,20 +104,34 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
     if (ProjectRootsUtil.isModuleContentRoot(directoryFile, project)) {
       ProjectFileIndex fi = ProjectRootManager.getInstance(project).getFileIndex();
-      Module module = fi.getModuleForFile(directoryFile);
+      Set<Module> modules = fi.getModulesForFile(directoryFile, true);
 
       data.setPresentableText(directoryFile.getName());
-      if (module != null) {
+      if (!modules.isEmpty()) {
         if (!(parentValue instanceof Module)) {
-          if (ModuleType.isInternal(module) || !shouldShowModuleName()) {
-            data.addText(directoryFile.getName() + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          }
-          else if (moduleNameMatchesDirectoryName(module, directoryFile, fi)) {
-            data.addText(directoryFile.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          if (modules.size() == 1) {
+            Module module = modules.iterator().next();
+            if (ModuleType.isInternal(module) || !shouldShowModuleName()) {
+              data.addText(directoryFile.getName() + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            }
+            else if (moduleNameMatchesDirectoryName(module, directoryFile, fi)) {
+              data.addText(directoryFile.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+            }
+            else {
+              data.addText(directoryFile.getName() + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+              data.addText("[" + module.getName() + "]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+            }
           }
           else {
-            data.addText(directoryFile.getName() + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            data.addText("[" + module.getName() + "]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+            // todo ijpl-339 implement this logic carefully, add support for internal module, support more nodes
+            if (shouldShowModuleName()) {
+              data.addText(directoryFile.getName() + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+              String moduleNames = "[" + StringUtil.join(modules, module -> module.getName(), ", ") + "]";
+              data.addText(moduleNames, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+            }
+            else {
+              data.addText(directoryFile.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            }
           }
         }
         else {

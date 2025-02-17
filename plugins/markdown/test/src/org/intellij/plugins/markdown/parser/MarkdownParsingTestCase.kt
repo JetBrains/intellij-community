@@ -10,6 +10,7 @@ import com.intellij.psi.LanguageFileViewProviders
 import com.intellij.psi.templateLanguages.TemplateDataElementType
 import com.intellij.psi.xml.StartTagEndTokenProvider
 import com.intellij.testFramework.ParsingTestCase
+import com.intellij.xml.XmlElementTypeServiceHelper.registerXmlElementTypeServices
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.parser.MarkdownFlavourProvider
@@ -17,7 +18,7 @@ import org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition
 import org.intellij.plugins.markdown.lang.psi.MarkdownAstFactory
 import org.intellij.plugins.markdown.xml.DefaultMarkdownFileViewProviderFactory
 
-abstract class MarkdownParsingTestCase(dataPath: String): ParsingTestCase(
+abstract class MarkdownParsingTestCase(dataPath: String) : ParsingTestCase(
   dataPath,
   "md",
   true,
@@ -27,6 +28,7 @@ abstract class MarkdownParsingTestCase(dataPath: String): ParsingTestCase(
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
+    registerXmlElementTypeServices(application, testRootDisposable)
     registerExtensionPoint(MarkdownFlavourProvider.extensionPoint, MarkdownFlavourProvider::class.java)
     registerExtensionPoint(EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME, EmbeddedTokenTypesProvider::class.java)
     registerExtensionPoint(StartTagEndTokenProvider.EP_NAME, StartTagEndTokenProvider::class.java)

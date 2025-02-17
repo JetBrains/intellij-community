@@ -34,6 +34,8 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -74,12 +76,12 @@ public final class BuildClasspathModuleGradleDataService extends AbstractProject
     Interner<List<String>> interner = Interner.createInterner();
     final NotNullLazyValue<List<String>> externalProjectGradleSdkLibs = NotNullLazyValue.lazy(() -> {
       final Set<String> gradleSdkLibraries = new LinkedHashSet<>();
-      File gradleHome = gradleInstallationManager.getGradleHome(project, linkedExternalProjectPath);
-      if (gradleHome != null && gradleHome.isDirectory()) {
-        final Collection<File> libraries = gradleInstallationManager.getClassRoots(project, linkedExternalProjectPath);
+      Path gradleHome = gradleInstallationManager.getGradleHomePath(project, linkedExternalProjectPath);
+      if (gradleHome != null && Files.isDirectory(gradleHome)) {
+        final Collection<Path> libraries = gradleInstallationManager.getClassRoots(project, linkedExternalProjectPath);
         if (libraries != null) {
-          for (File library : libraries) {
-            gradleSdkLibraries.add(FileUtil.toCanonicalPath(library.getPath()));
+          for (Path library : libraries) {
+            gradleSdkLibraries.add(library.toString());
           }
         }
       }

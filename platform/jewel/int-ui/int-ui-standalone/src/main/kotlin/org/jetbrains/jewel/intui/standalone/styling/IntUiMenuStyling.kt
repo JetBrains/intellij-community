@@ -148,7 +148,7 @@ public fun MenuItemColors.Companion.dark(
 public fun MenuMetrics.Companion.defaults(
     cornerSize: CornerSize = CornerSize(8.dp),
     menuMargin: PaddingValues = PaddingValues(vertical = 6.dp),
-    contentPadding: PaddingValues = PaddingValues(0.dp),
+    contentPadding: PaddingValues = PaddingValues(vertical = 7.dp, horizontal = 2.dp),
     offset: DpOffset = DpOffset(0.dp, 2.dp),
     shadowSize: Dp = 12.dp,
     borderWidth: Dp = 1.dp,
@@ -158,9 +158,9 @@ public fun MenuMetrics.Companion.defaults(
     MenuMetrics(cornerSize, menuMargin, contentPadding, offset, shadowSize, borderWidth, itemMetrics, submenuMetrics)
 
 public fun MenuItemMetrics.Companion.defaults(
-    selectionCornerSize: CornerSize = CornerSize(0.dp),
-    outerPadding: PaddingValues = PaddingValues(),
-    contentPadding: PaddingValues = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+    selectionCornerSize: CornerSize = CornerSize(4.dp),
+    outerPadding: PaddingValues = PaddingValues(horizontal = 6.dp),
+    contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
     separatorPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
     keybindingsPadding: PaddingValues = PaddingValues(start = 36.dp),
     separatorThickness: Dp = 1.dp,

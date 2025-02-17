@@ -237,9 +237,6 @@ public final class EditorGutterLayout {
     );
 
     List<GutterArea> extraRightFreePainters = List.of(
-      area(GAP_BETWEEN_AREAS, EditorGutterComponentImpl.GAP_AFTER_VCS_MARKERS_WIDTH::get)
-        .as(EditorMouseEventArea.LINE_MARKERS_AREA)
-        .showIf(() -> myEditorGutter.getExtraRightFreePaintersAreaWidth() > 0 && myEditorGutter.isLineMarkersShown()),
       area(EXTRA_RIGHT_FREE_PAINTERS_AREA, myEditorGutter::getExtraRightFreePaintersAreaWidth)
         .showIf(() -> myEditorGutter.isLineMarkersShown()),
       areaGap(1).showIf(() -> myEditorGutter.isLineMarkersShown())

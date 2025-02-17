@@ -1139,21 +1139,6 @@ public final class ContainerUtil {
     collection.removeIf(t -> !collected.add(t));
   }
 
-  /**
-   * @deprecated use {@link Map#of}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @Unmodifiable @NotNull Map<String, String> stringMap(String @NotNull ... keyValues) {
-    Map<String, String> result = new HashMap<>();
-    for (int i = 0; i < keyValues.length - 1; i+=2) {
-      result.put(keyValues[i], keyValues[i+1]);
-    }
-
-    return result;
-  }
-
   @Contract(pure = true)
   public static @NotNull <T> Iterator<T> iterate(T @NotNull [] array) {
     return array.length == 0 ? Collections.emptyIterator() : Arrays.asList(array).iterator();

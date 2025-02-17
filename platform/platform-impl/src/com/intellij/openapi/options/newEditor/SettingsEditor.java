@@ -21,14 +21,11 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
-import com.intellij.ui.IdeUICustomization;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.SearchTextField;
-import com.intellij.ui.UIBundle;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.*;
+import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
+import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
@@ -53,6 +50,8 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.options.newEditor.SettingsDialogExtensionsKt.createWrapperPanel;
+
 @ApiStatus.Internal
 public final class SettingsEditor extends AbstractEditor implements UiDataProvider, Place.Navigator {
   private static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
@@ -68,11 +67,20 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   private final OnePixelSplitter mySplitter;
   private final SpotlightPainter spotlightPainter;
   private final LoadingDecorator loadingDecorator;
-  private final @NotNull Banner myBanner;
+  private final @NotNull ConfigurableEditorBanner myBanner;
   private final History myHistory = new History(this);
 
   private final Map<Configurable, ConfigurableController> controllers = new HashMap<>();
   private ConfigurableController lastController;
+
+  private final Breadcrumbs myBreadcrumbs = new Breadcrumbs() {
+    @Override
+    protected int getFontStyle(Crumb crumb) {
+      return Font.BOLD;
+    }
+  };
+  private final JLabel myHeaderLabel = new JLabel();
+
 
   private final AbstractAction myResetAllAction = new AbstractAction(UIBundle.message("settings.reset.all.action.name")) {
     @Override
@@ -255,19 +263,17 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
     loadingDecorator = new LoadingDecorator(editor, this, 10, true);
     loadingDecorator.setOverlayBackground(LoadingDecorator.OVERLAY_BACKGROUND);
-    myBanner = new Banner(editor.getResetAction());
+    myBanner = new ConfigurableEditorBanner(editor.getResetAction(), SettingsDialog.useNonModalSettingsWindow() ? myHeaderLabel : myBreadcrumbs);
     searchPanel.setBorder(JBUI.Borders.empty(7, 5, 6, 5));
     myBanner.setBorder(JBUI.Borders.empty(11, 6, 0, 10));
     search.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     searchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     JComponent left = new JPanel(new BorderLayout());
-    left.add(BorderLayout.NORTH, searchPanel);
     left.add(BorderLayout.CENTER, treeView);
-    left.setMinimumSize(new Dimension(96, 0));
-    left.setPreferredSize(new Dimension(256, 1024));
-    left.setMaximumSize(new Dimension(300, 32767));
+    left.setMinimumSize(JBUI.size(96, left.getMinimumSize().height));
+    left.setPreferredSize(JBUI.size(256, left.getPreferredSize().height));
+    left.setMaximumSize(JBUI.size(300, left.getMaximumSize().height));
     JComponent right = new JPanel(new BorderLayout());
-    right.add(BorderLayout.NORTH, withHistoryToolbar(myBanner));
     right.add(BorderLayout.CENTER, loadingDecorator.getComponent());
     mySplitter = new OnePixelSplitter(false, properties.getFloat(SPLITTER_PROPORTION, SPLITTER_PROPORTION_DEFAULT_VALUE));
     mySplitter.setHonorComponentsMinimumSize(true);
@@ -279,10 +285,17 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       mySplitter.getDivider().setOpaque(false);
     }
     if (SettingsDialog.useNonModalSettingsWindow()) {
+      RelativeFont.HUGE.install(myHeaderLabel);
+      RelativeFont.BOLD.install(myHeaderLabel);
+      myHeaderLabel.setAlignmentY(CENTER_ALIGNMENT);
+      myHeaderLabel.setBorder(JBUI.Borders.empty(8));
+      right.add(BorderLayout.NORTH, myBanner);
+      myBanner.setBorder(JBUI.Borders.empty(8, 5));
       mySplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
-      mySplitter.setHonorComponentsPreferredSize(true);
-      add(BorderLayout.CENTER, new JBScrollPane(mySplitter));
+      add(BorderLayout.CENTER, createWrapperPanel(this, mySplitter));
     } else {
+      right.add(BorderLayout.NORTH, withHistoryToolbar(myBanner));
+      left.add(BorderLayout.NORTH, searchPanel);
       editor.setPreferredSize(JBUI.size(800, 600));
       add(BorderLayout.CENTER, mySplitter);
     }
@@ -398,9 +411,6 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   }
 
   private JComponent withHistoryToolbar(JComponent component) {
-    if (SettingsDialog.useNonModalSettingsWindow())
-      return component;
-
     ActionGroup group = ActionUtil.getActionGroup("Back", "Forward");
     if (group == null) return component;
     JComponent toolbar = ActionUtil.createToolbarComponent(this, ActionPlaces.SETTINGS_HISTORY, group, true);
@@ -532,7 +542,16 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   private void updateController(@Nullable Configurable configurable) {
     Project project = treeView.findConfigurableProject(configurable);
     myBanner.setProjectText(project != null ? getProjectText(project) : null);
-    myBanner.setText(treeView.getPathNames(configurable));
+    Collection<@NlsContexts.ConfigurableName String> pathNames = treeView.getPathNames(configurable);
+    List<Crumb> crumbs = new ArrayList<>();
+    if (!pathNames.isEmpty()) {
+      List<Action> actions = CopySettingsPathAction.createSwingActions(() -> pathNames);
+      for (@NlsContexts.ConfigurableName String name : pathNames) {
+        crumbs.add(new Crumb.Impl(null, name, null, actions));
+      }
+    }
+    myBreadcrumbs.setCrumbs(crumbs);
+    myHeaderLabel.setText(configurable==null ? "" : configurable.getDisplayName());
 
     if (lastController != null) {
       lastController.setBanner(null);

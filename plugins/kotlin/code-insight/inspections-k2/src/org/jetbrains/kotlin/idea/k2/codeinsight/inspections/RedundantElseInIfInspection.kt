@@ -22,10 +22,10 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class RedundantElseInIfInspection : KotlinApplicableInspectionBase.Simple<KtIfExpression, Unit>() {
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtIfExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtIfExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtIfExpression>() {
+    ): KotlinModCommandQuickFix<KtIfExpression> = object : KotlinModCommandQuickFix<KtIfExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.redundant.else.fix.text")
@@ -58,7 +58,7 @@ internal class RedundantElseInIfInspection : KotlinApplicableInspectionBase.Simp
                 (added.getNextSiblingIgnoringWhitespace() ?: added.parent).endOffset,
             )
         }
-    })
+    }
 
     override fun getProblemDescription(
         element: KtIfExpression,

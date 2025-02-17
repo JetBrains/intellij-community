@@ -126,6 +126,7 @@
     "GotItTooltip": {
       "background": "Gray14",
       "borderColor": "Gray14",
+      "borderSimplifiedColor": "Gray10",
       "foreground": "Gray1",
       "stepForeground": "Gray7",
       "secondaryActionForeground": "Gray7",
@@ -239,8 +240,6 @@
         "keymapLabel": "Gray9"
       }
     },
-    
-    "DataSummary.Chart.background": "Blue4",
 
     "ManagedIdeBadgeBorder": "Gray11",
     "ManagedIdeBadgeBackground": "Gray13",

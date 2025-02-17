@@ -6214,6 +6214,22 @@ public class PyTypingTest extends PyTestCase {
                    """);
   }
 
+  // PY-79060
+  public void testParamSpecInsideConcatenateBoundToCallableParameterListInCustomGeneric() {
+    doTest("MyCallable[[int, n: int, s: str]]", """
+      from typing import Concatenate, Callable, Any
+      
+      class MyCallable[**P1]:    ...
+      
+      def f[**P2](fn: Callable[P2, Any]) -> MyCallable[Concatenate[int, P2]]: ...
+      
+      def expects_int_str(n: int, s: str) -> None: ...
+      
+      expr = f(expects_int_str)
+      """);
+  }
+
+
   // PY-77940
   public void testUnderscoredNameInPyiStub() {
     doMultiFileStubAwareTest("int", """

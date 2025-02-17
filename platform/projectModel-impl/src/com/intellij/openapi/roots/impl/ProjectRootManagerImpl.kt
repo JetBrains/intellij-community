@@ -262,7 +262,7 @@ open class ProjectRootManagerImpl(
       return null
     }
 
-    val projectJdkTable = ProjectJdkTable.getInstance()
+    val projectJdkTable = ProjectJdkTable.getInstance(project)
     if (projectSdkType == null) {
       return projectJdkTable.findJdk(projectSdkName!!)
     }

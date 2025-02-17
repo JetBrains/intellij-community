@@ -20,6 +20,11 @@ abstract class GrTypeUseAnnotationHighlightingTestBase : GrHighlightingTestBase(
   class Gr3TypeUseAnnotationHighlightingTest : GrTypeUseAnnotationHighlightingTestBase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
 
+    fun testAnnotationClass() = doTestHighlighting("""
+        @<error descr="'@ExampleAnno' not applicable to annotation type">ExampleAnno</error>
+        @interface InnerAnnotation {}
+    """.trimIndent())
+
     fun testNoHighlightingForTypeUse() = doTestHighlighting("""
     @<error descr="'@ExampleAnno' not applicable to type">ExampleAnno</error>
     class Main2 {
@@ -44,6 +49,11 @@ abstract class GrTypeUseAnnotationHighlightingTestBase : GrHighlightingTestBase(
 
   class Gr4TypeUseAnnotationHighlightingTest : GrTypeUseAnnotationHighlightingTestBase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = GroovyProjectDescriptors.GROOVY_4_0
+
+    fun testAnnotationClass() = doTestHighlighting("""
+        @ExampleAnno
+        @interface InnerAnnotation {}
+    """.trimIndent())
 
     fun testNoHighlightingForTypeUse() = doTestHighlighting("""
     @ExampleAnno

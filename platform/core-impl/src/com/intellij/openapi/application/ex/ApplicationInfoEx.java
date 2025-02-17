@@ -31,11 +31,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    */
   public abstract @NotNull String getSmallApplicationSvgIconUrl();
 
-  /** @deprecated please use {@link #getApplicationSvgIconUrl()} instead. */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public abstract @Nullable String getWelcomeScreenLogoUrl();
-
   public abstract String getCopyrightStart();
 
   /**
@@ -101,13 +96,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract boolean usesJetBrainsPluginRepository();
 
   public abstract @NotNull String getPluginsListUrl();
-
-  /**
-   * @deprecated is not used by the platform anymore
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public abstract String getChannelListUrl();
 
   public abstract @NotNull String getPluginDownloadUrl();
 

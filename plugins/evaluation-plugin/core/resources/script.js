@@ -51,7 +51,6 @@ function updateBackgrounds(e, elementClasses, bgClass) {
   addClassForElements(selected, bgClass, true)
 }
 
-document.getElementById("wrong-filters").onchange = (e) => updateBackgrounds(e,  ["raw-filter", "analyzed-filter"], "bg-filters-skipped")
 document.getElementById("model-skipped").onchange = (e) => updateBackgrounds(e, ["trigger-skipped", "filter-skipped"], "bg-model-skipped")
 
 function removeClassForElements(elementsClassName, classToAdd) {

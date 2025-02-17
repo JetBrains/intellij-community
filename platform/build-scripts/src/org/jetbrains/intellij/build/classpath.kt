@@ -160,10 +160,7 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>) {
 
       for (entry in entries) {
         packageIndexBuilder.addFile(entry.name)
-        zipCreator.uncompressedData(
-          nameString = entry.name,
-          data = entry.getByteBuffer(sourceZip, null),
-        )
+        zipCreator.uncompressedData(nameString = entry.name, data = entry.getByteBuffer(sourceZip, null))
       }
       packageIndexBuilder.writePackageIndex(zipCreator)
     }

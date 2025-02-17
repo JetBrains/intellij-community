@@ -165,4 +165,9 @@ public class PyFunctionTypeImpl implements PyFunctionType {
     }
     return this;
   }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    return visitor.visitPyFunctionType(this);
+  }
 }

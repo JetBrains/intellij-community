@@ -627,7 +627,7 @@
     <registryKey key="git.commit.gpg.signing.enable.embedded.pinentry" defaultValue="true"
                  restartRequired="true"
                  description="Enable embedded pinentry application for unlock GPG private key while Git perform commit signing. For remote dev (unix backend) and WSL."/>
-    <registryKey key="git.commit.gpg.signing.enable.embedded.pinentry.notification.proposal" defaultValue="false"
+    <registryKey key="git.commit.gpg.signing.enable.embedded.pinentry.notification.proposal" defaultValue="true"
                  description="GPG Agent configuration notification proposal (see git.commit.gpg.signing.enable.embedded.pinentry)"/>
     <registryKey key="git.read.branches.from.disk" defaultValue="false"
                  description="When enabled, read the '.git/refs' directory contents. When disabled, delegate to 'git branch' call."/>

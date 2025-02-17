@@ -152,6 +152,9 @@ final class JavaErrorFixProvider {
         error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
     fix(MODULE_DUPLICATE_OPENS_TARGET,
         error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
+    fix(IMPORT_MODULE_NOT_ALLOWED, error -> myFactory.createReplaceOnDemandImport(error.psi(), QuickFixBundle.message("replace.import.module.fix.text")));
+    fix(MODULE_DUPLICATE_IMPLEMENTATION,
+        error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.reference.fix.text")));
     multi(MODULE_NOT_ON_PATH, error -> {
       PsiJavaModuleReference ref = error.psi().getReference();
       if (ref != null) {
@@ -160,6 +163,10 @@ final class JavaErrorFixProvider {
         return registrar;
       }
       return List.of();
+    });
+    fix(MODULE_SERVICE_IMPLEMENTATION_TYPE, error -> {
+      PsiClassType type = JavaPsiFacade.getElementFactory(error.project()).createType(error.context().superClass());
+      return myFactory.createExtendsListFix(error.context().subClass(), type, true);
     });
   }
 
@@ -677,6 +684,10 @@ final class JavaErrorFixProvider {
   private void createTypeFixes() {
     fixes(TYPE_INCOMPATIBLE, (error, sink) -> 
       HighlightFixUtil.registerIncompatibleTypeFixes(sink, error.psi(), error.context().lType(), error.context().rType()));
+    fixes(SWITCH_EXPRESSION_INCOMPATIBLE_TYPE, (error, sink) ->
+      HighlightFixUtil.registerIncompatibleTypeFixes(sink,
+                                                     requireNonNull(PsiTreeUtil.getParentOfType(error.psi(), PsiSwitchExpression.class)),
+                                                     error.context().lType(), error.context().rType()));
     fixes(CALL_TYPE_INFERENCE_ERROR, (error, sink) -> {
       if (error.psi() instanceof PsiMethodCallExpression callExpression) {
         HighlightFixUtil.registerCallInferenceFixes(callExpression, sink);
@@ -947,7 +958,7 @@ final class JavaErrorFixProvider {
     fix(ANNOTATION_NOT_ALLOWED_STATIC, error -> new MoveAnnotationOnStaticMemberQualifyingTypeFix(error.psi()));
     fix(ANNOTATION_MISSING_ATTRIBUTE, error -> myFactory.createAddMissingRequiredAnnotationParametersFix(
       error.psi(), PsiMethod.EMPTY_ARRAY, error.context()));
-    multi(ANNOTATION_ATTRIBUTE_ANNOTATION_NAME_IS_MISSING, error -> myFactory.createAddAnnotationAttributeNameFixes(error.psi()));
+    multi(ANNOTATION_ATTRIBUTE_NAME_MISSING, error -> myFactory.createAddAnnotationAttributeNameFixes(error.psi()));
     multi(ANNOTATION_ATTRIBUTE_UNKNOWN_METHOD, error -> {
       PsiNameValuePair pair = error.psi();
       if (pair.getName() != null) return List.of();

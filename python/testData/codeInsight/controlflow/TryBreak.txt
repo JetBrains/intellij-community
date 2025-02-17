@@ -5,9 +5,9 @@
 4(5,8,12) READ ACCESS: bar
 5(6,8) element: PyTargetExpression: i
 6(7,8) WRITE ACCESS: i
-7(8,12) element: PyBreakStatement
+7(12) element: PyBreakStatement
 8(9) element: PyExceptPart
-9(10) element: PyRaiseStatement
+9(10) raise: PyRaiseStatement
 10(11) READ ACCESS: Exception
 11(13) element: PyCallExpression: Exception
 12(13) element: PyReturnStatement

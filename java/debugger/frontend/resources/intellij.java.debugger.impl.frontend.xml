@@ -1,0 +1,11 @@
+<idea-plugin package="com.intellij.java.debugger.impl.frontend">
+  <dependencies>
+    <plugin id="com.intellij.platform.experimental.frontend"/>
+    <module name="intellij.platform.debugger.impl.frontend"/>
+  </dependencies>
+  <actions resource-bundle="messages.JavaDebuggerImplFrontendBundle">
+    <action id="Debugger.ViewText.Frontend" class="com.intellij.java.debugger.impl.frontend.actions.FrontendViewTextAction">
+      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Bottom.Section.Frontend" anchor="last"/>
+    </action>
+  </actions>
+</idea-plugin>

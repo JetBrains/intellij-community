@@ -3,7 +3,6 @@
 
 package org.jetbrains.bazel.jvm.jps
 
-import org.jetbrains.bazel.jvm.jps.impl.javaModuleTypes
 import org.jetbrains.jps.builders.AdditionalRootsProviderService
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider
@@ -39,6 +38,9 @@ internal class BazelJpsServiceManager : JpsServiceManager() {
     // exclude CleanupTempDirectoryExtension
     extensions.put(JavaBuilderExtension::class.java, listOf(
       object : JavaBuilderExtension() {
+        @Suppress("RemoveRedundantQualifierName")
+        private val javaModuleTypes = java.util.Set.of(JpsJavaModuleType.INSTANCE)
+
         override fun shouldHonorFileEncodingForCompilation(file: File): Boolean = false
 
         override fun getCompilableModuleTypes() = javaModuleTypes
@@ -57,7 +59,7 @@ internal class BazelJpsServiceManager : JpsServiceManager() {
 
     // confine costly service initialization to single thread for defined startup profile
     return synchronized(services) {
-      return services.computeIfAbsent(serviceClass) {
+      services.computeIfAbsent(serviceClass) {
         doComputeService(it) as T
       } as T
     }

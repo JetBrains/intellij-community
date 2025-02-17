@@ -95,7 +95,8 @@ public final class AsyncStacksUtils {
     EvaluationContextImpl evaluationContext = evalContext.withAutoLoadClasses(false);
 
     DebugProcessImpl process = evaluationContext.getDebugProcess();
-    Pair<ClassType, Method> methodPair = process.getUserData(CAPTURE_STORAGE_METHOD);
+    VirtualMachineProxyImpl virtualMachineProxy = evalContext.getVirtualMachineProxy();
+    Pair<ClassType, Method> methodPair = virtualMachineProxy.getUserData(CAPTURE_STORAGE_METHOD);
 
     if (methodPair == null) {
       try {
@@ -112,14 +113,13 @@ public final class AsyncStacksUtils {
         methodPair = NO_CAPTURE_AGENT;
         LOG.debug("Error loading debug agent", e);
       }
-      putProcessUserData(CAPTURE_STORAGE_METHOD, methodPair, process);
+      virtualMachineProxy.putUserData(CAPTURE_STORAGE_METHOD, methodPair);
     }
 
     if (methodPair == NO_CAPTURE_AGENT) {
       return null;
     }
 
-    VirtualMachineProxyImpl virtualMachineProxy = evalContext.getVirtualMachineProxy();
     List<Value> args = Collections.singletonList(virtualMachineProxy.mirrorOf(getMaxStackLength()));
     Pair<ClassType, Method> finalMethodPair = methodPair;
     String value = DebuggerUtils.getInstance().processCollectibleValue(

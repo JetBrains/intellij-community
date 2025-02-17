@@ -945,7 +945,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     if (step instanceof FilterableListPopupStep<?> o) {
       o.updateFilter(mySpeedSearch.getFilter());
     }
+    var before = myListModel.getSize();
     myListModel.refilter();
+    var after = myListModel.getSize();
+    var fusActivity = ActionGroupPopupActivity.getCurrentActivity(this);
+    if (fusActivity != null) {
+      fusActivity.filtered(StringUtil.length(mySpeedSearch.getFilter()), before, after);
+    }
     boolean nowEmpty = myListModel.getSize() == 0;
     if (myListModel.getSize() > 0) {
       if (!(shouldUseStatistics() && autoSelectUsingStatistics())) {

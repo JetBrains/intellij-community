@@ -11,6 +11,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext
 import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
@@ -240,6 +241,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     return getOrCreateWrappee().readModel(file, ourToken)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use suspend method")
   fun executeGoal(
     requests: Collection<MavenGoalExecutionRequest>,

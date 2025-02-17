@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -124,7 +125,7 @@ class LibraryEffectiveKindProvider(private val project: Project) {
 
                     val fileType = when {
                         nameSequence.endsWith(".class") -> classFileType
-                        else -> fileOrDir.fileType
+                        else -> FileTypeManager.getInstance().getFileTypeByFileName(nameSequence)
                     }
                     when {
                         fileType == classFileType ->

@@ -4,6 +4,20 @@
 c:com.intellij.execution.wsl.WSLDistribution
 - com.intellij.execution.wsl.AbstractWslDistribution
 - *:getUNCRootPath():java.nio.file.Path
+*:com.intellij.frontend.HostIdeInfoService
+- a:getHostInfo():com.intellij.frontend.HostInfo
+*f:com.intellij.frontend.HostInfo
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():java.lang.String
+- f:copy(java.lang.String,java.lang.String,java.lang.String):com.intellij.frontend.HostInfo
+- bs:copy$default(com.intellij.frontend.HostInfo,java.lang.String,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.frontend.HostInfo
+- equals(java.lang.Object):Z
+- f:getOsName():java.lang.String
+- f:getOsVersion():java.lang.String
+- f:getProductCode():java.lang.String
+- hashCode():I
 *:com.intellij.ide.CommandLineInspectionProjectAsyncConfigurator
 - com.intellij.ide.CommandLineInspectionProjectConfigurator
 - configureProject(com.intellij.openapi.project.Project,com.intellij.ide.CommandLineInspectionProjectConfigurator$ConfiguratorContext):V

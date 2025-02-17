@@ -87,26 +87,13 @@ public abstract class Task implements TaskInfo, Progressive {
    */
   public void onSuccess() { }
 
-  /** @deprecated please override {@link #onThrowable(Throwable)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @SuppressWarnings({"DeprecatedIsStillUsed", "RedundantSuppression"})
-  public void onError(@NotNull Exception error) {
-    LOG.error(error);
-  }
-
   /**
    * This callback will be invoked on AWT dispatch thread.
    * <p>
    * Callback executed when {@link #run(ProgressIndicator)} throws an exception (except {@link ProcessCanceledException}).
    */
   public void onThrowable(@NotNull Throwable error) {
-    if (error instanceof Exception) {
-      onError((Exception)error);
-    }
-    else {
-      LOG.error(error);
-    }
+    LOG.error(error);
   }
 
   /**

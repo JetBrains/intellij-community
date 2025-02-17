@@ -46,7 +46,7 @@ abstract class ScriptConfigurationsSource<T : BaseScriptModel>(open val project:
 
     protected abstract suspend fun updateConfigurations(scripts: Iterable<T>)
 
-    protected abstract suspend fun updateModules(storage: MutableEntityStorage? = null)
+    abstract suspend fun updateModules(storage: MutableEntityStorage? = null)
 
     suspend fun updateDependenciesAndCreateModules(scripts: Iterable<T>, storage: MutableEntityStorage? = null) {
         updateConfigurations(scripts)

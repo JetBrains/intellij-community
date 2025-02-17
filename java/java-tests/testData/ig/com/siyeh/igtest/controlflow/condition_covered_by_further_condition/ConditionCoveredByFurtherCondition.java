@@ -163,11 +163,11 @@ public class ConditionCoveredByFurtherCondition {
     }
 
     void testIncompleteLambda(Object x) {
-        if (x != null && <error descr="Lambda expression not expected here">() -> x</error><EOLError descr="')' expected"></EOLError>
+        if (x != null && <error descr="Unexpected lambda expression">() -> x</error><EOLError descr="')' expected"></EOLError>
     }
 
     void testIncompleteLambda2(Object x) {
-        if (x != null && <error descr="Lambda expression not expected here">() -> x instanceof</error><error descr="')' expected"><error descr="Type expected"> </error></error>
+        if (x != null && <error descr="Unexpected lambda expression">() -> x instanceof</error><error descr="')' expected"><error descr="Type expected"> </error></error>
     }
 
     void testBooleanChain(boolean b1, boolean b2) {

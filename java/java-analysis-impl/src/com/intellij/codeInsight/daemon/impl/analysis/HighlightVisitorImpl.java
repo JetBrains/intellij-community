@@ -310,7 +310,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
     checkSwitchBlock(expression);
-    if (!hasErrorResults()) HighlightUtil.checkSwitchExpressionReturnTypeCompatible(expression, myErrorSink);
     if (!hasErrorResults()) super.visitSwitchExpression(expression);
   }
 
@@ -365,14 +364,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (result != null) {
         add(HighlightUtil.checkReference(ref, result));
       }
-    }
-  }
-
-  @Override
-  public void visitProvidesStatement(@NotNull PsiProvidesStatement statement) {
-    super.visitProvidesStatement(statement);
-    if (JavaFeature.MODULES.isSufficient(myLanguageLevel)) {
-      if (!hasErrorResults()) ModuleHighlightUtil.checkServiceImplementations(statement, myFile, myErrorSink);
     }
   }
 }

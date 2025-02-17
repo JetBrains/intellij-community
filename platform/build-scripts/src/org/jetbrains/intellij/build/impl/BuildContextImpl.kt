@@ -316,8 +316,6 @@ class BuildContextImpl internal constructor(
     return copy
   }
 
-  override suspend fun includeBreakGenLibraries(): Boolean = getBundledPluginModules().contains(JavaPluginLayout.MAIN_MODULE_NAME)
-
   override fun patchInspectScript(path: Path) {
     //todo use placeholder in inspect.sh/inspect.bat file instead
     Files.writeString(path, Files.readString(path).replace(" inspect ", " ${productProperties.inspectCommandName} "))

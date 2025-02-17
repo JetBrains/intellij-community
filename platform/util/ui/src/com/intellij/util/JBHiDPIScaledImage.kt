@@ -43,6 +43,7 @@ open class JBHiDPIScaledImage : BufferedImage {
     this.scale = scale
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use IconManager instead.")
   constructor(image: Image, width: Int, height: Int, type: Int) : this(image = image,
                                                                        width = width.toDouble(),

@@ -21,7 +21,6 @@
 
     <!-- Group ======================= -->
 
-    <!-- skip if 'id' not specified -->
     <<warning descr="Extract text/description for i18n">group</warning> description="Not localized"
            text="Not Localized"/>
 

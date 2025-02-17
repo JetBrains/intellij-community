@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +61,8 @@ import static org.junit.Assert.fail;
  * these markers are not checked.
  */
 public class ExpectedHighlightingData {
-  static final String EXPECTED_DUPLICATION_MESSAGE =
+  @ApiStatus.Internal
+  public static final String EXPECTED_DUPLICATION_MESSAGE =
     "Expected duplication problem. Please remove `ExpectedHighlightingData.expectedDuplicatedHighlighting()` surrounding call, if there is no such problem any more";
 
   private static final String ERROR_MARKER = CodeInsightTestFixture.ERROR_MARKER;

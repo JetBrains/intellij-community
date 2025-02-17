@@ -425,6 +425,7 @@
 - sf:KIND_FRAMEWORK:java.lang.String
 - sf:PKG_MANAGER_NODE_PACKAGES:java.lang.String
 - sf:PKG_MANAGER_RUBY_GEMS:java.lang.String
+- sf:PKG_MANAGER_SYMFONY_BUNDLES:java.lang.String
 - sf:VALUE_NONE:java.lang.String
 - sf:WEB_SYMBOLS_CONTEXT_EP:com.intellij.openapi.util.KeyedExtensionCollector
 - sf:WEB_SYMBOLS_CONTEXT_FILE:java.lang.String

@@ -11,7 +11,7 @@
 10(11,18) READ ACCESS: renderer
 11(12) element: PyExceptPart
 12(13) READ ACCESS: KeyError
-13(14) element: PyRaiseStatement
+13(14) raise: PyRaiseStatement
 14(18) READ ACCESS: Error
 15(16) element: PyStatementList
 16(17) element: PyReturnStatement

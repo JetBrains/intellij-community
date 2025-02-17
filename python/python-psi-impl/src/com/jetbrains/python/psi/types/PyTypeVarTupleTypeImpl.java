@@ -82,4 +82,9 @@ public final class PyTypeVarTupleTypeImpl implements PyTypeVarTupleType {
     String scopeName = myScopeOwner != null ? Objects.requireNonNullElse(myScopeOwner.getQualifiedName(), myScopeOwner.getName()) : null;
     return "PyTypeVarTupleType: " + (scopeName != null ? scopeName + ":" : "") + myName;
   }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    return visitor.visitPyTypeVarTupleType(this);
+  }
 }

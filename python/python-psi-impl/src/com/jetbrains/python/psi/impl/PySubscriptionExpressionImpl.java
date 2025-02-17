@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
@@ -26,10 +27,12 @@ import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class PySubscriptionExpressionImpl extends PyElementImpl implements PySubscriptionExpression {
@@ -47,17 +50,18 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     final PyExpression indexExpression = getIndexExpression();
     final PyType type = indexExpression != null ? context.getType(getOperand()) : null;
     if (type instanceof PyTupleType tupleType) {
-      return Optional
-        .ofNullable(PyEvaluator.evaluate(indexExpression, Integer.class))
-        .map(index -> !tupleType.isHomogeneous() && index < 0 ? tupleType.getElementCount() + index : index)
-        .map(tupleType::getElementType)
-        .orElse(null);
+      List<Integer> indexPossibleValues = getIndexExpressionPossibleValues(indexExpression, context, Integer.class);
+      List<@Nullable PyType> possibleTypes = ContainerUtil.map(indexPossibleValues, index -> {
+        if (!tupleType.isHomogeneous() && index < 0) {
+          index += tupleType.getElementCount();
+        }
+        return tupleType.getElementType(index);
+      });
+      return PyUnionType.union(possibleTypes);
     }
     if (type instanceof PyTypedDictType typedDictType) {
-      return Optional
-        .ofNullable(PyEvaluator.evaluate(indexExpression, String.class))
-        .map(typedDictType::getElementType)
-        .orElse(null);
+      List<String> indexPossibleValues = getIndexExpressionPossibleValues(indexExpression, context, String.class);
+      return PyUnionType.union(ContainerUtil.map(indexPossibleValues, typedDictType::getElementType));
     }
     if (type instanceof PyClassType) {
       PyType parameterizedType = Ref.deref(PyTypingTypeProvider.getType(this, context));
@@ -66,6 +70,35 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
       }
     }
     return PyCallExpressionHelper.getCallType(this, context, key);
+  }
+
+  @ApiStatus.Internal
+  public static <T> @NotNull List<T> getIndexExpressionPossibleValues(@Nullable PyExpression indexExpression,
+                                                                      @NotNull TypeEvalContext context,
+                                                                      @NotNull Class<T> indexType) {
+    if (indexExpression == null) {
+      return List.of();
+    }
+    T indexExprValue = PyEvaluator.evaluate(indexExpression, indexType);
+    if (indexExprValue != null) {
+      return List.of(indexExprValue);
+    }
+    PyType type = context.getType(indexExpression);
+    if (type == null) {
+      return List.of();
+    }
+    List<T> result = new ArrayList<>();
+    for (PyType subType : PyTypeUtil.toStream(type)) {
+      if (!(subType instanceof PyLiteralType literalType)) {
+        return List.of();
+      }
+      T val = PyEvaluator.evaluateNoResolve(literalType.getExpression(), indexType);
+      if (val == null) {
+        return List.of();
+      }
+      result.add(val);
+    }
+    return result;
   }
 
   @Override

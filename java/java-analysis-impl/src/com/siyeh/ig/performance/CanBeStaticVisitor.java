@@ -17,9 +17,11 @@ package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-class CanBeStaticVisitor extends JavaRecursiveElementWalkingVisitor {
+@ApiStatus.Internal
+public final class CanBeStaticVisitor extends JavaRecursiveElementWalkingVisitor {
   private boolean canBeStatic = true;
 
   @Override

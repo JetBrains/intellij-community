@@ -19,6 +19,11 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/kernel/shared:kernel",
+    "//platform/core-ui",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
   ],
   runtime_deps = [":java-debugger-impl-shared_resources"]
 )

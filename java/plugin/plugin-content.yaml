@@ -128,6 +128,12 @@
 - name: lib/maven-resolver-connector-basic.jar
 - name: lib/maven-resolver-transport-file.jar
 - name: lib/maven-resolver-transport-http.jar
+- name: lib/modules/intellij.java.debugger.impl.backend.jar
+  contentModules:
+  - name: intellij.java.debugger.impl.backend
+- name: lib/modules/intellij.java.debugger.impl.frontend.jar
+  contentModules:
+  - name: intellij.java.debugger.impl.frontend
 - name: lib/modules/intellij.java.featuresTrainer.jar
   contentModules:
   - name: intellij.java.featuresTrainer

@@ -15,9 +15,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 @ApiStatus.Internal
-public final class InjectedLanguageFragmentSyntaxUtil {
+final class InjectedLanguageFragmentSyntaxUtil {
   @Contract(pure = true)
-  public static List<HighlightInfo> addSyntaxInjectedFragmentInfo(@NotNull EditorColorsScheme scheme,
+  static List<HighlightInfo> addSyntaxInjectedFragmentInfo(@NotNull EditorColorsScheme scheme,
                                                            @NotNull TextRange hostRange,
                                                            TextAttributesKey @NotNull [] keys,
                                                            @Nullable Object toolId) {

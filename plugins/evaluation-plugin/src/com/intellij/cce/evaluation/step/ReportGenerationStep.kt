@@ -124,8 +124,13 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     comparisonStorage: CompareSessionsStorage,
     workspaces: List<EvaluationWorkspace>
   ): List<ReportInfo> {
+    val sessions = sessionFiles.filter { it.value.size == sessionStorages.size }
+      .flatMap { it.value }
+      .map { sessionStorages[evaluationTitles.indexOf(it.evaluationType)].getSessions(it.path) }
+      .flatMap { it.sessions }
+
     val title2evaluator = evaluationTitles.mapIndexed { index, title ->
-      title to MetricsEvaluator.withMetrics(title, feature.getMetrics())
+      title to MetricsEvaluator.withMetrics(title, feature.getMetrics(sessions))
     }.toMap()
 
     val filteredSessionFiles = sessionFiles.filter { it.value.size == sessionStorages.size }

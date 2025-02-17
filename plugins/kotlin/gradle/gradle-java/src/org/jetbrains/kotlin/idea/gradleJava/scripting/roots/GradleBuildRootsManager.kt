@@ -42,6 +42,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.FileSystems
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -294,7 +295,7 @@ class GradleBuildRootsManager(val project: Project, private val coroutineScope: 
         }
     }
 
-    fun loadLinkedRoot(settings: GradleProjectSettings, version: String = getGradleVersion(project, settings)): GradleBuildRoot {
+    fun loadLinkedRoot(settings: GradleProjectSettings, version: String): GradleBuildRoot {
         if (!enabled) {
             return Legacy(settings)
         }
@@ -312,7 +313,7 @@ class GradleBuildRootsManager(val project: Project, private val coroutineScope: 
         return tryCreateImportedRoot(settings.externalProjectPath) {
             GradleBuildRootDataSerializer.getInstance().read(it)?.let { data ->
                 val gradleHome = data.gradleHome
-                if (gradleHome.isNotBlank() && GradleInstallationManager.getGradleVersion(gradleHome) != version) return@let null
+                if (gradleHome.isNotBlank() && GradleInstallationManager.getGradleVersion(Path.of(gradleHome)) != version) return@let null
 
                 addFromSettings(data, settings)
             }

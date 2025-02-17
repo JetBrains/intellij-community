@@ -58,6 +58,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import static com.intellij.java.debugger.impl.shared.engine.XValueTypeKt.JAVA_VALUE_KIND;
+
 public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XValueTextProvider,
                                                       PinToTopParentValue, PinToTopMemberValue {
   private static final Logger LOG = Logger.getInstance(JavaValue.class);
@@ -505,6 +507,20 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
             .executeSynchronously();
         }
       }
+    });
+  }
+
+  @Override
+  public @Nullable CompletableFuture<XValueDescriptor> getXValueDescriptorAsync() {
+    return myValueDescriptor.getInitFuture().thenApply(ignored -> {
+      XValueType type;
+      if (myValueDescriptor.isString()) {
+        type = XValueType.StringType.INSTANCE;
+      }
+      else {
+        type = XValueType.Unknown.INSTANCE;
+      }
+      return new XValueDescriptor(JAVA_VALUE_KIND, type);
     });
   }
 

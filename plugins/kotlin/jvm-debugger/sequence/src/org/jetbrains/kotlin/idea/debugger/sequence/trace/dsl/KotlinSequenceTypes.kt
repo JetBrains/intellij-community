@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
-import com.intellij.debugger.streams.trace.dsl.Types
-import com.intellij.debugger.streams.trace.impl.handler.type.*
+import com.intellij.debugger.streams.core.trace.dsl.Types
+import com.intellij.debugger.streams.core.trace.impl.handler.type.*
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 
 object KotlinSequenceTypes : Types {
@@ -44,18 +44,22 @@ object KotlinSequenceTypes : Types {
                               { "kotlin.arrayOfNulls<${elementType.genericTypeName}>($it)" })
     }
 
+    private fun mapEntryType(keys: String, values: String) : String = "kotlin.collections.Map.Entry<$keys, $values>"
+
     override fun map(keyType: GenericType, valueType: GenericType): MapType =
         MapTypeImpl(
             keyType, valueType,
             { keys, values -> "kotlin.collections.MutableMap<$keys, $values>" },
-            "kotlin.collections.mutableMapOf()"
+            "kotlin.collections.mutableMapOf()",
+            ::mapEntryType
         )
 
     override fun linkedMap(keyType: GenericType, valueType: GenericType): MapType =
         MapTypeImpl(
             keyType, valueType,
             { keys, values -> "kotlin.collections.MutableMap<$keys, $values>" },
-            "kotlin.collections.linkedMapOf()"
+            "kotlin.collections.linkedMapOf()",
+            ::mapEntryType
         )
 
     override fun nullable(typeSelector: Types.() -> GenericType): GenericType {
@@ -66,7 +70,8 @@ object KotlinSequenceTypes : Types {
             is ListType -> ListTypeImpl(type.elementType, { "kotlin.collections.MutableList<$it>?" }, type.defaultValue)
             is MapType -> MapTypeImpl(
                 type.keyType, type.valueType, { keys, values -> "kotlin.collections.MutableMap<$keys, $values>?" },
-                type.defaultValue
+                type.defaultValue,
+                ::mapEntryType
             )
             else -> ClassTypeImpl(type.genericTypeName + '?', type.defaultValue)
         }

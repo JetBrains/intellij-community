@@ -75,4 +75,12 @@ public final class PySelfType implements PyTypeParameterType {
   public void assertValid(String message) {
 
   }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
+      return visitorExt.visitPySelfType(this);
+    }
+    return visitor.visitPyType(this);
+  }
 }

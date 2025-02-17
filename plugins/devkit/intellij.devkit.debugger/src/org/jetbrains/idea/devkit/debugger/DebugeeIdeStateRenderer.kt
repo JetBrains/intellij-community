@@ -283,7 +283,7 @@ private suspend fun selectLockFrame(
   var targetXFrame: XStackFrame = javaFrames.getOrNull(targetXFrameIndex + 1) ?: return
   if (!framesList.model.contains(targetXFrame)) {
     val collapsedFrames = framesList.model.items.filterIsInstance<XFramesView.HiddenStackFramesItem>()
-    targetXFrame = collapsedFrames.firstOrNull { it.hiddenFrames.contains(targetXFrame) } ?: return
+    targetXFrame = collapsedFrames.firstOrNull { it.getHiddenFrames().contains(targetXFrame) } ?: return
     if (!framesList.model.contains(targetXFrame)) return
   }
   withContext(Dispatchers.EDT) {
@@ -297,7 +297,7 @@ private fun List<XStackFrame>.flattenJavaFrames(toIndex: Int = size) =
   subList(0, toIndex).flatMap { frame ->
     when (frame) {
       is JavaStackFrame -> listOf(frame)
-      is XFramesView.HiddenStackFramesItem -> frame.hiddenFrames.filterIsInstance<JavaStackFrame>()
+      is XFramesView.HiddenStackFramesItem -> frame.getHiddenFrames().filterIsInstance<JavaStackFrame>()
       else -> emptyList()
     }
   }

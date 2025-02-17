@@ -11,10 +11,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.EventDispatcher
 import com.intellij.collaboration.ui.SimpleEventListener
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Please migrate to coroutines")
 abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
   : ClearableLazyValue<CompletableFuture<T>>() {

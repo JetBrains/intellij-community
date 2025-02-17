@@ -1,6 +1,7 @@
 package com.intellij.settingsSync.core.config
 
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ExitActionType
 import com.intellij.settingsSync.core.SettingsSyncBundle.message
 import com.intellij.settingsSync.core.SettingsSyncLocalStateHolder
 import com.intellij.settingsSync.core.SettingsSyncState
@@ -68,7 +69,7 @@ internal class EnableSettingsSyncDialog(
   private fun applyAndClose(result: Result) {
     applyFields()
     dialogResult = result
-    close(0, true)
+    close(0, true, ExitActionType.OK)
   }
 
   fun getResult(): Result? = dialogResult

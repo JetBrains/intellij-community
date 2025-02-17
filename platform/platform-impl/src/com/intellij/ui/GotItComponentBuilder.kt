@@ -359,7 +359,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
       .setHideOnClickOutside(false)
       .setBlockClicksThroughBalloon(true)
       .setRequestFocus(requestFocus)
-      .setBorderColor(JBUI.CurrentTheme.GotItTooltip.borderColor(useContrastColors))
+      .setBorderColor(getBorderColor())
       .setCornerToPointerDistance(getArrowShift())
       .setFillColor(JBUI.CurrentTheme.GotItTooltip.background(useContrastColors))
       .setPointerSize(JBUI.size(16, 8))
@@ -408,6 +408,15 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     }
 
     return balloon
+  }
+
+  private fun getBorderColor(): Color {
+    val borderColor = JBUI.CurrentTheme.GotItTooltip.borderColor(useContrastColors)
+    if (useContrastColors) {
+      return borderColor
+    }
+    val simpleBorderColor = JBColor.namedColor("GotItTooltip.borderSimplifiedColor", borderColor)
+    return JBColor.lazy { if (DrawUtil.isSimplifiedUI()) simpleBorderColor else borderColor }
   }
 
   private fun createContent(buttonConsumer: (JButton) -> Unit,
@@ -669,11 +678,13 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   }
 }
 
-private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
-                                     maxWidth: Int,
-                                     useContrastColors: Boolean,
-                                     allowWidthExtending: Boolean,
-                                     iconsMap: Map<Int, Icon>) : JEditorPane() {
+private class LimitedWidthEditorPane(
+  htmlBuilder: HtmlBuilder,
+  maxWidth: Int,
+  useContrastColors: Boolean,
+  allowWidthExtending: Boolean,
+  iconsMap: Map<Int, Icon>,
+) : JEditorPane() {
   init {
     foreground = JBUI.CurrentTheme.GotItTooltip.foreground(useContrastColors)
     background = JBUI.CurrentTheme.GotItTooltip.background(useContrastColors)

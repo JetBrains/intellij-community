@@ -24,12 +24,18 @@ public final class ThrowableInfoUtil {
            : new RuntimeException(message, originalThrowable);
   }
 
-  public static List<ErrorInfo.Fix> getAllFixes(@NotNull ErrorInfo error) {
+  public static List<ErrorInfo.Fix> getAllFixes(@NotNull ErrorInfo error, boolean withCustomProviders) {
+    if (!withCustomProviders) return error.getFixes();
+
     List<ErrorInfo.Fix> fixes = new ArrayList<>(error.getFixes());
     for (RuntimeErrorActionProvider provider : RuntimeErrorActionProvider.getProviders()) {
       ErrorInfo.Fix fix = provider.createAction(error);
       if (fix != null) fixes.add(fix);
     }
     return fixes;
+  }
+
+  public static List<ErrorInfo.Fix> getAllFixes(@NotNull ErrorInfo error) {
+    return getAllFixes(error, true);
   }
 }

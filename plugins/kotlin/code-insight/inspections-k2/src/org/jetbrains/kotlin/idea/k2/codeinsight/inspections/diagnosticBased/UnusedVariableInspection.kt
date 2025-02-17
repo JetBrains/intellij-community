@@ -61,13 +61,13 @@ internal class UnusedVariableInspection :
             .asUnit
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtNamedDeclaration,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtNamedDeclaration>> {
+    ): KotlinModCommandQuickFix<KtNamedDeclaration> {
         val smartPointer = element.createSmartPointer()
 
-        return arrayOf(object : KotlinModCommandQuickFix<KtNamedDeclaration>() {
+        return object : KotlinModCommandQuickFix<KtNamedDeclaration>() {
 
             override fun getFamilyName(): String =
                 KotlinBundle.message("remove.variable")
@@ -88,6 +88,6 @@ internal class UnusedVariableInspection :
                     removeProperty(element)
                 }
             }
-        })
+        }
     }
 }

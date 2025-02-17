@@ -164,13 +164,6 @@ a:com.intellij.execution.testframework.sm.runner.OutputEventSplitter
 - f:onTextAvailable(java.lang.String,com.intellij.smRunner.OutputType):V
 - f:process(java.lang.String,com.intellij.openapi.util.Key):V
 f:com.intellij.execution.testframework.sm.runner.OutputEventSplitter$Companion
-a:com.intellij.execution.testframework.sm.runner.OutputLineSplitter
-- sf:SM_MESSAGE_PREFIX:I
-- <init>(Z):V
-- flush():V
-- p:isInTeamcityMessage():Z
-- pa:onLineAvailable(java.lang.String,com.intellij.openapi.util.Key,Z):V
-- process(java.lang.String,com.intellij.openapi.util.Key):V
 c:com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter
 - com.intellij.execution.testframework.sm.runner.ProcessOutputConsumer
 - <init>(java.lang.String,com.intellij.execution.testframework.TestConsoleProperties):V
@@ -184,7 +177,6 @@ c:com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConver
 - onStartTesting():V
 - process(java.lang.String,com.intellij.openapi.util.Key):V
 - p:processConsistentText(java.lang.String,com.intellij.openapi.util.Key):V
-- p:processConsistentText(java.lang.String,com.intellij.openapi.util.Key,Z):V
 - p:processServiceMessage(jetbrains.buildServer.messages.serviceMessages.ServiceMessage,jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor):V
 - p:processServiceMessages(java.lang.String,com.intellij.openapi.util.Key,jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor):Z
 - setProcessor(com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor):V

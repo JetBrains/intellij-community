@@ -27,6 +27,8 @@ import org.junit.runner.RunWith;
 import java.io.File;
 import java.io.IOException;
 
+import static com.intellij.xml.XmlElementTypeServiceHelper.registerXmlElementTypeServices;
+
 @RunWith(JUnit38AssumeSupportRunner.class)
 public class XmlParsingTest extends ParsingTestCase {
   public XmlParsingTest() {
@@ -49,6 +51,7 @@ public class XmlParsingTest extends ParsingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    registerXmlElementTypeServices(getApplication(), getTestRootDisposable());
     addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, new XmlASTFactory());
     registerExtensionPoint(StartTagEndTokenProvider.EP_NAME, StartTagEndTokenProvider.class);
   }
@@ -146,7 +149,7 @@ public class XmlParsingTest extends ParsingTestCase {
                 <!
                 ]>
                 <root>
-
+                
                 </root>""");
   }
 
@@ -204,7 +207,7 @@ public class XmlParsingTest extends ParsingTestCase {
     });
 
     perfTest.setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
-      .startAsSubtest(this.getClass().getSimpleName() + " "  + perfTest.getLaunchName());
+      .startAsSubtest(this.getClass().getSimpleName() + " " + perfTest.getLaunchName());
 
     LeafElement firstLeaf = TreeUtil.findFirstLeaf(file.getNode());
     int count = 0;

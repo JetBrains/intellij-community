@@ -19,10 +19,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * used by Wolf to find any diagnostic in the file, and stop
  */
 @ApiStatus.Internal
-public final class NasueousGeneralHighlightingPass extends GeneralHighlightingPass {
+final class NasueousGeneralHighlightingPass extends GeneralHighlightingPass {
   private final @NotNull AtomicReference<? super HighlightInfo> myError;
 
-  public NasueousGeneralHighlightingPass(@NotNull PsiFile psiFile,
+  NasueousGeneralHighlightingPass(@NotNull PsiFile psiFile,
                                   @NotNull Document document,
                                   @NotNull ProperTextRange visibleRange,
                                   @NotNull AtomicReference<? super HighlightInfo> error) {

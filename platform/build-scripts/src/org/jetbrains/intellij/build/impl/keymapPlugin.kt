@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.intellij.build.impl
 
@@ -29,7 +29,7 @@ internal fun buildKeymapPlugin(keymaps: Array<String>, buildNumber: String, targ
     channel = WritableByteChannelBackedByByteBuffer(buffer),
     zipIndexWriter = ZipIndexWriter(indexWriter = packageIndexBuilder.indexWriter),
   ).use { zipCreator ->
-    zipCreator.uncompressedData("META-INF/plugin.xml", ByteBuffer.wrap(pluginXmlData))
+    zipCreator.uncompressedData("META-INF/plugin.xml", pluginXmlData)
     packageIndexBuilder.addFile("META-INF/plugin.xml")
 
     packageIndexBuilder.addFile("META-INF/pluginIcon.svg")

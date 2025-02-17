@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.ex.EntryPointsManager;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.uast.UastMetaLanguage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UParameter;
@@ -21,12 +22,16 @@ import java.util.List;
 public abstract class RefJavaManager implements RefManagerExtension<RefJavaManager> {
   public static final @NonNls String CLASS = "class";
   public static final @NonNls String METHOD = "method";
-  static final @NonNls String IMPLICIT_CONSTRUCTOR = "implicit.constructor";
+  @ApiStatus.Internal
+  public static final @NonNls String IMPLICIT_CONSTRUCTOR = "implicit.constructor";
   public static final @NonNls String FIELD = "field";
-  static final @NonNls String PARAMETER = "parameter";
-  static final @NonNls String JAVA_MODULE = "java.module";
+  @ApiStatus.Internal
+  public static final @NonNls String PARAMETER = "parameter";
+  @ApiStatus.Internal
+  public static final @NonNls String JAVA_MODULE = "java.module";
   public static final @NonNls String PACKAGE = "package";
-  static final String FUNCTIONAL_EXPRESSION = "functional.expression";
+  @ApiStatus.Internal
+  public static final String FUNCTIONAL_EXPRESSION = "functional.expression";
   public static final Key<RefJavaManager> MANAGER = Key.create("RefJavaManager");
   private final List<Language> myLanguages;
 

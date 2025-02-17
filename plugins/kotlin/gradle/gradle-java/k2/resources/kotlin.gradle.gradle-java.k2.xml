@@ -5,6 +5,11 @@
     <plugin id="com.intellij.modules.kotlin.k2"/>
   </dependencies>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <editorNotificationProvider
+            implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.K2IndexScriptDependenciesSourcesNotificationProvider"/>
+  </extensions>
+
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsSource"/>
   </extensions>

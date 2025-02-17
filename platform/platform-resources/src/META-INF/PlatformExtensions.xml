@@ -278,6 +278,7 @@
                         client="local"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.JBPopupFactory"
                         serviceImplementation="com.intellij.ui.popup.PopupFactoryImpl"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ui.popup.ActionGroupPopupCollector"/>
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.ex.FileEditorProviderManager"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl"/>
 
@@ -1181,6 +1182,8 @@
       serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.GlobalIgnoredPluginSuggestionState"/>
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateRequestParametersProvider"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.DefaultUpdateRequestParametersProvider"/>
+    <applicationService serviceInterface="com.intellij.frontend.HostIdeInfoService"
+                        serviceImplementation="com.intellij.frontend.DefaultHostIdeInfoService"/>
     <dependencyCollector kind="executable"
                          implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.EnvironmentDependencyCollector"/>
 
@@ -1286,6 +1289,7 @@
     <statistics.gotItTooltipAllowlist prefix="show.diff.in.editor"/>
     <statistics.gotItTooltipAllowlist prefix="reader.mode.got.it"/>
     <statistics.gotItTooltipAllowlist prefix="fragment.hidden"/>
+    <statistics.gotItTooltipAllowlist prefix="trial.state.widget.got.it.id"/>
 
     <!-- Browsers -->
     <applicationService serviceInterface="com.intellij.ide.browsers.BrowserLauncher"
@@ -1616,7 +1620,6 @@
     <advancedSetting id="confirm.rerun.with.termination" default="true" groupKey="group.advanced.settings.run"/>
     <advancedSetting id="start.run.configurations.pinned" default="false" groupKey="group.advanced.settings.run"/>
     <advancedSetting id="max.recent.run.configurations" default="5" groupKey="group.advanced.settings.run"/>
-    <advancedSetting id="se.text.search" default="true" groupKey="group.advanced.settings.se"/>
     <advancedSetting id="edit.source.on.enter.key.request.focus.in.editor" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.tree.collapse.recursively" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="project.view.do.not.autoscroll.to.libraries" default="false" groupKey="group.advanced.settings.project.view"/>
@@ -1694,19 +1697,29 @@
                         serviceImplementation="com.intellij.openapi.progress.impl.PlatformTaskSupport" preload="true"/>
     <applicationService serviceImplementation="com.intellij.openapi.progress.impl.TaskInfoEntityCollector" preload="true"/>
 
-    <searchEverywhereContributor implementation="com.intellij.find.impl.TextSearchContributor$Companion$Factory"/>
-
     <applicationService serviceInterface="com.intellij.openapi.vfs.newvfs.persistent.FsRootDataLoader"
                         serviceImplementation="com.intellij.openapi.vfs.newvfs.persistent.EmptyFsRootDataLoader"/>
 
     <applicationService serviceInterface="com.intellij.diagnostic.PerformanceWatcher"
                         serviceImplementation="com.intellij.diagnostic.PerformanceWatcherImpl"/>
 
+    <applicationService serviceInterface="com.intellij.diagnostic.WriteLockMeasurer"
+                        serviceImplementation="com.intellij.diagnostic.WriteLockMeasurerImpl"/>
+
     <applicationService serviceInterface="com.intellij.openapi.wm.impl.headertoolbar.OpenProjectSelectionPredicateSupplier"
                         serviceImplementation="com.intellij.openapi.wm.impl.headertoolbar.DefaultOpenProjectSelectionPredicateSupplier"/>
 
     <projectService serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
                     serviceImplementation="com.intellij.internal.performanceTests.DummyProjectInitializationDiagnosticService"/>
+
+    <!-- multiverse -->
+    <registryKey key="intellij.platform.shared.source.support"
+                 defaultValue="false"
+                 description="Enables shared source support"
+                 restartRequired="true"
+    />
+    <multiverseEnabler implementation="com.intellij.codeInsight.multiverse.RegistryFlagMultiverseEnabler"/>
+    <multiverse.codeInsightContextProvider implementation="com.intellij.multiverse.ProjectModelEntityContextProvider"/>
 
     <!-- Presentation Assistant -->
     <applicationService serviceImplementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistant"/>
@@ -1866,8 +1879,6 @@
               topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.ui.mac.MergeAllWindowsAction$RecentProjectsFullScreenTabSupport"
               topic="com.intellij.ide.AppLifecycleListener"/>
-    <listener class="com.intellij.ui.components.trialState.TrialStateWidget$TrialStateWidgetUnregister"
-              topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.openapi.vcs.FileStatusCleaner"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener class="com.intellij.codeInsight.hints.InlayUnloadingListener" activeInHeadlessMode="false" activeInTestMode="false"
@@ -1942,6 +1953,8 @@
               topic="com.intellij.codeInsight.template.TemplateManagerListener"/>
     <listener class="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener"
               topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+    <listener class="com.intellij.codeInsight.multiverse.EditorFilterUpdater"
+              topic="com.intellij.codeInsight.multiverse.EditorContextManager$ChangeEventListener"/>
   </projectListeners>
 
   <xi:include href="/META-INF/RemoteDevUtil.xml">

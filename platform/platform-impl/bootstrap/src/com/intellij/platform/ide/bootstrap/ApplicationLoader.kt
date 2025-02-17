@@ -7,6 +7,7 @@ package com.intellij.platform.ide.bootstrap
 import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.WriteLockMeasurer
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.*
@@ -218,6 +219,7 @@ internal suspend fun loadApp(
 
     asyncScope.launch {
       enableCoroutineDumpAndJstack()
+      enableLockMonitoring(app)
     }
 
     launch {
@@ -357,6 +359,10 @@ private suspend fun enableCoroutineDumpAndJstack() {
   if (isInstalled) {
     enableJstack()
   }
+}
+
+private suspend fun enableLockMonitoring(application: ApplicationImpl) {
+  application.serviceAsync<WriteLockMeasurer>()
 }
 
 private suspend fun enableJstack() {

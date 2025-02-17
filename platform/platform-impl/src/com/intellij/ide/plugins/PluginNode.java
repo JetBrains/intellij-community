@@ -115,7 +115,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   /**
    * @deprecated Use {@link #getDefaultTrialPeriod()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable Integer getTrialPeriod() {
     return defaultTrialPeriod;
   }
@@ -123,7 +123,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   /**
    * @deprecated Use {@link #setDefaultTrialPeriod(Integer)}}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setTrialPeriod(@Nullable Integer trialPeriod) {
     this.defaultTrialPeriod = trialPeriod;
   }

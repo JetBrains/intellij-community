@@ -1,15 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.indices;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.indexing.InvertedIndex;
 import com.intellij.util.io.PersistentEnumerator;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.IOException;
 import java.util.Collection;
 
-class PersistentObjectSeq {
+@ApiStatus.Internal
+public final class PersistentObjectSeq {
   private static final Logger LOG = Logger.getInstance(PersistentObjectSeq.class);
 
   interface PersistentObject {

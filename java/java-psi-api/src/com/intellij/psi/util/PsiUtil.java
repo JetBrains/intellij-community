@@ -1611,6 +1611,7 @@ public final class PsiUtil extends PsiUtilCore {
    * @deprecated use {@link #isAvailable(JavaFeature, PsiElement)} instead to check whether a particular feature is available, rather
    * than to check against a language level; if you still need an explicit language level check, just inline the method call.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isLanguageLevel11OrHigher(@NotNull PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_11);

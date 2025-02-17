@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.java.debugger.impl.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "java-debugger-impl-backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-debugger-impl-backend",
+  module_name = "intellij.java.debugger.impl.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/kernel/shared:kernel",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//java/debugger/shared:java-debugger-impl-shared",
+    "//platform/kernel/rpc.backend:rpc-backend",
+  ],
+  runtime_deps = [":java-debugger-impl-backend_resources"]
+)
+### auto-generated section `build intellij.java.debugger.impl.backend` end

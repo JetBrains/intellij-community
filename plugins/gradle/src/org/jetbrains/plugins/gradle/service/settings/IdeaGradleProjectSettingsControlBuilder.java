@@ -59,7 +59,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -280,14 +279,14 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   private void deduceGradleHomeIfPossible() {
     if (myGradleHomePathField == null) return;
 
-    File gradleHome = GradleInstallationManager.getInstance().getAutodetectedGradleHome(myProjectRef.get());
+    Path gradleHome = GradleInstallationManager.getInstance().getAutodetectedGradleHome(myProjectRef.get());
     if (gradleHome == null) {
       new DelayedBalloonInfo(MessageType.WARNING, GradleLocationSettingType.UNKNOWN, BALLOON_DELAY_MILLIS).run();
       return;
     }
     myGradleHomeSettingType = GradleLocationSettingType.DEDUCED;
     new DelayedBalloonInfo(MessageType.INFO, GradleLocationSettingType.DEDUCED, BALLOON_DELAY_MILLIS).run();
-    myGradleHomePathField.setText(gradleHome.getPath());
+    myGradleHomePathField.setText(gradleHome.toString());
     myGradleHomePathField.getTextField().setForeground(GradleLocationSettingType.DEDUCED.getColor());
   }
 
@@ -417,7 +416,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       }
       else {
         Project project = myProjectRef.get();
-        if (GradleInstallationManager.getInstance().isGradleSdkHome(project, myGradleHomePathField.getText())) {
+        if (GradleInstallationManager.getInstance().isGradleSdkHome(project, Path.of(myGradleHomePathField.getText()))) {
           myGradleHomeSettingType = GradleLocationSettingType.EXPLICIT_CORRECT;
         }
         else {
@@ -463,7 +462,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
         myGradleHomeSettingType = GradleLocationSettingType.UNKNOWN;
         throw new ConfigurationException(GradleBundle.message("gradle.home.setting.type.explicit.empty", gradleHomePath));
       }
-      else if (!GradleInstallationManager.getInstance().isGradleSdkHome(myProjectRef.get(), new File(gradleHomePath))) {
+      else if (!GradleInstallationManager.getInstance().isGradleSdkHome(myProjectRef.get(), Path.of(gradleHomePath))) {
         myGradleHomeSettingType = GradleLocationSettingType.EXPLICIT_INCORRECT;
         new DelayedBalloonInfo(MessageType.ERROR, myGradleHomeSettingType, 0).run();
         throw new ConfigurationException(GradleBundle.message("gradle.home.setting.type.explicit.incorrect", gradleHomePath));
@@ -489,26 +488,26 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   public void apply(GradleProjectSettings settings) {
     settings.setCompositeBuild(myInitialSettings.getCompositeBuild());
     if (myGradleHomePathField != null) {
-      String gradleHomePath = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
-      File gradleHomeFile = new File(gradleHomePath);
-      String finalGradleHomePath;
-      if (GradleInstallationManager.getInstance().isGradleSdkHome(myProjectRef.get(), gradleHomeFile)) {
+      Path gradleHomePath = Path.of(FileUtil.toCanonicalPath(myGradleHomePathField.getText()));
+      Path finalGradleHomePath;
+      if (GradleInstallationManager.getInstance().isGradleSdkHome(myProjectRef.get(), gradleHomePath)) {
         finalGradleHomePath = gradleHomePath;
       }
       else {
         finalGradleHomePath = GradleInstallationManager.getInstance().suggestBetterGradleHomePath(myProjectRef.get(), gradleHomePath);
         if (finalGradleHomePath != null) {
           SwingUtilities.invokeLater(() -> {
-            myGradleHomePathField.setText(finalGradleHomePath);
+            myGradleHomePathField.setText(finalGradleHomePath.toString());
           });
         }
       }
-      if (StringUtil.isEmpty(finalGradleHomePath)) {
+      if (finalGradleHomePath == null) {
         settings.setGradleHome(null);
       }
       else {
-        settings.setGradleHome(finalGradleHomePath);
-        GradleUtil.storeLastUsedGradleHome(finalGradleHomePath);
+        String finalGradleHome = finalGradleHomePath.toString();
+        settings.setGradleHome(finalGradleHome);
+        GradleUtil.storeLastUsedGradleHome(finalGradleHome);
       }
     }
 
@@ -646,12 +645,12 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       deduceGradleHomeIfPossible();
     }
     else {
-      File gradleHomeFile = new File(gradleHome);
-      if (GradleInstallationManager.getInstance().isGradleSdkHome(project, gradleHomeFile)) {
+      Path gradleHomePath = Path.of(gradleHome);
+      if (GradleInstallationManager.getInstance().isGradleSdkHome(project, gradleHomePath)) {
         myGradleHomeSettingType = GradleLocationSettingType.EXPLICIT_CORRECT;
       }
       else {
-        myGradleHomeSettingType = GradleInstallationManager.getInstance().suggestBetterGradleHomePath(project, gradleHome) != null
+        myGradleHomeSettingType = GradleInstallationManager.getInstance().suggestBetterGradleHomePath(project, gradleHomePath) != null
                                   ? GradleLocationSettingType.EXPLICIT_CORRECT
                                   : GradleLocationSettingType.EXPLICIT_INCORRECT;
       }

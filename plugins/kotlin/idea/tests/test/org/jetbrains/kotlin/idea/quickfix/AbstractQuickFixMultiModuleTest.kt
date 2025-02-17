@@ -121,6 +121,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                         editor,
                         actionShouldBeAvailable,
                         actionFileName,
+                        actionHint,
                         this::availableActions,
                         this::doHighlighting,
                         pluginMode = pluginMode,
@@ -179,7 +180,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
             setActiveEditor(editedFile.findExistingEditor() ?: createEditor(editedFile.virtualFile))
             try {
                 checkResultByFile(afterFileInTestData.relativeTo(File(testDataPath)).path)
-            } catch (e: FileComparisonFailedError) {
+            } catch (_: FileComparisonFailedError) {
                 KotlinTestUtils.assertEqualsToFile(afterFileInTestData, editor)
             }
         }

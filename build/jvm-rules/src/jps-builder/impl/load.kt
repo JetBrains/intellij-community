@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UnstableApiUsage", "HardCodedStringLiteral", "ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 
 package org.jetbrains.bazel.jvm.jps.impl
@@ -51,18 +52,18 @@ internal fun loadJpsProject(
   )
 }
 
-private object NoopIgnoredFileIndex : IgnoredFileIndex {
+internal object NoopIgnoredFileIndex : IgnoredFileIndex {
   override fun isIgnored(path: String) = false
 }
 
-private object NoopBuildDataVersionManager : BuildDataVersionManager {
+internal object NoopBuildDataVersionManager : BuildDataVersionManager {
   override fun versionDiffers() = false
 
   override fun saveVersion() {
   }
 }
 
-private class BazelBuildTargetIndex(moduleTarget: ModuleBuildTarget) : BuildTargetIndex {
+internal class BazelBuildTargetIndex(@JvmField val moduleTarget: ModuleBuildTarget) : BuildTargetIndex {
   private var targetChunks = java.util.List.of(BuildTargetChunk(java.util.Set.of(moduleTarget)))
   private var targets = java.util.List.of(moduleTarget)
 

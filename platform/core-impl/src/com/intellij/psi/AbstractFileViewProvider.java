@@ -180,6 +180,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     if (!isPhysical()) {
       FileManager fileManager = getManager().getFileManager();
       VirtualFile virtualFile = getVirtualFile();
+      // todo ijpl-339 check no real context is used here???
       if (fileManager.findCachedViewProvider(virtualFile) == null && getCachedPsiFiles().isEmpty()) {
         fileManager.setViewProvider(virtualFile, this);
       }

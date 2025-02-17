@@ -1092,7 +1092,6 @@ a:com.intellij.openapi.application.ex.ApplicationInfoEx
 - a:getApiVersionAsNumber():com.intellij.openapi.util.BuildNumber
 - a:getApplicationSvgIconUrl():java.lang.String
 - a:getBuiltinPluginsUrl():java.lang.String
-- a:getChannelListUrl():java.lang.String
 - a:getCopyrightStart():java.lang.String
 - a:getDefaultClassicDarkLaf():java.lang.String
 - a:getDefaultClassicLightLaf():java.lang.String
@@ -1113,7 +1112,6 @@ a:com.intellij.openapi.application.ex.ApplicationInfoEx
 - a:getSupportUrl():java.lang.String
 - a:getUpdateUrls():com.intellij.openapi.application.ex.ApplicationInfoEx$UpdateUrls
 - a:getWebHelpUrl():java.lang.String
-- a:getWelcomeScreenLogoUrl():java.lang.String
 - a:getWhatsNewUrl():java.lang.String
 - a:getWinKeymapUrl():java.lang.String
 - a:getYoutrackUrl():java.lang.String

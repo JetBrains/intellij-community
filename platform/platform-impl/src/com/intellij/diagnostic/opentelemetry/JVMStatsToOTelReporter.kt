@@ -186,11 +186,12 @@ private class JVMStatsToOTelReporter : ProjectActivity {
   private class AvgMemoryUsageProvider(cs: CoroutineScope) {
     @Volatile
     private var counters: Counters = Counters()
+    private val provider = PlatformMemoryUtil.getInstance().newMemoryStatsProvider()
 
     init {
       cs.launch(CoroutineName("JVMStatsToOTelReporter.AvgMemoryUsageProvider")) {
         while (isActive) {
-          val memStats = PlatformMemoryUtil.getInstance().getCurrentProcessMemoryStats()
+          val memStats = provider.getCurrentProcessMemoryStats()
           if (memStats != null) {
             val prev = counters
             counters = Counters(

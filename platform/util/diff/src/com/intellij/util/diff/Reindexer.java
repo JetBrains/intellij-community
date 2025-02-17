@@ -1,14 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.diff;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
 import java.util.BitSet;
 
-final class Reindexer {
+@ApiStatus.Internal
+public final class Reindexer {
   private final int[][] myOldIndices = new int[2][];
   private final int[] myOriginalLengths = new int[]{-1, -1};
   private final int[] myDiscardedLengths = new int[]{-1, -1};

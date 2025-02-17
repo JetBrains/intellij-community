@@ -2,6 +2,7 @@
 
 package com.intellij.mock;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -15,6 +16,7 @@ import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,13 +43,25 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   }
 
   @Override
-  public PsiFile findFile(@NotNull VirtualFile file) {
+  public @Nullable PsiFile findFile(@NotNull VirtualFile file) {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable PsiFile findFile(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
     return null;
   }
 
   @Override
   public @Nullable
   FileViewProvider findViewProvider(@NotNull VirtualFile file) {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable FileViewProvider findViewProvider(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
     return null;
   }
 

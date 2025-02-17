@@ -2,25 +2,20 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.interpret
 
-import com.intellij.debugger.streams.trace.CallTraceInterpreter
-import com.intellij.debugger.streams.trace.TraceElement
-import com.intellij.debugger.streams.trace.TraceInfo
-import com.intellij.debugger.streams.trace.impl.TraceElementImpl
-import com.intellij.debugger.streams.trace.impl.interpret.ex.UnexpectedValueTypeException
-import com.intellij.debugger.streams.wrapper.StreamCall
-import com.sun.jdi.ArrayReference
-import com.sun.jdi.BooleanValue
-import com.sun.jdi.IntegerValue
-import com.sun.jdi.Value
+import com.intellij.debugger.streams.core.trace.*
+import com.intellij.debugger.streams.core.trace.impl.TraceElementImpl
+import com.intellij.debugger.streams.core.trace.impl.interpret.ValuesOrderInfo
+import com.intellij.debugger.streams.core.trace.impl.interpret.ex.UnexpectedValueTypeException
+import com.intellij.debugger.streams.core.wrapper.StreamCall
 
 class FilterTraceInterpreter(private val predicateValueToAccept: Boolean) : CallTraceInterpreter {
     override fun resolve(call: StreamCall, value: Value): TraceInfo {
-        if (value !is ArrayReference) throw UnexpectedValueTypeException("array reference excepted, but actual: ${value.type().name()}")
-        val before = resolveValuesBefore(value.getValue(0))
+        if (value !is ArrayReference) throw UnexpectedValueTypeException("array reference excepted, but actual: ${value.typeName()}")
+        val before = resolveValuesBefore(value.getValue(0)!!)
         val filteringMap = value.getValue(1)
-        val after = resolveValuesAfter(before, filteringMap)
+        val after = resolveValuesAfter(before, filteringMap!!)
 
-        return ValuesOrder(call, before, after)
+        return ValuesOrderInfo(call, before, after)
     }
 
     private fun resolveValuesBefore(map: Value): Map<Int, TraceElement> {

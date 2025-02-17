@@ -182,6 +182,7 @@ fun generateRandomPath(parentDirectory: Path): Path {
 }
 
 //<editor-fold desc="Deprecated stuff.">
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use kotlin.io.path.readText", level = DeprecationLevel.ERROR)
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Throws(IOException::class)
@@ -204,6 +205,7 @@ fun Path.isDirectory(): Boolean = isDirectory()
 @Suppress("DeprecatedCallableAddReplaceWith")
 fun Path.isFile(): Boolean = isRegularFile()
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Use kotlin.io.path.fileSize", level = DeprecationLevel.ERROR)
 @Suppress("DeprecatedCallableAddReplaceWith")
 fun Path.size(): Long = fileSize()

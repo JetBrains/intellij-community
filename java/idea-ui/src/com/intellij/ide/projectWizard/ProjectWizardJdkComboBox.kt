@@ -622,12 +622,11 @@ private fun findExistingJdksEel(eelDescriptor: EelDescriptor): List<DetectedJdk>
   val jdks = JavaHomeFinder.findJdks(eelDescriptor, false)
 
   return jdks.mapNotNull {
-    val path = it.get(SdkType.HOMEPATH_KEY) ?: return@mapNotNull null
-    val version = it.get(JavaHomeFinder.JDK_VERSION_KEY)
-    val symlink = it.get(SdkType.IS_SYMLINK_KEY) ?: containsSymbolicLink(path)
+    val version = it.versionInfo
+    val symlink = containsSymbolicLink(it.path)
 
     when {
-      version != null && javaSdk.isValidSdkHome(path) -> DetectedJdk(version.displayVersionString(), path, symlink)
+      version != null && javaSdk.isValidSdkHome(it.path) -> DetectedJdk(version.displayVersionString(), it.path, symlink)
       else -> null
     }
   }

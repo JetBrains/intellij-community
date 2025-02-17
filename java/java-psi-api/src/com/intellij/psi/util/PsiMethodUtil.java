@@ -95,11 +95,15 @@ public final class PsiMethodUtil {
    */
   private static @Nullable PsiMethod findMainMethod(final PsiMethod[] mainMethods, PsiClass aClass, boolean first) {
     List<@NotNull PsiMethod> candidates = new ArrayList<>();
+    //from java 22 main methods are chosen according to parameters
+    boolean chooseMainMethodByParametersEnabled = inheritedStaticMainEnabled(aClass);
     for (final PsiMethod mainMethod : mainMethods) {
       if (mainMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
         continue;
       }
-      if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !mainMethod.hasModifierProperty(PsiModifier.STATIC)) {
+      if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+          !mainMethod.hasModifierProperty(PsiModifier.STATIC) &&
+          !chooseMainMethodByParametersEnabled) {
         continue;
       }
       PsiClass containingClass = mainMethod.getContainingClass();
@@ -109,12 +113,12 @@ public final class PsiMethodUtil {
         }
         if (containingClass.isInterface() &&
             mainMethod.hasModifierProperty(PsiModifier.STATIC) &&
-            !inheritedStaticMainEnabled(containingClass)) {
+            !chooseMainMethodByParametersEnabled) {
           continue;
         }
       }
       if (isMainMethod(mainMethod)) {
-        if (first) {
+        if (first && !chooseMainMethodByParametersEnabled) {
           //fast exit
           return mainMethod;
         }
@@ -125,7 +129,18 @@ public final class PsiMethodUtil {
       return null;
     }
     candidates.sort(mainCandidateComparator);
-    return candidates.get(0);
+    PsiMethod method = candidates.get(0);
+    if (chooseMainMethodByParametersEnabled) {
+      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+        if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          return null;
+        }
+        if (!PsiUtil.hasDefaultConstructor(aClass, true, true)) {
+          return null;
+        }
+      }
+    }
+    return method;
   }
 
   private static boolean instanceMainMethodsEnabled(@NotNull PsiElement psiElement) {

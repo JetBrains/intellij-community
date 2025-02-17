@@ -42,13 +42,13 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
   private final boolean myIsPositional;
   private final boolean myIsKeyword;
 
-  private PyCallableParameterImpl(@Nullable String name,
-                                  @Nullable Ref<PyType> type,
-                                  @Nullable PyExpression defaultValue,
-                                  @Nullable PyParameter element,
-                                  boolean isPositional,
-                                  boolean isKeyword,
-                                  @Nullable PsiElement declarationElement) {
+  PyCallableParameterImpl(@Nullable String name,
+                          @Nullable Ref<PyType> type,
+                          @Nullable PyExpression defaultValue,
+                          @Nullable PyParameter element,
+                          boolean isPositional,
+                          boolean isKeyword,
+                          @Nullable PsiElement declarationElement) {
     myName = name;
     myType = type;
     myDefaultValue = defaultValue;

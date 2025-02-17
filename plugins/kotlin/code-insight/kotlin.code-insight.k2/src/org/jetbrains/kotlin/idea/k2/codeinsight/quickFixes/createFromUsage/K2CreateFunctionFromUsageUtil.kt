@@ -184,8 +184,8 @@ object K2CreateFunctionFromUsageUtil {
     ): ExpectedParameter {
         val parameterNameAsString = getArgumentName()?.asName?.asString()
         val argumentExpression = getArgumentExpression()
+        val parameterNames = parameterNameAsString?.let { sequenceOf(it) } ?: argumentExpression?.let { NAME_SUGGESTER.suggestExpressionNames(it) }
         var expectedArgumentType = argumentExpression?.expressionType
-        val parameterNames = parameterNameAsString?.let { sequenceOf(it) } ?: expectedArgumentType?.let { NAME_SUGGESTER.suggestTypeNames(it) }
         if (expectedArgumentType != null && receiverType is KaClassType) {
             expectedArgumentType = guessAccessibleTypeByArguments(receiverType, expectedArgumentType)
         }

@@ -27,7 +27,6 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
-import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.*;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.NewUI;
@@ -119,34 +118,6 @@ public final class HighlightUtil {
 
   private static @NotNull String formatField(@NotNull PsiField field) {
     return PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
-  }
-
-  static void checkSwitchExpressionReturnTypeCompatible(@NotNull PsiSwitchExpression switchExpression,
-                                                        @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    if (!PsiPolyExpressionUtil.isPolyExpression(switchExpression)) {
-      return;
-    }
-    PsiType switchExpressionType = switchExpression.getType();
-    if (switchExpressionType != null) {
-      for (PsiExpression expression : PsiUtil.getSwitchResultExpressions(switchExpression)) {
-        PsiType expressionType = expression.getType();
-        if (expressionType != null && !TypeConversionUtil.areTypesAssignmentCompatible(switchExpressionType, expression)) {
-          String text = JavaErrorBundle
-            .message("bad.type.in.switch.expression", expressionType.getCanonicalText(), switchExpressionType.getCanonicalText());
-          HighlightInfo.Builder info =
-            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text);
-          HighlightFixUtil.registerIncompatibleTypeFixes(asConsumer(info), switchExpression, switchExpressionType, expressionType);
-          errorSink.accept(info);
-        }
-      }
-
-      if (PsiTypes.voidType().equals(switchExpressionType)) {
-        String text = JavaErrorBundle.message("switch.expression.cannot.be.void");
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(switchExpression.getFirstChild()).descriptionAndTooltip(text);
-        errorSink.accept(info);
-      }
-    }
   }
 
   static @NotNull @NlsContexts.DetailedDescription String staticContextProblemDescription(@NotNull PsiElement refElement) {
@@ -516,7 +487,7 @@ public final class HighlightUtil {
     return ref;
   }
 
-  static @NlsSafe @NotNull String format(@NotNull PsiElement element) {
+   private static @NlsSafe @NotNull String format(@NotNull PsiElement element) {
     if (element instanceof PsiClass psiClass) return formatClass(psiClass);
     if (element instanceof PsiMethod psiMethod) return JavaHighlightUtil.formatMethod(psiMethod);
     if (element instanceof PsiField psiField) return formatField(psiField);

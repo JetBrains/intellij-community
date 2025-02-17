@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.dialog
 
+import com.intellij.frontend.HostIdeInfoService
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
@@ -10,6 +11,7 @@ import com.intellij.internal.statistic.utils.platformPlugin
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
@@ -65,6 +67,7 @@ data class CommonFeedbackSystemData(
     private fun getOsVersion() = SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION
     private fun getMemorySize() = Runtime.getRuntime().maxMemory() / FileUtilRt.MEGABYTE
     private fun getCoresNumber() = Runtime.getRuntime().availableProcessors()
+
     private fun getAppVersionWithBuild(): String {
       val appInfo = ApplicationInfo.getInstance()
 
@@ -74,7 +77,6 @@ data class CommonFeedbackSystemData(
         appVersion += " ($edition)"
       }
 
-      // todo remove dev host info
       val appBuild = appInfo.build
       appVersion += CommonFeedbackBundle.message("dialog.feedback.system.info.panel.app.version.build", appBuild.asString())
       val timestamp: Date = appInfo.buildDate.time
@@ -87,6 +89,14 @@ data class CommonFeedbackSystemData(
         appVersion += CommonFeedbackBundle.message("dialog.feedback.system.info.panel.app.version.build.date",
                                                    NlsMessages.formatDateLong(timestamp))
       }
+
+      if (appInfo.build.productCode == "JBC") {
+        val hostInfo = service<HostIdeInfoService>().getHostInfo()
+        if (hostInfo != null) {
+          appVersion += CommonFeedbackBundle.message("dialog.feedback.system.info.panel.app.version.host", hostInfo.productCode)
+        }
+      }
+
       return appVersion
     }
 
@@ -100,11 +110,17 @@ data class CommonFeedbackSystemData(
 
     private fun getRuntimeVersion() = SystemInfo.JAVA_RUNTIME_VERSION + SystemInfo.OS_ARCH
     private fun getIsInternalMode(): Boolean = ApplicationManager.getApplication().isInternal
-    private fun getRegistryKeys(): List<String> = Registry.getAll().filter { value: RegistryValue ->
-      val pluginId: String? = value.pluginId
-      val pluginInfo = if (pluginId != null) getPluginInfoById(PluginId.getId(pluginId)) else platformPlugin
-      value.isChangedFromDefault() && pluginInfo.isSafeToReport()
-    }.map { v: RegistryValue -> v.key + "=" + v.asString() }.toList()
+
+    private fun getRegistryKeys(): List<String> {
+      return Registry.getAll()
+        .filter { value: RegistryValue ->
+          val pluginId: String? = value.pluginId
+          val pluginInfo = if (pluginId != null) getPluginInfoById(PluginId.getId(pluginId)) else platformPlugin
+          value.isChangedFromDefault() && pluginInfo.isSafeToReport()
+        }
+        .map { v: RegistryValue -> v.key + "=" + v.asString() }
+        .toList()
+    }
 
     private fun getDisabledPlugins(): List<String> = getPluginsNamesWithVersion { p: IdeaPluginDescriptor -> !p.isEnabled }
 

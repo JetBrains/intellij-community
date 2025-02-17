@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl
 import com.intellij.openapi.editor.impl.softwrap.EmptySoftWrapPainter
+import com.intellij.openapi.observable.util.addFocusListener
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -32,6 +33,7 @@ import org.jetbrains.plugins.terminal.block.TerminalContentView
 import org.jetbrains.plugins.terminal.block.output.NEW_TERMINAL_OUTPUT_CAPACITY_KB
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMethodSupport
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
+import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputFileType
 import org.jetbrains.plugins.terminal.block.reworked.session.*
 import org.jetbrains.plugins.terminal.block.ui.*
@@ -40,9 +42,7 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Component
 import java.awt.Dimension
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
-import java.awt.event.KeyEvent
+import java.awt.event.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JScrollPane
@@ -87,6 +87,7 @@ internal class ReworkedTerminalView(
 
     outputEditor = createOutputEditor(settings, parentDisposable = this)
     val outputModel = createOutputModel(
+      project,
       editor = outputEditor,
       maxOutputLength = AdvancedSettings.getInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB).coerceIn(1, 10 * 1024) * 1024,
       settings,
@@ -102,6 +103,7 @@ internal class ReworkedTerminalView(
 
     alternateBufferEditor = createAlternateBufferEditor(settings, parentDisposable = this)
     val alternateBufferModel = createOutputModel(
+      project,
       editor = alternateBufferEditor,
       maxOutputLength = 0,
       settings,
@@ -130,6 +132,8 @@ internal class ReworkedTerminalView(
     listenSearchController()
     listenPanelSizeChanges()
     listenAlternateBufferSwitch()
+
+    TerminalVfsSynchronizer.install(controller, ::addFocusListener, this)
   }
 
   override fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize) {
@@ -209,6 +213,7 @@ internal class ReworkedTerminalView(
   }
 
   private fun createOutputModel(
+    project: Project,
     editor: EditorEx,
     maxOutputLength: Int,
     settings: JBTerminalSystemSettingsProviderBase,
@@ -221,7 +226,7 @@ internal class ReworkedTerminalView(
   ): TerminalOutputModel {
     val model = TerminalOutputModelImpl(editor.document, maxOutputLength)
 
-    val parentDisposable = coroutineScope.asDisposable()
+    val parentDisposable = coroutineScope.asDisposable() // same lifecycle as `this@ReworkedTerminalView`
 
     // Document modifications can change the scroll position.
     // Mark them with the corresponding flag to indicate that this change is not caused by the explicit user action.
@@ -239,6 +244,8 @@ internal class ReworkedTerminalView(
     })
 
     editor.highlighter = TerminalTextHighlighter { model.getHighlightings() }
+
+    TerminalHyperlinkHighlighter.install(project, model, editor, coroutineScope)
 
     TerminalCursorPainter.install(editor, model, sessionModel, coroutineScope.childScope("TerminalCursorPainter"))
 
@@ -285,6 +292,7 @@ internal class ReworkedTerminalView(
     editor.putUserData(TerminalDataContextUtils.IS_OUTPUT_MODEL_EDITOR_KEY, true)
     editor.settings.isUseSoftWraps = true
     editor.useTerminalDefaultBackground(parentDisposable = this)
+    CopyOnSelectionHandler(settings).install(editor)
 
     Disposer.register(parentDisposable) {
       EditorFactory.getInstance().releaseEditor(editor)
@@ -330,8 +338,22 @@ internal class ReworkedTerminalView(
 
   override fun dispose() {}
 
+  private fun addFocusListener(parentDisposable: Disposable, listener: FocusListener) {
+    terminalPanel.addFocusListener(parentDisposable, listener)
+  }
+
   private inner class TerminalPanel(initialContent: Editor) : JBLayeredPane(), UiDataProvider {
     private var curEditor: Editor = initialContent
+
+    private val delegatingFocusListener = object : FocusListener {
+      override fun focusGained(e: FocusEvent) {
+        focusListeners.forEach { it.focusGained(e) }
+      }
+
+      override fun focusLost(e: FocusEvent) {
+        focusListeners.forEach { it.focusLost(e) }
+      }
+    }
 
     init {
       setTerminalContent(initialContent)
@@ -344,10 +366,12 @@ internal class ReworkedTerminalView(
       val prevEditor = curEditor
       @Suppress("SENSELESS_COMPARISON") // called from init when curEditor == null
       if (prevEditor != null) {
+        prevEditor.contentComponent.removeFocusListener(delegatingFocusListener)
         remove(curEditor.component)
       }
       curEditor = editor
       addToLayer(editor.component, DEFAULT_LAYER)
+      editor.contentComponent.addFocusListener(delegatingFocusListener)
     }
 
     override fun uiDataSnapshot(sink: DataSink) {

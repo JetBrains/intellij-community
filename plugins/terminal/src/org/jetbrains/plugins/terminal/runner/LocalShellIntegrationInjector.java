@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.runner;
 
 import com.intellij.execution.CommandLineUtil;
@@ -39,9 +39,8 @@ import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.isBlockTe
 
 @ApiStatus.Internal
 public final class LocalShellIntegrationInjector {
-
   @VisibleForTesting
-  static final String IJ_ZSH_DIR = "JETBRAINS_INTELLIJ_ZSH_DIR";
+  public static final String IJ_ZSH_DIR = "JETBRAINS_INTELLIJ_ZSH_DIR";
   private static final Logger LOG = Logger.getInstance(LocalShellIntegrationInjector.class);
   private static final String LOGIN_SHELL = "LOGIN_SHELL";
   private static final String IJ_COMMAND_END_MARKER = "JETBRAINS_INTELLIJ_COMMAND_END_MARKER";
@@ -228,5 +227,4 @@ public final class LocalShellIntegrationInjector {
     TerminalWidget widget = options != null ? options.getWidget() : null;
     return widget != null ? ShellTerminalWidget.asShellJediTermWidget(widget) : null;
   }
-
 }

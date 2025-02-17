@@ -116,19 +116,13 @@ public class JavaHomeFinderBasic {
   }
 
   /// Detects the paths of JDKs on the machine with information about the Java version and architecture.
-  public final @NotNull Set<KeyFMap> findExistingJdkEntries() {
+  public final @NotNull Set<JavaHomeFinder.JdkEntry> findExistingJdkEntries() {
     final var paths = findExistingJdks();
     final var detector = JdkVersionDetector.getInstance();
 
     return paths.stream().map(path -> {
       final var version = detector.detectJdkVersionInfo(path);
-      var info = KeyFMap.EMPTY_MAP.plus(SdkType.HOMEPATH_KEY, path);
-      if (version != null) {
-        info = info
-          .plus(JavaHomeFinder.JDK_VERSION_KEY, version)
-          .plus(SdkType.VERSION_KEY, version.displayVersionString());
-      }
-      return info;
+      return new JavaHomeFinder.JdkEntry(path, version);
     }).collect(Collectors.toSet());
 
   }

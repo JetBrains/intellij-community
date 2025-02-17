@@ -32,6 +32,7 @@ jvm_library(
     "//plugins/kotlin/base/psi:kotlin-base-psi",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/core",
     "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
     "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
     "//plugins/kotlin/code-insight/descriptions:kotlin-code-insight-descriptions",

@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
@@ -59,10 +58,9 @@ public final class PyMandatoryEncodingInspection extends PyInspection {
 
       final String charsetString = PythonFileType.getCharsetFromEncodingDeclaration(node);
       if (charsetString == null) {
-        TextRange tr = new TextRange(0, 0);
         ProblemsHolder holder = getHolder();
         if (holder != null) {
-          holder.registerProblem(node, tr, PyPsiBundle.message("INSP.mandatory.encoding.no.encoding.specified.for.file"),
+          holder.registerProblem(node, PyPsiBundle.message("INSP.mandatory.encoding.no.encoding.specified.for.file"),
                                  new AddEncodingQuickFix(myDefaultEncoding, myEncodingFormatIndex));
         }
       }

@@ -578,7 +578,8 @@ internal open class WorkspaceProjectImporter(
                                              workspaceModel.getVirtualFileUrlManager(),
                                              mavenManager.importingSettings,
                                              folderImportingContext,
-                                             MavenWorkspaceConfigurator.EXTENSION_POINT_NAME.extensionList)
+                                             MavenWorkspaceConfigurator.EXTENSION_POINT_NAME.extensionList,
+                                             project)
 
       var numberOfModules = 0
       readMavenExternalSystemData(builder).forEach { data ->

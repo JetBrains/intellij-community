@@ -2,12 +2,12 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
-import com.intellij.debugger.streams.trace.dsl.*
-import com.intellij.debugger.streams.trace.dsl.impl.AssignmentStatement
-import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
-import com.intellij.debugger.streams.trace.dsl.impl.VariableImpl
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.core.trace.dsl.*
+import com.intellij.debugger.streams.core.trace.dsl.impl.AssignmentStatement
+import com.intellij.debugger.streams.core.trace.dsl.impl.TextExpression
+import com.intellij.debugger.streams.core.trace.dsl.impl.VariableImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
 import org.jetbrains.annotations.NonNls
 
 class KotlinStatementFactory(private val peekCallFactory: PeekCallFactory) : StatementFactory {
@@ -37,8 +37,8 @@ class KotlinStatementFactory(private val peekCallFactory: PeekCallFactory) : Sta
         KotlinForEachLoop(iterateVariable, collection, loopBody)
 
     override fun createForLoop(
-        initialization: VariableDeclaration, condition: Expression,
-        afterThought: Expression, loopBody: ForLoopBody
+      initialization: VariableDeclaration, condition: Expression,
+      afterThought: Expression, loopBody: ForLoopBody
     ): Convertable =
         KotlinForLoop(initialization, condition, afterThought, loopBody)
 
@@ -60,7 +60,13 @@ class KotlinStatementFactory(private val peekCallFactory: PeekCallFactory) : Sta
     override fun createAssignmentStatement(variable: Variable, expression: Expression): AssignmentStatement =
         KotlinAssignmentStatement(variable, expression)
 
-    override fun createMapVariable(keyType: GenericType, valueType: GenericType, name: String, linked: Boolean): MapVariable =
+    override fun createMapVariable(
+        keyType: GenericType,
+        valueType: GenericType,
+        name: String,
+        linked: Boolean,
+        args: Array<out Expression>
+    ): MapVariable =
         KotlinMapVariable(if (linked) types.linkedMap(keyType, valueType) else types.map(keyType, valueType), name)
 
     override fun createArrayVariable(elementType: GenericType, name: String): ArrayVariable =
@@ -82,6 +88,8 @@ class KotlinStatementFactory(private val peekCallFactory: PeekCallFactory) : Sta
     override fun currentTimeExpression(): Expression = TextExpression("time.get()")
 
     override fun updateCurrentTimeExpression(): Expression = TextExpression("time.incrementAndGet()")
+
+    override fun currentNanosecondsExpression(): Expression = TextExpression("java.lang.System.nanoTime()")
 
     override fun createNewArrayExpression(elementType: GenericType, vararg args: Expression): Expression {
         val arguments = args.joinToString { it.toCode() }

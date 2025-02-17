@@ -108,7 +108,8 @@ interface ScanningTimes {
   val concurrentIterationAndScannersApplicationSumOfThreadTimesWithPauses: Duration
   val concurrentFileCheckSumOfThreadTimesWithPauses: Duration
   val pausedDuration: Duration
-  val wasInterrupted: Boolean
+  val isCancelled: Boolean
+  val cancellationReason: String?
 }
 
 interface DumbIndexingTimes {
@@ -120,5 +121,6 @@ interface DumbIndexingTimes {
   val retrievingChangedDuringIndexingFilesDuration: Duration
   val pausedDuration: Duration
   val separateValueApplicationVisibleTime: TimeNano
-  val wasInterrupted: Boolean
+  val isCancelled: Boolean
+  val cancellationReason: String?
 }

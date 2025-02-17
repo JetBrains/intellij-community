@@ -5,23 +5,14 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.impl.PositionUtil
 import com.intellij.debugger.ui.breakpoints.MethodBreakpoint
 import com.intellij.debugger.ui.breakpoints.MethodBreakpoint.MethodDescriptor
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task.Backgroundable
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.DocumentUtil
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -31,13 +22,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator
 import org.jetbrains.kotlin.idea.debugger.base.util.runSmartReadActionIfUnderProgressElseDumb
-import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle.message
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerLegacyFacade
 import org.jetbrains.kotlin.idea.debugger.core.methodName
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.getJvmSignature
-import org.jetbrains.kotlin.idea.util.application.isDispatchThread
-import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
@@ -52,13 +41,7 @@ open class KotlinFunctionBreakpoint(
     breakpoint: XBreakpoint<*>
 ) : MethodBreakpoint(project, breakpoint), SourcePositionRefiner {
     override fun getPsiClass(): PsiClass? {
-        val sourcePosition = sourcePosition
-        val declaration = PositionUtil.getPsiElementAt(
-            myProject,
-            KtClassOrObject::class.java,
-            sourcePosition
-        ) ?: return null
-
+        val declaration = getKtClass() ?: return null
         return runSmartReadActionIfUnderProgressElseDumb(myProject, null) {
             declaration.toLightClass()
         }
@@ -74,53 +57,22 @@ open class KotlinFunctionBreakpoint(
         return sourcePosition
     }
 
-    @RequiresBackgroundThread
-    override fun reload() {
-        super.reload()
-
-        // We can't wait for a smart mode under a read access. It would result to exceptions
-        // or a possible deadlock. So return here.
-        if (ApplicationManager.getApplication().isReadAccessAllowed && DumbService.isDumb(myProject)) {
-            return
-        }
-
-        invalidateMethodData()
-        val descriptor = sourcePosition?.getMethodDescriptor(myProject)
-        ProgressIndicatorProvider.checkCanceled()
-        updateMethodData(descriptor)
-        updateClassPattern()
+    override fun computeMethodDescriptor(sourcePosition: SourcePosition): MethodBreakpoint.MethodDescriptor? {
+        ProgressManager.checkCanceled()
+        return sourcePosition.getMethodDescriptor(myProject)
     }
 
-    private fun invalidateMethodData() {
-        methodName = null
-        mySignature = null
+    override fun computeClassPattern(): String? {
+        val declaration = getKtClass() ?: return null
+        val pattern = ClassNameCalculator.getInstance().getClassName(declaration)
+        if (pattern != null) return pattern
+        // fallback to java
+        return psiClass?.qualifiedName
     }
 
-    private fun updateMethodData(descriptor: MethodDescriptor?) {
-        methodName = descriptor?.methodName
-        mySignature = descriptor?.methodSignature
-        if (descriptor != null && descriptor.isStatic) {
-            isInstanceFiltersEnabled = false
-        }
-    }
-
-    private fun updateClassPattern() {
-        ProgressIndicatorProvider.checkCanceled()
-        val task = object : Backgroundable(myProject, message("function.breakpoint.initialize")) {
-            override fun run(indicator: ProgressIndicator) {
-                val psiClass = psiClass
-                if (psiClass != null) {
-                    properties.myClassPattern = runReadAction { psiClass.qualifiedName }
-                }
-            }
-        }
-        val progressManager = ProgressManager.getInstance()
-        if (isDispatchThread() && !isUnitTestMode()) {
-            progressManager.runProcessWithProgressAsynchronously(task, BackgroundableProcessIndicator(task))
-        } else {
-            val progressIndicator = EmptyProgressIndicator()
-            progressManager.runProcess({ task.run(progressIndicator) }, progressIndicator)
-        }
+    private fun getKtClass(): KtClassOrObject? {
+        val sourcePosition = sourcePosition
+        return PositionUtil.getPsiElementAt(myProject, KtClassOrObject::class.java, sourcePosition)
     }
 }
 

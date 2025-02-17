@@ -15,7 +15,9 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
 internal class IdeProductInfoImpl : IdeProductInfo {
@@ -32,7 +34,7 @@ internal class IdeProductInfoImpl : IdeProductInfo {
 
   override fun loadProductInfo(ideHome: Path): ProductInfoData? {
     return try {
-      if (SystemInfo.isMac && ideHome.name != "Contents") {
+      if (SystemInfo.isMac && ideHome.name != "Contents" && ideHome.resolve("Contents").isDirectory()) {
         tryLoadingProductInfo(ideHome.resolve("Contents"))
       }
       else {
@@ -47,7 +49,10 @@ internal class IdeProductInfoImpl : IdeProductInfo {
 
   @OptIn(ExperimentalSerializationApi::class)
   private fun tryLoadingProductInfo(ideHome: Path): ProductInfoData {
-    val productInfoRelativePath = if (SystemInfo.isMac) ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC else ApplicationEx.PRODUCT_INFO_FILE_NAME
+    val productInfoRelativePath =
+      //cross-platform distribution used for plugin development has the product-info.json file at the root even on macOS
+      if (SystemInfo.isMac && ideHome.resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC).exists()) ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC
+      else ApplicationEx.PRODUCT_INFO_FILE_NAME
     val productInfoPath = ideHome.resolve(productInfoRelativePath)
     return productInfoPath.inputStream().buffered().use {
       json.decodeFromStream(ProductInfoData.serializer(), it)

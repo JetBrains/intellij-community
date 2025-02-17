@@ -706,14 +706,24 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
           @Override
           public void visitEnd() {
             if (myAcc != null) {
-              Object[] template = null;
               if (!myAcc.isEmpty()) {
-                final Object elem = myAcc.get(0);
+                Object elem = null;
+                for (Object o : myAcc) {
+                  if (o != null) {
+                    elem = o;
+                    break;
+                  }
+                }
                 if (elem != null) {
-                  template = (Object[])Array.newInstance(elem.getClass(), 0);
+                  defaultValue.set(myAcc.toArray((Object[])Array.newInstance(elem.getClass(), 0)));
                 }
               }
-              defaultValue.set(template != null? myAcc.toArray(template) : myAcc.toArray());
+
+              if (defaultValue.get() == null) {
+                Type declaredType = Type.getReturnType(desc);
+                // array of array is not allowed by spec
+                defaultValue.set(Array.newInstance(getTypeClass(declaredType.getSort() == Type.ARRAY? declaredType.getElementType() : declaredType), myAcc.size()));
+              }
             }
           }
 
@@ -1031,6 +1041,24 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
         }
       };
     }
+  }
+
+  private static Class getTypeClass(Type t)  {
+    switch(t.getSort()) {
+      case Type.BOOLEAN: return boolean.class;
+      case Type.CHAR: return char.class;
+      case Type.BYTE: return byte.class;
+      case Type.SHORT: return short.class;
+      case Type.INT: return int.class;
+      case Type.FLOAT: return float.class;
+      case Type.LONG: return long.class;
+      case Type.DOUBLE: return double.class;
+      case Type.OBJECT:
+        if ("java.lang.String".equals(t.getClassName())) {
+          return String.class;
+        }
+    }
+    return Type.class;
   }
 
 }

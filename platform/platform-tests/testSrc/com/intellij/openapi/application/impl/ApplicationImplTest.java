@@ -44,8 +44,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.openapi.application.RuntimeFlagsKt.isLockStoredInContext;
-
 @RunFirst
 public class ApplicationImplTest extends LightPlatformTestCase {
   private TestTimeOut t;

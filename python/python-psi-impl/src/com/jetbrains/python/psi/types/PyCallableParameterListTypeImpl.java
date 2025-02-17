@@ -42,4 +42,9 @@ public final class PyCallableParameterListTypeImpl implements PyCallableParamete
   public int hashCode() {
     return Objects.hash(myParameters);
   }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    return visitor.visitPyCallableParameterListType(this);
+  }
 }

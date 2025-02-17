@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.kotlin
 
 import org.jetbrains.intellij.build.io.ZipArchiveOutputStream
@@ -36,7 +36,7 @@ private fun writeManifest(manifest: Manifest, out: ZipArchiveOutputStream) {
 
   val manifestOut = ByteArrayOutputStream()
   manifest.write(manifestOut)
-  out.writeDataRawEntryWithoutCrc(data = ByteBuffer.wrap(manifestOut.toByteArray()), name = MANIFEST_NAME_BYTES)
+  out.writeDataRawEntryWithoutCrc(name = MANIFEST_NAME_BYTES, data = manifestOut.toByteArray())
 }
 
 fun createJar(
@@ -65,7 +65,7 @@ fun createJar(
 
     for (outputFile in outputFiles.asList()) {
       val data = outputFile.asByteArray()
-      out.writeDataRawEntryWithoutCrc(data = ByteBuffer.wrap(data), name = outputFile.relativePath.toByteArray())
+      out.writeDataRawEntryWithoutCrc(name = outputFile.relativePath.toByteArray(), data = data)
     }
   }
 }

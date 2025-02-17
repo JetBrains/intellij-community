@@ -4,6 +4,7 @@ package com.intellij.openapi.ui.messages
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
+import com.intellij.openapi.ui.ExitActionType
 import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DetailedDescription
@@ -61,7 +62,8 @@ interface MessagesService {
     doNotAskOption: DoNotAskOption?,
     alwaysUseIdeaUI: Boolean = false,
     helpId: String? = null,
-    invocationPlace: String? = null
+    invocationPlace: String? = null,
+    exitActionTypes: Array<ExitActionType> = emptyArray()
   ): Int
 
 

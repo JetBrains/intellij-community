@@ -85,7 +85,7 @@ internal class SdkListPresenter2<T>(
 
       is SdkListItem.SuggestedItem -> {
         var icon = sdkListItem.sdkType.icon
-        if (icon != null && sdkListItem.info.get(SdkType.IS_SYMLINK_KEY) == true) {
+        if (icon != null && sdkListItem.isSymlink) {
           icon = AllIcons.Nodes.Related
         }
         item.icon = icon ?: IconUtil.addIcon

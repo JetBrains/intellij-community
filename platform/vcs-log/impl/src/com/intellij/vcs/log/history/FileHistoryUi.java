@@ -112,7 +112,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   /**
    * @deprecated use {@link FileHistoryModel#getPathInCommit(Hash)} or {@link FileHistoryPaths#filePath(VcsLogDataPack, int)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable FilePath getPathInCommit(@NotNull Hash hash) {
     return myFileHistoryModel.getPathInCommit(hash);
   }

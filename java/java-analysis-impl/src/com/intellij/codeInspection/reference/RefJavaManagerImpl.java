@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -24,7 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uast.UastVisitorAdapter;
-import com.intellij.util.LazyInitializer;
+import com.intellij.util.LazyInitializer.LazyValue;
 import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -36,9 +36,6 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import java.util.*;
 import java.util.stream.Stream;
 
-/**
- * @author anna
- */
 public final class RefJavaManagerImpl extends RefJavaManager {
   private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION =
     Conditions.or(Conditions.instanceOf(PsiFile.class, PsiJavaModule.class),
@@ -51,7 +48,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   private final PsiMethod myAppMainPattern;
   private final PsiMethod myAppPremainPattern;
   private final PsiMethod myAppAgentmainPattern;
-  private final LazyInitializer.LazyValue<PsiClass> myApplet;
+  private final LazyValue<PsiClass> myApplet;
   private volatile RefPackage myCachedDefaultPackage;  // cached value. benign race
   private Map<String, RefPackage> myPackages; // guarded by this
   private final RefManagerImpl myRefManager;
@@ -66,7 +63,8 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     myAppPremainPattern = factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null);
     myAppAgentmainPattern = factory.createMethodFromText("void agentmain(String[] args, java.lang.instrument.Instrumentation i);", null);
 
-    myApplet = LazyInitializer.create(() -> JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", GlobalSearchScope.allScope(project)));
+    myApplet =
+      new LazyValue<>(() -> JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", GlobalSearchScope.allScope(project)));
   }
 
   @Override
@@ -117,7 +115,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     return refPackage;
   }
 
-  private boolean isEntryPoint(final RefElement element) {
+  private boolean isEntryPoint(RefElement element) {
     UnusedDeclarationInspectionBase tool = getDeadCodeTool(element);
     return tool != null && tool.isEntryPoint(element) && isTestSource(tool, element);
   }
@@ -153,7 +151,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
       }
     }
     InspectionProfileEntry tool = toolWrapper == null ? null : toolWrapper.getTool();
-    return tool instanceof UnusedDeclarationInspectionBase ? (UnusedDeclarationInspectionBase)tool : null;
+    return tool instanceof UnusedDeclarationInspectionBase t ? t : null;
   }
 
   @Override
@@ -210,7 +208,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public void iterate(final @NotNull RefVisitor visitor) {
+  public void iterate(@NotNull RefVisitor visitor) {
     Map<String, RefPackage> packages;
     synchronized (this) {
       packages = myPackages;
@@ -244,28 +242,28 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public void removeReference(final @NotNull RefElement refElement) { }
+  public void removeReference(@NotNull RefElement refElement) { }
 
   @Override
-  public @Nullable RefElement createRefElement(final @NotNull PsiElement psi) {
+  public @Nullable RefElement createRefElement(@NotNull PsiElement psi) {
     if (!getLanguages().contains(psi.getLanguage())) {
       return null;
     }
-    if (psi instanceof PsiFile) {
-      return new RefJavaFileImpl((PsiFile)psi, myRefManager);
+    if (psi instanceof PsiFile f) {
+      return new RefJavaFileImpl(f, myRefManager);
     }
-    else if (psi instanceof PsiJavaModule) {
-      return new RefJavaModuleImpl((PsiJavaModule)psi, myRefManager);
+    else if (psi instanceof PsiJavaModule m) {
+      return new RefJavaModuleImpl(m, myRefManager);
     }
-    UElement uElement = psi instanceof UElement ? (UElement)psi : UastContextKt.toUElement(psi);
-    if (uElement instanceof UClass) {
-      return new RefClassImpl((UClass)uElement, psi, myRefManager);
+    UElement uElement = psi instanceof UElement e ? e : UastContextKt.toUElement(psi);
+    if (uElement instanceof UClass c) {
+      return new RefClassImpl(c, psi, myRefManager);
     }
-    if (uElement instanceof UMethod) {
-      return new RefMethodImpl((UMethod)uElement, psi, myRefManager);
+    if (uElement instanceof UMethod m) {
+      return new RefMethodImpl(m, psi, myRefManager);
     }
-    else if (uElement instanceof UField) {
-      return new RefFieldImpl((UField)uElement, psi, myRefManager);
+    else if (uElement instanceof UField f) {
+      return new RefFieldImpl(f, psi, myRefManager);
     }
     else if (uElement instanceof ULambdaExpression || uElement instanceof UCallableReferenceExpression) {
       return new RefFunctionalExpressionImpl((UExpression)uElement, psi, myRefManager);
@@ -279,7 +277,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public @Nullable RefEntity getReference(final String type, final String fqName) {
+  public @Nullable RefEntity getReference(String type, String fqName) {
     if (IMPLICIT_CONSTRUCTOR.equals(type)) {
       return getImplicitConstructor(fqName);
     }
@@ -305,7 +303,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public @Nullable String getType(final @NotNull RefEntity ref) {
+  public @Nullable String getType(@NotNull RefEntity ref) {
     if (ref instanceof RefImplicitConstructor) {
       return IMPLICIT_CONSTRUCTOR;
     }
@@ -334,15 +332,15 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public @NotNull RefEntity getRefinedElement(final @NotNull RefEntity ref) {
-    if (ref instanceof RefImplicitConstructor) {
-      return ((RefImplicitConstructor)ref).getOwnerClass();
+  public @NotNull RefEntity getRefinedElement(@NotNull RefEntity ref) {
+    if (ref instanceof RefImplicitConstructor c) {
+      return c.getOwnerClass();
     }
     return ref;
   }
 
   @Override
-  public void visitElement(final @NotNull PsiElement element) {
+  public void visitElement(@NotNull PsiElement element) {
     PsiElementVisitor projectIterator = myProjectIterator;
     if (projectIterator == null) {
       myProjectIterator = projectIterator = new UastVisitorAdapter(new MyJavaElementVisitor(), true) {
@@ -366,18 +364,18 @@ public final class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public @Nullable String getGroupName(final @NotNull RefEntity entity) {
+  public @Nullable String getGroupName(@NotNull RefEntity entity) {
     if (entity instanceof RefFile && !(entity instanceof RefJavaFileImpl)) return null;
     return RefJavaUtil.getInstance().getPackageName(entity);
   }
 
   @Override
-  public boolean belongsToScope(final @NotNull PsiElement psiElement) {
+  public boolean belongsToScope(@NotNull PsiElement psiElement) {
     return !(psiElement instanceof PsiTypeParameter);
   }
 
   @Override
-  public void export(final @NotNull RefEntity refEntity, final @NotNull Element element) {
+  public void export(@NotNull RefEntity refEntity, @NotNull Element element) {
     String packageName = RefJavaUtil.getInstance().getPackageName(refEntity);
     if (packageName != null) {
       final Element packageElement = new Element("package");
@@ -430,7 +428,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     return entryPointsManager;
   }
 
-  private class MyJavaElementVisitor extends AbstractUastNonRecursiveVisitor {
+  private final class MyJavaElementVisitor extends AbstractUastNonRecursiveVisitor {
     private final RefJavaUtil myRefUtil = RefJavaUtil.getInstance();
     private final ExternalAnnotationsManager myExternalAnnotationsManager = ExternalAnnotationsManager.getInstance(myRefManager.getProject());
 
@@ -543,8 +541,8 @@ public final class RefJavaManagerImpl extends RefJavaManager {
             String suppressId = buf.substring(1);
             element.addSuppression(suppressId);
 
-            if (annotatedSrc instanceof PsiField) {
-              addSuppressionsForSiblings((PsiField)annotatedSrc, suppressId);
+            if (annotatedSrc instanceof PsiField field) {
+              addSuppressionsForSiblings(field, suppressId);
             }
           }
         }
@@ -555,8 +553,8 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     private void processComments(@NotNull UElement node) {
       for (UComment comment : node.getComments()) {
         PsiElement psi = comment.getSourcePsi();
-        if (psi instanceof PsiDocComment) {
-          final PsiDocTag[] tags = ((PsiDocComment)psi).getTags();
+        if (psi instanceof PsiDocComment docComment) {
+          final PsiDocTag[] tags = docComment.getTags();
           for (PsiDocTag tag : tags) {
             if (Comparing.strEqual(tag.getName(), SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) {
               final PsiElement[] dataElements = tag.getDataElements();
@@ -584,8 +582,8 @@ public final class RefJavaManagerImpl extends RefJavaManager {
           break;
         }
         psiElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(psiElement);
-        if (psiElement instanceof PsiField) {
-          field = (PsiField)psiElement;
+        if (psiElement instanceof PsiField f) {
+          field = f;
           RefElement refElement = myRefManager.getReference(field);
           if (refElement != null) {
             ((WritableRefElement)refElement).addSuppression(suppressId);

@@ -31,7 +31,7 @@ import kotlin.metadata.jvm.localDelegatedProperties
 import kotlin.metadata.jvm.signature
 import kotlin.metadata.visibility
 
-internal fun createAbForKotlin(classesToBeDeleted: HashSet<String>, item: JarContentToProcess): ByteArray? {
+internal fun createAbiForKotlin(classesToBeDeleted: HashSet<String>, item: JarContentToProcess): ByteArray? {
   val classWriter = ClassWriter(0)
   val innerClassesToKeep = HashSet<String>()
   val remapper = ClassRemapper(classWriter, object : Remapper() {

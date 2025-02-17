@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import org.jetbrains.annotations.NotNull;
 
-public class IgnoredViewDialog extends SpecificFilesViewDialog.SpecificFilePathsViewDialog {
+public final class IgnoredViewDialog extends SpecificFilesViewDialog.SpecificFilePathsViewDialog {
   public IgnoredViewDialog(@NotNull Project project) {
     super(project, VcsBundle.message("dialog.title.ignored.files"), ChangesListView.IGNORED_FILE_PATHS_DATA_KEY,
           () -> ChangeListManager.getInstance(project).getIgnoredFilePaths());

@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.immutableKeyValueStore.benchmark
 
-import com.intellij.util.lang.Xxh3
+import com.dynatrace.hash4j.hashing.Hashing
 import org.jetbrains.intellij.build.io.IkvWriter
 import java.nio.channels.FileChannel
 import java.nio.file.Files
@@ -19,7 +19,7 @@ internal fun generateDb(file: Path, count: Int): List<Pair<Long, ByteArray>> {
     writer.use {
       (0 until count).forEach { i ->
         val data = random.nextBytes(random.nextInt(64, 512))
-        val key = Xxh3.hash(data)
+        val key = Hashing.xxh3_64().hashBytesToLong(data)
         writer.write(writer.entry(key, data.size), data)
         list.add(Pair(key, data))
       }

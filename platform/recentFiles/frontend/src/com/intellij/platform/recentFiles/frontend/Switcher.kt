@@ -39,9 +39,10 @@ import com.intellij.platform.recentFiles.frontend.SwitcherLogger.NAVIGATED_INDEX
 import com.intellij.platform.recentFiles.frontend.SwitcherLogger.NAVIGATED_ORIGINAL_INDEXES
 import com.intellij.platform.recentFiles.frontend.SwitcherLogger.SHOWN_TIME_ACTIVITY
 import com.intellij.platform.recentFiles.frontend.SwitcherSpeedSearch.Companion.installOn
-import com.intellij.platform.recentFiles.shared.FileSwitcherApi
 import com.intellij.platform.recentFiles.frontend.model.PreservingSelectionModel
+import com.intellij.platform.recentFiles.shared.FileSwitcherApi
 import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -56,9 +57,7 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.SwingTextTrimmer
 import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.components.BorderLayoutPanel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -75,13 +74,12 @@ import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val ACTION_PLACE = "Switcher"
 
-/**
- * @author Konstantin Bulenkov
- */
 object Switcher : BaseSwitcherAction(null) {
   @ApiStatus.Internal
   val SWITCHER_KEY: Key<SwitcherPanel> = Key.create("SWITCHER_KEY")
@@ -90,13 +88,13 @@ object Switcher : BaseSwitcherAction(null) {
   class SwitcherPanel(
     val project: Project,
     val title: @Nls String,
-    event: InputEvent?,
+    launchParameters: SwitcherLaunchEventParameters,
     onlyEditedFiles: Boolean?,
     givenFilesModel: CollectionListModel<SwitcherVirtualFile>,
-    val backendRequestsScope: CoroutineScope,
-    val remoteApi: FileSwitcherApi,
+    private val uiUpdateScope: CoroutineScope,
+    private val backendRequestsScope: CoroutineScope,
+    private val remoteApi: FileSwitcherApi,
   ) : BorderLayoutPanel(), UiDataProvider, QuickSearchComponent, Disposable {
-
     val popup: JBPopup?
     private val activity = SHOWN_TIME_ACTIVITY.started(project)
     private var navigationData: SwitcherLogger.NavigationData? = null
@@ -119,7 +117,7 @@ object Switcher : BaseSwitcherAction(null) {
     // false - auto closeable on modifier key release, true - default popup
     val pinned: Boolean
 
-    private val mnemonicsRegistry: SwitcherMnemonicsRegistry = SwitcherMnemonicsRegistry(event)
+    private val mnemonicsRegistry: SwitcherMnemonicsRegistry = SwitcherMnemonicsRegistry(launchParameters)
     private val onKeyRelease: SwitcherKeyReleaseListener
     private val speedSearch: SwitcherSpeedSearch?
     private var hint: JBPopup? = null
@@ -138,12 +136,12 @@ object Switcher : BaseSwitcherAction(null) {
     }
 
     init {
-      onKeyRelease = SwitcherKeyReleaseListener(if (recent) null else event) { e ->
+      onKeyRelease = SwitcherKeyReleaseListener(if (recent) null else launchParameters) { e ->
         ActionUtil.performInputEventHandlerWithCallbacks(ActionUiKind.POPUP, ACTION_PLACE, e) {
           navigate(e)
         }
       }
-      pinned = !onKeyRelease.isEnabled
+      pinned = !launchParameters.isEnabled
       val onlyEdited = true == onlyEditedFiles
       speedSearch = if (recent && Registry.`is`("ide.recent.files.speed.search")) installOn(this) else null
       cbShowOnlyEditedFiles = if (!recent) null else JCheckBox(IdeBundle.message("recent.files.checkbox.label"))
@@ -259,49 +257,64 @@ object Switcher : BaseSwitcherAction(null) {
       }
       val maybeSearchableModel = speedSearch?.wrap(givenFilesModel) ?: givenFilesModel
       val preservingSelectionModel = PreservingSelectionModel(maybeSearchableModel)
-      maybeSearchableModel.addListDataListener(object : ListDataListener {
-        override fun intervalAdded(e: ListDataEvent?) {
-          if (e == null) return
-          LOG.debug("Switcher add interval: $e")
-          // select the first item, if it's the only one
-          if (preservingSelectionModel.isSelectionEmpty && maybeSearchableModel.size == 1) {
-            LOG.debug("Switcher add first item: $e")
-            files.requestFocusInWindow()
-            preservingSelectionModel.setSelectionInterval(0, 0)
-            return
-          }
-
-          // otherwise, select the first file not opened in the focused editor after it is received
-          if (preservingSelectionModel.selectedIndices.singleOrNull() == 0 && maybeSearchableModel.size > 1) {
-            LOG.debug("Switcher add non-first item: $e")
-            val firstSelectedEntry = maybeSearchableModel.getElementAt(0)
-            if (firstSelectedEntry.virtualFileId.virtualFile() != FileEditorManager.getInstance(project).selectedEditor?.file) {
-              LOG.debug("Switcher added item != editor: $e")
+      if (Registry.`is`("switcher.preserve.selection.on.model.update")) {
+        maybeSearchableModel.addListDataListener(object : ListDataListener {
+          override fun intervalAdded(e: ListDataEvent?) {
+            if (e == null) return
+            cancelScheduledUiUpdate()
+            LOG.debug("Switcher add interval: $e")
+            // select the first item, if it's the only one
+            if (preservingSelectionModel.isSelectionEmpty && maybeSearchableModel.size == 1) {
+              LOG.debug("Switcher add first item: $e")
+              files.requestFocusInWindow()
+              preservingSelectionModel.setSelectionInterval(0, 0)
               return
             }
 
-            val newFileEntry = maybeSearchableModel.getElementAt(e.index0) ?: return
-            LOG.debug("Switcher new item in model != null: $e, $newFileEntry")
-            if (FileEditorManager.getInstance(project).selectedEditor?.file != newFileEntry.virtualFileId.virtualFile()) {
-              LOG.debug("Switcher added item != editor: $e, $newFileEntry")
-              preservingSelectionModel.setSelectionInterval(e.index0, e.index0)
+            // otherwise, select the first file not opened in the focused editor after it is received
+            if (preservingSelectionModel.selectedIndices.singleOrNull() == 0 && maybeSearchableModel.size > 1) {
+              LOG.debug("Switcher add non-first item: $e")
+              val firstSelectedEntry = maybeSearchableModel.getElementAt(0)
+              if (firstSelectedEntry.virtualFileId.virtualFile() != FileEditorManager.getInstance(project).selectedEditor?.file) {
+                LOG.debug("Switcher added item != editor: $e")
+                return
+              }
+
+              val newFileEntry = maybeSearchableModel.getElementAt(e.index0) ?: return
+              LOG.debug("Switcher new item in model != null: $e, $newFileEntry")
+              if (FileEditorManager.getInstance(project).selectedEditor?.file != newFileEntry.virtualFileId.virtualFile()) {
+                LOG.debug("Switcher added item != editor: $e, $newFileEntry")
+                preservingSelectionModel.setSelectionInterval(e.index0, e.index0)
+              }
             }
           }
-        }
 
-        override fun intervalRemoved(e: ListDataEvent?) {
-          if (maybeSearchableModel.size == 0) {
-            LOG.debug("Switcher removed item, empty model: $e")
-            toolWindows.requestFocusInWindow()
-            ScrollingUtil.ensureSelectionExists(toolWindows)
+          override fun intervalRemoved(e: ListDataEvent?) {
+            if (maybeSearchableModel.size == 0) {
+              LOG.debug("Switcher removed item, empty model: $e")
+              scheduleUiUpdate {
+                toolWindows.requestFocusInWindow()
+                ScrollingUtil.ensureSelectionExists(toolWindows)
+              }
+            }
           }
-        }
 
-        override fun contentsChanged(e: ListDataEvent?) {}
-      })
+          override fun contentsChanged(e: ListDataEvent?) {}
+        })
+      }
 
       files = JBListWithOpenInRightSplit.createListWithOpenInRightSplitter<SwitcherVirtualFile>(maybeSearchableModel, null)
         .apply { selectionModel = preservingSelectionModel }
+      if (files.model.size > 0) {
+        val fileFromSelectedEditor = FileEditorManager.getInstance(project).selectedEditor?.file
+        val firstFileInList = files.model.getElementAt(0).virtualFileId.virtualFile()
+        if (firstFileInList != null && firstFileInList == fileFromSelectedEditor) {
+          files.setSelectedIndex(1)
+        }
+        else {
+          files.setSelectedIndex(0)
+        }
+      }
 
       val filesSelectionListener = object : ListSelectionListener {
         override fun valueChanged(e: ListSelectionEvent) {
@@ -342,7 +355,7 @@ object Switcher : BaseSwitcherAction(null) {
         files.addKeyListener(listener)
         toolWindows.addKeyListener(listener)
       }
-      popup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, toolWindows)
+      popup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, files)
         .setResizable(pinned)
         .setNormalWindowLevel(pinned && StartupUiUtil.isWaylandToolkit()) // On Wayland, only "normal" windows can be moved smoothly at the moment
         .setModalContext(false)
@@ -380,7 +393,6 @@ object Switcher : BaseSwitcherAction(null) {
       if (Registry.`is`("highlighting.passes.cache")) {
         scheduleBackendRecentFilesUpdate(RecentFilesBackendRequest.ScheduleRehighlighting(project.projectId()))
       }
-      scheduleBackendRecentFilesUpdate(RecentFilesBackendRequest.NewSearchWithParameters(onlyEdited, pinned, project.projectId()))
     }
 
     override fun dispose() {
@@ -394,6 +406,8 @@ object Switcher : BaseSwitcherAction(null) {
           }
         }
       }
+      uiUpdateScope.cancel(CancellationException("Switcher is disposed"))
+      backendRequestsScope.cancel(CancellationException("Switcher is disposed"))
     }
 
     val isOnlyEditedFilesShown: Boolean
@@ -456,6 +470,18 @@ object Switcher : BaseSwitcherAction(null) {
       popup!!.cancel()
     }
 
+    private fun cancelScheduledUiUpdate() {
+      uiUpdateScope.coroutineContext.cancelChildren(CancellationException("UI update cancelled because of adjacent model update"))
+    }
+
+    private fun scheduleUiUpdate(update: () -> Unit) {
+      cancelScheduledUiUpdate()
+      uiUpdateScope.launch(context = Dispatchers.EDT) {
+        delay(100.milliseconds)
+        update()
+      }
+    }
+
     private fun hideSpeedSearchOrPopup() {
       if (speedSearch == null || !speedSearch.isPopupActive) {
         cancel()
@@ -492,7 +518,7 @@ object Switcher : BaseSwitcherAction(null) {
 
     private fun updateFilesByCheckBox(event: ItemEvent) {
       val onlyEdited = ItemEvent.SELECTED == event.stateChange
-      scheduleBackendRecentFilesUpdate(RecentFilesBackendRequest.NewSearchWithParameters(onlyEdited, pinned, project.projectId()))
+      scheduleBackendRecentFilesUpdate(createFilesSearchRequestRequest(onlyEdited, pinned, project))
     }
 
     fun navigate(e: InputEvent?) {

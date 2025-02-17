@@ -103,15 +103,6 @@ public final class PsiUtil {
     return IntelliJProjectUtil.isIntelliJPlatformProject(project);
   }
 
-  /**
-   * @deprecated Use {@linkplain IntelliJProjectUtil#markAsIntelliJPlatformProject(Project, Boolean)} instead
-   */
-  @TestOnly
-  @Deprecated(forRemoval = true)
-  public static void markAsIdeaProject(@NotNull Project project, boolean value) {
-    IntelliJProjectUtil.markAsIntelliJPlatformProject(project, value);
-  }
-
   public static @Nullable UExpression getReturnedExpression(PsiMethod method) {
     UMethod uMethod = UastContextKt.toUElement(method, UMethod.class);
     if (uMethod == null) return null;

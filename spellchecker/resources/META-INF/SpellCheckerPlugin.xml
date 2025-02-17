@@ -18,7 +18,7 @@
                         serviceImplementation="com.intellij.spellchecker.ui.SpellCheckingEditorCustomizationProviderImpl"
                         overrides="true"/>
     <fileType name="Dictionary" implementationClass="com.intellij.spellchecker.DictionaryFileType" extensions="dic"/>
-    <postStartupActivity implementation="com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine$SpellerLoadActivity"/>
+    <backgroundPostStartupActivity implementation="com.intellij.spellchecker.grazie.GrazieSpellCheckerEngine$SpellerLoadActivity"/>
     <projectConfigurable parentId="proofread" instance="com.intellij.spellchecker.settings.SpellCheckerSettingsManager" id="reference.settings.ide.settings.spelling" key="spelling" bundle="messages.SpellCheckerBundle" />
 
     <localInspection shortName="SpellCheckingInspection" bundle="messages.SpellCheckerBundle"
@@ -36,6 +36,8 @@
 
     <registryKey key="spellchecker.corrections.limit" defaultValue="3" description="Spellchecker corrections limit" restartRequired="false"/>
     <registryKey key="spellchecker.inspection.enabled" defaultValue="true" description="Enable spellchecking inspection" restartRequired="false"/>
+    <registryKey key="spellchecker.use.standard.project.dictionary.name" defaultValue="true" description="Enables single project dictionary file"
+                 restartRequired="false"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.spellchecker.statistics.SpellcheckerConfigCollector"/>
     <lookup.usageDetails implementation="com.intellij.spellchecker.statistics.SpellcheckerLookupUsageDescriptor"/>

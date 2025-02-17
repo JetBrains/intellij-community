@@ -172,6 +172,7 @@ java_library(
     "//plugins/stats-collector:statsCollector",
     "//plugins/completion-ml-ranking-models:completionMlRankingModels",
     "//plugins/completion-ml-ranking:completionMlRanking",
+    "//plugins/stream-debugger-core:debugger-streams-core",
     "//plugins/stream-debugger:java-debugger-streams",
     "@lib//:jgoodies-common",
     "//plugins/editorconfig",
@@ -231,6 +232,9 @@ java_library(
     "//plugins/search-everywhere-ml/typos:searchEverywhereMl-typos",
     "//plugins/grazie",
     "//plugins/compose:compose-ide-plugin",
+    "//plugins/compose/intellij.compose.ide.plugin.k1:ide-plugin-k1",
+    "//plugins/compose/intellij.compose.ide.plugin.k2:ide-plugin-k2",
+    "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
     "//plugins/git-modal-commit:vcs-git-commit-modal",
   ]
 )

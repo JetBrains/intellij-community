@@ -2,14 +2,14 @@
 package com.intellij.debugger.streams.chain;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.streams.core.trace.dsl.impl.DslImpl;
+import com.intellij.debugger.streams.core.wrapper.StreamChain;
 import com.intellij.debugger.streams.lib.impl.StandardLibrarySupport;
 import com.intellij.debugger.streams.psi.impl.JavaChainTransformerImpl;
 import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.PackageChainDetector;
-import com.intellij.debugger.streams.trace.dsl.impl.DslImpl;
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory;
 import com.intellij.debugger.streams.trace.impl.JavaTraceExpressionBuilder;
-import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;

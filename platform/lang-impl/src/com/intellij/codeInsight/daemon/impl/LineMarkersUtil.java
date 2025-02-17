@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -71,7 +73,7 @@ final class LineMarkersUtil {
       if (textRange == null) continue;
       TextRange elementRange = InjectedLanguageManager.getInstance(project).injectedToHost(element, textRange);
       if (bounds.intersects(elementRange)) {
-        createOrReuseLineMarker(info, markupModel, recycler);
+        createOrReuseLineMarker(info, project, markupModel, recycler, highlightingSession.getCodeInsightContext());
       }
     }
     incinerate(recycler);
@@ -91,8 +93,10 @@ final class LineMarkersUtil {
   }
 
   private static void createOrReuseLineMarker(@NotNull LineMarkerInfo<?> info,
+                                              @NotNull Project project,
                                               @NotNull MarkupModelEx markupModel,
-                                              @NotNull Long2ObjectMap<List<RangeHighlighterEx>> toReuse) {
+                                              @NotNull Long2ObjectMap<List<RangeHighlighterEx>> toReuse,
+                                              @NotNull CodeInsightContext context) {
     LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer<?>)info.createGutterRenderer();
     List<RangeHighlighterEx> list = toReuse.get(TextRangeScalarUtil.toScalarRange(info.startOffset, info.endOffset));
     RangeHighlighterEx highlighter = list == null ? null : ContainerUtil.find(list, r -> r.getLayer() == HighlighterLayer.ADDITIONAL_SYNTAX);
@@ -100,7 +104,7 @@ final class LineMarkersUtil {
       highlighter = markupModel.addRangeHighlighterAndChangeAttributes(
         null, info.startOffset, info.endOffset,
         HighlighterLayer.ADDITIONAL_SYNTAX, HighlighterTargetArea.LINES_IN_RANGE, false,
-        changeAttributes(info, true, newRenderer, true, true));
+        changeAttributes(info, project, true, newRenderer, context, true, true));
 
       MarkupEditorFilter editorFilter = info.getEditorFilter();
       if (editorFilter != MarkupEditorFilter.EMPTY) {
@@ -115,7 +119,7 @@ final class LineMarkersUtil {
       boolean lineSeparatorPlacementChanged = !Comparing.equal(highlighter.getLineSeparatorPlacement(), info.separatorPlacement);
 
       if (rendererChanged || lineSeparatorColorChanged || lineSeparatorPlacementChanged) {
-        markupModel.changeAttributesInBatch(highlighter, changeAttributes(info, rendererChanged, newRenderer, lineSeparatorColorChanged, lineSeparatorPlacementChanged));
+        markupModel.changeAttributesInBatch(highlighter, changeAttributes(info, project, rendererChanged, newRenderer, context, lineSeparatorColorChanged, lineSeparatorPlacementChanged));
       }
       HighlightingNecromancer.unmarkZombieMarkup(highlighter);
     }
@@ -124,8 +128,10 @@ final class LineMarkersUtil {
   }
 
   private static @NotNull Consumer<RangeHighlighterEx> changeAttributes(@NotNull LineMarkerInfo<?> info,
+                                                                        @NotNull Project project,
                                                                         boolean rendererChanged,
                                                                         LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer,
+                                                                        @NotNull CodeInsightContext context,
                                                                         boolean lineSeparatorColorChanged,
                                                                         boolean lineSeparatorPlacementChanged) {
     return markerEx -> {
@@ -138,10 +144,17 @@ final class LineMarkersUtil {
       if (lineSeparatorPlacementChanged) {
         markerEx.setLineSeparatorPlacement(info.separatorPlacement);
       }
+
+      CodeInsightContextHighlightingUtil.installCodeInsightContext(markerEx, project, context);
     };
   }
 
-  static void addLineMarkerToEditorIncrementally(@NotNull Project project, @NotNull Document document, @NotNull LineMarkerInfo<?> markerInfo) {
+  static void addLineMarkerToEditorIncrementally(
+    @NotNull Project project,
+    @NotNull Document document,
+    @NotNull LineMarkerInfo<?> markerInfo,
+    @NotNull HighlightingSession session
+  ) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
@@ -165,7 +178,7 @@ final class LineMarkersUtil {
           return true;
         });
       if (allIsClear) {
-        createOrReuseLineMarker(markerInfo, markupModel, recycler);
+        createOrReuseLineMarker(markerInfo, project, markupModel, recycler, session.getCodeInsightContext());
       }
     }
     incinerate(recycler);

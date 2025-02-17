@@ -43,7 +43,6 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
-    "//plugins/kotlin/idea",
     "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/util:kotlin-base-util",

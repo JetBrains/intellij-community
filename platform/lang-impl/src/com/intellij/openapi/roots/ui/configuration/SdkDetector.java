@@ -16,11 +16,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.keyFMap.KeyFMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,10 +47,10 @@ public class SdkDetector {
 
     /**
      * Provides detailed information about a detected SDK.
-     * @param info additional metadata associated with the detected SDK, stored in a {@link KeyFMap}.
+     * @param entry additional metadata associated with the detected SDK.
      */
-    default void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home, @NotNull KeyFMap info) {
-      onSdkDetected(type, version, home);
+    default void onSdkDetected(@NotNull SdkType type, @NotNull SdkType.SdkEntry entry) {
+      onSdkDetected(type, entry.versionString(), entry.homePath());
     }
 
     default void onSearchStarted() { }
@@ -139,9 +137,9 @@ public class SdkDetector {
     }
 
     @Override
-    public void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home, @NotNull KeyFMap info) {
+    public void onSdkDetected(@NotNull SdkType type, @NotNull SdkType.SdkEntry entry) {
       synchronized (myPublicationLock) {
-        logEvent(listener -> listener.onSdkDetected(type, version, home, info));
+        logEvent(listener -> listener.onSdkDetected(type, entry));
       }
     }
 
@@ -217,17 +215,13 @@ public class SdkDetector {
                              @NotNull ProgressIndicator indicator,
                              @NotNull DetectedSdkListener callback) {
     try {
-      Collection<KeyFMap> suggestedPaths = type.collectSdkDetails(project);
-      for (KeyFMap info : suggestedPaths) {
+      Collection<SdkType.SdkEntry> suggestedPaths = type.collectSdkEntries(project);
+      for (SdkType.SdkEntry entry : suggestedPaths) {
         indicator.checkCanceled();
-        var updatedInfo = info;
 
-        final String home = info.get(SdkType.HOMEPATH_KEY);
-        if (home == null) continue;
-
+        final String home = entry.homePath();
         final Path path = Paths.get(home);
         try {
-          //a sanity check first
           if (!Files.exists(path)) continue;
           if (!type.isValidSdkHome(home)) continue;
         }
@@ -236,30 +230,7 @@ public class SdkDetector {
           continue;
         }
 
-        String version = info.get(SdkType.VERSION_KEY); // might have been detected earlier (e.g. to sort results)
-        if (version == null) {
-          try {
-              version = type.getVersionString(home);
-          }
-          catch (Exception e) {
-            LOG.warn("Failed to get the detected SDK version for " + type + " at " + home + ". " + e.getMessage(), e);
-            continue;
-          }
-          if (version == null) {
-            LOG.warn("No version is returned for detected SDK " + type + " at " + home);
-            continue;
-          }
-        }
-
-        if (info.get(SdkType.IS_SYMLINK_KEY) == null) {
-          try {
-            var containsSymlink = !path.toRealPath().equals(path);
-            updatedInfo = info.plus(SdkType.IS_SYMLINK_KEY, containsSymlink);
-          }
-          catch (IOException ignored) {}
-        }
-
-        callback.onSdkDetected(type, version, home, updatedInfo);
+        callback.onSdkDetected(type, entry);
       }
     }
     catch (ProcessCanceledException e) {
@@ -290,8 +261,8 @@ public class SdkDetector {
     }
 
     @Override
-    public void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home, @NotNull KeyFMap info) {
-      dispatch(() -> myTarget.onSdkDetected(type, version, home, info));
+    public void onSdkDetected(@NotNull SdkType type, @NotNull SdkType.SdkEntry info) {
+      dispatch(() -> myTarget.onSdkDetected(type, info));
     }
 
     @Override

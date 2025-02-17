@@ -14,9 +14,10 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ExitActionType
 
 internal object DialogsCounterUsagesCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("ui.dialogs", 62)
+  private val GROUP = EventLogGroup("ui.dialogs", 63)
 
   val EXIT_CODE: PrimitiveEventField<Int> = object: PrimitiveEventField<Int>() {
     override val name: String = "code"
@@ -39,9 +40,10 @@ internal object DialogsCounterUsagesCollector : CounterUsagesCollector() {
 
   val DIALOG_CLASS: ClassEventField = EventFields.Class("dialog_class")
   val INVOCATION_PLACE: StringEventField = StringValidatedByCustomRule("dialog_invocation_place", ListValidationRule::class.java)
+  val EXIT_ACTION_TYPE = EnumEventField("exit_action_type", ExitActionType::class.java) { it.name }
 
   val SHOW: VarargEventId = GROUP.registerVarargEvent("show", DIALOG_CLASS, INVOCATION_PLACE, EventFields.PluginInfo)
-  val CLOSE: VarargEventId = GROUP.registerVarargEvent("close", DIALOG_CLASS, INVOCATION_PLACE, EXIT_CODE, EventFields.PluginInfo)
+  val CLOSE: VarargEventId = GROUP.registerVarargEvent("close", DIALOG_CLASS, INVOCATION_PLACE, EXIT_ACTION_TYPE, EXIT_CODE, EventFields.PluginInfo)
   val HELP: VarargEventId = GROUP.registerVarargEvent("help.clicked", DIALOG_CLASS, INVOCATION_PLACE, EventFields.PluginInfo)
 
   override fun getGroup(): EventLogGroup = GROUP
@@ -119,11 +121,12 @@ internal class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
     }
   }
 
-  override fun logCloseDialog(clazz: Class<*>, exitCode: Int, invocationPlace: String?) {
+  override fun logCloseDialog(clazz: Class<*>, exitCode: Int, exitActionType: ExitActionType, invocationPlace: String?) {
     if (FeatureUsageLogger.getInstance().isEnabled()) {
       DialogsCounterUsagesCollector.CLOSE.log(
         DialogsCounterUsagesCollector.DIALOG_CLASS.with(clazz),
         DialogsCounterUsagesCollector.INVOCATION_PLACE.with(invocationPlace),
+        DialogsCounterUsagesCollector.EXIT_ACTION_TYPE.with(exitActionType),
         DialogsCounterUsagesCollector.EXIT_CODE.with(exitCode)
       )
     }

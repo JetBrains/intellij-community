@@ -93,7 +93,7 @@ class X implements ListCellRenderer<String> {
   void lambdaOk() {
     ListCellRenderer<Integer> renderer = (list, val, index, sel, cell) -> {
       JPanel panel = new JPanel() {
-        public <error descr="'getAccessibleContext()' in 'Anonymous class derived from javax.swing.JPanel' clashes with 'getAccessibleContext()' in 'javax.swing.JPanel'; attempting to use incompatible return type">AccessibleContext</error> getAccessibleContext() {
+        public <error descr="'getAccessibleContext()' in 'Anonymous class derived from javax.swing.JPanel' clashes with 'getAccessibleContext()' in 'javax.swing.JPanel'; incompatible return type">AccessibleContext</error> getAccessibleContext() {
           return null;
         }
       };
@@ -106,7 +106,7 @@ class X implements ListCellRenderer<String> {
   }
   
   private class MyJPanel extends JPanel {
-    public <error descr="'getAccessibleContext()' in 'X.MyJPanel' clashes with 'getAccessibleContext()' in 'javax.swing.JPanel'; attempting to use incompatible return type">AccessibleContext</error> getAccessibleContext() {
+    public <error descr="'getAccessibleContext()' in 'X.MyJPanel' clashes with 'getAccessibleContext()' in 'javax.swing.JPanel'; incompatible return type">AccessibleContext</error> getAccessibleContext() {
       return null;
     }
   }

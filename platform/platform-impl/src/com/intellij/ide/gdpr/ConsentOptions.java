@@ -12,10 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import kotlin.Pair;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,6 +33,7 @@ public final class ConsentOptions implements ModificationTracker {
   private static final String RECONFIRM_CONSENTS_PROPERTY = "test.force.reconfirm.consents";
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
   private static final String EAP_FEEDBACK_OPTION_ID = "eap";
+  private static final String AI_DATA_COLLECTION_OPTION_ID = "ai.data.collection.and.use.policy";
   private static final Set<String> PER_PRODUCT_CONSENTS = Set.of(EAP_FEEDBACK_OPTION_ID);
   private final BooleanSupplier myIsEap;
   private String myProductCode;
@@ -107,7 +105,7 @@ public final class ConsentOptions implements ModificationTracker {
         Files.writeString(confirmedConsentsFile, data);
         if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
           DataSharingSettingsChangeListener syncPublisher =
-            ApplicationManager.getApplication().getMessageBus().syncPublisher(DataSharingSettingsChangeListener.Companion.getTOPIC());
+            ApplicationManager.getApplication().getMessageBus().syncPublisher(DataSharingSettingsChangeListener.TOPIC);
           syncPublisher.consentWritten();
         }
       }
@@ -197,6 +195,10 @@ public final class ConsentOptions implements ModificationTracker {
     return consent -> isProductConsentOfKind(EAP_FEEDBACK_OPTION_ID, consent.getId());
   }
 
+  public static @NotNull Predicate<Consent> condAiDataCollectionConsent() {
+    return consent -> AI_DATA_COLLECTION_OPTION_ID.equals(consent.getId());
+  }
+
   /**
    * Warning: For JetBrains products this setting is relevant for release builds only.
    * Statistics sending for JetBrains EAP builds is managed by a separate flag.
@@ -219,6 +221,14 @@ public final class ConsentOptions implements ModificationTracker {
 
   public boolean setEAPFeedbackAllowed(boolean allowed) {
     return setPermission(EAP_FEEDBACK_OPTION_ID, allowed);
+  }
+
+  public @NotNull Permission getAiDataCollectionPermission() {
+    return getPermission(AI_DATA_COLLECTION_OPTION_ID);
+  }
+
+  public void setAiDataCollectionPermission(boolean permitted) {
+    setPermission(AI_DATA_COLLECTION_OPTION_ID, permitted);
   }
 
   private @NotNull Permission getPermission(final String consentId) {
@@ -281,7 +291,7 @@ public final class ConsentOptions implements ModificationTracker {
       if (applyServerChangesToConfirmedConsents(confirmed, fromServer)) {
         myBackend.writeConfirmedConsents(confirmedConsentToExternalString(confirmed.values().stream()));
       }
-      myModificationCount.incrementAndGet();
+      notifyConsentsUpdated();
     }
     catch (Exception e) {
       LOG.info("Unable to apply server consents", e);
@@ -386,7 +396,7 @@ public final class ConsentOptions implements ModificationTracker {
           allConfirmed.put(consent.getId(), consent);
         }
         myBackend.writeConfirmedConsents(confirmedConsentToExternalString(allConfirmed.values().stream()));
-        myModificationCount.incrementAndGet();
+        notifyConsentsUpdated();
       }
       catch (IOException e) {
         LOG.info("Unable to save confirmed consents", e);
@@ -559,6 +569,23 @@ public final class ConsentOptions implements ModificationTracker {
       return consentId.substring(0, consentId.length() - productCode.length() - 1);
     }
     return null;
+  }
+
+  private void notifyConsentsUpdated() {
+    myModificationCount.incrementAndGet();
+    if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(DataSharingSettingsChangeListener.TOPIC).consentsUpdated();
+    }
+  }
+
+  @TestOnly
+  public static @NotNull Path getDefaultConsentsFileForTests() {
+    return getDefaultConsentsFile();
+  }
+
+  @TestOnly
+  public static @NotNull Path getConfirmedConsentsFileForTests() {
+    return getConfirmedConsentsFile();
   }
 
   protected interface IOBackend {

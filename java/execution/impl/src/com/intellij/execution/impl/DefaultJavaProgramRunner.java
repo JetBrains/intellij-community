@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.debugger.engine.JavaDebugProcess;
@@ -308,7 +308,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
         return;
       }
       RunnerContentUi runnerContentUi = event.getData(RunnerContentUi.KEY);
-      if (Registry.is("execution.dump.threads.using.attach") && processHandler instanceof BaseProcessHandler && runnerContentUi != null) {
+      if (processHandler instanceof BaseProcessHandler && runnerContentUi != null) {
         String pid = String.valueOf(((BaseProcessHandler<?>)processHandler).getProcess().pid());
         RunTab runTab = event.getData(RunTab.KEY);
         GlobalSearchScope scope =
@@ -343,8 +343,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
                 try {
                   vm.detach();
                 }
-                catch (IOException ignored) {
-                }
+                catch (IOException ignored) { }
               }
             }
           });

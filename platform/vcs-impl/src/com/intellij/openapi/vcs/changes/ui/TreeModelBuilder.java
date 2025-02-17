@@ -565,6 +565,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
     if (parentUserObject instanceof FilePath &&
         childUserObject instanceof FilePath) {
+      appendCollapsedParent(child, parent);
       return child;
     }
 
@@ -578,12 +579,19 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
       List<ChangesBrowserNode<?>> children = child.iterateNodeChildren().toList(); // defensive copy
       for (ChangesBrowserNode<?> childNode : children) {
         parent.add(childNode);
+        appendCollapsedParent(childNode, child);
       }
 
       return parent;
     }
 
     return null;
+  }
+
+  private static void appendCollapsedParent(@NotNull ChangesBrowserNode<?> child, ChangesBrowserNode<?> parent) {
+    if (child instanceof AbstractChangesBrowserFilePathNode<?> childWithFilePath) {
+      childWithFilePath.appendFlattenedParent$intellij_platform_vcs_impl(parent);
+    }
   }
 
   public static @NotNull StaticFilePath staticFrom(@NotNull FilePath fp) {

@@ -1,5 +1,9 @@
 package ru.adelf.idea.dotenv.tests
 
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.LexerTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -44,6 +48,16 @@ abstract class DotEnvFileBasedTestCase : BasePlatformTestCase() {
         }
         val referenceFile = "${testDataPath}/${filenamePrefixForCurrentTest("txt")}"
         assertSameLinesWithFile(referenceFile, result!!)
+    }
+
+    fun doSingleCompletionTest() {
+        val settings = CodeInsightSettings.getInstance()
+        val command = Runnable {
+            val previousCompletionState: Boolean = settings.AUTOCOMPLETE_ON_CODE_COMPLETION
+            (LookupManager.getActiveLookup(myFixture.editor) as? LookupImpl)?.finishLookup('\n')
+            settings.AUTOCOMPLETE_ON_CODE_COMPLETION = previousCompletionState
+        }
+        CommandProcessor.getInstance().executeCommand(project, command, null, null, myFixture.editor.document)
     }
 
     override fun getBasePath(): String = "testResources/ru/adelf/idea/dotenv/tests"

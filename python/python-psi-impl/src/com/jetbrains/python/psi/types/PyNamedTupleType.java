@@ -223,4 +223,12 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
       return myDefaultValue;
     }
   }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
+      return visitorExt.visitPyNamedTupleType(this);
+    }
+    return visitor.visitPyClassType(this);
+  }
 }

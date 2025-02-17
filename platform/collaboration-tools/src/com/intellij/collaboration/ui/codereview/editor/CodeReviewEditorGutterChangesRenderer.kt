@@ -243,6 +243,7 @@ open class CodeReviewEditorGutterChangesRenderer(
   }
 
   companion object {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use a suspending function", ReplaceWith("cs.launch { render(model, editor) }"))
     fun setupIn(cs: CoroutineScope, model: CodeReviewEditorGutterActionableChangesModel, editor: Editor) {
       cs.launchNow { render(model, editor) }

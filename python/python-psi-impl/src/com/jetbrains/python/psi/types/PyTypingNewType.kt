@@ -99,4 +99,11 @@ class PyTypingNewType(private val classType: PyClassType,
   override fun hashCode(): Int {
     return 31 * classType.hashCode() + name.hashCode()
   }
+
+  override fun <T : Any?> acceptTypeVisitor(visitor: PyTypeVisitor<T?>): T? {
+    if (visitor is PyTypeVisitorExt) {
+      return visitor.visitPyTypingNewType(this)
+    }
+    return visitor.visitPyClassType(this)
+  }
 }

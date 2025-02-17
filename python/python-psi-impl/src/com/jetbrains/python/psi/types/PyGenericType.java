@@ -11,7 +11,6 @@ import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +29,7 @@ public class PyGenericType implements PyTypeVarType {
   private final @Nullable Ref<PyType> myDefaultType;
   private final boolean myIsDefinition;
   private final @Nullable PyQualifiedNameOwner myDeclarationElement;
-  private @Nullable PyQualifiedNameOwner myScopeOwner;
+  private final @Nullable PyQualifiedNameOwner myScopeOwner;
 
   public PyGenericType(@NotNull String name,
                        @NotNull List<@Nullable PyType> constraints,
@@ -39,13 +38,13 @@ public class PyGenericType implements PyTypeVarType {
     this(name, constraints, bound, defaultType, false, null, null);
   }
 
-  private PyGenericType(@NotNull String name,
-                        @NotNull List<@Nullable PyType> constraints,
-                        @Nullable PyType bound,
-                        @Nullable Ref<PyType> defaultType,
-                        boolean isDefinition,
-                        @Nullable PyQualifiedNameOwner declarationElement,
-                        @Nullable PyQualifiedNameOwner scopeOwner) {
+  protected PyGenericType(@NotNull String name,
+                          @NotNull List<@Nullable PyType> constraints,
+                          @Nullable PyType bound,
+                          @Nullable Ref<PyType> defaultType,
+                          boolean isDefinition,
+                          @Nullable PyQualifiedNameOwner declarationElement,
+                          @Nullable PyQualifiedNameOwner scopeOwner) {
     myName = name;
     myConstraints = constraints;
     myBound = bound;
@@ -155,8 +154,7 @@ public class PyGenericType implements PyTypeVarType {
   }
 
   public @NotNull PyGenericType withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
-    return new PyGenericType(getName(), getConstraints(), getBound(), getDefaultType(), isDefinition(), getDeclarationElement(),
-                             scopeOwner);
+    return new PyTypeVarTypeImpl(getName(), getConstraints(), getBound(), getDefaultType(), isDefinition(), getDeclarationElement(), scopeOwner);
   }
 
   public @NotNull PyGenericType withTargetExpression(@Nullable PyTargetExpression targetExpression) {
@@ -164,29 +162,16 @@ public class PyGenericType implements PyTypeVarType {
   }
 
   public @NotNull PyGenericType withDeclarationElement(@Nullable PyQualifiedNameOwner declarationElement) {
-    return new PyGenericType(getName(), getConstraints(), getBound(), getDefaultType(), isDefinition(), declarationElement,
-                             getScopeOwner());
-  }
-
-  @ApiStatus.Internal
-  public void setScopeOwner(@NotNull PyQualifiedNameOwner scopeOwner) {
-    if (myScopeOwner != null && myScopeOwner != scopeOwner) {
-      throw new IllegalStateException("Cannot override the existing scope owner");
-    }
-    myScopeOwner = scopeOwner;
+    return new PyTypeVarTypeImpl(getName(), getConstraints(), getBound(), getDefaultType(), isDefinition(), declarationElement, getScopeOwner());
   }
 
   @Override
   public @NotNull PyGenericType toInstance() {
-    return myIsDefinition
-           ? new PyGenericType(myName, myConstraints, myBound, myDefaultType, false, myDeclarationElement, myScopeOwner)
-           : this;
+    return myIsDefinition ? new PyTypeVarTypeImpl(myName, myConstraints, myBound, myDefaultType, false, myDeclarationElement, myScopeOwner) : this;
   }
 
   @Override
   public @NotNull PyGenericType toClass() {
-    return myIsDefinition
-           ? this
-           : new PyGenericType(myName, myConstraints, myBound, myDefaultType, true, myDeclarationElement, myScopeOwner);
+    return myIsDefinition ? this : new PyTypeVarTypeImpl(myName, myConstraints, myBound, myDefaultType, true, myDeclarationElement, myScopeOwner);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +92,7 @@ enum JvmProtoMemberValueExternalizer implements Externalizer<Object> {
     @Override
     public void save(GraphDataOutput out, Object val) throws IOException {
       final int length = Array.getLength(val);
-      JvmProtoMemberValueExternalizer ext = find(length > 0? Array.get(val, 0).getClass() : val.getClass().getComponentType());
+      JvmProtoMemberValueExternalizer ext = find(getDataType(length > 0? Array.get(val, 0).getClass() : val.getClass().getComponentType()));
       out.writeInt(ext.ordinal());
       if (ext != NONE) {
         out.writeInt(length);
@@ -146,6 +146,78 @@ enum JvmProtoMemberValueExternalizer implements Externalizer<Object> {
         return boolean.class;
       }
       return dataType;
+    }
+
+    private Class<?> getDataType(Class<?> arrayElementType) {
+      if (char.class.equals(arrayElementType)) {
+        return Character.class;
+      }
+      if (byte.class.equals(arrayElementType)) {
+        return Byte.class;
+      }
+      if (short.class.equals(arrayElementType)) {
+        return Short.class;
+      }
+      if (int.class.equals(arrayElementType)) {
+        return Integer.class;
+      }
+      if (long.class.equals(arrayElementType)) {
+        return Long.class;
+      }
+      if (float.class.equals(arrayElementType)) {
+        return Float.class;
+      }
+      if (double.class.equals(arrayElementType)) {
+        return Double.class;
+      }
+      if (boolean.class.equals(arrayElementType)) {
+        return Boolean.class;
+      }
+      return arrayElementType;
+    }
+  },
+  BOOLEAN(Boolean.class) {
+    @Override
+    public void save(GraphDataOutput out, Object v) throws IOException {
+      out.writeBoolean((Boolean)v);
+    }
+
+    @Override
+    public Object load(GraphDataInput in) throws IOException {
+      return in.readBoolean();
+    }
+  },
+  CHARACTER(Character.class) {
+    @Override
+    public void save(GraphDataOutput out, Object v) throws IOException {
+      out.writeChar((Character)v);
+    }
+
+    @Override
+    public Object load(GraphDataInput in) throws IOException {
+      return in.readChar();
+    }
+  },
+  BYTE(Byte.class) {
+    @Override
+    public void save(GraphDataOutput out, Object v) throws IOException {
+      out.writeByte((Byte)v);
+    }
+
+    @Override
+    public Object load(GraphDataInput in) throws IOException {
+      return in.readByte();
+    }
+  },
+  SHORT(Short.class) {
+    @Override
+    public void save(GraphDataOutput out, Object v) throws IOException {
+      out.writeShort((Short)v);
+    }
+
+    @Override
+    public Object load(GraphDataInput in) throws IOException {
+      return in.readShort();
     }
   }
   ;

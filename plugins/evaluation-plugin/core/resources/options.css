@@ -76,3 +76,8 @@
 .errRef {
     color: red;
 }
+
+.chartContainer{
+  height: 65%;
+  padding: 10px;
+}

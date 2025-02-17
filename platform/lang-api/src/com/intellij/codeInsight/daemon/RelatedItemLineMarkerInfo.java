@@ -33,18 +33,6 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLi
     myTargets = targets;
   }
 
-  /**
-   * @deprecated Use {@link #RelatedItemLineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment, NotNullFactory)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public RelatedItemLineMarkerInfo(@NotNull T element, @NotNull TextRange range, Icon icon, int updatePass,
-                                   @Nullable Function<? super T, String> tooltipProvider,
-                                   @Nullable GutterIconNavigationHandler<T> navHandler,
-                                   @NotNull GutterIconRenderer.Alignment alignment,
-                                   final @NotNull Collection<? extends GotoRelatedItem> targets) {
-    this(element, range, icon, tooltipProvider, navHandler, alignment, ()->targets);
-  }
-
   public RelatedItemLineMarkerInfo(@NotNull T element, @NotNull TextRange range, Icon icon,
                                    @Nullable Function<? super T, String> tooltipProvider,
                                    @Nullable GutterIconNavigationHandler<T> navHandler,

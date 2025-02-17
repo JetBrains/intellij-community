@@ -2,7 +2,7 @@ package p;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
-interface I0 <error descr="Invalid permits clause: 'I0' must be sealed">permits</error> I {}
+interface I0 <error descr="Invalid 'permits' clause: 'I0' must be sealed">permits</error> I {}
 
 sealed interface I extends I0 permits <error descr="Cannot resolve symbol 'Unresolved'">Unresolved</error>, I1, <error descr="Duplicate reference to 'p.I1' in 'permits' list">I1</error>{}
 non-sealed interface I1 extends I {}
@@ -16,7 +16,7 @@ class Usage {
 }
 
 
-sealed interface Indirect permits <error descr="Invalid permits clause: 'IndirectInheritor' must directly implement 'Indirect'">IndirectInheritor</error>, MiddleMan {}
+sealed interface Indirect permits <error descr="Invalid 'permits' clause: 'IndirectInheritor' must directly implement 'Indirect'">IndirectInheritor</error>, MiddleMan {}
 non-sealed interface MiddleMan extends Indirect {}
 final class IndirectInheritor implements MiddleMan {}
 

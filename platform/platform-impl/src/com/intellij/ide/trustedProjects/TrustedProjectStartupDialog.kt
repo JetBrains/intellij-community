@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ExitActionType
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
@@ -227,17 +228,27 @@ internal class TrustedProjectStartupDialog(
       val option = options[i]
       val action: Action = object : AbstractAction(UIUtil.replaceMnemonicAmpersand(option)) {
         override fun actionPerformed(e: ActionEvent) {
+          val exitActionType: ExitActionType
           userChoice = when (option) {
-            trustButtonText -> OpenUntrustedProjectChoice.TRUST_AND_OPEN
-            distrustButtonText -> OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE
-            cancelButtonText -> OpenUntrustedProjectChoice.CANCEL
+            trustButtonText -> {
+              exitActionType = ExitActionType.YES
+              OpenUntrustedProjectChoice.TRUST_AND_OPEN
+            }
+            distrustButtonText -> {
+              exitActionType = ExitActionType.NO
+              OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE
+            }
+            cancelButtonText -> {
+              exitActionType = ExitActionType.CANCEL
+              OpenUntrustedProjectChoice.CANCEL
+            }
             else -> {
               logger<TrustedProjects>().error("Illegal choice $option")
               close(i, false)
               return
             }
           }
-          close(i, userChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN)
+          close(i, userChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN, exitActionType)
         }
       }
       if (option == trustButtonText) trustAction = action

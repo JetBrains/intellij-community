@@ -30,7 +30,7 @@ public final class NamedColorUtil {
   /**
    * @deprecated use {@link Cursor#getPredefinedCursor(int)} with {@link Cursor#TEXT_CURSOR} argument instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull Cursor getTextCursor(@NotNull Color backgroundColor) {
     return SystemInfoRt.isMac && ColorUtil.isDark(backgroundColor) ?
            MacUIUtil.getInvertedTextCursor() : Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);

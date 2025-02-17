@@ -17,26 +17,22 @@ class UiText(private val component: UiComponent, private val textData: TextData)
   val bundleKey get(): String = textData.bundleKey
 
   override fun toString(): String {
-    return "UiText[$text]"
+    return text
   }
 
   fun click() {
-    LOG.info("Click at '$this'")
-    component.click(textData.point, silent = true)
+    component.click(textData.point)
   }
 
   fun doubleClick() {
-    LOG.info("Double click at '$this'")
-    component.doubleClick(textData.point, silent = true)
+    component.doubleClick(textData.point)
   }
 
   fun rightClick() {
-    LOG.info("Right click at '$this'")
-    component.rightClick(textData.point, silent = true)
+    component.rightClick(textData.point)
   }
 
   fun moveMouse() {
-    LOG.info("Move mouse to the $this ${textData.point}")
-    component.moveMouse(textData.point, silent = true)
+    component.moveMouse(textData.point)
   }
 }

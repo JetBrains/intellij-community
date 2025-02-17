@@ -25,6 +25,8 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser;
+import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.Traversal;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -301,66 +303,100 @@ public final class PyTypeHintGenerationUtil {
                                                    @NotNull Set<String> typingTypes) {
     boolean useGenericAliasFromTyping =
       context.getOrigin() != null && LanguageLevel.forElement(context.getOrigin()).isOlderThan(LanguageLevel.PYTHON39);
-    if (type == null) {
-      typingTypes.add("Any");
-    }
-    else if (type instanceof PyUnionType) {
-      final Collection<PyType> members = ((PyUnionType)type).getMembers();
-      final boolean isOptional = members.size() == 2 && members.contains(PyNoneType.INSTANCE);
-      if (!PyTypingTypeProvider.isBitwiseOrUnionAvailable(context)) {
-        typingTypes.add(isOptional ? "Optional" : "Union");
+    PyRecursiveTypeVisitor.traverse(type, context, new PyTypeTraverser() {
+      @Override
+      public @NotNull Traversal visitUnknownType() {
+        typingTypes.add("Any");
+        return Traversal.CONTINUE;
       }
-      for (PyType pyType : members) {
-        collectImportTargetsFromType(pyType, context, symbols, typingTypes);
+
+      @Override
+      public @NotNull Traversal visitPyUnionType(@NotNull PyUnionType unionType) {
+        final Collection<PyType> members = unionType.getMembers();
+        final boolean isOptional = members.size() == 2 && members.contains(PyNoneType.INSTANCE);
+        if (!PyTypingTypeProvider.isBitwiseOrUnionAvailable(context)) {
+          typingTypes.add(isOptional ? "Optional" : "Union");
+        }
+        return Traversal.CONTINUE;
       }
-    }
-    else if (type instanceof PyNamedTupleType) {
-      final PyQualifiedNameOwner element = type.getDeclarationElement();
-      if (element instanceof PsiNamedElement) {
-        symbols.add((PsiNamedElement)element);
+
+      @Override
+      public @NotNull Traversal visitPyNamedTupleType(@NotNull PyNamedTupleType namedTupleType) {
+        final PyQualifiedNameOwner element = namedTupleType.getDeclarationElement();
+        if (element instanceof PsiNamedElement) {
+          symbols.add((PsiNamedElement)element);
+        }
+        addTypingTypeIfNeeded(namedTupleType);
+        return Traversal.CONTINUE;
       }
-    }
-    else if (type instanceof PyCollectionType) {
-      if (type instanceof PyCollectionTypeImpl) {
-        final PyClass pyClass = ((PyCollectionTypeImpl)type).getPyClass();
+
+      @Override
+      public @NotNull Traversal visitPyGenericType(@NotNull PyCollectionType genericType) {
+        final PyClass pyClass = genericType.getPyClass();
         final String typingCollectionName = PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.get(pyClass.getQualifiedName());
-        if (typingCollectionName != null && type.isBuiltin() && useGenericAliasFromTyping) {
+        if (typingCollectionName != null && genericType.isBuiltin() && useGenericAliasFromTyping) {
           typingTypes.add(typingCollectionName);
         }
         else {
           symbols.add(pyClass);
         }
+        addTypingTypeIfNeeded(genericType);
+        return Traversal.CONTINUE;
       }
-      else if (type instanceof PyTupleType && useGenericAliasFromTyping) {
-        typingTypes.add("Tuple");
+
+      @Override
+      public @NotNull Traversal visitPyTupleType(@NotNull PyTupleType tupleType) {
+        if (useGenericAliasFromTyping) {
+          typingTypes.add("Tuple");
+        }
+        return Traversal.CONTINUE;
       }
-      for (PyType pyType : ((PyCollectionType)type).getElementTypes()) {
-        collectImportTargetsFromType(pyType, context, symbols, typingTypes);
+
+      @Override
+      public @NotNull Traversal visitPyTypedDictType(@NotNull PyTypedDictType typedDictType) {
+        if (typedDictType.isInferred()) {
+          if (useGenericAliasFromTyping) {
+            typingTypes.add("Dict");
+          }
+        }
+        else {
+          symbols.add((PsiNamedElement)typedDictType.getDeclarationElement());
+          // Don't go through its type arguments
+          return Traversal.PRUNE;
+        }
+        return Traversal.CONTINUE;
       }
-    }
-    else if (type instanceof PyTypedDictType typedDictType) {
-      symbols.add((PsiNamedElement)typedDictType.getDeclarationElement());
-    }
-    else if (type instanceof PyClassType) {
-      symbols.add(((PyClassType)type).getPyClass());
-    }
-    else if (type instanceof PyCallableType callableType) {
-      typingTypes.add("Callable");
-      for (PyCallableParameter parameter : ContainerUtil.notNullize(callableType.getParameters(context))) {
-        collectImportTargetsFromType(parameter.getType(context), context, symbols, typingTypes);
+
+      @Override
+      public @NotNull Traversal visitPyClassType(@NotNull PyClassType classType) {
+        symbols.add(classType.getPyClass());
+        addTypingTypeIfNeeded(classType);
+        return Traversal.CONTINUE;
       }
-      collectImportTargetsFromType(callableType.getReturnType(context), context, symbols, typingTypes);
-    }
-    else if (type instanceof PyTypeParameterType) {
-      final PyTargetExpression target = as(type.getDeclarationElement(), PyTargetExpression.class);
-      if (target != null) {
-        symbols.add(target);
+
+      @Override
+      public @NotNull Traversal visitPyCallableType(@NotNull PyCallableType callableType) {
+        typingTypes.add("Callable");
+        return Traversal.CONTINUE;
       }
-    }
-    // TODO in Python 3.9+ use the builtin "type" instead of "typing.Type"
-    if (type instanceof PyInstantiableType && ((PyInstantiableType<?>)type).isDefinition()) {
-      typingTypes.add("Type");
-    }
+
+      @Override
+      public @NotNull Traversal visitPyTypeParameterType(@NotNull PyTypeParameterType typeParameterType) {
+        final PyTargetExpression target = as(typeParameterType.getDeclarationElement(), PyTargetExpression.class);
+        if (target != null) {
+          symbols.add(target);
+        }
+        addTypingTypeIfNeeded(typeParameterType);
+        return Traversal.PRUNE;
+      }
+
+      private void addTypingTypeIfNeeded(@NotNull PyType type) {
+        // TODO in Python 3.9+ use the builtin "type" instead of "typing.Type"
+        if (type instanceof PyInstantiableType<?> instantiableType && instantiableType.isDefinition()) {
+          typingTypes.add("Type");
+        }
+      }
+    });
   }
 
   public static void checkPep484Compatibility(@Nullable PyType type, @NotNull TypeEvalContext context) {

@@ -16,6 +16,7 @@ import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
+import java.nio.file.Path
 import java.nio.file.Paths
 
 class ProjectGradleSettingsListener(
@@ -28,8 +29,9 @@ class ProjectGradleSettingsListener(
     override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
         settings.forEach {
             coroutineScope.launchTracked(Dispatchers.IO) {
+                val gradleVersion = getGradleVersion(project, it)
                 writeAction {
-                    val newRoot = buildRootsManager.loadLinkedRoot(it)
+                    val newRoot = buildRootsManager.loadLinkedRoot(it, gradleVersion)
                     buildRootsManager.add(newRoot)
                 }
             }
@@ -40,8 +42,9 @@ class ProjectGradleSettingsListener(
         if (KotlinPluginModeProvider.isK2Mode()) {
             settings.forEach {
                 coroutineScope.launchTracked(Dispatchers.IO) {
+                    val gradleVersion = getGradleVersion(project, it)
                     val newRoot = writeAction {
-                        buildRootsManager.loadLinkedRoot(it)
+                        buildRootsManager.loadLinkedRoot(it, gradleVersion)
                     }
                     if (newRoot is Imported) {
                         loadScriptConfigurations(newRoot, it)
@@ -58,7 +61,7 @@ class ProjectGradleSettingsListener(
     }
 
     override fun onGradleHomeChange(oldPath: String?, newPath: String?, linkedProjectPath: String) {
-        val version = GradleInstallationManager.getGradleVersion(newPath)
+        val version = GradleInstallationManager.getGradleVersion(newPath?.let { Path.of(it) })
         buildRootsManager.reloadBuildRoot(linkedProjectPath, version)
     }
 

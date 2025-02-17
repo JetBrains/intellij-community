@@ -56,7 +56,9 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
   private static PsiCodeFragment prepareResolveScope(PsiCodeFragment codeFragment) {
     GlobalSearchScope originalResolveScope = codeFragment.getResolveScope();
     codeFragment.forceResolveScope(new DelegatingGlobalSearchScope(GlobalSearchScope.allScope(codeFragment.getProject())) {
-      final Comparator<VirtualFile> myScopeComparator = Comparator.comparing(originalResolveScope::contains).thenComparing(super::compare);
+      final Comparator<VirtualFile> myScopeComparator = Comparator
+        .comparing((VirtualFile file) -> originalResolveScope.contains(file))
+        .thenComparing(super::compare);
 
       @Override
       public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {

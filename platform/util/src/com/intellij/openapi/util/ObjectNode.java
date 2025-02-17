@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -11,9 +11,10 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-final class ObjectNode {
+@ApiStatus.Internal
+public final class ObjectNode {
   @VisibleForTesting
-  static final int REASONABLY_BIG = 500;
+  public static final int REASONABLY_BIG = 500;
 
   private final Disposable myObject;
   private @NotNull NodeChildren myChildren = EMPTY; // guarded by ObjectTree.treeLock

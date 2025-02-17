@@ -409,11 +409,13 @@ internal class ToolbarFrameHeader(
       val gb = GridBag().anchor(WEST).nextLine()
       add(menuBarContainer, gb.next().fillCellVertically().weighty(1.0))
       add(createDraggableWindowArea(), gb.next().weightx(1.0).fillCell())
+      isVisible = ShowMode.getCurrent() == ShowMode.MENU
     }
     val toolbarPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
       add(mainMenuWithButton, gb.next().fillCellVertically().weighty(1.0))
       add(toolbarPlaceholder, gb.next().weightx(1.0).fillCell())
+      isVisible = ShowMode.getCurrent() != ShowMode.MENU
     }
 
     val result = NonOpaquePanel(CardLayout()).apply {

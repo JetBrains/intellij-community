@@ -16,8 +16,6 @@ interface DataLoader {
   fun isSuitable(file: VirtualFile): Boolean
   fun getAssociatedExtensions(): Iterable<String>
 
-  fun ensureInitialized(consumer: Consumer<@NlsSafe String>)
-
   @Throws(Exception::class)
   fun loadFromFile(project: Project, file: VirtualFile, dataConsumer: DataConsumer)
 }

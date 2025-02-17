@@ -18,7 +18,6 @@ package org.jetbrains.bazel.jvm
 import com.google.devtools.build.lib.worker.WorkerProtocol
 import com.google.devtools.build.lib.worker.WorkerProtocol.WorkResponse
 import io.opentelemetry.api.OpenTelemetry
-import io.opentelemetry.context.Context
 import kotlinx.coroutines.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -41,7 +40,7 @@ class WorkRequestHandlerTest {
   fun normalWorkRequest() {
     val out = ByteArrayOutputStream()
     val handler = WorkRequestHandler<WorkRequest>(
-      requestExecutor = { args, err, _, _, _ -> 1 },
+      requestExecutor = { args, err, _, _ -> 1 },
       //input = ByteArrayInputStream(ByteArray(0)),
       out = out,
       tracer = OpenTelemetry.noop().getTracer("noop"),
@@ -56,7 +55,7 @@ class WorkRequestHandlerTest {
       sandboxDir = null,
     )
     runBlocking {
-      handler.handleRequest(request = request, requestState = AtomicReference(WorkRequestState.STARTED), tracingContext = null, parentSpan = null)
+      handler.handleRequest(request = request, requestState = AtomicReference(WorkRequestState.STARTED))
     }
 
     val response = WorkResponse.parseDelimitedFrom(out.toByteArray().inputStream())
@@ -70,7 +69,7 @@ class WorkRequestHandlerTest {
   fun multiplexWorkRequest() {
     val out = ByteArrayOutputStream()
     val handler = WorkRequestHandler<WorkRequest>(
-      requestExecutor = { args, err, _, _, _ -> 0 },
+      requestExecutor = { args, err, _, _ -> 0 },
       //input = ByteArray(0).inputStream(),
       out,
       tracer = OpenTelemetry.noop().getTracer("noop"),
@@ -78,7 +77,7 @@ class WorkRequestHandlerTest {
 
     val request = newWorkRequest(listOf("--sources", "A.java"))
     runBlocking {
-      handler.handleRequest(request = request, requestState = AtomicReference(WorkRequestState.STARTED), tracingContext = null, parentSpan = null)
+      handler.handleRequest(request = request, requestState = AtomicReference(WorkRequestState.STARTED))
     }
 
     val response = WorkResponse.parseDelimitedFrom(out.toByteArray().inputStream())
@@ -96,7 +95,7 @@ class WorkRequestHandlerTest {
     val started = Semaphore(0)
     val workerThreads = AtomicInteger()
     val handler = WorkRequestHandler<WorkRequest>(
-      requestExecutor = { args, err, _, _, _ ->
+      requestExecutor = { args, err, _, _ ->
         // each call to this, runs in its own thread
         workerThreads.incrementAndGet()
         started.release()
@@ -130,7 +129,7 @@ class WorkRequestHandlerTest {
   fun testOutput() {
     val out = ByteArrayOutputStream()
     val handler = WorkRequestHandler<WorkRequest>(
-      requestExecutor = { args, err, _, _, _ ->
+      requestExecutor = { args, err, _, _ ->
         err.appendLine("Failed!")
         1
       },
@@ -142,7 +141,7 @@ class WorkRequestHandlerTest {
     val args = listOf("--sources", "A.java")
     val request = newWorkRequest(args, requestId = 0)
     runBlocking {
-      handler.handleRequest(request, AtomicReference(WorkRequestState.STARTED), tracingContext = null, parentSpan = null)
+      handler.handleRequest(request, AtomicReference(WorkRequestState.STARTED))
     }
 
     val response = WorkResponse.parseDelimitedFrom(out.toByteArray().inputStream())
@@ -156,7 +155,7 @@ class WorkRequestHandlerTest {
   fun testException() {
     val out = ByteArrayOutputStream()
     val handler = WorkRequestHandler<WorkRequest>(
-      requestExecutor = { args, err, _, _, _ ->
+      requestExecutor = { args, err, _, _ ->
         throw RuntimeException("Exploded!")
       },
       //input = ByteArray(0).inputStream(),
@@ -167,7 +166,7 @@ class WorkRequestHandlerTest {
     val args = listOf("--sources", "A.java")
     val request = newWorkRequest(args, 342)
     runBlocking {
-      handler.handleRequest(request = request, requestState = AtomicReference(WorkRequestState.STARTED), tracingContext = null, parentSpan = null)
+      handler.handleRequest(request = request, requestState = AtomicReference(WorkRequestState.STARTED))
     }
 
     val response = WorkResponse.parseDelimitedFrom(ByteArrayInputStream(out.toByteArray()))
@@ -186,7 +185,7 @@ class WorkRequestHandlerTest {
 
     val input = PipedInputStream(src)
     val handler = WorkRequestHandler<WorkRequest>(
-      requestExecutor = { args, err, _, _, _ ->
+      requestExecutor = { args, err, _, _ ->
         handlerCalled = true
         err.appendLine("Such work! Much progress! Wow!")
         1
@@ -234,7 +233,7 @@ class WorkRequestHandlerTest {
 
     // we force the regular handling to not finish until after we have read the cancel response, to avoid flakiness
     val handler = WorkRequestHandler<WorkRequest>(
-      requestExecutor = { args, err, _, _, _ ->
+      requestExecutor = { args, err, _, _ ->
         // this handler waits until the main thread has sent a cancel request
         handlerCalled.release()
         try {
@@ -283,7 +282,7 @@ class WorkRequestHandlerTest {
     // we force the regular handling to not finish until after we have read the cancel response, to avoid flakiness
     val inputStream = PipedInputStream(src)
     val handler = WorkRequestHandler<WorkRequest>(
-      requestExecutor = { args, err, _, _, _ ->
+      requestExecutor = { args, err, _, _ ->
         try {
           waitForCancel.acquire()
         }
@@ -329,7 +328,7 @@ class WorkRequestHandlerTest {
 
     // we force the cancel request to not happen until after we have read the normal response, to avoid flakiness
     val handler = WorkRequestHandler<WorkRequest>(
-      requestExecutor = { args, err, _, _, _ ->
+      requestExecutor = { args, err, _, _ ->
         handlerCalled.release()
         err.appendLine("Such work! Much progress! Wow!")
         2
@@ -363,7 +362,7 @@ class WorkRequestHandlerTest {
   fun workRequestHandlerWithWorkRequestCallback() {
     val out = ByteArrayOutputStream()
     val handler = WorkRequestHandler<WorkRequest>(
-      requestExecutor = { request, err, _, _, _ -> request.arguments.size },
+      requestExecutor = { request, err, _, _ -> request.arguments.size },
       //ByteArrayInputStream(ByteArray(0)),
       out,
       tracer = OpenTelemetry.noop().getTracer("noop"),
@@ -372,7 +371,7 @@ class WorkRequestHandlerTest {
     val args = listOf("--sources", "B.java")
     val request = newWorkRequest(args, requestId = 0)
     runBlocking {
-      handler.handleRequest(request = request, requestState = AtomicReference(WorkRequestState.STARTED), tracingContext = null, parentSpan = null)
+      handler.handleRequest(request = request, requestState = AtomicReference(WorkRequestState.STARTED))
     }
 
     val response = WorkResponse.parseDelimitedFrom(ByteArrayInputStream(out.toByteArray()))
@@ -405,7 +404,7 @@ private inline fun useHandler(
 ) {
   val processor = GlobalScope.async(Dispatchers.Default) {
     try {
-      handler.processRequests(WorkRequestReaderWithoutDigest(input), Context.current())
+      handler.processRequests(WorkRequestReaderWithoutDigest(input))
     }
     catch (_: CancellationException) {
     }
@@ -436,4 +435,11 @@ private inline fun useHandler(
       processor.cancel()
     }
   }
+}
+
+private suspend fun WorkRequestHandler<WorkRequest>.handleRequest(
+  request: WorkRequest,
+  requestState: AtomicReference<WorkRequestState>,
+) {
+  executeRequest(request = request, requestState = requestState, parentSpan = null, tracer = OpenTelemetry.noop().getTracer("noop"))
 }

@@ -96,7 +96,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
     SourcePosition sourcePosition = getSourcePosition();
     if (sourcePosition != null) {
-      MethodDescriptor descriptor = getMethodDescriptor(myProject, sourcePosition);
+      MethodDescriptor descriptor = computeMethodDescriptor(sourcePosition);
       if (descriptor != null) {
         setMethodName(descriptor.methodName);
         mySignature = descriptor.methodSignature;
@@ -105,10 +105,20 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         }
       }
     }
-    PsiClass psiClass = getPsiClass();
-    if (psiClass != null) {
-      getProperties().myClassPattern = psiClass.getQualifiedName();
+    String classPattern = computeClassPattern();
+    if (classPattern != null) {
+      getProperties().myClassPattern = classPattern;
     }
+  }
+
+  protected @Nullable String computeClassPattern() {
+    PsiClass psiClass = getPsiClass();
+    if (psiClass == null) return null;
+    return psiClass.getQualifiedName();
+  }
+
+  protected @Nullable MethodDescriptor computeMethodDescriptor(@NotNull SourcePosition sourcePosition) {
+    return getMethodDescriptor(myProject, sourcePosition);
   }
 
   private static void createRequestForSubClasses(@NotNull MethodBreakpointBase breakpoint,

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -7,6 +7,7 @@ import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.concurrency.Job;
@@ -130,6 +131,7 @@ final class PassExecutorService implements Disposable {
   }
 
   void submitPasses(@NotNull Document document,
+                    @NotNull CodeInsightContext context,
                     @NotNull VirtualFile virtualFile,
                     @NotNull PsiFile psiFile,
                     @NotNull FileEditor fileEditor,
@@ -169,11 +171,11 @@ final class PassExecutorService implements Disposable {
     Int2ObjectMap<ScheduledPass> toBeSubmitted = new Int2ObjectOpenHashMap<>();
     sortById(documentBoundPasses);
     for (TextEditorHighlightingPass pass : documentBoundPasses) {
-      createScheduledPass(fileEditor, document, virtualFile, psiFile, pass, toBeSubmitted, id2Pass, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
+      createScheduledPass(fileEditor, document, context, virtualFile, psiFile, pass, toBeSubmitted, id2Pass, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
     }
 
     for (EditorBoundHighlightingPass pass : editorBoundPasses) {
-      createScheduledPass(fileEditor, document, virtualFile, psiFile, pass, toBeSubmitted, id2Pass, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
+      createScheduledPass(fileEditor, document, context, virtualFile, psiFile, pass, toBeSubmitted, id2Pass, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
     }
 
     if (CHECK_CONSISTENCY && !ApplicationManagerEx.isInStressTest()) {
@@ -260,6 +262,7 @@ final class PassExecutorService implements Disposable {
 
   private @NotNull ScheduledPass createScheduledPass(@NotNull FileEditor fileEditor,
                                                      @NotNull Document document,
+                                                     @NotNull CodeInsightContext context,
                                                      @NotNull VirtualFile virtualFile,
                                                      @NotNull PsiFile psiFile,
                                                      @NotNull TextEditorHighlightingPass pass,
@@ -277,7 +280,7 @@ final class PassExecutorService implements Disposable {
     threadsToStartCountdown.incrementAndGet();
     toBeSubmitted.put(passId, scheduledPass);
     for (int predecessorId : pass.getCompletionPredecessorIds()) {
-      ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditor, document, virtualFile, psiFile, toBeSubmitted, id2Pass, freePasses, dependentPasses,
+      ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditor, document, context, virtualFile, psiFile, toBeSubmitted, id2Pass, freePasses, dependentPasses,
                                                               updateProgress, threadsToStartCountdown, predecessorId,
                                                               toBeSubmitted, id2Pass);
       if (predecessor != null) {
@@ -285,7 +288,7 @@ final class PassExecutorService implements Disposable {
       }
     }
     for (int predecessorId : pass.getStartingPredecessorIds()) {
-      ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditor, document, virtualFile, psiFile, toBeSubmitted, id2Pass, freePasses, dependentPasses,
+      ScheduledPass predecessor = findOrCreatePredecessorPass(fileEditor, document, context, virtualFile, psiFile, toBeSubmitted, id2Pass, freePasses, dependentPasses,
                                                               updateProgress, threadsToStartCountdown, predecessorId,
                                                               toBeSubmitted, id2Pass);
       if (predecessor != null) {
@@ -303,9 +306,10 @@ final class PassExecutorService implements Disposable {
       ProgressManager.checkCanceled();
       Editor editor = text.getEditor();
       ShowIntentionsPass ip = new ShowIntentionsPass(psiFile, editor, false);
+      ip.setContext(context);
       assignUniqueId(ip, id2Pass);
       ip.setCompletionPredecessorIds(new int[]{passId});
-      createScheduledPass(fileEditor, document, virtualFile, psiFile, ip, toBeSubmitted, id2Pass, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
+      createScheduledPass(fileEditor, document, context, virtualFile, psiFile, ip, toBeSubmitted, id2Pass, freePasses, dependentPasses, updateProgress, threadsToStartCountdown);
     }
 
     return scheduledPass;
@@ -313,6 +317,7 @@ final class PassExecutorService implements Disposable {
 
   private ScheduledPass findOrCreatePredecessorPass(@NotNull FileEditor fileEditor,
                                                     @NotNull Document document,
+                                                    @NotNull CodeInsightContext context,
                                                     @NotNull VirtualFile virtualFile,
                                                     @NotNull PsiFile psiFile,
                                                     @NotNull Int2ObjectMap<ScheduledPass> toBeSubmitted,
@@ -327,7 +332,7 @@ final class PassExecutorService implements Disposable {
     ScheduledPass predecessor = thisEditorId2ScheduledPass.get(predecessorId);
     if (predecessor == null) {
       TextEditorHighlightingPass textEditorPass = thisEditorId2Pass.get(predecessorId);
-      predecessor = textEditorPass == null ? null : createScheduledPass(fileEditor, document, virtualFile, psiFile, textEditorPass, toBeSubmitted,
+      predecessor = textEditorPass == null ? null : createScheduledPass(fileEditor, document, context, virtualFile, psiFile, textEditorPass, toBeSubmitted,
                                                                         id2Pass, freePasses,
                                                                         dependentPasses, updateProgress, myThreadsToStartCountdown);
     }

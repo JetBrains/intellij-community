@@ -520,7 +520,7 @@ public final class GitChangeUtils {
   /**
    * @deprecated use getThreeDotDiffOrThrow
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull Collection<Change> getThreeDotDiff(@NotNull GitRepository repository,
                                                             @NotNull @NonNls String oldRevision,
                                                             @NotNull @NonNls String newRevision) {

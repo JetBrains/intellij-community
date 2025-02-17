@@ -55,6 +55,7 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     setupListeners(component)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(
     """Use the static method {@link UiNotifyConnector#installOn(Component, Activatable, boolean)}.
     <p>

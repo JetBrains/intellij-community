@@ -872,11 +872,7 @@ f:com.intellij.vcs.log.ui.filter.BranchFilterModel$Companion
 f:com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent
 - com.intellij.util.ui.FilterComponent
 - <init>(com.intellij.vcs.log.impl.MainVcsLogUiProperties,com.intellij.vcs.log.ui.filter.BranchFilterModel):V
-- getCurrentText():java.lang.String
-- getEmptyFilterValue():java.lang.String
 - getTargetComponent():java.awt.Component
-- getToolTipText():java.lang.String
-- installChangeListener(java.lang.Runnable):V
 - f:showPopupMenu():V
 a:com.intellij.vcs.log.ui.filter.BranchPopupBuilder
 - pf:myDataPack:com.intellij.vcs.log.VcsLogDataPack
@@ -895,23 +891,12 @@ f:com.intellij.vcs.log.ui.filter.DateFilterModel$Companion
 - f:getDateValues(com.intellij.vcs.log.VcsLogDateFilter):java.util.List
 c:com.intellij.vcs.log.ui.filter.DateFilterPopupComponent
 - com.intellij.util.ui.FilterComponent
-- psf:ALL_ACTION_TEXT:java.util.function.Supplier
-- psf:EMPTY_FILTER_TEXT:java.util.function.Supplier
-- pf:myFilterModel:com.intellij.vcs.log.ui.filter.FilterModel
 - <init>(com.intellij.vcs.log.ui.filter.FilterModel):V
 - p:createActionGroup():com.intellij.openapi.actionSystem.ActionGroup
 - p:createPopupMenu():com.intellij.openapi.ui.popup.ListPopup
-- p:createResetAction():java.lang.Runnable
-- getCurrentText():java.lang.String
-- getEmptyFilterValue():java.lang.String
 - getTargetComponent():java.awt.Component
 - p:getText(com.intellij.vcs.log.VcsLogDateFilter):java.lang.String
-- pa:getText(java.lang.Object):java.lang.String
 - p:getToolTip(com.intellij.vcs.log.VcsLogDateFilter):java.lang.String
-- pa:getToolTip(java.lang.Object):java.lang.String
-- getToolTipText():java.lang.String
-- installChangeListener(java.lang.Runnable):V
-- p:isValueSelected():Z
 - f:showPopupMenu():V
 f:com.intellij.vcs.log.ui.filter.FileFilterModel
 - com.intellij.vcs.log.ui.filter.FilterModel$MultipleFilterModel
@@ -960,23 +945,12 @@ a:com.intellij.vcs.log.ui.filter.FilterModel$SingleFilterModel
 - setFilter(com.intellij.vcs.log.VcsLogFilter):V
 c:com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent
 - com.intellij.util.ui.FilterComponent
-- psf:ALL_ACTION_TEXT:java.util.function.Supplier
-- psf:EMPTY_FILTER_TEXT:java.util.function.Supplier
-- pf:myFilterModel:com.intellij.vcs.log.ui.filter.FilterModel
 - <init>(com.intellij.vcs.log.impl.MainVcsLogUiProperties,com.intellij.vcs.log.ui.filter.FileFilterModel,com.intellij.vcs.log.ui.VcsLogColorManager):V
 - p:createActionGroup():com.intellij.openapi.actionSystem.ActionGroup
 - p:createPopupMenu():com.intellij.openapi.ui.popup.ListPopup
-- p:createResetAction():java.lang.Runnable
-- getCurrentText():java.lang.String
-- getEmptyFilterValue():java.lang.String
 - getTargetComponent():java.awt.Component
 - p:getText(com.intellij.vcs.log.VcsLogFilterCollection):java.lang.String
-- pa:getText(java.lang.Object):java.lang.String
 - p:getToolTip(com.intellij.vcs.log.VcsLogFilterCollection):java.lang.String
-- pa:getToolTip(java.lang.Object):java.lang.String
-- getToolTipText():java.lang.String
-- installChangeListener(java.lang.Runnable):V
-- p:isValueSelected():Z
 - s:path2Text(com.intellij.openapi.vcs.FilePath,Z,java.util.Set):java.lang.String
 - f:showPopupMenu():V
 f:com.intellij.vcs.log.ui.filter.TextFilterModel
@@ -987,35 +961,15 @@ f:com.intellij.vcs.log.ui.filter.TextFilterModel
 f:com.intellij.vcs.log.ui.filter.TextFilterModel$Companion
 c:com.intellij.vcs.log.ui.filter.UserFilterPopupComponent
 - com.intellij.util.ui.FilterComponent
-- psf:ALL_ACTION_TEXT:java.util.function.Supplier
-- psf:EMPTY_FILTER_TEXT:java.util.function.Supplier
-- pf:myFilterModel:com.intellij.vcs.log.ui.filter.FilterModel
-- pf:myUiProperties:com.intellij.vcs.log.impl.MainVcsLogUiProperties
 - p:createActionGroup():com.intellij.openapi.actionSystem.ActionGroup
 - p:createFilter(java.util.List):com.intellij.vcs.log.VcsLogUserFilter
-- pa:createFilter(java.util.List):java.lang.Object
 - p:createPopupMenu():com.intellij.openapi.ui.popup.ListPopup
-- p:createRecentItemsActionGroup():java.util.List
-- p:createResetAction():java.lang.Runnable
-- p:createSelectMultipleValuesAction():com.intellij.openapi.actionSystem.AnAction
 - p:createSpeedSearchActionGroup():com.intellij.openapi.actionSystem.ActionGroup
-- p:getActionName(java.util.List):java.lang.String
 - p:getAllValues():java.util.List
-- getCurrentText():java.lang.String
-- getEmptyFilterValue():java.lang.String
 - p:getFilterValues(com.intellij.vcs.log.VcsLogUserFilter):java.util.List
-- pa:getFilterValues(java.lang.Object):java.util.List
 - p:getLocalizedValues(java.util.Collection):java.util.List
-- p:getRecentValuesFromSettings():java.util.List
 - getTargetComponent():java.awt.Component
-- p:getText(java.lang.Object):java.lang.String
-- p:getToolTip(java.lang.Object):java.lang.String
-- getToolTipText():java.lang.String
-- p:getTooltip(java.util.Collection):java.lang.String
-- installChangeListener(java.lang.Runnable):V
-- p:isValueSelected():Z
 - p:parseLocalizedValues(java.util.Collection):java.util.List
-- p:rememberValuesInSettings(java.util.Collection):V
 - f:showPopupMenu():V
 c:com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 - com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx

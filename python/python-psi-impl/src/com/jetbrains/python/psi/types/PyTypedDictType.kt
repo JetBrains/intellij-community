@@ -13,11 +13,13 @@ import java.util.*
 class PyTypedDictType @JvmOverloads constructor(
   private val name: String,
   val fields: Map<String, FieldTypeAndTotality>,
+  
   private val dictClass: PyClass,
   private val definitionLevel: DefinitionLevel,
   private val ancestors: List<PyTypedDictType>,
   private val declaration: PyQualifiedNameOwner? = null,
-) : PyClassTypeImpl(dictClass, definitionLevel != DefinitionLevel.INSTANCE) {
+) :
+  PyClassTypeImpl(dictClass, definitionLevel != DefinitionLevel.INSTANCE){
   fun getElementType(key: String): PyType? {
     return fields[key]?.type
   }
@@ -330,4 +332,12 @@ class PyTypedDictType @JvmOverloads constructor(
 
     val hasErrors: Boolean get() = valueTypeErrors.isNotEmpty() || missingKeys.isNotEmpty() || extraKeys.isNotEmpty()
   }
+
+  override fun <T : Any?> acceptTypeVisitor(visitor: PyTypeVisitor<T?>): T? {
+    if (visitor is PyTypeVisitorExt) {
+      return visitor.visitPyTypedDictType(this)
+    }
+    return visitor.visitPyClassType(this)
+  }
+
 }

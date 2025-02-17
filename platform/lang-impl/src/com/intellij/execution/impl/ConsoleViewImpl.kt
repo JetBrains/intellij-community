@@ -915,7 +915,7 @@ open class ConsoleViewImpl protected constructor(
                   val additionalAttributes = additionalHighlight.getTextAttributes(null)
                   val hyperlinks = getHyperlinks()!!
                   if (additionalAttributes == null) {
-                    hyperlinks.highlightHyperlinks(additionalHighlight, 0)
+                    hyperlinks.highlightHyperlinks(additionalHighlight)
                   }
                   else {
                     val item = additionalHighlight.resultItems[0]

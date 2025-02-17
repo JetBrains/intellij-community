@@ -1351,7 +1351,6 @@ public final class EclipseXMLOutputter extends BaseXmlOutputter implements Clone
 
     return (
       "XMLOutputter[omitDeclaration = " + false + ", " +
-      "encoding = " + CharsetToolkit.UTF8 + ", " +
       "omitEncoding = " + false + ", " +
       "indent = '" + "\t" + "'" + ", " +
       "expandEmptyElements = " + userFormat.expandEmptyElements + ", " +

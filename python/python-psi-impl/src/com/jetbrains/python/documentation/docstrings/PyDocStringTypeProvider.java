@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
-import java.util.function.Function;
 
 /**
  * @author Mikhail Golubev
@@ -69,7 +68,17 @@ public final class PyDocStringTypeProvider extends PyTypeProviderBase {
     if (type != null) {
       type.assertValid("from docstring");
     }
-    setTypeVarScopeOwners(type, callable, context);
+    if (callable instanceof PyFunction pyFunction) {
+      return Ref.create(PyCloningTypeVisitor.clone(type, new PyCloningTypeVisitor(context) {
+        @Override
+        public PyType visitPyTypeVarType(@NotNull PyTypeVarType typeVarType) {
+          if (typeVarType instanceof PyTypeVarTypeImpl impl) {
+            return impl.withScopeOwner(findScopeOwner(typeVarType, pyFunction, context));
+          }
+          return typeVarType;
+        }
+      }));
+    }
     return Ref.create(type);
   }
 
@@ -89,31 +98,21 @@ public final class PyDocStringTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  // A hack to update scope owners of type parameters parsed out of docstrings
-  private void setTypeVarScopeOwners(@Nullable PyType type, @NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    if (!(callable instanceof PyFunction pyFunction)) return;
-    PyTypeChecker.Generics typeParameters = PyTypeChecker.collectGenerics(type, context);
-    if (typeParameters.isEmpty()) return;
-
-    PyClass pyClass = pyFunction.getContainingClass();
-
-    Function<PyTypeVarType, PyQualifiedNameOwner> findScopeOwner = typeVar -> pyFunction;
-    if (PyUtil.isInitOrNewMethod(callable)) {
-      findScopeOwner = typeVar -> pyClass;
+  private PyQualifiedNameOwner findScopeOwner(@NotNull PyTypeVarType typeVar,
+                                              @NotNull PyFunction function,
+                                              @NotNull TypeEvalContext context) {
+    PyClass pyClass = function.getContainingClass();
+    if (PyUtil.isInitOrNewMethod(function)) {
+      return pyClass;
     }
     else if (pyClass != null) {
       PyType classGenericType = getGenericType(pyClass, context);
       if (classGenericType != null) {
         PyTypeChecker.Generics classTypeParameters = PyTypeChecker.collectGenerics(classGenericType, context);
         Set<String> classTypeVarNames = ContainerUtil.map2Set(classTypeParameters.getTypeVars(), PyTypeVarType::getName);
-        findScopeOwner = typeVar -> classTypeVarNames.contains(typeVar.getName()) ? pyClass : pyFunction;
+        return classTypeVarNames.contains(typeVar.getName()) ? pyClass : function;
       }
     }
-
-    for (PyTypeParameterType typeParam : typeParameters.getAllTypeParameters()) {
-      if (typeParam instanceof PyTypeVarTypeImpl typeVar) {
-        typeVar.setScopeOwner(findScopeOwner.apply(typeVar));
-      }
-    }
+    return function;
   }
 }

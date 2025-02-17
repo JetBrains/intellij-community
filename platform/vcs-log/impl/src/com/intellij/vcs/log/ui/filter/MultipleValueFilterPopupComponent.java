@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -20,7 +20,8 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 import java.util.function.Supplier;
 
-abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterModel<Filter>>
+@ApiStatus.Internal
+public abstract class MultipleValueFilterPopupComponent<Filter, Model extends FilterModel<Filter>>
   extends FilterPopupComponent<Filter, Model> {
 
   private static final int MAX_FILTER_VALUE_LENGTH = 20;

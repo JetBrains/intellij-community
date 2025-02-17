@@ -19,6 +19,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ObjectUtils;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
@@ -166,5 +169,17 @@ public final class PyTypeUtil {
   @ApiStatus.Internal
   public static @Nullable PyType getEffectiveBound(@NotNull PyTypeVarType typeVarType) {
     return typeVarType.getConstraints().isEmpty() ? typeVarType.getBound() : PyUnionType.union(typeVarType.getConstraints());
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable PyType convertToType(@Nullable PyType type,
+                                               @NotNull String superTypeName,
+                                               @NotNull PsiElement anchor,
+                                               @NotNull TypeEvalContext context) {
+    PyClass superClass = PyPsiFacade.getInstance(anchor.getProject()).createClassByQName(superTypeName, anchor);
+    if (superClass == null) return null;
+    PyClassType superClassType = ObjectUtils.notNull(PyTypeChecker.findGenericDefinitionType(superClass, context),
+                                                     new PyClassTypeImpl(superClass, false));
+    return PyTypeChecker.convertToType(type, superClassType, context);
   }
 }

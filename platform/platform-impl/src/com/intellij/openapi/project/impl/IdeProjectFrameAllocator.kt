@@ -84,9 +84,13 @@ internal class IdeProjectFrameAllocator(
 
   override suspend fun runInBackground(projectInitObservable: ProjectInitObservable) {
     coroutineScope {
-      launch {
-        delay(10.seconds)
-        logger<ProjectFrameAllocator>().warn("Cannot load project in 10 seconds: ${dumpCoroutines()}")
+      val application = ApplicationManager.getApplication()
+      if (application == null || application.isUnitTestMode || application.isInternal) {
+        launch {
+          delay(10.seconds)
+          // logged only during development, let's not spam users
+          logger<ProjectFrameAllocator>().warn("Cannot load project in 10 seconds: ${dumpCoroutines()}")
+        }
       }
 
       val project = projectInitObservable.awaitProjectInit()

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
+import com.intellij.xdebugger.frame.XValueDescriptor
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rhizome.XValueMarkerDto
 import fleet.rpc.RemoteApi
@@ -90,6 +91,7 @@ data class XValueId(val uid: UID)
 @Serializable
 data class XValueDto(
   val id: XValueId,
+  @Serializable(with = DeferredSerializer::class) val descriptor: Deferred<XValueDescriptor>?,
   val canNavigateToSource: Boolean,
   @Serializable(with = DeferredSerializer::class) val canNavigateToTypeSource: Deferred<Boolean>,
   @Serializable(with = DeferredSerializer::class) val canBeModified: Deferred<Boolean>,

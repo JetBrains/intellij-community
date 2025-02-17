@@ -170,7 +170,8 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
               tr { td("Dumb mode start"); td(times.dumbModeStart?.presentableLocalDateTimeWithMilliseconds() ?: "Didn't happen") }
 
               tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTimeWithMilliseconds()) }
-              tr { td("Cancelled"); td(times.wasInterrupted.toString()) }
+              tr { td("Is cancelled"); td(times.isCancelled.toString()) }
+              tr { td("Cancellation reason"); td(times.cancellationReason ?: "") }
               tr { td("Total time with pauses"); td(times.totalWallTimeWithPauses.presentableDuration()) }
               tr { td("Time spent on pause"); td(times.wallTimeOnPause.presentableDuration()) }
               tr { td("Total time w/o pauses"); td(times.totalWallTimeWithoutPauses.presentableDuration()) }
@@ -415,7 +416,8 @@ private fun JsonProjectDumbIndexingHistory.generateDumbIndexingHtml(target: Appe
               val times = times
               tr { td("Started at"); td(times.updatingStart.presentableLocalDateTime()) }
               tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
-              tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
+              tr { td("Is cancelled"); td(times.isCancelled.toString()) }
+              tr { td("Cancellation reason"); td(times.cancellationReason ?: "") }
               tr { td("Total time with pauses"); td(times.totalWallTimeWithPauses.presentableDuration()) }
               tr { td("Pauses time"); td(times.wallTimeOnPause.presentableDuration()) }
               if (IndexDiagnosticDumper.shouldProvideVisibleAndAllThreadsTimeInfo) {

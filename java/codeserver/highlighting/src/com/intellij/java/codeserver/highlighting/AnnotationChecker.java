@@ -595,7 +595,7 @@ final class AnnotationChecker {
     if (identifier == null && pair.getParent() instanceof PsiAnnotationParameterList list) {
       PsiNameValuePair[] attributes = list.getAttributes();
       if (attributes.length > 1) {
-        myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_ANNOTATION_NAME_IS_MISSING.create(pair));
+        myVisitor.report(JavaErrorKinds.ANNOTATION_ATTRIBUTE_NAME_MISSING.create(pair));
         return;
       }
     }

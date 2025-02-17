@@ -55,10 +55,10 @@ internal sealed class RedundantLetInspection :
         parameterName: String,
     ): Boolean
 
-    final override fun createQuickFixes(
+    final override fun createQuickFix(
         element: KtCallExpression,
         context: Unit,
-    ): Array<KotlinModCommandQuickFix<KtCallExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtCallExpression>() {
+    ): KotlinModCommandQuickFix<KtCallExpression> = object : KotlinModCommandQuickFix<KtCallExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.let.call")
@@ -72,7 +72,7 @@ internal sealed class RedundantLetInspection :
                 updater.moveCaretTo(it)
             }
         }
-    })
+    }
 
     final override fun buildVisitor(
         holder: ProblemsHolder,

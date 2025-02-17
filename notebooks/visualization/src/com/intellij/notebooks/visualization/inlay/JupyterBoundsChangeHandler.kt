@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.SoftWrapChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.util.EventDispatcher
 import java.beans.PropertyChangeListener
 
@@ -25,6 +26,7 @@ import java.beans.PropertyChangeListener
  * - On soft wrap recalculation ends
  * - Folding model change
  * - Inlay model change
+ * - Tool window state changes
  */
 // Class name does not reflect the functionality of this class.
 class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
@@ -89,6 +91,13 @@ class JupyterBoundsChangeHandler(val editor: EditorImpl) : Disposable {
         boundsChanged()
       }
     }, this)
+
+    editor.project?.messageBus?.connect(this)?.subscribe(
+      ToolWindowManagerListener.TOPIC,
+      object : ToolWindowManagerListener {
+        override fun stateChanged() = boundsChanged()
+      }
+    )
   }
 
   override fun dispose(): Unit = Unit

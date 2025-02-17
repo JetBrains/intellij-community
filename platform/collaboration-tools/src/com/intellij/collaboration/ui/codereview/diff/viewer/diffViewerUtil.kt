@@ -125,6 +125,7 @@ private fun <VM : DiffMapped> TwosideTextDiffViewer.controlInlaysIn(
  * @param I - inlay model
  */
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Using a suspend function is safer for threading",
             ReplaceWith("cs.launch { controlReview(modelFactory, modelKey, rendererFactory) }"))
 fun <M : CodeReviewEditorModel<I>, I : CodeReviewInlayModel> DiffViewerBase.controlReviewIn(

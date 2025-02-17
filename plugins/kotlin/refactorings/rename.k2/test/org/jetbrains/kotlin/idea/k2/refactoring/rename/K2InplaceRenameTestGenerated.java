@@ -685,6 +685,11 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/QuotedLocalVar.kt");
     }
 
+    @TestMetadata("QuotedOuterNames.kt")
+    public void testQuotedOuterNames() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/QuotedOuterNames.kt");
+    }
+
     @TestMetadata("QuotedParameter.kt")
     public void testQuotedParameter() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/QuotedParameter.kt");

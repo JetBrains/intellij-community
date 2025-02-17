@@ -365,6 +365,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     public void actionPerformed(@NotNull AnActionEvent e) {
       ListPopup popup = JBPopupFactory.getInstance().
         createActionGroupPopup(null, this, e.getDataContext(), true, null, Integer.MAX_VALUE);
+      popup.setShowSubmenuOnHover(true);
 
       HelpTooltip.setMasterPopup(e.getInputEvent().getComponent(), popup);
       Component component = e.getInputEvent().getComponent();

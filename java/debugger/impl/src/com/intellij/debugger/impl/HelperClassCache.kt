@@ -4,8 +4,11 @@ package com.intellij.debugger.impl
 import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.impl.ClassLoaderInfo.DefinedInCompanionClassLoader
+import com.intellij.debugger.impl.ClassLoaderInfo.LoadFailedMarker
 import com.sun.jdi.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.net.URLClassLoader
@@ -30,8 +33,8 @@ private sealed interface ClassLoaderInfo {
  *
  * 3. Finally, the helper class can be loaded to a new class loader, as a child to the current class loader.
  * This option is the most reliable but also consumes memory for a new class loader.
- *
- * With any option suitable, the resulting class loader will always be used for the current class loader.
+ * After the creation of a new class loader, it is cached as a companion for the current class loader
+ * and will be used for further loading requests.
  */
 internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: DebuggerManagerThreadImpl) {
   private val evaluationClassLoaderMapping = HashMap<ClassLoaderReference?, ClassLoaderInfo>()
@@ -45,15 +48,82 @@ internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: D
     launchCleaningTask(managerThread)
   }
 
+  fun getHelperClass(
+    evaluationContext: EvaluationContextImpl, forceNewClassLoader: Boolean,
+    className: String, vararg additionalClassesToLoad: String,
+  ): ClassType? {
+    val currentClassLoader = evaluationContext.classLoader
+    val classLoaderInfo = evaluationClassLoaderMapping[currentClassLoader]
+    if (classLoaderInfo == null && !forceNewClassLoader) {
+      return tryLoadingInParentOrCompanion(evaluationContext, className, *additionalClassesToLoad)
+    }
+    return when (classLoaderInfo) {
+      is LoadFailedMarker -> null
+      is DefinedInCompanionClassLoader? -> tryLoadingInCompanion(classLoaderInfo, evaluationContext, className, *additionalClassesToLoad)
+    }
+  }
+
+  private fun tryLoadingInParentOrCompanion(
+    evaluationContext: EvaluationContextImpl,
+    className: String, vararg additionalClassesToLoad: String,
+  ): ClassType? {
+    // could be already loaded
+    val type = tryLoadingInCurrent(evaluationContext, className, *additionalClassesToLoad)
+    if (type != null) return type
+
+    val currentClassLoader = evaluationContext.classLoader
+    if (currentClassLoader != null) {
+      // try loading in parent if not bootstrap
+      val parentClassLoader = getTopClassloader(evaluationContext, currentClassLoader)
+      val type = tryToDefineInClassLoader(evaluationContext, parentClassLoader, currentClassLoader, className, *additionalClassesToLoad)
+      if (type != null) return type
+    }
+    // finally, load in companion class loader
+    return tryLoadingInCompanion(null, evaluationContext, className, *additionalClassesToLoad)
+  }
+
+  private fun tryLoadingInCurrent(
+    evaluationContext: EvaluationContextImpl,
+    className: String, vararg additionalClassesToLoad: String,
+  ): ClassType? {
+    val currentClassLoader = evaluationContext.classLoader
+    val loadedTypes = listOf(className, *additionalClassesToLoad).map { tryLoadInClassLoader(evaluationContext, it, currentClassLoader) }
+    if (loadedTypes.any { it == null }) return null // ensure all classes can be loaded
+    return loadedTypes.first()
+  }
+
+  private fun tryLoadingInCompanion(
+    currentInfo: DefinedInCompanionClassLoader?,
+    evaluationContext: EvaluationContextImpl,
+    className: String, vararg additionalClassesToLoad: String,
+  ): ClassType? {
+    val companionClassLoader = currentInfo?.classLoader
+                               ?: ClassLoadingUtils.getClassLoader(evaluationContext, evaluationContext.debugProcess)
+    val type = tryToDefineInClassLoader(evaluationContext, companionClassLoader, companionClassLoader,
+                                        className, *additionalClassesToLoad) ?: return null
+    if (currentInfo == null) {
+      DebuggerUtilsImpl.disableCollection(companionClassLoader)
+      evaluationClassLoaderMapping[evaluationContext.classLoader] = DefinedInCompanionClassLoader(companionClassLoader)
+    }
+    return type
+  }
+
+  /**
+   * As the collection of the newly created class loaders is explicitly disabled,
+   * we have to track the disposal of the user's class loaders, and clear unused companion class loaders.
+   */
   private fun launchCleaningTask(managerThread: DebuggerManagerThreadImpl) {
     managerThread.coroutineScope.launch {
       while (true) {
         delay(5.seconds)
-        withDebugContext(managerThread) {
-          val collectedClassLoaders = evaluationClassLoaderMapping.keys.filter { it?.isCollected == true }
+        withDebugContext(managerThread, PrioritizedTask.Priority.LOWEST) {
+          val allClassLoadersSnapshot = evaluationClassLoaderMapping.keys.filterNotNull()
+          val collectedClassLoaders = allClassLoadersSnapshot.filter {
+            DebuggerUtilsAsync.isCollected(it).await()
+          }
           for (classLoader in collectedClassLoaders) {
-            val info = evaluationClassLoaderMapping.remove(classLoader) ?: continue
-            if (info is ClassLoaderInfo.DefinedInCompanionClassLoader) {
+            val info = evaluationClassLoaderMapping.remove(classLoader)
+            if (info is DefinedInCompanionClassLoader) {
               DebuggerUtilsImpl.enableCollection(info.classLoader)
             }
           }
@@ -64,81 +134,38 @@ internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: D
 
   private fun releaseAllClassLoaders() {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    val createdLoaders = evaluationClassLoaderMapping.values.filterIsInstance<ClassLoaderInfo.DefinedInCompanionClassLoader>()
+    val createdLoaders = evaluationClassLoaderMapping.values.filterIsInstance<DefinedInCompanionClassLoader>()
     for (info in createdLoaders) {
       DebuggerUtilsImpl.enableCollection(info.classLoader)
     }
     evaluationClassLoaderMapping.clear()
   }
+}
 
-  fun getHelperClass(
-    evaluationContext: EvaluationContextImpl, forceNewClassLoader: Boolean,
-    className: String, vararg additionalClassesToLoad: String,
-  ): ClassType? {
-    val currentClassLoader = evaluationContext.classLoader
-    val classLoaderInfo = evaluationClassLoaderMapping[currentClassLoader]
-    return when (classLoaderInfo) {
-      is ClassLoaderInfo.LoadFailedMarker -> null
-      is ClassLoaderInfo.DefinedInCompanionClassLoader? -> {
-        loadHelperClassWithClassLoaderCaching(classLoaderInfo, evaluationContext, forceNewClassLoader, className, *additionalClassesToLoad)
-      }
-    }
+private fun tryLoadInClassLoader(evaluationContext: EvaluationContextImpl, className: String, classLoader: ClassLoaderReference?): ClassType? {
+  try {
+    return evaluationContext.debugProcess.findClass(evaluationContext, className, classLoader) as ClassType?
   }
+  catch (e: EvaluateException) {
+    val cause = e.cause
+    if (cause is InvocationException && "java.lang.ClassNotFoundException" == cause.exception().type().name()) {
+      return null
+    }
+    throw e
+  }
+}
 
-  private fun loadHelperClassWithClassLoaderCaching(
-    currentInfo: ClassLoaderInfo.DefinedInCompanionClassLoader?, evaluationContext: EvaluationContextImpl,
-    forceNewClassLoader: Boolean, className: String, vararg additionalClassesToLoad: String,
-  ): ClassType? {
-    val preferNewClassLoader = forceNewClassLoader || currentInfo != null
-    val currentClassLoader = evaluationContext.classLoader
-    if (!preferNewClassLoader) {
-      val type = tryLoadInClassLoader(evaluationContext, className, currentClassLoader)
-      if (type != null) return type
-    }
-    if (!preferNewClassLoader && currentClassLoader != null) {
-      val parentClassLoader = getTopClassloader(evaluationContext, currentClassLoader)
-      val type = tryToDefineInClassLoader(evaluationContext, parentClassLoader, currentClassLoader, className, *additionalClassesToLoad)
-      if (type != null) return type
-    }
-    val companionClassLoader = currentInfo?.classLoader
-                               ?: ClassLoadingUtils.getClassLoader(evaluationContext, evaluationContext.debugProcess)
-    val type = tryToDefineInClassLoader(evaluationContext, companionClassLoader, companionClassLoader, className, *additionalClassesToLoad)
-    if (type != null) {
-      if (currentInfo == null) {
-        DebuggerUtilsImpl.disableCollection(companionClassLoader)
-        evaluationClassLoaderMapping[currentClassLoader] = ClassLoaderInfo.DefinedInCompanionClassLoader(companionClassLoader)
-      }
-      return type
-    }
-    return null
+private fun tryToDefineInClassLoader(
+  evaluationContext: EvaluationContextImpl,
+  loaderForDefine: ClassLoaderReference, loaderForLookup: ClassLoaderReference,
+  className: String, vararg additionalClassesToLoad: String,
+): ClassType? {
+  for (fqn in listOf(className, *additionalClassesToLoad)) {
+    val alreadyDefined = tryLoadInClassLoader(evaluationContext, fqn, loaderForDefine)
+    if (alreadyDefined != null) continue // ensure no double define
+    if (!defineClass(fqn, evaluationContext, loaderForDefine)) return null
   }
-
-  private fun tryToDefineInClassLoader(
-    evaluationContext: EvaluationContextImpl,
-    loaderForDefine: ClassLoaderReference, loaderForLookup: ClassLoaderReference,
-    className: String, vararg additionalClassesToLoad: String,
-  ): ClassType? {
-    val alreadyDefined = tryLoadInClassLoader(evaluationContext, className, loaderForDefine)
-    if (alreadyDefined == null) {
-      for (className in listOf(className, *additionalClassesToLoad)) {
-        if (!defineClass(className, evaluationContext, loaderForDefine)) return null
-      }
-    }
-    return tryLoadInClassLoader(evaluationContext, className, loaderForLookup)
-  }
-
-  private fun tryLoadInClassLoader(evaluationContext: EvaluationContextImpl, className: String, classLoader: ClassLoaderReference?): ClassType? {
-    try {
-      return evaluationContext.debugProcess.findClass(evaluationContext, className, classLoader) as ClassType?
-    }
-    catch (e: EvaluateException) {
-      val cause = e.cause
-      if (cause is InvocationException && "java.lang.ClassNotFoundException" == cause.exception().type().name()) {
-        return null
-      }
-      throw e
-    }
-  }
+  return tryLoadInClassLoader(evaluationContext, className, loaderForLookup)
 }
 
 /**

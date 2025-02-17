@@ -6,6 +6,7 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
 import com.intellij.codeInsight.navigation.impl.NavigationRequestor
 import com.intellij.codeInsight.navigation.impl.gtdTargetNavigatable
 import com.intellij.ide.IdeEventQueue
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.impl.DirectoryNavigationRequest
 import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
+import com.intellij.platform.backend.navigation.impl.SharedSourceNavigationRequest
 import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -67,7 +69,12 @@ fun navigateRequest(project: Project, request: NavigationRequest) {
     is SourceNavigationRequest -> {
       // TODO support pure source request without OpenFileDescriptor
       val offset = request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: -1
-      val openFileDescriptor = OpenFileDescriptor(project, request.file, offset)
+      val openFileDescriptor = if (request is SharedSourceNavigationRequest && isSharedSourceSupportEnabled(project)) {
+        OpenFileDescriptor(project, request.file, request.context, offset)
+      }
+      else {
+        OpenFileDescriptor(project, request.file, offset)
+      }
       if (UISettings.getInstance().openInPreviewTabIfPossible && Registry.`is`("editor.preview.tab.navigation")) {
         openFileDescriptor.isUsePreviewTab = true
       }

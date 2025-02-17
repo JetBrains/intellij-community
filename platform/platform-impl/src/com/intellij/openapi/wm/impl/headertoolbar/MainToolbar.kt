@@ -87,7 +87,6 @@ private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScop
     addWidget(widget = mainMenuWithButton, parent = headerContent, position = HorizontalLayout.Group.LEFT)
   }
 
-  fun recalculateWidth(toolbar: MainToolbar) = mainMenuWithButton.recalculateWidth(toolbar)
 }
 
 private data object DefaultMainToolbarFlavor : MainToolbarFlavor
@@ -124,11 +123,12 @@ class MainToolbar(
         when (component) {
           is ActionToolbar -> {
             val availableSize = Dimension(this@MainToolbar.width - 4 * JBUI.scale(layoutGap), this@MainToolbar.height)
+
+            val event = ToolbarCompressedEvent(this@MainToolbar)
+            val application = ApplicationManager.getApplication()
+            application.messageBus.syncPublisher(ToolbarCompressedNotifier.TOPIC).onToolbarCompressed(event)
+
             CompressingLayoutStrategy.distributeSize(availableSize, components.filterIsInstance<ActionToolbar>()).getValue(component)
-          }
-          is MainMenuWithButton -> {
-            (flavor as? MenuButtonInToolbarMainToolbarFlavor)?.recalculateWidth(this@MainToolbar)
-            component.preferredSize
           }
           else -> {
             component.preferredSize

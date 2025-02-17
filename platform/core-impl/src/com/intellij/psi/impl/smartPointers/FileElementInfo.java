@@ -1,6 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.editor.Document;
@@ -9,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -23,9 +26,12 @@ final class FileElementInfo extends SmartPointerElementInfo {
   private final @NotNull Project myProject;
   private final @NotNull String myLanguageId;
   private final @NotNull String myFileClassName;
+  private final @NotNull CodeInsightContext myContext;
 
   FileElementInfo(@NotNull PsiFile file) {
-    myVirtualFile = file.getViewProvider().getVirtualFile();
+    FileViewProvider provider = file.getViewProvider();
+    myVirtualFile = provider.getVirtualFile();
+    myContext = FileViewProviderUtil.getCodeInsightContext(provider);
     myProject = file.getProject();
     myLanguageId = LanguageUtil.getRootLanguage(file).getID();
     myFileClassName = file.getClass().getName();
@@ -35,7 +41,7 @@ final class FileElementInfo extends SmartPointerElementInfo {
   PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
     Language language = Language.findLanguageByID(myLanguageId);
     if (language == null) return null;
-    PsiFile file = SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject, language);
+    PsiFile file = SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myContext, myProject, language);
     return file != null && file.getClass().getName().equals(myFileClassName) ? file : null;
   }
 

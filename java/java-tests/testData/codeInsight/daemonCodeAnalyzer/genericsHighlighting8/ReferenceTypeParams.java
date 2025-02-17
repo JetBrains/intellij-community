@@ -133,8 +133,8 @@ class ClassLiteral<T> {
     Object c1 = <error descr="Cannot access class object of a type parameter">T</error>.class;
     Object c2 = <error descr="Cannot access class object of a type parameter">T[]</error>.class;
     
-    Object c3 = <error descr="Cannot access class object of parameterized type">List<String></error>.class;
-    Object c4 = <error descr="Cannot access class object of parameterized type">List<String>[]</error>.class;
+    Object c3 = <error descr="Cannot access class object of a parameterized type">List<String></error>.class;
+    Object c4 = <error descr="Cannot access class object of a parameterized type">List<String>[]</error>.class;
     Object c5 = List[].class;
     Object c6 = List.class;
   }

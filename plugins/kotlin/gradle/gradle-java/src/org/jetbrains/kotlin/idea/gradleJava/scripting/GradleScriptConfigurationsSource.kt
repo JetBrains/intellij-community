@@ -127,8 +127,15 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
                     val sources = toVfsRoots(configuration.dependenciesSources).toMutableSet()
                     addAll(getDependenciesFromGradleLibs(classes, sources, fileUrlManager, project))
                     addAll(updatedStorage.createDependenciesWithSources(classes, sources, source, fileUrlManager))
-                    add(updatedStorage.createDependencyWithKeyword(classes, sources, source, fileUrlManager, locationName, "accessors"))
-                    add(updatedStorage.createDependencyWithKeyword(classes, sources, source, fileUrlManager, locationName, "groovy"))
+                    add(updatedStorage.groupClassesSourcesByPredicate(classes, sources, source, fileUrlManager, "$locationName accessors dependencies") {
+                        it.path.contains("accessors")
+                    })
+                    add(updatedStorage.groupClassesSourcesByPredicate(classes, sources, source, fileUrlManager, "$locationName groovy dependencies") {
+                        it.path.contains("groovy")
+                    })
+                    add(updatedStorage.groupClassesSourcesByPredicate(classes, sources, source, fileUrlManager, "$locationName kotlin dependencies") {
+                        it.name.contains("kotlin")
+                    })
                 }
 
                 addAll(classes.map { updatedFactory.get(it, source) })
@@ -189,9 +196,9 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
         val dependencies: MutableList<LibraryDependency> = mutableListOf()
         val sourcesNames = sources.associateBy { it.name }
 
-        val pairs = classes.associateWith {
-            val sourcesName = it.name.replace(".jar", "-sources.jar")
-            sourcesNames[sourcesName]
+        val jar = ".jar"
+        val pairs = classes.filter { it.name.contains(jar) }.associateWith {
+            sourcesNames[it.name] ?: sourcesNames[it.name.replace(jar, "-sources.jar")]
         }.filterValues { it != null }
 
         for ((left, right) in pairs) {
@@ -221,17 +228,17 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
         return dependencies
     }
 
-    private fun MutableEntityStorage.createDependencyWithKeyword(
+    private fun MutableEntityStorage.groupClassesSourcesByPredicate(
         classes: MutableSet<VirtualFile>,
         sources: MutableSet<VirtualFile>,
         source: KotlinScriptEntitySource,
         manager: VirtualFileUrlManager,
-        locationName: String,
-        keywordToSearch: String
+        dependencyName: String,
+        predicate: Predicate<VirtualFile>
     ): LibraryDependency {
 
-        val groupedClasses = classes.removeOnMatch { it.path.contains(keywordToSearch) }
-        val groupedSources = sources.removeOnMatch { it.path.contains(keywordToSearch) }
+        val groupedClasses = classes.removeOnMatch(predicate)
+        val groupedSources = sources.removeOnMatch(predicate)
 
         val classRoots = groupedClasses.sortedBy { it.name }.map {
             LibraryRoot(it.toVirtualFileUrl(manager), LibraryRootTypeId.COMPILED)
@@ -243,7 +250,7 @@ internal open class GradleScriptConfigurationsSource(override val project: Proje
 
         val dependencyLibrary = addEntity(
             LibraryEntity(
-                "$locationName $keywordToSearch dependencies", LibraryTableId.ProjectLibraryTableId, classRoots + sourceRoots, source
+                dependencyName, LibraryTableId.ProjectLibraryTableId, classRoots + sourceRoots, source
             )
         )
 

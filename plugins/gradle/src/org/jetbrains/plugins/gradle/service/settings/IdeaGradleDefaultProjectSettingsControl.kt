@@ -25,7 +25,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
-import org.jetbrains.plugins.gradle.service.GradleInstallationManager.getGradleVersionSafe
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager.Companion.getGradleVersionSafe
 import org.jetbrains.plugins.gradle.service.project.open.suggestGradleHome
 import org.jetbrains.plugins.gradle.service.settings.IdeaGradleDefaultProjectSettingsControl.DistributionTypeItem.LOCAL
 import org.jetbrains.plugins.gradle.service.settings.IdeaGradleDefaultProjectSettingsControl.DistributionTypeItem.WRAPPER
@@ -35,6 +35,7 @@ import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleBundle.message
 import org.jetbrains.plugins.gradle.util.suggestGradleVersion
+import java.nio.file.Path
 
 internal class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
   private val propertyGraph = PropertyGraph()
@@ -163,10 +164,11 @@ internal class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl()
 
   private fun ValidationInfoBuilder.validateGradleHome(gradleHome: String): ValidationInfo? {
     val installationManager = GradleInstallationManager.getInstance()
-    if (!installationManager.isGradleSdkHome(null, gradleHome)) {
+    val gradleHomePath = Path.of(gradleHome)
+    if (!installationManager.isGradleSdkHome(null, gradleHomePath)) {
       return error(GradleBundle.message("gradle.project.settings.distribution.invalid"))
     }
-    val rawGradleVersion = GradleInstallationManager.getGradleVersion(gradleHome)
+    val rawGradleVersion = GradleInstallationManager.getGradleVersion(gradleHomePath)
     if (rawGradleVersion == null) {
       return error(GradleBundle.message("gradle.project.settings.distribution.version.invalid"))
     }

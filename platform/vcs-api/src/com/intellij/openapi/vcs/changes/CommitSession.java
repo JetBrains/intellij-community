@@ -22,22 +22,13 @@ public interface CommitSession {
   };
 
   /**
-   * @deprecated Since version 7.0, implement {@link #getAdditionalConfigurationUI(Collection, String)} instead
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated(forRemoval = true)
-  default @Nullable JComponent getAdditionalConfigurationUI() {
-    return null;
-  }
-
-  /**
    * Show dialog with additional options before running pre-commit checks.
    *
    * @see com.intellij.openapi.vcs.changes.ui.SessionDialog
    * @see com.intellij.openapi.ui.DialogPanel
    */
   default @Nullable JComponent getAdditionalConfigurationUI(@NotNull Collection<? extends Change> changes, @Nullable @NlsSafe String commitMessage) {
-    return getAdditionalConfigurationUI();
+    return null;
   }
 
   /**

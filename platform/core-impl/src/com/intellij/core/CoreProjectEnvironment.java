@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.mock.*;
 import com.intellij.openapi.Disposable;
@@ -47,6 +49,8 @@ public class CoreProjectEnvironment {
     project.registerService(PsiModificationTracker.class, modificationTracker);
     project.registerService(FileIndexFacade.class, myFileIndexFacade);
     project.registerService(ResolveCache.class, new ResolveCache(project));
+
+    project.registerService(CodeInsightContextManager.class, new CodeInsightContextManagerImpl(project, project.getCoroutineScope()));
 
     myPsiManager = new PsiManagerImpl(project);
     project.registerService(PsiManager.class, myPsiManager);

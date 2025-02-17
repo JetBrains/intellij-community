@@ -4,6 +4,6 @@ package com.intellij.openapi.wm.ex;
 /**
  * @deprecated Use {@link ToolWindowManagerListener} directly
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class ToolWindowManagerAdapter implements ToolWindowManagerListener {
 }

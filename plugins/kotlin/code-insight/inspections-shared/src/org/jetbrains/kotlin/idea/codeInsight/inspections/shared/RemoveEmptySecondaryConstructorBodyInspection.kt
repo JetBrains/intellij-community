@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
@@ -39,7 +39,10 @@ internal class RemoveEmptySecondaryConstructorBodyInspection :
         context: Unit
     ): @InspectionMessage String = KotlinBundle.message("remove.empty.constructor.body")
 
-    override fun createQuickFixes(element: KtBlockExpression, context: Unit): Array<KotlinModCommandQuickFix<KtBlockExpression>> = arrayOf(object : KotlinModCommandQuickFix<KtBlockExpression>() {
+    override fun createQuickFix(
+        element: KtBlockExpression,
+        context: Unit,
+    ): KotlinModCommandQuickFix<KtBlockExpression> = object : KotlinModCommandQuickFix<KtBlockExpression>() {
 
         override fun getFamilyName(): String =
             KotlinBundle.message("remove.empty.constructor.body")
@@ -51,5 +54,5 @@ internal class RemoveEmptySecondaryConstructorBodyInspection :
         ) {
             element.delete()
         }
-    })
+    }
 }

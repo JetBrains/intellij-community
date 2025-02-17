@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.TextRange;
@@ -14,6 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,25 +22,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Maxim.Mossienko
- * @author Konstantin Bulenkov
- */
-public class SchemaReferencesProvider extends PsiReferenceProvider {
+@ApiStatus.Internal
+public final class SchemaReferencesProvider extends PsiReferenceProvider {
   private static final @NonNls String VALUE_ATTR_NAME = "value";
   static final @NonNls String NAME_ATTR_NAME = "name";
 
   static final @NonNls String MEMBER_TYPES_ATTR_NAME = "memberTypes";
   static final @NonNls String ITEM_TYPE_ATTR_NAME = "itemType";
   static final @NonNls String BASE_ATTR_NAME = "base";
-  static final @NonNls String GROUP_TAG_NAME = "group";
+  public static final @NonNls String GROUP_TAG_NAME = "group";
 
-  static final @NonNls String ATTRIBUTE_GROUP_TAG_NAME = "attributeGroup";
-  static final @NonNls String ATTRIBUTE_TAG_NAME = "attribute";
-  static final @NonNls String ELEMENT_TAG_NAME = "element";
-  static final @NonNls String SIMPLE_TYPE_TAG_NAME = "simpleType";
+  public static final @NonNls String ATTRIBUTE_GROUP_TAG_NAME = "attributeGroup";
+  public static final @NonNls String ATTRIBUTE_TAG_NAME = "attribute";
+  public static final @NonNls String ELEMENT_TAG_NAME = "element";
+  public static final @NonNls String SIMPLE_TYPE_TAG_NAME = "simpleType";
 
-  static final @NonNls String COMPLEX_TYPE_TAG_NAME = "complexType";
+  public static final @NonNls String COMPLEX_TYPE_TAG_NAME = "complexType";
   static final @NonNls String REF_ATTR_NAME = "ref";
   static final @NonNls String TYPE_ATTR_NAME = "type";
   static final @NonNls String SUBSTITUTION_GROUP_ATTR_NAME = "substitutionGroup";
@@ -49,7 +47,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       VALUE_ATTR_NAME, ITEM_TYPE_ATTR_NAME};
   }
 
-  public static class NameReference implements PsiReference {
+  public static final class NameReference implements PsiReference {
     private final PsiElement myElement;
 
     public NameReference(PsiElement element) {

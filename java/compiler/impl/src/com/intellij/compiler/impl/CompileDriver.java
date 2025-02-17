@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -36,6 +37,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -44,6 +46,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
 import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.tracing.Tracer;
@@ -115,6 +118,13 @@ public final class CompileDriver {
   public boolean isUpToDate(@NotNull CompileScope scope, final @Nullable ProgressIndicator progress) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("isUpToDate operation started");
+    }
+    if (Registry.is("compiler.build.can.use.eel") &&
+        ProjectRootManager.getInstance(myProject).getProjectSdk() == null &&
+        !EelPathUtils.isProjectLocal(myProject)) {
+      // BuildManager tries to use the internal JDK if the project jdk is not set
+      // We cannot allow fallback to the internal jdk
+      return true;
     }
 
     final CompilerTask task = new CompilerTask(myProject, JavaCompilerBundle.message("classes.up.to.date.check"), true, false, false,

@@ -222,7 +222,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   /**
    * @deprecated Always start progress in background
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PerformInBackgroundOption getUpdateOption() {
     return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }

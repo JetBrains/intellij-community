@@ -12,7 +12,6 @@ import kotlinx.coroutines.ensureActive
 import org.h2.mvstore.MVStore
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
-import org.jetbrains.bazel.jvm.jps.impl.RequestLog
 import org.jetbrains.bazel.jvm.jps.impl.loadJpsProject
 import org.jetbrains.jps.cmdline.ProjectDescriptor
 import org.jetbrains.jps.incremental.fs.BuildFSState
@@ -25,7 +24,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.coroutines.coroutineContext
 
-internal class StorageInitializer(private val dataDir: Path, private val classOutDir: Path) {
+internal class StorageInitializer(private val dataDir: Path, private val outJar: Path) {
   private var storageManager: StorageManager? = null
   private val cacheDbFile = dataDir.resolve("jps-portable-cache.db")
 
@@ -58,7 +57,7 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
     isCleanBuild = Files.notExists(cacheDbFile)
 
     if (isCleanBuild && Files.isDirectory(dataDir)) {
-      span.addEvent("remove $dataDir and $classOutDir because no cache db file found: $cacheDbFile")
+      span.addEvent("remove $dataDir and $outJar because no cache db file found: $cacheDbFile")
       // if no db file, make sure that data dir is also not reused
       deleteDirs()
     }
@@ -98,7 +97,6 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
   }
 
   fun createProjectDescriptor(
-    messageHandler: RequestLog,
     jpsModel: JpsModel,
     moduleTarget: BazelModuleBuildTarget,
     relativizer: PathRelativizerService,
@@ -130,7 +128,6 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
     }
 
     return createProjectDescriptor(
-      messageHandler = messageHandler,
       jpsModel = jpsModel,
       moduleTarget = moduleTarget,
       relativizer = relativizer,
@@ -149,6 +146,6 @@ internal class StorageInitializer(private val dataDir: Path, private val classOu
 
   private fun deleteDirs() {
     FileUtilRt.deleteRecursively(dataDir)
-    FileUtilRt.deleteRecursively(classOutDir)
+    Files.deleteIfExists(outJar)
   }
 }

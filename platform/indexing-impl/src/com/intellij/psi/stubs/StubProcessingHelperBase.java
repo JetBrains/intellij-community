@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
@@ -8,15 +10,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiBinaryFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.StubbedSpine;
-import com.intellij.psi.search.FileTypeIndex;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,7 +44,8 @@ public abstract class StubProcessingHelperBase {
                                                              @Nullable GlobalSearchScope scope,
                                                              @NotNull Class<Psi> requiredClass,
                                                              @NotNull Computable<String> debugOperationName) {
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    CodeInsightContext context = getCodeInsightContext(file, project, scope);
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(file, context);
 
     if (psiFile == null) {
       LOG.error("Stub index points to a file without PSI: " +
@@ -73,6 +73,32 @@ public abstract class StubProcessingHelperBase {
       if (!processor.process((Psi)psi)) return false;
     }
     return true;
+  }
+
+  private static @NotNull CodeInsightContext getCodeInsightContext(@NotNull VirtualFile file, @NotNull Project project, @Nullable GlobalSearchScope scope) {
+    if (!CodeInsightContextKt.isSharedSourceSupportEnabled(project)) {
+      return CodeInsightContextKt.anyContext();
+    }
+
+    if (scope == null) {
+      return CodeInsightContextKt.anyContext();
+    }
+
+    CodeInsightContextFileInfo fileInfo = CodeInsightContextAwareSearchScopesKt.getFileContextInfo(scope, file);
+    if (fileInfo instanceof ActualContextFileInfo) {
+      Collection<CodeInsightContext> contexts = ((ActualContextFileInfo)fileInfo).getContexts();
+      if (contexts.size() > 1) {
+        // todo ijpl-339 we need to process the file twice in this case. Not supported yet
+        LOG.error("Multiple contexts for file " + file + " in scope " + scope + ". Contexts: " + contexts);
+      }
+      return contexts.iterator().next();
+    }
+    if (fileInfo instanceof NoContextFileInfo) {
+      return CodeInsightContextKt.anyContext();
+    }
+    // fileInfo instanceof DoesNotContainFileInfo
+    LOG.error("Provided scope does not contain file " + file + ", scope = " + scope);
+    return CodeInsightContextKt.anyContext();
   }
 
   private static @Unmodifiable @NotNull List<StubbedSpine> getAllSpines(PsiFile psiFile) {

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProviders;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSettingListener;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
@@ -302,7 +303,11 @@ public final class DaemonListeners implements Disposable {
       private void fileRenamed(@NotNull VFilePropertyChangeEvent event) {
         stopDaemonAndRestartAllFiles("Virtual file name changed");
         VirtualFile virtualFile = event.getFile();
-        PsiFile psiFile = !virtualFile.isValid() ? null : ((FileManagerImpl)PsiManagerEx.getInstanceEx(myProject).getFileManager()).getFastCachedPsiFile(virtualFile);
+        if (!virtualFile.isValid()) {
+          return;
+        }
+        FileManagerImpl fileManager = (FileManagerImpl)PsiManagerEx.getInstanceEx(myProject).getFileManager();
+        PsiFile psiFile = fileManager.getFastCachedPsiFile(virtualFile, CodeInsightContextKt.anyContext());
         if (psiFile == null || myDaemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
           return;
         }
@@ -603,7 +608,8 @@ public final class DaemonListeners implements Disposable {
       if (myEscPressed) {
         if (affectedDocument != null) {
           // prevent Esc key to leave the document in the not-highlighted state
-          if (!myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(affectedDocument)) {
+          // todo ijpl-339 investigate this place
+          if (!myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(affectedDocument, CodeInsightContextKt.anyContext())) {
             stopDaemon(true, "Command finish");
           }
         }

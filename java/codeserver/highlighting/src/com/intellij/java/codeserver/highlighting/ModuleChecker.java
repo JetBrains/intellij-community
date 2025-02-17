@@ -2,6 +2,7 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.codeserver.core.JavaServiceProviderUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.module.Module;
@@ -12,9 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -230,4 +229,57 @@ final class ModuleChecker {
       case 1 -> myVisitor.report(JavaErrorKinds.MODULE_NOT_ON_PATH.create(refElement));
       default -> {}
     }
-  }}
+  }
+
+  void checkServiceImplementations(@NotNull PsiProvidesStatement statement) {
+    PsiReferenceList implRefList = statement.getImplementationList();
+    if (implRefList == null) return;
+
+    PsiJavaCodeReferenceElement intRef = statement.getInterfaceReference();
+    PsiElement intTarget = intRef != null ? intRef.resolve() : null;
+
+    Set<String> filter = new HashSet<>();
+    for (PsiJavaCodeReferenceElement implRef : implRefList.getReferenceElements()) {
+      String refText = implRef.getQualifiedName();
+      if (!filter.add(refText)) {
+        myVisitor.report(JavaErrorKinds.MODULE_DUPLICATE_IMPLEMENTATION.create(implRef));
+        continue;
+      }
+
+      if (!(intTarget instanceof PsiClass psiClass)) continue;
+
+      PsiElement implTarget = implRef.resolve();
+      if (implTarget instanceof PsiClass implClass) {
+        Module fileModule = ModuleUtilCore.findModuleForFile(myVisitor.file());
+        Module implModule = ModuleUtilCore.findModuleForFile(implClass.getContainingFile());
+        if (fileModule != implModule && !JavaMultiReleaseUtil.areMainAndAdditionalMultiReleaseModules(implModule, fileModule)) {
+          myVisitor.report(JavaErrorKinds.MODULE_SERVICE_ALIEN.create(implRef));
+        }
+
+        PsiMethod provider = JavaServiceProviderUtil.findServiceProviderMethod(implClass);
+        if (provider != null) {
+          PsiType type = provider.getReturnType();
+          PsiClass typeClass = type instanceof PsiClassType classType ? classType.resolve() : null;
+          if (!InheritanceUtil.isInheritorOrSelf(typeClass, psiClass, true)) {
+            myVisitor.report(JavaErrorKinds.MODULE_SERVICE_PROVIDER_TYPE.create(implRef, implClass));
+          }
+        }
+        else if (InheritanceUtil.isInheritorOrSelf(implClass, psiClass, true)) {
+          if (implClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            myVisitor.report(JavaErrorKinds.MODULE_SERVICE_ABSTRACT.create(implRef, implClass));
+          }
+          else if (!(ClassUtil.isTopLevelClass(implClass) || implClass.hasModifierProperty(PsiModifier.STATIC))) {
+            myVisitor.report(JavaErrorKinds.MODULE_SERVICE_INNER.create(implRef, implClass));
+          }
+          else if (!PsiUtil.hasDefaultConstructor(implClass)) {
+            myVisitor.report(JavaErrorKinds.MODULE_SERVICE_NO_CONSTRUCTOR.create(implRef, implClass));
+          }
+        }
+        else {
+          myVisitor.report(JavaErrorKinds.MODULE_SERVICE_IMPLEMENTATION_TYPE.create(
+            implRef, new JavaErrorKinds.SuperclassSubclassContext(psiClass, implClass)));
+        }
+      }
+    }
+  }
+}

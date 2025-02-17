@@ -7,17 +7,18 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.project.projectId
 import com.intellij.platform.recentFiles.frontend.Switcher.SwitcherPanel
 import com.intellij.platform.recentFiles.frontend.model.FlowBackedListModel
 import com.intellij.platform.recentFiles.frontend.model.FlowBackedListModelUpdate
-import com.intellij.platform.recentFiles.shared.*
+import com.intellij.platform.recentFiles.shared.FileSwitcherApi
+import com.intellij.platform.recentFiles.shared.RecentFilesEvent
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
+import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -27,16 +28,32 @@ internal fun createAndShowNewSwitcher(onlyEditedFiles: Boolean?, event: AnAction
   }
 }
 
+@OptIn(FlowPreview::class)
 @ApiStatus.Internal
 suspend fun createAndShowNewSwitcherSuspend(onlyEditedFiles: Boolean?, event: AnActionEvent?, @Nls title: String, project: Project): SwitcherPanel {
+  val serviceScope = RecentFilesCoroutineScopeProvider.getInstance(project).coroutineScope
+
+  val uiUpdateScope = serviceScope.childScope("Switcher UI updates")
+  val backendRequestsScope = serviceScope.childScope("Switcher backend requests")
+
+  val dataModel = createReactiveDataModel(serviceScope, project)
+  val remoteApi = FileSwitcherApi.getInstance()
+  val parameters = SwitcherLaunchEventParameters(event?.inputEvent)
+
+  backendRequestsScope.launch(start = CoroutineStart.UNDISPATCHED) {
+    remoteApi.updateRecentFilesBackendState(createFilesSearchRequestRequest(true == onlyEditedFiles, !parameters.isEnabled, project))
+  }
+  dataModel.awaitModelPopulation(durationMillis = Registry.intValue("switcher.preload.timeout.ms", 300).toLong())
   return withContext(Dispatchers.EDT) {
+    // try waiting for the initial bunch of files to load before displaying the UI
     SwitcherPanel(project = project,
                   title = title,
-                  event = event?.inputEvent,
+                  launchParameters = parameters,
                   onlyEditedFiles = onlyEditedFiles,
-                  givenFilesModel = createReactiveDataModel(this, project),
-                  backendRequestsScope = this,
-                  remoteApi = FileSwitcherApi.getInstance())
+                  givenFilesModel = dataModel,
+                  backendRequestsScope = backendRequestsScope,
+                  uiUpdateScope = uiUpdateScope,
+                  remoteApi = remoteApi)
   }
 }
 
@@ -44,7 +61,8 @@ private suspend fun createReactiveDataModel(parentScope: CoroutineScope, project
   val mappedEvents = FileSwitcherApi.getInstance()
     .getRecentFileEvents(project.projectId())
     .map { recentFilesUpdate -> convertRpcEventToFlowModelEvent(recentFilesUpdate) }
-  return FlowBackedListModel(parentScope, mappedEvents)
+  val modelSubscriptionScope = parentScope.childScope("FlowBackedListModel events subscription")
+  return FlowBackedListModel(modelSubscriptionScope, mappedEvents)
 }
 
 // FIXME: Unnecessary conversion, consider setting up KX serialisation so that generic type parameter's serializer is recognised
@@ -54,6 +72,7 @@ private fun convertRpcEventToFlowModelEvent(rpcEvent: RecentFilesEvent): FlowBac
     is ItemAdded -> FlowBackedListModelUpdate.ItemAdded(convertSwitcherDtoToViewModel(rpcEvent.entry))
     is ItemRemoved -> FlowBackedListModelUpdate.ItemRemoved(convertSwitcherDtoToViewModel(rpcEvent.entry))
     is AllItemsRemoved -> FlowBackedListModelUpdate.AllItemsRemoved()
+    is EndOfUpdates -> FlowBackedListModelUpdate.UpdateCompleted()
   }
 }
 

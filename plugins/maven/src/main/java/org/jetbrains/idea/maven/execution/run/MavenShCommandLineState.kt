@@ -248,10 +248,18 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   private fun getScriptPath(eel: EelApi): String {
     val type: MavenHomeType = MavenProjectsManager.getInstance(myConfiguration.project).getGeneralSettings().getMavenHomeType()
     if (type is MavenWrapper) {
-      return if (isWindows()) "mvnw.cmd" else "./mvnw"
+      val multimoduleDir = MavenDistributionsCache.getInstance(myConfiguration.project)
+        .getMultimoduleDirectory(myConfiguration.runnerParameters.workingDirPath)
+      val relativePath = Path(myConfiguration.runnerParameters.workingDirPath).relativize(Path(multimoduleDir)).toString()
+      return if (relativePath.isEmpty()) {
+        if (isWindows()) "mvnw.cmd" else "./mvnw"
+      }
+      else {
+        if (isWindows()) "$relativePath/mvnw.cmd" else "$relativePath/mvnw"
+      }
     }
 
-    var mavenHome = MavenDistributionsCache.getInstance(myConfiguration.getProject())
+    var mavenHome = MavenDistributionsCache.getInstance(myConfiguration.project)
       .getMavenDistribution(myConfiguration.runnerParameters.workingDirPath).mavenHome
 
     if (type is BundledMaven3 || type is BundledMaven4) {

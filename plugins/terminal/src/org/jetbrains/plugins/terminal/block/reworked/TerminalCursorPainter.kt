@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.codePointAt
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
@@ -14,13 +15,16 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.JBUI
 import com.jediterm.terminal.CursorShape
 import kotlinx.coroutines.*
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
+import java.awt.Rectangle
 import java.awt.geom.Rectangle2D
 
 internal class TerminalCursorPainter private constructor(
@@ -86,6 +90,13 @@ internal class TerminalCursorPainter private constructor(
     // 3. As a result, the logical offset of the cursor stayed the same, but we still need to repaint it.
     outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
       override fun afterContentChanged(startOffset: Int) {
+        // This listener exists to handle the case when the offset has not changed,
+        // but it must also work correctly when the offset has in fact changed.
+        // In that case, the offset is updated before this listener is invoked,
+        // but it may not have been collected yet,
+        // because the collector might be called in an invokeLater by the coroutine dispatcher.
+        // Therefore, the flow is guaranteed to have the correct value, but curCursorState is not.
+        curCursorState = curCursorState.copy(offset = outputModel.cursorOffsetState.value)
         updateCursor(curCursorState)
       }
     })
@@ -105,12 +116,22 @@ internal class TerminalCursorPainter private constructor(
       return
     }
 
-    if (state.isFocused) {
-      val renderer = BlockCursorRenderer(editor)
+    val shouldBlink = state.isFocused && state.cursorShape.isBlinking
+    val renderer = when (state.cursorShape) {
+      CursorShape.BLINK_BLOCK, CursorShape.STEADY_BLOCK ->
+        if (state.isFocused) {
+          BlockCursorRenderer(editor)
+        }
+        else {
+          EmptyBlockCursorRenderer(editor)
+        }
+      CursorShape.BLINK_UNDERLINE, CursorShape.STEADY_UNDERLINE -> UnderlineCursorRenderer(editor)
+      CursorShape.BLINK_VERTICAL_BAR, CursorShape.STEADY_VERTICAL_BAR -> VerticalBarCursorRenderer(editor)
+    }
+    if (shouldBlink) {
       paintBlinkingCursor(renderer, state.offset)
     }
     else {
-      val renderer = EmptyBlockCursorRenderer(editor)
       paintStaticCursor(renderer, state.offset)
     }
   }
@@ -170,15 +191,28 @@ internal class TerminalCursorPainter private constructor(
 
     abstract fun paintCursor(g: Graphics2D, rect: Rectangle2D.Double)
 
+    protected inline fun Graphics2D.withCursorColor(block: () -> Unit) {
+      val oldColor = color
+      try {
+        color = editorCursorColor
+        block()
+      }
+      finally {
+        color = oldColor
+      }
+    }
+
     final override fun installCursorHighlighter(offset: Int): RangeHighlighter {
       val attributes = TextAttributes(cursorForeground, null, null, null, Font.PLAIN)
-      val endOffset = if (offset + 1 < editor.document.textLength) offset + 1 else offset
-      val highlighter = editor.markupModel.addRangeHighlighter(offset, endOffset, HighlighterLayer.LAST,
+      // offset == textLength is allowed (it means that the cursor is at the end, a very common case)
+      val startOffset = offset.coerceIn(0..editor.document.textLength)
+      val endOffset = (offset + 1).coerceIn(0..editor.document.textLength)
+      val highlighter = editor.markupModel.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.LAST,
                                                                attributes, HighlighterTargetArea.EXACT_RANGE)
       highlighter.setCustomRenderer { _, _, g ->
         val offset = highlighter.startOffset
         val point = editor.offsetToPoint2D(offset)
-        val text = editor.document.text
+        val text = editor.document.immutableCharSequence
         val codePoint = if (offset in text.indices) text.codePointAt(offset) else 'W'.code
         val cursorWidth = (editor as EditorImpl).view.getCodePointWidth(codePoint)
         val cursorHeight = editor.lineHeight
@@ -196,13 +230,8 @@ internal class TerminalCursorPainter private constructor(
       get() = if (ColorUtil.isDark(editorCursorColor)) CURSOR_LIGHT else CURSOR_DARK
 
     override fun paintCursor(g: Graphics2D, rect: Rectangle2D.Double) {
-      val oldColor = g.color
-      try {
-        g.color = editorCursorColor
+      g.withCursorColor {
         g.fill(rect)
-      }
-      finally {
-        g.color = oldColor
       }
     }
   }
@@ -211,15 +240,34 @@ internal class TerminalCursorPainter private constructor(
     override val cursorForeground: Color? = null
 
     override fun paintCursor(g: Graphics2D, rect: Rectangle2D.Double) {
-      val oldColor = g.color
-      try {
-        g.color = editorCursorColor
+      g.withCursorColor {
         g.draw(rect)
       }
-      finally {
-        g.color = oldColor
+    }
+  }
+
+  private abstract class LineCursorRenderer(editor: EditorEx) : CursorRendererBase(editor) {
+    override val cursorForeground: Color? = null
+
+    protected val lineThickness: Double get() = JBUIScale.scale(2.0f).toDouble()
+
+    protected abstract fun shape(rect: Rectangle2D.Double): Rectangle2D.Double
+
+    override fun paintCursor(g: Graphics2D, rect: Rectangle2D.Double) {
+      g.withCursorColor {
+        g.fill(shape(rect))
       }
     }
+  }
+
+  private class UnderlineCursorRenderer(editor: EditorEx) : LineCursorRenderer(editor) {
+    override fun shape(rect: Rectangle2D.Double): Rectangle2D.Double =
+      Rectangle2D.Double(rect.x, rect.y + rect.height - lineThickness, rect.width, lineThickness)
+  }
+
+  private class VerticalBarCursorRenderer(editor: EditorEx) : LineCursorRenderer(editor) {
+    override fun shape(rect: Rectangle2D.Double): Rectangle2D.Double =
+      Rectangle2D.Double(rect.x, rect.y, lineThickness, rect.height)
   }
 
   companion object {

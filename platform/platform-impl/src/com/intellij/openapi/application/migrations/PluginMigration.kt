@@ -9,6 +9,9 @@ import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 
+/**
+ * Note that migrations are not taken into account for IDE updates through Toolbox
+ */
 internal abstract class PluginMigration {
   open fun migratePlugins(options: PluginMigrationOptions) {
     migratePlugins(PluginMigrationDescriptor(options))

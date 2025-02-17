@@ -316,7 +316,6 @@ a:com.intellij.execution.RunManager
 - f:getAllConfigurations():com.intellij.execution.configurations.RunConfiguration[]
 - a:getAllConfigurationsList():java.util.List
 - a:getAllSettings():java.util.List
-- f:getConfigurationSettings(com.intellij.execution.configurations.ConfigurationType):com.intellij.execution.RunnerAndConfigurationSettings[]
 - a:getConfigurationSettingsList(com.intellij.execution.configurations.ConfigurationType):java.util.List
 - f:getConfigurationSettingsList(java.lang.Class):java.util.List
 - a:getConfigurationTemplate(com.intellij.execution.configurations.ConfigurationFactory):com.intellij.execution.RunnerAndConfigurationSettings

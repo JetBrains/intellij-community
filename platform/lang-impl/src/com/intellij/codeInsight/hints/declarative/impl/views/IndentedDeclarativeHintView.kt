@@ -21,7 +21,7 @@ import java.awt.geom.Rectangle2D
 /**
  * Indents the hint to match the indent of the line given by the offset of the carrying inlay
  *
- * Concerns:
+ * Caveats:
  * - Calculating the width of the indent requires a read action during rendering.
  * More correct approach would be to calculate and update it in [com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass],
  * however, that creates a noticeable delay between when, e.g., user increases the indent of the line and the time the indent of the hint

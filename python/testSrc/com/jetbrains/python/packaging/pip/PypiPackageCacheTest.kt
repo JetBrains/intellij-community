@@ -23,7 +23,7 @@ class PypiPackageCacheTest : PyTestCase() {
     withPypiPackagesRanking(mapOf("c-pkg" to 2, "b-pkg" to 1, "a-pkg" to 1))
     withEmptyCacheStorage()
     val cache = PypiPackageCache()
-    runBlocking { cache.loadCache() }
+    runBlocking { cache.reloadCache() }
     assertThat(cache.packages).containsExactly("c-pkg", "a-pkg", "b-pkg")
   }
 
@@ -31,7 +31,7 @@ class PypiPackageCacheTest : PyTestCase() {
     withLocalStoredPackages(listOf("c-pkg", "a-pkg", "b-pkg"), Instant.now())
     withPypiLoaderThrowingError()
     val cache = PypiPackageCache()
-    runBlocking { cache.loadCache() }
+    runBlocking { cache.reloadCache() }
     assertThat(cache.packages).containsExactly("c-pkg", "a-pkg", "b-pkg")
   }
 
@@ -40,7 +40,7 @@ class PypiPackageCacheTest : PyTestCase() {
     withPypiPackages(listOf("c-pkg", "b-pkg", "a-pkg"))
     withPypiPackagesRanking(mapOf("c-pkg" to 2, "b-pkg" to 1, "a-pkg" to 1))
     val cache = PypiPackageCache()
-    runBlocking { cache.loadCache() }
+    runBlocking { cache.reloadCache() }
     assertThat(cache.packages).containsExactly("c-pkg", "a-pkg", "b-pkg")
   }
 
@@ -49,7 +49,7 @@ class PypiPackageCacheTest : PyTestCase() {
     withPypiPackages(listOf("c-pkg", "b-pkg", "a-pkg"))
     withPypiPackagesRanking(mapOf("c-pkg" to 2, "b-pkg" to 1, "a-pkg" to 1))
     val cache = PypiPackageCache()
-    runBlocking { cache.loadCache() }
+    runBlocking { cache.reloadCache() }
     assertThat(cache.packages).containsExactly("c-pkg", "a-pkg", "b-pkg")
   }
 

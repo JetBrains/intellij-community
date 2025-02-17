@@ -6,6 +6,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.createSingleFolderDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ExitActionType
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesDialog
@@ -105,6 +106,6 @@ class MoveRefactoringActionDialog(
         PropertiesComponent.getInstance().setValue(RECENT_SELECTED_PATH, selectedDirectoryName)
         PropertiesComponent.getInstance().setValue(RECENT_SELECTED_RUN_COUNT, tfRefactoringRunCount.text)
 
-        close(OK_EXIT_CODE, /* isOk = */ true)
+        close(OK_EXIT_CODE, /* isOk = */ true, ExitActionType.OK)
     }
 }

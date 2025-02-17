@@ -1870,7 +1870,6 @@ a:com.intellij.xdebugger.memory.utils.AbstractTableColumnDescriptor
 - p:<init>(java.lang.String,java.lang.Class):V
 - getColumnClass():java.lang.Class
 - getName():java.lang.String
-- a:getValue(I):java.lang.Object
 com.intellij.xdebugger.memory.utils.InstancesProvider
 - a:getInstances(I):java.util.List
 c:com.intellij.xdebugger.memory.utils.SingleAlarmWithMutableDelay

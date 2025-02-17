@@ -7,13 +7,15 @@ import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.function.Function;
 
-abstract class PyTypeProviderWithCustomContext<Context> extends PyTypeProviderBase {
+@ApiStatus.Internal
+public abstract class PyTypeProviderWithCustomContext<Context> extends PyTypeProviderBase {
   @Override
   public final @Nullable PyType getReferenceExpressionType(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
     return withCustomContext(context, customContext -> {

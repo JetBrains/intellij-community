@@ -930,7 +930,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
   /**
    * @deprecated Use {@link #createSettingsList(Project, ExecutorProvider, DataContext, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull List<ItemWrapper<?>> createSettingsList(@NotNull Project project,
                                                                  @NotNull ExecutorProvider executorProvider,
                                                                  boolean isCreateEditAction) {

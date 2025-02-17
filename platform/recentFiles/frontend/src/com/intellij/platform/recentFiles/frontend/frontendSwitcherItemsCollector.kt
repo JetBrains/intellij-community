@@ -2,9 +2,13 @@
 package com.intellij.platform.recentFiles.frontend
 
 import com.intellij.ide.actions.ActivateToolWindowAction
+import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.NaturalComparator
@@ -12,11 +16,21 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 
+private const val SWITCHER_ELEMENTS_LIMIT = 30
+
 private val mnemonicAndMainTextComparator by lazy {
   Comparator.comparing(SwitcherListItem::mnemonic) { m1, m2 ->
     if (m1 == null) (if (m2 == null) 0 else 1) else if (m2 == null) -1 else m1.compareTo(m2)
   }
     .thenComparing(SwitcherListItem::mainText, NaturalComparator.INSTANCE)
+}
+
+internal fun collectFilesFromFrontendEditorSelectionHistory(project: Project): List<VirtualFileId> {
+  return (FileEditorManager.getInstance(project) as FileEditorManagerImpl).getSelectionHistoryList()
+    .asSequence()
+    .take(SWITCHER_ELEMENTS_LIMIT)
+    .map { it.first.rpcId() }
+    .toList()
 }
 
 internal fun collectToolWindows(onlyEditedFilesShown: Boolean, pinned: Boolean, isSpeedSearchInstalled: Boolean, mnemonicsRegistry: SwitcherMnemonicsRegistry, project: Project): List<SwitcherToolWindow> {

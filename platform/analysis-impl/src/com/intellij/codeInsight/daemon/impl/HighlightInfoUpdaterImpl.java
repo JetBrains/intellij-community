@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -560,7 +562,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   }
 
   @NotNull
-  Collection<HighlightInfo> getInfosFromMarkup(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
+  private Collection<HighlightInfo> getInfosFromMarkup(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
     if (!isAssertInvariants()) return Set.of();
     Project project = psiFile.getProject();
     Document hostDocument;
@@ -586,9 +588,10 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       .collect(Collectors.toList());
   }
 
-  synchronized void assertMarkupDataConsistent(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
+  private synchronized void assertMarkupDataConsistent(@NotNull PsiFile psiFile, @NotNull WhatTool toolIdPredicate) {
     if (!isAssertInvariants()) return;
     Collection<HighlightInfo> fromMarkup = getInfosFromMarkup(psiFile, toolIdPredicate);
+    // todo ijpl-339 process top level infos
     Set<HighlightInfo> fromData = new HashSet<>(getAllData(psiFile, toolIdPredicate));
 
     if (!new HashSet<>(fromMarkup).equals(fromData)) {
@@ -1236,16 +1239,17 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     TextAttributes infoAttributes = newInfo.getTextAttributes(psiFile, session.getColorsScheme());
     com.intellij.util.Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter -> {
       BackgroundUpdateHighlightersUtil.changeAttributes(finalHighlighter, newInfo, session.getColorsScheme(), psiFile, infoAttributes);
-      newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
     };
     if (LOG.isDebugEnabled()) {
       LOG.debug("remap: create " + (recycled == null ? "(new RH)" : "(recycled)") + newInfo + currentProgressInfo());
     }
+
     RangeHighlighterEx highlighter;
     if (recycled == null) {
       // create new
       if (isFileLevel) {
         highlighter = createOrReuseFakeFileLevelHighlighter(MANAGED_HIGHLIGHT_INFO_GROUP, newInfo, null, markup);
+        newInfo.setHighlighter(highlighter);
         ((HighlightingSessionImpl)session).addFileLevelHighlight(newInfo, highlighter);
       }
       else {
@@ -1253,23 +1257,31 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
                                                       HighlighterTargetArea.EXACT_RANGE, false,
                                                       changeAttributes);
+        newInfo.setHighlighter(highlighter);
+        CodeInsightContext context = session.getCodeInsightContext();
+        CodeInsightContextHighlightingUtil.installCodeInsightContext(highlighter, session.getProject(), context);
+        newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
       }
     }
     else {
       // recycle
       HighlightInfo oldInfo = recycled.info();
       highlighter = oldInfo.getHighlighter();
+      newInfo.setHighlighter(highlighter);
       if (isFileLevel) {
         highlighter = createOrReuseFakeFileLevelHighlighter(MANAGED_HIGHLIGHT_INFO_GROUP, newInfo, highlighter, markup);
         ((HighlightingSessionImpl)session).replaceFileLevelHighlight(oldInfo, newInfo, highlighter);
       }
       else {
         markup.changeAttributesInBatch(highlighter, changeAttributes);
+        CodeInsightContext context = session.getCodeInsightContext();
+        CodeInsightContextHighlightingUtil.installCodeInsightContext(highlighter, session.getProject(), context);
+        newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
+
       }
       oldInfo.copyComputedLazyFixesTo(newInfo, session.getDocument());
       assert oldInfo.getGroup() == MANAGED_HIGHLIGHT_INFO_GROUP: oldInfo;
     }
-    newInfo.setHighlighter(highlighter);
     range2markerCache.put(finalInfoRange, highlighter);
   }
 

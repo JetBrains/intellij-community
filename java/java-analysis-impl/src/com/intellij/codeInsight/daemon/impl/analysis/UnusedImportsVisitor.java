@@ -7,6 +7,8 @@ import com.intellij.codeInsight.daemon.UnusedImportProvider;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.codeInspection.ExternalSourceProblemGroup;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -39,6 +41,7 @@ class UnusedImportsVisitor extends JavaElementVisitor {
   private final @NotNull Project myProject;
   private final PsiFile myFile;
   private final @NotNull Document myDocument;
+  private final @NotNull CodeInsightContext myContext;
   private boolean requiresFix = false;
   private int myCurrentEntryIndex = -1;
   private boolean errorFound;
@@ -50,6 +53,7 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     myFile = file;
     myDocument = document;
     myRefCountHolder = LocalRefUseInfo.forFile(file);
+    myContext = FileViewProviderUtil.getCodeInsightContext(file);
   }
 
   void collectHighlights(@NotNull HighlightInfoHolder holder) {
@@ -69,7 +73,7 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     if (errorFound) {
       DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
       FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-      fileStatusMap.setErrorFoundFlag(myProject, myDocument, true);
+      fileStatusMap.setErrorFoundFlag(myDocument, myContext, true);
     }
     IntentionAction fixNotOnFly = null;
     if (requiresFix) {

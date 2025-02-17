@@ -62,10 +62,10 @@ internal class SelfReferenceConstructorParameterInspection :
         )
     }
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtPrimaryConstructor,
         context: Context,
-    ): Array<KotlinModCommandQuickFix<KtPrimaryConstructor>> = arrayOf(object : KotlinModCommandQuickFix<KtPrimaryConstructor>() {
+    ): KotlinModCommandQuickFix<KtPrimaryConstructor> = object : KotlinModCommandQuickFix<KtPrimaryConstructor>() {
 
         override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.to.nullable.type.fix.text")
 
@@ -78,7 +78,7 @@ internal class SelfReferenceConstructorParameterInspection :
             val parameter = element.valueParameterList?.parameters[context.parameterIndex] ?: return
             parameter.typeReference = KtPsiFactory(project).createType(context.nullableType)
         }
-    })
+    }
 }
 
 private fun KaSession.isSelfReferenceParameter(

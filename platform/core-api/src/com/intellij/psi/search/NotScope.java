@@ -31,6 +31,11 @@ final class NotScope extends DelegatingGlobalSearchScope {
   }
 
   @Override
+  public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {
+    return CodeInsightContextAwareSearchScopesKt.NoContextInformation();
+  }
+
+  @Override
   public String toString() {
     return "NOT: (" + myBaseScope + ")";
   }

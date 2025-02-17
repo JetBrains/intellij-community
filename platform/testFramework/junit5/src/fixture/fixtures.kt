@@ -21,8 +21,8 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
@@ -155,15 +155,29 @@ fun TestFixture<PsiDirectory>.psiFileFixture(
   name: String,
   content: String,
 ): TestFixture<PsiFile> = testFixture { _ ->
-  val sor = this@psiFileFixture.init()
+  val project = this@psiFileFixture.init().project
+  val virtualFile = virtualFileFixture(name, content).init()
+  val file = readAction {
+    PsiManager.getInstance(project).findFile(virtualFile) ?: error("Fail to find file $virtualFile")
+  }
+  initialized(file) {/*nothing*/}
+}
+
+@TestOnly
+fun TestFixture<PsiDirectory>.virtualFileFixture(
+  name: String,
+  content: String,
+): TestFixture<VirtualFile> = testFixture { _ ->
+  val dirFixture = this@virtualFileFixture
+  val dir = dirFixture.init()
   val file = writeAction {
-    sor.createFile(name).also {
-      it.virtualFile.setBinaryContent(content.toByteArray())
+    dir.virtualFile.createChildData(dirFixture, name).also {
+      it.setBinaryContent(content.toByteArray())
     }
   }
   initialized(file) {
     writeAction {
-      file.delete()
+      file.delete(dirFixture)
     }
   }
 }
@@ -200,18 +214,5 @@ fun <T : Any> extensionPointFixture(epName: ExtensionPointName<T>, extension: T)
   epName.point.registerExtension(extension, disposable)
   initialized(extension) {
     Disposer.dispose(disposable)
-  }
-}
-
-/**
- * Ensures [registryValue] has [value] state during the lifetime of the fixture.
- * After the fixture is disposed, the previous value is restored.
- */
-@TestOnly
-fun registryValueFixture(registryValue: RegistryValue, value: Boolean): TestFixture<Unit> = testFixture {
-  val prevValue = registryValue.asBoolean()
-  registryValue.setValue(value)
-  initialized(Unit) {
-    registryValue.setValue(prevValue)
   }
 }

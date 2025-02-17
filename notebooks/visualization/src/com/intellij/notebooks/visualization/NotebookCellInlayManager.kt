@@ -212,7 +212,7 @@ class NotebookCellInlayManager private constructor(
   private fun addBelowLastCellInlay() {  // PY-77218
     belowLastCellInlay = editor.addComponentInlay(
       UiDataProvider.wrapComponent(belowLastCellPanel) { sink ->
-        sink[NOTEBOOK_CELL_LINES_INTERVAL] = editor.notebook?.cells?.last()?.interval
+        sink[NOTEBOOK_CELL_LINES_INTERVAL] = editor.notebook?.cells?.lastOrNull()?.interval
       },
       isRelatedToPrecedingText = true,
       showAbove = false,

@@ -29,10 +29,10 @@ class KotlinUnreachableCodeInspection : KotlinKtDiagnosticBasedInspectionBase<Kt
         context: Unit
     ): @InspectionMessage String = KotlinBundle.message("inspection.unreachable.code")
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtElement,
         context: Unit
-    ): Array<KotlinModCommandQuickFix<KtElement>> = arrayOf(object : KotlinModCommandQuickFix<KtElement>() {
+    ): KotlinModCommandQuickFix<KtElement> = object : KotlinModCommandQuickFix<KtElement>() {
 
         override fun getFamilyName(): String = KotlinBundle.message("inspection.unreachable.code.remove.unreachable.code")
 
@@ -43,7 +43,7 @@ class KotlinUnreachableCodeInspection : KotlinKtDiagnosticBasedInspectionBase<Kt
         ) {
             element.delete()
         }
-    })
+    }
 
     override fun buildVisitor(
         holder: ProblemsHolder,

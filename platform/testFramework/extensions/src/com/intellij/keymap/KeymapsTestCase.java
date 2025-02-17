@@ -152,7 +152,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl X",             "Code.Review.Editor.New.Comment", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
       {"shift ctrl alt C",         "CopyReference", "Gauge.Extract"},
       {"shift ctrl alt DOWN",      "ResizeToolWindowDown", "VcsShowNextChangeMarker"},
-      {"shift ctrl alt F",         "DatabaseView.FullTextSearch", "Console.TableResult.EditFilterCriteria", "GoFmtFileAction", "TFFmtFileAction"},
+      {"shift ctrl alt F",         "DatabaseView.FullTextSearch", "Console.TableResult.EditFilterCriteria", "GoFmtFileAction", "TfFmtFileAction"},
       {"shift ctrl alt L",         "ShowReformatFileDialog", "Gauge.Format"},
       {"shift ctrl alt LEFT",      "MoveElementLeft", "ResizeToolWindowLeft"},
       {"shift ctrl alt S",         "ShowProjectStructureSettings", "GoShareInPlaygroundAction"},

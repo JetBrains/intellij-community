@@ -117,4 +117,12 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
     return ((isValid() ? "" : "[INVALID] ") + "PyCollectionClassType: " + getClassQName()) +
            "[" + StringUtil.join(getElementTypes(), ", ") + "]";
   }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
+      return visitorExt.visitPyGenericType(this);
+    }
+    return visitor.visitPyClassType(this);
+  }
 }

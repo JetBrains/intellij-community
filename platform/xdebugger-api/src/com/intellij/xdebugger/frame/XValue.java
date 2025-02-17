@@ -142,4 +142,12 @@ public abstract class XValue extends XValueContainer {
   public @Nullable XReferrersProvider getReferrersProvider() {
     return null;
   }
+
+  /**
+   * Provides additional information about XValue, which frontend may use.
+   */
+  @ApiStatus.Internal
+  public @Nullable CompletableFuture<XValueDescriptor> getXValueDescriptorAsync() {
+    return null;
+  }
 }

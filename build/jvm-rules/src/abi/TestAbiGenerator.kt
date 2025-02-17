@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.abi
 
-import org.jetbrains.org.objectweb.asm.ClassReader
-import org.jetbrains.org.objectweb.asm.ClassWriter
 import java.nio.file.Path
 
 internal object TestAbiGenerator {
@@ -17,7 +15,7 @@ internal object TestAbiGenerator {
       val data = zip.getInputStream(zip.getEntry(zipName)).use { it.readAllBytes() }
 
       val classesToBeDeleted = HashSet<String>()
-      val bytes = createAbForKotlin(HashSet(), JarContentToProcess(
+      val bytes = createAbiForKotlin(HashSet(), JarContentToProcess(
         name = zipName.toByteArray(),
         data = data,
         isKotlinModuleMetadata = false,

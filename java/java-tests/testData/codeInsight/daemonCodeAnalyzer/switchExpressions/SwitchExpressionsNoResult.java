@@ -31,7 +31,7 @@ class Test {
   
   Object invalidLambdaContext(int x) {
     return (Runnable) switch (x) {
-      default -> x > 0 ? <error descr="Lambda expression not expected here">() -> {}</error> : <error descr="Lambda expression not expected here">() -> {}</error>;
+      default -> x > 0 ? <error descr="Unexpected lambda expression">() -> {}</error> : <error descr="Unexpected lambda expression">() -> {}</error>;
     };
   }
 }

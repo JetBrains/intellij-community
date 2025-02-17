@@ -189,7 +189,6 @@ c:com.intellij.reference.SoftReference
 - java.lang.ref.SoftReference
 - java.util.function.Supplier
 - <init>(java.lang.Object):V
-- <init>(java.lang.Object,java.lang.ref.ReferenceQueue):V
 - s:deref(java.util.function.Supplier):java.lang.Object
 - s:dereference(java.lang.ref.Reference):java.lang.Object
 e:com.intellij.smRunner.OutputStreamType
@@ -244,7 +243,6 @@ f:com.intellij.util.ArrayUtil
 - s:copyOf(java.lang.Object[]):java.lang.Object[]
 - s:copyOf(Z[]):Z[]
 - s:ensureExactSize(I,java.lang.Object[]):java.lang.Object[]
-- s:equals(java.lang.Object[],java.lang.Object[],java.util.Comparator):Z
 - s:find(I[],I):I
 - s:find(java.lang.Object[],java.lang.Object):I
 - s:getComponentType(java.lang.Object[]):java.lang.Class

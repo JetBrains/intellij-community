@@ -131,7 +131,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
 
   public void testDelStatement() {
     doTestByText("""
-                   from typing import TypedDict
+                   from typing import TypedDict, Literal
                    class Movie(TypedDict):
                        name: str
                        year: int
@@ -141,7 +141,10 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                    year2 = year
                    m = HorrorMovie(name='Alien', year=1979)
                    del (m['based_on_book'], m[<warning descr="Key 'name' of TypedDict 'HorrorMovie' cannot be deleted">'name'</warning>])
-                   del m[<warning descr="Key 'year' of TypedDict 'HorrorMovie' cannot be deleted">year2</warning>], m['based_on_book']""");
+                   del m[<warning descr="Key 'year' of TypedDict 'HorrorMovie' cannot be deleted">year2</warning>], m['based_on_book']
+                   def foo(k1: Literal['name', 'year', 'based_on_book'], k2: Literal['based_on_book']):
+                       del m[<warning descr="Key 'name' of TypedDict 'HorrorMovie' cannot be deleted"><warning descr="Key 'year' of TypedDict 'HorrorMovie' cannot be deleted">k1</warning></warning>]
+                       del m[k2]""");
   }
 
   public void testDictModificationMethods() {
@@ -446,14 +449,19 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
   // PY-73099
   public void testReadOnly() {
     doTestByText("""
-                   from typing_extensions import TypedDict, Required, ReadOnly
+                   from typing_extensions import TypedDict, Required, ReadOnly, Literal
                    
                    class Movie(TypedDict):
                        name: ReadOnly[Required[str]]
+                       director: str
                    
                    m: Movie = {"name": "Blur"}
                    print(m["name"])
                    <warning descr="TypedDict key \\"name\\" is ReadOnly">m["name"]</warning> = "new name"
+                   
+                   def foo(k1: Literal["name", "director"], k2: Literal["director"]):
+                       <warning descr="TypedDict key \\"name\\" is ReadOnly">m[k1]</warning> = "new name"
+                       m[k2] = ""
                    """);
   }
 

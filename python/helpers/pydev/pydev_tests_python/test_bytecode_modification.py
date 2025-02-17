@@ -7,9 +7,11 @@ from types import CodeType
 import pytest
 
 from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code, \
-    add_jump_instruction, IS_PY310_OR_GREATER
+    add_jump_instruction
 from _pydevd_bundle.pydevd_constants import IS_PY39
+from _pydevd_bundle.pydevd_constants import IS_PY310_OR_GREATER
 from _pydevd_bundle.pydevd_constants import IS_PY311_OR_GREATER
+from _pydevd_bundle.pydevd_constants import IS_PY313_OR_LESSER
 from opcode import EXTENDED_ARG
 
 TRACE_MESSAGE = "Trace called"
@@ -32,7 +34,7 @@ IS_PY37_OR_GREATER = sys.version_info > (3, 7)
 
 LOAD_OPCODES = [dis.opmap[x] for x in ('LOAD_ATTR', 'LOAD_CONST', 'LOAD_FAST', 'LOAD_GLOBAL', 'LOAD_NAME')]
 
-if IS_PY37_OR_GREATER:
+if IS_PY37_OR_GREATER and IS_PY313_OR_LESSER:
     LOAD_OPCODES.append(dis.opmap['LOAD_METHOD'])
 
 

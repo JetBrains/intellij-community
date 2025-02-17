@@ -618,6 +618,7 @@ public final class SwitchUtils {
         StringBuilder builder = new StringBuilder();
         builder.append(createPatternCaseText(instanceOf));
         boolean needAppendWhen = PsiUtil.isAvailable(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS, expression);
+        if (!needAppendWhen) return null; // impossible to support old style guarded with '&&'
         for (PsiExpression operand : operands) {
           if (operand != instanceOf) {
             builder.append(needAppendWhen ? " when " : " && ").append(operand.getText());

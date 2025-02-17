@@ -31,6 +31,8 @@
                                                implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentCompletionCommand"/>
     <codeInsight.completion.applicable.command language="kotlin"
                                                implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinDeleteCompletionCommand"/>
+    <codeInsight.completion.applicable.command language="kotlin"
+                                               implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinChangeSignatureCompletionCommand"/>
   </extensions>
 
 </idea-plugin>

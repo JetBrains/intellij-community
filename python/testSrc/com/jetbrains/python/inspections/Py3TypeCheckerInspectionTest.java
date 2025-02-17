@@ -2502,4 +2502,45 @@ def foo(param: str | int) -> TypeGuard[str]:
                    asdict(<warning descr="Expected type 'DataclassInstance', got 'str' instead">"Bob"</warning>)
                    """);
   }
+
+  // PY-79129
+  public void testTupleIndexOutOfRange() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   def foo(t: tuple[int, str], i: Literal[1], j: Literal[3], k: Literal[-3]):
+                       t[i]
+                       t[-1]
+                       t[<warning descr="Tuple index out of range">j</warning>]
+                       t[<warning descr="Tuple index out of range">2</warning>]
+                       t[<warning descr="Tuple index out of range">k</warning>]
+                       t[<warning descr="Tuple index out of range">-4</warning>]
+                   
+                   def bar(t: tuple[int, ...]):
+                       t[10]
+                   """);
+  }
+
+  // PY-79163
+  public void testLiteralTypeInferredForFinalVariableOrAttribute() {
+    doTestByText("""
+                   from typing import Literal, Final
+                   
+                   foo: Final = 3
+                   def expects_three(x: Literal[3]) -> None: ...
+                   
+                   expects_three(foo)
+                   
+                   def bar():
+                       var: Final = 3
+                       expects_three(var)
+                   """);
+    doTestByText("""
+                   from typing import Literal, Final
+                   v: Final = [1, 2]
+                   def expects_list(l: list[int]): ...
+                   
+                   expects_list(v)
+                   """);
+  }
 }

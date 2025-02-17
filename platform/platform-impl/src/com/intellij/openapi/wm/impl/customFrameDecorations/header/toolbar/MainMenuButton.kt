@@ -28,6 +28,7 @@ import com.intellij.platform.ide.menu.createIdeMainMenuActionGroup
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupImpl
+import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
@@ -283,7 +284,8 @@ private fun createMenuButton(action: AnAction): ActionButton {
     // Dynamically adjusts the insets of the component based on its height. This approach ensures alignment with the menu
     override fun getInsets(): Insets? {
       val ins = super.getInsets()
-      return JBUI.insets(this.height / 8,ins.left,  this.height / 8, ins.right)
+      val topBottomInset = this.height / scale(8)
+      return JBUI.insets(topBottomInset,ins.left,  topBottomInset, ins.right)
     }
   }
 

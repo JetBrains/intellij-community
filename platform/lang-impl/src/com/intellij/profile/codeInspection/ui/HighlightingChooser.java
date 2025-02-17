@@ -43,6 +43,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -73,7 +74,7 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
       return;
     }
 
-    final var attributes = ColorSettingsUtil.getErrorTextAttributes();
+    List<Pair<TextAttributesKey, @Nls String>> attributes = ColorSettingsUtil.getErrorTextAttributes();
     String displayName = key.getExternalName();
     for (Pair<TextAttributesKey, @Nls String> pair: attributes) {
       if (key.toString().equals(pair.first.toString())) {

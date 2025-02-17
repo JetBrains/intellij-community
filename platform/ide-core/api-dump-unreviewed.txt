@@ -176,6 +176,14 @@ com.intellij.ide.AppLifecycleListener
 - projectFrameClosed():V
 - projectOpenFailed():V
 - welcomeScreenDisplayed():V
+f:com.intellij.ide.CliResult
+- java.lang.Record
+- sf:OK:com.intellij.ide.CliResult
+- <init>(I,java.lang.String):V
+- f:equals(java.lang.Object):Z
+- exitCode():I
+- f:hashCode():I
+- message():java.lang.String
 f:com.intellij.ide.GeneralLocalSettings
 - com.intellij.openapi.components.SimplePersistentStateComponent
 - sf:Companion:com.intellij.ide.GeneralLocalSettings$Companion
@@ -227,7 +235,6 @@ f:com.intellij.ide.GeneralSettings
 - f:isShowWelcomeScreen():Z
 - f:isSupportScreenReaders():Z
 - f:isSyncOnFrameActivation():Z
-- f:isUseDefaultBrowser():Z
 - f:isUseSafeWrite():Z
 - loadState(com.intellij.ide.GeneralSettingsState):V
 - noStateLoaded():V
@@ -1825,6 +1832,16 @@ a:com.intellij.openapi.ui.DoNotAskOption$Adapter
 - a:rememberChoice(Z,I):V
 - f:setToBeShown(Z,I):V
 - shouldSaveOptionsOnCancel():Z
+e:com.intellij.openapi.ui.ExitActionType
+- java.lang.Enum
+- sf:CANCEL:com.intellij.openapi.ui.ExitActionType
+- sf:NO:com.intellij.openapi.ui.ExitActionType
+- sf:OK:com.intellij.openapi.ui.ExitActionType
+- sf:UNDEFINED:com.intellij.openapi.ui.ExitActionType
+- sf:YES:com.intellij.openapi.ui.ExitActionType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.ui.ExitActionType
+- s:values():com.intellij.openapi.ui.ExitActionType[]
 f:com.intellij.openapi.ui.MessageConstants
 - sf:CANCEL:I
 - sf:NO:I

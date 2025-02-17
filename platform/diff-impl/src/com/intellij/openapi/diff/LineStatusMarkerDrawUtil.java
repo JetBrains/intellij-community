@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ex.ChangedLines;
 import com.intellij.openapi.vcs.ex.ChangesBlock;
 import com.intellij.openapi.vcs.ex.Range;
@@ -217,9 +218,12 @@ public final class LineStatusMarkerDrawUtil {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     if (ExperimentalUI.isNewUI()) {
       int x = gutter.getExtraLineMarkerFreePaintersAreaOffset();
+      boolean is6pxWidth = Registry.is("gutter.vcs.changes.width.6px", false);
       x += JBUI.scale(1); // leave 1px for brace highlighters
-      x += JBUI.scale(2); //IDEA-286352
-      int areaWidth = scaleWithEditor(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", 4)), editor);
+      if (!is6pxWidth) {
+        x += JBUI.scale(2); //IDEA-286352
+      }
+      int areaWidth = scaleWithEditor(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", is6pxWidth ? 6 : 4)), editor);
       return new IntPair(x, x + areaWidth);
     }
     else {

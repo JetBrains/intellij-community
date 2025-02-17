@@ -3,7 +3,6 @@ package com.intellij.xml.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.tree.IElementType;
@@ -11,78 +10,35 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ObjectIntHashMap;
-import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class XmlTagUtil {
-  private static final ObjectIntMap<String> ourCharacterEntities = new ObjectIntHashMap<>(6);
-
-  static {
-    ourCharacterEntities.put("lt", '<');
-    ourCharacterEntities.put("gt", '>');
-    ourCharacterEntities.put("apos", '\'');
-    ourCharacterEntities.put("quot", '\"');
-    ourCharacterEntities.put("nbsp", '\u00a0');
-    ourCharacterEntities.put("amp", '&');
-  }
-
   /**
    * if text contains XML-sensitive characters (<,>), quote text with ![CDATA[ ... ]]
    *
    * @return quoted text
    */
   public static String getCDATAQuote(String text) {
-    if (text == null) return null;
-    String offensiveChars = "<>&\n";
-    final int textLength = text.length();
-    if (textLength > 0 && (Character.isWhitespace(text.charAt(0)) || Character.isWhitespace(text.charAt(textLength - 1)))) {
-      return "<![CDATA[" + text + "]]>";
-    }
-    for (int i = 0; i < offensiveChars.length(); i++) {
-      char c = offensiveChars.charAt(i);
-      if (text.indexOf(c) != -1) {
-        return "<![CDATA[" + text + "]]>";
-      }
-    }
-    return text;
+    return BasicXmlTagUtil.getCDATAQuote(text);
   }
 
   public static String getInlineQuote(String text) {
-    if (text == null) return null;
-    String offensiveChars = "<>&";
-    for (int i = 0; i < offensiveChars.length(); i++) {
-      char c = offensiveChars.charAt(i);
-      if (text.indexOf(c) != -1) {
-        return "<![CDATA[" + text + "]]>";
-      }
-    }
-    return text;
+    return BasicXmlTagUtil.getInlineQuote(text);
   }
 
 
   public static CharSequence composeTagText(@NonNls String tagName, @NonNls String tagValue) {
-    StringBuilder builder = new StringBuilder();
-    builder.append('<').append(tagName);
-    if (StringUtil.isEmpty(tagValue)) {
-      builder.append("/>");
-    }
-    else {
-      builder.append('>').append(getCDATAQuote(tagValue)).append("</").append(tagName).append('>');
-    }
-    return builder;
+    return BasicXmlTagUtil.composeTagText(tagName, tagValue);
   }
 
   public static String[] getCharacterEntityNames() {
-    return ArrayUtilRt.toStringArray(ourCharacterEntities.keySet());
+    return BasicXmlTagUtil.getCharacterEntityNames();
   }
 
   public static char getCharacterByEntityName(String entityName) {
-    int c = ourCharacterEntities.get(entityName);
-    return c==-1?0:(char)c;
+    return BasicXmlTagUtil.getCharacterByEntityName(entityName);
   }
 
   public static @Nullable XmlToken getStartTagNameElement(@NotNull XmlTag tag) {

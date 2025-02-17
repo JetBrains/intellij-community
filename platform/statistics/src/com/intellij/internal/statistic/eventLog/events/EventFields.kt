@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.Version
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -37,18 +36,6 @@ internal object EventFieldIds {
 
 @Suppress("FunctionName")
 object EventFields {
-  /**
-   * Creates a field that will be validated by global regexp rule
-   * @param name  name of the field
-   * @param regexpRef reference to global regexp, e.g "integer" for "{regexp#integer}"
-   */
-  @Deprecated("Confusing API - users may pass regex directly and assume it can work",
-              ReplaceWith("StringEventField.StringValidatedByRegexpReference(name, regexpRef)"))
-  @ScheduledForRemoval
-  @JvmStatic
-  fun StringValidatedByRegexp(@NonNls @EventFieldName name: String, @NonNls regexpRef: String): StringEventField {
-    return StringEventField.ValidatedByRegexp(name, regexpRef, null)
-  }
 
   /**
    * Creates a field that will be validated by global regexp rule.

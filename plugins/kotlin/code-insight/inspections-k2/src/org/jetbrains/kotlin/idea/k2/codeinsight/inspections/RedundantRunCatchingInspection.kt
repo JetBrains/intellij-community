@@ -36,10 +36,10 @@ internal class RedundantRunCatchingInspection : KotlinApplicableInspectionBase.S
     override fun getProblemDescription(element: KtQualifiedExpression, context: CallChainExpressions): String =
         KotlinBundle.message("redundant.runcatching.call.may.be.reduced.to.0", conversion.replacement)
 
-    override fun createQuickFixes(
+    override fun createQuickFix(
         element: KtQualifiedExpression,
         context: CallChainExpressions
-    ): Array<KotlinModCommandQuickFix<KtQualifiedExpression>> = arrayOf(SimplifyCallChainFix(conversion))
+    ): KotlinModCommandQuickFix<KtQualifiedExpression> = SimplifyCallChainFix(conversion)
 
     override fun getApplicableRanges(element: KtQualifiedExpression): List<TextRange> {
         val chain = CallChainExpressions.from(element) ?: return emptyList()

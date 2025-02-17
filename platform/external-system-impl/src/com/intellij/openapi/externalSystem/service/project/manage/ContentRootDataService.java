@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.notification.Notification;
@@ -404,6 +405,9 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
 
   private static void filterAndReportDuplicatingContentRoots(@NotNull MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> moduleNodeToRootNodes,
                                                              @NotNull Project project) {
+
+    boolean duplicatesAreAllowed = CodeInsightContextKt.isSharedSourceSupportEnabled(project);
+
     Map<String, DuplicateModuleReport> filter = new LinkedHashMap<>();
 
     for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : moduleNodeToRootNodes.entrySet()) {
@@ -415,8 +419,10 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
         DuplicateModuleReport report = filter.putIfAbsent(rootPath, new DuplicateModuleReport(moduleData));
         if (report != null) {
           report.addDuplicate(moduleData);
-          iterator.remove();
-          crDataNode.clear(true);
+          if (!duplicatesAreAllowed) {
+            iterator.remove();
+            crDataNode.clear(true);
+          }
         }
       }
     }
@@ -430,7 +436,8 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
 
     boolean hasDuplicates = !toReport.isEmpty();
     HasSharedSourcesUtil.setHasSharedSources(project, hasDuplicates);
-    if (hasDuplicates) {
+
+    if (hasDuplicates && !duplicatesAreAllowed) {
       String notificationMessage = prepareMessageAndLogWarnings(toReport);
       if (notificationMessage != null) {
         showNotificationsPopup(project, toReport.size(), notificationMessage);

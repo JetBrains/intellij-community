@@ -11,6 +11,8 @@
     <orderEntry type="module" module-name="intellij.java.compiler.charts" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.debugger.memory.agent" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" scope="RUNTIME" />

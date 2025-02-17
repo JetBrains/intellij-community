@@ -1048,7 +1048,6 @@ a:com.intellij.openapi.actionSystem.ActionGroup
 - f:setPopup(Z):V
 - f:setSearchable(Z):V
 a:com.intellij.openapi.actionSystem.ActionManager
-- a:addAnActionListener(com.intellij.openapi.actionSystem.ex.AnActionListener):V
 - addAnActionListener(com.intellij.openapi.actionSystem.ex.AnActionListener,com.intellij.openapi.Disposable):V
 - a:addTimerListener(com.intellij.openapi.actionSystem.TimerListener):V
 - a:createActionPopupMenu(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup):com.intellij.openapi.actionSystem.ActionPopupMenu

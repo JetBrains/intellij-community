@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.navigation.impl
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
@@ -15,11 +16,19 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * or `null` to change the caret position according to [offsetMarker]
  */
 @Internal
-class SourceNavigationRequest internal constructor(
+open class SourceNavigationRequest internal constructor(
   val file: VirtualFile,
   val offsetMarker: RangeMarker?,
   val elementRangeMarker: RangeMarker?,
 ) : NavigationRequest
+
+@Internal
+class SharedSourceNavigationRequest internal constructor(
+  file: VirtualFile,
+  val context: CodeInsightContext,
+  offsetMarker: RangeMarker?,
+  elementRangeMarker: RangeMarker?,
+) : SourceNavigationRequest(file, offsetMarker, elementRangeMarker)
 
 @Internal
 class DirectoryNavigationRequest internal constructor(
