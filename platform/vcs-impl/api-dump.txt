@@ -2308,7 +2308,7 @@ c:com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 - sf:create(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,kotlin.jvm.functions.Function0,java.util.function.Consumer):com.intellij.openapi.vcs.ui.RefreshableOnComponent
 - sf:create(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,kotlin.reflect.KMutableProperty0):com.intellij.openapi.vcs.ui.RefreshableOnComponent
 - f:createContent(com.intellij.ui.dsl.builder.Panel):V
-- sf:createLink(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,kotlin.jvm.functions.Function0,java.util.function.Consumer,java.lang.String,com.intellij.ui.components.labels.LinkListener):com.intellij.openapi.vcs.ui.RefreshableOnComponent
+- sf:createLink(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,javax.swing.Icon,kotlin.jvm.functions.Function0,java.util.function.Consumer,java.lang.String,com.intellij.ui.components.labels.LinkListener):com.intellij.openapi.vcs.ui.RefreshableOnComponent
 - sf:createLink(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,kotlin.reflect.KMutableProperty0,java.lang.String,com.intellij.ui.components.labels.LinkListener):com.intellij.openapi.vcs.ui.RefreshableOnComponent
 - p:createOptionContent(com.intellij.ui.dsl.builder.Panel):V
 - pf:getCheckBox():com.intellij.ui.components.JBCheckBox
@@ -2324,10 +2324,11 @@ c:com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 f:com.intellij.openapi.vcs.changes.ui.BooleanCommitOption$Companion
 - f:create(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,kotlin.jvm.functions.Function0,java.util.function.Consumer):com.intellij.openapi.vcs.ui.RefreshableOnComponent
 - f:create(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,kotlin.reflect.KMutableProperty0):com.intellij.openapi.vcs.ui.RefreshableOnComponent
-- f:createLink(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,kotlin.jvm.functions.Function0,java.util.function.Consumer,java.lang.String,com.intellij.ui.components.labels.LinkListener):com.intellij.openapi.vcs.ui.RefreshableOnComponent
+- f:createLink(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,javax.swing.Icon,kotlin.jvm.functions.Function0,java.util.function.Consumer,java.lang.String,com.intellij.ui.components.labels.LinkListener):com.intellij.openapi.vcs.ui.RefreshableOnComponent
 - f:createLink(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.checkin.CheckinHandler,Z,java.lang.String,kotlin.reflect.KMutableProperty0,java.lang.String,com.intellij.ui.components.labels.LinkListener):com.intellij.openapi.vcs.ui.RefreshableOnComponent
 com.intellij.openapi.vcs.changes.ui.BooleanCommitOption$LinkContext
-- a:setCheckboxText(java.lang.String):V
+- a:update(java.lang.String,javax.swing.Icon):V
+- bs:update$default(com.intellij.openapi.vcs.changes.ui.BooleanCommitOption$LinkContext,java.lang.String,javax.swing.Icon,I,java.lang.Object):V
 c:com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.diff.actions.impl.GoToChangePopupBuilder$Chain

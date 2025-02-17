@@ -9,14 +9,17 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.vcs.commit.CommitSessionCollector
 import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
+import javax.swing.Icon
 import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
 
@@ -137,7 +140,7 @@ open class BooleanCommitOption(
                    property: KMutableProperty0<Boolean>,
                    linkText: @Nls String,
                    linkCallback: LinkListener<LinkContext>): RefreshableOnComponent {
-      return createLink(project, checkinHandler, disableWhenDumb, text, { property.get() }, { property.set(it) }, linkText, linkCallback)
+      return createLink(project, checkinHandler, disableWhenDumb, text, null, { property.get() }, { property.set(it) }, linkText, linkCallback)
     }
 
     @JvmStatic
@@ -145,41 +148,47 @@ open class BooleanCommitOption(
                    checkinHandler: CheckinHandler?,
                    disableWhenDumb: Boolean,
                    @Nls text: String,
+                   iconAfterText: Icon?,
                    getter: () -> Boolean,
                    setter: Consumer<Boolean>,
                    linkText: @Nls String,
                    linkCallback: LinkListener<LinkContext>): RefreshableOnComponent {
-      val commitOption = BooleanCommitOptionWithLink(project, text, disableWhenDumb, getter, setter, linkText, linkCallback)
+      val commitOption = BooleanCommitOptionWithLink(project, text, iconAfterText, disableWhenDumb, getter, setter, linkText, linkCallback)
       if (checkinHandler != null) commitOption.withCheckinHandler(checkinHandler)
       return commitOption
     }
   }
 
   interface LinkContext {
-    fun setCheckboxText(text: @Nls String)
+    fun update(checkBoxText: @Nls String, iconAfterText: Icon? = null)
   }
 }
 
 private class BooleanCommitOptionWithLink(project: Project,
                                           text: @Nls String,
+                                          iconAfterText: Icon?,
                                           disableWhenDumb: Boolean,
                                           getter: () -> Boolean,
                                           setter: Consumer<Boolean>,
                                           val linkText: @Nls String,
                                           val linkCallback: LinkListener<LinkContext>)
   : BooleanCommitOption(project, text, disableWhenDumb, getter, setter), BooleanCommitOption.LinkContext {
+    private val iconLabel = JBLabel(iconAfterText)
+
   override fun Panel.createOptionContent() {
     val configureFilterLink = LinkLabel(linkText, null, linkCallback, this@BooleanCommitOptionWithLink)
     row {
       cell(checkBox).also {
         if (isInSettings) it.bindSelected(getter, setter::accept)
-      }
+      }.gap(RightGap.SMALL)
+      cell(iconLabel).gap(RightGap.SMALL)
       cell(configureFilterLink)
     }
   }
 
-  override fun setCheckboxText(text: @Nls String) {
-    checkBox.text = text
+  override fun update(checkBoxText: @Nls String, iconAfterText: Icon?) {
+    checkBox.text = checkBoxText
+    iconLabel.icon = iconAfterText
   }
 }
 
