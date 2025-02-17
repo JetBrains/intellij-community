@@ -10940,6 +10940,7 @@ a:com.intellij.ide.scratch.LRUPopupBuilder
 f:com.intellij.ide.scratch.ScratchFileActions
 - <init>():V
 - s:doCreateNewScratch(com.intellij.openapi.project.Project,com.intellij.ide.scratch.ScratchFileCreationHelper$Context):com.intellij.psi.PsiFile
+- s:doCreateNewScratch(com.intellij.openapi.project.Project,com.intellij.ide.scratch.ScratchFileCreationHelper$Context,com.intellij.openapi.actionSystem.DataContext):com.intellij.psi.PsiFile
 c:com.intellij.ide.scratch.ScratchFileActions$ChangeLanguageAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
