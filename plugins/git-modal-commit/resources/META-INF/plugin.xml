@@ -3,9 +3,13 @@
   <id>intellij.git.commit.modal</id>
   <category>Version Controls</category>
   <vendor>JetBrains</vendor>
-  <description>
-    <![CDATA[Adds the option to enable a modal interface for Git commit (Settings | Advanced Settings)]]>
-  </description>
+  <description><![CDATA[
+    This plugin restores the modal commit option for JetBrains IDEs,
+    which was the default before the introduction of the non-modal commit window.
+    <br/>
+    If you prefer the traditional commit workflow, this plugin brings that functionality back
+    (available in "Settings | Advanced Settings | Version Control").
+  ]]></description>
 
   <dependencies>
     <plugin id="Git4Idea"/>
