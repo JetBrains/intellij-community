@@ -102,7 +102,7 @@ object XmlElementType {
 
   @JvmField
   val HTML_FILE: IFileElementType =
-    factory.getFileElementType("HTML_FILE")
+    HtmlFileElementType.INSTANCE
 
   @JvmField
   val HTML_EMBEDDED_CONTENT: IElementType =
