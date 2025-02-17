@@ -1055,6 +1055,7 @@ f:com.intellij.openapi.application.CoroutinesKt
 - sf:constrainedReadAction(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:constrainedReadActionBlocking(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:constrainedReadAndWriteAction(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- sf:edtWriteAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:getEDT(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
 - sf:readAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:readActionBlocking(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object

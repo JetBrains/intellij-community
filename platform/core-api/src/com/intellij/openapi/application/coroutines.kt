@@ -220,21 +220,36 @@ suspend fun <T> constrainedReadAndWriteAction(vararg constraints: ReadConstraint
 }
 
 /**
- * Runs given [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction].
+ * Runs given [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction] using [Dispatchers.EDT].
  *
- * Currently, the [action] is dispatched by [Dispatchers.EDT] within the [context modality state][asContextElement].
+ * The [action] is dispatched by [Dispatchers.EDT] within the [context modality state][asContextElement].
  * If the calling coroutine is already executed by [Dispatchers.EDT], then no re-dispatch happens.
  * Acquiring the write-lock happens in blocking manner,
  * i.e. [runWriteAction][com.intellij.openapi.application.Application.runWriteAction] call will block
  * until all currently running read actions are finished.
+ *
+ * @see readAndWriteAction
+ * @see com.intellij.openapi.command.writeCommandAction
+ */
+suspend fun <T> edtWriteAction(action: () -> T): T {
+  return withContext(Dispatchers.EDT) {
+    blockingContext {
+      ApplicationManager.getApplication().runWriteAction(Computable(action))
+    }
+  }
+}
+
+/**
+ * Runs [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction].
+ *
+ * This function is deprecated in favor of [edtWriteAction]. This deprecation is needed to free the name [writeAction],
+ * as we are planning to schedule all write actions to background by default.
  *
  * NB This function is an API stub.
  * The implementation will change once running write actions would be allowed on other threads.
  * This function exists to make it possible to use it in suspending contexts
  * before the platform is ready to handle write actions differently.
  *
- * @see readAndWriteAction
- * @see com.intellij.openapi.command.writeCommandAction
  */
 @Experimental
 suspend fun <T> writeAction(action: () -> T): T {
