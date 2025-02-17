@@ -842,6 +842,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       context.messages.info("Will run tests in dedicated runtimes ('${options.isDedicatedTestRuntime}')")
       // First, collect all tests for both JUnit5 and JUnit3+4
       val testClassesJUnit5 = spanBuilder("collect junit 5 tests").use {
+        if (options.shouldSkipJUnit5Tests) {
+          context.messages.warning("JUnit 5 tests collections is skipped")
+          return@use emptyList()
+        }
+
         val testClassesListFile = Files.createTempFile("tests-to-run-", ".list").apply { Files.delete(this) }
         runJUnit5Engine(
           systemProperties = systemProperties + ("intellij.build.test.list.classes" to testClassesListFile.absolutePathString()),
@@ -857,6 +862,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       }
 
       val testClassesJUnit34 = block("collect junit 3+4 tests") {
+        if (options.shouldSkipJUnit34Tests) {
+          context.messages.warning("JUnit 3+4 tests collections is skipped")
+          return@block emptyList()
+        }
+
         val testClassesListFile = Files.createTempFile("tests-to-run-", ".list").apply { Files.delete(this) }
         runJUnit5Engine(
           systemProperties = systemProperties + ("intellij.build.test.list.classes" to testClassesListFile.absolutePathString()),
@@ -965,8 +975,8 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         if (options.attemptCount > 1) mapOf("intellij.build.test.retries.failedClasses.file" to "$it", "intellij.build.test.list.file" to "$it")
         else emptyMap()
       }
-      var runJUnit5 = true
-      var runJUnit34 = true
+      var runJUnit5 = !options.shouldSkipJUnit5Tests
+      var runJUnit34 = !options.shouldSkipJUnit34Tests
       for (attempt in 1..options.attemptCount) {
         if (!runJUnit5 && !runJUnit34) break
         val spanNameSuffix = if (options.attemptCount > 1) " (attempt $attempt)" else ""

@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.TestCaseLoader
+import com.intellij.util.SystemProperties
 import com.intellij.util.text.nullize
 import org.jetbrains.intellij.build.TestingOptions.Companion.ALL_EXCLUDE_DEFINED_GROUP
 import org.jetbrains.intellij.build.TestingOptions.Companion.BOOTSTRAP_SUITE_DEFAULT
@@ -177,6 +178,12 @@ open class TestingOptions {
    * Better together with [BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_UNPACK]
    */
   val useArchivedCompiledClasses: Boolean = getBooleanProperty("intellij.build.test.use.compiled.classes.archives", false)
+
+  /** Skip running (and collection) of JUnit5 tests */
+  val shouldSkipJUnit5Tests: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.skip.tests.junit5", false)
+
+  /** Skip running (and collection) of JUnit3/4 tests */
+  val shouldSkipJUnit34Tests: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.skip.tests.junit34", false)
 
   /**
    * If `true` then a test process's stdout is redirected to a file,
