@@ -892,10 +892,13 @@ public final class ConfigImportHelper {
   public static final class ConfigImportOptions {
     final Logger log;
     boolean headless;
-    @Nullable ConfigImportSettings importSettings;
-    @Nullable BuildNumber compatibleBuildNumber;
-    Path bundledPluginPath = null;
-    boolean mergeVmOptions = false;
+    @ApiStatus.Internal
+    public @Nullable ConfigImportSettings importSettings;
+    @ApiStatus.Internal
+    public @Nullable BuildNumber compatibleBuildNumber;
+    @ApiStatus.Internal
+    public Path bundledPluginPath = null;
+    private boolean mergeVmOptions = false;
     @ApiStatus.Internal
     public MarketplacePluginDownloadService downloadService;
     /** should be exception-safe */
@@ -924,8 +927,8 @@ public final class ConfigImportHelper {
       return mergeVmOptions;
     }
 
-    public void setMergeVmOptions(boolean mergeVmOptions) {
-      this.mergeVmOptions = mergeVmOptions;
+    public void setMergeVmOptions(boolean value) {
+      mergeVmOptions = value;
     }
 
     public @Nullable ProgressIndicator getHeadlessProgressIndicator() {
