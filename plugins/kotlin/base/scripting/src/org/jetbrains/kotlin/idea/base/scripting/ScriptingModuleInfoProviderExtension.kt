@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProviderExtension
 import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
@@ -19,7 +18,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.register
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesSourceInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
-import org.jetbrains.kotlin.idea.base.scripting.projectStructure.scriptLibraryDependencies
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
@@ -55,10 +53,7 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
         val isBinary = virtualFile.fileType.isKotlinBinary
 
         if (isBinary) {
-            if (KotlinPluginModeProvider.isK2Mode()) {
-                val scriptFile = (config.contextualModuleInfo as? ScriptModuleInfo)?.scriptFile
-                scriptFile?.scriptLibraryDependencies(project)?.filter { virtualFile in it.contentScope }?.forEach { register(it) }
-            } else if (ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFilesScope().contains(virtualFile)) {
+            if (ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFilesScope().contains(virtualFile)) {
                 if (isLibrarySource) {
                     register(ScriptDependenciesSourceInfo.ForProject(project))
                 } else {
