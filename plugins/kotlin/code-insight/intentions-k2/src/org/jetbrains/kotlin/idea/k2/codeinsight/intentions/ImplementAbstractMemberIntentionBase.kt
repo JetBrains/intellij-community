@@ -121,10 +121,12 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         buildTargetPopupWithMultiSelect(
             items = sortedImplementableMembers,
             presentationProvider = {
-                val targetClass = it.getTargetClass()
-                TargetPresentation.builder(classRenderer.getElementText(targetClass)!!)
-                    .icon(targetClass.getIcon(0))
-                    .presentation()
+                runReadAction {
+                    val targetClass = it.getTargetClass()
+                    TargetPresentation.builder(classRenderer.getElementText(targetClass)!!)
+                        .icon(targetClass.getIcon(0))
+                        .presentation()
+                }
             }) { true }
             .setTitle(CodeInsightBundle.message("intention.implement.abstract.method.class.chooser.title"))
             .setItemsChosenCallback {
