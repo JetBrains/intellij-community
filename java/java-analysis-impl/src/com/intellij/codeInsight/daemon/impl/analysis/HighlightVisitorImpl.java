@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -45,13 +46,8 @@ import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.*;
 
 // java highlighting: problems in java code like unresolved/incompatible symbols/methods etc.
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
-  private final Map<String, String> myTooltipStyles = Map.of(
-    JavaCompilationError.JAVA_DISPLAY_INFORMATION, "color: " + ColorUtil.toHtmlColor(NewUI.isEnabled() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : UIUtil.getToolTipForeground()),
-    JavaCompilationError.JAVA_DISPLAY_GRAYED, "color: " + ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground()),
-    JavaCompilationError.JAVA_DISPLAY_PARAMETER, "color: " + ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground())+"; background-color: " + ColorUtil.toHtmlColor(
-      EditorColorsUtil.getGlobalOrDefaultColorScheme().getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).getBackgroundColor()),
-    JavaCompilationError.JAVA_DISPLAY_ERROR, "color: " + ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground()
-    ));
+  private final Map<String, String> myTooltipStyles = initTooltipStyles();
+
   private @NotNull HighlightInfoHolder myHolder;
   private @NotNull LanguageLevel myLanguageLevel;
 
@@ -64,6 +60,21 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private boolean myHasError; // true if myHolder.add() was called with HighlightInfo of >=ERROR severity. On each .visit(PsiElement) call this flag is reset. Useful to determine whether the error was already reported while visiting this PsiElement.
 
   protected HighlightVisitorImpl() {
+  }
+
+  private static @NotNull Map<String, String> initTooltipStyles() {
+    Color parameterBgColor = EditorColorsUtil.getGlobalOrDefaultColorScheme()
+      .getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).getBackgroundColor();
+    String parameterBgStyle = parameterBgColor == null ? "" : "; background-color: " + ColorUtil.toHtmlColor(parameterBgColor);
+    return Map.of(
+      JavaCompilationError.JAVA_DISPLAY_INFORMATION,
+      "color: " + ColorUtil.toHtmlColor(NewUI.isEnabled() ? JBUI.CurrentTheme.Editor.Tooltip.FOREGROUND : UIUtil.getToolTipForeground()),
+      JavaCompilationError.JAVA_DISPLAY_GRAYED,
+      "color: " + ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground()),
+      JavaCompilationError.JAVA_DISPLAY_PARAMETER,
+      "color: " + ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground()) + parameterBgStyle,
+      JavaCompilationError.JAVA_DISPLAY_ERROR,
+      "color: " + ColorUtil.toHtmlColor(NamedColorUtil.getErrorForeground()));
   }
 
   @Contract(pure = true)
