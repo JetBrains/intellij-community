@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -21,8 +21,8 @@ import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.indexing.IndexingBundle;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -187,7 +187,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     Collection<RootDescriptor> roots = myProjectFileIndex.getModuleSourceOrLibraryClassesRoots(file);
     if (roots.isEmpty()) return CodeInsightContextAwareSearchScopesKt.DoesNotContainFileInfo();
 
-    List<CodeInsightContext> result = new SmartList<>();
+    Set<CodeInsightContext> result = new SmartHashSet<>();
     for (RootDescriptor rootDescriptor : roots) {
       ScopeRootDescriptor descriptor = myRoots.getRootDescriptor(rootDescriptor);
       if (descriptor != null) {
