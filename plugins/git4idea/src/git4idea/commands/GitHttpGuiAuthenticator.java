@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -29,6 +29,7 @@ import git4idea.remote.GitHttpAuthDataProvider;
 import git4idea.remote.GitRememberedInputs;
 import git4idea.remote.GitRepositoryHostingService;
 import git4idea.remote.InteractiveGitHttpAuthDataProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +51,8 @@ import static com.intellij.credentialStore.CredentialAttributesKt.generateServic
  * <p>
  * git version <=1.7.7 does not provide url for methods (method parameter will be a blank line)
  */
-class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
+@ApiStatus.Internal
+public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   private static final Logger LOG = Logger.getInstance(GitHttpGuiAuthenticator.class);
   private static final String HTTP_SCHEME_URL_PREFIX = "http" + URLUtil.SCHEME_SEPARATOR;

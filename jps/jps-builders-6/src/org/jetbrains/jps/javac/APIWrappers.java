@@ -130,7 +130,8 @@ public final class APIWrappers {
     T getWrapperDelegate();
   }
 
-  abstract static class DynamicWrapper<T> implements WrapperDelegateAccessor<T> {
+  @ApiStatus.Internal
+  public abstract static class DynamicWrapper<T> implements WrapperDelegateAccessor<T> {
 
     private final T myDelegate;
 
@@ -191,7 +192,8 @@ public final class APIWrappers {
     }
   }
 
-  static class ProcessorWrapper extends DynamicWrapper<Processor> {
+  @ApiStatus.Internal
+  public static final class ProcessorWrapper extends DynamicWrapper<Processor> {
     private final ProcessingContext myProcessingContext;
     private boolean myCodeShown = false;
     private ProcessingEnvironment myProcessingEnv;
