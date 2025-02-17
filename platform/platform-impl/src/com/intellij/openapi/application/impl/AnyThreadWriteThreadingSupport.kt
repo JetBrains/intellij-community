@@ -221,7 +221,8 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
   // @Throws(E::class)
   override fun <T, E : Throwable?> runWriteIntentReadAction(computation: ThrowableComputable<T, E>): T {
-    fireBeforeWriteIntentReadActionStart(computation.javaClass)
+    val listener = myWriteIntentActionListener
+    fireBeforeWriteIntentReadActionStart(listener, computation.javaClass)
     val currentReadState = myTopmostReadAction.get()
     myTopmostReadAction.set(false)
 
@@ -262,11 +263,11 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
 
     try {
-      fireWriteIntentActionStarted(computation.javaClass)
+      fireWriteIntentActionStarted(listener, computation.javaClass)
       return runWithTemporaryThreadLocal(ts) { computation.compute() }
     }
     finally {
-      fireWriteIntentActionFinished(computation.javaClass)
+      fireWriteIntentActionFinished(listener, computation.javaClass)
       if (release) {
         ts.release()
         myWriteIntentAcquired = null
@@ -275,7 +276,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
         mySecondaryPermits.get().removeLast().release()
       }
       myTopmostReadAction.set(currentReadState)
-      afterWriteIntentReadActionFinished(computation.javaClass)
+      afterWriteIntentReadActionFinished(listener, computation.javaClass)
     }
   }
 
@@ -391,7 +392,8 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   }
 
   private fun <T, E : Throwable?> runReadAction(clazz: Class<*>, block: ThrowableComputable<T, E>): T {
-    fireBeforeReadActionStart(clazz)
+    val listener = myReadActionListener
+    fireBeforeReadActionStart(listener, clazz)
 
     val currentReadState = myTopmostReadAction.get()
     myTopmostReadAction.set(true)
@@ -427,12 +429,12 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     myReadActionsInThread.set(myReadActionsInThread.get() + 1)
 
     try {
-      fireReadActionStarted(clazz)
+      fireReadActionStarted(listener, clazz)
       val rv = runWithTemporaryThreadLocal(ts) { block.compute() }
       return rv
     }
     finally {
-      fireReadActionFinished(clazz)
+      fireReadActionFinished(listener, clazz)
 
       myReadActionsInThread.set(myReadActionsInThread.get() - 1)
       if (release) {
@@ -442,12 +444,13 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
         mySecondaryPermits.get().removeLast().release()
       }
       myTopmostReadAction.set(currentReadState)
-      fireAfterReadActionFinished(clazz)
+      fireAfterReadActionFinished(listener, clazz)
     }
   }
 
   override fun tryRunReadAction(action: Runnable): Boolean {
-    fireBeforeReadActionStart(action.javaClass)
+    val listener = myReadActionListener
+    fireBeforeReadActionStart(listener, action.javaClass)
 
     val currentReadState = myTopmostReadAction.get()
     myTopmostReadAction.set(true)
@@ -491,12 +494,12 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     myReadActionsInThread.set(myReadActionsInThread.get() + 1)
 
     try {
-      fireReadActionStarted(action.javaClass)
+      fireReadActionStarted(listener, action.javaClass)
       runWithTemporaryThreadLocal(ts) { action.run() }
       return true
     }
     finally {
-      fireReadActionFinished(action.javaClass)
+      fireReadActionFinished(listener, action.javaClass)
 
       myReadActionsInThread.set(myReadActionsInThread.get() - 1)
       if (release) {
@@ -507,7 +510,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       }
 
       myTopmostReadAction.set(currentReadState)
-      fireAfterReadActionFinished(action.javaClass)
+      fireAfterReadActionFinished(listener, action.javaClass)
     }
   }
 
@@ -600,7 +603,15 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  private fun startWrite(ts: ThreadState, clazz: Class<*>): Triple<Boolean, Boolean, Boolean> {
+  private data class WriteListenerInitResult(
+    val releasePrime: Boolean,
+    val releaseSecondary: Boolean,
+    val currentReadState: Boolean,
+    val listener: WriteActionListener?,
+  )
+
+  private fun startWrite(ts: ThreadState, clazz: Class<*>): WriteListenerInitResult {
+    val listener = myWriteActionListener
     // Read permit is incompatible
     check(!ts.hasRead) { "WriteAction can not be called from ReadAction" }
 
@@ -613,7 +624,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
     myWriteActionPending.incrementAndGet()
     if (myWriteActionsStack.isEmpty()) {
-      fireBeforeWriteActionStart(ts, clazz)
+      fireBeforeWriteActionStart(listener, ts, clazz)
     }
 
     var release = false
@@ -670,24 +681,24 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     myWriteActionPending.decrementAndGet()
 
     myWriteActionsStack.push(clazz)
-    fireWriteActionStarted(ts, clazz)
+    fireWriteActionStarted(listener, ts, clazz)
 
-    return Triple(release, releaseSecondary, currentReadState)
+    return WriteListenerInitResult(release, releaseSecondary, currentReadState, listener)
   }
 
-  private fun endWrite(ts: ThreadState, clazz: Class<*>, releases: Triple<Boolean, Boolean, Boolean>) {
-    fireWriteActionFinished(ts, clazz)
+  private fun endWrite(ts: ThreadState, clazz: Class<*>, initResult: WriteListenerInitResult) {
+    fireWriteActionFinished(initResult.listener, ts, clazz)
     myWriteActionsStack.pop()
-    if (releases.first) {
+    if (initResult.releasePrime) {
       ts.release()
       myWriteAcquired = null
     }
-    if (releases.second) {
+    if (initResult.releaseSecondary) {
       mySecondaryPermits.get().removeLast().release()
     }
-    myTopmostReadAction.set(releases.third)
-    if (releases.first) {
-      fireAfterWriteActionFinished(ts, clazz)
+    myTopmostReadAction.set(initResult.currentReadState)
+    if (initResult.releasePrime) {
+      fireAfterWriteActionFinished(initResult.listener, ts, clazz)
     }
   }
 
@@ -776,42 +787,42 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  private fun fireBeforeReadActionStart(clazz: Class<*>) {
+  private fun fireBeforeReadActionStart(listener: ReadActionListener?, clazz: Class<*>) {
     try {
-      myReadActionListener?.beforeReadActionStart(clazz)
+      listener?.beforeReadActionStart(clazz)
     }
     catch (_: Throwable) {
     }
   }
 
-  private fun fireReadActionStarted(clazz: Class<*>) {
+  private fun fireReadActionStarted(listener: ReadActionListener?, clazz: Class<*>) {
     try {
-      myReadActionListener?.readActionStarted(clazz)
+      listener?.readActionStarted(clazz)
     }
     catch (_: Throwable) {
     }
   }
 
-  private fun fireReadActionFinished(clazz: Class<*>) {
+  private fun fireReadActionFinished(listener: ReadActionListener?, clazz: Class<*>) {
     try {
-      myReadActionListener?.readActionFinished(clazz)
+      listener?.readActionFinished(clazz)
     }
     catch (_: Throwable) {
     }
   }
 
-  private fun fireAfterReadActionFinished(clazz: Class<*>) {
+  private fun fireAfterReadActionFinished(listener: ReadActionListener?, clazz: Class<*>) {
     try {
-      myReadActionListener?.afterReadActionFinished(clazz)
+      listener?.afterReadActionFinished(clazz)
     }
     catch (_: Throwable) {
     }
   }
 
-  private fun fireBeforeWriteActionStart(ts: ThreadState, clazz: Class<*>) {
+  private fun fireBeforeWriteActionStart(listener: WriteActionListener?, ts: ThreadState, clazz: Class<*>) {
     ts.inListener = true
     try {
-      myWriteActionListener?.beforeWriteActionStart(clazz)
+      listener?.beforeWriteActionStart(clazz)
     }
     catch (_: Throwable) {
     }
@@ -820,10 +831,10 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  private fun fireWriteActionStarted(ts: ThreadState, clazz: Class<*>) {
+  private fun fireWriteActionStarted(listener: WriteActionListener?, ts: ThreadState, clazz: Class<*>) {
     ts.inListener = true
     try {
-      myWriteActionListener?.writeActionStarted(clazz)
+      listener?.writeActionStarted(clazz)
     }
     catch (_: Throwable) {
     }
@@ -832,10 +843,10 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  private fun fireWriteActionFinished(ts: ThreadState, clazz: Class<*>) {
+  private fun fireWriteActionFinished(listener: WriteActionListener?, ts: ThreadState, clazz: Class<*>) {
     ts.inListener = true
     try {
-      myWriteActionListener?.writeActionFinished(clazz)
+      listener?.writeActionFinished(clazz)
     }
     catch (_: Throwable) {
     }
@@ -844,10 +855,10 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  private fun fireAfterWriteActionFinished(ts: ThreadState, clazz: Class<*>) {
+  private fun fireAfterWriteActionFinished(listener: WriteActionListener?, ts: ThreadState, clazz: Class<*>) {
     ts.inListener = true
     try {
-      myWriteActionListener?.afterWriteActionFinished(clazz)
+      listener?.afterWriteActionFinished(clazz)
     }
     catch (_: Throwable) {
     }
@@ -856,20 +867,36 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  private fun fireBeforeWriteIntentReadActionStart(clazz: Class<*>) {
-    myWriteIntentActionListener?.beforeWriteIntentReadActionStart(clazz)
+  private fun fireBeforeWriteIntentReadActionStart(listener: WriteIntentReadActionListener?, clazz: Class<*>) {
+    try {
+      listener?.beforeWriteIntentReadActionStart(clazz)
+    }
+    catch (_: Throwable) {
+    }
   }
 
-  private fun fireWriteIntentActionStarted(clazz: Class<*>) {
-    myWriteIntentActionListener?.writeIntentReadActionStarted(clazz)
+  private fun fireWriteIntentActionStarted(listener: WriteIntentReadActionListener?, clazz: Class<*>) {
+    try {
+      listener?.writeIntentReadActionStarted(clazz)
+    }
+    catch (_: Throwable) {
+    }
   }
 
-  private fun fireWriteIntentActionFinished(clazz: Class<*>) {
-    myWriteIntentActionListener?.writeIntentReadActionFinished(clazz)
+  private fun fireWriteIntentActionFinished(listener: WriteIntentReadActionListener?, clazz: Class<*>) {
+    try {
+      listener?.writeIntentReadActionFinished(clazz)
+    }
+    catch (_: Throwable) {
+    }
   }
 
-  private fun afterWriteIntentReadActionFinished(clazz: Class<*>) {
-    myWriteIntentActionListener?.afterWriteIntentReadActionFinished(clazz)
+  private fun afterWriteIntentReadActionFinished(listener: WriteIntentReadActionListener?, clazz: Class<*>) {
+    try {
+      listener?.afterWriteIntentReadActionFinished(clazz)
+    }
+    catch (_: Throwable) {
+    }
   }
 
   private fun getWriteIntentPermit(lock: RWMutexIdea): WriteIntentPermit {
@@ -910,17 +937,18 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
   @Deprecated("")
   private class ReadAccessToken : AccessToken() {
+    private val capturedListener = myReadActionListener
     private val myPermit = run {
-      fireBeforeReadActionStart(javaClass)
+      fireBeforeReadActionStart(capturedListener, javaClass)
       val p = getReadPermit(lock)
-      fireReadActionStarted(javaClass)
+      fireReadActionStarted(capturedListener, javaClass)
       p
     }
 
     override fun finish() {
-      fireReadActionFinished(javaClass)
+      fireReadActionFinished(capturedListener, javaClass)
       myPermit.release()
-      fireAfterReadActionFinished(javaClass)
+      fireAfterReadActionFinished(capturedListener, javaClass)
     }
   }
 
