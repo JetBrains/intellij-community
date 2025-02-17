@@ -43,6 +43,7 @@ class BundledRuntimeImpl(
     get() {
       val bundledRuntimePrefix = options.bundledRuntimePrefix
       return when {
+        LinuxLibcImpl.isLinuxMusl -> "jbrsdk-"
         // required as a runtime for debugger tests
         System.getProperty("intellij.build.jbr.setupSdk", "false").toBoolean() -> "jbrsdk-"
         bundledRuntimePrefix != null -> bundledRuntimePrefix
@@ -125,7 +126,8 @@ class BundledRuntimeImpl(
     val version = if (forceVersionWithUnderscores) split[0].replace(".", "_") else split[0]
     val buildNumber = "b${split[1]}"
     val archSuffix = getArchSuffix(arch)
-    return "${prefix}${version}-${os.jbrArchiveSuffix}-${archSuffix}-${runtimeBuildPrefix()}${buildNumber}.tar.gz"
+    val muslSuffix = if (LinuxLibcImpl.isLinuxMusl) "-musl" else ""
+    return "${prefix}${version}-${os.jbrArchiveSuffix}${muslSuffix}-${archSuffix}-${runtimeBuildPrefix()}${buildNumber}.tar.gz"
   }
 
   private fun runtimeBuildPrefix(): String {

@@ -23,7 +23,8 @@ object JdkDownloader {
     val os = OS.current
     val arch = Arch.current
     val isMusl = LinuxLibcImpl.isLinuxMusl
-    return getJdkHome(communityRoot = communityRoot, os = os, arch = arch, isMusl = isMusl, infoLog = infoLog, jdkBuildNumber = jdkBuildNumber, variation = variation)
+    val effectiveVariation = if (isMusl) null else variation
+    return getJdkHome(communityRoot = communityRoot, os = os, arch = arch, isMusl = isMusl, infoLog = infoLog, jdkBuildNumber = jdkBuildNumber, variation = effectiveVariation)
   }
 
   @JvmStatic
@@ -57,7 +58,8 @@ object JdkDownloader {
     variation: String? = null,
     infoLog: (String) -> Unit,
   ): Path {
-    val jdkUrl = getUrl(communityRoot = communityRoot, os = os, arch = arch, isMusl = isMusl, jdkBuildNumber = jdkBuildNumber, variation = variation)
+    val effectiveVariation = if (isMusl) null else variation
+    val jdkUrl = getUrl(communityRoot = communityRoot, os = os, arch = arch, isMusl = isMusl, jdkBuildNumber = jdkBuildNumber, variation = effectiveVariation)
     val jdkArchive = downloadFileToCacheLocation(url = jdkUrl.toString(), communityRoot = communityRoot)
     val jdkExtracted = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot = communityRoot,
                                                                               archiveFile = jdkArchive,
