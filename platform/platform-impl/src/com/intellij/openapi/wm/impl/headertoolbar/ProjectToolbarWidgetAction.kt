@@ -7,6 +7,7 @@ import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.newui.ListPluginComponent
+import com.intellij.ide.userScaledProjectIconSize
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -29,6 +30,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.util.maximumWidth
+import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
@@ -163,7 +165,7 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
     val content = panel {
       customizeSpacingConfiguration(EmptySpacingConfiguration()) {
         row {
-          icon(action.projectIcon)
+          icon(IconUtil.downscaleIconToSize(action.projectIcon, userScaledProjectIconSize(), userScaledProjectIconSize()))
             .align(AlignY.TOP)
             .customize(UnscaledGaps(right = 8))
 

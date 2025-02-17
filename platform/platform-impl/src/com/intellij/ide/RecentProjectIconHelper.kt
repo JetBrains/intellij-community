@@ -36,7 +36,7 @@ import javax.swing.Icon
 
 internal fun unscaledProjectIconSize() = Registry.intValue("ide.project.icon.size", 20)
 
-private fun userScaledProjectIconSize() = JBUIScale.scale(unscaledProjectIconSize())
+internal fun userScaledProjectIconSize() = JBUIScale.scale(unscaledProjectIconSize())
 
 private const val IDEA_DIR = Project.DIRECTORY_STORE_FOLDER
 
