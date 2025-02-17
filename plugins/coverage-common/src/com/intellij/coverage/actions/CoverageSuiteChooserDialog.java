@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.actions;
 
 import com.intellij.CommonBundle;
@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 @ApiStatus.Internal
-public class CoverageSuiteChooserDialog extends DialogWrapper {
+public final class CoverageSuiteChooserDialog extends DialogWrapper {
   private static final @NonNls String LOCAL = "Local";
   private final Project myProject;
   private final CheckboxTree mySuitesTree;
@@ -218,7 +218,8 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     }
   }
 
-  class NoCoverageAction extends DialogWrapperAction {
+  @ApiStatus.Internal
+  public final class NoCoverageAction extends DialogWrapperAction {
     NoCoverageAction() {
       super(CoverageBundle.message("coverage.data.no.coverage.button"));
     }
@@ -232,7 +233,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     }
   }
 
-  private class AddExternalSuiteAction extends AnAction {
+  private final class AddExternalSuiteAction extends AnAction {
     AddExternalSuiteAction() {
       super(CommonBundle.message("button.add"), CommonBundle.message("button.add"), IconUtil.getAddIcon());
       registerCustomShortcutSet(CommonShortcuts.getInsert(), mySuitesTree);
@@ -252,7 +253,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     }
   }
 
-  private class RemoveSuiteAction extends AnAction {
+  private final class RemoveSuiteAction extends AnAction {
     RemoveSuiteAction() {
       super(CommonBundle.message("button.remove"), CommonBundle.message("button.remove"), PlatformIcons.DELETE_ICON);
     }
@@ -282,7 +283,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     }
   }
 
-  private class DeleteSuiteAction extends AnAction {
+  private final class DeleteSuiteAction extends AnAction {
     DeleteSuiteAction() {
       super(CommonBundle.message("button.delete"), CommonBundle.message("button.delete"), AllIcons.Actions.GC);
       registerCustomShortcutSet(CommonShortcuts.getDelete(), mySuitesTree);

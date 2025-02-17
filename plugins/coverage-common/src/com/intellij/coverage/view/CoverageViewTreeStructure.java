@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.CoverageSuitesBundle;
@@ -7,11 +7,13 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-class CoverageViewTreeStructure extends AbstractTreeStructure {
+@ApiStatus.Internal
+public final class CoverageViewTreeStructure extends AbstractTreeStructure {
   private final Project myProject;
   private final AtomicReference<Object> myRootNode = new AtomicReference<>(null);
   final CoverageSuitesBundle myData;
@@ -53,7 +55,7 @@ class CoverageViewTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public @NotNull NodeDescriptor createDescriptor(final @NotNull Object element, final NodeDescriptor parentDescriptor) {
+  public @NotNull NodeDescriptor<?> createDescriptor(final @NotNull Object element, final NodeDescriptor parentDescriptor) {
     if (element instanceof AbstractTreeNode<?> node) {
       return node;
     }
