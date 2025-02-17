@@ -9,11 +9,14 @@ import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiReference
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.PathUtil
-import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
-import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.junit.Assert
 import kotlin.test.assertTrue
@@ -159,14 +162,16 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
             offset: Int,
             psiReference: PsiReference?,
             render: (PsiElement) -> String = { it.renderAsGotoImplementation() },
-            checkResolvedTo: (PsiElement) -> Unit = {}
+            replacePlaceholders: Boolean = true,
+            checkResolvedTo: (PsiElement) -> Unit = {},
         ) {
             val expectedString = expectedResolveData.referenceString
             if (psiReference != null) {
                 val resolvedTo = executeOnPooledThreadInReadAction { psiReference.resolve() }
                 if (resolvedTo != null) {
                     checkResolvedTo(resolvedTo)
-                    val resolvedToElementStr = replacePlaceholders(render(resolvedTo))
+                    val renderedResolvedTo = render(resolvedTo)
+                    val resolvedToElementStr = if (replacePlaceholders) replacePlaceholders(renderedResolvedTo) else renderedResolvedTo
                     assertEquals(
                         "Found reference to '$resolvedToElementStr', but '$expectedString' was expected",
                         expectedString,
