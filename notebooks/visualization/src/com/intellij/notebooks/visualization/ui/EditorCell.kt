@@ -162,7 +162,8 @@ class EditorCell(
     CELL_EXTENSION_CONTAINER_KEY.get(this)?.values?.forEach { action(it) }
   }
 
-   fun updateOutputs(keys: List<NotebookOutputDataKey>) {
+  /** Called only in RD mode with a ready list of NotebookOutputDataKey, to avoid reading data from JSON which is missing on the frontend. */
+  fun updateOutputs(keys: List<NotebookOutputDataKey>): Unit = editor.updateManager.update {
     outputs.outputs.set(keys.map { EditorCellOutput(it) })
   }
 
