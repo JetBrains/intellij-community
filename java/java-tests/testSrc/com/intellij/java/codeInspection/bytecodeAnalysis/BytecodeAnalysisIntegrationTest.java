@@ -5,9 +5,11 @@ import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
 import com.intellij.codeInsight.daemon.impl.LineMarkerSettingsImpl;
+import com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisSuppressor;
 import com.intellij.codeInspection.bytecodeAnalysis.ClassDataIndexer;
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -28,6 +30,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
@@ -46,6 +49,8 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
   private static final String INFERRED_TEST_METHOD =
     "org.apache.velocity.util.ExceptionUtils java.lang.Throwable createWithCause(java.lang.Class, java.lang.String, java.lang.Throwable)";
   private static final String EXTERNAL_TEST_METHOD = "java.lang.String String(java.lang.String)";
+  
+  private static final BytecodeAnalysisSuppressor TEST_SUPPRESSOR = file -> file.getPath().endsWith("/ParserTokenManager.class");
 
   private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
@@ -133,6 +138,8 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
 
   public void testSdkAndLibAnnotations() {
     PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), BytecodeAnalysisSuppressor.EP_NAME, TEST_SUPPRESSOR,
+                                           getTestRootDisposable());
     assertNotNull(rootPackage);
 
     List<String> diffs = new ArrayList<>();
@@ -212,6 +219,8 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
   public void _testExportInferredAnnotations() {
     PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
     assertNotNull(rootPackage);
+    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), BytecodeAnalysisSuppressor.EP_NAME, TEST_SUPPRESSOR,
+                                           getTestRootDisposable());
 
     VirtualFile annotationsRoot = getAnnotationsRoot();
     JavaRecursiveElementVisitor visitor = new PackageVisitor(GlobalSearchScope.moduleWithLibrariesScope(getModule())) {
