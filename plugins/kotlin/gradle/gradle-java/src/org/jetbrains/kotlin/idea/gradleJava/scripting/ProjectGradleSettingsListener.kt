@@ -16,6 +16,7 @@ import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
+import java.nio.file.Path
 import java.nio.file.Paths
 
 class ProjectGradleSettingsListener(
@@ -60,7 +61,7 @@ class ProjectGradleSettingsListener(
     }
 
     override fun onGradleHomeChange(oldPath: String?, newPath: String?, linkedProjectPath: String) {
-        val version = GradleInstallationManager.getGradleVersion(newPath)
+        val version = GradleInstallationManager.getGradleVersion(newPath?.let { Path.of(it) })
         buildRootsManager.reloadBuildRoot(linkedProjectPath, version)
     }
 

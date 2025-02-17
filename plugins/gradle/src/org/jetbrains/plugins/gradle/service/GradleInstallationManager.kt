@@ -388,6 +388,7 @@ open class GradleInstallationManager : Disposable.Default {
       return null
     }
 
+    @JvmStatic
     fun getGradleVersion(gradleHome: Path?): String? {
       if (gradleHome == null) {
         return null
@@ -516,6 +517,7 @@ open class GradleInstallationManager : Disposable.Default {
       return buildLayoutParameters.gradleVersion
     }
 
+    @JvmStatic
     fun parseDistributionVersion(path: String): GradleVersion? {
       var path = path
       path = StringUtil.substringAfterLast(path, "/") ?: return null
