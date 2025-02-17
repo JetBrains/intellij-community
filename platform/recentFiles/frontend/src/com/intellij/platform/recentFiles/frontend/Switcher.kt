@@ -271,19 +271,16 @@ object Switcher : BaseSwitcherAction(null) {
             }
 
             // otherwise, select the first file not opened in the focused editor after it is received
-            if (preservingSelectionModel.selectedIndices.singleOrNull() == 0 && maybeSearchableModel.size > 1) {
+            if (preservingSelectionModel.selectedIndices.isEmpty() && maybeSearchableModel.size > 1) {
               LOG.debug("Switcher add non-first item: $e")
-              val firstSelectedEntry = maybeSearchableModel.getElementAt(0)
-              if (firstSelectedEntry.virtualFileId.virtualFile() != FileEditorManager.getInstance(project).selectedEditor?.file) {
-                LOG.debug("Switcher added item != editor: $e")
-                return
+              val firstModelEntry = maybeSearchableModel.getElementAt(0)
+              if (firstModelEntry.virtualFileId.virtualFile() == FileEditorManager.getInstance(project).selectedEditor?.file) {
+                LOG.debug("Switcher added item == editor, selecting 2nd item: $e")
+                preservingSelectionModel.setSelectionInterval(1, 1)
               }
-
-              val newFileEntry = maybeSearchableModel.getElementAt(e.index0) ?: return
-              LOG.debug("Switcher new item in model != null: $e, $newFileEntry")
-              if (FileEditorManager.getInstance(project).selectedEditor?.file != newFileEntry.virtualFileId.virtualFile()) {
-                LOG.debug("Switcher added item != editor: $e, $newFileEntry")
-                preservingSelectionModel.setSelectionInterval(e.index0, e.index0)
+              else {
+                LOG.debug("Switcher added item != editor, selecting 1st item: $e")
+                preservingSelectionModel.setSelectionInterval(0, 0)
               }
             }
           }
