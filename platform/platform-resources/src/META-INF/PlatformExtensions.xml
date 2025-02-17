@@ -1852,6 +1852,12 @@
     <registryKey key="rhizome.progress"
                  defaultValue="true"
                  description="Progress will be reported and collected through Rhizome DB. See PlatformTaskSupport for more info"/>
+    <registryKey key="ide.idle.memory.cleaner.enabled"
+                 defaultValue="true"
+                 description="Actively return memory to OS when the IDE becomes idle"/>
+    <registryKey key="ide.idle.memory.cleaner.delay"
+                 defaultValue="5000"
+                 description="A delay in milliseconds between the IDE becoming idle and the memory cleaning being performed"/>
     <pluginRepositoryAuthProvider implementation="com.intellij.ide.plugins.auth.EnvironmentVariablePluginRepositoryAuthProvider" />
     <applicationService serviceInterface="com.intellij.auth.GenericAuthService"
                         serviceImplementation="com.intellij.auth.LocalGenericAuthService"
@@ -1940,6 +1946,10 @@
 
     <listener class="com.intellij.ide.OsDataLoggerApplicationInitializedListener"
               topic="com.intellij.ide.AppLifecycleListener"/>
+
+    <listener class="com.intellij.ide.AppIdleMemoryCleaner$MyApplicationActivationListener"
+              topic="com.intellij.openapi.application.ApplicationActivationListener"
+              activeInTestMode="false" activeInHeadlessMode="false"/>
   </applicationListeners>
 
   <projectListeners>

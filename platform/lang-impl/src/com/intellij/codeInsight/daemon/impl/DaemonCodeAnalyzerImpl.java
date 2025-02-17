@@ -884,6 +884,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     return myFileStatusMap;
   }
 
+  @Override
   public synchronized boolean isRunning() {
     for (DaemonProgressIndicator indicator : myUpdateProgress.values()) {
       if (!indicator.isCanceled()) {

@@ -62,6 +62,11 @@ public abstract class DaemonCodeAnalyzer {
 
   public abstract void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file);
 
+  @ApiStatus.Internal
+  public boolean isRunning() {
+    return false;
+  }
+
   @Topic.ProjectLevel
   public static final Topic<DaemonListener> DAEMON_EVENT_TOPIC = new Topic<>(DaemonListener.class, Topic.BroadcastDirection.NONE, true);
 
