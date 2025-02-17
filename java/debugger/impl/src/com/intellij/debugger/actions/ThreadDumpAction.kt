@@ -57,7 +57,7 @@ class ThreadDumpAction : DumbAwareAction() {
       executeOnDMT(managerThread) {
         val dumpItems = buildThreadDump(context)
         withContext(Dispatchers.EDT) {
-          val xSession = session.getXDebugSession()
+          val xSession = session.xDebugSession
           if (xSession != null) {
             DebuggerUtilsEx.addDumpItems(project, dumpItems, xSession.ui, session.searchScope)
           }
@@ -73,7 +73,7 @@ class ThreadDumpAction : DumbAwareAction() {
       presentation.setEnabled(false)
       return
     }
-    val debuggerSession = (DebuggerManagerEx.getInstanceEx(project)).getContext().debuggerSession
+    val debuggerSession = DebuggerManagerEx.getInstanceEx(project).context.debuggerSession
     presentation.setEnabled(debuggerSession != null && debuggerSession.isAttached)
   }
 
@@ -423,7 +423,7 @@ private class JavaThreadsProvider : ThreadDumpItemsProviderFactory() {
     }
 
     private fun evaluateAndGetAllVirtualThreads(suspendContext: SuspendContextImpl): List<Pair<ThreadReference, String>> {
-      val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy())
+      val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
 
       val lookupImpl = getMethodHandlesImplLookup(evaluationContext)
       if (lookupImpl == null) {
