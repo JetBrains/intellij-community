@@ -54,7 +54,7 @@ import kotlin.test.fail
 private val LOG = logger<ConfigImportHelperTest>()
 
 class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
-  val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true; }
+  val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { isHeadless = true; }
 
   @Test fun `config directory is valid for import`() {
     PropertiesComponent.getInstance().setValue("property.ConfigImportHelperTest", true)
@@ -619,7 +619,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     }, testRootDisposable)
 
     configImportMarketplaceStub.unset() // enable marketplace fetching
-    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true } // reinstantiate
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { isHeadless = true } // reinstantiate
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
 
@@ -691,7 +691,7 @@ class ConfigImportHelperPluginUpdateModeTest(val updateIncompatibleOnly: Boolean
     }, testRootDisposable)
 
     configImportMarketplaceStub.unset() // enable marketplace fetching
-    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true } // reinstantiate
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { isHeadless = true } // reinstantiate
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.pluginUpdatesFetcher = LastCompatiblePluginUpdatesFetcher {
       buildMap {

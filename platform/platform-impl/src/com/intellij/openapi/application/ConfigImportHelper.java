@@ -891,7 +891,7 @@ public final class ConfigImportHelper {
 
   public static final class ConfigImportOptions {
     final Logger log;
-    boolean headless;
+    private boolean headless;
     @ApiStatus.Internal
     public @Nullable ConfigImportSettings importSettings;
     @ApiStatus.Internal
@@ -909,7 +909,7 @@ public final class ConfigImportHelper {
     public @NotNull LastCompatiblePluginUpdatesFetcher pluginUpdatesFetcher =
       testLastCompatiblePluginUpdatesFetcher != null ? testLastCompatiblePluginUpdatesFetcher : (pluginIds) -> fetchPluginUpdatesFromMarketplace(this, pluginIds, 7000);
 
-    @Nullable ProgressIndicator headlessProgressIndicator = null;
+    private @Nullable ProgressIndicator headlessProgressIndicator = null;
 
     public ConfigImportOptions(Logger log) {
       this.log = log;
