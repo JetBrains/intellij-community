@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -248,12 +248,14 @@ public final class Restarter {
     Logger.getInstance(Restarter.class).info("run restarter: " + command);
 
     var processBuilder = new ProcessBuilder(command);
-    processBuilder.directory(Path.of(SystemProperties.getUserHome()).toFile());
+    processBuilder.directory(Path.of(SystemProperties.getUserHome()).toFile())
+      .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+      .redirectError(ProcessBuilder.Redirect.DISCARD);
     processBuilder.environment().put("IJ_RESTARTER_LOG", PathManager.getLogDir().resolve("restarter.log").toString());
 
     if (SystemInfo.isUnix && !SystemInfo.isMac) setDesktopStartupId(processBuilder);
 
-    if (SystemInfo.isWindows) processBuilder.environment().remove("IJ_LAUNCHER_DEBUG");
+    processBuilder.environment().remove("IJ_LAUNCHER_DEBUG");
 
     processBuilder.start();
   }
