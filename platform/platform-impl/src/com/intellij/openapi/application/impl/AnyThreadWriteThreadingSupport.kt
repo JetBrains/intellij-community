@@ -435,10 +435,10 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     try {
       fireReadActionStarted(clazz)
       val rv = runWithTemporaryThreadLocal(ts) { block.compute() }
-      fireReadActionFinished(clazz)
       return rv
     }
     finally {
+      fireReadActionFinished(clazz)
       ThreadingAssertions.setImplicitLockOnEDT(prevImplicitLock)
 
       myReadActionsInThread.set(myReadActionsInThread.get() - 1)
@@ -502,10 +502,10 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     try {
       fireReadActionStarted(action.javaClass)
       runWithTemporaryThreadLocal(ts) { action.run() }
-      fireReadActionFinished(action.javaClass)
       return true
     }
     finally {
+      fireReadActionFinished(action.javaClass)
       ThreadingAssertions.setImplicitLockOnEDT(prevImplicitLock)
       myReadActionsInThread.set(myReadActionsInThread.get() - 1)
       if (release) {
