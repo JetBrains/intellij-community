@@ -205,6 +205,9 @@ internal class IdeProjectFrameAllocator(
 
     withContext(Dispatchers.EDT) {
       if (frame != null) {
+        if (!frame.isVisible) {
+          throw CancellationException("Pre-allocated frame was already closed")
+        }
         val frameHelper = IdeProjectFrameHelper(frame = frame, loadingState = loadingState)
         completeFrameAndCloseOnCancel(frameHelper) {
           if (options.forceOpenInNewFrame) {
@@ -220,6 +223,9 @@ internal class IdeProjectFrameAllocator(
 
       val preAllocated = getAndUnsetSplashProjectFrame() as IdeFrameImpl?
       if (preAllocated != null) {
+        if (!preAllocated.isVisible) {
+          throw CancellationException("Pre-allocated frame was already closed")
+        }
         val frameHelper = IdeProjectFrameHelper(frame = preAllocated, loadingState = loadingState)
         completeFrameAndCloseOnCancel(frameHelper) {
           span("ProjectFrameHelper.init") {
