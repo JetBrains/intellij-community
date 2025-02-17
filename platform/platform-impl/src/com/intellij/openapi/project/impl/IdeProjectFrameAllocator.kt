@@ -50,7 +50,6 @@ import com.intellij.openapi.wm.impl.*
 import com.intellij.platform.diagnostic.telemetry.impl.getTraceActivity
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.platform.ide.bootstrap.getAndUnsetSplashProjectFrame
 import com.intellij.platform.ide.bootstrap.hideSplash
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.problems.WolfTheProblemSolver
@@ -218,35 +217,19 @@ internal class IdeProjectFrameAllocator(
           }
           frameHelper.setInitBounds(frameInfo.bounds)
         }
-        return@withContext
       }
-
-      val preAllocated = getAndUnsetSplashProjectFrame() as IdeFrameImpl?
-      if (preAllocated != null) {
-        if (!preAllocated.isVisible) {
-          throw CancellationException("Pre-allocated frame was already closed")
-        }
-        val frameHelper = IdeProjectFrameHelper(frame = preAllocated, loadingState = loadingState)
+      else {
+        val frameHelper = IdeProjectFrameHelper(createIdeFrame(frameInfo), loadingState = loadingState)
+        // must be after preInit (frame decorator is required to set a full-screen mode)
+        frameHelper.frame.isVisible = true
         completeFrameAndCloseOnCancel(frameHelper) {
+          updateFullScreenState(frameHelper, frameInfo.fullScreen)
+
           span("ProjectFrameHelper.init") {
             frameHelper.init()
           }
         }
-        return@withContext
       }
-
-
-      val frameHelper = IdeProjectFrameHelper(createIdeFrame(frameInfo), loadingState = loadingState)
-      // must be after preInit (frame decorator is required to set a full-screen mode)
-      frameHelper.frame.isVisible = true
-      completeFrameAndCloseOnCancel(frameHelper) {
-        updateFullScreenState(frameHelper, frameInfo.fullScreen)
-
-        span("ProjectFrameHelper.init") {
-          frameHelper.init()
-        }
-      }
-      return@withContext
     }
   }
 
