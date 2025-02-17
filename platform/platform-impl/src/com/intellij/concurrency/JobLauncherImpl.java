@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 import com.intellij.openapi.application.AccessToken;
@@ -32,7 +32,8 @@ import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public final class JobLauncherImpl extends JobLauncher {
-  static final int CORES_FORK_THRESHOLD = 1;
+  @ApiStatus.Internal
+  public static final int CORES_FORK_THRESHOLD = 1;
   private static final Logger LOG = Logger.getInstance(JobLauncher.class);
   private final boolean logAllExceptions = System.getProperty("idea.job.launcher.log.all.exceptions", "false").equals("true");
   private final ForkJoinPool myForkJoinPool;

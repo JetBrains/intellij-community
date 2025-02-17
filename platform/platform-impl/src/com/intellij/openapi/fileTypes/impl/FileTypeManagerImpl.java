@@ -69,11 +69,13 @@ import static com.intellij.openapi.fileTypes.impl.AlarmAdapterKt.singleAlarm;
   additionalExportDirectory = FileTypeManagerImpl.FILE_SPEC,
   category = SettingsCategory.CODE)
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, ExtensionPointListener<FileTypeBean> {
-  static final ExtensionPointName<FileTypeBean> EP_NAME = new ExtensionPointName<>("com.intellij.fileType");
+  @ApiStatus.Internal
+  public static final ExtensionPointName<FileTypeBean> EP_NAME = new ExtensionPointName<>("com.intellij.fileType");
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
-  static final int VERSION = 19;
+  @ApiStatus.Internal
+  public static final int VERSION = 19;
 
   // must be sorted
   @SuppressWarnings("SpellCheckingInspection")
@@ -94,7 +96,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private volatile CachedFileTypes CACHED;
 
   private final Set<FileTypeWithDescriptor> defaultTypes = CollectionFactory.createSmallMemoryFootprintSet();
-  final FileTypeDetectionService myDetectionService;
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public final FileTypeDetectionService detectionService;
   private FileTypeIdentifiableByVirtualFile[] specialFileTypes = FileTypeIdentifiableByVirtualFile.EMPTY_ARRAY;
 
   FileTypeAssocTable<FileTypeWithDescriptor> patternsTable = FileTypeAssocTableUtil.newScalableFileTypeAssocTable();
@@ -136,7 +140,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final SchemeManager<FileTypeWithDescriptor> schemeManager;
 
   protected FileTypeManagerImpl(@NotNull CoroutineScope coroutineScope) throws IOException {
-    myDetectionService = new FileTypeDetectionService(this, coroutineScope);
+    detectionService = new FileTypeDetectionService(this, coroutineScope);
 
     NonLazySchemeProcessor<FileTypeWithDescriptor, FileTypeWithDescriptor> abstractTypesProcessor = new NonLazySchemeProcessor<>() {
       @Override
@@ -249,13 +253,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @TestOnly
   void listenAsyncVfsEvents() {
-    VirtualFileManager.getInstance().addAsyncFileListener(myDetectionService::prepareChange, this);
+    VirtualFileManager.getInstance().addAsyncFileListener(detectionService::prepareChange, this);
   }
 
   static final class MyAsyncVfsListener implements AsyncFileListener {
     @Override
     public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
-      return ((FileTypeManagerImpl)getInstance()).myDetectionService.prepareChange(events);
+      return ((FileTypeManagerImpl)getInstance()).detectionService.prepareChange(events);
     }
   }
 
@@ -507,7 +511,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  final Set<String> INSTANTIATED = PluginManagerCore.isUnitTestMode ? ContainerUtil.newConcurrentSet() : null;
+  @ApiStatus.Internal
+  public final Set<String> INSTANTIATED = PluginManagerCore.isUnitTestMode ? ConcurrentHashMap.newKeySet() : null;
 
   private @Nullable FileTypeWithDescriptor instantiateFileTypeBean(@NotNull FileTypeBean bean) {
     myPendingInitializationLock.writeLock().lock();
@@ -619,27 +624,30 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @TestOnly
-  boolean toLog;
+  @ApiStatus.Internal
+  public boolean toLog;
+
   boolean toLog() {
     return toLog;
   }
+
   void log(@NonNls String message) {
     LOG.debug(message + " - " + Thread.currentThread());
   }
 
   @TestOnly
   public void drainReDetectQueue() {
-    myDetectionService.drainReDetectQueue();
+    detectionService.drainReDetectQueue();
   }
 
   @TestOnly
   @NotNull Collection<VirtualFile> dumpReDetectQueue() {
-    return myDetectionService.dumpReDetectQueue();
+    return detectionService.dumpReDetectQueue();
   }
 
   @TestOnly
   void reDetectAsync(boolean enable) {
-    myDetectionService.reDetectAsync(enable);
+    detectionService.reDetectAsync(enable);
   }
 
   @Override
@@ -799,7 +807,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       return PlainTextFileType.INSTANCE.equals(requestedFileType);
     }
     if (fileType == null || fileType == DetectedByContentFileType.INSTANCE) {
-      FileType detected = myDetectionService.getOrDetectFromContent(virtualFile, null, fileType);
+      FileType detected = detectionService.getOrDetectFromContent(virtualFile, null, fileType);
       if (detected == UnknownFileType.INSTANCE && fileType == DetectedByContentFileType.INSTANCE) {
         return DetectedByContentFileType.INSTANCE.equals(requestedFileType);
       }
@@ -869,7 +877,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @ApiStatus.Internal
   protected @NotNull FileType internalContinueToDetectFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content, @Nullable FileType fileTypeByName) {
     // should run detectors for 'DetectedByContentFileType' type and if failed, return text
-    return myDetectionService.getOrDetectFromContent(file, content, fileTypeByName);
+    return detectionService.getOrDetectFromContent(file, content, fileTypeByName);
   }
 
   private FileType getTemporarilyFixedFileType(@NotNull VirtualFile file) {
@@ -1138,7 +1146,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void fireFileTypesChanged(@Nullable FileType addedFileType, @Nullable FileType removedFileType) {
-    myDetectionService.clearCaches();
+    detectionService.clearCaches();
     CachedFileType.clearCache();
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this, addedFileType, removedFileType));
   }
@@ -1160,7 +1168,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     clearIgnoredFileCache();
 
-    myDetectionService.loadState(state);
+    detectionService.loadState(state);
   }
 
   void clearIgnoredFileCache() {
@@ -1906,7 +1914,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   public String toString() {
     return super.toString() + " FileTypeManagerImpl{" +
-           "myDetectionService=" + myDetectionService +
+           "myDetectionService=" + detectionService +
            ", CACHED=" + CACHED +
            ", defaultTypes=" + defaultTypes +
            ", specialFileTypes=" + Arrays.toString(specialFileTypes) +

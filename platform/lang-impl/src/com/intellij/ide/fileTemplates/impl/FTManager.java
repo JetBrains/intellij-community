@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -15,10 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.containers.MultiMap;
 import kotlin.jvm.functions.Function3;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -28,10 +25,8 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 
-/**
- * @author Eugene Zhuravlev
- */
-final class FTManager {
+@ApiStatus.Internal
+public final class FTManager {
   private static final Logger LOG = Logger.getInstance(FTManager.class);
   private static final String DEFAULT_TEMPLATE_EXTENSION = "ft";
   static final String TEMPLATE_EXTENSION_SUFFIX = "." + DEFAULT_TEMPLATE_EXTENSION;
@@ -83,7 +78,7 @@ final class FTManager {
   }
 
   @TestOnly
-  FTManager(@NotNull @NonNls String name, @NotNull Path templateDir) {
+  public FTManager(@NotNull @NonNls String name, @NotNull Path templateDir) {
     this(name, Path.of("test"), templateDir, Collections.emptyList(), false, FileTemplatesLoaderKt.streamProvider(null));
   }
 
@@ -91,8 +86,7 @@ final class FTManager {
     return name;
   }
 
-  @NotNull
-  Collection<? extends FileTemplateBase> getAllTemplates(boolean includeDisabled) {
+  public @NotNull Collection<? extends FileTemplateBase> getAllTemplates(boolean includeDisabled) {
     List<? extends FileTemplateBase> sorted = sortedTemplates;
     if (sorted == null) {
       sorted = new ArrayList<>(getTemplates().values());
@@ -117,8 +111,7 @@ final class FTManager {
   /**
    * @return template no matter enabled or disabled it is
    */
-  @Nullable
-  FileTemplateBase getTemplate(@NotNull String templateQname) {
+  public @Nullable FileTemplateBase getTemplate(@NotNull String templateQname) {
     return getTemplates().get(templateQname);
   }
 

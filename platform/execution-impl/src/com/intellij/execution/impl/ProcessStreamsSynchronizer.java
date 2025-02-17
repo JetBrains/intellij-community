@@ -38,7 +38,8 @@ public class ProcessStreamsSynchronizer {
    *
    * @see com.intellij.util.io.BaseDataReader.SleepingPolicy#NON_BLOCKING
    */
-  static final long AWAIT_SAME_STREAM_TEXT_NANO = TimeUnit.MILLISECONDS.toNanos(10);
+  @ApiStatus.Internal
+  public static final long AWAIT_SAME_STREAM_TEXT_NANO = TimeUnit.MILLISECONDS.toNanos(10);
 
   private final Object myLock = new Object();
   private final List<Chunk> myPendingChunks = new ArrayList<>();

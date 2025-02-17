@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.util.BitUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,8 @@ import java.util.function.Consumer;
 /**
  * GlyphVector-based text fragment. Used for non-Latin text or when ligatures are enabled
  */
-final class ComplexTextFragment extends TextFragment {
+@ApiStatus.Internal
+public final class ComplexTextFragment extends TextFragment {
   private static final Logger LOG = Logger.getInstance(ComplexTextFragment.class);
   private static final double CLIP_MARGIN = 1e4;
 
