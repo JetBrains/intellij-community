@@ -243,7 +243,9 @@ private fun SearchBar(service: ReleasesSampleService, modifier: Modifier = Modif
     TextField(
         state = state,
         modifier = modifier.focusRequester(focusRequester),
-        leadingIcon = { Icon(AllIconsKeys.Actions.Find, contentDescription = "Find icon", Modifier.padding(end = 8.dp)) },
+        leadingIcon = {
+            Icon(AllIconsKeys.Actions.Find, contentDescription = "Find icon", Modifier.padding(end = 8.dp))
+        },
         trailingIcon = {
             if (filterText.isNotBlank()) {
                 CloseIconButton(service)

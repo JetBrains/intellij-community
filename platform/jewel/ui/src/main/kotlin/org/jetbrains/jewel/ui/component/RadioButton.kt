@@ -166,17 +166,19 @@ private fun RadioButtonImpl(
     }
 
     val wrapperModifier =
-        modifier.selectable(
-            selected = selected,
-            onClick = onClick,
-            enabled = enabled,
-            role = Role.RadioButton,
-            interactionSource = interactionSource,
-            indication = null,
-        ).semantics(mergeDescendants = true) {
-            role = Role.RadioButton
-            focused = radioButtonState.isFocused
-        }
+        modifier
+            .selectable(
+                selected = selected,
+                onClick = onClick,
+                enabled = enabled,
+                role = Role.RadioButton,
+                interactionSource = interactionSource,
+                indication = null,
+            )
+            .semantics(mergeDescendants = true) {
+                role = Role.RadioButton
+                focused = radioButtonState.isFocused
+            }
 
     val colors = style.colors
     val metrics = style.metrics
