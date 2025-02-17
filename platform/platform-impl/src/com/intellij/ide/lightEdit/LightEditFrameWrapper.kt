@@ -17,7 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.project.impl.applyBoundsOrDefault
-import com.intellij.openapi.project.impl.createNewProjectFrameProducer
+import com.intellij.openapi.project.impl.createIdeFrame
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
@@ -47,7 +47,7 @@ internal fun allocateLightEditFrame(project: Project, frameInfo: FrameInfo?): Li
   return runWithModalProgressBlocking(project, "") {
     withContext(Dispatchers.EDT) {
       val wrapper = allocateLightEditFrame(project) { frame ->
-        LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrameProducer(frameInfo).create())
+        LightEditFrameWrapper(project = project, frame = frame ?: createIdeFrame(frameInfo))
       } as LightEditFrameWrapper
       (project.serviceAsync<FileEditorManager>() as LightEditFileEditorManagerImpl).internalInit()
       wrapper

@@ -231,9 +231,8 @@ internal class IdeProjectFrameAllocator(
     }
 
     val frameInfo = getFrameInfo()
-    val frameProducer = createNewProjectFrameProducer(frameInfo = frameInfo)
     withContext(Dispatchers.EDT) {
-      val frameHelper = IdeProjectFrameHelper(frameProducer.create(), loadingState = loadingState)
+      val frameHelper = IdeProjectFrameHelper(createIdeFrame(frameInfo), loadingState = loadingState)
       // must be after preInit (frame decorator is required to set a full-screen mode)
       frameHelper.frame.isVisible = true
       updateFullScreenState(frameHelper, frameInfo)
@@ -417,10 +416,6 @@ private suspend fun focusSelectedEditor(editorComponent: EditorsSplitters) {
   }
 }
 
-internal interface ProjectFrameProducer {
-  fun create(): IdeFrameImpl
-}
-
 internal fun applyBoundsOrDefault(frame: JFrame, bounds: Rectangle?, restoreOnlyLocation: Boolean = false) {
   if (bounds == null) {
     setDefaultSize(frame)
@@ -448,46 +443,38 @@ private fun setDefaultSize(frame: JFrame, screen: Rectangle = ScreenUtil.getMain
 }
 
 @ApiStatus.Internal
-internal fun createNewProjectFrameProducer(frameInfo: FrameInfo?): ProjectFrameProducer {
+internal fun createIdeFrame(frameInfo: FrameInfo?): IdeFrameImpl {
   val deviceBounds = frameInfo?.bounds
   if (deviceBounds == null) {
-    return object : ProjectFrameProducer {
-      override fun create(): IdeFrameImpl {
-        val frame = IdeFrameImpl()
-        setDefaultSize(frame)
-        frame.setLocationRelativeTo(null)
-        return frame
-      }
-    }
+    val frame = IdeFrameImpl()
+    setDefaultSize(frame)
+    frame.setLocationRelativeTo(null)
+    return frame
   }
   else {
     checkForNonsenseBounds("IdeProjectFrameAllocatorKt.createNewProjectFrameProducer.deviceBounds", deviceBounds)
     val bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(deviceBounds)
     val state = frameInfo.extendedState
     val isMaximized = FrameInfoHelper.isMaximized(state)
-    return object : ProjectFrameProducer {
-      override fun create(): IdeFrameImpl {
-        val frame = IdeFrameImpl()
-        val restoreNormalBounds = isMaximized && frame.extendedState == Frame.NORMAL && bounds != null
+    val frame = IdeFrameImpl()
+    val restoreNormalBounds = isMaximized && frame.extendedState == Frame.NORMAL && bounds != null
 
-        // On macOS, setExtendedState(maximized) may UN-maximize the frame if the restored bounds are too large
-        // (so the OS will "autodetect" it as already maximized).
-        // Therefore, we only restore the location and use the default size (which is always computed to be less than the screen).
-        applyBoundsOrDefault(frame, bounds, restoreOnlyLocation = isMaximized && SystemInfo.isMac)
-        frame.extendedState = state
-        frame.minimumSize = Dimension(340, frame.minimumSize.height)
+    // On macOS, setExtendedState(maximized) may UN-maximize the frame if the restored bounds are too large
+    // (so the OS will "autodetect" it as already maximized).
+    // Therefore, we only restore the location and use the default size (which is always computed to be less than the screen).
+    applyBoundsOrDefault(frame, bounds, restoreOnlyLocation = isMaximized && SystemInfo.isMac)
+    frame.extendedState = state
+    frame.minimumSize = Dimension(340, frame.minimumSize.height)
 
-        // This has to be done after restoring the actual state, as otherwise setExtendedState() may overwrite the normal bounds.
-        if (restoreNormalBounds) {
-          frame.normalBounds = bounds
-          frame.screenBounds = ScreenUtil.getScreenDevice(bounds!!)?.defaultConfiguration?.bounds
-          if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
-            IDE_FRAME_EVENT_LOG.debug("Loaded saved normal bounds ${frame.normalBounds} for the screen ${frame.screenBounds}")
-          }
-        }
-        return frame
+    // This has to be done after restoring the actual state, as otherwise setExtendedState() may overwrite the normal bounds.
+    if (restoreNormalBounds) {
+      frame.normalBounds = bounds
+      frame.screenBounds = ScreenUtil.getScreenDevice(bounds!!)?.defaultConfiguration?.bounds
+      if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+        IDE_FRAME_EVENT_LOG.debug("Loaded saved normal bounds ${frame.normalBounds} for the screen ${frame.screenBounds}")
       }
     }
+    return frame
   }
 }
 

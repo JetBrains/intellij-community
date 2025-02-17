@@ -26,7 +26,7 @@ import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.OpenProjectImplOptions
-import com.intellij.openapi.project.impl.createNewProjectFrameProducer
+import com.intellij.openapi.project.impl.createIdeFrame
 import com.intellij.openapi.project.impl.frame
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.io.FileUtilRt
@@ -542,7 +542,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       var activeTask: Pair<Path, OpenProjectTask>? = null
       for ((path, info) in toOpen) {
         val isActive = info == activeInfo
-        val ideFrame = createNewProjectFrameProducer(info.frame).create()
+        val ideFrame = createIdeFrame(info.frame)
         info.frameTitle?.let {
           ideFrame.title = it
         }
