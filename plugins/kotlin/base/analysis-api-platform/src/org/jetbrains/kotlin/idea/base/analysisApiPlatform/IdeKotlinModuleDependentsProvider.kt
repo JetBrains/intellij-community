@@ -35,7 +35,7 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
                     // No dependents need to be provided for SDK modules (see `KotlinModuleDependentsProvider`).
                     return emptySet()
                 }
-                getDirectDependentsForLibraryNonSdkModule(module)
+                return buildSet { getDirectDependentsForLibraryNonSdkModule(module, this) }
             }
 
             is KaLibrarySourceModule -> getDirectDependents(module.binaryLibrary)
@@ -76,7 +76,7 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
 
     protected abstract fun addAnchorModuleDependents(module: KaSourceModule, to: MutableSet<KaModule>)
 
-    protected abstract fun getDirectDependentsForLibraryNonSdkModule(module: KaLibraryModule): Set<KaModule>
+    protected abstract fun getDirectDependentsForLibraryNonSdkModule(module: KaLibraryModule, to: MutableSet<KaModule>)
 
     protected fun MutableSet<KaModule>.addWorkspaceModelDependents(symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>) {
         val snapshot = WorkspaceModel.getInstance(project).currentSnapshot

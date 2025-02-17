@@ -24,9 +24,7 @@ internal class K2IdeKotlinModuleDependentsProvider(project: Project) : IdeKotlin
         }
     }
 
-    override fun getDirectDependentsForLibraryNonSdkModule(module: KaLibraryModule): Set<KaModule> {
-        return buildSet {
-            addWorkspaceModelDependents(module.symbolicId)
-        }
+    override fun getDirectDependentsForLibraryNonSdkModule(module: KaLibraryModule, to: MutableSet<KaModule>) {
+        to.addWorkspaceModelDependents(module.symbolicId)
     }
 }

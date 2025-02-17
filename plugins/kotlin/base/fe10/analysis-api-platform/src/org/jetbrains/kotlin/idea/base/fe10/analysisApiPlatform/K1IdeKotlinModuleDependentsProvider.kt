@@ -8,13 +8,8 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.base.fe10.analysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinModuleDependentsProvider
-import org.jetbrains.kotlin.idea.base.projectStructure.KtLibraryModuleByModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryUsageIndex
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProductionOrTest
 import org.jetbrains.kotlin.idea.base.projectStructure.util.getTransitiveLibraryDependencyInfos
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 
@@ -47,12 +42,12 @@ internal class K1IdeKotlinModuleDependentsProvider(project: Project) : IdeKotlin
             }
     }
 
-    override fun getDirectDependentsForLibraryNonSdkModule(module: KaLibraryModule): Set<KaModule> {
+    override fun getDirectDependentsForLibraryNonSdkModule(module: KaLibraryModule, to: MutableSet<KaModule>) {
         require(module is KtLibraryModuleByModuleInfo)
 
-        return project.service<LibraryUsageIndex>()
+        project.service<LibraryUsageIndex>()
             .getDependentModules(module.libraryInfo)
-            .mapNotNullTo(mutableSetOf()) { it.toKaSourceModuleForProductionOrTest() }
+            .mapNotNullTo(to) { it.toKaSourceModuleForProductionOrTest() }
     }
 
 }
