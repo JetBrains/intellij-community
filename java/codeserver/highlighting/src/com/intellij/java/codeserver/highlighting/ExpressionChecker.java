@@ -3,6 +3,7 @@ package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.codeserver.core.JavaPsiReferenceUtil;
 import com.intellij.java.codeserver.highlighting.errors.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;

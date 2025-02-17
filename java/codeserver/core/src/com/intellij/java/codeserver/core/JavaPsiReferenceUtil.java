@@ -1,11 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.util;
+package com.intellij.java.codeserver.core;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Utility methods related to references in Java sources
+ */
 public final class JavaPsiReferenceUtil {
   private JavaPsiReferenceUtil() { }
 
@@ -67,7 +72,7 @@ public final class JavaPsiReferenceUtil {
   /**
    * @return field that has initializer with this element as subexpression or null if not found
    */
-  static PsiField findEnclosingFieldInitializer(@NotNull PsiElement entry) {
+  private static PsiField findEnclosingFieldInitializer(@NotNull PsiElement entry) {
     PsiElement element = entry;
     while (element != null) {
       PsiElement parent = element.getParent();
@@ -84,7 +89,7 @@ public final class JavaPsiReferenceUtil {
   private static PsiClassInitializer findParentClassInitializer(@NotNull PsiElement root) {
     PsiElement element = root;
     while (element != null) {
-      if (element instanceof PsiClassInitializer) return (PsiClassInitializer)element;
+      if (element instanceof PsiClassInitializer initializer) return initializer;
       if (element instanceof PsiClass || element instanceof PsiMethod) return null;
       element = element.getParent();
     }
