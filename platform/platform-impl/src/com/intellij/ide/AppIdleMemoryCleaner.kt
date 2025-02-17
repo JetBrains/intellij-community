@@ -20,6 +20,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.ide.progress.activeTasks
 import com.intellij.platform.ide.progress.updates
+import com.intellij.util.io.DirectByteBufferAllocator
+import com.intellij.util.io.StorageLockContext
 import com.intellij.util.io.storage.HeavyProcessLatch
 import fleet.kernel.rete.asValuesFlow
 import fleet.kernel.rete.tokensFlow
@@ -90,7 +92,15 @@ class AppIdleMemoryCleaner(private val cs: CoroutineScope) {
   private fun performCleanup() {
     LOG.debug("Performing memory cleanup")
     runGc()
+    releaseIndexCachedDirectBuffers()
     PlatformMemoryUtil.getInstance().trimLinuxNativeHeap()
+  }
+
+  private fun releaseIndexCachedDirectBuffers() {
+    // This cache is allocated off-heap and can be quickly retuned to the OS.
+    // Also, this cache is short-living: it takes little time to allocate and fill it back.
+    StorageLockContext.forceDirectMemoryCache()
+    DirectByteBufferAllocator.ALLOCATOR.releaseCachedBuffers()
   }
 
   private fun runGc() {
