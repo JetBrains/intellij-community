@@ -117,6 +117,7 @@ class EditorCellDraggableBar(
         }
 
         override fun mouseReleased(e: MouseEvent) {
+          deleteDragPreview()
           if (!isDragging || dragStartPoint == null) {
             isDragging = false
             return
@@ -202,8 +203,6 @@ class EditorCellDraggableBar(
     }
 
     private fun clearDragState() {
-      dragPreview?.dispose()
-      dragPreview = null
       isDragging = false
       deleteDropIndicator()
     }
@@ -232,6 +231,11 @@ class EditorCellDraggableBar(
       is CellDropTarget.TargetCell -> (currentlyHighlightedCell as CellDropTarget.TargetCell).cell.view?.removeDropHighlightIfPresent()
       CellDropTarget.BelowLastCell -> removeHighlightAfterLastCell()
       else -> { }
+    }
+
+    private fun deleteDragPreview() {
+      dragPreview?.dispose()
+      dragPreview = null
     }
 
     @Nls
