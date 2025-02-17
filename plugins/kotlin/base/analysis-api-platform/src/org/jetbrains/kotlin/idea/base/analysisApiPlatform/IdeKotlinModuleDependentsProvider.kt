@@ -78,7 +78,7 @@ abstract class IdeKotlinModuleDependentsProvider(protected val project: Project)
 
     protected abstract fun getDirectDependentsForLibraryNonSdkModule(module: KaLibraryModule): Set<KaModule>
 
-    private fun MutableSet<KaModule>.addWorkspaceModelDependents(symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>) {
+    protected fun MutableSet<KaModule>.addWorkspaceModelDependents(symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>) {
         val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
         snapshot
             .referrers(symbolicId, ModuleEntity::class.java)
