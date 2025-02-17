@@ -10,14 +10,8 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaGlobalSearc
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.directRegularDependenciesOfType
-import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
 import org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService
 import org.jetbrains.kotlin.idea.base.projectStructure.getAssociatedKaModules
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
-import org.jetbrains.kotlin.idea.base.projectStructure.useNewK2ProjectStructureProvider
-import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.utils.SmartList
 
@@ -28,7 +22,7 @@ class FirLibrarySourceScopeService(private val project: Project): LibrarySourceS
 
         val primaryScope = binaryModuleInfos.mapNotNull { it.librarySources?.contentScope }.union()
         val additionalScope = binaryModuleInfos.flatMap {
-            it.associatedCommonLibraries() + it.sourcesOnlyDependencies()
+            it.associatedCommonLibraries()
         }.mapNotNull { it.librarySources?.contentScope }.union()
 
         return if (binaryModuleInfos.any { it is KaScriptDependencyModule }) {
@@ -50,17 +44,6 @@ class FirLibrarySourceScopeService(private val project: Project): LibrarySourceS
             }
         }
         return result
-    }
-
-    private fun KaLibraryModule.sourcesOnlyDependencies(): List<KaLibraryModule> {
-        if (useNewK2ProjectStructureProvider) {
-             // Library dependencies are not used in K2 mode
-            return emptyList()
-        } else {
-            @OptIn(K1ModeProjectStructureApi::class)
-            return LibraryDependenciesCache.getInstance(project).getLibraryDependencies(moduleInfo as LibraryInfo).sourcesOnlyDependencies
-                .mapNotNull { it.toKaModule() as? KaLibraryModule }
-        }
     }
 
     private fun Collection<GlobalSearchScope>.union(): List<GlobalSearchScope> =
