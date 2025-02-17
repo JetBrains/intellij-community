@@ -39,6 +39,7 @@
   </projectListeners>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.contractProvider" interface="com.intellij.codeInspection.dataFlow.JvmContractAnnotationProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.methodImplementor" interface="com.intellij.codeInsight.MethodImplementor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javaExpressionSurrounder"
                     interface="com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder" dynamic="true"/>
@@ -1039,7 +1040,7 @@
                            order="last, after NestingTreeStructureProvider"/>
     <importFilteringRule implementation="com.intellij.usages.impl.rules.ImportFilteringRule"/>
     <usageContextPanelProvider implementation="com.intellij.usageView.UsageContextDataflowFromPanel$Provider"/>
-    <usageContextPanelProvider implementation="com.intellij.usageView.UsageContextDataflowToPanel$Provider"/>
+    <usageContextPanelProvider implementation="com.intellij.usageView.UsageContextDataflowToPanel$Provider"/>\
     <usageTypeProvider implementation="com.intellij.usages.impl.rules.JavaUsageTypeProvider"/>
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.JavaClassGroupRuleProvider"/>
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.JavaMethodGroupRuleProvider"/>
@@ -2762,6 +2763,7 @@
     <registryKey defaultValue="false" description="Suggested refactoring from call-site in Java"
                  key="ide.java.refactoring.suggested.call.site"/>
     <dataflowIRProvider language="JAVA" implementationClass="com.intellij.codeInspection.dataFlow.java.JavaDataFlowIRProvider"/>
+    <codeInsight.contractProvider implementation="com.intellij.codeInspection.dataFlow.JbContractAnnotationProvider"/>
     <java.effectively.final.fixer implementation="com.intellij.codeInsight.daemon.impl.quickfix.makefinal.MoveInitializerToIfBranchFixer"/>
     <java.effectively.final.fixer implementation="com.intellij.codeInspection.streamMigration.ConvertToStreamFixer"/>
     <postStartupActivity implementation="com.intellij.ide.FileNotInSourceRootChecker"/>
