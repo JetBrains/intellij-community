@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VfsUtil
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NativeKlibLibraryInfo
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.NativeForwardDeclarationKind
 import org.jetbrains.kotlin.name.NativeStandardInteropNames.ExperimentalForeignApi
@@ -31,9 +30,9 @@ private val LOG = logger<KotlinForwardDeclarationsFileGenerator>()
  * [KotlinForwardDeclarationsModelChangeService] service responsible for launching the generation.
  */
 internal object KotlinForwardDeclarationsFileGenerator {
-    fun generateForwardDeclarationFiles(libraryInfo: NativeKlibLibraryInfo): Path? {
-        val groupedClasses = KotlinForwardDeclarationsFqNameExtractor.getGroupedForwardDeclarations(libraryInfo).ifEmpty { return null }
-        return generateForwardDeclarationsForFqNames(groupedClasses, libraryInfo.libraryRoot)
+    fun generateForwardDeclarationFiles(library: KLib): Path? {
+        val groupedClasses = KotlinForwardDeclarationsFqNameExtractor.getGroupedForwardDeclarations(library).ifEmpty { return null }
+        return generateForwardDeclarationsForFqNames(groupedClasses, library.libraryRoot)
     }
 
     private fun generateForwardDeclarationsForFqNames(groupedFqNames: Map<FqName, List<FqName>>, libraryPath: String): Path {
