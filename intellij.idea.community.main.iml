@@ -126,6 +126,8 @@
     <orderEntry type="module" module-name="intellij.tools.updater" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.scriptDebugger.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.terminal" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.terminal.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.terminal.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.images.build" scope="TEST" />
     <orderEntry type="module" module-name="intellij.statsCollector" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.statsCollector.tests" scope="TEST" />
