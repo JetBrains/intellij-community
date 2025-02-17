@@ -1,4 +1,5 @@
-package com.intellij.lang.ant
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.xml.testFramework
 
 import com.intellij.lang.html.BackendHtmlElementFactory
 import com.intellij.lang.html.BasicHtmlElementFactory
@@ -7,11 +8,7 @@ import com.intellij.lang.xml.BasicXmlElementFactory
 import com.intellij.mock.MockApplication
 import com.intellij.openapi.Disposable
 
-/**
- * Copy of [com.intellij.xml.XmlElementTypeServiceHelper]
- * Copied to avoid "cyclic module dependency" exception
- */
-internal object XmlElementTypeServiceHelper {
+object XmlElementTypeServiceHelper {
   @JvmStatic
   fun registerXmlElementTypeServices(
     application: MockApplication,
