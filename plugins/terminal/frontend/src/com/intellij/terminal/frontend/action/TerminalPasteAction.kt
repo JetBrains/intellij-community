@@ -3,7 +3,6 @@ package com.intellij.terminal.frontend.action
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.ide.CopyPasteManager
@@ -26,7 +25,7 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.termin
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalSession
 import java.awt.datatransfer.DataFlavor
 
-internal class TerminalPasteAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.editor as? EditorEx ?: return
     val input = e.terminalInput

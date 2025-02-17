@@ -3,7 +3,6 @@ package com.intellij.terminal.frontend.action
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.wm.ToolWindowManager
@@ -69,7 +68,7 @@ interface TerminalEscapeHandler {
 internal val TERMINAL_ESCAPE_HANDLER_EP: ExtensionPointName<TerminalEscapeHandler> =
   ExtensionPointName.create("org.jetbrains.plugins.terminal.escapeHandler")
 
-internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction() {
   // order matters, because only the first enabled handler will be executed
   private val handlers: List<Handler> = listOf(
     CloseHistoryHandler(),
