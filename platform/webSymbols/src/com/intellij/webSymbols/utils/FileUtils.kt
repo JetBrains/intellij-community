@@ -7,7 +7,7 @@ import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFileBase
 
-fun findOriginalFile(file: VirtualFile?) =
+fun findOriginalFile(file: VirtualFile?): VirtualFile? =
   file?.let {
     var f: VirtualFile? = it
     while (f is LightVirtualFileBase) {
