@@ -58,6 +58,14 @@ _KOPTS = {
         type = attr.bool,
         flag_name = "allow-kotlin-package",
     ),
+    "when_guards": struct(
+        args = dict(
+            default = False,
+            doc = "",
+        ),
+        type = attr.bool,
+        flag_name = "when-guards",
+    ),
     "jvm_target": struct(
         args = dict(
             default = 0,

@@ -46,6 +46,7 @@ enum class JvmBuilderFlags {
 
   OPT_IN,
   ALLOW_KOTLIN_PACKAGE,
+  WHEN_GUARDS,
   LAMBDAS,
   JVM_DEFAULT,
   INLINE_CLASSES,
@@ -87,9 +88,11 @@ fun configureCommonCompilerArgs(kotlinArgs: K2JVMCompilerArguments, args: ArgMap
     kotlinArgs.optIn = it.toTypedArray()
   }
 
-  val allowKotlinPackage = args.boolFlag(JvmBuilderFlags.ALLOW_KOTLIN_PACKAGE)
-  if (allowKotlinPackage) {
+  if (args.boolFlag(JvmBuilderFlags.ALLOW_KOTLIN_PACKAGE)) {
     kotlinArgs.allowKotlinPackage = true
+  }
+  if (args.boolFlag(JvmBuilderFlags.WHEN_GUARDS)) {
+    kotlinArgs.whenGuards = true
   }
 
   args.optionalSingle(JvmBuilderFlags.LAMBDAS)?.let {

@@ -77,7 +77,7 @@ fun prepareCompilerConfiguration(
     }
   }
 
-  config.setupCommonArguments(kotlinArgs) { version -> MetadataVersion(*version) }
+  config.setupCommonArguments(kotlinArgs) { MetadataVersion(*it) }
   config.setupJvmSpecificArguments(kotlinArgs)
   if (args.boolFlag(JvmBuilderFlags.ALLOW_KOTLIN_PACKAGE)) {
     config.put(CLIConfigurationKeys.ALLOW_KOTLIN_PACKAGE, true)
