@@ -1,10 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.util;
+package com.intellij.java.codeserver.core;
 
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ public final class JavaPsiEnumUtil {
 
     if (!JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_6)) {
       PsiType type = field.getType();
-      if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == enumClass) return false;
+      if (type instanceof PsiClassType classType && classType.resolve() == enumClass) return false;
     }
 
     return !PsiUtil.isCompileTimeConstant(field);
@@ -38,8 +39,8 @@ public final class JavaPsiEnumUtil {
     if (PsiImplUtil.getSwitchLabel(expr) != null) return null;
     PsiMember constructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expr);
     if (constructorOrInitializer == null || constructorOrInitializer.hasModifierProperty(PsiModifier.STATIC)) return null;
-    PsiClass enumClass = constructorOrInitializer instanceof PsiEnumConstantInitializer
-                         ? (PsiClass)constructorOrInitializer
+    PsiClass enumClass = constructorOrInitializer instanceof PsiEnumConstantInitializer initializer
+                         ? initializer
                          : constructorOrInitializer.getContainingClass();
     if (enumClass instanceof PsiEnumConstantInitializer) {
       enumClass = enumClass.getSuperClass();
