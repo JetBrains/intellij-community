@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.project.Project;
@@ -7,12 +7,13 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-class GitLogFullRecord extends GitLogRecord {
-
+@ApiStatus.Internal
+public final class GitLogFullRecord extends GitLogRecord {
   private final @NotNull List<VcsFileStatusInfo> myStatusInfo;
 
   GitLogFullRecord(@NotNull Map<GitLogParser.GitLogOption, String> options,
