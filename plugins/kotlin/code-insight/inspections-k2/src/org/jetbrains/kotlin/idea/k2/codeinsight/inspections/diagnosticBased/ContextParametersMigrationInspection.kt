@@ -280,33 +280,52 @@ internal class ContextParametersMigrationQuickFix(
         val contextReceiversWithNewNames = context.contextReceiversWithNames.mapNotNull { (contextReceiverPointer, newName) ->
             contextReceiverPointer.element?.to(newName)
         }.toMap()
-        val ktElementReplacements = mutableMapOf<KtElement, KtElement>()
-        for ((contextReceiver, newName) in contextReceiversWithNewNames) {
-            val newContextParameter = contextReceiver.createNamedParameter(newName)
-            ktElementReplacements[updater.getWritable(contextReceiver)] = newContextParameter
+        // prepare writable copies
+        val writableContextReceiversWithNewNames = contextReceiversWithNewNames.mapKeys { (ktReceiver, _) ->
+            updater.getWritable(ktReceiver)
         }
-        for (implicitContextUsage in context.implicitContextUsages) {
+
+        val writableCallElementsForUsages = context.implicitContextUsages.associateWith { usage ->
+            val callElement = usage.callReference.element?.let { ref -> ref.parent as? KtCallExpression ?: ref } ?:return
+            updater.getWritable(callElement)
+        }
+        // replace usages from inner to outer
+        for (implicitContextUsage in sortedContextUsages(writableCallElementsForUsages)) {
             val dispatchReceiverContextPsi = implicitContextUsage.dispatchReceiverContextPsi
             val extensionReceiverContextPsi = implicitContextUsage.extensionReceiverContextPsi
             val receiverCombination = implicitContextUsage.receiverCombination
 
-            val oldCall = implicitContextUsage.callReference.element?.let { ref -> ref.parent as? KtCallExpression ?: ref } ?: continue
+            val oldCall = writableCallElementsForUsages[implicitContextUsage] ?: continue
             val newText = newCallExpressionText(
                 oldCall, receiverCombination, dispatchReceiverContextPsi?.element,
                 extensionReceiverContextPsi?.element, contextReceiversWithNewNames
             ) ?: continue
-            ktElementReplacements[updater.getWritable(oldCall)] = factory.createExpression(newText)
+            oldCall.replace(factory.createExpression(newText))
         }
-
-        ktElementReplacements.forEach { (oldElement, newElement) ->
-            oldElement.replace(newElement)
+        // replace receivers with parameters
+        for ((writableContextReceiver, newName) in writableContextReceiversWithNewNames) {
+            val newContextParameter = writableContextReceiver.createNamedParameter(newName)
+            writableContextReceiver.replace(newContextParameter)
         }
-
         // if there's a single context parameter, suggest renaming in interactive mode
         containingFunctionOrProperty.contextReceiverList?.contextParameters()?.singleOrNull()?.let { contextParameter ->
             val suggestedNames = mutableSetOf<String>()
             NameSuggestionProvider.suggestNames(contextParameter, containingFunctionOrProperty, suggestedNames)
             updater.rename(contextParameter, suggestedNames.toList())
+        }
+    }
+
+    private fun sortedContextUsages(
+        writableCallElementsForUsages: Map<ImplicitContextReceiverUsage, KtReferenceExpression>
+    ): List<ImplicitContextReceiverUsage> {
+        return context.implicitContextUsages.sortedWith { a, b ->
+            val firstCallElement = writableCallElementsForUsages.getValue(a)
+            val secondCallElement = writableCallElementsForUsages.getValue(b)
+            when {
+                PsiTreeUtil.isAncestor(firstCallElement, secondCallElement, true) -> 1
+                PsiTreeUtil.isAncestor(secondCallElement, firstCallElement, true) -> -1
+                else -> 0
+            }
         }
     }
 

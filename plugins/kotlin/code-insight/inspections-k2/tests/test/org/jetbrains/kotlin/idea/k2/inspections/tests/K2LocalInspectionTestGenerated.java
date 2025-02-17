@@ -12701,6 +12701,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/implicitDispatchContextExtension.kt");
         }
 
+        @TestMetadata("insideLambdaWithReceiver.kt")
+        public void testInsideLambdaWithReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/insideLambdaWithReceiver.kt");
+        }
+
         @TestMetadata("leaveUnrelatedIntact.kt")
         public void testLeaveUnrelatedIntact() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/leaveUnrelatedIntact.kt");
