@@ -42,37 +42,6 @@ interface ThreadingSupport {
   fun isWriteIntentLocked(): Boolean
 
   /**
-   * Requests pooled thread to execute the action.
-   *
-   * This pool is an
-   *   - Unbounded.
-   *   - Application-wide, always active, non-shutdownable singleton.
-   *
-   * You can use this pool for long-running and/or IO-bound tasks.
-   *
-   * @param action to be executed
-   * @return future result
-   */
-  @RequiresBlockingContext
-  fun executeOnPooledThread(action: Runnable, expired: BooleanSupplier): Future<*>
-
-  /**
-   * Requests pooled thread to execute the action.
-   *
-   * This pool is an
-   *   - Unbounded.
-   *   - Application-wide, always active, non-shutdownable singleton.
-   *
-   * You can use this pool for long-running and/or IO-bound tasks.
-   *
-   * @param action to be executed
-   * @return future result
-   */
-  @RequiresBlockingContext
-  fun <T> executeOnPooledThread(action: Callable<T>, expired: BooleanSupplier): Future<T>
-
-
-  /**
    * Runs the specified action under the write-intent lock. Can be called from any thread. The action is executed immediately
    * if no write-intent action is currently running, or blocked until the currently running write-intent action completes.
    *
