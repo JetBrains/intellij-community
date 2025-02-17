@@ -10,7 +10,7 @@
 
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.fir.projectStructure.DelegatingIDEProjectStructureProvider"/>
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fir.projectStructure.provider.K2IDEProjectStructureProvider"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.fir.projectStructure.kmp.K2ForwardDeclarationScopeProviderImpl"
                     serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.kmp.K2ForwardDeclarationScopeProvider"/>
