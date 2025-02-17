@@ -263,7 +263,7 @@ internal class ToolbarFrameHeader(
 
   override fun paintComponent(g: Graphics) {
     if (mode == ShowMode.MENU && menuBarHeaderTitle.isVisible ||
-        toolbarHeaderTitle.parent != null ||
+        toolbarHeaderTitle.parent != null || isCompactHeader ||
         !ProjectWindowCustomizerService.getInstance().paint(window = frame, parent = this, g = g as Graphics2D)) {
       // isOpaque is false to paint colorful toolbar gradient, so, we have to draw background on our own
       g.color = background
