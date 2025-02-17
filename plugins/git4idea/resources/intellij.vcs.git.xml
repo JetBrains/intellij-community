@@ -533,8 +533,6 @@
     <advancedSetting id="git.commit.do.not.run.commit.hooks" default="false"  groupKey="advanced.settings.git"/>
     <advancedSetting id="git.use.schannel.on.windows" default="false" groupKey="advanced.settings.git" os="windows"/>
     <advancedSetting id="git.branch.cleanup.symbol" default="-" groupKey="advanced.settings.git"/>
-    <registryKey key="git.execute.with.mediator" defaultValue="true"
-                 description="Use wrapper executable on Windows to support soft Git process cancellation."/>
     <registryKey key="git.blocking.read" defaultValue="true"
                  description="Use blocking mode for git process output reader."/>
     <registryKey key="git.allow.stderr.to.stdout.mixing" defaultValue="false"
