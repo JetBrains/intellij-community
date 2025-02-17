@@ -11,6 +11,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.symbolicId
 internal class K2ForwardDeclarationScopeProviderImpl(private val project: Project) : K2ForwardDeclarationScopeProvider() {
     override fun createForwardDeclarationScope(module: KaLibraryModule): GlobalSearchScope? {
         if (module !is KaLibraryModuleImpl) return null
-        return org.jetbrains.kotlin.idea.base.projectStructure.kmp.createForwardDeclarationScope(module.symbolicId, module, project)
+        return org.jetbrains.kotlin.idea.base.projectStructure.kmp.createForwardDeclarationScope(module.symbolicId, project)
     }
 }

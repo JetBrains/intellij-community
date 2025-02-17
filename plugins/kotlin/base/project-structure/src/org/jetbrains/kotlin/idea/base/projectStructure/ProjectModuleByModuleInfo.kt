@@ -348,7 +348,7 @@ class KtNativeKlibLibraryModuleByModuleInfo(
     val forwardDeclarationsScope: GlobalSearchScope?
         get() {
             val libraryEntityId = (libraryInfo.library as? LibraryBridge)?.libraryId ?: return null
-            return createForwardDeclarationScope(libraryEntityId, this, project)
+            return createForwardDeclarationScope(libraryEntityId, project)
         }
 }
 
