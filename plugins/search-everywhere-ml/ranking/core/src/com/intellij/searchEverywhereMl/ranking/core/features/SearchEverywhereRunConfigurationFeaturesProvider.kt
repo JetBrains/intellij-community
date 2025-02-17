@@ -15,13 +15,12 @@ import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRun
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRunConfigurationFeaturesProvider.Fields.IS_TEMPORARY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRunConfigurationFeaturesProvider.Fields.RUN_CONFIGURATION_TYPE
 
-internal class SearchEverywhereRunConfigurationFeaturesProvider
+private class SearchEverywhereRunConfigurationFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(RunConfigurationsSEContributor::class.java) {
   object Fields {
     val IS_SHARED = EventFields.Boolean("isShared")
     val IS_TEMPORARY = EventFields.Boolean("isTemporary")
-    val RUN_CONFIGURATION_TYPE = EventFields.StringValidatedByCustomRule("runConfigType",
-                                                                         RunConfigurationTypeValidator::class.java)
+    val RUN_CONFIGURATION_TYPE = EventFields.StringValidatedByCustomRule("runConfigType", SearchEverywhereRunConfigurationTypeValidator::class.java)
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
@@ -44,21 +43,21 @@ internal class SearchEverywhereRunConfigurationFeaturesProvider
       RUN_CONFIGURATION_TYPE.with(settings.type.id),
     )
   }
+}
 
-  class RunConfigurationTypeValidator : CustomValidationRule() {
-    override fun getRuleId(): String {
-      return "run_config_type"
-    }
+private class SearchEverywhereRunConfigurationTypeValidator : CustomValidationRule() {
+  override fun getRuleId(): String {
+    return "run_config_type"
+  }
 
-    override fun doValidate(data: String, context: EventContext): ValidationResultType {
-      if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED
-      val configurationType = findConfigurationTypeById(data) ?: return ValidationResultType.REJECTED
-      return if (getPluginInfo(configurationType.javaClass).isDevelopedByJetBrains()) ValidationResultType.ACCEPTED
-      else ValidationResultType.THIRD_PARTY
-    }
+  override fun doValidate(data: String, context: EventContext): ValidationResultType {
+    if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED
+    val configurationType = findConfigurationTypeById(data) ?: return ValidationResultType.REJECTED
+    return if (getPluginInfo(configurationType.javaClass).isDevelopedByJetBrains()) ValidationResultType.ACCEPTED
+    else ValidationResultType.THIRD_PARTY
+  }
 
-    private fun findConfigurationTypeById(data: String): ConfigurationType? {
-      return ConfigurationType.CONFIGURATION_TYPE_EP.extensionList.find { type: ConfigurationType -> type.id == data }
-    }
+  private fun findConfigurationTypeById(data: String): ConfigurationType? {
+    return ConfigurationType.CONFIGURATION_TYPE_EP.extensionList.find { type: ConfigurationType -> type.id == data }
   }
 }
