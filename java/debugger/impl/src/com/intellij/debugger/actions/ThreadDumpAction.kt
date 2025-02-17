@@ -2,31 +2,44 @@
 package com.intellij.debugger.actions
 
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.debugger.engine.DebuggerUtils
-import com.intellij.debugger.engine.executeOnDMT
+import com.intellij.debugger.engine.*
+import com.intellij.debugger.engine.MethodInvokeUtils.getMethodHandlesImplLookup
+import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.impl.ExtendedThreadDumpItemsProvider
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.rt.debugger.VirtualThreadDumper
 import com.intellij.threadDumpParser.ThreadDumpParser
 import com.intellij.threadDumpParser.ThreadState
 import com.intellij.unscramble.DumpItem
 import com.intellij.unscramble.JavaThreadDumpItem
+import com.intellij.util.lang.JavaVersion
 import com.jetbrains.jdi.ThreadReferenceImpl
 import com.sun.jdi.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.lang.Long
+import java.util.concurrent.CancellationException
+import kotlin.Boolean
 import kotlin.Int
 import kotlin.Pair
 import kotlin.String
 import kotlin.Throwable
 import kotlin.checkNotNull
 import kotlin.let
+import kotlin.time.Duration.Companion.seconds
 import kotlin.to
 
 class ThreadDumpAction : DumbAwareAction() {
@@ -79,8 +92,35 @@ class ThreadDumpAction : DumbAwareAction() {
              "(" + DebuggerUtilsEx.getSourceName(location, "Unknown Source") + ":" + DebuggerUtilsEx.getLineNumber(location, false) + ")"
     }
 
-    private fun buildThreadDump(context: DebuggerContextImpl): List<DumpItem> {
-      return buildJavaPlatformThreadDump(context).map(::JavaThreadDumpItem)
+    private suspend fun buildThreadDump(context: DebuggerContextImpl): List<DumpItem> {
+      fun fallback() =
+        buildJavaPlatformThreadDump(context).map(::JavaThreadDumpItem)
+
+      if (!Registry.`is`("debugger.thread.dump.extended")) {
+        return fallback()
+      }
+
+      val timeout = Registry.intValue("debugger.thread.dump.suspension.timeout.seconds", 5).seconds
+      return try {
+        suspendAllAndEvaluate(context, timeout) {
+          fetchExtendedThreadDumpItems(it)
+        }
+      }
+      catch (e: Throwable) {
+        when (e) {
+          is TimeoutCancellationException -> {
+            thisLogger().warn("timeout while waiting for evaluatable context ($timeout)")
+            fallback()
+          }
+          is CancellationException, is ControlFlowException -> {
+            throw e
+          }
+          else -> {
+            thisLogger().error(e)
+            fallback()
+          }
+        }
+      }
     }
 
     fun buildJavaPlatformThreadDump(context: DebuggerContextImpl): List<ThreadState> {
@@ -95,6 +135,10 @@ class ThreadDumpAction : DumbAwareAction() {
     }
   }
 }
+
+private fun fetchExtendedThreadDumpItems(suspendContext: SuspendContextImpl): List<DumpItem> =
+  ExtendedThreadDumpItemsProvider.EP.extensionList
+    .flatMap { it.compute(suspendContext) }
 
 private fun renderLockedObject(monitor: ObjectReference): String {
   return "locked " + renderObject(monitor)
@@ -336,12 +380,67 @@ private fun getPlatformThreadsWithStackTraces(vmProxy: VirtualMachineProxyImpl):
         if (this.isNotEmpty()) {
           append('\n')
         }
-        append('\t')
+        append("\t  ")
         try {
           append(ThreadDumpAction.renderLocation(stackFrame.location()))
         }
         catch (e: InvalidStackFrameException) {
           append("Invalid stack frame: ").append(e.message)
+        }
+      }
+    }
+  }
+}
+
+private class JavaThreadsProvider : ExtendedThreadDumpItemsProvider() {
+  override val isEnabled: Boolean
+    get() = Registry.`is`("debugger.thread.dump.include.virtual.threads")
+
+  override fun compute(suspendContext: SuspendContextImpl): List<DumpItem> {
+    val virtualThreads = evaluateAndGetAllVirtualThreads(suspendContext)
+
+    val vm = suspendContext.virtualMachineProxy
+    return buildThreadStates(vm, virtualThreads)
+      .map(::JavaThreadDumpItem)
+  }
+
+  private fun evaluateAndGetAllVirtualThreads(suspendContext: SuspendContextImpl): List<Pair<ThreadReference, String>> {
+    if (!Registry.`is`("debugger.thread.dump.include.virtual.threads")) return emptyList()
+
+    val version = JavaVersion.parse(suspendContext.virtualMachineProxy.version())
+    if (version.feature < 19) return emptyList()
+
+    val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy())
+
+    val lookupImpl = getMethodHandlesImplLookup(evaluationContext)
+    if (lookupImpl == null) {
+      thisLogger().error("Cannot get MethodHandles.Lookup.IMPL_LOOKUP")
+      return emptyList()
+    }
+
+    val evaluated = try {
+      DebuggerUtilsImpl.invokeHelperMethod(
+        evaluationContext,
+        VirtualThreadDumper::class.java, "getAllVirtualThreadsWithStackTraces",
+        listOf(lookupImpl)
+      )
+    }
+    catch (e: EvaluateException) {
+      thisLogger().error(e)
+      return emptyList()
+    }
+    val packedThreadsAndStackTraces = (evaluated as ArrayReference?)?.values ?: emptyList()
+
+    return buildList {
+      var i = 0
+      while (i < packedThreadsAndStackTraces.size) {
+        val stackTrace = (packedThreadsAndStackTraces[i++] as StringReference).value()
+        while (true) {
+          val thread = packedThreadsAndStackTraces[i++]
+          if (thread == null) {
+            break
+          }
+          add(thread as ThreadReference to stackTrace)
         }
       }
     }
