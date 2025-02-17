@@ -192,8 +192,8 @@ private class ElementsBuilder {
     while (parentTmp != null) {
       val first = parentTmp.model
       val second = assembledModel.model
-      if (first is ExtendedLogicalObject && first.logicalEquals(second)
-          || second is ExtendedLogicalObject && second.logicalEquals(first)
+      if (first is ExtendedLogicalObject && first.isTheSameParent(second)
+          || second is ExtendedLogicalObject && second.isTheSameParent(first)
           || first == second) return true
       parentTmp = parentTmp.parent
     }
