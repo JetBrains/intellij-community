@@ -71,6 +71,7 @@ jvm_library(
     "//platform/util-ex",
     "@lib//:kotlin-stdlib",
     "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",

@@ -217,6 +217,7 @@ jvm_library(
     "@lib//:netty-buffer",
     "//platform/util/progress",
     "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-ui",
     "@lib//:zip-signer",
     "@lib//:caffeine",

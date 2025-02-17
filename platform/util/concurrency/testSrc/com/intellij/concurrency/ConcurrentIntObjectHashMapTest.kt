@@ -1,14 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency
 
-import org.assertj.core.api.Assertions.*
-import org.junit.Assert.assertNull
-import org.junit.Test
+import com.intellij.util.containers.ConcurrentIntObjectMap
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 
 class ConcurrentIntObjectHashMapTest {
   @Test
   fun `put and get`() {
-    val map = ConcurrentIntObjectHashMap<Int>()
+    val map = chIntMap<Int>()
     assertThat(map.size()).isEqualTo(0)
     assertThat(map.isEmpty).isTrue()
     map.put(1, 0)
@@ -18,7 +19,8 @@ class ConcurrentIntObjectHashMapTest {
     assertThat(map.get(1)).isEqualTo(0)
     assertThat(map.get(2)).isEqualTo(1)
     assertThat(map.getOrDefault(2, 4)).isEqualTo(1)
-    assertNull(map.get(3))
+    @Suppress("USELESS_CAST")
+    assertThat(map.get(3) as Int?).isNull()
     assertThat(map.getOrDefault(3, 4)).isEqualTo(4)
     assertThat(map.containsKey(1)).isTrue()
     assertThat(map.containsKey(3)).isFalse()
@@ -33,7 +35,8 @@ class ConcurrentIntObjectHashMapTest {
   fun remove() {
     val map = createFrom(1 to 2, 2 to 3, 3 to 4)
     assertThat(map.size()).isEqualTo(3)
-    assertNull(map.remove(4))
+    @Suppress("USELESS_CAST")
+    assertThat(map.remove(4) as Int?).isNull()
     assertThat(map.remove(3, 5)).isFalse()
     assertThat(map.size()).isEqualTo(3)
 
@@ -56,9 +59,11 @@ class ConcurrentIntObjectHashMapTest {
   @Test
   fun `put if absent`() {
     val map = createFrom(1 to 2)
-    assertThat(map.putIfAbsent(1, 3)).isEqualTo(2)
+    @Suppress("USELESS_CAST")
+    assertThat(map.putIfAbsent(1, 3) as Int?).isEqualTo(2)
     assertThat(map[1]).isEqualTo(2)
-    assertNull(map.putIfAbsent(2, 3))
+    @Suppress("USELESS_CAST")
+    assertThat(map.putIfAbsent(2, 3) as Int?).isNull()
     assertThat(map[2]).isEqualTo(3)
   }
 
@@ -73,8 +78,8 @@ class ConcurrentIntObjectHashMapTest {
     assertThat(map[1]).isEqualTo(3)
   }
 
-  private fun createFrom(vararg pair: Pair<Int, Int>): ConcurrentIntObjectHashMap<Int> {
-    val map = ConcurrentIntObjectHashMap<Int>()
+  private fun createFrom(vararg pair: Pair<Int, Int>): ConcurrentIntObjectMap<Int> {
+    val map = chIntMap<Int>()
     for (entry in pair) {
       map.put(entry.first, entry.second)
     }

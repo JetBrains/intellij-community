@@ -2836,8 +2836,10 @@ com.intellij.util.containers.ConcurrentIntObjectMap
 - com.intellij.util.containers.IntObjectMap
 - a:cacheOrGet(I,java.lang.Object):java.lang.Object
 - a:elements():java.util.Enumeration
+- a:getOrDefault(I,java.lang.Object):java.lang.Object
 - a:putIfAbsent(I,java.lang.Object):java.lang.Object
 - a:remove(I,java.lang.Object):Z
+- a:replace(I,java.lang.Object):java.lang.Object
 - a:replace(I,java.lang.Object,java.lang.Object):Z
 - a:size():I
 com.intellij.util.containers.ConcurrentList
@@ -2851,7 +2853,9 @@ com.intellij.util.containers.ConcurrentLongObjectMap
 - a:containsValue(java.lang.Object):Z
 - a:elements():java.util.Iterator
 - a:entries():java.lang.Iterable
+- a:entrySet():java.util.Set
 - a:get(J):java.lang.Object
+- a:getOrDefault(J,java.lang.Object):java.lang.Object
 - a:isEmpty():Z
 - a:keys():J[]
 - a:put(J,java.lang.Object):java.lang.Object

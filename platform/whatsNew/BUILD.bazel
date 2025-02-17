@@ -48,6 +48,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-impl",
     "//platform/platform-api:ide",
     "//platform/statistics",
