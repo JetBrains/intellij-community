@@ -193,7 +193,7 @@ internal class IncrementalKotlinBuilder(
     target: BazelModuleBuildTarget,
     dirtyFilesHolder: BazelDirtyFileHolder,
     outputConsumer: BazelTargetBuildOutputConsumer,
-    outputSink: OutputSink
+    outputSink: OutputSink,
   ): ModuleLevelBuilder.ExitCode {
     val kotlinContext = getKotlinCompileContext(context)
     val kotlinTarget = kotlinContext.targetsIndex.byJpsTarget.get(jpsTarget) ?: return ModuleLevelBuilder.ExitCode.OK
@@ -288,7 +288,7 @@ internal class IncrementalKotlinBuilder(
 
     val compilationErrors = Utils.ERRORS_DETECTED_KEY.get(context, false)
     if (compilationErrors) {
-      JavaBuilderUtil.registerFilesWithErrors(context, messageCollector.filesWithErrors.map(::File))
+      JavaBuilderUtil.registerFilesWithErrors(context, messageCollector.filesWithErrors.map { it.toFile() })
       return ModuleLevelBuilder.ExitCode.ABORT
     }
     else {

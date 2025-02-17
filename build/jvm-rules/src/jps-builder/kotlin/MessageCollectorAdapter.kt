@@ -1,9 +1,11 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.bazel.jvm.jps.kotlin
 
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.Nls
+import org.jetbrains.bazel.jvm.linkedSet
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.incremental.messages.CompilerMessage
@@ -13,16 +15,16 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.CompilerRunnerConstants
 import org.jetbrains.kotlin.jps.targets.KotlinModuleBuildTarget
 import java.io.File
-import java.lang.IllegalArgumentException
+import java.nio.file.Path
 
 internal class MessageCollectorAdapter(
   private val context: CompileContext,
   private val span: Span,
-  private val kotlinTarget: KotlinModuleBuildTarget<*>? = null,
+  private val kotlinTarget: KotlinModuleBuildTarget<*>?,
 ) : MessageCollector {
   private var hasErrors = false
   @JvmField
-  val filesWithErrors = LinkedHashSet<String>()
+  val filesWithErrors = linkedSet<Path>()
 
   override fun report(severity: CompilerMessageSeverity, @Nls message: String, location: CompilerMessageSourceLocation?) {
     if (severity.isError) {
@@ -44,12 +46,13 @@ internal class MessageCollectorAdapter(
     }
     else {
       // report target when cross-compiling common files
-      if (location != null && kotlinTarget != null && kotlinTarget.isFromIncludedSourceRoot(File(location.path))) {
-        val moduleName = kotlinTarget.module.name
-        prefix += "[$moduleName] "
-      }
-      if (severity.isError) {
-        location?.let { filesWithErrors.add(it.path) }
+      if (location != null) {
+        if (kotlinTarget != null && kotlinTarget.isFromIncludedSourceRoot(File(location.path))) {
+          prefix += "[${kotlinTarget.module.name}] "
+        }
+        if (severity.isError) {
+          filesWithErrors.add(Path.of(location.path))
+        }
       }
 
       context.processMessage(

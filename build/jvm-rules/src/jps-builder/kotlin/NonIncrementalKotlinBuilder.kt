@@ -26,7 +26,6 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.progress.CompilationCanceledStatus
-import java.io.File
 
 internal class NonIncrementalKotlinBuilder(
   private val job: Job,
@@ -45,7 +44,11 @@ internal class NonIncrementalKotlinBuilder(
     outputConsumer: BazelTargetBuildOutputConsumer,
     outputSink: OutputSink
   ): ExitCode {
-    val messageCollector = MessageCollectorAdapter(context, span)
+    val messageCollector = MessageCollectorAdapter(
+      context = context,
+      span = span,
+      kotlinTarget = null,
+    )
     val builder = Services.Builder()
     builder.register(CompilationCanceledStatus::class.java, object : CompilationCanceledStatus {
       override fun checkCanceled() {
@@ -80,7 +83,7 @@ internal class NonIncrementalKotlinBuilder(
     }
 
     if (Utils.ERRORS_DETECTED_KEY.get(context, false)) {
-      JavaBuilderUtil.registerFilesWithErrors(context, messageCollector.filesWithErrors.map(::File))
+      JavaBuilderUtil.registerFilesWithErrors(context, messageCollector.filesWithErrors.map { it.toFile() })
       return ExitCode.ABORT
     }
     else {

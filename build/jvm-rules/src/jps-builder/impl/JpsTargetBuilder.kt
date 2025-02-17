@@ -65,7 +65,6 @@ internal abstract class BazelTargetBuilder(category: BuilderCategory) : ModuleLe
     outputConsumer: BazelTargetBuildOutputConsumer,
     outputSink: OutputSink,
   ): ExitCode
-
   final override fun build(
     context: CompileContext,
     chunk: ModuleChunk,
