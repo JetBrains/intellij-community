@@ -3,7 +3,9 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
 import com.intellij.debugger.actions.ThreadDumpAction
 import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.impl.ExtendedThreadDumpItemsProvider
+import com.intellij.debugger.impl.DebuggerContextImpl
+import com.intellij.debugger.impl.ThreadDumpItemsProvider
+import com.intellij.debugger.impl.ThreadDumpItemsProviderFactory
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleTextAttributes
@@ -23,13 +25,20 @@ import com.intellij.unscramble.MergeableToken
  * Coroutine dump items are represented as [CoroutineDumpItem] instances.
  */
 @ApiStatus.Internal
-class CoroutinesDumpAsyncProvider : ExtendedThreadDumpItemsProvider() {
-    override val isEnabled: Boolean
-        get() = Registry.`is`("debugger.kotlin.show.coroutines.in.threadDumpPanel")
+class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
+    override fun getProvider(context: DebuggerContextImpl): ThreadDumpItemsProvider = object : ThreadDumpItemsProvider {
+        val enabled =
+            // TODO: check if there are any coroutines without evaluation
+            Registry.`is`("debugger.kotlin.show.coroutines.in.threadDumpPanel")
 
-    override fun compute(suspendContext: SuspendContextImpl): List<DumpItem> {
-        val coroutinesCache = CoroutineDebugProbesProxy(suspendContext).dumpCoroutines()
-        return if (coroutinesCache.isOk()) coroutinesCache.cache.map { CoroutineDumpItem(it) } else emptyList()
+        override fun requiresEvaluation() = enabled
+
+        override fun getItems(suspendContext: SuspendContextImpl?): List<DumpItem> {
+            if (!enabled) return emptyList()
+
+            val coroutinesCache = CoroutineDebugProbesProxy(suspendContext!!).dumpCoroutines()
+            return if (coroutinesCache.isOk()) coroutinesCache.cache.map { CoroutineDumpItem(it) } else emptyList()
+        }
     }
 }
 

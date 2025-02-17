@@ -9,13 +9,15 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
-import com.intellij.debugger.impl.ExtendedThreadDumpItemsProvider
+import com.intellij.debugger.impl.ThreadDumpItemsProvider
+import com.intellij.debugger.impl.ThreadDumpItemsProviderFactory
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.rt.debugger.VirtualThreadDumper
@@ -32,7 +34,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.lang.Long
 import java.util.concurrent.CancellationException
-import kotlin.Boolean
 import kotlin.Int
 import kotlin.Pair
 import kotlin.String
@@ -81,6 +82,9 @@ class ThreadDumpAction : DumbAwareAction() {
   }
 
   companion object {
+    private val extendedProviders: ExtensionPointName<ThreadDumpItemsProviderFactory> =
+      ExtensionPointName.Companion.create("com.intellij.debugger.dumpItemsProvider")
+
     @JvmStatic
     fun buildThreadStates(vmProxy: VirtualMachineProxyImpl): List<ThreadState> {
       return buildThreadStates(vmProxy, emptyList())
@@ -100,18 +104,27 @@ class ThreadDumpAction : DumbAwareAction() {
         return fallback()
       }
 
-      val timeout = Registry.intValue("debugger.thread.dump.suspension.timeout.seconds", 5).seconds
       return try {
-        suspendAllAndEvaluate(context, timeout) {
-          fetchExtendedThreadDumpItems(it)
+        val providers = extendedProviders.extensionList.map { it.getProvider(context) }
+
+        if (providers.any { it.requiresEvaluation() }) {
+          val timeout = Registry.intValue("debugger.thread.dump.suspension.timeout.seconds", 5).seconds
+          try {
+            suspendAllAndEvaluate(context, timeout) { suspendContext ->
+              providers.flatMap { it.getItems(suspendContext) }
+            }
+          }
+          catch (_: TimeoutCancellationException) {
+            thisLogger().warn("timeout while waiting for evaluatable context ($timeout)")
+            fallback()
+          }
+        }
+        else {
+          providers.flatMap { it.getItems(null) }
         }
       }
       catch (e: Throwable) {
         when (e) {
-          is TimeoutCancellationException -> {
-            thisLogger().warn("timeout while waiting for evaluatable context ($timeout)")
-            fallback()
-          }
           is CancellationException, is ControlFlowException -> {
             throw e
           }
@@ -135,10 +148,6 @@ class ThreadDumpAction : DumbAwareAction() {
     }
   }
 }
-
-private fun fetchExtendedThreadDumpItems(suspendContext: SuspendContextImpl): List<DumpItem> =
-  ExtendedThreadDumpItemsProvider.EP.extensionList
-    .flatMap { it.compute(suspendContext) }
 
 private fun renderLockedObject(monitor: ObjectReference): String {
   return "locked " + renderObject(monitor)
@@ -392,55 +401,60 @@ private fun getPlatformThreadsWithStackTraces(vmProxy: VirtualMachineProxyImpl):
   }
 }
 
-private class JavaThreadsProvider : ExtendedThreadDumpItemsProvider() {
-  override val isEnabled: Boolean
-    get() = Registry.`is`("debugger.thread.dump.include.virtual.threads")
+private class JavaThreadsProvider : ThreadDumpItemsProviderFactory() {
+  override fun getProvider(context: DebuggerContextImpl) = object : ThreadDumpItemsProvider {
+    val vm = context.debugProcess!!.virtualMachineProxy
 
-  override fun compute(suspendContext: SuspendContextImpl): List<DumpItem> {
-    val virtualThreads = evaluateAndGetAllVirtualThreads(suspendContext)
+    // TODO: somehow check if there are alive virtual threads without evaluation
+    val dumpVirtualThreads =
+      Registry.`is`("debugger.thread.dump.include.virtual.threads") &&
+      // Virtual threads first appeared in Java 19 as part of Project Loom.
+      JavaVersion.parse(vm.version()).feature >= 19
 
-    val vm = suspendContext.virtualMachineProxy
-    return buildThreadStates(vm, virtualThreads)
-      .map(::JavaThreadDumpItem)
-  }
+    override fun requiresEvaluation() = dumpVirtualThreads
 
-  private fun evaluateAndGetAllVirtualThreads(suspendContext: SuspendContextImpl): List<Pair<ThreadReference, String>> {
-    if (!Registry.`is`("debugger.thread.dump.include.virtual.threads")) return emptyList()
+    override fun getItems(suspendContext: SuspendContextImpl?): List<DumpItem> {
+      val virtualThreads =
+        if (dumpVirtualThreads) evaluateAndGetAllVirtualThreads(suspendContext!!)
+        else emptyList()
 
-    val version = JavaVersion.parse(suspendContext.virtualMachineProxy.version())
-    if (version.feature < 19) return emptyList()
-
-    val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy())
-
-    val lookupImpl = getMethodHandlesImplLookup(evaluationContext)
-    if (lookupImpl == null) {
-      thisLogger().error("Cannot get MethodHandles.Lookup.IMPL_LOOKUP")
-      return emptyList()
+      return buildThreadStates(vm, virtualThreads)
+        .map(::JavaThreadDumpItem)
     }
 
-    val evaluated = try {
-      DebuggerUtilsImpl.invokeHelperMethod(
-        evaluationContext,
-        VirtualThreadDumper::class.java, "getAllVirtualThreadsWithStackTraces",
-        listOf(lookupImpl)
-      )
-    }
-    catch (e: EvaluateException) {
-      thisLogger().error(e)
-      return emptyList()
-    }
-    val packedThreadsAndStackTraces = (evaluated as ArrayReference?)?.values ?: emptyList()
+    private fun evaluateAndGetAllVirtualThreads(suspendContext: SuspendContextImpl): List<Pair<ThreadReference, String>> {
+      val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy())
 
-    return buildList {
-      var i = 0
-      while (i < packedThreadsAndStackTraces.size) {
-        val stackTrace = (packedThreadsAndStackTraces[i++] as StringReference).value()
-        while (true) {
-          val thread = packedThreadsAndStackTraces[i++]
-          if (thread == null) {
-            break
+      val lookupImpl = getMethodHandlesImplLookup(evaluationContext)
+      if (lookupImpl == null) {
+        thisLogger().error("Cannot get MethodHandles.Lookup.IMPL_LOOKUP")
+        return emptyList()
+      }
+
+      val evaluated = try {
+        DebuggerUtilsImpl.invokeHelperMethod(
+          evaluationContext,
+          VirtualThreadDumper::class.java, "getAllVirtualThreadsWithStackTraces",
+          listOf(lookupImpl)
+        )
+      }
+      catch (e: EvaluateException) {
+        thisLogger().error(e)
+        return emptyList()
+      }
+      val packedThreadsAndStackTraces = (evaluated as ArrayReference?)?.values ?: emptyList()
+
+      return buildList {
+        var i = 0
+        while (i < packedThreadsAndStackTraces.size) {
+          val stackTrace = (packedThreadsAndStackTraces[i++] as StringReference).value()
+          while (true) {
+            val thread = packedThreadsAndStackTraces[i++]
+            if (thread == null) {
+              break
+            }
+            add(thread as ThreadReference to stackTrace)
           }
-          add(thread as ThreadReference to stackTrace)
         }
       }
     }
