@@ -27,9 +27,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 @Service
-class CondaPackageCache : PythonPackageCache<String> {
+internal class CondaPackageCache : PythonPackageCache<String> {
   @Volatile
   private var cache: Map<String, List<String>> = emptyMap()
 

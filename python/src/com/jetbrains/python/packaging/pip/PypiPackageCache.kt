@@ -29,8 +29,8 @@ import kotlin.io.path.exists
 
 private val LOG = logger<PypiPackageCache>()
 
+@ApiStatus.Internal
 @Service
-@ApiStatus.Experimental
 class PypiPackageCache : PythonPackageCache<String> {
   override val packages: List<String>
     get() = cache.toList()

@@ -12,7 +12,7 @@ import com.jetbrains.python.packaging.common.PythonSimplePackageSpecification
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 open class PyPackageRepository() : BaseState() {
   var name by string("")
   var repositoryUrl by string("")

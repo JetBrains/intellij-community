@@ -15,8 +15,8 @@ import com.jetbrains.python.packaging.pip.PipBasedRepositoryManager
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-class CondaRepositoryManger(project: Project, sdk: Sdk) : PipBasedRepositoryManager(project, sdk) {
+@ApiStatus.Internal
+internal class CondaRepositoryManger(project: Project, sdk: Sdk) : PipBasedRepositoryManager(project, sdk) {
 
   override val repositories: List<PyPackageRepository>
     get() = listOf(CondaPackageRepository) + super.repositories

@@ -18,6 +18,7 @@ import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.targetEnvConfiguration
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.Nls
 class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   @Volatile
   override var installedPackages: List<PythonPackage> = emptyList()
-  override val repositoryManager = CondaRepositoryManger(project, sdk)
+  override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project, sdk)
 
   override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> =
     try {
@@ -110,7 +111,6 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
       if (result.exitCode != 0) {
         throw PyExecutionException(message("conda.packaging.exception.non.zero"), operation, arguments, result)
       }
-
       else result.stdout
     }
   }
