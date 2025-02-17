@@ -530,11 +530,9 @@ internal open class FirCallableCompletionContributor(
                 positionContext = positionContext,
                 scope = scopeWithKind.scope,
                 hasSuitableExtensionReceiver = extensionChecker,
-            )
-            ShadowedCallablesFilter.sortExtensions(
-                extensions = suitableExtensions.toList(),
-                receiversFromContext = receiverTypes,
-            ).map { KtCallableSignatureWithContainingScopeKind(it.signature, scopeWithKind.kind) to it.insertionOptions }
+            ).toList()
+            ShadowedCallablesFilter.sortExtensions(suitableExtensions, receiverTypes)
+                .map { KtCallableSignatureWithContainingScopeKind(it.signature, scopeWithKind.kind) to it.insertionOptions }
         }
     }
 
