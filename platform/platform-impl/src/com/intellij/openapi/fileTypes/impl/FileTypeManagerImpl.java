@@ -79,7 +79,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // must be sorted
   @SuppressWarnings("SpellCheckingInspection")
-  static final List<String> DEFAULT_IGNORED = List.of("*.pyc", "*.pyo", "*.rbc", "*.yarb", "*~", ".DS_Store", ".git", ".hg",
+  @ApiStatus.Internal
+  public static final List<String> DEFAULT_IGNORED = List.of("*.pyc", "*.pyo", "*.rbc", "*.yarb", "*~", ".DS_Store", ".git", ".hg",
                                                       ".mypy_cache", ".pytest_cache", ".ruff_cache",
                                                       ".svn", "CVS", "__pycache__", "_svn", "vssver.scc", "vssver2.scc");
 

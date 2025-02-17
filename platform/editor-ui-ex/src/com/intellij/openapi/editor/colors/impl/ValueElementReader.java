@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ColorHexUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,8 @@ import java.awt.*;
  * {@code windows}, {@code mac}, {@code linux}.  If one of them is set,
  * it should be used instead of the default one.
  */
-class ValueElementReader {
+@ApiStatus.Internal
+public class ValueElementReader {
   private static final @NonNls String VALUE = "value";
   private static final @NonNls String MAC = "mac";
   private static final @NonNls String LINUX = "linux";

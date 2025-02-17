@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -215,7 +215,8 @@ public final class VfsData {
   }
 
   /** Caches info about SEGMENT_SIZE consequent files, indexed by fileId */
-  static final class Segment {
+  @ApiStatus.Internal
+  public static final class Segment {
     private static final int INT_FIELDS_COUNT = 1;
     private static final int FLAGS_FIELD_NO = 0;
 

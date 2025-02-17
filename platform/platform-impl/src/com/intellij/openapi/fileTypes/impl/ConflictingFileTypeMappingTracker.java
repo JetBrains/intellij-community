@@ -50,7 +50,8 @@ public final class ConflictingFileTypeMappingTracker {
     return result;
   }
 
-  record ResolveConflictResult(@NotNull FileTypeManagerImpl.FileTypeWithDescriptor resolved,
+  @ApiStatus.Internal
+  public record ResolveConflictResult(@NotNull FileTypeManagerImpl.FileTypeWithDescriptor resolved,
                                @NotNull @Nls String notification,
                                @NotNull @Nls String explanation,
                                boolean approved) {
