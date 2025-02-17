@@ -12,7 +12,10 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.ConstantExpressionUtil;
+import com.intellij.psi.util.JavaPsiSwitchUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -78,48 +81,6 @@ public class SwitchBlockHighlightingModel {
       }
     });
     return found.get();
-  }
-
-  void checkSwitchSelectorType(@NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    JavaPsiSwitchUtil.SelectorKind kind = getSwitchSelectorKind();
-    if (kind == JavaPsiSwitchUtil.SelectorKind.INT) return;
-
-    JavaFeature requiredFeature = kind.getFeature();
-
-    if (kind == JavaPsiSwitchUtil.SelectorKind.INVALID || requiredFeature != null && !requiredFeature.isSufficient(myLevel)) {
-      String message;
-      if (JavaFeature.PATTERNS_IN_SWITCH.isSufficient(myLevel)) {
-        message = JavaErrorBundle.message("switch.invalid.selector.types",
-                                          JavaHighlightUtil.formatType(mySelectorType));
-      }
-      else {
-        boolean is7 = JavaFeature.STRING_SWITCH.isSufficient(myLevel);
-        String expected = JavaErrorBundle.message(is7 ? "valid.switch.1_7.selector.types" : "valid.switch.selector.types");
-        message = JavaErrorBundle.message("incompatible.types", expected, JavaHighlightUtil.formatType(mySelectorType));
-      }
-      HighlightInfo.Builder info = createError(mySelector, message);
-      registerFixesOnInvalidSelector(info);
-      if (requiredFeature != null) {
-        HighlightUtil.registerIncreaseLanguageLevelFixes(mySelector, requiredFeature, info);
-      }
-      errorSink.accept(info);
-    }
-    checkIfAccessibleType(errorSink);
-  }
-
-  private void registerFixesOnInvalidSelector(HighlightInfo.Builder builder) {
-    if (myBlock instanceof PsiSwitchStatement switchStatement) {
-      IntentionAction action = getFixFactory().createConvertSwitchToIfIntention(switchStatement);
-      builder.registerFix(action, null, null, null, null);
-    }
-    if (PsiTypes.longType().equals(mySelectorType) ||
-        PsiTypes.floatType().equals(mySelectorType) ||
-        PsiTypes.doubleType().equals(mySelectorType)) {
-      IntentionAction addTypeCastFix = getFixFactory().createAddTypeCastFix(PsiTypes.intType(), mySelector);
-      builder.registerFix(addTypeCastFix, null, null, null, null);
-      IntentionAction wrapWithAdapterFix = getFixFactory().createWrapWithAdapterFix(PsiTypes.intType(), mySelector);
-      builder.registerFix(wrapWithAdapterFix, null, null, null, null);
-    }
   }
 
   void checkSwitchLabelValues(@NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
@@ -229,14 +190,6 @@ public class SwitchBlockHighlightingModel {
 
   private static QuickFixFactory getFixFactory() {
     return QuickFixFactory.getInstance();
-  }
-
-  void checkIfAccessibleType(@NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    PsiClass member = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
-    if (member != null && !PsiUtil.isAccessible(member.getProject(), member, mySelector, null)) {
-      String className = PsiFormatUtil.formatClass(member, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME);
-      errorSink.accept(createError(mySelector, JavaErrorBundle.message("inaccessible.type", className)));
-    }
   }
 
   void fillElementsToCheckDuplicates(@NotNull MultiMap<Object, PsiElement> elements, @NotNull PsiCaseLabelElement labelElement) {

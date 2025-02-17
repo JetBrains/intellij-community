@@ -16,7 +16,7 @@ class SwitchExpressions {
     });
 
     System.out.println(
-      switch (<error descr="Incompatible types. Found: 'java.lang.Object', required: 'char, byte, short, int, Character, Byte, Short, Integer, String, or an enum'">new Object()</error>) {
+      switch (<error descr="Selector type of 'java.lang.Object' is not supported at language level '15'">new Object()</error>) {
         default -> "whatever";
       }
     );

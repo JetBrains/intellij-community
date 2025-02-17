@@ -89,8 +89,11 @@ public final class JavaPsiSwitchUtil {
   /**
    * Returns the selector kind based on the type.
    * <p> 
-   * It's not checked whether this particular kind is supported at a given location 
-   * (the method does not have location information anyway). 
+   * The result may depend on type language level for boxed primitive types.
+   * E.g., if selector type is {@link Double} then {@link SelectorKind#DOUBLE} will be returned
+   * if primitives in patterns are supported, but {@link SelectorKind#CLASS_OR_ARRAY} will be returned otherwise.
+   * <p>
+   * It's not checked whether this particular kind is supported at a given location. 
    * It's up to the caller to check this using the {@link SelectorKind#getFeature()} method.
    * 
    * @param selectorType type of switch selector expression
@@ -100,7 +103,9 @@ public final class JavaPsiSwitchUtil {
     if (TypeConversionUtil.getTypeRank(selectorType) <= TypeConversionUtil.INT_RANK) {
       return SelectorKind.INT;
     }
-    PsiType unboxedType = PsiPrimitiveType.getOptionallyUnboxedType(selectorType);
+    PsiType unboxedType = selectorType instanceof PsiClassType && 
+                          JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(((PsiClassType)selectorType).getLanguageLevel()) ? 
+                          PsiPrimitiveType.getOptionallyUnboxedType(selectorType) : selectorType;
     if (unboxedType != null) {
       if (unboxedType.equals(PsiTypes.longType())) {
         return SelectorKind.LONG;

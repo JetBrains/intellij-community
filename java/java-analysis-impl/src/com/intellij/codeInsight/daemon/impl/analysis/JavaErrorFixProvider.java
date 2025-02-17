@@ -228,6 +228,13 @@ final class JavaErrorFixProvider {
       PsiSwitchLabeledRuleStatement previousRule = PsiTreeUtil.getPrevSiblingOfType(error.psi(), PsiSwitchLabeledRuleStatement.class);
       return previousRule == null ? null : myFactory.createWrapSwitchRuleStatementsIntoBlockFix(previousRule);
     });
+    fixes(SWITCH_SELECTOR_TYPE_INVALID, (error, sink) -> {
+      HighlightFixUtil.registerFixesOnInvalidSelector(error.psi(), sink);
+      JavaFeature feature = error.context().getFeature();
+      if (feature != null) {
+        HighlightFixUtil.getIncreaseLanguageLevelFixes(error.psi(), feature).forEach(sink);
+      }
+    });
   }
 
   private void createMethodFixes() {

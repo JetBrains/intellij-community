@@ -1789,4 +1789,23 @@ final class ExpressionChecker {
     }
     myVisitor.report(JavaErrorKinds.SWITCH_DIFFERENT_CASE_KINDS.create(alien));
   }
+
+  void checkSwitchSelectorType(@NotNull PsiSwitchBlock block) {
+    PsiExpression selector = block.getExpression();
+    if (selector == null) return;
+    PsiType selectorType = selector.getType();
+    if (selectorType == null) return;
+    JavaPsiSwitchUtil.SelectorKind kind = JavaPsiSwitchUtil.getSwitchSelectorKind(selectorType);
+
+    JavaFeature requiredFeature = kind.getFeature();
+
+    if ((kind == JavaPsiSwitchUtil.SelectorKind.INVALID || requiredFeature != null && !myVisitor.isApplicable(requiredFeature)) &&
+        !PsiTreeUtil.hasErrorElements(block)) {
+      myVisitor.report(JavaErrorKinds.SWITCH_SELECTOR_TYPE_INVALID.create(selector, kind));
+    }
+    PsiClass member = PsiUtil.resolveClassInClassTypeOnly(selectorType);
+    if (member != null && !PsiUtil.isAccessible(member.getProject(), member, selector, null)) {
+      myVisitor.report(JavaErrorKinds.TYPE_INACCESSIBLE.create(selector, member));
+    }
+  }
 }

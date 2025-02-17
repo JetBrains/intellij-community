@@ -899,6 +899,21 @@ public final class HighlightFixUtil {
                    factory.createShowModulePropertiesFix(element));
   }
 
+  static void registerFixesOnInvalidSelector(@NotNull PsiExpression selector,
+                                             @NotNull Consumer<? super @Nullable CommonIntentionAction> sink) {
+    QuickFixFactory factory = QuickFixFactory.getInstance();
+    if (selector.getParent() instanceof PsiSwitchStatement switchStatement) {
+      sink.accept(factory.createConvertSwitchToIfIntention(switchStatement));
+    }
+    PsiType selectorType = selector.getType();
+    if (PsiTypes.longType().equals(selectorType) ||
+        PsiTypes.floatType().equals(selectorType) ||
+        PsiTypes.doubleType().equals(selectorType)) {
+      sink.accept(factory.createAddTypeCastFix(PsiTypes.intType(), selector));
+      sink.accept(factory.createWrapWithAdapterFix(PsiTypes.intType(), selector));
+    }
+  }
+
   private static final class ReturnModel {
     final PsiReturnStatement myStatement;
     final PsiType myType;

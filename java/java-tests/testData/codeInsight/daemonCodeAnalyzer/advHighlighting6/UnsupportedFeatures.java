@@ -21,7 +21,7 @@ class UnsupportedFeatures {
     I i1 = <error descr="Method references are not supported at language level '6'">UnsupportedFeatures::m</error>;
     I i2 = <error descr="Lambda expressions are not supported at language level '6'">() -> { }</error>;
 
-    switch (<error descr="Incompatible types. Found: 'java.lang.String', required: 'byte, char, short or int'">list.get(0)</error>) {
+    switch (<error descr="Selector type of 'java.lang.String' is not supported at language level '6'">list.get(0)</error>) {
       case "foo": break;
     }
 

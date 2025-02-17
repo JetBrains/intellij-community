@@ -1,7 +1,9 @@
 class c {
   void f() {
+    Integer x = new Integer(0);
     //---- switch --------------------------------------------------------
-    switch (<error descr="Incompatible types. Found: 'java.lang.String', required: 'byte, char, short or int'">"s"</error>) 
+    switch (<error descr="Selector type of 'java.lang.Integer' is not supported at language level '1.4'">x</error>) {default:}
+    switch (<error descr="Selector type of 'java.lang.String' is not supported at language level '1.4'">"s"</error>) 
     {default:}
     byte bt = 0;
     switch (bt) {
