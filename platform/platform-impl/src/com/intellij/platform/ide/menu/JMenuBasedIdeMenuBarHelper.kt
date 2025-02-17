@@ -44,9 +44,11 @@ internal class JMenuBasedIdeMenuBarHelper(flavor: IdeMenuFlavor, menuBar: IdeJMe
                                     isMnemonicEnabled = enableMnemonics,
                                     useDarkIcons = (menuBar as IdeJMenuBar.JMenuBarImpl).isDarkMenu,
                                     isHeaderMenuItem = true)
-        if (isCustomDecorationActive) {
+        if (isCustomDecorationActive || menuBarComponent is MergedMainMenu) {
           actionMenu.isOpaque = false
-          actionMenu.isFocusable = false
+          if (isCustomDecorationActive) {
+            actionMenu.isFocusable = false
+          }
         }
         if (countOfInvisibleItems > 0 && newVisibleActions.indexOf(action) >= visibleActions.size - countOfInvisibleItems - 1) {
           (menuBarComponent as? MergedMainMenu)?.addInvisibleItem(actionMenu)

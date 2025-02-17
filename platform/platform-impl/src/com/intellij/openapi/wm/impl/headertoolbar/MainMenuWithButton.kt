@@ -28,12 +28,7 @@ class MainMenuWithButton(
   val coroutineScope: CoroutineScope, private val frame: JFrame,
 ) : NonOpaquePanel(GridLayout()) {
   val mainMenuButton: MainMenuButton = MainMenuButton(coroutineScope, getButtonIcon()) { if (ShowMode.isMergedMainMenu()) toolbarMainMenu.menuCount else 0 }
-  val toolbarMainMenu: MergedMainMenu = MergedMainMenu(coroutineScope = coroutineScope, frame = frame).apply {
-    addUpdateGlobalMenuRootsListener { components.forEach { (it as JMenu).isOpaque = false } }
-    isOpaque = false
-    isVisible = ShowMode.getCurrent() == ShowMode.TOOLBAR_WITH_MENU
-    border = null
-  }
+  val toolbarMainMenu: MergedMainMenu = MergedMainMenu(coroutineScope = coroutineScope, frame = frame)
   private val connection: MessageBusConnection = com.intellij.openapi.application.ApplicationManager.getApplication().messageBus.connect()
 
 
@@ -122,6 +117,13 @@ class MainMenuWithButton(
 
 @ApiStatus.Internal
 class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame): IdeJMenuBar(coroutineScope = coroutineScope, frame = frame) {
+
+  init {
+    isOpaque = false
+    isVisible = ShowMode.getCurrent() == ShowMode.TOOLBAR_WITH_MENU
+    border = null
+  }
+
   private val invisibleItems: ConcurrentLinkedDeque<ActionMenu> = ConcurrentLinkedDeque<ActionMenu>()
 
   fun clearInvisibleItems() {
