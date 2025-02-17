@@ -560,12 +560,25 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     mySuspendingWriteActionListener = listener
   }
 
+  @ApiStatus.Internal
+  override fun removeSuspendingWriteActionListener(listener: SuspendingWriteActionListener) {
+    if (mySuspendingWriteActionListener != listener)
+      error("SuspendingWriteActionListener is not registered")
+    mySuspendingWriteActionListener = null
+  }
 
   @ApiStatus.Internal
   override fun setLegacyIndicatorProvider(provider: LegacyProgressIndicatorProvider) {
     if (myLegacyProgressIndicatorProvider != null)
       error("LegacyProgressIndicatorProvider already registered")
     myLegacyProgressIndicatorProvider = provider
+  }
+
+  @ApiStatus.Internal
+  override fun removeLegacyIndicatorProvider(provider: LegacyProgressIndicatorProvider) {
+    if (myLegacyProgressIndicatorProvider != provider)
+      error("LegacyProgressIndicatorProvider is not registered")
+    myLegacyProgressIndicatorProvider = null
   }
 
   @ApiStatus.Internal

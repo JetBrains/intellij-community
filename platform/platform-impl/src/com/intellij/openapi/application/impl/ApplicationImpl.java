@@ -123,6 +123,15 @@ public final class ApplicationImpl extends ClientAwareComponentManager
 
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
+  private static final LegacyProgressIndicatorProvider myLegacyIndicatorProvider = () -> {
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    return indicator == null ? null : () -> {
+      if (indicator.isCanceled()) {
+        throw new ProcessCanceledException();
+      }
+    };
+  };
+
   @SuppressWarnings("Convert2Lambda")
   private final Supplier<OTelReadWriteActionsMonitor> otelMonitor = new SynchronizedClearableLazy<>(new Function0<>() {
     @Override
@@ -372,6 +381,9 @@ public final class ApplicationImpl extends ClientAwareComponentManager
   public void dispose() {
     getThreadingSupport().removeReadActionListener(this);
     getThreadingSupport().removeWriteActionListener(this);
+    getThreadingSupport().removeLockAcquisitionListener(this);
+    getThreadingSupport().removeLegacyIndicatorProvider(myLegacyIndicatorProvider);
+    getThreadingSupport().removeSuspendingWriteActionListener(this);
 
     //noinspection deprecation
     myDispatcher.getMulticaster().applicationExiting();
@@ -1262,14 +1274,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager
     getThreadingSupport().setWriteIntentReadActionListener(app);
     getThreadingSupport().setLockAcquisitionListener(app);
     getThreadingSupport().setSuspendingWriteActionListener(app);
-    getThreadingSupport().setLegacyIndicatorProvider(() -> {
-      ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-      return indicator == null ? null : () -> {
-        if (indicator.isCanceled()) {
-          throw new ProcessCanceledException();
-        }
-      };
-    });
+    getThreadingSupport().setLegacyIndicatorProvider(myLegacyIndicatorProvider);
 
     app.addApplicationListener(new ApplicationListener() {
       @Override
@@ -1305,6 +1310,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager
   public void writeActionStarted(@NotNull Class<?> action) {
     fireWriteActionStarted(action);
   }
+
 
   @Override
   public void addReadActionListener(@NotNull ReadActionListener listener, @NotNull Disposable parentDisposable) {
