@@ -45,11 +45,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isTooLargeForIntellijSense
-import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.openapi.wm.IdeFrame
-import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
 import com.intellij.psi.PsiElement
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.JBPanelWithEmptyText
@@ -58,7 +57,6 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerEvent.ContentOperation
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.switcher.QuickActionProvider
-import com.intellij.util.BitUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.Topic
@@ -71,7 +69,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
-import java.awt.event.HierarchyEvent
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -129,20 +126,20 @@ class StructureViewWrapperImpl(
       LOG.debug("timer to check if update needed: remove")
       timer.stop()
     }
-    component.addHierarchyListener { e ->
-      if (BitUtil.isSet(e.changeFlags, HierarchyEvent.DISPLAYABILITY_CHANGED.toLong())) {
-        val visible = myToolWindow.isVisible
-        LOG.debug("displayability changed: $visible")
-        if (visible) {
-          loggedRun("update file") { checkUpdate() }
-          scheduleRebuild()
-        }
-        else if (!project.isDisposed) {
-          myFile = null
-          rebuildNow("clear a structure on hide")
+    project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun stateChanged(toolWindowManager: ToolWindowManager, toolWindow: ToolWindow, changeType: ToolWindowManagerEventType) {
+        if (toolWindow !== myToolWindow) return
+        when (changeType) {
+          ToolWindowManagerEventType.ShowToolWindow -> loggedRun("update file") { checkUpdate() }
+          ToolWindowManagerEventType.HideToolWindow -> if (!project.isDisposed) {
+            myFile = null
+            rebuildNow("clear a structure on hide")
+          }
+          else -> {}
         }
       }
-    }
+    })
+
     if (component.isShowing) {
       loggedRun("initial structure rebuild") { checkUpdate() }
       scheduleRebuild()
@@ -284,7 +281,6 @@ class StructureViewWrapperImpl(
       val notInEditor = withContext(Dispatchers.EDT) {
         !project.serviceAsync<FileEditorManager>().selectedFiles.contains(file)
       }
-      LOG.debug("file is NonPhysicalFileSystem + IJU + not in editor: $notInEditor")
       if (notInEditor) return
     }
 
@@ -333,6 +329,7 @@ class StructureViewWrapperImpl(
         project.serviceAsync<FileEditorManager>().getSelectedEditor(file) !== myFileEditor
       }
       if (editorIsDifferent) {
+        LOG.debug("Editor is different, rebuilding it")
         setFileAndRebuild()
         return
       }
