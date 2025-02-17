@@ -125,14 +125,13 @@ public class Merger implements IMerger {
 
   private void appendComment() {
     myCommitMessage = StringUtil.notNullize(
-      MergerCommitMessage.EP_NAME.computeSafeIfAny(
-        it -> it.getCommitMessage(myProject, myCommitMessage, myBranchName, myMergeChunk.changeLists()))
+      MergerCommitMessage.EP_NAME.computeSafeIfAny(myProject, it -> it.getCommitMessage(this, myMergeChunk.changeLists()))
     );
   }
 
   protected void doMerge() throws VcsException {
     Target source = Target.on(myCurrentBranchUrl);
-    MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
+    MergeClient client = getClientFactory().createMergeClient();
 
     client.merge(source, myMergeChunk.revisionRange(), myTarget, Depth.INFINITY, mySvnConfig.isMergeDryRun(), myRecordOnly, true,
                  mySvnConfig.getMergeOptions(), myHandler);
@@ -181,6 +180,14 @@ public class Merger implements IMerger {
 
       BackgroundTaskUtil.syncPublisher(myProject, COMMITTED_CHANGES_MERGED_STATE).event(processed);
     }
+  }
+
+  public @NotNull ClientFactory getClientFactory() {
+    return myVcs.getFactory(myTarget);
+  }
+
+  public @NotNull String getBranchName() {
+    return myBranchName;
   }
 
   @Topic.ProjectLevel
