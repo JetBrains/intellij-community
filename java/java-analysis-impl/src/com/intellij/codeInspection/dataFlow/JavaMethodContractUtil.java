@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.*;
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -30,8 +31,9 @@ public final class JavaMethodContractUtil {
   private JavaMethodContractUtil() {}
 
   /**
-   * JetBrains contract annotation fully-qualified name
+   * @deprecated To support contracts from different libraries please use {@link JvmContractAnnotationProvider}
    */
+  @Deprecated
   public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
 
   /**
@@ -207,13 +209,24 @@ public final class JavaMethodContractUtil {
   }
 
   /**
-   * Returns a contract annotation for given method, checking the hierarchy
+   * Returns a contract annotation for a given method, checking the hierarchy
+   *
+   * @param method a method
+   * @param skipExternal to skip external annotations
+   * @return a found annotation (null if not found)
+   */
+  public static @Nullable PsiAnnotation findContractAnnotation(@NotNull PsiMethod method, boolean skipExternal) {
+    return AnnotationUtil.findAnnotationInHierarchy(method, new HashSet<>(JvmContractAnnotationProvider.qualifiedNames()), skipExternal);
+  }
+
+  /**
+   * Returns a contract annotation for a given method, checking the hierarchy
    *
    * @param method a method
    * @return a found annotation (null if not found)
    */
   public static @Nullable PsiAnnotation findContractAnnotation(@NotNull PsiMethod method) {
-    return AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton(ORG_JETBRAINS_ANNOTATIONS_CONTRACT));
+    return AnnotationUtil.findAnnotationInHierarchy(method, new HashSet<>(JvmContractAnnotationProvider.qualifiedNames()), false);
   }
 
   /**
