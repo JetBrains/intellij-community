@@ -146,7 +146,8 @@ public final class APIWrappers {
   }
 
   @SuppressWarnings("unchecked")
-  final static class DiagnosticListenerWrapper<T extends FileObject> extends DynamicWrapper<DiagnosticOutputConsumer> implements DiagnosticListener<T>{
+  @ApiStatus.Internal
+  public final static class DiagnosticListenerWrapper<T extends FileObject> extends DynamicWrapper<DiagnosticOutputConsumer> implements DiagnosticListener<T>{
     private final ProcessingContext myProcContext;
 
     DiagnosticListenerWrapper(ProcessingContext procContext, DiagnosticOutputConsumer delegate) {
