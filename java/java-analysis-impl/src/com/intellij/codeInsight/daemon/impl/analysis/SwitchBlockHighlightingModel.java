@@ -8,7 +8,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
@@ -29,6 +28,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+import static java.util.Objects.requireNonNull;
+
 public class SwitchBlockHighlightingModel {
   final @NotNull LanguageLevel myLevel;
   final @NotNull PsiSwitchBlock myBlock;
@@ -42,8 +43,8 @@ public class SwitchBlockHighlightingModel {
                                @NotNull PsiFile psiFile) {
     myLevel = languageLevel;
     myBlock = switchBlock;
-    mySelector = Objects.requireNonNull(myBlock.getExpression());
-    mySelectorType = Objects.requireNonNull(mySelector.getType());
+    mySelector = requireNonNull(myBlock.getExpression());
+    mySelectorType = requireNonNull(mySelector.getType());
     myFile = psiFile;
   }
 
@@ -80,18 +81,23 @@ public class SwitchBlockHighlightingModel {
   }
 
   void checkSwitchSelectorType(@NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    SelectorKind kind = getSwitchSelectorKind();
-    if (kind == SelectorKind.INT) return;
+    JavaPsiSwitchUtil.SelectorKind kind = getSwitchSelectorKind();
+    if (kind == JavaPsiSwitchUtil.SelectorKind.INT) return;
 
-    JavaFeature requiredFeature = null;
-    if (kind == SelectorKind.ENUM) requiredFeature = JavaFeature.ENUMS;
-    if (kind == SelectorKind.STRING) requiredFeature = JavaFeature.STRING_SWITCH;
+    JavaFeature requiredFeature = kind.getFeature();
 
-    if (kind == null || requiredFeature != null && !requiredFeature.isSufficient(myLevel)) {
-      boolean is7 = myLevel.isAtLeast(LanguageLevel.JDK_1_7);
-      String expected = JavaErrorBundle.message(is7 ? "valid.switch.1_7.selector.types" : "valid.switch.selector.types");
-      HighlightInfo.Builder info =
-        createError(mySelector, JavaErrorBundle.message("incompatible.types", expected, JavaHighlightUtil.formatType(mySelectorType)));
+    if (kind == JavaPsiSwitchUtil.SelectorKind.INVALID || requiredFeature != null && !requiredFeature.isSufficient(myLevel)) {
+      String message;
+      if (JavaFeature.PATTERNS_IN_SWITCH.isSufficient(myLevel)) {
+        message = JavaErrorBundle.message("switch.invalid.selector.types",
+                                          JavaHighlightUtil.formatType(mySelectorType));
+      }
+      else {
+        boolean is7 = JavaFeature.STRING_SWITCH.isSufficient(myLevel);
+        String expected = JavaErrorBundle.message(is7 ? "valid.switch.1_7.selector.types" : "valid.switch.selector.types");
+        message = JavaErrorBundle.message("incompatible.types", expected, JavaHighlightUtil.formatType(mySelectorType));
+      }
+      HighlightInfo.Builder info = createError(mySelector, message);
       registerFixesOnInvalidSelector(info);
       if (requiredFeature != null) {
         HighlightUtil.registerIncreaseLanguageLevelFixes(mySelector, requiredFeature, info);
@@ -101,7 +107,7 @@ public class SwitchBlockHighlightingModel {
     checkIfAccessibleType(errorSink);
   }
 
-  protected void registerFixesOnInvalidSelector(HighlightInfo.Builder builder) {
+  private void registerFixesOnInvalidSelector(HighlightInfo.Builder builder) {
     if (myBlock instanceof PsiSwitchStatement switchStatement) {
       IntentionAction action = getFixFactory().createConvertSwitchToIfIntention(switchStatement);
       builder.registerFix(action, null, null, null, null);
@@ -305,7 +311,7 @@ public class SwitchBlockHighlightingModel {
     LinkedHashSet<PsiEnumConstant> missingConstants = findMissingEnumConstant(selectorClass, enumElements);
     if (!enumElements.isEmpty() && missingConstants.isEmpty()) return;
     HighlightInfo.Builder info = createCompletenessInfoForSwitch(hasElements);
-    if (!missingConstants.isEmpty() && getSwitchSelectorKind() == SelectorKind.ENUM) {
+    if (!missingConstants.isEmpty() && getSwitchSelectorKind() == JavaPsiSwitchUtil.SelectorKind.ENUM) {
       IntentionAction enumBranchesFix =
         getFixFactory().createAddMissingEnumBranchesFix(myBlock, ContainerUtil.map2LinkedSet(missingConstants, PsiField::getName));
       IntentionAction fix = PriorityIntentionActionWrapper.highPriority(enumBranchesFix);
@@ -340,30 +346,13 @@ public class SwitchBlockHighlightingModel {
     return info;
   }
 
-  @Nullable
-  SelectorKind getSwitchSelectorKind() {
-    if (TypeConversionUtil.getTypeRank(mySelectorType) <= TypeConversionUtil.INT_RANK) {
-      return SelectorKind.INT;
-    }
-    PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
-    if (psiClass != null) {
-      if (psiClass.isEnum()) {
-        return SelectorKind.ENUM;
-      }
-      if (Comparing.strEqual(psiClass.getQualifiedName(), CommonClassNames.JAVA_LANG_STRING)) {
-        return SelectorKind.STRING;
-      }
-    }
-    return null;
+  @NotNull
+  JavaPsiSwitchUtil.SelectorKind getSwitchSelectorKind() {
+    return JavaPsiSwitchUtil.getSwitchSelectorKind(mySelectorType);
   }
 
   static @NotNull HighlightInfo.Builder createError(@NotNull PsiElement range, @NlsContexts.DetailedDescription @NotNull String message) {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message);
-  }
-
-  enum SelectorKind {
-    INT, ENUM, STRING, CLASS_OR_ARRAY,
-    BOOLEAN, LONG, FLOAT, DOUBLE // primitives from Java 22 Preview
   }
 
   /**

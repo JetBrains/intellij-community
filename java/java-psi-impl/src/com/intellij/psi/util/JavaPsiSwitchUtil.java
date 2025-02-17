@@ -2,9 +2,11 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,5 +84,94 @@ public final class JavaPsiSwitchUtil {
       if (Comparing.strEqual(fqn, CommonClassNames.JAVA_LANG_STRING)) return false;
     }
     return true;
+  }
+
+  /**
+   * Returns the selector kind based on the type.
+   * <p> 
+   * It's not checked whether this particular kind is supported at a given location 
+   * (the method does not have location information anyway). 
+   * It's up to the caller to check this using the {@link SelectorKind#getFeature()} method.
+   * 
+   * @param selectorType type of switch selector expression
+   * @return kind of selector 
+   */
+  public static @NotNull SelectorKind getSwitchSelectorKind(@NotNull PsiType selectorType) {
+    if (TypeConversionUtil.getTypeRank(selectorType) <= TypeConversionUtil.INT_RANK) {
+      return SelectorKind.INT;
+    }
+    PsiType unboxedType = PsiPrimitiveType.getOptionallyUnboxedType(selectorType);
+    if (unboxedType != null) {
+      if (unboxedType.equals(PsiTypes.longType())) {
+        return SelectorKind.LONG;
+      }
+      else if (unboxedType.equals(PsiTypes.booleanType())) {
+        return SelectorKind.BOOLEAN;
+      }
+      else if (unboxedType.equals(PsiTypes.floatType())) {
+        return SelectorKind.FLOAT;
+      }
+      else if (unboxedType.equals(PsiTypes.doubleType())) {
+        return SelectorKind.DOUBLE;
+      }
+    }
+    if (TypeConversionUtil.isPrimitiveAndNotNull(selectorType)) {
+      return SelectorKind.INVALID;
+    }
+    PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
+    if (psiClass != null) {
+      if (psiClass.isEnum()) return SelectorKind.ENUM;
+      String fqn = psiClass.getQualifiedName();
+      if (Comparing.strEqual(fqn, CommonClassNames.JAVA_LANG_STRING)) {
+        return SelectorKind.STRING;
+      }
+    }
+    return SelectorKind.CLASS_OR_ARRAY;
+  }
+
+
+  /**
+   * Kinds of switch selector
+   * @see #getSwitchSelectorKind(PsiType) 
+   */
+  public enum SelectorKind {
+    /**
+     * Classic Java 1.0 int selector (also covers byte, short, and char, thanks to primitive widening)
+     */
+    INT(null),
+    /**
+     * Java 1.5 enum selector
+     */
+    ENUM(JavaFeature.ENUMS),
+    /**
+     * Java 1.7 string selector
+     */
+    STRING(JavaFeature.STRING_SWITCH),
+    /**
+     * Generic pattern selector
+     */
+    CLASS_OR_ARRAY(JavaFeature.PATTERNS_IN_SWITCH),
+    /**
+     * Primitive selector
+     */
+    BOOLEAN(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS), 
+    LONG(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS), 
+    FLOAT(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS), 
+    DOUBLE(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS),
+    /**
+     * Invalid selector type (like void)
+     */
+    INVALID(null);
+    
+    private final @Nullable JavaFeature myFeature;
+
+    SelectorKind(@Nullable JavaFeature feature) { myFeature = feature; }
+
+    /**
+     * @return java feature required for this selector kind; null if it's always available
+     */
+    public @Nullable JavaFeature getFeature() {
+      return myFeature;
+    }
   }
 }
