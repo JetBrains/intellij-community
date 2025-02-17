@@ -510,7 +510,7 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     StatusText statusText = textEditor.getEmptyText();
     statusText.setShowAboveCenter(false);
     statusText.setText(leftText, SimpleTextAttributes.GRAY_ATTRIBUTES);
-    statusText.appendText(false, 0, rightText, SimpleTextAttributes.GRAY_ATTRIBUTES, null);
+    statusText.appendText(1, 0, null, rightText, SimpleTextAttributes.GRAY_ATTRIBUTES, null);
     statusText.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
   }
 
