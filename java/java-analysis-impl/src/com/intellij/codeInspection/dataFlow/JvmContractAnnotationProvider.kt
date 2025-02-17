@@ -14,5 +14,10 @@ interface JvmContractAnnotationProvider {
     fun qualifiedNames(): List<String> {
       return EP_NAME.extensionList.map { it.fqn }
     }
+
+    @JvmStatic
+    fun isMethodContract(fqn: String): Boolean {
+      return qualifiedNames().any { it == fqn }
+    }
   }
 }
