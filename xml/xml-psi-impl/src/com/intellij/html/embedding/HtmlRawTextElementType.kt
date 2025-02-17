@@ -6,8 +6,8 @@ import com.intellij.lang.PsiBuilder
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.lexer.HtmlRawTextLexer
 import com.intellij.lexer.Lexer
+import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.source.html.HtmlRawTextImpl
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType
 import com.intellij.psi.xml.XmlElementType.XML_TEXT
 
@@ -23,7 +23,10 @@ object HtmlRawTextElementType :
     start.done(XML_TEXT)
   }
 
-  override fun createLexer(): Lexer = HtmlRawTextLexer()
+  override fun createLexer(): Lexer =
+    HtmlRawTextLexer()
 
-  override fun createPsi(node: ASTNode): PsiElement = HtmlRawTextImpl(node)
+  override fun createPsi(node: ASTNode): PsiElement =
+    service<BasicHtmlRawTextElementFactory>()
+      .createRawTextElement(node)
 }
