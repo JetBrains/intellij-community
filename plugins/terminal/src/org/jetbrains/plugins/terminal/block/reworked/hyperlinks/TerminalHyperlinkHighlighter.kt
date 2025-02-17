@@ -9,13 +9,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.hyperlinks.CompositeFilterWrapper
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import kotlin.math.max
 
-internal class TerminalHyperlinkHighlighter private constructor(
+@ApiStatus.Internal
+class TerminalHyperlinkHighlighter private constructor(
   project: Project,
   private val editor: Editor,
   coroutineScope: CoroutineScope,
