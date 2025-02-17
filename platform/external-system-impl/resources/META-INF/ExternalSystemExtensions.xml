@@ -84,6 +84,8 @@
 
     <registryKey key="external.system.substitute.library.dependencies" defaultValue="true"
                  description="Replace library dependencies with module dependencies imported from external build systems like Maven/Gradle"/>
+    <registryKey key="external.system.project.sdk.matches.build.config" defaultValue="false"
+                 description="Ensure project SDK always matches the build configuration after sync if possible"/>
 
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataServiceImpl"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService"/>

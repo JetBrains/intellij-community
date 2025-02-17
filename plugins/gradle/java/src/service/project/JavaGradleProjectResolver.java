@@ -27,17 +27,20 @@ import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.idea.IdeaJavaLanguageSettings;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.AnnotationProcessingData;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -372,7 +375,15 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   }
 
   private void populateProjectSdkModel(@NotNull IdeaProject ideaProject, @NotNull DataNode<? extends ProjectData> projectNode) {
-    Sdk sdk = lookupProjectSdk(ideaProject);
+    GradleVersion gradleVersion = GradleVersion.version(resolverCtx.getProjectGradleVersion());
+    Path linkedExternalProjectPath = Path.of(projectNode.getData().getLinkedExternalProjectPath());
+    Sdk sdk;
+    if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(linkedExternalProjectPath, gradleVersion)) {
+      String javaHomePath = ideaProject.getJavaLanguageSettings().getJdk().getJavaHome().getAbsolutePath();
+      sdk = lookupJdkByPath(javaHomePath);
+    } else {
+      sdk = lookupProjectSdk(ideaProject);
+    }
     String sdkName = ObjectUtils.doIfNotNull(sdk, it -> it.getName());
     ProjectSdkData projectSdkData = new ProjectSdkData(sdkName);
     projectNode.createChild(ProjectSdkData.KEY, projectSdkData);
