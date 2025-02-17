@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.CheckReturnValue
 import java.io.IOException
@@ -24,6 +25,7 @@ import java.nio.ByteBuffer
 import java.nio.channels.Channels
 import java.nio.channels.ReadableByteChannel
 import java.nio.channels.WritableByteChannel
+import java.nio.charset.Charset
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -57,6 +59,30 @@ fun EelSendChannel<IOException>.asOutputStream(blockingContext: CoroutineContext
  */
 fun CoroutineScope.consumeReceiveChannelAsKotlin(receiveChannel: EelReceiveChannel<*>, bufferSize: Int = DEFAULT_BUFFER_SIZE): ReceiveChannel<ByteBuffer> =
   consumeReceiveChannelAsKotlinImpl(receiveChannel, bufferSize)
+
+/**
+ * Collect data from channel line-by-line using [charset] to convert bytes to chars.
+ * Much like [java.io.BufferedReader], we consider CR or CRLF as a new line chars.
+ * This API might be slow (as it reads one byte per time) so you might prefer to [readAllBytes] first, then decode it and split by lines.
+ * However, for interactive source you can't read till the end, so you use this api.
+ *
+ * As soon as channel gets closed -- flow finishes.
+ * ```kotlin
+ *  suspend fun chat(process: EelProcess) {
+ *   process.stdout.lines().collect {
+ *     val line = it.getOrThrow()
+ *     if (line == "Nice to meet you") {
+ *       process.stdin.sendWholeText("Nice to meet you too!").getOrThrow()
+ *     }
+ *     if (line == "Who are you?") {
+ *       process.stdin.sendWholeText("An eel api!").getOrThrow()
+ *     }
+ *   }
+ * }
+ * ```
+ */
+fun <E : Any> EelReceiveChannel<E>.lines(charset: Charset): Flow<EelResult<String, E>> = linesImpl(charset)
+fun <E : Any> EelReceiveChannel<E>.lines(): Flow<EelResult<String, E>> = lines(Charset.defaultCharset())
 
 fun Socket.consumeAsEelChannel(): EelReceiveChannel<IOException> = consumeAsEelChannelImpl()
 fun Socket.asEelChannel(): EelSendChannel<IOException> = asEelChannelImpl()

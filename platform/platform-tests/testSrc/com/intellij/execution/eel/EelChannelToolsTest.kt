@@ -142,8 +142,7 @@ class EelChannelToolsTest {
 
     val dst = spyk(ByteArrayOutputStream().asEelChannel())
     coEvery {
-      @Suppress("OPT_IN_USAGE")
-      dst.send(any())
+      @Suppress("OPT_IN_USAGE") dst.send(any())
     } answers {
       if (dstErr) {
         ResultErrImpl(IOException(dstErrorText))
@@ -210,17 +209,15 @@ class EelChannelToolsTest {
     }
 
     var errorHappened = false
-    copy(src, dst,
-         onReadError = {
-           assertEquals(SocketTimeoutException::class, it::class)
-           errorHappened = true
-           OnError.RETRY
-         },
-         onWriteError = {
-           assertEquals(SocketTimeoutException::class, it::class)
-           errorHappened = true
-           OnError.RETRY
-         }).getOrThrow()
+    copy(src, dst, onReadError = {
+      assertEquals(SocketTimeoutException::class, it::class)
+      errorHappened = true
+      OnError.RETRY
+    }, onWriteError = {
+      assertEquals(SocketTimeoutException::class, it::class)
+      errorHappened = true
+      OnError.RETRY
+    }).getOrThrow()
 
     assertTrue(errorHappened, "No error callback called")
     assertArrayEquals((0..limit).map { it.toByte() }.reversed().toTypedArray(), result.toTypedArray(), "wrong data copied")
@@ -276,24 +273,20 @@ class EelChannelToolsTest {
     // 8192
     launch {
       pipe.sink.sendWholeBuffer(allocate(bytesCount)).getOrThrow()
-    }
-    // 8192 * 2
+    } // 8192 * 2
     launch {
       pipe.sink.sendWholeBuffer(allocate(bytesCount)).getOrThrow()
     }
     awaitForCondition {
       Assertions.assertEquals(bytesCount * 2, input.available(), "Wrong number of bytes available")
-    }
-    // 8192
-    pipe.source.receive(allocate(bytesCount)).getOrThrow()
-    // 8193
+    } // 8192
+    pipe.source.receive(allocate(bytesCount)).getOrThrow() // 8193
     launch {
       pipe.sink.sendWholeBuffer(allocate(1)).getOrThrow()
     }
     awaitForCondition {
       Assertions.assertEquals(bytesCount + 1, input.available(), "Wrong number of bytes available")
-    }
-    // 1
+    } // 1
     pipe.source.receive(allocate(bytesCount)).getOrThrow()
     awaitForCondition {
       Assertions.assertEquals(1, input.available(), "After receiving there must be 0 bytes")
@@ -497,6 +490,25 @@ class EelChannelToolsTest {
       return@timeoutRunBlocking
     }
     fail("No exception was thrown, also channel returned an error")
+  }
+
+  @CartesianTest
+  fun testLines(
+    @IntRangeSource(from = 1, to = 10) blockSize: Int,
+    @CartesianTest.Values(strings = ["\n", "\r\n"]) separator: String,
+  ): Unit = timeoutRunBlocking {
+    val lines = buildList {
+      add("`Twas brillig, and the slithy toves")
+      add("Did gyre and gimble in the wabe")
+      add("All mimsy were the borogoves,")
+      add("And the mome raths outgrabe")
+    }
+    val eelChannel = ByteArrayInputStreamLimited(lines.joinToString(separator).encodeToByteArray(), blockSize).consumeAsEelChannel()
+    val result = mutableListOf<String>()
+    eelChannel.lines().collect { line ->
+      result.add(line.getOrThrow().trim())
+    }
+    Assertions.assertArrayEquals(lines.toTypedArray(), result.toTypedArray(), "Wrong lines collected")
   }
 }
 
