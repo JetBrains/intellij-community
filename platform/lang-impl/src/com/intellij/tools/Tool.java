@@ -320,7 +320,8 @@ public class Tool implements SchemeElement {
         if (commandLine == null) {
           return false;
         }
-        OSProcessHandler handler = new OSProcessHandler(commandLine);
+        OSProcessHandler handler =
+          UtilKt.runToolOnBgtWithModality(project, commandLine, myName != null ? myName : commandLine.getExePath());
         handler.addProcessListener(new ToolProcessAdapter(project, synchronizeAfterExecution(), getName()));
         if (processListener != null) {
           handler.addProcessListener(processListener);
