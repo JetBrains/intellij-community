@@ -350,7 +350,7 @@ public final class Format implements Cloneable {
   /**
    * New line separator
    */
-  String lineSeparator = "\n";
+  private String lineSeparator = "\n";
 
   /**
    * The encoding format

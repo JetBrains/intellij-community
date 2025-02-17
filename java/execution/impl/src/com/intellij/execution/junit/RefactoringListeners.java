@@ -132,7 +132,7 @@ public final class RefactoringListeners {
     }
   }
 
-  private static class RefactorPackage extends RenameElement<PsiPackage> {
+  private static final class RefactorPackage extends RenameElement<PsiPackage> {
     RefactorPackage(final Accessor<? super PsiPackage> accessor, final String path) {
       super(accessor, path);
     }
@@ -148,7 +148,7 @@ public final class RefactoringListeners {
     }
   }
 
-  private static class RefactorClass extends RenameElement<UClass> {
+  private static final class RefactorClass extends RenameElement<UClass> {
     RefactorClass(final Accessor<? super PsiClass> accessor, final String path) {
       super(wrap(accessor), path);
     }
@@ -193,7 +193,7 @@ public final class RefactoringListeners {
     }
   }
 
-  public static class RefactorPackageByClass extends RenameElement<PsiClass> {
+  public static final class RefactorPackageByClass extends RenameElement<PsiClass> {
     public RefactorPackageByClass(final Accessor<? super PsiClass> accessor) {
       super(accessor, "*");
     }
