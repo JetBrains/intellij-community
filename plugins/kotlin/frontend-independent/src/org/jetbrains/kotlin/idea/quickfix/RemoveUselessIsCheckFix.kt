@@ -2,22 +2,27 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtIsExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.isNull
 
-class RemoveUselessIsCheckFix(element: KtIsExpression, val result: Boolean? = null) : KotlinPsiOnlyQuickFixAction<KtIsExpression>(element) {
-    override fun getFamilyName(): String = KotlinBundle.message("remove.useless.is.check")
+class RemoveUselessIsCheckFix(
+    element: KtIsExpression,
+    val result: Boolean? = null,
+) : PsiUpdateModCommandAction<KtIsExpression>(element) {
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.useless.is.check")
 
-    override fun getText(): String = familyName
-
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        element?.run {
+    override fun invoke(
+        context: ActionContext,
+        element: KtIsExpression,
+        updater: ModPsiUpdater,
+    ) {
+        element.run {
             val expressionsText = result?.toString() ?: if (leftHandSide.isNull()) isNegated.toString() else isNegated.not().toString()
             val newExpression = KtPsiFactory(project).createExpression(expressionsText)
             replace(newExpression)

@@ -11,6 +11,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 internal object RemoveUselessIsCheckFixFactory : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
     override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
         val expression = psiElement.getNonStrictParentOfType<KtIsExpression>() ?: return emptyList()
-        return listOf(RemoveUselessIsCheckFix(expression))
+        return listOf(RemoveUselessIsCheckFix(expression).asIntention())
     }
 }

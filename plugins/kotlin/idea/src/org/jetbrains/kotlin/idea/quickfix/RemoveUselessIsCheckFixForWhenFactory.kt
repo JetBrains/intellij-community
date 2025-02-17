@@ -14,6 +14,6 @@ internal object RemoveUselessIsCheckFixForWhenFactory : QuickFixesPsiBasedFactor
     override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
         val expression = psiElement.getNonStrictParentOfType<KtWhenConditionIsPattern>() ?: return emptyList()
         if (expression.getStrictParentOfType<KtWhenEntry>()?.guard != null) return emptyList()
-        return listOf(RemoveUselessIsCheckFixForWhen(expression))
+        return listOf(RemoveUselessIsCheckFixForWhen(expression).asIntention())
     }
 }
