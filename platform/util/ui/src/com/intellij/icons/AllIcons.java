@@ -908,7 +908,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Alias = load("expui/nodes/alias.svg", "nodes/alias.svg", -1977759261, 0);
     /** 16x16 */ public static final @NotNull Icon Annotationtype = load("expui/nodes/annotation.svg", "nodes/annotationtype.svg", 155742257, 0);
     /** 16x16 */ public static final @NotNull Icon AnonymousClass = load("expui/nodes/classAnonymous.svg", "nodes/anonymousClass.svg", -1373375692, 0);
-    /** 16x16 */ public static final @NotNull Icon Artifact = load("nodes/artifact.svg", 1929766435, 0);
+    /** 16x16 */ public static final @NotNull Icon Artifact = load("expui/nodes/artifact.svg", "nodes/artifact.svg", 1929766435, 0);
     /** 16x16 */ public static final @NotNull Icon Aspect = load("nodes/aspect.svg", 1476698583, 0);
     /** 16x16 */ public static final @NotNull Icon Bookmark = load("expui/bookmarks/bookmark.svg", "nodes/bookmark.svg", 2046286300, 2);
     /** 16x16 */ public static final @NotNull Icon BookmarkGroup = load("expui/bookmarks/bookmarksList.svg", "nodes/bookmarkGroup.svg", -1602832368, 0);
