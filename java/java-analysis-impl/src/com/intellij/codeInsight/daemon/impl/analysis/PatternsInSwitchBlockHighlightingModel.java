@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.java.codeserver.core.JavaPsiSealedUtil;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.JavaFeature;

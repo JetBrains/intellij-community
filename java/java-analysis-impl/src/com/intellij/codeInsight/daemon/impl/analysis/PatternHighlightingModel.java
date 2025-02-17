@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AddMissingDeconstructionCom
 import com.intellij.codeInsight.daemon.impl.quickfix.AddMissingDeconstructionComponentsFix.Pattern;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.java.codeserver.core.JavaPsiSealedUtil;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;

@@ -2,6 +2,7 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.java.codeserver.core.JavaPsiSealedUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.psi.PsiModifier.SEALED;
 import static com.intellij.util.ObjectUtils.tryCast;
-import static java.util.Objects.*;
+import static java.util.Objects.hash;
 
 final class PatternChecker {
   private static final Logger LOG = Logger.getInstance(PatternChecker.class);
