@@ -34,6 +34,7 @@ import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAd
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsRemovedByUser
 import java.nio.file.Files
 import java.nio.file.attribute.FileTime
+import java.nio.file.attribute.PosixFilePermissions
 import java.time.Instant
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.div
@@ -55,7 +56,10 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, private val project: Project
   fun run(indicator: ProgressIndicator) {
     val localRemoteSourcesRoot = Files.createDirectories(sdk.remoteSourcesLocalPath)
 
-    val localUploadDir = Files.createTempDirectory("remote_sync")
+    // The directory needs to be readable to all users in case the helpers are run as another user
+    val localUploadDir = Files.createTempDirectory(
+      "remote_sync", PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxr-xr-x"))
+    )
     val uploadVolume = TargetEnvironment.UploadRoot(localRootPath = localUploadDir, targetRootPath = TargetPath.Temporary())
     targetEnvRequest.uploadVolumes += uploadVolume
 
