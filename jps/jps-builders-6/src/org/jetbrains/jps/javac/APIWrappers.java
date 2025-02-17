@@ -163,7 +163,8 @@ public final class APIWrappers {
     }
   }
 
-  static class DiagnosticWrapper<T> extends DynamicWrapper<Diagnostic<T>> {
+  @ApiStatus.Internal
+  public static final class DiagnosticWrapper<T> extends DynamicWrapper<Diagnostic<T>> {
     private final ProcessingContext myProcContext;
 
     DiagnosticWrapper(ProcessingContext procContext, Diagnostic<T> delegate) {
@@ -277,7 +278,8 @@ public final class APIWrappers {
     }
   }
 
-  final static class ProcessingEnvironmentWrapper extends DynamicWrapper<ProcessingEnvironment> {
+  @ApiStatus.Internal
+  public final static class ProcessingEnvironmentWrapper extends DynamicWrapper<ProcessingEnvironment> {
     private final JpsJavacFileManager myFileManager;
     private Filer myFilerImpl;
 
@@ -296,7 +298,8 @@ public final class APIWrappers {
     }
   }
 
-  final static class FilerWrapper extends DynamicWrapper<Filer> implements Filer {
+  @ApiStatus.Internal
+  public final static class FilerWrapper extends DynamicWrapper<Filer> implements Filer {
     private final JpsJavacFileManager myFileManager;
     private final Function<Element, String> convertToClassName;
 
