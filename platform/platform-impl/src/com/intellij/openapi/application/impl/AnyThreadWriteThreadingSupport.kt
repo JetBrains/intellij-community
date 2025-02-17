@@ -628,7 +628,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   @ApiStatus.Internal
   override fun setSuspendingWriteActionListener(listener: SuspendingWriteActionListener) {
     if (mySuspendingWriteActionListener != null)
-      error("WriteActionListener already registered")
+      error("SuspendingWriteActionListener already registered")
     mySuspendingWriteActionListener = listener
   }
 
