@@ -1831,6 +1831,7 @@ c:com.intellij.ide.RecentProjectsManagerBase
 - f:addRecentPath(java.lang.String,com.intellij.ide.RecentProjectMetaInfo):V
 - f:findGroup(java.lang.String):com.intellij.ide.ProjectGroup
 - f:forceReopenProjects():V
+- f:getActivationTimestamp(java.lang.String):java.lang.Long
 - f:getCurrentBranchName(java.lang.String):java.lang.String
 - f:getDisplayName(java.lang.String):java.lang.String
 - getGroups():java.util.List
@@ -1877,9 +1878,11 @@ c:com.intellij.ide.ReopenProjectAction
 - com.intellij.openapi.project.DumbAware
 - <init>(java.lang.String,java.lang.String,java.lang.String):V
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
-- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.Long):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.Long,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getActivationTimestamp():java.lang.Long
 - getBranchName():java.lang.String
 - f:getProjectDisplayName():java.lang.String
 - getProjectIcon():javax.swing.Icon

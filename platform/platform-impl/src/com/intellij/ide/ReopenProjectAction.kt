@@ -33,11 +33,13 @@ open class ReopenProjectAction @JvmOverloads constructor(
   projectName: @NlsSafe String?,
   displayName: @NlsSafe String?,
   branchName: @NlsSafe String? = null,
+  activationTimestamp: Long? = null,
 ) : AnAction(), DumbAware, LightEditCompatible, ProjectToolbarWidgetPresentable {
   private val myProjectPath: @SystemIndependent String
   private val myProjectName: @NlsSafe String?
   private val myDisplayName: @NlsSafe String?
   private val myBranchName: @NlsSafe String?
+  private val myActivationTimestamp: Long?
 
   override val branchName: @NlsSafe String? get() = myBranchName
 
@@ -52,6 +54,7 @@ open class ReopenProjectAction @JvmOverloads constructor(
     myProjectName = projectName
     myDisplayName = displayName
     myBranchName = branchName
+    myActivationTimestamp = activationTimestamp
 
     if (Strings.isEmpty(projectDisplayName)) {
       logger<ReopenProjectAction>().error("Empty action text for projectName='$projectName' displayName='$displayName' path='$projectPath'")
@@ -131,6 +134,8 @@ open class ReopenProjectAction @JvmOverloads constructor(
     get() = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(projectPath), false)
 
   override val projectIcon: Icon get() = RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectPath, true, 20)
+
+  override val activationTimestamp: Long? get() = myActivationTimestamp
 
   fun setProjectGroup(projectGroup: ProjectGroup?) {
     this.projectGroup = projectGroup

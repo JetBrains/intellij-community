@@ -57,7 +57,8 @@ internal data class RecentProjectItem(
   @NlsSafe val projectName: String,
   @NlsSafe val displayName: String,
   @NlsSafe val branchName: String? = null,
-  val projectGroup: ProjectGroup?
+  val projectGroup: ProjectGroup?,
+  val activationTimestamp: Long?,
 ) : RecentProjectTreeItem {
   override fun displayName(): String = displayName
 
@@ -146,6 +147,7 @@ internal data class ProviderRecentProjectItem(
   val branchName: @NlsSafe String? get() = recentProject.branchName
   val providerPath: @NlsSafe String? get() = recentProject.providerPath
   val icon: Icon? get() = recentProject.icon
+  val activationTimestamp: Long? get() = recentProject.activationTimestamp
 
   fun openProject() {
     recentProject.openProject()

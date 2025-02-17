@@ -266,4 +266,5 @@ interface ProjectToolbarWidgetPresentable {
   val projectPathToDisplay: @NlsSafe String?
   val branchName: @NlsSafe String?
   val projectIcon: Icon
+  val activationTimestamp: Long?
 }

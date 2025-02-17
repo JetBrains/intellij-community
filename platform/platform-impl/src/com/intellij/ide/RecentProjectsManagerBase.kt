@@ -433,6 +433,12 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
+  fun getActivationTimestamp(path: String): Long? {
+    synchronized(stateLock) {
+      return state.additionalInfo.get(path)?.activationTimestamp
+    }
+  }
+
   fun getCurrentBranchName(path: String): String? {
     return RecentProjectsBranchesProvider.getCurrentBranch(path)
   }
