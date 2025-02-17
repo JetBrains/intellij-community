@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.vcs.VcsLocaleHelper;
 import org.jetbrains.annotations.NonNls;
@@ -62,9 +61,7 @@ public final class ShellCommand {
     throws ShellCommandException {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     try {
-      OSProcessHandler processHandler = isBinary
-                                        ? new BinaryOSProcessHandler(myCommandLine)
-                                        : new KillableProcessHandler(myCommandLine, Registry.is("hg4idea.execute.with.mediator"));
+      OSProcessHandler processHandler = isBinary ? new BinaryOSProcessHandler(myCommandLine) : new KillableProcessHandler(myCommandLine);
       ProcessAdapter outputAdapter = new ProcessAdapter() {
         @Override
         public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
