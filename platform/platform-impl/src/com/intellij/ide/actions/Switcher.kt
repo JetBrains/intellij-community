@@ -96,6 +96,7 @@ private const val ACTION_PLACE = "Switcher"
 /**
  * @author Konstantin Bulenkov
  */
+@Deprecated("Use the updated implementation com.intellij.platform.recentFiles.frontend.Switcher")
 object Switcher : BaseSwitcherAction(null) {
   @ApiStatus.Internal
   val SWITCHER_KEY: Key<SwitcherPanel> = Key.create("SWITCHER_KEY")
