@@ -17,6 +17,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
+                    serviceImplementation="com.intellij.pycharm.community.ide.impl.PyProjectScopeBuilder"
+                    overrides="true"/>
+
     <refactoring.elementListenerProvider implementation="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectListenerProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectUsageCollector"/>
     <registryKey defaultValue="5" description="Number of primary buttons on welcome screen (other go to 'more actions')"
@@ -92,6 +96,11 @@
     <defaultToolWindowLayout implementation="com.intellij.pycharm.community.ide.impl.PyToolWindowLayoutProvider" order="last"/>
 
     <codeInsight.codeVision.settings.defaults implementation="com.intellij.pycharm.community.ide.impl.PyCharmCodeVisionSettingsDefaults"/>
+
+    <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
+                    serviceImplementation="com.intellij.pycharm.community.ide.impl.PyProjectScopeBuilder"
+                    overrides="true"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
