@@ -80,6 +80,9 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.repositoryLibrary" beanClass="com.intellij.jarRepository.RepositoryLibraryDefinition"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.disableCompilationDependenciesResolutionTask"
+                    interface="com.intellij.jarRepository.CompilationDependenciesResolutionTask$DisableCompilationDependenciesResolutionTask"
+                    dynamic="true"/>
     <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.encapsulateFields.Helper" beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
