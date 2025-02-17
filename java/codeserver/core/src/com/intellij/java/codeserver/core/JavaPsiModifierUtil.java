@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.util;
+package com.intellij.java.codeserver.core;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -181,8 +183,7 @@ public final class JavaPsiModifierUtil {
    * @return the package-private class which prevents the place expression from being evaluated, null if nothing is found
    */
   public static @Nullable PsiClass getPackageLocalClassInTheMiddle(@NotNull PsiElement place) {
-    if (place instanceof PsiReferenceExpression) {
-      PsiReferenceExpression expression = (PsiReferenceExpression)place;
+    if (place instanceof PsiReferenceExpression expression) {
       // check for package-private classes in the middle
       while (true) {
         PsiField field = ObjectUtils.tryCast(expression.resolve(), PsiField.class);
