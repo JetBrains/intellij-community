@@ -542,7 +542,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       var activeTask: Pair<Path, OpenProjectTask>? = null
       for ((path, info) in toOpen) {
         val isActive = info == activeInfo
-        val ideFrame = createIdeFrame(info.frame)
+        val ideFrame = createIdeFrame(info.frame ?: FrameInfo())
         info.frameTitle?.let {
           ideFrame.title = it
         }

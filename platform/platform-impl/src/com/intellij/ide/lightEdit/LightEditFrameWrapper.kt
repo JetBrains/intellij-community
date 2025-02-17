@@ -47,7 +47,7 @@ internal fun allocateLightEditFrame(project: Project, frameInfo: FrameInfo?): Li
   return runWithModalProgressBlocking(project, "") {
     withContext(Dispatchers.EDT) {
       val wrapper = allocateLightEditFrame(project) { frame ->
-        LightEditFrameWrapper(project = project, frame = frame ?: createIdeFrame(frameInfo))
+        LightEditFrameWrapper(project = project, frame = frame ?: createIdeFrame(frameInfo ?: FrameInfo()))
       } as LightEditFrameWrapper
       (project.serviceAsync<FileEditorManager>() as LightEditFileEditorManagerImpl).internalInit()
       wrapper

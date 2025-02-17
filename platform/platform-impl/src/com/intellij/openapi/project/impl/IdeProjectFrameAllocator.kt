@@ -200,50 +200,48 @@ internal class IdeProjectFrameAllocator(
   }
 
   private suspend fun createFrameManager(loadingState: FrameLoadingState) {
-    val frame = options.frame
-                ?: (ApplicationManager.getApplication().serviceIfCreated<WindowManager>() as? WindowManagerImpl)?.removeAndGetRootFrame()
+    val frame = getFrame()
+    val frameInfo = getFrameInfo()
 
-    if (frame != null) {
-      withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.EDT) {
+      if (frame != null) {
         val frameHelper = IdeProjectFrameHelper(frame = frame, loadingState = loadingState)
-
         completeFrameAndCloseOnCancel(frameHelper) {
           if (options.forceOpenInNewFrame) {
-            updateFullScreenState(frameHelper, getFrameInfo())
+            updateFullScreenState(frameHelper, frameInfo.fullScreen)
           }
-
-          frameHelper.init()
-          frameHelper.setInitBounds(getFrameInfo()?.bounds)
+          span("ProjectFrameHelper.init") {
+            frameHelper.init()
+          }
+          frameHelper.setInitBounds(frameInfo.bounds)
         }
+        return@withContext
       }
-      return
-    }
 
-    val preAllocated = getAndUnsetSplashProjectFrame() as IdeFrameImpl?
-    if (preAllocated != null) {
-      val frameHelper = withContext(Dispatchers.EDT) {
+      val preAllocated = getAndUnsetSplashProjectFrame() as IdeFrameImpl?
+      if (preAllocated != null) {
         val frameHelper = IdeProjectFrameHelper(frame = preAllocated, loadingState = loadingState)
-        frameHelper.init()
-        frameHelper
+        completeFrameAndCloseOnCancel(frameHelper) {
+          span("ProjectFrameHelper.init") {
+            frameHelper.init()
+          }
+        }
+        return@withContext
       }
-      completeFrameAndCloseOnCancel(frameHelper) {}
-      return
-    }
 
-    val frameInfo = getFrameInfo()
-    withContext(Dispatchers.EDT) {
+
       val frameHelper = IdeProjectFrameHelper(createIdeFrame(frameInfo), loadingState = loadingState)
       // must be after preInit (frame decorator is required to set a full-screen mode)
       frameHelper.frame.isVisible = true
-      updateFullScreenState(frameHelper, frameInfo)
-
       completeFrameAndCloseOnCancel(frameHelper) {
+        updateFullScreenState(frameHelper, frameInfo.fullScreen)
+
         span("ProjectFrameHelper.init") {
           frameHelper.init()
         }
       }
+      return@withContext
     }
-    return
   }
 
   private suspend inline fun completeFrameAndCloseOnCancel(
@@ -266,13 +264,19 @@ internal class IdeProjectFrameAllocator(
     }
   }
 
-  private suspend fun getFrameInfo(): FrameInfo? {
-    return options.frameInfo
-           ?: (serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase).getProjectMetaInfo(projectStoreBaseDir)?.frame
+  private fun getFrame(): IdeFrameImpl? {
+    return options.frame
+           ?: (ApplicationManager.getApplication().serviceIfCreated<WindowManager>() as? WindowManagerImpl)?.removeAndGetRootFrame()
   }
 
-  private fun updateFullScreenState(frameHelper: ProjectFrameHelper, frameInfo: FrameInfo?) {
-    if (frameInfo?.fullScreen == true && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
+  private suspend fun getFrameInfo(): FrameInfo {
+    return options.frameInfo
+           ?: (serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase).getProjectMetaInfo(projectStoreBaseDir)?.frame
+           ?: FrameInfo()
+  }
+
+  private fun updateFullScreenState(frameHelper: ProjectFrameHelper, isFullScreen: Boolean) {
+    if (isFullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
       frameHelper.toggleFullScreen(true)
     }
   }
@@ -443,8 +447,8 @@ private fun setDefaultSize(frame: JFrame, screen: Rectangle = ScreenUtil.getMain
 }
 
 @ApiStatus.Internal
-internal fun createIdeFrame(frameInfo: FrameInfo?): IdeFrameImpl {
-  val deviceBounds = frameInfo?.bounds
+internal fun createIdeFrame(frameInfo: FrameInfo): IdeFrameImpl {
+  val deviceBounds = frameInfo.bounds
   if (deviceBounds == null) {
     val frame = IdeFrameImpl()
     setDefaultSize(frame)
