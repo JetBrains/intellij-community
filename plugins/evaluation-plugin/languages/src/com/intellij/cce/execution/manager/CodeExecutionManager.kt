@@ -12,7 +12,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiNamedElement
-import java.io.File
+import com.intellij.util.io.delete
+import java.nio.file.Path
+import kotlin.io.path.writeText
 
 abstract class CodeExecutionManager {
   companion object {
@@ -42,10 +44,10 @@ abstract class CodeExecutionManager {
   abstract fun removeTarget()
 
 
-  protected abstract fun getGeneratedCodeFile(basePath: String, code: String): File
+  protected abstract fun getGeneratedCodeFile(basePath: String, code: String): Path
   protected abstract fun compileGeneratedCode(): ProcessExecutionLog
   protected abstract fun setupEnvironment(project: Project): ProcessExecutionLog
-  protected abstract fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?, unitUnderTest: PsiNamedElement?): ProcessExecutionLog
+  protected abstract fun executeGeneratedCode(target: String, basePath: String, codeFilePath: Path, sdk: Sdk?, unitUnderTest: PsiNamedElement?): ProcessExecutionLog
 
   // Protected since there can be language-specific metrics
   protected fun clear() {

@@ -15,8 +15,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiNamedElement
+import com.intellij.util.io.delete
 import com.jetbrains.python.sdk.PythonSdkType
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.readText
 
 open class PythonCodeExecutionManager() : CodeExecutionManager() {
   override val language = Language.PYTHON
@@ -24,14 +27,14 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
 
   private val defaultTestFilePath = "/tests/eval-plugin-test.py"
 
-  override fun getGeneratedCodeFile(basePath: String, code: String): File {
+  override fun getGeneratedCodeFile(basePath: String, code: String): Path {
     extractCodeDirectory(code)?.let {
       val detectedPath = if (!it.startsWith("/")) "/$it" else it
       collectedInfo.put(AIA_TEST_FILE_PROVIDED, true)
-      return File(basePath + detectedPath)
+      return Path.of(basePath + detectedPath)
     }
     collectedInfo.put(AIA_TEST_FILE_PROVIDED, false)
-    return File(basePath + defaultTestFilePath)
+    return Path.of(basePath + defaultTestFilePath)
   }
 
   override fun setupEnvironment(project: Project): ProcessExecutionLog {
@@ -42,9 +45,9 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
 
     if (sdk?.sdkType !is PythonSdkType) return ProcessExecutionLog("", "Python SDK not found", -1)
 
-    val setupFile = File("$basePath/setup_tests.sh")
+    val setupFile = Path.of("$basePath/setup_tests.sh")
     if (!setupFile.exists()) return ProcessExecutionLog("", "Bash script file not found", -1)
-    val executionLog = runPythonProcess(basePath, ProcessBuilder("/bin/bash", setupFile.path.toString()), sdk)
+    val executionLog = runPythonProcess(basePath, ProcessBuilder("/bin/bash", setupFile.toString()), sdk)
 
     if (executionLog.exitCode != 0) throw IllegalStateException("Setup was not successful")
 
@@ -68,15 +71,18 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
     return ProcessExecutionLog("", "", 0)
   }
 
-  override fun executeGeneratedCode(target: String, basePath: String, codeFilePath: File, sdk: Sdk?, unitUnderTest: PsiNamedElement?): ProcessExecutionLog {
+  override fun executeGeneratedCode(target: String, basePath: String, codeFilePath: Path, sdk: Sdk?, unitUnderTest: PsiNamedElement?): ProcessExecutionLog {
     if (sdk?.sdkType !is PythonSdkType) return ProcessExecutionLog("", "Python SDK not found", -1)
 
-    val runFile = File("$basePath/run_tests.sh")
+    val runFile = Path.of("$basePath/run_tests.sh")
 
     if (!runFile.exists()) return ProcessExecutionLog("", "Bash script file not found", -1)
     if (!codeFilePath.exists()) return ProcessExecutionLog("", "The Python test file does not exist", -1)
 
-    val testName = codeFilePath.path
+    val testName = codeFilePath
+      .toAbsolutePath()
+      .normalize()
+      .toString()
       .removePrefix(basePath)
       .removePrefix("/")
       .removeSuffix(".py")
@@ -84,16 +90,16 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
     val coverageFilePath = "$basePath/$testName-coverage"
     val junitFilePath = "$basePath/$testName-junit"
     try {
-      val executionLog = runPythonProcess(basePath, ProcessBuilder("/bin/bash", runFile.path.toString(), testName, target), sdk)
+      val executionLog = runPythonProcess(basePath, ProcessBuilder("/bin/bash", runFile.toString(), testName, target), sdk)
 
       // Collect success ratio
-      val junitFile = File(junitFilePath)
+      val junitFile = Path.of(junitFilePath)
       val junitData = if (junitFile.exists()) junitFile.readText(Charsets.UTF_8) else ""
       val successRatio = PythonJunitProcessor().getTestExecutionSuccessRate(junitData)
       collectedInfo.put(AIA_EXECUTION_SUCCESS_RATIO, successRatio)
 
       // Collect Coverage
-      val coverageFile = File(coverageFilePath)
+      val coverageFile = Path.of(coverageFilePath)
       val coverageData = if (coverageFile.exists()) coverageFile.readText(Charsets.UTF_8) else ""
       val coverageProcessor = PythonTestCoverageProcessor(coverageData, target)
 
@@ -101,9 +107,9 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
       collectedInfo.put(AIA_TEST_BRANCH_COVERAGE, coverageProcessor.getBranchCoverage(unitUnderTest))
 
       // Remove cumulative coverage data for all the tests
-      File(coverageFilePath).delete()
-      File(junitFilePath).delete()
-      File("$basePath/.coverage").delete()
+      Path.of(coverageFilePath).delete()
+      Path.of(junitFilePath).delete()
+      Path.of("$basePath/.coverage").delete()
       return executionLog
     }
     catch (e: Exception) {
@@ -117,7 +123,7 @@ open class PythonCodeExecutionManager() : CodeExecutionManager() {
     // Set the correct Python interpreter
     processBuilder.environment()["PYTHON"] = sdk.homePath
     // Move to project's root
-    processBuilder.directory(File(basePath))
+    processBuilder.directory(Path.of(basePath).toFile())
     // Start the process
     val process = processBuilder.start()
     // Capture and print the output
