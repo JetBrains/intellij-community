@@ -71,36 +71,6 @@ import javax.swing.Icon
 import javax.swing.JList
 import kotlin.io.path.Path
 
-/**
- * Represents an intent to set up a JDK:
- *
- * - [NoJdk] - Create the project without selecting a JDK.
- * - [DownloadJdk] - Download a JDK on project creation.
- * - [ExistingJdk] - Use a JDK already configured, or from a location selected by the user.
- * - [DetectedJdk] - Configure a JDK detected by the IDE.
- */
-sealed class ProjectWizardJdkIntent {
-  data object NoJdk : ProjectWizardJdkIntent()
-
-  data class DownloadJdk(val task: SdkDownloadTask) : ProjectWizardJdkIntent()
-
-  data class ExistingJdk(val jdk: Sdk) : ProjectWizardJdkIntent()
-
-  data object AddJdkFromPath : ProjectWizardJdkIntent()
-
-  data class AddJdkFromJdkListDownloader(val extension: SdkDownload) : ProjectWizardJdkIntent()
-
-  data class DetectedJdk(val version: @NlsSafe String, val home: @NlsSafe String, val isSymlink: Boolean) : ProjectWizardJdkIntent()
-
-  fun isAtLeast(version: Int): Boolean = when (this) {
-    is DownloadJdk -> JavaVersion.tryParse(task.plannedVersion)?.isAtLeast(version)
-    is ExistingJdk -> if (jdk.versionString == null) true
-                      else JavaVersion.tryParse(jdk.versionString)?.isAtLeast(version)
-    is DetectedJdk -> JavaVersion.tryParse(this.version)?.isAtLeast(version)
-    else -> false
-  } ?: true
-}
-
 fun NewProjectWizardStep.projectWizardJdkComboBox(
   row: Row,
   sdkProperty: GraphProperty<Sdk?>,
