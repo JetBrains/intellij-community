@@ -4,6 +4,7 @@ package com.intellij.java.codeserver.highlighting;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.codeserver.core.JavaPsiVariableUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.pom.java.JavaFeature;

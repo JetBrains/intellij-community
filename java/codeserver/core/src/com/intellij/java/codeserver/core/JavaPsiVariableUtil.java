@@ -1,11 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.util;
+package com.intellij.java.codeserver.core;
 
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +23,7 @@ public final class JavaPsiVariableUtil {
     PsiElement scope = variable.getParent();
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
-      if (child instanceof PsiVariable) {
-        PsiVariable psiVariable = (PsiVariable)child;
+      if (child instanceof PsiVariable psiVariable) {
         if (child.equals(variable)) continue;
         if (Objects.equals(variable.getName(), psiVariable.getName())) {
           return psiVariable;
@@ -48,8 +49,7 @@ public final class JavaPsiVariableUtil {
         hint = hint.invert();
         continue;
       }
-      if (parent instanceof PsiPolyadicExpression) {
-        PsiPolyadicExpression expression = (PsiPolyadicExpression)parent;
+      if (parent instanceof PsiPolyadicExpression expression) {
         IElementType tokenType = expression.getOperationTokenType();
         if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
           PatternResolveState targetHint = PatternResolveState.fromBoolean(tokenType.equals(JavaTokenType.OROR));
@@ -62,8 +62,7 @@ public final class JavaPsiVariableUtil {
           continue;
         }
       }
-      if (parent instanceof PsiConditionalExpression) {
-        PsiConditionalExpression conditional = (PsiConditionalExpression)parent;
+      if (parent instanceof PsiConditionalExpression conditional) {
         PsiExpression thenExpression = conditional.getThenExpression();
         if (lastParent == thenExpression) {
           conditional.getCondition()
@@ -120,8 +119,7 @@ public final class JavaPsiVariableUtil {
         oldVariable = findSamePatternVariableInBranches((PsiPatternVariable)variable);
       }
     }
-    else if (variable instanceof PsiField) {
-      PsiField field = (PsiField)variable;
+    else if (variable instanceof PsiField field) {
       PsiClass aClass = field.getContainingClass();
       if (aClass == null) return null;
       PsiField fieldByName = aClass.findFieldByName(variable.getName(), false);
