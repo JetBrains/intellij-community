@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.recentFiles.frontend.model.FlowBackedListModelUpdate.*
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.CollectionListModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
@@ -19,9 +18,9 @@ private val LOG by lazy { fileLogger() }
 sealed interface FlowBackedListModelUpdate<Item> {
   class AllItemsRemoved<Item>() : FlowBackedListModelUpdate<Item>
 
-  data class ItemAdded<Item>(val item: Item) : FlowBackedListModelUpdate<Item>
+  data class ItemsAdded<Item>(val items: List<Item>) : FlowBackedListModelUpdate<Item>
 
-  data class ItemRemoved<Item>(val item: Item) : FlowBackedListModelUpdate<Item>
+  data class ItemsRemoved<Item>(val items: List<Item>) : FlowBackedListModelUpdate<Item>
 
   class UpdateCompleted<Item>() : FlowBackedListModelUpdate<Item>
 }
@@ -58,15 +57,20 @@ class FlowBackedListModel<Item>(
     itemUpdatesFlow.collect { update ->
       LOG.debug("Received update in FlowBackedListModel: $update")
       when {
-        update is ItemAdded && update.item != null -> {
-          LOG.debug("Adding item ${update.item} to FlowBackedListModel")
+        update is ItemsAdded && update.items.isNotEmpty() -> {
+          LOG.debug("Adding item ${update.items} to FlowBackedListModel")
           modelUpdateState.value = FlowBackedListModelState.LOADING
-          withContext(Dispatchers.EDT) { add(update.item) }
+          withContext(Dispatchers.EDT) { add(update.items) }
         }
-        update is ItemRemoved && update.item != null -> {
-          LOG.debug("Removing item ${update.item} from FlowBackedListModel")
+        update is ItemsRemoved && update.items.isNotEmpty() -> {
+          LOG.debug("Removing item ${update.items} from FlowBackedListModel")
           modelUpdateState.value = FlowBackedListModelState.LOADING
-          withContext(Dispatchers.EDT) { remove(update.item) }
+          withContext(Dispatchers.EDT) {
+            for (item in update.items) {
+              if (item == null) continue
+              remove(item)
+            }
+          }
         }
         update is AllItemsRemoved -> {
           LOG.debug("Removing all items from FlowBackedListModel")

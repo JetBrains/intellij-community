@@ -69,8 +69,8 @@ private suspend fun createReactiveDataModel(parentScope: CoroutineScope, project
 private fun convertRpcEventToFlowModelEvent(rpcEvent: RecentFilesEvent): FlowBackedListModelUpdate<SwitcherVirtualFile> {
   LOG.debug("Switcher convert rpc to model event: $rpcEvent")
   return when (rpcEvent) {
-    is ItemAdded -> FlowBackedListModelUpdate.ItemAdded(convertSwitcherDtoToViewModel(rpcEvent.entry))
-    is ItemRemoved -> FlowBackedListModelUpdate.ItemRemoved(convertSwitcherDtoToViewModel(rpcEvent.entry))
+    is ItemsAdded -> FlowBackedListModelUpdate.ItemsAdded(rpcEvent.batch.map(::convertSwitcherDtoToViewModel))
+    is ItemsRemoved -> FlowBackedListModelUpdate.ItemsRemoved(rpcEvent.batch.map(::convertSwitcherDtoToViewModel))
     is AllItemsRemoved -> FlowBackedListModelUpdate.AllItemsRemoved()
     is EndOfUpdates -> FlowBackedListModelUpdate.UpdateCompleted()
   }

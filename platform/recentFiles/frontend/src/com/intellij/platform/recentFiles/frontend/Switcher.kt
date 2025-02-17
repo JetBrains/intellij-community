@@ -42,7 +42,6 @@ import com.intellij.platform.recentFiles.frontend.SwitcherSpeedSearch.Companion.
 import com.intellij.platform.recentFiles.frontend.model.PreservingSelectionModel
 import com.intellij.platform.recentFiles.shared.FileSwitcherApi
 import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -442,6 +441,8 @@ object Switcher : BaseSwitcherAction(null) {
       val selected = selectedList!!.selectedIndices
       Arrays.sort(selected)
       var selectedIndex: Int
+
+      val filesToHide = mutableListOf<SwitcherVirtualFile>()
       for (i in selected.indices.reversed()) {
         selectedIndex = selected[i]
         val item = selectedList.model.getElementAt(selectedIndex)
@@ -449,13 +450,17 @@ object Switcher : BaseSwitcherAction(null) {
         when (item) {
           is SwitcherVirtualFile -> {
             closeEditorForFile(item, project)
-            scheduleBackendRecentFilesUpdate(RecentFilesBackendRequest.HideFile(item.rpcModel, project.projectId()))
+            filesToHide.add(item)
           }
           is SwitcherToolWindow -> {
             closeToolWindow(item, project)
           }
           else -> {}
         }
+      }
+
+      if (filesToHide.isNotEmpty()) {
+        scheduleBackendRecentFilesUpdate(RecentFilesBackendRequest.HideFiles(filesToHide.map { it.rpcModel }, project.projectId()))
       }
     }
 
