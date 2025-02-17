@@ -38,7 +38,6 @@ import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
@@ -222,11 +221,9 @@ class ProjectStructureProviderIdeImpl(private val project: Project) : IDEProject
         psiElement: PsiElement
     ): ModuleInfoProvider.Configuration where T : KaModule, T : KtModuleByModuleInfoBase {
         val preferModulesFromExtensions =
-            if (KotlinPluginModeProvider.isK2Mode()) {
-                isScriptOrItsDependency(contextualModule, virtualFile)
-            } else {
-                isScriptOrItsDependency(contextualModule, virtualFile) && (!RootKindFilter.projectSources.matches(psiElement) || isInSpecialSrcDir(psiElement))
-            }
+            isScriptOrItsDependency(contextualModule, virtualFile)
+                    && (!RootKindFilter.projectSources.matches(psiElement) || isInSpecialSrcDir(psiElement))
+
 
         return ModuleInfoProvider.Configuration(
             createSourceLibraryInfoForLibraryBinaries = false,
