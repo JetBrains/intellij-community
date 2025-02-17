@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.lexer.FlexAdapter;
@@ -7,6 +7,7 @@ import com.intellij.lexer.RestartableLexer;
 import com.intellij.lexer.TokenIterator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CancellationException;
 
 public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDocumentListener {
   private static final Logger LOG = Logger.getInstance(LexerEditorHighlighter.class);
@@ -134,8 +136,19 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
         doSetText(document.getImmutableCharSequence());
       }
 
-      int latestValidOffset = mySegments.getLastValidOffset();
-      return new HighlighterIteratorImpl(Math.max(0, Math.min(startOffset, latestValidOffset)));
+      try {
+        int latestValidOffset = mySegments.getLastValidOffset();
+        return new HighlighterIteratorImpl(Math.max(0, Math.min(startOffset, latestValidOffset)));
+      }
+      catch (CancellationException e) {
+        throw e;
+      }
+      catch (Throwable t) {
+        if (t instanceof ControlFlowException) throw t;
+
+        LOG.error("Error creating highlighter iterator at offset " + startOffset + " in " + this, t);
+        return new EmptyEditorHighlighter().createIterator(startOffset);
+      }
     }
   }
 
