@@ -40,6 +40,7 @@ jvm_library(
     "//python/setup-test-environment:community-testFramework-testEnv",
     "//python/openapi:community",
     "//python/openapi:community_test_lib",
+    "//platform/eel-provider",
   ],
   runtime_deps = ["//python/pluginCore:community-plugin"]
 )

@@ -3944,8 +3944,15 @@ kt_jvm_import(
 
 kt_jvm_import(
   name = "kotlinx-datetime-jvm",
-  jar = "@kotlinx-datetime-jvm-0_6_1_http//file",
-  srcjar = "@kotlinx-datetime-jvm-0_6_1-sources_http//file",
+  jar = "@kotlinx-datetime-jvm-0_6_2_http//file",
+  srcjar = "@kotlinx-datetime-jvm-0_6_2-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinx-datetime-jvm-provided",
+  exports = [":kotlinx-datetime-jvm"],
+  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
