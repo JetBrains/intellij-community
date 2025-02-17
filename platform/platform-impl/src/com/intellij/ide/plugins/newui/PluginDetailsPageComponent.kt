@@ -479,6 +479,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         { this.createUninstallAction() })
       nameAndButtons.addButtonComponent(enableDisableController!!.button.also { gearButton = it })
       nameAndButtons.addButtonComponent(enableDisableController!!.bundledButton.also { myEnableDisableButton = it })
+      myEnableDisableButton?.isEnabled = showComponent?.isNotFreeInFreeMode == true
+      gearButton?.isEnabled = showComponent?.isNotFreeInFreeMode == true
     }
     else {
       gearButton = SelectionBasedPluginModelAction.createGearButton(
