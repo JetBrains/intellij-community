@@ -10,13 +10,21 @@ value class Codepoint(val codepoint: Int) {
 
   companion object {
     fun isUnicodeIdentifierPart(codepoint: Int): Boolean {
-      // TODO multiplatform implementation?
-      return Character.isUnicodeIdentifierPart(codepoint)
+      return isTrueBasedOnRange(codepoint, eitherUnicodeOrJavaStartIdRanges) || isTrueBasedOnRange(codepoint, unicodeIdRanges)
     }
 
     fun isJavaIdentifierPart(codepoint: Int): Boolean {
-      // TODO multiplatform implementation?
-      return Character.isJavaIdentifierPart(codepoint)
+      return isTrueBasedOnRange(codepoint, eitherUnicodeOrJavaStartIdRanges) || isTrueBasedOnRange(codepoint, javaStartIdRanges)
+    }
+
+    fun isSpaceChar(codePoint: Int): Boolean {
+      // Could be substituted by Char.isWhitespace() && !char.isISOControl() && /* + extra filters for java's !Character.isWhitespace(char) */
+      return when (codePoint) {
+        0x20, 0xA0, 0x1680, 0x202F, 0x205F, 0x3000 -> true
+        in 0x2000..<0x200B -> true
+        in 0x2028..<0x202A -> true
+        else -> false
+      }
     }
 
     /**
