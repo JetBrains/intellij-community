@@ -329,19 +329,6 @@ interface ThreadingSupport {
    * DO NOT USE
    */
   @ApiStatus.Internal
-  // @Throws(CannotRunReadActionException::class)
-  fun executeByImpatientReader(runnable: Runnable)
-
-  /**
-   * DO NOT USE
-   */
-  @ApiStatus.Internal
-  fun isInImpatientReader(): Boolean
-
-  /**
-   * DO NOT USE
-   */
-  @ApiStatus.Internal
   fun isInsideUnlockedWriteIntentLock(): Boolean
 
   @ApiStatus.Internal

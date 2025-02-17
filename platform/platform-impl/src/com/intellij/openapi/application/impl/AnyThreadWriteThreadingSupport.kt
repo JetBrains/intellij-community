@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ReadActionListener
 import com.intellij.openapi.application.SuspendingWriteActionListener
 import com.intellij.openapi.application.WriteActionListener
 import com.intellij.openapi.application.WriteIntentReadActionListener
-import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.application.reportInvalidActionChains
 import com.intellij.openapi.application.useBackgroundWriteAction
 import com.intellij.openapi.diagnostic.Logger
@@ -29,7 +28,6 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.Stack
-import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
@@ -141,7 +139,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   // We approximate "on stack" permits with "thread local" permits for shared main lock
   private val mySecondaryPermits = ThreadLocal.withInitial { ArrayList<Permit>() }
   private val myReadActionsInThread = ThreadLocal.withInitial { 0 }
-  private val myImpatientReader = ThreadLocal.withInitial { false }
 
   // todo: reimplement with listeners in IJPL-177760
   private val myTopmostReadAction = ThreadLocal.withInitial { false }
@@ -438,10 +435,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       return permit
     }
 
-    // Impatient reader not in non-cancellable session will not wait
-    if (myImpatientReader.get() && !Cancellation.isInNonCancelableSection()) {
-      throw ApplicationUtil.CannotRunReadActionException.create()
-    }
+    myReadActionListener?.fastPathAcquisitionFailed()
 
     // Check for cancellation
     val indicator = myLegacyProgressIndicatorProvider?.obtainProgressIndicator()
@@ -831,23 +825,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       }
     }
   }
-
-  override fun executeByImpatientReader(runnable: Runnable) {
-    if (EDT.isCurrentThreadEdt()) {
-      runnable.run()
-      return
-    }
-
-    myImpatientReader.set(true)
-    try {
-      runnable.run()
-    }
-    finally {
-      myImpatientReader.set(false)
-    }
-  }
-
-  override fun isInImpatientReader(): Boolean = myImpatientReader.get()
 
   override fun isInsideUnlockedWriteIntentLock(): Boolean {
     if (isLockStoredInContext) {

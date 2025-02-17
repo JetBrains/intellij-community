@@ -111,6 +111,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager
 
   private final ReadActionCacheImpl myReadActionCacheImpl = new ReadActionCacheImpl();
 
+  private final ThreadLocal<Boolean> myImpatientReader = ThreadLocal.withInitial(() -> false);
+
   private final long myStartTime = System.currentTimeMillis();
   private boolean mySaveAllowed;
   private volatile boolean myExitInProgress;
@@ -185,12 +187,23 @@ public final class ApplicationImpl extends ClientAwareComponentManager
    */
   @Override
   public void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
-    getThreadingSupport().executeByImpatientReader(runnable);
+    if (EDT.isCurrentThreadEdt()) {
+      runnable.run();
+      return;
+    }
+
+    myImpatientReader.set(true);
+    try {
+      runnable.run();
+    }
+    finally {
+      myImpatientReader.set(false);
+    }
   }
 
   @Override
   public boolean isInImpatientReader() {
-    return getThreadingSupport().isInImpatientReader();
+    return myImpatientReader.get();
   }
 
   @TestOnly
@@ -1247,6 +1260,14 @@ public final class ApplicationImpl extends ClientAwareComponentManager
   @Override
   public void readActionStarted(@NotNull Class<?> action) {
     myReadActionListenerDispatcher.getMulticaster().readActionStarted(action);
+  }
+
+  @Override
+  public void fastPathAcquisitionFailed() {
+    // Impatient reader not in non-cancellable session will not wait
+    if (myImpatientReader.get() && !Cancellation.isInNonCancelableSection()) {
+      throw ApplicationUtil.CannotRunReadActionException.create();
+    }
   }
 
   @Override
