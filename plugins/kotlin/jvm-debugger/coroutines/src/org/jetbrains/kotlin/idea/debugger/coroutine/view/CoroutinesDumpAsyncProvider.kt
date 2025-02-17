@@ -27,9 +27,12 @@ import com.intellij.unscramble.MergeableToken
 @ApiStatus.Internal
 class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
     override fun getProvider(context: DebuggerContextImpl): ThreadDumpItemsProvider = object : ThreadDumpItemsProvider {
-        val enabled =
-            // TODO: check if there are any coroutines without evaluation
-            Registry.`is`("debugger.kotlin.show.coroutines.in.threadDumpPanel")
+        private val vm = context.debugProcess!!.virtualMachineProxy
+
+        private val enabled =
+            Registry.`is`("debugger.kotlin.show.coroutines.in.threadDumpPanel") &&
+                    // check that coroutines are in the project's classpath
+                    vm.classesByName("kotlinx.coroutines.debug.internal.DebugProbesImpl").isNotEmpty()
 
         override fun requiresEvaluation() = enabled
 
