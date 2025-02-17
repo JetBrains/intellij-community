@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.util.Computable
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.terminal.session.StyleRange
 import com.intellij.terminal.session.TerminalOutputModelState
@@ -24,12 +21,14 @@ import kotlin.math.max
 /**
  * [maxOutputLength] limits the length of the document. Zero means unlimited length.
  *
- * Note that this implementation acquires the write lock, so [updateContent] should be called on EDT.
+ * Note that this implementation doesn't the write lock by default on [updateContent].
+ * It is controlled by the passed [changesApplier], that wrap all document modifications.
  */
 @ApiStatus.Internal
 class TerminalOutputModelImpl(
   override val document: Document,
   private val maxOutputLength: Int,
+  private val changesApplier: TerminalDocumentChangesApplier,
 ) : TerminalOutputModel {
   private val mutableCursorOffsetState: MutableStateFlow<Int> = MutableStateFlow(0)
   override val cursorOffsetState: StateFlow<Int> = mutableCursorOffsetState.asStateFlow()
@@ -138,13 +137,11 @@ class TerminalOutputModelImpl(
 
     contentUpdateInProgress = true
     val changeStartOffset = try {
-      ApplicationManager.getApplication().runWriteAction(Computable {
-        var result = 0
-        CommandProcessor.getInstance().runUndoTransparentAction {
-          result = block()
-        }
-        result
-      })
+      var result = 0
+      changesApplier.applyChange {
+        result = block()
+      }
+      result
     }
     finally {
       contentUpdateInProgress = false

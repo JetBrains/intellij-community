@@ -82,7 +82,11 @@ internal class ReworkedTerminalView(
     terminalInput = TerminalInput(sessionFuture, sessionModel, coroutineScope.childScope("TerminalInput"))
 
     alternateBufferEditor = createAlternateBufferEditor(settings, parentDisposable = this)
-    val alternateBufferModel = TerminalOutputModelImpl(alternateBufferEditor.document, 0)
+    val alternateBufferModel = TerminalOutputModelImpl(
+      alternateBufferEditor.document,
+      maxOutputLength = 0,
+      WriteActionTerminalDocumentChangesApplier()
+    )
     configureOutputEditor(
       project,
       editor = alternateBufferEditor,
@@ -97,7 +101,11 @@ internal class ReworkedTerminalView(
     )
 
     outputEditor = createOutputEditor(settings, parentDisposable = this)
-    val outputModel = TerminalOutputModelImpl(outputEditor.document, TerminalUiUtils.getDefaultMaxOutputLength())
+    val outputModel = TerminalOutputModelImpl(
+      outputEditor.document,
+      maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength(),
+      WriteActionTerminalDocumentChangesApplier()
+    )
     val scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, coroutineScope.childScope("TerminalOutputScrollingModel"))
     configureOutputEditor(
       project,
