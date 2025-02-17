@@ -1317,6 +1317,11 @@ public final class JBUI {
       }
     }
 
+    public static final class FloatingToolbar {
+      public static final float DEFAULT_BACKGROUND_ALPHA = Popup.DEFAULT_HINT_OPACITY;
+      public static final float TRANSLUCENT_BACKGROUND_ALPHA = 0.9f;
+    }
+
     public static final class MainToolbar {
 
       public static final class Dropdown {
@@ -1574,6 +1579,8 @@ public final class JBUI {
       public static int minimumHintWidth() {
         return JBUIScale.scale(170);
       }
+
+      public static final float DEFAULT_HINT_OPACITY = 0.55f;
 
       public static Color mnemonicForeground() {
         return JBColor.namedColor("Popup.mnemonicForeground", ActionsList.MNEMONIC_FOREGROUND);

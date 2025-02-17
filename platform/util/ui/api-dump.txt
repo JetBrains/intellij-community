@@ -4322,6 +4322,10 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$FindPopup
 - s:bottomPanelInsetsKey():java.lang.String
 - s:scopesPanelInsets():java.awt.Insets
 - s:scopesPanelInsetsKey():java.lang.String
+f:com.intellij.util.ui.JBUI$CurrentTheme$FloatingToolbar
+- sf:DEFAULT_BACKGROUND_ALPHA:F
+- sf:TRANSLUCENT_BACKGROUND_ALPHA:F
+- <init>():V
 f:com.intellij.util.ui.JBUI$CurrentTheme$Focus
 - <init>():V
 - s:defaultButtonColor():java.awt.Color
@@ -4484,6 +4488,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$NotificationWarning
 - s:foregroundColor():java.awt.Color
 f:com.intellij.util.ui.JBUI$CurrentTheme$Popup
 - sf:BACKGROUND:java.awt.Color
+- sf:DEFAULT_HINT_OPACITY:F
 - <init>():V
 - s:bodyBottomInsetBeforeAd():I
 - s:bodyBottomInsetNoAd():I
