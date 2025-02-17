@@ -211,6 +211,9 @@ public interface ApplicationEx extends Application {
   @ApiStatus.Internal
   default void addReadActionListener(@NotNull ReadActionListener listener, @NotNull Disposable parentDisposable) { }
 
+  @ApiStatus.Experimental
+  default void addWriteActionListener(@NotNull WriteActionListener listener, @NotNull Disposable parentDisposable) { }
+
   @ApiStatus.Internal
   default void addWriteIntentReadActionListener(@NotNull WriteIntentReadActionListener listener, @NotNull Disposable parentDisposable) { }
 

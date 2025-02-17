@@ -91,6 +91,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager
 
   private final EventDispatcher<ApplicationListener> myDispatcher = EventDispatcher.create(ApplicationListener.class);
 
+  private final EventDispatcher<WriteActionListener> myWriteActionListenerDispatcher = EventDispatcher.create(WriteActionListener.class);
+
   private final EventDispatcher<ReadActionListener> myReadActionListenerDispatcher = EventDispatcher.create(ReadActionListener.class);
 
   private final EventDispatcher<WriteIntentReadActionListener> myWriteIntentReadActionListenerDispatcher =
@@ -1159,18 +1161,22 @@ public final class ApplicationImpl extends ClientAwareComponentManager
 
   private void fireBeforeWriteActionStart(@NotNull Class<?> action) {
     myDispatcher.getMulticaster().beforeWriteActionStart(action);
+    myWriteActionListenerDispatcher.getMulticaster().beforeWriteActionStart(action);
   }
 
   private void fireWriteActionStarted(@NotNull Class<?> action) {
     myDispatcher.getMulticaster().writeActionStarted(action);
+    myWriteActionListenerDispatcher.getMulticaster().writeActionStarted(action);
   }
 
   private void fireWriteActionFinished(@NotNull Class<?> action) {
     myDispatcher.getMulticaster().writeActionFinished(action);
+    myWriteActionListenerDispatcher.getMulticaster().writeActionFinished(action);
   }
 
   private void fireAfterWriteActionFinished(@NotNull Class<?> action) {
     myDispatcher.getMulticaster().afterWriteActionFinished(action);
+    myWriteActionListenerDispatcher.getMulticaster().afterWriteActionFinished(action);
   }
 
   @Override
@@ -1311,6 +1317,10 @@ public final class ApplicationImpl extends ClientAwareComponentManager
     fireWriteActionStarted(action);
   }
 
+  @Override
+  public void addWriteActionListener(@NotNull WriteActionListener listener, @NotNull Disposable parentDisposable) {
+    myWriteActionListenerDispatcher.addListener(listener, parentDisposable);
+  }
 
   @Override
   public void addReadActionListener(@NotNull ReadActionListener listener, @NotNull Disposable parentDisposable) {
