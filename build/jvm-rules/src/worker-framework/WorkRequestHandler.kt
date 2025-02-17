@@ -11,7 +11,7 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
-import io.opentelemetry.exporter.otlp.http.trace.OtlpHttpSpanExporter
+import io.opentelemetry.exporter.logging.otlp.internal.traces.OtlpStdoutSpanExporter
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.common.export.MemoryMode
 import io.opentelemetry.sdk.resources.Resource
@@ -51,14 +51,14 @@ fun interface WorkRequestExecutor<T : WorkRequest> {
 
 @Suppress("SpellCheckingInspection")
 fun configureOpenTelemetry(@Suppress("unused") out: OutputStream, serviceName: String): Pair<OpenTelemetrySdk, () -> Unit> {
-  //val spanExporter = OtlpStdoutSpanExporter.builder()
-  //  .setOutput(out)
-  //  .setMemoryMode(MemoryMode.REUSABLE_DATA)
-  //  .build()
-  val spanExporter = OtlpHttpSpanExporter.builder()
+  val spanExporter = OtlpStdoutSpanExporter.builder()
+    .setOutput(out)
     .setMemoryMode(MemoryMode.REUSABLE_DATA)
-    //.setEndpoint("https://jaeger-dev.labs.jb.gg/v1/traces")
     .build()
+  //val spanExporter = OtlpHttpSpanExporter.builder()
+  //  .setMemoryMode(MemoryMode.REUSABLE_DATA)
+  //  .setEndpoint("https://jaeger-dev.labs.jb.gg/v1/traces")
+  //  .build()
 
   val batchSpanProcessor = BatchSpanProcessor.builder(spanExporter)
     .build()
