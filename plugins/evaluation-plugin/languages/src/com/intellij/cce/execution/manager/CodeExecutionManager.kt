@@ -19,24 +19,16 @@ import kotlin.io.path.writeText
 abstract class CodeExecutionManager {
   companion object {
     val EP_NAME: ExtensionPointName<CodeExecutionManager> = ExtensionPointName.create("com.intellij.cce.codeExecutionManager")
-    fun getForLanguage(language: Language, inDocker: Boolean): CodeExecutionManager? =
-      EP_NAME.findFirstSafe {
-        it.language == language
-        && it.executionMode == if (inDocker)
-          ExecutionMode.DOCKER
-        else ExecutionMode.LOCAL
-      }
+    fun getForLanguage(language: Language, inDocker: Boolean): CodeExecutionManager? = EP_NAME.findFirstSafe {
+      it.language == language && it.executionMode == if (inDocker) ExecutionMode.DOCKER else ExecutionMode.LOCAL
+    }
   }
 
   abstract val language: Language
   abstract val executionMode: ExecutionMode?
   var shouldSetup: Boolean = true
 
-  private val executionBasedMetrics = listOf(
-    AIA_EXECUTION_SUCCESS_RATIO,
-    AIA_TEST_LINE_COVERAGE,
-    AIA_TEST_BRANCH_COVERAGE,
-    AIA_TEST_FILE_PROVIDED)
+  private val executionBasedMetrics = listOf(AIA_EXECUTION_SUCCESS_RATIO, AIA_TEST_LINE_COVERAGE, AIA_TEST_BRANCH_COVERAGE, AIA_TEST_FILE_PROVIDED)
 
   protected val collectedInfo: MutableMap<String, Any> = mutableMapOf()
 
@@ -51,8 +43,7 @@ abstract class CodeExecutionManager {
 
   // Protected since there can be language-specific metrics
   protected fun clear() {
-    executionBasedMetrics.forEach {
-      // Setting default value for every metric
+    executionBasedMetrics.forEach { // Setting default value for every metric
       collectedInfo[it] = 0
     }
   }
