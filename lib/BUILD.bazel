@@ -2490,15 +2490,15 @@ java_import(
 
 kt_jvm_import(
   name = "jediterm-core",
-  jar = "@jediterm-core-3_49_http//file",
-  srcjar = "@jediterm-core-3_49-sources_http//file",
+  jar = "@jediterm-core-3_50_http//file",
+  srcjar = "@jediterm-core-3_50-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 kt_jvm_import(
   name = "jediterm-ui",
-  jar = "@jediterm-ui-3_49_http//file",
-  srcjar = "@jediterm-ui-3_49-sources_http//file",
+  jar = "@jediterm-ui-3_50_http//file",
+  srcjar = "@jediterm-ui-3_50-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

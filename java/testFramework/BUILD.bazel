@@ -8,6 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//java/openapi:java",
+    "//java/testFramework/shared:java-testFramework-shared",
     "//platform/util",
     "@lib//:junit4",
     "//platform/util/jdom",
@@ -39,6 +40,7 @@ jvm_library(
     "//platform/xdebugger-testFramework:debugger-testFramework",
   ],
   exports = [
+    "//java/testFramework/shared:java-testFramework-shared",
     "//platform/util",
     "//platform/lang-api:lang",
     "//java/java-impl:impl",
