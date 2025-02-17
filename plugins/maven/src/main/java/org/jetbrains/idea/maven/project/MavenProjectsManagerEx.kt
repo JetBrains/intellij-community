@@ -52,6 +52,7 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap
 import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
 import org.jetbrains.idea.maven.project.preimport.SimpleStructureProjectVisitor
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
 import org.jetbrains.idea.maven.server.showUntrustedProjectNotification
 import org.jetbrains.idea.maven.telemetry.tracer
@@ -322,6 +323,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
   private suspend fun doUpdateAllMavenProjects(spec: MavenSyncSpec,
                                                modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+    MavenDistributionsCache.getInstance(myProject).cleanCaches()
     tracer.spanBuilder("checkOrInstallMavenWrapper").useWithScope {
       checkOrInstallMavenWrapper(project)
     }
