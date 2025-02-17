@@ -9,6 +9,8 @@ import com.intellij.ui.CollectionListModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import org.jetbrains.annotations.ApiStatus
 
@@ -37,6 +39,7 @@ class FlowBackedListModel<Item>(
 ) : CollectionListModel<Item>(), Disposable {
 
   private val modelUpdateState = MutableStateFlow(FlowBackedListModelState.CREATED)
+  val state: StateFlow<FlowBackedListModelState> = modelUpdateState.asStateFlow()
 
   init {
     coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {

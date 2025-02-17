@@ -34,24 +34,24 @@ suspend fun createAndShowNewSwitcherSuspend(onlyEditedFiles: Boolean?, event: An
   val serviceScope = RecentFilesCoroutineScopeProvider.getInstance(project).coroutineScope
 
   val uiUpdateScope = serviceScope.childScope("Switcher UI updates")
-  val backendRequestsScope = serviceScope.childScope("Switcher backend requests")
+  val modelUpdateScope = serviceScope.childScope("Switcher backend requests")
 
   val dataModel = createReactiveDataModel(serviceScope, project)
   val remoteApi = FileSwitcherApi.getInstance()
   val parameters = SwitcherLaunchEventParameters(event?.inputEvent)
 
-  backendRequestsScope.launch(start = CoroutineStart.UNDISPATCHED) {
+  modelUpdateScope.launch(start = CoroutineStart.UNDISPATCHED) {
     remoteApi.updateRecentFilesBackendState(createFilesSearchRequestRequest(true == onlyEditedFiles, !parameters.isEnabled, project))
   }
+  // try waiting for the initial bunch of files to load before displaying the UI
   dataModel.awaitModelPopulation(durationMillis = Registry.intValue("switcher.preload.timeout.ms", 300).toLong())
   return withContext(Dispatchers.EDT) {
-    // try waiting for the initial bunch of files to load before displaying the UI
     SwitcherPanel(project = project,
                   title = title,
                   launchParameters = parameters,
                   onlyEditedFiles = onlyEditedFiles,
                   givenFilesModel = dataModel,
-                  backendRequestsScope = backendRequestsScope,
+                  modelUpdateScope = modelUpdateScope,
                   uiUpdateScope = uiUpdateScope,
                   remoteApi = remoteApi)
   }

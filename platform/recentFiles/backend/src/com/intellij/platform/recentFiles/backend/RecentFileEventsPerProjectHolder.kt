@@ -17,6 +17,7 @@ import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.recentFiles.shared.RecentFilesBackendRequest
 import com.intellij.platform.recentFiles.shared.RecentFilesEvent
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 
 @Service(Service.Level.PROJECT)
