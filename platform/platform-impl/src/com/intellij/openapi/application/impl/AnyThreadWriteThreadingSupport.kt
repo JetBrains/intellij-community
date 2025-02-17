@@ -9,9 +9,9 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicatorProvider
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
@@ -428,16 +428,15 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       return permit
     }
 
-    val progress = ProgressManager.getInstance()
     // Impatient reader not in non-cancellable session will not wait
-    if (myImpatientReader.get() && !progress.isInNonCancelableSection) {
+    if (myImpatientReader.get() && !Cancellation.isInNonCancelableSection()) {
       throw ApplicationUtil.CannotRunReadActionException.create()
     }
 
     // Check for cancellation
     val indicator = ProgressIndicatorProvider.getGlobalProgressIndicator()
     // Nothing to check or cannot be canceled
-    if (indicator == null || progress.isInNonCancelableSection) {
+    if (indicator == null || Cancellation.isInNonCancelableSection()) {
       return getReadPermit(lock)
     }
 
