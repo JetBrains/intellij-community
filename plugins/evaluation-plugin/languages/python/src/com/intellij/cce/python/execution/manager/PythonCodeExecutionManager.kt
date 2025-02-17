@@ -18,7 +18,7 @@ import com.intellij.psi.PsiNamedElement
 import com.jetbrains.python.sdk.PythonSdkType
 import java.io.File
 
-class PythonCodeExecutionManager() : CodeExecutionManager() {
+open class PythonCodeExecutionManager() : CodeExecutionManager() {
   override val language = Language.PYTHON
   override val executionMode = ExecutionMode.LOCAL
 
