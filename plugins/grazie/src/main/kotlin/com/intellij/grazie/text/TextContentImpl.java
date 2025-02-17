@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 @ApiStatus.Internal
 public final class TextContentImpl extends UserDataHolderBase implements TextContent {
   private final TextDomain domain;
-  final List<TokenInfo> tokens;
+  public final List<TokenInfo> tokens;
   private volatile String text;
   private volatile int[] tokenOffsets;
 
@@ -423,7 +423,8 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
     return null;
   }
 
-  abstract static class TokenInfo {
+  @ApiStatus.Internal
+  public abstract static class TokenInfo {
     final String text;
 
     TokenInfo(String text) {
@@ -442,7 +443,7 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
 
   enum TokenKind { text, markup, unknown }
 
-  static class PsiToken extends TokenInfo {
+  static final class PsiToken extends TokenInfo {
     final PsiElement psi;
     final TextRange rangeInPsi;
     final TextRange rangeInFile;
@@ -512,7 +513,7 @@ public final class TextContentImpl extends UserDataHolderBase implements TextCon
     }
   }
 
-  static class WSTokenInfo extends TokenInfo {
+  static final class WSTokenInfo extends TokenInfo {
     WSTokenInfo(char ws) { super(String.valueOf(ws)); }
 
     @Override
