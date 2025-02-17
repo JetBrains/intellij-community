@@ -63,7 +63,7 @@ public final class MultiRoutingFileSystemProvider
   }
 
   @Override
-  protected @NotNull MultiRoutingFileSystem wrapDelegateFileSystem(@NotNull FileSystem delegateFs) {
+  public @NotNull MultiRoutingFileSystem wrapDelegateFileSystem(@NotNull FileSystem delegateFs) {
     return new MultiRoutingFileSystem(this, delegateFs);
   }
 
