@@ -22,7 +22,7 @@ class ZipArchiveOutputStream(
   private var finished = false
 
   private var bufferReleased = false
-  private val buffer = ByteBufAllocator.DEFAULT.directBuffer(4096 * 1024)
+  private val buffer = ByteBufAllocator.DEFAULT.directBuffer(128 * 1024)
 
   private var channelPosition = 0L
 
