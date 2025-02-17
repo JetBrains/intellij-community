@@ -221,7 +221,7 @@ abstract class DeprecatedSymbolUsageFixBase(
 
             val expression = createReplacementExpression(project, replaceWith, context) ?: return null
 
-            return buildCodeToInline(target, expression, isUnitType != false, null, object : CodeToInlineBuilder(original = target) {
+            return buildCodeToInline(target, expression, isUnitType != false, null, object : CodeToInlineBuilder(original = target, replaceWith.imports) {
                 override fun saveComments(codeToInline: MutableCodeToInline, contextDeclaration: KtDeclaration) {}
             })
         }
