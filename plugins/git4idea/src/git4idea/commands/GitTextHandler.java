@@ -35,6 +35,10 @@ public abstract class GitTextHandler extends GitHandler {
   private volatile boolean myIsDestroyed;
   private final Object myProcessStateLock = new Object();
 
+  /** @deprecated always {@code false} since a mediator is no longer used */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("unused")
+  protected boolean myWithMediator = false;
   private int myTerminationTimeoutMs = TERMINATION_TIMEOUT_MS;
 
   protected GitTextHandler(@Nullable Project project, @NotNull File directory, @NotNull GitCommand command) {
