@@ -37,6 +37,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.eel.provider.EelInitialization
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtilRt
@@ -527,6 +528,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
                                    index: Int,
                                    someProjectWasOpened: Boolean): Boolean {
     val (key, value) = openPaths.get(index)
+    EelInitialization.runEelInitialization(key)
     val project = openProject(projectFile = Path.of(key), options = OpenProjectTask {
       forceOpenInNewFrame = true
       showWelcomeScreen = false
