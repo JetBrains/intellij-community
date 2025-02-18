@@ -52,6 +52,31 @@ import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 
+/**
+ * A clickable text link that follows the standard visual styling with customizable appearance.
+ *
+ * Provides a text link that can be clicked to trigger an action. The link supports various states
+ * including enabled/disabled, focused, and hovered, with optional underline behavior based on
+ * the style configuration.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/link.html#link.md)
+ *
+ * **Usage example:**
+ * [`Links.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/standalone/src/main/kotlin/org/jetbrains/jewel/samples/standalone/view/component/Links.kt)
+ *
+ * **Swing equivalent:** [`JLabel`](https://docs.oracle.com/javase/tutorial/uiswing/components/label.html)
+ * with HTML link styling
+ *
+ * @param text The text to be displayed as a link
+ * @param onClick Called when the link is clicked
+ * @param modifier Modifier to be applied to the link
+ * @param enabled Controls whether the link can be interacted with
+ * @param textStyle The typography style to be applied to the link text
+ * @param overflow How the text should handle overflow
+ * @param interactionSource Source of interactions for this link
+ * @param style The visual styling configuration for the link
+ * @see javax.swing.JLabel
+ */
 @Composable
 public fun Link(
     text: String,
