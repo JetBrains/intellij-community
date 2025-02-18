@@ -2,11 +2,10 @@
 package com.intellij.java.debugger.impl.frontend.actions
 
 import com.intellij.java.debugger.impl.shared.actions.ViewTextActionBase
-import com.intellij.java.debugger.impl.shared.engine.JAVA_VALUE_KIND
+import com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
-import com.intellij.xdebugger.frame.XValueType
 import com.intellij.xdebugger.impl.actions.areFrontendDebuggerActionsEnabled
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
@@ -27,9 +26,9 @@ private class FrontendViewTextAction : ViewTextActionBase(), ActionRemoteBehavio
   override fun getStringNode(e: AnActionEvent): XValueNodeImpl? {
     val node = XDebuggerTreeActionBase.getSelectedNodes(e.dataContext).singleOrNull() ?: return null
     val xValue = node.valueContainer as? FrontendXValue ?: return null
-    val descriptor = xValue.descriptor ?: return null
+    val descriptor = (xValue.descriptor as? JavaValueDescriptor) ?: return null
 
-    if (xValue.modifier != null && descriptor.kind == JAVA_VALUE_KIND && descriptor.type is XValueType.StringType) {
+    if (xValue.modifier != null && descriptor.isString) {
       return node
     }
 
