@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -6,6 +6,7 @@ import com.intellij.dvcs.push.PushSource;
 import com.intellij.openapi.util.NlsSafe;
 import git4idea.GitLocalBranch;
 import git4idea.GitTag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,7 +129,8 @@ public abstract class GitPushSource implements PushSource {
     }
   }
 
-  static class Tag extends GitPushSource {
+  @ApiStatus.Internal
+  public static final class Tag extends GitPushSource {
     private final @NotNull GitTag tag;
 
     Tag(@NotNull GitTag tag) {

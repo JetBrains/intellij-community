@@ -126,7 +126,8 @@ public final class APIWrappers {
     }
   }
 
-  interface WrapperDelegateAccessor<T> {
+  @ApiStatus.Internal
+  public interface WrapperDelegateAccessor<T> {
     T getWrapperDelegate();
   }
 
