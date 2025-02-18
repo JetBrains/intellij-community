@@ -62,6 +62,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   private final @NotNull ModuleChecker myModuleChecker = new ModuleChecker(this);
   final @NotNull ModifierChecker myModifierChecker = new ModifierChecker(this);
   final @NotNull ExpressionChecker myExpressionChecker = new ExpressionChecker(this);
+  private final @NotNull SwitchChecker mySwitchChecker = new SwitchChecker(this);
   private final @NotNull StatementChecker myStatementChecker = new StatementChecker(this);
   private final @NotNull LiteralChecker myLiteralChecker = new LiteralChecker(this);
   private final @Nullable PsiJavaModule myJavaModule;
@@ -176,11 +177,11 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   @Override
   public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
     super.visitYieldStatement(statement);
-    if (!hasErrorResults()) myStatementChecker.checkYieldOutsideSwitchExpression(statement);
+    if (!hasErrorResults()) mySwitchChecker.checkYieldOutsideSwitchExpression(statement);
     if (!hasErrorResults()) {
       PsiExpression expression = statement.getExpression();
       if (expression != null) {
-        myStatementChecker.checkYieldExpressionType(expression);
+        mySwitchChecker.checkYieldExpressionType(expression);
       }
     }
   }
@@ -192,7 +193,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (parent instanceof PsiSwitchLabeledRuleStatement ruleStatement) {
       PsiSwitchBlock switchBlock = ruleStatement.getEnclosingSwitchBlock();
       if (switchBlock instanceof PsiSwitchExpression expr && !PsiPolyExpressionUtil.isPolyExpression(expr)) {
-        myStatementChecker.checkYieldExpressionType(statement.getExpression());
+        mySwitchChecker.checkYieldExpressionType(statement.getExpression());
       }
     }
   }
@@ -627,8 +628,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     super.visitSwitchExpression(expression);
     checkSwitchBlock(expression);
     if (!hasErrorResults()) checkFeature(expression.getFirstChild(), JavaFeature.SWITCH_EXPRESSION);
-    if (!hasErrorResults()) myExpressionChecker.checkSwitchExpressionReturnTypeCompatible(expression);
-    if (!hasErrorResults()) myExpressionChecker.checkSwitchExpressionHasResult(expression);
+    if (!hasErrorResults()) mySwitchChecker.checkSwitchExpressionReturnTypeCompatible(expression);
+    if (!hasErrorResults()) mySwitchChecker.checkSwitchExpressionHasResult(expression);
   }
 
   @Override
@@ -638,8 +639,8 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   private void checkSwitchBlock(@NotNull PsiSwitchBlock block) {
-    if (!hasErrorResults()) myExpressionChecker.checkSwitchBlockStatements(block);
-    if (!hasErrorResults()) myExpressionChecker.checkSwitchSelectorType(block);
+    if (!hasErrorResults()) mySwitchChecker.checkSwitchBlockStatements(block);
+    if (!hasErrorResults()) mySwitchChecker.checkSwitchSelectorType(block);
   }
 
   @Override
@@ -964,7 +965,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     if (result != null) {
       PsiElement resolved = result.getElement();
       if (!hasErrorResults() && resolved instanceof PsiClass aClass) {
-        myExpressionChecker.checkLocalClassReferencedFromAnotherSwitchBranch(ref, aClass);
+        mySwitchChecker.checkLocalClassReferencedFromAnotherSwitchBranch(ref, aClass);
       }
       if (!hasErrorResults()) myGenericsChecker.checkRawOnParameterizedType(ref, resolved);
       if (!hasErrorResults()) myExpressionChecker.checkAmbiguousConstructorCall(ref, resolved);
@@ -975,15 +976,15 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   @Override
   public void visitSwitchLabelStatement(@NotNull PsiSwitchLabelStatement statement) {
     super.visitSwitchLabelStatement(statement);
-    if (!hasErrorResults()) myStatementChecker.checkCaseStatement(statement);
-    if (!hasErrorResults()) myStatementChecker.checkGuard(statement);
+    if (!hasErrorResults()) mySwitchChecker.checkCaseStatement(statement);
+    if (!hasErrorResults()) mySwitchChecker.checkGuard(statement);
   }
 
   @Override
   public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
     super.visitSwitchLabeledRuleStatement(statement);
-    if (!hasErrorResults()) myStatementChecker.checkCaseStatement(statement);
-    if (!hasErrorResults()) myStatementChecker.checkGuard(statement);
+    if (!hasErrorResults()) mySwitchChecker.checkCaseStatement(statement);
+    if (!hasErrorResults()) mySwitchChecker.checkGuard(statement);
   }
 
   private JavaResolveResult doVisitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {

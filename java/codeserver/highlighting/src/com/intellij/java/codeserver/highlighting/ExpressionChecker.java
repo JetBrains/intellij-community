@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -140,27 +139,6 @@ final class ExpressionChecker {
       return;
     }
     myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(elementToHighlight, new JavaIncompatibleTypeErrorContext(lType, rType)));
-  }
-
-  void checkLocalClassReferencedFromAnotherSwitchBranch(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiClass aClass) {
-    if (!(aClass.getParent() instanceof PsiDeclarationStatement declarationStatement) ||
-        !(declarationStatement.getParent() instanceof PsiCodeBlock codeBlock) ||
-        !(codeBlock.getParent() instanceof PsiSwitchBlock)) {
-      return;
-    }
-    boolean classSeen = false;
-    for (PsiStatement statement : codeBlock.getStatements()) {
-      if (classSeen) {
-        if (PsiTreeUtil.isAncestor(statement, ref, true)) break;
-        if (statement instanceof PsiSwitchLabelStatement) {
-          myVisitor.report(JavaErrorKinds.REFERENCE_LOCAL_CLASS_OTHER_SWITCH_BRANCH.create(ref, aClass));
-          return;
-        }
-      }
-      else if (statement == declarationStatement) {
-        classSeen = true;
-      }
-    }
   }
 
   void checkMustBeBoolean(@NotNull PsiExpression expr) {
@@ -818,60 +796,6 @@ final class ExpressionChecker {
     myVisitor.report(JavaErrorKinds.RESOURCE_DECLARATION_OR_VARIABLE_EXPECTED.create(expression));
   }
 
-  void checkSwitchExpressionHasResult(@NotNull PsiSwitchExpression switchExpression) {
-    PsiCodeBlock switchBody = switchExpression.getBody();
-    if (switchBody != null) {
-      PsiStatement lastStatement = PsiTreeUtil.getPrevSiblingOfType(switchBody.getRBrace(), PsiStatement.class);
-      boolean hasResult = false;
-      if (lastStatement instanceof PsiSwitchLabeledRuleStatement rule) {
-        boolean reported = false;
-        for (;
-             rule != null;
-             rule = PsiTreeUtil.getPrevSiblingOfType(rule, PsiSwitchLabeledRuleStatement.class)) {
-          PsiStatement ruleBody = rule.getBody();
-          if (ruleBody instanceof PsiExpressionStatement) {
-            hasResult = true;
-          }
-          // the expression and throw statements are fine, only the block statement could be an issue
-          // 15.28.1 If the switch block consists of switch rules, then any switch rule block cannot complete normally
-          if (ruleBody instanceof PsiBlockStatement) {
-            ControlFlow flow = ControlFlowChecker.getControlFlow(ruleBody);
-            if (flow != null && ControlFlowUtil.canCompleteNormally(flow, 0, flow.getSize())) {
-              myVisitor.report(JavaErrorKinds.SWITCH_RULE_SHOULD_PRODUCE_RESULT.create(rule));
-              reported = true;
-            }
-            else if (!hasResult && hasYield(switchExpression, ruleBody)) {
-              hasResult = true;
-            }
-          }
-        }
-        if (reported) {
-          return;
-        }
-      }
-      else {
-        // previous statements may have no result as well, but in that case they fall through to the last one, which needs to be checked anyway
-        if (lastStatement != null) {
-          boolean canCompleteNormally;
-          if (lastStatement instanceof PsiSwitchLabelStatement) {
-            canCompleteNormally = true;
-          } else {
-            ControlFlow flow = ControlFlowChecker.getControlFlow(lastStatement);
-            canCompleteNormally = flow != null && ControlFlowUtil.canCompleteNormally(flow, 0, flow.getSize());
-          }
-          if (canCompleteNormally) {
-            myVisitor.report(JavaErrorKinds.SWITCH_EXPRESSION_SHOULD_PRODUCE_RESULT.create(switchExpression));
-            return;
-          }
-        }
-        hasResult = hasYield(switchExpression, switchBody);
-      }
-      if (!hasResult) {
-        myVisitor.report(JavaErrorKinds.SWITCH_EXPRESSION_NO_RESULT.create(switchExpression));
-      }
-    }
-  }
-
   void checkClassReferenceAfterQualifier(@NotNull PsiReferenceExpression expression, @Nullable PsiElement resolved) {
     if (!(resolved instanceof PsiClass psiClass)) return;
     PsiExpression qualifier = expression.getQualifierExpression();
@@ -896,31 +820,6 @@ final class ExpressionChecker {
       }
     }
     myVisitor.report(JavaErrorKinds.CLASS_OR_PACKAGE_EXPECTED.create(expression, psiClass));
-  }
-
-  private static boolean hasYield(@NotNull PsiSwitchExpression switchExpression, @NotNull PsiElement scope) {
-    class YieldFinder extends JavaRecursiveElementWalkingVisitor {
-      private boolean hasYield;
-
-      @Override
-      public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
-        if (statement.findEnclosingExpression() == switchExpression) {
-          hasYield = true;
-          stopWalking();
-        }
-      }
-
-      // do not go inside to save time: declarations cannot contain yield that points to outer switch expression
-      @Override
-      public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {}
-
-      // do not go inside to save time: expressions cannot contain yield that points to outer switch expression
-      @Override
-      public void visitExpression(@NotNull PsiExpression expression) {}
-    }
-    YieldFinder finder = new YieldFinder();
-    scope.accept(finder);
-    return finder.hasYield;
   }
 
   private static boolean isIntersection(@NotNull PsiTypeElement castTypeElement, @NotNull PsiType castType) {
@@ -1708,104 +1607,6 @@ final class ExpressionChecker {
           myVisitor.report(JavaErrorKinds.PACKAGE_CLASHES_WITH_CLASS.create(ref));
         }
       }
-    }
-  }
-
-  void checkSwitchExpressionReturnTypeCompatible(@NotNull PsiSwitchExpression switchExpression) {
-    if (!PsiPolyExpressionUtil.isPolyExpression(switchExpression)) {
-      return;
-    }
-    PsiType switchExpressionType = switchExpression.getType();
-    if (switchExpressionType != null) {
-      for (PsiExpression expression : PsiUtil.getSwitchResultExpressions(switchExpression)) {
-        PsiType expressionType = expression.getType();
-        if (expressionType != null && !TypeConversionUtil.areTypesAssignmentCompatible(switchExpressionType, expression)) {
-          myVisitor.report(JavaErrorKinds.SWITCH_EXPRESSION_INCOMPATIBLE_TYPE.create(
-            expression, new JavaIncompatibleTypeErrorContext(switchExpressionType, expressionType)));
-        }
-      }
-
-      if (PsiTypes.voidType().equals(switchExpressionType)) {
-        myVisitor.report(JavaErrorKinds.SWITCH_EXPRESSION_CANNOT_BE_VOID.create(switchExpression));
-      }
-    }
-  }
-
-  void checkSwitchBlockStatements(@NotNull PsiSwitchBlock block) {
-    PsiCodeBlock body = block.getBody();
-    if (body == null) return;
-    PsiElement first = PsiTreeUtil.skipWhitespacesAndCommentsForward(body.getLBrace());
-    if (first != null && !(first instanceof PsiSwitchLabelStatementBase) && !PsiUtil.isJavaToken(first, JavaTokenType.RBRACE)) {
-      myVisitor.report(JavaErrorKinds.SWITCH_LABEL_EXPECTED.create(first));
-    }
-    PsiElement element = first;
-    PsiStatement alien = null;
-    boolean classicLabels = false;
-    boolean enhancedLabels = false;
-    boolean levelChecked = false;
-    while (element != null && !PsiUtil.isJavaToken(element, JavaTokenType.RBRACE)) {
-      if (element instanceof PsiSwitchLabeledRuleStatement) {
-        if (!levelChecked) {
-          myVisitor.checkFeature(element, JavaFeature.ENHANCED_SWITCH);
-          if (myVisitor.hasErrorResults()) return;
-          levelChecked = true;
-        }
-        if (classicLabels) {
-          alien = (PsiStatement)element;
-          break;
-        }
-        enhancedLabels = true;
-      }
-      else if (element instanceof PsiStatement statement) {
-        if (enhancedLabels) {
-          //let's not highlight twice
-          if (statement instanceof PsiSwitchLabelStatement labelStatement &&
-              labelStatement.getChildren().length != 0 &&
-              labelStatement.getChildren()[labelStatement.getChildren().length - 1] instanceof PsiErrorElement errorElement &&
-              errorElement.getErrorDescription().startsWith(JavaPsiBundle.message("expected.colon.or.arrow"))) {
-            break;
-          }
-          alien = statement;
-          break;
-        }
-        classicLabels = true;
-      }
-
-      if (!levelChecked && element instanceof PsiSwitchLabelStatementBase label) {
-        @Nullable PsiCaseLabelElementList values = label.getCaseLabelElementList();
-        if (values != null && values.getElementCount() > 1) {
-          myVisitor.checkFeature(values, JavaFeature.ENHANCED_SWITCH);
-          if (myVisitor.hasErrorResults()) return;
-          levelChecked = true;
-        }
-      }
-
-      element = PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
-    }
-    if (alien == null) return;
-    if (enhancedLabels && !(alien instanceof PsiSwitchLabelStatementBase)) {
-      myVisitor.report(JavaErrorKinds.SWITCH_LABEL_EXPECTED.create(alien));
-      return;
-    }
-    myVisitor.report(JavaErrorKinds.SWITCH_DIFFERENT_CASE_KINDS.create(alien));
-  }
-
-  void checkSwitchSelectorType(@NotNull PsiSwitchBlock block) {
-    PsiExpression selector = block.getExpression();
-    if (selector == null) return;
-    PsiType selectorType = selector.getType();
-    if (selectorType == null) return;
-    JavaPsiSwitchUtil.SelectorKind kind = JavaPsiSwitchUtil.getSwitchSelectorKind(selectorType);
-
-    JavaFeature requiredFeature = kind.getFeature();
-
-    if ((kind == JavaPsiSwitchUtil.SelectorKind.INVALID || requiredFeature != null && !myVisitor.isApplicable(requiredFeature)) &&
-        !PsiTreeUtil.hasErrorElements(block)) {
-      myVisitor.report(JavaErrorKinds.SWITCH_SELECTOR_TYPE_INVALID.create(selector, kind));
-    }
-    PsiClass member = PsiUtil.resolveClassInClassTypeOnly(selectorType);
-    if (member != null && !PsiUtil.isAccessible(member.getProject(), member, selector, null)) {
-      myVisitor.report(JavaErrorKinds.TYPE_INACCESSIBLE.create(selector, member));
     }
   }
 }
