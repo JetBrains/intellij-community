@@ -55,6 +55,33 @@ import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.checkboxStyle
 
+/**
+ * A checkbox component that follows the standard visual styling with customizable appearance and behavior.
+ *
+ * Provides a selectable component that can be either checked or unchecked. The checkbox supports various
+ * states including enabled/disabled, focused, and hovered, adapting its appearance accordingly.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/checkbox.html)
+ *
+ * **Usage example:**
+ * [`Checkboxes.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Checkboxes.kt)
+ *
+ * **Swing equivalent:** [`JCheckBox`](https://docs.oracle.com/javase/tutorial/uiswing/components/button.html#checkbox)
+ *
+ * @param checked The current state of the checkbox
+ * @param onCheckedChange Called when the checkbox is clicked, with the new checked state
+ * @param modifier Modifier to be applied to the checkbox
+ * @param enabled Controls the enabled state of the checkbox. When false, the checkbox cannot be checked/unchecked
+ * @param outline The outline style to be applied to the checkbox
+ * @param interactionSource Source of interactions for this checkbox
+ * @param colors The color styling configuration for the checkbox
+ * @param metrics The sizing and spacing configuration for the checkbox
+ * @param icons The icon configuration for the checkbox
+ * @param textStyle The typography style to be applied to the checkbox's text content
+ * @param verticalAlignment The vertical alignment of the checkbox relative to its text content
+ * @see javax.swing.JCheckBox
+ * @see com.intellij.ui.components.JBCheckBox
+ */
 @Composable
 public fun Checkbox(
     checked: Boolean,
