@@ -21,7 +21,7 @@ public fun PlatformIcon(
     hint: PainterHint,
 ) {
     @Suppress("DEPRECATION") // Everything is deprecated here anyway
-    PlatformIcon(key, contentDescription!!, modifier, tint, *arrayOf(hint))
+    PlatformIcon(key, contentDescription, modifier, tint, *arrayOf(hint))
 }
 
 @Deprecated(
