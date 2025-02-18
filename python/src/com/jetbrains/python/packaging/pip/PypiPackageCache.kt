@@ -13,6 +13,8 @@ import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.common.PythonRankingAwarePackageNameComparator
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.io.BufferedReader
@@ -23,8 +25,6 @@ import java.nio.file.Paths
 import java.time.Duration
 import java.time.Instant
 import java.util.*
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 import kotlin.io.path.exists
 
 private val LOG = logger<PypiPackageCache>()
@@ -42,7 +42,7 @@ class PypiPackageCache : PythonPackageCache<String> {
   @Volatile
   private var cache: Set<String> = emptySet()
 
-  private val lock = ReentrantLock()
+  private val lock = Mutex()
   private var loadInProgress: Boolean = false
 
   private val gson: Gson = Gson()

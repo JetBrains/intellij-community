@@ -60,14 +60,12 @@ internal class CondaRepositoryManger(project: Project, sdk: Sdk) : PipBasedRepos
 
   override suspend fun initCaches() {
     super.initCaches()
-    service<CondaPackageCache>().apply {
-      if (isEmpty()) refreshAll(sdk, project)
-    }
+    service<CondaPackageCache>().reloadCache(sdk, project)
   }
 
   override suspend fun refreshCashes() {
     super.refreshCashes()
-    service<CondaPackageCache>().refreshAll(sdk, project)
+    service<CondaPackageCache>().forceReloadCache(sdk, project)
   }
 
   override fun searchPackages(query: String, repository: PyPackageRepository): List<String> {
