@@ -307,11 +307,9 @@ interface ThreadingSupport {
    */
   @ApiStatus.Internal
   @Throws(LockAccessDisallowed::class)
-  fun prohibitTakingLocksInsideAndRun(action: Runnable)
+  fun prohibitTakingLocksInsideAndRun(action: Runnable, failSoftly: Boolean)
 
-  /**
-   * DO NOT USE
-   */
+  /** DO NOT USE */
   @ApiStatus.Internal
   fun isInsideUnlockedWriteIntentLock(): Boolean
 

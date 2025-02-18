@@ -225,7 +225,7 @@ public interface ApplicationEx extends Application {
   default void addSuspendingWriteActionListener(@NotNull SuspendingWriteActionListener listener, @NotNull Disposable parentDisposable) { }
 
   @ApiStatus.Internal
-  default void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable) {
+  default void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, boolean failSoftly) {
     runnable.run();
   }
 }

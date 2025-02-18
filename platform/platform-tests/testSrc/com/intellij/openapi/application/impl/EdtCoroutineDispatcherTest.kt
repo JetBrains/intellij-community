@@ -4,9 +4,11 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.application
@@ -21,6 +23,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -30,6 +33,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
+import kotlin.test.assertTrue
 
 @TestApplication
 class EdtCoroutineDispatcherTest {
@@ -377,6 +381,33 @@ class EdtCoroutineDispatcherTest {
         }
       }
     }
+  }
+
+  @Test
+  fun `main dispatcher fails softly on locking actions`(): Unit = timeoutRunBlocking(context = Dispatchers.Main) {
+    Assumptions.assumeTrue(Registry.`is`("ide.install.ui.dispatcher.as.main.coroutine.dispatcher"))
+    val counter = AtomicInteger()
+    assertErrorLogged<ThreadingSupport.LockAccessDisallowed> {
+      application.runWriteAction {
+        counter.incrementAndGet()
+      }
+    }
+    assertErrorLogged<ThreadingSupport.LockAccessDisallowed> {
+      application.runReadAction {
+        counter.incrementAndGet()
+      }
+    }
+    assertErrorLogged<ThreadingSupport.LockAccessDisallowed> {
+      assertTrue(ApplicationManagerEx.getApplicationEx().tryRunReadAction {
+        counter.incrementAndGet()
+      })
+    }
+    assertErrorLogged<ThreadingSupport.LockAccessDisallowed> {
+      application.runWriteIntentReadAction<Unit, Exception> {
+        counter.incrementAndGet()
+      }
+    }
+    assertThat(counter.get()).isEqualTo(4)
   }
 
   @Suppress("ForbiddenInSuspectContextMethod")

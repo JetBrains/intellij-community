@@ -8,7 +8,9 @@ import com.intellij.openapi.application.ThreadingSupport
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.impl.EdtDispatcherKind.LockBehavior
 import com.intellij.openapi.application.isCoroutineWILEnabled
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.isRunBlockingUnderReadAction
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
@@ -27,7 +29,7 @@ import kotlin.coroutines.CoroutineContext
  * [ModalityState.any]. See IJPL-166436
  */
 internal sealed class EdtCoroutineDispatcher(
-  val type: EdtDispatcherKind,
+  protected val type: EdtDispatcherKind,
 ) : MainCoroutineDispatcher() {
 
   override val immediate: MainCoroutineDispatcher
@@ -60,10 +62,10 @@ internal sealed class EdtCoroutineDispatcher(
   }
 
   private fun wrapWithLocking(runnable: Runnable): Runnable {
-    if (!type.allowReadWriteLock) {
+    if (!type.allowLocks()) {
       return Runnable {
         try {
-          ApplicationManagerEx.getApplicationEx().prohibitTakingLocksInsideAndRun(runnable)
+          ApplicationManagerEx.getApplicationEx().prohibitTakingLocksInsideAndRun(runnable, type.lockBehavior == LockBehavior.LOCKS_DISALLOWED_FAIL_SOFT)
         }
         catch (e: ThreadingSupport.LockAccessDisallowed) {
           throw IllegalStateException("You are attempting to use the RW lock inside `$this`.\n" +
@@ -112,7 +114,7 @@ private class ImmediateEdtCoroutineDispatcher(type: EdtDispatcherKind) : EdtCoro
     if (!ModalityState.current().accepts(contextModality)) {
       return true
     }
-    if (type.allowReadWriteLock) {
+    if (type.allowLocks()) {
       // this dispatcher requires RW lock => if EDT does not the hold lock, then we need to reschedule to avoid blocking
       return !ApplicationManager.getApplication().isWriteIntentLockAcquired
     }
@@ -124,14 +126,14 @@ private class ImmediateEdtCoroutineDispatcher(type: EdtDispatcherKind) : EdtCoro
   }
 }
 
-enum class EdtDispatcherKind(
+internal enum class EdtDispatcherKind(
   /**
-   * Historically, all runnables executed on EDT were wrapped into a Write-Intent lock. We want to move away from this contract, so here we
-   * operate with two versions of EDT-thread dispatcher. If [allowReadWriteLock] == `true`, then all runnables are automatically wrapped
-   * into write-intent lock If [allowReadWriteLock] == `false`, then runnables are executed without the lock, and requesting lock is
-   * forbidden for them.
+   * Historically, all runnables executed on EDT were wrapped into a Write-Intent lock. We want to move away from this contract, so here
+   * we operate with two versions of EDT-thread dispatcher. If [lockBehavior] == [LockBehavior.LOCKS_ALLOWED], then all runnables are
+   * automatically wrapped into write-intent lock If [lockBehavior] != [LockBehavior.LOCKS_ALLOWED], then runnables are executed without the
+   * lock, and requesting lock is forbidden for them.
    */
-  val allowReadWriteLock: Boolean,
+  val lockBehavior: LockBehavior,
   /**
    * Sometimes coroutines get dispatched without an explicit modality in their contexts. In this case, we differentiate two cases:
    * 1. Platform-relevant dispatchers that may access the IJ Platform model (`Dispatchers.UI` and `Dispatchers.EDT`) These dispatchers
@@ -144,11 +146,12 @@ enum class EdtDispatcherKind(
   val fallbackModality: DefaultModality,
 ) {
 
-  LEGACY_EDT(true, DefaultModality.NON_MODAL),
 
-  MODERN_UI(false, DefaultModality.NON_MODAL),
+  LEGACY_EDT(LockBehavior.LOCKS_ALLOWED, DefaultModality.NON_MODAL),
 
-  MAIN(false, DefaultModality.ANY);
+  MODERN_UI(LockBehavior.LOCKS_DISALLOWED_FAIL_HARD, DefaultModality.NON_MODAL),
+
+  MAIN(LockBehavior.LOCKS_DISALLOWED_FAIL_SOFT, DefaultModality.ANY);
 
   enum class DefaultModality {
     ANY,
@@ -160,9 +163,18 @@ enum class EdtDispatcherKind(
     }
   }
 
-  fun presentableName(): String = when (allowReadWriteLock) {
-    true -> "Dispatchers.EDT"
-    false -> if (fallbackModality.toModalityState() === ModalityState.nonModal()) "Dispatchers.UI" else "Dispatchers.UI.Main"
+  enum class LockBehavior {
+    LOCKS_ALLOWED,
+    LOCKS_DISALLOWED_FAIL_SOFT,
+    LOCKS_DISALLOWED_FAIL_HARD,
+  }
+
+  fun allowLocks(): Boolean = lockBehavior == LockBehavior.LOCKS_ALLOWED
+
+  fun presentableName(): String = when (this) {
+    LEGACY_EDT -> "Dispatchers.EDT"
+    MODERN_UI -> "Dispatchers.UI"
+    MAIN -> "Dispatchers.UI.Main"
   }
 }
 
