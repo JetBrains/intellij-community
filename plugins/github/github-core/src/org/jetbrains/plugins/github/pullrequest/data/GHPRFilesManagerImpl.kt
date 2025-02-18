@@ -15,7 +15,6 @@ import com.intellij.util.containers.addIfNotNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.GHNewPRDiffVirtualFile
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffVirtualFile
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
@@ -67,8 +66,8 @@ internal class GHPRFilesManagerImpl(private val project: Project,
 
   override fun findDiffFile(pullRequest: GHPRIdentifier): DiffVirtualFileBase? = diffFiles[pullRequest]
 
-  override fun updateTimelineFilePresentation(details: GHPullRequestShort) {
-    findTimelineFile(details.prId)?.let {
+  override fun updateTimelineFilePresentation(pullRequest: GHPRIdentifier) {
+    findTimelineFile(pullRequest)?.let {
       FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(it)
     }
   }

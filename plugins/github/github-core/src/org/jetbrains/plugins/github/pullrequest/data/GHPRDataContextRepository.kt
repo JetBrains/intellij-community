@@ -30,7 +30,6 @@ import java.awt.Image
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
-import kotlin.Throws
 
 @Service(Service.Level.PROJECT)
 internal class GHPRDataContextRepository(private val project: Project, parentCs: CoroutineScope) {
@@ -148,7 +147,6 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
                              }, true))
       }
 
-      val filesManager = GHPRFilesManagerImpl(project, apiRepositoryCoordinates)
       val interactionState = project.service<GHPRPersistentInteractionState>()
 
       val creationService = GHPRCreationServiceImpl(requestExecutor, repoDataService)
@@ -156,7 +154,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       GHPRDataContext(cs, listLoader, listUpdatesChecker, dataProviderRepository,
                       securityService, repoDataService, creationService, detailsService, reactionsService,
                       imageLoader, avatarIconsProvider, reactionIconsProvider,
-                      filesManager, interactionState)
+                      interactionState)
     }
   }
 
@@ -174,9 +172,6 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
     override suspend fun postProcess(image: Image): Image =
       ImageUtil.createCircleImage(ImageUtil.toBufferedImage(image))
   }
-
-  // dangerous to do this without lock, but making it suspendable is too much work
-  fun findContext(repositoryCoordinates: GHRepositoryCoordinates): GHPRDataContext? = cache[repositoryCoordinates]
 
   companion object {
     private val LOG = logger<GHPRDataContextRepository>()

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowProjectViewModel
 import com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabs
@@ -21,6 +22,7 @@ import git4idea.remote.hosting.findHostedRemoteBranchTrackedByCurrent
 import git4idea.remote.hosting.knownRepositories
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -33,6 +35,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.GHPRListViewModel
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPRFilesManagerImpl
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRViewModelContainer
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRViewModelContainerImpl
@@ -64,6 +67,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
   private val repoManager = project.service<GHHostedRepositoriesManager>()
   private val allRepos = repoManager.knownRepositories.map(GHGitRepositoryMapping::repository)
   val repository: GHRepositoryCoordinates = dataContext.repositoryDataService.repositoryCoordinates
+  internal val filesManager = GHPRFilesManagerImpl(project, repository)
   override val projectName: String = GHUIUtil.getRepositoryDisplayName(allRepos, repository)
 
   override val listVm: GHPRListViewModel = GHPRListViewModel(project, cs, connection.dataContext)
@@ -77,6 +81,21 @@ class GHPRToolWindowProjectViewModel internal constructor(
   private val pullRequestsVms = Caffeine.newBuilder().build<GHPRIdentifier, DisposalCountingHolder<GHPRViewModelContainer>> { id ->
     DisposalCountingHolder {
       GHPRViewModelContainerImpl(project, cs, dataContext, id, it, ::viewPullRequest, ::viewPullRequest, ::openPullRequestDiff, ::refreshPrOnCurrentBranch)
+    }
+  }
+
+  init {
+    dataContext.dataProviderRepository.addDetailsLoadedListener(cs.nestedDisposable()) {
+      filesManager.updateTimelineFilePresentation(it.prId)
+    }
+
+    cs.launch {
+      try {
+        awaitCancellation()
+      }
+      finally {
+        Disposer.dispose(filesManager)
+      }
     }
   }
 
@@ -94,7 +113,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
       tabsHelper.close(GHPRToolWindowTab.NewPullRequest)
       lazyCreateVm.drop()?.let(Disposer::dispose)
       cs.launch {
-        dataContext.filesManager.closeNewPrFile()
+        filesManager.closeNewPrFile()
       }
     }
   }
@@ -147,13 +166,13 @@ class GHPRToolWindowProjectViewModel internal constructor(
 
   fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean) {
     cs.launch(Dispatchers.EDT) {
-      dataContext.filesManager.createAndOpenTimelineFile(id, requestFocus)
+      filesManager.createAndOpenTimelineFile(id, requestFocus)
     }
   }
 
   fun openPullRequestDiff(id: GHPRIdentifier?, requestFocus: Boolean) {
     cs.launch(Dispatchers.EDT) {
-      dataContext.filesManager.createAndOpenDiffFile(id, requestFocus)
+      filesManager.createAndOpenDiffFile(id, requestFocus)
     }
   }
 

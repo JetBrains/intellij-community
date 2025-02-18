@@ -28,7 +28,6 @@ class GHPRDataContext internal constructor(
   internal val htmlImageLoader: AsyncHtmlImageLoader,
   internal val avatarIconsProvider: GHAvatarIconsProvider,
   internal val reactionIconsProvider: IconsProvider<GHReactionContent>,
-  internal val filesManager: GHPRFilesManager,
   internal val interactionState: GHPRPersistentInteractionState,
 ) {
   private val listenersDisposable = Disposer.newDisposable("GH PR context listeners disposable")
@@ -42,7 +41,6 @@ class GHPRDataContext internal constructor(
       listLoader.updateData {
         if (it.id == details.id) details else null
       }
-      filesManager.updateTimelineFilePresentation(details)
     }
 
     // need immediate to dispose in time
@@ -51,7 +49,6 @@ class GHPRDataContext internal constructor(
         awaitCancellation()
       }
       finally {
-        Disposer.dispose(filesManager)
         Disposer.dispose(listenersDisposable)
         Disposer.dispose(dataProviderRepository)
         Disposer.dispose(listLoader)
