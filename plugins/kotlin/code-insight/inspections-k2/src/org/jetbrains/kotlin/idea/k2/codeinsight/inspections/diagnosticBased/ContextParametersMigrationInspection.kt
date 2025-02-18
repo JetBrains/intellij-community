@@ -79,12 +79,6 @@ internal class ContextParametersMigrationInspection :
         isOnTheFly: Boolean
     ): KtVisitor<*, *> {
         return object : KtVisitorVoid() {
-            // The override can be removed after KT-75170 is fixed
-            override fun visitContextReceiverList(contextReceiverList: KtContextReceiverList, data: Void?): Void? {
-                visitContextReceiverList(contextReceiverList)
-                return null
-            }
-
             override fun visitContextReceiverList(contextReceiverList: KtContextReceiverList) {
                 visitTargetElement(contextReceiverList, holder, isOnTheFly)
                 contextReceiverList.contextReceivers().forEach { contextReceiver ->
