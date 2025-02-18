@@ -3,15 +3,10 @@ package com.intellij.ide.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.withExplicitClientId
-import com.intellij.codeWithMe.asContextElement
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
-import com.intellij.ide.structureView.StructureView
-import com.intellij.ide.structureView.StructureViewBuilder
-import com.intellij.ide.structureView.StructureViewWrapper
-import com.intellij.ide.structureView.TextEditorBasedStructureViewModel
-import com.intellij.ide.structureView.StructureViewEventsCollector
+import com.intellij.ide.structureView.*
 import com.intellij.ide.structureView.impl.StructureViewComposite
 import com.intellij.ide.structureView.impl.StructureViewComposite.StructureViewDescriptor
 import com.intellij.ide.structureView.impl.StructureViewState
@@ -23,8 +18,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.*
-import com.intellij.openapi.client.ClientKind
-import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
@@ -75,7 +68,6 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
-import kotlin.coroutines.EmptyCoroutineContext
 
 @OptIn(FlowPreview::class)
 class StructureViewWrapperImpl(
@@ -105,20 +97,24 @@ class StructureViewWrapperImpl(
       LOG.error("StructureViewWrapperImpl must be not created for light project.")
     }
 
+    val clientId = ClientId.current
+
     // to check on the next turn
     val timer = TimerUtil.createNamedTimer("StructureView", REFRESH_TIME) { _ ->
-      if (!component.isShowing) return@createNamedTimer
+      withExplicitClientId(clientId) { // TODO: IJPL-178436
+        if (!component.isShowing) return@withExplicitClientId
 
-      val count = ActivityTracker.getInstance().count
-      if (count == myActivityCount) return@createNamedTimer
+        val count = ActivityTracker.getInstance().count
+        if (count == myActivityCount) return@withExplicitClientId
 
-      val state = ModalityState.stateForComponent(component)
-      if (!ModalityState.current().accepts(state)) return@createNamedTimer
+        val state = ModalityState.stateForComponent(component)
+        if (!ModalityState.current().accepts(state)) return@withExplicitClientId
 
-      val successful = WriteIntentReadAction.compute<Boolean, Throwable> {
-        loggedRun("check if update needed") { checkUpdate() }
+        val successful = WriteIntentReadAction.compute<Boolean, Throwable> {
+          loggedRun("check if update needed") { checkUpdate() }
+        }
+        if (successful) myActivityCount = count // to check on the next turn
       }
-      if (successful) myActivityCount = count // to check on the next turn
     }
     LOG.debug("timer to check if update needed: add")
     timer.start()
@@ -189,16 +185,7 @@ class StructureViewWrapperImpl(
           }
         }
         .collectLatest {
-          val controllerSession = ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER).singleOrNull()
-          // In RemoteDev's backend controller client id should be set explicitly to get correct editors' information
-          if (controllerSession != null) {
-            withContext(controllerSession.clientId.asContextElement()) {
-              rebuildImpl()
-            }
-          }
-          else {
             rebuildImpl()
-          }
         }
     }
   }
@@ -211,17 +198,6 @@ class StructureViewWrapperImpl(
     rebuildNow("clear caches")
   }
   private fun checkUpdate() {
-    val controllerSession = ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER).singleOrNull()
-    if (controllerSession != null) {
-      // If the structure view is running inside RemoteDev's backend to successfully resolve file editors, client id should be set correctly
-      withExplicitClientId(controllerSession.clientId) {
-        checkUpdateWithCorrectClientId(controllerSession.clientId)
-      }
-    } else {
-      checkUpdateWithCorrectClientId(null)
-    }
-  }
-  private fun checkUpdateWithCorrectClientId(clientId: ClientId?) {
     if (project.isDisposed) return
     val owner = getFocusOwner()
 
@@ -250,7 +226,7 @@ class StructureViewWrapperImpl(
           val firstRun = myFirstRun
           myFirstRun = false
 
-          coroutineScope.launch(context = clientId?.asContextElement() ?: EmptyCoroutineContext) {
+          coroutineScope.launch {
             if (file != null) {
               setFile(file)
             }
