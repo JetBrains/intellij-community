@@ -113,10 +113,7 @@ private class ImmediateEdtCoroutineDispatcher(allowReadWriteLock: Boolean) : Edt
       // this dispatcher requires RW lock => if EDT does not the hold lock, then we need to reschedule to avoid blocking
       return !ApplicationManager.getApplication().isWriteIntentLockAcquired
     }
-    else {
-      // this dispatcher forbids RW lock => we need to reschedule to release the lock
-      return ApplicationManager.getApplication().isWriteIntentLockAcquired
-    }
+    return false
   }
 
   override fun toString(): String = "${this@ImmediateEdtCoroutineDispatcher.allowReadWriteLock.dispatcherName}.immediate"

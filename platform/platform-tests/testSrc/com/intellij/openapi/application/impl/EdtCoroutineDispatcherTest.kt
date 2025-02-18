@@ -283,11 +283,11 @@ class EdtCoroutineDispatcherTest {
   }
 
   @Test
-  fun `main ui dispatcher performs dispatch when used under edt`(): Unit = timeoutRunBlocking {
+  fun `main ui dispatcher does not perform dispatch when used under edt`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       assertThat(application.isReadAccessAllowed).isTrue
       withContext(Dispatchers.UI.immediateDispatcher) {
-        assertThat(application.isReadAccessAllowed).isFalse
+        assertThat(application.isReadAccessAllowed).isTrue
       }
       assertThat(application.isReadAccessAllowed).isTrue
     }
