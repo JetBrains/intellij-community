@@ -5,8 +5,6 @@ import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBro
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.TrustedProjects;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -20,7 +18,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.TerminalUiSettingsManager;
 import com.intellij.ui.*;
@@ -36,11 +33,7 @@ import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions;
-import org.jetbrains.plugins.terminal.block.TerminalUsageLocalStorage;
-import org.jetbrains.plugins.terminal.block.feedback.BlockTerminalFeedbackSurveyKt;
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle;
-import org.jetbrains.plugins.terminal.fus.BlockTerminalSwitchPlace;
-import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -52,6 +45,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+
+import static org.jetbrains.plugins.terminal.TerminalUtil.*;
 
 public final class TerminalSettingsPanel {
   private JPanel myWholePanel;
@@ -213,18 +208,7 @@ public final class TerminalSettingsPanel {
   }
 
   public void apply() {
-    var blockTerminalSetting = Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY);
-    if (blockTerminalSetting.asBoolean() != myNewUiCheckbox.isSelected()) {
-      blockTerminalSetting.setValue(myNewUiCheckbox.isSelected());
-      TerminalUsageTriggerCollector.triggerBlockTerminalSwitched(myProject, myNewUiCheckbox.isSelected(),
-                                                                 BlockTerminalSwitchPlace.SETTINGS);
-      if (!myNewUiCheckbox.isSelected()) {
-        TerminalUsageLocalStorage.getInstance().recordBlockTerminalDisabled();
-        ApplicationManager.getApplication().invokeLater(() -> {
-          BlockTerminalFeedbackSurveyKt.showBlockTerminalFeedbackNotification(myProject);
-        }, ModalityState.nonModal());
-      }
-    }
+    setGenOneTerminalEnabled(myProject, myNewUiCheckbox.isSelected());
     myBlockTerminalOptions.setShowSeparatorsBetweenBlocks(myShowSeparatorsBetweenBlocksCheckbox.isSelected());
     myBlockTerminalOptions.setPromptStyle(getSelectedPromptStyle());
     myProjectOptionsProvider.setStartingDirectory(myStartDirectoryField.getText());
@@ -371,14 +355,6 @@ public final class TerminalSettingsPanel {
 
     assert c != null : "Can't find color for keys " + Arrays.toString(colorKeys);
     return c;
-  }
-
-  private static boolean isGenOneTerminalEnabled() {
-    return Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY, false);
-  }
-
-  private static boolean isGenTwoTerminalEnabled() {
-    return Registry.is(LocalBlockTerminalRunner.REWORKED_BLOCK_TERMINAL_REGISTRY, false);
   }
 
   public Color getChangedValueColor() {
