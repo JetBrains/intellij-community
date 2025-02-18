@@ -35,6 +35,7 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -95,20 +96,14 @@ public final class LibraryDependenciesUpdater {
           }
         }
 
-        HashStream64 hash = null;
-        for (Map.Entry<Path, List<String>> entry : present.entrySet()) {
-          if (hash == null) {
-            hash = Hashing.komihash5_0().hashStream();
-          }
-          else {
+        if (!present.isEmpty()) {
+          HashStream64 hash = Hashing.xxh3_64().hashStream();
+          for (Map.Entry<Path, List<String>> entry : present.entrySet()) {
+            // encoding string as bytes is faster
+            hash.putUnorderedIterable(entry.getValue(), name -> Hashing.xxh3_64().hashBytesToLong(name.getBytes(StandardCharsets.UTF_8)));
+            myNamespaces.put(entry.getKey(), Long.toUnsignedString(hash.getAsLong(), Character.MAX_RADIX));
             hash.reset();
           }
-          List<String> libNames = entry.getValue();
-          Collections.sort(libNames);
-          for (String name : libNames) {
-            hash.putString(name);
-          }
-          myNamespaces.put(entry.getKey(), Long.toUnsignedString(hash.getAsLong(), Character.MAX_RADIX));
         }
 
         Set<Path> past = libraryRoots.getRoots(new HashSet<>());
