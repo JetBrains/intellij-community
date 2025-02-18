@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -2499,7 +2499,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                          """.trimIndent())
       importProjectAsync()
 
-      writeAction {
+      edtWriteAction {
         val modifiableModel = ModuleRootManager.getInstance(getModule("project")).getModifiableModel()
         modifiableModel.addInvalidLibrary("SomeLibrary", LibraryTablesRegistrar.PROJECT_LEVEL)
         modifiableModel.addInvalidLibrary("Maven: AnotherLibrary", LibraryTablesRegistrar.PROJECT_LEVEL)
