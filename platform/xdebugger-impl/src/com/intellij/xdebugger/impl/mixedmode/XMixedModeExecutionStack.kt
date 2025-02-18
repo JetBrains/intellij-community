@@ -119,7 +119,9 @@ class XMixedModeExecutionStack(
       }
 
       if (mixFramesResult.isFailure) {
-        logger.error("Failed to build mixed stack. Will use low level frames only", mixFramesResult.exceptionOrNull())
+        if (mixFramesResult.exceptionOrNull() !is CancellationException)
+          logger.error("Failed to build mixed stack. Will use low level frames only", mixFramesResult.exceptionOrNull())
+
         container.addStackFrames(filterIfNeeded(lowLevelFrames), true)
         computedFramesMap.complete(lowLevelFrames.associateWith { null })
       }
