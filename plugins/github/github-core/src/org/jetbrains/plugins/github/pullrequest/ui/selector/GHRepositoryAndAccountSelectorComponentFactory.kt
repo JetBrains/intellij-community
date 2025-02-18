@@ -21,9 +21,11 @@ import javax.swing.AbstractAction
 import javax.swing.JButton
 import javax.swing.JComponent
 
-class GHRepositoryAndAccountSelectorComponentFactory internal constructor(private val project: Project,
-                                                                          private val vm: GHRepositoryAndAccountSelectorViewModel,
-                                                                          private val accountManager: GHAccountManager) {
+internal class GHRepositoryAndAccountSelectorComponentFactory(
+  private val project: Project,
+  private val vm: GHRepositoryAndAccountSelectorViewModel,
+  private val accountManager: GHAccountManager,
+) {
 
   fun create(scope: CoroutineScope): JComponent {
     val accountDetailsProvider = GHAccountsDetailsProvider(scope, accountManager)
