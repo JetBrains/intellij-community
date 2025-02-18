@@ -27,9 +27,6 @@ import java.util.Locale;
 public final class FileSystemUtil {
   private static final Logger LOG = Logger.getInstance(FileSystemUtil.class);
 
-  @ApiStatus.Internal
-  public static final boolean DO_NOT_RESOLVE_SYMLINKS = Boolean.getBoolean("idea.symlinks.no.resolve");
-
   private FileSystemUtil() { }
 
   /** Please use NIO API instead ({@link Files}, etc.) */
