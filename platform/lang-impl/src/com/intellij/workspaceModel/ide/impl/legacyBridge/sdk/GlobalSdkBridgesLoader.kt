@@ -58,7 +58,14 @@ class GlobalSdkBridgesLoader(val descriptor: EelDescriptor) : GlobalSdkTableBrid
     thisLogger().debug("Initial load of SDKs")
 
     for ((entity, sdkBridge) in sdks) {
-      mutableStorage.mutableSdkMap.addIfAbsent(entity, sdkBridge)
+      if (shouldSkipEntityProcessing(entity)) {
+        // The SDKs are populated from a single file for now. All loaded SDK entities go to the same entity storage
+        // We want to avoid having alien SDKs in storages, hence we filter them
+        mutableStorage.removeEntity(entity)
+      }
+      else {
+        mutableStorage.mutableSdkMap.addIfAbsent(entity, sdkBridge)
+      }
     }
     return {}
   }
@@ -69,7 +76,7 @@ class GlobalSdkBridgesLoader(val descriptor: EelDescriptor) : GlobalSdkTableBrid
     val addChanges = sdkChanges.filterIsInstance<EntityChange.Added<SdkEntity>>()
 
     for (addChange in addChanges) {
-      if (shouldSkipEntityProcessing(addChange)) {
+      if (shouldSkipEntityProcessing(addChange.newEntity)) {
         continue
       }
 
@@ -89,7 +96,7 @@ class GlobalSdkBridgesLoader(val descriptor: EelDescriptor) : GlobalSdkTableBrid
     if (changes.isEmpty()) return
 
     for (change in changes) {
-      if (shouldSkipEntityProcessing(change)) {
+      if ((change.newEntity ?: change.oldEntity)?.let(::shouldSkipEntityProcessing) == true) {
         continue
       }
       LOG.debug { "Process sdk change $change" }
@@ -125,11 +132,11 @@ class GlobalSdkBridgesLoader(val descriptor: EelDescriptor) : GlobalSdkTableBrid
    * The events about changes in global models are broadcasted to all existing `GlobalWorkspaceModel`s.
    * Not all of them are interested in every change, especially if the change happens in an unrelated environment.
    */
-  private fun shouldSkipEntityProcessing(entityChange: EntityChange<SdkEntity>): Boolean {
+  private fun shouldSkipEntityProcessing(entity: SdkEntity): Boolean {
     if (!Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
       return false
     }
-    return (entityChange.oldEntity ?: entityChange.newEntity)?.homePath?.toPath()?.getEelDescriptor() != descriptor
+    return entity.homePath?.toPath()?.getEelDescriptor() != descriptor
   }
 
   companion object {
