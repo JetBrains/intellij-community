@@ -6,7 +6,7 @@ import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
-import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
+import com.intellij.debugger.impl.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.base.util.safeVariables
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 
