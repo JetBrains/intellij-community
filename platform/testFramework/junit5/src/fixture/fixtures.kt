@@ -5,7 +5,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
@@ -78,11 +78,11 @@ fun TestFixture<Project>.moduleFixture(
 ): TestFixture<Module> = testFixture(name ?: "unnamed module") { context ->
   val project = this@moduleFixture.init()
   val manager = ModuleManager.getInstance(project)
-  val module = writeAction {
+  val module = edtWriteAction {
     manager.newNonPersistentModule(name ?: context.uniqueId, "")
   }
   initialized(module) {
-    writeAction {
+    edtWriteAction {
       manager.disposeModule(module)
     }
   }
@@ -101,7 +101,7 @@ fun TestFixture<Project>.moduleFixture(
   val project = this@moduleFixture.init()
   val path = pathFixture.init()
   val manager = ModuleManager.getInstance(project)
-  val module = writeAction {
+  val module = edtWriteAction {
     manager.newModule(path, "")
   }
   if (addPathToSourceRoot) {
@@ -109,7 +109,7 @@ fun TestFixture<Project>.moduleFixture(
       VirtualFileManager.getInstance().findFileByNioPath(path)!!
     }
 
-    writeAction {
+    edtWriteAction {
       ModuleRootManager.getInstance(module).modifiableModel.apply {
         addContentEntry(pathVfs).addSourceFolder(pathVfs, false)
         commit()
@@ -117,7 +117,7 @@ fun TestFixture<Project>.moduleFixture(
     }
   }
   initialized(module) {
-    writeAction {
+    edtWriteAction {
       manager.disposeModule(module)
     }
   }
@@ -144,7 +144,7 @@ fun TestFixture<Module>.sourceRootFixture(isTestSource: Boolean = false, pathFix
       PsiManager.getInstance(module.project).findDirectory(directoryVfs) ?: error("Fail to find directory $directoryVfs")
     }
     initialized(directory) {
-      writeAction {
+      edtWriteAction {
         directory.delete()
       }
     }
@@ -170,13 +170,13 @@ fun TestFixture<PsiDirectory>.virtualFileFixture(
 ): TestFixture<VirtualFile> = testFixture { _ ->
   val dirFixture = this@virtualFileFixture
   val dir = dirFixture.init()
-  val file = writeAction {
+  val file = edtWriteAction {
     dir.virtualFile.createChildData(dirFixture, name).also {
       it.setBinaryContent(content.toByteArray())
     }
   }
   initialized(file) {
-    writeAction {
+    edtWriteAction {
       file.delete(dirFixture)
     }
   }

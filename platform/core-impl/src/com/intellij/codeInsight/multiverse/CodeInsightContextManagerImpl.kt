@@ -5,7 +5,7 @@ import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -52,7 +52,7 @@ class CodeInsightContextManagerImpl(
     // it's unnecessary here to serialize invalidation requests because they are all equal, and it's unimportant, which is called first.
     // once more granular invalidation requests are added, it's necessary to add serialization (e.g., via a flow)
     cs.launch {
-      writeAction {
+      edtWriteAction {
         preferredContext.invalidate()
         allContexts.invalidate()
 

@@ -2,7 +2,7 @@
 package com.intellij.testFramework.junit5.fixture
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -244,14 +244,14 @@ private suspend fun getPsiDirectoryFromVfs(psiManager: PsiManager, directoryVfs:
 }
 
 private suspend fun createDirectory(targetPath: Path): VirtualFile {
-  return writeAction {
+  return edtWriteAction {
     VfsUtil.createDirectories(targetPath.toCanonicalPath())
     ?: error("Failed to create directory at path: $targetPath")
   }
 }
 
 private suspend fun deleteDirectorySafely(psiDirectory: PsiDirectory, targetPath: Path, project: Project) {
-  writeAction {
+  edtWriteAction {
     if (!psiDirectory.isValid) {
       val resolvedVfsDirectory = LocalFileSystem.getInstance().findFileByPath(targetPath.toString())
       resolvedVfsDirectory?.delete(project)

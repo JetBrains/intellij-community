@@ -232,7 +232,7 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   @ICUtil
   suspend fun <T> withWriteAction(block: () -> T): T {
     return withContext(Dispatchers.EDT) {
-      writeAction(block)
+      edtWriteAction(block)
     }
   }
 

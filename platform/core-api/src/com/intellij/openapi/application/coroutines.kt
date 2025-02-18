@@ -242,14 +242,11 @@ suspend fun <T> edtWriteAction(action: () -> T): T {
 /**
  * Runs [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction].
  *
- * This function is deprecated in favor of [edtWriteAction]. This deprecation is needed to free the name [writeAction],
- * as we are planning to schedule all write actions to background by default.
+ * This function is deprecated in favor of [edtWriteAction]. This deprecation is needed to free the name [edtWriteAction], as we are
+ * planning to schedule all write actions to background by default.
  *
- * NB This function is an API stub.
- * The implementation will change once running write actions would be allowed on other threads.
- * This function exists to make it possible to use it in suspending contexts
- * before the platform is ready to handle write actions differently.
- *
+ * NB This function is an API stub. The implementation will change once running write actions would be allowed on other threads. This
+ * function exists to make it possible to use it in suspending contexts before the platform is ready to handle write actions differently.
  */
 @Experimental
 suspend fun <T> writeAction(action: () -> T): T {
