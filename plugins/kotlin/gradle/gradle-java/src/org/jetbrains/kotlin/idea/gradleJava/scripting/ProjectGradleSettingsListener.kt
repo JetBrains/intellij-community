@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.observation.launchTracked
@@ -30,7 +30,7 @@ class ProjectGradleSettingsListener(
         settings.forEach {
             coroutineScope.launchTracked(Dispatchers.IO) {
                 val gradleVersion = getGradleVersion(project, it)
-                writeAction {
+                edtWriteAction {
                     val newRoot = buildRootsManager.loadLinkedRoot(it, gradleVersion)
                     buildRootsManager.add(newRoot)
                 }
@@ -43,7 +43,7 @@ class ProjectGradleSettingsListener(
             settings.forEach {
                 coroutineScope.launchTracked(Dispatchers.IO) {
                     val gradleVersion = getGradleVersion(project, it)
-                    val newRoot = writeAction {
+                    val newRoot = edtWriteAction {
                         buildRootsManager.loadLinkedRoot(it, gradleVersion)
                     }
                     if (newRoot is Imported) {

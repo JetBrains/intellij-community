@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.configuration.ui
 import com.intellij.facet.ProjectFacetManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -111,7 +111,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
             }
         }
         if (writeActionContinuations.isNotEmpty()) {
-            writeAction {
+            edtWriteAction {
                 writeActionContinuations.forEach { it.invoke() }
             }
         }
