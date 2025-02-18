@@ -20,6 +20,5 @@
     <orderEntry type="module" module-name="intellij.platform.tests" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework.shared" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
   </component>
 </module>
