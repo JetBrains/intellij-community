@@ -201,10 +201,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myCollector.processElement(element);
   }
 
-  public static @Nullable JavaResolveResult resolveJavaReference(@NotNull PsiReference reference) {
-    return reference instanceof PsiJavaReference psiJavaReference ? psiJavaReference.advancedResolve(false) : null;
-  }
-
   private boolean add(@Nullable HighlightInfo.Builder builder) {
     if (builder != null) {
       HighlightInfo info = builder.create();
