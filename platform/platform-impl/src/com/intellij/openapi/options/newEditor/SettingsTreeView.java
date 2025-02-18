@@ -446,12 +446,14 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
           return;
         }
 
+        /*
         Runnable handler = () -> {
           fireSelected(configurable).processed(promise);
         };
+        */
 
         if (configurable == null) {
-          handler.run();
+          fireSelected(null).processed(promise);
           return;
         }
 
@@ -459,7 +461,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         FilteringTreeStructure.FilteringNode editorUiNode = myModel.getTreeStructure().getVisibleNodeFor(editorNode);
         if (editorUiNode == null) return;
 
-        myModel.select(editorUiNode, myTree, treePath -> handler.run());
+        myModel.select(editorUiNode, myTree, unused -> {});
       }
 
       @Override
