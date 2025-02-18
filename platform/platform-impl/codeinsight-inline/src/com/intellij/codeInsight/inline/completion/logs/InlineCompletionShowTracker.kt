@@ -3,6 +3,7 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
+import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
@@ -22,6 +23,7 @@ import java.time.Duration
 internal class InlineCompletionShowTracker(
   private val request: InlineCompletionRequest,
   private val requestId: Long,
+  private val editorType: InlineCompletionEditorType,
   private val provider: Class<out InlineCompletionProvider>,
   private val invocationTime: Long,
   private val language: Language?,
@@ -49,6 +51,7 @@ internal class InlineCompletionShowTracker(
     state.firstComputed = true
     showStartTime = System.currentTimeMillis()
     data.add(ShownEvents.REQUEST_ID.with(requestId))
+    data.add(ShownEvents.EDITOR_TYPE.with(editorType))
     data.add(EventFields.Language.with(language))
     data.add(EventFields.CurrentFile.with(fileLanguage))
     data.add(ShownEvents.TIME_TO_SHOW.with(System.currentTimeMillis() - invocationTime))
@@ -133,7 +136,8 @@ internal class InlineCompletionShowTracker(
   private fun getDurations(): List<Duration> =
     if (ApplicationManager.getApplication().isUnitTestMode) {
       listOf(Duration.ofMillis(TEST_CHECK_STATE_AFTER_MLS))
-    } else {
+    }
+    else {
       listOf(Duration.ofSeconds(10), Duration.ofSeconds(30), Duration.ofMinutes(1), Duration.ofMinutes(5))
     }
 
@@ -148,7 +152,7 @@ internal class InlineCompletionShowTracker(
     var finalSuggestion: String,
     var lines: Int,
     var lengthChange: Int,
-    var firstComputed: Boolean
+    var firstComputed: Boolean,
   ) {
     fun append(text: String) {
       initialSuggestion += text

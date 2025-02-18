@@ -3,12 +3,8 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventField
-import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
-import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.internal.statistic.eventLog.events.ObjectEventField
-import com.intellij.internal.statistic.eventLog.events.VarargEventId
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -18,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object InlineCompletionLogs : CounterUsagesCollector() {
   // TODO use ML_RECORDER_ID
-  val GROUP: EventLogGroup = EventLogGroup("inline.completion.v2", 30, recorder = "ML")
+  val GROUP: EventLogGroup = EventLogGroup("inline.completion.v2", 31, recorder = "ML")
 
   val INSERTED_STATE_EVENT: VarargEventId = GROUP.registerVarargEvent(
     "inserted_state",
