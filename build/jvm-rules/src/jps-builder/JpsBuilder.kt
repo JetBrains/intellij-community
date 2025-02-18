@@ -212,6 +212,7 @@ suspend fun buildUsingJps(
   val moduleTarget = BazelModuleBuildTarget(
     module = jpsModel.project.modules.single(),
     sources = sources,
+    javaFileCount = args.optionalSingle(JvmBuilderFlags.JAVA_COUNT)?.toInt() ?: -1,
   )
 
   val isIncrementalCompilation = forceIncremental || args.boolFlag(JvmBuilderFlags.INCREMENTAL)
@@ -389,10 +390,16 @@ private suspend fun nonIncrementalBuildUsingJps(
   OutputSink.createOutputSink(oldJar = null).use { outputSink ->
     val exitCode = tracer.spanBuilder("compile").use { span ->
       val builders = arrayOf(
-        BazelJavaBuilder(isIncremental = false, tracer = tracer, isDebugEnabled = isDebugEnabled, out = log.out),
+        createJavaBuilder(
+          tracer = tracer,
+          isDebugEnabled = isDebugEnabled,
+          out = log.out,
+          javaFileCount = moduleTarget.javaFileCount,
+          isIncremental = false,
+        ),
         //NotNullInstrumentingBuilder(),
         NonIncrementalKotlinBuilder(job = coroutineContext.job, span = span),
-      )
+      ).filterNotNull().toTypedArray()
       builders.sortBy { it.category.ordinal }
 
       JpsTargetBuilder(
@@ -416,6 +423,22 @@ private suspend fun nonIncrementalBuildUsingJps(
   }
 }
 
+private fun createJavaBuilder(
+  tracer: Tracer,
+  isIncremental: Boolean,
+  isDebugEnabled: Boolean,
+  javaFileCount: Int,
+  out: Appendable,
+): BazelJavaBuilder? {
+  // we skip javaBuilder only for non-incremental, because for incremental
+  if (javaFileCount == 0) {
+    return null
+  }
+  else {
+    return BazelJavaBuilder(isIncremental = isIncremental, tracer = tracer, isDebugEnabled = isDebugEnabled, out = out)
+  }
+}
+
 private suspend fun writeJarAndAbi(
   tracer: Tracer,
   outputSink: OutputSink,
@@ -430,7 +453,10 @@ private suspend fun writeJarAndAbi(
       }
     }
     else {
-      val outputToSource = if (sourceDescriptors != null) {
+      val outputToSource = if (sourceDescriptors == null) {
+        emptyMap()
+      }
+      else {
         val outputToSource = hashMap<String, String>(sourceDescriptors.size)
         for (sourceDescriptor in sourceDescriptors) {
           for (output in sourceDescriptor.outputs) {
@@ -438,9 +464,6 @@ private suspend fun writeJarAndAbi(
           }
         }
         outputToSource
-      }
-      else {
-        emptyMap()
       }
 
       tracer.span("create output JAR and ABI JAR") {
@@ -535,22 +558,25 @@ private suspend fun initAndBuild(
           .setAttribute(AttributeKey.booleanKey("isRebuild"), isRebuild)
           .use { span ->
             val builders = arrayOf(
-              if (compileScope.isIncrementalCompilation) {
-                IncrementalKotlinBuilder(isRebuild = isRebuild, span = span, dataManager = buildDataProvider, jpsTarget = moduleTarget)
+              IncrementalKotlinBuilder(isRebuild = isRebuild, span = span, dataManager = buildDataProvider, jpsTarget = moduleTarget),
+              // If not rebuilding, we still need to create a JavaBuilder even if there are no Java files,
+              // as there might be some old ones cached (so, we have to update incremental cache).
+              if (isRebuild && moduleTarget.javaFileCount == 0) {
+                null
               }
               else {
-                NonIncrementalKotlinBuilder(job = coroutineContext.job, span = span)
+                createJavaBuilder(
+                  tracer = tracer,
+                  isDebugEnabled = isDebugEnabled,
+                  out = messageHandler.out,
+                  isIncremental = true,
+                  javaFileCount = moduleTarget.javaFileCount,
+                )
               },
-              BazelJavaBuilder(
-                isIncremental = compileScope.isIncrementalCompilation,
-                tracer = tracer,
-                isDebugEnabled = isDebugEnabled,
-                out = messageHandler.out,
-              ),
               //NotNullInstrumentingBuilder(),
               JavaBackwardReferenceIndexBuilder(),
               KotlinCompilerReferenceIndexBuilder(),
-            )
+            ).filterNotNull().toTypedArray()
             builders.sortBy { it.category.ordinal }
 
             JpsTargetBuilder(

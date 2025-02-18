@@ -14,6 +14,7 @@ import org.jetbrains.bazel.jvm.hashSet
 import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.jps.OutputSink
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
+import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
 import org.jetbrains.bazel.jvm.jps.impl.BazelDirtyFileHolder
 import org.jetbrains.bazel.jvm.jps.impl.BazelKotlinFsOperationsHelper
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
@@ -187,7 +188,7 @@ internal class IncrementalKotlinBuilder(
   }
 
   override suspend fun build(
-    context: CompileContext,
+    context: BazelCompileContext,
     module: JpsModule,
     chunk: ModuleChunk,
     target: BazelModuleBuildTarget,

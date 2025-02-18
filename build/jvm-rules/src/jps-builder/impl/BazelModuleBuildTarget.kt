@@ -24,6 +24,7 @@ import java.nio.file.Path
 internal class BazelModuleBuildTarget(
   module: JpsModule,
   @JvmField val sources: List<Path>,
+  @JvmField val javaFileCount: Int,
 ) : ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION) {
   // org.jetbrains.kotlin.incremental.IncrementalJvmCache allows `null`
   override fun getOutputDir(): File? = null

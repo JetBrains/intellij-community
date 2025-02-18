@@ -8,6 +8,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.jps.OutputSink
+import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
 import org.jetbrains.bazel.jvm.jps.impl.BazelDirtyFileHolder
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
@@ -19,10 +20,8 @@ import org.jetbrains.bazel.jvm.kotlin.prepareCompilerConfiguration
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.incremental.BuilderCategory
-import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.Utils
 import org.jetbrains.jps.incremental.messages.BuildMessage
-import org.jetbrains.jps.incremental.messages.CompilerMessage
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.progress.CompilationCanceledStatus
@@ -36,7 +35,7 @@ internal class NonIncrementalKotlinBuilder(
   override fun getCompilableFileExtensions() = arrayListOf("kt")
 
   override suspend fun build(
-    context: CompileContext,
+    context: BazelCompileContext,
     module: JpsModule,
     chunk: ModuleChunk,
     target: BazelModuleBuildTarget,
@@ -78,7 +77,7 @@ internal class NonIncrementalKotlinBuilder(
     }
     val exitCode = executeJvmPipeline(pipeline, bazelConfigurationHolder.kotlinArgs, builder.build(), messageCollector)
     if (exitCode == org.jetbrains.kotlin.cli.common.ExitCode.INTERNAL_ERROR) {
-      context.processMessage(CompilerMessage("kotlin", BuildMessage.Kind.ERROR, "Internal compiler error"))
+      context.compilerMessage(kind = BuildMessage.Kind.ERROR, message = "Internal compiler error")
       return ExitCode.ABORT
     }
 

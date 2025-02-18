@@ -27,9 +27,13 @@ bool_flag(
     name = "kt_trace",
     build_setting_default = False,
 )
-# --@rules_jvm//:jps_threshold=500
+# --@rules_jvm//:koltin_inc_threshold=100
 int_flag(
-    name = "jps_threshold",
+    name = "koltin_inc_threshold",
+    build_setting_default = -1,
+)
+int_flag(
+    name = "java_inc_threshold",
     build_setting_default = -1,
 )
 

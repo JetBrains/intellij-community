@@ -103,7 +103,7 @@ _KOPTS = {
         ),
         type = attr.bool,
     ),
-    "jps_threshold": struct(
+    "inc_threshold": struct(
         args = dict(
             default = -1,
             doc = "",

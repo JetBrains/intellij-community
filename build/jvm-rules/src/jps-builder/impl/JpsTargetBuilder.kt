@@ -40,7 +40,6 @@ import org.jetbrains.jps.incremental.fs.BuildFSState.CURRENT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.fs.BuildFSState.NEXT_ROUND_DELTA_KEY
 import org.jetbrains.jps.incremental.fs.CompilationRound
 import org.jetbrains.jps.incremental.messages.BuildMessage.Kind
-import org.jetbrains.jps.incremental.messages.CompilerMessage
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent
 import org.jetbrains.jps.incremental.messages.ProgressMessage
@@ -57,7 +56,7 @@ import kotlin.time.toJavaDuration
 
 internal abstract class BazelTargetBuilder(category: BuilderCategory) : ModuleLevelBuilder(category) {
   abstract suspend fun build(
-    context: CompileContext,
+    context: BazelCompileContext,
     module: JpsModule,
     chunk: ModuleChunk,
     target: BazelModuleBuildTarget,
@@ -85,7 +84,7 @@ internal class JpsTargetBuilder(
   private val numberOfSourcesProcessedByBuilder = hashMap<Builder, AtomicInteger>()
 
   suspend fun build(
-    context: CompileContext,
+    context: BazelCompileContext,
     moduleTarget: BazelModuleBuildTarget,
     builders: Array<out ModuleLevelBuilder>,
     buildState: LoadStateResult?,
@@ -156,7 +155,7 @@ internal class JpsTargetBuilder(
 
   // return true if changed something, false otherwise
   private suspend fun runModuleLevelBuilders(
-    context: CompileContext,
+    context: BazelCompileContext,
     target: BazelModuleBuildTarget,
     builders: Array<out ModuleLevelBuilder>,
     outputSink: OutputSink,
@@ -241,7 +240,7 @@ internal class JpsTargetBuilder(
                 var infoMessage = "Builder \"${builder.presentableName}\" requested rebuild of module chunk \"${chunk.name}\""
                 infoMessage += ".\n"
                 infoMessage += "Consider building whole project or rebuilding the module."
-                context.processMessage(CompilerMessage("", Kind.INFO, infoMessage))
+                context.compilerMessage(kind = Kind.INFO, message = infoMessage)
                 // allow rebuild from scratch only once per chunk
                 rebuildFromScratchRequested = true
                 // forcibly mark all files in the chunk dirty
@@ -278,7 +277,7 @@ internal class JpsTargetBuilder(
         builder.chunkBuildFinished(context, chunk)
       }
       if (Utils.errorsDetected(context)) {
-        context.processMessage(CompilerMessage("", Kind.JPS_INFO, "Errors occurred while compiling module ${chunk.presentableShortName}"))
+        context.compilerMessage(kind = Kind.JPS_INFO, message = "Errors occurred while compiling module ${chunk.presentableShortName}")
       }
     }
 
@@ -286,7 +285,7 @@ internal class JpsTargetBuilder(
   }
 
   private suspend fun buildTarget(
-    context: CompileContext,
+    context: BazelCompileContext,
     target: BazelModuleBuildTarget,
     builders: Array<out ModuleLevelBuilder>,
     buildState: LoadStateResult?,

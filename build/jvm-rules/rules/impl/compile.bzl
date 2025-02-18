@@ -273,19 +273,13 @@ def kt_jvm_produce_jar_actions(ctx, rule_kind):
     output_jar = ctx.actions.declare_file(ctx.label.name + ".jar")
 
     outputs_struct = None
-    jps_threshold = ctx.attr._jps_threshold[BuildSettingInfo].value
-    if jps_threshold == -1:
-        kotlinc_options = ctx.attr.kotlinc_opts[KotlincOptions]
-        jps_threshold = kotlinc_options.jps_threshold
 
     transitiveInputs = [compile_deps.compile_jars]
     _collect_runtime_jars(perTargetPlugins, transitiveInputs)
     _collect_runtime_jars(ctx.attr.deps, transitiveInputs)
 
-#     if jps_threshold == -2 or (jps_threshold != -1 and len(srcs.kt) >= jps_threshold):
     outputs_struct = _run_jps_builder(
           ctx = ctx,
-          jps_threshold = jps_threshold,
           output_jar = output_jar,
           rule_kind = rule_kind,
           toolchains = toolchains,
@@ -568,7 +562,6 @@ def _run_kt_java_builder_actions(
 
 def _run_jps_builder(
         ctx,
-        jps_threshold,
         output_jar,
         rule_kind,
         toolchains,
@@ -582,6 +575,12 @@ def _run_jps_builder(
     Returns:
         A struct containing the a list of output_jars and a struct annotation_processing jars
     """
+
+    kotlin_inc_threshold = ctx.attr._kotlin_inc_threshold[BuildSettingInfo].value
+    if kotlin_inc_threshold == -1:
+        kotlinc_options = ctx.attr.kotlinc_opts[KotlincOptions]
+        kotlin_inc_threshold = kotlinc_options.inc_threshold
+    java_inc_threshold = ctx.attr._java_inc_threshold[BuildSettingInfo].value
 
     args = init_builder_args(ctx, rule_kind, associates, transitiveInputs, plugins = plugins, compile_deps = compile_deps)
     args.add("--out", output_jar)
@@ -607,10 +606,12 @@ def _run_jps_builder(
     if javac_opts and javac_opts.add_exports:
         args.add_all("--add-export", javac_opts.add_exports)
 
-    isIncremental = jps_threshold != -1 and len(srcs.kt) >= jps_threshold
+    isIncremental = (kotlin_inc_threshold != -1 and len(srcs.kt) >= kotlin_inc_threshold) or (java_inc_threshold != -1 and len(srcs.java) >= java_inc_threshold)
     if isIncremental:
         args.add("--incremental")
 
+    javaCount = len(srcs.java)
+    args.add("--java-count", javaCount)
     ctx.actions.run(
         mnemonic = "JpsCompile",
         inputs = depset(srcs.all_srcs, transitive = transitiveInputs),
@@ -625,7 +626,7 @@ def _run_jps_builder(
             "supports-multiplex-sandboxing": "1",
         },
         arguments = [args],
-        progress_message = "compile %%{label} { kt: %d, java: %d%s}" % (len(srcs.kt), len(srcs.java), ", incremental" if isIncremental else ""),
+        progress_message = "compile %%{label} (kt: %d, java: %d%s}" % (len(srcs.kt), javaCount, ", incremental" if isIncremental else ""),
     )
 
     return struct(

@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("HardCodedStringLiteral")
+@file:Suppress("HardCodedStringLiteral", "UnstableApiUsage")
 
 package org.jetbrains.bazel.jvm.jps.impl
 
@@ -9,6 +9,7 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.Tracer
 import org.jetbrains.jps.incremental.MessageHandler
 import org.jetbrains.jps.incremental.messages.BuildMessage
+import org.jetbrains.jps.incremental.messages.BuildMessage.Kind
 import org.jetbrains.jps.incremental.messages.CompilerMessage
 import org.jetbrains.jps.incremental.messages.CustomBuilderMessage
 import org.jetbrains.jps.incremental.messages.ProgressMessage
@@ -26,6 +27,62 @@ internal class RequestLog(
 
   fun resetState() {
     hasErrors = false
+  }
+
+  fun compilerMessage(kind: Kind, message: String, sourcePath: String? = null, line: Int = -1, column: Int = -1) {
+    val m = if (sourcePath != null) {
+      val sourcePath = relativizer.toRelative(sourcePath, RelativePathType.SOURCE)
+      if (line < 0) {
+        "$sourcePath: $message"
+      }
+      else {
+        "$sourcePath($line:$column): $message"
+      }
+    }
+    else {
+      message
+    }
+
+    if (m.isEmpty()) {
+      return
+    }
+    if (kind == Kind.ERROR) {
+      parentSpan.addEvent("compilation error", Attributes.of(AttributeKey.stringKey("message"), m))
+      out.appendLine("Error: $m")
+      hasErrors = true
+    }
+    else {
+      out.appendLine(m)
+    }
+  }
+
+  fun compilerMessage(message: CompilerMessage) {
+    var sourcePath = message.sourcePath
+    var messageText = message.messageText
+    if (sourcePath != null) {
+      sourcePath = relativizer.toRelative(sourcePath, RelativePathType.SOURCE)
+      messageText = if (message.line < 0) {
+        "$sourcePath: $messageText"
+      }
+      else {
+        "$sourcePath(${message.line}:${message.column}): $messageText"
+      }
+    }
+
+    if (!messageText.isEmpty()) {
+      doReport(messageText, message)
+    }
+  }
+
+  private fun doReport(messageText: String, message: BuildMessage) {
+    if (message.kind == Kind.ERROR) {
+      parentSpan.addEvent("compilation error", Attributes.of(AttributeKey.stringKey("message"), messageText))
+      out.appendLine("Error: $messageText")
+      hasErrors = true
+    }
+    else if (!messageText.startsWith("Compiled") && !messageText.startsWith("Copying")) {
+      out.appendLine(messageText)
+    }
   }
 
   override fun processMessage(message: BuildMessage) {
@@ -59,17 +116,8 @@ internal class RequestLog(
       else -> message.messageText
     }
 
-    if (messageText.isEmpty()) {
-      return
-    }
-
-    if (message.kind == BuildMessage.Kind.ERROR) {
-      parentSpan.addEvent("compilation error", Attributes.of(AttributeKey.stringKey("message"), messageText))
-      out.appendLine("Error: $messageText")
-      hasErrors = true
-    }
-    else if (!messageText.startsWith("Compiled") && !messageText.startsWith("Copying")) {
-      out.appendLine(messageText)
+    if (!messageText.isEmpty()) {
+      doReport(messageText, message)
     }
   }
 
