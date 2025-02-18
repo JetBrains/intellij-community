@@ -47,13 +47,13 @@ class C {
   }
 
   void defaultBranchAlwaysThrows(int n) {
-    String s = <error descr="Switch expression does not have any result expressions">switch</error> (n) {
+    String s = <error descr="'switch' expression does not have any result expressions">switch</error> (n) {
       default: throw new RuntimeException();
     };
   }
 
   void defaultRuleAlwaysThrows(int n) {
-    String s = <error descr="Switch expression does not have any result expressions">switch</error> (n) {
+    String s = <error descr="'switch' expression does not have any result expressions">switch</error> (n) {
       default -> throw new RuntimeException();
     };
   }

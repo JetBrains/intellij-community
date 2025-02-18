@@ -10,7 +10,6 @@ import com.intellij.modcommand.ModCommandAction;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -62,7 +61,6 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     List<PsiElement> elementsToCheckDominance = new ArrayList<>();
     List<PsiCaseLabelElement> elementsToCheckCompleteness = new ArrayList<>();
     int switchBlockGroupCounter = 0;
-    boolean reported = false;
     for (PsiStatement st : body.getStatements()) {
       if (!(st instanceof PsiSwitchLabelStatementBase labelStatement)) continue;
       fillElementsToCheckFallThroughLegality(elementsToCheckFallThroughLegality, labelStatement, switchBlockGroupCounter);
@@ -78,10 +76,6 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
       PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
       if (labelElementList == null) continue;
       for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
-        if (checkLabelAndSelectorCompatibility(labelElement, errorSink)) {
-          reported = true;
-          continue;
-        }
         fillElementsToCheckDuplicates(elementsToCheckDuplicates, labelElement);
         fillElementsToCheckDominance(elementsToCheckDominance, labelElement);
         elementsToCheckCompleteness.add(labelElement);
@@ -91,11 +85,9 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     if (checkDuplicates(elementsToCheckDuplicates, errorSink)) {
       return;
     }
-    if (reported) {
-      return;
-    }
     Set<PsiElement> alreadyFallThroughElements = new HashSet<>();
-    reported = checkFallThroughFromPatternWithSeveralLabels(elementsToCheckFallThroughLegality, alreadyFallThroughElements, errorSink);
+    boolean reported =
+      checkFallThroughFromPatternWithSeveralLabels(elementsToCheckFallThroughLegality, alreadyFallThroughElements, errorSink);
     reported |= checkFallThroughToPatternPrecedingCompleteNormally(elementsToCheckFallThroughLegality, alreadyFallThroughElements, errorSink);
     if (reported) {
       return;
@@ -108,145 +100,6 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     if (needToCheckCompleteness(elementsToCheckCompleteness)) {
       checkCompleteness(elementsToCheckCompleteness, true, errorSink);
     }
-  }
-
-  private boolean checkLabelAndSelectorCompatibility(@NotNull PsiCaseLabelElement label,
-                                                     @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
-    if (label instanceof PsiDefaultCaseLabelElement) return false;
-    if (!(label instanceof PsiParenthesizedExpression) && isNullType(label)) {
-      if (mySelectorType instanceof PsiPrimitiveType && !isNullType(mySelector)) {
-        HighlightInfo.Builder error = createError(label, JavaErrorBundle.message("incompatible.switch.null.type", "null",
-                                                                                 JavaHighlightUtil.formatType(mySelectorType)));
-        errorSink.accept(error);
-        return true;
-      }
-      return false;
-    }
-    if (label instanceof PsiPattern) {
-      PsiPattern elementToReport = JavaPsiPatternUtil.getTypedPattern(label);
-      if (elementToReport == null) return false;
-      PsiTypeElement typeElement = JavaPsiPatternUtil.getPatternTypeElement(elementToReport);
-      if (typeElement == null) return false;
-      PsiType patternType = typeElement.getType();
-      if (!(patternType instanceof PsiClassType) && !(patternType instanceof PsiArrayType) &&
-          !JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(myLevel)) {
-        String expectedTypes = JavaErrorBundle.message("switch.class.or.array.type.expected");
-        String message = JavaErrorBundle.message("unexpected.type", expectedTypes, JavaHighlightUtil.formatType(patternType));
-        HighlightInfo.Builder info = createError(elementToReport, message);
-        if (patternType instanceof PsiPrimitiveType) {
-          HighlightInfo.Builder infoFeature =
-            HighlightUtil.checkFeature(elementToReport, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS,
-                                       PsiUtil.getLanguageLevel(elementToReport), elementToReport.getContainingFile());
-          if (infoFeature != null) {
-            info = infoFeature;
-          }
-        }
-        PsiPrimitiveType primitiveType = ObjectUtils.tryCast(patternType, PsiPrimitiveType.class);
-        if (primitiveType != null) {
-          IntentionAction fix = getFixFactory().createReplacePrimitiveWithBoxedTypeAction(mySelectorType, typeElement);
-          if (fix != null) {
-            info.registerFix(fix, null, null, null, null);
-          }
-        }
-        errorSink.accept(info);
-        return true;
-      }
-      if ((!ContainerUtil.and(JavaPsiPatternUtil.deconstructSelectorType(mySelectorType), type -> TypeConversionUtil.areTypesConvertible(type, patternType)) ||
-           // 14.30.3 A type pattern that declares a pattern variable of a reference type U is
-           // applicable at another reference type T if T is checkcast convertible to U (JEP 440-441)
-           // There is no rule that says that a reference type applies to a primitive type
-           (mySelectorType instanceof PsiPrimitiveType &&
-            PsiUtil.isAvailable(JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS, label)) &&
-           //from JEP 455 it is allowed
-           !PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, label)) &&
-          //null type is applicable to any class type
-          !mySelectorType.equals(PsiTypes.nullType())) {
-        if (!IncompleteModelUtil.isIncompleteModel(label) ||
-            (!IncompleteModelUtil.isPotentiallyConvertible(mySelectorType, patternType, label))) {
-          HighlightInfo.Builder error =
-            HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, elementToReport.getTextRange());
-          if (mySelectorType instanceof PsiPrimitiveType) {
-            HighlightInfo.Builder infoFeature =
-              HighlightUtil.checkFeature(elementToReport, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS,
-                                         PsiUtil.getLanguageLevel(elementToReport), elementToReport.getContainingFile());
-            if (infoFeature != null) {
-              error = infoFeature;
-            }
-          }
-          errorSink.accept(error);
-          return true;
-        }
-      }
-      HighlightInfo.Builder error = getUncheckedPatternConversionError(elementToReport);
-      if (error != null) {
-        errorSink.accept(error);
-        return true;
-      }
-      PsiDeconstructionPattern deconstructionPattern = JavaPsiPatternUtil.findDeconstructionPattern(elementToReport);
-      return createDeconstructionErrors(deconstructionPattern, errorSink);
-    }
-    else if (label instanceof PsiExpression expr) {
-      if (mySelectorType.equals(PsiTypes.nullType())) {
-        HighlightInfo.Builder info =
-          HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, expr.getType(), expr.getTextRange());
-        errorSink.accept(info);
-        return true;
-      }
-      HighlightInfo.Builder info = HighlightUtil.checkAssignability(mySelectorType, expr.getType(), expr, expr);
-      if (info != null) {
-        errorSink.accept(info);
-        return true;
-      }
-      if (label instanceof PsiReferenceExpression ref) {
-        String enumConstName = evaluateEnumConstantName(ref);
-        if (enumConstName != null) {
-          HighlightInfo.Builder error = createQualifiedEnumConstantInfo(ref);
-          if (error != null) {
-            errorSink.accept(error);
-            return true;
-          }
-          return false;
-        }
-      }
-      Object constValue = evaluateConstant(expr);
-      if (constValue == null) {
-        HighlightInfo.Builder error = createError(expr, JavaErrorBundle.message("constant.expression.required"));
-        errorSink.accept(error);
-        return true;
-      }
-      JavaPsiSwitchUtil.SelectorKind kind = mySelectorKind;
-      if (isExtendedPrimitiveSelector()) {
-        if ((kind == JavaPsiSwitchUtil.SelectorKind.LONG && !(constValue instanceof Long)) ||
-            (kind == JavaPsiSwitchUtil.SelectorKind.DOUBLE && !(constValue instanceof Double)) ||
-            (kind == JavaPsiSwitchUtil.SelectorKind.FLOAT && !(constValue instanceof Float)) ||
-            (kind == JavaPsiSwitchUtil.SelectorKind.BOOLEAN && !(constValue instanceof Boolean))) {
-          PsiType unboxedType = PsiPrimitiveType.getOptionallyUnboxedType(mySelectorType);
-          if (unboxedType != null) {
-            HighlightInfo.Builder error =
-              HighlightUtil.createIncompatibleTypeHighlightInfo(unboxedType, expr.getType(), label.getTextRange());
-            errorSink.accept(error);
-            return true;
-          }
-        }
-        return false;
-      }
-      if (ConstantExpressionUtil.computeCastTo(constValue, mySelectorType) == null) {
-        HighlightInfo.Builder error =
-          HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, expr.getType(), label.getTextRange());
-        errorSink.accept(error);
-        return true;
-      }
-      if (kind == JavaPsiSwitchUtil.SelectorKind.INT || kind == JavaPsiSwitchUtil.SelectorKind.STRING) {
-        return false;
-      }
-      HighlightInfo.Builder infoIncompatibleTypes =
-        createError(expr, JavaErrorBundle.message("switch.pattern.expected", JavaHighlightUtil.formatType(mySelectorType)));
-      errorSink.accept(infoIncompatibleTypes);
-      return true;
-    }
-    HighlightInfo.Builder error = createError(label, JavaErrorBundle.message("switch.constant.expression.required"));
-    errorSink.accept(error);
-    return true;
   }
 
   @Override
@@ -278,13 +131,6 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     else if (JavaPsiPatternUtil.isUnconditionalForType(labelElement, mySelectorType)) {
       elements.putValue(UNCONDITIONAL_PATTERN, labelElement);
     }
-  }
-
-  private boolean isExtendedPrimitiveSelector() {
-    return mySelectorKind == JavaPsiSwitchUtil.SelectorKind.BOOLEAN ||
-           mySelectorKind == JavaPsiSwitchUtil.SelectorKind.FLOAT ||
-           mySelectorKind == JavaPsiSwitchUtil.SelectorKind.DOUBLE ||
-           mySelectorKind == JavaPsiSwitchUtil.SelectorKind.LONG;
   }
 
   private static void fillElementsToCheckFallThroughLegality(@NotNull List<List<PsiSwitchLabelStatementBase>> elements,

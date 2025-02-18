@@ -411,13 +411,8 @@ final class JavaErrorFixProvider {
       }
     });
     fix(UNSUPPORTED_FEATURE, error -> {
-      if (error.context() == JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS &&
-          error.psi() instanceof PsiInstanceOfExpression instanceOfExpression) {
-        PsiTypeElement element = InstanceOfUtils.findCheckTypeElement(instanceOfExpression);
-        PsiType operandType = instanceOfExpression.getOperand().getType();
-        if (element != null && operandType != null && TypeConversionUtil.isPrimitiveAndNotNull(element.getType())) {
-          return myFactory.createReplacePrimitiveWithBoxedTypeAction(operandType, requireNonNull(element));
-        }
+      if (error.context() == JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS) {
+        return HighlightFixUtil.createPrimitiveToBoxedPatternFix(error.psi());
       }
       return null;
     });
@@ -439,7 +434,7 @@ final class JavaErrorFixProvider {
     fix(PATTERN_INSTANCEOF_EQUALS, redundantInstanceOfFix);
     fix(PATTERN_INSTANCEOF_SUPERTYPE, redundantInstanceOfFix);
   }
-  
+
   private void createVariableFixes() {
     fix(UNNAMED_VARIABLE_BRACKETS, error -> new NormalizeBracketsFix(error.psi()));
     fix(UNNAMED_VARIABLE_WITHOUT_INITIALIZER, error -> myFactory.createAddVariableInitializerFix(error.psi()));
@@ -688,6 +683,9 @@ final class JavaErrorFixProvider {
     fix(CALL_MEMBER_BEFORE_CONSTRUCTOR, qualifyFix);
     fix(CLASS_OR_PACKAGE_EXPECTED, error -> myFactory.createRemoveQualifierFix(
       requireNonNull(error.psi().getQualifierExpression()), error.psi(), error.context()));
+    fix(SWITCH_LABEL_QUALIFIED_ENUM, error -> myFactory.createDeleteFix(
+      requireNonNull(error.psi().getQualifier()), JavaErrorBundle.message("qualified.enum.constant.in.switch.remove.fix")));
+    fix(SWITCH_DEFAULT_LABEL_CONTAINS_CASE, error -> myFactory.createReplaceCaseDefaultWithDefaultFix(error.context()));
   }
 
   private void createAccessFixes() {

@@ -149,24 +149,24 @@ final class PatternChecker {
         if (recordComponents.length == deconstructionComponents.length) {
           if (isApplicableForRecordComponent(substitutedRecordComponentType, deconstructionComponentType,
                                              JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel())) {
-            myVisitor.checkFeature(deconstructionComponent, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS);
+            myVisitor.report(JavaErrorKinds.UNSUPPORTED_FEATURE.create(deconstructionComponent, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS));
+            continue;
           }
           else if ((substitutedRecordComponentType instanceof PsiPrimitiveType ||
                     deconstructionComponentType instanceof PsiPrimitiveType) &&
                    JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(languageLevel)) {
             myVisitor.report(JavaErrorKinds.CAST_INCONVERTIBLE.create(
               deconstructionComponent, new JavaIncompatibleTypeErrorContext(substitutedRecordComponentType, deconstructionComponentType)));
+            continue;
           }
 
-          if (!myVisitor.hasErrorResults()) {
-            if (myVisitor.isIncompleteModel() &&
-                (IncompleteModelUtil.hasUnresolvedComponent(substitutedRecordComponentType) ||
-                 IncompleteModelUtil.hasUnresolvedComponent(deconstructionComponentType))) {
-              continue;
-            }
-            myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
-              deconstructionComponent, new JavaIncompatibleTypeErrorContext(substitutedRecordComponentType, deconstructionComponentType)));
+          if (myVisitor.isIncompleteModel() &&
+              (IncompleteModelUtil.hasUnresolvedComponent(substitutedRecordComponentType) ||
+               IncompleteModelUtil.hasUnresolvedComponent(deconstructionComponentType))) {
+            continue;
           }
+          myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
+            deconstructionComponent, new JavaIncompatibleTypeErrorContext(substitutedRecordComponentType, deconstructionComponentType)));
         }
       }
       else {

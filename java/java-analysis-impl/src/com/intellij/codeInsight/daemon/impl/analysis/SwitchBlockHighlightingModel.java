@@ -91,7 +91,6 @@ public class SwitchBlockHighlightingModel {
 
     MultiMap<Object, PsiElement> elementsToCheckDuplicates = new MultiMap<>();
     boolean hasDefaultCase = false;
-    boolean reported = false;
 
     for (PsiStatement st : body.getStatements()) {
       if (!(st instanceof PsiSwitchLabelStatementBase labelStatement)) continue;
@@ -107,54 +106,12 @@ public class SwitchBlockHighlightingModel {
       }
       for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
         if (labelElement instanceof PsiExpression expr) {
-          HighlightInfo.Builder info = HighlightUtil.checkAssignability(mySelectorType, expr.getType(), expr, expr);
-          if (info != null) {
-            errorSink.accept(info);
-            reported = true;
-            continue;
-          }
-          Object value = null;
-          if (expr instanceof PsiReferenceExpression ref) {
-            String enumConstName = evaluateEnumConstantName(ref);
-            if (enumConstName != null) {
-              value = enumConstName;
-              HighlightInfo.Builder info2 = createQualifiedEnumConstantInfo(ref);
-              if (info2 != null) {
-                errorSink.accept(info2);
-                reported = true;
-                continue;
-              }
-            }
-          }
-          if (value == null) {
-            value = ConstantExpressionUtil.computeCastTo(expr, mySelectorType);
-          }
-          if (value == null) {
-            errorSink.accept(createError(expr, JavaErrorBundle.message("constant.expression.required")));
-            reported = true;
-            continue;
-          }
           fillElementsToCheckDuplicates(elementsToCheckDuplicates, expr);
-        }
-        else if (labelElement instanceof PsiDefaultCaseLabelElement defaultElement && labelElementList.getElementCount() == 1) {
-          // if default is not the only case in the label, insufficient language level will be reported
-          // see HighlightVisitorImpl#visitDefaultCaseLabelElement
-          HighlightInfo.Builder info = createError(defaultElement, JavaErrorBundle.message("default.label.must.not.contains.case.keyword"));
-          ModCommandAction fix = getFixFactory().createReplaceCaseDefaultWithDefaultFix(labelElementList);
-          info.registerFix(fix, null, null, null, null);
-          errorSink.accept(info);
-          reported = true;
-        }
-        else if (labelElement instanceof PsiPattern) {
-          // ignore patterns. If they appear here, insufficient language level will be reported
         }
       }
     }
 
     if (checkDuplicates(elementsToCheckDuplicates, errorSink)) {
-      return;
-    }
-    if (reported) {
       return;
     }
 
@@ -183,17 +140,6 @@ public class SwitchBlockHighlightingModel {
     PsiEnumConstant enumConstant = getEnumConstant(expr);
     if (enumConstant != null) return enumConstant.getName();
     return null;
-  }
-
-  static @Nullable HighlightInfo.Builder createQualifiedEnumConstantInfo(@NotNull PsiReferenceExpression expr) {
-    if (PsiUtil.isAvailable(JavaFeature.ENUM_QUALIFIED_NAME_IN_SWITCH, expr)) return null;
-    PsiElement qualifier = expr.getQualifier();
-    if (qualifier == null) return null;
-    HighlightInfo.Builder result = createError(expr, JavaErrorBundle.message("qualified.enum.constant.in.switch"));
-    IntentionAction action = getFixFactory().createDeleteFix(qualifier, JavaErrorBundle.message(
-      "qualified.enum.constant.in.switch.remove.fix"));
-    result.registerFix(action, null, null, null, null);
-    return result;
   }
 
   private static QuickFixFactory getFixFactory() {

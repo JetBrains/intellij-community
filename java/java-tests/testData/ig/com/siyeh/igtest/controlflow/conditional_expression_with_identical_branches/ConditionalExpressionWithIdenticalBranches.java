@@ -71,9 +71,9 @@ class ConditionalExpressionWithIdenticalBranches {
     } : switch (e) {
       default: yield 2; // different yield value expression
     };
-    int yy = (i == 10) ? <error descr="Switch expression does not have any result expressions">switch</error> (e) {
+    int yy = (i == 10) ? <error descr="'switch' expression does not have any result expressions">switch</error> (e) {
       default -> throw new InternalError();
-    }: <error descr="Switch expression does not have any result expressions">switch</error> (e) {
+    }: <error descr="'switch' expression does not have any result expressions">switch</error> (e) {
       default -> throw new InternalError((String) null); // different default body
     };
   }

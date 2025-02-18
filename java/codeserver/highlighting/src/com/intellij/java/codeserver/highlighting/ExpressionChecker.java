@@ -118,27 +118,31 @@ final class ExpressionChecker {
     }
   }
 
-  void checkAssignability(@Nullable PsiType lType,
-                          @Nullable PsiType rType,
-                          @Nullable PsiExpression expression,
-                          @NotNull PsiElement elementToHighlight) {
-    if (lType == rType) return;
+  /**
+   * @return true if there's no assignatbility problem reported
+   */
+  boolean checkAssignability(@Nullable PsiType lType,
+                             @Nullable PsiType rType,
+                             @Nullable PsiExpression expression,
+                             @NotNull PsiElement elementToHighlight) {
+    if (lType == rType) return true;
     if (expression == null) {
-      if (rType == null || lType == null || TypeConversionUtil.isAssignable(lType, rType)) return;
+      if (rType == null || lType == null || TypeConversionUtil.isAssignable(lType, rType)) return true;
     }
     else if (TypeConversionUtil.areTypesAssignmentCompatible(lType, expression) || PsiTreeUtil.hasErrorElements(expression)) {
-      return;
+      return true;
     }
     if (rType == null) {
       rType = expression.getType();
     }
     if (lType == null || lType == PsiTypes.nullType()) {
-      return;
+      return true;
     }
     if (expression != null && myVisitor.isIncompleteModel() && IncompleteModelUtil.isPotentiallyConvertible(lType, expression)) {
-      return;
+      return true;
     }
     myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(elementToHighlight, new JavaIncompatibleTypeErrorContext(lType, rType)));
+    return false;
   }
 
   void checkMustBeBoolean(@NotNull PsiExpression expr) {
