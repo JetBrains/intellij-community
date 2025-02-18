@@ -94,6 +94,7 @@ public abstract class SdkType implements SdkTypeId {
 
   /**
    * Returns a list of all valid SDKs found on the host where {@code project} is located.
+   * If {@code project} is null, returns a list of all valid SDKs found on the host.
    * <p/>
    * E.g. for Python SDK on Unix the method may return {@code ["/usr/bin/python2", "/usr/bin/python3"]}.
    * <p/>
