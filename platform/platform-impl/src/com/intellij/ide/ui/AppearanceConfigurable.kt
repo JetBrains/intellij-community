@@ -232,7 +232,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       group(message("title.accessibility")) {
         row(message("combobox.ide.scale.percent")) {
           val defaultScale = UISettingsUtils.defaultScale(false)
-          var resetZoom: Cell<ActionLink>? = null
+          lateinit var resetZoom: Cell<ActionLink>
 
           val model = IdeScaleTransformer.Settings.createIdeScaleComboboxModel()
           comboBox(model)
@@ -242,7 +242,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
               IdeScaleTransformer.Settings.scaleFromPercentStringValue(it.item, false)?.let { scale ->
                 logIdeZoomChanged(scale, false)
-                resetZoom?.visible(scale.percentValue != defaultScale.percentValue)
+                resetZoom.visible(scale.percentValue != defaultScale.percentValue)
                 settings.ideScale = scale
                 invokeLater {
                   // Invoke later to avoid NPE in JComboBox.repaint()
@@ -269,10 +269,10 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           resetZoom = link(message("ide.scale.reset.link")) {
             model.selectedItem = defaultScale.percentStringValue
           }.apply { visible(settings.ideScale.percentValue != defaultScale.percentValue) }
-        }.topGap(TopGap.SMALL)
+        }
 
         row {
-          var resetCustomFont: (() -> Unit)? = null
+          lateinit var resetCustomFont: (() -> Unit)
 
           val useCustomCheckbox = checkBox(message("checkbox.override.default.laf.fonts"))
             .gap(RightGap.SMALL)
@@ -286,7 +286,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               }
             }
             .onChanged { checkbox ->
-              if (!checkbox.isSelected) resetCustomFont?.invoke()
+              if (!checkbox.isSelected) resetCustomFont.invoke()
             }
 
           val fontFace = cell(FontComboBox())
@@ -459,7 +459,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
         if (!SystemInfo.isMac && ExperimentalUI.isNewUI()) {
           row  {
-            comboBox(model = CollectionComboBoxModel<MainMenuDisplayMode>(MainMenuDisplayMode.entries)/* SimpleListCellRenderer<MainMenuDisplayMode>.create { label, value, _ -> label.text = value.description  }*/  )
+            comboBox(model = CollectionComboBoxModel(MainMenuDisplayMode.entries))
               .label(message("main.menu.combobox.label"))
               .bindItem(settings::mainMenuDisplayMode.toNullableProperty())
               .apply {
