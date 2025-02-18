@@ -24,6 +24,7 @@ jvm_library(
     "//plugins/kotlin/base/indices:kotlin-base-indices",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
     "@lib//:kotlinc-analysis-api-provided",
+    "//java/java-psi-api:psi",
   ],
   runtime_deps = [":ide-plugin-shared_resources"]
 )
@@ -58,6 +59,9 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "@lib//:io-mockk",
+    "@lib//:io-mockk-jvm",
   ]
 )
 

@@ -1,6 +1,5 @@
 ### auto-generated section `build intellij.compose.ide.plugin.k1` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
   name = "ide-plugin-k1_resources",
@@ -8,14 +7,28 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
-java_library(
+jvm_library(
   name = "ide-plugin-k1",
+  module_name = "intellij.compose.ide.plugin.k1",
   visibility = ["//visibility:public"],
-  runtime_deps = [
-    ":ide-plugin-k1_resources",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
-  ]
+    "//platform/core-api:core",
+    "//platform/analysis-api:analysis",
+    "//platform/util",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "@lib//:kotlinc-kotlin-compiler-fe10-provided",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/kotlin/completion/impl-k1:kotlin-completion-impl-k1",
+  ],
+  runtime_deps = [":ide-plugin-k1_resources"]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.k1` end
 
@@ -37,6 +50,8 @@ jvm_test(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/core",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
   ],
   runtime_deps = ["//plugins/compose/intellij.compose.ide.plugin.k1:ide-plugin-k1"]
 )

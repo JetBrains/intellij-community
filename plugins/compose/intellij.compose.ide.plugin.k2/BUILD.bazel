@@ -26,6 +26,10 @@ jvm_library(
     "//platform/analysis-impl",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
     "@lib//:kotlinc-analysis-api-provided",
+    "//platform/util",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/completion/impl-k2:kotlin-completion-impl-k2",
   ],
   runtime_deps = [":ide-plugin-k2_resources"]
 )
@@ -61,6 +65,7 @@ jvm_test(
     "//platform/testFramework/core",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
     "@lib//:kotlinc-analysis-api-provided",
+    "@lib//:kotlin-test-assertions-core-jvm",
   ]
 )
 ### auto-generated section `build intellij.compose.ide.plugin.k2.tests` end
