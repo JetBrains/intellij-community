@@ -288,7 +288,8 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
   }
 
-  private abstract static class AuthDataProvider {
+  @ApiStatus.Internal
+  public abstract static class AuthDataProvider {
     protected final @NotNull String myUrl;
 
     protected AuthDataProvider(@NotNull String url) {
@@ -306,13 +307,13 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     abstract void onAuthFailure();
   }
 
-  private static class ExtensionAdapterProvider extends AuthDataProvider {
+  private static final class ExtensionAdapterProvider extends AuthDataProvider {
     private final @NotNull Project myProject;
     private final @NotNull GitHttpAuthDataProvider myDelegate;
 
     private AuthData myData = null;
 
-    protected ExtensionAdapterProvider(@NotNull String url, @NotNull Project project, @NotNull GitHttpAuthDataProvider provider) {
+    ExtensionAdapterProvider(@NotNull String url, @NotNull Project project, @NotNull GitHttpAuthDataProvider provider) {
       super(url);
       myProject = project;
       myDelegate = provider;
@@ -347,14 +348,14 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
   }
 
-  private static class DialogProvider extends AuthDataProvider {
+  private static final class DialogProvider extends AuthDataProvider {
     private final @NotNull Project myProject;
     private final @NotNull PasswordSafeProvider myPasswordSafeDelegate;
     private final boolean showActionForGitHelper;
     private boolean myCancelled;
     private boolean myDataForSession = false;
 
-    protected DialogProvider(@NotNull String url,
+    DialogProvider(@NotNull String url,
                              @NotNull Project project,
                              @NotNull PasswordSafeProvider passwordSafeDelegate,
                              boolean showActionForGitHelper) {
@@ -370,12 +371,12 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
 
     @Override
-    public @Nullable AuthData getData() {
+    public @NotNull AuthData getData() {
       return getDataFromDialog(myUrl, myPasswordSafeDelegate.getRememberedLogin(myUrl), true);
     }
 
     @Override
-    public @Nullable AuthData getDataForKnownLogin(@NotNull String login) {
+    public @NotNull AuthData getDataForKnownLogin(@NotNull String login) {
       return getDataFromDialog(myUrl, login, false);
     }
 
@@ -447,7 +448,8 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   }
 
   @VisibleForTesting
-  static class PasswordSafeProvider extends AuthDataProvider {
+  @ApiStatus.Internal
+  public static class PasswordSafeProvider extends AuthDataProvider {
     private final @NotNull DvcsRememberedInputs myRememberedInputs;
     private final @NotNull PasswordSafe myPasswordSafe;
 
@@ -561,14 +563,14 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       return "Cancelled";
     }
 
-    @Nullable
     @Override
+    @NotNull
     AuthData getData() {
       return new AuthData("", "");
     }
 
-    @Nullable
     @Override
+    @NotNull
     AuthData getDataForKnownLogin(@NotNull String login) {
       return new AuthData("", "");
     }
