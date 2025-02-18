@@ -53,9 +53,9 @@ public interface MavenLogEntryReader {
   }
 
   @ApiStatus.Internal
-  final class MavenLogEntry {
-    final @Nullable LogMessageType myType;
-    final @NotNull String myLine;
+  public final class MavenLogEntry {
+    public final @Nullable LogMessageType myType;
+    public final @NotNull String myLine;
 
     @TestOnly
     public MavenLogEntry(@NotNull String line, LogMessageType type) {
