@@ -23,4 +23,8 @@ private class JdiHelperClassLoaderImpl : JdiHelperClassLoader {
     val forceNewClassLoader = Registry.`is`("debugger.evaluate.load.helper.in.separate.classloader")
     return cache.getHelperClass(evaluationContext.withAutoLoadClasses(true), forceNewClassLoader, cls.name, *additionalClassesToLoad)
   }
+
+  override fun isApplicable(evaluationContext: EvaluationContextImpl): Boolean {
+    return !DexDebugFacility.isDex(evaluationContext.virtualMachineProxy.virtualMachine)
+  }
 }
