@@ -8,6 +8,7 @@ import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaSourceRoots
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
@@ -46,8 +47,8 @@ import java.nio.file.Paths
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.pathString
 
-class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
-  private val LOG = logger<AllIntellijEntitiesGenerationTest>()
+abstract class AbstractAllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
+  private val LOG = logger<AbstractAllIntellijEntitiesGenerationTest>()
 
   private val virtualFileManager = IdeVirtualFileUrlManagerImpl()
 
@@ -75,6 +76,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   override val testDataDirectory: File
     get() = File(IdeaTestExecutionPolicy.getHomePathWithPolicy())
 
+  // IJPL-895
   fun `_test generation of all entities in intellij codebase`() {
     executeEntitiesGeneration(::generateAndCompare)
   }
@@ -148,8 +150,10 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     modulesToCheck.forEach { (moduleEntity, sourceRoot), pathToPackages ->
       val isTestModule = sourceRoot.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID
 
-      fun generateForSpecificModule(processAbstractTypes: Boolean, beforeGeneration: (ModifiableRootModel) -> Unit,
-                                    afterGeneration: (ModifiableRootModel) -> Unit) {
+      fun generateForSpecificModule(
+        processAbstractTypes: Boolean, beforeGeneration: (ModifiableRootModel) -> Unit,
+        afterGeneration: (ModifiableRootModel) -> Unit,
+      ) {
         runWriteActionAndWait {
           val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
           beforeGeneration(modifiableModel)
@@ -165,11 +169,11 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
       }
 
       when (moduleEntity.name) {
-        "intellij.platform.workspace.storage"-> {
+        "intellij.platform.workspace.storage" -> {
           generateForSpecificModule(false, { modifiableModel -> removeWorkspaceStorageLibrary(modifiableModel) },
                                     { modifiableModel -> addWorkspaceStorageLibrary(modifiableModel) })
         }
-        "intellij.platform.workspace.jps"-> {
+        "intellij.platform.workspace.jps" -> {
           generateForSpecificModule(false, { modifiableModel -> removeWorkspaceJpsEntitiesLibrary(modifiableModel) },
                                     { modifiableModel -> addWorkspaceJpsEntitiesLibrary(modifiableModel) })
         }
@@ -191,9 +195,9 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
             addIntellijJavaLibrary(modifiableModel)
             addKotlinJpsCommonJar(modifiableModel)
           }, { modifiableModel ->
-            removeIntellijJavaLibrary(modifiableModel)
-            removeKotlinJpsCommonJar(modifiableModel)
-          })
+                                      removeIntellijJavaLibrary(modifiableModel)
+                                      removeKotlinJpsCommonJar(modifiableModel)
+                                    })
         }
         in modulesWithAbstractTypes -> {
           val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, true, false, isTestModule)
@@ -216,7 +220,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     storage: MutableEntityStorage, moduleEntity: ModuleEntity,
     sourceRoot: SourceRootEntity, pathToPackages: Set<String>,
     processAbstractTypes: Boolean, explicitApiEnabled: Boolean,
-    isTestModule: Boolean
+    isTestModule: Boolean,
   ): Boolean {
     val relativize = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl))
     myFixture.copyDirectoryToProject(relativize.invariantSeparatorsPathString, "")
@@ -272,7 +276,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     storage: MutableEntityStorage, moduleEntity: ModuleEntity,
     sourceRoot: SourceRootEntity, pathToPackages: Set<String>,
     processAbstractTypes: Boolean, explicitApiEnabled: Boolean,
-    isTestModule: Boolean
+    isTestModule: Boolean,
   ): Boolean {
     val genSourceRoots = sourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.filter { it.generated }
     val relativize = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl))
@@ -314,7 +318,8 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   private fun setupCustomIndent(moduleEntity: ModuleEntity) {
     val indent = modulesWithCustomIndentSize[moduleEntity.name] ?: return
     val settings = CodeStyle.getSettings(project)
-    val indentOptions = settings.getIndentOptions(KotlinFileType.INSTANCE)
+    val kotlinFileType: LanguageFileType? = KotlinFileType.INSTANCE
+    val indentOptions = settings.getIndentOptions(kotlinFileType)
     indentOptions.INDENT_SIZE = indent
     indentOptions.TAB_SIZE = indent
     indentOptions.CONTINUATION_INDENT_SIZE = indent
@@ -323,7 +328,8 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   private fun resetCustomIndent(moduleEntity: ModuleEntity) {
     modulesWithCustomIndentSize[moduleEntity.name] ?: return
     val settings = CodeStyle.getSettings(project)
-    val indentOptions = settings.getIndentOptions(KotlinFileType.INSTANCE)
+    val kotlinFileType: LanguageFileType? = KotlinFileType.INSTANCE
+    val indentOptions = settings.getIndentOptions(kotlinFileType)
     indentOptions.INDENT_SIZE = INDENT_SIZE
     indentOptions.TAB_SIZE = TAB_SIZE
     indentOptions.CONTINUATION_INDENT_SIZE = CONTINUATION_INDENT_SIZE
@@ -348,14 +354,11 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     return filter { path -> none { anotherPath -> anotherPath != path && anotherPath.isSubPathOf(path) } }
   }
 
-  private fun Path.isSubPathOf(anotherPath: Path): Boolean
-    = anotherPath.startsWith(this)
-
-
+  private fun Path.isSubPathOf(anotherPath: Path): Boolean = anotherPath.startsWith(this)
+  
   internal object TestErrorReporter : ErrorReporter {
     override fun reportError(message: String, file: VirtualFileUrl) {
       throw AssertionFailedError("Failed to load ${file.url}: $message")
     }
   }
 }
-

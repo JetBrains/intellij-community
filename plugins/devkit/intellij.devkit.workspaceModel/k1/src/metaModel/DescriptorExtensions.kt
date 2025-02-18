@@ -1,11 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.devkit.workspaceModel.metaModel.impl.extensions
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.devkit.workspaceModel.k1.metaModel
 
-import com.intellij.devkit.workspaceModel.metaModel.impl.*
+import com.intellij.devkit.workspaceModel.metaModel.WorkspaceModelDefaults
+import com.intellij.devkit.workspaceModel.metaModel.impl.CompiledObjModuleImpl
+import com.intellij.devkit.workspaceModel.metaModel.impl.ObjAnnotationImpl
+import com.intellij.devkit.workspaceModel.metaModel.impl.ObjClassImpl
+import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.workspaceModel.codegen.deft.meta.Obj
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
@@ -22,38 +24,30 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 
-
 private val moduleAbstractTypesClassIds: List<ClassId> = listOf(
-  ClassId.topLevel(StandardNames.ENTITY_SOURCE),
-  ClassId.topLevel(StandardNames.SYMBOLIC_ENTITY_ID)
+  WorkspaceModelDefaults.ENTITY_SOURCE.classId,
+  WorkspaceModelDefaults.SYMBOLIC_ENTITY_ID.classId
 )
 
-private val entitiesSuperclassFqn = StandardNames.WORKSPACE_ENTITY
+private val entitiesSuperclassFqn: FqName = WorkspaceModelDefaults.WORKSPACE_ENTITY.fqName
 
-internal val blobClasses: List<FqName> = arrayListOf(
-  StandardNames.VIRTUAL_FILE_URL,
-  StandardNames.ENTITY_POINTER
+private val blobClasses: List<FqName> = arrayListOf(
+  WorkspaceModelDefaults.VIRTUAL_FILE_URL.fqName,
+  WorkspaceModelDefaults.ENTITY_POINTER.fqName
 )
-
 
 internal val ModuleDescriptor.moduleAbstractTypes: List<ClassDescriptor>
   get() = moduleAbstractTypesClassIds.mapNotNull { findClassAcrossModuleDependencies(it) }
 
 internal fun ClassDescriptor.inheritors(
-  javaPsiFacade: JavaPsiFacade, scope: GlobalSearchScope
+  javaPsiFacade: JavaPsiFacade, scope: GlobalSearchScope,
 ): List<ClassDescriptor> {
   val psiClass = javaPsiFacade.findClass(fqNameSafe.asString(), scope) ?: return emptyList()
-  return psiClass.inheritors(scope).map { it.getJavaClassDescriptor()!! }
+  val inheritors = ClassInheritorsSearch.search(psiClass, scope, true, true, false)
+    .filterNot { it.qualifiedName == null }
+    .sortedBy { it.qualifiedName } // Sorting is needed for consistency in case of regeneration
+  return inheritors.map { it.getJavaClassDescriptor()!! }
 }
-
-private fun PsiClass.inheritors(scope: SearchScope): List<PsiClass> {
-  val inheritors = ClassInheritorsSearch.search(this, scope, true, true, false).asIterable().filterNot { it.isAnonymous }
-  return inheritors.sortedBy { it.qualifiedName } //Sorting is needed for consistency in case of regeneration
-}
-
-private val PsiClass.isAnonymous: Boolean
-  get() = qualifiedName == null
-
 
 internal val ClassifierDescriptor.javaClassFqn: String
   get() {
@@ -73,7 +67,7 @@ internal val ClassDescriptor.superTypesJavaFqns: List<String>
   get() = defaultType.supertypes()
     .mapNotNull { it.constructor.declarationDescriptor?.javaClassFqn }
     .withoutStandardTypes()
-
+    .sorted()
 
 internal val ClassDescriptor.isObject: Boolean
   get() = kind == ClassKind.OBJECT
@@ -96,11 +90,11 @@ internal val ClassDescriptor.isAbstractClassOrInterface: Boolean
   get() = !isFinalClass
 
 internal val ClassDescriptor.isEntityInterface: Boolean
-  get() = DescriptorUtils.isInterface(this) && defaultType.isSubclassOf(entitiesSuperclassFqn) // If this is `WorkspaceEntity` interface we need to check it
+  // If this is `WorkspaceEntity` interface, we need to check it
+  get() = DescriptorUtils.isInterface(this) && defaultType.isSubclassOf(entitiesSuperclassFqn)
 
 internal val ClassDescriptor.isEntityBuilderInterface: Boolean
-  get() = isEntityInterface && name.identifier == "Builder" //todo improve
-
+  get() = isEntityInterface && name.identifier == "Builder" // TODO: improve
 
 private fun KotlinType.isSubclassOf(superClassName: FqName): Boolean {
   return constructor.declarationDescriptor?.fqNameSafe == superClassName || constructor.supertypes.any {
@@ -108,31 +102,31 @@ private fun KotlinType.isSubclassOf(superClassName: FqName): Boolean {
   }
 }
 
-
 internal fun createObjTypeStub(interfaceDescriptor: ClassDescriptor, module: CompiledObjModuleImpl): ObjClassImpl<Obj> {
   val openness = when {
-    interfaceDescriptor.isAnnotatedBy(StandardNames.ABSTRACT_ANNOTATION) -> ObjClass.Openness.abstract
-    interfaceDescriptor.isAnnotatedBy(StandardNames.OPEN_ANNOTATION) -> ObjClass.Openness.open
+    interfaceDescriptor.isAnnotatedBy(WorkspaceModelDefaults.ABSTRACT_ANNOTATION.fqName) -> ObjClass.Openness.abstract
+    interfaceDescriptor.isAnnotatedBy(WorkspaceModelDefaults.OPEN_ANNOTATION.fqName) -> ObjClass.Openness.open
     else -> ObjClass.Openness.final
   }
   val propertyAnnotations = interfaceDescriptor.annotations
-                              .mapNotNull { it.fqName }
-                              .map { ObjAnnotationImpl(it.asString(), it.pathSegments().map { segment -> segment.asString() }) }
-  return ObjClassImpl(module, interfaceDescriptor.name.identifier, openness, interfaceDescriptor.source, propertyAnnotations)
+    .mapNotNull { it.fqName }
+    .map { ObjAnnotationImpl(it.asString(), it.pathSegments().map { segment -> segment.asString() }) }
+  return ObjClassImpl(module, interfaceDescriptor.name.identifier, openness, interfaceDescriptor.source.getPsi(), propertyAnnotations)
 }
 
-internal fun computeKind(property: PropertyDescriptor): ObjProperty.ValueKind {
-  val getter = property.getter ?: return ObjProperty.ValueKind.Plain
+internal fun PropertyDescriptor.computeKind(): ObjProperty.ValueKind {
+  val getter = getter ?: return ObjProperty.ValueKind.Plain
   if (!getter.hasBody()) return ObjProperty.ValueKind.Plain
   val declaration = getter.source.getPsi() as? KtDeclarationWithBody ?: return ObjProperty.ValueKind.Plain
   val getterText = (declaration.bodyExpression ?: declaration.bodyBlockExpression)?.text
   return when {
     getterText == null -> ObjProperty.ValueKind.Plain
-    getter.isAnnotatedBy(StandardNames.DEFAULT_ANNOTATION) -> ObjProperty.ValueKind.WithDefault(getterText)
+    getter.isAnnotatedBy(WorkspaceModelDefaults.DEFAULT_ANNOTATION.fqName) -> ObjProperty.ValueKind.WithDefault(getterText)
     else -> ObjProperty.ValueKind.Computable(getterText)
   }
 }
 
+private val standardTypes = setOf(Any::class.qualifiedName, CommonClassNames.JAVA_LANG_OBJECT, CommonClassNames.JAVA_LANG_ENUM)
 
 private fun Iterable<String>.withoutStandardTypes(): List<String> {
   return filterNot { standardTypes.contains(it) }

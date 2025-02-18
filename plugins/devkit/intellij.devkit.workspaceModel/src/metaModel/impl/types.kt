@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.metaModel.impl
 
-import com.intellij.devkit.workspaceModel.metaModel.ObjMetaElementWithSource
+import com.intellij.devkit.workspaceModel.metaModel.ObjMetaElementWithPsi
+import com.intellij.psi.PsiElement
 import com.intellij.workspaceModel.codegen.deft.meta.*
-import org.jetbrains.kotlin.descriptors.SourceElement
 
 object ObjTypeType : ObjType<ObjType<*>> {
   override val classifier: ObjType<ObjType<*>>
@@ -27,9 +27,9 @@ class ObjClassImpl<T : Obj>(
   override val module: ObjModule,
   override val name: String,
   override val openness: ObjClass.Openness,
-  override val sourceElement: SourceElement,
+  override val sourcePsi: PsiElement?,
   override val annotations: List<ObjAnnotation>
-) : ObjClass<T>, ObjTypeImpl<T>(), ObjMetaElementWithSource {
+) : ObjClass<T>, ObjTypeImpl<T>(), ObjMetaElementWithPsi {
   override var parentField: OwnProperty<T, *>? = null
   override var nameField: OwnProperty<T, *>? = null
   private val mutableFields: MutableList<OwnProperty<T, *>> = ArrayList()

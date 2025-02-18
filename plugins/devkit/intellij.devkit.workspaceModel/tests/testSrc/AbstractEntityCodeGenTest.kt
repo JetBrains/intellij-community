@@ -2,11 +2,11 @@
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import org.junit.jupiter.api.Assertions
 import java.io.File
 import java.nio.file.Path
-import org.junit.jupiter.api.Assertions
 
-class EntityCodeGenTest : CodeGenerationTestBase() {
+abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
   override val testDataDirectory: File
     get() = File(PathManagerEx.getCommunityHomePath() + "/plugins/devkit/intellij.devkit.workspaceModel/tests/testData/codeGen/$testDirectoryName")
 
@@ -39,6 +39,14 @@ class EntityCodeGenTest : CodeGenerationTestBase() {
     doTest()
   }
 
+  fun testEntityWithChildrenCollection() {
+    doTest()
+  }
+
+  fun testEntityWithDifferentChildrenTargets() {
+    doTest()
+  }
+
   fun testRefsFromAnotherModule() {
     doTest()
   }
@@ -61,6 +69,14 @@ class EntityCodeGenTest : CodeGenerationTestBase() {
 
   fun testAddCopyrightComment() {
     doTest(processAbstractTypes = true)
+  }
+
+  fun testImports() {
+    doTest()
+  }
+
+  fun testPropertiesOrder() {
+    doTest()
   }
 
   fun testBothLinksAreParents() {
@@ -96,7 +112,6 @@ class EntityCodeGenTest : CodeGenerationTestBase() {
       isTestModule = isTestModule
     )
   }
-
 
   private fun getExpectedDir(): Path {
     return testDataDirectory.toPath().resolve("after")
