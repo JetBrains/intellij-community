@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.DynamicBundle;
@@ -35,6 +35,7 @@ import kotlin.Lazy;
 import kotlin.Unit;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +127,8 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     }
   }
 
-  static final class State {
+  @ApiStatus.Internal
+  public static final class State {
     @OptionTag(nameAttribute = "", valueAttribute = "shortcut", converter = ShortcutConverter.class)
     public char defaultShortcut = TAB_CHAR;
 
