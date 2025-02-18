@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.incremental.storage.StorageOwner;
 import org.jetbrains.jps.javac.Iterators;
@@ -15,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -22,9 +24,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @ApiStatus.Internal
-public class LibraryRoots implements StorageOwner {
+public class LibraryRootsImpl implements StorageOwner, LibraryRoots {
 
-  private static final Logger LOG = Logger.getInstance(LibraryRoots.class);
+  private static final Logger LOG = Logger.getInstance(LibraryRootsImpl.class);
   private static final String LIBRARY_ROOTS_FILE_NAME = "libraries.dat";
   private static final String TIMESTAMP_DELIMITER = ": ";
   @NotNull
@@ -34,12 +36,13 @@ public class LibraryRoots implements StorageOwner {
   private Map<Path, RootData> myRoots;
   private boolean myChanged = false;
 
-  public LibraryRoots(BuildDataPaths dataPaths, @NotNull PathRelativizerService relativizer) {
+  public LibraryRootsImpl(BuildDataPaths dataPaths, @NotNull PathRelativizerService relativizer) {
     myFile = dataPaths.getDataStorageDir().resolve(LIBRARY_ROOTS_FILE_NAME);
     myRelativizer = relativizer;
   }
 
-  public synchronized Set<Path> getRoots(Set<Path> acc) {
+  @Override
+  public synchronized @NotNull Set<Path> getRoots(@NotNull Set<Path> acc) {
     acc.addAll(getLibraryRoots().keySet());
     return acc;
   }
@@ -53,18 +56,39 @@ public class LibraryRoots implements StorageOwner {
     return changed;
   }
 
+  @Override
+  public @NotNull LibRootUpdateResult updateIfExists(@NotNull Path root, @NotNull String namespace) {
+    BasicFileAttributes attribs = FSOperations.getAttributes(root);
+    if (attribs == null) {
+      return LibRootUpdateResult.DOES_NOT_EXIST;
+    }
+    else if (attribs.isRegularFile() && update(root, namespace, FSOperations.lastModified(root, attribs))) {
+      return LibRootUpdateResult.EXISTS_AND_MODIFIED;
+    }
+    else {
+      return LibRootUpdateResult.UNKNOWN;
+    }
+  }
+
+  @Override
+  public void removeRoots(@NotNull Iterable<? extends @NotNull Path> toRemove) {
+    for (Path deletedRoot : toRemove) {
+      remove(deletedRoot);
+    }
+  }
+
   /**
    * @return true, if root data has been changed after the update, otherwise false
    */
-  public synchronized boolean update(Path root, String namespace, long stamp) {
+  private synchronized boolean update(Path root, String namespace, long stamp) {
     RootData update = RootData.create(namespace, stamp);
     boolean changed = !update.equals(getLibraryRoots().put(root, update));
     myChanged |= changed;
     return changed;
   }
 
-  @Nullable
-  public synchronized String getNamespace(Path root) {
+  @Override
+  public synchronized @Nullable String getNamespace(@NotNull Path root) {
     RootData rootData = getLibraryRoots().get(root);
     return rootData != null? rootData.namespace : null;
   }

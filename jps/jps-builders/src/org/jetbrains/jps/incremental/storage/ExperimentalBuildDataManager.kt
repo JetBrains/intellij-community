@@ -3,16 +3,22 @@ package org.jetbrains.jps.incremental.storage
 
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import org.jetbrains.jps.builders.BuildTarget
+import org.jetbrains.jps.builders.BuildTargetType
+import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
+import org.jetbrains.jps.incremental.storage.dataTypes.LibraryRootsImpl
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 internal class ExperimentalBuildDataManager(
+  dataPaths: BuildDataPaths,
   private val storageManager: StorageManager,
   private val relativizer: PathRelativizerService,
 ) : BuildDataProvider {
   private val targetToMapManager = ConcurrentHashMap<BuildTarget<*>, PerTargetMapManager>()
+  //todo store in db
+  private val libraryRoots = LibraryRootsImpl(dataPaths, relativizer)
 
   private val typeAwareRelativizer = relativizer.typeAwareRelativizer ?: object : PathTypeAwareRelativizer {
     override fun toRelative(path: String, type: RelativePathType) = relativizer.toRelative(path)
@@ -37,7 +43,8 @@ internal class ExperimentalBuildDataManager(
     storageManager.clearCache()
   }
 
-  override fun removeStaleTarget(targetId: String, targetTypeId: String) {
+  override fun removeStaleTarget(targetId: String, targetType: BuildTargetType<*>) {
+    val targetTypeId = targetType.typeId
     storageManager.removeMaps(targetId, targetTypeId)
     outputToTargetMapping.value.removeTarget(targetId, targetTypeId)
   }
@@ -63,22 +70,29 @@ internal class ExperimentalBuildDataManager(
 
   override fun getOutputToTargetMapping(): OutputToTargetMapping = outputToTargetMapping.value
 
-  override fun getSourceToForm(target: BuildTarget<*>): ExperimentalOneToManyPathMapping {
-    return getPerTargetMapManager(target).sourceToForm
-  }
+  override fun getSourceToForm(target: BuildTarget<*>) = getPerTargetMapManager(target).sourceToForm
 
   override fun closeTargetMaps(target: BuildTarget<*>) {
     targetToMapManager.remove(target)
   }
 
-  override fun removeAllMaps() {
-    outputToTargetMapping.drop()
-    targetToMapManager.clear()
-    storageManager.clean()
+  override fun flushStorage(memoryCachesOnly: Boolean) {
+    if (!memoryCachesOnly) {
+      storageManager.commit()
+    }
   }
 
-  override fun commit() {
-    storageManager.commit()
+  override fun getLibraryRoots() = libraryRoots
+
+  override fun wipeStorage() {
+    try {
+      outputToTargetMapping.drop()
+      targetToMapManager.clear()
+      storageManager.clean()
+    }
+    finally {
+      libraryRoots.clean()
+    }
   }
 
   override fun close() {
