@@ -305,7 +305,7 @@
 - com.intellij.webSymbols.WebSymbolsScope
 - <init>(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.util.UserDataHolder,java.lang.Object):V
 - a:createPointer():com.intellij.model.Pointer
-- f:equals(java.lang.Object):Z
+- equals(java.lang.Object):Z
 - getCodeCompletions(com.intellij.webSymbols.WebSymbolQualifiedName,com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams,com.intellij.util.containers.Stack):java.util.List
 - pf:getDataHolder():com.intellij.openapi.util.UserDataHolder
 - pf:getFramework():java.lang.String
@@ -314,7 +314,7 @@
 - getModificationCount():J
 - pf:getProject():com.intellij.openapi.project.Project
 - getSymbols(com.intellij.webSymbols.WebSymbolQualifiedKind,com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams,com.intellij.util.containers.Stack):java.util.List
-- f:hashCode():I
+- hashCode():I
 - pa:initialize(kotlin.jvm.functions.Function1,java.util.Set):V
 - pa:provides(com.intellij.webSymbols.WebSymbolQualifiedKind):Z
 *f:com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
