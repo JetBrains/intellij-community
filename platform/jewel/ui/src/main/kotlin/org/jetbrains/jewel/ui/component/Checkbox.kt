@@ -114,6 +114,33 @@ public fun Checkbox(
     )
 }
 
+/**
+ * A three-state checkbox component that follows the standard visual styling with customizable appearance.
+ *
+ * Provides a selectable component that can be in one of three states: checked, unchecked, or indeterminate.
+ * This variant is particularly useful for representing partially selected states in hierarchical selections.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/checkbox.html#three-state-checkbox)
+ *
+ * **Usage example:**
+ * [`Checkboxes.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Checkboxes.kt)
+ *
+ * **Swing equivalent:** [`JCheckBox`](https://docs.oracle.com/javase/tutorial/uiswing/components/button.html#checkbox)
+ * with [setIndeterminate](https://docs.oracle.com/javase/8/docs/api/javax/swing/JCheckBox.html#setIndeterminate-boolean-)
+ *
+ * @param state The current state of the checkbox (On, Off, or Indeterminate)
+ * @param onClick Called when the checkbox is clicked
+ * @param modifier Modifier to be applied to the checkbox
+ * @param enabled Controls the enabled state of the checkbox. When false, the checkbox cannot be interacted with
+ * @param outline The outline style to be applied to the checkbox
+ * @param interactionSource Source of interactions for this checkbox
+ * @param colors The color styling configuration for the checkbox
+ * @param metrics The sizing and spacing configuration for the checkbox
+ * @param icons The icon configuration for the checkbox
+ * @param textStyle The typography style to be applied to the checkbox's text content
+ * @param verticalAlignment The vertical alignment of the checkbox relative to its text content
+ * @see javax.swing.JCheckBox
+ */
 @Composable
 public fun TriStateCheckbox(
     state: ToggleableState,
