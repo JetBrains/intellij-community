@@ -236,6 +236,36 @@ public fun TriStateCheckboxRow(
     }
 }
 
+/**
+ * A checkbox with accompanying text, following the standard visual styling with customizable appearance.
+ *
+ * Provides a horizontal layout combining a checkbox with text content. The entire row is clickable,
+ * making it easier for users to interact with the checkbox. This component is commonly used in forms,
+ * settings panels, and option lists.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/checkbox.html)
+ *
+ * **Usage example:**
+ * [`Checkboxes.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Checkboxes.kt)
+ *
+ * **Swing equivalent:** [`JCheckBox`](https://docs.oracle.com/javase/tutorial/uiswing/components/button.html#checkbox)
+ * with text constructor
+ *
+ * @param text The text to be displayed next to the checkbox
+ * @param checked The current state of the checkbox
+ * @param onCheckedChange Called when the checkbox or row is clicked, with the new checked state
+ * @param modifier Modifier to be applied to the entire row
+ * @param textModifier Modifier to be applied to the text content
+ * @param enabled Controls the enabled state of the checkbox. When false, the row cannot be interacted with
+ * @param outline The outline style to be applied to the checkbox
+ * @param interactionSource Source of interactions for this checkbox
+ * @param colors The color styling configuration for the checkbox
+ * @param metrics The sizing and spacing configuration for the checkbox
+ * @param icons The icon configuration for the checkbox
+ * @param textStyle The typography style to be applied to the text content
+ * @param verticalAlignment The vertical alignment of the checkbox relative to its text content
+ * @see javax.swing.JCheckBox
+ */
 @Composable
 public fun CheckboxRow(
     text: String,
@@ -272,6 +302,34 @@ public fun CheckboxRow(
     }
 }
 
+/**
+ * A checkbox with accompanying content, following the standard visual styling with customizable appearance.
+ *
+ * Provides a horizontal layout combining a checkbox with custom content. The entire row is clickable,
+ * making it easier for users to interact with the checkbox. This component is commonly used in forms,
+ * settings panels, and option lists where custom content layout is needed.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/checkbox.html)
+ *
+ * **Usage example:**
+ * [`Checkboxes.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Checkboxes.kt)
+ *
+ * **Swing equivalent:** [`JCheckBox`](https://docs.oracle.com/javase/tutorial/uiswing/components/button.html#checkbox)
+ *
+ * @param checked The current state of the checkbox
+ * @param onCheckedChange Called when the checkbox or row is clicked, with the new checked state
+ * @param modifier Modifier to be applied to the entire row
+ * @param enabled Controls the enabled state of the checkbox. When false, the row cannot be interacted with
+ * @param outline The outline style to be applied to the checkbox
+ * @param interactionSource Source of interactions for this checkbox
+ * @param colors The color styling configuration for the checkbox
+ * @param metrics The sizing and spacing configuration for the checkbox
+ * @param icons The icon configuration for the checkbox
+ * @param textStyle The typography style to be applied to the content
+ * @param verticalAlignment The vertical alignment of the checkbox relative to its content
+ * @param content Composable content to be displayed next to the checkbox
+ * @see javax.swing.JCheckBox
+ */
 @Composable
 public fun CheckboxRow(
     checked: Boolean,
@@ -304,6 +362,35 @@ public fun CheckboxRow(
     )
 }
 
+/**
+ * A three-state checkbox with accompanying content, following the standard visual styling.
+ *
+ * Provides a horizontal layout combining a three-state checkbox with custom content. The entire row is
+ * clickable, making it easier for users to interact with the checkbox. This variant is particularly
+ * useful for representing partially selected states in hierarchical selections with custom content.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/checkbox.html#three-state-checkbox)
+ *
+ * **Usage example:**
+ * [`Checkboxes.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Checkboxes.kt)
+ *
+ * **Swing equivalent:** [`JCheckBox`](https://docs.oracle.com/javase/tutorial/uiswing/components/button.html#checkbox)
+ * with [setIndeterminate](https://docs.oracle.com/javase/8/docs/api/javax/swing/JCheckBox.html#setIndeterminate-boolean-)
+ *
+ * @param state The current state of the checkbox (On, Off, or Indeterminate)
+ * @param onClick Called when the checkbox or row is clicked
+ * @param modifier Modifier to be applied to the entire row
+ * @param enabled Controls the enabled state of the checkbox. When false, the row cannot be interacted with
+ * @param outline The outline style to be applied to the checkbox
+ * @param interactionSource Source of interactions for this checkbox
+ * @param colors The color styling configuration for the checkbox
+ * @param metrics The sizing and spacing configuration for the checkbox
+ * @param icons The icon configuration for the checkbox
+ * @param textStyle The typography style to be applied to the content
+ * @param verticalAlignment The vertical alignment of the checkbox relative to its content
+ * @param content Composable content to be displayed next to the checkbox
+ * @see javax.swing.JCheckBox
+ */
 @Composable
 public fun TriStateCheckboxRow(
     state: ToggleableState,
