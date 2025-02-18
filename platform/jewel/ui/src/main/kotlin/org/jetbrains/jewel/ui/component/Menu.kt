@@ -497,7 +497,7 @@ internal fun MenuItem(
                 if (canShowIcon) {
                     val iconModifier = Modifier.size(style.metrics.itemMetrics.iconSize)
                     if (iconKey != null) {
-                        Icon(key = iconKey, contentDescription = "Menu icon", modifier = iconModifier)
+                        Icon(key = iconKey, contentDescription = null, modifier = iconModifier)
                     } else {
                         Box(modifier = iconModifier)
                     }
@@ -619,7 +619,7 @@ public fun MenuSubmenuItem(
             ) {
                 if (canShowIcon) {
                     if (iconKey != null) {
-                        Icon(key = iconKey, contentDescription = "Menu icon")
+                        Icon(key = iconKey, contentDescription = null)
                     } else {
                         Box(Modifier.size(style.metrics.itemMetrics.iconSize))
                     }

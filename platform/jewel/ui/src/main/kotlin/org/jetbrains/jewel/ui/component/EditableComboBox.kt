@@ -310,7 +310,7 @@ private fun Chevron(
         )
 
         Box(Modifier.fillMaxWidth().align(Alignment.CenterEnd), contentAlignment = Alignment.Center) {
-            Icon(key = style.icons.chevronDown, tint = iconTint, contentDescription = "Chevron icon")
+            Icon(key = style.icons.chevronDown, tint = iconTint, contentDescription = null)
         }
     }
 }
