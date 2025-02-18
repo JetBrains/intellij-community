@@ -924,7 +924,16 @@ public final class JavaErrorKinds {
     parameterized(PsiExpression.class, JavaIncompatibleTypeErrorContext.class, "switch.expression.incompatible.type")
       .withRawDescription((expr, context) -> message("switch.expression.incompatible.type", formatType(context.rType()), formatType(context.lType())));
   public static final Simple<PsiElement> SWITCH_LABEL_EXPECTED = error(PsiElement.class, "switch.label.expected");
-  public static final Simple<PsiElement> SWITCH_DIFFERENT_CASE_KINDS = error("switch.different.case.kinds");
+  public static final Simple<PsiStatement> SWITCH_DIFFERENT_CASE_KINDS = error(PsiStatement.class, "switch.different.case.kinds")
+    .withRange(statement -> {
+      if (statement instanceof PsiSwitchLabeledRuleStatement rule) {
+        PsiCaseLabelElementList list = rule.getCaseLabelElementList();
+        if (list != null) {
+          return TextRange.create(0, list.getTextRangeInParent().getEndOffset());
+        }
+      }
+      return null;
+    });
   public static final Parameterized<PsiExpression, JavaPsiSwitchUtil.SelectorKind> SWITCH_SELECTOR_TYPE_INVALID =
     parameterized(PsiExpression.class, JavaPsiSwitchUtil.SelectorKind.class, "switch.selector.type.invalid")
       .withRawDescription((expr, kind) -> kind.getFeature() == null ?

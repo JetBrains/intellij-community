@@ -23,7 +23,7 @@ class EnhancedSwitchStatements {
     }
     switch (new Random().nextInt()) {
       case 0: throw new IllegalStateException("no args"); break;
-      <error descr="Different 'case' kinds used in 'switch'">case 1 -> { System.out.println("one"); }</error>
+      <error descr="Different 'case' kinds used in 'switch'">case 1</error> -> { System.out.println("one"); }
     }
 
     { <error descr="Case statement outside switch">case 11 -> System.out.println("hi there");</error> }
@@ -88,4 +88,16 @@ class EnhancedSwitchStatements {
   }
 
   private static void noop() { }
+  
+  void differentCase() {
+    int a = 1;
+    switch (a) {
+      case 1:
+        System.out.println(1);
+        break;
+      <error descr="Different 'case' kinds used in 'switch'">case 2</error> -> {
+        System.out.println(2);
+      }
+    }
+  }
 }

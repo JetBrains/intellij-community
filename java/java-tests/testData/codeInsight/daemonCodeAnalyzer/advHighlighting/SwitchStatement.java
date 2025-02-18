@@ -29,4 +29,11 @@ class SwitchStatement {
         <error descr="Local class 'Local' cannot be referenced from another switch branch">Local</error> x = new <error descr="Local class 'Local' cannot be referenced from another switch branch">Local</error>();
     }
   }
+  
+  int unsupported(int i) {
+    return <error descr="'switch' expressions are not supported at language level '1.4'">switch</error> (i) {
+      default:
+        throw new IllegalStateException("Unexpected value: " + i);
+    };
+  }
 }

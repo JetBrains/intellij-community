@@ -173,7 +173,7 @@ public final class JavaPsiSwitchUtil {
     SelectorKind(@Nullable JavaFeature feature) { myFeature = feature; }
 
     /**
-     * @return java feature required for this selector kind; null if it's always available
+     * @return java feature required for this selector kind; null if it's always available or non-applicable
      */
     public @Nullable JavaFeature getFeature() {
       return myFeature;
