@@ -81,7 +81,7 @@ public class MessagesServiceImpl implements MessagesService {
       AlertMessagesManager alertMessagesManager = AlertMessagesManager.getInstanceIfPossible();
       if (alertMessagesManager != null) {
         return alertMessagesManager.showMessageDialog(project, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon,
-                                                      null, null, null, null);
+                                                      null, null, null, new ExitActionType[]{});
       }
     }
 
