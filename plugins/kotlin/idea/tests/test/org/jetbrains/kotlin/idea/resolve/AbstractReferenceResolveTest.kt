@@ -60,12 +60,14 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
         }
     }
 
+    protected open val replacePlaceholders: Boolean = true
+
     private fun doSingleResolveTest() {
         forEachCaret { index, offset ->
             val fileText = myFixture.file.text
             val expectedResolveData = readResolveData(fileText, getExpectedReferences(fileText, index))
             val psiReference = wrapReference(myFixture.file.findReferenceAt(offset))
-            checkReferenceResolve(expectedResolveData, offset, psiReference, render  = { this.render(it) }) { resolveTo ->
+            checkReferenceResolve(expectedResolveData, offset, psiReference, render  = { this.render(it) }, replacePlaceholders = replacePlaceholders) { resolveTo ->
                 checkResolvedTo(resolveTo)
                 performAdditionalResolveChecks(listOf(resolveTo))
             }

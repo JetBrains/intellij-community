@@ -1,23 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.navigation
 
-import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
-import org.jetbrains.kotlin.idea.k2.navigation.AbstractKotlinNavigationToLibrarySourceTest.Companion.signatureText
+import org.jetbrains.kotlin.idea.k2.navigation.AbstractKotlinNavigationToLibrarySourceTest.Companion.renderNavigationElement
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest.Companion.checkReferenceResolve
 import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest.Companion.readResolveData
 import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.test.util.renderAsGotoImplementation
 import java.io.File
 
 abstract class AbstractMultiModuleNavigationTest: AbstractMultiModuleTest() {
@@ -89,38 +83,6 @@ abstract class AbstractMultiModuleNavigationTest: AbstractMultiModuleTest() {
         }
     }
 
-    private fun render(element: PsiElement): String {
-        fun StringBuilder.renderPackageName(declaration: KtNamedDeclaration) {
-            if (declaration is KtClassOrObject) {
-                append(declaration.fqName?.asString() ?: "<local>")
-            } else {
-                val classOrObject = declaration.containingClassOrObject
-                if (classOrObject != null) {
-                    renderPackageName(classOrObject)
-                } else {
-                    append("<??>")
-                }
-            }
-        }
-
-        return when (val navigationElement = element.navigationElement) {
-            is KtNamedDeclaration -> buildString {
-                append("(")
-                renderPackageName(navigationElement)
-                append(" @ ")
-                val virtualFile = navigationElement.containingFile.virtualFile
-                val jarFileSystem = virtualFile.fileSystem as? JarFileSystem
-                append(jarFileSystem?.let {
-                    val root = VfsUtilCore.getRootFile(virtualFile)
-                    "${it.protocol}://${root.name}${JarFileSystem.JAR_SEPARATOR}${VfsUtilCore.getRelativeLocation(virtualFile, root)}"
-                } ?: virtualFile.name)
-                append(")")
-                append(navigationElement.signatureText())
-            }
-            else -> {
-                element.renderAsGotoImplementation()
-            }
-        }
-    }
+    private fun render(element: PsiElement): String = renderNavigationElement(element)
 
 }
