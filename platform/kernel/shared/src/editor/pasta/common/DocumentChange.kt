@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.impl.ad.common
+package com.intellij.platform.kernel.editor.pasta.common
 
 import andel.operation.Operation
 import andel.operation.isIdentity
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 import kotlin.reflect.KClass
 
 @Experimental
-internal data class ChangeDocument(
+data class ChangeDocument(
   val documentId: EID,
   val operationId: UID,
   val operation: Operation,

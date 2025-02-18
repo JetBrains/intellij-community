@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-@Deprecated(forRemoval = true)
 public interface AdTheManager {
 
   static @NotNull AdTheManager getInstance(@NotNull Project project) {

@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.impl.ad.common
+package com.intellij.platform.kernel.editor.pasta.common
 
 import andel.editor.*
 import andel.intervals.AnchorStorage
@@ -62,7 +62,7 @@ class DocumentEntity(override val eid: EID) : Entity {
     val mutableDocument = DbMutableDocument(this, changeScope, initialMeta.mutable())
     val result = f(mutableDocument)
     for (component in mutableDocument.components.asMap().values) {
-      kotlin.runCatching {
+      runCatching {
         component.onCommit()
       }.onFailure {
         logger.error(it) { "failed onCommit" }

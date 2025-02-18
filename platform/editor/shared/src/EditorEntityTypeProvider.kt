@@ -3,8 +3,8 @@ package com.intellij.platform.editor
 
 import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.editor.impl.ad.AdDocumentEntity
-import com.intellij.openapi.editor.impl.ad.common.DocumentEntity
-import com.intellij.openapi.editor.impl.ad.common.EditLogEntity
+import com.intellij.platform.kernel.editor.pasta.common.DocumentEntity
+import com.intellij.platform.kernel.editor.pasta.common.EditLogEntity
 import com.intellij.platform.kernel.EntityTypeProvider
 import com.jetbrains.rhizomedb.EntityType
 

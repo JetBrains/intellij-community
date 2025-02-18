@@ -7,6 +7,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.platform.kernel.EntityTypeProvider
+import com.intellij.platform.kernel.editor.pasta.common.ChangeDocument
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.*
 import fleet.kernel.rebase.*
@@ -85,6 +86,7 @@ val CommonInstructionSet: InstructionSet =
     LocalInstructionCoder(ReifyEntities::class),
     ValidateCoder,
     CreateEntityCoder,
+    ChangeDocument,
   ))
 
 suspend fun updateDbInTheEventDispatchThread(): Nothing {

@@ -18,13 +18,14 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.ad.ThreadLocalRhizomeDB
-import com.intellij.openapi.editor.impl.ad.common.DocumentEntity
-import com.intellij.openapi.editor.impl.ad.common.DocumentEntity.Companion.EditLogAttr
-import com.intellij.openapi.editor.impl.ad.common.DocumentEntity.Companion.SharedAnchorStorageAttr
-import com.intellij.openapi.editor.impl.ad.common.DocumentEntity.Companion.TextAttr
-import com.intellij.openapi.editor.impl.ad.common.DocumentEntity.Companion.WritableAttr
-import com.intellij.openapi.editor.impl.ad.common.createEmptyEditLog
+import com.intellij.platform.kernel.editor.pasta.common.DocumentEntity
+import com.intellij.platform.kernel.editor.pasta.common.DocumentEntity.Companion.EditLogAttr
+import com.intellij.platform.kernel.editor.pasta.common.DocumentEntity.Companion.SharedAnchorStorageAttr
+import com.intellij.platform.kernel.editor.pasta.common.DocumentEntity.Companion.TextAttr
+import com.intellij.platform.kernel.editor.pasta.common.DocumentEntity.Companion.WritableAttr
+import com.intellij.platform.kernel.editor.pasta.common.createEmptyEditLog
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
@@ -37,29 +38,30 @@ import fleet.kernel.rete.first
 import fleet.kernel.shared
 import fleet.kernel.transactor
 import fleet.util.UID
+import fleet.util.openmap.OpenMap
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
 private val AD_DISPATCHER by lazy {
-  AppExecutorUtil.createBoundedApplicationPoolExecutor("AD_DISPATCHER", 1).asCoroutineDispatcher()
+  AppExecutorUtil.createBoundedApplicationPoolExecutor("AD_DISPATCHER_V2", 1).asCoroutineDispatcher()
 }
 
 @Experimental
 @Service(Level.APP)
-class AdTheManager(private val coroutineScope: CoroutineScope) {
+class AdTheManagerV2(private val coroutineScope: CoroutineScope) {
 
   companion object {
     @JvmStatic
-    fun getInstance(): AdTheManager = service()
+    fun getInstance(): AdTheManagerV2 = service()
   }
 
   private val docToEntityMap = IdentityHashMap<DocumentEx, DocumentEntityHandle>()
   private val docToSynchronizerMap = IdentityHashMap<DocumentEx, DocumentListener>()
 
   fun bindBackendDocEntity(file: VirtualFile, lazyDocumentId: (document: DocumentEx) -> Any) {
-    if (isRhizomeAdEnabled) {
+    if (isEnabled()) {
       val document = FileDocumentManager.getInstance().getDocument(file)
       if (document is DocumentEx) {
         synchronized(docToEntityMap) {
@@ -99,7 +101,7 @@ class AdTheManager(private val coroutineScope: CoroutineScope) {
   }
 
   fun bindFrontendDocEntity(documentId: Any, document: Document?) {
-    if (isRhizomeAdEnabled && document is DocumentEx) {
+    if (isEnabled() && document is DocumentEx) {
       val uid = hackyDocumentId(documentId)
       synchronized(docToEntityMap) {
         val entityRef = AtomicReference<DocumentEntity>()
@@ -114,7 +116,7 @@ class AdTheManager(private val coroutineScope: CoroutineScope) {
   }
 
   fun releaseDocEntity(document: DocumentEx) {
-    if (isRhizomeAdEnabled) {
+    if (isEnabled()) {
       synchronized(docToEntityMap) {
         val entityHandle = docToEntityMap[document]
         checkNotNull(entityHandle) { "doc entity not found" }
@@ -139,7 +141,7 @@ class AdTheManager(private val coroutineScope: CoroutineScope) {
   }
 
   fun getAdDocument(document: DocumentEx): DocumentEx? {
-    if (isRhizomeAdEnabled) {
+    if (isEnabled()) {
       val entity = synchronized(docToEntityMap) {
         docToEntityMap[document]
       }?.entity0()
@@ -152,7 +154,7 @@ class AdTheManager(private val coroutineScope: CoroutineScope) {
   }
 
   fun bindEditor(editor: EditorImpl) {
-    if (isRhizomeAdEnabled) {
+    if (isEnabled()) {
       val cs = coroutineScope.childScope("editor repaint on doc entity change")
       val disposable = Disposable { cs.cancel() }
       EditorUtil.disposeWithEditor(editor, disposable)
@@ -171,6 +173,10 @@ class AdTheManager(private val coroutineScope: CoroutineScope) {
     val bytes = documentId.toString().toByteArray()
     val uuid = UUID.nameUUIDFromBytes(bytes)
     return UID.fromString(uuid.toString())
+  }
+
+  private fun isEnabled(): Boolean {
+    return isRhizomeAdEnabled && Registry.`is`("ijpl.rhizome.ad.v2.enabled", false)
   }
 }
 
@@ -207,13 +213,9 @@ private class DocumentToEntitySynchronizer(
       change {
         shared {
           val repaired = repairIfNeeded(operation)
-          entity[TextAttr] = entity.text.mutableView().apply {
+          entity.mutate(this, OpenMap.empty()) {
             edit(repaired)
-          }.text()
-          // TODO: does not work in split mode
-          //entity.mutate(this, OpenMap.empty()) {
-          //  edit(repaired)
-          //}
+          }
         }
       }
     }
