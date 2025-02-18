@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
+import com.intellij.collaboration.file.ComplexPathVirtualFileWithoutContent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.project.Project
+import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -12,17 +14,19 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWind
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.Icon
 
-@Suppress("EqualsOrHashCode")
-internal class GHPRTimelineVirtualFile(fileManagerId: String,
-                                       project: Project,
-                                       repository: GHRepositoryCoordinates,
-                                       pullRequest: GHPRIdentifier)
-  : GHPRVirtualFile(fileManagerId, project, repository, pullRequest) {
+internal data class GHPRTimelineVirtualFile(
+  override val fileManagerId: String,
+  val project: Project,
+  val repository: GHRepositoryCoordinates,
+  val pullRequest: GHPRIdentifier,
+) : ComplexPathVirtualFileWithoutContent(fileManagerId), GHPRVirtualFile {
 
   init {
     putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
     isWritable = false
   }
+
+  override fun getFileSystem(): ComplexPathVirtualFileSystem<*> = GHPRVirtualFileSystem.getInstance()
 
   override fun getName() = "#${pullRequest.number}"
   override fun getPresentableName() = findDetails()?.let { "${it.title} $name" } ?: name
@@ -40,10 +44,4 @@ internal class GHPRTimelineVirtualFile(fileManagerId: String,
     project.service<GHPRToolWindowViewModel>().projectVm.value?.takeIf { it.repository == repository }
 
   private fun findDetails(): GHPullRequestShort? = findProjectVm()?.findDetails(pullRequest)
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is GHPRTimelineVirtualFile) return false
-    return super.equals(other)
-  }
 }

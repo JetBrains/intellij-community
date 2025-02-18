@@ -10,7 +10,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
+import org.jetbrains.plugins.github.pullrequest.GHPRTimelineVirtualFile
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 import java.util.function.Supplier
 
@@ -34,13 +34,13 @@ class GHPRSelectPullRequestForFileAction : DumbAwareAction(GithubBundle.messageP
     }
 
     e.presentation.isVisible = true
-    val file: GHPRVirtualFile? = FileEditorManager.getInstance(project).selectedFiles.filterIsInstance<GHPRVirtualFile>().firstOrNull()
+    val file = FileEditorManager.getInstance(project).selectedFiles.filterIsInstance<GHPRTimelineVirtualFile>().firstOrNull()
     e.presentation.isEnabled = file != null && file.repository == projectVm.repository
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getData(PlatformDataKeys.PROJECT) ?: return
-    val file = FileEditorManager.getInstance(project).selectedFiles.filterIsInstance<GHPRVirtualFile>().first()
+    val file = FileEditorManager.getInstance(project).selectedFiles.filterIsInstance<GHPRTimelineVirtualFile>().first()
     project.service<GHPRToolWindowViewModel>().activateAndAwaitProject {
       if (file.repository == repository) {
         viewPullRequest(file.pullRequest)
