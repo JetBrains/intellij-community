@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.TrustedProjects;
@@ -29,7 +28,6 @@ import com.intellij.ui.components.*;
 import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,9 +46,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
 import java.awt.*;
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -362,57 +357,7 @@ public final class TerminalSettingsPanel {
   }
 
   private @NotNull List<String> detectShells() {
-    List<String> shells = new ArrayList<>();
-    if (SystemInfo.isUnix) {
-      addIfExists(shells, "/bin/bash");
-      addIfExists(shells, "/usr/bin/bash");
-      addIfExists(shells, "/usr/local/bin/bash");
-      addIfExists(shells, "/opt/homebrew/bin/bash");
-
-      addIfExists(shells, "/bin/zsh");
-      addIfExists(shells, "/usr/bin/zsh");
-      addIfExists(shells, "/usr/local/bin/zsh");
-      addIfExists(shells, "/opt/homebrew/bin/zsh");
-
-      addIfExists(shells, "/bin/fish");
-      addIfExists(shells, "/usr/bin/fish");
-      addIfExists(shells, "/usr/local/bin/fish");
-      addIfExists(shells, "/opt/homebrew/bin/fish");
-
-      addIfExists(shells, "/opt/homebrew/bin/pwsh");
-    }
-    else if (SystemInfo.isWindows) {
-      File powershell = PathEnvironmentVariableUtil.findInPath("powershell.exe");
-      if (powershell != null && StringUtil.startsWithIgnoreCase(powershell.getAbsolutePath(), "C:\\Windows\\System32\\WindowsPowerShell\\")) {
-        shells.add(powershell.getAbsolutePath());
-      }
-      File cmd = PathEnvironmentVariableUtil.findInPath("cmd.exe");
-      if (cmd != null && StringUtil.startsWithIgnoreCase(cmd.getAbsolutePath(), "C:\\Windows\\System32\\")) {
-        shells.add(cmd.getAbsolutePath());
-      }
-      File pwsh = PathEnvironmentVariableUtil.findInPath("pwsh.exe");
-      if (pwsh != null && StringUtil.startsWithIgnoreCase(pwsh.getAbsolutePath(), "C:\\Program Files\\PowerShell\\")) {
-        shells.add(pwsh.getAbsolutePath());
-      }
-      File gitBash = new File("C:\\Program Files\\Git\\bin\\bash.exe");
-      if (gitBash.isFile()) {
-        shells.add(gitBash.getAbsolutePath());
-      }
-      String cmderRoot = EnvironmentUtil.getValue("CMDER_ROOT");
-      if (cmderRoot == null) {
-        cmderRoot = myEnvVarField.getEnvs().get("CMDER_ROOT");
-      }
-      if (cmderRoot != null && cmd != null && StringUtil.startsWithIgnoreCase(cmd.getAbsolutePath(), "C:\\Windows\\System32\\")) {
-        shells.add("cmd.exe /k \"%CMDER_ROOT%\\vendor\\init.bat\"");
-      }
-    }
-    return shells;
-  }
-
-  private static void addIfExists(@NotNull List<String> shells, @NotNull String filePath) {
-    if (Files.exists(Path.of(filePath))) {
-      shells.add(filePath);
-    }
+    return TerminalUtil.detectShells(myEnvVarField.getEnvs());
   }
 
   private static @NotNull Color findColorByKey(String... colorKeys) {
