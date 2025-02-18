@@ -15483,7 +15483,6 @@ e:com.intellij.ui.layout.CCFlags
 a:com.intellij.ui.layout.Cell
 - com.intellij.ui.layout.BaseBuilder
 - <init>():V
-- bf:browserLink(java.lang.String,java.lang.String):com.intellij.ui.layout.CellBuilder
 - bf:button(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.ui.layout.CellBuilder
 - bf:checkBox(java.lang.String):com.intellij.ui.layout.CellBuilder
 - bf:checkBox(java.lang.String,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,java.lang.String):com.intellij.ui.layout.CellBuilder
@@ -15516,25 +15515,18 @@ com.intellij.ui.layout.CellBuilder
 - a:comment(java.lang.String,I,Z):com.intellij.ui.layout.CellBuilder
 - bs:comment$default(com.intellij.ui.layout.CellBuilder,java.lang.String,I,Z,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 - a:constraints(com.intellij.ui.layout.CCFlags[]):com.intellij.ui.layout.CellBuilder
-- ba:enableIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.layout.CellBuilder
 - ba:focused():com.intellij.ui.layout.CellBuilder
 - a:getComponent():javax.swing.JComponent
 - a:growPolicy(com.intellij.ui.layout.GrowPolicy):com.intellij.ui.layout.CellBuilder
 - a:onApply(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
 - a:onIsModified(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
 - a:onReset(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
-- b:withBinding(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,com.intellij.ui.layout.PropertyBinding):com.intellij.ui.layout.CellBuilder
 - ba:withValidationOnApply(kotlin.jvm.functions.Function2):com.intellij.ui.layout.CellBuilder
 - ba:withValidationOnInput(kotlin.jvm.functions.Function2):com.intellij.ui.layout.CellBuilder
 f:com.intellij.ui.layout.CellBuilder$DefaultImpls
 - bs:comment$default(com.intellij.ui.layout.CellBuilder,java.lang.String,I,Z,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
-- bs:withBinding(com.intellij.ui.layout.CellBuilder,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,com.intellij.ui.layout.PropertyBinding):com.intellij.ui.layout.CellBuilder
 f:com.intellij.ui.layout.CellKt
-- bsf:applyToComponent(com.intellij.ui.layout.CellBuilder,kotlin.jvm.functions.Function1):com.intellij.ui.layout.CellBuilder
 - sf:createPropertyBinding(kotlin.reflect.KMutableProperty0,java.lang.Class):com.intellij.ui.layout.PropertyBinding
-- bsf:getSelected(com.intellij.ui.layout.CellBuilder):com.intellij.ui.layout.ComponentPredicate
-- bsf:listCellRenderer(kotlin.jvm.functions.Function4):com.intellij.ui.SimpleListCellRenderer
-- bsf:toNullable(com.intellij.ui.layout.PropertyBinding):com.intellij.ui.layout.PropertyBinding
 - bsf:withTextBinding(com.intellij.ui.layout.CellBuilder,com.intellij.ui.layout.PropertyBinding):com.intellij.ui.layout.CellBuilder
 @:com.intellij.ui.layout.CellMarker
 - java.lang.annotation.Annotation
@@ -15599,10 +15591,8 @@ a:com.intellij.ui.layout.Row
 - <init>():V
 - bf:cell(Z,Z,kotlin.jvm.functions.Function1):V
 - bs:cell$default(com.intellij.ui.layout.Row,Z,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):V
-- ba:getEnabled():Z
 - ba:getVisible():Z
 - a:setCellMode(Z,Z,Z):V
-- ba:setEnabled(Z):V
 - ba:setVisible(Z):V
 com.intellij.ui.layout.RowBuilder
 - com.intellij.ui.layout.BaseBuilder
