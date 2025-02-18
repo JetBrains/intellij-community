@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection;
 
-abstract class UnsafeReturnStatementVisitorInsertVisitMethodsTestBase extends LightDevKitInspectionFixTestBase {
+public abstract class UnsafeReturnStatementVisitorInsertVisitMethodsTestBase extends LightDevKitInspectionFixTestBase {
   public static final String INSERT_LAMBDA_AND_CLASS_VISIT_METHODS = "Insert visitLambdaExpression/visitClass methods";
   public static final String INSERT_LAMBDA_VISIT_METHOD = "Insert visitLambdaExpression method";
   public static final String INSERT_CLASS_VISIT_METHOD = "Insert visitClass method";
