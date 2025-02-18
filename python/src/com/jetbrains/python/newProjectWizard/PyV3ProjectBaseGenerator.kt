@@ -3,7 +3,7 @@ package com.jetbrains.python.newProjectWizard
 
 import com.intellij.facet.ui.ValidationResult
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
@@ -73,7 +73,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
       }
 
       withContext(Dispatchers.EDT) {
-        writeAction {
+        edtWriteAction {
           VirtualFileManager.getInstance().syncRefresh()
         }
       }

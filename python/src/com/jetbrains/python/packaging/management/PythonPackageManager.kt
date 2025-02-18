@@ -2,7 +2,7 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
@@ -90,7 +90,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   protected abstract suspend fun reloadPackagesCommand(): Result<List<PythonPackage>>
 
   internal suspend fun refreshPaths() {
-    writeAction {
+    edtWriteAction {
       // Background refreshing breaks structured concurrency: there is a some activity in background that locks files.
       // Temporary folders can't be deleted on Windows due to that.
       // That breaks tests.

@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.service
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -31,7 +31,7 @@ class PySdkService private constructor(private val project: Project) {
    */
   suspend fun persistSdk(sdk: Sdk): Unit = coroutineScope {
     mutex.withLock {
-      writeAction {
+      edtWriteAction {
         if (!sdkExists(sdk)) {
           with(model) {
             addSdk(sdk)

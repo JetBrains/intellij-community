@@ -349,7 +349,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
       runWithModalProgressBlocking {
         val job = Job()
         launch(Dispatchers.EDT) {
-          writeAction {
+          edtWriteAction {
             try {
               inWriteAction.set(true)
               job.complete()
@@ -461,7 +461,7 @@ class RunWithModalProgressBlockingTest : ModalCoroutineTest() {
         launch(Dispatchers.EDT) {
           writeCoroutineStarted.complete()
           writeActionCanStart.join()
-          writeAction {
+          edtWriteAction {
             inWaCounter.set(true)
           }
         }

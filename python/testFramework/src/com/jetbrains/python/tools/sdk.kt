@@ -3,7 +3,7 @@ package com.jetbrains.python.tools
 
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.testFramework.testEnv.PythonType
@@ -51,7 +51,7 @@ suspend fun createSdk(request: SdkCreationRequest): Pair<Sdk, AutoCloseable> = w
         sdkModificator.apply {
           homePath = PYTHON_PATH_ON_TARGET
           sdkAdditionalData = targetData
-          writeAction {
+          edtWriteAction {
             commitChanges()
           }
         }

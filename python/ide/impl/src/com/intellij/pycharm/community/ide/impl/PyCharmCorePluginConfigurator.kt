@@ -8,7 +8,7 @@ import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Experiments
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -57,7 +57,7 @@ private class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
 
         val fileTypeManager = FileTypeManager.getInstance()
         val ignoredFilesList = fileTypeManager.getIgnoredFilesList()
-        writeAction {
+        edtWriteAction {
           fileTypeManager.setIgnoredFilesList("$ignoredFilesList;*\$py.class")
         }
       }

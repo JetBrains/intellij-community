@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.framework.env
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.testFramework.testEnv.PythonType
@@ -33,7 +33,7 @@ fun <ENV : Any> pySdkFixture(
   val (sdk, autoClosable, env) = pythonType.createSdkClosableEnv().getOrThrow()
   sdk.persist()
   initialized(SdkFixture<ENV>(sdk, env)) {
-    writeAction {
+    edtWriteAction {
       ProjectJdkTable.getInstance().removeJdk(sdk)
       autoClosable.close()
     }

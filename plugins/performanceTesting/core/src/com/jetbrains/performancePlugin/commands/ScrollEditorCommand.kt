@@ -1,7 +1,7 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -21,12 +21,12 @@ class ScrollEditorCommand(text: String, line: Int): PerformanceCommandCoroutineA
     val timer = Timer()
     timer.start(NAME, true)
 
-    val editor = writeAction { checkNotNull(FileEditorManager.getInstance(context.project).selectedTextEditor) }
+    val editor = edtWriteAction { checkNotNull(FileEditorManager.getInstance(context.project).selectedTextEditor) }
     val totalLines = readAction { editor.document.lineCount } - 1
 
     var lineToScrollTo = 0
     while (lineToScrollTo <= totalLines) {
-      writeAction {
+      edtWriteAction {
         val logicalPosition = editor.visualToLogicalPosition(VisualPosition(lineToScrollTo, 0))
         editor.scrollingModel.scrollTo(logicalPosition, ScrollType.RELATIVE)
       }
