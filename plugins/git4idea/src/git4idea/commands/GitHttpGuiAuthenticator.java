@@ -3,6 +3,7 @@ package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.externalProcessAuthHelper.AuthenticationGate;
@@ -37,8 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 import java.util.function.Function;
-
-import static com.intellij.credentialStore.CredentialAttributesKt.generateServiceName;
 
 /**
  * <p>Handles "ask username" and "ask password" requests from Git:
@@ -526,15 +525,18 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
 
     @VisibleForTesting
-    static @NotNull CredentialAttributes credentialAttributes(@NotNull String key) {
-      return new CredentialAttributes(generateServiceName(GitBundle.message("label.credential.store.key.http.password"), key), key);
+    @ApiStatus.Internal
+    public static @NotNull CredentialAttributes credentialAttributes(@NotNull String key) {
+      return new CredentialAttributes(
+        CredentialAttributesKt.generateServiceName(GitBundle.message("label.credential.store.key.http.password"), key), key);
     }
 
     /**
      * Makes the password database key for the URL: inserts the login after the scheme: http://login@url.
      */
     @VisibleForTesting
-    static @NotNull String makeKey(@NotNull String url, @Nullable String login) {
+    @ApiStatus.Internal
+    public static @NotNull String makeKey(@NotNull String url, @Nullable String login) {
       if (login == null) {
         return url;
       }
@@ -548,7 +550,7 @@ public final class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
   }
 
-  private static class CancelledProvider extends AuthDataProvider {
+  private static final class CancelledProvider extends AuthDataProvider {
     CancelledProvider(@NotNull String url) {
       super(url);
     }
