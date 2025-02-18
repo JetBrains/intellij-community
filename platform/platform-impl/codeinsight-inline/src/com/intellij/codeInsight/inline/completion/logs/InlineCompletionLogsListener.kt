@@ -3,6 +3,7 @@ package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
+import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.FINAL_PROPOSAL_LENGTH
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.FINAL_PROPOSAL_LINE
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.FINISH_TYPE
@@ -19,6 +20,7 @@ import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.TOTAL_INSER
 import com.intellij.codeInsight.inline.completion.logs.FinishingLogs.WAS_SHOWN
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsContainer.Phase
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsUtils.isLoggable
+import com.intellij.codeInsight.inline.completion.logs.StartingLogs.EDITOR_TYPE
 import com.intellij.codeInsight.inline.completion.logs.StartingLogs.FILE_LANGUAGE
 import com.intellij.codeInsight.inline.completion.logs.StartingLogs.INLINE_API_PROVIDER
 import com.intellij.codeInsight.inline.completion.logs.StartingLogs.REQUEST_EVENT
@@ -73,6 +75,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
     container.addProject(event.request.editor.project)
     container.add(REQUEST_ID with event.request.requestId)
     container.add(REQUEST_EVENT with event.request.event.javaClass)
+    container.add(EDITOR_TYPE with InlineCompletionEditorType.get(event.request.editor))
     container.add(INLINE_API_PROVIDER with event.provider)
     event.request.event.toRequest()?.file?.language?.let { container.add(FILE_LANGUAGE with it) }
     container.addAsync {
@@ -201,7 +204,8 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
   private fun getDurations(): List<Duration> =
     if (ApplicationManager.getApplication().isUnitTestMode) {
       listOf(Duration.ofMillis(TEST_CHECK_STATE_AFTER_MLS))
-    } else {
+    }
+    else {
       listOf(Duration.ofSeconds(10), Duration.ofSeconds(30), Duration.ofMinutes(1), Duration.ofMinutes(5))
     }
 }
@@ -209,6 +213,7 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
 private object StartingLogs : PhasedLogs(Phase.INLINE_API_STARTING) {
   val REQUEST_ID = registerBasic(EventFields.Long("request_id", "Unique request id for the inline completion session"))
   val REQUEST_EVENT = register(EventFields.Class("request_event", "Type of the event that caused the request for the inline completion session"))
+  val EDITOR_TYPE = registerBasic(EventFields.Enum<InlineCompletionEditorType>("editor_type", "Type of the editor"))
   val INLINE_API_PROVIDER = registerBasic(EventFields.Class("inline_api_provider", "Type of the inline completion provider that was used for the request"))
   val FILE_LANGUAGE = registerBasic(EventFields.Language("file_language", "Language of the file that was opened for the request"))
 }
