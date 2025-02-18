@@ -16,6 +16,8 @@ interface JdiHelperClassLoader {
   @Throws(EvaluateException::class)
   fun getHelperClass(cls: Class<*>, evaluationContext: EvaluationContextImpl, vararg additionalClassesToLoad: String): ClassType?
 
+  fun isApplicable(evaluationContext: EvaluationContextImpl): Boolean
+
   companion object {
     private val EP_NAME: ExtensionPointName<JdiHelperClassLoader> = create("com.intellij.debugger.jdiHelperClassLoader")
 

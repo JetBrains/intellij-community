@@ -79,15 +79,17 @@ public final class ClassLoadingUtils {
   public static @Nullable ClassType getHelperClass(Class<?> cls, EvaluationContextImpl evaluationContext,
                                                    String... additionalClassesToLoad) {
     for (JdiHelperClassLoader loader : JdiHelperClassLoader.getLoaders()) {
-      try {
-        ClassType classType = loader.getHelperClass(cls, evaluationContext, additionalClassesToLoad);
-        if (classType != null) {
-          return classType;
+      if (loader.isApplicable(evaluationContext)) {
+        try {
+          ClassType classType = loader.getHelperClass(cls, evaluationContext, additionalClassesToLoad);
+          if (classType != null) {
+            return classType;
+          }
         }
-      }
-      catch (EvaluateException ex) {
-        String message = String.format("Failed to load '%s' with %s", cls.getName(), loader.getClass().getName());
-        Logger.getInstance(ClassLoadingUtils.class).error(message, ex);
+        catch (EvaluateException ex) {
+          String message = String.format("Failed to load '%s' with %s", cls.getName(), loader.getClass().getName());
+          Logger.getInstance(ClassLoadingUtils.class).error(message, ex);
+        }
       }
     }
     return null;
