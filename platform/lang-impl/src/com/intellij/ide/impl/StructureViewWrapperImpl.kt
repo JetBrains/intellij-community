@@ -380,6 +380,8 @@ class StructureViewWrapperImpl(
     withContext(Dispatchers.EDT) {
       wasFocused = UIUtil.isFocusAncestor(container)
       if (myStructureView != null) {
+        LOG.debug("Removing all view options on structure view deletion")
+        myActionGroup.removeAll()
         myStructureView!!.storeState()
         contentManager.selectedContent?.tabName
           ?.takeIf { it.isNotEmpty() }
@@ -393,6 +395,7 @@ class StructureViewWrapperImpl(
         myModuleStructureComponent = null
       }
       if (!isStructureViewShowing) {
+        LOG.debug("updating Structure View on hidden window")
         contentManager.removeAllContents(true)
       }
     }
