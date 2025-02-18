@@ -160,7 +160,7 @@ final class JavaServiceLineMarkerUtil {
     }
   }
 
-  private static class ServiceUsesNavigationHandler extends ServiceNavigationHandler {
+  private static final class ServiceUsesNavigationHandler extends ServiceNavigationHandler {
     ServiceUsesNavigationHandler(String interfaceClassName) {
       super(interfaceClassName);
     }
@@ -174,7 +174,7 @@ final class JavaServiceLineMarkerUtil {
     }
   }
 
-  private static class ServiceProvidesNavigationHandler extends ServiceNavigationHandler {
+  private static final class ServiceProvidesNavigationHandler extends ServiceNavigationHandler {
     private final String myImplementerClassName;
 
     ServiceProvidesNavigationHandler(@NotNull String interfaceClassName, @NotNull String implementerClassName) {
