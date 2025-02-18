@@ -34,10 +34,10 @@ class MavenSnapshotDependenciesTest : MavenMultiVersionImportingTestCase() {
   fun `test incremental sync update snapshot dependency`() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1")
     helper.addTestData("remote_snapshot/1", "remote")
-    val remoteRepoPath = helper.getTestDataPath("remote")
-    val localRepoPath = helper.getTestDataPath("local1")
-    httpServerFixture.startRepositoryFor(remoteRepoPath)
-    repositoryPath = localRepoPath
+    val remoteRepoPath = helper.getTestData("remote")
+    val localRepoPath = helper.getTestData("local1")
+    httpServerFixture.startRepositoryFor(remoteRepoPath.toString())
+    repositoryFile = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
       """

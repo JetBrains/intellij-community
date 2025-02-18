@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.junit.Test
 import java.io.File
 import java.util.zip.ZipOutputStream
+import kotlin.io.path.isRegularFile
 
 class MavenWrapperConfigurationTest : MavenImportingTestCase() {
 
@@ -99,10 +100,10 @@ class MavenWrapperConfigurationTest : MavenImportingTestCase() {
   @Test
   fun testShouldDownloadAndUseWrapperMavenSettings() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
-    val remoteRepoPath = helper.getTestDataPath("remote")
-    val localRepoPath = helper.getTestDataPath("local1")
+    val remoteRepoPath = helper.getTestData("remote")
+    val localRepoPath = helper.getTestData("local1")
 
-    httpServerFixture.startRepositoryFor(remoteRepoPath)
+    httpServerFixture.startRepositoryFor(remoteRepoPath.toString())
     val newName = "custom-maven.zip"
     val repack = repackCurrentMaven(newName) {
       FileUtil.writeToFile(it.resolve("conf/settings.xml"), """
@@ -128,7 +129,7 @@ class MavenWrapperConfigurationTest : MavenImportingTestCase() {
     }
     httpServerFixtureForWrapper.startRepositoryFor(repack.parent)
 
-    repositoryPath = localRepoPath
+    repositoryFile = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
       """
@@ -157,9 +158,9 @@ class MavenWrapperConfigurationTest : MavenImportingTestCase() {
 
     MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.setMavenHomeNoFire(MavenWrapper)
     removeFromLocalRepository("org/mytest/myartifact/")
-    assertFalse(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
     importProjectAsync()
-    assertTrue(helper.getTestDataLegacy("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
+    assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
   }
 
   /**

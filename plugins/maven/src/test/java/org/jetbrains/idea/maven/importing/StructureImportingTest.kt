@@ -639,7 +639,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testParentInRemoteRepository() = runBlocking {
     val pathToJUnit = "asm/asm-parent/3.0"
-    val parentDir = Paths.get(repositoryPath, pathToJUnit)
+    val parentDir = repositoryFile.resolve(pathToJUnit)
 
     removeFromLocalRepository(pathToJUnit)
     assertFalse(Files.exists(parentDir))

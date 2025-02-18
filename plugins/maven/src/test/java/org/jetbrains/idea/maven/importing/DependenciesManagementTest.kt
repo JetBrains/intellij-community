@@ -24,10 +24,10 @@ class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
   fun testImportingDependencies() = runBlocking {
     if (!hasMavenInstallation()) return@runBlocking
 
-    repositoryPath = dir.resolve("repo").toString()
+    repositoryFile = dir.resolve("repo")
     updateSettingsXml("""
                       <localRepository>
-                      ${repositoryPath}</localRepository>
+                      ${repositoryFile}</localRepository>
                       """.trimIndent())
 
     createModulePom("__temp",
@@ -77,10 +77,10 @@ class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testImportingNotInstalledDependencies() = runBlocking {
-    repositoryPath = dir.resolve("repo").toString()
+    repositoryFile = dir.resolve("repo")
     updateSettingsXml("""
   <localRepository>
-  ${repositoryPath}</localRepository>
+  ${repositoryFile}</localRepository>
   """.trimIndent())
 
     val bom = createModulePom("bom",

@@ -27,7 +27,7 @@ class MavenPluginInfoReaderTest : MavenTestCase() {
 
   override fun setUp() {
     super.setUp()
-    repositoryPath = MavenCustomRepositoryHelper(dir, "plugins").getTestDataPath("plugins")
+    repositoryFile = MavenCustomRepositoryHelper(dir, "plugins").getTestData("plugins")
     p = MavenArtifactUtil.readPluginInfo(Path.of(repositoryFile.toAbsolutePath().toString(), "org/apache/maven/plugins", "maven-compiler-plugin", "2.0.2", "maven-compiler-plugin-2.0.2.jar"))
   }
 

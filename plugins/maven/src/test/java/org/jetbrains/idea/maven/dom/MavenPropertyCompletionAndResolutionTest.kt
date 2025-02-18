@@ -687,7 +687,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
   fun testResolvingSettingsModelProperties() = runBlocking {
     val profiles = updateSettingsXml("""
   <localRepository>
-  ${repositoryPath}</localRepository>
+  ${repositoryFile}</localRepository>
   """.trimIndent())
 
     updateProjectPom("""

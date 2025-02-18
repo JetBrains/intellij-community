@@ -292,8 +292,8 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testTakingProxySettingsIntoAccount() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1")
-    repositoryPath = helper.getTestDataPath("local1")
-    mavenGeneralSettings.setLocalRepository(repositoryPath)
+    repositoryFile = helper.getTestData("local1")
+    mavenGeneralSettings.setLocalRepository(repositoryFile.toString())
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -347,7 +347,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   fun testMavenExtensionsAreLoadedAndAfterProjectsReadIsCalled() = runBlocking {
     try {
       val helper = MavenCustomRepositoryHelper(dir, "plugins")
-      repositoryPath = helper.getTestDataPath("plugins")
+      repositoryFile = helper.getTestData("plugins")
       mavenGeneralSettings.isWorkOffline = true
       importProjectAsync("""
                       <groupId>test</groupId>

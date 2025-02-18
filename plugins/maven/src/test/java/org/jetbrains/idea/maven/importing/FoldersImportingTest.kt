@@ -35,6 +35,7 @@ import org.junit.Test
 import java.io.File
 import java.io.IOException
 import java.util.function.Consumer
+import kotlin.io.path.exists
 
 class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
 
@@ -760,9 +761,8 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   fun testDownloadingNecessaryPlugins() = runBlocking {
     try {
       val helper = MavenCustomRepositoryHelper(dir, "local1")
-      repositoryPath = helper.getTestDataPath("local1")
-      val pluginFile = File(repositoryPath,
-                            "org/codehaus/mojo/build-helper-maven-plugin/1.2/build-helper-maven-plugin-1.2.jar")
+      repositoryFile = helper.getTestData("local1")
+      val pluginFile = repositoryFile.resolve("org/codehaus/mojo/build-helper-maven-plugin/1.2/build-helper-maven-plugin-1.2.jar")
       assertFalse(pluginFile.exists())
       importProjectAsync("""
                       <groupId>test</groupId>

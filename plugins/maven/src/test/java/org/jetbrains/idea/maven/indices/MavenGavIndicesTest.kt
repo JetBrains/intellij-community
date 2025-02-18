@@ -11,9 +11,9 @@ class MavenGavIndicesTest : MavenTestCase() {
 
   fun testUpdateGavIndex() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1")
-    val path = helper.getTestDataPath("local1")
+    val path = helper.getTestData("local1")
 
-    val gavIndex = MavenLocalGavIndexImpl(MavenRepositoryInfo("local", path, RepositoryKind.LOCAL))
+    val gavIndex = MavenLocalGavIndexImpl(MavenRepositoryInfo("local", path.toString(), RepositoryKind.LOCAL))
     gavIndex.update(mavenProgressIndicator!!, false)
     assertSameElements(gavIndex.groupIds, "asm", "commons-io", "junit", "org.deptest", "org.example", "org.intellijgroup", "org.ow2.asm")
     assertSameElements(gavIndex.getArtifactIds("asm"), "asm", "asm-attrs")
