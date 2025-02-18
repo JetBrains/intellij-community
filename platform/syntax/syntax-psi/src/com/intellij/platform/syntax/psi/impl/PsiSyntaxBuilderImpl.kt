@@ -22,6 +22,9 @@ import com.intellij.platform.syntax.psi.LanguageSyntaxDefinition
 import com.intellij.platform.syntax.psi.PsiSyntaxBuilder
 import com.intellij.platform.syntax.psi.asSyntaxLogger
 import com.intellij.platform.syntax.psi.convertNotNull
+import com.intellij.platform.syntax.util.CompletionState
+import com.intellij.platform.syntax.util.CompletionVariantProvider
+import com.intellij.platform.syntax.util.SyntaxGeneratedParserUtilBase.ErrorState
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.BlockSupportImpl
 import com.intellij.psi.impl.DiffLog
@@ -55,7 +58,7 @@ internal class PsiSyntaxBuilderImpl(
   private val tokenConverter: ElementTypeConverter,
   opaquePolicy: OpaqueElementPolicy?,
   whitespaceOrCommentBindingPolicy: WhitespaceOrCommentBindingPolicy?,
-) : UnprotectedUserDataHolder(), PsiSyntaxBuilder {
+) : UnprotectedUserDataHolder(), PsiSyntaxBuilder, CompletionVariantProvider {
 
   internal val builder: SyntaxTreeBuilder = builder(
     text = text,
@@ -332,6 +335,32 @@ internal class PsiSyntaxBuilderImpl(
     else if (isFileRoot && flag != null && !hasCollapsedChameleons) {
       file.putUserData(BlockSupport.TREE_DEPTH_LIMIT_EXCEEDED, null)
     }
+  }
+
+  override fun addCompletionVariantSmart(builder: SyntaxTreeBuilder, token: Any) {
+    val state: ErrorState = ErrorState.Companion.get(builder)
+    val completionState: CompletionState? = state.completionState
+    if (completionState != null && state.predicateSign) {
+      addCompletionVariant(builder, completionState, token)
+    }
+  }
+
+  override fun addCompletionVariant(builder: SyntaxTreeBuilder, completionState: CompletionState?, o: Any) {
+    val offset: Int = builder.currentOffset
+    if (!builder.eof() && offset == builder.rawTokenTypeStart(1)) return  // suppress for zero-length tokens
+    completionState?.let {
+      val text = completionState.convertItem(o)
+      val length = text.length
+      var add = length != 0 && completionState.prefixMatches(builder, text)
+      add = add && length > 1 && !(text[0] == '<' && text[length - 1] == '>') && !(text[0] == '\'' && text[length - 1] == '\'' && length < 5)
+      if (add) {
+        completionState.addItem(builder, text)
+      }
+    }
+  }
+
+  override fun getCompletionState(): CompletionState? {
+    return ErrorState.get(builder).completionState
   }
 
   companion object {
