@@ -823,7 +823,7 @@
 
     <projectService serviceInterface="git4idea.commands.GitCommandOutputPrinter"
                     serviceImplementation="git4idea.commands.GitCommandOutputConsolePrinter"/>
-    <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
+    <vcs.consoleFolding implementation="git4idea.console.GitConsoleFoldingImpl"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>
 
     <advancedSetting default="false" id="git.search.everywhere.tab.enabled" groupKey="advanced.settings.git"/>

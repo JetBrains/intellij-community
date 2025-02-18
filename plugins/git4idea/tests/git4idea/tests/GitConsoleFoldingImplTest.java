@@ -4,12 +4,12 @@ package git4idea.tests;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.vcs.console.VcsConsoleFolding;
-import git4idea.console.GitConsoleFolding;
+import git4idea.console.GitConsoleFoldingImpl;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class GitConsoleFoldingTest extends LightPlatformTestCase {
+public class GitConsoleFoldingImplTest extends LightPlatformTestCase {
   private static final String START_MARKER = "<fold>";
   private static final String END_MARKER = "</fold>";
 
@@ -55,7 +55,7 @@ public class GitConsoleFoldingTest extends LightPlatformTestCase {
       last = end;
     }
 
-    GitConsoleFolding provider = new GitConsoleFolding();
+    GitConsoleFoldingImpl provider = new GitConsoleFoldingImpl();
     List<VcsConsoleFolding.Placeholder> foldings = provider.getFoldingsForLine(getProject(), line.toString());
 
     assertEquals(expectedRanges.size(), foldings.size());

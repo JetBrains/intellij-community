@@ -10,12 +10,15 @@ import com.intellij.vcs.console.VcsConsoleFolding
 import com.intellij.vcs.console.VcsConsoleFolding.Placeholder
 import com.intellij.vcs.console.VcsConsoleView
 import git4idea.commands.GitImplBase
+import org.jetbrains.annotations.ApiStatus
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-class GitConsoleFolding : VcsConsoleFolding {
+internal class GitConsoleFoldingImpl : VcsConsoleFolding by GitConsoleFolding(Pattern.compile("\\[.*] git "))
+
+@ApiStatus.Internal
+class GitConsoleFolding(private val gitLinePattern: Pattern) : VcsConsoleFolding {
   private val CONFIG_OPTIONS_REGEX: Pattern = Pattern.compile("(\\s-c\\s[\\w.]+=[^ ]*)+")
-  private val GIT_LINE_REGEX: Pattern = Pattern.compile("\\[.*] git ")
 
   override fun getFoldingsForLine(project: Project, line: String): List<Placeholder> {
     if (!isGitCommandLine(line)) return emptyList()
@@ -36,11 +39,11 @@ class GitConsoleFolding : VcsConsoleFolding {
   }
 
   private fun isGitCommandLine(line: String): Boolean {
-    return GIT_LINE_REGEX.matcher(line).find()
+    return gitLinePattern.matcher(line).find()
   }
 }
 
-class GitProgressOutputConsoleFolding : ConsoleFolding() {
+internal class GitProgressOutputConsoleFolding : ConsoleFolding() {
   override fun shouldBeAttachedToThePreviousLine(): Boolean = false
 
   override fun getPlaceholderText(project: Project, lines: MutableList<String>): String? {
