@@ -47,11 +47,14 @@ import org.jetbrains.jewel.ui.theme.segmentedControlStyle
  * - Selecting from a small set of mutually exclusive options
  * - Filtering content with different criteria
  *
- * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/radio-button.html#5-and-more-options)
+ * **Guidelines:**
+ * [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/radio-button.html#5-and-more-options)
  *
- * **Example usage:** [`SegmentedControls`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/SegmentedControls.kt)
+ * **Example usage:**
+ * [`SegmentedControls`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/SegmentedControls.kt)
  *
- * **Swing equivalent:** [`JBRadioButton`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBRadioButton.java)
+ * **Swing equivalent:**
+ * [`JBRadioButton`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBRadioButton.java)
  *
  * @param buttons List of [SegmentedControlButtonData] that define the segments to display. Each button contains its
  *   selection state, content, and selection callback.
