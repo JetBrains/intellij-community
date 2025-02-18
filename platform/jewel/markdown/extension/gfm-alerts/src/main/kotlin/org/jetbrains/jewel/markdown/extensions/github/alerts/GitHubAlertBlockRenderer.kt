@@ -89,7 +89,7 @@ public class GitHubAlertBlockRenderer(private val styling: AlertStyling, private
                 if (titleIconKey != null) {
                     Icon(
                         key = titleIconKey,
-                        contentDescription = "Title icon",
+                        contentDescription = null,
                         iconClass = AlertStyling::class.java,
                         tint = styling.titleIconTint,
                     )

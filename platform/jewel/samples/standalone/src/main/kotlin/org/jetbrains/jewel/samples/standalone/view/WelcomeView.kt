@@ -34,7 +34,7 @@ internal fun WelcomeView() {
             Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        Icon(key = ShowcaseIcons.jewelLogo, contentDescription = "Jewel logo", modifier = Modifier.size(200.dp))
+        Icon(key = ShowcaseIcons.jewelLogo, contentDescription = null, modifier = Modifier.size(200.dp))
 
         Text("Meet Jewel", style = Typography.h1TextStyle())
 

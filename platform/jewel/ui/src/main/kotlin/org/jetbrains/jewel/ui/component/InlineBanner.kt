@@ -43,7 +43,7 @@ import org.jetbrains.jewel.ui.theme.inlineBannerStyle
 public fun InformationInlineBanner(
     text: String,
     modifier: Modifier = Modifier,
-    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonInformation, "Information icon") },
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonInformation, null) },
     actions: (@Composable FlowRowScope.() -> Unit)? = null,
     actionIcons: (@Composable RowScope.() -> Unit)? = null,
     style: InlineBannerStyle = JewelTheme.inlineBannerStyle.information,
@@ -64,7 +64,7 @@ public fun InformationInlineBanner(
 public fun SuccessInlineBanner(
     text: String,
     modifier: Modifier = Modifier,
-    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.Debugger.ThreadStates.Idle, "Success icon") },
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.Debugger.ThreadStates.Idle, null) },
     actions: (@Composable FlowRowScope.() -> Unit)? = null,
     actionIcons: (@Composable RowScope.() -> Unit)? = null,
     style: InlineBannerStyle = JewelTheme.inlineBannerStyle.success,
@@ -85,7 +85,7 @@ public fun SuccessInlineBanner(
 public fun WarningInlineBanner(
     text: String,
     modifier: Modifier = Modifier,
-    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonWarning, "Warning icon") },
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonWarning, null) },
     actions: (@Composable FlowRowScope.() -> Unit)? = null,
     actionIcons: (@Composable RowScope.() -> Unit)? = null,
     style: InlineBannerStyle = JewelTheme.inlineBannerStyle.warning,
@@ -106,7 +106,7 @@ public fun WarningInlineBanner(
 public fun ErrorInlineBanner(
     text: String,
     modifier: Modifier = Modifier,
-    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonError, "Error icon") },
+    icon: (@Composable () -> Unit)? = { Icon(AllIconsKeys.General.BalloonError, null) },
     actions: (@Composable FlowRowScope.() -> Unit)? = null,
     actionIcons: (@Composable RowScope.() -> Unit)? = null,
     style: InlineBannerStyle = JewelTheme.inlineBannerStyle.error,
