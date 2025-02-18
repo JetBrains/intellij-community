@@ -99,7 +99,7 @@ class PyAddNewUvPanel(
     val field = textField as? JBTextField ?: return@apply
     service<PythonSdkCoroutineService>().cs.launch {
       detectUvExecutable()?.let {
-          field.emptyText.text = "Auto-detected: ${it.absolutePathString()}"
+        field.emptyText.text = "Auto-detected: ${it.absolutePathString()}"
       }
       getUvExecutable()?.let {
         field.text = it.pathString
@@ -197,7 +197,7 @@ class PyAddNewUvPanel(
   private fun update() {
     service<PythonSdkCoroutineService>().cs.launch {
       selectedModule?.let {
-        installPackagesCheckBox.isEnabled = pyProjectToml(it) != null
+        installPackagesCheckBox.isEnabled = UvPyProject.findFile(it) != null
       }
     }
   }
