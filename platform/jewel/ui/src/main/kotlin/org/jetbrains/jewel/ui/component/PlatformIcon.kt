@@ -32,7 +32,7 @@ public fun PlatformIcon(
 @Composable
 public fun PlatformIcon(
     key: IntelliJIconKey,
-    contentDescription: String,
+    contentDescription: String?,
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified,
     vararg hints: PainterHint,
