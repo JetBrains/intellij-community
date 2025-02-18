@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.core.filter
 
 import com.intellij.debugger.engine.SyntheticTypeComponentProvider
 import com.sun.jdi.*
-import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
+import com.intellij.debugger.impl.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.SUSPEND_IMPL_NAME_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.core.DexBytecodeInspector
