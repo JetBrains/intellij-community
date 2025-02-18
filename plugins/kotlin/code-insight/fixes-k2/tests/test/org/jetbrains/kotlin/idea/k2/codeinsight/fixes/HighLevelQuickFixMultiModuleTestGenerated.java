@@ -1451,6 +1451,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             runTest("../../../idea/tests/testData/multiModuleQuickFix/other/createVarInExpectClass/");
         }
 
+        @TestMetadata("expectNoImplementAsConstructorParam")
+        public void testExpectNoImplementAsConstructorParam() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/other/expectNoImplementAsConstructorParam/");
+        }
+
         @TestMetadata("functionTypeParameterToReceiverByHeader")
         public void testFunctionTypeParameterToReceiverByHeader() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/other/functionTypeParameterToReceiverByHeader/");
