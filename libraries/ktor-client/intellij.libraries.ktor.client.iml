@@ -13,6 +13,5 @@
     <orderEntry type="library" exported="" name="ktor-client-content-negotiation" level="project" />
     <orderEntry type="library" exported="" name="ktor-serialization-kotlinx-json" level="project" />
     <orderEntry type="library" exported="" name="ktor-client-auth" level="project" />
-    <orderEntry type="library" name="kotlinx-io-core" level="project" />
   </component>
 </module>
