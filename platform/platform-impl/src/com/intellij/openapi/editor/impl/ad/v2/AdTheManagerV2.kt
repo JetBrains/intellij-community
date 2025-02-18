@@ -31,6 +31,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.AppExecutorUtil
 import fleet.kernel.Durable
+import fleet.kernel.awaitCommitted
 import fleet.kernel.change
 import fleet.kernel.rete.each
 import fleet.kernel.rete.filter
@@ -201,28 +202,29 @@ private class DocumentToEntitySynchronizer(
   override fun getPriority(): Int = Int.MIN_VALUE + 1
 
   override fun documentChanged(event: DocumentEvent) {
-    val docText = event.document.immutableCharSequence
-    val operation = Operation.Companion.replaceAt(
-      offset = event.offset.toLong(),
-      oldText = event.oldFragment.toString(),
-      newText = event.newFragment.toString(),
-      totalLength = docText.length.toLong(),
-    )
-    coroutineScope.launch(AD_DISPATCHER) {
+    val operation = operation(event)
+    val deferred = coroutineScope.async(AD_DISPATCHER) {
       val entity = entityHandle.entity()
-      change {
-        shared {
-          val repaired = repairIfNeeded(operation)
-          entity.mutate(this, OpenMap.empty()) {
-            edit(repaired)
-          }
+      change { // it is a shared change
+        entity.mutate(this, OpenMap.empty()) {
+          edit(operation)
         }
       }
+      awaitCommitted()
     }
+    runBlocking { deferred.await() }
+    ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
   }
 
-  private fun repairIfNeeded(defaultOperation: Operation): Operation {
-    // TODO: how to detect out of sync state?
-    return defaultOperation
+  private fun operation(event: DocumentEvent): Operation {
+    val oldText = event.oldFragment.toString()
+    val newText = event.newFragment.toString()
+    val lengthBefore = event.document.textLength - newText.length + oldText.length
+    return Operation.Companion.replaceAt(
+      offset = event.offset.toLong(),
+      oldText = oldText,
+      newText = newText,
+      totalLength = lengthBefore.toLong(),
+    )
   }
 }
