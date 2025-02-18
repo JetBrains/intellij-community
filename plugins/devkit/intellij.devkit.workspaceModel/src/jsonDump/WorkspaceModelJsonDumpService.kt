@@ -56,8 +56,10 @@ class WorkspaceModelJsonDumpService(private val project: Project, private val co
             reporter.itemStep(rootEntityClass.name)
             addJsonObject {
               put("rootEntityName", rootEntityClass.simpleName)
+              val entities = snapshot.entities(rootEntityClass).toList()
+              put("rootEntitiesCount", entities.size)
               putJsonArray("entities") {
-                for ((i, entity) in snapshot.entities(rootEntityClass).withIndex()) {
+                for ((i, entity) in entities.withIndex()) {
                   if (i % 100 == 0) ensureActive()
                   val jsonEntity = json.encodeToJsonElement(wsmSerializers[entity], entity)
                   add(jsonEntity)
