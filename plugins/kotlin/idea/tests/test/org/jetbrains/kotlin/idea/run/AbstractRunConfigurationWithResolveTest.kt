@@ -10,11 +10,11 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.findMainOwner
 import org.jetbrains.kotlin.idea.base.projectStructure.withLanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.checkers.languageVersionSettingsFromText
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.withCustomLanguageAndApiVersion
@@ -49,7 +49,7 @@ abstract class AbstractRunConfigurationWithResolveTest : AbstractRunConfiguratio
 
             for (file in files) {
                 val ktFile = psiManager.findFile(file) as? KtFile ?: continue
-                val languageVersionSettings = languageVersionSettingsFromText(listOf(ktFile.text))
+                val languageVersionSettings = defaultLanguageVersionSettings()
 
                 module.withLanguageVersionSettings(languageVersionSettings) {
                     var functionCandidates: List<KtNamedFunction>? = null
@@ -85,6 +85,10 @@ abstract class AbstractRunConfigurationWithResolveTest : AbstractRunConfiguratio
         }
     }
 
+    private fun defaultLanguageVersionSettings(): LanguageVersionSettings {
+        val bundledKotlinVersion = KotlinPluginLayout.standaloneCompilerVersion
+        return LanguageVersionSettingsImpl(bundledKotlinVersion.languageVersion, bundledKotlinVersion.apiVersion)
+    }
 
     private val detectorConfiguration = KotlinMainFunctionDetector.Configuration()
 
