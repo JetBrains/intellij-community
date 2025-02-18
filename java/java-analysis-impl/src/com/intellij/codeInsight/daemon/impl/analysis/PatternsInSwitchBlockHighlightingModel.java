@@ -23,7 +23,6 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -35,6 +34,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.PatternHighlightingModel.*;
 import static com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBlockHighlightingModel.CompletenessResult.*;
+import static java.util.Objects.requireNonNull;
 
 /**
  * This class represents the model for highlighting patterns in a switch block.
@@ -44,7 +44,6 @@ import static com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBloc
  * @see SwitchBlockHighlightingModel
  */
 public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlightingModel {
-  private final Object myUnconditionalPattern = new Object();
   private final @NotNull JavaPsiSwitchUtil.SelectorKind mySelectorKind;
 
   PatternsInSwitchBlockHighlightingModel(@NotNull LanguageLevel languageLevel,
@@ -71,8 +70,8 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
         switchBlockGroupCounter++;
       }
       if (labelStatement.isDefaultCase()) {
-        PsiElement defaultKeyword = Objects.requireNonNull(labelStatement.getFirstChild());
-        elementsToCheckDuplicates.putValue(myDefaultValue, defaultKeyword);
+        PsiElement defaultKeyword = requireNonNull(labelStatement.getFirstChild());
+        elementsToCheckDuplicates.putValue(DEFAULT_VALUE, defaultKeyword);
         elementsToCheckDominance.add(defaultKeyword);
         continue;
       }
@@ -253,7 +252,7 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
   @Override
   void fillElementsToCheckDuplicates(@NotNull MultiMap<Object, PsiElement> elements, @NotNull PsiCaseLabelElement labelElement) {
     if (labelElement instanceof PsiDefaultCaseLabelElement) {
-      elements.putValue(myDefaultValue, labelElement);
+      elements.putValue(DEFAULT_VALUE, labelElement);
     }
     else if (labelElement instanceof PsiExpression) {
       if (labelElement instanceof PsiReferenceExpression ref) {
@@ -277,7 +276,7 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
       }
     }
     else if (JavaPsiPatternUtil.isUnconditionalForType(labelElement, mySelectorType)) {
-      elements.putValue(myUnconditionalPattern, labelElement);
+      elements.putValue(UNCONDITIONAL_PATTERN, labelElement);
     }
   }
 
@@ -366,41 +365,6 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     return elements[0] instanceof PsiExpression expr &&
            ExpressionUtils.isNullLiteral(expr) &&
            elements[1] instanceof PsiDefaultCaseLabelElement;
-  }
-
-  @Override
-  HighlightInfo.@NotNull Builder createDuplicateInfo(@Nullable Object duplicateKey, @NotNull PsiElement duplicateElement) {
-    String description = createDuplicateDescription(duplicateKey, duplicateElement);
-    HighlightInfo.Builder info = createError(duplicateElement, description);
-    PsiSwitchLabelStatementBase labelStatement = PsiTreeUtil.getParentOfType(duplicateElement, PsiSwitchLabelStatementBase.class);
-    if (labelStatement != null && labelStatement.isDefaultCase()) {
-      IntentionAction action = getFixFactory().createDeleteDefaultFix(myFile, duplicateElement);
-      info.registerFix(action, null, null, null, null);
-    }
-    else {
-      IntentionAction action = getFixFactory().createDeleteSwitchLabelFix((PsiCaseLabelElement)duplicateElement);
-      info.registerFix(action, null, null, null, null);
-    }
-    return info;
-  }
-
-  private @NotNull @Nls String createDuplicateDescription(@Nullable Object duplicateKey, @NotNull PsiElement duplicateElement) {
-    String description;
-    if (duplicateKey == myDefaultValue) {
-      description = JavaErrorBundle.message("duplicate.default.switch.label");
-    }
-    else if (duplicateKey == myUnconditionalPattern) {
-      description = JavaErrorBundle.message("duplicate.unconditional.pattern.label");
-    }
-    else {
-      if (duplicateElement instanceof PsiLiteralExpression literalExpression) {
-        description = JavaErrorBundle.message("duplicate.switch.label", literalExpression.getValue());
-      }
-      else {
-        description = JavaErrorBundle.message("duplicate.switch.label", duplicateKey);
-      }
-    }
-    return description;
   }
 
   private static boolean checkFallThroughFromPatternWithSeveralLabels(@NotNull List<? extends List<PsiSwitchLabelStatementBase>> switchBlockGroup,
