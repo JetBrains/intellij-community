@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.AddAnnotationFix;
@@ -11,6 +11,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -19,7 +20,8 @@ import org.jetbrains.uast.*;
 import java.util.Set;
 import java.util.function.Predicate;
 
-final class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBase {
+@ApiStatus.Internal
+public final class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBase {
 
   private static final String[] METHODS_TO_IGNORE_CLASS = {
     "generatePreview", "getFileModifierForPreview", "applyFixForPreview", "startInWriteAction", "invokeForPreview"};
