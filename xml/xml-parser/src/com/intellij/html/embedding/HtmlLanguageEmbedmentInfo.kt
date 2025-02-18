@@ -6,7 +6,10 @@ import com.intellij.lexer.Lexer
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.psi.tree.IElementType
 
-class HtmlLanguageEmbedmentInfo(private val elementType: IElementType, private val syntaxHighlighterLanguage: Language): HtmlEmbedmentInfo {
+class HtmlLanguageEmbedmentInfo(
+  private val elementType: IElementType,
+  private val syntaxHighlighterLanguage: Language,
+) : HtmlEmbedmentInfo {
 
   override fun getElementType(): IElementType = elementType
 

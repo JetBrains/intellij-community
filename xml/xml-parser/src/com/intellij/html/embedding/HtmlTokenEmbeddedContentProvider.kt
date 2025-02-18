@@ -18,10 +18,11 @@ open class HtmlTokenEmbeddedContentProvider : BaseHtmlEmbeddedContentProvider {
   private val info: HtmlEmbedmentInfo
 
   @JvmOverloads
-  constructor(lexer: BaseHtmlLexer,
-              token: IElementType,
-              highlightingLexerSupplier: Supplier<Lexer?>,
-              elementTypeOverrideSupplier: Supplier<IElementType?> = Supplier { token }
+  constructor(
+    lexer: BaseHtmlLexer,
+    token: IElementType,
+    highlightingLexerSupplier: Supplier<Lexer?>,
+    elementTypeOverrideSupplier: Supplier<IElementType?> = Supplier { token },
   ) : super(lexer) {
     tokens = TokenSet.create(token)
     tokenClass = null

@@ -36,13 +36,13 @@ public final class XmlHighlighterColors {
     TextAttributesKey.createTextAttributesKey("HTML_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
   public static final TextAttributesKey HTML_TAG =
     TextAttributesKey.createTextAttributesKey("HTML_TAG", DefaultLanguageHighlighterColors.MARKUP_TAG);
-  
+
   public static final TextAttributesKey HTML_TAG_NAME =
     TextAttributesKey.createTextAttributesKey("HTML_TAG_NAME", DefaultLanguageHighlighterColors.KEYWORD);
-  public static final TextAttributesKey HTML_CUSTOM_TAG_NAME = 
+  public static final TextAttributesKey HTML_CUSTOM_TAG_NAME =
     TextAttributesKey.createTextAttributesKey("HTML_CUSTOM_TAG_NAME", HTML_TAG_NAME);
-  
-  
+
+
   public static final TextAttributesKey HTML_ATTRIBUTE_NAME =
     TextAttributesKey.createTextAttributesKey("HTML_ATTRIBUTE_NAME", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
   public static final TextAttributesKey HTML_ATTRIBUTE_VALUE =

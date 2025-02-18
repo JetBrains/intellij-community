@@ -19,6 +19,7 @@ public interface XmlBuilder {
   }
 
   ProcessingOrder startTag(CharSequence localName, String namespace, int startoffset, int endoffset, final int headerEndOffset);
+
   void endTag(CharSequence localName, String namespace, int startoffset, int endoffset);
 
   void attribute(CharSequence name, CharSequence value, int startoffset, int endoffset);
