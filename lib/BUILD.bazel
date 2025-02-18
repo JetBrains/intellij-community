@@ -10092,6 +10092,28 @@ java_import(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "vcs-github-apollographql-apollo-ast-jvm",
+  exports = [
+    ":apollo-ast-jvm-4_0_0_http_import",
+    ":okio-jvm-3_9_0_http_import",
+    ":apollo-annotations-jvm-4_0_0_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+kt_jvm_import(
+  name = "apollo-ast-jvm-4_0_0_http_import",
+  jar = "@apollo-ast-jvm-4_0_0_http//file",
+  srcjar = "@apollo-ast-jvm-4_0_0-sources_http//file"
+)
+
+kt_jvm_import(
+  name = "apollo-annotations-jvm-4_0_0_http_import",
+  jar = "@apollo-annotations-jvm-4_0_0_http//file",
+  srcjar = "@apollo-annotations-jvm-4_0_0-sources_http//file"
+)
+
 java_import(
   name = "velocity",
   jars = ["@velocity-engine-core-2_3_http//file"],

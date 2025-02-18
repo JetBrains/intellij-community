@@ -129,6 +129,10 @@ jvm_library(
     "@lib//:io-mockk-jvm",
     "//platform/platform-impl/ui:ide-ui",
     "@lib//:gson",
+    "@lib//:classgraph",
+    "@lib//:assert_j",
+    "@lib//:kotlin-reflect",
+    "@lib//:vcs-github-apollographql-apollo-ast-jvm",
   ],
   runtime_deps = [":vcs-github_resources"]
 )
