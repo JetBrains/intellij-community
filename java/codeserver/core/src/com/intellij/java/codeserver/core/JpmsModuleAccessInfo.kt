@@ -6,7 +6,7 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.psi.search.GlobalSearchScope
@@ -164,9 +164,8 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
     if (targetModule.name == PsiJavaModule.JAVA_BASE) return true
 
     if (!isJdkModule(jpsModule, targetModule)) return false
-    val languageLevel = PsiUtil.getLanguageLevel(place)
     // https://bugs.openjdk.org/browse/JDK-8197532
-    val jdkModulePred: (PsiJavaModule) -> Boolean = if (languageLevel >= LanguageLevel.JDK_11) {
+    val jdkModulePred: (PsiJavaModule) -> Boolean = if (PsiUtil.isAvailable(JavaFeature.AUTO_ROOT_MODULES, place)) {
       { module -> module.exports.any { e -> e.moduleNames.isEmpty() } }
     }
     else {
