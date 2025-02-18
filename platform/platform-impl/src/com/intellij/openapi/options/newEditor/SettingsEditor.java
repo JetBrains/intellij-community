@@ -12,6 +12,8 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ConfigurationException;
@@ -68,12 +70,13 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   private final SettingsSearch search;
   private final SettingsFilter filter;
   private final SettingsTreeView treeView;
-  private final ConfigurableEditor editor;
+  public final ConfigurableEditor editor;
   private final OnePixelSplitter mySplitter;
   private final SpotlightPainter spotlightPainter;
   private final LoadingDecorator loadingDecorator;
   private final @NotNull ConfigurableEditorBanner myBanner;
   private final History myHistory = new History(this);
+  private volatile boolean myNavigatingNow = false;
 
   private final Map<Configurable, ConfigurableController> controllers = new HashMap<>();
   private ConfigurableController lastController;
@@ -180,7 +183,17 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       public @NotNull Promise<? super Object> onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
         if (configurable != null) {
           properties.setValue(SELECTED_CONFIGURABLE, ConfigurableVisitor.getId(configurable));
-          myHistory.pushQueryPlace();
+          if (SettingsDialog.useNonModalSettingsWindow()) {
+            if (!myNavigatingNow && oldConfigurable != null) { // don't add to IdeDocumentHistory if just opened
+              IdeDocumentHistory documentHistory = IdeDocumentHistory.getInstance(project);
+              CommandProcessor.getInstance().executeCommand(project, () -> {
+                documentHistory.onSelectionChanged();
+              }, "ConfigurableChange", null);
+            }
+            myNavigatingNow = false;
+          } else {
+            myHistory.pushQueryPlace();
+          }
           loadingDecorator.startLoading(false);
         }
         checkModified(oldConfigurable);
@@ -454,7 +467,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(History.KEY, myHistory);
+    if (!SettingsDialog.useNonModalSettingsWindow()) {
+      sink.set(History.KEY, myHistory);
+    }
     sink.set(Settings.KEY, settings);
     sink.set(SearchTextField.KEY, search);
   }
@@ -557,6 +572,18 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   public boolean isModified() {
     return !filter.context.getModified().isEmpty();
+  }
+
+  public void setNavigatingNow() {
+    myNavigatingNow = true;
+  }
+
+  public String getSelectedConfigurableId() {
+    Configurable configurable = editor.getConfigurable();
+    if (configurable == null) {
+      return null;
+    }
+    return ConfigurableVisitor.getId(configurable);
   }
 
   private void updateController(@Nullable Configurable configurable) {
