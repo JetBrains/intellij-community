@@ -14,6 +14,10 @@
 
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer"/>
   </extensions>
+  <applicationListeners>
+    <listener class="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSeparationListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+  </applicationListeners>
 
   <!--Index-->
   <extensionPoints>
