@@ -32,12 +32,15 @@ import org.jetbrains.bazel.jvm.jps.impl.BazelBuildRootIndex
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildTargetIndex
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileScope
+import org.jetbrains.bazel.jvm.jps.impl.BazelLibraryRoots
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.JpsTargetBuilder
+import org.jetbrains.bazel.jvm.jps.impl.LibRootDescriptor
 import org.jetbrains.bazel.jvm.jps.impl.NoopIgnoredFileIndex
 import org.jetbrains.bazel.jvm.jps.impl.NoopModuleExcludeIndex
 import org.jetbrains.bazel.jvm.jps.impl.RequestLog
 import org.jetbrains.bazel.jvm.jps.impl.createPathRelativizer
+import org.jetbrains.bazel.jvm.jps.impl.loadLibRootState
 import org.jetbrains.bazel.jvm.jps.java.BazelJavaBuilder
 import org.jetbrains.bazel.jvm.jps.kotlin.IncrementalKotlinBuilder
 import org.jetbrains.bazel.jvm.jps.kotlin.NonIncrementalKotlinBuilder
@@ -117,7 +120,7 @@ private suspend fun incrementalBuild(
   writer: Writer,
   allocator: RootAllocator,
 ): Int {
-  val dependencyFileToDigest = if (isLibTracked) null else hashMap<Path, ByteArray>()
+  val dependencyFileToDigest = hashMap<Path, ByteArray>()
   val sourceFileToDigest = hashMap<Path, ByteArray>(request.inputPaths.size)
   val sources = ArrayList<Path>()
   val isDebugEnabled = request.verbosity > 0
@@ -138,7 +141,7 @@ private suspend fun incrementalBuild(
       if (dependencyFileToDigestDebugString != null) {
         appendDebug(dependencyFileToDigestDebugString, input, digest)
       }
-      dependencyFileToDigest?.put(baseDir.resolve(input).normalize(), digest)
+      dependencyFileToDigest.put(baseDir.resolve(input).normalize(), digest)
     }
   }
 
@@ -190,7 +193,8 @@ suspend fun buildUsingJps(
   forceIncremental: Boolean = false,
 ): Int {
   val relativizer = createPathRelativizer(baseDir)
-  val log = RequestLog(out = out, parentSpan = parentSpan, tracer = tracer, relativizer = relativizer.typeAwareRelativizer!!)
+  val typeAwareRelativizer = relativizer.typeAwareRelativizer!!
+  val log = RequestLog(out = out, parentSpan = parentSpan, tracer = tracer, relativizer = typeAwareRelativizer)
 
   val abiJar = args.optionalSingle(JvmBuilderFlags.ABI_OUT)?.let { baseDir.resolve(it).normalize() }
   val outJar = baseDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUT)).normalize()
@@ -241,7 +245,6 @@ suspend fun buildUsingJps(
   }
 
   val buildStateFile = dataDir.resolve("$prefix-state-v1.arrow")
-  val typeAwareRelativizer = relativizer.typeAwareRelativizer!!
 
   fun computeBuildState(parentSpan: Span): LoadStateResult? {
     val buildState = loadBuildState(
@@ -270,7 +273,21 @@ suspend fun buildUsingJps(
     }
   }
 
-  val buildState = if (isRebuild) null else tracer.span("load and check state") { parentSpan -> computeBuildState(parentSpan) }
+  val libRootStorageFile = dataDir.resolve("$prefix-lib-roots-v1.arrow")
+  val buildState = if (isRebuild) null else tracer.span("load and check state") { computeBuildState(it) }
+  val libRootState = if (isRebuild) {
+    hashMap<Path, LibRootDescriptor>()
+  }
+  else {
+    tracer.span("load and check state") {
+      loadLibRootState(
+        storageFile = libRootStorageFile,
+        allocator = allocator,
+        relativizer = typeAwareRelativizer,
+        span = it,
+      )
+    }
+  }
 
   var exitCode = initAndBuild(
     compileScope = BazelCompileScope(isIncrementalCompilation = true, isRebuild = isRebuild),
@@ -288,6 +305,11 @@ suspend fun buildUsingJps(
       storeFile = buildStateFile,
       allocator = allocator,
       isCleanBuild = isRebuild,
+      libRootManager = BazelLibraryRoots(
+        dependencyFileToDigest = dependencyFileToDigest!!,
+        storageFile = libRootStorageFile,
+        roots = libRootState,
+      ),
     ),
     buildState = buildState,
     parentSpan = parentSpan,
@@ -312,6 +334,11 @@ suspend fun buildUsingJps(
         storeFile = buildStateFile,
         allocator = allocator,
         isCleanBuild = true,
+        libRootManager = BazelLibraryRoots(
+          dependencyFileToDigest = dependencyFileToDigest,
+          storageFile = libRootStorageFile,
+          roots = hashMap(),
+        ),
       ),
       buildState = null,
       parentSpan = parentSpan,
@@ -621,6 +648,7 @@ private fun CoroutineScope.postBuild(
       metadata = Object2ObjectArrayMap(stateFileMetaNames, targetDigests.asString()),
       allocator = buildDataProvider.allocator,
     )
+    buildDataProvider.libRootManager.saveState(buildDataProvider.allocator, buildDataProvider.relativizer)
   }
 
   launch {

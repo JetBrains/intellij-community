@@ -197,15 +197,15 @@ http_file(
 
 http_file(
     name = "flatbuffers-java",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/flatbuffers/flatbuffers-java/25.1.24/flatbuffers-java-25.1.24.jar",
-    sha256 = "dbc103dfd4eb25664f87492968d8e01812c13cf939e5b72db2af38bfce530af3",
-    downloaded_file_path = "flatbuffers-java-25.1.24.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/flatbuffers/flatbuffers-java/25.2.10/flatbuffers-java-25.2.10.jar",
+    sha256 = "587bd6c31cda747587493a113bec8602d3a0b0ca579b2b1b838ef71b19e6525d",
+    downloaded_file_path = "flatbuffers-java-25.2.10.jar",
 )
 http_file(
     name = "flatbuffers-java-sources",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/flatbuffers/flatbuffers-java/25.1.24/flatbuffers-java-25.1.24-sources.jar",
-    sha256 = "5cd75b7500b07f93c5308ffd8d430aa0b62cd162dff7a5394d5e513cf3a7d534",
-    downloaded_file_path = "flatbuffers-java-25.1.24-sources.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/flatbuffers/flatbuffers-java/25.2.10/flatbuffers-java-25.2.10-sources.jar",
+    sha256 = "202bfdb62bff2f27bf3932a909fa5e45b3070aad3db3bb5a11900ee471a5546b",
+    downloaded_file_path = "flatbuffers-java-25.2.10-sources.jar",
 )
 
 http_file(

@@ -12,33 +12,21 @@ import org.apache.arrow.vector.VarBinaryVector
 import org.apache.arrow.vector.VarCharVector
 import org.apache.arrow.vector.VectorSchemaRoot
 import org.apache.arrow.vector.complex.ListVector
-import org.apache.arrow.vector.ipc.ArrowFileReader
-import org.apache.arrow.vector.ipc.ArrowFileWriter
 import org.apache.arrow.vector.types.pojo.ArrowType
 import org.apache.arrow.vector.types.pojo.Field
 import org.apache.arrow.vector.types.pojo.FieldType
 import org.apache.arrow.vector.types.pojo.Schema
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.bazel.jvm.jps.SourceDescriptor
 import org.jetbrains.bazel.jvm.emptyList
-import org.jetbrains.bazel.jvm.jps.emptyStringArray
 import org.jetbrains.bazel.jvm.hashMap
-import org.jetbrains.intellij.build.io.writeFileUsingTempFile
+import org.jetbrains.bazel.jvm.jps.SourceDescriptor
+import org.jetbrains.bazel.jvm.jps.emptyStringArray
 import org.jetbrains.jps.incremental.storage.PathTypeAwareRelativizer
 import org.jetbrains.jps.incremental.storage.RelativePathType
-import org.jetbrains.kotlin.utils.addToStdlib.enumSetOf
 import java.io.IOException
-import java.nio.channels.FileChannel
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
 
 // https://observablehq.com/@huggingface/apache-arrow-quick-view
-
-private val WRITE_FILE_OPTION = enumSetOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE)
-private val READ_FILE_OPTION = enumSetOf(StandardOpenOption.READ)
-
-private val notNullUtfStringFieldType = FieldType.notNullable(ArrowType.Utf8.INSTANCE)
 
 private val sourceFileField = Field("sourceFile", notNullUtfStringFieldType, null)
 private val digestField = Field("digest", FieldType.notNullable(ArrowType.Binary.INSTANCE), null)
@@ -92,53 +80,33 @@ internal fun loadBuildState(
   targetDigests: TargetConfigurationDigestContainer?,
   parentSpan: Span?,
 ): LoadStateResult? {
-  try {
-    FileChannel.open(buildStateFile, READ_FILE_OPTION).use { fileChannel ->
-      ArrowFileReader(fileChannel, allocator).use { fileReader ->
-        // metadata is available only after loading batch
-        fileReader.loadNextBatch()
-
-        if (targetDigests != null) {
-          val rebuildRequested = checkConfiguration(metadata = fileReader.metaData, targetDigests = targetDigests)
-          if (rebuildRequested != null) {
-            if (parentSpan == null) {
-              throw IOException(rebuildRequested)
-            }
-            else {
-              return LoadStateResult(
-                rebuildRequested = rebuildRequested,
-                map = createInitialSourceMap(sourceFileToDigest),
-                changedFiles = emptyList(),
-                deletedFiles = emptyList(),
-              )
-            }
-          }
+  readArrowFile(buildStateFile, allocator, parentSpan) { fileReader ->
+    if (targetDigests != null) {
+      val rebuildRequested = checkConfiguration(metadata = fileReader.metaData, targetDigests = targetDigests)
+      if (rebuildRequested != null) {
+        if (parentSpan == null) {
+          throw IOException(rebuildRequested)
         }
-
-        return doLoad(
-          root = fileReader.vectorSchemaRoot,
-          actualDigestMap = sourceFileToDigest,
-          relativizer = relativizer,
-          parentSpan = parentSpan,
-        )
+        else {
+          return LoadStateResult(
+            rebuildRequested = rebuildRequested,
+            map = createInitialSourceMap(sourceFileToDigest),
+            changedFiles = emptyList(),
+            deletedFiles = emptyList(),
+          )
+        }
       }
     }
-  }
-  catch (_: NoSuchFileException) {
-    return null
-  }
-  catch (e: Throwable) {
-    if (parentSpan == null) {
-      throw e
-    }
 
-    parentSpan.recordException(e, Attributes.of(
-      AttributeKey.stringKey("message"), "cannot load build state file",
-      AttributeKey.stringKey("buildStateFile"), buildStateFile.toString(),
-    ))
-    // will be deleted by caller
-    return null
+    return doLoad(
+      root = fileReader.vectorSchemaRoot,
+      actualDigestMap = sourceFileToDigest,
+      relativizer = relativizer,
+      parentSpan = parentSpan,
+    )
   }
+
+  return null
 }
 
 internal fun createInitialSourceMap(actualDigestMap: Map<Path, ByteArray>): Map<Path, SourceDescriptor> {
@@ -197,15 +165,7 @@ fun saveBuildState(
 
     root.setRowCount(rowIndex)
 
-    writeFileUsingTempFile(buildStateFile) { tempFile ->
-      FileChannel.open(tempFile, WRITE_FILE_OPTION).use { fileChannel ->
-        ArrowFileWriter(root, null, fileChannel, metadata).use { fileWriter ->
-          fileWriter.start()
-          fileWriter.writeBatch()
-          fileWriter.end()
-        }
-      }
-    }
+    writeVectorToFile(buildStateFile, root, metadata)
   }
 }
 
