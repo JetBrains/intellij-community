@@ -378,10 +378,14 @@ internal class ReworkedTerminalView(
 
     fun installSearchComponent(component: SearchReplaceComponent) {
       addToLayer(component, POPUP_LAYER)
+      revalidate()
+      repaint()
     }
 
     fun removeSearchComponent(component: SearchReplaceComponent) {
       remove(component)
+      revalidate()
+      repaint()
     }
 
     override fun getPreferredSize(): Dimension {
