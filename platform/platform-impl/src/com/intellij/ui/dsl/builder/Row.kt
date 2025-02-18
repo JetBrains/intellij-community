@@ -17,7 +17,6 @@ import com.intellij.ui.components.*
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.gridLayout.Grid
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
-import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
@@ -383,13 +382,6 @@ interface Row {
    * @see textListCellRenderer
    */
   fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
-
-  /**
-   * Overrides all gaps around row by [customRowGaps]. Should be used for very specific cases
-   */
-  @Deprecated("Use overloaded customize(...) with UnscaledGapsY", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.ScheduledForRemoval
-  fun customize(customRowGaps: VerticalGaps): Row
 
   /**
    * Overrides all gaps around row by [customRowGaps]. Should be used for very specific cases

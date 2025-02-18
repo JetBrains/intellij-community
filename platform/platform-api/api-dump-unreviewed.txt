@@ -8585,18 +8585,6 @@ e:com.intellij.ui.dsl.gridLayout.VerticalAlign
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.gridLayout.VerticalAlign
 - s:values():com.intellij.ui.dsl.gridLayout.VerticalAlign[]
-f:com.intellij.ui.dsl.gridLayout.VerticalGaps
-- <init>():V
-- <init>(I,I):V
-- b:<init>(I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():I
-- f:component2():I
-- f:copy(I,I):com.intellij.ui.dsl.gridLayout.VerticalGaps
-- bs:copy$default(com.intellij.ui.dsl.gridLayout.VerticalGaps,I,I,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.VerticalGaps
-- equals(java.lang.Object):Z
-- f:getBottom():I
-- f:getTop():I
-- hashCode():I
 f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
 - sf:listCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 - sf:textListCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer

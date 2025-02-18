@@ -327,13 +327,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return visible && isRowFromVisibleRange(rowIndex) && (parent == null || parent.isVisible())
   }
 
-  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelImpl {
-    super.horizontalAlign(horizontalAlign)
-    return this
-  }
-
   @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): PanelImpl {

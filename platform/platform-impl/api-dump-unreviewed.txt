@@ -15164,7 +15164,6 @@ com.intellij.ui.dsl.builder.Panel
 - bs:group$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
 - a:groupRowsRange(java.lang.String,Z,java.lang.Boolean,java.lang.Boolean,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.RowsRange
 - bs:groupRowsRange$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,java.lang.Boolean,java.lang.Boolean,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.RowsRange
-- ba:horizontalAlign(com.intellij.ui.dsl.gridLayout.HorizontalAlign):com.intellij.ui.dsl.builder.Panel
 - a:indent(kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.RowsRange
 - a:onApply(kotlin.jvm.functions.Function0):com.intellij.ui.dsl.builder.Panel
 - a:onIsModified(kotlin.jvm.functions.Function0):com.intellij.ui.dsl.builder.Panel
@@ -15219,7 +15218,6 @@ com.intellij.ui.dsl.builder.Row
 - a:contextHelp(java.lang.String,java.lang.String):com.intellij.ui.dsl.builder.Cell
 - bs:contextHelp$default(com.intellij.ui.dsl.builder.Row,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - a:customize(com.intellij.ui.dsl.gridLayout.UnscaledGapsY):com.intellij.ui.dsl.builder.Row
-- ba:customize(com.intellij.ui.dsl.gridLayout.VerticalGaps):com.intellij.ui.dsl.builder.Row
 - a:dropDownLink(java.lang.Object,java.util.List):com.intellij.ui.dsl.builder.Cell
 - a:enabled(Z):com.intellij.ui.dsl.builder.Row
 - a:enabledIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.Row
