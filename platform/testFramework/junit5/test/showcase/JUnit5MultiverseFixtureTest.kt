@@ -1,14 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5.showcase
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.*
+import com.intellij.testFramework.junit5.fixture.multiverseProjectFixture
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import kotlin.io.path.Path
 
 @TestApplication
 class JUnit5MultiverseFixtureTest {
@@ -33,6 +35,7 @@ class JUnit5MultiverseFixtureTest {
                         """.trimIndent()
               )
             }
+            file("file2.txt", """ This is a file in source root. """)
           }
           sourceRoot("source2", sourceRootId = "source2ID") {
             dir("extraDir") {
@@ -43,6 +46,7 @@ class JUnit5MultiverseFixtureTest {
               )
             }
           }
+          file("file3.txt", """ This is a file in content root. """)
         }
         module("nestedModule1") {
           contentRoot("nestedContentRoot1") {
@@ -72,6 +76,7 @@ class JUnit5MultiverseFixtureTest {
             }
           }
         }
+        file("file4.txt", """ This is a file in module1. """)
       }
 
       module("module2") {
@@ -352,5 +357,19 @@ class JUnit5MultiverseFixtureTest {
     assert(file2Content.contains("public class A2")) {
       "File 'file2.java' content in shared source1 does not match expected content"
     }
+  }
+
+  @Test
+  fun testFilesInNonDirs() {
+    assertFileExist("module1/module1PrimaryContent/source1/file2.txt")
+    assertFileExist("module1/module1PrimaryContent/file3.txt")
+    assertFileExist("module1/file4.txt")
+  }
+
+  private fun assertFileExist(path: String) {
+    val project = multiverseFixture.get()
+    val basePath = project.basePath!!
+    val file = VfsUtil.findFile(Path("$basePath/$path"), false)
+    assertNotNull(file, path)
   }
 }

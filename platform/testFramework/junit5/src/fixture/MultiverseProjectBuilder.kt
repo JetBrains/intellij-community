@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5.fixture
 
 import com.intellij.openapi.application.readAction
@@ -20,6 +20,13 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
+
+@TestOnly
+fun multiverseProjectFixture(name: String, init: MultiverseProjectBuilder.() -> Unit): TestFixture<Project> {
+  val builder = MultiverseProjectBuilder(name)
+  builder.init()
+  return buildMultiverseFixture(builder)
+}
 
 class MultiverseProjectBuilder(val name: String) {
   private val directories: MutableList<DirectoryBuilder> = mutableListOf()
@@ -44,9 +51,12 @@ class MultiverseProjectBuilder(val name: String) {
 
   inner class ModuleBuilder(val moduleName: String, private val modulePath: String) : DirectoryContainer, ModuleContainer {
     private val directories: MutableList<DirectoryBuilder> = mutableListOf()
+    private val files: MutableList<FileBuilder> = mutableListOf()
     private val nestedModules: MutableList<ModuleBuilder> = mutableListOf()
 
     override fun getDirectories(): List<DirectoryBuilder> = directories
+    override fun getFiles(): List<FileBuilder> = files
+
     override fun getNestedModules(): List<ModuleBuilder> = nestedModules
     fun getPath(): String = modulePath
 
@@ -97,6 +107,10 @@ class MultiverseProjectBuilder(val name: String) {
       directories.add(directory)
     }
 
+    override fun file(fileName: String, content: String) {
+      files.add(FileBuilder(fileName, content, "$modulePath/$fileName"))
+    }
+
     override fun module(moduleName: String, init: ModuleBuilder.() -> Unit) {
       val nestedModulePath = "$modulePath/$moduleName"
       val nestedModule = ModuleBuilder(moduleName, nestedModulePath).apply(init)
@@ -110,10 +124,12 @@ class MultiverseProjectBuilder(val name: String) {
     val isExisting: Boolean = false,
   ) : DirectoryContainer, ModuleContainer {
     private val directories: MutableList<DirectoryBuilder> = mutableListOf()
+    private val files: MutableList<FileBuilder> = mutableListOf()
     private val nestedModules: MutableList<ModuleBuilder> = mutableListOf()
     private val sourceRoots: MutableList<SourceRootBuilder> = mutableListOf()
 
     override fun getDirectories(): List<DirectoryBuilder> = directories
+    override fun getFiles(): List<FileBuilder> = files
     override fun getNestedModules(): List<ModuleBuilder> = nestedModules
     fun getSourceRoots(): List<SourceRootBuilder> = sourceRoots
     fun addSourceRoot(sourceRoot: SourceRootBuilder) {
@@ -150,6 +166,10 @@ class MultiverseProjectBuilder(val name: String) {
       directories.add(directory)
     }
 
+    override fun file(fileName: String, content: String) {
+      files.add(FileBuilder(fileName, content, "$path/$fileName"))
+    }
+
     override fun module(moduleName: String, init: ModuleBuilder.() -> Unit) {
       val nestedModulePath = "$path/$moduleName"
       val nestedModule = ModuleBuilder(moduleName, nestedModulePath).apply(init)
@@ -170,9 +190,9 @@ class MultiverseProjectBuilder(val name: String) {
 
     override fun getDirectories(): List<DirectoryBuilder> = directories
     override fun getNestedModules(): List<ModuleBuilder> = nestedModules
-    fun getFiles(): List<FileBuilder> = files
+    override fun getFiles(): List<FileBuilder> = files
 
-    fun file(fileName: String, content: String) {
+    override fun file(fileName: String, content: String) {
       files.add(FileBuilder(fileName, content, "$path/$fileName"))
     }
 
@@ -199,9 +219,9 @@ class MultiverseProjectBuilder(val name: String) {
 
     override fun getDirectories(): List<DirectoryBuilder> = directories
     override fun getNestedModules(): List<ModuleBuilder> = nestedModules
-    fun getFiles(): List<FileBuilder> = files
+    override fun getFiles(): List<FileBuilder> = files
 
-    fun file(fileName: String, content: String) {
+    override fun file(fileName: String, content: String) {
       files.add(FileBuilder(fileName, content, "$path/$fileName"))
     }
 
@@ -227,7 +247,9 @@ class MultiverseProjectBuilder(val name: String) {
 
   interface DirectoryContainer {
     fun getDirectories(): List<DirectoryBuilder>
+    fun getFiles(): List<FileBuilder>
     fun dir(name: String, init: DirectoryBuilder.() -> Unit)
+    fun file(fileName: String, content: String)
   }
 
   interface ModuleContainer {
@@ -346,20 +368,13 @@ private fun customPathFixture(root: Path): TestFixture<Path> = testFixture {
 }
 
 @TestOnly
-fun multiverseProjectFixture(name: String, init: MultiverseProjectBuilder.() -> Unit): TestFixture<Project> {
-  val builder = MultiverseProjectBuilder(name)
-  builder.init()
-  return buildMultiverseFixture(builder)
-}
-
-@TestOnly
 private fun buildMultiverseFixture(builder: MultiverseProjectBuilder): TestFixture<Project> = testFixture(builder.name) {
   val initializer = MultiverseFixtureInitializer(builder)
-  with(initializer) {
+  val project = with(initializer) {
     initializeProjectModel()
   }
 
-  initialized(initializer.project) {
+  initialized(project) {
     /*
      Nothing to dispose
      */
@@ -368,24 +383,23 @@ private fun buildMultiverseFixture(builder: MultiverseProjectBuilder): TestFixtu
 
 @TestOnly
 private class MultiverseFixtureInitializer(private val builder: MultiverseProjectBuilder) {
-  lateinit var projectFixture: TestFixture<Project>
-  lateinit var project: Project
+  private lateinit var projectFixture: TestFixture<Project>
 
   suspend fun TestFixtureInitializer.R<Project>.initializeProjectModel(): Project {
     this@MultiverseFixtureInitializer.projectFixture = projectFixture()
-    this@MultiverseFixtureInitializer.project = projectFixture.init()
+    val project = projectFixture.init()
 
     val basePath = project.basePath?.let { Path.of(it) }
                    ?: throw IllegalStateException("Project base path is not available")
 
     builder.getModules().forEach { module ->
-      processModule(basePath, module)
+      initializeModule(basePath, module)
     }
 
     return project
   }
 
-  private suspend fun TestFixtureInitializer.R<Project>.processModule(
+  private suspend fun TestFixtureInitializer.R<Project>.initializeModule(
     parentPath: Path,
     module: MultiverseProjectBuilder.ModuleBuilder,
   ) {
@@ -398,54 +412,65 @@ private class MultiverseFixtureInitializer(private val builder: MultiverseProjec
                       ?: throw IllegalStateException("Content roots entity for module '${module.moduleName}' is null")
 
     contentRoots.values.forEach { contentRoot ->
-      val contentRootPath = modulePath.resolve(contentRoot.name)
-      val contentRootFixture = if (contentRoot.isExisting) {
-        moduleFixture.customContentRootFixture(contentRootPath.parent, contentRoot.name)
-      }
-      else {
-        moduleFixture.customContentRootFixture(modulePath, contentRoot.name)
-      }
-      contentRootFixture.init()
-
-      initializeDirectoriesAndFiles(
-        parentPath = contentRootPath,
-        psiFixture = contentRootFixture,
-        directories = contentRoot.getDirectories()
-      )
-
-      contentRoot.getSourceRoots().forEach { sourceRoot ->
-        val sourceRootPath = contentRootPath.resolve(sourceRoot.name)
-        val sourceRootFixture = moduleFixture.customSourceRootFixture(contentEntry = contentRootPath, dirName = sourceRoot.name)
-        sourceRootFixture.init()
-
-        if (!sourceRoot.isExisting) {
-          initializeDirectoriesAndFiles(
-            parentPath = sourceRootPath,
-            psiFixture = sourceRootFixture,
-            directories = sourceRoot.getDirectories()
-          )
-
-          sourceRoot.getNestedModules().forEach { nestedModule ->
-            processModule(sourceRootPath, nestedModule)
-          }
-        }
-      }
-
-      contentRoot.getNestedModules().forEach { nestedModule ->
-        processModule(contentRootPath, nestedModule)
-      }
+      initializeContentRoot(modulePath, contentRoot, moduleFixture)
     }
 
     module.getNestedModules().forEach { nestedModule ->
-      processModule(modulePath, nestedModule)
+      initializeModule(modulePath, nestedModule)
+    }
+
+    initializeDirectoriesAndFiles(modulePath, modulePathFixture.asPsiDirectoryFixture(), module)
+  }
+
+  private suspend fun TestFixtureInitializer.R<Project>.initializeContentRoot(
+    modulePath: Path,
+    contentRoot: MultiverseProjectBuilder.ContentRootBuilder,
+    moduleFixture: TestFixture<Module>,
+  ) {
+    val contentRootPath = modulePath.resolve(contentRoot.name)
+    val contentRootFixture = if (contentRoot.isExisting) {
+      moduleFixture.customContentRootFixture(contentRootPath.parent, contentRoot.name)
+    }
+    else {
+      moduleFixture.customContentRootFixture(modulePath, contentRoot.name)
+    }
+    contentRootFixture.init()
+
+    initializeDirectoriesAndFiles(
+      parentPath = contentRootPath,
+      psiFixture = contentRootFixture,
+      parent = contentRoot
+    )
+
+    contentRoot.getSourceRoots().forEach { sourceRoot ->
+      val sourceRootPath = contentRootPath.resolve(sourceRoot.name)
+      val sourceRootFixture = moduleFixture.customSourceRootFixture(contentEntry = contentRootPath, dirName = sourceRoot.name)
+      sourceRootFixture.init()
+
+      if (!sourceRoot.isExisting) {
+        initializeDirectoriesAndFiles(
+          parentPath = sourceRootPath,
+          psiFixture = sourceRootFixture,
+          parent = sourceRoot
+        )
+
+        sourceRoot.getNestedModules().forEach { nestedModule ->
+          initializeModule(sourceRootPath, nestedModule)
+        }
+      }
+    }
+
+    contentRoot.getNestedModules().forEach { nestedModule ->
+      initializeModule(contentRootPath, nestedModule)
     }
   }
 
   private suspend fun TestFixtureInitializer.R<Project>.initializeDirectoriesAndFiles(
     parentPath: Path,
     psiFixture: TestFixture<PsiDirectory>,
-    directories: List<MultiverseProjectBuilder.DirectoryBuilder>,
+    parent: MultiverseProjectBuilder.DirectoryContainer,
   ) {
+    val directories = parent.getDirectories()
     directories.forEach { directory ->
       val directoryFixture = psiFixture.customPsiDirectoryFixture(
         root = parentPath,
@@ -454,21 +479,30 @@ private class MultiverseFixtureInitializer(private val builder: MultiverseProjec
 
       directoryFixture.init()
 
-      directory.getFiles().forEach { file ->
-        directoryFixture.psiFileFixture(file.getFileName(), file.getFileContent()).init()
-      }
-
       val directoryPath = parentPath.resolve(directory.name)
 
       initializeDirectoriesAndFiles(
         parentPath = directoryPath,
         psiFixture = directoryFixture,
-        directories = directory.getDirectories()
+        parent = directory
       )
 
       directory.getNestedModules().forEach { nestedModule ->
-        processModule(directoryPath, nestedModule)
+        initializeModule(directoryPath, nestedModule)
       }
     }
+
+    val files = parent.getFiles()
+    files.forEach { file ->
+      psiFixture.psiFileFixture(file.getFileName(), file.getFileContent()).init()
+    }
+  }
+
+  private fun TestFixture<Path>.asPsiDirectoryFixture(): TestFixture<PsiDirectory> = testFixture {
+    val dirPath = this@asPsiDirectoryFixture.init()
+    val project = projectFixture.init()
+    val vDir = VfsUtil.findFile(dirPath, true) ?: throw IllegalStateException("Virtual file for path '$dirPath' was not found")
+    val dir = readAction { PsiManager.getInstance(project).findDirectory(vDir) } ?: throw IllegalStateException("PsiDirectory for path '$dirPath' was not found")
+    initialized(dir) {/*nothing to clean up*/ }
   }
 }
