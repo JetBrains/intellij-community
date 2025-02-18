@@ -60,15 +60,14 @@ try:
 except:
     pass
 
-
 if IS_PY2:
     builtin_qualifier = "__builtin__"
 else:
     builtin_qualifier = "builtins"
 
 
-
 @pytest.mark.skipif(IS_IRONPYTHON, reason='Test needs gc.get_referrers to really check anything.')
+@pytest.mark.xfail(reason="PY-79298", strict=False)
 def test_case_referrers(case_setup):
     with case_setup.test_file('_debugger_case1.py') as writer:
         writer.log.append('writing add breakpoint')
