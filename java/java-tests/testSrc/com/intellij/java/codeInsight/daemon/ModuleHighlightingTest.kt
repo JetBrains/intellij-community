@@ -14,10 +14,15 @@ import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescripto
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleManager.Companion.getInstance
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
@@ -42,6 +47,7 @@ import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.workspaceModel.updateProjectModel
+import com.intellij.util.ThrowableRunnable
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
@@ -964,6 +970,39 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
       }""".trimIndent(), MR_JAVA9)
   }
 
+  fun testImportJavaSe() {
+    withInternalJdk(INTERNAL_MAIN, LanguageLevel.JDK_23_PREVIEW) {
+      highlight("Main.java", """
+        <error descr="Module 'java.se' is missing from the module graph">import module java.se;</error>
+        import module jdk.httpserver;
+        import module java.smartcardio;
+
+        public class Main {
+          private <error descr="Reference to 'Date' is ambiguous, both 'java.sql.Date' and 'java.util.Date' match">Date</error> date;
+          private HttpsServer http;
+          private ATR attr;
+        }""".trimIndent(), INTERNAL_MAIN)
+    }
+  }
+
+  fun testSmartCardio9() {
+    withInternalJdk(INTERNAL_MAIN, LanguageLevel.JDK_1_9) {
+      highlight("Main.java", """
+        public class Main {
+          private <error descr="Package 'javax.smartcardio' is declared in module 'java.smartcardio', which is not in the module graph">javax.smartcardio</error>.ATR attr;
+        }""".trimIndent(), INTERNAL_MAIN)
+    }
+  }
+
+  fun testSmartCardio11() {
+    withInternalJdk(INTERNAL_MAIN, LanguageLevel.JDK_11) {
+      highlight("Main.java", """
+        public class Main {
+          private javax.smartcardio.ATR attr;
+        }""".trimIndent(), INTERNAL_MAIN)
+    }
+  }
+
   //<editor-fold desc="Helpers.">
   private fun highlight(text: String) = highlight("module-info.java", text)
 
@@ -985,6 +1024,35 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
                 && !it.name.endsWith("DeclarativeHintsTogglingIntention")}
       .map { it.simpleName }
     assertThat(available).describedAs(availableIntentions.toString()).containsExactlyInAnyOrder(*fixes)
+  }
+
+  private fun withInternalJdk(moduleDescriptor: ModuleDescriptor, level: LanguageLevel, block: () -> Unit) {
+    val name = "INTERNAL_JDK_TEST"
+
+    val module = getInstance(project).findModuleByName(moduleDescriptor.moduleName)!!
+    try {
+
+      WriteAction.runAndWait<RuntimeException?>(ThrowableRunnable {
+        val jdk = ProjectJdkTable.getInstance().findJdk(name)
+                  ?: JavaSdk.getInstance().createJdk(name, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomePath()!!, false)
+
+        ProjectJdkTable.getInstance().addJdk(jdk, project)
+        ModuleRootModificationUtil.setModuleSdk(module, jdk)
+      })
+
+      IdeaTestUtil.withLevel(module, level) {
+        block()
+      }
+
+    }
+    finally {
+      WriteAction.runAndWait<RuntimeException?>(ThrowableRunnable {
+        ModuleRootModificationUtil.setModuleSdk(module, projectDescriptor.sdk)
+        ProjectJdkTable.getInstance().findJdk(name)?.also { jdk ->
+          ProjectJdkTable.getInstance().removeJdk(jdk)
+        }
+      })
+    }
   }
 
   private fun ModuleDescriptor.createSourceRoot(srcPathPrefix: String): VirtualFile? {
