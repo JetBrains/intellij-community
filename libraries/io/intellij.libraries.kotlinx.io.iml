@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library" exported="">
+    <orderEntry type="module-library">
       <library name="kotlinx-io-core" type="repository">
         <properties maven-id="org.jetbrains.kotlinx:kotlinx-io-core-jvm:0.6.0">
           <verification>
