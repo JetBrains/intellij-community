@@ -55,32 +55,6 @@ import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.checkboxStyle
 
-/**
- * A checkbox that allows users to toggle between checked and unchecked states.
- *
- * Provides a toggleable component that follows the standard checkbox interactions including hover, press, and focus
- * states. The checkbox adapts its appearance based on the enabled/disabled state and supports custom styling.
- *
- * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/checkbox.html)
- *
- * **Usage example:**
- * [`Checkboxes.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Checkboxes.kt)
- *
- * **Swing equivalent:**
- * [`JBCheckBox`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBCheckBox.java)
- *
- * @param checked Current checked state of the checkbox
- * @param onCheckedChange Will be called when the checkbox is clicked, with the new checked state
- * @param modifier Modifier to be applied to the checkbox
- * @param enabled Controls the enabled state of the checkbox. When false, the checkbox will not be clickable
- * @param outline Visual outline state for error/warning indicators
- * @param interactionSource An optional [MutableInteractionSource] for observing and emitting [Interaction]s
- * @param colors The color styling configuration for the checkbox
- * @param metrics The size and layout metrics for the checkbox
- * @param icons The icon resources used for different checkbox states
- * @param textStyle The typography style to be applied to any text content
- * @see com.intellij.ui.components.JBCheckBox
- */
 @Composable
 public fun Checkbox(
     checked: Boolean,
@@ -113,32 +87,6 @@ public fun Checkbox(
     )
 }
 
-/**
- * A three-state checkbox that cycles between checked, unchecked, and indeterminate states.
- *
- * Provides a toggleable component with three possible states, useful for representing partial selections or mixed
- * states. Follows standard checkbox interactions with additional state handling.
- *
- * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/checkbox.html)
- *
- * **Usage example:**
- * [`Checkboxes.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Checkboxes.kt)
- *
- * **Swing equivalent:**
- * [`JBCheckBox`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBCheckBox.java)
- *
- * @param state Current state of the checkbox (On, Off, or Indeterminate)
- * @param onClick Will be called when the checkbox is clicked
- * @param modifier Modifier to be applied to the checkbox
- * @param enabled Controls the enabled state of the checkbox. When false, the checkbox will not be clickable
- * @param outline Visual outline state for error/warning indicators
- * @param interactionSource An optional [MutableInteractionSource] for observing and emitting [Interaction]s
- * @param colors The color styling configuration for the checkbox
- * @param metrics The size and layout metrics for the checkbox
- * @param icons The icon resources used for different checkbox states
- * @param textStyle The typography style to be applied to any text content
- * @see com.intellij.ui.components.JBCheckBox
- */
 @Composable
 public fun TriStateCheckbox(
     state: ToggleableState,
@@ -170,34 +118,6 @@ public fun TriStateCheckbox(
     )
 }
 
-/**
- * A three-state checkbox with text label that cycles between checked, unchecked, and indeterminate states.
- *
- * Combines a TriStateCheckbox with a text label in a row layout. The entire row is clickable, making it easier for
- * users to interact with the control.
- *
- * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/checkbox.html)
- *
- * **Usage example:**
- * [`Checkboxes.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Checkboxes.kt)
- *
- * **Swing equivalent:**
- * [`JBCheckBox`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBCheckBox.java)
- *
- * @param text The text label to display next to the checkbox
- * @param state Current state of the checkbox (On, Off, or Indeterminate)
- * @param onClick Will be called when the checkbox or its label is clicked
- * @param modifier Modifier to be applied to the entire row
- * @param textModifier Modifier to be applied to the text label only
- * @param enabled Controls the enabled state of the checkbox. When false, the checkbox will not be clickable
- * @param outline Visual outline state for error/warning indicators
- * @param interactionSource An optional [MutableInteractionSource] for observing and emitting [Interaction]s
- * @param colors The color styling configuration for the checkbox
- * @param metrics The size and layout metrics for the checkbox
- * @param icons The icon resources used for different checkbox states
- * @param textStyle The typography style to be applied to the text label
- * @see com.intellij.ui.components.JBCheckBox
- */
 @Composable
 public fun TriStateCheckboxRow(
     text: String,
@@ -232,34 +152,6 @@ public fun TriStateCheckboxRow(
     }
 }
 
-/**
- * A checkbox with text label that toggles between checked and unchecked states.
- *
- * Combines a Checkbox with a text label in a row layout. The entire row is clickable, providing a larger hit target for
- * better usability.
- *
- * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/checkbox.html)
- *
- * **Usage example:**
- * [`Checkboxes.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Checkboxes.kt)
- *
- * **Swing equivalent:**
- * [`JBCheckBox`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBCheckBox.java)
- *
- * @param text The text label to display next to the checkbox
- * @param checked Current checked state of the checkbox
- * @param onCheckedChange Will be called when the checkbox or its label is clicked, with the new checked state
- * @param modifier Modifier to be applied to the entire row
- * @param textModifier Modifier to be applied to the text label only
- * @param enabled Controls the enabled state of the checkbox. When false, the checkbox will not be clickable
- * @param outline Visual outline state for error/warning indicators
- * @param interactionSource An optional [MutableInteractionSource] for observing and emitting [Interaction]s
- * @param colors The color styling configuration for the checkbox
- * @param metrics The size and layout metrics for the checkbox
- * @param icons The icon resources used for different checkbox states
- * @param textStyle The typography style to be applied to the text label
- * @see com.intellij.ui.components.JBCheckBox
- */
 @Composable
 public fun CheckboxRow(
     text: String,
