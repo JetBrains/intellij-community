@@ -87,6 +87,24 @@ import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.menuStyle
 import org.jetbrains.skiko.hostOs
 
+/**
+ * A popup menu component that follows the standard visual styling with customizable content.
+ *
+ * Provides a floating menu that can be used for context menus, dropdown menus, and other popup
+ * menu scenarios. The menu supports keyboard navigation, icons, keybindings, and nested submenus.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/popups-and-menus.html)
+
+ * **Swing equivalent:** [`JPopupMenu`](https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html#popup)
+ *
+ * @param onDismissRequest Called when the menu should be dismissed, returns true if the dismissal was handled
+ * @param horizontalAlignment The horizontal alignment of the menu relative to its anchor point
+ * @param modifier Modifier to be applied to the menu container
+ * @param style The visual styling configuration for the menu and its items
+ * @param popupProperties Properties controlling the popup window behavior
+ * @param content The menu content builder using [MenuScope]
+ * @see javax.swing.JPopupMenu
+ */
 @Composable
 public fun PopupMenu(
     onDismissRequest: (InputMode) -> Boolean,
