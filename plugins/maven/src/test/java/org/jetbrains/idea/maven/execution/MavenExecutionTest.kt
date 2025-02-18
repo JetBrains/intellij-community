@@ -20,7 +20,7 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.maven.testFramework.MavenExecutionTestCase
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.toCanonicalPath
@@ -60,7 +60,7 @@ class MavenExecutionTest : MavenExecutionTestCase() {
 
   @Test
   fun testUpdatingExcludedFoldersAfterExecution() = runBlocking {
-    writeAction {
+    edtWriteAction {
       createStdProjectFolders()
     }
     importProjectAsync("""
@@ -68,7 +68,7 @@ class MavenExecutionTest : MavenExecutionTestCase() {
                       <artifactId>project</artifactId>
                       <version>1</version>
                       """.trimIndent())
-    writeAction {
+    edtWriteAction {
       createProjectSubDirs("target/generated-sources/foo", "target/bar")
     }
 

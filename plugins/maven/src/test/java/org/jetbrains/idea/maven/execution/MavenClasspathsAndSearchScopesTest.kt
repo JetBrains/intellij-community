@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.execution
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
@@ -1288,7 +1288,7 @@ $scope</scope>
     val nonMavenM1 = createModule("nonMavenM1")
     val nonMavenM2 = createModule("nonMavenM2")
 
-    writeAction {
+    edtWriteAction {
       ModuleRootModificationUtil.addDependency(nonMavenM1, nonMavenM2, DependencyScope.COMPILE, true)
       ModuleRootModificationUtil.addDependency(nonMavenM2, modules[0], DependencyScope.COMPILE, true)
       createProjectSubDirs("nonMavenM1/src/main/java", "nonMavenM1/src/test/java",

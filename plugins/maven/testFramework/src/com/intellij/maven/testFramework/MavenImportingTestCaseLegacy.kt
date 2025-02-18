@@ -549,7 +549,7 @@ abstract class MavenImportingTestCaseLegacy : MavenTestCaseLegacy() {
     catch (e: ModuleWithNameAlreadyExists) {
       throw RuntimeException(e)
     }
-    writeAction {
+    edtWriteAction {
       modifiableModel.commit()
       project.getMessageBus().syncPublisher(ModuleListener.TOPIC).modulesRenamed(project, listOf(module)) { oldName }
     }

@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.project.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
 import com.intellij.openapi.util.ThrowableComputable
@@ -653,7 +653,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                                             """.trimIndent())
     importProjectAsync()
     val oldDir = m.getParent()
-    writeAction {
+    edtWriteAction {
       val newDir = projectRoot.createChildDirectory(this, "m2")
       assertEquals(1, projectsTree.rootProjects.size)
       assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)

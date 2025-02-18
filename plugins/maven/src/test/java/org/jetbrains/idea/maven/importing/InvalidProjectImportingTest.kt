@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
@@ -171,7 +171,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testUnknownProblemWithEmptyFile() = runBlocking {
     createProjectPom("")
-    writeAction { projectPom.setBinaryContent(ByteArray(0)) }
+    edtWriteAction { projectPom.setBinaryContent(ByteArray(0)) }
 
     importProjectAsync()
 

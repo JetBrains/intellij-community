@@ -7,7 +7,7 @@ import com.intellij.idea.LoggerFactory
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -74,7 +74,7 @@ class WorkspaceModelJsonDumpService(private val project: Project, private val co
     coroutineScope.launch(Dispatchers.Default) {
       val jsonEntities = getWorkspaceEntitiesAsJsonArray()
       val serializedEntitiesString = json.encodeToString(jsonEntities)
-      writeAction {
+      edtWriteAction {
         ensureActive()
         CopyPasteManager.getInstance().setContents(StringSelection(serializedEntitiesString))
       }
@@ -101,7 +101,7 @@ class WorkspaceModelJsonDumpService(private val project: Project, private val co
       }
       val jsonEntities = getWorkspaceEntitiesAsJsonArray()
       val serializedEntitiesString = json.encodeToString(jsonEntities)
-      val wsmDumpFile = writeAction {
+      val wsmDumpFile = edtWriteAction {
         logDirectory2.findChild(logFileName)?.delete(this)
         val wsmDumpFile = logDirectory2.createChildData(this, logFileName)
         wsmDumpFile.writeText(serializedEntitiesString)

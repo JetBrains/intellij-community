@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import kotlinx.coroutines.runBlocking
@@ -130,7 +130,7 @@ class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase()
   private suspend fun deleteSettingsXmlAndWaitForImport() {
     val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Paths.get(dir.toString(), "settings.xml"))!!
     waitForImportWithinTimeout {
-      writeAction {
+      edtWriteAction {
         f.delete(this)
       }
     }

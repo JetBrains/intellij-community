@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -643,7 +643,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
                       </build>
                       """.trimIndent())
 
-      writeAction {
+      edtWriteAction {
         val a = MavenRootModelAdapter(
           MavenRootModelAdapterLegacyImpl(projectsTree.findProject(projectPom)!!,
                                           getModule("project"),

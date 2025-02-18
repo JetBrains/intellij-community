@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -52,7 +52,7 @@ private class JsonJacksonReformatAction : AnAction(), LargeFileWriteRequestor {
       }
 
       if (doc?.isWritable == true) {
-        writeAction {
+        edtWriteAction {
           executeCommand(e.project, JsonBundle.message("JsonJacksonReformatAction.command.name.json.reformat")) {
             doc.setText(formatted)
           }
@@ -75,7 +75,7 @@ private class JsonJacksonReformatAction : AnAction(), LargeFileWriteRequestor {
       )
       if (!dialogBuilder.ask(project)) return@runWithModalProgressBlocking
 
-      writeAction {
+      edtWriteAction {
         executeCommand(e.project, JsonBundle.message("JsonJacksonReformatAction.command.name.json.reformat")) {
           virtualFile.getOutputStream(this@JsonJacksonReformatAction).use { stream ->
             stream.write(formatted.toByteArray(virtualFile.getCharset()))

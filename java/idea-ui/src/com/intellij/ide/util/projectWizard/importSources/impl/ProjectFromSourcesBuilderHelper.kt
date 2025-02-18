@@ -12,7 +12,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl.ProjectConfigurationUpdater
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.ModifiableModuleModel
@@ -64,7 +64,7 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
     try {
       createProjectLevelLibraries(projectLibraryTable, projectLibs)
       if (commitModels) {
-        writeAction {
+        edtWriteAction {
           projectLibraryTable.commit()
         }
       }
@@ -80,7 +80,7 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
     try {
       result.addAll(createModules(projectLibs, descriptorToModuleMap))
       if (commitModels) {
-        writeAction {
+        edtWriteAction {
           moduleModel.commit()
         }
       }
@@ -149,7 +149,7 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
     val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
     setupRootModel(projectDescriptor, descriptor, modifiableModel, projectLibs)
     descriptor.updateModuleConfiguration(module, modifiableModel)
-    writeAction {
+    edtWriteAction {
       modifiableModel.commit()
     }
     return module
@@ -225,7 +225,7 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
               rootModel.addModuleOrderEntry(dependentModule)
             }
           }
-          writeAction {
+          edtWriteAction {
             rootModel.commit()
           }
         }
@@ -237,7 +237,7 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
                                IdeCoreBundle.message("title.add.module"))
     }
 
-    writeAction {
+    edtWriteAction {
       for (updater in myUpdaters) {
         updater.updateProject(project, modelsProvider, updatedModulesProvider)
       }
@@ -254,7 +254,7 @@ internal class ProjectFromSourcesBuilderHelper(private val project: Project,
         for (file in files) {
           libraryModel.addRoot(VfsUtil.getUrlForLibraryRoot(file), OrderRootType.CLASSES)
         }
-        writeAction {
+        edtWriteAction {
           libraryModel.commit()
         }
         projectLibs[lib] = projectLib

@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
@@ -364,7 +364,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
               return@useWithScope result.modules
             }
             incompleteState = tracer.spanBuilder("enterIncompleteState").useWithScope {
-              writeAction {
+              edtWriteAction {
                 project.service<IncompleteDependenciesService>().enterIncompleteState(this@MavenProjectsManagerEx)
               }
             }
@@ -383,7 +383,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
       finally {
         logDebug("Finish update ${project.name}, $spec ${myProject.name}")
         incompleteState?.let {
-          writeAction { it.finish() }
+          edtWriteAction { it.finish() }
         }
         console.finishTransaction(spec.resolveIncrementally())
         syncActivity.finished {
