@@ -50,7 +50,7 @@ internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
 
 @Service(Service.Level.PROJECT)
 private class GHPRToolWindowController(private val project: Project, parentCs: CoroutineScope) {
-  private val cs = parentCs.childScope(Dispatchers.Main)
+  private val cs = parentCs.childScope(javaClass.name, Dispatchers.Main)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   suspend fun manageIconInToolbar(toolWindow: ToolWindow) {
@@ -94,6 +94,11 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
   fun manageContent(toolWindow: ToolWindow) {
     toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
 
+    val wrapper = ActionUtil.wrap("Github.Create.Pull.Request")
+    wrapper.registerCustomShortcutSet(CommonShortcuts.getNew(), toolWindow.component)
+    toolWindow.setTitleActions(listOf(wrapper, GHPRSelectPullRequestForFileAction()))
+    toolWindow.setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
+
     cs.launch {
       val vm = project.serviceAsync<GHPRToolWindowViewModel>()
 
@@ -106,10 +111,6 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
         toolWindow.dontHideOnEmptyContent()
         val componentFactory = GHPRToolWindowTabComponentFactory(project, vm)
         manageReviewToolwindowTabs(this, toolWindow, vm, componentFactory, GithubBundle.message("toolwindow.stripe.Pull_Requests"))
-        val wrapper = ActionUtil.wrap("Github.Create.Pull.Request")
-        wrapper.registerCustomShortcutSet(CommonShortcuts.getNew(), toolWindow.component)
-        toolWindow.setTitleActions(listOf(wrapper, GHPRSelectPullRequestForFileAction()))
-        toolWindow.setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
 
         awaitCancellation()
       }
