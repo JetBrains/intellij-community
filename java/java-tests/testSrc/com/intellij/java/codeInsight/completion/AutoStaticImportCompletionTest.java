@@ -359,6 +359,7 @@ public class AutoStaticImportCompletionTest extends NormalCompletionTestCase {
       LookupElementPresentation presentation = new LookupElementPresentation();
       element.renderElement(presentation);
       assertTrue(presentation.getTailText().contains("org.example"));
+      selectItem(element);
     }
     checkResult();
   }
