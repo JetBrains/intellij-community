@@ -177,6 +177,7 @@ open class JBHtmlPane : JEditorPane, Disposable {
       ExtendableHTMLViewFactory.Extensions.PARAGRAPH_VIEW_EX,
       ExtendableHTMLViewFactory.Extensions.LINE_VIEW_EX,
       ExtendableHTMLViewFactory.Extensions.BLOCK_VIEW_EX,
+      ExtendableHTMLViewFactory.Extensions.FORM_VIEW_EX,
       ExtendableHTMLViewFactory.Extensions.WBR_SUPPORT,
       ExtendableHTMLViewFactory.Extensions.HIDPI_IMAGES.takeIf {
         !myPaneConfiguration.extensions.contains(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)
