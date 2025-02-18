@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.i18n;
 
 import com.intellij.DynamicBundle;
@@ -6,8 +6,8 @@ import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
 
-final class DevKitI18nBundle {
-
+@ApiStatus.Internal
+public final class DevKitI18nBundle {
   private static final @NonNls String BUNDLE_FQN = "messages.DevKitI18nBundle";
   private static final DynamicBundle BUNDLE = new DynamicBundle(DevKitI18nBundle.class, BUNDLE_FQN);
 
