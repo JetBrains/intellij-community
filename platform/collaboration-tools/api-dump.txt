@@ -47,6 +47,8 @@ c:com.intellij.collaboration.api.dto.GraphQLNodesDTO
 - <init>():V
 - <init>(java.util.List):V
 - b:<init>(java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.util.List,java.lang.Integer):V
+- b:<init>(java.util.List,java.lang.Integer,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getNodes():java.util.List
 com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
 - a:getNodes():java.util.List
