@@ -451,9 +451,10 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         if (PsiPolyExpressionUtil.isPolyExpression(expression)) return false;
         PsiType exprType = CommonJavaRefactoringUtil.getTypeByExpression(expression);
         if (exprType == null || PsiTypes.voidType().equals(exprType)) return false;
-        if (exprType instanceof PsiDisjunctionType) {
-          exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
+        if (exprType instanceof PsiDisjunctionType disjunctionType) {
+          exprType = disjunctionType.getLeastUpperBound();
         }
+        exprType = PsiTypesUtil.removeExternalAnnotations(exprType);
         if (!PsiTypesUtil.allTypeParametersResolved(myTargetMethod, exprType)) return false;
         JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
         String name = suggestUniqueParameterName(codeStyleManager, expression, exprType, existingNames);
