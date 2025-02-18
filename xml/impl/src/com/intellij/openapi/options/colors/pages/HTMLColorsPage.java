@@ -13,7 +13,7 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlCoreBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,21 +21,21 @@ import java.util.Map;
 
 public class HTMLColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
-    new AttributesDescriptor(XmlBundle.message("options.html.attribute.descriptor.code"), XmlHighlighterColors.HTML_CODE),
-    new AttributesDescriptor(XmlBundle.message("options.html.attribute.descriptor.comment"), XmlHighlighterColors.HTML_COMMENT),
-    new AttributesDescriptor(XmlBundle.message("options.html.attribute.descriptor.tag"), XmlHighlighterColors.HTML_TAG),
-    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag.name.custom"), XmlHighlighterColors.HTML_CUSTOM_TAG_NAME),
-    new AttributesDescriptor(XmlBundle.message("options.html.attribute.descriptor.tag.name"), XmlHighlighterColors.HTML_TAG_NAME),
-    new AttributesDescriptor(XmlBundle.message("options.html.attribute.descriptor.attribute.name"), XmlHighlighterColors.HTML_ATTRIBUTE_NAME),
-    new AttributesDescriptor(XmlBundle.message("options.html.attribute.descriptor.attribute.value"), XmlHighlighterColors.HTML_ATTRIBUTE_VALUE),
-    new AttributesDescriptor(XmlBundle.message("options.html.attribute.descriptor.entity.reference"), XmlHighlighterColors.HTML_ENTITY_REFERENCE),
+    new AttributesDescriptor(XmlCoreBundle.message("options.html.attribute.descriptor.code"), XmlHighlighterColors.HTML_CODE),
+    new AttributesDescriptor(XmlCoreBundle.message("options.html.attribute.descriptor.comment"), XmlHighlighterColors.HTML_COMMENT),
+    new AttributesDescriptor(XmlCoreBundle.message("options.html.attribute.descriptor.tag"), XmlHighlighterColors.HTML_TAG),
+    new AttributesDescriptor(XmlCoreBundle.message("options.xml.attribute.descriptor.tag.name.custom"), XmlHighlighterColors.HTML_CUSTOM_TAG_NAME),
+    new AttributesDescriptor(XmlCoreBundle.message("options.html.attribute.descriptor.tag.name"), XmlHighlighterColors.HTML_TAG_NAME),
+    new AttributesDescriptor(XmlCoreBundle.message("options.html.attribute.descriptor.attribute.name"), XmlHighlighterColors.HTML_ATTRIBUTE_NAME),
+    new AttributesDescriptor(XmlCoreBundle.message("options.html.attribute.descriptor.attribute.value"), XmlHighlighterColors.HTML_ATTRIBUTE_VALUE),
+    new AttributesDescriptor(XmlCoreBundle.message("options.html.attribute.descriptor.entity.reference"), XmlHighlighterColors.HTML_ENTITY_REFERENCE),
     new AttributesDescriptor(OptionsBundle.message("options.any.color.descriptor.injected.language.fragment"), XmlHighlighterColors.HTML_INJECTED_LANGUAGE_FRAGMENT),
   };
   private static final String FULL_PRODUCT_NAME = ApplicationNamesInfo.getInstance().getFullProductName();
 
   @Override
   public @NotNull String getDisplayName() {
-    return XmlBundle.message("options.html.display.name");
+    return XmlCoreBundle.message("options.html.display.name");
   }
 
   @Override
@@ -56,7 +56,7 @@ public class HTMLColorsPage implements ColorSettingsPage {
     final ColorDescriptor[] colorDescriptors = new ColorDescriptor[colorKeys.length];
 
     for (int i = 0; i < colorDescriptors.length; i++) {
-      colorDescriptors[i] = new ColorDescriptor(XmlBundle.message("options.html.attribute.descriptor.tag.tree", i + 1),
+      colorDescriptors[i] = new ColorDescriptor(XmlCoreBundle.message("options.html.attribute.descriptor.tag.tree", i + 1),
                                                 colorKeys[i], ColorDescriptor.Kind.BACKGROUND);
     }
 

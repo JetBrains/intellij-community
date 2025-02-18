@@ -10,7 +10,7 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlCoreBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -18,23 +18,23 @@ import java.util.Map;
 
 public class XMLColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
-    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.prologue"), XmlHighlighterColors.XML_PROLOGUE),
-    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.comment"), XmlHighlighterColors.XML_COMMENT),
-    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag"), XmlHighlighterColors.XML_TAG),
-    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag.name"), XmlHighlighterColors.XML_TAG_NAME),
-    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag.name.custom"), XmlHighlighterColors.XML_CUSTOM_TAG_NAME),
-    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.matched.tag.name"), XmlHighlighterColors.MATCHED_TAG_NAME),
-    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.namespace.prefix"), XmlHighlighterColors.XML_NS_PREFIX),
-    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.attribute.name"), XmlHighlighterColors.XML_ATTRIBUTE_NAME),
-    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.attribute.value"), XmlHighlighterColors.XML_ATTRIBUTE_VALUE),
-    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag.data"), XmlHighlighterColors.XML_TAG_DATA),
-    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.descriptor.entity,reference"), XmlHighlighterColors.XML_ENTITY_REFERENCE),
+    new AttributesDescriptor(XmlCoreBundle.message("options.xml.attribute.descriptor.prologue"), XmlHighlighterColors.XML_PROLOGUE),
+    new AttributesDescriptor(XmlCoreBundle.message("options.xml.attribute.descriptor.comment"), XmlHighlighterColors.XML_COMMENT),
+    new AttributesDescriptor(XmlCoreBundle.message("options.xml.attribute.descriptor.tag"), XmlHighlighterColors.XML_TAG),
+    new AttributesDescriptor(XmlCoreBundle.message("options.xml.attribute.descriptor.tag.name"), XmlHighlighterColors.XML_TAG_NAME),
+    new AttributesDescriptor(XmlCoreBundle.message("options.xml.attribute.descriptor.tag.name.custom"), XmlHighlighterColors.XML_CUSTOM_TAG_NAME),
+    new AttributesDescriptor(XmlCoreBundle.message("options.xml.attribute.descriptor.matched.tag.name"), XmlHighlighterColors.MATCHED_TAG_NAME),
+    new AttributesDescriptor(XmlCoreBundle.message("options.xml.attribute.descriptor.namespace.prefix"), XmlHighlighterColors.XML_NS_PREFIX),
+    new AttributesDescriptor(XmlCoreBundle.message("options.xml.attribute.descriptor.attribute.name"), XmlHighlighterColors.XML_ATTRIBUTE_NAME),
+    new AttributesDescriptor(XmlCoreBundle.message("options.xml.attribute.descriptor.attribute.value"), XmlHighlighterColors.XML_ATTRIBUTE_VALUE),
+    new AttributesDescriptor(XmlCoreBundle.message("options.xml.attribute.descriptor.tag.data"), XmlHighlighterColors.XML_TAG_DATA),
+    new AttributesDescriptor(XmlCoreBundle.message("options.xml.attribute.descriptor.descriptor.entity,reference"), XmlHighlighterColors.XML_ENTITY_REFERENCE),
     new AttributesDescriptor(OptionsBundle.message("options.any.color.descriptor.injected.language.fragment"), XmlHighlighterColors.XML_INJECTED_LANGUAGE_FRAGMENT),
   };
 
   @Override
   public @NotNull String getDisplayName() {
-    return XmlBundle.message("options.xml.display.name");
+    return XmlCoreBundle.message("options.xml.display.name");
   }
 
   @Override

@@ -8,7 +8,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.NlsContexts.ConfigurableName;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
-import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlCoreBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ public class HtmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   }
 
   public static @ConfigurableName String getDisplayName() {
-    return XmlBundle.message("options.html.display.name");
+    return XmlCoreBundle.message("options.html.display.name");
   }
 
   @Override
