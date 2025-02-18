@@ -86,7 +86,8 @@ public final class BufferingTextSplitter {
     }
   }
 
-  interface LineConsumer {
+  @ApiStatus.Internal
+  public interface LineConsumer {
     void consume(@NotNull String line, boolean isCrOnly);
   }
 }
