@@ -67,15 +67,16 @@ private class GitLabMergeRequestsToolWindowController(private val project: Proje
     toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
     toolWindow.dontHideOnEmptyContent()
 
+    val wrapper = ActionUtil.wrap("GitLab.Merge.Request.Create")
+    wrapper.registerCustomShortcutSet(CommonShortcuts.getNew(), toolWindow.component)
+    toolWindow.setTitleActions(listOf(wrapper))
+    toolWindow.setAdditionalGearActions(DefaultActionGroup(GitLabSwitchProjectAndAccountAction()))
+
     cs.launch {
       val vm = project.serviceAsync<GitLabToolWindowViewModel>()
       val componentFactory = GitLabReviewTabComponentFactory(project, vm)
 
       manageReviewToolwindowTabs(this, toolWindow, vm, componentFactory, GitLabBundle.message("merge.request.toolwindow.tab.title"))
-      val wrapper = ActionUtil.wrap("GitLab.Merge.Request.Create")
-      wrapper.registerCustomShortcutSet(CommonShortcuts.getNew(), toolWindow.component)
-      toolWindow.setTitleActions(listOf(wrapper))
-      toolWindow.setAdditionalGearActions(DefaultActionGroup(GitLabSwitchProjectAndAccountAction()))
       awaitCancellation()
     }.cancelOnDispose(toolWindow.contentManager)
   }
