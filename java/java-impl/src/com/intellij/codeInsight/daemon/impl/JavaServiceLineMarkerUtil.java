@@ -36,8 +36,8 @@ import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SERVICE_LOADER;
 /**
  * Utility for generating JPMS service provider line markers
  */
-final class JavaServiceLineMarkerUtil {
-
+@ApiStatus.Internal
+public final class JavaServiceLineMarkerUtil {
   static final CallMatcher SERVICE_LOADER_LOAD = CallMatcher.staticCall(JAVA_UTIL_SERVICE_LOADER,
                                                                         ArrayUtil.toStringArray(
                                                                           JavaServiceProviderUtil.JAVA_UTIL_SERVICE_LOADER_METHODS));
