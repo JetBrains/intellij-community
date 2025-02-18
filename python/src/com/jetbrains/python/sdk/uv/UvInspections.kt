@@ -16,9 +16,6 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.findAmongRoots
-import org.toml.lang.psi.TomlKeyValue
-import org.toml.lang.psi.TomlTable
-import kotlin.collections.contains
 
 internal class UvPackageVersionsInspection : LocalInspectionTool() {
   override fun buildVisitor(
@@ -53,28 +50,30 @@ internal class UvPackageVersionsInspection : LocalInspectionTool() {
         return
       }
 
-      if (file.virtualFile != module.pyProjectTomlBlocking()) {
+      val pyProject = UvPyProject.fromModuleBlocking(module)
+      if (pyProject == null) {
         return
       }
 
-      file.children
-        .filter { element ->
-          (element as? TomlTable)?.header?.key?.text in listOf("dependencies", "dev-dependencies")
-        }.flatMap {
-          it.children.mapNotNull { line -> line as? TomlKeyValue }
-        }.forEach { keyValue ->
-          val packageName = keyValue.key.text
-          val outdated = (PythonPackageManager.forSdk(
-            module.project, sdk) as? UvPackageManager)?.let {
-            it.outdatedPackages[packageName]
-          }
+      val outdatedPackages = (PythonPackageManager.forSdk(module.project, sdk) as? UvPackageManager)?.outdatedPackages
+      if (outdatedPackages == null) {
+        return
+      }
 
-          if (outdated != null) {
-            val message = PyBundle.message("python.sdk.inspection.message.version.outdated.latest",
-                                           packageName, outdated.version, outdated.latestVersion)
-            holder.registerProblem(keyValue, message, ProblemHighlightType.WARNING)
-          }
+      pyProject.requirements.forEach { requirement ->
+        outdatedPackages[requirement.pyRequirement.name]?.let { outdated ->
+          holder.registerProblem(
+            requirement.tomlLiteral,
+            PyBundle.message(
+              "python.sdk.inspection.message.version.outdated.latest",
+              requirement.pyRequirement.name,
+              outdated.version,
+              outdated.latestVersion
+            ),
+            ProblemHighlightType.WARNING
+          )
         }
+      }
     }
   }
 }
