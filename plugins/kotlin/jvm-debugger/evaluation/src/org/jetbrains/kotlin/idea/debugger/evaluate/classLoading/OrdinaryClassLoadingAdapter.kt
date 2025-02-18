@@ -10,7 +10,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx.mirrorOfString
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.sun.jdi.ClassLoaderReference
 import com.sun.jdi.ClassType
-import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
+import com.intellij.debugger.impl.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluationBundle
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.ReflectionCallClassPatcher
