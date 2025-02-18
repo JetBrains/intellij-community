@@ -7,12 +7,14 @@ import com.intellij.ide.actions.ToolWindowEmptyStateAction
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.usageView.UsageViewContentManager
@@ -38,7 +40,7 @@ class ActivateFindToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.FIN
       title = IdeBundle.message("empty.text.search.everywhere"),
       description = LangBundle.message("status.text.find.toolwindow.empty.state.search.everywhere.description"),
       shortcutText = getSearchEveryWhereShortcutText(),
-      listener = getTriggerActionListener(project, IdeActions.ACTION_SEARCH_EVERYWHERE),
+      listener = createTriggerActionListener(project, IdeActions.ACTION_SEARCH_EVERYWHERE),
     )
 
     appendActionRow(
@@ -47,7 +49,7 @@ class ActivateFindToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.FIN
       title = LangBundle.message("status.text.find.toolwindow.empty.state.find.in.files.title"),
       description = LangBundle.message("status.text.find.toolwindow.empty.state.find.in.files.description"),
       shortcutText = getActionShortcutText(IdeActions.ACTION_FIND_IN_PATH),
-      listener = getTriggerActionListener(project, IdeActions.ACTION_FIND_IN_PATH),
+      listener = createTriggerActionListener(project, IdeActions.ACTION_FIND_IN_PATH),
     )
 
     appendActionRow(
@@ -74,10 +76,29 @@ class ActivateFindToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.FIN
     statusText.appendText(4, rowId, description, StatusText.DEFAULT_ATTRIBUTES, null)
   }
 
-  private fun getTriggerActionListener(project: Project, actionId: String): ActionListener = ActionListener {
-    val action = ActionManager.getInstance().getAction(actionId)
-    val anActionEvent = AnActionEvent.createEvent(SimpleDataContext.getProjectContext(project), null, ActionPlaces.TOOLWINDOW_CONTENT, ActionUiKind.NONE, null)
-    ActionUtil.invokeAction(action, anActionEvent, null)
+  private fun createTriggerActionListener(project: Project, actionId: String): ActionListener =
+    ActionListener {
+      val action = ActionManager.getInstance().getAction(actionId)
+      val actionEvent = createActionEvent(project, action)
+      ActionUtil.invokeAction(action, actionEvent, null)
+    }
+
+  private fun createActionEvent(
+    project: Project,
+    action: AnAction,
+  ): AnActionEvent {
+    val component = IdeFocusManager.getInstance(project).getFocusOwner()
+    val dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, component)
+      .build()
+    return AnActionEvent.createEvent(
+      dataContext,
+      PresentationFactory().getPresentation(action),
+      ActionPlaces.TOOLWINDOW_CONTENT,
+      ActionUiKind.NONE,
+      null,
+    )
   }
 
   @NlsSafe
