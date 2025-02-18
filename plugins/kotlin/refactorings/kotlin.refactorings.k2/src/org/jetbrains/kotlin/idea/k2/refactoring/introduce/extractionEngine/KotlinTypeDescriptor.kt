@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
@@ -100,7 +101,8 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
     override fun renderType(
         type: KaType, isReceiver: Boolean, variance: Variance
     ): String = analyze(data.commonParent) {
-        val renderType = type.render(position = variance)
+        val renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES_WITHOUT_PARAMETER_NAMES
+        val renderType = type.render(renderer = renderer, position = variance)
         if ((type.isFunctionType || type.isSuspendFunctionType) && isReceiver) "($renderType)" else renderType
     }
 

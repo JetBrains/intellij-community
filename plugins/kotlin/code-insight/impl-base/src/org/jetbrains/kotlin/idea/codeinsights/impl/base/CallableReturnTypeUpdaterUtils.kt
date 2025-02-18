@@ -23,6 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -336,8 +337,8 @@ object CallableReturnTypeUpdaterUtils {
             internal fun createTypeByKtType(ktType: KaType): Type = Type(
                 isUnit = ktType.isUnitType,
                 isError = ktType is KaErrorType,
-                longTypeRepresentation = ktType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.OUT_VARIANCE),
-                shortTypeRepresentation = ktType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE),
+                longTypeRepresentation = ktType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES_WITHOUT_PARAMETER_NAMES, position = Variance.OUT_VARIANCE),
+                shortTypeRepresentation = ktType.render(KaTypeRendererForSource.WITH_SHORT_NAMES_WITHOUT_PARAMETER_NAMES, position = Variance.OUT_VARIANCE),
             )
 
             val UNIT: Type = Type(isUnit = true, isError = false, longTypeRepresentation = "kotlin.Unit", shortTypeRepresentation = "Unit")

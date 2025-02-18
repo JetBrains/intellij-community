@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFunctionalTypeRenderer
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -89,7 +90,7 @@ internal object CompletionShortNamesRenderer {
     }
 
     @KaExperimentalApi
-    val renderer = KaTypeRendererForSource.WITH_SHORT_NAMES
+    val renderer = KaTypeRendererForSource.WITH_SHORT_NAMES_WITHOUT_PARAMETER_NAMES
 
     @KaExperimentalApi
     val rendererVerbose = renderer.with {
