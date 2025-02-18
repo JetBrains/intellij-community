@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vitaliy.Bibaev
  */
-public class UnexpectedValueException extends ResolveException {
+public final class UnexpectedValueException extends ResolveException {
   public UnexpectedValueException(@NotNull String s) {
     super(s);
   }
