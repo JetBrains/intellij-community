@@ -508,7 +508,8 @@ public final class MessageFormatUtil {
     }
   }
 
-  static class MessageFormatElement {
+  @ApiStatus.Internal
+  public static final class MessageFormatElement {
     private final StringBuilder indexSegment = new StringBuilder();
     private final StringBuilder formatTypeSegment = new StringBuilder();
     private final StringBuilder formatStyleSegment = new StringBuilder();
