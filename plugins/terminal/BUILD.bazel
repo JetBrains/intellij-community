@@ -49,6 +49,8 @@ jvm_library(
     "@lib//:opentelemetry-semconv-provided",
     "@lib//:opentelemetry-extension-kotlin-provided",
     "//platform/platform-impl/ui:ide-ui",
+    "//platform/kernel/shared:kernel",
+    "//platform/project/shared:project",
   ],
   exports = ["//plugins/terminal/completion"],
   runtime_deps = [":terminal_resources"]
@@ -107,6 +109,8 @@ jvm_library(
     "@lib//:opentelemetry-extension-kotlin-provided",
     "//platform/platform-impl/ui:ide-ui",
     "@lib//:assert_j",
+    "//platform/kernel/shared:kernel",
+    "//platform/project/shared:project",
   ],
   runtime_deps = [":terminal_resources"]
 )

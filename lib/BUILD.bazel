@@ -2209,6 +2209,13 @@ kt_jvm_import(
   visibility = ["//visibility:public"]
 )
 
+java_library(
+  name = "jackson-module-kotlin-provided",
+  exports = [":jackson-module-kotlin"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
 java_import(
   name = "java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-connector-basic",
   jars = ["@maven-resolver-connector-basic-1_9_22_http//file"],

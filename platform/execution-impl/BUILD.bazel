@@ -54,6 +54,8 @@ jvm_library(
     "//platform/rd-platform-community:rd-community",
     "//platform/util/coroutines",
     "//platform/eel-provider",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
   ],
   exports = ["//platform/macro"],
   runtime_deps = [":execution-impl_resources"]

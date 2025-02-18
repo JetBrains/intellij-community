@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.terminal.frontend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "frontend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "frontend",
+  module_name = "intellij.terminal.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-impl",
+    "//plugins/terminal",
+    "//platform/execution-impl",
+    "//platform/util/coroutines",
+    "//platform/editor-ui-ex:editor-ex",
+    "@lib//:jediterm-core",
+    "@lib//:jediterm-ui",
+    "//platform/core-ui",
+    "//platform/code-style-api:codeStyle",
+    "@lib//:guava",
+    "//platform/kernel/shared:kernel",
+    "//platform/ide-core-impl",
+    "//platform/statistics",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-impl",
+    "//platform/platform-impl/ui:ide-ui",
+  ],
+  runtime_deps = [":frontend_resources"]
+)
+### auto-generated section `build intellij.terminal.frontend` end
