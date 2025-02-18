@@ -159,10 +159,17 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
                     else -> {
                         val correspondingOwner = getCorrespondingClassLikeDeclaration(containingClass, scope, module) as? KtClassOrObject
                             ?: return null
-                        if (declaration is KtProperty && correspondingOwner.isData() && !declaration.isExtensionDeclaration() && declaration.typeParameters.isEmpty()) {
-                            correspondingOwner.primaryConstructor?.valueParameters?.firstOrNull { it.name == declarationName }?.let { return it }
+                        val declarations = correspondingOwner.declarations
+                        if (declaration is KtProperty) {
+                            declarations.firstOrNull { it is KtProperty && it.name == declaration.name }
+                                ?.let { return it }
+
+                            if (!declaration.isExtensionDeclaration() && declaration.typeParameters.isEmpty()) {
+                                correspondingOwner.primaryConstructor?.valueParameters?.firstOrNull { it.name == declarationName }
+                                    ?.let { return it }
+                            }
                         }
-                        correspondingOwner.declarations
+                        declarations
                     }
                 }
                 return chooseCallableCandidate(declaration, candidates)
