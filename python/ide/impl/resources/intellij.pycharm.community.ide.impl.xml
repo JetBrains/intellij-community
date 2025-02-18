@@ -96,11 +96,6 @@
     <defaultToolWindowLayout implementation="com.intellij.pycharm.community.ide.impl.PyToolWindowLayoutProvider" order="last"/>
 
     <codeInsight.codeVision.settings.defaults implementation="com.intellij.pycharm.community.ide.impl.PyCharmCodeVisionSettingsDefaults"/>
-
-    <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
-                    serviceImplementation="com.intellij.pycharm.community.ide.impl.PyProjectScopeBuilder"
-                    overrides="true"/>
-
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
