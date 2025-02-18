@@ -90,6 +90,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
       }
       val asyncInspections = if (cachedInspectionCommand == null) asyncInspectionHighlighting(psiFile, editor, offset) else null
 
+      //can move cursor!
       val asyncIntentions = asyncIntentions(editor, psiFile, originalPsiFile, offset)
 
       val errors = asyncErrorHighlighting?.await()
@@ -230,7 +231,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
           if (info == null) continue
           if (!insideRange.intersects(info.startOffset, info.endOffset) ||
               (isInjected && !insideRange.contains(TextRange(info.startOffset, info.endOffset)))) continue
-          val fixes: MutableList<IntentionActionDescriptor> = ArrayList<IntentionActionDescriptor>()
+          val fixes: MutableList<IntentionActionDescriptor> = ArrayList()
           ShowIntentionsPass.addAvailableFixesForGroups(info, topLevelEditor, topLevelFile, fixes, -1, offset, false)
           for (descriptor in fixes) {
             if (descriptor.action is EmptyIntentionAction) continue
@@ -254,57 +255,76 @@ internal class DirectIntentionCommandProvider : CommandProvider {
     offset: Int,
   ): Deferred<List<CompletionCommand>> = async {
     return@async readAction {
-      val intentionCommandSkipper = IntentionCommandSkipper.EP_NAME.forLanguage(psiFile.language)
-      val availableIntentions = IntentionManager.getInstance().getAvailableIntentions(mutableListOf(originalFile.language.id))
-      val actionsToShow = IntentionsInfo()
-      for (action in availableIntentions) {
-        val intentionAction = IntentionActionDelegate.unwrap(action)
-        val descriptor =
-          IntentionActionDescriptor(action, null, null,
-                                    if (intentionAction is Iconable)
-                                      intentionAction.getIcon(ICON_FLAG_VISIBILITY)
-                                    else null, null, null, null, null)
-        actionsToShow.intentionsToShow.add(descriptor)
-      }
-      val dumbService = DumbService.getInstance(originalFile.project)
-      val intentionsCache = CachedIntentions(originalFile.project, psiFile, editor)
-      val toRemove = mutableListOf<IntentionActionDescriptor>()
-      val filter = Predicate { action: IntentionAction? ->
-        IntentionActionFilter.EXTENSION_POINT_NAME.extensionList.all { f: IntentionActionFilter -> action != null && f.accept(action, psiFile, editor.caretModel.offset) }
-      }
+      val result = mutableMapOf<String, CompletionCommand>()
+      try {
+        var language = originalFile.language
+        val injectedElementAt = InjectedLanguageManager.getInstance(psiFile.project).findInjectedElementAt(psiFile, offset)
+        if (injectedElementAt != null) {
+          language = injectedElementAt.language
+        }
+        val offsetProvider = IntentionCommandOffsetProvider.EP_NAME.forLanguage(language)
+        val intentionCommandSkipper = IntentionCommandSkipper.EP_NAME.forLanguage(language)
 
-      for (intention in actionsToShow.intentionsToShow) {
-        try {
-          ProgressManager.checkCanceled()
-          if (!dumbService.isUsableInCurrentContext(intention) ||
-              !intention.action.isAvailable(originalFile.project, editor, psiFile) &&
-              //todo temporary workaround for AI
-              intention.action.familyName !in ("AI Actions…") ||
-              !filter.test(intention.action)) {
-            toRemove.add(intention)
+        val offsets = offsetProvider?.findOffsets(psiFile, offset) ?: mutableListOf(offset)
+
+        val availableIntentions = IntentionManager.getInstance().getAvailableIntentions(mutableListOf(language.id))
+        for (currentOffset in offsets) {
+          val actionsToShow = IntentionsInfo()
+          for (action in availableIntentions) {
+            val intentionAction = IntentionActionDelegate.unwrap(action)
+            val descriptor =
+              IntentionActionDescriptor(action, null, null,
+                                        if (intentionAction is Iconable) {
+                                          intentionAction.getIcon(ICON_FLAG_VISIBILITY)
+                                        }
+                                        else null, null, null, null, null)
+            actionsToShow.intentionsToShow.add(descriptor)
+          }
+          val dumbService = DumbService.getInstance(originalFile.project)
+          editor.caretModel.moveToOffset(currentOffset)
+          val intentionsCache = CachedIntentions(originalFile.project, psiFile, editor)
+          val toRemove = mutableListOf<IntentionActionDescriptor>()
+          val filter = Predicate { action: IntentionAction? ->
+            IntentionActionFilter.EXTENSION_POINT_NAME.extensionList.all { f: IntentionActionFilter -> action != null && f.accept(action, psiFile, editor.caretModel.offset) }
+          }
+
+          for (intention in actionsToShow.intentionsToShow) {
+            try {
+              ProgressManager.checkCanceled()
+              if (!dumbService.isUsableInCurrentContext(intention) ||
+                  !intention.action.isAvailable(originalFile.project, editor, psiFile) &&
+                  //todo temporary workaround for AI
+                  intention.action.familyName !in ("AI Actions…") ||
+                  !filter.test(intention.action)) {
+                toRemove.add(intention)
+              }
+            }
+            catch (_: UnsupportedOperationException) {
+              toRemove.add(intention)
+            }
+            catch (_: CommandCompletionUnsupportedOperationException) {
+              toRemove.add(intention)
+            }
+            catch (_: IntentionPreviewUnsupportedOperationException) {
+              toRemove.add(intention)
+            }
+          }
+          actionsToShow.intentionsToShow.removeAll(toRemove)
+          intentionsCache.wrapAndUpdateActions(actionsToShow, false)
+          for (intention in intentionsCache.intentions) {
+            if (intention.action is EmptyIntentionAction ||
+                intentionCommandSkipper != null && intentionCommandSkipper.skip(intention.action, psiFile, currentOffset)) continue
+            val intentionCommand =
+              IntentionCompletionCommand(intention, 50, intention.icon ?: AllIcons.Actions.IntentionBulbGrey, null, currentOffset)
+            result.put(intention.text, intentionCommand)
           }
         }
-        catch (_: UnsupportedOperationException) {
-          toRemove.add(intention)
-        }
-        catch (_: CommandCompletionUnsupportedOperationException) {
-          toRemove.add(intention)
-        }
-        catch (_: IntentionPreviewUnsupportedOperationException) {
-          toRemove.add(intention)
-        }
       }
-      actionsToShow.intentionsToShow.removeAll(toRemove)
-      intentionsCache.wrapAndUpdateActions(actionsToShow, false)
-      val result = mutableListOf<CompletionCommand>()
-      for (intention in intentionsCache.intentions) {
-        if (intention.action is EmptyIntentionAction ||
-            intentionCommandSkipper != null && intentionCommandSkipper.skip(intention.action, psiFile, offset)) continue
-        val intentionCommand =
-          IntentionCompletionCommand(intention, 50, intention.icon ?: AllIcons.Actions.IntentionBulbGrey, null)
-        result.add(intentionCommand)
+      finally {
+        editor.caretModel.moveToOffset(offset)
       }
-      return@readAction result
+
+      return@readAction result.values.toList()
     }
   }
 }
@@ -319,7 +339,7 @@ internal fun getLineRange(psiFile: PsiFile, offset: Int): TextRange {
 
 private fun getInspectionTools(profile: InspectionProfileWrapper, file: PsiFile): MutableList<LocalInspectionToolWrapper?> {
   val toolWrappers = profile.inspectionProfile.getInspectionTools(file)
-  val enabled: MutableList<LocalInspectionToolWrapper?> = ArrayList<LocalInspectionToolWrapper?>()
+  val enabled: MutableList<LocalInspectionToolWrapper?> = ArrayList()
   val projectTypes = ProjectTypeService.getProjectTypeIds(file.project)
 
   for (toolWrapper in toolWrappers) {
@@ -361,3 +381,10 @@ interface IntentionCommandSkipper {
   fun skip(action: CommonIntentionAction, psiFile: PsiFile, offset: Int): Boolean = false
 }
 
+interface IntentionCommandOffsetProvider {
+  companion object {
+    internal val EP_NAME: LanguageExtension<IntentionCommandOffsetProvider> = LanguageExtension<IntentionCommandOffsetProvider>("com.intellij.codeInsight.completion.intention.offset.provider")
+  }
+
+  fun findOffsets(psiFile: PsiFile, offset: Int): List<Int> = listOf(offset)
+}

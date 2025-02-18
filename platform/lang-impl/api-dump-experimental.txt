@@ -205,6 +205,10 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - a:hasToShow(com.intellij.psi.PsiElement):Z
 - f:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - f:supportsReadOnly():Z
+*:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider
+- *sf:Companion:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider$Companion
+- findOffsets(com.intellij.psi.PsiFile,I):java.util.List
+*f:com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider$Companion
 *:com.intellij.codeInsight.completion.command.commands.IntentionCommandSkipper
 - *sf:Companion:com.intellij.codeInsight.completion.command.commands.IntentionCommandSkipper$Companion
 - skip(com.intellij.codeInsight.intention.CommonIntentionAction,com.intellij.psi.PsiFile,I):Z

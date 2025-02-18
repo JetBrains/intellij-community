@@ -15,6 +15,7 @@ internal class IntentionCompletionCommand(
   override val priority: Int?,
   override val icon: Icon?,
   override val highlightInfo: HighlightInfoLookup?,
+  private val myOffset: Int,
 ) : CompletionCommand() {
 
   override val name: String
@@ -25,8 +26,16 @@ internal class IntentionCompletionCommand(
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     if (editor == null) return
-    if (ShowIntentionActionsHandler.availableFor(psiFile, editor, offset, intentionAction.action)) {
+    val marker = editor.document.createRangeMarker(offset, offset)
+    editor.caretModel.moveToOffset(myOffset)
+    if (ShowIntentionActionsHandler.availableFor(psiFile, editor, myOffset, intentionAction.action)) {
       ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, intentionAction.action, name)
+    }
+    if (marker.isValid) {
+      editor.caretModel.moveToOffset(marker.endOffset)
+    }
+    else {
+      editor.caretModel.moveToOffset(offset)
     }
   }
 }

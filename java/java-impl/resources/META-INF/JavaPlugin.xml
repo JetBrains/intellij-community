@@ -1496,6 +1496,8 @@
     <codeInsight.completion.command.factory language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory" />
     <codeInsight.completion.intention.skipper language="JAVA"
                                               implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory$JavaIntentionCommandSkipper"/>
+    <codeInsight.completion.intention.offset.provider language="JAVA"
+                                                      implementationClass="com.intellij.codeInsight.completion.commands.JavaCommandCompletionFactory$JavaIntentionCommandOffsetProvider"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.SimpleRunMarkerCommandProvider" />
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaGenerateCommandCompletion" />
     <codeInsight.completion.applicable.command language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaInlineVariableCompletionCommand" />

@@ -767,5 +767,10 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.commands.IntentionCommandSkipper"/>
     </extensionPoint>
 
+    <extensionPoint qualifiedName="com.intellij.codeInsight.completion.intention.offset.provider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider"/>
+    </extensionPoint>
+
   </extensionPoints>
 </idea-plugin>
