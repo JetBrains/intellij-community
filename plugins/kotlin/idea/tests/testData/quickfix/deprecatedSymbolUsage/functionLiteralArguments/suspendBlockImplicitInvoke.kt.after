@@ -1,4 +1,5 @@
 // "Replace with 'withContext(this, block)'" "true"
+// K2_AFTER_ERROR: Missing return statement.
 
 interface Context
 class MyClass: Context

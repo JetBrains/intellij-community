@@ -1,4 +1,5 @@
 // "Create extension property 'String?.notExistingVal'" "true"
+// K2_AFTER_ERROR: Extension property must have accessors or be abstract.
 fun foo(n: Int) {}
 
 fun context(p: String?) {

@@ -1,5 +1,6 @@
 // "class org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix" "false"
 // ERROR: Return type of 'foo' is not a subtype of the return type of the overridden member 'public abstract fun foo(): Int defined in A'
+// K2_AFTER_ERROR: Return type of 'foo' is not a subtype of the return type of the overridden member 'fun foo(): Int' defined in '/A'.
 interface A {
     fun foo(): Int
 }

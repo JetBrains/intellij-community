@@ -2,6 +2,7 @@
 // ACTION: Change parameter 'a' type of function 'foo' to 'B'
 // ACTION: Create function 'foo'
 // ERROR: Type mismatch: inferred type is B but A<*> was expected
+// K2_AFTER_ERROR: Argument type mismatch: actual type is 'B', but 'A<*>' was expected.
 
 package let.implement
 

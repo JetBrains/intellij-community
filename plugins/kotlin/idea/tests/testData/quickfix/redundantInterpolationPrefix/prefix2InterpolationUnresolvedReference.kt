@@ -1,5 +1,6 @@
 // "Remove redundant interpolation prefix" "false"
 // COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+// K2_AFTER_ERROR: Unresolved reference 'unresolved'.
 
 fun test() {
     <caret>$$"sample $$unresolved text"
