@@ -199,7 +199,7 @@ internal class KotlinModuleSizeCollectorState : BaseState() {
  * This is why we use this storage to remember the last time we collected the data for the project.
  */
 @Service(Service.Level.PROJECT)
-@State(name = "Project", storages = [Storage(value = "kotlin-statistics.xml", roamingType = RoamingType.DISABLED)])
+@State(name = "Project", storages = [Storage(value = StoragePathMacros.CACHE_FILE)])
 internal class KotlinModuleSizeCollectorTracker : PersistentStateComponent<KotlinModuleSizeCollectorState> {
 
     companion object {
