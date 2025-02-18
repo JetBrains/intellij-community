@@ -21,6 +21,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,7 +136,8 @@ final class JavaServiceLineMarkerUtil {
       .orElse(null);
   }
 
-  abstract static class ServiceNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
+  @ApiStatus.Internal
+  public abstract static class ServiceNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
     final String myInterfaceClassName;
 
     ServiceNavigationHandler(@NotNull String interfaceClassName) { myInterfaceClassName = interfaceClassName; }
