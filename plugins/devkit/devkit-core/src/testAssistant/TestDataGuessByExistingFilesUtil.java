@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -30,6 +30,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -42,7 +43,8 @@ import java.util.*;
  * There is a possible case that particular test class is not properly configured with test annotations but uses test data files.
  * This class contains utility methods for guessing test data files location and name patterns from existing one.
  */
-final class TestDataGuessByExistingFilesUtil {
+@ApiStatus.Internal
+public final class TestDataGuessByExistingFilesUtil {
   private static final Logger LOG = Logger.getInstance(TestDataGuessByExistingFilesUtil.class);
 
   private TestDataGuessByExistingFilesUtil() {
