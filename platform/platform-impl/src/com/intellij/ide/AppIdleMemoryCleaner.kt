@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.isRhizomeProgressEnabled
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.ide.progress.activeTasks
@@ -74,9 +75,14 @@ class AppIdleMemoryCleaner(private val cs: CoroutineScope) {
    * The function starts executing when all application windows are deactivated (unfocused)
    * and is canceled when any application window is activated
    */
+  @Suppress("SimplifyBooleanWithConstants")
   private suspend fun allWindowsDeactivated() {
     delay(Registry.get("ide.idle.memory.cleaner.delay").asInteger().toLong())
-    hasActiveBackgroundTasks.awaitValue(false)
+    for (project in ProjectManager.getInstance().openProjects) {
+      val scanner = project.serviceIfCreated<UnindexedFilesScannerExecutor>() ?: continue
+      scanner.isRunning.first { it == false }
+    }
+    hasActiveBackgroundTasks.first { it == false }
     while (hasOngoingHighlightingInAnyProject() || HeavyProcessLatch.INSTANCE.isRunning) {
       // We could use listeners instead, but it looks overkill in this case - we're not in a hurry
       delay(1000)
@@ -140,8 +146,4 @@ private fun CoroutineScope.hasActiveBackgroundTasksStateFlow(): StateFlow<Boolea
     .map { count -> count > 0 }
     .debounce { if (it) 0 else 2000 }
     .stateIn(this, SharingStarted.Eagerly, false)
-}
-
-private suspend fun <T> StateFlow<T>.awaitValue(targetValue: T) {
-  filter { it == targetValue }.first()
 }
