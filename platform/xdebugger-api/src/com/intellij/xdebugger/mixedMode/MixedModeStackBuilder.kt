@@ -11,12 +11,13 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface MixedModeStackBuilder {
-  /**
-  * If an unhandled exception occurs within this method, only low-level threads will be shown
-   * frameToSelectIndex == null, means we agree to select the highest frame by default
-   */
+
   @ApiStatus.Internal
   data class MixedBuiltStackResult(val lowLevelToHighLevelFrameMap: Map<XStackFrame, XStackFrame?>, val highestHighLevelFrame: XStackFrame?)
+
+  /**
+   * If an unhandled exception occurs within this method, only low-level threads will be shown
+   */
   suspend fun buildMixedStack(
     lowExecutionStack: XExecutionStack,
     lowLevelFrames: List<XStackFrame>,
