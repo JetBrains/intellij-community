@@ -837,6 +837,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
           myGenericsChecker.checkClassSupersAccessibility(psiClass, expression, myFile.getResolveScope());
         }
       }
+      if (!hasErrorResults()) myGenericsChecker.checkMemberSignatureTypesAccessibility(expression);
     }
     if (!hasErrorResults() && resultForIncompleteCode != null && isApplicable(JavaFeature.PATTERNS_IN_SWITCH)) {
       myPatternChecker.checkPatternVariableRequired(expression, resultForIncompleteCode);

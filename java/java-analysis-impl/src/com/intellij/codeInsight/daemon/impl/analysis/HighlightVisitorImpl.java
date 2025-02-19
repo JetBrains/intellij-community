@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
-import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorHighlightType;
@@ -51,7 +50,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private @NotNull LanguageLevel myLanguageLevel;
 
   private @NotNull PsiFile myFile;
-  private PsiJavaModule myJavaModule;
   private JavaErrorCollector myCollector;
 
   private final @NotNull Consumer<? super HighlightInfo.Builder> myErrorSink = builder -> add(builder);
@@ -130,7 +128,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
     finally {
-      myJavaModule = null;
       myFile = null;
       myHolder = null;
       myCollector = null;
@@ -147,7 +144,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myHolder = holder;
     myFile = file;
     myLanguageLevel = PsiUtil.getLanguageLevel(file);
-    myJavaModule = JavaFeature.MODULES.isSufficient(myLanguageLevel) ? JavaPsiModuleUtil.findDescriptorByElement(file) : null;
     JavaErrorFixProvider errorFixProvider = JavaErrorFixProvider.getInstance();
     myCollector = new JavaErrorCollector(myFile, error -> reportError(error, errorFixProvider));
   }
@@ -275,12 +271,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     if (!hasErrorResults()) {
       visitElement(expression);
-      if (hasErrorResults()) return;
-    }
-
-    PsiExpression qualifierExpression = expression.getQualifierExpression();
-    if (!hasErrorResults() && myJavaModule == null && qualifierExpression != null) {
-      add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));
     }
   }
 
