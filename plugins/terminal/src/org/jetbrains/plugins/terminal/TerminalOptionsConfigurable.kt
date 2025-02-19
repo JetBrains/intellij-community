@@ -242,16 +242,8 @@ private fun getChangedValueColor(): Color {
   return findColorByKey("TextField.foreground")
 }
 
-private fun findColorByKey(vararg colorKeys: String): Color {
-  var c: Color? = null
-  for (key in colorKeys) {
-    c = UIManager.getColor(key)
-    if (c != null) {
-      break
-    }
-  }
-  checkNotNull(c) { "Can't find color for keys " + colorKeys.contentToString() }
-  return c
-}
+private fun findColorByKey(vararg colorKeys: String): Color =
+  colorKeys.firstNotNullOfOrNull { UIManager.getColor(it) } ?:
+  throw IllegalStateException("Can't find color for keys " + colorKeys.contentToString())
 
 private val LOG = logger<TerminalOptionsConfigurable>()
