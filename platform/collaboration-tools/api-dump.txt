@@ -380,29 +380,6 @@ f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFact
 f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy$ScrollToField
 - com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory$ScrollOnChangePolicy$ScrollToField
-com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModel
-- a:getContent():com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModelContent
-- a:getDocument():com.intellij.openapi.editor.Document
-- a:getProject():com.intellij.openapi.project.Project
-a:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModelBase
-- com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModel
-- <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.lang.Language):V
-- b:<init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.lang.Language,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- getContent():com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModelContent
-- f:getDocument():com.intellij.openapi.editor.Document
-- f:getProject():com.intellij.openapi.project.Project
-- f:isBusyValue():com.intellij.collaboration.ui.SingleValueModel
-- a:submit():V
-f:com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModelBaseKt
-- sf:getMarkdownLanguage():com.intellij.lang.Language
-com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldModelContent
-- a:clear():V
-- a:getText():java.lang.String
-- a:isAcceptSlashR():Z
-- a:isReadOnly():Z
-- a:setAcceptSlashR(Z):V
-- a:setReadOnly(Z):V
-- a:setText(java.lang.String):V
 com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewFoldableThreadViewModel
 - a:getCanCreateReplies():kotlinx.coroutines.flow.StateFlow
 - a:getRepliesFolded():kotlinx.coroutines.flow.StateFlow
