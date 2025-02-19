@@ -17731,6 +17731,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedReceiverParameter/reified.kt");
         }
 
+        @TestMetadata("reifiedUsedParameter.kt")
+        public void testReifiedUsedParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedReceiverParameter/reifiedUsedParameter.kt");
+        }
+
         @TestMetadata("reifiedWithClassLiteral.kt")
         public void testReifiedWithClassLiteral() throws Exception {
             runTest("testData/inspectionsLocal/unusedReceiverParameter/reifiedWithClassLiteral.kt");
