@@ -1036,6 +1036,7 @@
 
     <projectService serviceInterface="com.intellij.ide.structureView.StructureViewFactory"
                     serviceImplementation="com.intellij.ide.structureView.impl.StructureViewFactoryImpl"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.structureView.StructureViewEventsCollector"/>
     <projectService serviceInterface="com.intellij.codeInspection.InspectionManager"
                     serviceImplementation="com.intellij.codeInspection.ex.InspectionManagerEx"/>
     <documentationProvider implementation="com.intellij.codeInspection.actions.InspectionDescriptionDocumentationProvider"/>

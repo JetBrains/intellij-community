@@ -44,12 +44,12 @@ class PhysicalAndLogicalStructureViewBuilder(
 
     return StructureViewComposite(
       StructureViewComposite.StructureViewDescriptor(
-        StructureViewBundle.message("structureview.tab.logical"),
+        StructureViewTab.LOGICAL.title,
         logicalBuilder.createStructureView(fileEditor, project),
         null
       ),
       StructureViewComposite.StructureViewDescriptor(
-        StructureViewBundle.message("structureview.tab.physical"),
+        StructureViewTab.PHYSICAL.title,
         physicalBuilder.createStructureView(fileEditor, project),
         null
       )

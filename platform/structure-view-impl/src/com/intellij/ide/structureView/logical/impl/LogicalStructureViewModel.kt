@@ -3,6 +3,7 @@ package com.intellij.ide.structureView.logical.impl
 
 import com.intellij.ide.TypePresentationService
 import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.structureView.StructureViewEventsCollector
 import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewModelBase
 import com.intellij.ide.structureView.StructureViewTreeElement
@@ -54,7 +55,11 @@ class LogicalStructureViewModel private constructor(psiFile: PsiFile, editor: Ed
 
   override fun handleClick(element: StructureViewTreeElement, fragmentIndex: Int): Boolean {
     val model = getModel(element) ?: return false
-    return LogicalModelPresentationProvider.getForObject(model)?.handleClick(model, fragmentIndex) ?: false
+    val handled = LogicalModelPresentationProvider.getForObject(model)?.handleClick(model, fragmentIndex) ?: false
+    if (handled) {
+      StructureViewEventsCollector.logCustomClickHandled(model::class.java)
+    }
+    return handled
   }
 
   private fun getModel(element: StructureViewTreeElement): Any? {
@@ -212,6 +217,11 @@ private class ElementsBuilder {
     override fun isAllowExtensions(): Boolean = false
 
     override fun getLogicalAssembledModel() = assembledModel
+
+    override fun navigate(requestFocus: Boolean) {
+      StructureViewEventsCollector.logNavigate(assembledModel.model!!::class.java)
+      super<PsiTreeElementBase>.navigate(requestFocus)
+    }
 
     override fun equals(other: Any?): Boolean {
       if (other !is PsiElementStructureElement<*>) return false
