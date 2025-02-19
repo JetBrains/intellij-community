@@ -30,7 +30,7 @@ internal class UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQuic
     }
 
     override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, positionContext: KotlinRawPositionContext): Set<Name> =
-        setOfNotNull((positionContext as? KotlinNameReferencePositionContext)?.name)
+        (positionContext as? KotlinNameReferencePositionContext)?.reference?.resolvesByNames?.toSet().orEmpty()
 
     override fun KaSession.provideImportCandidates(
         unresolvedName: Name,
