@@ -234,11 +234,11 @@ private fun <T : JComponent> Cell<T>.setupDefaultValue(
   }
 }
 
-fun getDefaultValueColor(): Color {
+private fun getDefaultValueColor(): Color {
   return findColorByKey("TextField.inactiveForeground", "nimbusDisabledText")
 }
 
-fun getChangedValueColor(): Color {
+private fun getChangedValueColor(): Color {
   return findColorByKey("TextField.foreground")
 }
 
