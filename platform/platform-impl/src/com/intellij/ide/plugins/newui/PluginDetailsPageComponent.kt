@@ -479,8 +479,6 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         { this.createUninstallAction() })
       nameAndButtons.addButtonComponent(enableDisableController!!.button.also { gearButton = it })
       nameAndButtons.addButtonComponent(enableDisableController!!.bundledButton.also { myEnableDisableButton = it })
-      myEnableDisableButton?.isEnabled = showComponent?.isNotFreeInFreeMode == true
-      gearButton?.isEnabled = showComponent?.isNotFreeInFreeMode == true
     }
     else {
       gearButton = SelectionBasedPluginModelAction.createGearButton(
@@ -1403,7 +1401,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         val bundled = plugin!!.isBundled
         val isEssential = ApplicationInfo.getInstance().isEssentialPlugin(
           plugin!!.pluginId)
-        gearButton!!.isVisible = !uninstalled && !bundled
+        gearButton!!.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode != true
         myEnableDisableButton!!.isVisible = bundled
         myEnableDisableButton!!.isEnabled = !isEssential && showComponent?.isNotFreeInFreeMode != true
       }
