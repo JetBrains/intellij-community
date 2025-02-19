@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.SingleAlarm;
 import com.intellij.xdebugger.XDebugSession;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,17 @@ public abstract class XDebugView implements Disposable {
 
   protected abstract void clear();
 
-  public abstract void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session);
+  @ApiStatus.Internal
+  public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSessionProxy session) {
+    if (session instanceof XDebugSessionProxy.Monolith monolith) {
+      processSessionEvent(event, monolith.getSession());
+    }
+  }
+
+  @ApiStatus.Obsolete
+  public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
+    processSessionEvent(event, XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session));
+  }
 
   protected static @Nullable XDebugSession getSession(@NotNull EventObject e) {
     Component component = e.getSource() instanceof Component ? (Component)e.getSource() : null;

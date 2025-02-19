@@ -681,7 +681,7 @@ a:com.intellij.xdebugger.impl.frame.XDebugView
 - getMainComponent():javax.swing.JComponent
 - s:getSession(java.awt.Component):com.intellij.xdebugger.XDebugSession
 - ps:getSession(java.util.EventObject):com.intellij.xdebugger.XDebugSession
-- a:processSessionEvent(com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent,com.intellij.xdebugger.XDebugSession):V
+- processSessionEvent(com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent,com.intellij.xdebugger.XDebugSession):V
 - pf:requestClear():V
 e:com.intellij.xdebugger.impl.frame.XDebugView$SessionEvent
 - java.lang.Enum
