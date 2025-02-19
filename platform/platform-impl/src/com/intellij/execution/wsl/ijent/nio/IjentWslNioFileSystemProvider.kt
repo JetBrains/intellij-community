@@ -251,16 +251,8 @@ class IjentWslNioFileSystemProvider(
   }
 
   override fun isSameFile(path: Path, path2: Path): Boolean {
-    val conversionResult1 = tryConvertToWindowsPaths(path, path2)
-    if (conversionResult1 != null) {
-      return conversionResult1
-    }
-    val conversionResult2 = tryConvertToWindowsPaths(path2, path)
-    if (conversionResult2 != null) {
-      return conversionResult2
-    }
     // so both paths are now located in WSL
-    if (path.root != path2.root) {
+    if (path.fileSystem != path2.fileSystem) {
       // the paths could be in different distributions
       return false
     }
