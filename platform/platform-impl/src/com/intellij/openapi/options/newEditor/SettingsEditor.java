@@ -77,6 +77,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   private final @NotNull ConfigurableEditorBanner myBanner;
   private final History myHistory = new History(this);
   private volatile boolean myNavigatingNow = false;
+  private final boolean myIsModal;
 
   private final Map<Configurable, ConfigurableController> controllers = new HashMap<>();
   private ConfigurableController lastController;
@@ -104,10 +105,11 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
                  @Nullable Configurable configurable,
                  @Nullable String filter,
                  @Nullable Supplier<JButton> helpButtonSupplier,
+                 boolean isModal,
                  @NotNull ISettingsTreeViewFactory factory,
                  @NotNull SpotlightPainterFactory spotlightPainterFactory) {
     super(parent);
-
+    myIsModal = isModal;
     properties = PropertiesComponent.getInstance(project);
     settings = new Settings(groups) {
       @Override
@@ -152,7 +154,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     };
 
     JPanel searchPanel = new JPanel(new VerticalLayout(0));
-    if (!SettingsDialog.useNonModalSettingsWindow()) {
+    if (myIsModal) {
       searchPanel.add(VerticalLayout.CENTER, search);
     }
     this.filter = new SettingsFilter(project, groups, search, coroutineScope) {
@@ -183,7 +185,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       public @NotNull Promise<? super Object> onSelected(@Nullable Configurable configurable, Configurable oldConfigurable) {
         if (configurable != null) {
           properties.setValue(SELECTED_CONFIGURABLE, ConfigurableVisitor.getId(configurable));
-          if (SettingsDialog.useNonModalSettingsWindow()) {
+          if (!myIsModal) {
             if (!myNavigatingNow && oldConfigurable != null) { // don't add to IdeDocumentHistory if just opened
               IdeDocumentHistory documentHistory = IdeDocumentHistory.getInstance(project);
               CommandProcessor.getInstance().executeCommand(project, () -> {
@@ -282,7 +284,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
     loadingDecorator = new LoadingDecorator(editor, this, 10, true);
     loadingDecorator.setOverlayBackground(LoadingDecorator.OVERLAY_BACKGROUND);
-    myBanner = new ConfigurableEditorBanner(editor.getResetAction(), SettingsDialog.useNonModalSettingsWindow() ? myHeaderLabel : myBreadcrumbs);
+    myBanner = new ConfigurableEditorBanner(editor.getResetAction(), myIsModal ? myBreadcrumbs : myHeaderLabel);
     searchPanel.setBorder(JBUI.Borders.empty(7, 5, 6, 5));
     myBanner.setBorder(JBUI.Borders.empty(11, 6, 0, 10));
     search.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
@@ -299,10 +301,10 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_FIRST_MIN_SIZE);
     mySplitter.setFirstComponent(left);
 
-    if (IdeFrameDecorator.Companion.isCustomDecorationActive()) {
-      mySplitter.getDivider().setOpaque(false);
-    }
-    if (SettingsDialog.useNonModalSettingsWindow()) {
+    if (!myIsModal) {
+      if (IdeFrameDecorator.Companion.isCustomDecorationActive()) {
+        mySplitter.getDivider().setOpaque(false);
+      }
       if (helpButtonSupplier != null) {
         JButton helpButton = helpButtonSupplier.get();
         mySplitter.setSecondComponent(paneWithCorner(this, right, helpButton));
@@ -467,7 +469,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
-    if (!SettingsDialog.useNonModalSettingsWindow()) {
+    if (myIsModal) {
       sink.set(History.KEY, myHistory);
     }
     sink.set(Settings.KEY, settings);
