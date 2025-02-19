@@ -59,7 +59,6 @@ import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
 import org.jetbrains.jps.builders.logging.BuildLoggingManager
 import org.jetbrains.jps.cmdline.ProjectDescriptor
-import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.RebuildRequestedException
 import org.jetbrains.jps.incremental.fs.BuildFSState
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
@@ -237,11 +236,20 @@ suspend fun buildUsingJps(
     }
   }
 
-  // if class jar doesn't exist, make sure that we do not to use existing cache -
+  // if output jar doesn't exist, make sure that we do not to use existing cache -
   // set `isRebuild` to true and clear caches in this case
   var isRebuild = false
   if (Files.notExists(outJar)) {
     FileUtilRt.deleteRecursively(dataDir)
+    if (abiJar != null) {
+      Files.deleteIfExists(abiJar)
+    }
+    isRebuild = true
+  }
+  else if (abiJar != null && Files.notExists(abiJar)) {
+    // output JAR exists but not abi? something wrong, or we enabled ABI jars, let's rebuild
+    FileUtilRt.deleteRecursively(dataDir)
+    Files.deleteIfExists(outJar)
     isRebuild = true
   }
 
@@ -292,7 +300,7 @@ suspend fun buildUsingJps(
 
   var exitCode = initAndBuild(
     compileScope = BazelCompileScope(isIncrementalCompilation = true, isRebuild = isRebuild),
-    messageHandler = log,
+    requestLog = log,
     dataDir = dataDir,
     targetDigests = targetDigests,
     moduleTarget = moduleTarget,
@@ -321,7 +329,7 @@ suspend fun buildUsingJps(
     log.resetState()
     exitCode = initAndBuild(
       compileScope = BazelCompileScope(isIncrementalCompilation = true, isRebuild = true),
-      messageHandler = log,
+      requestLog = log,
       dataDir = dataDir,
       targetDigests = targetDigests,
       moduleTarget = moduleTarget,
@@ -510,7 +518,7 @@ private fun checkIsFullRebuildRequired(
 
 private suspend fun initAndBuild(
   compileScope: BazelCompileScope,
-  messageHandler: RequestLog,
+  requestLog: RequestLog,
   dataDir: Path,
   targetDigests: TargetConfigurationDigestContainer,
   moduleTarget: BazelModuleBuildTarget,
@@ -524,7 +532,7 @@ private suspend fun initAndBuild(
   isDebugEnabled: Boolean,
 ): Int {
   val isRebuild = compileScope.isRebuild
-  val tracer = messageHandler.tracer
+  val tracer = requestLog.tracer
   val storageInitializer = StorageInitializer(dataDir = dataDir, outJar = outJar)
   val storageManager = tracer.span("init storage") { span ->
     if (isRebuild) {
@@ -546,7 +554,7 @@ private suspend fun initAndBuild(
       val context = BazelCompileContext(
         scope = compileScope,
         projectDescriptor = projectDescriptor,
-        delegateMessageHandler = messageHandler,
+        delegateMessageHandler = requestLog,
         coroutineContext = coroutineContext,
       )
 
@@ -568,7 +576,7 @@ private suspend fun initAndBuild(
                 createJavaBuilder(
                   tracer = tracer,
                   isDebugEnabled = isDebugEnabled,
-                  out = messageHandler.out,
+                  out = requestLog.out,
                   isIncremental = true,
                   javaFileCount = moduleTarget.javaFileCount,
                 )
@@ -580,7 +588,7 @@ private suspend fun initAndBuild(
             builders.sortBy { it.category.ordinal }
 
             JpsTargetBuilder(
-              log = messageHandler,
+              log = requestLog,
               isCleanBuild = storageInitializer.isCleanBuild,
               dataManager = buildDataProvider,
               tracer = tracer,
@@ -603,7 +611,7 @@ private suspend fun initAndBuild(
               context = context,
               targetDigests = targetDigests,
               buildDataProvider = buildDataProvider,
-              tracer = tracer,
+              requestLog = requestLog,
               outputSink = outputSink,
               // We remove `outJar` if a rebuild is detected as necessary.
               // Therefore, the `Files.exists` condition is enough.
@@ -641,13 +649,13 @@ private val stateFileMetaNames: Array<String> = TargetConfigurationDigestPropert
   .let { entries -> Array(entries.size) { entries.get(it).name } }
 
 private fun CoroutineScope.postBuild(
-  moduleTarget: ModuleBuildTarget,
+  moduleTarget: BazelModuleBuildTarget,
   outJar: Path,
   abiJar: Path?,
   context: BazelCompileContext,
   targetDigests: TargetConfigurationDigestContainer,
   buildDataProvider: BazelBuildDataProvider,
-  tracer: Tracer,
+  requestLog: RequestLog,
   success: Boolean,
   outputSink: OutputSink,
   parentSpan: Span,
@@ -677,8 +685,13 @@ private fun CoroutineScope.postBuild(
     buildDataProvider.libRootManager.saveState(buildDataProvider.allocator, buildDataProvider.relativizer)
   }
 
-  launch {
-    writeJarAndAbi(tracer = tracer, outputSink = outputSink, outJar = outJar, abiJar = abiJar, sourceDescriptors = sourceDescriptors)
+  if (outputSink.isChanged || context.scope.isRebuild) {
+    launch {
+      writeJarAndAbi(tracer = requestLog.tracer, outputSink = outputSink, outJar = outJar, abiJar = abiJar, sourceDescriptors = sourceDescriptors)
+    }
+  }
+  else {
+    parentSpan.addEvent("no changes detected, no output JAR will be produced")
   }
 
   launch(CoroutineName("report build state")) {

@@ -15,6 +15,10 @@ import org.jetbrains.kotlin.backend.common.output.OutputFile
 import java.io.File
 import java.nio.file.Path
 import java.util.*
+import java.util.zip.ZipEntry
+
+@PublishedApi
+internal class KotlinOutputData(@JvmField val data: ByteArray)
 
 class OutputSink private constructor(
   @PublishedApi
@@ -24,11 +28,8 @@ class OutputSink private constructor(
   @JvmField
   internal val oldZipFile: HashMapZipFile?,
 ) : AutoCloseable {
-  private var isChanged = false
-
-  //@PublishedApi
-  //@JvmField
-  //internal val removedFiles = hashSet<String>()
+  internal var isChanged: Boolean = false
+    private set
 
   companion object {
     fun createOutputSink(oldJar: Path?): OutputSink {
@@ -54,7 +55,7 @@ class OutputSink private constructor(
           zipFile.close()
         }
       }
-      return OutputSink(fileToData, oldZipFile = zipFile)
+      return OutputSink(fileToData = fileToData, oldZipFile = zipFile)
     }
   }
 
@@ -64,24 +65,36 @@ class OutputSink private constructor(
 
   @Synchronized
   fun registerKotlincOutput(outputFiles: List<OutputFile>) {
+    var isChanged = isChanged
     for (file in outputFiles) {
       // not clear - is path system-independent or not?
       val path = file.relativePath.replace(File.separatorChar, '/')
-      //removedFiles.remove(path)
-      fileToData.put(path, file)
+      val newContent = file.asByteArray()
+      val oldContent = fileToData.put(path, KotlinOutputData(newContent)) as KotlinOutputData?
+      if (!isChanged && (oldContent == null || !oldContent.data.contentEquals(newContent))) {
+        isChanged = true
+      }
     }
-    isChanged = true
+    if (isChanged) {
+      this.isChanged = true
+    }
   }
 
   @Synchronized
   internal fun registerJavacOutput(outputs: List<InMemoryJavaOutputFileObject>) {
+    var isChanged = isChanged
     for (output in outputs) {
       val path = output.path
-      //removedFiles.remove(path)
       // missing content is an error and checked by BazelJpsJavacFileProvider.registerOutputs
-      fileToData.put(path, output.content!!)
+      val newContent = output.content!!
+      val old = fileToData.put(path, newContent) as? ByteArray
+      if (!isChanged && (old == null || !old.contentEquals(newContent))) {
+        isChanged = true
+      }
     }
-    isChanged = true
+    if (isChanged) {
+      this.isChanged = true
+    }
   }
 
   inline fun findByPackage(packageName: String, recursive: Boolean, consumer: (String, ByteArray, Int, Int) -> Unit) {
@@ -94,15 +107,11 @@ class OutputSink private constructor(
         continue
       }
 
-      //if (removedFiles.contains(path)) {
-      //  continue
-      //}
-
       val data: ByteArray
-      if (info is OutputFile) {
+      if (info is KotlinOutputData) {
         // kotlin can produce `.kotlin_module` files
         if (path.endsWith(".class")) {
-          data = info.asByteArray()
+          data = info.data
         }
         else {
           continue
@@ -126,57 +135,69 @@ class OutputSink private constructor(
       for ((path, info) in fileToData.entries) {
         packageIndexBuilder.addFile(name = path, addClassDir = false)
         val name = path.toByteArray()
-        val data: ByteArray
-        if (info is ByteArray) {
-          data = info
+        when (info) {
+          is ByteArray -> {
+            val data = info
 
-          classChannel?.send(JarContentToProcess(
-            name = name,
-            data = data,
-            isKotlinModuleMetadata = false,
-            isKotlin = false,
-          ))
-        }
-        else if (info is ImmutableZipEntry) {
-          // todo use direct byte buffer
-          data = info.getData(oldZipFile!!)
+            classChannel?.send(JarContentToProcess(
+              name = name,
+              data = data,
+              isKotlinModuleMetadata = false,
+              isKotlin = false,
+            ))
+            stream.writeDataRawEntryWithoutCrc(name = name, data = data)
+          }
 
-          if (classChannel != null) {
-            val isClass = path.endsWith(".class")
-            val isKotlinMetadata = !isClass && path.endsWith(".kotlin_module")
-            if (isClass || isKotlinMetadata) {
-              val sourceFile = outputToSource.get(path)
-              if (sourceFile == null) {
-                throw IllegalStateException("No source file for $path")
+          is ImmutableZipEntry -> {
+            val hashMapZipFile = oldZipFile!!
+            val buffer = info.getByteBuffer(hashMapZipFile, null)
+            try {
+              val size = buffer.remaining()
+              stream.writeDataRawEntry(name = name, data = buffer, crc = 0, size = size, compressedSize = size, method = ZipEntry.STORED)
+            }
+            finally {
+              hashMapZipFile.releaseBuffer(buffer)
+            }
+
+            if (classChannel != null) {
+              val isClass = path.endsWith(".class")
+              val isKotlinMetadata = !isClass && path.endsWith(".kotlin_module")
+              if (isClass || isKotlinMetadata) {
+                val sourceFile = outputToSource.get(path)
+                if (sourceFile == null) {
+                  throw IllegalStateException("No source file for $path")
+                }
+
+                val data = info.getData(hashMapZipFile)
+                classChannel.send(JarContentToProcess(
+                  name = name,
+                  data = data,
+                  isKotlinModuleMetadata = isKotlinMetadata,
+                  isKotlin = sourceFile.endsWith(".kt"),
+                ))
               }
-
-              classChannel.send(JarContentToProcess(
-                name = name,
-                data = data,
-                isKotlinModuleMetadata = isKotlinMetadata,
-                isKotlin = sourceFile.endsWith(".kt"),
-              ))
             }
           }
-        }
-        else {
-          data = (info as OutputFile).asByteArray()
 
-          if (classChannel != null) {
-            val isClass = path.endsWith(".class")
-            val isKotlinMetadata = !isClass && path.endsWith(".kotlin_module")
-            if (isClass || isKotlinMetadata) {
-              classChannel.send(JarContentToProcess(
-                name = name,
-                data = data,
-                isKotlinModuleMetadata = isKotlinMetadata,
-                isKotlin = true,
-              ))
+          else -> {
+            val data = (info as KotlinOutputData).data
+
+            if (classChannel != null) {
+              val isClass = path.endsWith(".class")
+              val isKotlinMetadata = !isClass && path.endsWith(".kotlin_module")
+              if (isClass || isKotlinMetadata) {
+                classChannel.send(JarContentToProcess(
+                  name = name,
+                  data = data,
+                  isKotlinModuleMetadata = isKotlinMetadata,
+                  isKotlin = true,
+                ))
+              }
             }
+
+            stream.writeDataRawEntryWithoutCrc(name = name, data = data)
           }
         }
-
-        stream.writeDataRawEntryWithoutCrc(name = name, data = data)
       }
       packageIndexBuilder.writePackageIndex(stream = stream, addDirEntriesMode = AddDirEntriesMode.RESOURCE_ONLY)
     }
@@ -184,10 +205,7 @@ class OutputSink private constructor(
 
   @Synchronized
   fun remove(path: String) {
-    if (fileToData.remove(path) == null) {
-      //removedFiles.add(path)
-    }
-    else {
+    if (fileToData.remove(path) != null) {
       isChanged = true
     }
   }

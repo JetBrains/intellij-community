@@ -18,7 +18,6 @@ use_repo(protoc, "com_google_protobuf", "toolchains_protoc_hub")
 register_toolchains("@toolchains_protoc_hub//:all")
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
-http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 local_path_override(
     module_name = "lib",
@@ -59,9 +58,9 @@ archive_override(
 
 http_file(
     name = "jps-standalone_http",
-    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jps/jps-build-standalone-15.02.25-1.jar",
-    downloaded_file_path = "jps-build-standalone-15.02.25-1.jar",
-    integrity = "sha256-UvpvIfzTeUfi/OiRJ5ChbhrtjlymK00a2gH5wp3oqSk=",
+    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jps/jps-build-standalone-19.02.25.jar",
+    downloaded_file_path = "jps-build-standalone-19.02.25.jar",
+    integrity = "sha256-+1MMXS2+hBFqgkx4mOtaFCOUaRdNxZSB//hANQi3F08=",
 )
 
 ### auto-generated section `libraries` start

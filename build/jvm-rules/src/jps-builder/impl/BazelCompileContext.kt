@@ -22,7 +22,7 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage
 import kotlin.coroutines.CoroutineContext
 
 internal class BazelCompileContext(
-  private val scope: BazelCompileScope,
+  @JvmField val scope: BazelCompileScope,
   private val projectDescriptor: ProjectDescriptor,
   private val delegateMessageHandler: RequestLog,
   private val coroutineContext: CoroutineContext,

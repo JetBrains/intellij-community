@@ -3,7 +3,7 @@ def get_jvm_flags(flags):
         # "-XX:+UseZGC",
         # "-XX:+ZGenerational",
         "-Xms2g",
-        "-Xmx10g",
+        "-Xmx16g",
         "-XX:ReservedCodeCacheSize=512m",
         "-Djava.awt.headless=true",
         "-Dapple.awt.UIElement=true",

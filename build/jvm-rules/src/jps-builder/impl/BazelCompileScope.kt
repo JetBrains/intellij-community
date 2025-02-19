@@ -11,16 +11,6 @@ internal class BazelCompileScope(
   @JvmField val isIncrementalCompilation: Boolean,
   @JvmField val isRebuild: Boolean,
 ) : CompileScope() {
-  private val typesToForceBuild = HashSet<BuildTargetType<*>?>()
-
-  init {
-    var forceBuildAllModuleBasedTargets = false
-    for (type in typesToForceBuild) {
-      typesToForceBuild.add(type)
-      forceBuildAllModuleBasedTargets = false
-    }
-  }
-
   override fun isAffected(target: BuildTarget<*>): Boolean = isWholeTargetAffected(target)
 
   override fun isWholeTargetAffected(target: BuildTarget<*>): Boolean = !isIncrementalCompilation || isRebuild
