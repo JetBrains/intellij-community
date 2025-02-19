@@ -3024,14 +3024,14 @@ public class StringUtil {
           j++;
         }
         if (!escape || c != 'u') {
-          sb.append(text, i, j + 1);
-          i = j;
+          sb.append(text, i, j);
+          i = j - 1;
           continue;
         }
         while (j < length && (c = text.charAt(j)) == 'u') j++;
         if (j > length - 4) {
-          sb.append(text, i, j + 1);
-          i = j;
+          sb.append(text, i, j);
+          i = j - 1;
           continue;
         }
         for (int k = 0; k < 4; k++) {
