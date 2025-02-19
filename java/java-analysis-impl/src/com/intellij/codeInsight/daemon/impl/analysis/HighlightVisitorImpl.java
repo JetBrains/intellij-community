@@ -188,7 +188,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     Consumer<@NotNull CommonIntentionAction> consumer = fix -> info.registerFix(fix.asIntention(), null, null, null, null);
     errorFixProvider.processFixes(error, consumer);
     ErrorFixExtensionPoint.registerFixes(consumer, error.psi(), error.kind().key());
-    error.psiForKind(EXPRESSION_EXPECTED, REFERENCE_UNRESOLVED, REFERENCE_AMBIGUOUS)
+    error.psiForKind(EXPRESSION_EXPECTED, REFERENCE_UNRESOLVED, REFERENCE_AMBIGUOUS, ACCESS_PRIVATE, ACCESS_PACKAGE_LOCAL, ACCESS_PROTECTED)
       .or(() -> error.psiForKind(TYPE_UNKNOWN_CLASS).map(PsiTypeElement::getInnermostComponentReferenceElement))
       .or(() -> error.psiForKind(CALL_AMBIGUOUS_NO_MATCH, CALL_UNRESOLVED).map(PsiMethodCallExpression::getMethodExpression))
       .ifPresent(ref -> UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, info));
@@ -327,12 +327,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
-    super.visitReferenceElement(ref);
     if (!(ref instanceof PsiExpression)) {
       JavaResolveResult result = resolveOptimised(ref, myFile);
       if (result != null) {
         add(HighlightUtil.checkReference(ref, result));
       }
     }
+    if (!hasErrorResults()) super.visitReferenceElement(ref);
   }
 }

@@ -704,6 +704,9 @@ final class JavaErrorFixProvider {
     JavaFixesPusher<PsiJavaCodeReferenceElement, JavaResolveResult> accessFix = (error, sink) -> {
       if (error.context().isStaticsScopeCorrect() && error.context().getElement() instanceof PsiJvmMember member) {
         HighlightFixUtil.registerAccessQuickFixAction(sink, member, error.psi(), null);
+        if (error.psi() instanceof PsiReferenceExpression expression) {
+          sink.accept(myFactory.createRenameWrongRefFix(expression));
+        }
       }
     };
     fixes(ACCESS_PRIVATE, accessFix);

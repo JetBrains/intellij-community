@@ -7,12 +7,8 @@ import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -26,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -35,22 +30,6 @@ public final class HighlightUtil {
 
   private HighlightUtil() { }
 
-  private static @NotNull QuickFixFactory getFixFactory() {
-    return QuickFixFactory.getInstance();
-  }
-
-
-  static @NotNull Consumer<CommonIntentionAction> asConsumer(@Nullable HighlightInfo.Builder highlightInfo) {
-    if (highlightInfo == null) {
-      return fix -> {};
-    }
-    return fix -> {
-      if (fix != null) {
-        highlightInfo.registerFix(fix.asIntention(), null, null, null, null);
-      }
-    };
-  }
-
   public static @NotNull @NlsSafe String formatClass(@NotNull PsiClass aClass) {
     return formatClass(aClass, true);
   }
@@ -58,12 +37,6 @@ public final class HighlightUtil {
   public static @NotNull String formatClass(@NotNull PsiClass aClass, boolean fqn) {
     return PsiFormatUtil.formatClass(aClass, PsiFormatUtilBase.SHOW_NAME |
                                              PsiFormatUtilBase.SHOW_ANONYMOUS_CLASS_VERBOSE | (fqn ? PsiFormatUtilBase.SHOW_FQ_NAME : 0));
-  }
-
-  static @NotNull @NlsContexts.DetailedDescription String accessProblemDescription(@NotNull PsiElement ref,
-                                                                                   @NotNull PsiElement resolved,
-                                                                                   @NotNull JavaResolveResult result) {
-    return accessProblemDescriptionAndFixes(ref, resolved, result).first;
   }
 
   static @NotNull Pair<@Nls String, List<IntentionAction>> accessProblemDescriptionAndFixes(@NotNull PsiElement ref,
@@ -176,18 +149,10 @@ public final class HighlightUtil {
   }
 
   static HighlightInfo.Builder checkReference(@NotNull PsiJavaCodeReferenceElement ref, @NotNull JavaResolveResult result) {
-    PsiElement refName = ref.getReferenceNameElement();
-    if (!(refName instanceof PsiIdentifier) && !(refName instanceof PsiKeyword)) return null;
     PsiElement resolved = result.getElement();
 
-    PsiElement refParent = ref.getParent();
-
-    if (refParent instanceof PsiMethodCallExpression || resolved == null) {
-      // reported elsewhere
-      return null;
-    }
-
     boolean skipValidityChecks =
+      ref.getParent() instanceof PsiMethodCallExpression || resolved == null ||
       PsiUtil.isInsideJavadocComment(ref) ||
       PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class, true) != null ||
       resolved instanceof PsiPackage && ref.getParent() instanceof PsiJavaCodeReferenceElement;
@@ -199,22 +164,6 @@ public final class HighlightUtil {
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(findPackagePrefix(ref))
         .descriptionAndTooltip(moduleProblem.message);
       moduleProblem.fixes.forEach(fix -> info.registerFix(fix, List.of(), null, null, null));
-      return info;
-    }
-
-    if (!result.isAccessible()) {
-      @Nls String description = accessProblemDescription(ref, resolved, result);
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description);
-      if (result.isStaticsScopeCorrect() && resolved instanceof PsiJvmMember) {
-        HighlightFixUtil.registerAccessQuickFixAction(asConsumer(info), (PsiJvmMember)resolved, ref,
-                                                      result.getCurrentFileResolveScope());
-        if (ref instanceof PsiReferenceExpression expression) {
-          IntentionAction action = getFixFactory().createRenameWrongRefFix(expression);
-          info.registerFix(action, null, null, null, null);
-        }
-      }
-      UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, info);
       return info;
     }
 

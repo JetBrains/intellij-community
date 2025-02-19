@@ -895,61 +895,8 @@ final class ExpressionChecker {
     }
 
     if (resolved == null) {
-      // do not highlight unknown packages (javac does not care), Javadoc, and module references (checked elsewhere)
-      PsiJavaCodeReferenceElement parent = getOuterReferenceParent(ref);
-      PsiElement outerParent = parent.getParent();
-      if (outerParent instanceof PsiPackageStatement ||
-          result.isPackagePrefixPackageReference() ||
-          PsiUtil.isInsideJavadocComment(ref) ||
-          parent.resolve() instanceof PsiMember ||
-          outerParent instanceof PsiPackageAccessibilityStatement) {
-        return;
-      }
-
-      //do not highlight module keyword if the statement is not complete
-      //see com.intellij.lang.java.parser.BasicFileParser.parseImportStatement
-      if (PsiKeyword.MODULE.equals(ref.getText()) && refParent instanceof PsiImportStatement &&
-          PsiUtil.isAvailable(JavaFeature.MODULE_IMPORT_DECLARATIONS, ref)) {
-        PsiElement importKeywordExpected = PsiTreeUtil.skipWhitespacesAndCommentsBackward(ref);
-        PsiElement errorElementExpected = PsiTreeUtil.skipWhitespacesAndCommentsForward(ref);
-        if (importKeywordExpected instanceof PsiKeyword keyword &&
-            keyword.textMatches(PsiKeyword.IMPORT) &&
-            errorElementExpected instanceof PsiErrorElement errorElement &&
-            JavaPsiBundle.message("expected.identifier.or.semicolon").equals(errorElement.getErrorDescription())) {
-          return;
-        }
-      }
-
-      JavaResolveResult[] results = ref.multiResolve(true);
-      if (results.length > 1) {
-        if (ref instanceof PsiMethodReferenceExpression methodRef &&
-            myVisitor.isIncompleteModel() && IncompleteModelUtil.isUnresolvedClassType(methodRef.getFunctionalInterfaceType())) {
-          return;
-        }
-        myVisitor.report(JavaErrorKinds.REFERENCE_AMBIGUOUS.create(ref, Arrays.asList(results)));
-      }
-      else {
-        boolean definitelyIncorrect = false;
-        if (ref instanceof PsiReferenceExpression expression) {
-          PsiExpression qualifierExpression = expression.getQualifierExpression();
-          if (qualifierExpression != null) {
-            PsiType type = qualifierExpression.getType();
-            if (type instanceof PsiPrimitiveType primitiveType && !primitiveType.equals(PsiTypes.nullType())) {
-              myVisitor.report(JavaErrorKinds.REFERENCE_QUALIFIER_PRIMITIVE.create(ref, primitiveType));
-              return;
-            }
-          }
-        }
-        else if (ImplicitClassSearch.search(ref.getQualifiedName(), myVisitor.project(), ref.getResolveScope()).findFirst() != null) {
-          myVisitor.report(JavaErrorKinds.REFERENCE_IMPLICIT_CLASS.create(ref));
-          return;
-        }
-        if (!definitelyIncorrect && myVisitor.isIncompleteModel() && IncompleteModelUtil.canBePendingReference(ref)) {
-          myVisitor.report(JavaErrorKinds.REFERENCE_PENDING.create(refName));
-          return;
-        }
-        myVisitor.report(JavaErrorKinds.REFERENCE_UNRESOLVED.create(ref));
-      }
+      checkUnresolvedReference(ref, result);
+      return;
     }
     if (resolved instanceof PsiClass psiClass &&
         psiClass.getContainingClass() == null &&
@@ -969,8 +916,70 @@ final class ExpressionChecker {
 
     if (skipValidityChecks) return;
 
+    if (!result.isAccessible() && resolved instanceof PsiModifierListOwner owner) {
+      myVisitor.myModifierChecker.reportAccessProblem(ref, owner, result);
+      return;
+    }
     if (!result.isStaticsScopeCorrect()) {
       myVisitor.report(JavaErrorKinds.REFERENCE_NON_STATIC_FROM_STATIC_CONTEXT.create(ref, resolved));
+    }
+  }
+
+  private void checkUnresolvedReference(@NotNull PsiJavaCodeReferenceElement ref, @NotNull JavaResolveResult result) {
+    // do not highlight unknown packages (javac does not care), Javadoc, and module references (checked elsewhere)
+    PsiJavaCodeReferenceElement parent = getOuterReferenceParent(ref);
+    PsiElement outerParent = parent.getParent();
+    if (outerParent instanceof PsiPackageStatement ||
+        result.isPackagePrefixPackageReference() ||
+        PsiUtil.isInsideJavadocComment(ref) ||
+        parent.resolve() instanceof PsiMember ||
+        outerParent instanceof PsiPackageAccessibilityStatement) {
+      return;
+    }
+
+    //do not highlight module keyword if the statement is not complete
+    //see com.intellij.lang.java.parser.BasicFileParser.parseImportStatement
+    if (PsiKeyword.MODULE.equals(ref.getText()) && ref.getParent() instanceof PsiImportStatement &&
+        PsiUtil.isAvailable(JavaFeature.MODULE_IMPORT_DECLARATIONS, ref)) {
+      PsiElement importKeywordExpected = PsiTreeUtil.skipWhitespacesAndCommentsBackward(ref);
+      PsiElement errorElementExpected = PsiTreeUtil.skipWhitespacesAndCommentsForward(ref);
+      if (importKeywordExpected instanceof PsiKeyword keyword &&
+          keyword.textMatches(PsiKeyword.IMPORT) &&
+          errorElementExpected instanceof PsiErrorElement errorElement &&
+          JavaPsiBundle.message("expected.identifier.or.semicolon").equals(errorElement.getErrorDescription())) {
+        return;
+      }
+    }
+
+    JavaResolveResult[] results = ref.multiResolve(true);
+    if (results.length > 1) {
+      if (ref instanceof PsiMethodReferenceExpression methodRef &&
+          myVisitor.isIncompleteModel() && IncompleteModelUtil.isUnresolvedClassType(methodRef.getFunctionalInterfaceType())) {
+        return;
+      }
+      myVisitor.report(JavaErrorKinds.REFERENCE_AMBIGUOUS.create(ref, Arrays.asList(results)));
+    }
+    else {
+      boolean definitelyIncorrect = false;
+      if (ref instanceof PsiReferenceExpression expression) {
+        PsiExpression qualifierExpression = expression.getQualifierExpression();
+        if (qualifierExpression != null) {
+          PsiType type = qualifierExpression.getType();
+          if (type instanceof PsiPrimitiveType primitiveType && !primitiveType.equals(PsiTypes.nullType())) {
+            myVisitor.report(JavaErrorKinds.REFERENCE_QUALIFIER_PRIMITIVE.create(ref, primitiveType));
+            return;
+          }
+        }
+      }
+      else if (ImplicitClassSearch.search(ref.getQualifiedName(), myVisitor.project(), ref.getResolveScope()).findFirst() != null) {
+        myVisitor.report(JavaErrorKinds.REFERENCE_IMPLICIT_CLASS.create(ref));
+        return;
+      }
+      if (!definitelyIncorrect && myVisitor.isIncompleteModel() && IncompleteModelUtil.canBePendingReference(ref)) {
+        myVisitor.report(JavaErrorKinds.REFERENCE_PENDING.create(requireNonNull(ref.getReferenceNameElement())));
+        return;
+      }
+      myVisitor.report(JavaErrorKinds.REFERENCE_UNRESOLVED.create(ref));
     }
   }
 
