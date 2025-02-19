@@ -405,11 +405,12 @@ private class JavaThreadsProvider : ThreadDumpItemsProviderFactory() {
   override fun getProvider(context: DebuggerContextImpl) = object : ThreadDumpItemsProvider {
     val vm = context.debugProcess!!.virtualMachineProxy
 
-    // TODO: somehow check if there are alive virtual threads without evaluation
     val dumpVirtualThreads =
       Registry.`is`("debugger.thread.dump.include.virtual.threads") &&
       // Virtual threads first appeared in Java 19 as part of Project Loom.
-      JavaVersion.parse(vm.version()).feature >= 19
+      JavaVersion.parse(vm.version()).feature >= 19 &&
+      // Check if VirtualThread class is at least loaded.
+      vm.classesByName("java.lang.VirtualThread").isNotEmpty()
 
     override fun requiresEvaluation() = dumpVirtualThreads
 
