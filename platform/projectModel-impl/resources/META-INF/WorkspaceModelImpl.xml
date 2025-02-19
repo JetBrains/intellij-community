@@ -26,6 +26,8 @@
     <!--suppress PluginXmlDynamicPlugin -->
     <extensionPoint name="workspaceModel.fileIndexContributor"
                     interface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor"/>
+    <extensionPoint name="workspaceModel.optionalExclusionContributor" dynamic="true"
+                    interface="com.intellij.workspaceModel.core.fileIndex.OptionalExclusionContributor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
