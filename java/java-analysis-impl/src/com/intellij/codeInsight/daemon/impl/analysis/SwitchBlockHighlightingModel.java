@@ -21,7 +21,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SmartHashSet;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -86,12 +85,6 @@ public class SwitchBlockHighlightingModel {
     PsiCodeBlock body = myBlock.getBody();
     if (body == null) return;
 
-    MultiMap<Object, PsiElement> elementsToCheckDuplicates = JavaPsiSwitchUtil.getValuesAndLabels(myBlock);
-
-    if (checkDuplicates(elementsToCheckDuplicates, errorSink)) {
-      return;
-    }
-
     // todo replace with needToCheckCompleteness
     if (myBlock instanceof PsiSwitchExpression && !hasDefaultCase(body)) {
       PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(mySelectorType);
@@ -129,35 +122,6 @@ public class SwitchBlockHighlightingModel {
 
   static @Nullable Object evaluateConstant(@NotNull PsiCaseLabelElement constant) {
     return JavaPsiFacade.getInstance(constant.getProject()).getConstantEvaluationHelper().computeConstantExpression(constant, false);
-  }
-
-  static boolean checkDuplicates(@NotNull MultiMap<Object, PsiElement> values, Consumer<? super HighlightInfo.Builder> errorSink) {
-    boolean reported = false;
-    for (Map.Entry<Object, Collection<PsiElement>> entry : values.entrySet()) {
-      if (entry.getValue().size() <= 1) continue;
-      Object duplicateKey = entry.getKey();
-      for (PsiElement duplicateElement : entry.getValue()) {
-        HighlightInfo.Builder info = createDuplicateInfo(duplicateKey, duplicateElement);
-        errorSink.accept(info);
-        reported = true;
-      }
-    }
-    return reported;
-  }
-
-  @NotNull
-  private static HighlightInfo.Builder createDuplicateInfo(@Nullable Object duplicateKey, @NotNull PsiElement duplicateElement) {
-    String description = createDuplicateDescription(duplicateKey, duplicateElement);
-    HighlightInfo.Builder info = createError(duplicateElement, description);
-    if (duplicateElement instanceof PsiCaseLabelElement caseLabel) {
-      IntentionAction action = getFixFactory().createDeleteSwitchLabelFix(caseLabel);
-      info.registerFix(action, null, null, null, null);
-    }
-    else if (duplicateKey == JavaPsiSwitchUtil.SwitchSpecialValue.DEFAULT_VALUE) {
-      IntentionAction action = getFixFactory().createDeleteDefaultFix(null, duplicateElement);
-      info.registerFix(action, null, null, null, null);
-    }
-    return info;
   }
 
   boolean needToCheckCompleteness(@NotNull List<? extends PsiCaseLabelElement> elements) {
@@ -258,24 +222,5 @@ public class SwitchBlockHighlightingModel {
     if (dominanceCheckingCandidates.isEmpty()) return result;
     return StreamEx.ofKeys(patternInSwitchModel.findDominatedLabels(dominanceCheckingCandidates), value -> value instanceof PsiPattern)
       .into(result);
-  }
-
-  private static @NotNull @Nls String createDuplicateDescription(@Nullable Object duplicateKey, @NotNull PsiElement duplicateElement) {
-    if (duplicateKey instanceof JavaPsiSwitchUtil.SwitchSpecialValue specialValue) {
-      return switch (specialValue) {
-        case UNCONDITIONAL_PATTERN -> JavaErrorBundle.message("duplicate.unconditional.pattern.label");
-        case DEFAULT_VALUE -> JavaErrorBundle.message("duplicate.default.switch.label");
-        case NULL_VALUE -> JavaErrorBundle.message("duplicate.switch.label", PsiKeyword.NULL);
-      };
-    }
-    else if (duplicateKey instanceof PsiEnumConstant constant) {
-      return JavaErrorBundle.message("duplicate.switch.label", constant.getName());
-    }
-    else if (duplicateElement instanceof PsiLiteralExpression literalExpression) {
-      return JavaErrorBundle.message("duplicate.switch.label", literalExpression.getValue());
-    }
-    else {
-      return JavaErrorBundle.message("duplicate.switch.label", duplicateKey);
-    }
   }
 }

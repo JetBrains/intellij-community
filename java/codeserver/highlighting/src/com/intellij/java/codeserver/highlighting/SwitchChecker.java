@@ -15,6 +15,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Map;
+
 final class SwitchChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
 
@@ -435,5 +438,15 @@ final class SwitchChecker {
       return;
     }
     myVisitor.report(JavaErrorKinds.SWITCH_LABEL_UNEXPECTED.create(label));
+  }
+  
+  void checkDuplicates(@NotNull PsiSwitchBlock block) {
+    for (Map.Entry<Object, Collection<PsiElement>> entry : JavaPsiSwitchUtil.getValuesAndLabels(block).entrySet()) {
+      if (entry.getValue().size() <= 1) continue;
+      Object duplicateKey = entry.getKey();
+      for (PsiElement duplicateElement : entry.getValue()) {
+        myVisitor.report(JavaErrorKinds.SWITCH_LABEL_DUPLICATE.create(duplicateElement, duplicateKey));
+      }
+    }
   }
 }

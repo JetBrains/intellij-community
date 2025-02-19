@@ -955,6 +955,26 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiExpression, PsiType> SWITCH_LABEL_PATTERN_EXPECTED = 
     parameterized(PsiExpression.class, PsiType.class, "switch.label.pattern.expected")
       .withRawDescription((expr, type) -> message("switch.label.pattern.expected", formatType(type)));
+  public static final Parameterized<PsiElement, Object> SWITCH_LABEL_DUPLICATE =
+    parameterized(PsiElement.class, Object.class, "switch.label.duplicate")
+      .withRawDescription((label, value) -> {
+        if (value instanceof JavaPsiSwitchUtil.SwitchSpecialValue specialValue) {
+          return switch (specialValue) {
+            case UNCONDITIONAL_PATTERN -> message("switch.label.duplicate.unconditional.pattern");
+            case DEFAULT_VALUE -> message("switch.label.duplicate.default");
+            case NULL_VALUE -> message("switch.label.duplicate", PsiKeyword.NULL);
+          };
+        }
+        else if (value instanceof PsiEnumConstant constant) {
+          return message("switch.label.duplicate", constant.getName());
+        }
+        else if (label instanceof PsiLiteralExpression literalExpression) {
+          return message("switch.label.duplicate", literalExpression.getValue());
+        }
+        else {
+          return message("switch.label.duplicate", value);
+        }
+      });
   
   public static final Simple<PsiReferenceExpression> EXPRESSION_EXPECTED = error("expression.expected");
   public static final Parameterized<PsiReferenceExpression, PsiSuperExpression> EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD = 

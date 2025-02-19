@@ -235,6 +235,15 @@ final class JavaErrorFixProvider {
         HighlightFixUtil.getIncreaseLanguageLevelFixes(error.psi(), feature).forEach(sink);
       }
     });
+    fix(SWITCH_LABEL_DUPLICATE, error -> {
+      if (error.psi() instanceof PsiCaseLabelElement caseLabel) {
+        return myFactory.createDeleteSwitchLabelFix(caseLabel);
+      }
+      else if (error.context() == JavaPsiSwitchUtil.SwitchSpecialValue.DEFAULT_VALUE) {
+        return myFactory.createDeleteDefaultFix(null, error.psi());
+      }
+      return null;
+    });
   }
 
   private void createMethodFixes() {
