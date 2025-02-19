@@ -208,7 +208,9 @@ public final class TreeState implements JDOMExternalizable {
         return true;
       }
       else {
-        LOG.debug("Failed to advance");
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Failed to advance");
+        }
         return false;
       }
     }
