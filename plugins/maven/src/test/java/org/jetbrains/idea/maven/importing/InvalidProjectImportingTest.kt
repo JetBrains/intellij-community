@@ -834,7 +834,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
   fun testDoNotReportResolvedPlugins() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "plugins")
 
-    repositoryFile = helper.getTestData("plugins")
+    repositoryPath = helper.getTestData("plugins")
 
     importProjectAsync("""
                               <groupId>test</groupId>

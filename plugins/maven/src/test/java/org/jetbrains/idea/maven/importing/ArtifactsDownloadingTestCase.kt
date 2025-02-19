@@ -16,7 +16,7 @@ abstract class ArtifactsDownloadingTestCase : MavenMultiVersionImportingTestCase
     super.setUp()
     val helper = MavenCustomRepositoryHelper(dir, "plugins", "local1")
     helper.copy("plugins", "local1")
-    repositoryFile = helper.getTestData("local1")
+    repositoryPath = helper.getTestData("local1")
   }
 
   protected fun createDummyArtifact(remoteRepo: String, name: String) {

@@ -93,7 +93,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
 
     val helper = MavenCustomRepositoryHelper(dir, "local1")
     val repoPath = helper.getTestData("local1")
-    repositoryFile = repoPath
+    repositoryPath = repoPath
   }
 
   @After
@@ -106,7 +106,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
   fun testExceptionsFromMavenExtensionsAreReportedAsProblems() = runBlocking {
     assumeVersionAtLeast("3.1.0")
     val helper = MavenCustomRepositoryHelper(dir, "plugins")
-    repositoryFile = helper.getTestData("plugins")
+    repositoryPath = helper.getTestData("plugins")
     mavenGeneralSettings.isWorkOffline = true
 
     createProjectPom("""

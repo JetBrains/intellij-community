@@ -543,42 +543,42 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
     assertAllProductionSearchScope("m1",
                                    "$projectPath/m1/src/main/java",
                                    "$projectPath/m2/src/main/java",
-                                   "$repositoryFile/jmock/jmock/1.0/jmock-1.0.jar")
+                                   "$repositoryPath/jmock/jmock/1.0/jmock-1.0.jar")
     assertAllTestsSearchScope("m1",
                               "$projectPath/m1/src/main/java",
                               "$projectPath/m1/src/test/java",
                               "$projectPath/m2/src/main/java",
-                              "$repositoryFile/jmock/jmock/1.0/jmock-1.0.jar")
+                              "$repositoryPath/jmock/jmock/1.0/jmock-1.0.jar")
 
     assertAllProductionClasspath("m1",
                                  "$projectPath/m1/target/classes",
                                  "$projectPath/m2/target/classes",
-                                 "$repositoryFile/jmock/jmock/1.0/jmock-1.0.jar")
+                                 "$repositoryPath/jmock/jmock/1.0/jmock-1.0.jar")
     assertAllTestsClasspath("m1",
                             "$projectPath/m1/target/test-classes",
                             "$projectPath/m1/target/classes",
                             "$projectPath/m2/target/classes",
-                            "$repositoryFile/jmock/jmock/1.0/jmock-1.0.jar")
+                            "$repositoryPath/jmock/jmock/1.0/jmock-1.0.jar")
 
     assertAllProductionSearchScope("m2",
                                    "$projectPath/m2/src/main/java",
-                                   "$repositoryFile/jmock/jmock/1.0/jmock-1.0.jar",
-                                   "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                                   "$repositoryPath/jmock/jmock/1.0/jmock-1.0.jar",
+                                   "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
     assertAllTestsSearchScope("m2",
                               "$projectPath/m2/src/main/java",
                               "$projectPath/m2/src/test/java",
-                              "$repositoryFile/jmock/jmock/1.0/jmock-1.0.jar",
-                              "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                              "$repositoryPath/jmock/jmock/1.0/jmock-1.0.jar",
+                              "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
 
     assertAllProductionClasspath("m2",
                                  "$projectPath/m2/target/classes",
-                                 "$repositoryFile/jmock/jmock/1.0/jmock-1.0.jar",
-                                 "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                                 "$repositoryPath/jmock/jmock/1.0/jmock-1.0.jar",
+                                 "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
     assertAllTestsClasspath("m2",
                             "$projectPath/m2/target/test-classes",
                             "$projectPath/m2/target/classes",
-                            "$repositoryFile/jmock/jmock/1.0/jmock-1.0.jar",
-                            "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                            "$repositoryPath/jmock/jmock/1.0/jmock-1.0.jar",
+                            "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
   }
 
   @Test
@@ -641,32 +641,32 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
     assertCompileProductionSearchScope("m1",
                                        "$projectPath/m1/src/main/java",
                                        "$projectPath/m2/src/main/java",
-                                       "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                                       "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
     assertRuntimeProductionSearchScope("m1",
                                        "$projectPath/m1/src/main/java",
                                        "$projectPath/m2/src/main/java",
-                                       "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                                       "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
     assertAllTestsSearchScope("m1",
                               "$projectPath/m1/src/main/java",
                               "$projectPath/m1/src/test/java",
                               "$projectPath/m2/src/main/java",
-                              "$repositoryFile/junit/junit/4.0/junit-4.0.jar",
+                              "$repositoryPath/junit/junit/4.0/junit-4.0.jar",
                               "$projectPath/m3/src/main/java",
-                              "$repositoryFile/jmock/jmock/4.0/jmock-4.0.jar")
+                              "$repositoryPath/jmock/jmock/4.0/jmock-4.0.jar")
 
     assertCompileProductionClasspath("m1",
                                      "$projectPath/m1/target/classes",
                                      "$projectPath/m2/target/classes",
-                                     "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                                     "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
     assertRuntimeProductionClasspath("m1",
                                      "$projectPath/m1/target/classes")
     assertAllTestsClasspath("m1",
                             "$projectPath/m1/target/test-classes",
                             "$projectPath/m1/target/classes",
                             "$projectPath/m2/target/classes",
-                            "$repositoryFile/junit/junit/4.0/junit-4.0.jar",
+                            "$repositoryPath/junit/junit/4.0/junit-4.0.jar",
                             "$projectPath/m3/target/classes",
-                            "$repositoryFile/jmock/jmock/4.0/jmock-4.0.jar")
+                            "$repositoryPath/jmock/jmock/4.0/jmock-4.0.jar")
   }
 
   @Test
@@ -712,12 +712,12 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
     assertRuntimeProductionSearchScope("m1",
                                        "$projectPath/m1/src/main/java",
                                        "$projectPath/m2/src/main/java",
-                                       "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                                       "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
     assertAllTestsSearchScope("m1",
                               "$projectPath/m1/src/main/java",
                               "$projectPath/m1/src/test/java",
                               "$projectPath/m2/src/main/java",
-                              "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                              "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
 
     assertCompileProductionClasspath("m1",
                                      "$projectPath/m1/target/classes")
@@ -725,13 +725,13 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
     assertRuntimeProductionClasspath("m1",
                                      "$projectPath/m1/target/classes",
                                      "$projectPath/m2/target/classes",
-                                     "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                                     "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
 
     assertAllTestsClasspath("m1",
                             "$projectPath/m1/target/test-classes",
                             "$projectPath/m1/target/classes",
                             "$projectPath/m2/target/classes",
-                            "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                            "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
   }
 
   @Test
@@ -802,26 +802,26 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
 
     assertCompileProductionSearchScope("m2",
                                        "$projectPath/m2/src/main/java",
-                                       "$repositoryFile/jmock/jmock/1.0/jmock-1.0.jar")
+                                       "$repositoryPath/jmock/jmock/1.0/jmock-1.0.jar")
     assertRuntimeProductionSearchScope("m2",
                                        "$projectPath/m2/src/main/java",
-                                       "$repositoryFile/jmock/jmock/1.0/jmock-1.0.jar")
+                                       "$repositoryPath/jmock/jmock/1.0/jmock-1.0.jar")
     assertAllTestsSearchScope("m2",
                               "$projectPath/m2/src/main/java",
                               "$projectPath/m2/src/test/java",
-                              "$repositoryFile/jmock/jmock/1.0/jmock-1.0.jar",
-                              "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                              "$repositoryPath/jmock/jmock/1.0/jmock-1.0.jar",
+                              "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
 
     assertCompileProductionClasspath("m2",
                                      "$projectPath/m2/target/classes",
-                                     "$repositoryFile/jmock/jmock/1.0/jmock-1.0.jar")
+                                     "$repositoryPath/jmock/jmock/1.0/jmock-1.0.jar")
     assertRuntimeProductionClasspath("m2",
                                      "$projectPath/m2/target/classes")
     assertAllTestsClasspath("m2",
                             "$projectPath/m2/target/test-classes",
                             "$projectPath/m2/target/classes",
-                            "$repositoryFile/jmock/jmock/1.0/jmock-1.0.jar",
-                            "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                            "$repositoryPath/jmock/jmock/1.0/jmock-1.0.jar",
+                            "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
   }
 
   @Test
@@ -869,8 +869,8 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
                       "$projectPath/m2/src/test/java"
     )
 
-    val libraryPath = "$repositoryFile/junit/junit/4.0/junit-4.0.jar"
-    val librarySrcPath = "$repositoryFile/junit/junit/4.0/junit-4.0-sources.jar"
+    val libraryPath = "$repositoryPath/junit/junit/4.0/junit-4.0.jar"
+    val librarySrcPath = "$repositoryPath/junit/junit/4.0/junit-4.0-sources.jar"
     val m2m = getInstance(project).findModuleByName("m2")
     val modules2: List<OrderEntry> = ArrayList()
     ModuleRootManager.getInstance(m2m!!).orderEntries().withoutSdk().withoutModuleSourceEntries().forEach(
@@ -948,14 +948,14 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
                               "$projectPath/m1/src/main/java",
                               "$projectPath/m1/src/test/java",
                               "$projectPath/m2/src/main/java",
-                              "$repositoryFile/junit/junit/4.0/junit-4.0.jar",
+                              "$repositoryPath/junit/junit/4.0/junit-4.0.jar",
                               "$projectPath/m3/src/main/java")
 
     assertAllTestsClasspath("m1",
                             "$projectPath/m1/target/test-classes",
                             "$projectPath/m1/target/classes",
                             "$projectPath/m2/target/classes",
-                            "$repositoryFile/junit/junit/4.0/junit-4.0.jar",
+                            "$repositoryPath/junit/junit/4.0/junit-4.0.jar",
                             "$projectPath/m3/target/classes")
   }
 
@@ -1019,7 +1019,7 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
     assertCompileProductionClasspath("user",
                                      "$projectPath/user/output",
                                      "$projectPath/m1/target/classes",
-                                     "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                                     "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
 
     assertRuntimeProductionClasspath("user",
                                      "$projectPath/user/output",
@@ -1031,7 +1031,7 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
                                 "$projectPath/user/output",
                                 "$projectPath/m1/target/test-classes",
                                 "$projectPath/m1/target/classes",
-                                "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                                "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
 
     assertRuntimeTestsClasspath("user",
                                 "$projectPath/user/test-output",
@@ -1040,11 +1040,11 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
                                 "$projectPath/m1/target/classes",
                                 "$projectPath/m2/target/test-classes",
                                 "$projectPath/m2/target/classes",
-                                "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                                "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
 
     assertCompileProductionClasspath("m1",
                                      "$projectPath/m1/target/classes",
-                                     "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                                     "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
     assertRuntimeProductionClasspath("m1",
                                      "$projectPath/m1/target/classes",
                                      "$projectPath/m2/target/classes")
@@ -1052,7 +1052,7 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
                             "$projectPath/m1/target/test-classes",
                             "$projectPath/m1/target/classes",
                             "$projectPath/m2/target/classes",
-                            "$repositoryFile/junit/junit/4.0/junit-4.0.jar")
+                            "$repositoryPath/junit/junit/4.0/junit-4.0.jar")
   }
 
   @Test
@@ -1215,7 +1215,7 @@ $scope</scope>
     val m6E3 = m6OrderEntries[3]
     UsefulTestCase.assertInstanceOf(m6E3, ModuleSourceOrderEntry::class.java)
 
-    val jmockDir = VfsUtil.findFile(repositoryFile.resolve("jmock/jmock/1.0/jmock-1.0.jar"), true)
+    val jmockDir = VfsUtil.findFile(repositoryPath.resolve("jmock/jmock/1.0/jmock-1.0.jar"), true)
     assertNotNull(jmockDir)
     val jmockJar = JarFileSystem.getInstance().getJarRootForLocalFile(jmockDir!!)
     assertNotNull(jmockJar)
@@ -1264,7 +1264,7 @@ $scope</scope>
     val m6E2 = m6OrderEntries[2]
     UsefulTestCase.assertInstanceOf(m6E2, ModuleSourceOrderEntry::class.java)
 
-    val jmockDir = VfsUtil.findFile(repositoryFile.resolve("jmock/jmock/1.0/jmock-1.0.jar"), true)
+    val jmockDir = VfsUtil.findFile(repositoryPath.resolve("jmock/jmock/1.0/jmock-1.0.jar"), true)
     assertNotNull(jmockDir)
     val jmockJar = JarFileSystem.getInstance().getJarRootForLocalFile(jmockDir!!)
     assertNotNull(jmockJar)
@@ -1476,7 +1476,7 @@ $scope</scope>
     f.parent.createDirectories()
 
     createEmptyJar(f.parent.toString(), f.fileName.toString())
-    repositoryFile = createProjectSubDir("repo").toNioPath()
+    repositoryPath = createProjectSubDir("repo").toNioPath()
   }
 
   private fun createOutputDirectories() {

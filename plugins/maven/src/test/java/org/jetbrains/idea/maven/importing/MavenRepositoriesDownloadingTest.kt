@@ -15,7 +15,6 @@ import org.jetbrains.idea.maven.server.MisconfiguredPlexusDummyEmbedder
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 import java.io.BufferedReader
-import java.io.File
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
@@ -77,7 +76,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     val remoteRepoPath = helper.getTestData("remote")
     val localRepoPath = helper.getTestData("local1")
     httpServerFixture.startRepositoryFor(remoteRepoPath.toString())
-    repositoryFile = localRepoPath
+    repositoryPath = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
       """
@@ -100,7 +99,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     val remoteRepoPath = helper.getTestData("remote")
     val localRepoPath = helper.getTestData("local1")
     httpServerFixture.startRepositoryFor(remoteRepoPath.toString())
-    repositoryFile = localRepoPath
+    repositoryPath = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
       """
@@ -123,7 +122,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     val remoteRepoPath = helper.getTestData("remote")
     val localRepoPath = helper.getTestData("local1")
     httpServerFixture.startRepositoryFor(remoteRepoPath.toString())
-    repositoryFile = localRepoPath
+    repositoryPath = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
       """
@@ -145,7 +144,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     val remoteRepoPath = helper.getTestData("remote")
     val localRepoPath = helper.getTestData("local1")
     httpServerFixture.startRepositoryFor(remoteRepoPath.toFile(), USERNAME, PASSWORD)
-    repositoryFile = localRepoPath
+    repositoryPath = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
       """
@@ -175,7 +174,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     val remoteRepoPath = helper.getTestData("remote")
     val localRepoPath = helper.getTestData("local1")
     httpServerFixture.startRepositoryFor(remoteRepoPath.toFile(), USERNAME, PASSWORD)
-    repositoryFile = localRepoPath
+    repositoryPath = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
       """
@@ -214,7 +213,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     val remoteRepoPath = helper.getTestData("remote")
     val localRepoPath = helper.getTestData("local1")
     httpServerFixture.startRepositoryFor(remoteRepoPath.toFile(), USERNAME, PASSWORD)
-    repositoryFile = localRepoPath
+    repositoryPath = localRepoPath
     @Language(value = "XML") val settingsXmlText = """
        <settings>
           <localRepository>$localRepoPath</localRepository>
@@ -322,7 +321,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     val remoteRepoPath = helper.getTestData("remote")
     val localRepoPath = helper.getTestData("local1")
     httpServerFixture.startRepositoryFor(remoteRepoPath.toString())
-    repositoryFile = localRepoPath
+    repositoryPath = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
       """

@@ -37,7 +37,7 @@ class MavenSnapshotDependenciesTest : MavenMultiVersionImportingTestCase() {
     val remoteRepoPath = helper.getTestData("remote")
     val localRepoPath = helper.getTestData("local1")
     httpServerFixture.startRepositoryFor(remoteRepoPath.toString())
-    repositoryFile = localRepoPath
+    repositoryPath = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
       """

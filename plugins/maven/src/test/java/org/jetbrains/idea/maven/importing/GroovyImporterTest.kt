@@ -20,7 +20,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   override fun setUp() {
     super.setUp()
-    repositoryFile = dir.resolve("repo")
+    repositoryPath = dir.resolve("repo")
   }
 
   @Test
@@ -74,7 +74,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
     val library = libraries[0]
     assertUnorderedPathsAreEqual(
       listOf(*library.getUrls(OrderRootType.CLASSES)),
-      listOf("jar://$repositoryFile/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/"))
+      listOf("jar://$repositoryPath/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/"))
   }
 
   @Test
@@ -163,7 +163,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testGroovyEclipsePlugin() = runBlocking {
-    val batchDir = repositoryFile.resolve("org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/")
+    val batchDir = repositoryPath.resolve("org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/")
     batchDir.createDirectories()
     val batchJar = batchDir.resolve("groovy-eclipse-batch-2.1.3-01.jar")
     batchJar.createFile()
@@ -231,7 +231,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testGroovyEclipsePluginWhenOnlyCompilerDependency() = runBlocking {
-    val batchDir = repositoryFile.resolve("org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/")
+    val batchDir = repositoryPath.resolve("org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/")
     batchDir.createDirectories()
     val batchJar = batchDir.resolve("groovy-eclipse-batch-2.1.3-01.jar")
     batchJar.createFile()

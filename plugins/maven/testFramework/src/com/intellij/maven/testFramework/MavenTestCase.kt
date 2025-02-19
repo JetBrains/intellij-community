@@ -379,7 +379,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected val mavenImporterSettings: MavenImportingSettings
     get() = MavenProjectsManager.getInstance(myProject!!).importingSettings
 
-  protected var repositoryFile: Path
+  protected var repositoryPath: Path
     get() = mavenGeneralSettings.effectiveRepositoryPath
     set(path) {
       mavenGeneralSettings.setLocalRepository(path.toCanonicalPath())

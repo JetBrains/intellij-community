@@ -761,8 +761,8 @@ class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
   fun testDownloadingNecessaryPlugins() = runBlocking {
     try {
       val helper = MavenCustomRepositoryHelper(dir, "local1")
-      repositoryFile = helper.getTestData("local1")
-      val pluginFile = repositoryFile.resolve("org/codehaus/mojo/build-helper-maven-plugin/1.2/build-helper-maven-plugin-1.2.jar")
+      repositoryPath = helper.getTestData("local1")
+      val pluginFile = repositoryPath.resolve("org/codehaus/mojo/build-helper-maven-plugin/1.2/build-helper-maven-plugin-1.2.jar")
       assertFalse(pluginFile.exists())
       importProjectAsync("""
                       <groupId>test</groupId>

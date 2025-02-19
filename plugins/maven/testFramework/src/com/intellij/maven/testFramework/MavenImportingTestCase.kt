@@ -541,7 +541,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     if (SystemInfo.isWindows) {
       MavenServerManager.getInstance().closeAllConnectorsAndWait()
     }
-    FileUtil.delete(repositoryFile.resolve(relativePath))
+    FileUtil.delete(repositoryPath.resolve(relativePath))
   }
 
   protected fun setupJdkForModules(vararg moduleNames: String) {

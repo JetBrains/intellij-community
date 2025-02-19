@@ -129,7 +129,7 @@ class MavenWrapperConfigurationTest : MavenImportingTestCase() {
     }
     httpServerFixtureForWrapper.startRepositoryFor(repack.parent)
 
-    repositoryFile = localRepoPath
+    repositoryPath = localRepoPath
     val settingsXml = createProjectSubFile(
       "settings.xml",
       """

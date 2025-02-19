@@ -162,13 +162,13 @@ ${repositoriesSection()}<dependencies>
 
     assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",
-                       "jar://" + repositoryFile + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
-                       "jar://" + repositoryFile + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
-                       "jar://" + repositoryFile + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
 
-    assertTrue(repositoryFile.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar").exists())
-    assertTrue(repositoryFile.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar").exists())
-    assertTrue(repositoryFile.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar").exists())
+    assertTrue(repositoryPath.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar").exists())
+    assertTrue(repositoryPath.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar").exists())
+    assertTrue(repositoryPath.resolve("test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar").exists())
   }
 
   @Test
@@ -221,9 +221,9 @@ ${repositoriesSection()}<dependencies>
 
     assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",
-                       "jar://" + repositoryFile + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
-                       "jar://" + repositoryFile + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
-                       "jar://" + repositoryFile + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
 
 
     deployArtifact("test", "foo", "1-SNAPSHOT",
@@ -257,9 +257,9 @@ ${repositoriesSection()}<dependencies>
 
     assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",
-                       "jar://" + repositoryFile + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
-                       "jar://" + repositoryFile + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
-                       "jar://" + repositoryFile + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT.jar!/",
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-sources.jar!/",
+                       "jar://" + repositoryPath + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/")
   }
 
   private fun deployArtifact(groupId: String, artifactId: String, version: String, tail: String = "") {
