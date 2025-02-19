@@ -23,6 +23,7 @@ import com.intellij.debugger.ui.tree.*;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptor;
+import com.intellij.java.debugger.impl.shared.engine.JavaValueObjectReferenceInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,8 +59,6 @@ import javax.swing.*;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-
-import static com.intellij.java.debugger.impl.shared.engine.JavaValueDescriptorKt.JAVA_VALUE_KIND;
 
 public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XValueTextProvider,
                                                       PinToTopParentValue, PinToTopMemberValue {
@@ -514,8 +513,14 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   @Override
   public @Nullable CompletableFuture<XValueDescriptor> getXValueDescriptorAsync() {
     return myValueDescriptor.getInitFuture().thenApply(ignored -> {
+      Value value = myValueDescriptor.getValue();
+      JavaValueObjectReferenceInfo objectReferenceInfo = null;
+      if (value instanceof ObjectReference ref) {
+        objectReferenceInfo = new JavaValueObjectReferenceInfo(ref.referenceType().name(), ref.virtualMachine().canGetInstanceInfo());
+      }
       return new JavaValueDescriptor(
-        myValueDescriptor.isString()
+        myValueDescriptor.isString(),
+        objectReferenceInfo
       );
     });
   }

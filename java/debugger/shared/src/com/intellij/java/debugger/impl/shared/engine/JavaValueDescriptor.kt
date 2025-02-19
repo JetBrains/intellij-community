@@ -3,24 +3,36 @@ package com.intellij.java.debugger.impl.shared.engine
 
 import com.intellij.xdebugger.frame.XValueCustomDescriptorSerializerProvider
 import com.intellij.xdebugger.frame.XValueDescriptor
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.modules.PolymorphicModuleBuilder
-import kotlinx.serialization.modules.subclass
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 const val JAVA_VALUE_KIND: String = "JavaValue"
 
+// TODO: this class can be refactored,
+//  for now its fields are just added adhoc for actions
 @ApiStatus.Internal
 @Serializable
-class JavaValueDescriptor(
+data class JavaValueDescriptor(
   val isString: Boolean,
+  val objectReferenceInfo: JavaValueObjectReferenceInfo?,
 ) : XValueDescriptor {
   override val kind: String = JAVA_VALUE_KIND
 }
 
+@ApiStatus.Internal
+@Serializable
+data class JavaValueObjectReferenceInfo(
+  val typeName: String,
+  val canGetInstanceInfo: Boolean,
+)
+
 private class JavaValueDescriptorSerializerProvider : XValueCustomDescriptorSerializerProvider {
-  override fun registerSerializer(builder: PolymorphicModuleBuilder<XValueDescriptor>) {
-    builder.subclass(JavaValueDescriptor::class)
+  override fun getSerializer(kind: String): KSerializer<out XValueDescriptor>? {
+    if (kind == JAVA_VALUE_KIND) {
+      return JavaValueDescriptor.serializer()
+    }
+    return null
   }
 }

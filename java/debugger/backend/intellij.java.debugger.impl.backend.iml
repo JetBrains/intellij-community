@@ -43,5 +43,6 @@
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" />
     <orderEntry type="module" module-name="intellij.platform.rpc.backend" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl" />
   </component>
 </module>

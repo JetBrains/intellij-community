@@ -6,7 +6,8 @@ import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
 
-final class JavaDebuggerImplFrontendBundle {
+@ApiStatus.Internal
+public final class JavaDebuggerImplFrontendBundle {
 
   private static final @NonNls String BUNDLE_FQN = "messages.JavaDebuggerImplFrontendBundle";
   private static final DynamicBundle BUNDLE = new DynamicBundle(JavaDebuggerImplFrontendBundle.class, BUNDLE_FQN);
