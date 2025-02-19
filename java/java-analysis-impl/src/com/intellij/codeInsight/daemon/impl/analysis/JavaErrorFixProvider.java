@@ -646,9 +646,7 @@ final class JavaErrorFixProvider {
     });
     fixes(EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD, (error, sink) ->
       QualifySuperArgumentFix.registerQuickFixAction(error.context(), sink));
-    fix(REFERENCE_UNRESOLVED, error ->
-      PsiTreeUtil.skipParentsOfType(error.psi(), PsiJavaCodeReferenceElement.class) instanceof PsiNewExpression newExpression &&
-      HighlightUtil.isCallToStaticMember(newExpression) ? new RemoveNewKeywordFix(newExpression) : null);
+    fix(REFERENCE_UNRESOLVED, error -> HighlightFixUtil.createUnresolvedReferenceFix(error.psi()));
     fix(REFERENCE_QUALIFIER_PRIMITIVE,
         error -> error.psi() instanceof PsiReferenceExpression ref ? myFactory.createRenameWrongRefFix(ref) : null);
     fix(CAST_INTERSECTION_NOT_INTERFACE, error -> {

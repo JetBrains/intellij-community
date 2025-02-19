@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
@@ -937,6 +938,54 @@ public final class HighlightFixUtil {
       return QuickFixFactory.getInstance().createReplacePrimitiveWithBoxedTypeAction(operandType, requireNonNull(element));
     }
     return null;
+  }
+
+  /**
+   * Checks if the specified element is possibly a reference to a static member of a class,
+   * when the {@code new} keyword is removed.
+   * The element is split into two parts: the qualifier and the reference element.
+   * If they both exist and the qualifier references a class and the reference element text matches either
+   * the name of a static field or the name of a static method of the class
+   * then the method returns true
+   *
+   * @param element an element to examine
+   * @return true if the new expression can actually be a call to a class member (field or method), false otherwise.
+   */
+  @Contract(value = "null -> false", pure = true)
+  private static boolean isCallToStaticMember(@Nullable PsiElement element) {
+    if (!(element instanceof PsiNewExpression newExpression)) return false;
+
+    PsiJavaCodeReferenceElement reference = newExpression.getClassOrAnonymousClassReference();
+    if (reference == null) return false;
+
+    PsiElement qualifier = reference.getQualifier();
+    PsiElement memberName = reference.getReferenceNameElement();
+    if (!(qualifier instanceof PsiJavaCodeReferenceElement referenceElement) || memberName == null) return false;
+
+    PsiClass clazz = tryCast(referenceElement.resolve(), PsiClass.class);
+    if (clazz == null) return false;
+
+    if (newExpression.getArgumentList() == null) {
+      PsiField field = clazz.findFieldByName(memberName.getText(), true);
+      return field != null && field.hasModifierProperty(PsiModifier.STATIC);
+    }
+    PsiMethod[] methods = clazz.findMethodsByName(memberName.getText(), true);
+    for (PsiMethod method : methods) {
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass containingClass = method.getContainingClass();
+        assert containingClass != null;
+        if (!containingClass.isInterface() || containingClass == clazz) {
+          // a static method in an interface is not resolvable from its subclasses
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  static @Nullable CommonIntentionAction createUnresolvedReferenceFix(PsiJavaCodeReferenceElement psi) {
+    return PsiTreeUtil.skipParentsOfType(psi, PsiJavaCodeReferenceElement.class) instanceof PsiNewExpression newExpression &&
+           isCallToStaticMember(newExpression) ? new RemoveNewKeywordFix(newExpression) : null;
   }
 
   private static final class ReturnModel {
