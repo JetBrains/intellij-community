@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.kernel.editor.pasta.common
+package com.intellij.platform.pasta.common
 
 import andel.operation.Operation
 import andel.operation.isIdentity
@@ -83,17 +83,17 @@ data class ChangeDocument(
           listOf(
             Op.Assert(
               eid = documentId,
-              attribute = DocumentEntity.TextAttr.attr,
+              attribute = DocumentEntity.Companion.TextAttr.attr,
               value = textAfter,
             ),
             Op.Assert(
               eid = documentId,
-              attribute = DocumentEntity.SharedAnchorStorageAttr.attr,
+              attribute = DocumentEntity.Companion.SharedAnchorStorageAttr.attr,
               value = document.sharedAnchorStorage.edit(textBefore, textAfter, operation),
             ),
             Op.Assert(
               eid = editLog.eid,
-              attribute = EditLogEntity.EditLogAttr.attr,
+              attribute = EditLogEntity.Companion.EditLogAttr.attr,
               value = editLog.editLog.append(operationId, operation),
             ),
           )

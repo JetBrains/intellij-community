@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditReadOnlyListener
 import com.intellij.openapi.editor.ex.LineIterator
 import com.intellij.openapi.editor.ex.RangeMarkerEx
-import com.intellij.platform.kernel.editor.pasta.common.DocumentEntity
+import com.intellij.platform.pasta.common.DocumentEntity
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor

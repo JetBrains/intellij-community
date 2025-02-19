@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.kernel.editor.pasta.common
+package com.intellij.platform.pasta.common
 
 import andel.editor.AnchorId
 import andel.operation.Sticky
@@ -35,7 +35,7 @@ internal data class LocalAnchor(override val eid: EID) : RetractableEntity, Enti
     val anchorId = anchorId
     return RetractableEntity.Callback {
       if (anchorStorage.exists()) {
-        anchorStorage[LocalAnchorStorageEntity.AnchorStorageAttr] = anchorStorage.anchorStorage.removeAnchor(anchorId)
+        anchorStorage[LocalAnchorStorageEntity.Companion.AnchorStorageAttr] = anchorStorage.anchorStorage.removeAnchor(anchorId)
       }
     }
   }
@@ -50,7 +50,7 @@ internal fun ChangeScope.createAnchor(
 ): LocalAnchor {
   require(offset >= 0) { "Offset for the anchor should be >= 0" }
   val storage = ensureLocalAnchorStorageCreated(document)
-  storage[LocalAnchorStorageEntity.AnchorStorageAttr] = storage.anchorStorage
+  storage[LocalAnchorStorageEntity.Companion.AnchorStorageAttr] = storage.anchorStorage
     .removeAnchor(anchorId)
     .addAnchor(anchorId, offset, sticky)
   return entity(LocalAnchor.AnchorIdAttr, anchorId) ?: LocalAnchor.new {

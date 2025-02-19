@@ -15,6 +15,7 @@
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
               <args>
+                <arg>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</arg>
                 <arg>$MAVEN_REPOSITORY$/jetbrains/fleet/rhizomedb-compiler-plugin/2.1.10-0.1/rhizomedb-compiler-plugin-2.1.10-0.1.jar</arg>
               </args>
             </arrayArg>
@@ -27,13 +28,13 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/src/" isTestSource="false" packagePrefix="com.intellij.platform.kernel" />
+      <sourceFolder url="file://$MODULE_DIR$/src/" isTestSource="false" packagePrefix="com.intellij.platform.pasta" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.rpc" exported="" />
+    <orderEntry type="module" module-name="fleet.andel" exported="" />
     <orderEntry type="module" module-name="fleet.kernel" exported="" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
@@ -43,6 +44,5 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
-    <orderEntry type="module" module-name="intellij.platform.pasta" />
   </component>
 </module>
