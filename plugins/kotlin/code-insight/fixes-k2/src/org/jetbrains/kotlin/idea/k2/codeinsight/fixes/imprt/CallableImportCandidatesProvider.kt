@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvid
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForElement
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinInfixCallPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinOperatorCallPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -26,6 +27,7 @@ internal class CallableImportCandidatesProvider(
     private fun acceptsKotlinCallableAtPosition(kotlinCallable: KtCallableDeclaration): Boolean =
         when (positionContext) {
             is KotlinInfixCallPositionContext -> kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD)
+            is KotlinOperatorCallPositionContext -> kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD)
             else -> true
         }
 
@@ -34,13 +36,15 @@ internal class CallableImportCandidatesProvider(
 
     private fun acceptsJavaCallableAtPosition(): Boolean =
         when (positionContext) {
-            is KotlinInfixCallPositionContext -> false
+            is KotlinInfixCallPositionContext, 
+            is KotlinOperatorCallPositionContext -> false
             else -> true
         }
 
     private fun acceptsCallableCandidate(kotlinCallable: CallableImportCandidate): Boolean =
         when (positionContext) {
             is KotlinInfixCallPositionContext -> (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isInfix == true
+            is KotlinOperatorCallPositionContext -> (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isOperator == true
             else -> true
         }
 
