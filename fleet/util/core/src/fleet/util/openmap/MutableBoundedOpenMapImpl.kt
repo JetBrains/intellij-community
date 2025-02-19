@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util.openmap
 
-import fleet.util.AtomicRef
+import fleet.multiplatform.shims.AtomicRef
 import kotlinx.collections.immutable.PersistentMap
 
 internal class MutableBoundedOpenMapImpl<Domain, V : Any>(val map: AtomicRef<PersistentMap<Key<out V, in Domain>, V>>) : MutableBoundedOpenMap<Domain, V> {

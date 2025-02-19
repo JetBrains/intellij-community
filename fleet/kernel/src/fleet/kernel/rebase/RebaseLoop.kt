@@ -18,6 +18,7 @@ import fleet.util.channels.channels
 import fleet.util.channels.use
 import fleet.fastutil.ints.IntMap
 import fleet.fastutil.ints.partition
+import fleet.multiplatform.shims.AtomicRef
 import fleet.util.logging.logger
 import kotlinx.collections.immutable.toPersistentHashMap
 import kotlinx.coroutines.*

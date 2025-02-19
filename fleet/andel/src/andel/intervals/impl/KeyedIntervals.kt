@@ -3,7 +3,7 @@ package andel.intervals.impl
 
 import andel.intervals.*
 import andel.operation.Operation
-import fleet.util.AtomicRef
+import fleet.multiplatform.shims.AtomicRef
 import fleet.util.incrementAndGet
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf

@@ -5,7 +5,7 @@ import com.jetbrains.rhizomedb.EID
 import com.jetbrains.rhizomedb.MAX_PART
 import com.jetbrains.rhizomedb.Part
 import com.jetbrains.rhizomedb.withPart
-import fleet.util.AtomicRef
+import fleet.multiplatform.shims.AtomicRef
 import fleet.util.incrementAndGet
 import fleet.multiplatform.shims.ConcurrentHashMap
 

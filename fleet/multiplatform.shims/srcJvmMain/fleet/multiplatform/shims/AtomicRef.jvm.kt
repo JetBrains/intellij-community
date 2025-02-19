@@ -1,8 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package fleet.util
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package fleet.multiplatform.shims
 
-internal fun <T> JvmAtomicReference(value: T) = object : AtomicRef<T> {
-  private val reference = java.util.concurrent.atomic.AtomicReference(value)
+import fleet.util.multiplatform.Actual
+import java.util.concurrent.atomic.AtomicReference
+
+@Actual("atomicRefImpl")
+internal fun atomicRefImplJvm(value: Any?): AtomicRef<Any?> = atomicRef(value)
+
+private fun <T> atomicRef(value: T) = object : AtomicRef<T> {
+  private val reference = AtomicReference(value)
 
   override fun get(): T {
     return reference.get()

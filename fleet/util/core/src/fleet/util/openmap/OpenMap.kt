@@ -3,7 +3,7 @@
 
 package fleet.util.openmap
 
-import fleet.util.AtomicRef
+import fleet.multiplatform.shims.AtomicRef
 import kotlinx.collections.immutable.*
 
 interface Key<V : Any, in Domain>

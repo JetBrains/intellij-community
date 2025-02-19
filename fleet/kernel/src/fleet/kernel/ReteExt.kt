@@ -3,7 +3,7 @@ package fleet.kernel
 
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.rete.*
-import fleet.util.AtomicRef
+import fleet.multiplatform.shims.AtomicRef
 import fleet.util.logging.logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
