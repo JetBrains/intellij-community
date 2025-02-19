@@ -468,7 +468,6 @@ class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
 
   override fun updateUI() {
     super.updateUI()
-
     updateFont()
   }
 
