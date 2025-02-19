@@ -128,6 +128,12 @@ internal class TerminalSearchSession(
       cursorIndex != -1 -> ApplicationBundle.message("editorsearch.current.cursor.position", cursorIndex, matchesCount)
       else -> ApplicationBundle.message("editorsearch.current.cursor.position", 0, matchesCount)
     }
+    if (matchesCount == 0) {
+      component.setNotFoundBackground()
+    }
+    else {
+      component.setRegularBackground()
+    }
     component.statusText = status
     component.updateActions()
   }
