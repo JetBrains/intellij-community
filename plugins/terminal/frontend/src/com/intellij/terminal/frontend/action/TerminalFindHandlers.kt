@@ -10,6 +10,7 @@ import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.te
 import org.jetbrains.plugins.terminal.block.BlockTerminalController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.blockTerminalController
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferEditor
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isAlternateBufferModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
@@ -35,7 +36,7 @@ internal abstract class TerminalSearchActionHandler(private val originalHandler:
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
     return editor.isPromptEditor
            || editor.isOutputEditor
-           || editor.isOutputModelEditor
+           || editor.isOutputModelEditor || editor.isAlternateBufferModelEditor
            || originalHandler?.isEnabled(editor, caret, dataContext) == true
   }
 }

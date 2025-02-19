@@ -200,10 +200,8 @@ internal class ReworkedTerminalView(
 
           val editor = if (state.isAlternateScreenBuffer) alternateBufferEditor else outputEditor
           terminalPanel.setTerminalContent(editor)
+          terminalSearchController.finishSearchSession()
           IdeFocusManager.getInstance(project).requestFocus(terminalPanel.preferredFocusableComponent, true)
-          if (state.isAlternateScreenBuffer) {
-            terminalSearchController.finishSearchSession()
-          }
         }
       }
     }
