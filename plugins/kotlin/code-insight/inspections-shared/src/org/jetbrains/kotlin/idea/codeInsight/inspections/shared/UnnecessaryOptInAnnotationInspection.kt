@@ -1,351 +1,424 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.inspections
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElementVisitor
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.names.FqNames
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.core.OPT_IN_FQ_NAMES
-import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
-import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Util.asKtClass
-import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
-import org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker
-import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
-import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.idea.util.WasExperimentalOptInsNecessityCheckerFe10
-import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnnecessaryOptInAnnotationInspection.Context
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.classLiteralId
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.getRequiredOptIns
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.getRequiredOptInsToSubclass
+import org.jetbrains.kotlin.idea.references.KtReference
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.checkers.OptInNames
-import org.jetbrains.kotlin.resolve.constants.KClassValue
-import org.jetbrains.kotlin.resolve.descriptorUtil.*
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+
+internal class UnnecessaryOptInAnnotationInspection : KotlinApplicableInspectionBase<KtAnnotationEntry, Context>() {
+    internal sealed interface Context {
+        fun createProblemDescriptors(
+            manager: InspectionManager,
+            element: KtAnnotationEntry,
+            rangeInElement: TextRange?,
+            isOnTheFly: Boolean,
+        ): List<ProblemDescriptor>
+    }
+
+    internal data class RemoveMarkersContext(
+        val markersToRemove: Set<OptInMarker>,
+    ) : Context {
+        override fun createProblemDescriptors(
+            manager: InspectionManager,
+            element: KtAnnotationEntry,
+            rangeInElement: TextRange?,
+            isOnTheFly: Boolean
+        ): List<ProblemDescriptor> =
+            markersToRemove
+                .mapNotNull {
+                    val marker = it.markerPointer.element ?: return@mapNotNull null
+                    manager.createProblemDescriptor(
+                        /* psiElement = */ marker,
+                        /* descriptionTemplate = */ KotlinBundle.message(
+                            "inspection.unnecessary.opt_in.redundant.marker",
+                            it.classId.shortClassName.render()
+                        ),
+                        /* fix = */ RemoveOptInMarkerQuickFix(),
+                        /* highlightType = */ ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                        /* onTheFly = */ isOnTheFly
+                    )
+                }
+    }
+
+    internal object RemoveEntireOptInAnnotationContext : Context {
+        override fun createProblemDescriptors(
+            manager: InspectionManager,
+            element: KtAnnotationEntry,
+            rangeInElement: TextRange?,
+            isOnTheFly: Boolean
+        ): List<ProblemDescriptor> = listOf(
+            manager.createProblemDescriptor(
+                /* psiElement = */ element,
+                /* descriptionTemplate = */ KotlinBundle.message("inspection.unnecessary.opt_in.redundant.annotation"),
+                /* fix = */ RemoveAnnotationEntryQuickFix(),
+                /* highlightType = */ ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                /* onTheFly = */ isOnTheFly
+            )
+        )
+    }
+
+    private val OPT_IN_CLASS_IDS = OptInFqNames.OPT_IN_FQ_NAMES.map(ClassId::topLevel).toSet()
+    private val OPT_IN_SHORT_NAMES = OPT_IN_CLASS_IDS.map { it.shortClassName.asString() }.toSet()
+
+    override fun isApplicableByPsi(element: KtAnnotationEntry): Boolean =
+        element.valueArguments.isNotEmpty()
+
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean
+    ): KtVisitorVoid {
+        // Filter out annotation usages that definitely _aren't_ a usage of @OptIn before we visit them.
+        // We'll confirm that it _is_ an @OptIn usage via analysis later, but doing this check here can
+        // save us from the need to analyze at all.
+        // We do this check at the visitor level rather than in `isApplicableByPsi` so we only need to
+        // do the KotlinPsiHeuristics search for import aliases once.
+        val optInAliases =
+            (holder.file as? KtFile)
+                ?.let { KotlinPsiHeuristics.getImportAliases(it, OPT_IN_SHORT_NAMES) }
+                .orEmpty()
+        val optInNames = OPT_IN_SHORT_NAMES + optInAliases
+
+        return annotationEntryVisitor { annotationEntry ->
+            val entryShortName = annotationEntry.shortName?.asString()
+            if (entryShortName != null && entryShortName !in optInNames)
+                return@annotationEntryVisitor
+
+            visitTargetElement(annotationEntry, holder, isOnTheFly)
+        }
+    }
+
+    override fun KaSession.prepareContext(entry: KtAnnotationEntry): Context? {
+        val call = entry.resolveToCall()?.successfulConstructorCallOrNull() ?: return null
+        if (call.symbol.containingClassId !in OPT_IN_CLASS_IDS) return null
+
+        val removalCandidates = entry.valueArguments.mapNotNull { arg ->
+            val argumentExpression = arg.getArgumentExpression() as? KtClassLiteralExpression
+                ?: return@mapNotNull null
+
+            val classId = argumentExpression.classLiteralId ?: return@mapNotNull null
+
+            classId to argumentExpression.createSmartPointer()
+        }.toMap()
+
+        val visitor = OptInUsageVisitor(
+            analysisSession = this@prepareContext,
+            moduleApiVersion = entry.languageVersionSettings.apiVersion,
+            markersToCheck = removalCandidates.keys,
+            optInAnnotationEntry = entry,
+        )
+
+        entry.getStrictParentOfType<KtAnnotated>()?.accept(visitor)
+
+        return when (visitor.unusedMarkers.size) {
+            // Everything's in use, nothing to report.
+            0 -> null
+            // Nothing's in use, remove the entire @OptIn annotation.
+            removalCandidates.size -> RemoveEntireOptInAnnotationContext
+            // Some markers are unused, but not all - offer to remove those markers from @OptIn.
+            else -> RemoveMarkersContext(
+                visitor.unusedMarkers
+                    .mapTo(mutableSetOf()) {
+                        OptInMarker(removalCandidates[it]!!, it)
+                    }
+            )
+        }
+    }
+
+    override fun InspectionManager.createProblemDescriptor(
+        element: KtAnnotationEntry,
+        context: Context,
+        rangeInElement: TextRange?,
+        onTheFly: Boolean
+    ): Nothing = error("Problem descriptors must be created directly by registerProblem")
+
+    override fun registerProblem(
+        ranges: List<TextRange>,
+        holder: ProblemsHolder,
+        element: KtAnnotationEntry,
+        context: Context,
+        isOnTheFly: Boolean
+    ) {
+        ranges.asSequence()
+            .flatMap { range ->
+                context.createProblemDescriptors(holder.manager, element, range, isOnTheFly)
+            }
+            .forEach(holder::registerProblem)
+    }
+}
+
+internal data class OptInMarker(
+    val markerPointer: SmartPsiElementPointer<KtClassLiteralExpression>,
+    val classId: ClassId,
+)
 
 /**
- * An inspection to detect unnecessary (obsolete) `@OptIn` annotations.
+ * A visitor that checks a tree for usages of the provided opt-in markers.
  *
- * The `@OptIn(SomeExperimentalMarker::class)` annotation is necessary for the code that
- * uses experimental library API marked with `@SomeExperimentalMarker` but is not experimental by itself.
- * When the library authors decide that the API is not experimental anymore, and they remove
- * the experimental marker, the corresponding `@OptIn` annotation in the client code becomes unnecessary
- * and may be removed so the people working with the code would not be misguided.
- *
- * For each `@OptIn` annotation, the inspection checks if in its scope there are names marked with
- * the experimental marker mentioned in the `@OptIn`, and it reports the marker classes that don't match
- * any names. For these redundant markers, the inspection proposes a quick fix to remove the marker
- * or the entire unnecessary `@OptIn` annotation if it contains a single marker.
+ * When visiting is complete, [unusedMarkers] will contain the subset of the provided
+ * markers that were never used.
  */
-class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
+private class OptInUsageVisitor(
+    private val analysisSession: KaSession,
+    private val moduleApiVersion: ApiVersion,
+    private val markersToCheck: Set<ClassId>,
+    private val optInAnnotationEntry: KtAnnotationEntry,
+) : KtTreeVisitorVoid() {
+    private val markersNotSeen = markersToCheck.toMutableSet()
 
-    /**
-     * Get the PSI element to which the given `@OptIn` annotation applies.
-     *
-     * @receiver the `@OptIn` annotation entry
-     * @return the annotated element, or null if no such element is found
-     */
-    private fun KtAnnotationEntry.getOwner(): KtElement? = getStrictParentOfType<KtAnnotated>()
+    private val visitedSymbols: MutableSet<KaAnnotatedSymbol> = mutableSetOf()
+    private val visitedSupertypeSymbols: MutableSet<KaClassLikeSymbol> = mutableSetOf()
+    private val visitedTypes: MutableSet<KaType> = mutableSetOf()
 
-    /**
-     * A temporary storage for expected experimental markers.
-     *
-     * @param expression a smart pointer to the argument expression to create a quick fix
-     * @param fqName the resolved fully qualified name
-     */
-    private data class ResolvedMarker(
-        val expression: SmartPsiElementPointer<KtClassLiteralExpression>,
-        val fqName: FqName
-    )
+    val unusedMarkers: Set<ClassId>
+        get() = markersNotSeen
 
-    // Short names for `kotlin.OptIn` and `kotlin.UseExperimental` for faster comparison without name resolution
-    private val OPT_IN_SHORT_NAMES = OptInNames.OPT_IN_FQ_NAMES.map { it.shortName().asString() }.toSet()
+    override fun visitElement(element: PsiElement) {
+        // Optimization: stop walking the tree if we've confirmed that every opt-in marker we're
+        // looking for is in use.
+        if (unusedMarkers.isEmpty()) return
+        super.visitElement(element)
+    }
 
-    /**
-     * Main inspection visitor to traverse all annotation entries.
-     */
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        val file = holder.file
-        val optInAliases = if (file is KtFile) KotlinPsiHeuristics.getImportAliases(file, OPT_IN_SHORT_NAMES) else emptySet()
+    context(KaSession)
+    private fun KaAnnotatedSymbol.visit(followOverrides: Boolean = false) {
+        if (!visitedSymbols.add(this)) return
+        val usedOptIns = getRequiredOptIns(markersNotSeen, moduleApiVersion)
+        markersNotSeen.removeAll(usedOptIns)
 
-        return annotationEntryVisitor { annotationEntry  ->
-            val annotationEntryArguments = annotationEntry.valueArguments.ifEmpty {
-                return@annotationEntryVisitor
+        when (this) {
+            is KaClassSymbol, is KaConstructorSymbol -> {
+                val outerClass = containingDeclaration as? KaClassLikeSymbol
+                outerClass?.visit()
             }
-
-            // Fast check if the annotation may be `@OptIn`/`@UseExperimental` or any of their import aliases
-            val entryShortName = annotationEntry.shortName?.asString()
-            if (entryShortName != null && entryShortName !in OPT_IN_SHORT_NAMES && entryShortName !in optInAliases)
-                return@annotationEntryVisitor
-
-            // Resolve the candidate annotation entry. If it is an `@OptIn`/`@UseExperimental` annotation,
-            // resolve all expected experimental markers.
-            val resolutionFacade = annotationEntry.getResolutionFacade()
-            val annotationContext = annotationEntry.analyze(resolutionFacade)
-            val annotationFqName = annotationContext[BindingContext.ANNOTATION, annotationEntry]?.fqName
-            if (annotationFqName !in OptInNames.OPT_IN_FQ_NAMES) return@annotationEntryVisitor
-
-            val resolvedMarkers = mutableListOf<ResolvedMarker>()
-            for (arg in annotationEntryArguments) {
-                val argumentExpression = arg.getArgumentExpression()?.safeAs<KtClassLiteralExpression>() ?: continue
-                val markerFqName = annotationContext[
-                        BindingContext.REFERENCE_TARGET,
-                        argumentExpression.lhs?.safeAs<KtNameReferenceExpression>()
-                ]?.fqNameSafe ?: continue
-                resolvedMarkers.add(ResolvedMarker(argumentExpression.createSmartPointer(), markerFqName))
-            }
-
-            // Find the scope of the `@OptIn` declaration and collect all its experimental markers.
-            val markerProcessor = MarkerCollector(resolutionFacade)
-            annotationEntry.getOwner()?.accept(OptInMarkerVisitor(), markerProcessor)
-
-            val unusedMarkers = resolvedMarkers.filter { markerProcessor.isUnused(it.fqName) }
-            if (annotationEntryArguments.size == unusedMarkers.size) {
-                // If all markers in the `@OptIn` annotation are useless, create a quick fix to remove
-                // the entire annotation.
-                holder.registerProblem(
-                    annotationEntry,
-                    KotlinBundle.message("inspection.unnecessary.opt_in.redundant.annotation"),
-                    RemoveAnnotationEntry()
-                )
-            } else {
-                // Check each resolved marker whether it is actually used in the scope of the `@OptIn`.
-                // Create a quick fix to remove the unnecessary marker if no marked names have been found.
-                for (marker in unusedMarkers) {
-                    val expression = marker.expression.element ?: continue
-                    holder.registerProblem(
-                        expression,
-                        KotlinBundle.message(
-                                    "inspection.unnecessary.opt_in.redundant.marker",
-                                    marker.fqName.shortName().render()
-                                ),
-                        RemoveAnnotationArgumentOrEntireEntry()
-                    )
+            is KaCallableSymbol -> {
+                if (followOverrides) {
+                    if (this is KaNamedFunctionSymbol && isOverride ||
+                        this is KaPropertySymbol && isOverride) {
+                        directlyOverriddenSymbols.forEach { it.visit() }
+                    }
+                }
+                if (this is KaValueParameterSymbol) {
+                    generatedPrimaryConstructorProperty?.visit(followOverrides = followOverrides)
                 }
             }
         }
     }
-}
 
-/**
- * A processor that collects experimental markers referred by names in the `@OptIn` annotation scope.
- */
-private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
-    // Experimental markers found during a check for a specific annotation entry
-    private val foundMarkers = mutableSetOf<FqName>()
-
-    // A checker instance for setter call detection
-    private val readWriteAccessChecker = ReadWriteAccessChecker.getInstance(resolutionFacade.project)
-
-    /**
-     * Check if a specific experimental marker is not used in the scope of a specific `@OptIn` annotation.
-     *
-     * @param marker the fully qualified name of the experimental marker of interest
-     * @return true if no marked names was found during the check, false if there is at least one marked name
-     */
-    fun isUnused(marker: FqName): Boolean = marker !in foundMarkers
-
-    /**
-     * Collect experimental markers for a declaration and add them to [foundMarkers].
-     *
-     * Find a class whose superclass is annotated with @SubclassOptInRequired
-     * and add the experimental marker to [foundMarkers].
-     *
-     * @param declaration the declaration to process
-     */
-
-    fun collectMarkers(declaration: KtClassOrObject?) {
-        if (declaration == null) return
-        for (superTypeEntry in declaration.superTypeListEntries) {
-            val superClassDescriptor = superTypeEntry.asKtClass()?.descriptor ?: continue
-            val superClassAnnotation = superClassDescriptor.annotations.findAnnotation(OptInNames.SUBCLASS_OPT_IN_REQUIRED_FQ_NAME) ?: continue
-            val markerFqName = superClassAnnotation.allValueArguments[OptInNames.OPT_IN_ANNOTATION_CLASS]
-                ?.safeAs<KClassValue>()?.getArgumentType(superClassDescriptor.module)?.fqName
-            markerFqName?.let { foundMarkers += it }
-        }
+    context(KaSession)
+    private fun KaClassLikeSymbol.visitForSubclassing() {
+        if (!visitedSupertypeSymbols.add(this)) return
+        val usedOptIns = getRequiredOptInsToSubclass(markersNotSeen)
+        markersNotSeen.removeAll(usedOptIns)
     }
 
-    /**
-     * Collect experimental markers for a declaration and add them to [foundMarkers].
-     *
-     * The `@OptIn` annotation is useful for declarations that override a marked declaration (e.g., overridden
-     * functions or properties in classes/objects). If the declaration overrides another name, we should
-     * collect experimental markers from the overridden declaration.
-     *
-     * @param declaration the declaration to process
-     */
-    fun collectMarkers(declaration: KtDeclaration?) {
-        if (declaration == null) return
-        if (declaration !is KtFunction && declaration !is KtProperty && declaration !is KtParameter) return
-        if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-            val descriptor = declaration.resolveToDescriptorIfAny(resolutionFacade)?.safeAs<CallableMemberDescriptor>() ?: return
-            descriptor.getDirectlyOverriddenDeclarations().forEach { it.collectMarkers(declaration.languageVersionSettings.apiVersion) }
-        }
-    }
-
-    /**
-     * Collect experimental markers for an expression and add them to [foundMarkers].
-     *
-     * @param expression the expression to process
-     */
-    fun collectMarkers(expression: KtReferenceExpression?) {
-        if (expression == null) return
-
-        // Resolve the reference to descriptors, then analyze the annotations
-        // For each descriptor, we also check a corresponding importable descriptor
-        // if it is not equal to the descriptor itself. The goal is to correctly
-        // resolve class names. For example, the `Foo` reference in the code fragment
-        // `val x = Foo()` is resolved as a constructor, while the corresponding
-        // class descriptor can be found as the constructor's importable name.
-        // Both constructor and class may be annotated with an experimental API marker,
-        // so we should check both of them.
-        val descriptorList = expression
-            .resolveMainReferenceToDescriptors()
-            .flatMap { setOf(it, it.getImportableDescriptor()) }
-
-        val moduleApiVersion = expression.languageVersionSettings.apiVersion
-
-        for (descriptor in descriptorList) {
-            descriptor.collectMarkers(moduleApiVersion)
-            // A special case: a property has no experimental markers but its setter is experimental.
-            // We need to additionally collect markers from the setter if it is invoked in the expression.
-            if (descriptor is PropertyDescriptor) {
-                val setter = descriptor.setter
-                if (setter != null && expression.isSetterCall()) setter.collectMarkers(moduleApiVersion)
+    context(KaSession)
+    private fun KaType.visit() {
+        if (!visitedTypes.add(this)) return
+        abbreviation?.visit()
+        when (this) {
+            is KaClassType -> {
+                symbol.visit()
+                typeArguments.forEach {
+                    it.type?.visit()
+                }
             }
+            is KaDefinitelyNotNullType -> original.visit()
+            is KaFlexibleType -> {
+                lowerBound.visit()
+                upperBound.visit()
+            }
+            is KaIntersectionType -> conjuncts.forEach { it.visit() }
+        }
+    }
 
-            // The caller implicitly uses argument types and return types of a declaration,
-            // so we need to check whether these types have experimental markers
-            // regardless of the `@OptIn` annotation on the declaration itself.
-            if (descriptor is CallableDescriptor) {
-                descriptor.valueParameters.forEach { it.type.collectMarkers(moduleApiVersion)}
-                descriptor.returnType?.collectMarkers(moduleApiVersion)
+    context(KaSession)
+    private fun KaCallableSignature<*>.visit() {
+        returnType.visit()
+        receiverType?.visit()
+
+        if (this is KaFunctionSignature) {
+            valueParameters.forEach { it.visit() }
+        }
+    }
+
+    context(KaSession)
+    private fun KaPartiallyAppliedSymbol<*, *>.visit() {
+        dispatchReceiver?.type?.visit()
+        extensionReceiver?.type?.visit()
+        symbol.visit()
+        signature.visit()
+    }
+
+    context(KaSession)
+    private fun KaCall.visit() {
+        when (this) {
+            is KaSimpleVariableAccessCall -> {
+                partiallyAppliedSymbol.visit()
+                val symbol = this.symbol
+                if (symbol is KaPropertySymbol) {
+                    val accessor = when (simpleAccess) {
+                        is KaSimpleVariableAccess.Read -> symbol.getter
+                        is KaSimpleVariableAccess.Write -> symbol.setter
+                    }
+                    accessor?.visit()
+                }
+            }
+            is KaCallableMemberCall<*, *> -> partiallyAppliedSymbol.visit()
+            is KaCompoundVariableAccessCall -> {
+                variablePartiallyAppliedSymbol.visit()
+                val symbol = variablePartiallyAppliedSymbol.symbol
+                if (symbol is KaPropertySymbol) {
+                    symbol.getter?.visit()
+                    symbol.setter?.visit()
+                }
+                compoundOperation.operationPartiallyAppliedSymbol.visit()
+            }
+            is KaCompoundArrayAccessCall -> {
+                getPartiallyAppliedSymbol.visit()
+                setPartiallyAppliedSymbol.visit()
+                compoundOperation.operationPartiallyAppliedSymbol.visit()
             }
         }
     }
 
-    /**
-     * Collect experimental markers for property delegate and add them to [foundMarkers].
-     *
-     * @param delegate the property delegate to process
-     */
-    fun collectMarkers(delegate: KtPropertyDelegate) {
-        val moduleApiVersion = delegate.languageVersionSettings.apiVersion
-        delegate.resolveMainReferenceToDescriptors().forEach { descriptor ->
-            descriptor.collectMarkers(moduleApiVersion)
+    context(KaSession)
+    private fun KtReference.visit() {
+        resolveToSymbols()
+            .filterIsInstance<KaAnnotatedSymbol>()
+            .forEach { it.visit() }
+    }
+
+    override fun visitKtElement(element: KtElement) {
+        // Collect markers from callables called in scope.
+        with(analysisSession) {
+            super.visitKtElement(element)
+
+            element.resolveToCall()?.successfulCallOrNull<KaCall>()?.visit()
+        }
+    }
+
+    override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
+        // Collect markers from declarations and their overrides.
+        with(analysisSession) {
+            super.visitNamedDeclaration(declaration)
+            if (declaration is KtParameter && declaration.isFunctionTypeParameter) return
+
+            declaration.symbol.visit(followOverrides = true)
         }
     }
 
     /**
-     * Collect markers from a declaration descriptor corresponding to a Kotlin type.
+     * Collect opt-in markers from supertype entries of a class.
      *
-     * @receiver the type to collect markers
-     * @param moduleApiVersion the API version of the current module to check `@WasExperimental` annotations
+     * These entries are only checked for @SubclassOptInRequired here - they'll be checked
+     * for direct usage of opt-in markers in visitTypeReference below.
      */
-    private fun KotlinType.collectMarkers(moduleApiVersion: ApiVersion) {
-        arguments.forEach {
-            if (!it.isStarProjection) {
-                it.type.collectMarkers(moduleApiVersion)
+    override fun visitSuperTypeEntry(specifier: KtSuperTypeEntry) {
+        with(analysisSession) {
+            super.visitSuperTypeEntry(specifier)
+
+            val superClassType = specifier.typeReference?.type as? KaClassType ?: return
+            superClassType.symbol.visitForSubclassing()
+        }
+    }
+
+    override fun visitTypeReference(typeReference: KtTypeReference) {
+        // Collect opt-in markers from referenced types.
+        with(analysisSession) {
+            super.visitTypeReference(typeReference)
+
+            typeReference.type.visit()
+        }
+    }
+
+    override fun visitTypeAlias(typeAlias: KtTypeAlias) {
+        with(analysisSession) {
+            super.visitTypeAlias(typeAlias)
+
+            // Workaround for K1 AA bug - KtTypeReference in RHS of type alias doesn't directly resolve.
+            // Instead, we find the KtType by the type alias's symbol.
+            typeAlias.symbol.expandedType.visit()
+        }
+    }
+
+    override fun visitAnnotationEntry(annotationEntry: KtAnnotationEntry) {
+        // Stop walking if we hit the @OptIn entry itself, since we don't want to mark
+        // its arguments as used.
+        if (annotationEntry != optInAnnotationEntry) {
+            super.visitAnnotationEntry(annotationEntry)
+        }
+    }
+
+    override fun visitClassLiteralExpression(expression: KtClassLiteralExpression) {
+        with(analysisSession) {
+            super.visitClassLiteralExpression(expression)
+
+            expression.receiverType?.visit()
+        }
+    }
+
+    override fun visitPropertyDelegate(delegate: KtPropertyDelegate) {
+        with(analysisSession) {
+            super.visitPropertyDelegate(delegate)
+
+            // Resolve the PSI references for the delegate expression. This will bring in
+            // provideDelegate() for the RHS of the `by` expression, as well as `getValue()`
+            // for the provided delegate.
+            for (reference in delegate.references) {
+                if (reference !is KtReference) continue
+                reference.visit()
             }
         }
-
-        val descriptor = this.constructor.declarationDescriptor ?: return
-        descriptor.collectMarkers(moduleApiVersion)
-    }
-
-    /**
-     * Actually collect markers for a resolved descriptor and add them to [foundMarkers].
-     *
-     * @receiver the descriptor to collect markers
-     * @param moduleApiVersion the API version of the current module to check `@WasExperimental` annotations
-     */
-    private fun DeclarationDescriptor.collectMarkers(moduleApiVersion: ApiVersion) {
-        annotations.collectMarkers(moduleApiVersion, module)
-        if (isCompanionObject()) {
-            containingDeclaration?.let { it.annotations.collectMarkers(moduleApiVersion, it.module) }
-        }
-    }
-
-    private fun Annotations.collectMarkers(moduleApiVersion: ApiVersion, module: ModuleDescriptor) {
-        val annotations = this
-        for (ann in annotations) {
-            val annotationFqName = ann.fqName ?: continue
-            val annotationClass = ann.annotationClass ?: continue
-
-            // Add the annotation class as a marker if it has `@RequireOptIn` annotation.
-            if (annotationClass.annotations.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME)
-                || annotationClass.annotations.hasAnnotation(FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME)) {
-                foundMarkers += annotationFqName
-            }
-
-            WasExperimentalOptInsNecessityCheckerFe10
-                .getNecessaryOptInsFromWasExperimental(annotations, module, moduleApiVersion)
-                .forEach { foundMarkers.add(it) }
-        }
-    }
-
-    /**
-     * Check if the reference expression is a part of a property setter invocation.
-     *
-     * @receiver the expression to check
-     */
-    private fun KtReferenceExpression.isSetterCall(): Boolean =
-        readWriteAccessChecker.readWriteAccessWithFullExpression(this, true).first.isWrite
-}
-
-/**
- * The marker collecting visitor that navigates the PSI tree in the scope of the `@OptIn` declaration
- * and collects experimental markers.
- */
-private class OptInMarkerVisitor : KtTreeVisitor<MarkerCollector>() {
-    override fun visitNamedDeclaration(declaration: KtNamedDeclaration, markerCollector: MarkerCollector): Void? {
-        markerCollector.collectMarkers(declaration)
-        return super.visitNamedDeclaration(declaration, markerCollector)
-    }
-
-    override fun visitReferenceExpression(expression: KtReferenceExpression, markerCollector: MarkerCollector): Void? {
-        markerCollector.collectMarkers(expression)
-        return super.visitReferenceExpression(expression, markerCollector)
-    }
-
-    override fun visitClassOrObject(expression: KtClassOrObject, markerCollector: MarkerCollector): Void? {
-        markerCollector.collectMarkers(expression)
-        return super.visitClassOrObject(expression, markerCollector)
-    }
-
-    override fun visitPropertyDelegate(delegate: KtPropertyDelegate, markerCollector: MarkerCollector): Void? {
-        markerCollector.collectMarkers(delegate)
-        return super.visitPropertyDelegate(delegate, markerCollector)
     }
 }
 
 /**
- * A quick fix that removes the argument from the value argument list of an annotation entry,
- * or the entire entry if the argument was the only argument of the annotation.
+ * A quick fix that removes the targeted class-literal value argument from its containing annotation.
+ *
+ * If that argument was the last argument of the annotation, removes the entire annotation.
  */
-private class RemoveAnnotationArgumentOrEntireEntry : LocalQuickFix {
-    override fun getFamilyName(): String = KotlinBundle.message("inspection.unnecessary.opt_in.remove.marker.fix.family.name")
+private class RemoveOptInMarkerQuickFix : KotlinModCommandQuickFix<KtClassLiteralExpression>() {
+    override fun getFamilyName(): @IntentionFamilyName String =
+        KotlinBundle.message("inspection.unnecessary.opt_in.remove.marker.fix.family.name")
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val valueArgument = descriptor.psiElement?.parentOfType<KtValueArgument>() ?: return
+    override fun applyFix(
+        project: Project,
+        element: KtClassLiteralExpression,
+        updater: ModPsiUpdater
+    ) {
+        val valueArgument = element.parentOfType<KtValueArgument>() ?: return
         val annotationEntry = valueArgument.parentOfType<KtAnnotationEntry>() ?: return
         if (annotationEntry.valueArguments.size == 1) {
             annotationEntry.delete()
@@ -355,16 +428,12 @@ private class RemoveAnnotationArgumentOrEntireEntry : LocalQuickFix {
     }
 }
 
+/** A quick fix that removes an entire unused @OptIn annotation. */
+private class RemoveAnnotationEntryQuickFix : KotlinModCommandQuickFix<KtAnnotationEntry>() {
+    override fun getFamilyName(): @IntentionFamilyName String =
+        KotlinBundle.message("inspection.unnecessary.opt_in.remove.annotation.fix.family.name")
 
-
-/**
- * A quick fix that removes the entire annotation entry.
- */
-private class RemoveAnnotationEntry : LocalQuickFix {
-    override fun getFamilyName(): String = KotlinBundle.message("inspection.unnecessary.opt_in.remove.annotation.fix.family.name")
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val annotationEntry = descriptor.psiElement?.safeAs<KtAnnotationEntry>() ?: return
-        annotationEntry.delete()
+    override fun applyFix(project: Project, element: KtAnnotationEntry, updater: ModPsiUpdater) {
+        element.delete()
     }
 }

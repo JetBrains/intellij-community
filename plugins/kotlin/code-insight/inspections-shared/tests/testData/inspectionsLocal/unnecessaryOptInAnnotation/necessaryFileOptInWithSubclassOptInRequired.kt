@@ -1,7 +1,7 @@
 // PROBLEM: none
 // WITH_STDLIB
 
-@file:OptIn(UnstableApiA::class, UnstableApiB::class, ExperimentalSubclassOptIn::class)
+@file:OptIn(<caret>UnstableApiA::class, UnstableApiB::class, ExperimentalSubclassOptIn::class)
 
 @RequiresOptIn
 annotation class UnstableApiA
@@ -14,5 +14,5 @@ interface CoreLibraryApi
 
 interface SomeImplementation : CoreLibraryApi
 
-interface SomeChild : SomeImplementation<caret>
+interface SomeChild : SomeImplementation
 

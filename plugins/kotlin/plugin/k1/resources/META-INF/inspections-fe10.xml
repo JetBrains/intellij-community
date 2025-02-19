@@ -2265,16 +2265,6 @@
                      language="kotlin"
                      key="inspection.redundant.assequence.call" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.UnnecessaryOptInAnnotationInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle"
-                     groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     runForWholeFile="true"  editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
-                     key="inspection.unnecessary.opt_in.annotation.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinJvmAnnotationInJavaInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.java.interop.issues"
