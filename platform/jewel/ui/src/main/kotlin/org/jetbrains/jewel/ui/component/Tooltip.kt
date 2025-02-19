@@ -33,16 +33,16 @@ import org.jetbrains.jewel.ui.util.isDark
 /**
  * A tooltip component that follows the standard visual styling.
  *
- * Provides a floating tooltip that appears when hovering over or focusing the target content.
- * The tooltip follows platform conventions for timing, positioning, and appearance, supporting
- * both mouse and keyboard navigation.
+ * Provides a floating tooltip that appears when hovering over or focusing the target content. The tooltip follows
+ * platform conventions for timing, positioning, and appearance, supporting both mouse and keyboard navigation.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/tooltip.html)
  *
  * **Usage example:**
  * [`Tooltips.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/Tooltips.kt)
  *
- * **Swing equivalent:** [`HelpTooltip`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ide/HelpTooltip.java)
+ * **Swing equivalent:**
+ * [`HelpTooltip`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ide/HelpTooltip.java)
  * and [How to Use Tool Tips](https://docs.oracle.com/javase/tutorial/uiswing/components/tooltip.html)
  *
  * @param tooltip The content to be displayed in the tooltip
@@ -101,9 +101,9 @@ private fun TooltipImpl(style: TooltipStyle, tooltip: @Composable () -> Unit) {
 /**
  * A tooltip placement strategy that positions the tooltip relative to the cursor position.
  *
- * Provides a [PopupPositionProvider] that calculates the position of the tooltip relative to
- * the current mouse cursor position, maintaining that position after showing the tooltip.
- * This allows for stable tooltip positioning that doesn't follow cursor movement.
+ * Provides a [PopupPositionProvider] that calculates the position of the tooltip relative to the current mouse cursor
+ * position, maintaining that position after showing the tooltip. This allows for stable tooltip positioning that
+ * doesn't follow cursor movement.
  *
  * @param offset Additional offset to be added to the tooltip position
  * @param alignment The alignment of the tooltip relative to the cursor position
@@ -128,9 +128,9 @@ public class FixedCursorPoint(
 /**
  * Creates a position provider that maintains a fixed position relative to an anchor point.
  *
- * Returns a [PopupPositionProvider] that positions the popup at the given position relative
- * to the anchor, maintaining that position after showing the popup. This ensures stable
- * positioning that doesn't update with subsequent anchor movement.
+ * Returns a [PopupPositionProvider] that positions the popup at the given position relative to the anchor, maintaining
+ * that position after showing the popup. This ensures stable positioning that doesn't update with subsequent anchor
+ * movement.
  *
  * @param positionPx The offset in pixels relative to the anchor
  * @param offset Additional offset to be added to the popup position

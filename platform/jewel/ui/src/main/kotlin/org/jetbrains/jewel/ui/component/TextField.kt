@@ -44,16 +44,17 @@ import org.jetbrains.jewel.ui.theme.textFieldStyle
 /**
  * A single-line text input component that follows the standard visual styling.
  *
- * Provides a text input field for single-line text entry with optional leading and trailing icons,
- * placeholder text, and various text input features. The component supports standard text editing
- * capabilities and platform-specific key bindings.
+ * Provides a text input field for single-line text entry with optional leading and trailing icons, placeholder text,
+ * and various text input features. The component supports standard text editing capabilities and platform-specific key
+ * bindings.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/input-field.html)
  *
  * **Usage example:**
  * [`TextFields.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/TextFields.kt)
  *
- * **Swing equivalent:** [`JBTextField`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBTextField.java)
+ * **Swing equivalent:**
+ * [`JBTextField`](https://github.com/JetBrains/intellij-community/blob/master/platform/platform-api/src/com/intellij/ui/components/JBTextField.java)
  * and [`JTextField`](https://docs.oracle.com/javase/tutorial/uiswing/components/textfield.html)
  *
  * @param state The state object controlling the text content and selection
