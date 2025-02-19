@@ -2,17 +2,12 @@
 package org.intellij.plugins.markdown.ui.preview.accessor.impl
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.ide.actions.OpenFileAction
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectForFile
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.MessageType
@@ -21,28 +16,20 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.platform.project.projectId
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.PsiNavigateUtil
-import com.intellij.util.UriUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.isLocalHost
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.lang.index.HeaderAnchorIndex
+import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
+import org.intellij.plugins.markdown.service.MarkdownFrontendService
 import org.intellij.plugins.markdown.settings.DocumentLinksSafeState
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
-import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
 import org.intellij.plugins.markdown.util.MarkdownDisposable
 import java.net.URI
 import java.net.URISyntaxException
-import java.nio.file.Path
 
 internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
   override fun openLink(project: Project?, link: String) {
@@ -54,7 +41,6 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
       openExternalLink(project, uri)
     }
   }
-
   override fun isSafeLink(project: Project?, link: String): Boolean {
     val uri = createUri(link)?: return false
     return isSafeUri(project, uri)
@@ -157,41 +143,18 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
       }
     }
 
-    private fun URI.findVirtualFile(): VirtualFile? {
-      val actualPath = when {
-        SystemInfo.isWindows -> UriUtil.trimLeadingSlashes(path)
-        else -> path
-      }
-      val path = Path.of(actualPath)
-      return VfsUtil.findFile(path, true)
-    }
-
     private fun actuallyOpenInEditor(project: Project?, uri: URI): Boolean {
-      val anchor = uri.fragment
-      val targetFile = uri.findVirtualFile() ?: return false
+      val service = MarkdownFrontendService.getInstance()
       @Suppress("NAME_SHADOWING")
-      val project = project ?: guessProjectForFile(targetFile) ?: return false
-      if (anchor == null) {
+      val project = project ?: service.guessProjectForUri(uri) ?: return false
+      val anchor = uri.fragment
+      if (anchor == null){
         invokeLater {
-          OpenFileAction.openFile(targetFile, project)
+          service.openFile(project.projectId(), uri)
         }
         return true
       }
-      val point = obtainHeadersPopupPosition(project)
-      if (point == null) {
-        logger.warn("Failed to obtain screen point for showing popup")
-        return false
-      }
-      val headers = runReadAction {
-        if (DumbService.isDumb(project)) {
-          return@runReadAction null
-        }
-        val scope = when (val file = PsiManager.getInstance(project).findFile(targetFile)) {
-          null -> GlobalSearchScope.EMPTY_SCOPE
-          else -> GlobalSearchScope.fileScope(file)
-        }
-        return@runReadAction HeaderAnchorIndex.collectHeaders(project, scope, anchor)
-      }
+      val headers = service.collectHeaders(project.projectId(), uri)
       if (headers == null) {
         invokeLater {
           DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
@@ -202,11 +165,21 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
         // Return true to prevent external navigation from happening
         return true
       }
+      if (headers.size == 1) {
+        invokeLater {
+          service.navigateToHeader(project.projectId(), headers.first())
+        }
+        return true
+      }
+      val point = obtainHeadersPopupPosition(project)
+      if (point == null) {
+        logger.warn("Failed to obtain screen point for showing popup")
+        return false
+      }
       invokeLater {
         when {
           headers.isEmpty() -> showCannotNavigateNotification(project, anchor, point)
-          headers.size == 1 -> navigateToHeader(project, targetFile, headers.first())
-          else -> showHeadersPopup(project, headers, point)
+          headers.size > 1 ->  showHeadersPopup(project, headers, point)
         }
       }
       return true
@@ -229,40 +202,23 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
       balloon.show(point, Balloon.Position.below)
     }
 
-    private fun showHeadersPopup(project: Project, headers: Collection<PsiElement>, point: RelativePoint) {
+    private fun showHeadersPopup(project: Project, headers: Collection<MarkdownHeaderInfo>, point: RelativePoint) {
       JBPopupFactory.getInstance().createListPopup(HeadersPopup(project, headers.toList())).show(point)
     }
 
     private class HeadersPopup(
       private val project: Project,
-      headers: List<PsiElement>
-    ): BaseListPopupStep<PsiElement>(MarkdownBundle.message("markdown.navigate.to.header"), headers) {
-      override fun getTextFor(value: PsiElement): String {
-        val document = FileDocumentManager.getInstance().getDocument(value.containingFile.virtualFile)
-        requireNotNull(document)
-        val name = value.containingFile.virtualFile.name
-        val line = document.getLineNumber(value.textOffset) + 1
-        return "${value.text} ($name:$line)"
+      headers: List<MarkdownHeaderInfo>
+    ): BaseListPopupStep<MarkdownHeaderInfo>(MarkdownBundle.message("markdown.navigate.to.header"), headers) {
+      override fun getTextFor(value: MarkdownHeaderInfo): String {
+        return "${value.headerText} (${value.fileName}:${value.lineNumber})"
       }
 
-      override fun onChosen(selectedValue: PsiElement, finalChoice: Boolean): PopupStep<*> {
+      override fun onChosen(selectedValue: MarkdownHeaderInfo, finalChoice: Boolean): PopupStep<*> {
         return doFinalStep {
-          navigateToHeader(project, selectedValue.containingFile.virtualFile, selectedValue)
+          MarkdownFrontendService.getInstance().navigateToHeader(project.projectId(), selectedValue);
         }
       }
-    }
-
-    private fun navigateToHeader(project: Project, file: VirtualFile, element: PsiElement) {
-      val manager = FileEditorManager.getInstance(project)
-      val openedEditors = manager.getEditorList(file).filterIsInstance<MarkdownEditorWithPreview>()
-      if (openedEditors.isNotEmpty()) {
-        for (editor in openedEditors) {
-          PsiNavigateUtil.navigate(element, true)
-        }
-        return
-      }
-      val descriptor = OpenFileDescriptor(project, file, element.textOffset)
-      manager.openEditor(descriptor, true)
     }
   }
 }
