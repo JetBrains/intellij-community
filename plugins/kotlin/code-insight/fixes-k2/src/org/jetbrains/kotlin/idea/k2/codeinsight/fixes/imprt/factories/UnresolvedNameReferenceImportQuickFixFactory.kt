@@ -64,7 +64,9 @@ internal class UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQuic
             EnumEntryImportCandidatesProvider(positionContext),
         )
 
-        is KotlinInfixCallPositionContext -> sequenceOf(
+        is KotlinInfixCallPositionContext,
+        is KotlinOperatorCallPositionContext
+            -> sequenceOf(
             CallableImportCandidatesProvider(positionContext),
         )
 
