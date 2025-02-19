@@ -10,9 +10,12 @@ import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.util.ui.CSSFontResolver
 import org.jetbrains.annotations.Nls
 import java.awt.Color
+import java.awt.Component
 import java.awt.Image
 import java.net.URL
 import java.util.*
+import javax.swing.JComponent
+import javax.swing.text.ComponentView
 import javax.swing.text.LabelView
 import javax.swing.text.View
 import javax.swing.text.html.BlockView
@@ -36,22 +39,41 @@ internal class JBHtmlPaneImplService : JBHtmlPane.ImplService {
     JBHtmlPaneImageResolver(pane, null)
 
   override fun applyCssToView(pane: JBHtmlPane) {
-    applyCssToView(pane.ui.getRootView(pane))
-  }
-
-  private fun applyCssToView(view: View) {
-    val childCount = view.viewCount
-    for (i in 0..<childCount) {
-      val childView = view.getView(i)
-      if (childView != null) {
-        applyCssToView(childView)
-        if (childView is BlockView) {
-          blockViewSetPropertiesFromAttributesMethod.invoke(childView)
-        } else if (childView is LabelView) {
-          labelViewSetPropertiesFromAttributesMethod.invoke(childView)
-        }
+    visitViews(pane.ui.getRootView(pane)) { childView ->
+      when (childView) {
+        is BlockView -> blockViewSetPropertiesFromAttributesMethod.invoke(childView)
+        is LabelView -> labelViewSetPropertiesFromAttributesMethod.invoke(childView)
       }
     }
+  }
+
+  override fun ensureEditableViewsAreNotFocusable(pane: JBHtmlPane) {
+    visitViews(pane.ui.getRootView(pane)) { childView ->
+      when (childView) {
+        is ComponentView ->
+          if (childView.javaClass.name.let {
+              it.startsWith("javax.swing.text.html.")
+              && (it.endsWith("html.EditableView") || it.endsWith("html.HiddenTagView") || it.endsWith("html.CommentView"))
+            }) {
+            val components = mutableListOf<Component?>(childView.component)
+            while (components.isNotEmpty()) {
+              val component = components.removeLast()
+              component?.isFocusable = false
+              if (component is JComponent)
+                components.addAll(component.components)
+            }
+          }
+      }
+    }
+  }
+
+  private fun visitViews(view: View, visitor: (View) -> Unit) {
+    for (i in 0..<view.viewCount) {
+      view.getView(i)?.let {
+        visitViews(it, visitor)
+      }
+    }
+    visitor(view)
   }
 
   private val blockViewSetPropertiesFromAttributesMethod by lazy {

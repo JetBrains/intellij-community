@@ -1,12 +1,27 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.html
 
+import java.awt.Component
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import javax.swing.JComponent
 import javax.swing.text.Element
 import javax.swing.text.html.BlockView
 import javax.swing.text.html.FormView
 import javax.swing.text.html.InlineView
 
 internal class FormViewEx(elem: Element) : FormView(elem) {
+
+  override fun createComponent(): Component? =
+    super.createComponent()?.apply {
+      focusTraversalKeysEnabled = true
+      isFocusable = true
+      addFocusListener(object : FocusAdapter() {
+        override fun focusGained(e: FocusEvent?) {
+          (this@apply as? JComponent)?.scrollRectToVisible(bounds)
+        }
+      })
+    }
 
   override fun getAlignment(axis: Int): Float {
     if (axis != Y_AXIS)

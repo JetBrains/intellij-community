@@ -283,6 +283,7 @@ open class JBHtmlPane : JEditorPane, Disposable {
   override fun paintComponent(g: Graphics) {
     GraphicsUtil.setupAntialiasing(g)
     super.paintComponent(g)
+    service.ensureEditableViewsAreNotFocusable(this)
   }
 
   override fun setDocument(doc: Document) {
@@ -308,6 +309,8 @@ open class JBHtmlPane : JEditorPane, Disposable {
     fun createDefaultImageResolver(pane: JBHtmlPane): Dictionary<URL, Image>
 
     fun applyCssToView(pane: JBHtmlPane)
+
+    fun ensureEditableViewsAreNotFocusable(pane: JBHtmlPane)
   }
 
 }
