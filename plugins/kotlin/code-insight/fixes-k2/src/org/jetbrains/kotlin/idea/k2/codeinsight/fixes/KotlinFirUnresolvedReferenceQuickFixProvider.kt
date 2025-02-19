@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddDependencyQuickFixHelper
+import org.jetbrains.kotlin.idea.highlighter.binaryExpressionForOperationReference
 import org.jetbrains.kotlin.idea.highlighter.restoreKaDiagnosticsForUnresolvedReference
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.createRenameUnresolvedReferenceFix
@@ -35,6 +36,12 @@ class KotlinFirUnresolvedReferenceQuickFixProvider : UnresolvedReferenceQuickFix
 
         analyze(ktElement) {
             val savedDiagnostics = ktElement.restoreKaDiagnosticsForUnresolvedReference()
+                .ifEmpty {
+                    // if no diagnostics on the original element, 
+                    // try to backtrack to the binary expression parent (see KT-75331)
+                    ktElement.binaryExpressionForOperationReference?.restoreKaDiagnosticsForUnresolvedReference() 
+                }
+                .orEmpty()
             
             for (quickFix in ImportQuickFixProvider.getFixes(savedDiagnostics)) {
                 registrar.register(quickFix)
