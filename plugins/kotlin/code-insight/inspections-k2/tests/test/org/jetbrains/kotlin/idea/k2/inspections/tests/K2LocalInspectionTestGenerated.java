@@ -12711,6 +12711,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/insideLambdaWithReceiver.kt");
         }
 
+        @TestMetadata("labeledThis.kt")
+        public void testLabeledThis() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/labeledThis.kt");
+        }
+
+        @TestMetadata("labeledThisSpecialLabel.kt")
+        public void testLabeledThisSpecialLabel() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/labeledThisSpecialLabel.kt");
+        }
+
         @TestMetadata("leaveUnrelatedIntact.kt")
         public void testLeaveUnrelatedIntact() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/leaveUnrelatedIntact.kt");

@@ -32,19 +32,14 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinKtDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import kotlin.reflect.KClass
 
 internal class InspectionContext(
     val contextReceiversWithNames: Map<SmartPsiElementPointer<KtContextReceiver>, String>,
     val implicitContextUsages: List<ImplicitContextReceiverUsage>,
-)
-
-internal class ImplicitContextReceiverUsage(
-    val callReference: SmartPsiElementPointer<KtSimpleNameExpression>,
-    val receiverCombination: ReceiverCombination,
-    val dispatchReceiverContextPsi: SmartPsiElementPointer<KtContextReceiver>?,
-    val extensionReceiverContextPsi: SmartPsiElementPointer<KtContextReceiver>?,
+    val labeledThisContextReceiverUsages: List<LabeledThisContextReceiverUsage>,
 )
 
 internal class ContextParametersMigrationInspection :
@@ -99,13 +94,21 @@ internal class ContextParametersMigrationInspection :
         val ktContextReceiverSet = receivers.toSet()
 
         val implicitContextReceiverUsages = mutableListOf<ImplicitContextReceiverUsage>()
+        val labeledThisContextReceiverUsages = mutableListOf<LabeledThisContextReceiverUsage>()
         containingFunction.accept(
-            referenceExpressionRecursiveVisitor { referenceExpression ->
-                if (referenceExpression !is KtSimpleNameExpression) return@referenceExpressionRecursiveVisitor
+            object : KtTreeVisitorVoid() {
+                override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+                    implicitContextReceiverUsages.addIfNotNull(
+                        buildImplicitContextUsageInfo(expression, ktContextReceiverSet)
+                    )
+                }
 
-                implicitContextReceiverUsages.addIfNotNull(
-                    buildImplicitContextUsageInfo(referenceExpression, ktContextReceiverSet)
-                )
+                override fun visitThisExpression(expression: KtThisExpression) {
+                    if (expression.labelQualifier == null) return
+                    labeledThisContextReceiverUsages.addIfNotNull(
+                        buildLabeledThisUsageInfo(expression, ktContextReceiverSet)
+                    )
+                }
             }
         )
         val contextNames = findSuggestedContextNames(receivers, containingFunction) ?: createFallbackNames(receivers)
@@ -113,6 +116,7 @@ internal class ContextParametersMigrationInspection :
         return InspectionContext(
             contextNames,
             implicitContextReceiverUsages,
+            labeledThisContextReceiverUsages,
         )
     }
 
@@ -219,6 +223,22 @@ internal class ContextParametersMigrationInspection :
         if (receiverValue !is KaImplicitReceiverValue) return null
         return receiverValue.symbol.psi.takeIf { it in allContextReceivers } as? KtContextReceiver
     }
+
+    private fun KaSession.buildLabeledThisUsageInfo(
+        thisExpression: KtThisExpression,
+        contextReceiverSet: Set<KtContextReceiver>,
+    ): LabeledThisContextReceiverUsage? {
+        val thisExpressionSymbol = thisExpression.instanceReference.mainReference.resolveToSymbol() ?: return null
+        val maybeContextReceiver = thisExpressionSymbol.psi ?: return null
+
+        if (maybeContextReceiver is KtContextReceiver && maybeContextReceiver in contextReceiverSet) {
+            return LabeledThisContextReceiverUsage(
+                thisExpression.createSmartPointer(),
+                maybeContextReceiver.createSmartPointer()
+            )
+        }
+        return null
+    }
 }
 
 /**
@@ -278,23 +298,24 @@ internal class ContextParametersMigrationQuickFix(
         val writableContextReceiversWithNewNames = contextReceiversWithNewNames.mapKeys { (ktReceiver, _) ->
             updater.getWritable(ktReceiver)
         }
-
-        val writableCallElementsForUsages = context.implicitContextUsages.associateWith { usage ->
+        val writableCallElementsForImplicitUsages = context.implicitContextUsages.associateWith { usage ->
             val callElement = usage.callReference.element?.let { ref -> ref.parent as? KtCallExpression ?: ref } ?:return
             updater.getWritable(callElement)
         }
-        // replace usages from inner to outer
-        for (implicitContextUsage in sortedContextUsages(writableCallElementsForUsages)) {
-            val dispatchReceiverContextPsi = implicitContextUsage.dispatchReceiverContextPsi
-            val extensionReceiverContextPsi = implicitContextUsage.extensionReceiverContextPsi
-            val receiverCombination = implicitContextUsage.receiverCombination
-
-            val oldCall = writableCallElementsForUsages[implicitContextUsage] ?: continue
-            val newText = newCallExpressionText(
-                oldCall, receiverCombination, dispatchReceiverContextPsi?.element,
-                extensionReceiverContextPsi?.element, contextReceiversWithNewNames
-            ) ?: continue
-            oldCall.replace(factory.createExpression(newText))
+        val writableLabeledThisUsages = context.labeledThisContextReceiverUsages.associateWith { usage ->
+            usage.callReference.element?.let { updater.getWritable(it) } ?: return
+        }
+        val writableElementsMap = writableCallElementsForImplicitUsages + writableLabeledThisUsages
+        // replace affected elements from inner to outer for correct composite results
+        val sortedElementsToReplace = sortedElementsFromInnerToOuter(
+            context.implicitContextUsages + context.labeledThisContextReceiverUsages,
+            writableElementsMap,
+        )
+        for (implicitContextUsage in sortedElementsToReplace) {
+            val oldElement = writableElementsMap[implicitContextUsage] ?: continue
+            val newElement = implicitContextUsage.provideReplacement(oldElement, factory, contextReceiversWithNewNames)
+                ?: continue
+            oldElement.replace(newElement)
         }
         // replace receivers with parameters
         for ((writableContextReceiver, newName) in writableContextReceiversWithNewNames) {
@@ -309,18 +330,54 @@ internal class ContextParametersMigrationQuickFix(
         }
     }
 
-    private fun sortedContextUsages(
-        writableCallElementsForUsages: Map<ImplicitContextReceiverUsage, KtReferenceExpression>
-    ): List<ImplicitContextReceiverUsage> {
-        return context.implicitContextUsages.sortedWith { a, b ->
-            val firstCallElement = writableCallElementsForUsages.getValue(a)
-            val secondCallElement = writableCallElementsForUsages.getValue(b)
+    private fun sortedElementsFromInnerToOuter(
+        replaceableElementsToSort: List<ReplaceableContextUsage>,
+        referenceElementsMap: Map<in ReplaceableContextUsage, KtExpression>
+    ): List<ReplaceableContextUsage> {
+        return replaceableElementsToSort.sortedWith { a, b ->
+            val firstCallElement = referenceElementsMap.getValue(a)
+            val secondCallElement = referenceElementsMap.getValue(b)
             when {
                 PsiTreeUtil.isAncestor(firstCallElement, secondCallElement, true) -> 1
                 PsiTreeUtil.isAncestor(secondCallElement, firstCallElement, true) -> -1
                 else -> 0
             }
         }
+    }
+}
+
+internal interface ReplaceableContextUsage {
+    fun provideReplacement(
+        oldElement: KtElement,
+        ktPsiFactory: KtPsiFactory,
+        contextReceiversWithNewNames: Map<KtContextReceiver, String>,
+    ): KtElement?
+}
+
+internal class ImplicitContextReceiverUsage(
+    val callReference: SmartPsiElementPointer<KtSimpleNameExpression>,
+    val receiverCombination: ReceiverCombination,
+    val dispatchReceiverContextPsi: SmartPsiElementPointer<KtContextReceiver>?,
+    val extensionReceiverContextPsi: SmartPsiElementPointer<KtContextReceiver>?,
+): ReplaceableContextUsage {
+    override fun toString(): String =
+        """
+            call: ${callReference.element?.text}
+            call type: $receiverCombination
+            dispatch receiver: ${dispatchReceiverContextPsi?.element?.text}
+            extension receiver: ${extensionReceiverContextPsi?.element?.text}
+        """.trimIndent()
+
+    override fun provideReplacement(
+        oldElement: KtElement,
+        ktPsiFactory: KtPsiFactory,
+        contextReceiversWithNewNames: Map<KtContextReceiver, String>,
+    ): KtElement? {
+        val newText = newCallExpressionText(
+            oldElement, receiverCombination, dispatchReceiverContextPsi?.element,
+            extensionReceiverContextPsi?.element, contextReceiversWithNewNames
+        ) ?: return null
+        return ktPsiFactory.createExpression(newText)
     }
 
     private fun newCallExpressionText(
@@ -358,6 +415,27 @@ internal class ContextParametersMigrationQuickFix(
                 val extensionContextName = extensionReceiverContextPsi.contextParameterName() ?: return null
                 "with($dispatchContextName) { $extensionContextName.${oldCall.text} }"
             }
+        }
+    }
+}
+
+internal class LabeledThisContextReceiverUsage(
+    val callReference: SmartPsiElementPointer<KtThisExpression>,
+    val receiverContextPsi: SmartPsiElementPointer<KtContextReceiver>,
+): ReplaceableContextUsage {
+    override fun toString(): String =
+        """
+            this expression: ${callReference.element?.text} 
+            context receiver: ${receiverContextPsi.element?.text}
+            """.trimIndent()
+
+    override fun provideReplacement(
+        oldElement: KtElement,
+        ktPsiFactory: KtPsiFactory,
+        contextReceiversWithNewNames: Map<KtContextReceiver, String>,
+    ): KtElement? {
+        return contextReceiversWithNewNames[receiverContextPsi.element]?.let { newName ->
+            ktPsiFactory.createExpression(newName)
         }
     }
 }
