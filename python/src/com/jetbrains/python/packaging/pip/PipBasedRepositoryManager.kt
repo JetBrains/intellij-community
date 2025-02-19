@@ -128,7 +128,7 @@ internal abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : 
     }
   }
 
-  override suspend fun refreshCashes() {
+  override suspend fun refreshCaches() {
     service<PypiPackageCache>().forceReloadCache()
     service<PythonSimpleRepositoryCache>().refresh()
   }
