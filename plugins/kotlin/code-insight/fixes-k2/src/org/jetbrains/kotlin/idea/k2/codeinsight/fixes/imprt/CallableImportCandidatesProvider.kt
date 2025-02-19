@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinInfixCallPositionCon
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 
@@ -46,24 +47,24 @@ internal class CallableImportCandidatesProvider(
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     override fun collectCandidates(
+        name: Name,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<CallableImportCandidate> {
-        val unresolvedName = positionContext.name
         val explicitReceiver = positionContext.explicitReceiver
         val fileSymbol = getFileSymbol()
 
         val candidates = sequence {
             if (explicitReceiver == null) {
-                yieldAll(indexProvider.getKotlinCallableSymbolsByName(unresolvedName) { declaration ->
+                yieldAll(indexProvider.getKotlinCallableSymbolsByName(name) { declaration ->
                     // filter out extensions here, because they are added later with the use of information about receiver types
                     acceptsKotlinCallable(declaration) &&  (allowInapplicableExtensions || !declaration.isExtensionDeclaration())
                 }.map { CallableImportCandidate.create(it) })
 
-                yieldAll(indexProvider.getJavaMethodsByName(unresolvedName) { acceptsJavaCallable(it) }.map { CallableImportCandidate.create(it) })
-                yieldAll(indexProvider.getJavaFieldsByName(unresolvedName) { acceptsJavaCallable(it) }.map { CallableImportCandidate.create(it) })
+                yieldAll(indexProvider.getJavaMethodsByName(name) { acceptsJavaCallable(it) }.map { CallableImportCandidate.create(it) })
+                yieldAll(indexProvider.getJavaFieldsByName(name) { acceptsJavaCallable(it) }.map { CallableImportCandidate.create(it) })
 
                 yieldAll(
-                    indexProvider.getCallableSymbolsFromSubclassObjects(unresolvedName)
+                    indexProvider.getCallableSymbolsFromSubclassObjects(name)
                         .map { (dispatcherObject, callableSymbol) -> CallableImportCandidate.create(callableSymbol, dispatcherObject) }
                         .filter { allowInapplicableExtensions || !it.symbol.isExtension }
                 )
@@ -77,12 +78,12 @@ internal class CallableImportCandidatesProvider(
                 context is KotlinSimpleNameReferencePositionContext -> {
                     val receiverTypes = collectReceiverTypesForElement(context.nameExpression, context.explicitReceiver)
                     yieldAll(
-                        indexProvider.getExtensionCallableSymbolsByName(unresolvedName, receiverTypes) { acceptsKotlinCallable(it) }
+                        indexProvider.getExtensionCallableSymbolsByName(name, receiverTypes) { acceptsKotlinCallable(it) }
                             .map { CallableImportCandidate.create(it) }
                     )
                     
                     yieldAll(
-                        indexProvider.getExtensionCallableSymbolsFromSubclassObjects(unresolvedName, receiverTypes)
+                        indexProvider.getExtensionCallableSymbolsFromSubclassObjects(name, receiverTypes)
                             .map { (dispatcherObject, callableSymbol) -> CallableImportCandidate.create(callableSymbol, dispatcherObject) }
                     )
                 }

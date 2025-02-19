@@ -7,23 +7,11 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinPropertyDelegatePosi
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.util.OperatorNameConventions
 
+// TODO Get rid of this provider, use CallableImportCandidatesProvider instead
 internal class DelegateMethodImportCandidatesProvider(
-    private val expectedDelegateFunctionSignature: String,
     override val positionContext: KotlinPropertyDelegatePositionContext,
 ) : AbstractImportCandidatesProvider() {
-
-    private val expectedDelegateFunctionName: Name? = listOf(
-        OperatorNameConventions.GET_VALUE,
-        OperatorNameConventions.SET_VALUE,
-    ).singleOrNull { expectedDelegateFunctionSignature.startsWith(it.asString() + "(") }
-
-    private val missingDelegateFunctionNames: List<Name> =
-        listOfNotNull(
-            expectedDelegateFunctionName,
-            OperatorNameConventions.PROVIDE_DELEGATE,
-        )
 
     private fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean {
         if (!kotlinCallable.hasModifier(KtTokens.OPERATOR_KEYWORD)) return false
@@ -33,11 +21,12 @@ internal class DelegateMethodImportCandidatesProvider(
 
     context(KaSession)
     override fun collectCandidates(
+        name: Name,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<CallableImportCandidate> {
         val expressionType = positionContext.propertyDelegate.expression?.expressionType ?: return emptyList()
-        return indexProvider.getExtensionCallableSymbolsByNameFilter(
-            nameFilter = { it in missingDelegateFunctionNames },
+        return indexProvider.getExtensionCallableSymbolsByName(
+            name = name,
             receiverTypes = listOf(expressionType),
         ) { acceptsKotlinCallable(it) }
             .map { CallableImportCandidate.create(it) }
