@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 
 public final class LineMarkersPass extends TextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance(LineMarkersPass.class);
@@ -183,7 +184,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
           catch (IndexNotReadyException e) {
             continue;
           }
-          catch (ProcessCanceledException e) {
+          catch (CancellationException e) {
             throw e;
           }
           catch (Exception e) {
