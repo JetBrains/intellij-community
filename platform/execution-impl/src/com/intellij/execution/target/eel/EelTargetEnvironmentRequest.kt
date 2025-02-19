@@ -204,7 +204,7 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
     override fun download(relativePath: String, progressIndicator: ProgressIndicator) {
       val from = targetRootPath().resolve(relativePath).normalize()
       val to = localRoot.resolve(relativePath).normalize()
-      if (!from.isSameFileAs(to)) return
+      if (from.isSameFileAs(to)) return
       // TODO: generalize com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider.copy
       EelPathUtils.walkingTransfer(from, to, removeSource = false, copyAttributes = true)
     }
