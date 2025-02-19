@@ -40,7 +40,7 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
   public Options PACKAGE_SETTINGS = new Options();
   public Options MODULE_SETTINGS = new Options();
   public Options TOP_LEVEL_CLASS_SETTINGS = new Options("@param");
-  public Options INNER_CLASS_SETTINGS = new Options();
+  public Options INNER_CLASS_SETTINGS = new Options("@param");
   public Options METHOD_SETTINGS = new Options("@return@param@throws or @exception");
   public Options FIELD_SETTINGS = new Options();
 
@@ -73,7 +73,7 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
                                     List.of(PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE), List.of())
           .prefix("FIELD_SETTINGS"),
         INNER_CLASS_SETTINGS.getComponent(JavaBundle.message("inspection.javadoc.option.tab.title.inner.class"),
-                                          List.of(PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE), List.of())
+                                          List.of(PUBLIC, PROTECTED, PACKAGE_LOCAL, PRIVATE), List.of("@param"))
           .prefix("INNER_CLASS_SETTINGS")
       )
     );
@@ -206,10 +206,12 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
     if (docComment != null) {
       PsiDocTag[] tags = docComment.getTags();
 
-      checkRequiredTags(tags, options, docComment.getFirstChild(), holder);
+      PsiElement toHighlight = docComment.getFirstChild();
+      checkRequiredTags(tags, options, toHighlight, holder);
 
       if (options.isTagRequired("param")) {
-        checkMissingTypeParamTags(aClass, tags, docComment.getFirstChild(), holder);
+        checkMissingTypeParamTags(aClass, tags, toHighlight, holder);
+        checkMissingParamTags(aClass, tags, toHighlight, holder);
       }
     }
     else {
@@ -395,6 +397,22 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
     }
   }
 
+  private static void checkMissingParamTags(@NotNull PsiClass aClass,
+                                            PsiDocTag @NotNull [] tags,
+                                            @NotNull PsiElement toHighlight,
+                                            @NotNull ProblemsHolder holder) {
+    if (!aClass.isRecord()) return;
+    List<PsiNamedElement> absentParameters = null;
+
+    for (PsiRecordComponent param : aClass.getRecordComponents()) {
+      if (!hasTagForParameter(tags, param)) {
+        (absentParameters = list(absentParameters)).add(param);
+      }
+    }
+
+    reportMissingParamTags(absentParameters, toHighlight, holder);
+  }
+
   private static void checkMissingParamTags(@NotNull PsiMethod psiMethod,
                                             PsiDocTag @NotNull [] tags,
                                             @NotNull PsiElement toHighlight,
@@ -407,6 +425,12 @@ public final class MissingJavadocInspection extends LocalInspectionTool {
       }
     }
 
+    reportMissingParamTags(absentParameters, toHighlight, holder);
+  }
+
+  private static void reportMissingParamTags(List<PsiNamedElement> absentParameters,
+                                             @NotNull PsiElement toHighlight,
+                                             @NotNull ProblemsHolder holder) {
     if (absentParameters != null) {
       for (PsiNamedElement parameter : absentParameters) {
         String name = parameter.getName();
