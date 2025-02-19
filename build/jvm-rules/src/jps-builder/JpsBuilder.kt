@@ -687,7 +687,13 @@ private fun CoroutineScope.postBuild(
 
   if (outputSink.isChanged || context.scope.isRebuild) {
     launch {
-      writeJarAndAbi(tracer = requestLog.tracer, outputSink = outputSink, outJar = outJar, abiJar = abiJar, sourceDescriptors = sourceDescriptors)
+      writeJarAndAbi(
+        tracer = requestLog.tracer,
+        outputSink = outputSink,
+        outJar = outJar,
+        abiJar = abiJar,
+        sourceDescriptors = sourceDescriptors,
+      )
     }
   }
   else {
