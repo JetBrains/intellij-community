@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.Messages
-import com.intellij.platform.recentFiles.frontend.Switcher
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBList
@@ -93,7 +92,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       restoreByUi()
       test {
         ideFrame {
-          waitComponent(Switcher.SwitcherPanel::class.java)
+          waitComponent(JBListWithOpenInRightSplit::class.java)
         }
         type(prefixes)
       }
@@ -208,8 +207,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
   }
 
   private fun TaskRuntimeContext.checkRecentFilesSearch(expected: String): Boolean {
-    val focusOwner = UIUtil.getParentOfType(Switcher.SwitcherPanel::class.java, focusOwner)
-    return focusOwner != null && checkWordInSearch(expected, focusOwner)
+    return UIUtil.uiParents(focusOwner, false).any { it is JComponent && checkWordInSearch(expected, it) }
   }
 
   private fun TaskRuntimeContext.checkRecentLocationsSearch(expected: String): Boolean {
