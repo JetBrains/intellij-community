@@ -23,14 +23,14 @@ internal abstract class TerminalSearchActionHandler(private val originalHandler:
       doWithBlockController(blockController)
     }
     else if (reworkedController != null) {
-      doWithReworkedController(reworkedController)
+      doWithReworkedController(editor, reworkedController)
     }
     else originalHandler?.execute(editor, caret, dataContext)
   }
 
   abstract fun doWithBlockController(blockController: BlockTerminalController)
 
-  abstract fun doWithReworkedController(searchController: TerminalSearchController)
+  abstract fun doWithReworkedController(editor: Editor, searchController: TerminalSearchController)
 
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
     return editor.isPromptEditor
@@ -48,8 +48,8 @@ internal class TerminalFindHandler() : TerminalSearchActionHandler(originalHandl
     else blockController.startSearchSession()
   }
 
-  override fun doWithReworkedController(searchController: TerminalSearchController) {
-    searchController.startOrActivateSearchSession()
+  override fun doWithReworkedController(editor: Editor, searchController: TerminalSearchController) {
+    searchController.startOrActivateSearchSession(editor)
   }
 }
 
@@ -58,7 +58,7 @@ internal class TerminalFindNextHandler(originalHandler: EditorActionHandler) : T
     blockController.searchSession?.searchForward()
   }
 
-  override fun doWithReworkedController(searchController: TerminalSearchController) {
+  override fun doWithReworkedController(editor: Editor, searchController: TerminalSearchController) {
     searchController.searchForward()
   }
 }
@@ -68,7 +68,7 @@ internal class TerminalFindPreviousHandler(originalHandler: EditorActionHandler)
     blockController.searchSession?.searchBackward()
   }
 
-  override fun doWithReworkedController(searchController: TerminalSearchController) {
+  override fun doWithReworkedController(editor: Editor, searchController: TerminalSearchController) {
     searchController.searchBackward()
   }
 }

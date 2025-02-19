@@ -120,7 +120,7 @@ internal class ReworkedTerminalView(
       withTopAndBottomInsets = true,
     )
 
-    terminalSearchController = TerminalSearchController(project, outputEditor)
+    terminalSearchController = TerminalSearchController(project)
 
     val blocksModel = TerminalBlocksModelImpl(outputEditor.document)
     TerminalBlocksDecorator(outputEditor, blocksModel, scrollingModel, coroutineScope.childScope("TerminalBlocksDecorator"))

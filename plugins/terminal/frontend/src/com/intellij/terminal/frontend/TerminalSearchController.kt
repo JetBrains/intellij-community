@@ -5,16 +5,13 @@ import com.intellij.find.FindManager
 import com.intellij.find.FindModel
 import com.intellij.find.FindUtil
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.concurrent.CopyOnWriteArrayList
 
-internal class TerminalSearchController(
-  private val project: Project,
-  private val editor: EditorEx,
-) {
+internal class TerminalSearchController(private val project: Project) {
   private val listeners = CopyOnWriteArrayList<TerminalSearchControllerListener>()
   private var searchSession: TerminalSearchSession? = null
 
@@ -23,14 +20,14 @@ internal class TerminalSearchController(
   }
 
   @RequiresEdt
-  fun startOrActivateSearchSession() {
+  fun startOrActivateSearchSession(editor: Editor) {
     ThreadingAssertions.assertEventDispatchThread()
     val existingSession = searchSession
     if (existingSession == null) {
-      startSession()
+      startSession(editor)
     }
     else {
-      activateSession(existingSession)
+      existingSession.activate()
     }
   }
 
@@ -42,7 +39,7 @@ internal class TerminalSearchController(
 
   fun hasActiveSession(): Boolean = searchSession != null
 
-  private fun startSession() {
+  private fun startSession(editor: Editor) {
     val findModel = FindModel()
     findModel.copyFrom(FindManager.getInstance(project).findInFileModel)
     findModel.isWholeWordsOnly = false
@@ -58,18 +55,6 @@ internal class TerminalSearchController(
     val session = searchSession ?: return
     listeners.forEach { it.searchSessionFinished(session)}
     searchSession = null
-    // We only need to transfer the focus if the editor is still visible.
-    // There can be several reasons for closing the search,
-    // and in some cases the editor can be hidden (e.g., switching to the alternate buffer).
-    if (editor.contentComponent.isShowing) {
-      editor.contentComponent.requestFocusInWindow()
-    }
-  }
-
-  private fun activateSession(session: TerminalSearchSession) {
-    session.component.requestFocusInTheSearchFieldAndSelectContent(project)
-    FindUtil.configureFindModel(false, editor, session.findModel, false)
-    session.findModel.isGlobal = false
   }
 
   @RequiresEdt
