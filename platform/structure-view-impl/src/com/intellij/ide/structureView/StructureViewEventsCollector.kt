@@ -16,7 +16,7 @@ object StructureViewEventsCollector: CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   private val TAB = EventFields.Enum<StructureViewTab>("tab")
-  private val MODEL_CLASS = EventFields.Class("model.class")
+  private val MODEL_CLASS = EventFields.Class("model_class")
 
 
   private val BUILD_STRUCTURE = GROUP.registerEvent(
