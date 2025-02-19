@@ -14,18 +14,34 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 
-internal open class CallableImportCandidatesProvider(
+internal class CallableImportCandidatesProvider(
     override val positionContext: KotlinNameReferencePositionContext,
     private val allowInapplicableExtensions: Boolean = false,
 ) : AbstractImportCandidatesProvider() {
 
-    protected open fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean =
-        !kotlinCallable.isImported() && kotlinCallable.canBeImported()
+    private fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean =
+        acceptsKotlinCallableAtPosition(kotlinCallable) && !kotlinCallable.isImported() && kotlinCallable.canBeImported()
 
-    protected open fun acceptsJavaCallable(javaCallable: PsiMember): Boolean =
-        !javaCallable.isImported() && javaCallable.canBeImported()
+    private fun acceptsKotlinCallableAtPosition(kotlinCallable: KtCallableDeclaration): Boolean =
+        when (positionContext) {
+            is KotlinInfixCallPositionContext -> kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD)
+            else -> true
+        }
 
-    protected open fun acceptsCallableCandidate(kotlinCallable: CallableImportCandidate): Boolean = true
+    private fun acceptsJavaCallable(javaCallable: PsiMember): Boolean =
+        acceptsJavaCallableAtPosition() && !javaCallable.isImported() && javaCallable.canBeImported()
+
+    private fun acceptsJavaCallableAtPosition(): Boolean =
+        when (positionContext) {
+            is KotlinInfixCallPositionContext -> false
+            else -> true
+        }
+
+    private fun acceptsCallableCandidate(kotlinCallable: CallableImportCandidate): Boolean =
+        when (positionContext) {
+            is KotlinInfixCallPositionContext -> (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isInfix == true
+            else -> true
+        }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
@@ -82,20 +98,5 @@ internal open class CallableImportCandidatesProvider(
             .filter { acceptsCallableCandidate(it) }
             .filter { it.isVisible(visibilityChecker) && it.callableId != null }
             .toList()
-    }
-}
-
-
-internal class InfixCallableImportCandidatesProvider(
-    positionContext: KotlinInfixCallPositionContext,
-) : CallableImportCandidatesProvider(positionContext) {
-
-    override fun acceptsKotlinCallable(kotlinCallable: KtCallableDeclaration): Boolean =
-        kotlinCallable.hasModifier(KtTokens.INFIX_KEYWORD) && super.acceptsKotlinCallable(kotlinCallable)
-
-    override fun acceptsJavaCallable(javaCallable: PsiMember): Boolean = false
-
-    override fun acceptsCallableCandidate(kotlinCallable: CallableImportCandidate): Boolean {
-        return (kotlinCallable.symbol as? KaNamedFunctionSymbol)?.isInfix == true
     }
 }

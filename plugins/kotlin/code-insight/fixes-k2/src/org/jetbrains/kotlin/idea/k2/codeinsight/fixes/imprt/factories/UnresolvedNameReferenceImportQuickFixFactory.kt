@@ -61,7 +61,7 @@ internal class UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQuic
         )
 
         is KotlinInfixCallPositionContext -> sequenceOf(
-            InfixCallableImportCandidatesProvider(positionContext),
+            CallableImportCandidatesProvider(positionContext),
         )
 
         is KDocLinkNamePositionContext -> sequenceOf(
