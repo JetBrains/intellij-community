@@ -42,10 +42,9 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
 /**
  * A non-editable dropdown list component that follows the standard visual styling.
  *
- * Provides a selectable list of items in a dropdown format.
- * When clicked, displays a popup with the list of items.
- * Supports keyboard navigation, item selection, and custom item rendering.
- * The selected item is displayed in the main control.
+ * Provides a selectable list of items in a dropdown format. When clicked, displays a popup with the list of items.
+ * Supports keyboard navigation, item selection, and custom item rendering. The selected item is displayed in the main
+ * control.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
  *
@@ -102,8 +101,7 @@ public fun ListComboBox(
             labelText = items[index]
             onSelectedItemChange(index, items[index])
             scope.launch { listState.lazyListState.scrollToIndex(index) }
-        }
-        else {
+        } else {
             JewelLogger.getInstance("ListComboBox").trace("Ignoring item index $index as it's invalid")
         }
     }
@@ -112,8 +110,7 @@ public fun ListComboBox(
     val popupMaxHeight =
         if (maxPopupHeight == Dp.Unspecified) {
             JewelTheme.comboBoxStyle.metrics.maxPopupHeight
-        }
-        else {
+        } else {
             maxPopupHeight
         }
 
@@ -139,8 +136,7 @@ public fun ListComboBox(
                         popupManager.setPopupVisible(false)
                     }
                     true
-                }
-                else {
+                } else {
                     false
                 }
             },
@@ -197,10 +193,9 @@ public fun ListComboBox(
 /**
  * An editable dropdown list component that follows the standard visual styling.
  *
- * Provides a text field with a dropdown list of suggestions.
- * Users can either select from the list or type their own value.
- * Supports keyboard navigation, item selection, and custom item rendering.
- * The selected or entered text is displayed in the editable text field.
+ * Provides a text field with a dropdown list of suggestions. Users can either select from the list or type their own
+ * value. Supports keyboard navigation, item selection, and custom item rendering. The selected or entered text is
+ * displayed in the editable text field.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
  *
@@ -268,8 +263,7 @@ public fun EditableListComboBox(
             }
             onSelectedItemChange(index, items[index])
             scope.launch { listState.lazyListState.scrollToIndex(index) }
-        }
-        else {
+        } else {
             JewelLogger.getInstance("EditableListComboBox").trace("Ignoring item index $index as it's invalid")
         }
     }
@@ -278,8 +272,7 @@ public fun EditableListComboBox(
     val popupMaxHeight =
         if (maxPopupHeight == Dp.Unspecified) {
             JewelTheme.comboBoxStyle.metrics.maxPopupHeight
-        }
-        else {
+        } else {
             maxPopupHeight
         }
 
