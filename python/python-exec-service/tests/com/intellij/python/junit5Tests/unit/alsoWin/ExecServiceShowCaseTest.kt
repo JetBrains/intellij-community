@@ -23,7 +23,7 @@ import org.junit.jupiter.params.provider.ValueSource
  * How to use [ExecService]
  */
 @TestApplication
-class ExecServiceShowCase {
+class ExecServiceShowCaseTest {
 
   private val eel = localEel // TODO: Check other eels
 
