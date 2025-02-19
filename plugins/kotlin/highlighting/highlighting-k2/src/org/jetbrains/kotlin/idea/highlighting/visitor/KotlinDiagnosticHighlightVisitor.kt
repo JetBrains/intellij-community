@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.idea.highlighting.K2HighlightingBundle
 import org.jetbrains.kotlin.idea.highlighting.analyzers.ignoreIncompleteModeDiagnostics
 import org.jetbrains.kotlin.idea.inspections.suppress.CompilerWarningIntentionAction
 import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningProblemGroup
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector
 import org.jetbrains.kotlin.psi.*
 
@@ -243,7 +244,11 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor, HighlightRangeExtensi
         ) {
             psiElement.saveKaDiagnosticForUnresolvedReference(diagnostic)
             
-            psiElement.reference?.let { ref ->
+            // it's enough to register at least one reference here, because
+            // later on we rely on the underlying PSI element anyway 
+            val mainReference = (psiElement as? KtElement)?.mainReference
+
+            mainReference?.let { ref ->
                 UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, builder)
             }
         }
