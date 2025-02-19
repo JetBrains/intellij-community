@@ -12072,6 +12072,9 @@ f:com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame$Companion
 - f:showIfNoProjectOpened(com.intellij.ide.AppLifecycleListener):V
 - bs:showIfNoProjectOpened$default(com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame$Companion,com.intellij.ide.AppLifecycleListener,I,java.lang.Object):V
 - f:showNow():V
+f:com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil
+- <init>():V
+- s:createToolbarTextButtonAction(com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.ex.CustomComponentAction
 f:com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory
 - <init>():V
 - s:createErrorsLink(com.intellij.openapi.Disposable):javax.swing.JComponent
