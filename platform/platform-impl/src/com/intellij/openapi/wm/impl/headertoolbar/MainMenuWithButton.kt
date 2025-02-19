@@ -39,6 +39,7 @@ class MainMenuWithButton(
       .cell(component = mainMenuButton.button)
     connection.subscribe(ToolbarCompressedNotifier.TOPIC, object : ToolbarCompressedListener {
       override fun onToolbarCompressed(event: ToolbarCompressedEvent) {
+        if (event.toolbar.rootPane != frame.rootPane) return
         recalculateWidth(event.toolbar)
       }
     })
