@@ -16,16 +16,8 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.openapi.module.LanguageLevelUtil;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.roots.impl.FilePropertyPusher;
-import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.pom.java.JavaFeature;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.util.*;
@@ -494,53 +486,5 @@ public final class HighlightUtil {
     if (element instanceof PsiField psiField) return formatField(psiField);
     if (element instanceof PsiLabeledStatement statement) return statement.getName() + ':';
     return ElementDescriptionUtil.getElementDescription(element, HighlightUsagesDescriptionLocation.INSTANCE);
-  }
-
-  static @Nullable HighlightInfo.Builder checkFeature(@NotNull PsiElement element,
-                                                      @NotNull JavaFeature feature,
-                                                      @NotNull LanguageLevel level,
-                                                      @NotNull PsiFile file) {
-    if (!feature.isSufficient(level)) {
-      String message = getUnsupportedFeatureMessage(feature, level, file);
-      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message);
-      registerIncreaseLanguageLevelFixes(file, feature, info);
-      return info;
-    }
-
-    return null;
-  }
-
-  static void registerIncreaseLanguageLevelFixes(@NotNull PsiElement element,
-                                                 @NotNull JavaFeature feature,
-                                                 HighlightInfo.Builder info) {
-    if (info == null) return;
-    for (CommonIntentionAction action : HighlightFixUtil.getIncreaseLanguageLevelFixes(element, feature)) {
-      info.registerFix(action.asIntention(), null, null, null, null);
-    }
-  }
-
-  private static @NotNull @NlsContexts.DetailedDescription String getUnsupportedFeatureMessage(@NotNull JavaFeature feature,
-                                                                                               @NotNull LanguageLevel level,
-                                                                                               @NotNull PsiFile file) {
-    String name = feature.getFeatureName();
-    String version = JavaSdkVersion.fromLanguageLevel(level).getDescription();
-    String message = JavaErrorBundle.message("insufficient.language.level", name, version);
-
-    Module module = ModuleUtilCore.findModuleForPsiElement(file);
-    if (module != null) {
-      LanguageLevel moduleLanguageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
-      if (moduleLanguageLevel.isAtLeast(feature.getMinimumLevel()) && !feature.isLimited()) {
-        for (FilePropertyPusher<?> pusher : FilePropertyPusher.EP_NAME.getExtensionList()) {
-          if (pusher instanceof JavaLanguageLevelPusher javaPusher) {
-            String newMessage = javaPusher.getInconsistencyLanguageLevelMessage(message, level, file);
-            if (newMessage != null) {
-              return newMessage;
-            }
-          }
-        }
-      }
-    }
-
-    return message;
   }
 }
