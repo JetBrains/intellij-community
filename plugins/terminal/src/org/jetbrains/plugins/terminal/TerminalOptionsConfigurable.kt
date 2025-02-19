@@ -19,7 +19,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.UIUtil.setEnabledRecursively
 import org.jetbrains.plugins.terminal.TerminalBundle.message
 import org.jetbrains.plugins.terminal.TerminalUtil.*
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
@@ -53,10 +53,8 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
       panel {
 
         fun updateNewUiEnabledState(isEnabled: Boolean) {
-          for (newUiConfigurable in newTerminalConfigurables) {
-            UIUtil.uiTraverser(newUiConfigurable.component).forEach { component ->
-              component.isEnabled = isEnabled
-            }
+          newTerminalConfigurables.forEach {
+            setEnabledRecursively(it.component, isEnabled)
           }
         }
 
