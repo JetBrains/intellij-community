@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UElement;
@@ -36,7 +37,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQuickFix, I18nQuickFixHandler<T>, HighPriorityAction {
+@ApiStatus.Internal
+public abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQuickFix, I18nQuickFixHandler<T>, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(I18nizeQuickFix.class);
   private static final Set<String> AUXILIARY_WORDS = Set.of("is", "the", "of", "and", "a", "an");
   private final NlsInfo.Localized myInfo;
