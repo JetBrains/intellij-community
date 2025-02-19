@@ -53,7 +53,7 @@ public interface MavenLogEntryReader {
   }
 
   @ApiStatus.Internal
-  public final class MavenLogEntry {
+  final class MavenLogEntry {
     public final @Nullable LogMessageType myType;
     public final @NotNull String myLine;
 
