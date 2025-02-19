@@ -4,7 +4,7 @@
             defaultValue="true"
             description="Enables support for Analysis API-based resolution during dumb mode."
             key="kotlin.analysis.allowRestrictedAnalysis"
-            restartRequired="false"
+            restartRequired="true"
     />
 
     <applicationService
