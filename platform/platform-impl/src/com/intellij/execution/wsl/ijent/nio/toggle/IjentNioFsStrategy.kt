@@ -31,6 +31,8 @@ class IjentWslNioFsToggleStrategy(
 ) {
   internal val enabledInDistros: MutableSet<WSLDistribution> = ContainerUtil.newConcurrentSet()
 
+  private val providersCache = ContainerUtil.createConcurrentWeakMap<String, IjentWslNioFileSystemProvider>()
+
   init {
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       unregisterAll()
@@ -87,22 +89,17 @@ class IjentWslNioFsToggleStrategy(
       // Nothing.
     }
 
-    recomputeEel(distro) { underlyingProvider, previousFs ->
-      if (previousFs is IjentWslNioFileSystem) {
-        LOG.debug {
-          "Tried to switch $distro to IJent WSL nio.FS, but it had already been so. The old filesystem: $previousFs"
-        }
-        previousFs
-      }
-      else {
-        val fileSystem = IjentWslNioFileSystemProvider(
+    recomputeEel(distro) { underlyingProvider, _ ->
+      val fileSystemProvider = providersCache.computeIfAbsent(distro.id) {
+        IjentWslNioFileSystemProvider(
           wslDistribution = distro,
           ijentFsProvider = ijentFsProvider,
           originalFsProvider = TracingFileSystemProvider(underlyingProvider),
-        ).getFileSystem(distro.getUNCRootPath().toUri())
-        LOG.info("Switching $distro to IJent WSL nio.FS: $fileSystem")
-        fileSystem
+        )
       }
+      val fileSystem = fileSystemProvider.getFileSystem(distro.getUNCRootPath().toUri())
+      LOG.info("Switching $distro to IJent WSL nio.FS: $fileSystem")
+      fileSystem
     }
   }
 
@@ -128,12 +125,14 @@ private fun FileSystemProvider.getLocalFileSystem(): FileSystem = getFileSystem(
 
 private val LOG = logger<IjentWslNioFsToggleStrategy>()
 
-private const val wslLegacyPrefix = "wsl$"
-private const val wslPrefix = "wsl.localhost"
-
 private val WSLDistribution.roots: Set<String>
-  get() = getWindowsPath("/").let { base ->
-    setOf(base, base.replace(wslPrefix, wslLegacyPrefix), base.replace(wslLegacyPrefix, wslPrefix))
+  get() {
+    val localRoots = mutableSetOf(getWindowsPath("/"))
+    localRoots.single().let {
+      localRoots += it.replace("wsl.localhost", "wsl$")
+      localRoots += it.replace("wsl$", "wsl.localhost")
+    }
+    return localRoots
   }
 
 private fun recomputeEel(

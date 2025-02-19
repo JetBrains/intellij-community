@@ -75,9 +75,24 @@ class IjentWslNioPath(
   override fun equals(other: Any?): Boolean = when {
     this === other -> true
     other !is IjentWslNioPath -> false
-    else -> fileSystem == other.fileSystem && delegate == other.delegate
+    else -> this wslPathEqual other
   }
 
   override fun hashCode(): Int =
     fileSystem.hashCode() + 31 * delegate.hashCode()
+}
+
+internal infix fun IjentWslNioPath.wslPathEqual(other: IjentWslNioPath): Boolean {
+  if (fileSystem != other.fileSystem) {
+    return false
+  }
+
+  val delegateIter = delegate.iterator()
+  val otherDelegateIter = other.delegate.iterator()
+  while (delegateIter.hasNext() && otherDelegateIter.hasNext()) {
+    if (delegateIter.next() != otherDelegateIter.next()) {
+      return false
+    }
+  }
+  return !delegateIter.hasNext() && !otherDelegateIter.hasNext()
 }
