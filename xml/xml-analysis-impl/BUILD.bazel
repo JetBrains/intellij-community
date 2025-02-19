@@ -17,7 +17,6 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/core-impl",
     "//xml/xml-analysis-api:analysis",
-    "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
     "//xml/xml-parser:parser",
     "//platform/editor-ui-api:editor-ui",

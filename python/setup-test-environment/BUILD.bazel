@@ -10,11 +10,11 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/util",
     "//python/openapi:community",
-    "//platform/testFramework",
     "//python/python-sdk:sdk",
     "//platform/execution",
     "@lib//:kotlin-reflect",
     "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
   ]
 )
 ### auto-generated section `build intellij.python.community.testFramework.testEnv` end

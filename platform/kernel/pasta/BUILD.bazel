@@ -1,20 +1,15 @@
-### auto-generated section `build intellij.platform.kernel` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
-
-jvm_resources(
-  name = "kernel_resources",
-  files = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+### auto-generated section `build intellij.platform.pasta` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "kernel",
-  module_name = "intellij.platform.kernel",
+  name = "pasta",
+  module_name = "intellij.platform.pasta",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/kernel/rpc",
+    "//fleet/andel",
     "//fleet/kernel",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-collections-immutable",
@@ -24,12 +19,11 @@ jvm_library(
     "//platform/util",
     "//platform/ide-core",
     "//platform/util/coroutines",
-    "//platform/kernel/pasta",
   ],
   exports = [
     "//platform/kernel/rpc",
+    "//fleet/andel",
     "//fleet/kernel",
-  ],
-  runtime_deps = [":kernel_resources"]
+  ]
 )
-### auto-generated section `build intellij.platform.kernel` end
+### auto-generated section `build intellij.platform.pasta` end

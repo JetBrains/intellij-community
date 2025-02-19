@@ -34,6 +34,7 @@ jvm_library(
     "//platform/core-ui",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
+    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
   ],
   runtime_deps = [":features-trainer_resources"]
 )

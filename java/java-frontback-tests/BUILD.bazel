@@ -28,7 +28,6 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//java/testFramework/shared:java-testFramework-shared",
-    "//java/java-impl:impl",
   ]
 )
 

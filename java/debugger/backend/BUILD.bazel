@@ -23,6 +23,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "//java/debugger/shared:java-debugger-impl-shared",
     "//platform/kernel/rpc.backend:rpc-backend",
+    "//java/debugger/impl:java-debugger-impl",
   ],
   runtime_deps = [":java-debugger-impl-backend_resources"]
 )

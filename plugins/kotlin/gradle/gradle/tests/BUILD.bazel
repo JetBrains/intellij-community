@@ -47,7 +47,7 @@ jvm_library(
     "//plugins/kotlin/idea",
     "//plugins/kotlin/idea/tests:kotlin-idea-tests",
     "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
-    "//plugins/kotlin/jvm",
+    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
     "//plugins/kotlin/migration",
     "//plugins/kotlin/inspections",
     "//plugins/kotlin/gradle/code-insight-groovy:kotlin-gradle-code-insight-groovy",

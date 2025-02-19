@@ -43,7 +43,7 @@ jvm_library(
     "//plugins/kotlin/idea",
     "//plugins/kotlin/idea/tests:kotlin-idea-tests",
     "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
-    "//plugins/kotlin/jvm",
+    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
     "//plugins/kotlin/formatter",
     "//plugins/kotlin/maven",
     "//plugins/kotlin/tests-common",

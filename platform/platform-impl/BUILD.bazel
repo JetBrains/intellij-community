@@ -133,6 +133,7 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/platform-impl/ui:ide-ui",
     "//platform/buildData",
+    "//platform/kernel/pasta",
   ],
   exports = [
     "//platform/platform-api:ide",
@@ -276,6 +277,7 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/platform-impl/ui:ide-ui",
     "//platform/buildData",
+    "//platform/kernel/pasta",
   ],
   runtime_deps = [":ide-impl_resources"]
 )

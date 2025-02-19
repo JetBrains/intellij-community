@@ -31,7 +31,7 @@ jvm_library(
     "//plugins/kotlin/core",
     "//plugins/kotlin/frontend-independent:fir-frontend-independent",
     "//plugins/kotlin/idea",
-    "//plugins/kotlin/jvm",
+    "//plugins/kotlin/jvm/shared:kotlin-jvm-shared",
     "//plugins/IntelliLang:langInjection",
     "//platform/lang-impl",
   ],
