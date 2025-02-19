@@ -4,6 +4,7 @@ package com.intellij.platform.eel.provider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.NonNls
@@ -66,6 +67,19 @@ interface EelNioBridgeService {
 fun EelPath.asNioPath(): Path {
   return asNioPathOrNull()
          ?: throw IllegalArgumentException("Could not convert $this to nio.Path: the corresponding provider for $descriptor is not registered in ${EelNioBridgeService::class.simpleName}")
+}
+
+fun EelPath.asNioPathOrNull(project: Project): Path? {
+  if (descriptor === LocalEelDescriptor) {
+    return Path.of(toString())
+  }
+  val service = EelNioBridgeService.getInstanceSync()
+  val root = service.tryGetNioRoots(descriptor)!!
+    .single {
+      it.root.toString().trimEnd('/', '\\') == Path.of(project.basePath).root.toString().trimEnd('/', '\\')
+    }
+
+  return parts.fold(root, Path::resolve)
 }
 
 fun EelPath.asNioPathOrNull(): Path? {

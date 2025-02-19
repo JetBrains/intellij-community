@@ -7,7 +7,7 @@ import java.nio.file.attribute.UserPrincipalLookupService
 /**
  * See [IjentWslNioFileSystemProvider].
  */
-class IjentWslNioFileSystem(
+class IjentWslNioFileSystem internal constructor(
   private val provider: IjentWslNioFileSystemProvider,
   internal val wslId: String,
   private val ijentFs: FileSystem,
