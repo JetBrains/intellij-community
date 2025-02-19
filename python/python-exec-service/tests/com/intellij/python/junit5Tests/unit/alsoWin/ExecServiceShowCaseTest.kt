@@ -63,7 +63,7 @@ class ExecServiceShowCaseTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun tesSunnyDay(useLocalPath: Boolean): Unit = timeoutRunBlocking {
+  fun testSunnyDay(useLocalPath: Boolean): Unit = timeoutRunBlocking {
     val execService = ExecService()
 
     val expectedPhrase = "Usage"
