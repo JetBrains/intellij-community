@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.gson.JsonParseException;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SmartList;
@@ -18,7 +19,9 @@ import org.jetbrains.io.JsonUtil;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -137,7 +140,27 @@ public final class RegionUrlMapper {
   }
 
   private static @NotNull CompletableFuture<@NotNull RegionMapping> tryLoadMappingOrEmpty(@NotNull Region region) {
-    return loadMapping(region).exceptionally(t -> RegionMapping.empty());
+    return loadMapping(region).exceptionally(t -> {
+      while (t instanceof CompletionException) {
+        t = t.getCause();
+      }
+      if (t instanceof CancellationException ||
+          t instanceof ControlFlowException) {
+        LOG.debug("Loading regional URL mappings interrupted (using non-regional URL as fallback): " + t);
+      }
+      else if (t instanceof IOException) {
+        // legitimate failure when using the IDE offline; just log it without the stack trace
+        LOG.info("Failed to fetch regional URL mappings (using non-regional URL as fallback): " + t);
+      }
+      else if (t instanceof JsonParseException) {
+        LOG.warn("Failed to parse regional URL mappings (using non-regional URL as fallback): " + t);
+      }
+      else {
+        // never suppress errors indicating programmatic bugs or an IDE misconfiguration
+        LOG.error("Failed to load regional URL mappings (using non-regional URL as fallback)", t);
+      }
+      return RegionMapping.empty();
+    });
   }
 
   /**
@@ -150,16 +173,10 @@ public final class RegionUrlMapper {
     return ourCache.get(region);
   }
 
-  private static @NotNull RegionMapping doLoadMappingOrThrow(@NotNull Region reg) throws IOException {
+  private static @NotNull RegionMapping doLoadMappingOrThrow(@NotNull Region reg) throws IOException, JsonParseException {
     String configUrl = getConfigUrl(reg);
-    try {
-      String json = HttpRequests.request(configUrl).readString();
-      return RegionMapping.fromJson(json);
-    }
-    catch (Throwable e) {
-      LOG.info("Failed to load region-specific url mappings: " + e);
-      throw e;
-    }
+    String json = HttpRequests.request(configUrl).readString();
+    return RegionMapping.fromJson(json);
   }
 
   private static @NotNull String getConfigUrl(@NotNull Region reg) {
