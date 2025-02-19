@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.task.impl.ProjectTaskManagerImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 
@@ -86,19 +87,20 @@ internal class CompilationDependenciesResolutionTask : CompileTask {
   companion object {
     private val log = thisLogger()
   }
+}
 
-  /**
-   * Provides a way to opt out of this pre-compile task when it does not provide any values,
-   * e.g., in Bazel plugin where Bazel resolves all the external dependencies.
-   *
-   * [related issue](https://youtrack.jetbrains.com/issue/IDEA-367562/CompilationDependenciesResolutionTask-takes-40s-in-a-project-with-no-maven-libraries-registered)
-   */
-  interface DisableCompilationDependenciesResolutionTask {
-    companion object {
-      val EP_NAME: ExtensionPointName<DisableCompilationDependenciesResolutionTask> =
-        ExtensionPointName.create("com.intellij.disableCompilationDependenciesResolutionTask")
-    }
-
-    fun shouldDisable(project: Project): Boolean
+/**
+ * Provides a way to opt out of this pre-compile task when it does not provide any values,
+ * e.g., in Bazel plugin where Bazel resolves all the external dependencies.
+ *
+ * [related issue](https://youtrack.jetbrains.com/issue/IDEA-367562/CompilationDependenciesResolutionTask-takes-40s-in-a-project-with-no-maven-libraries-registered)
+ */
+@ApiStatus.Experimental
+interface DisableCompilationDependenciesResolutionTask {
+  companion object {
+    val EP_NAME: ExtensionPointName<DisableCompilationDependenciesResolutionTask> =
+      ExtensionPointName.create("com.intellij.disableCompilationDependenciesResolutionTask")
   }
+
+  fun shouldDisable(project: Project): Boolean
 }
