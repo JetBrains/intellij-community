@@ -385,7 +385,7 @@ private fun getIgnoredNames(): Set<String> {
    * merging build politic breaks Graal VM Truffle-based plugins in an inconsistant way, so it's better
    * to provide a correctly merged version in plugin.
    */
-  set.add("META-INF/services/com.oracle.truffle.api.TruffleLanguage${'$'}Provider")
+  set.add("META-INF/services/com.oracle.truffle.api.provider.TruffleLanguageProvider")
   return java.util.Set.copyOf(set)
 }
 
