@@ -8,7 +8,9 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
+import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import kotlin.reflect.KClass
 
@@ -64,3 +66,18 @@ fun PsiElement.saveKaDiagnosticForUnresolvedReference(diagnostic: KaDiagnosticWi
 fun PsiElement.clearSavedKaDiagnosticsForUnresolvedReference() {
     relevantDiagnosticClasses = emptySet()
 }
+
+/* 
+Utils below are required to overcome poorly selected PSI elements 
+on UnresolvedReference diagnostics for complex assignments (like `+=`).
+
+See KT-75331 for more info. 
+*/
+
+@get:ApiStatus.Internal
+val PsiElement.operationReferenceForBinaryExpressionOrThis: PsiElement
+    get() = (this as? KtBinaryExpression)?.operationReference ?: this
+
+@get:ApiStatus.Internal
+val PsiElement.binaryExpressionForOperationReference: KtBinaryExpression?
+    get() = (this as? KtOperationReferenceExpression)?.parent as? KtBinaryExpression
