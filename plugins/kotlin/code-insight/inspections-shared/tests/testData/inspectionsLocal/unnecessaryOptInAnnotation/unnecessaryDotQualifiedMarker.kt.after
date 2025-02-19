@@ -1,0 +1,5 @@
+object Foo {
+    @RequiresOptIn annotation class Bar
+}
+
+val x = null
