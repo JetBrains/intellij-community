@@ -13,11 +13,6 @@ CSV_FORMAT_SEPARATOR = '~'
 is_pd = False
 try:
     import pandas as pd
-
-    version = pd.__version__
-    majorVersion = int(version[0])
-    pd.set_option('display.max_colwidth', None)
-    is_pd = majorVersion >= 1
     is_pd = True
 except:
     pass
@@ -357,11 +352,9 @@ def __compute_data(arr, fun, format=None):
 
 def __get_tables_display_options():
     # type: () -> Tuple[None, Union[int, None], None]
-    import sys
-    if sys.version_info < (3, 0):
-        return None, MAX_COLWIDTH, None
     try:
         import pandas as pd
+        # In pandas versions earlier than 1.0, max_colwidth must be set as an integer
         if int(pd.__version__.split('.')[0]) < 1:
             return None, MAX_COLWIDTH, None
     except Exception:
