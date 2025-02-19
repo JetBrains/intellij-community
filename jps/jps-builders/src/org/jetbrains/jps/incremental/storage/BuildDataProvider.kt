@@ -3,9 +3,7 @@ package org.jetbrains.jps.incremental.storage
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.builders.BuildTarget
-import org.jetbrains.jps.builders.BuildTargetType
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping
-import org.jetbrains.jps.incremental.storage.dataTypes.LibraryRoots
 
 @ApiStatus.Internal
 interface BuildDataProvider {
@@ -17,15 +15,13 @@ interface BuildDataProvider {
 
   fun getOutputToTargetMapping(): OutputToTargetMapping
 
-  fun removeStaleTarget(targetId: String, targetType: BuildTargetType<*>)
+  fun removeStaleTarget(targetId: String, targetTypeId: String)
 
   fun clearCache()
 
-  fun getLibraryRoots(): LibraryRoots
+  fun removeAllMaps()
 
-  fun wipeStorage()
-
-  fun flushStorage(memoryCachesOnly: Boolean)
+  fun commit()
 
   fun closeTargetMaps(target: BuildTarget<*>)
 
