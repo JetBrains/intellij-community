@@ -1223,13 +1223,6 @@
 
     <daemon.intentionActionFilter implementation="com.intellij.psi.IntentionFilterOwnerActionFilter"/>
 
-    <projectConfigurable groupId="tools"
-                         provider="com.intellij.execution.startup.ProjectStartupConfigurable$ProjectStartupConfigurableProvider"
-                         bundle="messages.ExecutionBundle"
-                         key="configurable.ProjectStartupConfigurable.display.name"
-                         id="preferences.startup.tasks" nonDefaultProject="true"/>
-    <postStartupActivity implementation="com.intellij.execution.startup.ProjectStartupRunner"/>
-
     <applicationService serviceInterface="com.intellij.remote.ext.CredentialsManager"
                         serviceImplementation="com.intellij.remote.ext.CredentialsManagerImpl"/>
 
@@ -1497,8 +1490,6 @@
     <notificationGroup id="IDE-errors" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.ide.errors"
                        isLogByDefault="false"/>
     <notificationGroup id="System Clipboard" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.system.clipboard"/>
-    <notificationGroup id="Project Startup Tasks Messages" displayType="NONE" bundle="messages.ExecutionBundle"
-                       key="notification.group.startup.task"/>
     <notificationGroup id="scrolling-capabilities-debug" displayType="NONE" hideFromSettings="true"/>
     <notificationGroup id="URL does not respond notification" displayType="BALLOON" bundle="messages.IdeBundle"
                        key="browser.notification.timeout.group"/>
