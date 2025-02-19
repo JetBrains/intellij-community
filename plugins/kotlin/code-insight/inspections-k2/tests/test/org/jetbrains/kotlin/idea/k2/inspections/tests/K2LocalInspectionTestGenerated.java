@@ -12731,6 +12731,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/multipleContexts.kt");
         }
 
+        @TestMetadata("partiallyApplied.kt")
+        public void testPartiallyApplied() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/partiallyApplied.kt");
+        }
+
         @TestMetadata("passContextToContext.kt")
         public void testPassContextToContext() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/passContextToContext.kt");
@@ -12754,6 +12759,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("unchangedThisReference.kt")
         public void testUnchangedThisReference() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/unchangedThisReference.kt");
+        }
+
+        @TestMetadata("valueParameterDefault.kt")
+        public void testValueParameterDefault() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/contextParametersMigration/valueParameterDefault.kt");
         }
     }
 
