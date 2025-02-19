@@ -102,8 +102,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "-XX:CompileCommand=exclude,org.jetbrains.kotlin.serialization.deserialization.TypeDeserializer::toAttributes",
       )
     // b/373746515: K2 mode
-    // TODO(b/377539365): revert this after branching
-    enableKotlinPluginK2ByDefault()
+    // enableKotlinPluginK2ByDefault()
 
     productLayout.productImplementationModules = listOf(
       // From IdeaCommunityProperties:
