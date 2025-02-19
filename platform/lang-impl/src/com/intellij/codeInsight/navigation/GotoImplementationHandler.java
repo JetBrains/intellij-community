@@ -10,7 +10,6 @@ import com.intellij.codeInsight.daemon.NavigateAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
-import com.intellij.codeInsight.navigation.impl.TargetPresentationBuilderImpl;
 import com.intellij.lang.LangBundle;
 import com.intellij.model.Pointer;
 import com.intellij.model.psi.impl.UtilKt;

@@ -15,7 +15,6 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField.FindAction;
