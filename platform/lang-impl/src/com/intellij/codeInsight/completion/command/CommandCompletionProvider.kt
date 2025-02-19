@@ -117,7 +117,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
         override fun accepts(t: String, context: ProcessingContext?): Boolean {
           return !isReadOnly && commandCompletionType.suffix + t ==
                  commandCompletionFactory.suffix() + commandCompletionFactory.filterSuffix().toString() ||
-                 isReadOnly && commandCompletionType.suffix.toString() + t == commandCompletionFactory.filterSuffix().toString()
+                 isReadOnly && commandCompletionType.suffix + t == commandCompletionFactory.filterSuffix().toString()
         }
       }))
 
@@ -275,7 +275,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
 internal class CommandCompletionUnsupportedOperationException
   : UnsupportedOperationException("It's unexpected to invoke this method on a command completion calculating.")
 
-private class MyEditor(psiFileCopy: PsiFile, private val settings: EditorSettings) : ImaginaryEditor(psiFileCopy.project,
+internal class MyEditor(psiFileCopy: PsiFile, private val settings: EditorSettings) : ImaginaryEditor(psiFileCopy.project,
                                                                                                      psiFileCopy.viewProvider.document!!) {
   override fun notImplemented(): RuntimeException = throw CommandCompletionUnsupportedOperationException()
 

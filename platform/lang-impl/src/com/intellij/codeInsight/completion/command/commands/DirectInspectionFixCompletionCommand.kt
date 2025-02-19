@@ -36,6 +36,7 @@ internal class DirectInspectionFixCompletionCommand(
   override val priority: Int?,
   override val icon: Icon?,
   override val highlightInfo: HighlightInfoLookup,
+  private val targetOffset: Int,
 ) : CompletionCommand() {
 
   override val i18nName: @Nls String
@@ -46,7 +47,7 @@ internal class DirectInspectionFixCompletionCommand(
     val injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.project)
     val topLevelFile = injectedLanguageManager.getTopLevelFile(psiFile)
     val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
-    val topLevelOffset = injectedLanguageManager.injectedToHost(psiFile, offset)
+    val topLevelOffset = injectedLanguageManager.injectedToHost(psiFile, targetOffset)
     val isInjected = topLevelFile != psiFile
 
     val action: IntentionAction? = runWithModalProgressBlocking(psiFile.project, message("scanning.scope.progress.title")) {
@@ -70,7 +71,7 @@ internal class DirectInspectionFixCompletionCommand(
                       })
           }
           else {
-            val textRange = getLineRange(psiFile, offset)
+            val textRange = getLineRange(psiFile, targetOffset)
             InspectionEngine.inspectElements(listOf(inspectionTool), psiFile, textRange, true, true, indicator,
                                              PsiTreeUtil.collectElements(psiFile) { it.textRange.intersects(textRange) }.toList(), fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
               return true
@@ -89,7 +90,7 @@ internal class DirectInspectionFixCompletionCommand(
             val fixes = descriptor.fixes ?: continue
             for (i in 0..fixes.size - 1) {
               val intentionAction = wrap(descriptor, i)
-              if (intentionAction.text == name && availableFor(psiFile, editor, offset, intentionAction)) {
+              if (intentionAction.text == name && availableFor(psiFile, editor, targetOffset, intentionAction)) {
                 return@readAction intentionAction
               }
             }
@@ -100,6 +101,14 @@ internal class DirectInspectionFixCompletionCommand(
       return@runWithModalProgressBlocking result
     }
     if (action == null) return
+    val marker = editor.document.createRangeMarker(offset, offset)
+    editor.caretModel.moveToOffset(targetOffset)
     ShowIntentionActionsHandler.chooseActionAndInvoke(topLevelFile, topLevelEditor, action, name)
+    if (marker.isValid) {
+      editor.caretModel.moveToOffset(marker.endOffset)
+    }
+    else {
+      editor.caretModel.moveToOffset(offset)
+    }
   }
 }
