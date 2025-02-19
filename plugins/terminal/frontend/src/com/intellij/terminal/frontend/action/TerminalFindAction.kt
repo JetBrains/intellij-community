@@ -3,4 +3,4 @@ package com.intellij.terminal.frontend.action
 
 import org.jetbrains.plugins.terminal.block.TerminalPromotedEditorAction
 
-internal class TerminalFindAction : TerminalPromotedEditorAction(TerminalFindHandler())
+internal class TerminalFindAction : TerminalPromotedEditorAction(TerminalFindHandler(originalHandler = null))

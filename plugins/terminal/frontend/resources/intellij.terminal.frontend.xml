@@ -11,6 +11,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <actionPromoter implementation="com.intellij.terminal.frontend.action.SendShortcutToTerminalActionPromoter"/>
 
+    <editorActionHandler action="Find" implementationClass="com.intellij.terminal.frontend.action.TerminalFindHandler"
+                         id="terminalFind" order="first"/>
     <editorActionHandler action="FindNext" implementationClass="com.intellij.terminal.frontend.action.TerminalFindNextHandler"
                          id="terminalFindNext" order="first"/>
     <editorActionHandler action="FindPrevious" implementationClass="com.intellij.terminal.frontend.action.TerminalFindPreviousHandler"

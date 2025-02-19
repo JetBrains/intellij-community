@@ -41,7 +41,7 @@ internal abstract class TerminalSearchActionHandler(private val originalHandler:
   }
 }
 
-internal class TerminalFindHandler() : TerminalSearchActionHandler(originalHandler = null) {
+internal class TerminalFindHandler(originalHandler: EditorActionHandler?) : TerminalSearchActionHandler(originalHandler) {
   override fun doWithBlockController(blockController: BlockTerminalController) {
     if (blockController.searchSession != null) {
       blockController.activateSearchSession()
