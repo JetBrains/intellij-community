@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -12,7 +13,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.Icon
 
-internal object GHPRTimelineUIUtil {
+@ApiStatus.Internal
+object GHPRTimelineUIUtil {
   fun getName(pullRequest: GHPRIdentifier): @NlsSafe String = "#${pullRequest.number}"
   fun getPresentableName(project: Project, repository: GHRepositoryCoordinates, pullRequest: GHPRIdentifier): @NlsSafe String =
     findDetails(project, repository, pullRequest)?.let { "${it.title} ${getName(pullRequest)}" } ?: getName(pullRequest)

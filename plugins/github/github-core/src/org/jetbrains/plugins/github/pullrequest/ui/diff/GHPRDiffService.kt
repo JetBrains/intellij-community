@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewThreadsReloadAction
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -37,8 +38,9 @@ import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateDiffChangeViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateDiffViewModel
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-internal class GHPRDiffService(private val project: Project, parentCs: CoroutineScope) {
+class GHPRDiffService(private val project: Project, parentCs: CoroutineScope) {
   private val cs = parentCs.childScope(javaClass.name, Dispatchers.Main)
 
   fun createGHPRDiffProcessor(repository: GHRepositoryCoordinates, pullRequest: GHPRIdentifier): DiffEditorViewer {

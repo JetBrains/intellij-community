@@ -17,6 +17,7 @@ import com.intellij.util.ui.SingleComponentCenteringLayout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -29,7 +30,8 @@ import java.awt.LayoutManager
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal object GHPRTimelineComponentFactory {
+@ApiStatus.Internal
+object GHPRTimelineComponentFactory {
   fun create(
     project: Project, cs: CoroutineScope,
     projectVm: GHPRConnectedProjectViewModel, timelineVm: GHPRTimelineViewModel,
