@@ -1051,7 +1051,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testDictFromTuple() {
-    doTest("Dict[Union[str, int], Union[str, int]]",
+    doTest("Dict[Union[str, int], Union[int, str]]",
            "expr = dict((('1', 1), (2, 2), (3, '3')))");
   }
 
@@ -1662,9 +1662,9 @@ public class PyTypeTest extends PyTestCase {
 
     doTest("Dict[int, bool]", "expr = {1: False}");
 
-    doTest("Dict[Union[str, int], Union[str, int]]", "expr = {'1': 1, 1: '1', 1: 1}");
+    doTest("Dict[Union[str, int], Union[int, str]]", "expr = {'1': 1, 1: '1', 1: 1}");
 
-    doTest("Dict[Union[Union[str, int], Any], Union[Union[str, int], Any]]",
+    doTest("Dict[Union[Union[str, int], Any], Union[Union[int, str], Any]]",
            "expr = {'1': 1, 1: '1', 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1}");
   }
 
@@ -3980,7 +3980,7 @@ public class PyTypeTest extends PyTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> {
-        doTest("A",
+        doTest("type[A]",
                """
                  from typing import TypedDict
                  A = TypedDict('A', {'x': int}, total=False)

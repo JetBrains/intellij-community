@@ -334,14 +334,14 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @return string representation of the type
    */
   public static @NotNull @NlsSafe String getTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return buildTypeModel(type, context).asString();
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context, false)).toString();
   }
 
   /**
    * Returns the provided type in PEP 484 compliant format.
    */
   public static @NotNull String getTypeHint(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return buildTypeModel(type, context).asPep484TypeHint();
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.TypeHint(context)).toString();
   }
 
   /**
@@ -353,7 +353,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * such as bounds for TypeVar types in ' ≤: *bound*' format
    */
   public static @NotNull String getVerboseTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return buildTypeModel(type, context).asStringWithAdditionalInfo();
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.VerboseDocumentation(context)).toString();
   }
 
   /**
@@ -378,7 +378,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
         return;
       }
     }
-    buildTypeModel(type, context).toBodyWithLinks(body, anchor);
+    body.append(PyTypeVisitor.visit(type, new PyTypeRenderer.RichDocumentation(context, anchor)));
   }
 
   /**
@@ -388,11 +388,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * {@code Any} is excluded from {@code Union[Any, ...]}-like types.
    */
   public static @NotNull String getTypeDescription(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return buildTypeModel(type, context).asDescription();
-  }
-
-  private static @NotNull PyTypeModelBuilder.TypeModel buildTypeModel(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return new PyTypeModelBuilder(context).build(type, true);
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context, true)).toString();
   }
 
   static @NotNull HtmlChunk describeDecorators(@NotNull PyDecoratable decoratable,
