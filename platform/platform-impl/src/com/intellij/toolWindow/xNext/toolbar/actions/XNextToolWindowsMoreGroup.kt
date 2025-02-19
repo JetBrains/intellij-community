@@ -5,10 +5,17 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.actions.ToolWindowsGroup
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionWrapper
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManager
@@ -62,42 +69,45 @@ internal class XNextToolWindowsMoreGroup : ActionGroup(), DumbAware {
       override fun update(e: AnActionEvent) {
         super.update(e)
         e.presentation.isVisible = e.presentation.isVisible && e.presentation.isEnabled
-        e.presentation.putClientProperty(ActionUtil.INLINE_ACTIONS, listOf(PinAction(action.toolWindowId)))
+        e.presentation.putClientProperty(ActionUtil.INLINE_ACTIONS, listOf(TogglePinAction(action.toolWindowId)))
       }
     }
   }
 }
 
-internal class PinAction(val toolWindowId: String):  DumbAwareToggleAction(){
-
+internal open class TogglePinActionBase(val toolWindowId: String)
+  : DumbAwareAction(UIBundle.message("xnext.action.pin.tab.tooltip")) {
   init {
     templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfPreferred
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
-  override fun isSelected(e: AnActionEvent): Boolean {
-    val project = e.project ?: return false
-    val mng = XNextToolbarManager.getInstance(project)
-    return mng.isPinned(toolWindowId)
-  }
-
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
+  override fun update(e: AnActionEvent) {
     val project = e.project ?: return
     val mng = XNextToolbarManager.getInstance(project)
-    mng.setPinned(toolWindowId, state)
-  }
+    val pinned = mng.isPinned(toolWindowId)
 
-  override fun update(e: AnActionEvent) {
-    val pinned = isSelected(e)
-
-    e.presentation.description = if (pinned)
+    Toggleable.setSelected(e.presentation, pinned)
+    e.presentation.text = if (pinned)
       UIBundle.message("xnext.action.unpin.tab.tooltip")
     else
       UIBundle.message("xnext.action.pin.tab.tooltip")
+  }
 
-    e.presentation.icon = if (!pinned) null else AllIcons.General.PinSelected
-    e.presentation.selectedIcon = if (!pinned) null else AllIcons.General.PinSelectedHovered
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
+    val mng = XNextToolbarManager.getInstance(project)
+    mng.setPinned(toolWindowId, !Toggleable.isSelected(e.presentation))
+  }
+}
+
+internal class TogglePinAction(toolWindowId: String) : TogglePinActionBase(toolWindowId) {
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    val pinned = Toggleable.isSelected(e.presentation)
+    e.presentation.icon = if (!pinned) AllIcons.General.Pin else AllIcons.General.PinSelected
+    e.presentation.selectedIcon = if (!pinned) AllIcons.General.PinHovered else AllIcons.General.PinSelectedHovered
     e.presentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_INLINE_ACTION, pinned)
   }
 }
