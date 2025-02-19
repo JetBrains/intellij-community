@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,6 +133,28 @@ public final class JavaPsiSwitchUtil {
       }
     }
     return SelectorKind.CLASS_OR_ARRAY;
+  }
+
+  /**
+   * @param block switch block to check
+   * @return true if the block contains at least one case label (including default)
+   */
+  @Contract(pure = true)
+  public static boolean hasAnyCaseLabels(@NotNull PsiSwitchBlock block) {
+    PsiCodeBlock body = block.getBody();
+    if (body == null) return false;
+    for (PsiElement st = body.getFirstChild(); st != null; st = st.getNextSibling()) {
+      if (!(st instanceof PsiSwitchLabelStatementBase)) continue;
+      PsiSwitchLabelStatementBase labelStatement = (PsiSwitchLabelStatementBase)st;
+      if (labelStatement.isDefaultCase()) {
+        return true;
+      }
+      PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
+      if (labelElementList != null && labelElementList.getElementCount() > 0) {
+        return true;
+      }
+    }
+    return false;
   }
 
 
