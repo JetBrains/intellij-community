@@ -80,6 +80,7 @@ internal fun generateDeps(
 
       if (dependencyModuleName == "intellij.libraries.compose.desktop" ||
           dependencyModuleName == "intellij.libraries.compose.foundation.desktop" ||
+          dependencyModuleName == "intellij.android.adt.ui.compose" ||
           dependencyModuleName == "intellij.platform.jewel.markdown.ideLafBridgeStyling" ||
           dependencyModuleName == "intellij.ml.llm.libraries.compose.runtime" ||
           dependencyModuleName == "intellij.platform.jewel.foundation") {
