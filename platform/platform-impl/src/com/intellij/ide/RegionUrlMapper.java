@@ -157,7 +157,7 @@ public final class RegionUrlMapper {
       return RegionMapping.fromJson(json);
     }
     catch (Throwable e) {
-      LOG.info("Failed to load region-specific url mappings : " + e.getMessage());
+      LOG.info("Failed to load region-specific url mappings: " + e);
       throw e;
     }
   }
