@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.file;
 
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -123,10 +124,9 @@ public final class PsiPackageImplementationHelperImpl extends PsiPackageImplemen
     if (window != null) {
       window.activate(null);
     }
-    final ProjectView projectView = ProjectView.getInstance(project);
     PsiDirectory[] directories = suggestMostAppropriateDirectories(psiPackage);
     if (directories.length == 0) return;
-    projectView.select(directories[0], directories[0].getVirtualFile(), requestFocus);
+    PsiNavigationSupport.getInstance().navigateToDirectory(directories[0], requestFocus);
   }
 
   @VisibleForTesting
