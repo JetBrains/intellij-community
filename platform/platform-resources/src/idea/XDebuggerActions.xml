@@ -208,6 +208,7 @@
     </group>
 
     <group id="XDebugger.Touchbar.Debug">
+      <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
       <separator text="type.small"/>
       <reference ref="XDebugger.MuteBreakpoints"/>
       <add-to-group group-id="TouchBarDebug" anchor="after" relative-to-action="Stop"/>
