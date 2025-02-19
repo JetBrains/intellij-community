@@ -21,7 +21,6 @@ private val logger = logger<MixedModeProcessTransitionStateMachine>()
  * It takes the work of synchronizing debuggers and solving conflicts (like low-level breakpoint is hit while a managed step over is active).
  * Start state is OnlyLowStarted, finish state is Exited
  */
-@Suppress("SSBasedInspection")
 internal class MixedModeProcessTransitionStateMachine(
   private val low: XDebugProcess,
   private val high: XDebugProcess,
@@ -323,7 +322,7 @@ internal class MixedModeProcessTransitionStateMachine(
             logger.info("We've met a native stop (breakpoint or other kind) while resuming. Now managed resume is completed, " +
                         "but the event thread is stopped by a low level debugger. Need to pause the process completely if that's possible")
 
-            val canStopHere = /*withContext(stateMachineHelperScope.coroutineContext)*/run { highExtension.canStopHere(currentState.low) }
+            val canStopHere = highExtension.canStopHere(currentState.low)
             if (canStopHere)
               handlePauseEventWhenBothRunning()
             else {
