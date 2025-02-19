@@ -26,6 +26,14 @@ object StatisticsUtil {
     }
   }
 
+  fun addAutomatedPluginVersionTo(info: PluginInfo, data: MutableMap<String, Any>) {
+    if (!info.type.isSafeToReport()) return
+    val version = info.version
+    if (!version.isNullOrEmpty()) {
+      data["automated_plugin_version"] = version
+    }
+  }
+
   /**
    * Anonymizes sensitive project properties by rounding it to the next power of two.
    *

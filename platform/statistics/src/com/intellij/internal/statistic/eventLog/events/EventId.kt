@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.function.Consumer
+import kotlin.collections.plus
+import kotlin.collections.toList
 
 abstract class BaseEventId(val eventId: String, val recorder: String, val description: String?) {
   @ApiStatus.ScheduledForRemoval
@@ -19,6 +21,17 @@ abstract class BaseEventId(val eventId: String, val recorder: String, val descri
   internal fun getLogger(): StatisticsEventLogger = StatisticsEventLogProviderUtil.getEventLogProvider(recorder).logger
 
   abstract fun getFields(): List<EventField<*>>
+
+  protected fun EventLogGroup.extendFeatureUsageData(fuData: FeatureUsageData) {
+    groupData.forEach { (_, appendData) ->
+      fuData.appendData()
+    }
+  }
+
+  protected fun EventLogGroup.extendEventFields(eventFields: List<EventField<*>>): List<EventField<*>> {
+    if (groupData.isEmpty()) return eventFields
+    return (mutableListOf<EventField<*>>() + groupData.map { it.first } + eventFields).toList()
+  }
 }
 
 class EventId(
@@ -28,18 +41,32 @@ class EventId(
 ) : BaseEventId(eventId, group.recorder, description) {
 
   fun log() {
-    getLogger().logAsync(group, eventId, false)
+    if (group.groupData.isEmpty()) {
+      getLogger().logAsync(group, eventId, false)
+    } else {
+      val data = FeatureUsageData(group.recorder)
+      group.extendFeatureUsageData(data)
+      getLogger().logAsync(group, eventId, data.build(), false)
+    }
   }
 
   fun log(project: Project?) {
+    val data = FeatureUsageData(group.recorder)
+    group.extendFeatureUsageData(data)
     getLogger().logAsync(group, eventId, FeatureUsageData(group.recorder).addProject(project).build(), false)
   }
 
   fun metric(): MetricEvent {
-    return MetricEvent(eventId, null, group.recorder)
+    return if (group.groupData.isEmpty()) {
+      MetricEvent(eventId, null, group.recorder)
+    } else {
+      val data = FeatureUsageData(group.recorder)
+      group.extendFeatureUsageData(data)
+      MetricEvent(eventId, data, group.recorder)
+    }
   }
 
-  override fun getFields(): List<EventField<*>> = emptyList()
+  override fun getFields(): List<EventField<*>> = group.extendEventFields(emptyList())
 
   override fun toString(): String {
     return "EventId(eventId='$eventId')"
@@ -67,11 +94,12 @@ class EventId1<in T>(
 
   private fun buildUsageData(value1: T): FeatureUsageData {
     val data = FeatureUsageData(group.recorder)
+    group.extendFeatureUsageData(data)
     field1.addData(data, value1)
     return data
   }
 
-  override fun getFields(): List<EventField<*>> = listOf(field1)
+  override fun getFields(): List<EventField<*>> = group.extendEventFields(listOf(field1))
 
   override fun toString(): String {
     return "EventId1(eventId='$eventId')"
@@ -100,12 +128,13 @@ class EventId2<in T1, in T2>(
 
   private fun buildUsageData(value1: T1, value2: T2): FeatureUsageData {
     val data = FeatureUsageData(group.recorder)
+    group.extendFeatureUsageData(data)
     field1.addData(data, value1)
     field2.addData(data, value2)
     return data
   }
 
-  override fun getFields(): List<EventField<*>> = listOf(field1, field2)
+  override fun getFields(): List<EventField<*>> = group.extendEventFields(listOf(field1, field2))
 
   override fun toString(): String {
     return "EventId2(eventId='$eventId')"
@@ -135,13 +164,14 @@ class EventId3<in T1, in T2, in T3>(
 
   private fun buildUsageData(value1: T1, value2: T2, value3: T3): FeatureUsageData {
     val data = FeatureUsageData(group.recorder)
+    group.extendFeatureUsageData(data)
     field1.addData(data, value1)
     field2.addData(data, value2)
     field3.addData(data, value3)
     return data
   }
 
-  override fun getFields(): List<EventField<*>> = listOf(field1, field2, field3)
+  override fun getFields(): List<EventField<*>> = group.extendEventFields(listOf(field1, field2, field3))
 
   override fun toString(): String {
     return "EventId3(eventId='$eventId')"
@@ -215,6 +245,7 @@ class VarargEventId internal constructor(
 
   private fun buildUsageData(pairs: List<EventPair<*>>): FeatureUsageData {
     val data = FeatureUsageData(group.recorder)
+    group.extendFeatureUsageData(data)
     for (pair in pairs) {
       if (pair.field !in fields) throw IllegalArgumentException("Field ${pair.field.name} not in fields for event ID $eventId")
       @Suppress("UNCHECKED_CAST")
@@ -223,7 +254,7 @@ class VarargEventId internal constructor(
     return data
   }
 
-  override fun getFields(): List<EventField<*>> = fields.toList()
+  override fun getFields(): List<EventField<*>> = group.extendEventFields(fields)
 
   override fun toString(): String {
     return "VarargEventId(eventId='$eventId')"
