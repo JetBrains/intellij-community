@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl
 import com.intellij.openapi.editor.impl.softwrap.EmptySoftWrapPainter
@@ -78,11 +79,7 @@ internal class ReworkedTerminalView(
     terminalInput = TerminalInput(sessionFuture, sessionModel, coroutineScope.childScope("TerminalInput"))
 
     alternateBufferEditor = createAlternateBufferEditor(settings, parentDisposable = this)
-    val alternateBufferModel = TerminalOutputModelImpl(
-      alternateBufferEditor.document,
-      maxOutputLength = 0,
-      WriteActionTerminalDocumentChangesApplier()
-    )
+    val alternateBufferModel = TerminalOutputModelImpl(alternateBufferEditor.document, maxOutputLength = 0)
     configureOutputEditor(
       project,
       editor = alternateBufferEditor,
@@ -97,11 +94,7 @@ internal class ReworkedTerminalView(
     )
 
     outputEditor = createOutputEditor(settings, parentDisposable = this)
-    val outputModel = TerminalOutputModelImpl(
-      outputEditor.document,
-      maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength(),
-      WriteActionTerminalDocumentChangesApplier()
-    )
+    val outputModel = TerminalOutputModelImpl(outputEditor.document, maxOutputLength = TerminalUiUtils.getDefaultMaxOutputLength())
     val scrollingModel = TerminalOutputScrollingModelImpl(outputEditor, outputModel, coroutineScope.childScope("TerminalOutputScrollingModel"))
     configureOutputEditor(
       project,
@@ -273,7 +266,7 @@ internal class ReworkedTerminalView(
   }
 
   private fun createOutputEditor(settings: JBTerminalSystemSettingsProviderBase, parentDisposable: Disposable): EditorEx {
-    val document = createDocument()
+    val document = DocumentImpl("", true)
     val editor = createEditor(document, settings)
     editor.putUserData(TerminalDataContextUtils.IS_OUTPUT_MODEL_EDITOR_KEY, true)
     editor.settings.isUseSoftWraps = true
@@ -287,7 +280,7 @@ internal class ReworkedTerminalView(
   }
 
   private fun createAlternateBufferEditor(settings: JBTerminalSystemSettingsProviderBase, parentDisposable: Disposable): EditorEx {
-    val document = createDocument()
+    val document = DocumentImpl("", true)
     val editor = createEditor(document, settings)
     editor.putUserData(TerminalDataContextUtils.IS_ALTERNATE_BUFFER_MODEL_EDITOR_KEY, true)
     editor.useTerminalDefaultBackground(parentDisposable = this)
@@ -309,10 +302,6 @@ internal class ReworkedTerminalView(
     result.softWrapModel.applianceManager.setLineWrapPositionStrategy(TerminalLineWrapPositionStrategy())
     result.softWrapModel.applianceManager.setSoftWrapsUnderScrollBar(true)
     return result
-  }
-
-  private fun createDocument(): Document {
-    return EditorFactory.getInstance().createDocument("")
   }
 
   override fun dispose() {}

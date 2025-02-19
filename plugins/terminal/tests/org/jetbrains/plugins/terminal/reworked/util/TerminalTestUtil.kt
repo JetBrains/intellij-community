@@ -2,19 +2,18 @@
 package org.jetbrains.plugins.terminal.reworked.util
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.terminal.session.StyleRange
 import com.intellij.terminal.session.TerminalOutputModelState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
-import org.jetbrains.plugins.terminal.block.reworked.WriteActionTerminalDocumentChangesApplier
 
 internal object TerminalTestUtil {
   fun createOutputModel(maxLength: Int = 0): TerminalOutputModelImpl {
-    val document = EditorFactory.getInstance().createDocument("")
-    return TerminalOutputModelImpl(document, maxLength, WriteActionTerminalDocumentChangesApplier())
+    val document = DocumentImpl("", true)
+    return TerminalOutputModelImpl(document, maxLength)
   }
 
   suspend fun TerminalOutputModel.update(absoluteLineIndex: Int, text: String, styles: List<StyleRange> = emptyList()) {
