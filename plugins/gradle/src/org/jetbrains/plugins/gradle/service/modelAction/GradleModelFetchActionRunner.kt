@@ -13,6 +13,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionRunner.Companion.runBuildAction
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import org.jetbrains.plugins.gradle.statistics.GradleSyncCollector
+import java.util.*
 
 /**
  * This class handles setting up and running the [BuildActionExecuter] it deals with calling the correct APIs based on the version of
@@ -68,7 +69,11 @@ class GradleModelFetchActionRunner private constructor(
    * Creates the [BuildActionExecuter] to be used to run the [GradleModelFetchAction].
    */
   private fun runPhasedBuildAction(resultHandler: GradleModelFetchActionResultHandlerBridge) {
-    if(Registry.`is`("gradle.declarative.preimport.only")) return
+    try {
+      if(Registry.`is`("gradle.declarative.preimport.only")) return
+    } catch (_: MissingResourceException) {
+      // plugin is disabled
+    }
     modelFetchAction.isUseProjectsLoadedPhase = true
     connection.action()
       .projectsLoaded(modelFetchAction, resultHandler.asProjectLoadedResultHandler())
