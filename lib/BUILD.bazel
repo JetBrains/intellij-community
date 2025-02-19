@@ -754,8 +754,8 @@ java_import(
 
 java_import(
   name = "caffeine",
-  jars = ["@caffeine-3_1_8_http//file"],
-  srcjar = "@caffeine-3_1_8-sources_http//file",
+  jars = ["@caffeine-3_2_0_http//file"],
+  srcjar = "@caffeine-3_2_0-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
