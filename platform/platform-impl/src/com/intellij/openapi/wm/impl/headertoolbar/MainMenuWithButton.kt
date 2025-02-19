@@ -22,7 +22,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentLinkedDeque
 import javax.swing.Icon
 import javax.swing.JFrame
-import javax.swing.JMenu
 
 class MainMenuWithButton(
   val coroutineScope: CoroutineScope, private val frame: JFrame,
@@ -101,9 +100,9 @@ class MainMenuWithButton(
           toolbarMainMenu.add(item)
         }
         toolbarMainMenu.rootMenuItems.forEach { it.updateUI() }
-        toolbar.revalidate()
-        toolbar.repaint()
       }
+      toolbar.revalidate()
+      toolbar.repaint()
     }
   }
 

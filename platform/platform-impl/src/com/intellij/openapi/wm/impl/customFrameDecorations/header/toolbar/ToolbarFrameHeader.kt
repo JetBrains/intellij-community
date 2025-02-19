@@ -319,11 +319,11 @@ internal class ToolbarFrameHeader(
         toolbarPlaceholder.add(newToolbar, BorderLayout.CENTER)
       }
 
+      mainMenuWithButton.recalculateWidth(newToolbar)
       newToolbar.revalidate()
       newToolbar.repaint()
       toolbarPlaceholder.revalidate()
       toolbarPlaceholder.repaint()
-      mainMenuWithButton.recalculateWidth(toolbar)
       this@ToolbarFrameHeader.revalidate()
       this@ToolbarFrameHeader.repaint()
     }
