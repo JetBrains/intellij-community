@@ -133,6 +133,8 @@ final class StartupTest {
           latch.await(LOAD_TIMEOUT_SEC, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
           LOG.error(e);
+        } finally {
+          client.dispose();
         }
         if (latch.getCount() > 0) {
           LOG.error(String.format("Startup JCEF test is failed (lc=%d), out-of-process mode is disabled.", (int)latch.getCount()));
