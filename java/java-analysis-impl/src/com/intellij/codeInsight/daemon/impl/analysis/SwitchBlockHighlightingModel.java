@@ -12,7 +12,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.JavaPsiSwitchUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,8 +33,7 @@ import java.util.function.Consumer;
 import static java.util.Objects.requireNonNull;
 
 public class SwitchBlockHighlightingModel {
-  static final @NotNull Object UNCONDITIONAL_PATTERN = ObjectUtils.sentinel("UNCONDITIONAL_PATTERN");
-  static final @NotNull Object DEFAULT_VALUE = ObjectUtils.sentinel("DEFAULT_VALUE");
+
   final @NotNull LanguageLevel myLevel;
   final @NotNull PsiSwitchBlock myBlock;
   final @NotNull PsiExpression mySelector;
@@ -86,7 +86,7 @@ public class SwitchBlockHighlightingModel {
     PsiCodeBlock body = myBlock.getBody();
     if (body == null) return;
 
-    MultiMap<Object, PsiElement> elementsToCheckDuplicates = getElementsToCheckDuplicates(myBlock);
+    MultiMap<Object, PsiElement> elementsToCheckDuplicates = JavaPsiSwitchUtil.getValuesAndLabels(myBlock);
 
     if (checkDuplicates(elementsToCheckDuplicates, errorSink)) {
       return;
@@ -115,40 +115,11 @@ public class SwitchBlockHighlightingModel {
     return false;
   }
 
-  static @NotNull MultiMap<Object, PsiElement> getElementsToCheckDuplicates(@NotNull PsiSwitchBlock block) {
-    MultiMap<Object, PsiElement> elementsToCheckDuplicates = new MultiMap<>();
-    PsiCodeBlock body = block.getBody();
-    if (body == null) return elementsToCheckDuplicates;
-    PsiExpression selector = block.getExpression();
-    if (selector == null) return elementsToCheckDuplicates;
-    PsiType selectorType = selector.getType();
-    if (selectorType == null) return elementsToCheckDuplicates;
-    for (PsiStatement st : body.getStatements()) {
-      if (!(st instanceof PsiSwitchLabelStatementBase labelStatement)) continue;
-      if (labelStatement.isDefaultCase()) {
-        elementsToCheckDuplicates.putValue(DEFAULT_VALUE, requireNonNull(labelStatement.getFirstChild()));
-        continue;
-      }
-      PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
-      if (labelElementList == null) continue;
-      for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
-        fillElementsToCheckDuplicates(elementsToCheckDuplicates, labelElement, selectorType);
-      }
-    }
-    return elementsToCheckDuplicates;
-  }
-
   static @Nullable PsiEnumConstant getEnumConstant(@Nullable PsiElement element) {
     if (element instanceof PsiReferenceExpression referenceExpression &&
         referenceExpression.resolve() instanceof PsiEnumConstant enumConstant) {
       return enumConstant;
     }
-    return null;
-  }
-
-  static @Nullable String evaluateEnumConstantName(@NotNull PsiReferenceExpression expr) {
-    PsiEnumConstant enumConstant = getEnumConstant(expr);
-    if (enumConstant != null) return enumConstant.getName();
     return null;
   }
 
@@ -160,63 +131,15 @@ public class SwitchBlockHighlightingModel {
     return JavaPsiFacade.getInstance(constant.getProject()).getConstantEvaluationHelper().computeConstantExpression(constant, false);
   }
 
-  private static void fillElementsToCheckDuplicates(@NotNull MultiMap<Object, PsiElement> elements,
-                                                    @NotNull PsiCaseLabelElement labelElement,
-                                                    @NotNull PsiType selectorType) {
-    if (labelElement instanceof PsiExpression expr) {
-      if (expr instanceof PsiReferenceExpression ref) {
-        String enumConstName = evaluateEnumConstantName(ref);
-        if (enumConstName != null) {
-          elements.putValue(enumConstName, labelElement);
-          return;
-        }
-      }
-      Object operand = evaluateConstant(labelElement);
-      if (operand != null) {
-        if (operand instanceof Boolean booleanOperand &&
-            JavaPsiSwitchUtil.getSwitchSelectorKind(selectorType) == JavaPsiSwitchUtil.SelectorKind.BOOLEAN) {
-          elements.putValue(booleanOperand.booleanValue(), labelElement);
-        }
-        else {
-          elements.putValue(ConstantExpressionUtil.computeCastTo(operand, selectorType), labelElement);
-        }
-      }
-      if (labelElement instanceof PsiLiteralExpression literalExpression && literalExpression.getType() == PsiTypes.nullType()) {
-        elements.putValue(null, labelElement);
-      }
-    }
-    else if (labelElement instanceof PsiDefaultCaseLabelElement) {
-      elements.putValue(DEFAULT_VALUE, labelElement);
-    }
-    else if (JavaPsiPatternUtil.isUnconditionalForType(labelElement, selectorType)) {
-      elements.putValue(UNCONDITIONAL_PATTERN, labelElement);
-    }
-  }
-
   static boolean checkDuplicates(@NotNull MultiMap<Object, PsiElement> values, Consumer<? super HighlightInfo.Builder> errorSink) {
     boolean reported = false;
     for (Map.Entry<Object, Collection<PsiElement>> entry : values.entrySet()) {
       if (entry.getValue().size() <= 1) continue;
       Object duplicateKey = entry.getKey();
-      MultiMap<PsiEnumConstant, PsiElement> psiByEnums = new MultiMap<>();
       for (PsiElement duplicateElement : entry.getValue()) {
-        PsiEnumConstant constant = getEnumConstant(duplicateElement);
-        if (constant != null) {
-          psiByEnums.putValue(constant, duplicateElement);
-          continue;
-        }
         HighlightInfo.Builder info = createDuplicateInfo(duplicateKey, duplicateElement);
         errorSink.accept(info);
         reported = true;
-      }
-      //No two of the case constants associated with a switch block may have the same value. (enum is constant here)
-      for (Map.Entry<PsiEnumConstant, Collection<PsiElement>> references : psiByEnums.entrySet()) {
-        if (references.getValue().size() <= 1) continue;
-        for (PsiElement referenceToEnum : references.getValue()) {
-          HighlightInfo.Builder info = createDuplicateInfo(duplicateKey, referenceToEnum);
-          errorSink.accept(info);
-          reported = true;
-        }
       }
     }
     return reported;
@@ -226,13 +149,12 @@ public class SwitchBlockHighlightingModel {
   private static HighlightInfo.Builder createDuplicateInfo(@Nullable Object duplicateKey, @NotNull PsiElement duplicateElement) {
     String description = createDuplicateDescription(duplicateKey, duplicateElement);
     HighlightInfo.Builder info = createError(duplicateElement, description);
-    PsiSwitchLabelStatementBase labelStatement = PsiTreeUtil.getParentOfType(duplicateElement, PsiSwitchLabelStatementBase.class);
-    if (labelStatement != null && labelStatement.isDefaultCase()) {
-      IntentionAction action = getFixFactory().createDeleteDefaultFix(null, duplicateElement);
+    if (duplicateElement instanceof PsiCaseLabelElement caseLabel) {
+      IntentionAction action = getFixFactory().createDeleteSwitchLabelFix(caseLabel);
       info.registerFix(action, null, null, null, null);
     }
-    else {
-      IntentionAction action = getFixFactory().createDeleteSwitchLabelFix((PsiCaseLabelElement)duplicateElement);
+    else if (duplicateKey == JavaPsiSwitchUtil.SwitchSpecialValue.DEFAULT_VALUE) {
+      IntentionAction action = getFixFactory().createDeleteDefaultFix(null, duplicateElement);
       info.registerFix(action, null, null, null, null);
     }
     return info;
@@ -309,7 +231,7 @@ public class SwitchBlockHighlightingModel {
     List<PsiCaseLabelElement> labelElements =
       ContainerUtil.filterIsInstance(SwitchUtils.getSwitchBranches(switchBlock), PsiCaseLabelElement.class);
     if (labelElements.isEmpty()) return Collections.emptySet();
-    MultiMap<Object, PsiElement> duplicateCandidates = getElementsToCheckDuplicates(switchBlock);
+    MultiMap<Object, PsiElement> duplicateCandidates = JavaPsiSwitchUtil.getValuesAndLabels(switchBlock);
 
     Set<PsiElement> result = new SmartHashSet<>();
 
@@ -339,21 +261,21 @@ public class SwitchBlockHighlightingModel {
   }
 
   private static @NotNull @Nls String createDuplicateDescription(@Nullable Object duplicateKey, @NotNull PsiElement duplicateElement) {
-    String description;
-    if (duplicateKey == DEFAULT_VALUE) {
-      description = JavaErrorBundle.message("duplicate.default.switch.label");
+    if (duplicateKey instanceof JavaPsiSwitchUtil.SwitchSpecialValue specialValue) {
+      return switch (specialValue) {
+        case UNCONDITIONAL_PATTERN -> JavaErrorBundle.message("duplicate.unconditional.pattern.label");
+        case DEFAULT_VALUE -> JavaErrorBundle.message("duplicate.default.switch.label");
+        case NULL_VALUE -> JavaErrorBundle.message("duplicate.switch.label", PsiKeyword.NULL);
+      };
     }
-    else if (duplicateKey == UNCONDITIONAL_PATTERN) {
-      description = JavaErrorBundle.message("duplicate.unconditional.pattern.label");
+    else if (duplicateKey instanceof PsiEnumConstant constant) {
+      return JavaErrorBundle.message("duplicate.switch.label", constant.getName());
+    }
+    else if (duplicateElement instanceof PsiLiteralExpression literalExpression) {
+      return JavaErrorBundle.message("duplicate.switch.label", literalExpression.getValue());
     }
     else {
-      if (duplicateElement instanceof PsiLiteralExpression literalExpression) {
-        description = JavaErrorBundle.message("duplicate.switch.label", literalExpression.getValue());
-      }
-      else {
-        description = JavaErrorBundle.message("duplicate.switch.label", duplicateKey);
-      }
+      return JavaErrorBundle.message("duplicate.switch.label", duplicateKey);
     }
-    return description;
   }
 }

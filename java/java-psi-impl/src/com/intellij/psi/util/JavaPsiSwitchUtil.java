@@ -4,13 +4,17 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Utility methods to support switch
@@ -157,6 +161,84 @@ public final class JavaPsiSwitchUtil {
     return false;
   }
 
+  private static @Nullable PsiEnumConstant getEnumConstant(@Nullable PsiElement element) {
+    if (element instanceof PsiReferenceExpression) {
+      return ObjectUtils.tryCast(((PsiReferenceExpression)element).resolve(), PsiEnumConstant.class);
+    }
+    return null;
+  }
+
+  private static void addValueLabel(@NotNull MultiMap<Object, PsiElement> elements,
+                                    @NotNull PsiCaseLabelElement labelElement,
+                                    @NotNull PsiType selectorType) {
+    if (labelElement instanceof PsiExpression) {
+      PsiExpression expr = (PsiExpression)labelElement;
+      if (expr instanceof PsiReferenceExpression) {
+        PsiEnumConstant enumConstant = getEnumConstant(expr);
+        if (enumConstant != null) {
+          elements.putValue(enumConstant, labelElement);
+          return;
+        }
+      }
+      Object operand = JavaPsiFacade.getInstance(labelElement.getProject()).getConstantEvaluationHelper()
+        .computeConstantExpression(labelElement, false);
+      if (operand != null) {
+        if (operand instanceof Boolean &&
+            getSwitchSelectorKind(selectorType) == SelectorKind.BOOLEAN) {
+          elements.putValue(((Boolean)operand).booleanValue(), labelElement);
+        }
+        else {
+          Object casted = ConstantExpressionUtil.computeCastTo(operand, selectorType);
+          if (casted != null) {
+            elements.putValue(casted, labelElement);
+          }
+        }
+      }
+      else if (labelElement instanceof PsiLiteralExpression && ((PsiLiteralExpression)labelElement).getType() == PsiTypes.nullType()) {
+        elements.putValue(SwitchSpecialValue.NULL_VALUE, labelElement);
+      }
+    }
+    else if (labelElement instanceof PsiDefaultCaseLabelElement) {
+      elements.putValue(SwitchSpecialValue.DEFAULT_VALUE, labelElement);
+    }
+    else if (JavaPsiPatternUtil.isUnconditionalForType(labelElement, selectorType)) {
+      elements.putValue(SwitchSpecialValue.UNCONDITIONAL_PATTERN, labelElement);
+    }
+  }
+
+  /**
+   * @param block switch block to analyze
+   * @return a map where keys are switch constants and values are the corresponding PSI elements 
+   * (either {@link PsiCaseLabelElement}, or 'default' keyword). 
+   * Some special values listed in {@link SwitchSpecialValue} enum could be returned as well. 
+   * Pattern labels are ignored and not returned by this method.
+   * It's useful to check for duplicate branches: if a single constant is mapped to more than one PSI element, then such a switch
+   * is not well-formed.
+   */
+  public static @NotNull MultiMap<Object, PsiElement> getValuesAndLabels(@NotNull PsiSwitchBlock block) {
+    MultiMap<Object, PsiElement> elementsToCheckDuplicates = new MultiMap<>();
+    PsiCodeBlock body = block.getBody();
+    if (body == null) return elementsToCheckDuplicates;
+    PsiExpression selector = block.getExpression();
+    if (selector == null) return elementsToCheckDuplicates;
+    PsiType selectorType = selector.getType();
+    if (selectorType == null) return elementsToCheckDuplicates;
+    for (PsiStatement st : body.getStatements()) {
+      if (!(st instanceof PsiSwitchLabelStatementBase)) continue;
+      PsiSwitchLabelStatementBase labelStatement = (PsiSwitchLabelStatementBase)st;
+      if (labelStatement.isDefaultCase()) {
+        elementsToCheckDuplicates.putValue(SwitchSpecialValue.DEFAULT_VALUE, requireNonNull(labelStatement.getFirstChild()));
+        continue;
+      }
+      PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
+      if (labelElementList == null) continue;
+      for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
+        addValueLabel(elementsToCheckDuplicates, labelElement, selectorType);
+      }
+    }
+    return elementsToCheckDuplicates;
+  }
+
 
   /**
    * Kinds of switch selector
@@ -201,5 +283,23 @@ public final class JavaPsiSwitchUtil {
     public @Nullable JavaFeature getFeature() {
       return myFeature;
     }
+  }
+
+  /**
+   * Special values for switch labels that could be returned from {@link #getValuesAndLabels(PsiSwitchBlock)}
+   */
+  public enum SwitchSpecialValue {
+    /**
+     * Unconditional pattern
+     */
+    UNCONDITIONAL_PATTERN,
+    /**
+     * Default value (either default branch, or case default if supported)
+     */
+    DEFAULT_VALUE,
+    /**
+     * Null value (like 'case null')
+     */
+    NULL_VALUE
   }
 }

@@ -57,7 +57,7 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
     PsiCodeBlock body = myBlock.getBody();
     if (body == null) return;
 
-    MultiMap<Object, PsiElement> elementsToCheckDuplicates = getElementsToCheckDuplicates(myBlock);
+    MultiMap<Object, PsiElement> elementsToCheckDuplicates = JavaPsiSwitchUtil.getValuesAndLabels(myBlock);
 
     if (checkDuplicates(elementsToCheckDuplicates, errorSink)) {
       return;
