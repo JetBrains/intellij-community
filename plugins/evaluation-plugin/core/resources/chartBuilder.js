@@ -288,8 +288,8 @@ function populateSankeyChart(chart, structure) {
     nodePadding: 45,
     nodeWidth: 3,
     priority: {},
-    colorFrom: (c) => getColorFrom(c.dataset.data[c.dataIndex].from),
-    colorTo: (c) => getColorTo(c.dataset.data[c.dataIndex].to),
+    colorFrom: (column) => getColorFrom((column && column.dataset.data[column.dataIndex] && column.dataset.data[column.dataIndex].from) || "undefined"),
+    colorTo: (column) => getColorTo((column && column.dataset.data[column.dataIndex] && column.dataset.data[column.dataIndex].to) || "undefined")
   }]
 
   chart.update()

@@ -152,9 +152,9 @@ private val Lookup.analyzedFilteredDebugMessagesList: List<List<String>>
     ((mapItem["second"] as? List<String>) ?: emptyList<String>()).take(1)
   }
 
-private data class Branch(val head: String, val lambda: String? = null, val underFlow: String? = null, val children: List<Any> = emptyList())
-
 fun generateJsonStructureForSankeyChart(metrics: List<MetricInfo>): String {
+  data class Branch(val head: String, val lambda: String? = null, val underFlow: String? = null, val children: List<Any> = emptyList())
+
   val gson = Gson()
 
   val correctSuggestionsBranch = Branch("correct suggestions",
@@ -191,7 +191,10 @@ fun generateJsonStructureForSankeyChart(metrics: List<MetricInfo>): String {
                                   children = listOf(
                                     suggestionsBranch,
                                     wordFiltersBranch,
-                                    modelFilterBranch,
+                                    if (System.getenv("flcc_checkFilterModel")?.toBooleanStrictOrNull() ?: true)
+                                      modelFilterBranch
+                                    else
+                                      Branch("", children = emptyList()),
                                     preProcessingBranch))
 
   return gson.toJson(allProposalsBranch)
