@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
@@ -324,19 +323,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     SwitchBlockHighlightingModel model = SwitchBlockHighlightingModel.createInstance(myLanguageLevel, switchBlock, myFile);
     if (model == null) return;
     if (!hasErrorResults()) model.checkSwitchLabelValues(myErrorSink);
-  }
-
-  @Override
-  public void visitModuleReferenceElement(@NotNull PsiJavaModuleReferenceElement refElement) {
-    super.visitModuleReferenceElement(refElement);
-    PsiJavaModuleReference ref = refElement.getReference();
-    if (refElement.getParent() instanceof PsiPackageAccessibilityStatement && 
-        ref != null && ref.multiResolve(true).length == 0) {
-      String message = JavaErrorBundle.message("module.not.found", refElement.getReferenceText());
-      HighlightInfo.Builder info =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).descriptionAndTooltip(message);
-      add(info);
-    }
   }
 
   @Override
