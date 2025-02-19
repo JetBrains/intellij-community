@@ -5,13 +5,17 @@ import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.replaceService
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.ZipUtil
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.BundledMaven3
+import org.jetbrains.idea.maven.project.MavenInSpecificPath
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
+import org.jetbrains.idea.maven.project.MavenWrapper
 import org.junit.Test
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -46,7 +50,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
     val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
     assertEquals(
-      MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toFile().canonicalPath, connector.mavenDistribution.mavenHome.toFile().canonicalPath)
+      MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toCanonicalPath(), connector.mavenDistribution.mavenHome.toCanonicalPath())
     assertContainsOnce<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.message == "Cannot install wrapped maven, set Bundled Maven" }
   }
 
@@ -60,7 +64,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
     val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
     assertEquals(
-      MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toFile().canonicalPath, connector.mavenDistribution.mavenHome.toFile().canonicalPath)
+      MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toCanonicalPath(), connector.mavenDistribution.mavenHome.toCanonicalPath())
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>2</version>")
@@ -93,7 +97,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
       MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = BundledMaven3
       importProjectAsync()
       val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
-      assertFalse(connector.mavenDistribution.mavenHome.toFile().absolutePath.contains(".wrapper"))
+      assertFalse(connector.mavenDistribution.mavenHome.absolutePathString().contains(".wrapper"))
       assertNotContains<BuildEvent> {  it.message == "Running maven wrapper" }
     }
   }
@@ -108,7 +112,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
     val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
     assertEquals(
-      MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toFile().canonicalPath, connector.mavenDistribution.mavenHome.toFile().canonicalPath)
+      MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toCanonicalPath(), connector.mavenDistribution.mavenHome.toCanonicalPath())
     //assertContainsOnce<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.description!= null && it.description!!.contains("is not correct maven home, reverting to embedded") }
   }
 
