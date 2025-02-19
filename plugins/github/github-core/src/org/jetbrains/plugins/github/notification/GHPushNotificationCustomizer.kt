@@ -1,4 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code
+// is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.notification
 
 import com.intellij.dvcs.push.VcsPushOptionValue
@@ -16,11 +17,13 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests.Repos.PullRequests
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRestIdOnly
+import org.jetbrains.plugins.github.api.data.pullrequest.toPRIdentifier
 import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.pullrequest.GHRepositoryConnectionManager
+import org.jetbrains.plugins.github.pullrequest.action.GHOpenPullRequestExistingTabNotificationAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRCreatePullRequestNotificationAction
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
@@ -38,77 +41,108 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
     if (!pushResult.isSuccessful) return emptyList()
     val remoteBranch = pushResult.findRemoteBranch(repository) ?: return emptyList()
 
+    // If we already have a GH connection open, make sure it matches
     val connection = project.serviceAsync<GHRepositoryConnectionManager>().connectionState.value
     if (connection != null && (connection.repo.gitRepository != repository || connection.repo.gitRemote != remoteBranch.remote)) {
       return emptyList()
     }
 
-    val (projectMapping, account) = connection?.let {
-      it.repo to it.account
-    } ?: GitPushNotificationUtil.findRepositoryAndAccount(
-      project.serviceAsync<GHHostedRepositoriesManager>().knownRepositories,
-      repository, remoteBranch.remote,
-      serviceAsync<GHAccountManager>().accountsState.value,
-      project.serviceAsync<GithubPullRequestsProjectUISettings>().selectedUrlAndAccount?.second,
-      project.serviceAsync<GithubProjectDefaultAccountHolder>().account
-    ) ?: return emptyList()
+    val (projectMapping, account) =
+      connection?.let { it.repo to it.account }
+      ?: GitPushNotificationUtil.findRepositoryAndAccount(
+        project.serviceAsync<GHHostedRepositoriesManager>().knownRepositories,
+        repository,
+        remoteBranch.remote,
+        project.serviceAsync<GHAccountManager>().accountsState.value,
+        project.serviceAsync<GithubPullRequestsProjectUISettings>().selectedUrlAndAccount?.second,
+        project.serviceAsync<GithubProjectDefaultAccountHolder>().account
+      )
+      ?: return emptyList()
 
-    val canCreate = canCreateReview(projectMapping, account, remoteBranch)
-    if (!canCreate) return emptyList()
 
-    return listOf(GHPRCreatePullRequestNotificationAction(project, projectMapping, account))
+    if (!canCreateReview(projectMapping, account, remoteBranch)) {
+      return emptyList()
+    }
+
+    val existingPrs = findExistingPullRequests(projectMapping, account, remoteBranch)
+    return when (existingPrs.size) {
+      0 -> {
+        listOf(GHPRCreatePullRequestNotificationAction(project, projectMapping, account))
+      }
+      1 -> {
+        val singlePr = existingPrs.first()
+        listOf(GHOpenPullRequestExistingTabNotificationAction(project, projectMapping, account, singlePr.toPRIdentifier()))
+      }
+      else -> {
+        emptyList()
+      }
+    }
   }
 
-  private suspend fun canCreateReview(repositoryMapping: GHGitRepositoryMapping, account: GithubAccount, branch: GitRemoteBranch): Boolean {
+  /**
+   * Checks if it's even valid to create a PR.
+   * For instance:
+   * - The repository must exist
+   * - The branch cannot be the default branch (we don't allow creating a PR from default -> default)
+   */
+  private suspend fun canCreateReview(
+    repositoryMapping: GHGitRepositoryMapping,
+    account: GithubAccount,
+    branch: GitRemoteBranch,
+  ): Boolean {
     val accountManager = serviceAsync<GHAccountManager>()
     val token = accountManager.findCredentials(account) ?: return false
     val executor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
 
     val repository = repositoryMapping.repository
     val repositoryInfo = getRepositoryInfo(executor, repository) ?: run {
-      LOG.warn("Repository not found $repository")
+      LOG.warn("Repository not found: $repository")
       return false
     }
 
+    // Don't allow creating PRs targeting the default branch
     val remoteBranchName = branch.nameForRemoteOperations
-    if (repositoryInfo.defaultBranch == remoteBranchName) {
-      return false
-    }
-
-    if (findExistingPullRequests(executor, repository, remoteBranchName).isNotEmpty()) {
-      return false
-    }
-
-    return true
+    return repositoryInfo.defaultBranch != remoteBranchName
   }
 
-  private suspend fun getRepositoryInfo(executor: GithubApiRequestExecutor, repository: GHRepositoryCoordinates) =
-    try {
-      executor.executeSuspend(GHGQLRequests.Repo.find(repository))
-    }
-    catch (ce: CancellationException) {
-      throw ce
-    }
-    catch (e: Exception) {
-      LOG.warn("Failed to lookup a repository $repository", e)
-      null
-    }
-
-  private suspend fun findExistingPullRequests(
+  private suspend fun getRepositoryInfo(
     executor: GithubApiRequestExecutor,
     repository: GHRepositoryCoordinates,
-    remoteBranchName: String,
-  ): List<GHPullRequestRestIdOnly> = try {
-    executor.executeSuspend(PullRequests.find(repository,
-                                              GithubIssueState.open,
-                                              null,
-                                              repository.repositoryPath.owner + ":" + remoteBranchName)).items
+  ) = try {
+    executor.executeSuspend(GHGQLRequests.Repo.find(repository))
   }
   catch (ce: CancellationException) {
     throw ce
   }
   catch (e: Exception) {
-    LOG.warn("Failed to lookup an existing pull request for $remoteBranchName in $repository", e)
-    emptyList()
+    LOG.warn("Failed to lookup repository $repository", e)
+    null
+  }
+
+  /**
+   * Look up any existing open pull requests on the given remote branch.
+   */
+  private suspend fun findExistingPullRequests(
+    repositoryMapping: GHGitRepositoryMapping,
+    account: GithubAccount,
+    branch: GitRemoteBranch,
+  ): List<GHPullRequestRestIdOnly> {
+    val accountManager = serviceAsync<GHAccountManager>()
+    val token = accountManager.findCredentials(account) ?: return emptyList()
+    val executor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
+
+    val repository = repositoryMapping.repository
+    val remoteBranchName = branch.nameForRemoteOperations
+
+    return try {
+      executor.executeSuspend(PullRequests.find(repository, GithubIssueState.open, baseRef = null, headRef = repository.repositoryPath.owner + ":" + remoteBranchName)).items
+    }
+    catch (ce: CancellationException) {
+      throw ce
+    }
+    catch (e: Exception) {
+      LOG.warn("Failed to lookup existing pull requests for branch $remoteBranchName in $repository", e)
+      emptyList()
+    }
   }
 }
