@@ -55,18 +55,19 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
 @Service(Service.Level.PROJECT)
-private class ProjectWindowCustomizerIconCache(private val project: Project) {
+private class ProjectWindowCustomizerIconCache(private val project: Project, coroutineScope: CoroutineScope) {
   val cachedIcon: SynchronizedClearableLazy<Icon> = SynchronizedClearableLazy { getIconRaw() }
 
   init {
-    val busConnection = project.messageBus.simpleConnect()
-    busConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
+    val projectConnection = project.messageBus.connect(coroutineScope)
+    val appConnection = ApplicationManager.getApplication().messageBus.connect(coroutineScope)
+    projectConnection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
       cachedIcon.drop()
     })
-    busConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+    appConnection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
       cachedIcon.drop()
     })
-    busConnection.subscribe(ProjectNameListener.TOPIC, object: ProjectNameListener {
+    projectConnection.subscribe(ProjectNameListener.TOPIC, object: ProjectNameListener {
       override fun nameChanged(newName: String?) {
         cachedIcon.drop()
       }
