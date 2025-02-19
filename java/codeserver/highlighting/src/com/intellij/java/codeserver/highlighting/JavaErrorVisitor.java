@@ -702,6 +702,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
     super.visitImportModuleStatement(statement);
     if (!hasErrorResults()) checkFeature(statement, JavaFeature.MODULE_IMPORT_DECLARATIONS);
     if (!hasErrorResults()) myImportChecker.checkImportModuleInModuleInfo(statement);
+    if (!hasErrorResults()) myModuleChecker.checkModuleReference(statement);
   }
 
   @Override

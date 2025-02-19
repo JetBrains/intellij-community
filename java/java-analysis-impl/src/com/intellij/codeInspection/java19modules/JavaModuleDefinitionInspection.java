@@ -36,7 +36,7 @@ public final class JavaModuleDefinitionInspection extends AbstractBaseJavaLocalI
 
       @Override
       public void visitRequiresStatement(@NotNull PsiRequiresStatement statement) {
-        checkModuleReference(statement);
+        checkModuleReference(statement.getReferenceElement());
       }
 
       @Override
@@ -50,6 +50,11 @@ public final class JavaModuleDefinitionInspection extends AbstractBaseJavaLocalI
         }
       }
       
+      @Override
+      public void visitImportModuleStatement(@NotNull PsiImportModuleStatement statement) {
+        checkModuleReference(statement.getModuleReference());
+      }
+
       @Override
       public void visitPackageAccessibilityStatement(@NotNull PsiPackageAccessibilityStatement statement) {
         if (statement.getRole() != PsiPackageAccessibilityStatement.Role.OPENS) return;
@@ -71,8 +76,7 @@ public final class JavaModuleDefinitionInspection extends AbstractBaseJavaLocalI
           .register();
       }
 
-      void checkModuleReference(@NotNull PsiRequiresStatement statement) {
-        PsiJavaModuleReferenceElement refElement = statement.getReferenceElement();
+      private void checkModuleReference(PsiJavaModuleReferenceElement refElement) {
         if (refElement != null) {
           PsiJavaModuleReference ref = refElement.getReference();
           if (ref != null) {

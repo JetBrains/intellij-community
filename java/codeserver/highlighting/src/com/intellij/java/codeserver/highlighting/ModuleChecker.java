@@ -217,6 +217,15 @@ final class ModuleChecker {
     }
   }
 
+  void checkModuleReference(@NotNull PsiImportModuleStatement statement) {
+    PsiJavaModuleReferenceElement refElement = statement.getModuleReference();
+    if (refElement == null) return;
+    PsiJavaModuleReference ref = refElement.getReference();
+    if (ref != null && ref.resolve() == null) {
+      reportUnresolvedJavaModule(refElement);
+    }
+  }
+
   private void reportUnresolvedJavaModule(@NotNull PsiJavaModuleReferenceElement refElement) {
     PsiJavaModuleReference ref = refElement.getReference();
     assert ref != null : refElement.getParent();
