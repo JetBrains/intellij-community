@@ -107,7 +107,7 @@ internal class XNextToolbarManagerImpl(val project: Project, val scope: Coroutin
 @State(name = "XNextPinnedState", storages = [Storage("window.state.xml", roamingType = RoamingType.DISABLED)])
 private class XNextPinnedService : PersistentStateComponent<Element> {
 
-  private val pinnedIds = linkedSetOf("Project", "Commit", "Version Control", "Terminal")
+  private val pinnedIds = linkedSetOf("Project", "Commit", "Bookmarks")
 
   fun getListOfPinnedIds(): List<String> = pinnedIds.toList()
   fun updatePinned(linkSet: LinkedHashSet<String>) {

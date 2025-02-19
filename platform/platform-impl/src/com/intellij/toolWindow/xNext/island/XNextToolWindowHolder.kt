@@ -7,7 +7,6 @@ import com.intellij.ui.ClientProperty
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import fleet.util.logging.logger
-import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D
@@ -17,8 +16,7 @@ import javax.swing.border.AbstractBorder
 import javax.swing.border.Border
 import kotlin.math.max
 
-@ApiStatus.Internal
-class XNextToolWindowHolder private constructor(): JPanel() {
+internal class XNextToolWindowHolder private constructor(): JPanel() {
   companion object {
     @JvmStatic
     fun create(): JComponent = XNextToolWindowHolder().apply {
@@ -29,7 +27,7 @@ class XNextToolWindowHolder private constructor(): JPanel() {
 
   override fun setBorder(border: Border?) {
     if (border !is JRoundedCornerBorder) {
-      logger<XNextToolWindowHolder>().warn {
+      logger<XNextToolWindowHolder>().error {
         "Border type is invalid. Expected JRoundedCornerBorder, but received: ${border?.javaClass?.name ?: "null"}."
       }
       return 
@@ -64,7 +62,7 @@ private class JRoundedCornerBorder : AbstractBorder() {
 
       val extArea = Area(Rectangle(0, 0, width, height))
       extArea.subtract(Area(getBorderShape(width, height)))
-      g2.color = InternalUICustomization.getInstance()?.getCustomMainBackgroundColor() ?: c.background
+      g2.color = InternalUICustomization.getInstance().getCustomMainBackgroundColor() ?: c.background
 
       g2.fill(extArea)
 

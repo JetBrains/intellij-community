@@ -125,8 +125,9 @@ internal class MacToolbarFrameHeader(
   }
 
   override fun getComponentGraphics(graphics: Graphics?): Graphics? {
-    val componentGraphics = super.getComponentGraphics(graphics)
-    return InternalUICustomization.getInstance()?.transformGraphics(this, componentGraphics) ?: componentGraphics
+    val service = InternalUICustomization.getInstanceOrNull()
+    return service?.transformGraphics(this, super.getComponentGraphics(graphics))
+           ?: super.getComponentGraphics(graphics)
   }
 
   private fun isCompactHeaderFast(): Boolean {
@@ -243,7 +244,7 @@ internal class MacToolbarFrameHeader(
 
   private fun updateBackground(isActive: Boolean = frame.isActive) {
     val color = JBUI.CurrentTheme.CustomFrameDecorations.mainToolbarBackground(isActive)
-    background = InternalUICustomization.getInstance()?.frameHeaderBackgroundConverter(color) ?: color
+    background = InternalUICustomization.getInstance().frameHeaderBackgroundConverter(color) ?: color
   }
 
   override fun getAccessibleContext(): AccessibleContext {

@@ -31,8 +31,6 @@ internal class XNextActionToolbar : ActionToolbarImpl ("XNextStatusBar", XNextTo
   }
 
   private fun updateBackground() {
-    InternalUICustomization.getInstance()?.getCustomMainBackgroundColor()?.let {
-      background = it
-    }
+    background = InternalUICustomization.getInstance().getCustomMainBackgroundColor()
   }
 }

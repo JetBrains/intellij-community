@@ -175,10 +175,7 @@ abstract class ProjectFrameHelper internal constructor(
     ProjectFrameCustomHeaderHelper(ApplicationManager.getApplication(), this, frame, frameDecorator, rootPane, false, null)
 
   private fun createContentPane(): JPanel {
-    val contentPane = InternalUICustomization.getInstance()?.toolWindowUIDecorator?.createCustomToolWindowPaneHolder() ?: JPanel()
-
-    contentPane.apply {
-      layout = BorderLayout()
+    val contentPane = JPanel(BorderLayout()).apply {
       background = JBColor.PanelBackground
 
       // listen to mouse motion events for a11y
@@ -264,7 +261,7 @@ abstract class ProjectFrameHelper internal constructor(
     this.statusBar = statusBar
     val component = statusBar.component
 
-    if (InternalUICustomization.getInstance()?.statusBarRequired() == true) {
+    if (InternalUICustomization.getInstance().statusBarRequired()) {
       component?.let {
         contentPane.add(it, BorderLayout.SOUTH)
       }

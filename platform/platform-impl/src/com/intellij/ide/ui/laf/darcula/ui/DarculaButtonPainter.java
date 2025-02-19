@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.JBColor;
@@ -134,12 +133,8 @@ public class DarculaButtonPainter implements Border, UIResource {
         return JBUI.CurrentTheme.Button.focusBorderColor(defButton);
       }
       else {
-        GradientPaint paint = new GradientPaint(0, 0, JBUI.CurrentTheme.Button.buttonOutlineColorStart(defButton),
-                                                0, r.height, JBUI.CurrentTheme.Button.buttonOutlineColorEnd(defButton));
-        InternalUICustomization instance = InternalUICustomization.getInstance();
-        if (instance == null) return paint;
-
-        return instance.getAiComponentMarker().getCustomButtonBorderPaint(b, r, paint);
+        return new GradientPaint(0, 0, JBUI.CurrentTheme.Button.buttonOutlineColorStart(defButton),
+                                 0, r.height, JBUI.CurrentTheme.Button.buttonOutlineColorEnd(defButton));
       }
     }
     else {

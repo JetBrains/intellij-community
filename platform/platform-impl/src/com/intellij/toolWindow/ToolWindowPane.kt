@@ -30,7 +30,6 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getAdjustedR
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl.Companion.getRegisteredMutableInfoOrLogError
 import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.DevicePoint
@@ -108,7 +107,7 @@ class ToolWindowPane private constructor(
     }
 
     private fun createButtonManager(paneId: String): ToolWindowButtonManager {
-      InternalUICustomization.getInstance()?.internalCustomizer?.createCustomButtonManager(paneId)?.let {
+      InternalUICustomization.getInstance().internalCustomizer.createCustomButtonManager(paneId)?.let {
         return it
       }
 
@@ -194,7 +193,7 @@ class ToolWindowPane private constructor(
     splitter.dividerWidth = 0
     splitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"))
 
-    splitter.background = InternalUICustomization.getInstance()?.getToolWindowsPaneThreeSplitterBackground() ?: JBColor.GRAY
+    splitter.background = InternalUICustomization.getInstance().getToolWindowsPaneThreeSplitterBackground()
   }
 
   override fun removeNotify() {
@@ -617,7 +616,7 @@ class ToolWindowPane private constructor(
       }
 
       override fun createDivider(): Divider {
-        return InternalUICustomization.getInstance()?.createCustomDivider(isVisible, this) ?: super.createDivider()
+        return InternalUICustomization.getInstance().createCustomDivider(isVisible, this) ?: super.createDivider()
       }
 
       override fun toString() = "[$firstComponent|$secondComponent]"
