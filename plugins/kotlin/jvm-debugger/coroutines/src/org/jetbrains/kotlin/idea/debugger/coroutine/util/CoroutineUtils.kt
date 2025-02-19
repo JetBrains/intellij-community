@@ -109,7 +109,7 @@ fun ThreadReferenceProxyImpl.supportsEvaluation(): Boolean =
     threadReference?.isSuspended ?: false
 
 private fun SuspendContextImpl.supportsEvaluation() =
-    debugProcess.isEvaluationPossible(this) || isUnitTestMode()
+    debugProcess.isEvaluationPossibleInCurrentCommand(this) || isUnitTestMode()
 
 fun threadAndContextSupportsEvaluation(suspendContext: SuspendContextImpl, frameProxy: StackFrameProxyImpl?): Boolean {
     DebuggerManagerThreadImpl.assertIsManagerThread()
