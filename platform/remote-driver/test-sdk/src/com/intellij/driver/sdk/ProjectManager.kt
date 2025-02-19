@@ -35,7 +35,7 @@ fun Driver.isProjectOpened(project: Project? = null): Boolean {
 
     if (projectToCheck?.isInitialized() == true) {
       val ideFrame = getIdeFrame(projectToCheck)
-      return@withContext ideFrame?.getComponent()?.isVisible() == true
+      return@withContext ideFrame?.getComponent()?.isShowing() == true
     }
     return@withContext false
   }

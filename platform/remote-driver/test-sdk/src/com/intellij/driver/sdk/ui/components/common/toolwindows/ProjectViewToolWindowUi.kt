@@ -15,5 +15,5 @@ fun IdeaFrameUI.projectView(
 class ProjectViewToolWindowUi(data: ComponentData) : UiComponent(data) {
   val projectViewTree = tree(xQuery { byType("com.intellij.ide.projectView.impl.ProjectViewTree") })
 
-  fun expandAll() = x("//div[@myicon='expandAll.svg']").waitVisible().click()
+  fun expandAll() = x("//div[@myicon='expandAll.svg']").click()
 }

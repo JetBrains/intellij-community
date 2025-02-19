@@ -59,19 +59,12 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   companion object {
     /**
-     * Waits until the element specified is found within the parent search context. Doesn't guaranty visibility.
+     * Waits until the element specified is found within the parent search context.
      *
      * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
      */
     fun <T : UiComponent> T.waitFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT): T {
       findThisComponent(timeout)
-      return this
-    }
-
-    fun <T : UiComponent> T.waitVisible(timeout: Duration = DEFAULT_FIND_TIMEOUT): T {
-      waitFor("Component '$this' is visible", timeout = timeout) {
-        component.isVisible()
-      }
       return this
     }
   }
@@ -308,16 +301,12 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     return withComponent { it.isFocusOwner() }
   }
 
-  fun isVisible(): Boolean {
-    return withComponent { it.isVisible() }
-  }
-
   fun isEnabled(): Boolean {
     return withComponent { it.isEnabled() }
   }
 
   fun hasVisibleComponent(component: UiComponent): Boolean {
-    return hasComponent(component, Component::isVisible)
+    return hasComponent(component, Component::isShowing)
   }
 
   fun hasComponent(component: UiComponent, check: (Component) -> Boolean): Boolean {
