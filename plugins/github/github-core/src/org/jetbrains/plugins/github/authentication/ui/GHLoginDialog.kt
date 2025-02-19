@@ -56,7 +56,7 @@ internal sealed class GHLoginDialog(
   override fun doValidateAll(): List<ValidationInfo> = loginPanel.doValidateAll()
 
   override fun doOKAction() {
-    cs.launch(Dispatchers.Main.immediate + ModalityState.stateForComponent(rootPane).asContextElement()) {
+    cs.launch(Dispatchers.EDT + ModalityState.stateForComponent(rootPane).asContextElement()) {
       try {
         val (login, token) = loginPanel.acquireLoginAndToken()
         model.saveLogin(loginPanel.getServer(), login, token)
