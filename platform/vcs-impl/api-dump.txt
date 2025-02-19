@@ -2197,8 +2197,8 @@ c:com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.openapi.vcs.changes.ui.AbstractChangesBrowserFilePathNode
-- com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 - com.intellij.ide.util.treeView.PathElementIdProvider
+- com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 - sf:Companion:com.intellij.openapi.vcs.changes.ui.AbstractChangesBrowserFilePathNode$Companion
 - <init>(java.lang.Object,com.intellij.openapi.vcs.FileStatus):V
 - compareUserObjects(java.lang.Object):I

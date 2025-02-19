@@ -589,8 +589,8 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   }
 
   private static void appendCollapsedParent(@NotNull ChangesBrowserNode<?> child, ChangesBrowserNode<?> parent) {
-    if (child instanceof AbstractChangesBrowserFilePathNode<?> childWithFilePath) {
-      childWithFilePath.appendFlattenedParent$intellij_platform_vcs_impl(parent);
+    if (child instanceof ChangesBrowserNode.NodeWithCollapsedParents childWithCollapsedParents) {
+      childWithCollapsedParents.addCollapsedParent(parent);
     }
   }
 

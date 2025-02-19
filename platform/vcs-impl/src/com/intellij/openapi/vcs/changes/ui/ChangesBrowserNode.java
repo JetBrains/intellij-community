@@ -483,4 +483,9 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     @NotNull
     FilePath getNodeFilePath();
   }
+
+  interface NodeWithCollapsedParents {
+    @ApiStatus.Internal
+    void addCollapsedParent(@NotNull ChangesBrowserNode<?> parentNode);
+  }
 }
