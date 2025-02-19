@@ -79,7 +79,7 @@ class OsRegistryConfigProvider(private val configName: String) {
 
     logger.info("Looking for '$regValue' value in ${uris.map { it.readable() }}")
 
-    return uris.mapNotNull {
+    return uris.firstNotNullOfOrNull {
       val uri = try {
         logger.debug("Searching for '${it.readable()}' in registry")
         it.second()
@@ -104,7 +104,7 @@ class OsRegistryConfigProvider(private val configName: String) {
       else {
         null
       }
-    }.firstOrNull()
+    }
   }
 
   // https://specifications.freedesktop.org/basedir-spec/basedir-spec-0.6.html
