@@ -10,8 +10,10 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.DelegateMethodImport
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportCandidate
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinPropertyDelegatePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPropertyDelegate
+import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal class DelegateMethodImportQuickFixFactory : AbstractImportQuickFixFactory() {
     override fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): Pair<KtElement, KotlinRawPositionContext>? {
@@ -28,28 +30,39 @@ internal class DelegateMethodImportQuickFixFactory : AbstractImportQuickFixFacto
         }
     }
 
-    override fun KaSession.provideImportCandidates(
-        diagnostic: KaDiagnosticWithPsi<*>,
-        positionContext: KotlinRawPositionContext,
-        indexProvider: KtSymbolFromIndexProvider
-    ): List<ImportCandidate> {
-        if (positionContext !is KotlinPropertyDelegatePositionContext) return emptyList()
-        val providers = getCandidateProvidersForDelegatedProperty(diagnostic, positionContext)
-        return providers.flatMap { it.collectCandidates(indexProvider) }.toList()
-    }
-
-    private fun getCandidateProvidersForDelegatedProperty(
-        diagnostic: KaDiagnosticWithPsi<*>,
-        positionContext: KotlinPropertyDelegatePositionContext,
-    ): Sequence<AbstractImportCandidatesProvider> {
+    override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, positionContext: KotlinRawPositionContext): Set<Name> {
         val expectedFunctionSignature = when (diagnostic) {
             is KaFirDiagnostic.DelegateSpecialFunctionNoneApplicable -> diagnostic.expectedFunctionSignature
             is KaFirDiagnostic.DelegateSpecialFunctionMissing -> diagnostic.expectedFunctionSignature
             else -> null
         }
+        
+        if (expectedFunctionSignature == null) return emptySet()
 
-        if (expectedFunctionSignature == null) return emptySequence()
+        val expectedDelegateFunctionName: Name? = listOf(
+            OperatorNameConventions.GET_VALUE,
+            OperatorNameConventions.SET_VALUE,
+        ).singleOrNull { expectedFunctionSignature.startsWith(it.asString() + "(") }
 
-        return sequenceOf(DelegateMethodImportCandidatesProvider(expectedFunctionSignature, positionContext))
+        return setOfNotNull(
+            expectedDelegateFunctionName,
+            OperatorNameConventions.PROVIDE_DELEGATE,
+        )
+    }
+
+    override fun KaSession.provideImportCandidates(
+        unresolvedName: Name,
+        positionContext: KotlinRawPositionContext,
+        indexProvider: KtSymbolFromIndexProvider
+    ): List<ImportCandidate> {
+        if (positionContext !is KotlinPropertyDelegatePositionContext) return emptyList()
+        val providers = getCandidateProvidersForDelegatedProperty(positionContext)
+        return providers.flatMap { it.collectCandidates(unresolvedName, indexProvider) }.toList()
+    }
+
+    private fun getCandidateProvidersForDelegatedProperty(
+        positionContext: KotlinPropertyDelegatePositionContext,
+    ): Sequence<AbstractImportCandidatesProvider> {
+        return sequenceOf(DelegateMethodImportCandidatesProvider(positionContext))
     }
 }

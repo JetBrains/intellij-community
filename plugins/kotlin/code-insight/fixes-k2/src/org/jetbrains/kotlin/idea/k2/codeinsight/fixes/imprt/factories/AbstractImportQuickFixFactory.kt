@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportCandidate
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFixProvider
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 
 internal abstract class AbstractImportQuickFixFactory : KotlinQuickFixFactory.IntentionBased<KaDiagnosticWithPsi<*>> {
@@ -17,9 +18,11 @@ internal abstract class AbstractImportQuickFixFactory : KotlinQuickFixFactory.In
      * Returns the [KtElement] to put an auto-import on, and the detected [org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext] around it.
      */
     protected abstract fun detectPositionContext(diagnostic: KaDiagnosticWithPsi<*>): Pair<KtElement, KotlinRawPositionContext>?
+    
+    protected abstract fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, positionContext: KotlinRawPositionContext): Set<Name>
 
     protected abstract fun KaSession.provideImportCandidates(
-        diagnostic: KaDiagnosticWithPsi<*>,
+        unresolvedName: Name,
         positionContext: KotlinRawPositionContext,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<ImportCandidate>
@@ -31,10 +34,11 @@ internal abstract class AbstractImportQuickFixFactory : KotlinQuickFixFactory.In
         return diagnostics
             .mapNotNull { diagnostic ->
                 val (expression, positionContext) = detectPositionContext(diagnostic) ?: return@mapNotNull null
+                val unresolvedNames = provideUnresolvedNames(diagnostic, positionContext)
 
                 val indexProvider = KtSymbolFromIndexProvider(expression.containingKtFile)
 
-                val candidates = provideImportCandidates(diagnostic, positionContext, indexProvider)
+                val candidates = unresolvedNames.flatMap { provideImportCandidates(it, positionContext, indexProvider) }
                 val data = ImportQuickFixProvider.createImportData(expression, candidates) ?: return@mapNotNull null
                 ImportQuickFixProvider.run { createImportFix(expression, data) }
             }

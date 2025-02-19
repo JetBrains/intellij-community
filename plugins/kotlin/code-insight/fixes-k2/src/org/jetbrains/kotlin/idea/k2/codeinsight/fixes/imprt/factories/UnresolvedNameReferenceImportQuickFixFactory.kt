@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.*
 import org.jetbrains.kotlin.idea.util.positionContext.*
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 
 internal class UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQuickFixFactory() {
@@ -28,14 +29,17 @@ internal class UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQuic
         }
     }
 
+    override fun provideUnresolvedNames(diagnostic: KaDiagnosticWithPsi<*>, positionContext: KotlinRawPositionContext): Set<Name> =
+        setOfNotNull((positionContext as? KotlinNameReferencePositionContext)?.name)
+
     override fun KaSession.provideImportCandidates(
-        diagnostic: KaDiagnosticWithPsi<*>,
+        unresolvedName: Name,
         positionContext: KotlinRawPositionContext,
         indexProvider: KtSymbolFromIndexProvider
     ): List<ImportCandidate> {
         if (positionContext !is KotlinNameReferencePositionContext) return emptyList()
         val providers = getCandidateProvidersForUnresolvedNameReference(positionContext)
-        return providers.flatMap { it.collectCandidates(indexProvider) }.toList()
+        return providers.flatMap { it.collectCandidates(unresolvedName, indexProvider) }.toList()
     }
 
     context(KaSession)
