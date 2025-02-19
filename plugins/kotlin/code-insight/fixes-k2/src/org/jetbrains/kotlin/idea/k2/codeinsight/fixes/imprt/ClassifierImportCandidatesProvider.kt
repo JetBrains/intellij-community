@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvid
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinAnnotationTypeNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -39,17 +40,17 @@ internal open class ClassifierImportCandidatesProvider(
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     override fun collectCandidates(
+        name: Name,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<ClassLikeImportCandidate> {
         if (positionContext.explicitReceiver != null) return emptyList()
 
-        val unresolvedName = positionContext.name
         val fileSymbol = getFileSymbol()
         val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, receiverExpression = null, positionContext.position)
 
         return buildList {
-            addAll(indexProvider.getKotlinClassesByName(unresolvedName) { acceptsKotlinClass(it) })
-            addAll(indexProvider.getJavaClassesByName(unresolvedName) { acceptsJavaClass(it) })
+            addAll(indexProvider.getKotlinClassesByName(name) { acceptsKotlinClass(it) })
+            addAll(indexProvider.getJavaClassesByName(name) { acceptsJavaClass(it) })
         }
             .map { ClassLikeImportCandidate(it) }
             .filter { it.classId != null && it.isVisible(visibilityChecker) && acceptsClassLikeSymbol(it.symbol) }

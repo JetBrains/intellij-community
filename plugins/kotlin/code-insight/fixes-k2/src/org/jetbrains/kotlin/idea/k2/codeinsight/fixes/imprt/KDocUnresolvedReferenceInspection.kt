@@ -50,7 +50,7 @@ internal class KDocUnresolvedReferenceInspection : AbstractKotlinInspection() {
                 val candidates = listOf(
                     CallableImportCandidatesProvider(positionContext, allowInapplicableExtensions = true),
                     ClassifierImportCandidatesProvider(positionContext),
-                ).flatMap { it.collectCandidates(indexProvider) }
+                ).flatMap { it.collectCandidates(positionContext.name, indexProvider) }
 
                 val importData = ImportQuickFixProvider.createImportData(kDocName, candidates) ?: return null
                 val variants = importData.importVariants.ifEmpty { return null }

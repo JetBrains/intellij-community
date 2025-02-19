@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtEnumEntry
 
 internal class EnumEntryImportCandidatesProvider(override val positionContext: KotlinNameReferencePositionContext) :
@@ -22,18 +23,16 @@ internal class EnumEntryImportCandidatesProvider(override val positionContext: K
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    override fun collectCandidates(indexProvider: KtSymbolFromIndexProvider): List<CallableImportCandidate> {
+    override fun collectCandidates(name: Name, indexProvider: KtSymbolFromIndexProvider): List<CallableImportCandidate> {
         if (positionContext.explicitReceiver != null) return emptyList()
 
-        val unresolvedName = positionContext.name
-
         val kotlinEnumEntries = indexProvider.getKotlinEnumEntriesByName(
-            name = unresolvedName,
+            name = name,
             psiFilter = { acceptsKotlinEnumEntry(it) },
         )
 
         val javaEnumEntries = indexProvider.getJavaFieldsByName(
-            name = unresolvedName,
+            name = name,
             psiFilter = { it is PsiEnumConstant && acceptsJavaEnumEntry(it) },
         ).filterIsInstance<KaEnumEntrySymbol>()
         
