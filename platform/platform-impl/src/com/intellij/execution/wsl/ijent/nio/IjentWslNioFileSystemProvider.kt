@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.ijent.nio
 
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.CaseSensitivityAttribute
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
@@ -52,14 +53,15 @@ class IjentWslNioFileSystemProvider(
   internal val originalFsProvider: FileSystemProvider,
 ) : FileSystemProvider(), RoutingAwareFileSystemProvider {
   private val ijentFsUri: URI = URI("ijent", "wsl", "/${wslDistribution.id}", null, null)
-  private val wslLocalRoot: Path = originalFsProvider.getFileSystem(URI("file:/")).getPath(wslDistribution.getWindowsPath("/"))
+  private val originalFs = originalFsProvider.getFileSystem(URI("file:/"))
+  private val wslId: @NlsSafe String = wslDistribution.id
   private val createdFileSystems: MutableMap<String, IjentWslNioFileSystem> = ConcurrentHashMap()
 
   internal fun removeFileSystem(wslId: String) {
     createdFileSystems.remove(wslId)
   }
 
-  override fun toString(): String = """${javaClass.simpleName}(${wslLocalRoot})"""
+  override fun toString(): String = """${javaClass.simpleName}(${wslId})"""
 
   override fun canHandleRouting(): Boolean = true
 
@@ -68,18 +70,28 @@ class IjentWslNioFileSystemProvider(
   private fun Path.toIjentPath(): IjentNioPath =
     when (this) {
       is IjentNioPath -> this
-      is IjentWslNioPath -> delegate.toIjentPath()
+      is IjentWslNioPath -> presentablePath.toIjentPath()
       else -> fold(ijentFsProvider.getPath(ijentFsUri) as IjentNioPath, { nioPath, newPart -> nioPath.resolve(newPart.toString()) })
     }
 
-  internal fun toOriginalPath(path: Path): Path = path.toOriginalPath()
+  internal fun toOriginalPath(path: Path, notation: String): Path = path.toOriginalPath(notation)
 
-  private fun Path.toOriginalPath(): Path =
-    when (this) {
-      is IjentNioPath -> fold(wslLocalRoot) { parent, file -> parent.resolve(file.toString()) }
-      is IjentWslNioPath -> delegate.toOriginalPath()
+  private tailrec fun Path.toOriginalPath(notation: String): Path {
+    assert(notation == "wsl.localhost" || notation == "wsl$") { notation }
+    return when (this) {
+      is IjentNioPath -> fold(originalFs.getPath("\\\\$notation\\$wslId\\")) { parent, file -> parent.resolve(file.toString()) }
+      is IjentWslNioPath -> presentablePath.toOriginalPath(notation)
       else -> this
     }
+  }
+
+  private tailrec fun Path.toOriginalPathWithSameNotation(): Path {
+    return when (this) {
+      is IjentNioPath -> error(this)
+      is IjentWslNioPath -> presentablePath.toOriginalPathWithSameNotation()
+      else -> this
+    }
+  }
 
   override fun getScheme(): String =
     originalFsProvider.scheme
@@ -132,14 +144,16 @@ class IjentWslNioFileSystemProvider(
     executor: ExecutorService?,
     vararg attrs: FileAttribute<*>?,
   ): AsynchronousFileChannel =
-    originalFsProvider.newAsynchronousFileChannel(path.toOriginalPath(), options, executor, *attrs)
+    // TODO Implement me.
+    originalFsProvider.newAsynchronousFileChannel(path.toOriginalPathWithSameNotation(), options, executor, *attrs)
 
   override fun createSymbolicLink(link: Path, target: Path, vararg attrs: FileAttribute<*>?) {
-    ijentFsProvider.createSymbolicLink(link.toIjentPath(), target.toIjentPath(), *attrs)
+    ijentFsProvider.createSymbolicLink(link.toOriginalPathWithSameNotation(), target.toOriginalPathWithSameNotation(), *attrs)
   }
 
   override fun createLink(link: Path, existing: Path) {
-    originalFsProvider.createLink(link.toOriginalPath(), existing.toOriginalPath())
+    // TODO It will fail anyway. Maybe throw an error right there?
+    originalFsProvider.createLink(link.toOriginalPathWithSameNotation(), existing.toOriginalPathWithSameNotation())
   }
 
   override fun deleteIfExists(path: Path): Boolean =
@@ -190,7 +204,7 @@ class IjentWslNioFileSystemProvider(
                 )
               else null
 
-            return IjentWslNioPath(getFileSystem(wslId), originalPath.toOriginalPath(), dosAttributes)
+            return IjentWslNioPath(getFileSystem(wslId), originalPath.toOriginalPathWithSameNotation(), dosAttributes)
           }
 
           override fun remove() {
@@ -222,7 +236,7 @@ class IjentWslNioFileSystemProvider(
 
       sourceWsl == null && targetWsl == null -> {
         LOG.warn("This branch is not supposed to execute. Copying ${source} => ${target} through inappropriate FileSystemProvider")
-        originalFsProvider.copy(source.toOriginalPath(), target.toOriginalPath(), *options)
+        originalFsProvider.copy(source.toOriginalPathWithSameNotation(), target.toOriginalPathWithSameNotation(), *options)
       }
 
       else -> {
@@ -241,7 +255,7 @@ class IjentWslNioFileSystemProvider(
 
       sourceWsl == null && targetWsl == null -> {
         LOG.warn("This branch is not supposed to execute. Moving ${source} => ${target} through inappropriate FileSystemProvider")
-        originalFsProvider.move(source.toOriginalPath(), target.toOriginalPath(), *options)
+        originalFsProvider.move(source.toOriginalPathWithSameNotation(), target.toOriginalPathWithSameNotation(), *options)
       }
 
       else -> {
@@ -250,32 +264,37 @@ class IjentWslNioFileSystemProvider(
     }
   }
 
-  override fun isSameFile(path: Path, path2: Path): Boolean {
-    // so both paths are now located in WSL
-    if (path.fileSystem != path2.fileSystem) {
-      // the paths could be in different distributions
-      return false
-    }
-    return ijentFsProvider.isSameFile(path.toIjentPath(), path2.toIjentPath())
-  }
+  override fun isSameFile(path: Path, path2: Path): Boolean =
+    if (path is IjentWslNioPath && path2 is IjentWslNioPath)
+      when {
+        path.hasDifferentActualPath && path2.hasDifferentActualPath ->
+          Files.isSameFile(path.actualPath, path2.actualPath)
 
-  private fun tryConvertToWindowsPaths(path1: Path, path2: Path): Boolean? {
-    if (!WslPath.isWslUncPath(path1.root.toString())) {
-      // then the second path is in WSL, but it may be mounted Windows dir
-      val resolvedPath2 = path2.toRealPath().toString() // protection against symlinks
-      val parsed = WslPath.parseWindowsUncPath(resolvedPath2)
-      if (parsed != null) {
-        val windowsRepresentation = wslDistribution.getWindowsPath(parsed.linuxPath)
-        if (windowsRepresentation == resolvedPath2) return false
-        return Files.isSameFile(path1.toOriginalPath(), Path.of(windowsRepresentation))
+        path.hasDifferentActualPath || path2.hasDifferentActualPath -> {
+          // Here, both paths start with `\\wsl` and just one of the paths points to a kind of `/mnt/c`.
+          false
+        }
+
+        path.fileSystem != path2.fileSystem -> {
+          // The paths are in different WSL distributions.
+          false
+        }
+
+        else ->
+          ijentFsProvider.isSameFile(path.toIjentPath(), path2.toIjentPath())
       }
-      return false
-    }
-    return null
-  }
+
+    else if (path is IjentWslNioPath)
+      path2.fileSystem.provider().isSameFile(path.actualPath, path2)
+
+    else if (path2 is IjentWslNioPath)
+      isSameFile(path, path2.actualPath)
+
+    else
+      path2.fileSystem.provider().isSameFile(path, path2)
 
   override fun isHidden(path: Path): Boolean =
-    originalFsProvider.isHidden(path.toOriginalPath())
+    originalFsProvider.isHidden(path.toOriginalPathWithSameNotation())
 
   override fun getFileStore(path: Path): FileStore =
     ijentFsProvider.getFileStore(path.toIjentPath())
