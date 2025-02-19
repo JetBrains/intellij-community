@@ -21,7 +21,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public class CoreInjectedLanguageManager extends InjectedLanguageManager {
-  CoreInjectedLanguageManager() {}
+  public CoreInjectedLanguageManager() {}
 
   @Override
   public PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider injectedProvider) {
