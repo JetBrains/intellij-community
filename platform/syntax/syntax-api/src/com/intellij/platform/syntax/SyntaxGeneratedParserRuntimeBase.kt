@@ -10,10 +10,10 @@ import com.intellij.platform.syntax.lexer.Lexer
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
 import com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
-import com.intellij.platform.syntax.util.SyntaxGeneratedParserUtilBase.*
+import com.intellij.platform.syntax.util.SyntaxGeneratedParserRuntimeBase.*
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
-import java.util.*
+
 import kotlin.math.min
 
 
@@ -46,11 +46,12 @@ val _AND_: Int = 0x8
 val _NOT_: Int = 0x10
 val _UPPER_: Int = 0x20
 
-open class SyntaxGeneratedParserUtilBase(
+open class SyntaxGeneratedParserRuntimeBase(
   protected val MAX_RECURSION_LEVEL: Int = 1000,
   protected val isLanguageCaseSensitive: Boolean,
   protected val bundle: BundleAdapter,
   protected val lexer: Lexer,
+  protected val parser: (SyntaxElementType, SyntaxTreeBuilder) -> Unit,
   protected val braces: Collection<BracePair>,
 ) {
   private val LOG: Logger = NoopLogger
@@ -532,8 +533,8 @@ open class SyntaxGeneratedParserUtilBase(
       while ((eatMoreFlag || parenCount > 0) && builder.rawTokenIndex() < lastErrorPos) {
         val tokenType: SyntaxElementType? = builder.tokenType
         parenCount = state.braces?.let { braces ->
-          if (tokenType === braces[0]?.myLeftBrace) return@let 1
-          else if (tokenType === braces[0]?.myRightBrace) return@let -1
+          if (tokenType === braces[0].myLeftBrace) return@let 1
+          else if (tokenType === braces[0].myRightBrace) return@let -1
           return@let 0
         } ?: 0
         if (builder.rawTokenIndex() >= lastErrorPos) break
@@ -808,23 +809,22 @@ open class SyntaxGeneratedParserUtilBase(
 
 
   @JvmOverloads
-  fun adapt_builder_(root: SyntaxElementType, builder: SyntaxTreeBuilder, parser: PsiParser?, extendsSets: Array<Set<SyntaxElementType>>? = null): SyntaxTreeBuilder {
+  fun init_runtime_(root: SyntaxElementType, builder: SyntaxTreeBuilder, extendsSets: Array<Set<SyntaxElementType>>? = null) {
     val state: ErrorState = ErrorState(bundle)
     ErrorState.Companion.initState(state, builder, root, this, extendsSets)
-    return Builder(builder, state, parser)
   }
 
   private fun checkSiblings(
     chunkType: SyntaxElementType,
-    parens: Deque<Pair<SyntaxTreeBuilder.Marker?, SyntaxTreeBuilder.Marker?>>,
-    siblings: Deque<Pair<SyntaxTreeBuilder.Marker?, Int>>,
+    parens: ArrayDeque<Pair<SyntaxTreeBuilder.Marker?, SyntaxTreeBuilder.Marker?>>,
+    siblings: ArrayDeque<Pair<SyntaxTreeBuilder.Marker, Int>>,
   ) {
     main@ while (!siblings.isEmpty()) {
-      val parenPair: Pair<SyntaxTreeBuilder.Marker?, SyntaxTreeBuilder.Marker?> = parens.peek()
-      val rating: Int = siblings.getFirst().second
+      val parenPair: Pair<SyntaxTreeBuilder.Marker?, SyntaxTreeBuilder.Marker?> = parens.first()
+      val rating: Int = siblings.first().second
       var count = 0
       for (pair in siblings) {
-        if (pair.second != rating || parenPair != null && pair.first === parenPair.second) break@main
+        if (pair.second != rating || pair.first === parenPair.second) break@main
         if (++count >= MAX_CHILDREN_IN_TREE) {
           val parentMarker: SyntaxTreeBuilder.Marker = pair.first.precede()
           parentMarker.setCustomEdgeTokenBinders(WhitespacesBinders.greedyLeftBinder(), null)
@@ -846,7 +846,7 @@ open class SyntaxGeneratedParserUtilBase(
     parser: Parser, eatMoreCondition: Parser,
   ): Boolean {
     val parens: ArrayDeque<Pair<SyntaxTreeBuilder.Marker?, SyntaxTreeBuilder.Marker?>> = ArrayDeque<Pair<SyntaxTreeBuilder.Marker?, SyntaxTreeBuilder.Marker?>>(4)
-    val siblings: ArrayDeque<Pair<SyntaxTreeBuilder.Marker?, Int>> = ArrayDeque<Pair<SyntaxTreeBuilder.Marker?, Int>>()
+    val siblings: ArrayDeque<Pair<SyntaxTreeBuilder.Marker, Int>> = ArrayDeque<Pair<SyntaxTreeBuilder.Marker, Int>>()
     var marker: SyntaxTreeBuilder.Marker? = null
 
     val lBrace: SyntaxElementType? = state.braces?.let { braces -> if (checkBraces && braces.size > 0) braces[0].myLeftBrace else null }
@@ -872,7 +872,7 @@ open class SyntaxGeneratedParserUtilBase(
           tokenCount = 0
         }
         if (tokenType === lBrace) {
-          val prev = siblings.peek()
+          val prev = siblings.first()
           parens.addFirst(Pair(builder.mark(), prev.first))
         }
         checkSiblings(chunkType, parens, siblings)
@@ -881,7 +881,7 @@ open class SyntaxGeneratedParserUtilBase(
           val pair: Pair<SyntaxTreeBuilder.Marker?, SyntaxTreeBuilder.Marker?> = parens.removeFirst()
           pair.first?.done(chunkType)
           // drop all markers inside parens
-          while (!siblings.isEmpty() && siblings.getFirst().first !== pair.second) {
+          while (!siblings.isEmpty() && siblings.first().first !== pair.second) {
             siblings.removeFirst()
           }
           siblings.addFirst(Pair(pair.first, 1))
@@ -925,13 +925,11 @@ open class SyntaxGeneratedParserUtilBase(
     fun parse(builder: SyntaxTreeBuilder, level: Int): Boolean
   }
 
-  class Builder(private val builder: SyntaxTreeBuilder, state_: ErrorState, parser_: PsiParser?) : com.intellij.lang.impl.PsiBuilderAdapter(builder) {
+  class Builder(private val builder: SyntaxTreeBuilder, state_: ErrorState) {
     val state: ErrorState
-    val parser: com.intellij.lang.PsiParser?
 
     init {
       state = state_
-      parser = parser_
     }
 
     val lexer: Lexer
@@ -1005,7 +1003,7 @@ open class SyntaxGeneratedParserUtilBase(
       val list = if (expected) variants else unexpected
       val strings: Array<String?> = arrayOfNulls<String>(list.size)
       val hashes = LongArray(strings.size)
-      Arrays.fill(strings, "")
+      strings.fill("")
       var count = 0
       loop@ for (variant in list) {
         if (position == variant.position) {
@@ -1019,7 +1017,7 @@ open class SyntaxGeneratedParserUtilBase(
           count++
         }
       }
-      Arrays.sort(strings)
+      strings.sort()
       count = 0
       for (s in strings) {
         if (s.isNullOrEmpty()) continue
@@ -1075,7 +1073,7 @@ open class SyntaxGeneratedParserUtilBase(
         return (builder as Builder).state
       }
 
-      fun initState(state: ErrorState, builder: SyntaxTreeBuilder, root: SyntaxElementType, util: SyntaxGeneratedParserUtilBase, extendsSets: Array<Set<SyntaxElementType>>?) {
+      fun initState(state: ErrorState, builder: SyntaxTreeBuilder, root: SyntaxElementType, util: SyntaxGeneratedParserRuntimeBase, extendsSets: Array<Set<SyntaxElementType>>?) {
         state.extendsSets = extendsSets
         state.completionState = if (builder is CompletionVariantProvider) builder.getCompletionState() else null
         state.caseSensitive = util.isLanguageCaseSensitive

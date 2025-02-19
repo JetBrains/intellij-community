@@ -24,7 +24,7 @@ import com.intellij.platform.syntax.psi.asSyntaxLogger
 import com.intellij.platform.syntax.psi.convertNotNull
 import com.intellij.platform.syntax.util.CompletionState
 import com.intellij.platform.syntax.util.CompletionVariantProvider
-import com.intellij.platform.syntax.util.SyntaxGeneratedParserUtilBase.ErrorState
+import com.intellij.platform.syntax.util.SyntaxGeneratedParserRuntimeBase.ErrorState
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.BlockSupportImpl
 import com.intellij.psi.impl.DiffLog

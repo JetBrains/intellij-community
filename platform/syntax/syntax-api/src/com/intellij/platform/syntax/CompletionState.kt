@@ -3,7 +3,7 @@ package com.intellij.platform.syntax.util
 
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
-import com.intellij.platform.syntax.util.SyntaxGeneratedParserUtilBase.Companion.isWhitespaceOrComment
+import com.intellij.platform.syntax.util.SyntaxGeneratedParserRuntimeBase.Companion.isWhitespaceOrComment
 
 class CompletionState(val offset: Int) : Function<Any?, String?> {
   val items: MutableCollection<String?> = HashSet<String?>()
