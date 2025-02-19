@@ -12,6 +12,8 @@ import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.Path
+import kotlin.io.path.pathString
 
 @ApiStatus.Internal
 class EelNioBridgeServiceImpl : EelNioBridgeService {
@@ -41,7 +43,10 @@ class EelNioBridgeServiceImpl : EelNioBridgeService {
   }
 
   override fun register(localRoot: String, descriptor: EelDescriptor, internalName: String, prefix: Boolean, caseSensitive: Boolean, fsProvider: (underlyingProvider: FileSystemProvider, existingFileSystem: FileSystem?) -> FileSystem?) {
-    fsRegistry.compute(localRoot) { _, existingFileSystem ->
+    // For some reason, Path.of on Windows adds an extra slash at the end. For example, \\docker\id becomes \\docker\id\. Therefore, to compute the key, we need to convert the path to this format.
+    val key = Path(localRoot).pathString
+
+    fsRegistry.compute(key) { _, existingFileSystem ->
       val result: Ref<FileSystem?> = Ref(null)
       // the computation within MultiRoutingFileSystem can be restarted several times, but it will not terminate until it succeeds
       MultiRoutingFileSystemProvider.computeBackend(multiRoutingFileSystemProvider, localRoot, prefix, caseSensitive) { underlyingProvider, actualFs ->
