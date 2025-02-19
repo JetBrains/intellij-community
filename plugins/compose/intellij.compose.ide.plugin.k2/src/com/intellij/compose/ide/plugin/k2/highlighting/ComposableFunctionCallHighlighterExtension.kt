@@ -41,27 +41,23 @@ internal class ComposableFunctionCallHighlighterExtension : KotlinCallHighlighte
       return annotated != null && COMPOSABLE_ANNOTATION_CLASS_ID in annotated.annotations
     }
 
-    fun KaCallableMemberCall<*, *>.isComposableLambdaArgument(): Boolean {
-      val functionSymbol = this as? KaNamedFunctionSymbol ?: return false
-      val isInvokeOperatorCall = functionSymbol.isOperator && functionSymbol.name == OperatorNameConventions.INVOKE
-      if(!isInvokeOperatorCall) return false
-
-      val type = this.partiallyAppliedSymbol.dispatchReceiver?.type ?: return false
-      return hasComposableAnnotation(type)
+    fun KaNamedFunctionSymbol.isOperatorCall() : Boolean {
+      return this.isBuiltinFunctionInvoke || (this.isOperator && this.name == OperatorNameConventions.INVOKE)
     }
-
-    if (memberCall.isComposableLambdaArgument()) return true
 
     return when (val callableSymbol = memberCall.symbol) {
       is KaNamedFunctionSymbol -> {
-        hasComposableAnnotation(callableSymbol)
+        if (hasComposableAnnotation(callableSymbol)) return true
+
+        if (callableSymbol.isOperatorCall()) {
+          val typeInvokeOperatorIsCalledOn = memberCall.partiallyAppliedSymbol.dispatchReceiver?.type ?: return false
+          return hasComposableAnnotation(typeInvokeOperatorIsCalledOn)
+        }
+
+        return false
       }
-      is KaPropertySymbol -> {
-        hasComposableAnnotation(callableSymbol.getter)
-      }
-      else -> {
-        false
-      }
+      is KaPropertySymbol -> hasComposableAnnotation(callableSymbol.getter)
+      else -> false
     }
   }
 }
