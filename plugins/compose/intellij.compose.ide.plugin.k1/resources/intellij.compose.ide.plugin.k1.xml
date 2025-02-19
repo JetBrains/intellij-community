@@ -1,4 +1,4 @@
-<intellij-plugin package="com.intellij.compose.ide.plugin.k1">
+<idea-plugin package="com.intellij.compose.ide.plugin.k1">
   <dependencies>
     <plugin id="com.intellij.modules.kotlin.k1"/>
     <module name="intellij.compose.ide.plugin.shared" />
@@ -9,4 +9,4 @@
                             implementationClass="com.intellij.compose.ide.plugin.k1.completion.K1ComposeModifierCompletionContributor"
                             order="first, before KotlinCompletionContributor"/>
   </extensions>
-</intellij-plugin>
+</idea-plugin>
