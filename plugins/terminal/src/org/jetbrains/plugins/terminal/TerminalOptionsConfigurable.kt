@@ -123,7 +123,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
             project,
             FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withDescription(message("settings.terminal.shell.executable.path.browseFolder.description")),
             historyProvider = {
-              TerminalUtil.detectShells(environmentVarsButton.envs)
+              detectShells(environmentVarsButton.envs)
             },
           )).setupDefaultValue({ childComponent.textEditor }, projectOptionsProvider.defaultShellPath())
             .bindText(projectOptionsProvider::shellPath)
