@@ -12,11 +12,11 @@ import com.intellij.ui.dsl.builder.Panel
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Defines vertical step in new project wizard. It is step which
- * selects by controls on one wizard view. NPW step is small part
- * of UI [setupUI] and rules how this UI applies [setupProject] on
- * new project or new module. All steps form tree of steps are
- * applying in order from root to leaf.
+ * Defines a vertical step in the new project wizard.
+ * It is a step selected by controls on one wizard view.
+ * NPW step defines the part of UI [setupUI] and rules how this UI applies [setupProject] to the new project or module.
+ * All steps form the step tree, where [setupUI] and [setupProject] functions are applied in the order from root to leaf.
+ * However, the [setupProject] function won't be called for hidden steps.
  *
  * Wizard type (NPW or NMW) can be determined by [context] property
  * [WizardContext.isCreatingNewProject].
@@ -25,18 +25,19 @@ import org.jetbrains.annotations.ApiStatus
  * @see AbstractNewProjectWizardStep
  * @see AbstractNewProjectWizardMultiStep
  * @see NewProjectWizardMultiStepFactory
+ * @see GeneratorNewProjectWizard
  */
 interface NewProjectWizardStep {
 
   /**
-   * New project wizard context that is used to configure main properties of project. Project name, location, SDK, etc.
+   * New project wizard context that is used to configure the project's common properties.
+   * Project name, location, SDK, etc.
    */
   val context: WizardContext
 
   /**
    * Graph to add dependencies between UI properties.
-   * Expected that root step defines [propertyGraph] for other children steps.
-   * So the vast majority of consumers shouldn't do it, and get [propertyGraph] from local property of this class.
+   * Expected that root step defines [propertyGraph] for child steps.
    */
   val propertyGraph: PropertyGraph
 
@@ -50,36 +51,36 @@ interface NewProjectWizardStep {
    *
    * Convention:
    *
-   * Step which setups specific step data, should put these data into [data] holder.
-   * Also, step data should be extracted into interface where ara data properties and
-   * static property to get data from [data] holder.
-   * Usually our [NewProjectWizardStep]s implement their data interface.
-   * It allows getting data directly from parent step without dynamic casting data from [data] holder.
+   * Step, which sets up specific step data, should put their data into [data] holder.
+   * The step data should be extracted into interface where present data properties and
+   * a static property that get step's data from [data] holder.
+   *
+   * Implementing data interface by the child step allows getting data directly from a parent step without dynamic casting data from [data] holder.
    *
    * @see NewProjectWizardBaseData
    */
   val data: UserDataHolder
 
   /**
-   * Setups UI using Kotlin DSL.
+   * Sets up UI using Kotlin DSL.
    *
    * Wizard type (NPW or NMW) can be determined by [context] property
    * [WizardContext.isCreatingNewProject].
    *
-   * Style suggestions: If you need to create abstract step with
+   * Style suggestions: If you need to create an abstract step with
    * common UI then create small protected UI segments like
    * `setupJdkUi` and `setupSampleCodeUi` and reuse them in `setupUi`
    * for each implementation. Don't override `setupUi` in abstract
-   * steps, because later UI customization for only one consumer is
-   * hard with abstract `setupUi`.
+   * steps, because later UI customization with abstract `setupUi` is
+   * hard task.
    *
    * See also: `https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl.html`
    */
   fun setupUI(builder: Panel) {}
 
   /**
-   * Applies data from UI into project model or settings. It executes
-   * for new project and new module.
+   * Applies data from UI into project model or settings.
+   * This function will be executed in both cases: new project and module wizards.
    *
    * Wizard type (NPW or NMW) can be determined by [context] property
    * [WizardContext.isCreatingNewProject].
