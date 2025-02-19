@@ -608,6 +608,9 @@ final class JavaErrorFixProvider {
       if (error.psi().getParent() instanceof PsiMethodCallExpression methodCall) {
         HighlightFixUtil.registerMethodCallIntentions(sink, methodCall, methodCall.getArgumentList());
       }
+      else if (error.psi() instanceof PsiReferenceExpression expression) {
+        sink.accept(myFactory.createRenameWrongRefFix(expression));
+      }
     });
     fixes(CALL_UNRESOLVED, (error, sink) -> {
       PsiMethodCallExpression methodCall = error.psi();

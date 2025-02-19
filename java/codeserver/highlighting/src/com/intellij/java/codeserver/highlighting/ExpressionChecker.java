@@ -962,6 +962,16 @@ final class ExpressionChecker {
     if ((resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) && !(resolved instanceof ImplicitVariable)) {
       myVisitor.myControlFlowChecker.checkVariableMustBeFinal((PsiVariable)resolved, ref);
     }
+    boolean skipValidityChecks =
+      PsiUtil.isInsideJavadocComment(ref) ||
+      PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class, true) != null ||
+      resolved instanceof PsiPackage && ref.getParent() instanceof PsiJavaCodeReferenceElement;
+
+    if (skipValidityChecks) return;
+
+    if (!result.isStaticsScopeCorrect()) {
+      myVisitor.report(JavaErrorKinds.REFERENCE_NON_STATIC_FROM_STATIC_CONTEXT.create(ref, resolved));
+    }
   }
 
   private static boolean favorParentReport(@NotNull PsiCall methodCall, @NotNull String errorMessage) {

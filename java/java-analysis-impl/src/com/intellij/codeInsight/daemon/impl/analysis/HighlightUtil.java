@@ -16,7 +16,10 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -55,12 +58,6 @@ public final class HighlightUtil {
   public static @NotNull String formatClass(@NotNull PsiClass aClass, boolean fqn) {
     return PsiFormatUtil.formatClass(aClass, PsiFormatUtilBase.SHOW_NAME |
                                              PsiFormatUtilBase.SHOW_ANONYMOUS_CLASS_VERBOSE | (fqn ? PsiFormatUtilBase.SHOW_FQ_NAME : 0));
-  }
-
-  static @NotNull @NlsContexts.DetailedDescription String staticContextProblemDescription(@NotNull PsiElement refElement) {
-    String type = JavaElementKind.fromElement(refElement).lessDescriptive().subject();
-    String name = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
-    return JavaErrorBundle.message("non.static.symbol.referenced.from.static.context", type, name);
   }
 
   static @NotNull @NlsContexts.DetailedDescription String accessProblemDescription(@NotNull PsiElement ref,
@@ -195,41 +192,30 @@ public final class HighlightUtil {
       PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class, true) != null ||
       resolved instanceof PsiPackage && ref.getParent() instanceof PsiJavaCodeReferenceElement;
 
+    if (skipValidityChecks) return null;
+    
     final ErrorWithFixes moduleProblem = checkModuleAccess(resolved, ref, result);
-    if (!skipValidityChecks && !(result.isValidResult() && moduleProblem == null)) {
-      if (moduleProblem != null) {
-        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(findPackagePrefix(ref))
-          .descriptionAndTooltip(moduleProblem.message);
-        moduleProblem.fixes.forEach(fix -> info.registerFix(fix, List.of(), null, null, null));
-        return info;
-      }
+    if (moduleProblem != null) {
+      HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(findPackagePrefix(ref))
+        .descriptionAndTooltip(moduleProblem.message);
+      moduleProblem.fixes.forEach(fix -> info.registerFix(fix, List.of(), null, null, null));
+      return info;
+    }
 
-      if (!result.isAccessible()) {
-        @Nls String description = accessProblemDescription(ref, resolved, result);
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description);
-        if (result.isStaticsScopeCorrect() && resolved instanceof PsiJvmMember) {
-          HighlightFixUtil.registerAccessQuickFixAction(asConsumer(info), (PsiJvmMember)resolved, ref, result.getCurrentFileResolveScope());
-          if (ref instanceof PsiReferenceExpression expression) {
-            IntentionAction action = getFixFactory().createRenameWrongRefFix(expression);
-            info.registerFix(action, null, null, null, null);
-          }
-        }
-        UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, info);
-        return info;
-      }
-
-      if (!result.isStaticsScopeCorrect()) {
-        String description = staticContextProblemDescription(resolved);
-        HighlightInfo.Builder info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description);
-        HighlightFixUtil.registerStaticProblemQuickFixAction(asConsumer(info), resolved, ref);
+    if (!result.isAccessible()) {
+      @Nls String description = accessProblemDescription(ref, resolved, result);
+      HighlightInfo.Builder info =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description);
+      if (result.isStaticsScopeCorrect() && resolved instanceof PsiJvmMember) {
+        HighlightFixUtil.registerAccessQuickFixAction(asConsumer(info), (PsiJvmMember)resolved, ref,
+                                                      result.getCurrentFileResolveScope());
         if (ref instanceof PsiReferenceExpression expression) {
           IntentionAction action = getFixFactory().createRenameWrongRefFix(expression);
           info.registerFix(action, null, null, null, null);
         }
-        return info;
       }
+      UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(ref, info);
+      return info;
     }
 
     return null;
