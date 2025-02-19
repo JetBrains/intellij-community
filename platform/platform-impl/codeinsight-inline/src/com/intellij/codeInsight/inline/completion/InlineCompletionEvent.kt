@@ -315,6 +315,16 @@ interface InlineCompletionEvent {
    */
   @ApiStatus.Experimental
   class InsertNextLine @ApiStatus.Internal constructor(editor: Editor) : PartialAccept(editor), Builtin
+
+  /**
+   * Triggered when an editor becomes active.
+   */
+  @ApiStatus.Experimental
+  class EditorFocused @ApiStatus.Internal constructor(val editor: Editor) : Builtin {
+    override fun toRequest(): InlineCompletionRequest? {
+      return getRequest(event = this, editor = editor)
+    }
+  }
 }
 
 private fun getPsiFile(caret: Caret, project: Project): PsiFile? {
