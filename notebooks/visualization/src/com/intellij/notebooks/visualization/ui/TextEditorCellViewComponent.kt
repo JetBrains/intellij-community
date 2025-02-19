@@ -24,14 +24,13 @@ import java.awt.Dimension
 import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import kotlin.text.lines
 
 class TextEditorCellViewComponent(
   private val editor: EditorEx,
   private val cell: EditorCell,
 ) : EditorCellViewComponent(), InputComponent {
 
-  private var highlighters: List<RangeHighlighter>? = null
+  private var highlighter: RangeHighlighter? = null
 
   private val interval: NotebookCellLines.Interval
     get() = cell.intervalPointer.get() ?: error("Invalid interval")
@@ -78,7 +77,7 @@ class TextEditorCellViewComponent(
     )
 
     highlighter.gutterIconRenderer = ActionToGutterRendererAdapter(gutterAction)
-    this.highlighters = listOf(highlighter)
+    this.highlighter = highlighter
   }
 
   override fun dispose(): Unit = editor.updateManager.update { ctx ->
@@ -87,12 +86,8 @@ class TextEditorCellViewComponent(
   }
 
   private fun disposeExistingHighlighter() {
-    if (highlighters != null) {
-      highlighters?.forEach {
-        it.dispose()
-      }
-      highlighters = null
-    }
+    highlighter?.dispose()
+    highlighter = null
   }
 
   override fun calculateBounds(): Rectangle {
