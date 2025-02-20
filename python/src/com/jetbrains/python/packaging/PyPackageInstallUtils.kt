@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Version
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.quickfix.InstallPackageQuickFix
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -27,10 +28,14 @@ object PyPackageInstallUtils {
     }
     if (!isConfirmed)
       return
-    installPackage(project, sdk, packageName)
+    val result = withBackgroundProgress(project = project, PyBundle.message("python.packaging.installing.package", packageName),
+                           cancellable = true) {
+      installPackage(project, sdk, packageName)
+    }
+    result.getOrThrow()
   }
 
-  fun confirmInstall(project: Project, packageName: String): Boolean {
+  fun confirmInstall(project: Project, packageName: String): Boolean  {
     val isWellKnownPackage = ApplicationManager.getApplication()
       .getService(PyPIPackageRanking::class.java)
       .packageRank.containsKey(packageName)
