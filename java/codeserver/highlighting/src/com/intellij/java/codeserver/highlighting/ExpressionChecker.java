@@ -119,7 +119,7 @@ final class ExpressionChecker {
   }
 
   /**
-   * @return true if there's no assignatbility problem reported
+   * @return true if there's no assignability problem reported
    */
   boolean checkAssignability(@Nullable PsiType lType,
                              @Nullable PsiType rType,
@@ -1000,7 +1000,7 @@ final class ExpressionChecker {
           call.resolveMethodGenerics() instanceof MethodCandidateInfo info &&
           info.getInferenceErrorMessage() != null) {
         // Possibly inapplicable method reference due to the surrounding call inference failure:
-        // suppress method reference error in order to display more relevant inference error.
+        // suppress method reference error in order to display a more relevant inference error.
         return true;
       }
     }

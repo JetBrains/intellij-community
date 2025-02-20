@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static java.util.Objects.*;
+import static java.util.Objects.requireNonNullElse;
 
 
 final class FunctionChecker {
@@ -300,7 +300,7 @@ final class FunctionChecker {
     // it means that lambda is not responsible for inference failure and blaming it would be unreasonable.
     boolean skipReturnCompatibility = parentCallResolveResult != null &&
                                       PsiTypesUtil.mentionsTypeParameters(returnType, parentTypeParameters)
-                                      && !FunctionChecker.lambdaParametersMentionTypeParameter(functionalInterfaceType, parentTypeParameters);
+                                      && !lambdaParametersMentionTypeParameter(functionalInterfaceType, parentTypeParameters);
     if (!skipReturnCompatibility) {
       returnErrors = LambdaUtil.checkReturnTypeCompatible(expression, returnType);
     }

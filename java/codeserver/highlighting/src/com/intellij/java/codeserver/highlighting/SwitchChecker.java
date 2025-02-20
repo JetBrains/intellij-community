@@ -413,7 +413,7 @@ final class SwitchChecker {
       if ((!ContainerUtil.and(JavaPsiPatternUtil.deconstructSelectorType(selectorType),
                               type -> TypeConversionUtil.areTypesConvertible(type, patternType)) ||
            // 14.30.3 A type pattern that declares a pattern variable of a reference type U is
-           // applicable at another reference type T if T is checkcast convertible to U (JEP 440-441)
+           // applicable at another reference type T if T is checkcast convertible to U (JEP 440-441).
            // There is no rule that says that a reference type applies to a primitive type
            (selectorType instanceof PsiPrimitiveType &&
             //from JEP 455 it is allowed

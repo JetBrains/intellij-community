@@ -343,7 +343,7 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      * @param type a {@link JavaErrorHighlightType} for a given error kind.
      * @return a new Parameterized instance with the updated highlight type function.
      */
-    Parameterized<Psi, Context> withHighlightType(@NotNull JavaErrorHighlightType type) {
+    Parameterized<Psi, Context> withHighlightType(@SuppressWarnings("SameParameterValue") @NotNull JavaErrorHighlightType type) {
       return withHighlightType((psi, ctx) -> type);
     }
 

@@ -28,6 +28,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 
 final class AnnotationChecker {
   private static final ElementPattern<PsiElement> ANY_ANNOTATION_ALLOWED = psiElement().andOr(
@@ -410,7 +412,7 @@ final class AnnotationChecker {
       PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
       for (PsiNameValuePair attribute : attributes) {
         String name = attribute.getName();
-        names.add(Objects.requireNonNullElse(name, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
+        names.add(requireNonNullElse(name, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
       }
 
       PsiMethod[] annotationMethods = psiClass.getMethods();
@@ -615,7 +617,7 @@ final class AnnotationChecker {
     }
     PsiAnnotationMemberValue value = pair.getValue();
     if (value != null) {
-      PsiType expectedType = Objects.requireNonNull(annotationMethod.getReturnType());
+      PsiType expectedType = requireNonNull(annotationMethod.getReturnType());
       checkMemberValueType(value, expectedType, annotationMethod);
     }
     checkDuplicateAttribute(pair);

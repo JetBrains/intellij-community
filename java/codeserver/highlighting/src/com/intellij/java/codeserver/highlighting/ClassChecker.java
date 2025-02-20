@@ -694,7 +694,7 @@ final class ClassChecker {
 
   void checkClassDoesNotCallSuperConstructorOrHandleExceptions(PsiClass aClass) {
     if (aClass.isEnum()) return;
-    // check only no-ctr classes. Problem with specific constructor will be highlighted inside it
+    // Check only no-ctr classes. Problem with a specific constructor will be highlighted inside it
     if (aClass.getConstructors().length != 0) return;
     // find no-args base class ctr
     checkBaseClassDefaultConstructorProblem(aClass, aClass, PsiClassType.EMPTY_ARRAY);
