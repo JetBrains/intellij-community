@@ -22,10 +22,9 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
         }
     }
 
-    @Ignore("Check and unmute when KTIJ-32507 is fixed")
     @Test
-    @PluginTargetVersions(gradleVersion = "8.10+")
-    fun testJvmOnJvmJavaAndKotlin() {
+    @PluginTargetVersions(pluginVersion = "2.1.20-dev-3305+", gradleVersion = "8.10+")
+    fun testJvmDependsOnJvm() {
         doTest {
             onlyCheckers(
                 NoErrorEventsDuringImportFeature,
@@ -45,9 +44,8 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
         }
     }
 
-    @Ignore("Check and unmute when KTIJ-32507 is fixed")
     @Test
-    @PluginTargetVersions(gradleVersion = "8.10+")
+    @PluginTargetVersions(pluginVersion = "2.1.20-dev-3305+", gradleVersion = "8.10+")
     fun testJvmSharedResources() {
         doTest {
             onlyCheckers(
@@ -59,7 +57,7 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
 
     @Test
     @PluginTargetVersions(pluginVersion = "2.1.20-dev-3305+", gradleVersion = "8.10+")
-    fun testJvmIncludedBuild() {
+    fun testJvmIncludeBuild() {
         doTest {
             onlyCheckers(
                 NoErrorEventsDuringImportFeature,
@@ -68,10 +66,111 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
         }
     }
 
-    @Ignore("Unmute when the latest kotlin is updated to bootstrap version 2.2.0 and bootstrap version includes KT-74727")
     @Test
-    @PluginTargetVersions(gradleVersion = "8.10+")
+    @PluginTargetVersions(pluginVersion = "2.2.0-dev-231+", gradleVersion = "8.10+")
     fun testSimpleMultiTargetProject() {
+        doTest {
+            onlyCheckers(
+                NoErrorEventsDuringImportFeature,
+                HighlightingChecker
+            )
+        }
+    }
+
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.2.0-dev-231+", gradleVersion = "8.10+")
+    fun testMultiTargetIndependentProject() {
+        doTest {
+            onlyCheckers(
+                NoErrorEventsDuringImportFeature,
+                HighlightingChecker
+            )
+        }
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.2.0-dev-231+", gradleVersion = "8.10+")
+    fun testKmpSharedResourcesAndroidIOS() {
+        doTest {
+            onlyCheckers(
+                NoErrorEventsDuringImportFeature,
+                HighlightingChecker
+            )
+        }
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.2.0-dev-745+", gradleVersion = "8.10+")
+    fun testJvmMultiplatformTransitiveDependency() {
+        doTest {
+            onlyCheckers(
+                NoErrorEventsDuringImportFeature,
+                HighlightingChecker
+            )
+        }
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.2.0-dev-231+", gradleVersion = "8.10+")
+    fun testKmpWithCinteropLib() {
+        doTest {
+            onlyCheckers(
+                NoErrorEventsDuringImportFeature,
+                HighlightingChecker
+            )
+        }
+    }
+
+    @Ignore("Check and unmute when KTIJ-33118 is fixed")
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.2.0-dev-231+", gradleVersion = "8.10+")
+    fun testKmpIncludeBuild() {
+        doTest {
+            onlyCheckers(
+                NoErrorEventsDuringImportFeature,
+                HighlightingChecker
+            )
+        }
+    }
+
+    @Ignore("Check and unmute when IDEA-368207 is fixed")
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.2.0-dev-745+", gradleVersion = "8.10+")
+    fun testKmpDependsOnAndroidKMPLibrary() {
+        doTest {
+            onlyCheckers(
+                NoErrorEventsDuringImportFeature,
+                HighlightingChecker
+            )
+        }
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.2.0-dev-745+", gradleVersion = "8.11+")
+    fun testKmpShareConfigurationViaBuildSrc() {
+        doTest {
+            onlyCheckers(
+                NoErrorEventsDuringImportFeature,
+                HighlightingChecker
+            )
+        }
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.2.0-dev-745+", gradleVersion = "8.10+")
+    fun testKmpShareConfigurationViaIncludeBuild() {
+        doTest {
+            onlyCheckers(
+                NoErrorEventsDuringImportFeature,
+                HighlightingChecker
+            )
+        }
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.2.0-dev-745+", gradleVersion = "8.10+")
+    fun testKmpTestDependenciesAcrossModules() {
         doTest {
             onlyCheckers(
                 NoErrorEventsDuringImportFeature,
