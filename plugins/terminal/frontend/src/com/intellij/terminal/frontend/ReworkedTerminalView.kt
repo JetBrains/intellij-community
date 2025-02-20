@@ -19,12 +19,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFileFactory
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.ui.components.JBLayeredPane
-import com.intellij.util.LocalTimeCounter
 import com.intellij.util.asDisposable
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
@@ -34,7 +31,6 @@ import org.jetbrains.plugins.terminal.block.output.TerminalOutputEditorInputMeth
 import org.jetbrains.plugins.terminal.block.output.TerminalTextHighlighter
 import org.jetbrains.plugins.terminal.block.reworked.*
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinkHighlighter
-import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputFileType
 import org.jetbrains.plugins.terminal.block.ui.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils
@@ -315,15 +311,7 @@ internal class ReworkedTerminalView(
   }
 
   private fun createDocument(): Document {
-    val file = PsiFileFactory.getInstance(project).createFileFromText(
-      "terminal_output",
-      TerminalOutputFileType,
-      "",
-      LocalTimeCounter.currentTime(),
-      true,
-      true
-    )
-    return PsiDocumentManager.getInstance(project).getDocument(file)!!
+    return EditorFactory.getInstance().createDocument("")
   }
 
   override fun dispose() {}

@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.reworked.lang
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.LineWrapPositionStrategy
@@ -27,7 +27,7 @@ internal class TerminalLineWrapPositionStrategy : LineWrapPositionStrategy {
 
   /**
    * This method is not reachable
-   * because the valid offset will be found in [canWrapLineAtOffset][org.jetbrains.plugins.terminal.block.reworked.lang.TerminalLineWrapPositionStrategy.canWrapLineAtOffset] method
+   * because the valid offset will be found in [canWrapLineAtOffset] method
    */
   override fun calculateWrapPosition(
     document: Document,
