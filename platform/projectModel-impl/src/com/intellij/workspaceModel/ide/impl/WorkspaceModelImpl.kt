@@ -44,7 +44,10 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
 @ApiStatus.Internal
-open class WorkspaceModelImpl(private val project: Project, private val cs: CoroutineScope) : WorkspaceModelInternal {
+open class WorkspaceModelImpl : WorkspaceModelInternal {
+  val project: Project
+  val cs: CoroutineScope
+
   @Volatile
   var loadedFromCache: Boolean = false
     protected set
@@ -66,7 +69,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   */
   private val updatesFlow = MutableSharedFlow<VersionedStorageChange>(replay = 1)
 
-  private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl(project.isCaseSensitive)
+  private val virtualFileManager: VirtualFileUrlManager
 
   override val currentSnapshot: ImmutableEntityStorage
     get() = entityStorage.current
@@ -79,8 +82,19 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   private val updateModelMethodName = WorkspaceModelImpl::updateProjectModel.name
   private val updateModelSilentMethodName = WorkspaceModelImpl::updateProjectModelSilent.name
   private val onChangedMethodName = WorkspaceModelImpl::onChanged.name
+  
+  constructor(project: Project, cs: CoroutineScope, storage: ImmutableEntityStorage) {
+    this.project = project
+    this.cs = cs
+    this.virtualFileManager = IdeVirtualFileUrlManagerImpl(project.isCaseSensitive)
+    entityStorage = VersionedEntityStorageImpl(storage)
+    unloadedEntitiesStorage = VersionedEntityStorageImpl(ImmutableEntityStorage.empty())
+  }
 
-  init {
+  constructor(project: Project, cs: CoroutineScope) {
+    this.project = project
+    this.cs = cs
+    this.virtualFileManager = IdeVirtualFileUrlManagerImpl(project.isCaseSensitive)
     log.debug { "Loading workspace model" }
     val start = Milliseconds.now()
 
