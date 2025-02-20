@@ -82,6 +82,15 @@ val Project.currentSession: ClientProjectSession
   get() = ClientSessionsManager.getProjectSession(this) ?:
   error("Project-level session is not set. ${ClientId.current}")
 
+/**
+ * Shortcut to [com.intellij.openapi.client.ClientSessionsManager.getProjectSession] for [ClientId.current]
+ * @see com.intellij.openapi.client.ClientSessionsManager.getProjectSession
+ */
+@get:Internal
+val Project.currentSessionOrNull: ClientProjectSession?
+  get() = ClientSessionsManager.getProjectSession(project = this, clientId = ClientId.current)
+
+
 @Internal
 fun Application.sessions(kind: ClientKind): List<ClientAppSession> {
   return ClientSessionsManager.getAppSessions(kind)

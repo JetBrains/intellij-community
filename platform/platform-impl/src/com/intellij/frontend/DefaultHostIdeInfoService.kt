@@ -2,12 +2,13 @@
 package com.intellij.frontend
 
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.system.OS
 
 internal class DefaultHostIdeInfoService : HostIdeInfoService {
   override fun getHostInfo(): HostInfo {
     return HostInfo(productCode = ApplicationInfo.getInstance().build.productCode,
                     osName = OS.CURRENT.name,
-                    osVersion = OS.CURRENT.version)
+                    osVersion = SystemInfo.OS_VERSION)
   }
 }
