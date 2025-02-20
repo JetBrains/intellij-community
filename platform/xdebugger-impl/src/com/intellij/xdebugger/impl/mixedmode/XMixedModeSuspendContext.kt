@@ -9,7 +9,7 @@ import com.intellij.xdebugger.mixedMode.XExecutionStackWithNativeThreadId
 import com.intellij.xdebugger.mixedMode.XMixedModeSuspendContextBase
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.mixedMode.nativeThreadId
-import com.intellij.xdebugger.impl.util.adviseOnFrameChanged
+import com.intellij.xdebugger.impl.util.notifyOnFrameChanged
 import com.intellij.xdebugger.mixedMode.XMixedModeLowLevelDebugProcessExtension
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -46,7 +46,7 @@ class XMixedModeSuspendContext(
   private val activeExecutionStackBasedOnDebugProcesses by lazy { createActiveExecutionStack() }
 
   init {
-    session.adviseOnFrameChanged { stack, _ ->
+    session.notifyOnFrameChanged { stack, _ ->
       // we need to track when the current thread is changed to show the correct thread after rebuildAllViews
       setActiveThreadId(stack.nativeThreadId)
     }
