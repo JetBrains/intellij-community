@@ -9,7 +9,6 @@ object KLoggers {
   private val customFactory = ServiceLoader.load(KLoggerFactory::class.java, KLoggerFactory::class.java.classLoader).firstOrNull()
                               ?: Slf4jKLoggerFactory()
   fun logger(owner: KClass<*>) = customFactory.logger(owner)
-  fun logger(owner: Class<*>) = customFactory.logger(owner)
   fun logger(owner: Any) = customFactory.logger(owner)
   fun logger(name: String) = customFactory.logger(name)
 

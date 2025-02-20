@@ -12,10 +12,6 @@ internal class IjLoggerFactory : KLoggerFactory {
     return KLogger(IjLogger(Logger.getInstance(owner.java)))
   }
 
-  override fun logger(owner: Class<*>): KLogger {
-    return KLogger(IjLogger(Logger.getInstance(owner)))
-  }
-
   override fun logger(owner: Any): KLogger {
     return KLogger(IjLogger(Logger.getInstance(owner.toString())))
   }

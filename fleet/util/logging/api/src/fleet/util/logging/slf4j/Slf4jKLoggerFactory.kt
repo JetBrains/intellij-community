@@ -11,10 +11,6 @@ class Slf4jKLoggerFactory : KLoggerFactory {
     return defaultLogger(owner)
   }
 
-  override fun logger(owner: Class<*>): KLogger {
-    return defaultLogger(owner.kotlin)
-  }
-
   override fun logger(owner: Any): KLogger {
     return defaultLogger(owner.javaClass.kotlin)
   }

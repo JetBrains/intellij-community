@@ -5,7 +5,6 @@ import kotlin.reflect.KClass
 
 interface KLoggerFactory {
     fun logger(owner: KClass<*>): KLogger
-    fun logger(owner: Class<*>): KLogger
     fun logger(owner: Any): KLogger
     fun logger(name: String): KLogger
 }
