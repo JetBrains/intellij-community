@@ -16,7 +16,11 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * @deprecated Use {@link IndexingIteratorsProvider IndexingIteratorsProvider}
+ */
 @Internal
+@Deprecated(forRemoval = true)
 public interface IndexableFilesIndex {
 
   static @NotNull IndexableFilesIndex getInstance(@NotNull Project project) {
@@ -27,7 +31,6 @@ public interface IndexableFilesIndex {
   boolean shouldBeIndexed(@NotNull VirtualFile file);
 
   /**
-   * <br/>
    * Most of {@link IndexableSetOrigin} contain roots. In this case they contain registered roots of corresponding workspace entity or
    * other indexable unit, like {@link com.intellij.openapi.roots.SyntheticLibrary} or {@link IndexableSetContributor}.
    * Consider structure `contentRoot/dir/file`. {@code getOrigins(file).singleOrError().getRoots()} is `contentRoot`.

@@ -20,10 +20,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.AdditionalIndexableFileSet;
-import com.intellij.util.indexing.IndexableFilesIndex;
-import com.intellij.util.indexing.IndexableSetContributor;
-import com.intellij.util.indexing.ProjectEntityIndexingService;
+import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind;
@@ -41,8 +38,12 @@ import java.util.*;
 
 import static com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl.Companion;
 
+/**
+ * @deprecated Use {@link IndexingIteratorsProviderImpl IndexingIteratorsProviderImpl}
+ */
 @ApiStatus.Experimental
 @ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
   private final @NotNull Project project;
   private final AdditionalIndexableFileSet filesFromIndexableSetContributors;
