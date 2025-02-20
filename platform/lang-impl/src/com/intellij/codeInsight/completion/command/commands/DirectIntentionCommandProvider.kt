@@ -28,6 +28,9 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.jobToIndicator
@@ -260,10 +263,25 @@ internal class DirectIntentionCommandProvider : CommandProvider {
             TextRange(injectedLanguageManager.injectedToHost(psiFile, 0),
                       injectedLanguageManager.injectedToHost(psiFile, psiFile.fileDocument.textLength)))
         }
+        var attemptToAddAi = false
         for (info: HighlightInfo? in errorHighlightings) {
           if (info == null) continue
           if (!insideRange.intersects(info.startOffset, info.endOffset) ||
               (isInjected && !insideRange.contains(TextRange(info.startOffset, info.endOffset)))) continue
+          if (!attemptToAddAi && info.severity == HighlightSeverity.ERROR) {
+            val intentionsInfo: IntentionsInfo? = tryToAddAI(info, psiFile, editor, offset)
+            if (intentionsInfo != null) {
+              val intentionsCache = CachedIntentions(psiFile.project, psiFile, editor)
+              intentionsCache.wrapAndUpdateActions(intentionsInfo, false)
+              for (descriptor in intentionsCache.errorFixes) {
+                val command = IntentionCompletionCommand(descriptor, 50, AllIcons.Actions.QuickfixBulb,
+                                                         HighlightInfoLookup(TextRange(info.startOffset, info.endOffset),
+                                                                             CodeInsightColors.ERRORS_ATTRIBUTES, 100), offset)
+                result.add(command)
+              }
+            }
+            attemptToAddAi = true
+          }
           val fixes: MutableList<IntentionActionDescriptor> = ArrayList()
           ShowIntentionsPass.addAvailableFixesForGroups(info, topLevelEditor, topLevelFile, fixes, -1, offset, false)
           for (descriptor in fixes) {
@@ -279,6 +297,35 @@ internal class DirectIntentionCommandProvider : CommandProvider {
       }
       return@async result
     }
+  }
+
+  /**
+   * temporary workaround for fix with AI
+   */
+  private fun tryToAddAI(info: HighlightInfo, psiFile: PsiFile, editor: Editor, offset: Int): IntentionsInfo? {
+    val copyFile = psiFile.copy() as? PsiFile ?: return null
+    val markup = DocumentMarkupModel.forDocument(copyFile.fileDocument, psiFile.project, true) as? MarkupModelEx ?: return null
+    val textAttributesKey = if (info.forcedTextAttributesKey == null) info.type.getAttributesKey() else info.forcedTextAttributesKey
+    val highlighter = markup.addRangeHighlighter(textAttributesKey, info.startOffset, info.endOffset, 5000, HighlighterTargetArea.EXACT_RANGE)
+    highlighter.errorStripeTooltip = info
+    val dumbService = DumbService.getInstance(psiFile.project)
+    val intentions = IntentionsInfo()
+    val copyEditor = MyEditor(copyFile, editor.settings)
+    copyEditor.caretModel.moveToOffset(offset)
+    for (extension in IntentionMenuContributor.EP_NAME.extensionList) {
+      if (extension.javaClass.name != "com.intellij.ml.llm.inlinePromptDetector.fixWithAi.FixWithAiIntentionMenuContributor") continue
+      ProgressManager.checkCanceled()
+      try {
+        if (dumbService.isUsableInCurrentContext(extension)) {
+          extension.collectActions(copyEditor, copyFile, intentions, -1, offset)
+        }
+      }
+      catch (_: IntentionPreviewUnsupportedOperationException) {
+        //can collect action on a mock memory editor and produce exceptions - ignore
+      }
+    }
+
+    return intentions
   }
 
   private fun CoroutineScope.asyncIntentions(
