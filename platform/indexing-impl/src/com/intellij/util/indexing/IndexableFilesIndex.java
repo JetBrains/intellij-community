@@ -7,11 +7,8 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -29,26 +26,6 @@ public interface IndexableFilesIndex {
 
   @RequiresBackgroundThread
   boolean shouldBeIndexed(@NotNull VirtualFile file);
-
-  /**
-   * Most of {@link IndexableSetOrigin} contain roots. In this case they contain registered roots of corresponding workspace entity or
-   * other indexable unit, like {@link com.intellij.openapi.roots.SyntheticLibrary} or {@link IndexableSetContributor}.
-   * Consider structure `contentRoot/dir/file`. {@code getOrigins(file).singleOrError().getRoots()} is `contentRoot`.
-   * Why this is important: some similar APIs are written for incremental reindexing, and work with minimal necessary roots. For example,
-   * {@link ReincludedRootsUtil}.
-   * <br/>
-   * Batch handling is introduced for the sake of performance.
-   * <br/>
-   * Just like `WorkspaceFileIndex`, `IndexableFilesIndex` doesn't detect cases when a file gets under some `IndexableSetOrigin`
-   * due to a symlink on it or its parent.
-   * In case `rootOfOrigin1/targetFile` and `rootOfOrigin2/symlinkToTargetFile` only `Origin1` would be returned by `getOrigins(targetFile)`.
-   * See more in {@link IndexableFilesIndexSymlinkedOriginsTest}
-   */
-  @RequiresBackgroundThread
-  @NotNull
-  @Unmodifiable
-  @TestOnly
-  Collection<? extends IndexableSetOrigin> getOrigins(@NotNull Collection<VirtualFile> files);
 
   @RequiresBackgroundThread
   @NotNull

@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
@@ -32,7 +31,6 @@ import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -62,18 +60,6 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
   public boolean shouldBeIndexed(@NotNull VirtualFile file) {
     if (WorkspaceFileIndex.getInstance(project).isInWorkspace(file)) return true;
     return filesFromIndexableSetContributors.isInSet(file);
-  }
-
-  @Override
-  public @Unmodifiable @NotNull Collection<? extends IndexableSetOrigin> getOrigins(@NotNull Collection<VirtualFile> files) {
-    if (files.isEmpty()) return Collections.emptyList();
-    OriginClassifier classifier = OriginClassifier.classify(project, files);
-    Collection<IndexableFilesIterator> iterators =
-      ProjectEntityIndexingService.Companion.getInstance(project).createIteratorsForOrigins(classifier.entityStorage, classifier.myEntityPointers,
-                                                                        classifier.sdks, classifier.libraryIds,
-                                                                        classifier.filesFromAdditionalLibraryRootsProviders,
-                                                                        classifier.filesFromIndexableSetContributors);
-    return ContainerUtil.map(iterators, iterator -> iterator.getOrigin());
   }
 
   @Override
