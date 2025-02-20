@@ -10,16 +10,18 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -45,6 +47,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
   public static final int EXACT_MATCH_DEGREE = 5000;
   private static final int DIRECTORY_MATCH_DEGREE = 0;
+  private static final int DIR_CHILD_MATCH_DEGREE = 0;
 
   private final Project myProject;
   private final GotoFileModel myModel;
@@ -79,11 +82,32 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         parameters = parameters.withCompletePattern(pattern.substring(1));
       }
 
-      if (!processItemsForPattern(base, parameters, consumer, indicator)) {
+      Ref<Boolean> hasSuggestions = Ref.create(false);
+      boolean processItems = processItemsForPattern(base, parameters, consumer, indicator, hasSuggestions);
+
+      // With fuzzy search: The process was interrupt but there are suggestions.
+      // For example, if there are too many results,
+      // `ContainerUtil.process(matchedFiles, trackingProcessor)` in `SuffixMatcher.processFiles()` returns false
+      // and `processItems == false`
+      if (!processItems && (!Registry.is("search.everywhere.fuzzy.file.search.enabled", false) || hasSuggestions.get())) {
         return false;
       }
-      String fixedPattern = FixingLayoutMatcher.fixLayout(pattern);
-      return fixedPattern == null || processItemsForPattern(base, parameters.withCompletePattern(fixedPattern), consumer, indicator);
+
+      Ref<Boolean> hasSuggestionsFixedPattern = Ref.create(false);
+      if (processItems) { // stay within the original logic that was before adding the fuzzy search
+        String fixedPattern = FixingLayoutMatcher.fixLayout(pattern);
+        // With fuzzy search: The process was interrupt but there are suggestions.
+        if (fixedPattern != null &&
+            !processItemsForPattern(base, parameters.withCompletePattern(fixedPattern), consumer, indicator, hasSuggestionsFixedPattern) &&
+            (!Registry.is("search.everywhere.fuzzy.file.search.enabled", false) || hasSuggestionsFixedPattern.get())) {
+          return false;
+        }
+      }
+
+      return !Registry.is("search.everywhere.fuzzy.file.search.enabled", false) ||
+             hasSuggestions.get() ||
+             hasSuggestionsFixedPattern.get() ||
+             processItemsForPatternWithLevenshtein(parameters, consumer, indicator);
     }
     finally {
       if (LOG.isDebugEnabled()) {
@@ -92,22 +116,90 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
   }
 
+  /**
+   * Processes all files and directories with `LevenshteinCalculator`.
+   * Returns false if the process was stopped, true otherwise.
+   */
+  private boolean processItemsForPatternWithLevenshtein(@NotNull FindSymbolParameters parameters,
+                                                        @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
+                                                        @NotNull ProgressIndicator indicator) {
+    List<Pair<VirtualFile, String>> roots = DirectoryPathMatcher.getProjectRoots(myModel);
+    String pattern = parameters.getCompletePattern();
+    if (pattern.isEmpty()) {
+      return true;
+    }
+
+    LevenshteinCalculator calculator = new LevenshteinCalculator(pattern);
+    List<FoundItemDescriptor<PsiFileSystemItem>> matchingItems = new ArrayList<>();
+    List<PsiDirectory> matchingDirectories = new ArrayList<>();
+
+    for (Pair<VirtualFile, String> fileWithName : roots) {
+      VirtualFile root = fileWithName.getFirst();
+      VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          indicator.checkCanceled();
+
+          if (!parameters.getSearchScope().accept(file)) {
+            return false;
+          }
+
+          float distance = calculator.distanceToVirtualFile(file);
+          if (distance >= LevenshteinCalculator.MIN_ACCEPTABLE_DISTANCE) {
+            PsiFileSystemItem fileItem = PsiUtilCore.findFileSystemItem(myProject, file);
+            if (fileItem == null) {
+              return false;
+            }
+            int weight = LevenshteinCalculator.weightFromDistance(distance);
+            if (fileItem instanceof PsiDirectory directory) {
+              matchingItems.add(new FoundItemDescriptor<>(fileItem, Math.max(1, weight - 10)));
+              matchingDirectories.add(directory);
+            } else {
+              matchingItems.add(new FoundItemDescriptor<>(fileItem, weight));
+            }
+          }
+          return true;
+        }
+      });
+    }
+
+    if (matchingItems.isEmpty()) {
+      return true;
+    }
+
+    if (matchingDirectories.size() == 1) {
+      List<FoundItemDescriptor<PsiFileSystemItem>> childElements = getListWithChildItems(matchingDirectories.get(0), myProject);
+      matchingItems.addAll(childElements);
+    }
+
+    Processor<FoundItemDescriptor<?>> trackingProcessor = res -> {
+      return consumer.process(res);
+    };
+    if (!ContainerUtil.process(matchingItems, trackingProcessor)) {
+      return false;
+    }
+
+    return true;
+  }
+
   private boolean processItemsForPattern(@NotNull ChooseByNameViewModel base,
                                          @NotNull FindSymbolParameters parameters,
                                          @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
-                                         @NotNull ProgressIndicator indicator) {
+                                         @NotNull ProgressIndicator indicator,
+                                         @NotNull Ref<Boolean> hasSuggestions) {
     String sanitized = getSanitizedPattern(parameters.getCompletePattern(), myModel);
     int qualifierEnd = sanitized.lastIndexOf('/') + 1;
     NameGrouper grouper = new NameGrouper(sanitized.substring(qualifierEnd), indicator);
     processNames(parameters, name -> grouper.processName(name));
 
-    Ref<Boolean> hasSuggestions = Ref.create(false);
+    List<PsiDirectory> matchingDirectories = new ArrayList<>();
+
     DirectoryPathMatcher dirMatcher = DirectoryPathMatcher.root(myModel, sanitized.substring(0, qualifierEnd));
     while (dirMatcher != null) {
       int index = grouper.index;
       SuffixMatches group = grouper.nextGroup(base);
       if (group == null) break;
-      if (!group.processFiles(parameters.withLocalPattern(dirMatcher.dirPattern), consumer, hasSuggestions, dirMatcher)) {
+      if (!group.processFiles(parameters.withLocalPattern(dirMatcher.dirPattern), consumer, hasSuggestions, dirMatcher, matchingDirectories)) {
         return false;
       }
       dirMatcher = dirMatcher.appendChar(grouper.namePattern.charAt(index));
@@ -115,6 +207,16 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         return true;
       }
     }
+
+    // Different number of directories can be processed on different iterations of the while loop.
+    // So let's collect all directories and process children if matchingDirectories.size() == 1.
+    if (Registry.is("search.everywhere.fuzzy.file.search.enabled", false) && matchingDirectories.size() == 1) {
+      List<FoundItemDescriptor<PsiFileSystemItem>> childElements = getListWithChildItems(matchingDirectories.get(0), myProject);
+      if (!ContainerUtil.process(childElements, consumer)) {
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -238,6 +340,21 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       return true;
     }).append(dirs);
   }
+
+  private static @NotNull List<FoundItemDescriptor<PsiFileSystemItem>> getListWithChildItems(@NotNull PsiDirectory directory,
+                                                                                             @NotNull Project project) {
+    List<FoundItemDescriptor<PsiFileSystemItem>> childElements = new ArrayList<>();
+    for (VirtualFile childElement : directory.getVirtualFile().getChildren()) {
+      if (!childElement.isDirectory()) {
+        PsiFileSystemItem fileItem = PsiUtilCore.findFileSystemItem(project, childElement);
+        if (fileItem != null) {
+          childElements.add(new FoundItemDescriptor<>(fileItem, DIR_CHILD_MATCH_DEGREE));
+        }
+      }
+    }
+    return childElements;
+  }
+
 
   private @Unmodifiable @NotNull Iterable<FoundItemDescriptor<PsiFileSystemItem>> getItemsForNames(@NotNull GlobalSearchScope scope,
                                                                                                    @NotNull List<? extends MatchResult> matchResults,
@@ -383,8 +500,8 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     boolean processFiles(@NotNull FindSymbolParameters parameters,
                          @NotNull Processor<? super FoundItemDescriptor<?>> processor,
                          @NotNull Ref<Boolean> hasSuggestions,
-                         @NotNull DirectoryPathMatcher dirMatcher) {
-
+                         @NotNull DirectoryPathMatcher dirMatcher,
+                         @NotNull List<PsiDirectory> matchingDirectories) {
       List<MatchResult> matchingNames = this.matchingNames;
       if (patternSuffix.length() <= 3 && !dirMatcher.dirPattern.isEmpty()) {
         // just enumerate over files
@@ -427,6 +544,14 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
           : matchQualifiers(qualifierMatcher, filesMatchingPath, parameters.getCompletePattern());
 
         matchedFiles = moveDirectoriesToEnd(matchedFiles);
+
+        if (Registry.is("search.everywhere.fuzzy.file.search.enabled", false)) {
+          JBIterable.from(matchedFiles)
+            .filter(descriptor -> descriptor.getItem() instanceof PsiDirectory)
+            .map(descriptor -> (PsiDirectory)descriptor.getItem())
+            .forEach(matchingDirectories::add);
+        }
+
         Processor<FoundItemDescriptor<PsiFileSystemItem>> trackingProcessor = res -> {
           hasSuggestions.set(true);
           return processor.process(res);

@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
@@ -24,6 +25,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
+import org.apache.lucene.search.spell.LevenshteinDistance;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -430,6 +433,128 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
       int o1Weight = isCompiledWithoutSource(o1) ? 1 : 0;
       int o2Weight = isCompiledWithoutSource(o2) ? 1 : 0;
       return o1Weight - o2Weight;
+    }
+  }
+
+  /*
+   * Checks whether each component of a given pattern appears in a file path,
+   * verifying for approximate matches using the Levenshtein distance.
+   */
+  @ApiStatus.Internal
+  protected static final class LevenshteinCalculator {
+    private final List<String> patternComponents;
+    private final @Nullable List<String> invertedPatternComponents;
+    private static final LevenshteinDistance distanceCalculator = new LevenshteinDistance();
+    public static final float MIN_ACCEPTABLE_DISTANCE = 0.5f;
+    private static final String SEPARATOR_CHARACTERS = "[ /*\u0000]+";
+
+    private static final int MIN_WEIGHT = 1;
+    private static final int MAX_WEIGHT = 5000;
+
+    public LevenshteinCalculator(@NotNull String pattern) {
+      patternComponents =
+        Arrays.asList(pattern.replaceAll("^" + SEPARATOR_CHARACTERS, "").split(SEPARATOR_CHARACTERS));
+      invertedPatternComponents = patternComponents.size() == 2 ? List.of(patternComponents.get(1), patternComponents.get(0)) : null;
+    }
+
+    /**
+     * Returns the average Levenshtein distance between the pattern and the file path.
+     * Average distance is calculated as an average distance between
+     * file path and pattern components that have a match, that is, between those with
+     * a Levenshtein distance at least {@link #MIN_ACCEPTABLE_DISTANCE}.
+     * Returns 0 if there is a component in the pattern that does not have a match.
+     * <p>
+     * Assumes that all components of the pattern appear in the file path in the same order.
+     * If the pattern consists of two parts, it also considers that the user may have entered them in reverse order.
+     *
+     * @param file {@link VirtualFile}, the path to which is compared with the pattern
+     * @return the distance as the average distance of all the matches
+     */
+    public float distanceToVirtualFile(VirtualFile file) {
+      return distanceToStringPath(file.getPath());
+    }
+
+    /**
+     * Returns the average Levenshtein distance between the pattern and the path.
+     * Average distance is calculated as an average distance between
+     * path and pattern components that have a match, that is, between those with
+     * a Levenshtein distance at least {@link #MIN_ACCEPTABLE_DISTANCE}.
+     * Returns 0 if there is a component in the pattern that does not have a match.
+     * <p>
+     * Assumes that all components of the pattern appear in the file path in the same order.
+     * If the pattern consists of two parts, it also considers that the user may have entered them in reverse order.
+     *
+     * @param path path which is compared with the pattern
+     * @return the distance as the average distance of all the matches
+     */
+    public float distanceToStringPath(String path) {
+      List<String> pathComponents = Arrays.asList(path.split(SEPARATOR_CHARACTERS));
+      return Math.max(distanceBetweenComponents(patternComponents, pathComponents),
+                      invertedPatternComponents == null ? 0 : distanceBetweenComponents(invertedPatternComponents, pathComponents));
+    }
+
+    private static float distanceBetweenComponents(List<String> patternComponents, List<String> pathComponents) {
+      if (pathComponents.isEmpty() || patternComponents.isEmpty()) {
+        return 0;
+      }
+
+      int pathCompIndex = pathComponents.size() - 1;
+      int patternCompIndex = patternComponents.size() - 1;
+      float distance;
+      float avgDistance = 0;
+      boolean hasUnmatchedPatternComp = false;
+
+      // Process only cases where the last element of patternComponents matches the last element of pathCompIndex.
+      // A match is valid if it either satisfies MIN_ACCEPTABLE_DISTANCE or
+      // if it is lowercase camel-hump matching in case patternComponents.size() > 1.
+      String lastPatternComp = patternComponents.get(patternCompIndex);
+      String lastFileComp = pathComponents.get(pathCompIndex);
+      MinusculeMatcher matcher = buildPatternMatcher(lastPatternComp, true);
+      if (matcher.matches(lastFileComp) && patternComponents.size() > 1) {
+        distance = 1;
+      } else {
+        distance = distanceCalculator.getDistance(lastPatternComp.toLowerCase(Locale.ROOT), lastFileComp.toLowerCase(Locale.ROOT));
+      }
+      if (distance < MIN_ACCEPTABLE_DISTANCE) {
+        return 0;
+      }
+      else {
+        avgDistance += distance;
+        patternCompIndex--;
+        pathCompIndex--;
+      }
+
+      while (patternCompIndex >= 0 && pathCompIndex >= 0 && !hasUnmatchedPatternComp) {
+        while (pathCompIndex >= 0) {
+          String lowerCasePatternComp = patternComponents.get(patternCompIndex).toLowerCase(Locale.ROOT);
+          String lowerCasePathComp = pathComponents.get(pathCompIndex).toLowerCase(Locale.ROOT);
+          matcher = buildPatternMatcher(lowerCasePatternComp, true);
+          if (matcher.matches(lowerCasePathComp)) {
+            distance = 1;
+          } else {
+            distance = distanceCalculator.getDistance(lowerCasePatternComp, lowerCasePathComp);
+          }
+          if (distance >= MIN_ACCEPTABLE_DISTANCE) {
+            avgDistance += distance;
+            pathCompIndex--;
+            break;
+          }
+          else if (pathCompIndex == 0) {
+            hasUnmatchedPatternComp = true;
+            break;
+          }
+          pathCompIndex--;
+        }
+        patternCompIndex--;
+      }
+
+      hasUnmatchedPatternComp |= patternCompIndex >= 0;
+
+      return hasUnmatchedPatternComp ? 0 : avgDistance / patternComponents.size();
+    }
+
+    public static int weightFromDistance(double distance) {
+      return (int)(MIN_WEIGHT + distance * (MAX_WEIGHT - MIN_WEIGHT));
     }
   }
 }
