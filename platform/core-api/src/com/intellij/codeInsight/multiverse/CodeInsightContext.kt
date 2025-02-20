@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.multiverse
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 
 /**

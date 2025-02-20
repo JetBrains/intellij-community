@@ -27,7 +27,6 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.navigation.Place
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Composite
 import java.util.function.Consumer

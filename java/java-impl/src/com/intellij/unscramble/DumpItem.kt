@@ -13,7 +13,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.util.*
 import javax.swing.Icon
-import kotlin.math.min
 
 @ApiStatus.Internal
 interface DumpItem {

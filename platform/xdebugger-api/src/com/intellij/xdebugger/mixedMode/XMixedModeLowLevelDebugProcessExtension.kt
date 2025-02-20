@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.mixedMode
 
 import com.intellij.xdebugger.frame.XSuspendContext
-import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 
 /**

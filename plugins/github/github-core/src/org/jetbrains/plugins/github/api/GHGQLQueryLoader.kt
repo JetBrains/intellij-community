@@ -5,9 +5,6 @@ import com.google.common.annotations.VisibleForTesting
 import com.intellij.collaboration.api.graphql.CachingGraphQLQueryLoader
 import com.intellij.collaboration.api.graphql.GraphQLQueryLoader
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
-import java.io.IOException
-import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.stream.Collectors

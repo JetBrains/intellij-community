@@ -17,7 +17,6 @@ import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 import kotlin.io.path.name
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.seconds

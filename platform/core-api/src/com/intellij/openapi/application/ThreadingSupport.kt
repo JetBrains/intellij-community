@@ -6,9 +6,6 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
-import java.util.concurrent.Callable
-import java.util.concurrent.Future
-import java.util.function.BooleanSupplier
 import kotlin.coroutines.CoroutineContext
 import kotlin.jvm.Throws
 

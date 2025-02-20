@@ -20,7 +20,6 @@ import java.net.InetSocketAddress
 import java.nio.channels.ClosedChannelException
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
-import kotlin.time.Duration.Companion.milliseconds
 
 class TargetIncomingConnector : IncomingConnector {
   private val addressFactory: InetAddressFactory = InetAddressFactory()

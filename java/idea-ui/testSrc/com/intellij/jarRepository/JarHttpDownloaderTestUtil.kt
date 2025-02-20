@@ -4,7 +4,6 @@ package com.intellij.jarRepository
 import com.intellij.jarRepository.JarRepositoryAuthenticationDataProvider.AuthenticationData
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
-import io.ktor.server.application.call
 import io.ktor.server.application.createApplicationPlugin
 import io.ktor.server.application.hooks.ResponseSent
 import io.ktor.server.application.install

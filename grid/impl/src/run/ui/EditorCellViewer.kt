@@ -1,6 +1,5 @@
 package com.intellij.database.run.ui
 
-import com.intellij.database.DataGridBundle
 import com.intellij.database.datagrid.*
 import com.intellij.database.extractors.DisplayType
 import com.intellij.database.run.ReservedCellValue

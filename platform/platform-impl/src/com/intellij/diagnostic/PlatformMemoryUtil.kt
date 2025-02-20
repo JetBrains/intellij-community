@@ -4,8 +4,6 @@ package com.intellij.diagnostic
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.SystemProperties
-import com.intellij.util.system.CpuArch
 import com.sun.jna.Library
 import com.sun.jna.Memory
 import com.sun.jna.Native

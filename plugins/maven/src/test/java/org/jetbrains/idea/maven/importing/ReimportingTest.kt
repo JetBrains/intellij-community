@@ -13,7 +13,6 @@ import com.intellij.util.io.zipFile
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.junit.Test
-import java.nio.file.Paths
 
 class ReimportingTest : MavenMultiVersionImportingTestCase() {
   override fun setUp() = runBlocking {

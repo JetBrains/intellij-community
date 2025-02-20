@@ -6,10 +6,8 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractTestChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContextImpl
-import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinTestProperties
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.findMostSpecificExistingFileOrNewDefault
-import java.io.File
 import kotlin.collections.component2
 
 data class LibrarySourcesConfiguration(

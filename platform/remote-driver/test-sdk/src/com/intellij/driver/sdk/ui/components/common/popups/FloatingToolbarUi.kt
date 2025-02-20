@@ -5,7 +5,6 @@ import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.elements.PopupUiComponent
 import com.intellij.driver.sdk.ui.components.elements.actionButton
 import com.intellij.driver.sdk.ui.components.elements.popup
-import com.intellij.driver.sdk.ui.shouldBe
 import com.intellij.driver.sdk.ui.xQuery
 import java.awt.Window
 import javax.swing.JList

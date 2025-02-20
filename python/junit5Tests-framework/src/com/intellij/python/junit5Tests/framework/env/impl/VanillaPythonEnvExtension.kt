@@ -4,7 +4,6 @@ package com.intellij.python.junit5Tests.framework.env.impl
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.community.impl.poetry.poetryPath
 import com.intellij.python.community.testFramework.testEnv.TypeVanillaPython3
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath

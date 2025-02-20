@@ -1,7 +1,6 @@
 package com.jetbrains.python.codeInsight.controlflow
 
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder
-import com.intellij.codeInsight.controlflow.Instruction
 import com.intellij.codeInsight.controlflow.impl.InstructionImpl
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyCallExpression
