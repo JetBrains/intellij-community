@@ -17,7 +17,7 @@ class CustomizeFloatingToolbarDialog(data: ComponentData) : DialogUiComponent(da
     tree().clickPath(*node, fullMatch = false)
     addButton.click()
     dialog(xQuery { byTitle("Add Action") }) {
-      textField().appendText(actionName)
+      textField(xQuery { byAccessibleName("Message text filter") }).appendText(actionName)
       shouldBe("${actionName} action is highlighted") {
         tree().collectSelectedPaths().single().path.last().contains(actionName.split(" ").first())
       }
