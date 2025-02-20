@@ -9,10 +9,10 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
-import com.jetbrains.python.sdk.uv.PY_PROJECT_TOML
 import com.jetbrains.python.sdk.uv.impl.getUvExecutable
 import com.jetbrains.python.sdk.uv.setupUvSdkUnderProgress
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
@@ -65,14 +66,14 @@ suspend fun setupUvSdkUnderProgress(
 }
 
 private suspend fun resolveWorkingDirectory(moduleOrProject: ModuleOrProject): Pair<VirtualFile?, Path> {
-  var pyProjectToml: VirtualFile? = null
-  val workingDirectory = when (moduleOrProject) {
-                           is ModuleOrProject.ModuleAndProject -> {
-                             pyProjectToml = UvPyProject.findFile(moduleOrProject.module)
-                             pyProjectToml?.toNioPathOrNull()?.parent ?: moduleOrProject.module.basePath?.let { Path.of(it) }
-                           }
-                           else -> moduleOrProject.project.basePath?.let { Path.of(it) }
-                         } ?: throw IllegalArgumentException("Path to module or working directory is required")
+  val (file, path) = when (moduleOrProject) {
+    is ModuleOrProject.ModuleAndProject -> PyProjectToml.findModuleWorkingDirectory(moduleOrProject.module)
+    is ModuleOrProject.ProjectOnly -> Pair(null, PyProjectToml.findProjectWorkingDirectory(moduleOrProject.project))
+  }
 
-  return Pair(pyProjectToml, workingDirectory)
+  if (path == null) {
+    throw IllegalArgumentException("Path to module or working directory is required")
+  }
+
+  return file to path
 }
