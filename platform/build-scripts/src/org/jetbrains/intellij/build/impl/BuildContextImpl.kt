@@ -38,6 +38,8 @@ import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.intellij.build.computeAppInfoXml
+import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.dependencies.LinuxLibcImpl
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.runProcess
@@ -145,7 +147,7 @@ class BuildContextImpl internal constructor(
       productProperties.productLayout.compatiblePluginsToIgnore =
         productProperties.productLayout.compatiblePluginsToIgnore.addAll(options.compatiblePluginsToIgnore)
     }
-    check(options.isInDevelopmentMode || bundledRuntime.prefix == productProperties.runtimeDistribution.artifactPrefix) {
+    check(options.isInDevelopmentMode || bundledRuntime.prefix == productProperties.runtimeDistribution.artifactPrefix || LinuxLibcImpl.isLinuxMusl) {
       "The runtime type doesn't match the one specified in the product properties: ${bundledRuntime.prefix} != ${productProperties.runtimeDistribution.artifactPrefix}"
     }
   }
@@ -347,7 +349,7 @@ class BuildContextImpl internal constructor(
   @Suppress("SpellCheckingInspection")
   override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isScript: Boolean, isPortableDist: Boolean, isQodana: Boolean): List<String> {
     val jvmArgs = ArrayList<String>()
-    
+
     val macroName = when (os) {
       OsFamily.WINDOWS -> "%IDE_HOME%"
       OsFamily.MACOS -> "\$APP_PACKAGE${if (isPortableDist) "" else "/Contents"}"

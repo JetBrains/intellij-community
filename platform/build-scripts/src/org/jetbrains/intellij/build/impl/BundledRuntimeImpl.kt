@@ -43,6 +43,7 @@ class BundledRuntimeImpl(
     get() {
       val bundledRuntimePrefix = options.bundledRuntimePrefix
       return when {
+        // no JCEF distribution for musl, see https://github.com/JetBrains/JetBrainsRuntime/releases
         LinuxLibcImpl.isLinuxMusl -> "jbrsdk-"
         // required as a runtime for debugger tests
         System.getProperty("intellij.build.jbr.setupSdk", "false").toBoolean() -> "jbrsdk-"
