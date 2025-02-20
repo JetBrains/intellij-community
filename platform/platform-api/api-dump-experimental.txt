@@ -369,6 +369,7 @@ a:com.intellij.ui.ColoredTreeCellRenderer
 - dispose():V
 - f:getBackgroundFlow():kotlinx.coroutines.flow.StateFlow
 - p:getContentsScaleFactor():F
+- getSelectedText():java.lang.String
 - getText():java.lang.String
 - p:initializePaneConfiguration(com.intellij.ui.components.JBHtmlPaneConfiguration$Builder):V
 - p:initializeStyleConfiguration(com.intellij.ui.components.JBHtmlPaneStyleConfiguration$Builder):V
