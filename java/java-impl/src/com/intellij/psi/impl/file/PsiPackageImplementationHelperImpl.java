@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
@@ -17,9 +16,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -119,11 +115,6 @@ public final class PsiPackageImplementationHelperImpl extends PsiPackageImplemen
 
   @Override
   public void navigate(final @NotNull PsiPackage psiPackage, final boolean requestFocus) {
-    final Project project = psiPackage.getProject();
-    ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
-    if (window != null) {
-      window.activate(null);
-    }
     PsiDirectory[] directories = suggestMostAppropriateDirectories(psiPackage);
     if (directories.length == 0) return;
     PsiNavigationSupport.getInstance().navigateToDirectory(directories[0], requestFocus);
