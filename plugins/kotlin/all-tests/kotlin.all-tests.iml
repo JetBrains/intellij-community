@@ -55,6 +55,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="RUNTIME" />
