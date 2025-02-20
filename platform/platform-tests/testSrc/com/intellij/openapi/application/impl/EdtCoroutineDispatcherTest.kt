@@ -4,7 +4,6 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.LeakHunter
@@ -18,12 +17,7 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotEquals
-import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.fail
-import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -385,7 +379,6 @@ class EdtCoroutineDispatcherTest {
 
   @Test
   fun `main dispatcher fails softly on locking actions`(): Unit = timeoutRunBlocking(context = Dispatchers.Main) {
-    Assumptions.assumeTrue(Registry.`is`("ide.install.ui.dispatcher.as.main.coroutine.dispatcher"))
     val counter = AtomicInteger()
     assertErrorLogged<ThreadingSupport.LockAccessDisallowed> {
       application.runWriteAction {
