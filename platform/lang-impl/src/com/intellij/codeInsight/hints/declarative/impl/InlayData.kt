@@ -3,9 +3,7 @@ package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.psi.PsiFile
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil.readINT
 import com.intellij.util.io.DataInputOutputUtil.writeINT
@@ -53,7 +51,36 @@ data class InlayData(
   val payloads: List<InlayPayload>?,
   val providerClass: Class<*>, // Just for debugging purposes
   val sourceId: String,
-)
+) {
+  override fun toString(): String {
+    fun buildStringFromTextNodes(index: Byte, builder: StringBuilder): Unit = with(builder) {
+      tree.processChildren(index) { i ->
+        val tag = tree.getBytePayload(i)
+        when (tag) {
+          InlayTags.TEXT_TAG -> append(
+            when (val data = tree.getDataPayload(i)) {
+              is String -> data
+              is ActionWithContent -> data.content as String
+              else -> "%error: unexpected data in text node%"
+            })
+          InlayTags.COLLAPSIBLE_LIST_COLLAPSED_BRANCH_TAG -> {
+            // do nothing, we want to return fully expanded text
+          }
+          else -> {
+            buildStringFromTextNodes(i, builder)
+          }
+        }
+        true
+      }
+    }
+
+    return buildString {
+      append("<# ")
+      buildStringFromTextNodes(0, this)
+      append(" #>")
+    }
+  }
+}
 
 internal object InlayDataExternalizer : DataExternalizer<InlayData> {
   // increment on format changed
