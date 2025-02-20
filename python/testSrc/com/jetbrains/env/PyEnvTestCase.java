@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.python.community.testFramework.testEnv.EnvTagsKt;
 import com.intellij.python.community.testFramework.testEnv.PyEnvTestSettings;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -92,6 +93,7 @@ public abstract class PyEnvTestCase {
    */
   protected PyEnvTestCase(final String @NotNull ... requiredTags) {
     myRequiredTags = requiredTags.length > 0 ? requiredTags.clone() : null;
+    TestApplicationManager.getInstance(); // init app explicitly
   }
 
   public static String norm(String testDataPath) {
