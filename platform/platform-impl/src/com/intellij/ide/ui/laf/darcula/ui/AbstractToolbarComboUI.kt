@@ -57,10 +57,10 @@ open class AbstractToolbarComboUI : ComponentUI(), PropertyChangeListener {
     val metrics = c.getFontMetrics(c.font)
     g.color = if (c.isEnabled) c.getForeground() else UIUtil.getLabelDisabledForeground()
 
-    val baseline = c.getBaseline(c.width, c.height) - c.insets.top
+    val baseline = c.getBaseline(c.width, c.height)
     val text = c.textCutStrategy.calcShownText(fullText, metrics, textRect.width, g)
     val strBounds = metrics.getStringBounds(text, g).getBounds()
-    strBounds.setLocation(max(0, (textRect.centerX - strBounds.centerX).toInt()), baseline)
+    strBounds.setLocation((textRect.centerX - strBounds.centerX).toInt().coerceAtLeast(textRect.x), baseline)
 
     val v = c.getClientProperty(BasicHTML.propertyKey) as? View
     if (v != null) {
