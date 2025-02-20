@@ -389,7 +389,7 @@ private fun getPlatformThreadsWithStackTraces(vmProxy: VirtualMachineProxyImpl):
         if (this.isNotEmpty()) {
           append('\n')
         }
-        append("\t  ")
+        append("\t")
         try {
           append(ThreadDumpAction.renderLocation(stackFrame.location()))
         }
