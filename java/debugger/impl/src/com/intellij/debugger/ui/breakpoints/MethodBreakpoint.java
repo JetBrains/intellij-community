@@ -221,7 +221,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         breakpoint.disableEmulation();
         return;
       }
-      if (!method.isStatic() && !method.isPrivate()) {
+      if (!method.isStatic() && !method.isPrivate() && !method.isFinal()) {
         scanSubClasses = true;
       }
       if (method.isAbstract()) {
