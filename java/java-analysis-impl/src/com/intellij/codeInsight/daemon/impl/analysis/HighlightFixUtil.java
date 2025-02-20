@@ -18,7 +18,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
-import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -33,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
@@ -707,13 +707,9 @@ public final class HighlightFixUtil {
     PsiShortNamesCache shortNamesCache = PsiShortNamesCache.getInstance(project);
     PsiClass[] classes = shortNamesCache.getClassesByName(shortName, GlobalSearchScope.allScope(project));
     PsiElementFactory factory = facade.getElementFactory();
-    JavaSdkVersion version = requireNonNullElse(JavaVersionService.getInstance().getJavaSdkVersion(file),
-                                                        JavaSdkVersion.fromLanguageLevel(PsiUtil.getLanguageLevel(file)));
     for (PsiClass aClass : classes) {
-      if (aClass == null) {
-        continue;
-      }
-      if (!GenericsHighlightUtil.hasReferenceTypeProblem(aClass, parameterList, version)) {
+      if (aClass == null) continue;
+      if (isPotentiallyCompatible(aClass, parameterList)) {
         PsiType[] actualTypeParameters = parameterList.getTypeArguments();
         PsiTypeParameter[] classTypeParameters = aClass.getTypeParameters();
         Map<PsiTypeParameter, PsiType> map = new HashMap<>();
@@ -986,6 +982,31 @@ public final class HighlightFixUtil {
   static @Nullable CommonIntentionAction createUnresolvedReferenceFix(PsiJavaCodeReferenceElement psi) {
     return PsiTreeUtil.skipParentsOfType(psi, PsiJavaCodeReferenceElement.class) instanceof PsiNewExpression newExpression &&
            isCallToStaticMember(newExpression) ? new RemoveNewKeywordFix(newExpression) : null;
+  }
+
+  /**
+   * @return true if type parameters of a class are potentially compatible with type arguments in the list
+   * (that is: number of parameters is the same, and argument types are within bounds)
+   */
+  private static boolean isPotentiallyCompatible(@NotNull PsiClass psiClass, @NotNull PsiReferenceParameterList referenceParameterList) {
+    PsiTypeElement[] referenceElements = referenceParameterList.getTypeParameterElements();
+
+    PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+    int targetParametersNum = typeParameters.length;
+    int refParametersNum = referenceParameterList.getTypeArguments().length;
+    if (targetParametersNum != refParametersNum) return false;
+
+    // bounds check
+    for (int i = 0; i < targetParametersNum; i++) {
+      PsiType type = referenceElements[i].getType();
+      if (ContainerUtil.exists(
+        typeParameters[i].getSuperTypes(),
+        bound -> !bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
+                 GenericsUtil.checkNotInBounds(type, bound, referenceParameterList))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static final class ReturnModel {

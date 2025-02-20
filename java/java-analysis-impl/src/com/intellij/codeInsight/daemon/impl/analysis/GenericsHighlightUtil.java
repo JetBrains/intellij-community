@@ -7,12 +7,12 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiSuperMethodUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -21,104 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class GenericsHighlightUtil {
-  private static final Logger LOG = Logger.getInstance(GenericsHighlightUtil.class);
 
   private GenericsHighlightUtil() { }
-
-  static boolean hasReferenceTypeProblem(@NotNull PsiTypeParameterListOwner typeParameterListOwner,
-                                         @Nullable PsiReferenceParameterList referenceParameterList,
-                                         @NotNull JavaSdkVersion javaSdkVersion) {
-    PsiDiamondType.DiamondInferenceResult inferenceResult = null;
-    PsiTypeElement[] referenceElements = null;
-    if (referenceParameterList != null) {
-      referenceElements = referenceParameterList.getTypeParameterElements();
-      if (referenceElements.length == 1 && referenceElements[0].getType() instanceof PsiDiamondType) {
-        if (!typeParameterListOwner.hasTypeParameters()) return true;
-        inferenceResult = ((PsiDiamondType)referenceElements[0].getType()).resolveInferredTypes();
-        if (inferenceResult.getErrorMessage() != null &&
-            (inferenceResult == PsiDiamondType.DiamondInferenceResult.ANONYMOUS_INNER_RESULT ||
-             inferenceResult == PsiDiamondType.DiamondInferenceResult.EXPLICIT_CONSTRUCTOR_TYPE_ARGS) &&
-            !(inferenceResult.failedToInfer() &&
-              detectExpectedType(referenceParameterList) instanceof PsiClassType classType &&
-              classType.isRaw())) {
-          return true;
-        }
-
-        PsiElement parent = referenceParameterList.getParent().getParent();
-        if (parent instanceof PsiAnonymousClass anonymousClass &&
-            ContainerUtil.exists(anonymousClass.getMethods(),
-                                 method -> !method.hasModifierProperty(PsiModifier.PRIVATE) && method.findSuperMethods().length == 0)) {
-          return true;
-        }
-      }
-    }
-
-    PsiTypeParameter[] typeParameters = typeParameterListOwner.getTypeParameters();
-    int targetParametersNum = typeParameters.length;
-    int refParametersNum = referenceParameterList == null ? 0 : referenceParameterList.getTypeArguments().length;
-    if (targetParametersNum != refParametersNum && refParametersNum != 0) {
-      if (targetParametersNum != 0 || PsiTreeUtil.getParentOfType(referenceParameterList, PsiCall.class) == null ||
-          !(typeParameterListOwner instanceof PsiMethod psiMethod) ||
-          (!javaSdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7) &&
-           !ContainerUtil.exists(psiMethod.findDeepestSuperMethods(), PsiTypeParameterListOwner::hasTypeParameters))) {
-        return true;
-      }
-    }
-
-    // bounds check
-    if (targetParametersNum > 0 && refParametersNum != 0) {
-      PsiType[] types = inferenceResult != null ? inferenceResult.getTypes() : null;
-      for (int i = 0; i < typeParameters.length; i++) {
-        PsiType type = types != null ? types[i] : referenceElements[i].getType();
-        if (ContainerUtil.exists(
-          typeParameters[i].getSuperTypes(),
-          bound -> !bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
-                   GenericsUtil.checkNotInBounds(type, bound, referenceParameterList))) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  private static PsiType detectExpectedType(@NotNull PsiReferenceParameterList referenceParameterList) {
-    PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(referenceParameterList, PsiNewExpression.class);
-    LOG.assertTrue(newExpression != null);
-    PsiElement parent = newExpression.getParent();
-    PsiType expectedType = null;
-    if (parent instanceof PsiVariable psiVariable && newExpression.equals(psiVariable.getInitializer())) {
-      expectedType = psiVariable.getType();
-    }
-    else if (parent instanceof PsiAssignmentExpression expression && newExpression.equals(expression.getRExpression())) {
-      expectedType = expression.getLExpression().getType();
-    }
-    else if (parent instanceof PsiReturnStatement) {
-      PsiElement method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiLambdaExpression.class);
-      if (method instanceof PsiMethod psiMethod) {
-        expectedType = psiMethod.getReturnType();
-      }
-    }
-    else if (parent instanceof PsiExpressionList) {
-      PsiElement pParent = parent.getParent();
-      if (pParent instanceof PsiCallExpression callExpression) {
-        PsiExpressionList argumentList = callExpression.getArgumentList();
-        if (parent.equals(argumentList)) {
-          PsiMethod method = callExpression.resolveMethod();
-          if (method != null) {
-            PsiExpression[] expressions = argumentList.getExpressions();
-            int idx = ArrayUtilRt.find(expressions, newExpression);
-            if (idx > -1) {
-              PsiParameter parameter = method.getParameterList().getParameter(idx);
-              if (parameter != null) {
-                expectedType = parameter.getType();
-              }
-            }
-          }
-        }
-      }
-    }
-    return expectedType;
-  }
 
   /**
    * @param skipMethodInSelf pass false to check if method in {@code aClass} can be deleted
