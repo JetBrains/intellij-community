@@ -247,11 +247,8 @@ suspend fun <T> edtWriteAction(action: () -> T): T {
  *
  * NB This function is an API stub. The implementation will change once running write actions would be allowed on other threads. This
  * function exists to make it possible to use it in suspending contexts before the platform is ready to handle write actions differently.
- *
- * Deprecation note: we are going to introduce a breaking change in the semantics of this method. Please use [edtWriteAction] for now.
  */
 @Experimental
-@Deprecated("Use 'edtWriteAction' instead", ReplaceWith("edtWriteAction(action)"))
 suspend fun <T> writeAction(action: () -> T): T {
   return withContext(Dispatchers.EDT) {
     blockingContext {
