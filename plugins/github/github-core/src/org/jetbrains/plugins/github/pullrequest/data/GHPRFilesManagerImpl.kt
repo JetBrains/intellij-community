@@ -5,7 +5,7 @@ import com.intellij.collaboration.util.CodeReviewFilesUtil
 import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffVirtualFileBase
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -77,7 +77,7 @@ internal class GHPRFilesManagerImpl(private val project: Project,
     val file = newPRDiffFile.get() ?: return
     withContext(Dispatchers.EDT) {
       val fileManager = project.serviceAsync<FileEditorManager>()
-      writeAction {
+      edtWriteAction {
         CodeReviewFilesUtil.closeFilesSafely(fileManager, listOf(file))
       }
     }

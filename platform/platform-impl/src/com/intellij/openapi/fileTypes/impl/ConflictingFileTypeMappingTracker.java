@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -14,12 +14,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 
-final class ConflictingFileTypeMappingTracker {
+@ApiStatus.Internal
+public final class ConflictingFileTypeMappingTracker {
   /**
    * Somebody tries to assign matcher (which was previously assigned to the oldFileType) to the newFileType.
    * If there is a conflict, show notification "some plugin is going to override file type".
@@ -52,7 +50,8 @@ final class ConflictingFileTypeMappingTracker {
     return result;
   }
 
-  record ResolveConflictResult(@NotNull FileTypeManagerImpl.FileTypeWithDescriptor resolved,
+  @ApiStatus.Internal
+  public record ResolveConflictResult(@NotNull FileTypeManagerImpl.FileTypeWithDescriptor resolved,
                                @NotNull @Nls String notification,
                                @NotNull @Nls String explanation,
                                boolean approved) {

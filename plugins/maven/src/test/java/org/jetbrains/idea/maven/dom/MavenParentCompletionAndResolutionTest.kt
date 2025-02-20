@@ -117,8 +117,8 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </parent>
                        """.trimIndent())
 
-    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom")
-    val f = LocalFileSystem.getInstance().findFileByPath(filePath)
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestData("local1/junit/junit/4.0/junit-4.0.pom")
+    val f = LocalFileSystem.getInstance().findFileByNioFile(filePath)
 
     assertResolved(projectPom, findPsiFile(f))
   }

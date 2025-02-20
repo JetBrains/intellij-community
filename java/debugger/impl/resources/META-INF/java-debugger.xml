@@ -83,6 +83,8 @@
                     interface="com.intellij.debugger.ui.tree.ExtraDebugNodesProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.steppingListener"
                     interface="com.intellij.debugger.engine.SteppingListener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.debugger.dumpItemsProvider"
+                    interface="com.intellij.debugger.impl.ThreadDumpItemsProviderFactory" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -135,6 +137,7 @@
 
     <debugger.asyncStackTraceProvider
       implementation="com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint$CaptureAsyncStackTraceProvider"/>
+    <debugger.dumpItemsProvider implementation="com.intellij.debugger.actions.JavaThreadsProvider"/>
     <xdebugger.controlExceptionBreakpointSupport implementation="com.intellij.debugger.codeinsight.ControlExceptionBreakpointJVMSupport"/>
     <iconProvider implementation="com.intellij.debugger.engine.evaluation.AdditionalContextIconProvider"/>
 

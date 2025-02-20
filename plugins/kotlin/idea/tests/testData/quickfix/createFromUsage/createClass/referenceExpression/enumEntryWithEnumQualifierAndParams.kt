@@ -1,5 +1,6 @@
 // "Create enum constant 'A'" "true"
 // ERROR: No value passed for parameter 'n'
+// K2_AFTER_ERROR: No value passed for parameter 'n'.
 package p
 
 fun foo() = X.<caret>A

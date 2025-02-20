@@ -23,7 +23,7 @@ private class FilesSwitcherBackendApi : FileSwitcherApi {
     val perProjectRecentFileEventsHolder = getProjectFileEventsHolderOrNull(request.projectId) ?: return false
     when (request) {
       is RecentFilesBackendRequest.NewSearchWithParameters -> perProjectRecentFileEventsHolder.emitRecentFiles(request)
-      is RecentFilesBackendRequest.HideFile -> perProjectRecentFileEventsHolder.hideAlreadyShownFile(request)
+      is RecentFilesBackendRequest.HideFiles -> perProjectRecentFileEventsHolder.hideAlreadyShownFiles(request)
       is RecentFilesBackendRequest.ScheduleRehighlighting -> perProjectRecentFileEventsHolder.scheduleRehighlightUnopenedFiles(request.projectId)
     }
     return true

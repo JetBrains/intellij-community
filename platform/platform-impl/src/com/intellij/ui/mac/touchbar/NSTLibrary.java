@@ -1,12 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Pointer;
+import org.jetbrains.annotations.ApiStatus;
 
-interface NSTLibrary extends Library {
+@ApiStatus.Internal
+public interface NSTLibrary extends Library {
   ID createTouchBar(String name, ItemCreator creator, String escId); // if defined escId => replace esc button with custom item
   void setTouchBar(ID nsView, ID tbObj);
   void selectItemsToShow(ID tbObj, String[] ids, int count);

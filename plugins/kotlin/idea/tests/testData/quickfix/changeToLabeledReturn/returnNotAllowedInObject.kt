@@ -11,6 +11,8 @@
 // ACTION: Go To Super Property
 // ACTION: Introduce local variable
 // WITH_STDLIB
+// K2_AFTER_ERROR: 'return' is prohibited here.
+// K2_AFTER_ERROR: Null cannot be a value of a non-null type 'Unit'.
 interface Type {
     val value: String
 }

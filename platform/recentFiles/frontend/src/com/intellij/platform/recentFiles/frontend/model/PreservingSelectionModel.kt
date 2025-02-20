@@ -15,13 +15,14 @@ class PreservingSelectionModel(val dataModel: ListModel<*>) : DefaultListSelecti
   override fun removeIndexInterval(index0: Int, index1: Int) {
     LOG.debug("Switcher remove: Removing index interval: $index0-$index1")
     super.removeIndexInterval(index0, index1)
-    val indexBeforeFirstSelected = index0 - 1
+    val indexBeforeFirstSelected = index0
     val indexAfterLastSelected = index1
 
     val nextIndexToSelect = if (indexBeforeFirstSelected >= 0) indexBeforeFirstSelected else if (indexAfterLastSelected >= 0) indexAfterLastSelected else null
-    if (nextIndexToSelect != null && nextIndexToSelect in 0 until dataModel.size) {
-      LOG.debug("Switcher remove: select index interval: $nextIndexToSelect-$nextIndexToSelect")
-      super.addSelectionInterval(nextIndexToSelect, nextIndexToSelect)
+    val nextIndexToSelectConsideringModelSize = nextIndexToSelect?.coerceAtMost(dataModel.size - 1)
+    if (nextIndexToSelectConsideringModelSize != null) {
+      LOG.debug("Switcher remove: select index interval: $nextIndexToSelectConsideringModelSize-$nextIndexToSelectConsideringModelSize")
+      super.addSelectionInterval(nextIndexToSelectConsideringModelSize, nextIndexToSelectConsideringModelSize)
     }
   }
 

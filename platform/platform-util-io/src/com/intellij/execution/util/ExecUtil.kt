@@ -173,7 +173,9 @@ object ExecUtil {
   fun sudoAndGetOutput(commandLine: GeneralCommandLine, prompt: @Nls String): ProcessOutput =
     execAndGetOutput(sudoCommand(commandLine, prompt))
 
-  internal fun escapeAppleScriptArgument(arg: String): @NlsSafe String = "quoted form of \"${arg.replace("\"", "\\\"").replace("\\", "\\\\")}\""
+  internal fun escapeAppleScriptArgument(arg: String): @NlsSafe String =
+    if (arg == "&&") "\"$arg\"" // support multiple commands separated with &&
+    else "quoted form of \"${arg.replace("\"", "\\\"").replace("\\", "\\\\")}\""
 
   @ApiStatus.Internal
   @Deprecated(

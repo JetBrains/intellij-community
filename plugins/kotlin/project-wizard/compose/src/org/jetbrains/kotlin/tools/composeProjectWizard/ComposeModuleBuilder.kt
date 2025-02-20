@@ -22,7 +22,7 @@ import javax.swing.Icon
 internal class ComposeModuleBuilder : StarterModuleBuilder() {
     override fun getBuilderId(): String = "ComposeModuleBuilder"
     override fun getPresentableName(): String = ComposeProjectWizardBundle.message("module.presentation.name")
-    override fun getWeight(): Int = KOTLIN_WEIGHT-1
+    override fun getWeight(): Int = KOTLIN_WEIGHT-2
     override fun getNodeIcon(): Icon = KotlinIcons.Wizard.COMPOSE
     override fun getDescription(): String = ComposeProjectWizardBundle.message("module.description")
 

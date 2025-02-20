@@ -5,7 +5,7 @@ import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.metric.ApiCallExtractor
 import com.intellij.cce.metric.ApiCallExtractorProvider
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
@@ -15,7 +15,7 @@ import com.intellij.lang.Language as PlatformLanguage
 
 class PythonApiCallExtractor : ApiCallExtractor {
   override suspend fun extractApiCalls(code: String, project: Project, tokenProperties: TokenProperties): List<String> {
-    val psiFile = writeAction { parsePsiFile(project, code) }
+    val psiFile = edtWriteAction { parsePsiFile(project, code) }
     return readAction { extractApiCalls(psiFile) }
   }
 

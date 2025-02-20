@@ -3,7 +3,7 @@ package com.intellij.java.workspace.files
 
 import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -39,7 +39,7 @@ class JavaSourceFilesFunctionsTest {
 
   @Test
   fun `find file by path from source root`() = runBlocking {
-    val (aFile, bFile) = writeAction { 
+    val (aFile, bFile) = edtWriteAction {
       val srcRoot = projectModel.addSourceRoot(module, "src", JavaSourceRootType.SOURCE)
       val aFile = srcRoot.createFile("a.txt")
       val bFile = srcRoot.createFile("b/c.txt")
@@ -52,7 +52,7 @@ class JavaSourceFilesFunctionsTest {
   
   @Test
   fun `find file by path from source root with package prefix`() = runBlocking {
-    val aFile = writeAction { 
+    val aFile = edtWriteAction {
       val srcRoot = projectModel.addSourceRoot(module, "src", JavaSourceRootType.SOURCE)
       srcRoot.createFile("a.txt")
     }
@@ -68,7 +68,7 @@ class JavaSourceFilesFunctionsTest {
   
   @Test
   fun `find file by path from resource root with prefix`() = runBlocking {
-    val aFile = writeAction { 
+    val aFile = edtWriteAction {
       val srcRoot = projectModel.addSourceRoot(module, "src", JavaResourceRootType.RESOURCE)
       srcRoot.createFile("a.txt")
     }

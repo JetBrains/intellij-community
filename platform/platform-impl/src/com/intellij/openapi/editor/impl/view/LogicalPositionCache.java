@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -20,7 +21,8 @@ import java.util.Collections;
  * Caches information allowing faster offset<->logicalPosition conversions even for long lines.
  * Requests for conversion can be made from under read action, document changes and cache invalidation should be done in EDT.
  */
-final class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, Dumpable {
+@ApiStatus.Internal
+public final class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, Dumpable {
   private final Document myDocument;
   private final EditorView myView;
   private ArrayList<LineData> myLines = new ArrayList<>();

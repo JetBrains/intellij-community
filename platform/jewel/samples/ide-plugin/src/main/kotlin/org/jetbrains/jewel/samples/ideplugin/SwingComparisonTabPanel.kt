@@ -176,7 +176,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                 compose {
                     Icon(
                         key = IdeSampleIconKeys.jewelToolWindow,
-                        contentDescription = null,
+                        contentDescription = "Jewel Tool Window Icon",
                         modifier = Modifier.border(1.dp, Color.Red),
                     )
                 }

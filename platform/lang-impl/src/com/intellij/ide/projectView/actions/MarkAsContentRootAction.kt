@@ -8,6 +8,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.workspaceModel.core.fileIndex.impl.OptionalExclusionUtil
 
 internal class MarkAsContentRootAction : DumbAwareAction() {
 
@@ -29,10 +31,18 @@ internal class MarkAsContentRootAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
     val module = MarkRootActionBase.getModule(e, files) ?: return
-    val model = ModuleRootManager.getInstance(module).modifiableModel
-    for (it in files) {
-      model.addContentEntry(it)
+    val contentRootsToAdd = ArrayList<VirtualFile>()
+    for (file in files) {
+      if (!OptionalExclusionUtil.cancelExclusion(module.project, file)) {
+        contentRootsToAdd.add(file)
+      }
     }
-    MarkRootsManager.commitModel(module, model)
+    if (contentRootsToAdd.isNotEmpty()) {
+      val model = ModuleRootManager.getInstance(module).modifiableModel
+      for (it in contentRootsToAdd) {
+        model.addContentEntry(it)
+      }
+      MarkRootsManager.commitModel(module, model)
+    }
   }
 }

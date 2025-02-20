@@ -91,6 +91,7 @@ jvm_library(
     "//platform/util/jdom",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//xml/testFramework",
   ],
   runtime_deps = [":ant_resources"]
 )

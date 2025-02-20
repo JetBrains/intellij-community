@@ -220,14 +220,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return false;
   }
 
-  /**
-   * @return true if reworked block terminal (gen2) should be used instead of the Classic Terminal.
-   */
-  @ApiStatus.Internal
-  protected boolean isGenTwoTerminalEnabled() {
-    return false;
-  }
-
   private @NotNull String getShellPath() {
     return TerminalProjectOptionsProvider.getInstance(myProject).getShellPath();
   }

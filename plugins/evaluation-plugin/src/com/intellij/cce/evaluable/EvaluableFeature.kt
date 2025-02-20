@@ -41,7 +41,7 @@ interface EvaluableFeature<T : EvaluationStrategy> {
   /**
    * which metrics to calculate and show in reports
    */
-  fun getMetrics(sessions: List<Session>): List<Metric> = emptyList()
+  fun getMetrics(sessions: List<Session>): List<Metric> = getMetrics()
 
   fun getMetrics(): List<Metric> = emptyList()
 

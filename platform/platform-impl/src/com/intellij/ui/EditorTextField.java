@@ -715,7 +715,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       if (highlighter != null) editor.setHighlighter(highlighter);
     }
 
-    ReadAction.run(() -> {
+    WriteIntentReadAction.run((Runnable)() -> {
       editor.getSettings().setCaretRowShown(false);
 
       editor.setOneLineMode(myOneLineMode);

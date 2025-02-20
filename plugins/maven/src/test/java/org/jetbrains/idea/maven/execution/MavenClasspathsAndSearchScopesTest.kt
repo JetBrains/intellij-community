@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.execution
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
@@ -1215,7 +1215,7 @@ $scope</scope>
     val m6E3 = m6OrderEntries[3]
     UsefulTestCase.assertInstanceOf(m6E3, ModuleSourceOrderEntry::class.java)
 
-    val jmockDir = VfsUtil.findFileByIoFile(File(repositoryPath, "jmock/jmock/1.0/jmock-1.0.jar"), true)
+    val jmockDir = VfsUtil.findFile(repositoryPath.resolve("jmock/jmock/1.0/jmock-1.0.jar"), true)
     assertNotNull(jmockDir)
     val jmockJar = JarFileSystem.getInstance().getJarRootForLocalFile(jmockDir!!)
     assertNotNull(jmockJar)
@@ -1264,7 +1264,7 @@ $scope</scope>
     val m6E2 = m6OrderEntries[2]
     UsefulTestCase.assertInstanceOf(m6E2, ModuleSourceOrderEntry::class.java)
 
-    val jmockDir = VfsUtil.findFileByIoFile(File(repositoryPath, "jmock/jmock/1.0/jmock-1.0.jar"), true)
+    val jmockDir = VfsUtil.findFile(repositoryPath.resolve("jmock/jmock/1.0/jmock-1.0.jar"), true)
     assertNotNull(jmockDir)
     val jmockJar = JarFileSystem.getInstance().getJarRootForLocalFile(jmockDir!!)
     assertNotNull(jmockJar)
@@ -1288,7 +1288,7 @@ $scope</scope>
     val nonMavenM1 = createModule("nonMavenM1")
     val nonMavenM2 = createModule("nonMavenM2")
 
-    writeAction {
+    edtWriteAction {
       ModuleRootModificationUtil.addDependency(nonMavenM1, nonMavenM2, DependencyScope.COMPILE, true)
       ModuleRootModificationUtil.addDependency(nonMavenM2, modules[0], DependencyScope.COMPILE, true)
       createProjectSubDirs("nonMavenM1/src/main/java", "nonMavenM1/src/test/java",
@@ -1476,7 +1476,7 @@ $scope</scope>
     f.parent.createDirectories()
 
     createEmptyJar(f.parent.toString(), f.fileName.toString())
-    repositoryPath = createProjectSubDir("repo").path
+    repositoryPath = createProjectSubDir("repo").toNioPath()
   }
 
   private fun createOutputDirectories() {

@@ -10,7 +10,7 @@ import com.intellij.psi.LanguageFileViewProviders
 import com.intellij.psi.templateLanguages.TemplateDataElementType
 import com.intellij.psi.xml.StartTagEndTokenProvider
 import com.intellij.testFramework.ParsingTestCase
-import com.intellij.xml.XmlElementTypeServiceHelper.registerXmlElementTypeServices
+import com.intellij.xml.testFramework.XmlElementTypeServiceHelper.registerXmlElementTypeServices
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.parser.MarkdownFlavourProvider

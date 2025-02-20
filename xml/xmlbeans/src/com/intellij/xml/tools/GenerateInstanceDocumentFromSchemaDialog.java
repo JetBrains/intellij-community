@@ -1,6 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.tools;
-
 
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.javaee.ExternalResourceManager;
@@ -18,6 +17,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,10 +31,8 @@ import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Konstantin Bulenkov
- */
-final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
+@ApiStatus.Internal
+public final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
   private JPanel panel;
   private TextFieldWithBrowseButton generateFromUrl;
   private JLabel status;

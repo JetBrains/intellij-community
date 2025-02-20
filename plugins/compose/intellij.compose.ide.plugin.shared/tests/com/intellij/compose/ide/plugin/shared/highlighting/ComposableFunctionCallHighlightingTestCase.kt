@@ -56,12 +56,36 @@ abstract class ComposableFunctionCallHighlightingTestCase : BaseComposableCallHi
   fun `test Composable function call within Composable class member function with Compose enabled`() {
     val testFileToHighlight = myFixture.configureByFile("testComposableCallInComposableMember.kt")
 
-    doTestHighlightingWithDisabledCompose(testFileToHighlight)
+    doTestHighlightingWithEnabledCompose(testFileToHighlight, COMPOSABLE_CALL_TEXT_TYPE)
   }
 
   fun `test Composable function call within Composable class member function with Compose disabled`() {
     val testFileToHighlight = myFixture.configureByFile("testComposableCallInComposableMember.kt")
 
     doTestHighlightingWithDisabledCompose(testFileToHighlight)
+  }
+
+  fun `test function with Composable return type call within Composable class member function with Compose enabled`() {
+    val testFileToHighlight = myFixture.configureByFile("testFunctionWithComposableLambdaReturnTypeCallInComposableFunction.kt")
+
+    doTestHighlightingWithEnabledCompose(testFileToHighlight, null)
+  }
+
+  fun `test function with Composable return type call within Composable class member function with Compose disabled`() {
+    val testFileToHighlight = myFixture.configureByFile("testFunctionWithComposableLambdaReturnTypeCallInNonComposableFunction.kt")
+
+    doTestHighlightingWithDisabledCompose(testFileToHighlight)
+  }
+
+  fun `test Composable return type invoke method call within Composable function with Compose enabled`() {
+    val testFileToHighlight = myFixture.configureByFile("testComposableLambdaReturnTypeInvokeMethodCallInComposableFunction.kt")
+
+    doTestHighlightingWithEnabledCompose(testFileToHighlight, COMPOSABLE_CALL_TEXT_TYPE)
+  }
+
+  fun `test Composable return type invoke operator call within Composable function with Compose enabled`() {
+    val testFileToHighlight = myFixture.configureByFile("testComposableLambdaReturnTypeInvokeOperatorCallInComposableFunction.kt")
+
+    doTestHighlightingWithEnabledCompose(testFileToHighlight, COMPOSABLE_CALL_TEXT_TYPE)
   }
 }

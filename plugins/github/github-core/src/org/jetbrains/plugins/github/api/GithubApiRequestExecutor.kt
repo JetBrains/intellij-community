@@ -198,8 +198,10 @@ sealed class GithubApiRequestExecutor {
     }
 
     private fun checkServerVersion(connection: HttpURLConnection) {
-      // let's assume it's not ghe if header is missing
+      // let's assume it's not ghe if header is missing or it's *.ghe.com
       val versionHeader = connection.getHeaderField(GHEServerVersionChecker.ENTERPRISE_VERSION_HEADER) ?: return
+      if (versionHeader.contains("ghe.com", ignoreCase = true)) return // Kinda fragile...
+
       GHEServerVersionChecker.checkVersionSupported(versionHeader)
     }
 

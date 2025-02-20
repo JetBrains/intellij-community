@@ -14,6 +14,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.workspaceModel.core.fileIndex.impl.OptionalExclusionUtil;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -46,7 +47,9 @@ public class MarkExcludeRootAction extends MarkRootActionBase {
 
   @Override
   protected void modifyRoots(@NotNull VirtualFile vFile, @NotNull ContentEntry entry) {
-    entry.addExcludeFolder(vFile);
+    if (!OptionalExclusionUtil.exclude(entry.getRootModel().getModule().getProject(), vFile)) {
+      entry.addExcludeFolder(vFile);
+    }
   }
 
   @Override

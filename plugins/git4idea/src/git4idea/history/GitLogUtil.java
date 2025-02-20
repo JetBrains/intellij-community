@@ -173,6 +173,12 @@ public final class GitLogUtil {
   public static @NotNull VcsLogProvider.DetailedLogData collectMetadata(@NotNull Project project,
                                                                         @NotNull VirtualFile root,
                                                                         String... params) throws VcsException {
+    return collectMetadata(project, root, new GitLogCommandParameters(Collections.emptyList(), Arrays.asList(params)));
+  }
+
+  public static @NotNull VcsLogProvider.DetailedLogData collectMetadata(@NotNull Project project,
+                                                                        @NotNull VirtualFile root,
+                                                                        @NotNull GitLogCommandParameters parameters) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return LogDataImpl.empty();
@@ -193,11 +199,11 @@ public final class GitLogUtil {
     };
 
     try {
-      GitLineHandler handler = createGitHandler(project, root, Collections.emptyList(), false);
+      GitLineHandler handler = createGitHandler(project, root, parameters.getConfigParameters(), false);
       GitLogParser.GitLogOption[] options = ArrayUtil.append(COMMIT_METADATA_OPTIONS, REF_NAMES);
       GitLogParser<GitLogRecord> parser = GitLogParser.createDefaultParser(project, options);
       handler.setStdoutSuppressed(true);
-      handler.addParameters(params);
+      handler.addParameters(parameters.getFilterParameters());
       handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
       handler.addParameters("--decorate=full");
       handler.endOptions();

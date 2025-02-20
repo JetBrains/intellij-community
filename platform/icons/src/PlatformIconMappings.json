@@ -627,6 +627,7 @@
       "scala.svg": "language/scala.svg"
     },
     "nodes": {
+      "artifact.svg": "nodes/artifact.svg",
       "attribute.svg": "nodes/objectTypeAttribute.svg",
       "abstractException.svg": "nodes/abstractException.svg",
       "accessLocal.svg": ["nodes/c_plocal.svg", "nodes/packageLocal.svg"],

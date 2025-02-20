@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
@@ -740,7 +740,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   @Override
-  protected String calculateSignature() {
+  public String calculateSignature() {
     return doCalculateSignature(getMethod());
   }
 
@@ -761,8 +761,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return String.join(" ", modifierKeywords);
   }
 
-  private String getAnnotationText(PsiMethod method, PsiModifierList modifierList) {
-    PsiAnnotation annotation = modifierList.findAnnotation(JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+  private String getAnnotationText(PsiMethod method) {
+    PsiAnnotation annotation = JavaMethodContractUtil.findContractAnnotation(method);
     if (annotation != null) {
       String[] oldNames = ContainerUtil.map2Array(method.getParameterList().getParameters(), String.class, PsiParameter::getName);
       JavaParameterInfo[] parameters =
@@ -771,7 +771,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         PsiAnnotation converted = ContractConverter.convertContract(method, oldNames, parameters);
         if (converted != null && converted != annotation) {
           String text = converted.getText();
-          return text.replaceFirst("^@"+JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, "@Contract");
+          return text.replaceFirst("@" + converted.getQualifiedName(), "@Contract");
         }
       }
       catch (ContractConverter.ContractConversionException ignored) {
@@ -783,12 +783,12 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   protected String doCalculateSignature(PsiMethod method) {
     final StringBuilder buffer = new StringBuilder();
-    final PsiModifierList modifierList = method.getModifierList();
-    final String annotationText = getAnnotationText(method, modifierList);
+    final String annotationText = getAnnotationText(method);
     buffer.append(annotationText);
     if (!annotationText.isEmpty()) {
       buffer.append("\n");
     }
+    final PsiModifierList modifierList = method.getModifierList();
     final String modifiers = getModifiersText(modifierList, ObjectUtils.notNull(getVisibility(), PsiModifier.PACKAGE_LOCAL));
     buffer.append(modifiers);
     if (!modifiers.isEmpty()) {

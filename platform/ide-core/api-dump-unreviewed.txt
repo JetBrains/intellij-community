@@ -1377,6 +1377,14 @@ f:com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 - s:createSingleFileOrFolderDescriptor(com.intellij.openapi.fileTypes.FileType):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - s:createSingleFolderDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
 - s:createSingleLocalFileDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- s:multiDirs():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- s:multiFiles():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- s:multiFilesOrDirs():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- s:multiJarsOrDirs():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- s:singleDir():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- s:singleFile():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- s:singleFileOrAppBundle():com.intellij.openapi.fileChooser.FileChooserDescriptor
+- s:singleFileOrDir():com.intellij.openapi.fileChooser.FileChooserDescriptor
 c:com.intellij.openapi.fileChooser.FileElement
 - <init>(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
 - equals(java.lang.Object):Z

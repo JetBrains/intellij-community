@@ -5,6 +5,7 @@
 // ACTION: Create member function 'Base.defaultFun'
 // ACTION: Rename reference
 // ERROR: Unresolved reference: defaultFun
+// K2_AFTER_ERROR: Unresolved reference 'defaultFun'.
 
 package p
 

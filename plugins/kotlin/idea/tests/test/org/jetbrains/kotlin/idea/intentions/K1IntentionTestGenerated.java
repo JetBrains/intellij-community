@@ -15267,6 +15267,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/movePropertyToConstructor/expectClass.kt");
         }
 
+        @TestMetadata("flexibleType.kt")
+        public void testFlexibleType() throws Exception {
+            runTest("testData/intentions/movePropertyToConstructor/flexibleType.kt");
+        }
+
         @TestMetadata("functionReference.kt")
         public void testFunctionReference() throws Exception {
             runTest("testData/intentions/movePropertyToConstructor/functionReference.kt");

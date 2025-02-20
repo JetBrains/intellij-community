@@ -14,6 +14,8 @@ import com.intellij.codeInsight.hints.codeVision.CodeVisionProjectSettings
 import com.intellij.codeInsight.hints.codeVision.ModificationStampUtil
 import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
 import com.intellij.codeInsight.hints.settings.showInlaySettings
+import com.intellij.codeInsight.multiverse.EditorContextManager
+import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
 import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -205,6 +207,20 @@ open class CodeVisionHost(val project: Project) {
     val allProviders = collectAllProviders()
     defaultSortedProvidersList.clear()
     defaultSortedProvidersList.addAll(allProviders.getTopSortedIdList())
+  }
+
+  private fun subscribeForContextChanged(editor: Editor, editorLifetime: Lifetime, onContextChanged: () -> Unit) {
+    val project = editor.project ?: return
+    if (!isSharedSourceSupportEnabled(project)) return
+    project.messageBus.connect(editorLifetime.createNestedDisposable()).subscribe(EditorContextManager.topic, object : EditorContextManager.ChangeEventListener {
+      override fun editorContextsChanged(event: EditorContextManager.ChangeEvent) {
+        if (editor == event.editor) {
+          application.invokeLater {
+            onContextChanged()
+          }
+        }
+      }
+    })
   }
 
   private fun subscribeEditorCreated(enableCodeVisionLifetime: Lifetime) {
@@ -409,6 +425,10 @@ open class CodeVisionHost(val project: Project) {
     )
 
     subscribeForDocumentChanges(editor, editorLifetime) {
+      pokeEditor()
+    }
+
+    subscribeForContextChanged(editor, editorLifetime) {
       pokeEditor()
     }
 

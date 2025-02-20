@@ -5,7 +5,7 @@ import com.intellij.database.connection.throwable.info.SimpleErrorInfo
 import com.intellij.database.datagrid.DocumentDataHookUp.UpdateSession
 import com.intellij.database.run.ui.grid.LongActionRequestPlace
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
@@ -58,7 +58,7 @@ class DocumentUpdaterWithComputeOnBG {
       action.prepareData()
     }
 
-    writeAction {
+    edtWriteAction {
       executeCommand(hookUp.project, DataGridBundle.message("command.name.update.values"), null) {
         try {
           documentListener.muteChangeEvents()

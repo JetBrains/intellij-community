@@ -280,20 +280,20 @@ object K2UnusedSymbolUtil {
 
               val containingClassSearchScope = GlobalSearchScope.projectScope(project)
               val isRequiredToCallFunction =
-                  ReferencesSearch.search(KotlinReferencesSearchParameters(declarationContainingClass, containingClassSearchScope)).asIterable().any { ref ->
-                      val userType = ref.element.parent as? KtUserType ?: return@any false
+                  referenceExists(declarationContainingClass, containingClassSearchScope) { ref ->
+                      val userType = ref.element.parent as? KtUserType ?: return@referenceExists false
                       val typeArguments = userType.typeArguments
-                      if (typeArguments.isEmpty()) return@any false
+                      if (typeArguments.isEmpty()) return@referenceExists false
 
-                      val parameter = userType.getStrictParentOfType<KtParameter>() ?: return@any false
+                      val parameter = userType.getStrictParentOfType<KtParameter>() ?: return@referenceExists false
                       val callableDeclaration = parameter.getStrictParentOfType<KtCallableDeclaration>()?.let {
                           it as? KtNamedFunction ?: it.containingClass()
-                      } ?: return@any false
+                      } ?: return@referenceExists false
                       val typeParameters = callableDeclaration.typeParameters.map { it.name }
-                      if (typeParameters.isEmpty()) return@any false
-                      if (typeArguments.none { it.text in typeParameters }) return@any false
+                      if (typeParameters.isEmpty()) return@referenceExists false
+                      if (typeArguments.none { it.text in typeParameters }) return@referenceExists false
 
-                      ReferencesSearch.search(KotlinReferencesSearchParameters(callableDeclaration, containingClassSearchScope)).asIterable().any {
+                      referenceExists(callableDeclaration, containingClassSearchScope) {
                           val callElement = it.element.parent as? KtCallElement
                           callElement != null && callElement.typeArgumentList == null
                       }
@@ -374,10 +374,10 @@ object K2UnusedSymbolUtil {
               declarationContainingClass != null &&
               // when too many occurrences of this class, consider it used
               (isCheapEnoughToSearchUsages(declarationContainingClass) == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES ||
-              ReferencesSearch.search(KotlinReferencesSearchParameters(declarationContainingClass, useScope)).asIterable().any {
+               referenceExists(declarationContainingClass, useScope) {
                   val refElement = it.element
-                  refElement.getStrictParentOfType<KtTypeAlias>() != null // ignore unusedness of type aliased classes - they are too hard to trace
-                  || refElement.getStrictParentOfType<KtCallExpression>()?.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbol
+                          refElement.getStrictParentOfType<KtTypeAlias>() != null // ignore unusedness of type aliased classes - they are too hard to trace
+                          || refElement.getStrictParentOfType<KtCallExpression>()?.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol == symbol
               })) {
               return true
           }
@@ -449,12 +449,15 @@ object K2UnusedSymbolUtil {
           .any { !checkReference(it.mainReference.element, declaration, originalDeclaration) }
   }
 
+  // search for references to an element in the scope, satisfying predicate, lazily
+  private fun referenceExists(psiElement: PsiElement, scope:SearchScope, predicate: (PsiReference)->Boolean) : Boolean {
+    return !ReferencesSearch.search(KotlinReferencesSearchParameters(psiElement, scope)).forEach(Processor<PsiReference> { !predicate.invoke(it) })
+  }
   context(KaSession)
   private fun hasBuiltInEnumFunctionReference(enumClass: KtClass?, useScope: SearchScope): Boolean {
       if (enumClass == null) return false
-      val isFoundEnumFunctionReferenceViaSearch = ReferencesSearch.search(KotlinReferencesSearchParameters(enumClass, useScope))
-          .asIterable()
-          .any { hasBuiltInEnumFunctionReference(it, enumClass) }
+      val isFoundEnumFunctionReferenceViaSearch = referenceExists(enumClass, useScope)
+           { hasBuiltInEnumFunctionReference(it, enumClass) }
 
       return isFoundEnumFunctionReferenceViaSearch || hasEnumFunctionReferenceInEnumClass(enumClass)
   }

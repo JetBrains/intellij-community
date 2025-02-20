@@ -200,9 +200,11 @@ class CheckerRunner(val text: TextContent) {
 
     problem.customFixes.forEachIndexed { index, fix -> result.add(GrazieCustomFixWrapper(problem, fix, descriptor, index)) }
 
-    result.add(object : GrazieAddExceptionQuickFix(defaultSuppressionPattern(problem, findSentence(problem)), underline) {
+    val suppressionPattern = defaultSuppressionPattern(problem, findSentence(problem))
+    val rule = problem.rule
+    result.add(object : GrazieAddExceptionQuickFix(suppressionPattern, underline) {
       override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
-        GrazieFUSCounter.quickFixInvoked(problem.rule, project, "add.exception")
+        GrazieFUSCounter.quickFixInvoked(rule, project, "add.exception")
         super.applyFix(project, file, editor)
       }
     })

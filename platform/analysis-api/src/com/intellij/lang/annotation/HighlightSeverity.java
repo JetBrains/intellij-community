@@ -209,6 +209,6 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
 
   @Override
   public String toString() {
-    return myName;
+    return myName+"("+myVal+")";
   }
 }

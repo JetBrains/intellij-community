@@ -1,6 +1,8 @@
 // "Create property 'foo'" "true"
 // ERROR: Property must be initialized or be abstract
 // ERROR: Variable 'foo' must be initialized
+// K2_AFTER_ERROR: Property must be initialized or be abstract.
+// K2_AFTER_ERROR: Variable 'foo' must be initialized.
 
 class A<T> {
     var x: A<Int> by <caret>foo

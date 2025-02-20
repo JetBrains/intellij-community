@@ -112,8 +112,8 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     val pluginPath =
       "plugins/org/apache/maven/plugins/maven-surefire-plugin/2.12.4/maven-surefire-plugin-2.12.4.pom"
-    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath(pluginPath)
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestData(pluginPath)
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
     assertNotNull("file: $filePath not exists!", f)
     assertResolved(projectPom, findPsiFile(f))
   }
@@ -226,8 +226,8 @@ class MavenPluginCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     val pluginPath =
       "plugins/org/apache/maven/plugins/maven-compiler-plugin/$pluginVersion/maven-compiler-plugin-$pluginVersion.pom"
-    val filePath = myIndicesFixture!!.repositoryHelper.getTestDataPath(pluginPath)
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath)
+    val filePath = myIndicesFixture!!.repositoryHelper.getTestData(pluginPath)
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(filePath)
     assertNotNull("file: $filePath not exists!", f)
     assertResolved(projectPom, findPsiFile(f))
   }

@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.xml.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "testFramework",
+  module_name = "intellij.xml.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/testFramework",
+    "//xml/xml-frontback-impl:frontback-impl",
+    "//xml/xml-psi-impl:psi-impl",
+    "//xml/xml-parser:parser",
+    "//platform/core-impl",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+  ]
+)
+### auto-generated section `build intellij.xml.testFramework` end

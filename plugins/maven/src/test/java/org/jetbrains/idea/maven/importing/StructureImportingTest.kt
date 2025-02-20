@@ -12,7 +12,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.io.IOException
 import java.nio.file.Files
-import java.nio.file.Paths
 
 class StructureImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
@@ -639,7 +638,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testParentInRemoteRepository() = runBlocking {
     val pathToJUnit = "asm/asm-parent/3.0"
-    val parentDir = Paths.get(repositoryPath, pathToJUnit)
+    val parentDir = repositoryPath.resolve(pathToJUnit)
 
     removeFromLocalRepository(pathToJUnit)
     assertFalse(Files.exists(parentDir))

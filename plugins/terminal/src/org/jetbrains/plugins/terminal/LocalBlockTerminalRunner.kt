@@ -3,6 +3,8 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.client.sessions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.ui.TerminalWidget
@@ -28,11 +30,13 @@ open class LocalBlockTerminalRunner(project: Project) : LocalTerminalDirectRunne
   override fun isGenTwoTerminalEnabled(): Boolean {
     return (ExperimentalUI.isNewUI() || ApplicationManager.getApplication().isUnitTestMode)
            && Registry.`is`(REWORKED_BLOCK_TERMINAL_REGISTRY, false)
+           // Do not enable Gen2 terminal in CodeWithMe until it is adapted to this mode.
+           && myProject.sessions(ClientKind.GUEST).isEmpty()
   }
 
   override fun createShellTerminalWidget(parent: Disposable, startupOptions: ShellStartupOptions): TerminalWidget {
-    if (isGenOneTerminalEnabled || isGenTwoTerminalEnabled) {
-      return TerminalWidgetImpl(myProject, settingsProvider, isGenOneTerminalEnabled, parent)
+    if (isGenOneTerminalEnabled) {
+      return TerminalWidgetImpl(myProject, settingsProvider, parent)
     }
     return super.createShellTerminalWidget(parent, startupOptions)
   }

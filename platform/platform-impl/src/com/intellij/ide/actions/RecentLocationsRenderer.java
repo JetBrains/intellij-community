@@ -74,7 +74,7 @@ final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWi
     myProject = project;
     myModel = model;
     myCheckBox = checkBox;
-    myTitle.setBorder(JBUI.Borders.empty(8, 6, 5, 0));
+    myTitle.setBorder(JBUI.Borders.empty(8, 0, 5, 0));
     getEditor().setBorder(JBUI.Borders.empty(0, 4, 6, 0));
     setupEditor(getEditor());
 
@@ -90,6 +90,7 @@ final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWi
     var hg = layout.createSequentialGroup();
     var vg = layout.createParallelGroup(GroupLayout.Alignment.BASELINE);
 
+    hg.addGap(JBUI.scale(8));
     hg.addComponent(myTitle);
     hg.addGap(JBUI.scale(8), JBUI.scale(8), Short.MAX_VALUE);
     hg.addComponent(myTimestamp, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE);
@@ -219,7 +220,7 @@ final class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWi
 
     Icon icon = IconUtil.getIcon(place.getFile(), Iconable.ICON_FLAG_READ_STATUS, myProject);
     myTitle.setIcon(icon);
-    myTitle.setIconTextGap(4);
+    myTitle.setIconTextGap(6);
     if (!SystemInfo.isWindows) {
       myTitle.setFont(FontUtil.minusOne(StartupUiUtil.getLabelFont()));
     }

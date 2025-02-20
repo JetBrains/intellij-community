@@ -74,6 +74,8 @@ java_library(
     "//xml/relaxng",
     "//plugins/github/github-core:vcs-github",
     "//plugins/terminal",
+    "//plugins/terminal/frontend",
+    "//plugins/terminal/backend",
     "//python:pycharm-community",
     "//python:pycharm-community-customization",
     "//python/pluginCore:community-plugin",

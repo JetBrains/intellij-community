@@ -74,7 +74,7 @@ public abstract class VcsDirtyScope {
    *
    * @param path a path to check
    */
-  public abstract boolean belongsTo(final FilePath path);
+  public abstract boolean belongsTo(@NotNull final FilePath path);
 
   public abstract boolean wasEveryThingDirty();
 }

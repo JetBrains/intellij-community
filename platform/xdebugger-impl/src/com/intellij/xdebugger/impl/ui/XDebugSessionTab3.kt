@@ -49,8 +49,7 @@ class XDebugSessionTab3(
   override fun getFramesContentId(): String = debuggerContentId
 
   private fun getWatchesViewImpl(session: XDebugSessionImpl, watchesIsVariables: Boolean): XWatchesViewImpl {
-    val useSplitterView = session.debugProcess.getBottomLocalsComponentProvider() != null
-    return if (useSplitterView)
+    return if (session.debugProcess.useSplitterView())
       XSplitterWatchesViewImpl(session, watchesIsVariables, true, withToolbar = false)
     else
       XWatchesViewImpl(session, watchesIsVariables, true, false)

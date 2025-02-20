@@ -1,5 +1,6 @@
 // "Create property 'foo'" "true"
 // ERROR: Property must be initialized or be abstract
+// K2_AFTER_ERROR: Property must be initialized or be abstract.
 
 class Test {
     val foo1 = 1

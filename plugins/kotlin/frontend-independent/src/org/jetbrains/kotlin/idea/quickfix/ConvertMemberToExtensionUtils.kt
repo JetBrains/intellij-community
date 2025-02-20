@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -36,14 +37,15 @@ fun convertMemberToExtensionAndPrepareBodySelection(
     allowExpected: Boolean = true,
     addImport: (KtFile, FqName) -> KtImportDirective,
 ): Pair<KtCallableDeclaration, BodySelectionType> {
-    val expectedDeclaration = liftToExpect(element) as? KtCallableDeclaration
-    if (expectedDeclaration != null) {
-        withExpectedActuals(element).filterIsInstance<KtCallableDeclaration>().forEach {
+    ActionUtil.underModalProgress(
+        element.project,
+        KotlinBundle.message("progress.title.searching.for.expected.actual")
+    ) { withExpectedActuals(element) }
+        .filterIsInstance<KtCallableDeclaration>().forEach {
             if (it != element) {
                 processSingleDeclaration(it, allowExpected, addImport)
             }
         }
-    }
 
     val classVisibility = element.containingClass()?.visibilityModifierType()
     val (extension, bodyTypeToSelect) = processSingleDeclaration(element, allowExpected, addImport)

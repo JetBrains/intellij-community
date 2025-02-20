@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.types.Variance
@@ -74,6 +75,9 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
     private fun KtDeclaration?.matchesWithPlatform(targetPlatform: TargetPlatform): Boolean {
         val common = targetPlatform.isCommon()
         val bool = this?.isExpectDeclaration() == common
+        if (common && !bool) {
+            if (this?.hasActualModifier() != true) return true
+        }
         return bool
     }
 
@@ -115,14 +119,9 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         val targetPlatform = module.targetPlatform
 
         val classIdName = classId.asFqNameString()
-        val classOrObjects = KotlinFullClassNameIndex[classIdName, project, scope]
         val targetDeclaration =
-            classOrObjects.firstOrNull { it.matchesWithPlatform(targetPlatform) } ?: run {
-                val typeAliases = KotlinTopLevelTypeAliasFqNameIndex[classIdName, project, scope]
-                typeAliases.firstOrNull { it.matchesWithPlatform(targetPlatform) } ?:
-                    classOrObjects.firstOrNull() ?:
-                    typeAliases.firstOrNull()
-            }
+            KotlinFullClassNameIndex[classIdName, project, scope].firstOrNull { it.matchesWithPlatform(targetPlatform) } ?:
+            KotlinTopLevelTypeAliasFqNameIndex[classIdName, project, scope].firstOrNull { it.matchesWithPlatform(targetPlatform) }
         return targetDeclaration
     }
 
@@ -160,10 +159,17 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
                     else -> {
                         val correspondingOwner = getCorrespondingClassLikeDeclaration(containingClass, scope, module) as? KtClassOrObject
                             ?: return null
-                        if (declaration is KtProperty && correspondingOwner.isData() && !declaration.isExtensionDeclaration() && declaration.typeParameters.isEmpty()) {
-                            correspondingOwner.primaryConstructor?.valueParameters?.firstOrNull { it.name == declarationName }?.let { return it }
+                        val declarations = correspondingOwner.declarations
+                        if (declaration is KtProperty) {
+                            declarations.firstOrNull { it is KtProperty && it.name == declaration.name }
+                                ?.let { return it }
+
+                            if (!declaration.isExtensionDeclaration() && declaration.typeParameters.isEmpty()) {
+                                correspondingOwner.primaryConstructor?.valueParameters?.firstOrNull { it.name == declarationName }
+                                    ?.let { return it }
+                            }
                         }
-                        correspondingOwner.declarations
+                        declarations
                     }
                 }
                 return chooseCallableCandidate(declaration, candidates)

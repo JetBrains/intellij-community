@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.MathUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.TerminalFocusModel
 import org.jetbrains.plugins.terminal.block.TerminalFocusModel.TerminalFocusListener
 import org.jetbrains.plugins.terminal.block.output.TerminalSelectionModel.TerminalSelectionListener
@@ -15,10 +16,11 @@ import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 import kotlin.math.min
 
-internal class TerminalSelectionController(
+@ApiStatus.Internal
+class TerminalSelectionController(
   private val focusModel: TerminalFocusModel,
   private val selectionModel: TerminalSelectionModel,
-  private val outputModel: TerminalOutputModel
+  private val outputModel: TerminalOutputModel,
 ) : EditorMouseListener, EditorMouseMotionListener, TerminalSelectionListener {
   val selectedBlocks: List<CommandBlock>
     get() = selectionModel.selectedBlocks

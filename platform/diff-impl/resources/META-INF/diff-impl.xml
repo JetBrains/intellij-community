@@ -12,6 +12,8 @@
                          implementationClass="com.intellij.openapi.vcs.ex.LineStatusMakerEscEditorHandler"
                          id="LineStatusTrackerMarkerPopup"
                          order="before hide-hints"/>
+
+    <mergeableGutterIconRendererProvider implementation="com.intellij.diff.util.DiffGutterRendererMergeableRendererProvider" />
   </extensions>
 
   <applicationListeners>

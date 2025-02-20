@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.github.benmanes.caffeine.cache.Cache
@@ -30,14 +30,14 @@ internal class ShellDataGeneratorsExecutorImpl(session: BlockTerminalSession) : 
     })
   }
 
-  override suspend fun <T> execute(context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<T>): T {
+  override suspend fun <T : Any> execute(context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<T>): T {
     return if (generator is ShellCacheableDataGenerator) {
       executeCacheableGenerator(context, generator)
     }
     else generator.generate(context)
   }
 
-  private suspend fun <T> executeCacheableGenerator(context: ShellRuntimeContext, generator: ShellCacheableDataGenerator<T>): T {
+  private suspend fun <T : Any> executeCacheableGenerator(context: ShellRuntimeContext, generator: ShellCacheableDataGenerator<T>): T {
     val key = generator.getCacheKey(context)
               ?: return generator.generate(context)
     val cachedResult = getCachedResult<T>(key)

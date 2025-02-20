@@ -53,7 +53,7 @@ internal class ScopeRootDescriptor(
     val result =
       sdk1.homePath == sdk2.homePath &&
       sdk1.name == sdk2.name &&
-      //sdk1.versionString == sdk2.versionString && todo the version can be different
+      //sdk1.versionString == sdk2.versionString && todo ijpl-339 the version can be different
       sdk1.sdkType == sdk2.sdkType &&
       sdk1.unwrap().javaClass == sdk2.unwrap().javaClass
 

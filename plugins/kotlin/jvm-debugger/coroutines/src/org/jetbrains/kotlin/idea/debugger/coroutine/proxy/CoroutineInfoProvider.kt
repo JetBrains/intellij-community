@@ -26,12 +26,12 @@ internal class CoroutinesInfoFromJsonAndReferencesProvider(
 ) : CoroutineInfoProvider {
     private val stackFramesProvider = CoroutineStackFramesProvider(executionContext)
 
-    override fun dumpCoroutinesInfo(): List<CoroutineInfoData> {
+    override fun dumpCoroutinesInfo(): List<CoroutineInfoData>? {
 
         val array = callMethodFromHelper(CoroutinesDebugHelper::class.java, executionContext, "dumpCoroutinesInfoAsJsonAndReferences", emptyList())
             ?: fallbackToOldMirrorDump(executionContext)
 
-        val arrayValues = (array as? ArrayReference)?.values ?: return emptyList()
+        val arrayValues = (array as? ArrayReference)?.values ?: return null
 
         if (arrayValues.size != 4) {
             error("The result array of 'dumpCoroutinesInfoAsJSONAndReferences' should be of size 4")
@@ -58,7 +58,7 @@ internal class CoroutinesInfoFromJsonAndReferencesProvider(
 
     private fun fallbackToOldMirrorDump(executionContext: DefaultExecutionContext): ArrayReference? {
         val debugProbesImpl = DebugProbesImpl.instance(executionContext)
-        return if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
+        return if (debugProbesImpl != null && debugProbesImpl.isInstalled && debugProbesImpl.canDumpCoroutinesInfoAsJsonAndReferences()) {
             debugProbesImpl.dumpCoroutinesInfoAsJsonAndReferences(executionContext)
         } else null
     }
@@ -93,13 +93,6 @@ internal class CoroutinesInfoFromJsonAndReferencesProvider(
     )
 
     companion object {
-        fun instance(executionContext: DefaultExecutionContext, debugProbesImpl: DebugProbesImpl): CoroutinesInfoFromJsonAndReferencesProvider? {
-            if (debugProbesImpl.canDumpCoroutinesInfoAsJsonAndReferences()) {
-                return CoroutinesInfoFromJsonAndReferencesProvider(executionContext)
-            }
-            return null
-        }
-
         val log by logger
     }
 }
@@ -114,6 +107,15 @@ internal class CoroutineLibraryAgent2Proxy(
         val result = debugProbesImpl.dumpCoroutinesInfo(executionContext)
         return result.map {
             createCoroutineInfoDataFromMirror(it, stackFramesProvider)
+        }
+    }
+
+    companion object {
+        fun instance(executionContext: DefaultExecutionContext): CoroutineLibraryAgent2Proxy? {
+            val debugProbesImpl = DebugProbesImpl.instance(executionContext)
+            return if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
+                CoroutineLibraryAgent2Proxy(executionContext, debugProbesImpl)
+            } else null
         }
     }
 }

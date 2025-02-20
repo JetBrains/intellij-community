@@ -1317,6 +1317,11 @@ public final class JBUI {
       }
     }
 
+    public static final class FloatingToolbar {
+      public static final float DEFAULT_BACKGROUND_ALPHA = Popup.DEFAULT_HINT_OPACITY;
+      public static final float TRANSLUCENT_BACKGROUND_ALPHA = 0.9f;
+    }
+
     public static final class MainToolbar {
 
       public static final class Dropdown {
@@ -1574,6 +1579,8 @@ public final class JBUI {
       public static int minimumHintWidth() {
         return JBUIScale.scale(170);
       }
+
+      public static final float DEFAULT_HINT_OPACITY = 0.55f;
 
       public static Color mnemonicForeground() {
         return JBColor.namedColor("Popup.mnemonicForeground", ActionsList.MNEMONIC_FOREGROUND);
@@ -2440,28 +2447,36 @@ public final class JBUI {
         public static final Color FOREGROUND = JBColor.namedColor("TrialWidget.Default.foreground");
         public static final Color BACKGROUND = JBColor.namedColor("TrialWidget.Default.background");
         public static final Color BORDER_COLOR = JBColor.namedColor("TrialWidget.Default.borderColor");
+        public static final Color HOVER_FOREGROUND = JBColor.namedColor("TrialWidget.Default.hoverForeground");
         public static final Color HOVER_BACKGROUND = JBColor.namedColor("TrialWidget.Default.hoverBackground");
+        public static final Color HOVER_BORDER_COLOR = JBColor.namedColor("TrialWidget.Default.hoverBorderColor");
       }
 
       public static final class Active {
         public static final Color FOREGROUND = JBColor.namedColor("TrialWidget.Active.foreground");
         public static final Color BACKGROUND = JBColor.namedColor("TrialWidget.Active.background");
         public static final Color BORDER_COLOR = JBColor.namedColor("TrialWidget.Active.borderColor");
+        public static final Color HOVER_FOREGROUND = JBColor.namedColor("TrialWidget.Active.hoverForeground");
         public static final Color HOVER_BACKGROUND = JBColor.namedColor("TrialWidget.Active.hoverBackground");
+        public static final Color HOVER_BORDER_COLOR = JBColor.namedColor("TrialWidget.Active.hoverBorderColor");
       }
 
       public static final class Alert {
         public static final Color FOREGROUND = JBColor.namedColor("TrialWidget.Alert.foreground");
         public static final Color BACKGROUND = JBColor.namedColor("TrialWidget.Alert.background");
         public static final Color BORDER_COLOR = JBColor.namedColor("TrialWidget.Alert.borderColor");
+        public static final Color HOVER_FOREGROUND = JBColor.namedColor("TrialWidget.Alert.hoverForeground");
         public static final Color HOVER_BACKGROUND = JBColor.namedColor("TrialWidget.Alert.hoverBackground");
+        public static final Color HOVER_BORDER_COLOR = JBColor.namedColor("TrialWidget.Alert.hoverBorderColor");
       }
 
       public static final class Expiring {
         public static final Color FOREGROUND = JBColor.namedColor("TrialWidget.Expiring.foreground");
         public static final Color BACKGROUND = JBColor.namedColor("TrialWidget.Expiring.background");
         public static final Color BORDER_COLOR = JBColor.namedColor("TrialWidget.Expiring.borderColor");
+        public static final Color HOVER_FOREGROUND = JBColor.namedColor("TrialWidget.Expiring.hoverForeground");
         public static final Color HOVER_BACKGROUND = JBColor.namedColor("TrialWidget.Expiring.hoverBackground");
+        public static final Color HOVER_BORDER_COLOR = JBColor.namedColor("TrialWidget.Expiring.hoverBorderColor");
       }
     }
 

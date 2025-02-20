@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.smartPointers;
 
@@ -22,6 +22,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.stubs.LanguageStubDescriptor;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,8 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 
-class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
+@ApiStatus.Internal
+public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
   private static final Logger LOG = Logger.getInstance(SmartPsiElementPointerImpl.class);
 
   private Reference<E> myElement;

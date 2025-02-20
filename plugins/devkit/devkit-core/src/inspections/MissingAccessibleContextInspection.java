@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -20,7 +21,8 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import java.util.*;
 
-final class MissingAccessibleContextInspection extends DevKitUastInspectionBase {
+@ApiStatus.Internal
+public final class MissingAccessibleContextInspection extends DevKitUastInspectionBase {
 
   public static final int MAX_EXPRESSIONS_TO_PROCESS = 16;
 

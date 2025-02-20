@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 
 public final class HtmlHighlighterFactory {
-  public static EditorHighlighter createHTMLHighlighter(EditorColorsScheme settings){
+  public static EditorHighlighter createHTMLHighlighter(EditorColorsScheme settings) {
     SyntaxHighlighter highlighter = new HtmlFileHighlighter();
     return HighlighterFactory.createHighlighter(highlighter, settings);
   }

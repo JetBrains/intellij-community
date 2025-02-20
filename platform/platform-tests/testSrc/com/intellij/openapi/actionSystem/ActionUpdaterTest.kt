@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.impl.SkipOperation
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -201,7 +201,7 @@ class ActionUpdaterTest {
       }
       assertFalse(result.isCompleted, "The update must still be in progress")
       semaphore.acquire()
-      val waIsExecuted = writeAction {
+      val waIsExecuted = edtWriteAction {
         true
       }
       val actions = result.await()

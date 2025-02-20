@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -12,12 +12,11 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Bas Leijdekkers
- */
-abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
+@ApiStatus.Internal
+public abstract class CastedLiteralMaybeJustLiteralInspection extends BaseInspection {
 
   @Override
   protected final @NotNull String buildErrorString(Object... infos) {

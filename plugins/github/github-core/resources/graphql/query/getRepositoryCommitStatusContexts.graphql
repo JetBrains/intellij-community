@@ -3,34 +3,7 @@ query($repoOwner: String!, $repoName: String!, $oid: GitObjectID!, $pageSize: In
     object(oid: $oid) {
       ... on Commit {
         statusCheckRollup {
-          contexts(first: $pageSize, after: $cursor) {
-            pageInfo {
-              ...pageInfo
-            }
-            nodes {
-              __typename
-              ... on CheckRun {
-                checkSuite {
-                  workflowRun {
-                    workflow {
-                      name
-                    }
-                  }
-                }
-                name
-                title
-                status
-                conclusion
-                url
-              }
-              ... on StatusContext {
-                context
-                description
-                state
-                targetUrl
-              }
-            }
-          }
+          ...commitStatusRollup
         }
       }
     }

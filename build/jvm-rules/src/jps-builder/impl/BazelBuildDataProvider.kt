@@ -6,6 +6,7 @@ import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.bazel.jvm.jps.SourceDescriptor
 import org.jetbrains.bazel.jvm.jps.emptyStringArray
 import org.jetbrains.jps.builders.BuildTarget
+import org.jetbrains.jps.builders.BuildTargetType
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping
 import org.jetbrains.jps.incremental.storage.BuildDataProvider
 import org.jetbrains.jps.incremental.storage.OneToManyPathMapping
@@ -23,6 +24,7 @@ internal class BazelBuildDataProvider(
   @JvmField val storeFile: Path,
   @JvmField val allocator: RootAllocator,
   @JvmField val isCleanBuild: Boolean,
+  @JvmField val libRootManager: BazelLibraryRoots,
 ) : BuildDataProvider {
   @JvmField
   val stampStorage = BazelStampStorage(sourceToDescriptor)
@@ -56,7 +58,15 @@ internal class BazelBuildDataProvider(
   override fun clearCache() {
   }
 
-  override fun removeStaleTarget(targetId: String, targetTypeId: String) {
+  override fun removeStaleTarget(targetId: String, targetType: BuildTargetType<*>) {
+  }
+
+  override fun flushStorage(memoryCachesOnly: Boolean) {
+  }
+
+  override fun getLibraryRoots() = libRootManager
+
+  override fun wipeStorage() {
   }
 
   override fun getFileStampStorage(target: BuildTarget<*>): BazelStampStorage = stampStorage
@@ -68,12 +78,6 @@ internal class BazelBuildDataProvider(
   override fun getSourceToForm(target: BuildTarget<*>): OneToManyPathMapping = sourceToForm
 
   override fun closeTargetMaps(target: BuildTarget<*>) {
-  }
-
-  override fun removeAllMaps() {
-  }
-
-  override fun commit() {
   }
 
   override fun close() {
@@ -219,11 +223,7 @@ internal class BazelSourceToOutputMapping(
     synchronized(map) {
       for (descriptor in map.values) {
         for (output in descriptor.outputs) {
-          // hack for KTIJ-197
-          // Change of only one input of *.kotlin_module files didn't trigger recompilation of all inputs in old behaviour.
-          // Now it does.
-          // It isn't yet obvious whether it is right or wrong behaviour.
-          // Let's leave old behaviour for a while for safety and keeping kotlin incremental JPS tests green
+          // see KTIJ-197
           if (!output.endsWith(".kotlin_module") && affectedSources.any { it.contains(output) }) {
             result.add(descriptor)
             break

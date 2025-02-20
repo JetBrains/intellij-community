@@ -8,7 +8,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -130,7 +130,7 @@ class ExternalJavaConfigurationService(val project: Project, private val scope: 
   private fun <T> configure(jdk: Sdk, fileName: String, candidate: T) {
     scope.launch(Dispatchers.EDT) {
       val rootManager = ProjectRootManager.getInstance(project)
-      writeAction { rootManager.projectSdk = jdk }
+      edtWriteAction { rootManager.projectSdk = jdk }
       LOG.info("[$fileName] $candidate - JDK registered: ${jdk.versionString}")
 
       NotificationGroupManager.getInstance()

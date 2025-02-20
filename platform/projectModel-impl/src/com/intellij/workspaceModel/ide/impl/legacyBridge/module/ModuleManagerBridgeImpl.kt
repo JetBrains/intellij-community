@@ -406,7 +406,7 @@ abstract class ModuleManagerBridgeImpl(
     }
 
     withContext(Dispatchers.EDT) {
-      writeAction {
+      edtWriteAction {
         ProjectRootManagerEx.getInstanceEx(project).withRootsChange(RootsChangeRescanningInfo.NO_RESCAN_NEEDED).use {
           WorkspaceModel.getInstance(project).updateProjectModel("Update unloaded modules") { builder ->
             addAndRemoveModules(builder, moduleEntitiesToLoad, moduleEntitiesToUnload, unloadedEntityStorage)

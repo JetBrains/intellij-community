@@ -64,19 +64,6 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         }
     }
 
-    private fun VirtualFile.toIOFile(): File? {
-        val paths = mutableListOf<String>()
-        var vFile: VirtualFile? = this
-        while (vFile != null) {
-            vFile.sourceIOFile()?.let {
-                return File(it, paths.reversed().joinToString("/"))
-            }
-            paths.add(vFile.name)
-            vFile = vFile.parent
-        }
-        return null
-    }
-
     private fun doQuickFixTest(dirPath: String) {
         KotlinTestHelpers.registerChooserInterceptor(testRootDisposable)
 

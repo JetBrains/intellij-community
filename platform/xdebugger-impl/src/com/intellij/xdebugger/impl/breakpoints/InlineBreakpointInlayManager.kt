@@ -2,7 +2,7 @@
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.openapi.application.readAndWriteAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diff.impl.DiffUtil
@@ -175,7 +175,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
       }
       else {
         scope.launch {
-          writeAction {
+          edtWriteAction {
             getAllExistingInlays(editor.inlayModel).forEach { Disposer.dispose(it) }
           }
         }

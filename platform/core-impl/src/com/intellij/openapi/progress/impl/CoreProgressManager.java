@@ -50,7 +50,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(CoreProgressManager.class);
   private static final IJTracer progressManagerTracer = TelemetryManager.getInstance().getTracer(ProgressManagerScope);
 
-  static final int CHECK_CANCELED_DELAY_MILLIS = 10;
+  @ApiStatus.Internal
+  public static final int CHECK_CANCELED_DELAY_MILLIS = 10;
   private final AtomicInteger myUnsafeProgressCount = new AtomicInteger(0);
 
   private ScheduledFuture<?> myCheckCancelledFuture; // guarded by threadsUnderIndicator
@@ -65,8 +66,13 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final ConcurrentLongObjectMap<ProgressIndicator> threadTopLevelIndicators =
     Java11Shim.Companion.getINSTANCE().createConcurrentLongObjectMap();
   // threads which are running under canceled indicator
-  // THashSet is avoided here because of possible tombstones overhead
-  static final Set<Thread> threadsUnderCanceledIndicator = new HashSet<>(); // guarded by threadsUnderIndicator
+  private static final Set<Thread> threadsUnderCanceledIndicator = new HashSet<>(); // guarded by threadsUnderIndicator
+
+  @TestOnly
+  @ApiStatus.Internal
+  public static boolean hasThreadUnderCanceledIndicator(@NotNull Thread thread) {
+   return threadsUnderCanceledIndicator.contains(thread);
+  }
 
   private static volatile @NotNull CheckCanceledBehavior ourCheckCanceledBehavior = CheckCanceledBehavior.NONE;
 

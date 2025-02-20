@@ -20,41 +20,19 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 
 public class MavenCustomRepositoryHelper {
-  private final Path myTempDir;
+
   private final Path myWorkingData;
-  private final String[] mySubFolders;
 
   public MavenCustomRepositoryHelper(Path tempDir, String... subFolders) throws IOException {
-    myTempDir = tempDir;
-    mySubFolders = subFolders;
-
-    myWorkingData = myTempDir.resolve("testData");
+    myWorkingData = tempDir.resolve("testData");
     Files.createDirectories(myWorkingData);
-
-    for (String each : mySubFolders) {
-      addTestData(each);
-    }
-  }
-
-  /**
-   * @deprecated use NIO
-   */
-  @Deprecated(forRemoval = true)
-  public MavenCustomRepositoryHelper(File tempDir, String... subFolders) throws IOException {
-    myTempDir = tempDir.toPath();
-    mySubFolders = subFolders;
-
-    myWorkingData = myTempDir.resolve("testData");
-    Files.createDirectories(myWorkingData);
-
-    for (String each : mySubFolders) {
+    for (String each : subFolders) {
       addTestData(each);
     }
   }
@@ -76,8 +54,8 @@ public class MavenCustomRepositoryHelper {
         return FileVisitResult.CONTINUE;
       }
     });
-    LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(to.toFile()));
-    LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(to.toFile()));
+    LocalFileSystem.getInstance().refreshNioFiles(Collections.singleton(to));
+    LocalFileSystem.getInstance().refreshNioFiles(Collections.singleton(to));
   }
 
   public static String getOriginalTestDataPath() {
@@ -85,23 +63,13 @@ public class MavenCustomRepositoryHelper {
     return FileUtil.toSystemIndependentName(sourcesDir + "/src/test/data");
   }
 
-  public String getTestDataPath(String relativePath) {
-    String path = getTestDataLegacy(relativePath).getPath();
-    return FileUtil.toSystemIndependentName(path);
-  }
-
   public Path getTestData(String relativePath) {
     return myWorkingData.resolve(relativePath);
   }
 
-  @Deprecated
-  public File getTestDataLegacy(String relativePath) {
-    return getTestData(relativePath).toFile();
-  }
-
   public void delete(String relativePath) {
     try {
-      Path path = Paths.get(getTestDataPath(relativePath));
+      Path path = getTestData(relativePath);
       MavenLog.LOG.warn("Deleting " + path);
       if (Files.isDirectory(path)) {
         // delete directory content recursively
@@ -129,8 +97,8 @@ public class MavenCustomRepositoryHelper {
   }
 
   public void copy(String fromRelativePath, String toRelativePath) throws IOException {
-    Path from = Paths.get(getTestDataPath(fromRelativePath));
-    Path to = Paths.get(getTestDataPath(toRelativePath));
+    Path from = getTestData(fromRelativePath);
+    Path to = getTestData(toRelativePath);
 
     if (Files.isDirectory(from)) {
       Files.walkFileTree(from, new SimpleFileVisitor<>() {

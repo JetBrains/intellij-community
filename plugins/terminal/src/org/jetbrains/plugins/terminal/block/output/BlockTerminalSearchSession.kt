@@ -29,6 +29,7 @@ import com.intellij.ui.util.preferredWidth
 import com.intellij.util.SmartList
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalIcons
@@ -38,13 +39,14 @@ import java.awt.Point
 import java.util.regex.PatternSyntaxException
 import javax.swing.JTextArea
 
-internal class BlockTerminalSearchSession(
+@ApiStatus.Internal
+class BlockTerminalSearchSession(
   private val project: Project,
   private val editor: EditorEx,
   private val model: FindModel,
   private val outputModel: TerminalOutputModel,
   private val selectionModel: TerminalSelectionModel,
-  private val closeCallback: () -> Unit = {}
+  private val closeCallback: () -> Unit = {},
 ) : SearchSession, SearchResults.SearchResultsListener, SearchReplaceComponent.Listener {
   private val disposable = Disposer.newDisposable(BlockTerminalSearchSession::class.java.name)
   private val component: SearchReplaceComponent = createSearchComponent()

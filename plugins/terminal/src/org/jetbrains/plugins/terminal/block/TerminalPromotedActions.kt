@@ -20,7 +20,8 @@ abstract class TerminalPromotedDumbAwareAction : DumbAwareAction(), ActionPromot
   }
 }
 
-internal abstract class TerminalPromotedEditorAction(handler: EditorActionHandler) : EditorAction(handler), ActionPromoter {
+@ApiStatus.Internal
+abstract class TerminalPromotedEditorAction(handler: EditorActionHandler) : EditorAction(handler), ActionPromoter {
   /**
    * Prioritize terminal actions if there are actions with the same shortcuts.
    * It's safe because terminal actions are enabled only in the terminal.

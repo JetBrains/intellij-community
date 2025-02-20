@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.wizards.MavenProjectImportProvider
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
 
 class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?>() {
   override fun runInDispatchThread() = false
@@ -66,7 +67,7 @@ class MavenMultiProjectImportTest : ProjectWizardTestCase<AbstractProjectWizard?
 
   private fun createPomXml(dir: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile? {
     val projectDir = myDir!!.resolve(dir)
-    projectDir.toFile().mkdirs()
+    projectDir.createDirectories()
     val pom = projectDir.resolve("pom.xml")
     pom.write(MavenTestCaseLegacy.createPomXml(xml))
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pom)

@@ -2,7 +2,7 @@
 
 package com.intellij.workspaceModel.ide
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.platform.eel.path.EelPath
@@ -38,7 +38,7 @@ class GlobalWorkspaceModelEelTest {
 
     val globalWorkspaceModelEel = GlobalWorkspaceModel.getInstance(eelProject.get().getEelDescriptor())
 
-    writeAction {
+    edtWriteAction {
       globalWorkspaceModelEel.updateModel("A test update") { mutableStorage ->
         mutableStorage.addEntity(StringEntity("sample", SampleEntitySource("test eel")))
       }
@@ -60,7 +60,7 @@ class GlobalWorkspaceModelEelTest {
     val globalWorkspaceModelLocal = GlobalWorkspaceModel.getInstance(localProject.get().getEelDescriptor())
 
 
-    writeAction {
+    edtWriteAction {
       globalWorkspaceModelEel.updateModel("A test update") { mutableStorage ->
         mutableStorage.addEntity(StringEntity("eel sample", SampleEntitySource("test eel")))
       }

@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.EditorInputMethodSupport
 import com.intellij.openapi.editor.impl.InputMethodInlayRenderer
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
@@ -25,7 +26,8 @@ import java.text.AttributedString
 import java.text.CharacterIterator
 import javax.swing.SwingUtilities
 
-internal class TerminalOutputEditorInputMethodSupport(
+@ApiStatus.Internal
+class TerminalOutputEditorInputMethodSupport(
   private val editor: EditorEx,
   private val sendInputString: (String) -> Unit,
   private val getCaretPosition: () -> LogicalPosition?,

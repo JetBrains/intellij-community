@@ -14,13 +14,21 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtAnnotated
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 /**
  * Determines if the given [PsiElement] element is part of a library source.
@@ -62,6 +70,12 @@ internal fun isComposeEnabledInModule(module: Module): Boolean {
   return foundClasses.isNotEmpty()
 }
 
+internal fun isModifierEnabledInModule(module: Module): Boolean {
+  val moduleScope = module.getModuleWithDependenciesAndLibrariesScope(/*includeTests = */true)
+  val foundClasses = KotlinFullClassNameIndex[COMPOSE_MODIFIER_CLASS_ID.asFqNameString(), module.project, moduleScope]
+  return foundClasses.isNotEmpty()
+}
+
 internal fun PsiElement.isComposableFunction(): Boolean =
   (this as? KtNamedFunction)?.getAnnotationWithCaching(COMPOSABLE_FUNCTION_KEY) { it.isComposableAnnotation() } != null
 
@@ -87,4 +101,26 @@ private fun KaSession.classIdMatches(element: KtAnnotationEntry, classId: ClassI
 
   val elementClassId = element.resolveToCall()?.singleConstructorCallOrNull()?.symbol?.containingClassId ?: return false
   return classId == elementClassId
+}
+
+internal fun KtDeclaration.returnTypeFqName(): FqName? =
+    if (this !is KtCallableDeclaration) null
+    else analyze(this) { this@returnTypeFqName.returnType.expandedSymbol?.classId?.asSingleFqName() }
+
+internal fun KtElement.callReturnTypeFqName() =
+  analyze(this) {
+    val call = resolveToCall()?.calls?.firstOrNull() as? KaCallableMemberCall<*, *>
+    call?.let { it.symbol.returnType.expandedSymbol?.classId?.asSingleFqName() }
+  }
+
+internal fun KtValueArgument.matchingParamTypeFqName(callee: KtNamedFunction): FqName? {
+  return if (isNamed()) {
+    val argumentName = getArgumentName()!!.asName.asString()
+    val matchingParam = callee.valueParameters.find { it.name == argumentName } ?: return null
+    matchingParam.returnTypeFqName()
+  } else {
+    val argumentIndex = (parent as KtValueArgumentList).arguments.indexOf(this)
+    val paramAtIndex = callee.valueParameters.getOrNull(argumentIndex) ?: return null
+    paramAtIndex.returnTypeFqName()
+  }
 }

@@ -22,7 +22,7 @@ public interface HtmlScriptContentProvider {
   @Nullable
   Lexer getHighlightingLexer();
 
-  class Empty implements HtmlScriptContentProvider{
+  class Empty implements HtmlScriptContentProvider {
     @Override
     public @Nullable IElementType getScriptElementType() {
       return null;

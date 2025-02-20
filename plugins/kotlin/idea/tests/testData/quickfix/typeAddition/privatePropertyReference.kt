@@ -1,4 +1,5 @@
 // "Specify type explicitly" "true"
+// K2_AFTER_ERROR: Unresolved reference 'KProperty0'.
 private val foo: String = "hello"
 
 fun test() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,10 +11,9 @@ import org.jetbrains.annotations.Nullable;
  * @see GitPushNativeResultParser
  * @see GitPushRepoResult
  */
-public class GitPushNativeResult {
-
+public final class GitPushNativeResult {
   public static final String NO_FF_REJECT_REASON = "non-fast-forward";
-  static final String FETCH_FIRST_REASON = "fetch first";
+  public static final String FETCH_FIRST_REASON = "fetch first";
   static final String STALE_INFO_REASON = "stale info";
   static final String FAILED_LOCK_REASON = "failed to lock";
 

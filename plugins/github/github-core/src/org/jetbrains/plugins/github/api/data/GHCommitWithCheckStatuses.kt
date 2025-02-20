@@ -11,13 +11,13 @@ open class GHCommitWithCheckStatuses(
   oid: String,
   abbreviatedOid: String,
   val status: Status?,
-  val checkSuites: GHCheckSuiteConnection
+  val checkSuites: GHCheckSuiteConnection?
 ) : GHCommitHash(id, oid, abbreviatedOid) {
 
   class Status(val contexts: List<GHCommitStatusContext>)
 
   class GHCheckSuiteConnection(
     pageInfo: GraphQLCursorPageInfoDTO,
-    nodes: List<GHCheckSuite>
+    nodes: List<GHCheckSuite> = listOf()
   ) : GraphQLConnectionDTO<GHCheckSuite>(pageInfo, nodes)
 }

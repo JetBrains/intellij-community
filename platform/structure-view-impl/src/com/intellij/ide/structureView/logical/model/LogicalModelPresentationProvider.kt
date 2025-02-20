@@ -5,7 +5,15 @@ import com.intellij.ide.presentation.PresentationProvider
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.ClassExtension
+import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Adds additional features for common PresentationProvider
+ *
+ * Important: do not define the providers which implement this class via @Presentation annotation,
+ *  only <presentationProvider> extension point is allowed
+ */
+@ApiStatus.Experimental
 abstract class LogicalModelPresentationProvider<T>: PresentationProvider<T>() {
 
   companion object {

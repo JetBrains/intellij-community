@@ -21,11 +21,11 @@ class MavenRelativePathResolutionTest : MavenDomWithIndicesTestCase() {
 
   @Test
   fun testParentRelativePathOutsideProjectRoot() = runBlocking {
-    val file = myIndicesFixture!!.repositoryHelper.getTestDataLegacy("local1/org/example/example/1.0/example-1.0.pom")
+    val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/example/1.0/example-1.0.pom")
 
 
     val relativePathUnixSeparator =
-      FileUtil.getRelativePath(File(projectRoot.getPath()), file)!!.replace("\\\\".toRegex(), "/")
+      FileUtil.getRelativePath(projectRoot.getPath(), file.toString(), File.separatorChar)!!.replace("\\\\".toRegex(), "/")
 
     val pom = createProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -44,7 +44,7 @@ $relativePathUnixSeparator<caret></relativePath>
 
     val resolved = readAction { fixture.getElementAtCaret() }
     assertTrue(resolved is XmlFileImpl)
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
     val parentPsi = findPsiFile(f)
     assertResolved(projectPom, parentPsi)
     assertSame(parentPsi, resolved)
@@ -53,13 +53,15 @@ $relativePathUnixSeparator<caret></relativePath>
 
   @Test
   fun testParentRelativePathOutsideProjectRootWithDir() = runBlocking {
-    val file = myIndicesFixture!!.repositoryHelper.getTestDataLegacy("local1/org/example/example/1.0/pom.xml")
+    val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/example/1.0/pom.xml")
 
-    val parentFile = file.getParentFile()
+    val parentFile = file.parent
 
-
-    val relativePathUnixSeparator =
-      FileUtil.getRelativePath(File(projectRoot.getPath()), parentFile)!!.replace("\\\\".toRegex(), "/")
+    val relativePathUnixSeparator = FileUtil.getRelativePath(
+      projectRoot.getPath(),
+      parentFile.toString(),
+      File.separatorChar
+    )!!.replace("\\\\".toRegex(), "/")
 
     val pom = createProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -77,7 +79,7 @@ $relativePathUnixSeparator<caret></relativePath>
 
     val resolved = readAction { fixture.getElementAtCaret() }
     assertTrue(resolved is XmlFileImpl)
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)
     val parentPsi = findPsiFile(f)
     assertResolved(projectPom, parentPsi)
     assertSame(parentPsi, resolved)

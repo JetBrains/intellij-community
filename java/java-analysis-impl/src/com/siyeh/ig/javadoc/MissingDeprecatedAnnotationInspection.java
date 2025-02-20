@@ -35,6 +35,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,8 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-final class MissingDeprecatedAnnotationInspection extends BaseInspection implements CleanupLocalInspectionTool {
+@ApiStatus.Internal
+public final class MissingDeprecatedAnnotationInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @SuppressWarnings("PublicField") public boolean warnOnMissingJavadoc = false;
 
   @Override

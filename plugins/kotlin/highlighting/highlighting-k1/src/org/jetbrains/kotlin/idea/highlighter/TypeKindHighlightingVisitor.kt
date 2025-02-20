@@ -36,7 +36,10 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
         val key = attributeKeyForObjectAccess(expression) ?: calculateDeclarationReferenceAttributes(referenceTarget) ?: return
         if (key != KotlinHighlightInfoTypeSemanticNames.ANNOTATION
             || parent?.parentOfTypes(KtImportDirective::class, KtPackageDirective::class, KtTypeAlias::class) != null) { // annotation was highlighted in AnnoEntryHighVisitor
-            highlightName(expression.project, textRange, key)
+            val parentAnno = PsiTreeUtil.getParentOfType(
+                expression, KtAnnotationEntry::class.java, /* strict = */false, KtValueArgumentList::class.java
+            )
+            highlightName(expression.project, parentAnno?:expression, textRange, key)
         }
     }
 

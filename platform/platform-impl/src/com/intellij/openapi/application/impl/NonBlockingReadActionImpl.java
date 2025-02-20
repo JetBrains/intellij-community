@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -36,8 +36,8 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.RunnableCallable;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.*;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.api.metrics.Meter;
@@ -240,7 +240,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     return submission;
   }
 
-  private static final class Submission<T> extends AsyncPromise<T> {
+  @ApiStatus.Internal
+  public static final class Submission<T> extends AsyncPromise<T> {
     private final @NotNull Executor backendExecutor;
     private final @Nullable String myStartTrace;
     private volatile ProgressIndicator currentIndicator;

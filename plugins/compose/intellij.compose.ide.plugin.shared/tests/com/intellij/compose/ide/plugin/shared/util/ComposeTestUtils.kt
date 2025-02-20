@@ -1,8 +1,11 @@
 package com.intellij.compose.ide.plugin.shared.util
 
 import com.intellij.compose.ide.plugin.shared.isComposeEnabledInModule
+import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -43,3 +46,11 @@ internal fun resolveTestDataDirectory(directoryPath: String): Path {
     .resolve("plugins/compose/intellij.compose.ide.plugin.shared")
     .resolve(dirPath)
 }
+
+@ApiStatus.Internal
+fun JavaCodeInsightTestFixture.configureByText(text: String): KtFile {
+  return configureByText("Test.kt", text) as KtFile
+}
+
+@ApiStatus.Internal
+const val CARET = EditorTestUtil.CARET_TAG

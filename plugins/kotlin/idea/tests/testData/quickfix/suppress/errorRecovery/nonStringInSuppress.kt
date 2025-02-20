@@ -1,5 +1,6 @@
 // "Suppress 'DIVISION_BY_ZERO' for fun foo" "true"
 // ERROR: The integer literal does not conform to the expected type String
+// K2_AFTER_ERROR: Argument type mismatch: actual type is 'Int', but 'String' was expected.
 
 @Suppress(1)
 fun foo() = 2 / <caret>0

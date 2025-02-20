@@ -2,7 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
@@ -46,7 +46,7 @@ internal open class SaveSessionProducerManager(private val isUseVfsForWrite: Boo
 
   protected suspend fun saveSessions(saveSessions: Collection<SaveSession>, saveResult: SaveResult) {
     if (isUseVfsForWrite) {
-      writeAction {
+      edtWriteAction {
         for (saveSession in saveSessions) {
           saveSessionBlocking(saveSession, saveResult)
         }

@@ -3,7 +3,7 @@ package com.intellij.java.psi.resolve
 
 import com.intellij.find.ngrams.TrigramIndex
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
@@ -89,7 +89,7 @@ internal class StubPsiConsistencyTest {
     assertFileContentIsNotIndexed(project, virtualFile1)
 
     // update document to match old content
-    writeAction {
+    edtWriteAction {
       val doc1 = documentManager.getDocument(virtualFile1)!!
       doc1.setText(originalText1)
       doc1.commitToPsi(project)
@@ -137,7 +137,7 @@ internal class StubPsiConsistencyTest {
 
     val virtualFile1 = psiFile1Fixture.get().virtualFile
 
-    writeAction { // add source root from project1 to project2 source roots
+    edtWriteAction { // add source root from project1 to project2 source roots
       val srcRoot1 = sourceRootFixture.get().virtualFile
       val modmodmod2 = ModuleRootManager.getInstance(moduleFixture2.get()).modifiableModel
       try {
@@ -159,7 +159,7 @@ internal class StubPsiConsistencyTest {
       assertEquals(originalText1.length, psiFile.textLength)
     }
 
-    writeAction {
+    edtWriteAction {
       val doc1 = documentManager.getDocument(virtualFile1)!!
       val psiFile = PsiManagerEx.getInstanceEx(project1).getFileManager().findFile(virtualFile1)!!
       assertEquals(originalText1, (psiFile as PsiFileImpl).text)

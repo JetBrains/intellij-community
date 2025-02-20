@@ -101,7 +101,6 @@ private fun createMockCommits(headRef: String): List<GHCommit> {
   for (i in 1..5) {
     val mockParents = GraphQLNodesDTO(
       listOf(previousCommit?.let { GHCommitHash("", it.oid, it.abbreviatedOid) } ?: GHCommitHash("", "i", "i")),
-      totalCount = 1
     )
 
     val commit = GHCommit(

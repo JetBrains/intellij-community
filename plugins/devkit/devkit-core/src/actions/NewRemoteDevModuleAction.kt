@@ -5,7 +5,7 @@ import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -158,7 +158,7 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
     project: Project,
     moduleDirectories: RemoteDevModuleDirectories,
     moduleName: String,
-  ): Module = writeAction {
+  ): Module = edtWriteAction {
     val moduleManager = ModuleManager.getInstance(project)
     val modifiableModel = moduleManager.getModifiableModel()
     // TODO: handle exception on `toNioPath`
@@ -199,7 +199,7 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
   }
 
   private suspend fun createRemoteDevModuleDirectories(rootDirectory: PsiDirectory, moduleName: String): RemoteDevModuleDirectories {
-    return writeAction {
+    return edtWriteAction {
       val newModuleDirectory = rootDirectory.createSubdirectory(moduleName)
       val newSourcesDirectory = newModuleDirectory.createSubdirectory("src")
       val newResourcesDirectory = newModuleDirectory.createSubdirectory("resources")
@@ -245,7 +245,7 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
     try {
       val content = getPluginXmlInitialContent(module.name, moduleType)
 
-      writeAction {
+      edtWriteAction {
         val pluginXmlFile = resourcesDir.createFile("${module.name}.xml")
         pluginXmlFile.viewProvider.virtualFile.writeText(content)
       }
@@ -284,7 +284,7 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
         return couldntPatchEssentialModulesStep
       }
 
-      writeAction {
+      edtWriteAction {
         CommandProcessor.getInstance().runUndoTransparentAction {
           val fileElement = DomManager.getDomManager(project).getFileElement(essentialModulesXmlPsi, IdeaPlugin::class.java)
                             ?: return@runUndoTransparentAction
@@ -316,7 +316,7 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
         return couldntPatchPlatformImls
       }
 
-      writeAction {
+      edtWriteAction {
         ModuleRootModificationUtil.updateModel(moduleToPatch) {
           it.addModuleOrderEntry(module)
         }
@@ -334,7 +334,7 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
   }
 
   private suspend fun saveFiles(project: Project) {
-    writeAction {
+    edtWriteAction {
       SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(project = project, forceSavingAllSettings = true), forceExecuteImmediately = true)
     }
   }
@@ -390,7 +390,7 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
         moduleFacetManager.addContent(content.clone())
       }
 
-      writeAction {
+      edtWriteAction {
         moduleIml.getOutputStream(this@NewRemoteDevModuleAction).use {
           JDOMUtil.write(moduleJDOM, it)
         }

@@ -4,7 +4,7 @@
 package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.settings.ProjectBuildClasspathManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -42,7 +42,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
       initProject(root, compositeInfo)
     }
     for (moduleInfo in projectInfo.modules) {
-      val moduleRoot = writeAction {
+      val moduleRoot = edtWriteAction {
         root.findOrCreateDirectory(moduleInfo.relativePath)
       }
       moduleInfo.filesConfiguration.createFiles(moduleRoot)
@@ -57,7 +57,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
       deleteProject(root, compositeInfo)
     }
     withContext(Dispatchers.EDT) {
-      writeAction {
+      edtWriteAction {
         for (moduleInfo in projectInfo.modules) {
           root.deleteRecursively(moduleInfo.relativePath)
         }

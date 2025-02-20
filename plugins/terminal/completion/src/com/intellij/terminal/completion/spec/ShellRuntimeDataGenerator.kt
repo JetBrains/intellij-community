@@ -10,6 +10,6 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
-interface ShellRuntimeDataGenerator<out T> {
+interface ShellRuntimeDataGenerator<out T : Any> {
   suspend fun generate(context: ShellRuntimeContext): T
 }

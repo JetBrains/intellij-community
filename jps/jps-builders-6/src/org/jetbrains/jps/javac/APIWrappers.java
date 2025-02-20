@@ -126,11 +126,13 @@ public final class APIWrappers {
     }
   }
 
-  interface WrapperDelegateAccessor<T> {
+  @ApiStatus.Internal
+  public interface WrapperDelegateAccessor<T> {
     T getWrapperDelegate();
   }
 
-  abstract static class DynamicWrapper<T> implements WrapperDelegateAccessor<T> {
+  @ApiStatus.Internal
+  public abstract static class DynamicWrapper<T> implements WrapperDelegateAccessor<T> {
 
     private final T myDelegate;
 
@@ -145,7 +147,8 @@ public final class APIWrappers {
   }
 
   @SuppressWarnings("unchecked")
-  final static class DiagnosticListenerWrapper<T extends FileObject> extends DynamicWrapper<DiagnosticOutputConsumer> implements DiagnosticListener<T>{
+  @ApiStatus.Internal
+  public final static class DiagnosticListenerWrapper<T extends FileObject> extends DynamicWrapper<DiagnosticOutputConsumer> implements DiagnosticListener<T>{
     private final ProcessingContext myProcContext;
 
     DiagnosticListenerWrapper(ProcessingContext procContext, DiagnosticOutputConsumer delegate) {
@@ -163,7 +166,8 @@ public final class APIWrappers {
     }
   }
 
-  static class DiagnosticWrapper<T> extends DynamicWrapper<Diagnostic<T>> {
+  @ApiStatus.Internal
+  public static final class DiagnosticWrapper<T> extends DynamicWrapper<Diagnostic<T>> {
     private final ProcessingContext myProcContext;
 
     DiagnosticWrapper(ProcessingContext procContext, Diagnostic<T> delegate) {
@@ -190,7 +194,8 @@ public final class APIWrappers {
     }
   }
 
-  static class ProcessorWrapper extends DynamicWrapper<Processor> {
+  @ApiStatus.Internal
+  public static final class ProcessorWrapper extends DynamicWrapper<Processor> {
     private final ProcessingContext myProcessingContext;
     private boolean myCodeShown = false;
     private ProcessingEnvironment myProcessingEnv;
@@ -277,7 +282,8 @@ public final class APIWrappers {
     }
   }
 
-  final static class ProcessingEnvironmentWrapper extends DynamicWrapper<ProcessingEnvironment> {
+  @ApiStatus.Internal
+  public final static class ProcessingEnvironmentWrapper extends DynamicWrapper<ProcessingEnvironment> {
     private final JpsJavacFileManager myFileManager;
     private Filer myFilerImpl;
 
@@ -296,7 +302,8 @@ public final class APIWrappers {
     }
   }
 
-  final static class FilerWrapper extends DynamicWrapper<Filer> implements Filer {
+  @ApiStatus.Internal
+  public final static class FilerWrapper extends DynamicWrapper<Filer> implements Filer {
     private final JpsJavacFileManager myFileManager;
     private final Function<Element, String> convertToClassName;
 

@@ -5,8 +5,10 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 
-internal fun terminalProjectScope(project: Project): CoroutineScope {
+@ApiStatus.Internal
+fun terminalProjectScope(project: Project): CoroutineScope {
   return project.service<TerminalProjectScopeProvider>().coroutineScope
 }
 

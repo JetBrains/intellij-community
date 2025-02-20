@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -130,7 +130,7 @@ internal object J2kTestPreprocessorExtension : J2kPreprocessorExtension {
                 }
             } ?: continue
 
-            writeAction {
+            edtWriteAction {
                 PsiImplUtil.setName(checkNotNull(method.nameIdentifier), "prebar")
             }
         }
@@ -148,11 +148,11 @@ internal object J2kTestPostprocessorExtension : J2kPostprocessorExtension {
             } ?: continue
 
             val references = ReferencesSearch.search(firstNamedParameter, LocalSearchScope(file)).findAll()
-            writeAction {
+            edtWriteAction {
                 PsiImplUtil.setName(checkNotNull(firstNamedParameter.nameIdentifier), "postbar")
             }
             for (reference in references) {
-                writeAction {
+                edtWriteAction {
                     PsiImplUtil.setName(reference.element, "postbar")
                 }
             }

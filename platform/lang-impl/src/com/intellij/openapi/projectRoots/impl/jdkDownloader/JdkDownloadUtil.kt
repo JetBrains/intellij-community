@@ -3,7 +3,7 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -62,7 +62,7 @@ object JdkDownloadUtil {
   }
 
   suspend fun createDownloadSdk(sdkType: SdkType, sdkDownloadTask: SdkDownloadTask): Sdk {
-    return writeAction {
+    return edtWriteAction {
       createDownloadSdkInternal(sdkType, sdkDownloadTask)
     }
   }

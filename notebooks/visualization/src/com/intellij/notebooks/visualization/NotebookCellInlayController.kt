@@ -96,4 +96,5 @@ interface NotebookCellInlayController {
 
   fun updateFrameVisibility(isVisible: Boolean, interval: NotebookCellLines.Interval, color: Color) {}
 
+  fun forceChangePanelColor(color: Color? = null) {}
 }

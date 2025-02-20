@@ -1054,7 +1054,7 @@ f:com.intellij.openapi.application.TransactionGuardImpl
 - assertWriteActionAllowed():V
 - assertWriteSafeContext(com.intellij.openapi.application.ModalityState):V
 - enteredModality(com.intellij.openapi.application.ModalityState):V
-- getContextTransaction():com.intellij.openapi.application.TransactionGuardImpl$TransactionIdImpl
+- getContextTransaction():com.intellij.openapi.application.TransactionId
 - isWriteSafeModality(com.intellij.openapi.application.ModalityState):Z
 - isWritingAllowed():Z
 - submitTransaction(com.intellij.openapi.Disposable,com.intellij.openapi.application.TransactionId,java.lang.Runnable):V

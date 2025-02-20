@@ -21,7 +21,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -136,7 +136,7 @@ class K2ScratchExecutor(val scratchFile: ScratchFile, val project: Project, val 
         scope.launch {
             val document = readAction { scriptFile.findDocument() }
             if (document != null) {
-                writeAction {
+                edtWriteAction {
                     PsiDocumentManager.getInstance(project).commitDocument(document)
                     FileDocumentManager.getInstance().saveDocument(document)
                 }

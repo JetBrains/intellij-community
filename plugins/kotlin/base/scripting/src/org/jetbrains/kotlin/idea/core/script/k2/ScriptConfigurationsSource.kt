@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.core.script.k2
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
@@ -55,7 +55,7 @@ abstract class ScriptConfigurationsSource<T : BaseScriptModel>(open val project:
 
         ScriptConfigurationsProviderImpl.getInstance(project).notifySourceUpdated()
 
-        writeAction {
+        edtWriteAction {
             project.analysisMessageBus.syncPublisher(KotlinModificationTopics.GLOBAL_MODULE_STATE_MODIFICATION).onModification()
         }
 

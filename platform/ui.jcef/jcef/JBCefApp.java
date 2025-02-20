@@ -113,22 +113,29 @@ public final class JBCefApp {
       } else {
         if (SystemInfo.isWayland)
           LOG.debug("Out-of-process jcef mode is temporarily disabled in Wayland"); // TODO: fix https://youtrack.jetbrains.com/issue/IJPL-161273
-        else
+        else if (SystemInfo.isMac) {
+          boolean isThinClient = false;
+          ProcessHandle.Info i = ProcessHandle.current().info();
+          Optional<String[]> args = i.arguments();
+          Optional<String> processAppPath = i.command();
+          if (processAppPath.isPresent() && !processAppPath.get().endsWith("java") && args.isPresent()) {
+            for (String arg: args.get()) {
+              if ("thinClient".equals(arg)) {
+                isThinClient = true;
+                break;
+              }
+            }
+          }
+          if (isThinClient)
+            LOG.debug("Out-of-process jcef mode is temporarily disabled in CWM-client"); // TODO: fix https://youtrack.jetbrains.com/issue/JBR-8107 No access to camera/microphone in CWM call
+          else
+            System.setProperty(PROPERTY_NAME, "true");
+        } else
           System.setProperty(PROPERTY_NAME, "true");
       }
     }
 
-    Boolean result = null;
     IS_REMOTE_ENABLED = CefApp.isRemoteEnabled();
-    //try {
-    //  // Temporary use reflection to avoid jcef-version increment
-    //  Method m = CefApp.class.getMethod("isRemoteEnabled");
-    //  result = (boolean)m.invoke(CefApp.class);
-    //} catch (Throwable e) {
-    //  LOG.warn(e);
-    //}
-
-    //IS_REMOTE_ENABLED = result != null && result;
   }
 
   private JBCefApp(@NotNull JCefAppConfig config) throws IllegalStateException {

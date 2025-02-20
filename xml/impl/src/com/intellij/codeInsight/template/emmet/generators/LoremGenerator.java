@@ -1,13 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet.generators;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.*;
 
-public class LoremGenerator {
-  static final String[] COMMON_P = "lorem ipsum dolor sit amet consectetur adipisicing elit".split(" ");
+public final class LoremGenerator {
+  @ApiStatus.Internal
+  public static final String[] COMMON_P = "lorem ipsum dolor sit amet consectetur adipisicing elit".split(" ");
   private static final String[] WORDS = new String[]{"exercitationem", "perferendis", "perspiciatis", "laborum", "eveniet",
     "sunt", "iure", "nam", "nobis", "eum", "cum", "officiis", "excepturi",
     "odio", "consectetur", "quasi", "aut", "quisquam", "vel", "eligendi",

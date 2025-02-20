@@ -373,12 +373,13 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   @ApiStatus.Internal
   protected fun getProvider(event: InlineCompletionEvent): InlineCompletionProvider? {
     if (application.isUnitTestMode && testProvider != null) {
-      return testProvider?.takeIf { it.isEnabledConsideringEventRequirements(event, remDevAggregatorAllowed = false) }
+      return testProvider?.takeIf { it.isEnabledConsideringEventRequirements(event) }
     }
 
     val allProviders = InlineCompletionProvider.extensions()
-    val result = allProviders.findSafely { it.isEnabledConsideringEventRequirements(event, remDevAggregatorAllowed = false) }
-                 ?: allProviders.findSafely { it.isEnabledConsideringEventRequirements(event, remDevAggregatorAllowed = true) }
+    val (rdProviders, regularProviders) = allProviders.partition { it is RemDevAggregatorInlineCompletionProvider }
+    val result = regularProviders.findSafely { it.isEnabledConsideringEventRequirements(event) }
+                 ?: rdProviders.findSafely { it.isEnabledConsideringEventRequirements(event) }
 
     if (result != null) {
       LOG.trace("[Inline Completion] Selected inline provider: $result")
@@ -398,13 +399,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     }
   }
 
-  private fun InlineCompletionProvider.isEnabledConsideringEventRequirements(
-    event: InlineCompletionEvent,
-    remDevAggregatorAllowed: Boolean,
-  ): Boolean {
-    if (!remDevAggregatorAllowed && this is RemDevAggregatorInlineCompletionProvider) {
-      return false
-    }
+  private fun InlineCompletionProvider.isEnabledConsideringEventRequirements(event: InlineCompletionEvent): Boolean {
     if (event is InlineCompletionEvent.WithSpecificProvider) {
       // Only [RemDevAggregatorInlineCompletionProvider] can use others' events
       if (event.providerId != this@isEnabledConsideringEventRequirements.id && this !is RemDevAggregatorInlineCompletionProvider) {

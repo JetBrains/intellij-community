@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
-import static com.intellij.xml.XmlElementTypeServiceHelper.registerXmlElementTypeServices;
+import static com.intellij.xml.testFramework.XmlElementTypeServiceHelper.registerXmlElementTypeServices;
 
 public class DtdParsingTest extends ParsingTestCase {
 

@@ -12,7 +12,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.xml.StartTagEndTokenProvider;
 import com.intellij.testFramework.ParsingTestCase;
 
-import static com.intellij.lang.ant.XmlElementTypeServiceHelper.registerXmlElementTypeServices;
+import static com.intellij.xml.testFramework.XmlElementTypeServiceHelper.registerXmlElementTypeServices;
 
 public class AntParsingTest extends ParsingTestCase {
 

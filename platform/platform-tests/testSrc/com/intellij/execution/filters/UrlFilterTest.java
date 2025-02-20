@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.ide.browsers.OpenUrlHyperlinkInfo;
-import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -106,9 +106,9 @@ public class UrlFilterTest extends BasePlatformTestCase {
   }
 
   private static void assertFileLink(@NotNull FileLinkInfo expected, @NotNull UrlFilter.FileUrlHyperlinkInfo actual) {
-    assertEquals(expected.myFilePath, actual.myFilePath);
-    assertEquals(expected.myLine, actual.myDocumentLine == -1 ? -1 : actual.myDocumentLine + 1);
-    assertEquals(expected.myColumn, actual.myDocumentColumn == -1 ? -1 : actual.myDocumentColumn + 1);
+    assertEquals(expected.myFilePath, actual.filePath);
+    assertEquals(expected.myLine, actual.documentLine == -1 ? -1 : actual.documentLine + 1);
+    assertEquals(expected.myColumn, actual.documentColumn == -1 ? -1 : actual.documentColumn + 1);
   }
 
   private static final class FileLinkInfo extends LinkInfo {

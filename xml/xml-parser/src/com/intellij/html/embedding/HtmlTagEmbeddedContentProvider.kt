@@ -177,9 +177,15 @@ abstract class HtmlTagEmbeddedContentProvider(lexer: BaseHtmlLexer) : BaseHtmlEm
     else
       null
 
-  open class TagState(val tagNameRead: Boolean, val withinTag: Boolean, val tagName: CharSequence?,
-                      val attributeName: CharSequence?, val readAttributeValue: Boolean,
-                      val attributeValue: CharSequence?, embedment: Boolean) : BaseState(embedment)
+  open class TagState(
+    val tagNameRead: Boolean,
+    val withinTag: Boolean,
+    val tagName: CharSequence?,
+    val attributeName: CharSequence?,
+    val readAttributeValue: Boolean,
+    val attributeValue: CharSequence?,
+    embedment: Boolean,
+  ) : BaseState(embedment)
 
 
 }

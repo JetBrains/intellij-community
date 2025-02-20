@@ -6,6 +6,8 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighter"/>
     </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.mergeableGutterIconRendererProvider" interface="com.intellij.openapi.editor.MergeableGutterIconRendererProvider" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.ide.ui.UISettingsStateDefaultsProviderImpl"

@@ -1055,6 +1055,7 @@ f:com.intellij.openapi.application.CoroutinesKt
 - sf:constrainedReadAction(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:constrainedReadActionBlocking(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:constrainedReadAndWriteAction(com.intellij.openapi.application.ReadConstraint[],kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- sf:edtWriteAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:getEDT(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
 - sf:readAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:readActionBlocking(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
@@ -5135,7 +5136,7 @@ f:com.intellij.psi.util.PsiTreeUtilKt
 - bs:siblings$default(com.intellij.psi.PsiElement,Z,I,java.lang.Object):kotlin.sequences.Sequence
 - bs:siblings$default(com.intellij.psi.PsiElement,Z,Z,I,java.lang.Object):kotlin.sequences.Sequence
 - sf:skipTokens(kotlin.sequences.Sequence,com.intellij.psi.tree.TokenSet):kotlin.sequences.Sequence
-- sf:startOffsetIn(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):I
+- sf:startOffsetInAncestor(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):I
 - sf:validOrNull(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 c:com.intellij.psi.util.PsiUtilCore
 - sf:NULL_PSI_ELEMENT:com.intellij.psi.PsiElement

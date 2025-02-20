@@ -24,7 +24,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.*;
+import org.jetbrains.plugins.terminal.TerminalOptionsConfigurable;
+import org.jetbrains.plugins.terminal.TerminalTabState;
+import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder;
 import org.jetbrains.plugins.terminal.ui.OpenPredefinedTerminalActionProvider;
 
@@ -202,11 +204,10 @@ public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project != null) {
-        var runner = DefaultTerminalRunnerFactory.getInstance().createLocalRunner(project);
         TerminalTabState tabState = new TerminalTabState();
         tabState.myTabName = myPresentableName.get();
         tabState.myShellCommand = myCommand;
-        TerminalToolWindowManager.getInstance(project).createNewSession(runner, tabState);
+        TerminalToolWindowManager.getInstance(project).createNewSession(tabState);
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +25,7 @@ public final class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
   };
 
   @Override
-  public @NotNull MyVirtualFile findFileByPath(@NotNull String path) {
+  public @NotNull LightVirtualFile findFileByPath(@NotNull String path) {
     String normalized = path.replace(File.separatorChar, '/').replace('/', ':');
     if (StringUtil.startsWithChar(normalized, ':')) normalized = normalized.substring(1);
     MyVirtualFile file = myRoot;
@@ -36,7 +36,7 @@ public final class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
   }
 
   public @NotNull MockVirtualFileSystem file(@NotNull String path, @NotNull String data) {
-    MyVirtualFile file = findFileByPath(path);
+    LightVirtualFile file = findFileByPath(path);
     file.setContent(null, data, false);
     return this;
   }

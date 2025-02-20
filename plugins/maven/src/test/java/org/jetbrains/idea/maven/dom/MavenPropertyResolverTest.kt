@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFile
@@ -283,7 +283,7 @@ class MavenPropertyResolverTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
 
     val doc = readAction { FileDocumentManager.getInstance().getDocument(projectPom) }
-    writeAction {
+    edtWriteAction {
       doc!!.setText(createPomXml("""
           <groupId>test</groupId>
           <artifactId>project</artifactId>

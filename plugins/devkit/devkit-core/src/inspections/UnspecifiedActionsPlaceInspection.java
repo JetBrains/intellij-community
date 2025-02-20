@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.psi.*;
 import com.intellij.uast.UastHintedVisitorAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.uast.UCallExpression;
@@ -15,7 +16,8 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import java.util.List;
 import java.util.Objects;
 
-final class UnspecifiedActionsPlaceInspection extends DevKitUastInspectionBase {
+@ApiStatus.Internal
+public final class UnspecifiedActionsPlaceInspection extends DevKitUastInspectionBase {
 
   private static final boolean SKIP_CHILDREN = true;
 

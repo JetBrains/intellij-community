@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 
 public final class XmlHighlighterFactory {
-  public static EditorHighlighter createXMLHighlighter(EditorColorsScheme settings){
+  public static EditorHighlighter createXMLHighlighter(EditorColorsScheme settings) {
     return HighlighterFactory.createHighlighter(new XmlFileHighlighter(), settings);
   }
 }

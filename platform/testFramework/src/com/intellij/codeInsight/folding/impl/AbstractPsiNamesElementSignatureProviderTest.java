@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.editor.FoldRegion;
@@ -10,7 +10,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-abstract class AbstractPsiNamesElementSignatureProviderTest extends BasePlatformTestCase {
+public abstract class AbstractPsiNamesElementSignatureProviderTest extends BasePlatformTestCase {
   void doTest(@NotNull String text, @NotNull String ext) {
     myFixture.configureByText("test." + ext, text);
 

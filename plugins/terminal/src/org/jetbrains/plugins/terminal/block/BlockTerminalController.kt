@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.output.*
 import org.jetbrains.plugins.terminal.block.output.BlockTerminalSearchSession.Companion.isSearchInBlock
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptController
@@ -30,13 +31,14 @@ import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 import java.util.concurrent.CopyOnWriteArrayList
 
-internal class BlockTerminalController(
+@ApiStatus.Internal
+class BlockTerminalController(
   private val project: Project,
   private val session: BlockTerminalSession,
   private val outputController: TerminalOutputController,
   private val promptController: TerminalPromptController,
   private val selectionController: TerminalSelectionController,
-  private val focusModel: TerminalFocusModel
+  private val focusModel: TerminalFocusModel,
 ) {
   private val listeners: MutableList<BlockTerminalControllerListener> = CopyOnWriteArrayList()
 

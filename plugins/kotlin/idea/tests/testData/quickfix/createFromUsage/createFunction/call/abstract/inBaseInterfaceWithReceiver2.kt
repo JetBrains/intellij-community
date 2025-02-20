@@ -1,5 +1,6 @@
 // "Create abstract function 'I.bar'" "true"
 // ERROR: Class 'Foo' is not abstract and does not implement abstract member public abstract fun bar(): Unit defined in I
+// K2_AFTER_ERROR: Class 'Foo' is not abstract and does not implement abstract member:<br>fun bar(): Unit
 
 interface I
 

@@ -436,7 +436,12 @@ public abstract class QuickFixFactory {
 
   public abstract @NotNull IntentionAction createDeleteSwitchLabelFix(@NotNull PsiCaseLabelElement labelElement);
 
-  public abstract @NotNull IntentionAction createDeleteDefaultFix(@NotNull PsiFile file, @NotNull PsiElement defaultElement);
+  /**
+   * @param file ignored, can be null
+   * @param defaultElement switch default element
+   * @return fix to delete default element
+   */
+  public abstract @NotNull IntentionAction createDeleteDefaultFix(@Nullable PsiFile file, @NotNull PsiElement defaultElement);
 
   public abstract @NotNull IntentionAction createAddAnnotationTargetFix(@NotNull PsiAnnotation annotation, PsiAnnotation.TargetType target);
 

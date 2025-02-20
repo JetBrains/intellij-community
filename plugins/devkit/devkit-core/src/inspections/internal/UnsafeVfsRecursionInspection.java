@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -10,6 +10,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -19,8 +20,8 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.util.List;
 
-final class UnsafeVfsRecursionInspection extends DevKitUastInspectionBase {
-
+@ApiStatus.Internal
+public final class UnsafeVfsRecursionInspection extends DevKitUastInspectionBase {
   private static final String VIRTUAL_FILE_CLASS_NAME = VirtualFile.class.getName();
   private static final String GET_CHILDREN_METHOD_NAME = "getChildren";
   private static final String GET_CHILDREN_PROPERTY_ACCESS_NAME = "children"; // for language with property access syntax

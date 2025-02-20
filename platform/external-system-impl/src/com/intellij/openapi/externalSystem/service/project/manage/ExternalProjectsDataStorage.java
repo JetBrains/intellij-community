@@ -317,7 +317,8 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   }
 
   @NotNull
-  Collection<ExternalProjectInfo> list(final @NotNull ProjectSystemId projectSystemId) {
+  @ApiStatus.Internal
+  public Collection<ExternalProjectInfo> list(final @NotNull ProjectSystemId projectSystemId) {
     return ContainerUtil.mapNotNull(myExternalRootProjects.values(),
                                     info -> projectSystemId.equals(info.getProjectSystemId()) ? info : null);
   }

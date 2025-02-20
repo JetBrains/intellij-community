@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleReloadProjectTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
@@ -18,7 +18,7 @@ class GradleSyncOutputTest : GradleReloadProjectTestCase() {
       executionFixture.assertSyncViewTree {
         assertNode("finished")
       }
-      writeAction {
+      edtWriteAction {
         projectRoot.createBuildFile(gradleVersion) {
           withJavaPlugin()
           withPostfix {
@@ -32,7 +32,7 @@ class GradleSyncOutputTest : GradleReloadProjectTestCase() {
       executionFixture.assertSyncViewTree {
         assertNode("finished")
       }
-      writeAction {
+      edtWriteAction {
         projectRoot.createBuildFile(gradleVersion) {
           withJavaPlugin()
           withPostfix {

@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator.SdkInfo
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.roots.ui.configuration.testSdkFixture
@@ -112,7 +112,7 @@ class ProjectJdkEelTest {
       Assertions.assertTrue { localModel.sdks.size == 0 }
       Assertions.assertTrue { eelModel.sdks.size == 1 }
 
-      writeAction {
+      edtWriteAction {
         jdkTable.addJdk(newSdk)
       }
       try {
@@ -123,7 +123,7 @@ class ProjectJdkEelTest {
         Assertions.assertNotEquals(newSdk.homePath, eelModel.sdks[0].homePath)
       }
       finally {
-        writeAction {
+        edtWriteAction {
           jdkTable.removeJdk(newSdk)
         }
       }
@@ -199,14 +199,14 @@ class ProjectJdkEelTest {
         EnvKind.Local -> Files.createTempDirectory(name)
       }
       val sdk = testSdkGenerator.get().createTestSdk(SdkInfo(name, "1", tempDir.toString()))
-      writeAction {
+      edtWriteAction {
         table.addJdk(sdk)
       }
       try {
         block()
       }
       finally {
-        writeAction {
+        edtWriteAction {
           table.removeJdk(sdk)
         }
       }

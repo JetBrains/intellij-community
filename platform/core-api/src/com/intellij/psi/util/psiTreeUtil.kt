@@ -434,16 +434,16 @@ fun PsiFile.hasErrorElementInRange(range: TextRange): Boolean {
 
 /**
  * Provides the start offset of the receiver element
- * relative to the start offset of one of its predecessors.
+ * relative to the start offset of one of its ancestors.
  *
  * Useful, for instance, when a name identifier element is not
  * a direct descendant of an element, yet we need to calculate
  * the relative offset.
  */
-fun PsiElement.startOffsetIn(predecessor: PsiElement): Int {
+fun PsiElement.startOffsetInAncestor(ancestor: PsiElement): Int {
   var result = 0
   var tmp: PsiElement? = this
-  while (tmp != predecessor && tmp != null) {
+  while (tmp != ancestor && tmp != null) {
     result += tmp.startOffsetInParent
     tmp = tmp.parent
   }

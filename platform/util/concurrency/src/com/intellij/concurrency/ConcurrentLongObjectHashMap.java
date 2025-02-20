@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.concurrency;
 
@@ -905,6 +905,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
    *
    * @return the set view
    */
+  @Override
   public Set<LongEntry<V>> entrySet() {
     EntrySetView<V> es;
     return (es = entrySet) != null ? es : (entrySet = new EntrySetView<>(this));
@@ -1053,6 +1054,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
    * no mapping for the given key
    * @return the mapping for the key, if present; else the default value
    */
+  @Override
   public V getOrDefault(long key, V defaultValue) {
     V v;
     return (v = get(key)) == null ? defaultValue : v;

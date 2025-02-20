@@ -77,12 +77,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
           promoteListLiteral(expectedType, value, context, inferLiteralTypes)
         }
         else -> {
-          val type = if (inferLiteralTypes) {
-            getLiteralType(value, context)
-          }
-          else {
-            null
-          }
+          val type = if (inferLiteralTypes) getLiteralOrLiteralStringType(value, context) else null
           return type ?: context.getType(value)
         }
       }
@@ -214,11 +209,14 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
       if (expression is PyConditionalExpression) {
         return PyUnionType.union(
           listOf(expression.truePart, expression.falsePart).map {
-            it?.let { literalType(it, context, false) }
+            it?.let { getLiteralType(it, context) }
           }
         )
       }
+      return literalType(expression, context, false)
+    }
 
+    private fun getLiteralOrLiteralStringType(expression: PyExpression, context: TypeEvalContext): PyType? {
       if (expression is PyStringLiteralExpression && expression.isInterpolated) {
         val allLiteralStringFragments = expression.stringElements
           .filterIsInstance<PyFormattedStringElement>()
@@ -230,8 +228,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
           return PyLiteralStringType.create(expression)
         }
       }
-
-      return literalType(expression, context, false)
+      return getLiteralType(expression, context)
     }
 
     private fun literalType(expression: PyExpression, context: TypeEvalContext, index: Boolean): PyLiteralType? {

@@ -4,7 +4,6 @@
 package org.jetbrains.bazel.jvm.jps.java
 
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.lang.JavaVersion
@@ -19,6 +18,7 @@ import org.jetbrains.bazel.jvm.hashSet
 import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.jps.OutputSink
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildTargetIndex
+import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
 import org.jetbrains.bazel.jvm.jps.impl.BazelDirtyFileHolder
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
@@ -28,7 +28,6 @@ import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.ProjectPaths
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
 import org.jetbrains.jps.builders.FileProcessor
-import org.jetbrains.jps.builders.JpsBuildBundle
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
@@ -41,23 +40,17 @@ import org.jetbrains.jps.incremental.GlobalContextKey
 import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.StopBuildException
 import org.jetbrains.jps.incremental.Utils
-import org.jetbrains.jps.incremental.java.CustomOutputDataListener
 import org.jetbrains.jps.incremental.java.ExternalJavacOptionsProvider
 import org.jetbrains.jps.incremental.java.ModulePathSplitter
-import org.jetbrains.jps.incremental.messages.BuildMessage
-import org.jetbrains.jps.incremental.messages.CompilerMessage
 import org.jetbrains.jps.javac.CompilationPaths
 import org.jetbrains.jps.javac.DiagnosticOutputConsumer
-import org.jetbrains.jps.javac.ExternalJavacManager
 import org.jetbrains.jps.javac.ExternalJavacManagerKey
 import org.jetbrains.jps.javac.JavacFileReferencesRegistrar
 import org.jetbrains.jps.javac.JavacMain
-import org.jetbrains.jps.javac.JpsInfoDiagnostic
 import org.jetbrains.jps.javac.ModulePath
 import org.jetbrains.jps.javac.OutputFileConsumer
 import org.jetbrains.jps.javac.OutputFileObject
 import org.jetbrains.jps.javac.PlainMessageDiagnostic
-import org.jetbrains.jps.javac.ast.api.JavacFileData
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaSdkType
@@ -74,7 +67,6 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BiConsumer
 import java.util.function.Function
 import javax.tools.Diagnostic
@@ -158,7 +150,7 @@ internal class BazelJavaBuilder(
   override fun getCompilableFileExtensions(): List<String> = COMPILABLE_EXTENSIONS
 
   override suspend fun build(
-    context: CompileContext,
+    context: BazelCompileContext,
     module: JpsModule,
     chunk: ModuleChunk,
     target: BazelModuleBuildTarget,
@@ -196,7 +188,7 @@ internal class BazelJavaBuilder(
     try {
       if (hasSourcesToCompile) {
         val classpath = module.container.getChild(BazelConfigurationHolder.KIND).classPath
-        val diagnosticSink = DiagnosticSink(context = context, registrars = refRegistrars, out = out)
+        val diagnosticSink = JavaDiagnosticSink(context = context, registrars = refRegistrars, out = out)
         val compiledOk = tracer.spanBuilder("compile java files")
           .also { spanBuilder ->
             if (isDebugEnabled) {
@@ -219,7 +211,7 @@ internal class BazelJavaBuilder(
               )
             }
             finally {
-              filesWithErrors = diagnosticSink.filesWithErrors
+              filesWithErrors = diagnosticSink.getFilesWithErrors()
             }
           }
 
@@ -398,115 +390,6 @@ private class ExplodedModuleNameFinder(context: CompileContext) : Function<File?
   private val moduleTarget = (context.projectDescriptor.buildTargetIndex as BazelBuildTargetIndex).moduleTarget
 
   override fun apply(outputDir: File?): String? = moduleTarget.module.name.trim()
-}
-
-private class DiagnosticSink(
-  private val context: CompileContext,
-  private val registrars: MutableCollection<JavacFileReferencesRegistrar>,
-  private val out: Appendable,
-) : DiagnosticOutputConsumer {
-  private val myErrorCount = AtomicInteger(0)
-  private val myWarningCount = AtomicInteger(0)
-  @JvmField
-  val filesWithErrors = hashSet<File>()
-
-  override fun javaFileLoaded(file: File?) {
-  }
-
-  override fun registerJavacFileData(data: JavacFileData) {
-    for (registrar in registrars) {
-      registrar.registerFile(
-        context,
-        data.filePath,
-        data.refs.entries,
-        data.defs,
-        data.casts,
-        data.implicitToStringRefs
-      )
-    }
-  }
-
-  override fun customOutputData(pluginId: String, dataName: String?, data: ByteArray) {
-    if (JavacFileData.CUSTOM_DATA_PLUGIN_ID == pluginId && JavacFileData.CUSTOM_DATA_KIND == dataName) {
-      registerJavacFileData(JavacFileData.fromBytes(data))
-    }
-    else {
-      for (listener in JpsServiceManager.getInstance().getExtensions(CustomOutputDataListener::class.java)) {
-        if (pluginId == listener.id) {
-          listener.processData(context, dataName, data)
-          return
-        }
-      }
-    }
-  }
-
-  override fun outputLineAvailable(line: @NlsSafe String?) {
-    if (line.isNullOrEmpty()) {
-      return
-    }
-
-    when {
-      line.startsWith(ExternalJavacManager.STDOUT_LINE_PREFIX) || line.startsWith(ExternalJavacManager.STDERR_LINE_PREFIX) -> {
-        out.appendLine(line)
-      }
-
-      line.contains("java.lang.OutOfMemoryError") -> {
-        context.processMessage(CompilerMessage("java", BuildMessage.Kind.ERROR, JpsBuildBundle.message("build.message.insufficient.memory")))
-        myErrorCount.incrementAndGet()
-      }
-
-      else -> {
-        out.appendLine(line)
-      }
-    }
-  }
-
-  override fun report(diagnostic: Diagnostic<out JavaFileObject>) { val kind = when (diagnostic.kind) {
-      Diagnostic.Kind.ERROR -> {
-        myErrorCount.incrementAndGet()
-        BuildMessage.Kind.ERROR
-      }
-
-      Diagnostic.Kind.MANDATORY_WARNING, Diagnostic.Kind.WARNING -> {
-        myWarningCount.incrementAndGet()
-        BuildMessage.Kind.WARNING
-      }
-
-      Diagnostic.Kind.NOTE -> BuildMessage.Kind.INFO
-      Diagnostic.Kind.OTHER -> if (diagnostic is JpsInfoDiagnostic) BuildMessage.Kind.JPS_INFO else BuildMessage.Kind.OTHER
-      else -> BuildMessage.Kind.OTHER
-    }
-
-    val source: JavaFileObject? = diagnostic.getSource()
-    val sourceFile = if (source == null) null else File(source.toUri())
-    val sourcePath = if (sourceFile == null) {
-      null
-    }
-    else {
-      if (kind == BuildMessage.Kind.ERROR) {
-        filesWithErrors.add(sourceFile)
-      }
-      sourceFile.invariantSeparatorsPath
-    }
-    val message = diagnostic.getMessage(Locale.US)
-    context.processMessage(CompilerMessage(
-      "java",
-      kind,
-      message,
-      sourcePath,
-      diagnostic.startPosition,
-      diagnostic.endPosition,
-      diagnostic.position,
-      diagnostic.lineNumber,
-      diagnostic.columnNumber,
-    ))
-  }
-
-  val errorCount: Int
-    get() = myErrorCount.get()
-
-  val warningCount: Int
-    get() = myWarningCount.get()
 }
 
 private fun logJavacCall(options: Iterable<String>, mode: String, span: Span) {

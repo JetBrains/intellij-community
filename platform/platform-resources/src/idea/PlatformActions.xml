@@ -1076,6 +1076,7 @@
           <!--Cmd key is used, because it’s used in most of the action shortcuts: Back/Forward, Breakpoint and Find Usages./-->
           <reference ref="Back"/>
           <reference ref="Forward"/>
+          <!--suppress PluginXmlI18n, PluginXmlCapitalization -->
           <separator text="type.large"/>
         </group>
         <group id="TouchBarDefault_cmd.alt">

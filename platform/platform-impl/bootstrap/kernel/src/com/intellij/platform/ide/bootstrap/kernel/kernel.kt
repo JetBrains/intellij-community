@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap.kernel
 
+import com.intellij.platform.pasta.common.ChangeDocument
 import com.intellij.platform.kernel.util.kernelCoroutineContext
 import com.jetbrains.rhizomedb.EffectInstruction
 import com.jetbrains.rhizomedb.MapAttribute
@@ -31,6 +32,7 @@ private val CommonInstructionSet: InstructionSet =
     LocalInstructionCoder(ReifyEntities::class),
     ValidateCoder,
     CreateEntityCoder,
+    ChangeDocument,
   ))
 
 @ApiStatus.Internal

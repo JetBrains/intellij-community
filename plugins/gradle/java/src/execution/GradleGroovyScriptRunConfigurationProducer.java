@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.execution.Location;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
@@ -23,7 +24,8 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.resolvePro
 /**
  * @author Vladislav.Soroka
  */
-final class GradleGroovyScriptRunConfigurationProducer extends GradleRunConfigurationProducer {
+@ApiStatus.Internal
+public final class GradleGroovyScriptRunConfigurationProducer extends GradleRunConfigurationProducer {
 
   @Override
   @VisibleForTesting

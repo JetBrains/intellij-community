@@ -2,6 +2,8 @@
 // IS_APPLICABLE: false
 // ERROR: There's a cycle in the delegation calls chain
 // ERROR: There's a cycle in the delegation calls chain
+// K2_AFTER_ERROR: There's a cycle in the delegation calls chain.
+// K2_AFTER_ERROR: There's a cycle in the delegation calls chain.
 
 class NonReachableLoop {
     constructor<caret>(x: String)

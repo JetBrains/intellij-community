@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -305,7 +306,10 @@ class CodeFloatingToolbar(
             cancel()
           }
           withContext(Dispatchers.EDT + modality.asContextElement()) {
-            if (isPopupButton) button.click() else activeMenuPopup?.cancel()
+            if (isPopupButton) writeIntentReadAction {
+              button.click()
+            }
+            else activeMenuPopup?.cancel()
           }
         }
       }

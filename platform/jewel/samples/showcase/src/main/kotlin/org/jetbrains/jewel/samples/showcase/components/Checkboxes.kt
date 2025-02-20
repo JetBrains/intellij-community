@@ -16,7 +16,9 @@ import org.jetbrains.jewel.ui.component.TriStateCheckboxRow
 @Composable
 public fun Checkboxes() {
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-        var checked by remember { mutableStateOf(ToggleableState.On) }
+        var checked by remember { mutableStateOf(ToggleableState.Off) }
+        var checked2 by remember { mutableStateOf(ToggleableState.Off) }
+        var checked3 by remember { mutableStateOf(ToggleableState.Off) }
         TriStateCheckboxRow(
             "Checkbox",
             checked,
@@ -31,10 +33,10 @@ public fun Checkboxes() {
         )
         TriStateCheckboxRow(
             "Error",
-            checked,
+            checked2,
             onClick = {
-                checked =
-                    when (checked) {
+                checked2 =
+                    when (checked2) {
                         ToggleableState.On -> ToggleableState.Off
                         ToggleableState.Off -> ToggleableState.Indeterminate
                         ToggleableState.Indeterminate -> ToggleableState.On
@@ -44,10 +46,10 @@ public fun Checkboxes() {
         )
         TriStateCheckboxRow(
             "Warning",
-            checked,
+            checked3,
             onClick = {
-                checked =
-                    when (checked) {
+                checked3 =
+                    when (checked3) {
                         ToggleableState.On -> ToggleableState.Off
                         ToggleableState.Off -> ToggleableState.Indeterminate
                         ToggleableState.Indeterminate -> ToggleableState.On

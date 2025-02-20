@@ -41,7 +41,8 @@ private suspend fun <T> HatchRuntime.executeAndMatch(
   return this.executeAndHandleErrors(*arguments) { processOutput ->
     if (processOutput.exitCode != 0) return@executeAndHandleErrors Result.failure(null)
 
-    val matchResult = expectedOutput.matchEntire(outputContentSupplier.invoke(processOutput))
+    val output = outputContentSupplier.invoke(processOutput).replace("\r\n", "\n")
+    val matchResult = expectedOutput.matchEntire(output)
     if (matchResult == null) {
       Result.failure(PyHatchBundle.message("python.hatch.cli.error.response.out.of.pattern", expectedOutput.toString()))
     }

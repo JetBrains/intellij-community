@@ -39,6 +39,17 @@ internal class DirtBuilder {
     return scopesByVcs.isNotEmpty()
   }
 
+  fun addDirtyRoot(vcsRoot: VcsRoot): Boolean {
+    if (isEverythingDirty) return true
+
+    val vcs = vcsRoot.vcs
+    if (vcs != null) {
+      val scope = scopesByVcs.computeIfAbsent(vcs) { key -> createDirtyScope(key) }
+      scope.markRootDirty(vcsRoot.path)
+    }
+    return scopesByVcs.isNotEmpty()
+  }
+
   fun buildScopes(project: Project): List<VcsModifiableDirtyScope> {
     val scopes: Collection<VcsDirtyScopeBuilder>
     if (isEverythingDirty) {

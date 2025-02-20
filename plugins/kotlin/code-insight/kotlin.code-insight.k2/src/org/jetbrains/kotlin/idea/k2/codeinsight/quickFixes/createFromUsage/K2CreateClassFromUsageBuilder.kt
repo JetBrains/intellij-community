@@ -214,7 +214,7 @@ object K2CreateClassFromUsageBuilder {
         analyze (element) {
             val isReceiverAccepted = receiverExpression == null ||
                     receiverExpression is KtNameReferenceExpression &&
-                    receiverExpression.resolveExpression()?.psi<PsiElement>().let {it is KtClass || it is PsiPackage}
+                    receiverExpression.resolveExpression()?.psi.let { it is KtClass || it is PsiPackage }
             if (!isReceiverAccepted) {
                 // for `expression.Foo()` we can't create object nor enum
                 return null

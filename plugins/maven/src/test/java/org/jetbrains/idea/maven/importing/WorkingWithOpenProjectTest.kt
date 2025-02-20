@@ -2,7 +2,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PsiTestUtil
@@ -48,7 +48,7 @@ class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
 
     projectsManager.listenForExternalChanges()
     val d = FileDocumentManager.getInstance().getDocument(projectPom)
-    writeAction {
+    edtWriteAction {
       d!!.setText(createPomXml("""
                                 <groupId>test</groupId>
                                 <artifactId>project</artifactId>

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -60,7 +61,8 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
 
         var allowExpected = true
 
-        liftToExpect(element)?.actualsForExpect()?.let {
+        val actualsForExpect = ActionUtil.underModalProgress(element.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) { liftToExpect(element)?.actualsForExpect() }
+        actualsForExpect?.let {
             if (it.isEmpty()) {
                 allowExpected = askIfExpectedIsAllowed()
             }

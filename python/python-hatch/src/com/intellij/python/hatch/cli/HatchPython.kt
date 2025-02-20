@@ -29,7 +29,7 @@ class HatchPython(runtime: HatchRuntime) : HatchCommand("python", runtime) {
 
     return executeAndHandleErrors("find", *options, name) { output ->
       when {
-        output.exitCode == 1 && output.stderr.contains("Distribution not installed: $name\n") -> Result.success(null)
+        output.exitCode == 1 && output.stderr.contains("Distribution not installed: $name") -> Result.success(null)
         output.exitCode != 0 -> Result.failure(null)
         else -> {
           val path = NioFiles.toPath(output.stdout.trim())
@@ -79,7 +79,7 @@ class HatchPython(runtime: HatchRuntime) : HatchCommand("python", runtime) {
    * ```
    */
   fun parsePythonInstallCommandOutput(processOutput: ProcessOutput): PythonInstallResponse {
-    val output = processOutput.stderr
+    val output = processOutput.stderr.replace("\r\n", "\n")
 
     val abort = AbortReason.parse(output)?.let { PythonInstallResponse.Abort(it, output) }
 

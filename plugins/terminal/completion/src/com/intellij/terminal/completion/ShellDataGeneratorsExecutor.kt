@@ -6,5 +6,5 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface ShellDataGeneratorsExecutor {
-  suspend fun <T> execute(context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<T>): T
+  suspend fun <T : Any> execute(context: ShellRuntimeContext, generator: ShellRuntimeDataGenerator<T>): T
 }

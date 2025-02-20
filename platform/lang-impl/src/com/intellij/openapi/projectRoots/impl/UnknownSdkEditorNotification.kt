@@ -30,12 +30,12 @@ class UnknownSdkEditorNotification(val scope: CoroutineScope) {
     return notifications.get()
   }
 
-  fun showNotifications(notifications: MutableList<out UnknownSdkFix?>) {
+  fun showNotifications(notifications: MutableList<out UnknownSdkFix>) {
     var notifications = notifications
     if (!notifications.isEmpty() && !`is`("unknown.sdk.show.editor.actions")) {
-      notifications = mutableListOf<UnknownSdkFix?>()
+      notifications = mutableListOf<UnknownSdkFix>()
     }
-    this.notifications.set(List.copyOf<UnknownSdkFix?>(notifications))
+    this.notifications.set(List.copyOf<UnknownSdkFix>(notifications))
   }
 
   companion object {

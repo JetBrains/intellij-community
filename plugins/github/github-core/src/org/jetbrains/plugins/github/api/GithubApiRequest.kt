@@ -6,6 +6,7 @@ import com.intellij.collaboration.api.dto.GraphQLRequestDTO
 import com.intellij.collaboration.api.dto.GraphQLResponseDTO
 import com.intellij.collaboration.api.util.LinkHttpHeaderValue
 import com.intellij.util.ThrowableConvertor
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.api.data.GithubResponsePage
 import org.jetbrains.plugins.github.api.data.GithubSearchResult
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLError
@@ -142,9 +143,13 @@ sealed class GithubApiRequest<out T>(val url: String) {
 
     abstract class GQLQuery<out T>(
       url: String,
-      private val queryName: String,
-      private val variablesObject: Any,
+      @VisibleForTesting
+      internal val queryName: String,
+      @VisibleForTesting
+      internal val variablesObject: Any,
     ) : Post<T>(GithubApiContentHelper.JSON_MIME_TYPE, url) {
+      @get:VisibleForTesting
+      internal abstract val clazz: Class<*>
 
       override val body: String
         get() {
@@ -170,7 +175,7 @@ sealed class GithubApiRequest<out T>(val url: String) {
         url: String,
         requestFilePath: String,
         variablesObject: Any,
-        private val clazz: Class<T>,
+        override val clazz: Class<out T>,
       ) : GQLQuery<T>(url, requestFilePath, variablesObject) {
         override fun extractResultWithCost(response: GithubApiResponse): Pair<T, GHGQLRateLimit?> {
           return parseResponse(response, clazz)
@@ -178,13 +183,21 @@ sealed class GithubApiRequest<out T>(val url: String) {
         }
       }
 
+      abstract class Traversed<out T>(
+        url: String,
+        requestFilePath: String,
+        variablesObject: Any,
+        @VisibleForTesting
+        internal val pathFromData: Array<out String>
+      ) : GQLQuery<T>(url, requestFilePath, variablesObject)
+
       class TraversedParsed<out T : Any>(
         url: String,
         requestFilePath: String,
         variablesObject: Any,
-        private val clazz: Class<out T>,
-        private vararg val pathFromData: String,
-      ) : GQLQuery<T>(url, requestFilePath, variablesObject) {
+        override val clazz: Class<out T>,
+        vararg pathFromData: String,
+      ) : Traversed<T>(url, requestFilePath, variablesObject, pathFromData) {
         override fun extractResultWithCost(response: GithubApiResponse): Pair<T, GHGQLRateLimit?> {
           return parseResponse(response, clazz, pathFromData)
                  ?: throw GithubJsonException("Non-nullable entity is null or entity path is invalid")
@@ -195,9 +208,9 @@ sealed class GithubApiRequest<out T>(val url: String) {
         url: String,
         requestFilePath: String,
         variablesObject: Any,
-        private val clazz: Class<T>,
-        private vararg val pathFromData: String,
-      ) : GQLQuery<T?>(url, requestFilePath, variablesObject) {
+        override val clazz: Class<out T>,
+        vararg pathFromData: String,
+      ) : Traversed<T?>(url, requestFilePath, variablesObject, pathFromData) {
         override fun extractResultWithCost(response: GithubApiResponse): Pair<T?, GHGQLRateLimit?> {
           return parseResponse(response, clazz, pathFromData) ?: (null to null)
         }
@@ -207,9 +220,9 @@ sealed class GithubApiRequest<out T>(val url: String) {
         url: String,
         requestFilePath: String,
         variablesObject: Any,
-        private val clazz: Class<T>,
-        private vararg val pathFromData: String,
-      ) : GQLQuery<List<T>?>(url, requestFilePath, variablesObject) {
+        override val clazz: Class<out T>,
+        vararg pathFromData: String,
+      ) : Traversed<List<T>?>(url, requestFilePath, variablesObject, pathFromData) {
         override fun extractResultWithCost(response: GithubApiResponse): Pair<List<T>?, GHGQLRateLimit?> =
           parseResponse(response, pathFromData) {
             GithubApiContentHelper.readJsonList(it.toString().reader(), clazz)

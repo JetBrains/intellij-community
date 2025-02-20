@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block
 
 import com.intellij.openapi.util.Disposer
@@ -11,6 +11,7 @@ import com.intellij.testFramework.utils.io.deleteRecursively
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.*
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
@@ -18,7 +19,6 @@ import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCachingGen
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators.aliasesGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
-import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.toShellName
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.util.TerminalSessionTestUtil
 import org.jetbrains.plugins.terminal.block.util.TerminalSessionTestUtil.getCommandResultFuture
@@ -114,7 +114,7 @@ internal class ShellBaseGeneratorsTest(private val shellPath: Path) {
     assertTrue("Created alias is not found: $aliases", aliases.contains(aliasName))
   }
 
-  private fun <T> runGenerator(
+  private fun <T : Any> runGenerator(
     session: BlockTerminalSession,
     generator: ShellRuntimeDataGenerator<T>,
     typedPrefix: String = ""

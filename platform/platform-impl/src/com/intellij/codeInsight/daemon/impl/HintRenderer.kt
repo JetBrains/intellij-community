@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Key
 import com.intellij.ui.paint.EffectPainter
 import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.getFontWithFallback
 import org.intellij.lang.annotations.JdkConstants
@@ -276,7 +277,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
 
     private val HINT_FONT_METRICS = Key.create<MyFontMetrics>("ParameterHintFontMetrics")
 
-    const val BACKGROUND_ALPHA: Float = 0.55f
+    const val BACKGROUND_ALPHA: Float = JBUI.CurrentTheme.Popup.DEFAULT_HINT_OPACITY
   }
 
   // workaround for KT-12063 "IllegalAccessError when accessing @JvmStatic protected member of a companion object from a subclass"

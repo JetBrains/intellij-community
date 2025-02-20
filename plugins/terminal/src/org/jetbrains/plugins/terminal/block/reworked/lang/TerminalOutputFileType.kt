@@ -4,10 +4,12 @@ package org.jetbrains.plugins.terminal.block.reworked.lang
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
-internal object TerminalOutputFileType : LanguageFileType(TerminalOutputLanguage) {
+@ApiStatus.Internal
+object TerminalOutputFileType : LanguageFileType(TerminalOutputLanguage) {
   override fun getName(): @NonNls String = "TerminalOutput"
 
   override fun getDescription(): @NlsContexts.Label String = ""

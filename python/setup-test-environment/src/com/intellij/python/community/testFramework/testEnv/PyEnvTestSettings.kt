@@ -2,12 +2,13 @@
 package com.intellij.python.community.testFramework.testEnv
 
 import com.intellij.python.community.testFramework.testEnv.PyEnvTestSettings.Companion.PATH_TO_TEST_ENV_PYTHON_INTERPRETERS
-import com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 
+
+private val IS_UNDER_TEAMCITY: Boolean = System.getenv("TEAMCITY_VERSION") != null
 
 /**
  * Configures env test environment using env vars and properties.

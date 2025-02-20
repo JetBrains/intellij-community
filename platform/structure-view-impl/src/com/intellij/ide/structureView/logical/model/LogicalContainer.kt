@@ -4,7 +4,7 @@ package com.intellij.ide.structureView.logical.model
 import com.intellij.ide.structureView.logical.LogicalStructureElementsProvider
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface LogicalContainer<C> {
 
   fun getElements(): List<C>

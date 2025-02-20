@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -17,7 +17,7 @@ import java.util.Map;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Internal
-final class MessageCounter {
+public final class MessageCounter {
   private final Map<ProjectSystemId, Map<String/* group */, Map<NotificationSource, Object2IntOpenHashMap<NotificationCategory>>>>
     map = new HashMap<>();
 

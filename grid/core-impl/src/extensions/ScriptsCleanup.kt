@@ -72,7 +72,7 @@ object ScriptsCleanup {
     val nameToHashes = getHashes(dirName)
     if (nameToHashes.isEmpty()) return
 
-    writeAction {
+    edtWriteAction {
       val filesToDelete = getFilesToDelete(backupFilesWithNormalizedNames, nameToHashes)
         .mapNotNull { file ->
           val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file)

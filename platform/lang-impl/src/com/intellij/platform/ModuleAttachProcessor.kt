@@ -9,7 +9,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -93,7 +93,7 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
       runInAutoSaveDisabledMode {
         saveSettings(newProject)
       }
-      writeAction { Disposer.dispose(newProject) }
+      edtWriteAction { Disposer.dispose(newProject) }
     }
 
     val newModule = try {
@@ -147,7 +147,7 @@ private suspend fun attachModule(project: Project, imlFile: Path): Module {
   val moduleManager = ModuleManager.getInstance(project)
   val model = moduleManager.getModifiableModel()
   val module = model.loadModule(imlFile.invariantSeparatorsPathString)
-  writeAction {
+  edtWriteAction {
     model.commit()
   }
 

@@ -56,7 +56,6 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -381,7 +380,6 @@ internal fun MenuItem(
                         menuManager.closeAll(localInputModeManager.inputMode, true)
                     },
                     enabled = enabled,
-                    role = Role.Button,
                     interactionSource = interactionSource,
                     indication = null,
                 )
@@ -519,7 +517,6 @@ public fun MenuSubmenuItem(
                 .clickable(
                     onClick = { itemState = itemState.copy(selected = !itemState.isSelected) },
                     enabled = enabled,
-                    role = Role.Button,
                     interactionSource = interactionSource,
                     indication = null,
                 )

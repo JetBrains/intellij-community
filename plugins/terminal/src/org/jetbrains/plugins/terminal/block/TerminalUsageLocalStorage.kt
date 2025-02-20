@@ -4,13 +4,15 @@ package org.jetbrains.plugins.terminal.block
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.*
 import com.intellij.util.xmlb.annotations.XMap
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Note, that this class is about block terminal usage.
  */
+@ApiStatus.Internal
 @Service
 @State(name = "BlockTerminalUsage", storages = [Storage(value = "terminal.xml", roamingType = RoamingType.DISABLED)])
-internal class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalStorage.State> {
+class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalStorage.State> {
   private var state = State()
 
   val executedCommandsNumber: Int

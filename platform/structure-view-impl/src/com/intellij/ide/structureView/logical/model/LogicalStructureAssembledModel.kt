@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Utility class which helps to build full logical model for some element
  */
+@ApiStatus.Experimental
 class LogicalStructureAssembledModel<T> private constructor(
   val project: Project,
   val model: T,
@@ -25,7 +26,6 @@ class LogicalStructureAssembledModel<T> private constructor(
       return model.getElements().map { LogicalStructureAssembledModel(project, it, parent) }
     }
     return LogicalStructureElementsProvider.getProviders(model!!)
-      .filter { it !is ConvertElementsProvider }
       .flatMap { provider ->
         if (provider is ContainerElementsProvider || provider is PropertyElementProvider) {
           listOf(ProvidedLogicalContainer(provider) { provider.getElements(model) })
@@ -36,31 +36,6 @@ class LogicalStructureAssembledModel<T> private constructor(
       }
       .map { LogicalStructureAssembledModel(project, it, this) }
       .toList()
-  }
-
-  /**
-   * The grouping element in each pair - Any - can be any object, for which a PresentationProvider is registered
-   */
-  @Deprecated("")
-  @ApiStatus.ScheduledForRemoval
-  fun getChildrenGrouped(): List<Pair<Any, () -> List<LogicalStructureAssembledModel<*>>>> {
-    val result = mutableListOf<Pair<Any, () -> List<LogicalStructureAssembledModel<*>>>>()
-    for (provider in LogicalStructureElementsProvider.getProviders(model!!)) {
-      if (provider !is ContainerElementsProvider && provider !is PropertyElementProvider) continue
-      //if (provider is ContainerGroupedElementsProvider<*, *, *>) {
-      //  for (groupedElement in (provider as ContainerGroupedElementsProvider<T, *, *>).getGroupedElements(model)) {
-      //    result.add(Pair(groupedElement.key!!) { groupedElement.value.map { LogicalStructureAssembledModel(project, it, this) } })
-      //  }
-      //  continue
-      //}
-      val children = {
-        provider.getElements(model)
-          .map { LogicalStructureAssembledModel(project, it, this) }
-      }
-      result.add(Pair(provider, children))
-    }
-    result.sortBy { if (it.first is PropertyElementProvider<*, *>) 0 else 1 }
-    return result
   }
 
   override fun equals(other: Any?): Boolean {

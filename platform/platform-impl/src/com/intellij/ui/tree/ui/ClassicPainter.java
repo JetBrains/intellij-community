@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -6,13 +6,15 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-final class ClassicPainter implements Control.Painter {
+@ApiStatus.Internal
+public final class ClassicPainter implements Control.Painter {
   private static final int GAP = 2; // minimal space between a control icon and a renderer component
   private final Boolean myPaintLines;
   private final Integer myLeftIndent;

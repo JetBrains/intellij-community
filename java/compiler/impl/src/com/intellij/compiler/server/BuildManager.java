@@ -1382,7 +1382,8 @@ public final class BuildManager implements Disposable {
       wslPath = null;
       EelBuildCommandLineBuilder eelBuilder = new EelBuildCommandLineBuilder(project, Path.of(vmExecutablePath));
       cmdLine = eelBuilder;
-      cmdLine.addParameter("-Dide.jps.remote.path.prefix=" + eelBuilder.pathPrefix().replace('\\', '/'));
+      cmdLine.addParameter("-Dide.jps.remote.path.prefixes=" + eelBuilder.pathPrefixes().stream()
+        .map(e -> e.replace('\\', '/')).collect(Collectors.joining(";")));
       buildProcessConnectHost = "127.0.0.1";
       int listenPort = listenSocketAddress.getPort();
       buildProcessConnectPort = eelBuilder.maybeRunReverseTunnel(listenPort, project); // TODO maybeRunReverseTunnel must return InetSocketAddress

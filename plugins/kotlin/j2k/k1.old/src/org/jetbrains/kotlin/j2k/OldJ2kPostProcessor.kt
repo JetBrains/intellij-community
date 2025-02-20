@@ -76,7 +76,7 @@ class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcesso
                     for ((element, action, _, writeActionNeeded) in elementToActions) {
                         if (element.isValid) {
                             if (writeActionNeeded) {
-                                writeAction {
+                                edtWriteAction {
                                     action()
                                 }
                             } else {
@@ -94,7 +94,7 @@ class OldJ2kPostProcessor(private val formatCode: Boolean = true) : PostProcesso
 
             if (formatCode) {
                 launch(Dispatchers.EDT) {
-                    writeAction {
+                    edtWriteAction {
                         val codeStyleManager = CodeStyleManager.getInstance(file.project)
                         if (rangeMarker != null) {
                             if (rangeMarker.isValid) {

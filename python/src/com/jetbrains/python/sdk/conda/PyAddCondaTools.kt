@@ -9,7 +9,7 @@ import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.processTools.mapFlat
 import com.intellij.execution.target.*
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -69,7 +69,7 @@ suspend fun PyCondaCommand.createCondaSdkFromExistingEnv(
   // homePath is not required by conda, but used by lots of tools all over the code and required by CondaPathFix
   // Because homePath is not set yet, CondaPathFix does not work
   sdkModificator.homePath = getCondaPythonBinaryPath(project, condaEnv, targetConfig).getOrThrow()
-  writeAction {
+  edtWriteAction {
     sdkModificator.commitChanges()
   }
   saveLocalPythonCondaPath(Path.of(fullCondaPathOnTarget))

@@ -19,6 +19,6 @@ class HighlightingTestUtil {
       additionalAttributes.forEach { attributesPair -> span.setAttribute(attributesPair.first, attributesPair.second) }
       span.end(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
     }
-  }
 
+  }
 }

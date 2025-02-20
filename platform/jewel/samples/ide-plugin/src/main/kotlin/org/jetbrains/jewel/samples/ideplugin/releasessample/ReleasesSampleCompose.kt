@@ -243,7 +243,9 @@ private fun SearchBar(service: ReleasesSampleService, modifier: Modifier = Modif
     TextField(
         state = state,
         modifier = modifier.focusRequester(focusRequester),
-        leadingIcon = { Icon(AllIconsKeys.Actions.Find, contentDescription = null, Modifier.padding(end = 8.dp)) },
+        leadingIcon = {
+            Icon(AllIconsKeys.Actions.Find, contentDescription = "Find icon", Modifier.padding(end = 8.dp))
+        },
         trailingIcon = {
             if (filterText.isNotBlank()) {
                 CloseIconButton(service)
@@ -344,7 +346,7 @@ private fun OverflowMenu(currentContentSource: ContentSource<*>, onContentSource
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         if (it.isSameAs(currentContentSource)) {
-                            Icon(AllIconsKeys.Actions.Checked, null)
+                            Icon(AllIconsKeys.Actions.Checked, "Checked icon")
                         } else {
                             Spacer(Modifier.width(16.dp))
                         }

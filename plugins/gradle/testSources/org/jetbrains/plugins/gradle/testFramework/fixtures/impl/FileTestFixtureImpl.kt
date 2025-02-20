@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installBulkVirtualFileListener
 import com.intellij.openapi.externalSystem.util.runReadAction
@@ -117,7 +117,7 @@ internal class FileTestFixtureImpl(
   }
 
   private suspend fun invalidateFixtureCaches() {
-    writeAction {
+    edtWriteAction {
       root.deleteChildrenRecursively { it != fixtureStateFile }
     }
   }

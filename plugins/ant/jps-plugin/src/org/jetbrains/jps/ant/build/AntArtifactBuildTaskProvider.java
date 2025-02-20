@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.ant.build;
 
 import com.intellij.execution.process.BaseOSProcessHandler;
@@ -48,7 +48,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
+public final class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
   private static final Logger LOG = Logger.getInstance(AntArtifactBuildTaskProvider.class);
 
   @Override
@@ -71,7 +71,7 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
     }
   }
 
-  private static class AntArtifactBuildTask extends BuildTask {
+  private static final class AntArtifactBuildTask extends BuildTask {
     public static final @NlsSafe String BUILDER_NAME = "ant";
     private final JpsAntArtifactExtension myExtension;
 

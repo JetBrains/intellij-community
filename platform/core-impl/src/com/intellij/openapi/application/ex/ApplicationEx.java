@@ -211,6 +211,9 @@ public interface ApplicationEx extends Application {
   @ApiStatus.Internal
   default void addReadActionListener(@NotNull ReadActionListener listener, @NotNull Disposable parentDisposable) { }
 
+  @ApiStatus.Experimental
+  default void addWriteActionListener(@NotNull WriteActionListener listener, @NotNull Disposable parentDisposable) { }
+
   @ApiStatus.Internal
   default void addWriteIntentReadActionListener(@NotNull WriteIntentReadActionListener listener, @NotNull Disposable parentDisposable) { }
 
@@ -220,4 +223,9 @@ public interface ApplicationEx extends Application {
   @ApiStatus.Internal
   @ApiStatus.Obsolete
   default void addSuspendingWriteActionListener(@NotNull SuspendingWriteActionListener listener, @NotNull Disposable parentDisposable) { }
+
+  @ApiStatus.Internal
+  default void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, boolean failSoftly) {
+    runnable.run();
+  }
 }

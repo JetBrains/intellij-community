@@ -1354,7 +1354,7 @@ private suspend fun initProject(
     try {
       withContext(NonCancellable) {
         project.getCoroutineScope().coroutineContext.job.cancelAndJoin()
-        writeAction {
+        edtWriteAction {
           Disposer.dispose(project)
         }
       }

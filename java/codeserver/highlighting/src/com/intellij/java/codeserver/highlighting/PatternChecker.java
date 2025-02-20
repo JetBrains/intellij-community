@@ -2,6 +2,7 @@
 package com.intellij.java.codeserver.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.java.codeserver.core.JavaPsiSealedUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.psi.PsiModifier.SEALED;
 import static com.intellij.util.ObjectUtils.tryCast;
-import static java.util.Objects.*;
+import static java.util.Objects.hash;
 
 final class PatternChecker {
   private static final Logger LOG = Logger.getInstance(PatternChecker.class);
@@ -148,24 +149,24 @@ final class PatternChecker {
         if (recordComponents.length == deconstructionComponents.length) {
           if (isApplicableForRecordComponent(substitutedRecordComponentType, deconstructionComponentType,
                                              JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel())) {
-            myVisitor.checkFeature(deconstructionComponent, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS);
+            myVisitor.report(JavaErrorKinds.UNSUPPORTED_FEATURE.create(deconstructionComponent, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS));
+            continue;
           }
           else if ((substitutedRecordComponentType instanceof PsiPrimitiveType ||
                     deconstructionComponentType instanceof PsiPrimitiveType) &&
                    JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(languageLevel)) {
             myVisitor.report(JavaErrorKinds.CAST_INCONVERTIBLE.create(
               deconstructionComponent, new JavaIncompatibleTypeErrorContext(substitutedRecordComponentType, deconstructionComponentType)));
+            continue;
           }
 
-          if (!myVisitor.hasErrorResults()) {
-            if (myVisitor.isIncompleteModel() &&
-                (IncompleteModelUtil.hasUnresolvedComponent(substitutedRecordComponentType) ||
-                 IncompleteModelUtil.hasUnresolvedComponent(deconstructionComponentType))) {
-              continue;
-            }
-            myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
-              deconstructionComponent, new JavaIncompatibleTypeErrorContext(substitutedRecordComponentType, deconstructionComponentType)));
+          if (myVisitor.isIncompleteModel() &&
+              (IncompleteModelUtil.hasUnresolvedComponent(substitutedRecordComponentType) ||
+               IncompleteModelUtil.hasUnresolvedComponent(deconstructionComponentType))) {
+            continue;
           }
+          myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
+            deconstructionComponent, new JavaIncompatibleTypeErrorContext(substitutedRecordComponentType, deconstructionComponentType)));
         }
       }
       else {

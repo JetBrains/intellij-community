@@ -3,12 +3,15 @@ package org.jetbrains.plugins.github.api
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonSetter
+import com.fasterxml.jackson.annotation.Nulls
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.introspect.VisibilityChecker
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.exceptions.GithubJsonException
 import java.awt.image.BufferedImage
 import java.io.IOException
@@ -30,18 +33,21 @@ object GithubApiContentHelper {
   private val gqlJackson: ObjectMapper = jacksonObjectMapper().genericConfig()
     .setPropertyNamingStrategy(PropertyNamingStrategy.LOWER_CAMEL_CASE)
 
-  private fun ObjectMapper.genericConfig(): ObjectMapper =
-    this.setDateFormat(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"))
-      .setTimeZone(TimeZone.getDefault())
-      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-      .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-      .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
-      .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-      .setVisibility(VisibilityChecker.Std(JsonAutoDetect.Visibility.NONE,
-                                           JsonAutoDetect.Visibility.NONE,
-                                           JsonAutoDetect.Visibility.NONE,
-                                           JsonAutoDetect.Visibility.NONE,
-                                           JsonAutoDetect.Visibility.ANY))
+  private fun ObjectMapper.genericConfig(): ObjectMapper = apply {
+    setDateFormat(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"))
+    setTimeZone(TimeZone.getDefault())
+    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+    enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
+    setSerializationInclusion(JsonInclude.Include.NON_NULL)
+    setVisibility(VisibilityChecker.Std(JsonAutoDetect.Visibility.NONE,
+                                        JsonAutoDetect.Visibility.NONE,
+                                        JsonAutoDetect.Visibility.NONE,
+                                        JsonAutoDetect.Visibility.NONE,
+                                        JsonAutoDetect.Visibility.ANY))
+    configOverride(List::class.java)
+      .setSetterInfo(JsonSetter.Value.forValueNulls(Nulls.AS_EMPTY))
+  }
 
   @Throws(GithubJsonException::class)
   inline fun <reified T> fromJson(string: String): T = fromJson(string, T::class.java)
@@ -106,7 +112,8 @@ object GithubApiContentHelper {
     }
   }
 
-  private fun getObjectMapper(gqlNaming: Boolean = false): ObjectMapper = if (!gqlNaming) jackson else gqlJackson
+  @VisibleForTesting
+  internal fun getObjectMapper(gqlNaming: Boolean = false): ObjectMapper = if (!gqlNaming) jackson else gqlJackson
 
   @JvmStatic
   @Throws(IOException::class)

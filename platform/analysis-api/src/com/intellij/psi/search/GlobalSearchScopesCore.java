@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -17,10 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -287,7 +284,8 @@ public final class GlobalSearchScopesCore {
     }
   }
 
-  static final class DirectoriesScope extends GlobalSearchScope {
+  @ApiStatus.Internal
+  public static final class DirectoriesScope extends GlobalSearchScope {
     private final Set<? extends VirtualFile> myDirectories;
     private final Set<? extends VirtualFile> myDirectoriesWithSubdirectories;
 

@@ -5,7 +5,7 @@ import com.google.common.util.concurrent.SettableFuture
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ReadWriteActionSupport
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileType
@@ -137,7 +137,7 @@ class UnindexedFilesScannerTest {
 
       val latch = CountDownLatch(1)
       async {
-        writeAction {
+        edtWriteAction {
           latch.await()
         }
       }

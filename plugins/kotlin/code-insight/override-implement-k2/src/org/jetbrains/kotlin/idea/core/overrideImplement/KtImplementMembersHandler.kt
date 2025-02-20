@@ -20,9 +20,12 @@ import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler.Companion.getUnimplementedMembers
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
+import org.jetbrains.kotlin.idea.search.ExpectActualSupport
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.util.ImplementationStatus
 
 @ApiStatus.Internal
@@ -138,8 +141,13 @@ object MemberNotImplementedQuickfixFactories {
 
         return buildList {
             add(KtImplementMembersQuickfix(unimplementedMembers))
-            if (includeImplementAsConstructorParameterQuickfix && classWithUnimplementedMembers is KtClass && classWithUnimplementedMembers !is KtEnumEntry && !classWithUnimplementedMembers.isInterface()) {
-                // TODO: when MPP support is ready, return false if this class is `actual` and any expect classes have primary constructor.
+            if (includeImplementAsConstructorParameterQuickfix && classWithUnimplementedMembers is KtClass &&
+                classWithUnimplementedMembers !is KtEnumEntry &&
+                !classWithUnimplementedMembers.isInterface() &&
+                !classWithUnimplementedMembers.isExpectDeclaration() &&
+                !(classWithUnimplementedMembers.hasActualModifier() && (ExpectActualSupport.getInstance(classWithUnimplementedMembers.project)
+                    .expectDeclarationIfAny(classWithUnimplementedMembers) as? KtClass)?.primaryConstructor != null)
+            ) {
                 val unimplementedProperties = unimplementedMembers.filter { it.isProperty }
                 if (unimplementedProperties.isNotEmpty()) {
                     add(KtImplementAsConstructorParameterQuickfix(unimplementedProperties))

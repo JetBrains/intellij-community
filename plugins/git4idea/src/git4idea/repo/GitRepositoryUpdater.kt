@@ -152,7 +152,7 @@ internal class GitRepositoryUpdater(
       BackgroundTaskUtil.syncPublisher(repository.project, GitConfigListener.TOPIC).notifyConfigChanged(repository)
     }
     if (indexChanged || externallyCommitted || headMoved || headChanged || currentBranchChanged || gitignoreChanged) {
-      VcsDirtyScopeManager.getInstance(repository.project).dirDirtyRecursively(repository.root)
+      VcsDirtyScopeManager.getInstance(repository.project).rootDirty(repository.root)
       repository.untrackedFilesHolder.invalidate()
     }
     if (indexChanged) {

@@ -2,7 +2,7 @@
 package com.intellij.python.community.impl.venv.tests
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -41,7 +41,7 @@ fun TestFixture<SdkFixture<PythonBinary>>.pyVenvFixture(
       }
     }
     initialized(venvSdk) {
-      writeAction {
+      edtWriteAction {
         ProjectJdkTable.getInstance().removeJdk(venvSdk)
       }
     }

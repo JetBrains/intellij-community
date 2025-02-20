@@ -280,7 +280,7 @@ public final class VcsDirtyScopeImpl extends VcsModifiableDirtyScope implements 
   }
 
   @Override
-  public boolean belongsTo(final FilePath path) {
+  public boolean belongsTo(final @NotNull FilePath path) {
     if (myProject.isDisposed()) return false;
     final VcsRoot rootObject = myVcsManager.getVcsRootObjectFor(path);
     if (rootObject == null || rootObject.getVcs() != myVcs) {

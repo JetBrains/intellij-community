@@ -171,7 +171,7 @@ class VcsDirtyScopeManagerImpl(private val project: Project, coroutineScope: Cor
     LOG.debug { "dirty files: ${toString(filesConverted)}; dirty dirs: ${toString(dirsConverted)}; ${findFirstInterestingCallerClass()}" }
 
     var hasSomethingDirty = false
-    for (vcsRoot in ContainerUtil.union<VcsRoot>(filesConverted.keys, dirsConverted.keys)) {
+    for (vcsRoot in ContainerUtil.union(filesConverted.keys, dirsConverted.keys)) {
       val files = filesConverted.get(vcsRoot) ?: emptySet()
       val dirs = dirsConverted.get(vcsRoot) ?: emptySet()
 
@@ -223,6 +223,26 @@ class VcsDirtyScopeManagerImpl(private val project: Project, coroutineScope: Cor
 
   override fun dirDirtyRecursively(path: FilePath) {
     filePathsDirty(filesDirty = null, dirsRecursivelyDirty = setOf(path))
+  }
+
+  override fun rootDirty(root: VirtualFile) {
+    val vcsManager = ProjectLevelVcsManager.getInstance(project)
+    val vcsRoot = vcsManager.getVcsRootObjectFor(root)
+    if (vcsRoot == null) return
+
+    LOG.debug { "dirty root: ${vcsRoot}; ${findFirstInterestingCallerClass()}" }
+
+    var hasSomethingDirty = false
+
+    synchronized(LOCK) {
+      if (isReady) {
+        hasSomethingDirty = dirtBuilder.addDirtyRoot(vcsRoot)
+      }
+    }
+
+    if (hasSomethingDirty) {
+      ChangeListManagerImpl.getInstanceImpl(project).scheduleUpdateImpl()
+    }
   }
 
   /**

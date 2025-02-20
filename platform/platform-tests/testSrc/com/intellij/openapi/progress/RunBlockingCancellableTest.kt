@@ -4,7 +4,7 @@ package com.intellij.openapi.progress
 import com.intellij.concurrency.currentThreadOverriddenContextOrNull
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.impl.ModalityStateEx
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
@@ -274,7 +274,7 @@ class RunBlockingCancellableTest : CancellationTest() {
   @Test
   @RegistryKey("ide.run.blocking.cancellable.assert.in.tests", "true")
   fun `runBlockingCancellable is not allowed in wa`(): Unit = timeoutRunBlocking {
-    writeAction {
+    edtWriteAction {
       assertErrorLogged<java.lang.IllegalStateException> {
         runBlockingCancellable {
         }

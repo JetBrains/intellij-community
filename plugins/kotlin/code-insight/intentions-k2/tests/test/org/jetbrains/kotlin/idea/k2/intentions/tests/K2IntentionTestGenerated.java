@@ -5820,6 +5820,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/expectClass.kt");
         }
 
+        @TestMetadata("flexibleType.kt")
+        public void testFlexibleType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/flexibleType.kt");
+        }
+
         @TestMetadata("functionReference.kt")
         public void testFunctionReference() throws Exception {
             runTest("../../../idea/tests/testData/intentions/movePropertyToConstructor/functionReference.kt");

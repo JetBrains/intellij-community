@@ -26,7 +26,6 @@ import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal;
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.platform.workspace.storage.VersionedEntityStorage;
-import com.intellij.util.containers.ClassMap;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
@@ -120,9 +119,11 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   private void workspaceModelCommit() {
     ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
-      if (ExternalProjectsWorkspaceImpl.isDependencySubstitutionEnabled()) {
-        updateSubstitutions();
-      }
+
+      var workspaceModel = getModifiableWorkspaceModel();
+      workspaceModel.updateLibrarySubstitutions();
+      workspaceModel.commit();
+
       LibraryTable.ModifiableModel projectLibrariesModel = getModifiableProjectLibrariesModel();
       for (Map.Entry<Library, Library.ModifiableModel> entry: myModifiableLibraryModels.entrySet()) {
         Library fromLibrary = entry.getKey();
@@ -130,10 +131,14 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         Library.ModifiableModel modifiableModel = entry.getValue();
 
         // Modifiable model for the new library which was disposed via ModifiableModel.removeLibrary should also be disposed
+        if (fromLibrary instanceof LibraryEx fromLibraryEx && fromLibraryEx.isDisposed()) {
+          Disposer.dispose(modifiableModel);
+        }
         // Modifiable model for the old library which was removed from ProjectLibraryTable should also be disposed
-        if ((fromLibrary instanceof LibraryEx && ((LibraryEx)fromLibrary).isDisposed())
-            || (fromLibrary.getTable() != null && libraryName != null && projectLibrariesModel.getLibraryByName(libraryName) == null)
-            || (getModifiableWorkspace() != null && getModifiableWorkspace().isSubstituted(fromLibrary.getName()))) {
+        else if (fromLibrary.getTable() != null && libraryName != null && projectLibrariesModel.getLibraryByName(libraryName) == null) {
+          Disposer.dispose(modifiableModel);
+        }
+        else if (workspaceModel.isLibrarySubstituted(fromLibrary)) {
           Disposer.dispose(modifiableModel);
         }
         else {
@@ -218,22 +223,5 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   private void setIdeModelsProviderForModule(@NotNull Module module) {
     module.putUserData(MODIFIABLE_MODELS_PROVIDER_KEY, this);
-  }
-
-  // temporarily open access to state for the proxy
-  public ClassMap<ModifiableModel> getModifiableModels() {
-    return myModifiableModels;
-  }
-
-  public Map<Library, Library.ModifiableModel> getModifiableLibraryModels() {
-    return myModifiableLibraryModels;
-  }
-
-  public Map<Module, ModifiableFacetModel> getModifiableFacetModels() {
-    return myModifiableFacetModels;
-  }
-
-  public void forceUpdateSubstitutions() {
-    updateSubstitutions();
   }
 }

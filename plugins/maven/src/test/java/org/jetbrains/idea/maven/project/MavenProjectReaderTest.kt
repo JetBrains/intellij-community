@@ -612,7 +612,7 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
   fun testHandlingRecursionProprielyAndDoNotForgetCoClearRecursionGuard() = runBlocking {
     val repoPath = dir.resolve("repository")
-    repositoryPath = repoPath.toString()
+    repositoryPath = repoPath
 
     val parentFile = repoPath.resolve("test/parent/1/parent-1.pom")
     createFile(parentFile, createPomXml("""
@@ -907,7 +907,7 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
   fun testExpandingPropertiesFromParentInRepository() = runBlocking {
     val repoPath = dir.resolve("repository")
-    repositoryPath = repoPath.toString()
+    repositoryPath = repoPath
 
     val parentFile = repoPath.resolve("org/test/parent/1/parent-1.pom")
     createFile(parentFile, createPomXml("""

@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.TerminalFocusModel
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
@@ -30,11 +31,12 @@ import kotlin.math.min
  * @see TerminalOutputView
  * @see TerminalOutputController
  */
-internal class TerminalOutputView(
+@ApiStatus.Internal
+class TerminalOutputView(
   private val project: Project,
   session: BlockTerminalSession,
   settings: JBTerminalSystemSettingsProviderBase,
-  focusModel: TerminalFocusModel
+  focusModel: TerminalFocusModel,
 ) : Disposable {
   val controller: TerminalOutputController
   val component: JComponent

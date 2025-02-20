@@ -129,7 +129,6 @@ def __compute_sliced_data(table, fun, start_index=None, end_index=None, format=N
     if format is not None:
         _jb_float_options = pd.get_option('display.float_format')
 
-
     pd.set_option('display.max_columns', max_cols)
     pd.set_option('display.max_rows', max_rows)
     pd.set_option('display.max_colwidth', max_colwidth)
@@ -305,13 +304,10 @@ def __categorical_to_df(table):
     return pd.DataFrame(table)
 
 
-# In old versions of pandas max_colwidth accepted only Int-s
 def __get_tables_display_options():
     # type: () -> Tuple[None, Union[int, None], None]
-    import sys
-    if sys.version_info < (3, 0):
-        return None, MAX_COLWIDTH, None
     try:
+        # In pandas versions earlier than 1.0, max_colwidth must be set as an integer
         if int(pd.__version__.split('.')[0]) < 1:
             return None, MAX_COLWIDTH, None
     except ImportError:

@@ -14,12 +14,14 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
+import java.awt.Dimension
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import javax.swing.Action
+import javax.swing.*
 
 private const val PANEL_MAX_WIDTH = 1000
 private const val SEARCH_MAX_WIDTH = 400
@@ -92,6 +94,36 @@ internal fun SettingsDialog.createEditorToolbar(actions: List<Action>): DialogPa
   }
 
 }
+
+internal fun SettingsEditor.paneWithCorner(panel: JPanel, helpButton: JButton): JComponent {
+  val layeredPane: JLayeredPane = object : JBLayeredPane() {
+    override fun doLayout() {
+      val r = bounds
+      for (component in components) {
+        if (component === panel) {
+          component.setBounds(0, 0, r.width, r.height)
+        }
+        else if (component === helpButton) {
+          val d = component.preferredSize
+          component.setBounds(r.width - d.width-9, r.height - d.height-9, d.width, d.height)
+        }
+        else {
+          error("can't layout unexpected component: $component")
+        }
+      }
+    }
+
+    override fun getPreferredSize(): Dimension {
+      return panel.preferredSize
+    }
+  }
+  layeredPane.setLayer(panel, JLayeredPane.DEFAULT_LAYER)
+  layeredPane.add(panel)
+  layeredPane.setLayer(helpButton, JLayeredPane.PALETTE_LAYER)
+  layeredPane.add(helpButton)
+  return layeredPane
+}
+
 
 internal fun SettingsEditor.createWrapperPanel(splitter: OnePixelSplitter) : DialogPanel {
   splitter.border = JBUI.Borders.customLineRight(JBColor.border())

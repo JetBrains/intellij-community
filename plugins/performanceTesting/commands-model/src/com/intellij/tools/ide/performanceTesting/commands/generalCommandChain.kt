@@ -414,7 +414,7 @@ fun <T : CommandChain> T.delayType(
   delayMs: Int,
   text: String,
   calculateAnalyzesTime: Boolean = false,
-  disableWriteProtection: Boolean = false,
+  disableWriteProtection: Boolean = false
 ): T = apply {
   addCommand("${CMD_PREFIX}delayType", "$delayMs|$text|$calculateAnalyzesTime|$disableWriteProtection")
 }
@@ -1259,4 +1259,8 @@ fun <T : CommandChain> T.refreshVfsAfterMassChange(span: MassVfsRefreshSpan): T 
 
 fun <T : CommandChain> T.waitForVfsRefreshSelectedEditor(): T = apply {
   addCommand("${CMD_PREFIX}waitForVfsRefreshSelectedEditor")
+}
+
+fun <T : CommandChain> T.closeLookup(): T = apply {
+  addCommand("${CMD_PREFIX}closeLookup")
 }

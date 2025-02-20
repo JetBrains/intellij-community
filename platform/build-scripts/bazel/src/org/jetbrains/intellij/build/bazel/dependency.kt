@@ -80,6 +80,7 @@ internal fun generateDeps(
 
       if (dependencyModuleName == "intellij.libraries.compose.desktop" ||
           dependencyModuleName == "intellij.libraries.compose.foundation.desktop" ||
+          dependencyModuleName == "intellij.android.adt.ui.compose" ||
           dependencyModuleName == "intellij.platform.jewel.markdown.ideLafBridgeStyling" ||
           dependencyModuleName == "intellij.ml.llm.libraries.compose.runtime" ||
           dependencyModuleName == "intellij.platform.jewel.foundation") {
@@ -213,7 +214,8 @@ internal fun generateDeps(
 
       val libName = element.libraryReference.libraryName
       if (libName == "jetbrains-jewel-markdown-laf-bridge-styling" ||
-          libName == "jetbrains.kotlin.compose.compiler.plugin") {
+          libName == "jetbrains.kotlin.compose.compiler.plugin" ||
+          libName == "jetbrains-compose-ui-test-junit4-desktop") {
         plugins.add("@lib//:compose-plugin")
       }
     }

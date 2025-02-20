@@ -2818,7 +2818,6 @@ a:com.intellij.codeInspection.reference.RefElementImpl
 - setInitialized(Z):V
 - setPermanentEntry(Z):V
 - setReachable(Z):V
-- setReferencesBuilt(Z):V
 a:com.intellij.codeInspection.reference.RefEntityImpl
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.codeInspection.reference.RefEntity

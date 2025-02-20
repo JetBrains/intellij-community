@@ -169,6 +169,8 @@ java_library(
     "//json",
     "//java/typeMigration",
     "//plugins/terminal",
+    "//plugins/terminal/frontend",
+    "//plugins/terminal/backend",
     "//plugins/stats-collector:statsCollector",
     "//plugins/completion-ml-ranking-models:completionMlRankingModels",
     "//plugins/completion-ml-ranking:completionMlRanking",

@@ -903,6 +903,10 @@ public class StringUtilTest {
     assertEquals("\\uuu005\\a\\u1\\u22\\u333", StringUtil.replaceUnicodeEscapeSequences("\\uuu005\\a\\u1\\u22\\u333"));
     assertEquals("\\uA\\u1Z", StringUtil.replaceUnicodeEscapeSequences("\\u\\u0041\\u1\\u005a"));
     assertEquals("\\u004", StringUtil.replaceUnicodeEscapeSequences("\\u004"));
+    assertEquals("\\", StringUtil.replaceUnicodeEscapeSequences("\\"));
+    assertEquals("\\u", StringUtil.replaceUnicodeEscapeSequences("\\u"));
+    assertEquals("\\uu", StringUtil.replaceUnicodeEscapeSequences("\\uu"));
+    assertEquals("\\uu1", StringUtil.replaceUnicodeEscapeSequences("\\uu1"));
   }
 
   @Test

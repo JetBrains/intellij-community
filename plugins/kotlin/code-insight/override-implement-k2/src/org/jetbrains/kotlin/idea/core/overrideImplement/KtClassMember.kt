@@ -148,7 +148,15 @@ fun generateMember(
                 ): List<KtModifierKeywordToken> = buildList {
                     if (mode == MemberGenerateMode.OVERRIDE && containingSymbol?.isActual == true) {
                         //include actual modifier explicitly when containing class has modifier
-                        if (s.isActual) add(KtTokens.ACTUAL_KEYWORD)
+                        fun shouldHaveActualModifier(): Boolean {
+                            if (s.isActual) return true
+                            val containingInterface = s.containingSymbol
+                            return containingInterface is KaClassSymbol &&
+                                    containingSymbol.getExpectsForActual().any { (it as? KaClassSymbol)?.isSubClassOf(containingInterface) == true }
+                        }
+                        if (shouldHaveActualModifier()) {
+                            add(KtTokens.ACTUAL_KEYWORD)
+                        }
                     }
 
                     if (s is KaNamedFunctionSymbol) {

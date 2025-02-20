@@ -12,7 +12,7 @@ import com.intellij.java.JavaBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
@@ -78,10 +78,10 @@ private class FileNotInSourceRootService(
       }
 
       if (infoAndFile != null) {
-        writeAction {
-          if (!fileEditor.isValid) return@writeAction
+        edtWriteAction {
+          if (!fileEditor.isValid) return@edtWriteAction
           val psiFile = infoAndFile.second
-          if (!psiFile.isValid) return@writeAction
+          if (!psiFile.isValid) return@edtWriteAction
           val listener = object : VirtualFileListener {
             override fun fileMoved(event: VirtualFileMoveEvent) {
               val file = event.file

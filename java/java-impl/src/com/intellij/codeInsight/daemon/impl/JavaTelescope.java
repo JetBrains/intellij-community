@@ -17,6 +17,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,6 +118,10 @@ final class JavaTelescope {
     }
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
       return 0; // It's useless to have overridden markers for object.
+    }
+    
+    if (DeclarationSearchUtils.isTooExpensiveToSearch(aClass, false)) {
+      return 0;
     }
 
     AtomicInteger count = new AtomicInteger();

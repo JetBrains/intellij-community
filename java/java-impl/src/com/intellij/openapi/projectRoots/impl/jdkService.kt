@@ -7,7 +7,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -59,7 +59,7 @@ class ConfigureJdkService(val project: Project, private val coroutineScope: Coro
     val rootsManager = ProjectRootManager.getInstance(project)
     if (rootsManager.projectSdk == null) {
       coroutineScope.launch {
-        writeAction {
+        edtWriteAction {
           rootsManager.projectSdk = sdk
         }
 

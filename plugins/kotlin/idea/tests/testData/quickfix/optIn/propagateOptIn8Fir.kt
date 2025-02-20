@@ -5,6 +5,7 @@
 // ACTION: Opt in for 'UnstableApi' on 'foo'
 // ACTION: Propagate 'UnstableApi' opt-in requirement to 'foo'
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
+// K2_AFTER_ERROR: This class or interface requires opt-in to be implemented. Its usage must be marked with '@UnstableApi' or '@OptIn(UnstableApi::class)'
 // WITH_STDLIB
 @file:OptIn(ExperimentalSubclassOptIn::class)
 

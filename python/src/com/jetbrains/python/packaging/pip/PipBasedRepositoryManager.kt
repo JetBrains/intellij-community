@@ -23,7 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 
 @ApiStatus.Experimental
-abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRepositoryManager(project, sdk) {
+internal abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRepositoryManager(project, sdk) {
 
   override val repositories: List<PyPackageRepository>
     get() = listOf(PyPIPackageRepository) + service<PythonSimpleRepositoryCache>().repositories
@@ -128,7 +128,7 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
     }
   }
 
-  override suspend fun refreshCashes() {
+  override suspend fun refreshCaches() {
     service<PypiPackageCache>().forceReloadCache()
     service<PythonSimpleRepositoryCache>().refresh()
   }

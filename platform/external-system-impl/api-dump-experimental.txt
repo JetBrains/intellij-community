@@ -68,15 +68,6 @@ c:com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHan
 - a:getPathMapper():com.intellij.util.PathMapper
 com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension
 - *:isInternalError(java.lang.Throwable):Z
-*f:com.intellij.openapi.externalSystem.service.project.ModifiableWorkspace
-- addSubstitution(java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.roots.DependencyScope):V
-- commit():V
-- findModule(com.intellij.openapi.externalSystem.model.project.ProjectCoordinate):java.lang.String
-- getSubstitutedLibrary(java.lang.String):java.lang.String
-- isSubstituted(java.lang.String):Z
-- isSubstitution(java.lang.String,java.lang.String,com.intellij.openapi.roots.DependencyScope):Z
-- register(com.intellij.openapi.externalSystem.model.project.ProjectCoordinate,com.intellij.openapi.module.Module):V
-- removeSubstitution(java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.roots.DependencyScope):V
 f:com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox
 - com.intellij.openapi.ui.ComboBoxWithWidePopup
 - *:select(java.lang.String):V

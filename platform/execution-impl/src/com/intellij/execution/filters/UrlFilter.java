@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.execution.ExecutionBundle;
@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 
 public class UrlFilter implements Filter, DumbAware {
   private final Project myProject;
@@ -145,10 +145,13 @@ public class UrlFilter implements Filter, DumbAware {
   }
 
   public static final class FileUrlHyperlinkInfo extends LazyFileHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
-    private final @NotNull String myUrl;
-    final String myFilePath;
-    final int myDocumentLine;
-    final int myDocumentColumn;
+    private final @NotNull String url;
+    @ApiStatus.Internal
+    public final String filePath;
+    @ApiStatus.Internal
+    public final int documentLine;
+    @ApiStatus.Internal
+    public final int documentColumn;
 
     public FileUrlHyperlinkInfo(@NotNull Project project,
                                 @NotNull String filePath,
@@ -157,17 +160,17 @@ public class UrlFilter implements Filter, DumbAware {
                                 @NotNull String url,
                                 boolean useBrowser) {
       super(project, filePath, documentLine, documentColumn, useBrowser);
-      myUrl = url;
-      myFilePath = filePath;
-      myDocumentLine = documentLine;
-      myDocumentColumn = documentColumn;
+      this.url = url;
+      this.filePath = filePath;
+      this.documentLine = documentLine;
+      this.documentColumn = documentColumn;
     }
 
     @Override
     public void navigate(@NotNull Project project) {
       VirtualFile file = getVirtualFile();
       if (file == null || !file.isValid()) {
-        Messages.showErrorDialog(project, ExecutionBundle.message("message.cannot.find.file.0", StringUtil.trimMiddle(myUrl, 150)),
+        Messages.showErrorDialog(project, ExecutionBundle.message("message.cannot.find.file.0", StringUtil.trimMiddle(url, 150)),
                                  IdeBundle.message("title.cannot.open.file"));
         return;
       }
@@ -175,8 +178,8 @@ public class UrlFilter implements Filter, DumbAware {
     }
 
     @Override
-    public @Nullable ActionGroup getPopupMenuGroup(@NotNull MouseEvent event) {
-      return new OpenUrlHyperlinkInfo(myUrl).getPopupMenuGroup(event);
+    public @NotNull ActionGroup getPopupMenuGroup(@NotNull MouseEvent event) {
+      return new OpenUrlHyperlinkInfo(url).getPopupMenuGroup(event);
     }
   }
 }

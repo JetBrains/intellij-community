@@ -9,8 +9,8 @@ import com.intellij.testFramework.junit5.fixture.extensionPointFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 
 fun testSdkFixture(): TestFixture<TestSdkGenerator> = testFixture {
-  extensionPointFixture(SdkType.EP_NAME, SdkTestCase.TestSdkType).init()
-  extensionPointFixture(SdkDownload.EP_NAME, SdkTestCase.TestSdkDownloader).init()
+  extensionPointFixture(SdkType.EP_NAME) { SdkTestCase.TestSdkType }.init()
+  extensionPointFixture(SdkDownload.EP_NAME) { SdkTestCase.TestSdkDownloader }.init()
   TestSdkGenerator.reset()
   initialized(TestSdkGenerator) {
     TestSdkGenerator.reset()

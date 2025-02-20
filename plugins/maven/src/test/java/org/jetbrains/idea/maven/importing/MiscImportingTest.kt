@@ -292,8 +292,8 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testTakingProxySettingsIntoAccount() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1")
-    repositoryPath = helper.getTestDataPath("local1")
-    mavenGeneralSettings.setLocalRepository(repositoryPath)
+    repositoryPath = helper.getTestData("local1")
+    mavenGeneralSettings.setLocalRepository(repositoryPath.toString())
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -311,7 +311,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     // incremental sync doesn't download dependencies if effective pom dependencies haven't changed
     updateAllProjectsFullSync()
 
-    val jarFile = repositoryFile.resolve("junit/junit/4.0/junit-4.0.jar")
+    val jarFile = repositoryPath.resolve("junit/junit/4.0/junit-4.0.jar")
     assertTrue(jarFile.exists())
     projectsManager.listenForExternalChanges()
     waitForImportWithinTimeout {
@@ -347,7 +347,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   fun testMavenExtensionsAreLoadedAndAfterProjectsReadIsCalled() = runBlocking {
     try {
       val helper = MavenCustomRepositoryHelper(dir, "plugins")
-      repositoryPath = helper.getTestDataPath("plugins")
+      repositoryPath = helper.getTestData("plugins")
       mavenGeneralSettings.isWorkOffline = true
       importProjectAsync("""
                       <groupId>test</groupId>

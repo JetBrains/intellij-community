@@ -3,7 +3,7 @@ package git4idea.ignore
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -203,7 +203,7 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
 
     LOG.debug("Generate $GITIGNORE in $projectConfigDirPath for ${gitVcsKey.name}")
 
-    val gitIgnoreFile = writeAction {
+    val gitIgnoreFile = edtWriteAction {
       projectConfigDirVFile.createChildData(projectConfigDirVFile, GITIGNORE)
     }
 

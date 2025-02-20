@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
@@ -39,7 +39,7 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
   private suspend fun createNewModule(id: MavenId) {
     myBuilder!!.projectId = id
     waitForImportWithinTimeout {
-      writeAction {
+      edtWriteAction {
         val model = getInstance(project).getModifiableModel()
         myBuilder!!.createModule(model)
         model.commit()

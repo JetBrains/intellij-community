@@ -748,9 +748,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   }
 
   @VisibleForTesting
-  record HashMapSegmentLayout(int segmentIndex,
-                              int segmentSize,
-                              @NotNull ByteBuffer segmentBuffer) implements HashTableData {
+  @ApiStatus.Internal
+  public record HashMapSegmentLayout(int segmentIndex, int segmentSize, @NotNull ByteBuffer segmentBuffer) implements HashTableData {
     //@formatter:off
     private static final int LIVE_ENTRIES_COUNT_OFFSET  =  0; //int32
     private static final int HASH_SUFFIX_OFFSET         =  4; //int32
@@ -761,7 +760,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     private static final int HASHTABLE_SLOTS_OFFSET     = STATIC_HEADER_SIZE; //int32[N]
     //@formatter:on
 
-    HashMapSegmentLayout {
+    public HashMapSegmentLayout {
       if (segmentIndex < 1) {
         throw new IllegalArgumentException("segmentIndex(=" + segmentIndex + ") must be >=1 (0-th segment is a header)");
       }
@@ -884,7 +883,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
         int key = entryKey(i);
         int value = entryValue(i);
         if (key != 0) {
-          sb.append("\t[" + i + "]=(" + key + ", " + value + ")\n");
+          sb.append("\t[").append(i).append("]=(").append(key).append(", ").append(value).append(")\n");
         }
       }
       return sb.toString();

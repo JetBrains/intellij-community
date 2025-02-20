@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterActionFix;
@@ -31,7 +32,8 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-final class ComponentNotRegisteredInspection extends DevKitJvmInspection.ForClass {
+@ApiStatus.Internal
+public final class ComponentNotRegisteredInspection extends DevKitJvmInspection.ForClass {
   private static final Logger LOG = Logger.getInstance(ComponentNotRegisteredInspection.class);
 
   public boolean CHECK_ACTIONS = true;

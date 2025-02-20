@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
@@ -65,7 +65,7 @@ class GradleTestFixtureImpl(
     fileFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
     fileFixture.setUp()
     runBlocking {
-      writeAction {
+      edtWriteAction {
         testRoot = fileFixture.findOrCreateDir(className)
           .findOrCreateDirectory(methodName)
           .findOrCreateDirectory(gradleVersion.version)

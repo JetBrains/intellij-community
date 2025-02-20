@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.format;
 
 import com.intellij.openapi.util.Pair;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import it.unimi.dsi.fastutil.ints.Int2IntFunction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -420,7 +421,8 @@ public final class MessageFormatUtil {
     NUMBER, DATE, TIME, CHOICE
   }
 
-  enum MessageFormatParsedType {
+  @ApiStatus.Internal
+  public enum MessageFormatParsedType {
     STRING, FORMAT_ELEMENT, NUMBER /*for choice format*/
   }
 
@@ -470,7 +472,8 @@ public final class MessageFormatUtil {
   public record MessageFormatPlaceholder(int index, @NotNull TextRange range, boolean isString) implements FormatPlaceholder {
   }
 
-  static class MessageFormatPart {
+  @ApiStatus.Internal
+  public static final class MessageFormatPart {
     private final @NotNull StringBuilder text = new StringBuilder();
     private final @NotNull MessageFormatParsedType parsedType;
     private final @Nullable MessageFormatUtil.MessageFormatElement messageFormatElement;
@@ -505,7 +508,8 @@ public final class MessageFormatUtil {
     }
   }
 
-  static class MessageFormatElement {
+  @ApiStatus.Internal
+  public static final class MessageFormatElement {
     private final StringBuilder indexSegment = new StringBuilder();
     private final StringBuilder formatTypeSegment = new StringBuilder();
     private final StringBuilder formatStyleSegment = new StringBuilder();
@@ -594,7 +598,8 @@ public final class MessageFormatUtil {
   public record MessageFormatError(@NotNull MessageFormatErrorType errorType, int fromIndex, int toIndex) {
   }
 
-  static class MessageHolder {
+  @ApiStatus.Internal
+  public static final class MessageHolder {
     private final String pattern;
     private final List<MessageFormatPart> parts = new ArrayList<>();
     private final List<MessageFormatError> errors = new ArrayList<>();

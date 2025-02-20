@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.impl.dataRules.GetDataRule;
@@ -6,14 +6,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-final class GetDataRuleBean extends KeyedLazyInstanceEP<GetDataRule> {
+@ApiStatus.Internal
+public final class GetDataRuleBean extends KeyedLazyInstanceEP<GetDataRule> {
   @Attribute(value = "type", converter = TypeConverter.class)
   public GetDataRuleType type = GetDataRuleType.PROVIDER;
   @Attribute("injectedContext")
   public boolean injectedContext;
-
 
   static final class TypeConverter extends Converter<GetDataRuleType> {
     @Override

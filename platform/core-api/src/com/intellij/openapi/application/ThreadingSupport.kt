@@ -10,6 +10,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.function.BooleanSupplier
 import kotlin.coroutines.CoroutineContext
+import kotlin.jvm.Throws
 
 @ApiStatus.Internal
 interface ThreadingSupport {
@@ -40,37 +41,6 @@ interface ThreadingSupport {
    */
   @ApiStatus.Internal
   fun isWriteIntentLocked(): Boolean
-
-  /**
-   * Requests pooled thread to execute the action.
-   *
-   * This pool is an
-   *   - Unbounded.
-   *   - Application-wide, always active, non-shutdownable singleton.
-   *
-   * You can use this pool for long-running and/or IO-bound tasks.
-   *
-   * @param action to be executed
-   * @return future result
-   */
-  @RequiresBlockingContext
-  fun executeOnPooledThread(action: Runnable, expired: BooleanSupplier): Future<*>
-
-  /**
-   * Requests pooled thread to execute the action.
-   *
-   * This pool is an
-   *   - Unbounded.
-   *   - Application-wide, always active, non-shutdownable singleton.
-   *
-   * You can use this pool for long-running and/or IO-bound tasks.
-   *
-   * @param action to be executed
-   * @return future result
-   */
-  @RequiresBlockingContext
-  fun <T> executeOnPooledThread(action: Callable<T>, expired: BooleanSupplier): Future<T>
-
 
   /**
    * Runs the specified action under the write-intent lock. Can be called from any thread. The action is executed immediately
@@ -312,6 +282,16 @@ interface ThreadingSupport {
   @ApiStatus.Internal
   fun setSuspendingWriteActionListener(listener: SuspendingWriteActionListener)
 
+  @ApiStatus.Internal
+  fun removeSuspendingWriteActionListener(listener: SuspendingWriteActionListener)
+
+  @ApiStatus.Internal
+  fun setLegacyIndicatorProvider(provider: LegacyProgressIndicatorProvider)
+
+  @ApiStatus.Internal
+  fun removeLegacyIndicatorProvider(provider: LegacyProgressIndicatorProvider)
+
+
   /**
    * Removes a [LockAcquisitionListener].
    *
@@ -323,21 +303,13 @@ interface ThreadingSupport {
   fun removeLockAcquisitionListener(listener: LockAcquisitionListener)
 
   /**
-   * DO NOT USE
+   * Prevents any attempt to use R/W locks inside [action].
    */
   @ApiStatus.Internal
-  // @Throws(CannotRunReadActionException::class)
-  fun executeByImpatientReader(runnable: Runnable)
+  @Throws(LockAccessDisallowed::class)
+  fun prohibitTakingLocksInsideAndRun(action: Runnable, failSoftly: Boolean)
 
-  /**
-   * DO NOT USE
-   */
-  @ApiStatus.Internal
-  fun isInImpatientReader(): Boolean
-
-  /**
-   * DO NOT USE
-   */
+  /** DO NOT USE */
   @ApiStatus.Internal
   fun isInsideUnlockedWriteIntentLock(): Boolean
 
@@ -352,4 +324,6 @@ interface ThreadingSupport {
 
   @ApiStatus.Internal
   fun isInTopmostReadAction(): Boolean
+
+  class LockAccessDisallowed(override val message: String) : IllegalStateException(message)
 }

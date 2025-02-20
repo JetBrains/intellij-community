@@ -70,6 +70,7 @@ class BeforeResolveHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHi
         val eq = argument.equalsToken ?: return
         val parent = argument.parent
         highlightName(argument.project,
+                      argument,
             TextRange(argumentName.startOffset, eq.endOffset),
             if (parent is KtValueArgumentList && parent.parent is KtAnnotationEntry)
                 KotlinHighlightInfoTypeSemanticNames.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES

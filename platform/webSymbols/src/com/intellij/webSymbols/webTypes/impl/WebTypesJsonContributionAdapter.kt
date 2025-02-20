@@ -21,6 +21,7 @@ import com.intellij.webSymbols.webTypes.WebTypesScopeBase
 import com.intellij.webSymbols.webTypes.WebTypesSymbolBase
 import com.intellij.webSymbols.webTypes.json.*
 import java.util.*
+import javax.swing.Icon
 
 abstract class WebTypesJsonContributionAdapter private constructor(internal val contribution: BaseContribution,
                                                                    internal val jsonOrigin: WebTypesJsonOrigin,
@@ -54,7 +55,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
 
   override val framework: String? get() = jsonOrigin.framework
 
-  val icon get() = contribution.icon?.let { IconLoader.createLazy { jsonOrigin.loadIcon(it) ?: EmptyIcon.ICON_0 } }
+  val icon: Icon? get() = contribution.icon?.let { IconLoader.createLazy { jsonOrigin.loadIcon(it) ?: EmptyIcon.ICON_0 } }
 
   abstract override val name: String
   open val contributionName: String = contribution.name ?: "<no-name>"

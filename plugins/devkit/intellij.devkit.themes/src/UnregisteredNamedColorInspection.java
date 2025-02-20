@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -15,6 +15,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,8 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import java.util.Collection;
 import java.util.List;
 
-final class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
+@ApiStatus.Internal
+public final class UnregisteredNamedColorInspection extends DevKitUastInspectionBase {
 
   private static final String JB_COLOR_FQN = JBColor.class.getCanonicalName();
   private static final String NAMED_COLOR_METHOD_NAME = "namedColor";

@@ -8,7 +8,7 @@ import com.intellij.cce.metric.ApiCallExtractorProvider
 import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadActionBlocking
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -34,11 +34,11 @@ class InEditorGeneratedCodeIntegrator : GeneratedCodeIntegrator {
 class JavaApiCallExtractor(private val generatedCodeIntegrator: GeneratedCodeIntegrator) : ApiCallExtractor {
   override suspend fun extractApiCalls(code: String, project: Project, tokenProperties: TokenProperties): List<String> {
     val methodName = tokenProperties.additionalProperty(METHOD_NAME_PROPERTY)!!
-    val psiFileWithGeneratedCode = writeAction { createPsiFile(code, project, "dummy1.java") }
+    val psiFileWithGeneratedCode = edtWriteAction { createPsiFile(code, project, "dummy1.java") }
     val method = extractMethodFromGeneratedSnippet(project, psiFileWithGeneratedCode, methodName) ?: return emptyList()
 
     val integratedCode = generatedCodeIntegrator.integrate(project, method)
-    val psiFileWithIntegratedCode = writeAction { createPsiFile(integratedCode, project, "dummy2.java") }
+    val psiFileWithIntegratedCode = edtWriteAction { createPsiFile(integratedCode, project, "dummy2.java") }
 
     return smartReadActionBlocking(project) {
       val method = psiFileWithIntegratedCode.findMethodsByName(methodName).firstOrNull { it.text == method }

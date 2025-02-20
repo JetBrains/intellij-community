@@ -1,5 +1,6 @@
 // "Create property 'v2' as constructor parameter" "true"
 // ERROR: No value passed for parameter 'v2'
+// K2_AFTER_ERROR: No value passed for parameter 'v2'.
 
 data class DataToFix(val p1: Int)
 fun dataContext() {

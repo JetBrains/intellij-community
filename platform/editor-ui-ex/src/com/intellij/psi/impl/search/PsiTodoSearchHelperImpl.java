@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.TodoCacheManager;
-import com.intellij.psi.search.IndexPatternProvider;
-import com.intellij.psi.search.PsiTodoSearchHelper;
-import com.intellij.psi.search.TodoItem;
-import com.intellij.psi.search.TodoPattern;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
@@ -29,14 +26,14 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
   }
 
   @Override
-  public PsiFile @NotNull [] findFilesWithTodoItems() {
-    Set<PsiFile> files = new HashSet<>();
+  public @NotNull PsiFile @NotNull [] findFilesWithTodoItems() {
+    Set<@NotNull PsiFile> files = new HashSet<>();
     processFilesWithTodoItems(new CommonProcessors.CollectProcessor<>(files));
     return PsiUtilCore.toPsiFileArray(files);
   }
 
   @Override
-  public boolean processFilesWithTodoItems(@NotNull Processor<? super PsiFile> processor) {
+  public boolean processFilesWithTodoItems(@NotNull Processor<? super @NotNull PsiFile> processor) {
     return TodoCacheManager.getInstance(myProject).processFilesWithTodoItems(processor);
   }
 
@@ -46,37 +43,39 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
   }
 
   @Override
-  public TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset) {
+  public @NotNull TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset) {
     List<TodoItem> occurrences = new ArrayList<>();
     TodoItemCreator todoItemCreator = new TodoItemCreator();
     boolean multiLine = TodoConfiguration.getInstance().isMultiLine();
     for (IndexPatternProvider provider : IndexPatternProvider.EP_NAME.getExtensionList()) {
-      IndexPatternSearch.search(file, provider, startOffset, endOffset, multiLine).asIterable().forEach(occurrence -> {
+      Collection<IndexPatternOccurrence> collection = IndexPatternSearch.search(file, provider, startOffset, endOffset, multiLine).findAll();
+      for (IndexPatternOccurrence occurrence : collection) {
         if (occurrence.getTextRange().intersects(startOffset, endOffset)) {
           occurrences.add(todoItemCreator.createTodo(occurrence));
         }
-      });
+      }
     }
     return occurrences.isEmpty() ? TodoItem.EMPTY_ARRAY : occurrences.toArray(TodoItem.EMPTY_ARRAY);
   }
 
   @Override
-  public TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file) {
+  public @NotNull TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file) {
     return findTodoItemsLight(file, 0, file.getTextLength());
   }
 
   @Override
-  public TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset) {
+  public @NotNull TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset) {
     Collection<TodoItem> occurrences = new ArrayList<>();
     TodoItemCreator todoItemCreator = new TodoItemCreator();
     for (IndexPatternProvider provider : IndexPatternProvider.EP_NAME.getExtensionList()) {
-      LightIndexPatternSearch.SEARCH.createQuery(
+      Collection<IndexPatternOccurrence> collection = LightIndexPatternSearch.SEARCH.createQuery(
         new IndexPatternSearch.SearchParameters(file, provider, TodoConfiguration.getInstance().isMultiLine())
-      ).asIterable().forEach(occurrence -> {
+      ).findAll();
+      for (IndexPatternOccurrence occurrence : collection) {
         if (occurrence.getTextRange().intersects(startOffset, endOffset)) {
           occurrences.add(todoItemCreator.createTodo(occurrence));
         }
-      });
+      }
     }
     return occurrences.isEmpty() ? TodoItem.EMPTY_ARRAY : occurrences.toArray(TodoItem.EMPTY_ARRAY);
   }

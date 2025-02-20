@@ -345,84 +345,84 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPrio
   }
 
   companion object {
-    const val NAMESPACE_HTML = "html"
-    const val NAMESPACE_CSS = "css"
-    const val NAMESPACE_JS = "js"
+    const val NAMESPACE_HTML: String = "html"
+    const val NAMESPACE_CSS: String = "css"
+    const val NAMESPACE_JS: String = "js"
 
-    const val KIND_HTML_ELEMENTS = "elements"
-    const val KIND_HTML_ATTRIBUTES = "attributes"
-    const val KIND_HTML_ATTRIBUTE_VALUES = "values"
-    const val KIND_HTML_SLOTS = "slots"
+    const val KIND_HTML_ELEMENTS: String = "elements"
+    const val KIND_HTML_ATTRIBUTES: String = "attributes"
+    const val KIND_HTML_ATTRIBUTE_VALUES: String = "values"
+    const val KIND_HTML_SLOTS: String = "slots"
 
-    const val KIND_CSS_PROPERTIES = "properties"
-    const val KIND_CSS_PSEUDO_ELEMENTS = "pseudo-elements"
-    const val KIND_CSS_PSEUDO_CLASSES = "pseudo-classes"
-    const val KIND_CSS_FUNCTIONS = "functions"
-    const val KIND_CSS_CLASSES = "classes"
-    const val KIND_CSS_PARTS = "parts"
+    const val KIND_CSS_PROPERTIES: String = "properties"
+    const val KIND_CSS_PSEUDO_ELEMENTS: String = "pseudo-elements"
+    const val KIND_CSS_PSEUDO_CLASSES: String = "pseudo-classes"
+    const val KIND_CSS_FUNCTIONS: String = "functions"
+    const val KIND_CSS_CLASSES: String = "classes"
+    const val KIND_CSS_PARTS: String = "parts"
 
-    const val KIND_JS_EVENTS = "events"
-    const val KIND_JS_PROPERTIES = "properties"
-    const val KIND_JS_SYMBOLS = "symbols"
-    const val KIND_JS_STRING_LITERALS = "string-literals"
+    const val KIND_JS_EVENTS: String = "events"
+    const val KIND_JS_PROPERTIES: String = "properties"
+    const val KIND_JS_SYMBOLS: String = "symbols"
+    const val KIND_JS_STRING_LITERALS: String = "string-literals"
 
-    val HTML_ELEMENTS = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ELEMENTS)
-    val HTML_ATTRIBUTES = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES)
-    val HTML_ATTRIBUTE_VALUES = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ATTRIBUTE_VALUES)
-    val HTML_SLOTS = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_SLOTS)
+    val HTML_ELEMENTS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ELEMENTS)
+    val HTML_ATTRIBUTES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES)
+    val HTML_ATTRIBUTE_VALUES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ATTRIBUTE_VALUES)
+    val HTML_SLOTS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_SLOTS)
 
-    val CSS_PROPERTIES = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PROPERTIES)
-    val CSS_PSEUDO_ELEMENTS = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PSEUDO_ELEMENTS)
-    val CSS_PSEUDO_CLASSES = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PSEUDO_CLASSES)
-    val CSS_FUNCTIONS = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_FUNCTIONS)
-    val CSS_CLASSES = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_CLASSES)
-    val CSS_PARTS = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PARTS)
+    val CSS_PROPERTIES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PROPERTIES)
+    val CSS_PSEUDO_ELEMENTS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PSEUDO_ELEMENTS)
+    val CSS_PSEUDO_CLASSES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PSEUDO_CLASSES)
+    val CSS_FUNCTIONS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_FUNCTIONS)
+    val CSS_CLASSES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_CLASSES)
+    val CSS_PARTS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PARTS)
 
-    val JS_EVENTS = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_EVENTS)
-    val JS_PROPERTIES = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_PROPERTIES)
-    val JS_SYMBOLS = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_SYMBOLS)
-    val JS_STRING_LITERALS = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_STRING_LITERALS)
+    val JS_EVENTS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_EVENTS)
+    val JS_PROPERTIES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_PROPERTIES)
+    val JS_SYMBOLS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_SYMBOLS)
+    val JS_STRING_LITERALS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_STRING_LITERALS)
 
     /**
      * Supported by `html/elements` and `html/attributes` symbols,
      * allows to inject the specified language into HTML element text or HTML attribute value.
      */
-    const val PROP_INJECT_LANGUAGE = "inject-language"
+    const val PROP_INJECT_LANGUAGE: String = "inject-language"
 
     /**
      * If a symbol uses a RegEx pattern, usually it will be displayed in a documentation
      * popup section "pattern". Setting this property to `true` hides that section.
      */
-    const val PROP_DOC_HIDE_PATTERN = "doc-hide-pattern"
+    const val PROP_DOC_HIDE_PATTERN: String = "doc-hide-pattern"
 
     /**
      * By default, all symbols show up in code completion.
      * Setting this property to true prevents a symbol from showing up in the code completion.
      */
-    const val PROP_HIDE_FROM_COMPLETION = "hide-from-completion"
+    const val PROP_HIDE_FROM_COMPLETION: String = "hide-from-completion"
 
     /**
      * Name of boolean property used by `css/pseudo-elements` and `css/pseudo-classes` symbols
      * to specify whether they require arguments. Defaults to false.
      **/
-    const val PROP_ARGUMENTS = "arguments"
+    const val PROP_ARGUMENTS: String = "arguments"
 
     /**
      * Name of boolean property used by `js/properties` symbols to specify whether
      * the property is read-only. Defaults to false.
      **/
-    const val PROP_READ_ONLY = "read-only"
+    const val PROP_READ_ONLY: String = "read-only"
 
     /**
      * Name of [WebSymbolJsKind] property used by `js/symbols` symbols to specify kind of the JS symbol.
      * By default, JS symbol is treated as [WebSymbolJsKind.Variable].
      **/
-    const val PROP_KIND = "kind"
+    const val PROP_KIND: String = "kind"
 
     /**
      * Name of [WebSymbolJsKind] property used by other symbols to specify kind of the JS symbol.
      * By default, JS symbol is treated as [WebSymbolJsKind.Variable].
      **/
-    const val PROP_JS_SYMBOL_KIND = "js-symbol-kind"
+    const val PROP_JS_SYMBOL_KIND: String = "js-symbol-kind"
   }
 }

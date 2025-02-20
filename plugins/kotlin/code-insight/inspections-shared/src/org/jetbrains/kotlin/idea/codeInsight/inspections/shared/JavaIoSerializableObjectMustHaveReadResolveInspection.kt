@@ -1,10 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -41,12 +43,12 @@ internal class JavaIoSerializableObjectMustHaveReadResolveInspection : AbstractK
     }
 }
 
-private class ImplementReadResolveQuickFix : LocalQuickFix {
-    override fun getFamilyName(): String = KotlinBundle.message("inspection.java.io.serializable.object.must.have.read.resolve.quick.fix.name")
+private class ImplementReadResolveQuickFix : PsiUpdateModCommandQuickFix() {
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("inspection.java.io.serializable.object.must.have.read.resolve.quick.fix.name")
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
         val objectDeclaration =
-            (descriptor.psiElement as? LeafPsiElement)?.let { it.parent as? KtObjectDeclaration } ?: return
+            (element as? LeafPsiElement)?.let { it.parent as? KtObjectDeclaration } ?: return
         val readResolveDeclaration =
             KtPsiFactory(project).createDeclarationByPattern<KtFunction>("private fun readResolve(): Any = $0", objectDeclaration.name ?: return)
         val body = objectDeclaration.getOrCreateBody()

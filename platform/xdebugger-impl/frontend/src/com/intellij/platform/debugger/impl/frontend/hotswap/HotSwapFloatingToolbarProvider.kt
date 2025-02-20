@@ -176,7 +176,7 @@ private val logger = logger<HotSwapFloatingToolbarProvider>()
 @ApiStatus.Internal
 internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
 
-  override val backgroundAlpha: Float = BACKGROUND_ALPHA
+  override val backgroundAlpha: Float = JBUI.CurrentTheme.FloatingToolbar.TRANSLUCENT_BACKGROUND_ALPHA
 
   override val showingTime: Int = SHOWING_TIME_MS
 
@@ -262,7 +262,6 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
     }
 
   companion object {
-    private const val BACKGROUND_ALPHA = 0.9f
     private const val SHOWING_TIME_MS = 500
     private const val HIDING_TIME_MS = 500
   }

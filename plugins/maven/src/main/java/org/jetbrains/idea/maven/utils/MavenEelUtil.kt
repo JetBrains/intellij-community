@@ -8,7 +8,7 @@ import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.impl.DummyProject
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -440,7 +440,7 @@ object MavenEelUtil  {
         val eel = project.getEelDescriptor().upgrade()
         val sdkPath = service<JdkFinder>().suggestHomePaths(project).firstOrNull()
         if (sdkPath != null) {
-          writeAction {
+          edtWriteAction {
             val jdkName = SdkConfigurationUtil.createUniqueSdkName(JavaSdk.getInstance(), sdkPath,
                                                                    ProjectJdkTable.getInstance().allJdks.toList())
             val newJdk = JavaSdk.getInstance().createJdk(jdkName, sdkPath)

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.startOffsetInAncestor
 import com.intellij.webSymbols.WebSymbol
 import org.jetbrains.annotations.ApiStatus
 
@@ -48,17 +49,9 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
   companion object {
     @JvmStatic
     @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use com.intellij.psi.util.startOffsetIn() instead")
-    fun PsiElement.startOffsetIn(parent: PsiElement): Int {
-      var result = 0
-      var tmp: PsiElement? = this
-      while (tmp != parent && tmp != null) {
-        result += tmp.startOffsetInParent
-        tmp = tmp.parent
-      }
-      return if (tmp != null)
-        result
-      else -1
-    }
+    @Deprecated(message = "Use com.intellij.psi.util.startOffsetInAncestor() instead",
+                replaceWith = ReplaceWith("startOffsetInAncestor(parent)"))
+    fun PsiElement.startOffsetIn(parent: PsiElement): Int =
+      startOffsetInAncestor(parent)
   }
 }

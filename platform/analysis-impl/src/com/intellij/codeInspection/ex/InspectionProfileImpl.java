@@ -1125,9 +1125,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     protected boolean areSettingsMerged(@NotNull Map<String, Element> settings, @NotNull Element element) {
       // returns true when settings are default, so defaults will not be saved in profile
       boolean enabled = myWrapper.isEnabledByDefault();
-      return Boolean.parseBoolean(element.getAttributeValue("enabled")) == enabled &&
-             Boolean.parseBoolean(element.getAttributeValue("enabled_by_default")) == enabled &&
-             myWrapper.getDefaultLevel().toString().equals(element.getAttributeValue("level")) &&
+      return Boolean.parseBoolean(element.getAttributeValue(ToolsImpl.ENABLED_ATTRIBUTE)) == enabled &&
+             Boolean.parseBoolean(element.getAttributeValue(ToolsImpl.ENABLED_BY_DEFAULT_ATTRIBUTE)) == enabled &&
+             myWrapper.getDefaultLevel().getName().equals(element.getAttributeValue(ToolsImpl.LEVEL_ATTRIBUTE)) &&
              element.getChildren("scope").isEmpty();
     }
   }

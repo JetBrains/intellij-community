@@ -1,0 +1,64 @@
+### auto-generated section `build intellij.terminal.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "backend",
+  module_name = "intellij.terminal.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//plugins/terminal",
+    "@lib//:jediterm-core",
+    "@lib//:jediterm-ui",
+    "@lib//:pty4j",
+    "//platform/util/coroutines",
+    "//platform/kernel/backend",
+    "//platform/project/shared:project",
+    "//platform/execution-impl",
+    "//platform/core-impl",
+  ],
+  runtime_deps = [":backend_resources"]
+)
+
+jvm_library(
+  name = "backend_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [":backend"],
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core-impl",
+    "//plugins/terminal",
+    "//plugins/terminal:terminal_test_lib",
+    "@lib//:jediterm-core",
+    "@lib//:jediterm-ui",
+    "@lib//:pty4j",
+    "//platform/util/coroutines",
+    "//platform/kernel/backend",
+    "//platform/project/shared:project",
+    "//platform/execution-impl",
+    "//platform/core-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:junit4",
+    "@lib//:assert_j",
+    "@lib//:guava",
+  ],
+  runtime_deps = [":backend_resources"]
+)
+
+jvm_test(
+  name = "backend_test",
+  runtime_deps = [":backend_test_lib"]
+)
+### auto-generated section `build intellij.terminal.backend` end

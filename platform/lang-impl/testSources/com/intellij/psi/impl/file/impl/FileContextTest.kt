@@ -3,7 +3,7 @@ package com.intellij.psi.impl.file.impl
 
 import com.intellij.codeInsight.multiverse.*
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
@@ -126,12 +126,12 @@ private fun CodeInsightContext.asText() = when (this) {
   else -> this.toString()
 }
 
-internal fun TestFixture<Project>.withSharedSourceEnabled(): TestFixture<Project> = testFixture("shared-source-enabling-fixture") {
+fun TestFixture<Project>.withSharedSourceEnabled(): TestFixture<Project> = testFixture("shared-source-enabling-fixture") {
   MultiverseTestEnabler.enableSharedSourcesForTheNextProject()
   initialized(this@withSharedSourceEnabled.init()) {}
 }
 
-internal fun sharedSourceRootFixture(vararg moduleFixtures: TestFixture<Module>): TestFixture<PsiDirectory> = testFixture("shared-source-root-fixture") {
+fun sharedSourceRootFixture(vararg moduleFixtures: TestFixture<Module>): TestFixture<PsiDirectory> = testFixture("shared-source-root-fixture") {
   require(moduleFixtures.isNotEmpty())
 
   for (fixture in moduleFixtures) {
@@ -143,7 +143,7 @@ internal fun sharedSourceRootFixture(vararg moduleFixtures: TestFixture<Module>)
   val root = sharedSourceRoot.init().virtualFile
 
   // make sharedSourceRoot also the root of module 2
-  writeAction {
+  edtWriteAction {
     for (fixture in moduleFixtures) {
       if (fixture === firstFixture) continue
 

@@ -1,8 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -12,12 +13,10 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 public interface MavenLogEntryReader {
-
   void pushBack();
 
   @Nullable
   MavenLogEntry readLine();
-
 
   /**
    * Read lines while predicate is true
@@ -53,17 +52,18 @@ public interface MavenLogEntryReader {
     return null;
   }
 
-  class MavenLogEntry {
-    final @Nullable LogMessageType myType;
-    final @NotNull String myLine;
+  @ApiStatus.Internal
+  final class MavenLogEntry {
+    public final @Nullable LogMessageType myType;
+    public final @NotNull String myLine;
 
     @TestOnly
-    MavenLogEntry(@NotNull String line, LogMessageType type) {
+    public MavenLogEntry(@NotNull String line, LogMessageType type) {
       myLine = line;
       myType = type;
     }
 
-    MavenLogEntry(@NotNull String line) {
+    public MavenLogEntry(@NotNull String line) {
       line = clearProgressCarriageReturns(line);
       myType = LogMessageType.determine(line);
       myLine = clearLine(myType, line);
@@ -87,10 +87,9 @@ public interface MavenLogEntryReader {
       return myLine;
     }
 
-
     @Override
     public String toString() {
-      return myType == null ? myLine : "[" + myType.toString() + "] " + myLine;
+      return myType == null ? myLine : "[" + myType + "] " + myLine;
     }
 
     @Override

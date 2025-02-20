@@ -8,6 +8,7 @@ import com.intellij.platform.testFramework.assertion.collectionAssertion.Collect
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.entities
+import org.junit.jupiter.api.Assertions
 
 object ModuleAssertions {
 
@@ -53,5 +54,18 @@ object ModuleAssertions {
   fun assertModulesContains(storage: EntityStorage, expectedNames: List<String>) {
     val actualNames = storage.entities<ModuleEntity>().map { it.name }.toList()
     assertContainsUnordered(expectedNames, actualNames)
+  }
+
+  fun assertModuleEntity(project: Project, name: String, assertion: (ModuleEntity) -> Unit) =
+    assertModuleEntity(project.workspaceModel.currentSnapshot, name, assertion)
+
+  fun assertModuleEntity(storage: EntityStorage, name: String, assertion: (ModuleEntity) -> Unit) {
+    storage.entities<ModuleEntity>()
+      .find { it.name == name }
+      .let { module ->
+        Assertions.assertNotNull(module, "Cannot find '$name' module")
+        Assertions.assertEquals(name, module!!.name)
+        assertion(module)
+      }
   }
 }

@@ -20,6 +20,8 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orde
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.ExecuteRunConfigurationsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.RunConfigurationChecksDsl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.runConfigurations.RunConfigurationsChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.sources.LibrarySourcesCheckDsl
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.sources.LibrarySourcesChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.WorkspaceChecksDsl
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
@@ -85,7 +87,8 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
                                                       HighlightingCheckDsl,
                                                       TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl,
                                                       AllFilesUnderContentRootConfigurationDsl, RunConfigurationChecksDsl,
-                                                      CustomGradlePropertiesDsl, DocumentationCheckerDsl, KotlinMppTestHooksDsl {
+                                                      CustomGradlePropertiesDsl, DocumentationCheckerDsl, KotlinMppTestHooksDsl,
+                                                      LibrarySourcesCheckDsl {
 
     internal val installedFeatures = listOf<TestFeature<*>>(
         GradleProjectsPublishingTestsFeature,
@@ -105,6 +108,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         ReferenceTargetChecker,
         KotlinMppTestHooks,
         LibraryKindsChecker,
+        LibrarySourcesChecker
     )
 
     private val context: KotlinMppTestsContextImpl = KotlinMppTestsContextImpl(installedFeatures)

@@ -6,10 +6,10 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampl
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.*
 import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.util.projectWizard.ProjectConfigurator
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
-import com.intellij.ide.wizard.RootNewProjectWizardStep
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
@@ -63,9 +63,12 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
       linkMavenProject(project, builder)
     }
 
+    override fun createProjectConfigurator(): ProjectConfigurator? {
+      return builder.createProjectConfigurator()
+    }
+
     init {
       data.putUserData(MavenJavaNewProjectWizardData.KEY, this)
-      data.putUserData(RootNewProjectWizardStep.PROJECT_BUILDER_KEY, builder)
     }
   }
 

@@ -57,7 +57,7 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
   private final ExporterToTextFile myExporterToTextFile;
 
   public ThreadDumpPanel(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<ThreadState> threadDump) {
-    this(project, consoleView, toolbarActions, new ArrayList<>(ContainerUtil.map(threadDump, JavaThreadDumpItem::new)), false);
+    this(project, consoleView, toolbarActions, ContainerUtil.map(threadDump, JavaThreadDumpItem::new), false);
   }
 
   @ApiStatus.Internal
@@ -67,7 +67,7 @@ public final class ThreadDumpPanel extends JPanel implements UiDataProvider, NoS
 
   private ThreadDumpPanel(Project project, ConsoleView consoleView, DefaultActionGroup toolbarActions, List<DumpItem> dumpItems, boolean fromDumpItems) {
     super(new BorderLayout());
-    myThreadDump = dumpItems;
+    myThreadDump = new ArrayList<>(dumpItems);
     myMergedThreadDump = CompoundDumpItem.Companion.mergeThreadDumpItems(myThreadDump);
 
     myFilterField = createSearchTextField();

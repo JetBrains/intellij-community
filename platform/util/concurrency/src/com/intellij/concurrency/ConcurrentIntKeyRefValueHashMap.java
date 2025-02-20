@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 import com.intellij.reference.SoftReference;
@@ -37,8 +37,20 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
     }
   }
 
+
   @Override
-  public @NotNull V cacheOrGet(int key, @NotNull V value) {
+  public V getOrDefault(int key, V defaultValue) {
+    V v;
+    return (v = get(key)) == null ? defaultValue : v;
+  }
+
+  @Override
+  public final V replace(int key, @NotNull V value) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public final @NotNull V cacheOrGet(int key, @NotNull V value) {
     IntReference<V> newRef = createReference(key, value, myQueue);
     V result;
     while (true) {

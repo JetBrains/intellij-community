@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.Debug;
@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -23,6 +24,10 @@ public interface ConcurrentLongObjectMap<V> {
    */
   @NotNull
   V cacheOrGet(long key, @NotNull V value);
+
+  Set<LongEntry<V>> entrySet();
+
+  V getOrDefault(long key, V defaultValue);
 
   boolean remove(long key, @NotNull V value);
 

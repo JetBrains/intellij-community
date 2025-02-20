@@ -31,6 +31,7 @@ jvm_test(
     "//platform/testFramework/common",
     "//platform/util/coroutines",
     "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.util.coroutines.tests` end

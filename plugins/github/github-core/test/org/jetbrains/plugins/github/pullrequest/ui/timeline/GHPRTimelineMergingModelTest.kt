@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.LightPlatformTestCase
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.*
@@ -10,7 +10,7 @@ import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import kotlin.time.Duration.Companion.days
 
-class GHPRTimelineMergingModelTest : UsefulTestCase() {
+class GHPRTimelineMergingModelTest : LightPlatformTestCase() {
   private val YEAR = 365.days.inWholeMilliseconds
   private val actor1 = createTestUser("event_actor1")
   private val actor2 = createTestUser("event_actor2")

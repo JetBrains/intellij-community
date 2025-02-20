@@ -21,6 +21,7 @@
   <xi:include href="intellij.vcs.git.xml"/>
 
   <content>
+    <module name="intellij.vcs.git/localHistory"/>
     <module name="intellij.vcs.git/newUiOnboarding"/>
     <module name="intellij.vcs.git/terminal"/>
     <module name="intellij.vcs.git.coverage"/>

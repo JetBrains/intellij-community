@@ -134,6 +134,9 @@ public abstract class AbstractAutoTestManager implements PersistentStateComponen
     myProject.getMessageBus().syncPublisher(AutoTestListener.Companion.getTOPIC()).autoTestStatusChanged();
   }
 
+  /**
+   * Disable all enabled auto-test configurations for the project.
+   */
   public void disableAllAutoTests() {
     deactivateWatcher();
     for (RunContentDescriptor descriptor : RunContentManager.getInstance(myProject).getAllDescriptors()) {

@@ -1,9 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-class BufferingTextSplitter {
+@ApiStatus.Internal
+public final class BufferingTextSplitter {
   private final @NotNull StringBuilder myLineBuffer = new StringBuilder();
   private boolean myBufferedCr = false;
 
@@ -84,7 +86,8 @@ class BufferingTextSplitter {
     }
   }
 
-  interface LineConsumer {
+  @ApiStatus.Internal
+  public interface LineConsumer {
     void consume(@NotNull String line, boolean isCrOnly);
   }
 }

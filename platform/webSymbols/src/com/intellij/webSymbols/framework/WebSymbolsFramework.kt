@@ -40,10 +40,10 @@ abstract class WebSymbolsFramework {
     fun get(id: String): WebSymbolsFramework = WEB_FRAMEWORK_EP.findSingle(id) ?: UnregisteredWebFramework(id)
 
     @JvmStatic
-    fun inLocation(location: VirtualFile, project: Project) = WebSymbolsContext.get(KIND_FRAMEWORK, location, project)?.let { get(it) }
+    fun inLocation(location: VirtualFile, project: Project): WebSymbolsFramework? = WebSymbolsContext.get(KIND_FRAMEWORK, location, project)?.let { get(it) }
 
     @JvmStatic
-    fun inLocation(location: PsiElement) = WebSymbolsContext.get(KIND_FRAMEWORK, location)?.let { get(it) }
+    fun inLocation(location: PsiElement): WebSymbolsFramework? = WebSymbolsContext.get(KIND_FRAMEWORK, location)?.let { get(it) }
 
     @JvmStatic
     val all: List<WebSymbolsFramework>

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq.types
 
 import com.intellij.psi.*
@@ -12,10 +12,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField
  * The results of GINQ execution reside in the `NamedRecord` class. This class does not provide any syntactic/bytecode info
  * about its runtime contents, so we should predict the "fields" by our own means. This is similar to map literals.
  */
-class GrSyntheticNamedRecordClass(val typeParameters: List<PsiTypeParameter>,
-                                  val typeMap: Map<String, Lazy<PsiType>>,
-                                  val exposedBindings: List<String>, // bindings in `select` clause. Order is important
-                                  private val namedRecord: PsiClass) : LightClass(namedRecord) {
+internal class GrSyntheticNamedRecordClass(
+  val typeParameters: List<PsiTypeParameter>,
+  val typeMap: Map<String, Lazy<PsiType>>,
+  val exposedBindings: List<String>, // bindings in `select` clause. Order is important
+  private val namedRecord: PsiClass,
+) : LightClass(namedRecord) {
 
   constructor(ginqExpression: GinqExpression, namedRecord: PsiClass) :
     this(emptyList(),

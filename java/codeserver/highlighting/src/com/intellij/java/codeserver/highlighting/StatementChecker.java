@@ -4,6 +4,7 @@ package com.intellij.java.codeserver.highlighting;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.codeserver.core.JavaPsiVariableUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.pom.java.JavaFeature;
@@ -15,7 +16,6 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,36 +30,6 @@ final class StatementChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
 
   StatementChecker(@NotNull JavaErrorVisitor visitor) { myVisitor = visitor; }
-
-  void checkCaseStatement(@NotNull PsiSwitchLabelStatementBase statement) {
-    PsiSwitchBlock switchBlock = statement.getEnclosingSwitchBlock();
-    if (switchBlock == null) {
-      myVisitor.report(JavaErrorKinds.STATEMENT_CASE_OUTSIDE_SWITCH.create(statement));
-    }
-  }
-
-  void checkGuard(@NotNull PsiSwitchLabelStatementBase statement) {
-    PsiExpression guardingExpr = statement.getGuardExpression();
-    if (guardingExpr == null) return;
-    myVisitor.checkFeature(guardingExpr, JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS);
-    if (myVisitor.hasErrorResults()) return;
-    PsiCaseLabelElementList list = statement.getCaseLabelElementList();
-    if (list != null) {
-      if (!ContainerUtil.exists(list.getElements(), e -> e instanceof PsiPattern)) {
-        myVisitor.report(JavaErrorKinds.GUARD_MISPLACED.create(guardingExpr));
-        return;
-      }
-    }
-    if (!TypeConversionUtil.isBooleanType(guardingExpr.getType())) {
-      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
-        guardingExpr, new JavaIncompatibleTypeErrorContext(PsiTypes.booleanType(), guardingExpr.getType())));
-      return;
-    }
-    Object constVal = JavaPsiFacade.getInstance(myVisitor.project()).getConstantEvaluationHelper().computeConstantExpression(guardingExpr);
-    if (Boolean.FALSE.equals(constVal)) {
-      myVisitor.report(JavaErrorKinds.GUARD_EVALUATED_TO_FALSE.create(guardingExpr));
-    }
-  }
 
   void checkLabelWithoutStatement(@NotNull PsiLabeledStatement statement) {
     if (statement.getStatement() == null) {
@@ -382,18 +352,6 @@ final class StatementChecker {
         PsiClassType objectType = PsiType.getJavaLangObject(myVisitor.file().getManager(), expression.getResolveScope());
         myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(expression, new JavaIncompatibleTypeErrorContext(objectType, type)));
       }
-    }
-  }
-
-  void checkYieldOutsideSwitchExpression(@NotNull PsiYieldStatement statement) {
-    if (statement.findEnclosingExpression() == null) {
-      myVisitor.report(JavaErrorKinds.YIELD_UNEXPECTED.create(statement));
-    }
-  }
-
-  void checkYieldExpressionType(@NotNull PsiExpression expression) {
-    if (PsiTypes.voidType().equals(expression.getType())) {
-      myVisitor.report(JavaErrorKinds.YIELD_VOID.create(expression));
     }
   }
 

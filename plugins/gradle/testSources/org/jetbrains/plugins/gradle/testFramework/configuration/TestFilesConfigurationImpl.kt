@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.configuration
 
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.testFramework.utils.vfs.createDirectory
@@ -65,7 +65,7 @@ open class TestFilesConfigurationImpl : TestFilesConfiguration {
   }
 
   override suspend fun createFiles(root: VirtualFile) {
-    writeAction {
+    edtWriteAction {
       for ((path, content) in files) {
         val file = root.createFile(path)
         file.writeText(content)

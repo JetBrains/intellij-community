@@ -4,7 +4,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 create_kotlinc_options(
   name = "custom",
-  jvm_target = 17,
   context_receivers = True,
   opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
 )
@@ -42,6 +41,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/smRunner",
+    "//platform/threadDumpParser",
     "//java/java-psi-api:psi",
     "//platform/platform-impl:ide-impl",
     "//java/execution/impl:java-execution-impl",
@@ -51,6 +51,8 @@ jvm_library(
     "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
+    "//java/java-impl:impl",
+    "//java/debugger/shared:java-debugger-impl-shared",
   ],
   runtime_deps = [":kotlin-jvm-debugger-coroutines_resources"]
 )

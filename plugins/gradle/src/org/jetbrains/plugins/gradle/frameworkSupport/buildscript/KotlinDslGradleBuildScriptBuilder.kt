@@ -52,6 +52,12 @@ abstract class KotlinDslGradleBuildScriptBuilder<Self : KotlinDslGradleBuildScri
     call("maven", "url" to url)
   }
 
+  override fun ScriptTreeBuilder.mavenLocal(url: String): ScriptTreeBuilder = applyKt {
+    call("mavenLocal") {
+      assign("url", call("uri", url))
+    }
+  }
+
   override fun generate(): String {
     return KotlinScriptBuilder().generate(generateTree())
   }

@@ -3,7 +3,7 @@ package com.intellij.openapi.project.impl.navigation
 
 import com.intellij.navigation.LocationInFile
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -61,7 +61,7 @@ abstract class NavigationTestBase {
     val basePath = Path.of(project.basePath!!)
     val moduleManager = ModuleManager.getInstance(project)
     val projectManager = ProjectRootManagerEx.getInstanceEx(project)
-    writeAction {
+    edtWriteAction {
       projectManager.mergeRootsChangesDuring {
         val newModule = moduleManager.newModule(
           basePath.resolve("navigationModule.iml").invariantSeparatorsPathString,

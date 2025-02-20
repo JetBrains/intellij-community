@@ -24,7 +24,7 @@ class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
   fun testImportingDependencies() = runBlocking {
     if (!hasMavenInstallation()) return@runBlocking
 
-    repositoryPath = dir.resolve("repo").toString()
+    repositoryPath = dir.resolve("repo")
     updateSettingsXml("""
                       <localRepository>
                       ${repositoryPath}</localRepository>
@@ -77,7 +77,7 @@ class DependenciesManagementTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testImportingNotInstalledDependencies() = runBlocking {
-    repositoryPath = dir.resolve("repo").toString()
+    repositoryPath = dir.resolve("repo")
     updateSettingsXml("""
   <localRepository>
   ${repositoryPath}</localRepository>

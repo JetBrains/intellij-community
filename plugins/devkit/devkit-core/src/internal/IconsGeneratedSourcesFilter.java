@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.internal;
 
 import com.intellij.openapi.application.ReadAction;
@@ -7,9 +7,11 @@ import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-final class IconsGeneratedSourcesFilter extends GeneratedSourcesFilter {
+@ApiStatus.Internal
+public final class IconsGeneratedSourcesFilter extends GeneratedSourcesFilter {
   @Override
   public boolean isGeneratedSource(final @NotNull VirtualFile file, final @NotNull Project project) {
     if (file.getName().endsWith("Icons.java")) {

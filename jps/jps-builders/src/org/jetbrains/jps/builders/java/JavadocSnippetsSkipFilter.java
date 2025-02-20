@@ -1,16 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.util.function.BiFunction;
 
-final class JavadocSnippetsSkipFilter implements FileFilter {
+@ApiStatus.Internal
+public final class JavadocSnippetsSkipFilter implements FileFilter {
   public static final String SNIPPETS_FOLDER = "snippet-files";
   
   private static final String SNIPPETS_FOLDER_PATTERN = "/" + SNIPPETS_FOLDER + "/";

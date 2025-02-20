@@ -14,7 +14,7 @@ import com.intellij.openapi.application.impl.assertReferenced
 import com.intellij.openapi.application.impl.pumpEDT
 import com.intellij.openapi.application.impl.withModality
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
@@ -712,7 +712,7 @@ class CancellationPropagationTest {
     readActionScheduled.timeoutWaitUp()
     assertTrue(job.isActive)
     assertEquals(0, timesCancelled)
-    writeAction {
+    edtWriteAction {
       // immediately return, just to cancel and reschedule read action
     }
     assertEquals(1, timesCancelled)
@@ -911,7 +911,7 @@ class CancellationPropagationTest {
     val entryCounter = AtomicInteger(0)
     launch {
       canProceedWithWa.join()
-      writeAction {
+      edtWriteAction {
       }
     }
     launch {

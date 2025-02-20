@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.KotlinGradl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.SimpleProperties
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
+import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
 import java.io.File
 
 class KotlinTestProperties private constructor(

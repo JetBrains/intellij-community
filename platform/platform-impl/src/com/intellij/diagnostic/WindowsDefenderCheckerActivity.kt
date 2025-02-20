@@ -80,7 +80,7 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
       LOG.info("status check is skipped for this run")
       return
     }
-    else if (listOf( ProjectStatus.SUCCEED, ProjectStatus.FAILED).contains(projectStatus)) {
+    if (projectStatus == ProjectStatus.SUCCEED || projectStatus == ProjectStatus.FAILED) {
       LOG.info("requested from the \"trust project\" dialog; status=${projectStatus}")
       notify(project, success = projectStatus == ProjectStatus.SUCCEED)
       return

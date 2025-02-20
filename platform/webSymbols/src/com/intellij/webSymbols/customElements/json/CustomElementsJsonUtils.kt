@@ -44,12 +44,12 @@ fun CustomElementsManifest.adaptAllContributions(origin: CustomElementsJsonOrigi
       .mapNotNull { CustomElementsCustomElementExportSymbol.create(it, origin) }
   } + CustomElementsJavaScriptPackageSymbol(CustomElementsPackage(this), origin, rootScope)
 
-fun CustomElementsPackage.adaptAllContributions(origin: CustomElementsJsonOrigin, rootScope: CustomElementsManifestScopeBase) =
+fun CustomElementsPackage.adaptAllContributions(origin: CustomElementsJsonOrigin, rootScope: CustomElementsManifestScopeBase): Sequence<CustomElementsJavaScriptModuleSymbol> =
   manifest.modules.asSequence().mapNotNull { module ->
     CustomElementsJavaScriptModuleSymbol.create(module, origin, rootScope)
   }
 
-fun JavaScriptModule.adaptAllContributions(origin: CustomElementsJsonOrigin, rootScope: CustomElementsManifestScopeBase) =
+fun JavaScriptModule.adaptAllContributions(origin: CustomElementsJsonOrigin, rootScope: CustomElementsManifestScopeBase): Sequence<CustomElementsClassOrMixinDeclarationAdapter> =
   declarations.asSequence()
     .filterIsInstance<CustomElementClassOrMixinDeclaration>()
     .mapNotNull { CustomElementsClassOrMixinDeclarationAdapter.create(it, origin, rootScope) }

@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.AFTER_ERROR_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.ERROR_DIRECTIVE
 import org.jetbrains.kotlin.psi.KtFile
@@ -39,6 +40,10 @@ object K2DirectiveBasedActionUtils {
     }
 
     fun checkForErrorsAfter(mainFile: File, ktFile: KtFile, fileText: String) {
+        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, DISABLE_K2_ERRORS_DIRECTIVE, DirectiveBasedActionUtils.DISABLE_ERRORS_DIRECTIVE).isNotEmpty()) {
+            return
+        }
+
         checkForUnexpected(mainFile, ktFile, fileText, "errors", KaSeverity.ERROR, K2_AFTER_ERROR_DIRECTIVE, AFTER_ERROR_DIRECTIVE)
     }
 

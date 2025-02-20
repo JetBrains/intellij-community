@@ -1,13 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
 import icons.MavenIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-abstract class ProjectsGroupNode extends GroupNode {
+@ApiStatus.Internal
+public abstract class ProjectsGroupNode extends GroupNode {
   private final List<ProjectNode> myProjectNodes = new CopyOnWriteArrayList<>();
 
   ProjectsGroupNode(MavenProjectsStructure structure, MavenSimpleNode parent) {

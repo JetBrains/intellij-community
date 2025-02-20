@@ -98,6 +98,7 @@ interface GradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<Self>>
 
   fun ScriptTreeBuilder.mavenRepository(url: String): ScriptTreeBuilder
   fun ScriptTreeBuilder.mavenCentral(): ScriptTreeBuilder
+  fun ScriptTreeBuilder.mavenLocal(url: String): ScriptTreeBuilder
 
   companion object {
 

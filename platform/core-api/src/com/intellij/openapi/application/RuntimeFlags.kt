@@ -36,29 +36,6 @@ val isPureSwingEventWilEnabled: Boolean = System.getProperty("ide.pure.swing.eve
 val isMessageBusErrorPropagationEnabled: Boolean = System.getProperty("ijpl.message.bus.rethrows.errors.from.subscribers", "false").toBoolean()
 
 /**
- * - `false` means that lock permits are bound only to threads
- * - `true` means that lock permits also stored in coroutine contexts
- */
-@get:ApiStatus.Internal
-val isLockStoredInContext: Boolean = System.getProperty("ide.store.lock.in.context", "true").toBoolean()
-
-/**
- * - `false` means that [backgroundWriteAction] will perform write actions from a non-modal context on a background thread
- * - `true` means that [backgroundWriteAction] will perform write actions in and old way (on EDT)
- */
-@ApiStatus.Internal
-val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.write.action.enabled", "false").toBoolean()
-
-/**
- * - `false` means wrong action chains are ignored and not reported
- * - `true` means chains of actions like `WriteIntentReadAction -> ReadAction -> WriteAction` will be reported as warnings
- *
- *  Such reporting fails tests as I/O takes too much time and tests timeouts.
- */
-@get:ApiStatus.Internal
-val reportInvalidActionChains: Boolean = System.getProperty("ijpl.report.invalid.action.chains", "false").toBoolean()
-
-/**
  * - `false` means `Application.invokeLater()` calls with implicit `ModalityState.any()` are not reported
  * - `true` means `Application.invokeLater()` calls with implicit `ModalityState.any()` are reported via `LOG.error()`
  */

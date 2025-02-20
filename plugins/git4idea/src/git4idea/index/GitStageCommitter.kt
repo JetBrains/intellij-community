@@ -13,7 +13,6 @@ import com.intellij.vcs.VcsActivity
 import com.intellij.vcs.commit.AbstractCommitter
 import com.intellij.vcs.commit.commitWithoutChangesRoots
 import com.intellij.vcs.commit.getLocalHistoryEventName
-import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.GitUtil.getRepositoryForFile
 import git4idea.checkin.*
 import git4idea.index.ui.stagingAreaActionInvoked
@@ -77,8 +76,9 @@ internal class GitStageCommitter(
         VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root.parent)
       }
     }
-
-    VcsFileUtil.markFilesDirty(project, commitState.roots)
+    for (root in commitState.roots) {
+      VcsDirtyScopeManager.getInstance(project).rootDirty(root)
+    }
   }
 
   @Throws(VcsException::class)

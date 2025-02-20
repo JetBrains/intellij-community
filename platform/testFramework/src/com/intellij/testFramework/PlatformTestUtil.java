@@ -2,10 +2,11 @@
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.ThreadContext;
+import com.intellij.diagnostic.CoroutineDumperKt;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.execution.*;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -101,13 +102,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.*;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -299,10 +300,16 @@ public final class PlatformTestUtil {
 
   private static void assertMaxWaitTimeSince(long startTimeMillis, long timeoutMillis) {
     long took = getMillisSince(startTimeMillis);
-    if (took > timeoutMillis) {
-      assert false : String.format("the waiting takes too long. Expected to take no more than: %d ms but took: %d ms\nThread dump: %s",
-                                   timeoutMillis, took, ThreadDumper.dumpThreadsToString());
+    if (took <= timeoutMillis) {
+      return;
     }
+
+    throw new AssertionError(
+      "The waiting takes too long. " +
+      "Expected to take no more than: " + timeoutMillis + " ms but took: " + took + " ms\n" +
+      "Thread dump: " + ThreadDumper.dumpThreadsToString() + "\n" +
+      "Coroutine dump: " + CoroutineDumperKt.dumpCoroutines(null, true, true) + "\n"
+    );
   }
 
   private static void assertDispatchThreadWithoutWriteAccess() {

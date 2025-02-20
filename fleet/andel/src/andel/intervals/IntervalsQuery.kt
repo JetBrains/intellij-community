@@ -2,6 +2,10 @@
 package andel.intervals
 
 import andel.intervals.impl.IntervalsQuerySum
+import andel.operation.Operation
+import andel.operation.Sticky
+import andel.operation.invert
+import andel.operation.transformOnto
 
 interface IntervalsQuery<K, T> {
   companion object {
@@ -45,4 +49,19 @@ interface IntervalsQuery<K, T> {
       other is IntervalsQuerySum<K, T> -> other.copy(listOf(this) + other.queries)
       else -> IntervalsQuerySum(listOf(this, other)) 
     }
+}
+
+fun <K, T> IntervalsQuery<K, T>.adjust(operation: Operation): IntervalsQuery<K, T> {
+  val invertedOperation = operation.invert()
+
+  return IntervalsQuery.impl { start, end ->
+    val adjustedStart = start.transformOnto(invertedOperation, Sticky.LEFT)
+    val adjustedEnd = end.transformOnto(invertedOperation, Sticky.RIGHT)
+
+    this.query(adjustedStart, adjustedEnd).map { interval ->
+      val newFrom = interval.from.transformOnto(operation, Sticky.RIGHT)
+      val newTo = interval.to.transformOnto(operation, Sticky.LEFT)
+      interval.copy(from = newFrom, to = newTo)
+    }
+  }
 }

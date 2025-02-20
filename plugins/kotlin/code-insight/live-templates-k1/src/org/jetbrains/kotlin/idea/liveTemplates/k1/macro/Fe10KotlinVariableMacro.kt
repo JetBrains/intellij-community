@@ -18,8 +18,8 @@ import org.jetbrains.kotlin.resolve.BindingContext
 class Fe10KotlinVariableMacro : Fe10AbstractKotlinVariableMacro<Fe10KotlinVariableMacro.State?>() {
     class State(val expectedInfos: Collection<ExpectedInfo>, val smartCastCalculator: SmartCastCalculator)
 
-    override fun getName() = "kotlinVariable"
-    override fun getPresentableName() = "kotlinVariable()"
+    override fun getName(): String = "kotlinVariable"
+    override fun getPresentableName(): String = "kotlinVariable()"
 
     override fun initState(contextElement: KtElement, bindingContext: BindingContext): State? {
         val resolutionFacade = contextElement.getResolutionFacade()

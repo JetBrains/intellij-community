@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.configurationStore.StoreUtilKt;
@@ -539,7 +539,8 @@ public final class ConfigImportHelper {
     return false;
   }
 
-  static final class ConfigDirsSearchResult {
+  @ApiStatus.Internal
+  public static final class ConfigDirsSearchResult {
     private final List<? extends Pair<Path, FileTime>> directories;
     private final boolean fromSameProduct;
 
@@ -890,19 +891,25 @@ public final class ConfigImportHelper {
 
   public static final class ConfigImportOptions {
     final Logger log;
-    boolean headless;
-    @Nullable ConfigImportSettings importSettings;
-    @Nullable BuildNumber compatibleBuildNumber;
-    Path bundledPluginPath = null;
-    boolean mergeVmOptions = false;
-    MarketplacePluginDownloadService downloadService;
+    private boolean headless;
+    @ApiStatus.Internal
+    public @Nullable ConfigImportSettings importSettings;
+    @ApiStatus.Internal
+    public @Nullable BuildNumber compatibleBuildNumber;
+    @ApiStatus.Internal
+    public Path bundledPluginPath = null;
+    private boolean mergeVmOptions = false;
+    @ApiStatus.Internal
+    public MarketplacePluginDownloadService downloadService;
     /** should be exception-safe */
-    @NotNull BrokenPluginsFetcher brokenPluginsFetcher =
+    @ApiStatus.Internal
+    public @NotNull BrokenPluginsFetcher brokenPluginsFetcher =
       testBrokenPluginsFetcherStub != null ? testBrokenPluginsFetcherStub : (configDir) -> fetchBrokenPluginsFromMarketplace(this, configDir, 3000);
-    @NotNull LastCompatiblePluginUpdatesFetcher pluginUpdatesFetcher =
+    @ApiStatus.Internal
+    public @NotNull LastCompatiblePluginUpdatesFetcher pluginUpdatesFetcher =
       testLastCompatiblePluginUpdatesFetcher != null ? testLastCompatiblePluginUpdatesFetcher : (pluginIds) -> fetchPluginUpdatesFromMarketplace(this, pluginIds, 7000);
 
-    @Nullable ProgressIndicator headlessProgressIndicator = null;
+    private @Nullable ProgressIndicator headlessProgressIndicator = null;
 
     public ConfigImportOptions(Logger log) {
       this.log = log;
@@ -920,8 +927,8 @@ public final class ConfigImportHelper {
       return mergeVmOptions;
     }
 
-    public void setMergeVmOptions(boolean mergeVmOptions) {
-      this.mergeVmOptions = mergeVmOptions;
+    public void setMergeVmOptions(boolean value) {
+      mergeVmOptions = value;
     }
 
     public @Nullable ProgressIndicator getHeadlessProgressIndicator() {
@@ -1708,7 +1715,9 @@ public final class ConfigImportHelper {
   }
 
   @VisibleForTesting
-  static @Nullable ConfigImportOptions.BrokenPluginsFetcher testBrokenPluginsFetcherStub = null;
+  @ApiStatus.Internal
+  public static @Nullable ConfigImportOptions.BrokenPluginsFetcher testBrokenPluginsFetcherStub = null;
   @VisibleForTesting
-  static @Nullable ConfigImportOptions.LastCompatiblePluginUpdatesFetcher testLastCompatiblePluginUpdatesFetcher = null;
+  @ApiStatus.Internal
+  public static @Nullable ConfigImportOptions.LastCompatiblePluginUpdatesFetcher testLastCompatiblePluginUpdatesFetcher = null;
 }

@@ -4,12 +4,14 @@ package org.jetbrains.kotlin.idea.k2.quickfix.tests
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.actionsListDirectives
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
@@ -33,7 +35,9 @@ abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
     override val inspectionFileName: String
         get() = ".k2Inspection"
 
-    override fun checkForUnexpectedErrors() {}
+    override fun checkUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String) {
+        K2DirectiveBasedActionUtils.checkForErrorsAfter(mainFile, ktFile, fileText)
+    }
 
     override fun checkAvailableActionsAreExpected(actions: List<IntentionAction>) {
         DirectiveBasedActionUtils.checkAvailableActionsAreExpected(

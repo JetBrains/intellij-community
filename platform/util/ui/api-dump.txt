@@ -3657,6 +3657,7 @@ f:com.intellij.util.ui.ExtendableHTMLViewFactory$Extensions
 - sf:BLOCK_HR_SUPPORT:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:BLOCK_VIEW_EX:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:FIT_TO_WIDTH_IMAGES:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
+- sf:FORM_VIEW_EX:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:HIDPI_IMAGES:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:ICONS:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
 - sf:INLINE_VIEW_EX:com.intellij.util.ui.ExtendableHTMLViewFactory$Extension
@@ -4322,6 +4323,10 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$FindPopup
 - s:bottomPanelInsetsKey():java.lang.String
 - s:scopesPanelInsets():java.awt.Insets
 - s:scopesPanelInsetsKey():java.lang.String
+f:com.intellij.util.ui.JBUI$CurrentTheme$FloatingToolbar
+- sf:DEFAULT_BACKGROUND_ALPHA:F
+- sf:TRANSLUCENT_BACKGROUND_ALPHA:F
+- <init>():V
 f:com.intellij.util.ui.JBUI$CurrentTheme$Focus
 - <init>():V
 - s:defaultButtonColor():java.awt.Color
@@ -4484,6 +4489,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$NotificationWarning
 - s:foregroundColor():java.awt.Color
 f:com.intellij.util.ui.JBUI$CurrentTheme$Popup
 - sf:BACKGROUND:java.awt.Color
+- sf:DEFAULT_HINT_OPACITY:F
 - <init>():V
 - s:bodyBottomInsetBeforeAd():I
 - s:bodyBottomInsetNoAd():I
@@ -4729,24 +4735,32 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$TrialWidget$Active
 - sf:BORDER_COLOR:java.awt.Color
 - sf:FOREGROUND:java.awt.Color
 - sf:HOVER_BACKGROUND:java.awt.Color
+- sf:HOVER_BORDER_COLOR:java.awt.Color
+- sf:HOVER_FOREGROUND:java.awt.Color
 - <init>():V
 f:com.intellij.util.ui.JBUI$CurrentTheme$TrialWidget$Alert
 - sf:BACKGROUND:java.awt.Color
 - sf:BORDER_COLOR:java.awt.Color
 - sf:FOREGROUND:java.awt.Color
 - sf:HOVER_BACKGROUND:java.awt.Color
+- sf:HOVER_BORDER_COLOR:java.awt.Color
+- sf:HOVER_FOREGROUND:java.awt.Color
 - <init>():V
 f:com.intellij.util.ui.JBUI$CurrentTheme$TrialWidget$Default
 - sf:BACKGROUND:java.awt.Color
 - sf:BORDER_COLOR:java.awt.Color
 - sf:FOREGROUND:java.awt.Color
 - sf:HOVER_BACKGROUND:java.awt.Color
+- sf:HOVER_BORDER_COLOR:java.awt.Color
+- sf:HOVER_FOREGROUND:java.awt.Color
 - <init>():V
 f:com.intellij.util.ui.JBUI$CurrentTheme$TrialWidget$Expiring
 - sf:BACKGROUND:java.awt.Color
 - sf:BORDER_COLOR:java.awt.Color
 - sf:FOREGROUND:java.awt.Color
 - sf:HOVER_BACKGROUND:java.awt.Color
+- sf:HOVER_BORDER_COLOR:java.awt.Color
+- sf:HOVER_FOREGROUND:java.awt.Color
 - <init>():V
 f:com.intellij.util.ui.JBUI$CurrentTheme$Validator
 - <init>():V

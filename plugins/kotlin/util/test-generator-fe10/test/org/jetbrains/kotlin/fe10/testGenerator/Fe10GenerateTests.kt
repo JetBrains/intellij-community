@@ -607,6 +607,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "canConvertToMultiDollarString", // K2-only
                     "branched/introduceWhenSubject/whenGuards", // K2-only
                     "removeRedundantLabel", // quick fix in K1
+                    "contextParametersMigration", // K2-only
                 )
             )
         }
@@ -1245,11 +1246,22 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
 
     testGroup("idea/tests", testDataPath = TestKotlinArtifacts.compilerTestData("compiler/testData")) {
         testClass<AbstractResolveByStubTest> {
-            model("loadJava/compiledKotlin")
+            model(
+                "loadJava/compiledKotlin",
+                excludedDirectories = listOf(
+                    "contextParameters", // K1 failure for K2 feature, see KTIJ-33144
+                ),
+            )
         }
 
         testClass<AbstractLoadJavaClsStubTest> {
-            model("loadJava/compiledKotlin", testMethodName = "doTestCompiledKotlin")
+            model(
+                "loadJava/compiledKotlin",
+                testMethodName = "doTestCompiledKotlin",
+                excludedDirectories = listOf(
+                    "contextParameters", // K1 failure for K2 feature, see KTIJ-33144
+                ),
+            )
         }
 
         testClass<AbstractIdeLightClassesByFqNameTest> {

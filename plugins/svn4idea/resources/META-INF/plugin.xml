@@ -115,6 +115,7 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.vcs.svn.mergerCommitMessage"
                     interface="org.jetbrains.idea.svn.integrate.MergerCommitMessage"
+                    area="IDEA_PROJECT"
                     dynamic="true"/>
   </extensionPoints>
 

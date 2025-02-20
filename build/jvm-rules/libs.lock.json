@@ -1,7 +1,7 @@
 {
-  "com.google.flatbuffers:flatbuffers-java:25.1.24": [
-    "dbc103dfd4eb25664f87492968d8e01812c13cf939e5b72db2af38bfce530af3",
-    "5cd75b7500b07f93c5308ffd8d430aa0b62cd162dff7a5394d5e513cf3a7d534"
+  "com.google.flatbuffers:flatbuffers-java:25.2.10": [
+    "587bd6c31cda747587493a113bec8602d3a0b0ca579b2b1b838ef71b19e6525d",
+    "202bfdb62bff2f27bf3932a909fa5e45b3070aad3db3bb5a11900ee471a5546b"
   ],
   "com.google.protobuf:protobuf-java:4.29.3": [
     "442db5991a11974d72127353be7d7e7abdf8d943d83b16668cb2e336d7392f54",

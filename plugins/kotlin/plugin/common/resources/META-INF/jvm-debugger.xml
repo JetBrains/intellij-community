@@ -33,6 +33,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <debugger.creationStackTraceProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider"/>
+    <debugger.dumpItemsProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutinesDumpAsyncProvider"/>
 
     <runConfigurationExtension implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebugConfigurationExtension"/>
 

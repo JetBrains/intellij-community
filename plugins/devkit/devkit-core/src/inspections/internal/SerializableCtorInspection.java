@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.*;
@@ -12,10 +12,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
@@ -28,7 +25,8 @@ import java.util.Objects;
 
 import static com.intellij.lang.jvm.actions.AnnotationRequestsKt.annotationRequest;
 
-final class SerializableCtorInspection extends DevKitUastInspectionBase {
+@ApiStatus.Internal
+public final class SerializableCtorInspection extends DevKitUastInspectionBase {
 
   private static final String PROPERTY_MAPPING_ANNOTATION = "com.intellij.serialization.PropertyMapping";
 

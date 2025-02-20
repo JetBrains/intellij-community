@@ -6,7 +6,10 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.CaretModel
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.ScrollingModel
+import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.editor.ex.*
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -15,6 +18,7 @@ import com.intellij.openapi.editor.impl.FocusModeModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.jetbrains.rhizomedb.ChangeScope
 import com.jetbrains.rhizomedb.asOf
@@ -22,19 +26,11 @@ import fleet.kernel.change
 import fleet.kernel.lastKnownDb
 import fleet.kernel.shared
 import fleet.kernel.transactor
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import java.util.concurrent.Executors
-
+import kotlinx.coroutines.*
 
 
 private val LIMITED_DISPATCHER by lazy {
-  Executors.newFixedThreadPool(1).asCoroutineDispatcher()
+  AppExecutorUtil.createBoundedApplicationPoolExecutor("AD_DISPATCHER", 1).asCoroutineDispatcher()
 }
 
 @Service(Level.PROJECT)

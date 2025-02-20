@@ -188,7 +188,10 @@ fun KaCallableMemberCall<*, *>.getImplicitReceivers(): List<KaImplicitReceiverVa
     .map { it.unwrapSmartCasts() }
     .filterIsInstance<KaImplicitReceiverValue>()
 
-private tailrec fun KaReceiverValue.unwrapSmartCasts(): KaReceiverValue = when (this) {
+/**
+ * @return receiver value without smart casts if it has any or [this] otherwise
+ */
+tailrec fun KaReceiverValue.unwrapSmartCasts(): KaReceiverValue = when (this) {
     is KaSmartCastedReceiverValue -> original.unwrapSmartCasts()
     else -> this
 }

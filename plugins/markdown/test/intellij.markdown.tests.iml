@@ -40,5 +40,6 @@
     <orderEntry type="module" module-name="intellij.toml.core" />
     <orderEntry type="module" module-name="intellij.yaml.backend" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.testFramework" scope="TEST" />
   </component>
 </module>

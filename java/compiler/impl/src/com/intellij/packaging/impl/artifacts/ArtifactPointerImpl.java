@@ -1,17 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactModel;
 import com.intellij.packaging.artifacts.ArtifactPointer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.packaging.artifacts.ArtifactManager.getInstance;
 
-final class ArtifactPointerImpl implements ArtifactPointer {
+@ApiStatus.Internal
+public final class ArtifactPointerImpl implements ArtifactPointer {
   private final @NotNull Project myProject;
   private volatile @NotNull String myName;
   private volatile AtomicReference<Artifact> myArtifact;

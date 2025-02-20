@@ -9,10 +9,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 
 internal class PsiElementCommentCompletionCommand : AbstractActionCompletionCommand("CommentByLineComment",
-                                                                           "Comment element",
-                                                                           CodeInsightBundle.message(
-                                                                             "command.completion.psi.element.comment.text"),
-                                                                           null) {
+                                                                                    "Comment element",
+                                                                                    CodeInsightBundle.message(
+                                                                                      "command.completion.psi.element.comment.text"),
+                                                                                    null) {
 
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
     if (!super.isApplicable(offset, psiFile, editor)) return false
@@ -27,6 +27,7 @@ internal class PsiElementCommentCompletionCommand : AbstractActionCompletionComm
 
   private fun getHighLevelContext(offset: Int, psiFile: PsiFile): PsiElement? {
     var context = getContext(offset, psiFile) ?: return null
+    if (context.textRange.endOffset != offset) return null
     while (context.textRange?.endOffset == offset) {
       val parent = context.parent
       if (parent != null && parent.textRange != null && parent.textRange.endOffset == offset) {

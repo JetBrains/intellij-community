@@ -76,7 +76,7 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
   private fun getIconRaw(): Icon {
     val path = ProjectWindowCustomizerService.projectPath(project) ?: ""
     val size = JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSize()
-    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, iconSize = size, name = project.name)
+    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, unscaledIconSize = size, name = project.name)
   }
 }
 
@@ -372,7 +372,9 @@ class ProjectWindowCustomizerService : Disposable {
     val color = getGradientProjectColor(project)
 
     val length = Registry.intValue("ide.colorful.toolbar.gradient.radius", 300)
-    val projectComboBtn = ComponentUtil.findComponentsOfType(parent.rootPane, ToolbarComboButton::class.java).find {
+    val projectComboBtn = ComponentUtil.findComponentsOfType(parent, ToolbarComboButton::class.java).find {
+      it.text == project.name
+    } ?: ComponentUtil.findComponentsOfType(parent.rootPane, ToolbarComboButton::class.java).find {
       it.text == project.name
     }
     val projectIconWidth = projectComboBtn?.leftIcons?.firstOrNull()?.iconWidth?.toFloat() ?: 0f

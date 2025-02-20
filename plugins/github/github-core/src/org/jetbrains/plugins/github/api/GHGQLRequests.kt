@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.api
 
 import com.intellij.collaboration.api.data.GraphQLRequestPagination
+import com.intellij.collaboration.api.data.asParameters
 import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
@@ -9,6 +10,8 @@ import com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
 import com.intellij.diff.util.Side
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
 import org.jetbrains.plugins.github.api.data.*
+import org.jetbrains.plugins.github.api.data.commit.GHCommitStatusRollupContextDTO
+import org.jetbrains.plugins.github.api.data.commit.GHCommitStatusRollupShortDTO
 import org.jetbrains.plugins.github.api.data.graphql.query.GHGQLSearchQueryResponse
 import org.jetbrains.plugins.github.api.data.pullrequest.*
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
@@ -49,7 +52,7 @@ object GHGQLRequests {
           withOperationName("get teams in organization")
         }
 
-      private class TeamsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHTeam>)
+      private class TeamsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHTeam> = listOf())
         : GraphQLConnectionDTO<GHTeam>(pageInfo, nodes)
     }
   }
@@ -96,8 +99,48 @@ object GHGQLRequests {
         withOperationName("get branch protection rules")
       }
 
-    private class ProtectedRulesConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHBranchProtectionRule>)
+    private class ProtectedRulesConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHBranchProtectionRule> = listOf())
       : GraphQLConnectionDTO<GHBranchProtectionRule>(pageInfo, nodes)
+
+    fun getCommitStatus(
+      repo: GHRepositoryCoordinates,
+      commitHash: String,
+    ): GQLQuery<GHCommitStatusRollupShortDTO?> =
+      GQLQuery.OptionalTraversedParsed(
+        repo.serverPath.toGraphQLUrl(),
+        GHGQLQueries.getRepositoryCommitStatus,
+        mapOf("repoOwner" to repo.repositoryPath.owner,
+              "repoName" to repo.repositoryPath.repository,
+              "oid" to commitHash),
+        GHCommitStatusRollupShortDTO::class.java,
+        "repository", "object", "statusCheckRollup"
+      ).apply {
+        withOperation(GithubApiRequestOperation.GraphQLGetCommitStatuses)
+        withOperationName("get commit statuses")
+      }
+
+    fun getCommitStatusContext(
+      repo: GHRepositoryCoordinates,
+      commitHash: String,
+      pageData: GraphQLRequestPagination
+    ): GQLQuery<GraphQLConnectionDTO<GHCommitStatusRollupContextDTO>?> =
+      GQLQuery.OptionalTraversedParsed(
+        repo.serverPath.toGraphQLUrl(),
+        GHGQLQueries.getRepositoryCommitStatusContexts,
+        mapOf("repoOwner" to repo.repositoryPath.owner,
+              "repoName" to repo.repositoryPath.repository,
+              "oid" to commitHash) + pageData.asParameters(),
+        ContextsConnection::class.java,
+        "repository", "object", "statusCheckRollup", "contexts"
+      ).apply {
+        withOperation(GithubApiRequestOperation.GraphQLGetCommitStatusContexts)
+        withOperationName("get commit status contexts")
+      }
+
+    private class ContextsConnection(
+      pageInfo: GraphQLCursorPageInfoDTO,
+      nodes: List<GHCommitStatusRollupContextDTO> = listOf(),
+    ) : GraphQLConnectionDTO<GHCommitStatusRollupContextDTO>(pageInfo, nodes)
   }
 
   object Comment {
@@ -279,7 +322,7 @@ object GHGQLRequests {
         withOperationName("get review threads")
       }
 
-    private class ThreadsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestReviewThread>)
+    private class ThreadsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestReviewThread> = listOf())
       : GraphQLConnectionDTO<GHPullRequestReviewThread>(pageInfo, nodes)
 
     fun commits(
@@ -296,7 +339,7 @@ object GHGQLRequests {
         withOperationName("get pull request commits")
       }
 
-    private class CommitsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestCommit>)
+    private class CommitsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestCommit> = listOf())
       : GraphQLConnectionDTO<GHPullRequestCommit>(pageInfo, nodes)
 
     fun files(
@@ -313,7 +356,7 @@ object GHGQLRequests {
         withOperationName("get pull request files")
       }
 
-    private class FilesConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestChangedFile>) :
+    private class FilesConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestChangedFile> = listOf()) :
       GraphQLConnectionDTO<GHPullRequestChangedFile>(pageInfo, nodes)
 
     fun markFileAsViewed(server: GithubServerPath, pullRequestId: String, path: String): GQLQuery<Unit> =
@@ -358,7 +401,7 @@ object GHGQLRequests {
           withOperationName("get pull request timeline items")
         }
 
-      private class TimelineConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPRTimelineItem>)
+      private class TimelineConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPRTimelineItem> = listOf())
         : GraphQLConnectionDTO<GHPRTimelineItem>(pageInfo, nodes)
     }
 
@@ -428,7 +471,7 @@ object GHGQLRequests {
           withOperationName("get pending reviews")
         }
 
-      private class PendingReviewNodes(nodes: List<GHPullRequestPendingReviewDTO>) :
+      private class PendingReviewNodes(nodes: List<GHPullRequestPendingReviewDTO> = listOf()) :
         GraphQLNodesDTO<GHPullRequestPendingReviewDTO>(nodes)
 
       fun addComment(

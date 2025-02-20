@@ -118,6 +118,7 @@ jvm_library(
     "//platform/searchEverywhere/shared:searchEverywhere",
     "//platform/searchEverywhere/testFramework",
     "//java/codeserver/highlighting:java-codeserver-highlighting",
+    "//java/codeserver/core:java-codeserver-core",
   ],
   runtime_deps = [
     "//community-resources:customization",

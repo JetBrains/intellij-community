@@ -542,6 +542,16 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     }
   }
 
+  @ApiStatus.Internal
+  public @NotNull ActionMap getOwnActionMap() {
+    return myActionMap;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull InputMap getOwnInputMap() {
+    return myInputMap;
+  }
+
   private class ActionShortcutDelegate extends DumbAwareAction {
 
     private final Object myItem;

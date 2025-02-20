@@ -26,7 +26,7 @@ internal class CsatFeedbackNextDayAction : AnAction(), ActionRemoteBehaviorSpeci
 
       NotificationGroupManager.getInstance().getNotificationGroup("System Messages")
         .createNotification(
-          "Next CSAT feedback day is " + nextDate.date.format(DateTimeFormatter.ISO_DATE) +
+          "Next CSAT feedback day is " + nextDate.date.format(DateTimeFormatter.ISO_DATE) + ". " +
           "User is${if (!nextDate.isNewUser) " not " else " "}new.",
           NotificationType.INFORMATION
         )

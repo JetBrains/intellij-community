@@ -218,12 +218,12 @@ public final class LineStatusMarkerDrawUtil {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     if (ExperimentalUI.isNewUI()) {
       int x = gutter.getExtraLineMarkerFreePaintersAreaOffset();
-      boolean is6pxWidth = Registry.is("gutter.vcs.changes.width.6px", false);
+      int width = Registry.intValue("gutter.vcs.changes.width", 4, 4, 6);
       x += JBUI.scale(1); // leave 1px for brace highlighters
-      if (!is6pxWidth) {
+      if (width < 5) {
         x += JBUI.scale(2); //IDEA-286352
       }
-      int areaWidth = scaleWithEditor(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", is6pxWidth ? 6 : 4)), editor);
+      int areaWidth = scaleWithEditor(JBUIScale.scale(JBUI.getInt("Gutter.VcsChanges.width", width)), editor);
       return new IntPair(x, x + areaWidth);
     }
     else {

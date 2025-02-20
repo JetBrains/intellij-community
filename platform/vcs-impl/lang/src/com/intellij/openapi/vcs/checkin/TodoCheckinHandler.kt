@@ -92,7 +92,7 @@ internal class TodoCheckinHandler(private val project: Project) : CheckinHandler
                                           message("settings.filter.configure.link")) { sourceLink, linkData ->
       val group = SetTodoFilterAction.createPopupActionGroup(project, todoSettings, true) { filter ->
         todoSettings.todoFilterName = filter?.name
-        linkData.setCheckboxText(getFilterText(filter?.name))
+        linkData.update(getFilterText(filter?.name))
       }
       JBPopupMenu.showBelow(sourceLink, ActionPlaces.TODO_VIEW_TOOLBAR, group)
     }

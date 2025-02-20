@@ -217,6 +217,15 @@ final class ModuleChecker {
     }
   }
 
+  void checkModuleReference(@NotNull PsiImportModuleStatement statement) {
+    PsiJavaModuleReferenceElement refElement = statement.getModuleReference();
+    if (refElement == null) return;
+    PsiJavaModuleReference ref = refElement.getReference();
+    if (ref != null && ref.resolve() == null) {
+      reportUnresolvedJavaModule(refElement);
+    }
+  }
+
   private void reportUnresolvedJavaModule(@NotNull PsiJavaModuleReferenceElement refElement) {
     PsiJavaModuleReference ref = refElement.getReference();
     assert ref != null : refElement.getParent();
@@ -281,5 +290,17 @@ final class ModuleChecker {
         }
       }
     }
+  }
+
+  void checkPackageReference(@NotNull PsiPackageAccessibilityStatement statement) {
+    if (statement.getRole() == PsiPackageAccessibilityStatement.Role.OPENS) return;
+    PsiJavaCodeReferenceElement refElement = statement.getPackageReference();
+    if (refElement == null) return;
+    JavaPsiModuleUtil.PackageReferenceState state = JavaPsiModuleUtil.checkPackageReference(statement);
+    if (state == JavaPsiModuleUtil.PackageReferenceState.VALID) return;
+    var kind = state == JavaPsiModuleUtil.PackageReferenceState.PACKAGE_NOT_FOUND
+               ? JavaErrorKinds.MODULE_REFERENCE_PACKAGE_NOT_FOUND
+               : JavaErrorKinds.MODULE_REFERENCE_PACKAGE_EMPTY;
+    myVisitor.report(kind.create(statement));
   }
 }

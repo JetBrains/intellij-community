@@ -613,7 +613,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         for (XDebugSession session : sessions) {
           XDebugProcess process = session.getDebugProcess();
           if (process.dependsOnPlugin(pluginDescriptor)) {
-            return "Plugin is not unload-safe because of the started debug session";
+            return XDebuggerBundle.message("plugin.is.not.unload.safe.because.of.the.started.debug.session");
           }
         }
       }

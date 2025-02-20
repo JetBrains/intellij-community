@@ -8,7 +8,7 @@ import com.intellij.json.JsonBundle
 import com.intellij.json.psi.JsonObject
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -55,7 +55,7 @@ open class AddOptionalPropertiesIntention : IntentionAction {
         containingObject to missingProperties
       } ?: return@runWithModalProgressBlocking
 
-      writeAction {
+      edtWriteAction {
         executeCommand {
           AddMissingPropertyFix(missingProperties, getSyntaxAdapter(project)).performFix(objectPointer.dereference())
         }

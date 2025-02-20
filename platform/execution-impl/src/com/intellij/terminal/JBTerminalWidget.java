@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.terminal.search.DefaultJediTermSearchComponent;
 import com.intellij.terminal.search.JediTermSearchComponentProvider;
+import com.intellij.terminal.session.TerminalSession;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.terminal.ui.TtyConnectorAccessor;
 import com.intellij.ui.components.JBScrollBar;
@@ -41,6 +42,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCompatibleDataProvider {
   private static final Logger LOG = Logger.getInstance(JBTerminalWidget.class);
@@ -321,6 +323,16 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
     }
 
     @Override
+    public @Nullable TerminalSession getSession() {
+      return null;
+    }
+
+    @Override
+    public void connectToSession(@NotNull TerminalSession session) {
+      throw new IllegalStateException("TerminalSession is not supported in TerminalWidgetBridge");
+    }
+
+    @Override
     public @Nullable TermSize getTermSize() {
       return widget().getTerminalPanel().getTerminalSizeFromComponent();
     }
@@ -398,6 +410,11 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
     @Override
     public void setShellCommand(@Nullable List<String> command) {
       widget().setShellCommand(command);
+    }
+
+    @Override
+    public @NotNull CompletableFuture<@NotNull TermSize> getTerminalSizeInitializedFuture() {
+      throw new IllegalStateException("getTerminalSizeInitializedFuture is not supported in TerminalWidgetBridge");
     }
   }
 }

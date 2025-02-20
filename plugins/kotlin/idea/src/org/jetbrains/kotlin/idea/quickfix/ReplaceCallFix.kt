@@ -1,19 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.intentions.canBeReplacedWithInvokeCall
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -32,15 +32,15 @@ object ReplaceWithSafeCallFixFactory : KotlinSingleIntentionActionFactory() {
                 )
                 val newContext = safeQualifiedExpression.analyzeAsReplacement(qualifiedExpression, context)
                 if (safeQualifiedExpression.getResolvedCall(newContext)?.canBeReplacedWithInvokeCall() == true) {
-                    return ReplaceInfixOrOperatorCallFix(call, call.shouldHaveNotNullType())
+                    return ReplaceInfixOrOperatorCallFix(call, call.shouldHaveNotNullType()).asIntention()
                 }
             }
-            return ReplaceWithSafeCallFix(qualifiedExpression, qualifiedExpression.shouldHaveNotNullType())
+            return ReplaceWithSafeCallFix(qualifiedExpression, qualifiedExpression.shouldHaveNotNullType()).asIntention()
         } else {
             if (psiElement !is KtNameReferenceExpression) return null
             if (psiElement.getResolvedCall(psiElement.analyze())?.getImplicitReceiverValue() != null) {
                 val expressionToReplace: KtExpression = psiElement.parent as? KtCallExpression ?: psiElement
-                return ReplaceImplicitReceiverCallFix(expressionToReplace, expressionToReplace.shouldHaveNotNullType())
+                return ReplaceImplicitReceiverCallFix(expressionToReplace, expressionToReplace.shouldHaveNotNullType()).asIntention()
             }
             return null
         }
@@ -80,12 +80,12 @@ object ReplaceWithSafeCallForScopeFunctionFixFactory : KotlinSingleIntentionActi
 
         return ReplaceWithSafeCallForScopeFunctionFix(
             scopeDotQualifiedExpression, scopeDotQualifiedExpression.shouldHaveNotNullType()
-        )
+        ).asIntention()
     }
 
     private fun KtCallExpression.scopeFunctionKind(context: BindingContext): ScopeFunctionKind? {
         val methodName = getResolvedCall(context)?.resultingDescriptor?.fqNameUnsafe?.asString()
-        return ScopeFunctionKind.values().firstOrNull { kind -> kind.names.contains(methodName) }
+        return ScopeFunctionKind.entries.firstOrNull { kind -> kind.names.contains(methodName) }
     }
 
     private enum class ScopeFunctionKind(vararg val names: String) {

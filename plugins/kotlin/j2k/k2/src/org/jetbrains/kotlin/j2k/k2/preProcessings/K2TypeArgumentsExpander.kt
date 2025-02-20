@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.j2k.k2.preProcessings
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix
 import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor
 import com.intellij.psi.PsiJavaFile
@@ -57,7 +57,7 @@ class K2TypeArgumentsExpander: J2kPreprocessorExtension {
             }
             val sortedEntries = readAction { map.entries.sortedBy { -it.key.textRange.startOffset } }
             for (entry in sortedEntries) {
-                writeAction {
+                edtWriteAction {
                     CodeStyleManager.getInstance(project).performActionWithFormatterDisabled {
                         entry.key.typeArgumentList.replace(entry.value)
                     }

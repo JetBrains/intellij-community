@@ -2,7 +2,10 @@
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.javac.Iterators.BooleanFunction;
 import org.jetbrains.jps.javac.Iterators.Function;
@@ -146,11 +149,7 @@ public final class JpsJavacFileManager extends ForwardingJavaFileManager<Standar
       throw new IllegalArgumentException("Invalid kind: " + kind);
     }
     final JavaFileObject fo = super.getJavaFileForInput(location, className, kind); // todo
-    boolean isModuleInfo = "module-info".equals(className);
-    if (location == StandardLocation.CLASS_OUTPUT && isModuleInfo) {
-      return null;
-    }
-    if (fo == null && !isModuleInfo) {
+    if (fo == null && !"module-info".equals(className)) {
       // workaround javac bug (missing null-check): throwing exception here instead of returning null
       throw new FileNotFoundException("Java resource does not exist : " + location + '/' + kind + '/' + className);
     }

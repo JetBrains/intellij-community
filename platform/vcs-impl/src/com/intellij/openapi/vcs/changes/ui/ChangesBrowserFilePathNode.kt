@@ -17,11 +17,15 @@ import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter.getPresentableRela
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 
 
-abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: FileStatus?) : ChangesBrowserNode<U>(userObject), PathElementIdProvider {
+abstract class AbstractChangesBrowserFilePathNode<U>(
+  userObject: U,
+  val status: FileStatus?,
+) : ChangesBrowserNode<U>(userObject), PathElementIdProvider, ChangesBrowserNode.NodeWithCollapsedParents {
   private val filePath: FilePath get() = filePath(getUserObject())
   private val flattenedParents = mutableListOf<SerializablePathElement>()
   private val originInfo: OriginInfo? by lazy(LazyThreadSafetyMode.NONE) { buildOriginInfo() }
@@ -38,10 +42,12 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
     return filePath.isDirectory && isLeaf
   }
 
-  override fun render(renderer: ChangesBrowserNodeRenderer,
-                      selected: Boolean,
-                      expanded: Boolean,
-                      hasFocus: Boolean) {
+  override fun render(
+    renderer: ChangesBrowserNodeRenderer,
+    selected: Boolean,
+    expanded: Boolean,
+    hasFocus: Boolean,
+  ) {
     val path = filePath
     if (renderer.isShowFlatten && isLeaf) {
       renderer.append(path.name, textAttributes)
@@ -79,7 +85,8 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
     }
   }
 
-  internal fun appendFlattenedParent(parentNode: ChangesBrowserNode<*>) {
+  @ApiStatus.Internal
+  override fun addCollapsedParent(parentNode: ChangesBrowserNode<*>) {
     val parentUserObject = parentNode.userObject
     if (parentUserObject !is FilePath) return
     flattenedParents.add(SerializablePathElement(

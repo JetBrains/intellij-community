@@ -1,5 +1,6 @@
 // "Change function signature to 'fun f(a: Int): Int'" "true"
 // ERROR: Type mismatch: inferred type is String but Int was expected
+// K2_AFTER_ERROR: Return type mismatch: expected 'Int', actual 'String'.
 open class A {
     open fun f(a: Int): Int = 0
 }

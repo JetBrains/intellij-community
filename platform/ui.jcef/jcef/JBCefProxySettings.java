@@ -1,17 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.net.HttpConfigurable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Decorates {@link HttpConfigurable} so that it can be used in tests as well.
- *
- * @author tav
  */
-class JBCefProxySettings {
+@ApiStatus.Internal
+public final class JBCefProxySettings {
   public final boolean USE_HTTP_PROXY;
   public final boolean PROXY_TYPE_IS_SOCKS;
   public final boolean USE_PROXY_PAC;

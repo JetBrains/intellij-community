@@ -4,7 +4,7 @@ package com.intellij.java.codeInsight
 import com.intellij.ide.actions.CopyContentRootPathProvider
 import com.intellij.ide.actions.CopySourceRootPathProvider
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -29,7 +29,7 @@ class CopyPathProviderTest {
 
   @BeforeEach
   fun setUp() = runBlocking {
-    writeAction {
+    edtWriteAction {
       rootDir = projectModel.baseProjectDir.newVirtualDirectory("root")
       module = projectModel.createModule()
     }

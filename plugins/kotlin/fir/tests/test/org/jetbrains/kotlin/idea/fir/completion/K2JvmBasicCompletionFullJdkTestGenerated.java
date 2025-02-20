@@ -33,6 +33,31 @@ public abstract class K2JvmBasicCompletionFullJdkTestGenerated extends AbstractK
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("NoParameterName1.kt")
+        public void testNoParameterName1() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/NoParameterName1.kt");
+        }
+
+        @TestMetadata("NoParameterName2.kt")
+        public void testNoParameterName2() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/NoParameterName2.kt");
+        }
+
+        @TestMetadata("NoRemainingParameterName1.kt")
+        public void testNoRemainingParameterName1() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/NoRemainingParameterName1.kt");
+        }
+
+        @TestMetadata("NoRemainingParameterName2.kt")
+        public void testNoRemainingParameterName2() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/NoRemainingParameterName2.kt");
+        }
+
+        @TestMetadata("NoRemainingParameterName3.kt")
+        public void testNoRemainingParameterName3() throws Exception {
+            runTest("../../completion/testData/basic/fullJdk/lambdaSignature/NoRemainingParameterName3.kt");
+        }
+
         @TestMetadata("ParameterName1.kt")
         public void testParameterName1() throws Exception {
             runTest("../../completion/testData/basic/fullJdk/lambdaSignature/ParameterName1.kt");

@@ -58,7 +58,7 @@ class TestPythonRepositoryManager(project: Project, sdk: Sdk) : PythonRepository
     TODO("Not yet implemented")
   }
 
-  override suspend fun refreshCashes() {
+  override suspend fun refreshCaches() {
   }
 
   override suspend fun initCaches() {

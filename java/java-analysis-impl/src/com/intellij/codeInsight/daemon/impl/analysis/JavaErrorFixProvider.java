@@ -13,6 +13,7 @@ import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
@@ -23,6 +24,8 @@ import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
@@ -168,6 +171,13 @@ final class JavaErrorFixProvider {
       PsiClassType type = JavaPsiFacade.getElementFactory(error.project()).createType(error.context().superClass());
       return myFactory.createExtendsListFix(error.context().subClass(), type, true);
     });
+    JavaFixProvider<PsiPackageAccessibilityStatement, Void> createClassInPackage = error -> {
+      String packageName = error.psi().getPackageName();
+      Module module = ModuleUtilCore.findModuleForFile(error.psi().getContainingFile());
+      return module == null ? null : myFactory.createCreateClassInPackageInModuleFix(module, packageName);
+    };
+    fix(MODULE_REFERENCE_PACKAGE_NOT_FOUND, createClassInPackage);
+    fix(MODULE_REFERENCE_PACKAGE_EMPTY, createClassInPackage);
   }
 
   private void createStatementFixes() {
@@ -214,6 +224,26 @@ final class JavaErrorFixProvider {
         error -> myFactory.createDeleteFix(error.psi(), QuickFixBundle.message("delete.unreachable.statement.fix.text")));
     fix(STATEMENT_UNREACHABLE_LOOP_BODY, error -> myFactory.createSimplifyBooleanFix(error.psi(), false));
     fix(FOREACH_NOT_APPLICABLE, error -> myFactory.createNotIterableForEachLoopFix(error.psi()));
+    fix(SWITCH_LABEL_EXPECTED, error -> {
+      PsiSwitchLabeledRuleStatement previousRule = PsiTreeUtil.getPrevSiblingOfType(error.psi(), PsiSwitchLabeledRuleStatement.class);
+      return previousRule == null ? null : myFactory.createWrapSwitchRuleStatementsIntoBlockFix(previousRule);
+    });
+    fixes(SWITCH_SELECTOR_TYPE_INVALID, (error, sink) -> {
+      HighlightFixUtil.registerFixesOnInvalidSelector(error.psi(), sink);
+      JavaFeature feature = error.context().getFeature();
+      if (feature != null) {
+        HighlightFixUtil.getIncreaseLanguageLevelFixes(error.psi(), feature).forEach(sink);
+      }
+    });
+    fix(SWITCH_LABEL_DUPLICATE, error -> {
+      if (error.psi() instanceof PsiCaseLabelElement caseLabel) {
+        return myFactory.createDeleteSwitchLabelFix(caseLabel);
+      }
+      else if (error.context() == JavaPsiSwitchUtil.SwitchSpecialValue.DEFAULT_VALUE) {
+        return myFactory.createDeleteDefaultFix(null, error.psi());
+      }
+      return null;
+    });
   }
 
   private void createMethodFixes() {
@@ -390,13 +420,8 @@ final class JavaErrorFixProvider {
       }
     });
     fix(UNSUPPORTED_FEATURE, error -> {
-      if (error.context() == JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS &&
-          error.psi() instanceof PsiInstanceOfExpression instanceOfExpression) {
-        PsiTypeElement element = InstanceOfUtils.findCheckTypeElement(instanceOfExpression);
-        PsiType operandType = instanceOfExpression.getOperand().getType();
-        if (element != null && operandType != null && TypeConversionUtil.isPrimitiveAndNotNull(element.getType())) {
-          return myFactory.createReplacePrimitiveWithBoxedTypeAction(operandType, requireNonNull(element));
-        }
+      if (error.context() == JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS) {
+        return HighlightFixUtil.createPrimitiveToBoxedPatternFix(error.psi());
       }
       return null;
     });
@@ -418,7 +443,7 @@ final class JavaErrorFixProvider {
     fix(PATTERN_INSTANCEOF_EQUALS, redundantInstanceOfFix);
     fix(PATTERN_INSTANCEOF_SUPERTYPE, redundantInstanceOfFix);
   }
-  
+
   private void createVariableFixes() {
     fix(UNNAMED_VARIABLE_BRACKETS, error -> new NormalizeBracketsFix(error.psi()));
     fix(UNNAMED_VARIABLE_WITHOUT_INITIALIZER, error -> myFactory.createAddVariableInitializerFix(error.psi()));
@@ -667,6 +692,9 @@ final class JavaErrorFixProvider {
     fix(CALL_MEMBER_BEFORE_CONSTRUCTOR, qualifyFix);
     fix(CLASS_OR_PACKAGE_EXPECTED, error -> myFactory.createRemoveQualifierFix(
       requireNonNull(error.psi().getQualifierExpression()), error.psi(), error.context()));
+    fix(SWITCH_LABEL_QUALIFIED_ENUM, error -> myFactory.createDeleteFix(
+      requireNonNull(error.psi().getQualifier()), JavaErrorBundle.message("qualified.enum.constant.in.switch.remove.fix")));
+    fix(SWITCH_DEFAULT_LABEL_CONTAINS_CASE, error -> myFactory.createReplaceCaseDefaultWithDefaultFix(error.context()));
   }
 
   private void createAccessFixes() {

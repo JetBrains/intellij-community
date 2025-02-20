@@ -25,6 +25,7 @@ data class GHPullRequestReviewThread(override val id: String,
                                      @JsonProperty("startDiffSide") val startSide: Side?,
                                      val startLine: Int?,
                                      val originalStartLine: Int?,
+                                     // To be precise: the elements of this list can be null, but should practically never be...
                                      @JsonProperty("comments") private val commentsNodes: GraphQLNodesDTO<GHPullRequestReviewComment>,
                                      val viewerCanReply: Boolean,
                                      val viewerCanResolve: Boolean,
@@ -32,14 +33,22 @@ data class GHPullRequestReviewThread(override val id: String,
   : GHNode(id) {
   @JsonIgnore
   val comments: List<GHPullRequestReviewComment> = commentsNodes.nodes
+  @JsonIgnore
   private val root = commentsNodes.nodes.first()
 
+  @JsonIgnore
   val state: GHPullRequestReviewCommentState = root.state
+  @JsonIgnore
   val commit: GHCommitHash? = root.commit
+  @JsonIgnore
   val originalCommit: GHCommitHash? = root.originalCommit
+  @JsonIgnore
   val author: GHActor? = root.author
+  @JsonIgnore
   val createdAt: Date = root.createdAt
+  @JsonIgnore
   val diffHunk: String = root.diffHunk
+  @JsonIgnore
   val reviewId: String? = root.reviewId
 }
 

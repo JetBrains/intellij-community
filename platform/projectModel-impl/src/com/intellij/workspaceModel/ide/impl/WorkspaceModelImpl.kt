@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
@@ -209,7 +209,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
   override suspend fun update(description: String, updater: (MutableEntityStorage) -> Unit) {
     // TODO:: Has to be migrated to the implementation without WA. See IDEA-336937
-    writeAction { updateProjectModel(description, updater) }
+    edtWriteAction { updateProjectModel(description, updater) }
   }
 
   /**

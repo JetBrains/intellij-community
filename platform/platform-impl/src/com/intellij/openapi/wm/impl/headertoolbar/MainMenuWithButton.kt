@@ -22,18 +22,12 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentLinkedDeque
 import javax.swing.Icon
 import javax.swing.JFrame
-import javax.swing.JMenu
 
 class MainMenuWithButton(
   val coroutineScope: CoroutineScope, private val frame: JFrame,
 ) : NonOpaquePanel(GridLayout()) {
   val mainMenuButton: MainMenuButton = MainMenuButton(coroutineScope, getButtonIcon()) { if (ShowMode.isMergedMainMenu()) toolbarMainMenu.menuCount else 0 }
-  val toolbarMainMenu: MergedMainMenu = MergedMainMenu(coroutineScope = coroutineScope, frame = frame).apply {
-    addUpdateGlobalMenuRootsListener { components.forEach { (it as JMenu).isOpaque = false } }
-    isOpaque = false
-    isVisible = ShowMode.getCurrent() == ShowMode.TOOLBAR_WITH_MENU
-    border = null
-  }
+  val toolbarMainMenu: MergedMainMenu = MergedMainMenu(coroutineScope = coroutineScope, frame = frame)
   private val connection: MessageBusConnection = com.intellij.openapi.application.ApplicationManager.getApplication().messageBus.connect()
 
 
@@ -45,6 +39,7 @@ class MainMenuWithButton(
       .cell(component = mainMenuButton.button)
     connection.subscribe(ToolbarCompressedNotifier.TOPIC, object : ToolbarCompressedListener {
       override fun onToolbarCompressed(event: ToolbarCompressedEvent) {
+        if (event.toolbar.rootPane != frame.rootPane) return
         recalculateWidth(event.toolbar)
       }
     })
@@ -106,9 +101,9 @@ class MainMenuWithButton(
           toolbarMainMenu.add(item)
         }
         toolbarMainMenu.rootMenuItems.forEach { it.updateUI() }
-        toolbar.revalidate()
-        toolbar.repaint()
       }
+      toolbar.revalidate()
+      toolbar.repaint()
     }
   }
 
@@ -122,6 +117,13 @@ class MainMenuWithButton(
 
 @ApiStatus.Internal
 class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame): IdeJMenuBar(coroutineScope = coroutineScope, frame = frame) {
+
+  init {
+    isOpaque = false
+    isVisible = ShowMode.getCurrent() == ShowMode.TOOLBAR_WITH_MENU
+    border = null
+  }
+
   private val invisibleItems: ConcurrentLinkedDeque<ActionMenu> = ConcurrentLinkedDeque<ActionMenu>()
 
   fun clearInvisibleItems() {

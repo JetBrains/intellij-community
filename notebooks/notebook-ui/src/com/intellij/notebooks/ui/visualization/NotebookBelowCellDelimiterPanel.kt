@@ -76,7 +76,7 @@ class NotebookBelowCellDelimiterPanel(
 
   private fun createExecutionLabel(): JLabel {
     return JLabel().apply {
-      font = EditorUtil.getEditorFont()
+      font = EditorUtil.getEditorFont().deriveFont(EditorUtil.getEditorFont().size2D - 1)
       foreground = UIUtil.getLabelInfoForeground()
     }
   }

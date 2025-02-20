@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.DumbProgressIndicator
 import org.jetbrains.plugins.github.api.GithubApiRequests
@@ -8,6 +9,7 @@ import org.jetbrains.plugins.github.api.data.GithubIssue
 import org.jetbrains.plugins.github.issue.GithubIssuesLoadingHelper
 import org.jetbrains.plugins.github.test.GithubTest
 
+@IJIgnore(issue = "no server")
 class GithubIssuesTest : GithubTest() {
   private val indicator = DumbProgressIndicator.INSTANCE
 

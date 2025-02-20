@@ -4,6 +4,7 @@
 // ACTION: Convert to raw string literal
 // ACTION: Create function 'foo'
 // ERROR: Type mismatch: inferred type is String but A was expected
+// K2_AFTER_ERROR: Argument type mismatch: actual type is 'String', but 'A' was expected.
 
 package let.implement
 

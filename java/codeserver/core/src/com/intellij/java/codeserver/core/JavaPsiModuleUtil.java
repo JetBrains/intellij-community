@@ -4,6 +4,7 @@ package com.intellij.java.codeserver.core;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -20,10 +21,8 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.JavaModuleSearch;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.JavaMultiReleaseUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
@@ -519,6 +518,67 @@ public final class JavaPsiModuleUtil {
           collectDependencies(dependency, dependencies, transitive);
         }
       }
+    }
+  }
+
+  /**
+   * State of package reference in module-info file
+   */
+  public enum PackageReferenceState {
+    /**
+     * Valid reference to a non-empty package
+     */
+    VALID,
+    /**
+     * No package is found
+     */
+    PACKAGE_NOT_FOUND,
+    /**
+     * Package exists but contains no classes (for exports) or no files (for opens)
+     */
+    PACKAGE_EMPTY
+  }
+
+  /**
+   * @param statement statement to check ('opens' or 'exports' statement)
+   * @return state of the reference
+   */
+  public static @NotNull PackageReferenceState checkPackageReference(@NotNull PsiPackageAccessibilityStatement statement) {
+    PsiJavaCodeReferenceElement refElement = statement.getPackageReference();
+    if (refElement != null) {
+      PsiFile file = statement.getContainingFile();
+      Module module = ModuleUtilCore.findModuleForFile(file);
+      if (module != null) {
+        PsiElement target = refElement.resolve();
+        PsiDirectory[] directories = PsiDirectory.EMPTY_ARRAY;
+        if (target instanceof PsiPackage psiPackage) {
+          boolean inTests = ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(file.getVirtualFile());
+          directories = psiPackage.getDirectories(module.getModuleScope(inTests));
+          Module mainMultiReleaseModule = JavaMultiReleaseUtil.getMainMultiReleaseModule(module);
+          if (mainMultiReleaseModule != null) {
+            directories = ArrayUtil.mergeArrays(directories, psiPackage.getDirectories(mainMultiReleaseModule.getModuleScope(inTests)));
+          }
+        }
+        String packageName = statement.getPackageName();
+        if (directories.length == 0) {
+          return PackageReferenceState.PACKAGE_NOT_FOUND;
+        }
+        boolean opens = statement.getRole() == PsiPackageAccessibilityStatement.Role.OPENS;
+        if (packageName != null && isPackageEmpty(directories, packageName, opens)) {
+          return PackageReferenceState.PACKAGE_EMPTY;
+        }
+      }
+    }
+
+    return PackageReferenceState.VALID;
+  }
+  
+  private static boolean isPackageEmpty(PsiDirectory @NotNull [] directories, @NotNull String packageName, boolean anyFile) {
+    if (anyFile) {
+      return !ContainerUtil.exists(directories, dir -> dir.getFiles().length > 0);
+    }
+    else {
+      return PsiUtil.isPackageEmpty(directories, packageName);
     }
   }
 

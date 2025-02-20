@@ -143,4 +143,4 @@ private fun createRecentFileViewModel(virtualFile: VirtualFile, project: Project
   )
 }
 
-internal const val SWITCHER_ELEMENTS_LIMIT: Int = 30
+private const val SWITCHER_ELEMENTS_LIMIT: Int = 30

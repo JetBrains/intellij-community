@@ -11,7 +11,6 @@ import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PathMacroManager;
@@ -22,10 +21,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
@@ -43,6 +42,7 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import one.util.streamex.EntryStream;
@@ -54,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -90,8 +91,10 @@ public class RefManagerImpl extends RefManager {
   private final Map<Language, RefManagerExtension<?>> myLanguageExtensions = new HashMap<>();
   private final Interner<String> myNameInterner = Interner.createStringInterner();
 
-  private volatile BlockingQueue<@NotNull Runnable> myTasks;
-  private volatile List<Future<?>> myFutures;
+  private final BlockingQueue<@NotNull Runnable> myTasks;
+  private final AtomicInteger myTasksInFlight;
+  private final ExecutorService myExecutor;
+  private final CountDownLatch myLatch;
 
   public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
     myProject = project;
@@ -112,6 +115,22 @@ public class RefManagerImpl extends RefManager {
       for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
         getRefModule(module);
       }
+    }
+    if (Registry.is("batch.inspections.process.project.usages.in.parallel")) {
+      final int setting = Registry.get("batch.inspections.number.of.threads").asInteger();
+      final int threadsCount = (setting > 0) ? setting : Runtime.getRuntime().availableProcessors() - 1;
+      myExecutor =
+        AppExecutorUtil.createBoundedApplicationPoolExecutor("Reference Graph Executor", Math.min(Math.max(threadsCount, 1), 10));
+      myTasksInFlight = new AtomicInteger();
+      // unbounded queue because tasks are submitted under read action, so we mustn't block
+      myTasks = new LinkedBlockingQueue<>();
+      myLatch = new CountDownLatch(1);
+    }
+    else {
+      myExecutor = null;
+      myTasksInFlight = null;
+      myTasks = null;
+      myLatch = null;
     }
   }
 
@@ -397,42 +416,35 @@ public class RefManagerImpl extends RefManager {
     if (!myDeclarationsFound.getAndSet(true)) {
       long before = System.currentTimeMillis();
       startTaskWorkers();
-      try {
-        if (!Registry.is("batch.inspections.visit.psi.in.parallel")) {
-          scope.accept(myProjectIterator);
-        }
-        else {
-          final PsiManager psiManager = PsiManager.getInstance(myProject);
-          scope.accept(vFile -> {
-            executeTask(() -> {
-              final PsiFile file = psiManager.findFile(vFile);
-              if (file != null && ProblemHighlightFilter.shouldProcessFileInBatch(file)) {
-                file.accept(myProjectIterator);
-              }
-            });
-            return true;
+      if (!Registry.is("batch.inspections.visit.psi.in.parallel")) {
+        scope.accept(myProjectIterator);
+      }
+      else {
+        final PsiManager psiManager = PsiManager.getInstance(myProject);
+        scope.accept(vFile -> {
+          executeTask(() -> {
+            final PsiFile file = psiManager.findFile(vFile);
+            if (file != null && ProblemHighlightFilter.shouldProcessFileInBatch(file)) {
+              file.accept(myProjectIterator);
+            }
           });
-        }
-      }
-      finally {
+          return true;
+        });
         waitForWorkersToFinish();
-        LOG.info("Total duration of processing project usages: " + (System.currentTimeMillis() - before) + "ms");
       }
+      LOG.info("Total duration of processing project usages: " + (System.currentTimeMillis() - before) + "ms");
     }
   }
 
   private void waitForWorkersToFinish() {
-    final List<Future<?>> futures = myFutures;
-    if (futures == null) return;
-    myFutures = null;
-    try {
-      for (Future<?> future : futures) {
-        future.get();
+    if (myTasksInFlight.decrementAndGet() == 0) return;
+    while (true) {
+      try {
+        ProgressManager.checkCanceled();
+        myLatch.await(100, TimeUnit.MILLISECONDS);
+        if (myTasksInFlight.intValue() == 0) return;
       }
-      myTasks = null;
-    }
-    catch (ExecutionException | InterruptedException e) {
-      throw new RuntimeException(e);
+      catch (InterruptedException ignore) {}
     }
   }
 
@@ -448,6 +460,7 @@ public class RefManagerImpl extends RefManager {
   @Override
   public void executeTask(@Async.Schedule @NotNull Runnable runnable) {
     if (myTasks != null) {
+      myTasksInFlight.incrementAndGet();
       try {
         myTasks.put(runnable);
       }
@@ -459,43 +472,34 @@ public class RefManagerImpl extends RefManager {
   }
 
   private void startTaskWorkers() {
-    if (!Registry.is("batch.inspections.process.project.usages.in.parallel")) {
-      return;
-    }
-    final int setting = Registry.get("batch.inspections.number.of.threads").asInteger();
-    final int threadsCount = (setting > 0) ? setting : Runtime.getRuntime().availableProcessors() - 1;
-    if (threadsCount == 0) {
-      // need more than 1 core for parallel processing
-      return;
-    }
-    LOG.info("Processing project usages using " + threadsCount + " threads");
-    // unbounded queue because tasks are submitted under read action, so we mustn't block
-    myTasks = new LinkedBlockingQueue<>();
-    myFutures = new ArrayList<>();
-    final Application application = ApplicationManager.getApplication();
-    final ProgressManager progressManager = ProgressManager.getInstance();
-    final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
-    for (int i = 0; i < threadsCount; i++) {
-      final Future<?> future = application.executeOnPooledThread(() -> {
-        while (myFutures != null || !myTasks.isEmpty()) {
-          try {
-            final Runnable task = myTasks.poll(50, TimeUnit.MILLISECONDS);
-            ProgressManager.checkCanceled();
-            if (task != null) {
-              runTask(progressIndicator, task);
-            }
+    if (myExecutor == null) return;
+    myTasksInFlight.incrementAndGet();
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    ProgressIndicator progressIndicator = indicator == null && ApplicationManager.getApplication().isUnitTestMode()
+                                          ? new EmptyProgressIndicator()
+                                          : indicator;
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      while (myTasksInFlight.intValue() != 0) {
+        try {
+          final Runnable task = myTasks.poll(50, TimeUnit.MILLISECONDS);
+          ProgressManager.checkCanceled();
+          if (task != null) {
+            runTask(progressIndicator, task);
           }
-          catch (InterruptedException ignore) {}
         }
-      });
-      myFutures.add(future);
-    }
+        catch (InterruptedException ignore) {}
+      }
+    });
   }
 
   private void runTask(ProgressIndicator progressIndicator, @Async.Execute Runnable task) {
-    DumbService.getInstance(myProject).runReadActionInSmartMode(
-      () -> ProgressManager.getInstance().executeProcessUnderProgress(task, progressIndicator)
-    );
+    ReadAction.nonBlocking(task)
+      .inSmartMode(myProject)
+      .wrapProgress(progressIndicator)
+      .submit(myExecutor)
+      .onSuccess(x -> {
+        if (myTasksInFlight.decrementAndGet() == 0) myLatch.countDown();
+      });
   }
 
   public boolean isDeclarationsFound() {
@@ -589,8 +593,7 @@ public class RefManagerImpl extends RefManager {
       extension.removeReference(refElem);
     }
 
-    if (element != null &&
-        myRefTable.remove(createAnchor(element)) != null) return;
+    if (element != null && myRefTable.remove(createAnchor(element)) != null) return;
 
     //PsiElement may have been invalidated and new one returned by getElement() is different so we need to do this stuff.
     for (Map.Entry<PsiAnchor, RefElement> entry : myRefTable.entrySet()) {

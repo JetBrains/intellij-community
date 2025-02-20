@@ -767,7 +767,6 @@ c:com.intellij.execution.impl.RunConfigurable
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.options.Configurable
 - sf:Companion:com.intellij.execution.impl.RunConfigurable$Companion
-- sf:KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.openapi.project.Project):V
 - p:addRunConfigurationsToModel(javax.swing.tree.DefaultMutableTreeNode):V
 - apply():V

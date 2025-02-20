@@ -7,7 +7,7 @@ import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -287,14 +287,14 @@ internal class RCInArbitraryFileManager(private val project: Project) {
   }
 
   private suspend fun saveToFile(filePath: String, data: BufferExposingByteArrayOutputStream) {
-    writeAction {
+    edtWriteAction {
       var file = LocalFileSystem.getInstance().findFileByPath(filePath)
       if (file == null) {
         val parentPath = PathUtil.getParentPath(filePath)
         val dir = VfsUtil.createDirectoryIfMissing(parentPath)
         if (dir == null) {
           LOG.error("Failed to create directory $parentPath")
-          return@writeAction
+          return@edtWriteAction
         }
 
         file = dir.createChildData(this@RCInArbitraryFileManager, PathUtil.getFileName(filePath))

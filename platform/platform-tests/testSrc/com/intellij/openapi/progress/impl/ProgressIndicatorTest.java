@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
@@ -302,11 +302,11 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   public void testNestedIndicatorsAreCanceledRight() {
     checkCanceledCalled = false;
     ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-      assertFalse(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+      assertFalse(CoreProgressManager.hasThreadUnderCanceledIndicator(Thread.currentThread()));
       ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
       assertTrue(indicator != null && !indicator.isCanceled());
       indicator.cancel();
-      assertTrue(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+      assertTrue(CoreProgressManager.hasThreadUnderCanceledIndicator(Thread.currentThread()));
       assertTrue(indicator.isCanceled());
       final ProgressIndicatorEx nested = new ProgressIndicatorBase();
       nested.addStateDelegate(new ProgressIndicatorStub() {
@@ -317,7 +317,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         }
       });
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-        assertFalse(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+        assertFalse(CoreProgressManager.hasThreadUnderCanceledIndicator(Thread.currentThread()));
         ProgressIndicator indicator2 = ProgressIndicatorProvider.getGlobalProgressIndicator();
         assertTrue(indicator2 != null && !indicator2.isCanceled());
         assertSame(indicator2, nested);
@@ -327,7 +327,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       ProgressIndicator indicator3 = ProgressIndicatorProvider.getGlobalProgressIndicator();
       assertSame(indicator, indicator3);
 
-      assertTrue(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+      assertTrue(CoreProgressManager.hasThreadUnderCanceledIndicator(Thread.currentThread()));
     }, new EmptyProgressIndicator());
     assertFalse(checkCanceledCalled);
   }
@@ -361,10 +361,10 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     };
     assertThrows(ProcessCanceledException.class, () ->
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-        assertFalse(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+        assertFalse(CoreProgressManager.hasThreadUnderCanceledIndicator(Thread.currentThread()));
         assertFalse(progress.isCanceled());
         progress.cancel();
-        assertTrue(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
+        assertTrue(CoreProgressManager.hasThreadUnderCanceledIndicator(Thread.currentThread()));
         assertTrue(progress.isCanceled());
         waitForPCE();
       }, ProgressWrapper.wrap(progress))

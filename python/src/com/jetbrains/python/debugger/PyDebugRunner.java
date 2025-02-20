@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.codeWithMe.ClientId;
@@ -934,7 +934,8 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
   }
 
-  private abstract class PythonDebuggerTargetedCommandLineBuilder implements PythonScriptTargetedCommandLineBuilder {
+  @ApiStatus.Internal
+  public abstract class PythonDebuggerTargetedCommandLineBuilder implements PythonScriptTargetedCommandLineBuilder {
     private final @NotNull Project myProject;
     private final @NotNull PythonCommandLineState myPyState;
     private final @NotNull RunProfile myProfile;

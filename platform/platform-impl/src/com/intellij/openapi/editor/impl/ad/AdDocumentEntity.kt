@@ -18,8 +18,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 private typealias Att<T> = Attributes<AdDocumentEntity>.Required<T>
 
-@Internal
 @Experimental
+@Internal
 class AdDocumentEntity(override val eid: EID) : Entity {
   val text: Text by TextAttr
   val modStamp: Long by ModStampAttr

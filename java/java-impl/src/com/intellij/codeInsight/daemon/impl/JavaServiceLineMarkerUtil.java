@@ -21,6 +21,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,8 +36,8 @@ import static com.intellij.psi.CommonClassNames.JAVA_UTIL_SERVICE_LOADER;
 /**
  * Utility for generating JPMS service provider line markers
  */
-final class JavaServiceLineMarkerUtil {
-
+@ApiStatus.Internal
+public final class JavaServiceLineMarkerUtil {
   static final CallMatcher SERVICE_LOADER_LOAD = CallMatcher.staticCall(JAVA_UTIL_SERVICE_LOADER,
                                                                         ArrayUtil.toStringArray(
                                                                           JavaServiceProviderUtil.JAVA_UTIL_SERVICE_LOADER_METHODS));
@@ -135,7 +136,8 @@ final class JavaServiceLineMarkerUtil {
       .orElse(null);
   }
 
-  abstract static class ServiceNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
+  @ApiStatus.Internal
+  public abstract static class ServiceNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
     final String myInterfaceClassName;
 
     ServiceNavigationHandler(@NotNull String interfaceClassName) { myInterfaceClassName = interfaceClassName; }
@@ -160,7 +162,7 @@ final class JavaServiceLineMarkerUtil {
     }
   }
 
-  private static class ServiceUsesNavigationHandler extends ServiceNavigationHandler {
+  private static final class ServiceUsesNavigationHandler extends ServiceNavigationHandler {
     ServiceUsesNavigationHandler(String interfaceClassName) {
       super(interfaceClassName);
     }
@@ -174,7 +176,7 @@ final class JavaServiceLineMarkerUtil {
     }
   }
 
-  private static class ServiceProvidesNavigationHandler extends ServiceNavigationHandler {
+  private static final class ServiceProvidesNavigationHandler extends ServiceNavigationHandler {
     private final String myImplementerClassName;
 
     ServiceProvidesNavigationHandler(@NotNull String interfaceClassName, @NotNull String implementerClassName) {

@@ -25,6 +25,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.TerminalCommandExecutor
 import org.jetbrains.plugins.terminal.block.completion.TerminalInlineCompletion
 import org.jetbrains.plugins.terminal.block.history.CommandHistoryPresenter
@@ -50,11 +51,12 @@ import javax.swing.JScrollPane
 import kotlin.math.max
 import kotlin.math.min
 
-internal class TerminalPromptView(
+@ApiStatus.Internal
+class TerminalPromptView(
   private val project: Project,
   private val settings: JBTerminalSystemSettingsProviderBase,
   session: BlockTerminalSession,
-  commandExecutor: TerminalCommandExecutor
+  commandExecutor: TerminalCommandExecutor,
 ) : PromptStateListener, Disposable {
   val controller: TerminalPromptController
 

@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz.log;
 
 import de.plushnikov.intellij.plugin.processor.clazz.log.AbstractLogProcessor.LoggerInitializerParameter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,11 +15,11 @@ import java.util.stream.Collectors;
 
 /**
  * Never throws exception, returns null in case of invalid declaration.
- *
- * @author Adam Juraszek
  */
-final class CustomLogParser {
-  static class LoggerInitializerDeclaration {
+@ApiStatus.Internal
+public final class CustomLogParser {
+  @ApiStatus.Internal
+  public static final class LoggerInitializerDeclaration {
     private final List<LoggerInitializerParameter> withTopic;
     private final List<LoggerInitializerParameter> withoutTopic;
 

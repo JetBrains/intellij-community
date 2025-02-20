@@ -6,7 +6,11 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
@@ -23,7 +27,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseValueExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo.Companion.createByKtTypes
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo.Companion.createTypeByKtType
@@ -39,7 +42,7 @@ object CallableReturnTypeUpdaterUtils {
         typeInfo: TypeInfo,
         project: Project,
         editor: Editor? = null,
-    ) = updateType(
+    ): Unit = updateType(
         declaration,
         typeInfo,
         project,
@@ -52,7 +55,7 @@ object CallableReturnTypeUpdaterUtils {
         typeInfo: TypeInfo,
         project: Project,
         updater: ModPsiUpdater,
-    ) = updateType(
+    ): Unit = updateType(
         declaration,
         typeInfo,
         project,
@@ -225,13 +228,13 @@ object CallableReturnTypeUpdaterUtils {
     }
 
     private fun KaClassType.isLocal(): Boolean =
-        classId.isLocal == true
+        classId.isLocal
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getTypeInfo(declaration: KtCallableDeclaration): TypeInfo {
 
-        val calculateAllTypes = calculateAllTypes<TypeInfo>(declaration) { declarationType, allTypes, cannotBeNull ->
+        val calculateAllTypes = calculateAllTypes(declaration) { declarationType, allTypes, cannotBeNull ->
             if (isUnitTestMode()) {
                 selectForUnitTest(declaration, allTypes.toList())?.let { return@calculateAllTypes it }
             }
@@ -313,24 +316,26 @@ object CallableReturnTypeUpdaterUtils {
                 shortTypeRepresentation = ktType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE),
             )
 
-            val UNIT = Type(isUnit = true, isError = false, longTypeRepresentation = "kotlin.Unit", shortTypeRepresentation = "Unit")
-            val ANY = Type(isUnit = false, isError = false, longTypeRepresentation = "kotlin.Any", shortTypeRepresentation = "Any")
+            val UNIT: Type = Type(isUnit = true, isError = false, longTypeRepresentation = "kotlin.Unit", shortTypeRepresentation = "Unit")
+            val ANY: Type = Type(isUnit = false, isError = false, longTypeRepresentation = "kotlin.Any", shortTypeRepresentation = "Any")
         }
     }
 
     @ApiStatus.Internal
     class SpecifyExplicitTypeQuickFix(
-        target: KtCallableDeclaration,
+        element: KtCallableDeclaration,
         private val typeInfo: TypeInfo,
-    ) : AbstractKotlinApplicableQuickFix<KtCallableDeclaration>(target) {
-        override fun getFamilyName(): String = KotlinBundle.message("specify.type.explicitly")
+    ) : PsiUpdateModCommandAction<KtCallableDeclaration>(element) {
+        override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("specify.type.explicitly")
 
-        override fun getActionName(element: KtCallableDeclaration): String = when (element) {
-            is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
-            else -> KotlinBundle.message("specify.type.explicitly")
-        }
+        override fun getPresentation(context: ActionContext, element: KtCallableDeclaration): Presentation = Presentation.of(
+            when (element) {
+                is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
+                else -> KotlinBundle.message("specify.type.explicitly")
+            }
+        )
 
-        override fun apply(element: KtCallableDeclaration, project: Project, editor: Editor?, file: KtFile) =
-            updateType(element, typeInfo, project, editor)
+        override fun invoke(context: ActionContext, element: KtCallableDeclaration, updater: ModPsiUpdater): Unit =
+            updateType(element, typeInfo, context.project, updater)
     }
 }

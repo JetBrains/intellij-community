@@ -27,9 +27,10 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.block.reworked.WriteActionTerminalDocumentChangesApplier
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinkHighlighter
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
-import org.jetbrains.plugins.terminal.reworked.util.TerminalSessionTestUtil.update
+import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil.update
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -50,7 +51,7 @@ internal class TerminalHyperlinkHighlighterTest : BasePlatformTestCase() {
     useFilters(*filter)
     withContext(Dispatchers.EDT) {
       editor = createEditor()
-      model = TerminalOutputModelImpl(editor.document, maxCapacity)
+      model = TerminalOutputModelImpl(editor.document, maxCapacity, WriteActionTerminalDocumentChangesApplier())
       hyperlinkHighlighter = TerminalHyperlinkHighlighter.install(project, model, editor, coroutineScope)
     }
     hyperlinkHighlighter.awaitInitialized()

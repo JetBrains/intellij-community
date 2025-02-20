@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -24,6 +24,7 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.BitUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
+@ApiStatus.Internal
+public abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
   JavaMethodElementType(final @NonNls String name, @NotNull IElementType parentElementType) {
     super(name, parentElementType);
   }

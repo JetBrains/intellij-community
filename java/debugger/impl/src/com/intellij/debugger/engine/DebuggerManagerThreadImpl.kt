@@ -188,7 +188,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
   override fun processEvent(managerCommand: DebuggerCommandImpl) {
     assertIsManagerThread()
     val threadCommands = myCurrentCommands.get()
-    threadCommands.push(managerCommand)
+    threadCommands.add(managerCommand)
     try {
       if (myEvents.isClosed) {
         managerCommand.notifyCancelled()
@@ -220,7 +220,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
       LOG.error(e)
     }
     finally {
-      threadCommands.pop()
+      threadCommands.removeLast()
     }
   }
 
@@ -335,7 +335,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
 
   companion object {
     private val LOG = Logger.getInstance(DebuggerManagerThreadImpl::class.java)
-    private val myCurrentCommands = ThreadLocal.withInitial { LinkedList<DebuggerCommandImpl>() }
+    private val myCurrentCommands = ThreadLocal.withInitial { ArrayDeque<DebuggerCommandImpl>() }
 
     const val COMMAND_TIMEOUT: Int = 3000
 
@@ -365,7 +365,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal @JvmOverloads constructor(
     }
 
     @JvmStatic
-    fun getCurrentCommand(): DebuggerCommandImpl? = myCurrentCommands.get().peek()
+    fun getCurrentCommand(): DebuggerCommandImpl? = myCurrentCommands.get().peekLast()
 
     /**
      * Debugger thread runs in a progress indicator itself, so we need to check whether we have any other progress indicator additionally.

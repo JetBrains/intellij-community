@@ -6,7 +6,6 @@ com/intellij/ide/plugins/PluginLoadingResult
 com/intellij/ide/plugins/PluginManagerState
 com/intellij/lang/impl/PsiBuilderImpl$MyTreeStructure
 com/intellij/lang/impl/PsiBuilderImpl$StartMarker
-com/intellij/openapi/application/TransactionGuardImpl$TransactionIdImpl
 com/intellij/openapi/command/impl/CoreCommandProcessor$CommandDescriptor
 com/intellij/openapi/extensions/impl/ExtensionsAreaImpl
 com/intellij/psi/impl/DiffLog

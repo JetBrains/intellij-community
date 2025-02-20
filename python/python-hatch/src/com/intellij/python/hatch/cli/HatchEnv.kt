@@ -127,7 +127,7 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
       when {
         it.exitCode == 0 && it.stderr.startsWith("Creating environment") -> Result.success(CreateResult.Created)
         it.exitCode == 0 -> Result.success(CreateResult.AlreadyExists)
-        it.stderr == "Environment `$actualEnvName` is not defined by project config\n" -> Result.success(CreateResult.NotDefinedInConfig)
+        it.stderr.startsWith("Environment `$actualEnvName` is not defined by project config") -> Result.success(CreateResult.NotDefinedInConfig)
         else -> Result.failure(null)
       }
     }
@@ -144,7 +144,7 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
       when (it.exitCode) {
         0 -> Result.success(Path.of(it.stdout.trim()))
         else -> {
-          if (it.stderr == "Environment `${envName ?: DEFAULT_ENV_NAME}` is not defined by project config\n") {
+          if (it.stderr.startsWith("Environment `${envName ?: DEFAULT_ENV_NAME}` is not defined by project config")) {
             Result.success(null)
           }
           else {
@@ -180,7 +180,7 @@ class HatchEnv(runtime: HatchRuntime) : HatchCommand("env", runtime) {
       when {
         it.exitCode == 0 && it.stderr.startsWith("Removing environment") -> Result.success(RemoveResult.Removed)
         it.exitCode == 0 && it.stderr.isBlank() -> Result.success(RemoveResult.NotExists)
-        it.stderr == "Environment `$actualEnvName` is not defined by project config\n" -> Result.success(RemoveResult.NotDefinedInConfig)
+        it.stderr.startsWith("Environment `$actualEnvName` is not defined by project config") -> Result.success(RemoveResult.NotDefinedInConfig)
         it.stderr.startsWith("Cannot remove active environment") -> Result.success(RemoveResult.CantRemoveActiveEnvironment)
         else -> Result.failure(null)
       }

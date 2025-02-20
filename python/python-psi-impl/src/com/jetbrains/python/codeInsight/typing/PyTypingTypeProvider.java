@@ -2223,7 +2223,8 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     }
   }
 
-  static class Context {
+  @ApiStatus.Internal
+  public static final class Context {
     private final @NotNull TypeEvalContext myContext;
     private final @NotNull Stack<PyQualifiedNameOwner> myTypeAliasStack = new Stack<>();
     private boolean myComputeTypeParameterScope = true;

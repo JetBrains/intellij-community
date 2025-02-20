@@ -13,7 +13,7 @@ import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutp
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isPromptEditor
 
-internal class TerminalCopyTextAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+internal class TerminalCopyTextAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
     val selectedText = e.editor?.selectionModel?.selectedText ?: return
     CopyPasteManager.copyTextToClipboard(selectedText)

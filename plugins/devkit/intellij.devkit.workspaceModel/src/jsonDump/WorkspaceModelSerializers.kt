@@ -89,6 +89,7 @@ class WorkspaceModelSerializers {
                     element(property.name, stringSerializer.descriptor, isOptional = propertyType.isNullable)
                   }
                   ConnectionId.ConnectionType.ONE_TO_MANY, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
+                    element("${property.name}Count", Int.serializer().descriptor)
                     element(property.name, entitiesListSerializer.descriptor)
                   }
                 }
@@ -99,6 +100,7 @@ class WorkspaceModelSerializers {
               is ValueTypeMetadata.ParameterizedType -> {
                 // TODO: this handles lists and sets, but not maps
                 if (propertyType.genericParameterForList() == null) continue
+                element("${property.name}Count", Int.serializer().descriptor)
                 element(property.name, entitiesListSerializer.descriptor)
               }
             }
@@ -143,6 +145,9 @@ class WorkspaceModelSerializers {
                   }
                   ConnectionId.ConnectionType.ONE_TO_MANY, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
                     @Suppress("UNCHECKED_CAST")
+                    encodeIntElement(descriptor, propertyIndex, (propertyValue as List<Any>).size)
+                    propertyIndex++ // additional increment for the 'Count' property
+                    @Suppress("USELESS_CAST")
                     encodeSerializableElement(descriptor, propertyIndex, entitiesListSerializer, propertyValue as List<Any>)
                   }
                 }
@@ -196,6 +201,8 @@ class WorkspaceModelSerializers {
                 val valueList = propertyValue as List<Any>
                 val valueSerializer = getListValueSerializer(valueList, genericType)
                 val listSerializer = CustomListSerializer(valueSerializer)
+                encodeIntElement(descriptor, propertyIndex, valueList.size)
+                propertyIndex++ // additional increment for the 'Count' property
                 encodeSerializableElement(descriptor, propertyIndex, listSerializer, valueList)
               }
             }

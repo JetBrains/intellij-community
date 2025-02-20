@@ -1,6 +1,7 @@
 // "Create member property 'A.B.foo'" "true"
 // K2_ACTION: "Create property 'foo'" "true"
 // ERROR: Property must be initialized or be abstract
+// K2_AFTER_ERROR: Property must be initialized or be abstract.
 
 class A<T>(val n: T) {
     inner class B<U>(val m: U) {

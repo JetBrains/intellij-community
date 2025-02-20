@@ -14,6 +14,7 @@ import org.jetbrains.bazel.jvm.hashSet
 import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
 import org.jetbrains.bazel.jvm.jps.OutputSink
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
+import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
 import org.jetbrains.bazel.jvm.jps.impl.BazelDirtyFileHolder
 import org.jetbrains.bazel.jvm.jps.impl.BazelKotlinFsOperationsHelper
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
@@ -187,13 +188,13 @@ internal class IncrementalKotlinBuilder(
   }
 
   override suspend fun build(
-    context: CompileContext,
+    context: BazelCompileContext,
     module: JpsModule,
     chunk: ModuleChunk,
     target: BazelModuleBuildTarget,
     dirtyFilesHolder: BazelDirtyFileHolder,
     outputConsumer: BazelTargetBuildOutputConsumer,
-    outputSink: OutputSink
+    outputSink: OutputSink,
   ): ModuleLevelBuilder.ExitCode {
     val kotlinContext = getKotlinCompileContext(context)
     val kotlinTarget = kotlinContext.targetsIndex.byJpsTarget.get(jpsTarget) ?: return ModuleLevelBuilder.ExitCode.OK
@@ -288,7 +289,7 @@ internal class IncrementalKotlinBuilder(
 
     val compilationErrors = Utils.ERRORS_DETECTED_KEY.get(context, false)
     if (compilationErrors) {
-      JavaBuilderUtil.registerFilesWithErrors(context, messageCollector.filesWithErrors.map(::File))
+      JavaBuilderUtil.registerFilesWithErrors(context, messageCollector.filesWithErrors.map { it.toFile() })
       return ModuleLevelBuilder.ExitCode.ABORT
     }
     else {

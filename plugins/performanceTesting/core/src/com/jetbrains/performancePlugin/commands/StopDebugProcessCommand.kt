@@ -3,7 +3,7 @@ package com.jetbrains.performancePlugin.commands
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.xdebugger.XDebuggerManager
@@ -25,7 +25,7 @@ class StopDebugProcessCommand(text: String, line: Int) : PlaybackCommandCoroutin
     if (debugSessions.size > 1) throw IllegalStateException("Currently running ${debugSessions.size} debug processes")
 
     var selectedContent: RunContentDescriptor? = null
-    writeAction {
+    edtWriteAction {
       selectedContent = RunContentManager.getInstance(context.project).getSelectedContent()
       ExecutionManagerImpl.stopProcess(selectedContent)
     }

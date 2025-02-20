@@ -6,7 +6,7 @@ import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator.Companion.locateProject
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
@@ -244,7 +244,7 @@ private suspend fun openProject(projectPath: Path): Project {
   }) ?: error("Failed to open project in $projectPath, check logs")
   // There are countless number of reasons `openProjectAsync` might return null
   if (project.modules.isEmpty()) {
-    writeAction {
+    edtWriteAction {
       ModuleManager.getInstance(project).newModule(projectPath.resolve("${projectPath.name}.iml"), PythonModuleTypeBase.getInstance().id)
     }
   }
@@ -279,10 +279,10 @@ private suspend fun createProjectDir(projectPath: Path): Result<VirtualFile, @Nl
   return@withContext Result.Success(projectPathVfs)
 }
 
-private suspend fun ensureModuleHasRoot(module: Module, root: VirtualFile): Unit = writeAction {
+private suspend fun ensureModuleHasRoot(module: Module, root: VirtualFile): Unit = edtWriteAction {
   with(module.rootManager.modifiableModel) {
     try {
-      if (root in contentRoots) return@writeAction
+      if (root in contentRoots) return@edtWriteAction
       addContentEntry(root)
     }
     finally {

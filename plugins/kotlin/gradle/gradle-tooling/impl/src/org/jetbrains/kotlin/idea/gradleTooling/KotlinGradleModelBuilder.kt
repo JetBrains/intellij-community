@@ -6,8 +6,10 @@ import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyM
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver
 import com.intellij.gradle.toolingExtension.impl.util.GradleModelProviderUtil
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ProjectDependency
@@ -199,11 +201,20 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         return buildAll(project, builderContext = null, parameter = null)
     }
 
-    override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext, parameter: ModelBuilderService.Parameter?): KotlinGradleModelImpl? {
+    override fun buildAll(
+        modelName: String,
+        project: Project,
+        builderContext: ModelBuilderContext,
+        parameter: ModelBuilderService.Parameter?
+    ): KotlinGradleModelImpl? {
         return buildAll(project, builderContext, parameter)
     }
 
-    private fun buildAll(project: Project, builderContext: ModelBuilderContext?, parameter: ModelBuilderService.Parameter?): KotlinGradleModelImpl? {
+    private fun buildAll(
+        project: Project,
+        builderContext: ModelBuilderContext?,
+        parameter: ModelBuilderService.Parameter?
+    ): KotlinGradleModelImpl? {
         val interner = Interner()
         // When running in Android Studio, Android Studio would request specific source sets only to avoid syncing
         // currently not active build variants. We convert names to the lower case to avoid ambiguity with build variants
@@ -269,6 +280,14 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             .getDependencyDownloadPolicy(project)
         if (dependencyDownloadPolicy.isDownloadSources()) return
 
+        if (GradleVersionUtil.isCurrentGradleAtLeast("7.3")) {
+            downloadKotlinStdlibSources(project, context)
+        } else {
+            downloadKotlinStdlibSourcesDeprecated(project, context)
+        }
+    }
+
+    private fun downloadKotlinStdlibSourcesDeprecated(project: Project, context: ModelBuilderContext) {
         val kotlinStdlib = project.configurations.detachedConfiguration()
         project.configurations.forEachUsedKotlinLibrary {
             kotlinStdlib.dependencies.add(it)
@@ -291,6 +310,42 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
                 if (dependency.isPartOfKotlinStdlib()) {
                     dependencyConsumer.invoke(dependency)
                 }
+            }
+        }
+    }
+
+    private fun downloadKotlinStdlibSources(project: Project, context: ModelBuilderContext) {
+        val stdlibSourcesConfiguration = "kotlinStdlibSourcesResolvableConfiguration"
+        val projectConfigurations = project.configurations
+        var kotlinStdlib =
+            projectConfigurations.findByName(stdlibSourcesConfiguration)
+
+        if (kotlinStdlib == null) {
+            kotlinStdlib = projectConfigurations.create(stdlibSourcesConfiguration) {
+                it.isCanBeConsumed = false
+            }
+            projectConfigurations.forEachUsedDependency(kotlinStdlib) {
+                kotlinStdlib.dependencies.add(it)
+            }
+            project.buildscript.configurations.forEachUsedDependency(kotlinStdlib) {
+                kotlinStdlib.dependencies.add(it)
+            }
+        }
+
+        val stdlibDependencyGroups =
+            setOf("org.jetbrains.kotlin", "org.jetbrains.kotlinx")
+        GradleDependencyResolver(context, project, GradleDependencyDownloadPolicy.SOURCES)
+            .resolveDependencies(kotlinStdlib, stdlibDependencyGroups)
+    }
+
+    private fun ConfigurationContainer.forEachUsedDependency(
+        configurationToExclude: Configuration,
+        dependencyConsumer: (Dependency) -> Unit
+    ) {
+        for (configuration in this) {
+            if (configuration == configurationToExclude) continue
+            for (dependency in configuration.dependencies) {
+                dependencyConsumer.invoke(dependency)
             }
         }
     }

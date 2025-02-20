@@ -14,7 +14,7 @@ import java.io.IOException
 
 open class WebTypesDefinitionsEP : CustomLoadingExtensionPointBean<WebTypes>() {
   companion object {
-    val EP_NAME = ExtensionPointName<WebTypesDefinitionsEP>("com.intellij.webSymbols.webTypes")
+    val EP_NAME: ExtensionPointName<WebTypesDefinitionsEP> = ExtensionPointName<WebTypesDefinitionsEP>("com.intellij.webSymbols.webTypes")
     internal val EP_NAME_DEPRECATED = ExtensionPointName<WebTypesDefinitionsEP>("com.intellij.javascript.webTypes")
   }
 

@@ -4,14 +4,20 @@ package org.jetbrains.plugins.terminal.block.reworked
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.terminal.session.TerminalBlocksModelState
+import com.intellij.terminal.session.TerminalOutputBlock
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import kotlin.math.max
 
-internal class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksModel {
-  private var blockIdCounter: Int = 0
+@ApiStatus.Internal
+class TerminalBlocksModelImpl(private val document: Document) : TerminalBlocksModel {
+  @VisibleForTesting
+  var blockIdCounter: Int = 0
 
   override val blocks: MutableList<TerminalOutputBlock> = mutableListOf()
 
@@ -69,6 +75,35 @@ internal class TerminalBlocksModelImpl(private val document: Document) : Termina
   override fun commandFinished(exitCode: Int) {
     val curBlock = blocks.last()
     blocks[blocks.lastIndex] = curBlock.copy(exitCode = exitCode)
+  }
+
+  override fun dumpState(): TerminalBlocksModelState {
+    return TerminalBlocksModelState(
+      blocks = blocks.toList(),
+      blockIdCounter = blockIdCounter
+    )
+  }
+
+  override fun restoreFromState(state: TerminalBlocksModelState) {
+    check(state.blocks.isNotEmpty()) { "There should be always at least one block in the blocks model state" }
+
+    blockIdCounter = state.blockIdCounter
+
+    for (block in blocks) {
+      mutableEventsFlow.tryEmit(TerminalBlockRemovedEvent(block))
+    }
+    blocks.clear()
+
+    val finishedBlocks = state.blocks.subList(0, state.blocks.size - 1)
+    for (block in finishedBlocks) {
+      blocks.add(block)
+      mutableEventsFlow.tryEmit(TerminalBlockStartedEvent(block))
+      mutableEventsFlow.tryEmit(TerminalBlockFinishedEvent(block))
+    }
+
+    val lastBlock = state.blocks.last()
+    blocks.add(lastBlock)
+    mutableEventsFlow.tryEmit(TerminalBlockStartedEvent(lastBlock))
   }
 
   /**

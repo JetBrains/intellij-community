@@ -221,8 +221,8 @@ public final class TerminalSettingsPanel {
     var blockTerminalSetting = Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY);
     if (blockTerminalSetting.asBoolean() != myNewUiCheckbox.isSelected()) {
       blockTerminalSetting.setValue(myNewUiCheckbox.isSelected());
-      TerminalUsageTriggerCollector.triggerBlockTerminalSwitched$intellij_terminal(myProject, myNewUiCheckbox.isSelected(),
-                                                                                   BlockTerminalSwitchPlace.SETTINGS);
+      TerminalUsageTriggerCollector.triggerBlockTerminalSwitched(myProject, myNewUiCheckbox.isSelected(),
+                                                                 BlockTerminalSwitchPlace.SETTINGS);
       if (!myNewUiCheckbox.isSelected()) {
         TerminalUsageLocalStorage.getInstance().recordBlockTerminalDisabled();
         ApplicationManager.getApplication().invokeLater(() -> {

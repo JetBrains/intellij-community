@@ -26,16 +26,16 @@ import org.jetbrains.kotlin.types.Variance
 internal class CreatePropertyFromKotlinUsageRequest (
     referenceExpression: KtNameReferenceExpression,
     private val modifiers: Collection<JvmModifier>,
-    private val receiverType: KaType?,
+    receiverType: KaType?,
     val isExtension: Boolean
 ) : CreateFieldRequest {
     private val referencePointer = referenceExpression.createSmartPointer()
     private val returnType: List<ExpectedType> = initializeReturnType(referenceExpression)
     @OptIn(KaExperimentalApi::class)
-    val receiverTypeString: String? = getReceiverTypeString(referenceExpression, K2CreateFunctionFromUsageUtil.WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS)
+    val receiverTypeString: String? = getReceiverTypeString(referenceExpression, receiverType, K2CreateFunctionFromUsageUtil.WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS)
 
     @OptIn(KaExperimentalApi::class)
-    val receiverTypeNameString: String? = getReceiverTypeString(referenceExpression, KaTypeRendererForSource.WITH_SHORT_NAMES)
+    val receiverTypeNameString: String? = getReceiverTypeString(referenceExpression, receiverType, KaTypeRendererForSource.WITH_SHORT_NAMES)
 
     private fun initializeReturnType(referenceExpression: KtNameReferenceExpression): List<ExpectedType> {
         return analyze(referenceExpression) {
@@ -51,7 +51,7 @@ internal class CreatePropertyFromKotlinUsageRequest (
 
     @OptIn(KaExperimentalApi::class)
     private fun getReceiverTypeString(
-        referenceExpression: KtNameReferenceExpression, renderer: KaTypeRenderer
+        referenceExpression: KtNameReferenceExpression, receiverType: KaType?, renderer: KaTypeRenderer
     ): String? {
         return analyze(referenceExpression) {
             receiverType?.render(renderer, position = Variance.IN_VARIANCE)

@@ -31,5 +31,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.testFramework.testEnv" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
   </component>
 </module>

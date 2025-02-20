@@ -21,7 +21,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.application
 import com.intellij.util.containers.ContainerUtil
 import org.gradle.util.GradleVersion
@@ -34,7 +33,9 @@ import org.jetbrains.plugins.gradle.service.execution.LocalBuildLayoutParameters
 import org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.util.*
+import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.getGradleJvmLookupProvider
+import org.jetbrains.plugins.gradle.util.nonblockingResolveGradleJvmInfo
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -240,21 +241,6 @@ open class GradleInstallationManager : Disposable.Default {
     return null
   }
 
-  /**
-   * Check is the file belongs to the Gradle installation.
-   *
-   * @param files files to process
-   * @return `true` if one of the given files is from the Gradle installation; `false` otherwise
-   */
-  fun isGradleSdk(vararg files: VirtualFile): Boolean {
-    for (file in files) {
-      if (findGradleJar(file.toNioPath()) != null) {
-        return true
-      }
-    }
-    return false
-  }
-
   private fun findGradleSdkClasspath(project: Project, rootProjectPath: String?): List<Path> {
     if (rootProjectPath == null) {
       return emptyList()
@@ -368,24 +354,6 @@ open class GradleInstallationManager : Disposable.Default {
         }
       }
       return if (result.isEmpty()) null else result
-    }
-
-    private fun findGradleJar(file: Path): Path? {
-      if (GRADLE_JAR_FILE_PATTERN.matcher(file.fileName.toString()).matches()) {
-        return file
-      }
-      if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
-        val filesInfo = StringBuilder()
-        filesInfo.append(file).append(';')
-        if (!filesInfo.isEmpty()) {
-          filesInfo.setLength(filesInfo.length - 1)
-        }
-        GradleLog.LOG.info(String.format(
-          "Gradle sdk check fails. Reason: no one of the given files matches gradle JAR pattern (%s). Files: %s",
-          GRADLE_JAR_FILE_PATTERN, filesInfo
-        ))
-      }
-      return null
     }
 
     @JvmStatic

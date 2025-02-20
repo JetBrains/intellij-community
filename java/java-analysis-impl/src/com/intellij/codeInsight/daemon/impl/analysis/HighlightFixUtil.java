@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
+import com.intellij.java.codeserver.core.JavaPsiModifierUtil;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
@@ -34,6 +35,7 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.InstanceOfUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Contract;
@@ -43,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static java.util.Objects.requireNonNull;
 import static java.util.Objects.requireNonNullElse;
 
 public final class HighlightFixUtil {
@@ -896,6 +899,44 @@ public final class HighlightFixUtil {
     return List.of(factory.createIncreaseLanguageLevelFix(applicableLevel),
                    factory.createUpgradeSdkFor(applicableLevel),
                    factory.createShowModulePropertiesFix(element));
+  }
+
+  static void registerFixesOnInvalidSelector(@NotNull PsiExpression selector,
+                                             @NotNull Consumer<? super @Nullable CommonIntentionAction> sink) {
+    QuickFixFactory factory = QuickFixFactory.getInstance();
+    if (selector.getParent() instanceof PsiSwitchStatement switchStatement) {
+      sink.accept(factory.createConvertSwitchToIfIntention(switchStatement));
+    }
+    PsiType selectorType = selector.getType();
+    if (PsiTypes.longType().equals(selectorType) ||
+        PsiTypes.floatType().equals(selectorType) ||
+        PsiTypes.doubleType().equals(selectorType)) {
+      sink.accept(factory.createAddTypeCastFix(PsiTypes.intType(), selector));
+      sink.accept(factory.createWrapWithAdapterFix(PsiTypes.intType(), selector));
+    }
+  }
+
+  static @Nullable IntentionAction createPrimitiveToBoxedPatternFix(@NotNull PsiElement anchor) {
+    PsiTypeElement element = null;
+    PsiType operandType = null;
+    if (anchor instanceof PsiInstanceOfExpression instanceOfExpression) {
+      element = InstanceOfUtils.findCheckTypeElement(instanceOfExpression);
+      operandType = instanceOfExpression.getOperand().getType();
+    }
+    else if (anchor instanceof PsiPattern pattern) {
+      element = JavaPsiPatternUtil.getPatternTypeElement(pattern);
+      PsiSwitchBlock block = PsiTreeUtil.getParentOfType(element, PsiSwitchBlock.class);
+      if (block != null) {
+        PsiExpression selector = block.getExpression();
+        if (selector != null) {
+          operandType = selector.getType();
+        }
+      }
+    }
+    if (element != null && operandType != null && TypeConversionUtil.isPrimitiveAndNotNull(element.getType())) {
+      return QuickFixFactory.getInstance().createReplacePrimitiveWithBoxedTypeAction(operandType, requireNonNull(element));
+    }
+    return null;
   }
 
   private static final class ReturnModel {

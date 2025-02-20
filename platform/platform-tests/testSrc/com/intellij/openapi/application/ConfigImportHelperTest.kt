@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
@@ -54,7 +54,7 @@ import kotlin.test.fail
 private val LOG = logger<ConfigImportHelperTest>()
 
 class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
-  val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true; }
+  val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { isHeadless = true; }
 
   @Test fun `config directory is valid for import`() {
     PropertiesComponent.getInstance().setValue("property.ConfigImportHelperTest", true)
@@ -546,7 +546,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newConfigDir = createConfigDir(version = "2023.2")
     val newVmOptionsFile = newConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx2048m", "-Dsome.prop=new.val"))
 
-    options.mergeVmOptions = true
+    options.isMergeVmOptions = true
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
     assertThat(newVmOptionsFile.readLines()).containsExactly("-Xmx4g", "-Dsome.prop=new.val")
 
@@ -619,7 +619,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     }, testRootDisposable)
 
     configImportMarketplaceStub.unset() // enable marketplace fetching
-    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true } // reinstantiate
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { isHeadless = true } // reinstantiate
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
 
@@ -691,7 +691,7 @@ class ConfigImportHelperPluginUpdateModeTest(val updateIncompatibleOnly: Boolean
     }, testRootDisposable)
 
     configImportMarketplaceStub.unset() // enable marketplace fetching
-    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true } // reinstantiate
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { isHeadless = true } // reinstantiate
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.pluginUpdatesFetcher = LastCompatiblePluginUpdatesFetcher {
       buildMap {

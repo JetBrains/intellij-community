@@ -2,14 +2,14 @@
 package org.jetbrains.plugins.gradle.testFramework.util
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 
 suspend fun VirtualFile.refreshAndAwait() {
-  writeAction {
+  edtWriteAction {
     refresh(false, true)
   }
   withContext(Dispatchers.EDT) {

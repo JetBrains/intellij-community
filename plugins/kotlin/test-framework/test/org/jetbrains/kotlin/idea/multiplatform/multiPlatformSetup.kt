@@ -107,7 +107,12 @@ fun AbstractMultiModuleTest.doSetup(projectModel: ProjectResolveModel) {
                         setUpSdkForModule(ideaModule, dependency)
                 }
 
-                is ResolveLibrary -> ideaModule.addLibrary(dependency.root, dependency.name, dependency.kind)
+                is ResolveLibrary -> ideaModule.addLibrary(
+                    jar = dependency.root,
+                    name = dependency.name,
+                    kind = dependency.kind,
+                    sourceJar = dependency.sourceRoot
+                )
 
                 else -> ideaModule.addDependency(resolveModulesToIdeaModules[dependency]!!)
             }

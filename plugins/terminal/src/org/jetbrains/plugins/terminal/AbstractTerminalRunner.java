@@ -186,6 +186,14 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return true;
   }
 
+  /**
+   * @return true if reworked block terminal (gen2) should be used instead of the Classic Terminal.
+   */
+  @ApiStatus.Internal
+  public boolean isGenTwoTerminalEnabled() {
+    return false;
+  }
+
   private static @Nullable String getParentDirectoryPath(@Nullable VirtualFile file) {
     VirtualFile dir = file != null && !file.isDirectory() ? file.getParent() : file;
     return dir != null ? dir.getPath() : null;

@@ -8,6 +8,7 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 
 /**
@@ -18,6 +19,14 @@ import org.jetbrains.annotations.ApiStatus.Obsolete
  */
 fun Module.findSnapshotModuleEntity(): ModuleEntity? {
   return findModuleEntity(project.workspaceModel.currentSnapshot)
+}
+
+/**
+ * @return corresponding [ModuleEntity] or null if module isn't associated with entity yet
+ */
+@Internal
+fun Module.findModuleEntity(): ModuleEntity? {
+  return findModuleEntity((this as ModuleBridge).diff ?: project.workspaceModel.currentSnapshot)
 }
 
 /**

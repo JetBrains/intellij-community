@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.Navigatable;
 import icons.MavenIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,8 +14,8 @@ import javax.swing.*;
 
 import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 
-class RepositoryNode extends MavenSimpleNode {
-  
+@ApiStatus.Internal
+public final class RepositoryNode extends MavenSimpleNode {
   private final @NlsSafe String myId;
   private final @NlsSafe String myUrl;
   private final boolean myLocal;

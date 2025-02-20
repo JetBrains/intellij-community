@@ -19,6 +19,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.application
 import com.intellij.util.ui.GridBag
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.GridBagLayout
 import javax.swing.JComponent
@@ -30,7 +31,7 @@ import javax.swing.JPanel
 @ApiStatus.Internal
 class JavaAutoRunFloatingToolbarProvider : FloatingToolbarProvider {
 
-  override val backgroundAlpha: Float = 0.9f
+  override val backgroundAlpha: Float = JBUI.CurrentTheme.FloatingToolbar.TRANSLUCENT_BACKGROUND_ALPHA
 
   override val autoHideable: Boolean = false
 

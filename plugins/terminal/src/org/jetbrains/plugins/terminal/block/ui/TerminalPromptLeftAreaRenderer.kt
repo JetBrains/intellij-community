@@ -5,12 +5,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.geom.Rectangle2D
 
-internal class TerminalPromptLeftAreaRenderer : LineMarkerRenderer {
+@ApiStatus.Internal
+class TerminalPromptLeftAreaRenderer : LineMarkerRenderer {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
     val topInset = JBUI.scale(TerminalUi.blockTopInset)
 
