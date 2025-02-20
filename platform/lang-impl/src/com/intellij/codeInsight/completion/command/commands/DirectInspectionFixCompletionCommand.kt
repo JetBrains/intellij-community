@@ -102,8 +102,13 @@ internal class DirectInspectionFixCompletionCommand(
     }
     if (action == null) return
     val marker = editor.document.createRangeMarker(offset, offset)
+    val targetMarker = editor.document.createRangeMarker(targetOffset, targetOffset)
     editor.caretModel.moveToOffset(targetOffset)
     ShowIntentionActionsHandler.chooseActionAndInvoke(topLevelFile, topLevelEditor, action, name)
+    if (targetMarker.isValid && targetMarker.startOffset != editor.caretModel.offset) {
+      //probably, intention moves the cursor
+      return
+    }
     if (marker.isValid) {
       editor.caretModel.moveToOffset(marker.endOffset)
     }

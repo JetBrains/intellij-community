@@ -1716,8 +1716,6 @@
                  key="ide.completion.auto.insert.item.timeout"/>
     <registryKey key="ide.completion.command.enabled" defaultValue="false"
                  description="Enable experimental support command completion" restartRequired="false"/>
-    <registryKey key="ide.completion.command.full.line.enabled" defaultValue="false"
-                 description="Enable experimental support command completion for the whole line" restartRequired="false"/>
 
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.LibraryPropertyEntityIndexableEntityProvider"/>
     <indexableEntityProvider implementation="com.intellij.util.indexing.roots.CustomSourceRootPropertyIndexableEntityProvider"/>

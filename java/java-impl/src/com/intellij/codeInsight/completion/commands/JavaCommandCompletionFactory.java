@@ -14,6 +14,7 @@ import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,16 +62,21 @@ class JavaCommandCompletionFactory implements CommandCompletionFactory, DumbAwar
           if (currentOffset == 0) continue;
           PsiElement element = psiFile.findElementAt(currentOffset - 1);
           int currentLine = document.getLineNumber(currentOffset - 1);
-          if (element instanceof PsiWhiteSpace) {
+          while (element instanceof PsiWhiteSpace ||
+              element != null &&
+              StringUtil.isEmptyOrSpaces(element.getText())) {
             element = element.getPrevSibling();
-            if (currentLine != document.getLineNumber(element.getTextRange().getEndOffset())) {
-              continue;
+            if (element == null) {
+              break;
             }
-            results.add(element.getTextRange().getEndOffset());
+            element = PsiTreeUtil.getDeepestLast(element);
+            if (currentLine != document.getLineNumber(element.getTextRange().getEndOffset())) {
+              element = null;
+              break;
+            }
+            currentOffset = element.getTextRange().getEndOffset();
           }
-          else {
-            results.add(currentOffset);
-          }
+          results.add(currentOffset);
           if (element == null) continue;
           PsiElement parent = element.getParent();
           if (element instanceof PsiJavaToken) {

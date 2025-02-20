@@ -348,7 +348,7 @@ internal fun findActualIndex(suffix: String, text: CharSequence, offset: Int): I
     ) {
       currentIndex++
     }
-    if (currentIndex <= 1 || text[offset - currentIndex] != '\n') return indexOf
+    if (currentIndex <= 1 || text[offset - currentIndex] != '\n') return 0
     while (currentIndex >= 0 && text[offset - currentIndex].isWhitespace()) {
       currentIndex--
     }
@@ -385,7 +385,6 @@ internal fun findCommandCompletionType(
     return InvocationCommandType.PartialSuffix(text.substring(offset - indexOf + 1, offset),
                                                text.substring(offset - indexOf, offset - indexOf + 1))
   }
-  if (!Registry.`is`("ide.completion.command.full.line.enabled")) return null
   if (indexOf > 0) {
     //full empty line
     return InvocationCommandType.FullLine(text.substring(offset - indexOf, offset), "")

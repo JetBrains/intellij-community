@@ -98,7 +98,6 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
 
   fun testGenerateConstructorInline() {
     Registry.get("ide.completion.command.enabled").setValue(true, getTestRootDisposable())
-    Registry.get("ide.completion.command.full.line.enabled").setValue(true, getTestRootDisposable())
     myFixture.configureByText(JavaFileType.INSTANCE, """
       class A { 
         generate 'con<caret>
