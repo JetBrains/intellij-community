@@ -7768,6 +7768,7 @@ f:com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager
 - com.intellij.diagnostic.Dumpable
 - dumpState():java.lang.String
 - getWidthProvider():com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager$VisibleAreaWidthProvider
+- setLineWrapPositionStrategy(com.intellij.openapi.editor.LineWrapPositionStrategy):V
 - setWidthProvider(com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager$VisibleAreaWidthProvider):V
 com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager$VisibleAreaWidthProvider
 - a:getVisibleAreaWidth():I
