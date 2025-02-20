@@ -28,6 +28,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,8 +82,9 @@ final class JavaErrorVisitor extends JavaElementVisitor {
   }
 
   void report(@NotNull JavaCompilationError<?, ?> error) {
-    myErrorConsumer.accept(error);
     myHasError = true;
+    if (ContainerUtil.exists(JavaErrorFilter.EP_NAME.getExtensionList(), ep -> ep.shouldSuppressError(myFile, error))) return;
+    myErrorConsumer.accept(error);
   }
   
   @Contract(pure = true)

@@ -23,7 +23,7 @@ public final class JavaErrorCollector {
    * @param consumer a consumer to get errors
    */
   public JavaErrorCollector(@NotNull PsiFile file, @NotNull Consumer<@NotNull JavaCompilationError<?, ?>> consumer) {
-    myVisitor = new JavaErrorVisitor(file, consumer); 
+    myVisitor = new JavaErrorVisitor(file, consumer);
   }
 
   /**
