@@ -365,12 +365,12 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
 
   @Override
   public PsiAnnotation @NotNull [] getAnnotations() {
-    return PsiAnnotation.EMPTY_ARRAY;
+    return getStubOrPsiChildren(GroovyStubElementTypes.ANNOTATION, PsiAnnotation.ARRAY_FACTORY);
   }
 
   @Override
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
-    return null;
+    return com.intellij.psi.impl.PsiImplUtil.findAnnotation(this, qualifiedName);
   }
 
   @Override
