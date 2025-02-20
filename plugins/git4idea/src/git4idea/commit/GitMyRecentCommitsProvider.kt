@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.AsyncLoadingCache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -47,7 +48,7 @@ class GitMyRecentCommitsProvider(private val project: Project, private val scope
     project.messageBus.connect(scope)
       .subscribe(GitRepository.GIT_REPO_STATE_CHANGE, object : GitRepositoryStateChangeListener {
         override fun repositoryChanged(repository: GitRepository, previousInfo: GitRepoInfo, info: GitRepoInfo) {
-          LOG.debug("Refreshing cache entry for ${repository.root}")
+          LOG.debug { "Refreshing cache entry for ${repository.root}" }
           cache.synchronous().refresh(repository.root)
         }
       })
@@ -63,7 +64,7 @@ class GitMyRecentCommitsProvider(private val project: Project, private val scope
       else current
     }
     if (shouldInvalidate) {
-      LOG.debug("Limit updated for $root - $limit")
+      LOG.debug { "Limit updated for $root - $limit" }
       cache.synchronous().invalidate(root)
     }
     val future: CompletableFuture<List<VcsCommitMetadata>> = cache.get(root)
@@ -84,7 +85,7 @@ class GitMyRecentCommitsProvider(private val project: Project, private val scope
       GitLogUtil.collectMetadata(project, root, parameters).commits
     }
 
-    LOG.debug("Loaded ${commits.size} commits for $root in ${duration}ms")
+    LOG.debug { "Loaded ${commits.size} commits for $root in ${duration}ms" }
 
     return commits
   }
