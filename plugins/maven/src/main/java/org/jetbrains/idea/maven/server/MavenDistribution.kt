@@ -11,7 +11,10 @@ interface MavenDistribution {
   val version: String?
   fun isValid(): Boolean
   fun compatibleWith(mavenDistribution: MavenDistribution): Boolean
+}
 
+interface DaemonedMavenDistribution : MavenDistribution {
+  val daemonHome: Path
 }
 
 class LocalMavenDistribution(override val mavenHome: Path, override val name: String) : MavenDistribution {
@@ -23,7 +26,7 @@ class LocalMavenDistribution(override val mavenHome: Path, override val name: St
     return mavenDistribution == this || FileUtil.pathsEqual(mavenDistribution.mavenHome.toString(), mavenHome.toString())
   }
 
-  override fun isValid() = version != null
+  override fun isValid(): Boolean = version != null
   override fun toString(): String {
     return "$name($mavenHome) v $version"
   }
@@ -31,4 +34,17 @@ class LocalMavenDistribution(override val mavenHome: Path, override val name: St
 fun MavenDistribution.isMaven4(): Boolean {
   val v = this.version
   return v != null && v.startsWith("4.")
+}
+
+class DaemonedLocalDistribution(val mavenDistribution: LocalMavenDistribution, override val daemonHome: Path) : DaemonedMavenDistribution {
+  override val name: String
+    get() = "(mvnd) " + mavenDistribution.name
+  override val mavenHome: Path
+    get() = mavenDistribution.mavenHome
+  override val version: String?
+    get() = mavenDistribution.version
+
+  override fun isValid(): Boolean = mavenDistribution.isValid()
+
+  override fun compatibleWith(d: MavenDistribution): Boolean = mavenDistribution.compatibleWith(d)
 }

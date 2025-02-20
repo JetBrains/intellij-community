@@ -113,7 +113,7 @@ import java.util.stream.Stream
 import java.util.zip.CRC32
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
-import kotlin.Throws
+import kotlin.io.path.isDirectory
 
 object MavenUtil {
   interface MavenTaskHandler {
@@ -148,7 +148,10 @@ object MavenUtil {
   const val BIN_DIR: String = "bin"
   const val CONF_DIR: String = "conf"
   const val M2_CONF_FILE: String = "m2.conf"
+  const val M2_DAEMON_CONF_FILE: String = "mvnd-daemon.conf"
   const val MVN_FILE: String = "mvn"
+  const val MVND_FILE: String = "mvnd"
+  const val MVND_EXE_FILE: String = "mvnd.exe"
   const val REPOSITORY_DIR: String = "repository"
   const val LIB_DIR: String = "lib"
   const val CLIENT_ARTIFACT_SUFFIX: String = "-client"
@@ -917,25 +920,52 @@ object MavenUtil {
     return str == null || str.isBlank()
   }
 
+  @JvmStatic
+  fun isValidMavenDaemon(daemonHome: Path?): Boolean {
+    if (daemonHome == null) return false
+    return filesInBin(daemonHome).let {
+      (it.contains(MVND_FILE) || it.contains(MVND_EXE_FILE)) &&
+      (it.contains(M2_DAEMON_CONF_FILE))
+    }
+  }
+
+  @JvmStatic
+  fun extractMvnFromDaemon(daemonHome: Path?): Path? {
+    if (daemonHome == null) return null
+    val mvnDir = daemonHome.resolve("mvn")
+    if (mvnDir.isDirectory() && isValidMavenHome(mvnDir)) return mvnDir
+    //macos brew
+    val libexecMvnDir = daemonHome.resolve("libexec").resolve("mvn")
+    if (libexecMvnDir.isDirectory() && isValidMavenHome(libexecMvnDir)) return libexecMvnDir
+    return null
+  }
+
+
 
   @JvmStatic
   fun isValidMavenHome(home: Path?): Boolean {
     if (home == null) return false
+    return filesInBin(home).let {
+      it.contains(M2_CONF_FILE) && it.contains(MVN_FILE)
+    }
+  }
+
+  private fun filesInBin(home: Path): Set<String> {
     try {
       val binDir: Path = home.resolve(BIN_DIR)
-      if (!Files.isDirectory(binDir)) return false
+      if (!Files.isDirectory(binDir)) return emptySet()
 
       Files.newDirectoryStream(binDir).use { stream ->
-        val set: MutableSet<String?> = HashSet<String?>()
+        val set = HashSet<String>()
         for (entry in stream) {
-          set.add(entry.getFileName().toString())
+          set.add(entry.fileName.toString())
         }
-        return set.contains(M2_CONF_FILE) && set.contains(MVN_FILE)
+        return set
       }
     }
     catch (ignored: Exception) {
     }
-    return false
+    return emptySet()
   }
 
   @Deprecated("")
@@ -960,7 +990,9 @@ object MavenUtil {
   fun getMavenHomePath(mavenHome: StaticResolvedMavenHomeType): Path? {
     if (mavenHome is MavenInSpecificPath) {
       val file = Path.of(mavenHome.mavenHome)
-      return if (isValidMavenHome(file)) file else null
+      if (isValidMavenHome(file)) return file
+      if (isValidMavenDaemon(file)) return extractMvnFromDaemon(file)
+      return null
     }
     for (e in MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.extensionList) {
       val file = e.getMavenHomeFile(mavenHome)
