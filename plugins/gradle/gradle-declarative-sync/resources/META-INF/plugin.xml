@@ -1,6 +1,6 @@
-<idea-plugin>
+<idea-plugin implementation-detail="true">
   <name>Gradle Declarative Sync</name>
-  <id>org.jetbrains.plugins.gradle.declarative.sync</id>
+  <id>com.intellij.gradle.declarativeSync</id>
   <category>Build Tools</category>
   <description>
     <![CDATA[
@@ -14,7 +14,7 @@
   <depends>org.jetbrains.idea.gradle.dsl</depends>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
-    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.GradleDeclarativeSyncContributor"/>
+    <syncContributor implementation="com.intellij.gradle.declarativeSync.GradleDeclarativeSyncContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.service.syncContributor
+package com.intellij.gradle.declarativeSync
 
-import com.android.tools.idea.gradle.feature.flags.DeclarativeStudioSupport.override
+import com.android.tools.idea.gradle.feature.flags.DeclarativeStudioSupport
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.externalSystem.util.ListenerAssertion
 import com.intellij.openapi.util.Disposer
@@ -9,8 +9,8 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.use
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.testFramework.assertion.dependencyAssertion.DependencyAssertions
-import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions.assertContentRoots
-import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
 import org.jetbrains.plugins.gradle.importing.syncAction.GradlePhasedSyncTestCase
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -21,7 +21,7 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
 
   override fun setUp() {
     super.setUp()
-    override(true) // enable android gradle declarative flag
+    DeclarativeStudioSupport.override(true) // enable android gradle declarative flag
   }
 
   @Test
@@ -108,10 +108,10 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
       whenResolveProjectInfoStarted(disposable) { _, storage ->
         projectRootContributorAssertion.trace {
           // this should contain more stuff
-          assertModules(storage, "project", "project.main", "project.test")
-          assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
-          assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src/main"))
-          assertContentRoots(virtualFileUrlManager, storage, "project.test", projectRoot.resolve("src/test"))
+          ModuleAssertions.assertModules(storage, "project", "project.main", "project.test")
+          ContentRootAssertions.assertContentRoots(virtualFileUrlManager, storage, "project", projectRoot)
+          ContentRootAssertions.assertContentRoots(virtualFileUrlManager, storage, "project.main", projectRoot.resolve("src/main"))
+          ContentRootAssertions.assertContentRoots(virtualFileUrlManager, storage, "project.test", projectRoot.resolve("src/test"))
 
           DependencyAssertions.assertModuleLibDep(storage, "project.main", "Gradle: com.google.guava:guava:32.1.3-jre")
           DependencyAssertions.assertModuleModuleDeps(storage, "project.test", "project.main")
@@ -126,16 +126,16 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
 
       ExternalSystemUtil.refreshProject(projectRoot.toCanonicalPath(), createImportSpec())
 
-      assertModules(project, "test-dcl", "test-dcl.main", "test-dcl.test")
+      ModuleAssertions.assertModules(project, "test-dcl", "test-dcl.main", "test-dcl.test")
 
       assertModuleLibDep("test-dcl.main", "Gradle: com.google.guava:guava:32.1.3-jre")
       assertModuleModuleDeps("test-dcl.test", "test-dcl.main")
       assertModuleLibDep("test-dcl.test", "Gradle: com.google.guava:guava:32.1.3-jre")
       assertModuleLibDep("test-dcl.test", "Gradle: org.junit.jupiter:junit-jupiter:5.10.2")
 
-      assertContentRoots(project, "test-dcl", projectRoot)
-      assertContentRoots(project, "test-dcl.main", projectRoot.resolve("src/main"))
-      assertContentRoots(project, "test-dcl.test", projectRoot.resolve("src/test"))
+      ContentRootAssertions.assertContentRoots(project, "test-dcl", projectRoot)
+      ContentRootAssertions.assertContentRoots(project, "test-dcl.main", projectRoot.resolve("src/main"))
+      ContentRootAssertions.assertContentRoots(project, "test-dcl.test", projectRoot.resolve("src/test"))
 
       projectRootContributorAssertion.assertListenerFailures()
       projectRootContributorAssertion.assertListenerState(1) {
@@ -274,8 +274,8 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
 
       whenResolveProjectInfoStarted(disposable) { _, storage ->
         declarativeContributorAssertion.trace {
-          assertModules(storage, "project")
           //TODO this currently fails because the settings file parser does not work properly
+          ModuleAssertions.assertModules(storage, "project")
           //assertModules(storage, "project", "project.app", "project.app.main", "project.app.test", "project.list",
           //              "project.list.main", "project.list.test", "project.utilities", "project.utilities.main", "project.utilities.test")
           //assertContentRoots(virtualFileUrlManager, storage, "project.app", projectRoot.resolve("app"))
@@ -293,8 +293,9 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
 
       ExternalSystemUtil.refreshProject(projectRoot.toCanonicalPath(), createImportSpec())
 
-      assertModules(project, "test-dcl", "test-dcl.app", "test-dcl.app.main", "test-dcl.app.test", "test-dcl.list",
-                    "test-dcl.list.main", "test-dcl.list.test", "test-dcl.utilities", "test-dcl.utilities.main", "test-dcl.utilities.test")
+      ModuleAssertions.assertModules(project, "test-dcl", "test-dcl.app", "test-dcl.app.main", "test-dcl.app.test", "test-dcl.list",
+                                     "test-dcl.list.main", "test-dcl.list.test", "test-dcl.utilities", "test-dcl.utilities.main",
+                                     "test-dcl.utilities.test")
 
       assertModuleModuleDeps("test-dcl.app.main", "test-dcl.utilities.main", "test-dcl.list.main")
       assertModuleModuleDeps("test-dcl.app.test", "test-dcl.app.main", "test-dcl.utilities.main", "test-dcl.list.main")
@@ -306,15 +307,15 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
 
       assertModuleModuleDeps("test-dcl.list.test", "test-dcl.list.main")
 
-      assertContentRoots(project, "test-dcl.app", projectRoot.resolve("app"))
-      assertContentRoots(project, "test-dcl.app.main", projectRoot.resolve("app/src/main"))
-      assertContentRoots(project, "test-dcl.app.test", projectRoot.resolve("app/src/test"))
-      assertContentRoots(project, "test-dcl.utilities", projectRoot.resolve("utilities"))
-      assertContentRoots(project, "test-dcl.utilities.main", projectRoot.resolve("utilities/src/main"))
-      assertContentRoots(project, "test-dcl.utilities.test", projectRoot.resolve("utilities/src/test"))
-      assertContentRoots(project, "test-dcl.list", projectRoot.resolve("list"))
-      assertContentRoots(project, "test-dcl.list.main", projectRoot.resolve("list/src/main"))
-      assertContentRoots(project, "test-dcl.list.test", projectRoot.resolve("list/src/test"))
+      ContentRootAssertions.assertContentRoots(project, "test-dcl.app", projectRoot.resolve("app"))
+      ContentRootAssertions.assertContentRoots(project, "test-dcl.app.main", projectRoot.resolve("app/src/main"))
+      ContentRootAssertions.assertContentRoots(project, "test-dcl.app.test", projectRoot.resolve("app/src/test"))
+      ContentRootAssertions.assertContentRoots(project, "test-dcl.utilities", projectRoot.resolve("utilities"))
+      ContentRootAssertions.assertContentRoots(project, "test-dcl.utilities.main", projectRoot.resolve("utilities/src/main"))
+      ContentRootAssertions.assertContentRoots(project, "test-dcl.utilities.test", projectRoot.resolve("utilities/src/test"))
+      ContentRootAssertions.assertContentRoots(project, "test-dcl.list", projectRoot.resolve("list"))
+      ContentRootAssertions.assertContentRoots(project, "test-dcl.list.main", projectRoot.resolve("list/src/main"))
+      ContentRootAssertions.assertContentRoots(project, "test-dcl.list.test", projectRoot.resolve("list/src/test"))
 
       declarativeContributorAssertion.assertListenerFailures()
       declarativeContributorAssertion.assertListenerState(1) {

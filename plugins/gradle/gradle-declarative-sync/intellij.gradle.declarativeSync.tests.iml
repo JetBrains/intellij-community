@@ -3,7 +3,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$/testSources">
-      <sourceFolder url="file://$MODULE_DIR$/testSources" isTestSource="true" packagePrefix="org.jetbrains.plugins.gradle" />
+      <sourceFolder url="file://$MODULE_DIR$/testSources" isTestSource="true" packagePrefix="com.intellij.gradle.declarativeSync" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
