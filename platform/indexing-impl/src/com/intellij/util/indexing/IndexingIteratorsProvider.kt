@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 interface IndexingIteratorsProvider {
 
   companion object {
+    @JvmStatic
     fun getInstance(project: Project): IndexingIteratorsProvider {
       return project.service<IndexingIteratorsProvider>()
     }

@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess.VfsRootAccessNotAllowedError
 import com.intellij.util.containers.ConcurrentThreeStateBitSet
-import com.intellij.util.indexing.IndexableFilesIndex
+import com.intellij.util.indexing.IndexingIteratorsProvider
 
 internal class CachingProjectIndexableFilesFilterFactory : ProjectIndexableFilesFilterFactory() {
   override fun create(project: Project, currentVfsCreationTimestamp: Long): ProjectIndexableFilesFilter {
@@ -26,7 +26,7 @@ internal class CachingProjectIndexableFilesFilter(private val project: Project) 
       _fileIds[fileId]?.let { return it }
       try {
         val file = ManagingFS.getInstance().findFileById(fileId)
-        val isIndexable = file == null || IndexableFilesIndex.getInstance(project).shouldBeIndexed(file)
+        val isIndexable = file == null || IndexingIteratorsProvider.getInstance(project).shouldBeIndexed(file)
         if (_fileIds.compareAndSet(fileId, null, isIndexable)) {
           return isIndexable
         }

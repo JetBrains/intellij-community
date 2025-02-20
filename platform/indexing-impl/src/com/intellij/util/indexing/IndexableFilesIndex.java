@@ -10,6 +10,7 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
@@ -26,8 +27,6 @@ public interface IndexableFilesIndex {
   boolean shouldBeIndexed(@NotNull VirtualFile file);
 
   /**
-   * This method is significantly more expensive than {@link IndexableFilesIndex#shouldBeIndexed(VirtualFile)}
-   * Consider using this method if it's enough.
    * <br/>
    * Most of {@link IndexableSetOrigin} contain roots. In this case they contain registered roots of corresponding workspace entity or
    * other indexable unit, like {@link com.intellij.openapi.roots.SyntheticLibrary} or {@link IndexableSetContributor}.
@@ -45,6 +44,7 @@ public interface IndexableFilesIndex {
   @RequiresBackgroundThread
   @NotNull
   @Unmodifiable
+  @TestOnly
   Collection<? extends IndexableSetOrigin> getOrigins(@NotNull Collection<VirtualFile> files);
 
   @RequiresBackgroundThread

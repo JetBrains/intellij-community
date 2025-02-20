@@ -294,7 +294,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     registerIndexableSet(new IndexableFileSet() {
       @Override
       public boolean isInSet(@NotNull VirtualFile file) {
-        return IndexableFilesIndex.getInstance(project).shouldBeIndexed(file);
+        return IndexingIteratorsProvider.getInstance(project).shouldBeIndexed(file);
       }
     }, project);
   }
