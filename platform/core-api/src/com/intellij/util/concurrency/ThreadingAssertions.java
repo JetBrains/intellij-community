@@ -67,8 +67,6 @@ public final class ThreadingAssertions {
   public static final String MUST_NOT_EXECUTE_IN_EDT =
     "Access from Event Dispatch Thread (EDT) is not allowed";
 
-  private static boolean implicitLock = false;
-
   /**
    * Asserts that the current thread is the event dispatch thread.
    *
@@ -127,9 +125,6 @@ public final class ThreadingAssertions {
     if (!isFlagSet(Application::isReadAccessAllowed)) {
       throwThreadAccessException(MUST_EXECUTE_IN_READ_ACTION);
     }
-    else if (isImplicitLockOnEDT() && !isFlagSet(Application::isUnitTestMode)) {
-      reportImplicitRead();
-    }
   }
 
   /**
@@ -184,17 +179,6 @@ public final class ThreadingAssertions {
     if (!isFlagSet(Application::isWriteIntentLockAcquired)) {
       throwWriteIntentReadAccess();
     }
-    else if (isImplicitLockOnEDT()) {
-      reportImplicitWriteIntent();
-    }
-  }
-
-  /**
-   * Reports message about implicit read to logger at error level
-   */
-  @Internal
-  public static void reportImplicitWriteIntent() {
-    getLogger().error(new RuntimeExceptionWithAttachments(MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION_EXPLICIT));
   }
 
   /**
@@ -238,24 +222,6 @@ public final class ThreadingAssertions {
 
   private static @NotNull String describe(@Nullable Thread o) {
     return o == null ? "null" : o + " " + System.identityHashCode(o);
-  }
-
-  public static boolean isImplicitLockOnEDT() {
-    if (!EDT.isCurrentThreadEdt())
-      return false;
-    // Don't report implicit locks for unit tests, too many false positives
-    if (isFlagSet(Application::isUnitTestMode))
-      return false;
-    // Reset to decrease noise
-    boolean il = implicitLock;
-    implicitLock = false;
-    return il;
-  }
-
-  public static void setImplicitLockOnEDT(boolean implicitLock) {
-    if (!EDT.isCurrentThreadEdt())
-      return;
-    ThreadingAssertions.implicitLock = implicitLock;
   }
 
   private static boolean isFlagSet(@NotNull Function<Application, Boolean> getter) {
