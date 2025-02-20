@@ -37,6 +37,7 @@ data class TestCompileConfiguration(
     val languageVersion: LanguageVersion?,
     val enabledLanguageFeatures: Collection<LanguageFeature>,
     val useInlineScopes: Boolean,
+    val jvmDefaultMode: JvmDefaultMode?,
 )
 
 open class DebuggerTestCompilerFacility(
@@ -209,6 +210,9 @@ open class DebuggerTestCompilerFacility(
         }
         if (compileConfig.useInlineScopes) {
             options.add("-Xuse-inline-scopes-numbers")
+        }
+        if (compileConfig.jvmDefaultMode != null) {
+            options.add("-jvm-default=${compileConfig.jvmDefaultMode.description}")
         }
 
         if (compilerPlugins.isNotEmpty()) {
