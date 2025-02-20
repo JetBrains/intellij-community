@@ -13,16 +13,8 @@ val isFleetDevMode: Boolean by lazy { fleetFlag("fleet.dev.mode") }
   "we still have usages due to lack of dependency injection, most probably you want use FleetCommonSettingsKeys.kt#isInternalMode")
 val isFleetInternalDefaultValue: Boolean by lazy { fleetFlag("fleet.internal.mode.default") }
 
-@Deprecated("remove on next Dock API breakage")
-// Key for testing fus internal functionality. Should not be easily accessible from settings.
-val isFusInternalMode: Boolean by lazy { fleetFlag("fus.recorder.internal.test.mode") }
-
 // Fleet is running as a built distribution
 val isFleetDistributionMode: Boolean by lazy { fleetFlag("fleet.distribution.mode") }
-
-@Deprecated("remove in June 2024")
-// Fleet has been built by conveyor thus follows the conveyor distribution layout
-val isFleetDistributionConveyorLayout: Boolean by lazy { fleetFlag("fleet.distribution.conveyorLayout") }
 
 // The distribution is not published on the marketplace, features that depend on it, should do workarounds:
 // e.g. upload required resources to the Space in the runtime
@@ -40,11 +32,6 @@ val isFleetShortCircuitMode: Boolean by lazy {
     isFleetInternalDefaultValue -> false
     else -> true
   })
-}
-
-@Deprecated("remove FL-30525")
-val shipAutoUpdateEnabled: Boolean by lazy {
-  fleetProperty("fleet.ship.autoUpdate") == "true"
 }
 
 val coroutinesDebugProbesEnabled: Boolean by lazy { fleetFlag("fleet.coroutines.debug.probes.enabled") }
