@@ -115,6 +115,8 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
 
           DependencyAssertions.assertModuleLibDep(storage, "project.main", "Gradle: com.google.guava:guava:32.1.3-jre")
           DependencyAssertions.assertModuleModuleDeps(storage, "project.test", "project.main")
+          DependencyAssertions.assertModuleLibDep(storage, "project.test", "Gradle: com.google.guava:guava:32.1.3-jre")
+          DependencyAssertions.assertModuleLibDep(storage, "project.test", "Gradle: org.junit.jupiter:junit-jupiter:5.10.2")
         }
       }
 
@@ -126,8 +128,9 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
 
       assertModules(project, "test-dcl", "test-dcl.main", "test-dcl.test")
 
-      assertModuleModuleDeps("test-dcl.test", "test-dcl.main")
       assertModuleLibDep("test-dcl.main", "Gradle: com.google.guava:guava:32.1.3-jre")
+      assertModuleModuleDeps("test-dcl.test", "test-dcl.main")
+      assertModuleLibDep("test-dcl.test", "Gradle: com.google.guava:guava:32.1.3-jre")
       assertModuleLibDep("test-dcl.test", "Gradle: org.junit.jupiter:junit-jupiter:5.10.2")
 
       assertContentRoots(project, "test-dcl", projectRoot)
@@ -271,7 +274,8 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
 
       whenResolveProjectInfoStarted(disposable) { _, storage ->
         declarativeContributorAssertion.trace {
-          //TODO this currently fails because the settings file parser is faulty
+          assertModules(storage, "project")
+          //TODO this currently fails because the settings file parser does not work properly
           //assertModules(storage, "project", "project.app", "project.app.main", "project.app.test", "project.list",
           //              "project.list.main", "project.list.test", "project.utilities", "project.utilities.main", "project.utilities.test")
           //assertContentRoots(virtualFileUrlManager, storage, "project.app", projectRoot.resolve("app"))
