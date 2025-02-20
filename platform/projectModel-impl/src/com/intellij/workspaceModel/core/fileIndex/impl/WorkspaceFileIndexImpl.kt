@@ -350,7 +350,8 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
           throttledLogger.warn("WorkspaceFileIndex must not be queried for the default project", Throwable())
         }
         else {
-          thisLogger().error("WorkspaceFileIndex is not initialized yet, empty data is returned. Activities which use the project configuration must be postponed until the project is fully loaded.")
+          thisLogger().error("WorkspaceFileIndex is not initialized yet, empty data is returned. Activities which use the project configuration must be postponed until the project is fully loaded." +
+                             "It is possible to check Project.isInitialized to verify that the project is fully loaded.")
         }
       }
       EmptyWorkspaceFileIndexData.RESET -> {
