@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.workspace
 
+import com.intellij.openapi.externalSystem.util.DEFAULT_SYNC_TIMEOUT
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.INHERITED_SDK
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.MODULE_SOURCE
@@ -10,7 +11,6 @@ import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAsser
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.useProjectAsync
 import org.jetbrains.idea.maven.model.MavenConstants
-import org.jetbrains.plugins.gradle.testFramework.util.DEFAULT_SYNC_TIMEOUT
 import org.junit.jupiter.api.Test
 
 class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceIntegrationTestCase() {

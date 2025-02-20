@@ -5,6 +5,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity
+import com.intellij.openapi.externalSystem.util.DEFAULT_SYNC_TIMEOUT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.refreshAndFindVirtualDirectory
@@ -34,7 +35,6 @@ import org.jetbrains.plugins.gradle.service.project.workspace.util.MavenPomBuild
 import org.jetbrains.plugins.gradle.service.project.workspace.util.MavenSettingsBuilder
 import org.jetbrains.plugins.gradle.service.project.workspace.util.MavenSettingsBuilder.Companion.mavenSettings
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleJvmTestFixture
-import org.jetbrains.plugins.gradle.testFramework.util.DEFAULT_SYNC_TIMEOUT
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
