@@ -4,19 +4,22 @@ package com.intellij.ui.dsl.builder.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.ui.*
+import com.intellij.openapi.observable.util.whenChanged
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.*
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.EditorTextField
+import com.intellij.ui.UserActivityProviderComponent
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.validation.CellValidation
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.PropertyBinding
+import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.containers.map2Array
 import com.intellij.util.ui.JBFont
 import org.jetbrains.annotations.ApiStatus
@@ -354,6 +357,11 @@ internal class CellImpl<T : JComponent>(
       is JTextComponent -> WHEN_TEXT_CHANGED(component)
       is ItemSelectable -> WHEN_STATE_CHANGED(component)
       is EditorTextField -> WHEN_DOCUMENT_CHANGED(component)
+      is UserActivityProviderComponent -> {
+        DialogValidationRequestor { parentDisposable, validate ->
+          component.whenChanged(parentDisposable) { validate() }
+        }
+      }
       else -> null
     }
   }

@@ -11,11 +11,13 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.PopupMenuListenerAdapter
 import com.intellij.ui.SearchTextField
+import com.intellij.ui.UserActivityProviderComponent
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.TableViewModel
 import com.intellij.util.ui.tree.TreeModelAdapter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Component
 import java.awt.Dimension
@@ -253,4 +255,10 @@ fun JCheckBox.whenStateChangedFromUi(parentDisposable: Disposable? = null, liste
       listener(isSelected)
     }
   }
+}
+
+@ApiStatus.Internal
+fun UserActivityProviderComponent.whenChanged(parentDisposable: Disposable? = null, listener: ChangeListener) {
+  addChangeListener(listener)
+  parentDisposable?.whenDisposed { removeChangeListener(listener) }
 }
