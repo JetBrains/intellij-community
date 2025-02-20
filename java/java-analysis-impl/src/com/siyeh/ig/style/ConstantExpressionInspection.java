@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -59,7 +59,7 @@ public final class ConstantExpressionInspection extends AbstractBaseJavaLocalIns
       }
       
       private void handle(@NotNull PsiExpression expression) {
-        if (expression instanceof PsiLiteralExpression) return;
+        if (expression instanceof PsiLiteralExpression || expression instanceof PsiParenthesizedExpression) return;
         // inspection disabled for long expressions because of performance issues on
         // relatively common large string expressions.
         Object value = computeConstant(expression);
@@ -84,13 +84,11 @@ public final class ConstantExpressionInspection extends AbstractBaseJavaLocalIns
       }
 
       private @Nullable Object computeConstant(PsiExpression expression) {
-        if (expression.getTextLength() > MAX_EXPRESSION_LENGTH) return null;
-        if (expression.getType() == null) return null;
+        if (expression.getTextLength() > MAX_EXPRESSION_LENGTH || expression.getType() == null) return null;
         Object value = computeValue(expression);
         if (value == null) return null;
         final PsiExpression parent = getParentExpression(expression);
-        if (parent != null && computeValue(parent) != null) return null;
-        return value;
+        return (parent != null && computeValue(parent) != null) ? null : value;
       }
 
       private Object computeValue(PsiExpression expression) {
