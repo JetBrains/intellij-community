@@ -12,7 +12,6 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -53,63 +52,61 @@ class JavaCommandCompletionFactory implements CommandCompletionFactory, DumbAwar
     @Override
     public @NotNull List<@NotNull Integer> findOffsets(@NotNull PsiFile psiFile, int offset) {
       Set<Integer> results = new HashSet<>();
-      ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        Document document = psiFile.getFileDocument();
-        Queue<Integer> queue = new ArrayDeque<>();
-        queue.add(offset);
-        while (!queue.isEmpty()) {
-          Integer currentOffset = queue.poll();
-          if (currentOffset == 0) continue;
-          PsiElement element = psiFile.findElementAt(currentOffset - 1);
-          int currentLine = document.getLineNumber(currentOffset - 1);
-          while (element instanceof PsiWhiteSpace ||
-              element != null &&
-              StringUtil.isEmptyOrSpaces(element.getText())) {
-            element = element.getPrevSibling();
-            if (element == null) {
-              break;
-            }
-            element = PsiTreeUtil.getDeepestLast(element);
-            if (currentLine != document.getLineNumber(element.getTextRange().getEndOffset())) {
-              element = null;
-              break;
-            }
-            currentOffset = element.getTextRange().getEndOffset();
+      Document document = psiFile.getFileDocument();
+      Queue<Integer> queue = new ArrayDeque<>();
+      queue.add(offset);
+      while (!queue.isEmpty()) {
+        Integer currentOffset = queue.poll();
+        if (currentOffset == 0) continue;
+        PsiElement element = psiFile.findElementAt(currentOffset - 1);
+        int currentLine = document.getLineNumber(currentOffset - 1);
+        while (element instanceof PsiWhiteSpace ||
+               element != null &&
+               StringUtil.isEmptyOrSpaces(element.getText())) {
+          element = element.getPrevSibling();
+          if (element == null) {
+            break;
           }
-          results.add(currentOffset);
-          if (element == null) continue;
-          PsiElement parent = element.getParent();
-          if (element instanceof PsiJavaToken) {
-            Character open = braces.get(element.getText().charAt(0));
-            //collect first from last
-            PsiElement curParent = parent;
-            if (open != null && curParent.getTextRange().getEndOffset() == element.getTextRange().getEndOffset()) {
-              while (curParent.getTextRange().getEndOffset() == element.getTextRange().getEndOffset()) {
-                int nextOffset = curParent.getTextRange().getStartOffset();
-                if (results.add(nextOffset)) {
-                  queue.add(nextOffset);
-                }
-                curParent = curParent.getParent();
-                if (curParent == null) {
-                  break;
-                }
+          element = PsiTreeUtil.getDeepestLast(element);
+          if (currentLine != document.getLineNumber(element.getTextRange().getEndOffset())) {
+            element = null;
+            break;
+          }
+          currentOffset = element.getTextRange().getEndOffset();
+        }
+        results.add(currentOffset);
+        if (element == null) continue;
+        PsiElement parent = element.getParent();
+        if (element instanceof PsiJavaToken) {
+          Character open = braces.get(element.getText().charAt(0));
+          //collect first from last
+          PsiElement curParent = parent;
+          if (open != null && curParent.getTextRange().getEndOffset() == element.getTextRange().getEndOffset()) {
+            while (curParent.getTextRange().getEndOffset() == element.getTextRange().getEndOffset()) {
+              int nextOffset = curParent.getTextRange().getStartOffset();
+              if (results.add(nextOffset)) {
+                queue.add(nextOffset);
+              }
+              curParent = curParent.getParent();
+              if (curParent == null) {
+                break;
               }
             }
-            //collect open from closed
-            if (open != null) {
-              for (PsiElement child : parent.getChildren()) {
-                if (child instanceof PsiJavaToken && child.getText().charAt(0) == open) {
-                  int nextOffset = child.getTextRange().getStartOffset();
-                  if (!results.contains(nextOffset)) {
-                    queue.add(nextOffset);
-                  }
-                  break;
+          }
+          //collect open from closed
+          if (open != null) {
+            for (PsiElement child : parent.getChildren()) {
+              if (child instanceof PsiJavaToken && child.getText().charAt(0) == open) {
+                int nextOffset = child.getTextRange().getStartOffset();
+                if (!results.contains(nextOffset)) {
+                  queue.add(nextOffset);
                 }
+                break;
               }
             }
           }
         }
-      });
+      }
       return new ArrayList<>(results);
     }
 
