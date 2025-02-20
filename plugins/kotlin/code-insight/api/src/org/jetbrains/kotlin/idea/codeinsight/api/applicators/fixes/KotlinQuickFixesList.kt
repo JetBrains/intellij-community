@@ -69,6 +69,10 @@ class KtQuickFixesListBuilder private constructor() {
         diagnosticClass: KClass<DIAGNOSTIC>,
         factory: KotlinQuickFixFactory<DIAGNOSTIC>,
     ) {
+        require(diagnosticClass != KaDiagnosticWithPsi::class) {
+            "Specific diagnostic class expected instead of generic ${KaDiagnosticWithPsi::class}."
+        }
+
         quickFixes.getOrPut(diagnosticClass) { mutableListOf() } += factory
     }
 
