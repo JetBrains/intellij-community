@@ -111,6 +111,7 @@ class GradleDeclarativeSyncContributor : GradleSyncContributor {
         configureModule(storage, entitySource, moduleRootUrl, moduleName, buildModel.javaApplication())
       }
     }
+    GradleLibrariesResolver().resolveAndAddLibraries(storage, context, entitySource, projectBuildModel)
   }
 
   private fun addEmptyModule(storage: MutableEntityStorage, entitySource: GradleDeclarativeEntitySource,
