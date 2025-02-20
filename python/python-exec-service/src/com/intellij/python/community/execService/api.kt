@@ -4,6 +4,7 @@ package com.intellij.python.community.execService
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelProcess
 import com.intellij.python.community.execService.impl.ExecServiceImpl
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
@@ -20,6 +21,8 @@ import kotlin.time.Duration.Companion.minutes
  */
 typealias ProcessOutputTransformer<T> = (ProcessOutput) -> Result<T, @NlsSafe String?>
 
+typealias EelProcessInteractiveHandler<T> = suspend (EelProcess) -> Result<T, @NlsSafe String?>
+
 object ZeroCodeStdoutTransformer : ProcessOutputTransformer<String> {
   override fun invoke(processOutput: ProcessOutput): Result<String, String?> =
     if (processOutput.exitCode == 0) Result.success(processOutput.stdout) else Result.failure(null)
@@ -31,6 +34,15 @@ object ZeroCodeStdoutTransformer : ProcessOutputTransformer<String> {
  */
 @ApiStatus.Internal
 interface ExecService {
+
+  @CheckReturnValue
+  suspend fun <T> executeInteractive(
+    whatToExec: WhatToExec,
+    args: List<String> = emptyList(),
+    options: ExecOptions = ExecOptions(),
+    eelProcessInteractiveHandler: EelProcessInteractiveHandler<T>,
+  ): Result<T, ExecException>
+
   /**
    * Execute [whatToExec] with [args] and get both stdout/stderr outputs if `errorCode != 0`, gets error otherwise.
    * If you want to show a modal window with progress, use `withModalProgress`.
