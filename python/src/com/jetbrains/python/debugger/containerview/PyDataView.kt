@@ -184,6 +184,7 @@ class PyDataView(private val project: Project) : DumbAware {
 
     val content = ContentFactory.getInstance().createContent(panel, null, false)
     content.isCloseable = true
+    content.displayName = PyBundle.message("debugger.data.view.empty.tab")
     if (frameAccessor is PydevConsoleCommunication) {
       content.icon = PythonIcons.Python.PythonConsole
       content.description = PyBundle.message("debugger.data.view.connected.to.python.console")
