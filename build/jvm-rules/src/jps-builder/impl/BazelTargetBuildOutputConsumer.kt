@@ -60,6 +60,10 @@ internal class BazelTargetBuildOutputConsumer(
     JavaBuilderUtil.registerSuccessfullyCompiled(context, successfullyCompiled)
   }
 
+  fun registerKotlincAbiOutput(outputs: List<OutputFile>) {
+    outputSink.registerKotlincAbiOutput(outputs)
+  }
+
   fun addRegisteredSourceCount(add: Int) {
     registeredSourceCount += add
   }

@@ -6,6 +6,7 @@ import androidx.compose.compiler.plugins.kotlin.ComposePluginRegistrar
 import io.bazel.kotlin.plugin.jdeps.JdepsGenCommandLineProcessor
 import io.bazel.kotlin.plugin.jdeps.JdepsGenComponentRegistrar
 import org.jetbrains.bazel.jvm.ArgMap
+import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser.RegisteredPluginInfo
 import org.jetbrains.kotlin.compiler.plugin.CliOptionValue
 import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor
@@ -28,6 +29,7 @@ internal inline fun configurePlugins(
   args: ArgMap<JvmBuilderFlags>,
   workingDir: Path,
   targetLabel: String,
+  noinline abiOutputConsumer: ((List<OutputFile>) -> Unit)?,
   consumer: (RegisteredPluginInfo) -> Unit,
 ) {
   // put user plugins first
@@ -83,14 +85,12 @@ internal inline fun configurePlugins(
     ))
   }
 
-  args.optionalSingle(JvmBuilderFlags.ABI_OUT)?.let { workingDir.resolve(it) }?.let { abiJar ->
+  if (abiOutputConsumer != null) {
     consumer(RegisteredPluginInfo(
       componentRegistrar = null,
-      compilerPluginRegistrar = JvmAbiComponentRegistrar(),
+      compilerPluginRegistrar = JvmAbiComponentRegistrar(outputConsumer = abiOutputConsumer),
       commandLineProcessor = JvmAbiCommandLineProcessor(),
       pluginOptions = listOf(
-        cliOptionValue("outputDir", abiJar.toString()),
-        cliOptionValue("targetLabel", targetLabel),
         cliOptionValue("removePrivateClasses", "true"),
       )))
   }

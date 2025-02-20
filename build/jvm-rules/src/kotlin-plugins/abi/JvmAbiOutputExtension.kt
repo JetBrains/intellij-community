@@ -2,28 +2,34 @@
 
 package org.jetbrains.kotlin.jvm.abi
 
-import org.jetbrains.bazel.jvm.kotlin.createJar
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.backend.common.output.OutputFileCollection
 import org.jetbrains.kotlin.backend.common.output.SimpleOutputBinaryFile
-import org.jetbrains.kotlin.cli.common.output.writeAllTo
 import org.jetbrains.kotlin.codegen.ClassFileFactory
 import org.jetbrains.kotlin.codegen.extensions.ClassFileFactoryFinalizerExtension
-import org.jetbrains.kotlin.codegen.inline.*
+import org.jetbrains.kotlin.codegen.inline.SMAPBuilder
+import org.jetbrains.kotlin.codegen.inline.SMAPParser
+import org.jetbrains.kotlin.codegen.inline.SourceMapCopier
+import org.jetbrains.kotlin.codegen.inline.SourceMapCopyingMethodVisitor
+import org.jetbrains.kotlin.codegen.inline.SourceMapper
 import org.jetbrains.kotlin.codegen.visitWithSplitting
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
-import org.jetbrains.org.objectweb.asm.*
+import org.jetbrains.org.objectweb.asm.AnnotationVisitor
+import org.jetbrains.org.objectweb.asm.ClassReader
+import org.jetbrains.org.objectweb.asm.ClassVisitor
+import org.jetbrains.org.objectweb.asm.ClassWriter
+import org.jetbrains.org.objectweb.asm.FieldVisitor
+import org.jetbrains.org.objectweb.asm.MethodVisitor
+import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.commons.ClassRemapper
 import org.jetbrains.org.objectweb.asm.commons.Remapper
 import org.jetbrains.org.objectweb.asm.tree.FieldNode
 import org.jetbrains.org.objectweb.asm.tree.MethodNode
-import java.io.File
 import kotlin.metadata.jvm.JvmFieldSignature
 import kotlin.metadata.jvm.JvmMethodSignature
 
 internal class JvmAbiOutputExtension(
-    private val outputPath: File,
-    private val targetLabel: String,
+    private val outputConsumer: (List<OutputFile>) -> Unit,
     private val abiClassInfoBuilder: () -> Map<String, AbiClassInfo>,
     private val removeDebugInfo: Boolean,
     private val removeDataClassCopyIfConstructorIsPrivate: Boolean,
@@ -42,12 +48,7 @@ internal class JvmAbiOutputExtension(
                 preserveDeclarationOrder,
                 treatInternalAsPrivate,
             )
-        if (outputPath.extension == "jar") {
-            // We don't include the runtime or main class in interface jars and always reset time stamps.
-          createJar(outputFiles = outputFiles, outFile = outputPath.toPath(), targetLabel = targetLabel, mainClass = null)
-        } else {
-            outputFiles.writeAllTo(outputPath)
-        }
+      outputConsumer(outputFiles.asList())
     }
 
     private class InnerClassInfo(val name: String, val outerName: String?, val innerName: String?, val access: Int)

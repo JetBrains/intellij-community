@@ -56,24 +56,6 @@ internal class RequestLog(
     }
   }
 
-  fun compilerMessage(message: CompilerMessage) {
-    var sourcePath = message.sourcePath
-    var messageText = message.messageText
-    if (sourcePath != null) {
-      sourcePath = relativizer.toRelative(sourcePath, RelativePathType.SOURCE)
-      messageText = if (message.line < 0) {
-        "$sourcePath: $messageText"
-      }
-      else {
-        "$sourcePath(${message.line}:${message.column}): $messageText"
-      }
-    }
-
-    if (!messageText.isEmpty()) {
-      doReport(messageText, message)
-    }
-  }
-
   private fun doReport(messageText: String, message: BuildMessage) {
     if (message.kind == Kind.ERROR) {
       parentSpan.addEvent("compilation error", Attributes.of(AttributeKey.stringKey("message"), messageText))

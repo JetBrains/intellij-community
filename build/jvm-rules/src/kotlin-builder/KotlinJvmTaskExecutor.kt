@@ -53,7 +53,9 @@ internal suspend fun compileKotlinForJvm(
   require(kotlinArgs.freeArgs.isEmpty())
   kotlinArgs.freeArgs = sources.map { it.toString() }
 
-  val config = prepareCompilerConfiguration(args = args, kotlinArgs = kotlinArgs, baseDir = baseDir)
+  val config = prepareCompilerConfiguration(args = args, kotlinArgs = kotlinArgs, baseDir = baseDir, abiOutputConsumer = {
+    throw IllegalStateException("abi jars are not supported for non-unified JPS worker")
+  })
 
   val messageCollector = WriterBackedMessageCollector(verbose = context.isTracing)
   config.put(CLIConfigurationKeys.ORIGINAL_MESSAGE_COLLECTOR_KEY, messageCollector)

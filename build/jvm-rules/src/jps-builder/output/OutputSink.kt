@@ -46,10 +46,10 @@ class OutputSink internal constructor(
     }
   }
 
+  @Suppress("DuplicatedCode")
   @Synchronized
   fun registerKotlincOutput(outputFiles: List<OutputFile>) {
     var isChanged = isChanged
-    val abiFileToData = abiFileToData
     for (file in outputFiles) {
       // not clear - is path system-independent or not?
       val path = file.relativePath.replace(File.separatorChar, '/')
@@ -58,11 +58,24 @@ class OutputSink internal constructor(
       if (!isChanged && (oldContent == null || !oldContent.data.contentEquals(newContent))) {
         isChanged = true
       }
+    }
+    if (isChanged) {
+      this.isChanged = true
+    }
+  }
 
-      // todo enable kotlin abi
-      @Suppress("IfThenToSafeAccess")
-      if (abiFileToData != null) {
-        abiFileToData.put(path, newContent)
+  @Suppress("DuplicatedCode")
+  @Synchronized
+  fun registerKotlincAbiOutput(outputFiles: List<OutputFile>) {
+    var isChanged = isChanged
+    val abiFileToData = abiFileToData!!
+    for (file in outputFiles) {
+      // not clear - is path system-independent or not?
+      val path = file.relativePath.replace(File.separatorChar, '/')
+      val newContent = file.asByteArray()
+      val oldContent = abiFileToData.put(path, KotlinOutputData(newContent)) as KotlinOutputData?
+      if (!isChanged && (oldContent == null || !oldContent.data.contentEquals(newContent))) {
+        isChanged = true
       }
     }
     if (isChanged) {

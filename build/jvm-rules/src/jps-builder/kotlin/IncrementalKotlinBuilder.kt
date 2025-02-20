@@ -12,7 +12,6 @@ import org.jetbrains.bazel.jvm.emptyList
 import org.jetbrains.bazel.jvm.emptySet
 import org.jetbrains.bazel.jvm.hashSet
 import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
-import org.jetbrains.bazel.jvm.jps.output.OutputSink
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
 import org.jetbrains.bazel.jvm.jps.impl.BazelDirtyFileHolder
@@ -21,6 +20,7 @@ import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuilder
 import org.jetbrains.bazel.jvm.jps.impl.markFilesForCurrentRound
+import org.jetbrains.bazel.jvm.jps.output.OutputSink
 import org.jetbrains.bazel.jvm.kotlin.configureModule
 import org.jetbrains.bazel.jvm.kotlin.createJvmPipeline
 import org.jetbrains.bazel.jvm.kotlin.executeJvmPipeline
@@ -442,6 +442,9 @@ private fun doCompileModuleChunk(
     args = bazelConfigurationHolder.args,
     kotlinArgs = bazelConfigurationHolder.kotlinArgs,
     baseDir = bazelConfigurationHolder.classPathRootDir,
+    abiOutputConsumer = {
+      outputConsumer.registerKotlincAbiOutput(it)
+    },
   )
   configureModule(
     moduleName = module.name,

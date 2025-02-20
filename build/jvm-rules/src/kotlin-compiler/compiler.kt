@@ -6,6 +6,7 @@ package org.jetbrains.bazel.jvm.kotlin
 
 import com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE
 import org.jetbrains.bazel.jvm.ArgMap
+import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.backend.common.output.OutputFileCollection
 import org.jetbrains.kotlin.backend.common.phaser.then
 import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
@@ -68,9 +69,15 @@ fun prepareCompilerConfiguration(
   args: ArgMap<JvmBuilderFlags>,
   kotlinArgs: K2JVMCompilerArguments,
   baseDir: Path,
+  abiOutputConsumer: (List<OutputFile>) -> Unit,
 ): CompilerConfiguration {
   val config = configTemplate.copy()
-  configurePlugins(args = args, workingDir = baseDir, targetLabel = args.mandatorySingle(JvmBuilderFlags.TARGET_LABEL)) {
+  configurePlugins(
+    args = args,
+    workingDir = baseDir,
+    targetLabel = args.mandatorySingle(JvmBuilderFlags.TARGET_LABEL),
+    abiOutputConsumer = abiOutputConsumer,
+  ) {
     config.add(CompilerPluginRegistrar.COMPILER_PLUGIN_REGISTRARS, it.compilerPluginRegistrar!!)
     if (!it.pluginOptions.isEmpty()) {
       processCompilerPluginOptions(processor = it.commandLineProcessor!!, pluginOptions = it.pluginOptions, configuration = config)
@@ -158,7 +165,7 @@ fun configureModule(
 @OptIn(ExperimentalCompilerApi::class)
 fun getDebugInfoAboutPlugins(args: ArgMap<JvmBuilderFlags>, baseDir: Path, targetLabel: String): String {
   val sb = StringBuilder()
-  configurePlugins(args = args, workingDir = baseDir, targetLabel = targetLabel) { info ->
+  configurePlugins(args = args, workingDir = baseDir, targetLabel = targetLabel, abiOutputConsumer = null) { info ->
     sb.append(info.compilerPluginRegistrar!!.toString())
     if (!info.pluginOptions.isEmpty()) {
       sb.append("(" + info.pluginOptions.joinToString(separator = ", ") + ")")
