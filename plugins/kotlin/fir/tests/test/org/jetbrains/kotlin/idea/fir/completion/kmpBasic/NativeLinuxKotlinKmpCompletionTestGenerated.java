@@ -3573,6 +3573,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             runTest("../../completion/testData/basic/common/InsideAnonymousClass.kt");
         }
 
+        @TestMetadata("InsideAnonymousObject.kt")
+        public void testInsideAnonymousObject() throws Exception {
+            runTest("../../completion/testData/basic/common/InsideAnonymousObject.kt");
+        }
+
         @TestMetadata("InterfaceNameBeforeRunBug.kt")
         public void testInterfaceNameBeforeRunBug() throws Exception {
             runTest("../../completion/testData/basic/common/InterfaceNameBeforeRunBug.kt");

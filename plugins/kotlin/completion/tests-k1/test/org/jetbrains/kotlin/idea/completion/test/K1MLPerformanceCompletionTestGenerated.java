@@ -3389,6 +3389,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/InsideAnonymousClass.kt");
             }
 
+            @TestMetadata("InsideAnonymousObject.kt")
+            public void testInsideAnonymousObject() throws Exception {
+                runTest("../testData/basic/common/InsideAnonymousObject.kt");
+            }
+
             @TestMetadata("InterfaceNameBeforeRunBug.kt")
             public void testInterfaceNameBeforeRunBug() throws Exception {
                 runTest("../testData/basic/common/InterfaceNameBeforeRunBug.kt");
