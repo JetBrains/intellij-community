@@ -93,7 +93,14 @@ public final class ProcessListUtil {
   private static @Nullable List<ProcessInfo> parseCommandOutput(@NotNull List<@NlsSafe String> command,
                                                                 @NotNull NullableFunction<? super String, ? extends List<ProcessInfo>> parser,
                                                                 @Nullable Charset charset) {
-    String output;
+    String output = getCommandStdout(command, charset);
+    if (output == null) {
+      return null;
+    }
+    return parser.fun(output);
+  }
+
+  private static @Nullable String getCommandStdout(@NotNull List<@NlsSafe String> command, @Nullable Charset charset) {
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine(command);
       if (charset != null)
@@ -106,13 +113,12 @@ public final class ProcessListUtil {
                   + "\nstderr:\n"
                   + processOutput.getStderr());
       }
-      output = processOutput.getStdout();
+      return processOutput.getStdout();
     }
     catch (ExecutionException e) {
       LOG.error("Cannot get process list", e);
-      return null;
     }
-    return parser.fun(output);
+    return null;
   }
 
   private static @Nullable List<ProcessInfo> getProcessListOnUnix() {
@@ -192,9 +198,15 @@ public final class ProcessListUtil {
     // 12  S user ./command
     // 12  S user ./command argument list
 
-    return parseCommandOutput(COMM_LIST_COMMAND,
-                              commandOnly -> parseCommandOutput(COMMAND_LIST_COMMAND,
-                                                                full -> parseMacOutput(commandOnly, full, getCurrentUser())));
+    String commandOnly = getCommandStdout(COMM_LIST_COMMAND, null);
+    if (commandOnly == null) {
+      return null;
+    }
+    String full = getCommandStdout(COMMAND_LIST_COMMAND, null);
+    if (full == null) {
+      return null;
+    }
+    return parseMacOutput(commandOnly, full, getCurrentUser());
   }
 
   @ApiStatus.Internal
