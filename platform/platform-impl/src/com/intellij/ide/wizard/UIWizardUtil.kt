@@ -5,6 +5,7 @@ package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.ProjectBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.AbstractNewProjectWizardBuilder.Companion.postCommitByBuilder
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -122,11 +123,13 @@ fun whenProjectCreated(project: Project, action: () -> Unit) {
 }
 
 /**
- * This is a workaround for https://youtrack.jetbrains.com/issue/IDEA-286690
+ * Bridges the [ProjectBuilder] and [NewProjectWizardStep] abstractions.
+ *
+ * @param builder is a legacy abstraction for defining a new project wizard UI and project generator.
  */
 @ApiStatus.Internal
 fun NewProjectWizardStep.setupProjectFromBuilder(project: Project, builder: ProjectBuilder): Module? {
   val model = context.getUserData(NewProjectWizardStep.MODIFIABLE_MODULE_MODEL_KEY)
   return builder.commit(project, model)?.firstOrNull()
+    .also { postCommitByBuilder(builder) }
 }
-

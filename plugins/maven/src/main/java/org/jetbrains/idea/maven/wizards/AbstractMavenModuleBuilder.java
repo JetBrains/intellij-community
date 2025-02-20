@@ -109,11 +109,13 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     }
 
     MavenUtil.runWhenInitialized(project, (DumbAwareRunnable)() -> {
-      configure(project, root);
+      postCommit(project, root);
     });
   }
 
-  private void configure(Project project, VirtualFile root) {
+  @Override
+  @ApiStatus.Internal
+  public void postCommit(@NotNull Project project, @NotNull VirtualFile projectDir) {
     if (myEnvironmentForm != null) {
       myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
     }
@@ -130,7 +132,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
     new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
                                  myInheritVersion, myArchetype, myPropertiesToCreateByArtifact,
-                                 MavenProjectBundle.message("command.name.create.new.maven.module")).configure(project, root, false);
+                                 MavenProjectBundle.message("command.name.create.new.maven.module")).configure(project, projectDir, false);
   }
 
   protected static void setupNewProject(Project project) {
@@ -326,12 +328,5 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   public @Nullable Project createProject(String name, String path) {
     setCreatingNewProject(true);
     return super.createProject(name, path);
-  }
-
-  @Override
-  public @Nullable ProjectConfigurator createProjectConfigurator() {
-    return (project, projectDir) -> {
-      configure(project, projectDir);
-    };
   }
 }

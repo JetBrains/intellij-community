@@ -10,7 +10,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.util.projectWizard.ProjectConfigurator
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
@@ -98,8 +97,6 @@ internal class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     private lateinit var archetypeVersionComboBox: TextCompletionComboBox<String>
     private lateinit var archetypeDescriptorTable: PropertiesTable
     private lateinit var archetypeDescriptorPanel: JComponent
-
-    private val moduleBuilder = MavenJavaModuleBuilder()
 
     init {
       catalogItemProperty.afterChange { if (isAutoReloadArchetypeModel) reloadArchetypes() }
@@ -321,7 +318,7 @@ internal class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      linkMavenProject(project, moduleBuilder) { builder ->
+      linkMavenProject(project, MavenJavaModuleBuilder()) { builder ->
         builder.archetype = MavenArchetype(
           archetypeItem.groupId,
           archetypeItem.artifactId,
@@ -342,10 +339,6 @@ internal class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           putAll(archetypeDescriptor)
         }
       }
-    }
-
-    override fun createProjectConfigurator(): ProjectConfigurator? {
-      return moduleBuilder.createProjectConfigurator()
     }
   }
 

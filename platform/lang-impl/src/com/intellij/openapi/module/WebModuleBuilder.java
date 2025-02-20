@@ -84,17 +84,15 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
     return module;
   }
 
-  @ApiStatus.Internal
   @Override
-  public @Nullable ProjectConfigurator createProjectConfigurator() {
-    return (project, dir) -> {
-      if (myTemplate != null) {
-        Module module = ModuleUtilCore.findModuleForFile(dir, project);
-        if (module != null) {
-          myTemplate.configureModule(module, dir, myGeneratorPeerLazyValue.getValue().getSettings());
-        }
+  @ApiStatus.Internal
+  public void postCommit(@NotNull Project project, @NotNull VirtualFile projectDir) {
+    if (myTemplate != null) {
+      Module module = ModuleUtilCore.findModuleForFile(projectDir, project);
+      if (module != null) {
+        myTemplate.configureModule(module, projectDir, myGeneratorPeerLazyValue.getValue().getSettings());
       }
-    };
+    }
   }
 
   private static @NotNull VirtualFile getModuleDir(@NotNull Module module) {

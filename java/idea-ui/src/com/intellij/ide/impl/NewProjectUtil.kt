@@ -249,15 +249,14 @@ suspend fun createProjectFromWizardImpl(wizard: AbstractProjectWizard, projectFi
 
     if (newProject !== projectToClose) {
       updateLastProjectLocation(projectFile)
-      val projectConfigurator = projectBuilder.createProjectConfigurator()
       val options = OpenProjectTask {
         project = newProject
         projectName = projectFile.fileName.toString()
         callback = ProjectOpenedCallback { openedProject, module ->
-          if (openedProject != newProject && projectConfigurator != null) { // project attached to workspace
+          if (openedProject != newProject) { // project attached to workspace
             LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)?.let { dir ->
               ApplicationManager.getApplication().invokeLater {
-                projectConfigurator.configureProject(openedProject, dir)
+                projectBuilder.postCommit(openedProject, dir)
               }
             }
           }
