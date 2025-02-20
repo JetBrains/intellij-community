@@ -110,6 +110,7 @@ interface NewProjectWizardStep {
 
     const val GENERATE_ONBOARDING_TIPS_NAME: String = "NewProjectWizard.generateOnboardingTips"
 
-    val MODIFIABLE_MODULE_MODEL_KEY: Key<ModifiableModuleModel> = Key.create("MODIFIABLE_MODULE_MODEL_KEY")
+    @Deprecated("Use UIWizardUtil#setupProjectFromBuilder for creating modules from the legacy project builder.")
+    val MODIFIABLE_MODULE_MODEL_KEY: Key<ModifiableModuleModel> = AbstractNewProjectWizardBuilder.MODIFIABLE_MODULE_MODEL_KEY
   }
 }

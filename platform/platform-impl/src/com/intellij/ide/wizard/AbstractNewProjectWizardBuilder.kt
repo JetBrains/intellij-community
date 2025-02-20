@@ -6,7 +6,6 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.ProjectBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter.Companion.NPW_PREFIX
-import com.intellij.ide.wizard.NewProjectWizardStep.Companion.MODIFIABLE_MODULE_MODEL_KEY
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
@@ -18,7 +17,6 @@ import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.trackActivityBlocking
 import org.jetbrains.annotations.ApiStatus
-import java.util.ArrayList
 import java.util.function.BiConsumer
 import javax.swing.Icon
 
@@ -82,7 +80,15 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
 
   companion object {
 
+    @get:ApiStatus.Internal
+    val MODIFIABLE_MODULE_MODEL_KEY: Key<ModifiableModuleModel> = Key.create("MODIFIABLE_MODULE_MODEL_KEY")
     private val POST_COMMIT_ACTIONS: Key<MutableList<BiConsumer<Project, VirtualFile>>> = Key.create("POST_COMMIT_ACTIONS")
+
+    @ApiStatus.Internal
+    fun NewProjectWizardStep.commitByBuilder(builder: ProjectBuilder, project: Project): List<Module> {
+      val model = context.getUserData(MODIFIABLE_MODULE_MODEL_KEY)
+      return builder.commit(project, model)
+    }
 
     @ApiStatus.Internal
     fun NewProjectWizardStep.postCommitByBuilder(builder: ProjectBuilder) {
