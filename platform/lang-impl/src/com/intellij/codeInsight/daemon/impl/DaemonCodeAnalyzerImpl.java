@@ -1007,13 +1007,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     return findHighlightsByOffset(document, offset, includeFixRange, true, minSeverity, true, context);
   }
 
+
+  /*
+  *  todo ijpl-339 deprecate findHighlightByOffset when multiverse gets more mature
+  *  @deprecated This method is deprecated because it does not support contexts.
+  *             Use {@link #findHighlightByOffset(Document, int, boolean, CodeInsightContext)} instead.
+  */
+
   /**
    * Collects HighlightInfo intersecting with a certain offset.
-   *
-   * @deprecated This method is deprecated because it does not support contexts.
-   *             Use {@link #findHighlightByOffset(Document, int, boolean, CodeInsightContext)} instead.
    */
-  @Deprecated
   public @Nullable HighlightInfo findHighlightByOffset(@NotNull Document document,
                                                        int offset,
                                                        boolean includeFixRange) {
