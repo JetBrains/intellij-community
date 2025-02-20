@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.graph.PermanentGraph
@@ -22,20 +21,21 @@ import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryStateChangeListener
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.measureTimedValue
 
 @ApiStatus.Experimental
 @Service(Service.Level.PROJECT)
 class GitMyRecentCommitsProvider(private val project: Project, private val scope: CoroutineScope) {
-  private val requestedDepth: MutableMap<VirtualFile, Int> = ConcurrentHashMap()
+  private val requestedDepth = ConcurrentHashMap<VirtualFile, Int>()
 
   private val cache: AsyncLoadingCache<VirtualFile, List<VcsCommitMetadata>> = Caffeine.newBuilder()
-    .executor(AppExecutorUtil.getAppExecutorService())
+    .executor(Dispatchers.IO.asExecutor())
     .buildAsync { root, executor ->
       requestedDepth[root]?.let { commitsToLoad ->
         scope.future {
@@ -67,8 +67,7 @@ class GitMyRecentCommitsProvider(private val project: Project, private val scope
       LOG.debug { "Limit updated for $root - $limit" }
       cache.synchronous().invalidate(root)
     }
-    val future: CompletableFuture<List<VcsCommitMetadata>> = cache.get(root)
-    return future.await().take(limit)
+    return cache.get(root).await().take(limit)
   }
 
   @RequiresBackgroundThread
