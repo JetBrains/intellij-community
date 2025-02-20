@@ -4,7 +4,6 @@ package com.intellij.debugger.impl
 import com.intellij.debugger.engine.DebugProcessEvents
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
-import com.intellij.debugger.engine.withDebugContext
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -92,7 +91,7 @@ fun preloadAllClasses(vm: VirtualMachine) {
       }
     }
     channel.consumeEach { type ->
-      withDebugContext(managerThread, PrioritizedTask.Priority.LOWEST) {
+      managerThread.schedule(PrioritizedTask.Priority.LOWEST) {
         try {
           DebuggerUtilsAsync.supertypes(type)
         }
