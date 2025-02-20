@@ -28,6 +28,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGenera
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators.aliasesGenerator
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
+import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalPromptModel
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.util.ShellType
@@ -40,6 +41,16 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   val tracer = TelemetryManager.getTracer(TerminalCompletionScope)
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+    if (parameters.editor.isReworkedTerminalEditor) {
+      val allTokens = listOf("g")
+      val lookupElement1 = PrioritizedLookupElement.withPriority(LookupElementBuilder.create("git1"), 100.0)
+      val lookupElement2 = PrioritizedLookupElement.withPriority(LookupElementBuilder.create("git2"), 90.0)
+      val lookupElement3 = PrioritizedLookupElement.withPriority(LookupElementBuilder.create("git-lala"), 90.0)
+      result.addElement(lookupElement1)
+      result.addElement(lookupElement2)
+      result.addElement(lookupElement3)
+      submitSuggestions(emptyList(), allTokens, result, ShellType.ZSH)
+    }
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY) ?: return
     val runtimeContextProvider = parameters.editor.getUserData(ShellRuntimeContextProviderImpl.KEY) ?: return
     val generatorsExecutor = parameters.editor.getUserData(ShellDataGeneratorsExecutorImpl.KEY) ?: return

@@ -212,6 +212,7 @@ internal abstract class TerminalEventDispatcher(
       "Terminal.MoveToolWindowTabRight",
       "Terminal.ClearBuffer",
       "Terminal.Find",
+      "Terminal.CommandCompletion",
     )
   }
 }
