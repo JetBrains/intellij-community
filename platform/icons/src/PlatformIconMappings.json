@@ -20,6 +20,7 @@
       "groupByModuleGroup.svg": "actions/GroupByModuleGroup.svg",
       "groupByPackage.svg": "actions/GroupByPackage.svg",
       "groupByTestProduction.svg": "actions/groupByTestProduction.svg",
+      "highlighting.svg": "actions/highlighting.svg",
       "inSelection.svg": "actions/inSelection.svg",
       "install.svg": "actions/install.svg",
       "lightning.svg": "actions/lightning.svg",
