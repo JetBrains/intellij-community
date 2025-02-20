@@ -6,13 +6,13 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.python.pyproject.PyProjectToml
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.errorProcessing.failure
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.isAssociatedWithModule
-import com.jetbrains.python.sdk.uv.UvPyProject
 import com.jetbrains.python.sdk.uv.isUv
 import com.jetbrains.python.sdk.uv.setupUvSdkUnderProgress
 import com.jetbrains.python.statistics.InterpreterType
@@ -52,7 +52,7 @@ internal class UvExistingEnvironmentSelector(model: PythonMutableTargetAddInterp
   }
 
   override suspend fun findModulePath(module: Module): Path? =
-    UvPyProject.findFile(module)?.toNioPathOrNull()?.parent
+    PyProjectToml.findFile(module)?.toNioPathOrNull()?.parent
 
   private fun extractModule(moduleOrProject: ModuleOrProject): Module? =
     when (moduleOrProject) {
