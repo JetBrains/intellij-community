@@ -261,6 +261,14 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
       }
     }
 
+  override fun onHiddenByEsc(dataContext: DataContext) {
+    val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
+    if (logger.isDebugEnabled) {
+      logger.debug("Button is hidden by Esc button: ${dataContext.getData(CommonDataKeys.VIRTUAL_FILE)}")
+    }
+    FrontendHotSwapManager.getInstance(project).notifyHidden()
+  }
+
   companion object {
     private const val SHOWING_TIME_MS = 500
     private const val HIDING_TIME_MS = 500
@@ -270,6 +278,9 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
 private class HideAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
+    if (logger.isDebugEnabled) {
+      logger.debug("Button is hidden by user: ${e.dataContext.getData(CommonDataKeys.VIRTUAL_FILE)}")
+    }
     FrontendHotSwapManager.getInstance(project).notifyHidden()
   }
 
