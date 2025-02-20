@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.service.project
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.util.DEFAULT_SYNC_TIMEOUT
 import com.intellij.platform.externalSystem.testFramework.project
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestDisposable
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test
 class ExternalSystemModuleDataIndexTest : ExternalSystemModuleDataIndexTestCase() {
 
   @Test
-  fun `test module data finding`(@TestDisposable disposable: Disposable) = timeoutRunBlocking {
+  fun `test module data finding`(@TestDisposable disposable: Disposable) = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
     val systemId1 = ProjectSystemId("build-tool-1")
     val systemId2 = ProjectSystemId("build-tool-2")
 

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.project
 
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemModuleDataIndex
+import com.intellij.openapi.externalSystem.util.DEFAULT_SYNC_TIMEOUT
 import com.intellij.platform.externalSystem.testFramework.project
 import com.intellij.testFramework.common.timeoutRunBlocking
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test
 class GradleModuleDataIndexTest : GradleModuleDataIndexTestCase() {
 
   @Test
-  fun `test module data finding`() = timeoutRunBlocking {
+  fun `test module data finding`() = timeoutRunBlocking(DEFAULT_SYNC_TIMEOUT) {
     val settings = GradleSettings.getInstance(project)
     settings.linkedProjectsSettings = listOf(
       GradleProjectSettings().also {
