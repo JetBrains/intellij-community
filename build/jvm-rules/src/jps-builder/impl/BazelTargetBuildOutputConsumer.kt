@@ -4,7 +4,7 @@
 package org.jetbrains.bazel.jvm.jps.impl
 
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
-import org.jetbrains.bazel.jvm.jps.OutputSink
+import org.jetbrains.bazel.jvm.jps.output.OutputSink
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.incremental.BinaryContent

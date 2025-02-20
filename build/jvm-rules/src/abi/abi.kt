@@ -38,7 +38,7 @@ suspend fun writeAbi(abiJar: Path, classChannel: ReceiveChannel<JarContentToProc
   }
 }
 
-private fun createAbi(item: JarContentToProcess, classesToBeDeleted: HashSet<String>): ByteArray? {
+private fun createAbi(item: JarContentToProcess, classesToBeDeleted: MutableSet<String>): ByteArray? {
   val data = item.data
   if (item.isKotlin) {
     // check that Java ABI works
@@ -48,12 +48,16 @@ private fun createAbi(item: JarContentToProcess, classesToBeDeleted: HashSet<Str
     //return createAbForKotlin(classesToBeDeleted, item)
   }
   else {
-    val classWriter = ClassWriter(0)
-    val abiClassVisitor = JavaAbiClassVisitor(classWriter, classesToBeDeleted)
-    ClassReader(data).accept(abiClassVisitor, ClassReader.SKIP_FRAMES or ClassReader.SKIP_CODE)
-    if (abiClassVisitor.isApiClass) {
-      return classWriter.toByteArray()
-    }
+    return createAbiForJava(item.data, classesToBeDeleted)
+  }
+}
+
+fun createAbiForJava(data: ByteArray, classesToBeDeleted: MutableSet<String>): ByteArray? {
+  val classWriter = ClassWriter(0)
+  val abiClassVisitor = JavaAbiClassVisitor(classWriter, classesToBeDeleted)
+  ClassReader(data).accept(abiClassVisitor, ClassReader.SKIP_FRAMES or ClassReader.SKIP_CODE)
+  if (abiClassVisitor.isApiClass) {
+    return classWriter.toByteArray()
   }
   return null
 }

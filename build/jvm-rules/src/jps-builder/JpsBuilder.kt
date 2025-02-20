@@ -3,8 +3,6 @@
 
 package org.jetbrains.bazel.jvm.jps
 
-import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtilRt
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
@@ -12,20 +10,13 @@ import io.opentelemetry.api.trace.Tracer
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.apache.arrow.memory.RootAllocator
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.bazel.jvm.ArgMap
-import org.jetbrains.bazel.jvm.WorkRequestExecutor
-import org.jetbrains.bazel.jvm.abi.JarContentToProcess
-import org.jetbrains.bazel.jvm.abi.writeAbi
-import org.jetbrains.bazel.jvm.emptyMap
 import org.jetbrains.bazel.jvm.hashMap
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildRootIndex
@@ -44,6 +35,9 @@ import org.jetbrains.bazel.jvm.jps.impl.loadLibRootState
 import org.jetbrains.bazel.jvm.jps.java.BazelJavaBuilder
 import org.jetbrains.bazel.jvm.jps.kotlin.IncrementalKotlinBuilder
 import org.jetbrains.bazel.jvm.jps.kotlin.NonIncrementalKotlinBuilder
+import org.jetbrains.bazel.jvm.jps.output.OutputSink
+import org.jetbrains.bazel.jvm.jps.output.createOutputSink
+import org.jetbrains.bazel.jvm.jps.output.writeJarAndAbi
 import org.jetbrains.bazel.jvm.jps.state.LoadStateResult
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestContainer
 import org.jetbrains.bazel.jvm.jps.state.TargetConfigurationDigestProperty
@@ -52,10 +46,8 @@ import org.jetbrains.bazel.jvm.jps.state.loadBuildState
 import org.jetbrains.bazel.jvm.jps.state.saveBuildState
 import org.jetbrains.bazel.jvm.kotlin.JvmBuilderFlags
 import org.jetbrains.bazel.jvm.kotlin.parseArgs
-import org.jetbrains.bazel.jvm.processRequests
 import org.jetbrains.bazel.jvm.span
 import org.jetbrains.bazel.jvm.use
-import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
 import org.jetbrains.jps.builders.logging.BuildLoggingManager
 import org.jetbrains.jps.cmdline.ProjectDescriptor
@@ -63,7 +55,6 @@ import org.jetbrains.jps.incremental.RebuildRequestedException
 import org.jetbrains.jps.incremental.fs.BuildFSState
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.model.JpsModel
-import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.jps.incremental.KotlinCompilerReferenceIndexBuilder
 import java.io.Writer
 import java.nio.file.Files
@@ -73,46 +64,7 @@ import kotlin.coroutines.coroutineContext
 // if more than 50% files were changed, perform a full rebuild
 private const val thresholdPercentage = 0.5
 
-// Please note: for performance reasons, we do not set `jps.new.storage.compact.on.close` to true.
-// As a result, the database file on disk may grow to some extent.
-
-fun configureGlobalJps(tracer: Tracer, scope: CoroutineScope) {
-  val globalSpanForIJLogger = tracer.spanBuilder("global").startSpan()
-  scope.coroutineContext.job.invokeOnCompletion { globalSpanForIJLogger.end() }
-
-  Logger.setFactory { BazelLogger(category = IdeaLogRecordFormatter.smartAbbreviate(it), span = globalSpanForIJLogger) }
-  System.setProperty("jps.service.manager.impl", BazelJpsServiceManager::class.java.name)
-  System.setProperty("jps.backward.ref.index.builder.fs.case.sensitive", "true")
-  System.setProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, Runtime.getRuntime().availableProcessors().toString())
-  System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true")
-  System.setProperty(GlobalOptions.DEPENDENCY_GRAPH_ENABLED, "true")
-  System.setProperty(GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION, "true")
-  System.setProperty("idea.compression.enabled", "false")
-  System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY, "true")
-}
-
-internal class JpsBuildWorker private constructor(private val allocator: RootAllocator) : WorkRequestExecutor<WorkRequestWithDigests> {
-  companion object {
-    @JvmStatic
-    fun main(startupArgs: Array<String>) {
-      RootAllocator(Long.MAX_VALUE).use { allocator ->
-        processRequests(
-          startupArgs = startupArgs,
-          executor = JpsBuildWorker(allocator),
-          setup = { tracer, scope -> configureGlobalJps(tracer = tracer, scope = scope) },
-          reader = WorkRequestWithDigestReader(System.`in`),
-          serviceName = "jps-builder",
-        )
-      }
-    }
-  }
-
-  override suspend fun execute(request: WorkRequestWithDigests, writer: Writer, baseDir: Path, tracer: Tracer): Int {
-    return incrementalBuild(request = request, baseDir = baseDir, tracer = tracer, writer = writer, allocator = allocator)
-  }
-}
-
-private suspend fun incrementalBuild(
+internal suspend fun incrementalBuild(
   request: WorkRequestWithDigests,
   baseDir: Path,
   tracer: Tracer,
@@ -395,7 +347,7 @@ private suspend fun nonIncrementalBuildUsingJps(
   )
 
   // non-incremental build - oldJar is always as null (no need to copy old unchanged files)
-  OutputSink.createOutputSink(oldJar = null).use { outputSink ->
+  createOutputSink(oldJar = null, oldAbiJar = null, withAbi = abiJar != null).use { outputSink ->
     val exitCode = tracer.spanBuilder("compile").use { span ->
       val builders = arrayOf(
         createJavaBuilder(
@@ -444,47 +396,6 @@ private fun createJavaBuilder(
   }
   else {
     return BazelJavaBuilder(isIncremental = isIncremental, tracer = tracer, isDebugEnabled = isDebugEnabled, out = out)
-  }
-}
-
-private suspend fun writeJarAndAbi(
-  tracer: Tracer,
-  outputSink: OutputSink,
-  outJar: Path,
-  abiJar: Path?,
-  sourceDescriptors: Array<SourceDescriptor>?,
-) {
-  coroutineScope {
-    if (abiJar == null) {
-      tracer.span("write output JAR") {
-        outputSink.writeToZip(outJar = outJar, classChannel = null, outputToSource = emptyMap())
-      }
-    }
-    else {
-      val outputToSource = if (sourceDescriptors == null) {
-        emptyMap()
-      }
-      else {
-        val outputToSource = hashMap<String, String>(sourceDescriptors.size)
-        for (sourceDescriptor in sourceDescriptors) {
-          for (output in sourceDescriptor.outputs) {
-            outputToSource.put(output, sourceDescriptor.sourceFile.toString())
-          }
-        }
-        outputToSource
-      }
-
-      tracer.span("create output JAR and ABI JAR") {
-        val classChannel = Channel<JarContentToProcess>(capacity = 16)
-        launch {
-          outputSink.writeToZip(outJar = outJar, classChannel = classChannel, outputToSource = outputToSource)
-          classChannel.close()
-        }
-        withContext(Dispatchers.IO) {
-          writeAbi(abiJar, classChannel)
-        }
-      }
-    }
   }
 }
 
@@ -561,7 +472,14 @@ private suspend fun initAndBuild(
       // We remove `outJar` if a rebuild is detected as necessary.
       // Therefore, the `Files.exists` condition is enough.
       // However, it is still better to avoid unnecessary I/O calls.
-      OutputSink.createOutputSink(oldJar = if (isRebuild) null else outJar.takeIf { Files.exists(it) }).use { outputSink ->
+      val oldJar = if (isRebuild) null else outJar.takeIf { Files.exists(it) }
+      val oldAbiJar = if (isRebuild || oldJar == null) null else abiJar?.takeIf { Files.exists(it) }
+      // assert as it is critical to make sure that we use the correct data (or don't use)
+      if (isRebuild) {
+        require(oldJar == null)
+        require(oldAbiJar == null)
+      }
+      createOutputSink(oldJar = oldJar, oldAbiJar = oldAbiJar, withAbi = abiJar != null).use { outputSink ->
         val exitCode = tracer.spanBuilder("compile")
           .setAttribute(AttributeKey.booleanKey("isRebuild"), isRebuild)
           .use { span ->

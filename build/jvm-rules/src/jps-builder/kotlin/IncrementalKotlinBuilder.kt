@@ -12,7 +12,7 @@ import org.jetbrains.bazel.jvm.emptyList
 import org.jetbrains.bazel.jvm.emptySet
 import org.jetbrains.bazel.jvm.hashSet
 import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
-import org.jetbrains.bazel.jvm.jps.OutputSink
+import org.jetbrains.bazel.jvm.jps.output.OutputSink
 import org.jetbrains.bazel.jvm.jps.impl.BazelBuildDataProvider
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
 import org.jetbrains.bazel.jvm.jps.impl.BazelDirtyFileHolder

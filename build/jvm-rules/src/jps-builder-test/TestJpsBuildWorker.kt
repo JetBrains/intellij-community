@@ -39,11 +39,14 @@ internal object TestJpsBuildWorker {
       configureGlobalJps(tracer, coroutineScope)
 
       val args = parseArgs(testParams.lines().toTypedArray())
+
+      println("out jar: " + baseDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUT)).normalize())
+
       val messageDigest = MessageDigest.getInstance("SHA-512")
       val exitCode = RootAllocator(Long.MAX_VALUE).use { allocator ->
         tracer.span("build") { span ->
           buildUsingJps(
-            forceIncremental = true,
+            //forceIncremental = true,
             baseDir = baseDir,
             args = args,
             out = out,
@@ -68,8 +71,6 @@ internal object TestJpsBuildWorker {
           )
         }
       }
-
-      println("out jar: " + baseDir.resolve(args.mandatorySingle(JvmBuilderFlags.OUT)).normalize())
 
       openTelemetryAndOnClose.second()
 

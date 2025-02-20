@@ -12,29 +12,29 @@ import java.io.File
 
 @OptIn(ExperimentalCompilerApi::class)
 class JvmAbiComponentRegistrar : CompilerPluginRegistrar() {
-    override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
-        val outputPath = configuration.getNotNull(JvmAbiConfigurationKeys.OUTPUT_PATH)
-        configuration.put(JVMConfigurationKeys.RETAIN_OUTPUT_IN_MEMORY, true)
-        val removeDataClassCopy = configuration.getBoolean(JvmAbiConfigurationKeys.REMOVE_DATA_CLASS_COPY_IF_CONSTRUCTOR_IS_PRIVATE)
-        val builderExtension = JvmAbiClassBuilderInterceptor(
-          removeDataClassCopyIfConstructorIsPrivate = removeDataClassCopy,
-          removePrivateClasses = configuration.getBoolean(JvmAbiConfigurationKeys.REMOVE_PRIVATE_CLASSES),
-          treatInternalAsPrivate = configuration.getBoolean(JvmAbiConfigurationKeys.TREAT_INTERNAL_AS_PRIVATE),
-        )
-        val outputExtension = JvmAbiOutputExtension(
-          outputPath = File(outputPath),
-          targetLabel = configuration.getNotNull(JvmAbiConfigurationKeys.TARGET_LABEL),
-          abiClassInfoBuilder = builderExtension::buildAbiClassInfoAndReleaseResources,
-          removeDebugInfo = configuration.getBoolean(JvmAbiConfigurationKeys.REMOVE_DEBUG_INFO),
-          removeDataClassCopyIfConstructorIsPrivate = removeDataClassCopy,
-          preserveDeclarationOrder = configuration.getBoolean(JvmAbiConfigurationKeys.PRESERVE_DECLARATION_ORDER),
-          treatInternalAsPrivate = configuration.getBoolean(JvmAbiConfigurationKeys.TREAT_INTERNAL_AS_PRIVATE),
-        )
+  override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
+    val outputPath = configuration.getNotNull(JvmAbiConfigurationKeys.OUTPUT_PATH)
+    configuration.put(JVMConfigurationKeys.RETAIN_OUTPUT_IN_MEMORY, true)
+    val removeDataClassCopy = configuration.getBoolean(JvmAbiConfigurationKeys.REMOVE_DATA_CLASS_COPY_IF_CONSTRUCTOR_IS_PRIVATE)
+    val builderExtension = JvmAbiClassBuilderInterceptor(
+      removeDataClassCopyIfConstructorIsPrivate = removeDataClassCopy,
+      removePrivateClasses = configuration.getBoolean(JvmAbiConfigurationKeys.REMOVE_PRIVATE_CLASSES),
+      treatInternalAsPrivate = configuration.getBoolean(JvmAbiConfigurationKeys.TREAT_INTERNAL_AS_PRIVATE),
+    )
+    val outputExtension = JvmAbiOutputExtension(
+      outputPath = File(outputPath),
+      targetLabel = configuration.getNotNull(JvmAbiConfigurationKeys.TARGET_LABEL),
+      abiClassInfoBuilder = builderExtension::buildAbiClassInfoAndReleaseResources,
+      removeDebugInfo = configuration.getBoolean(JvmAbiConfigurationKeys.REMOVE_DEBUG_INFO),
+      removeDataClassCopyIfConstructorIsPrivate = removeDataClassCopy,
+      preserveDeclarationOrder = configuration.getBoolean(JvmAbiConfigurationKeys.PRESERVE_DECLARATION_ORDER),
+      treatInternalAsPrivate = configuration.getBoolean(JvmAbiConfigurationKeys.TREAT_INTERNAL_AS_PRIVATE),
+    )
 
-        ClassGeneratorExtension.registerExtension(builderExtension)
-        ClassFileFactoryFinalizerExtension.registerExtension(outputExtension)
-    }
+    ClassGeneratorExtension.registerExtension(builderExtension)
+    ClassFileFactoryFinalizerExtension.registerExtension(outputExtension)
+  }
 
-    override val supportsK2: Boolean
-        get() = true
+  override val supportsK2: Boolean
+    get() = true
 }

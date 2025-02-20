@@ -8,7 +8,7 @@ import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufOutputStream
 import io.netty.buffer.ByteBufUtil
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
-import org.jetbrains.bazel.jvm.jps.OutputSink
+import org.jetbrains.bazel.jvm.jps.output.OutputSink
 import org.jetbrains.bazel.jvm.jps.impl.BazelTargetBuildOutputConsumer
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks.Backend

@@ -12,7 +12,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import it.unimi.dsi.fastutil.objects.ObjectArraySet
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.bazel.jvm.hashMap
-import org.jetbrains.bazel.jvm.jps.OutputSink
+import org.jetbrains.bazel.jvm.jps.output.OutputSink
 import org.jetbrains.bazel.jvm.jps.state.LoadStateResult
 import org.jetbrains.bazel.jvm.jps.state.RemovedFileInfo
 import org.jetbrains.bazel.jvm.linkedSet
@@ -424,21 +424,19 @@ private fun deleteOutputsAssociatedWithDeletedPaths(
   var doneSomething = false
   // delete outputs associated with removed paths
   for (item in deletedFiles) {
-    val deletedOutputFiles = ArrayList<String>(item.outputs.size)
-    for (output in item.outputs) {
-      outputSink.remove(output)
-      deletedOutputFiles.add(output)
+    if (item.outputs.isEmpty()) {
+      continue
     }
-    if (!deletedOutputFiles.isEmpty()) {
-      doneSomething = true
-      if (span.isRecording) {
-        span.addEvent(
-          "deleted files",
-          Attributes.of(AttributeKey.stringArrayKey("deletedOutputFiles"), deletedOutputFiles),
-        )
-      }
-      //context.processMessage(FileDeletedEvent(deletedOutputFiles.map { it.toString() }))
+
+    outputSink.removeAll(item.outputs)
+    doneSomething = true
+    if (span.isRecording) {
+      span.addEvent(
+        "deleted files",
+        Attributes.of(AttributeKey.stringArrayKey("deletedOutputFiles"), item.outputs.toList()),
+      )
     }
+    //context.processMessage(FileDeletedEvent(deletedOutputFiles.map { it.toString() }))
   }
 
   val removedSources = context.getUserData(Utils.REMOVED_SOURCES_KEY)?.get(target)

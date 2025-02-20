@@ -7,7 +7,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.bazel.jvm.jps.BazelConfigurationHolder
-import org.jetbrains.bazel.jvm.jps.OutputSink
+import org.jetbrains.bazel.jvm.jps.output.OutputSink
 import org.jetbrains.bazel.jvm.jps.impl.BazelCompileContext
 import org.jetbrains.bazel.jvm.jps.impl.BazelDirtyFileHolder
 import org.jetbrains.bazel.jvm.jps.impl.BazelModuleBuildTarget

@@ -44,7 +44,6 @@ internal inline fun configurePlugins(
       continue
     }
 
-    @Suppress("SpellCheckingInspection")
     when (id) {
       "org.jetbrains.kotlin.kotlin-serialization-compiler-plugin" -> {
         consumer(RegisteredPluginInfo(
