@@ -308,6 +308,24 @@ public final class JavaErrorKinds {
         return message(messageKey, referenceName, formatMethod(abstractMethod),
                        formatClass(requireNonNull(abstractMethod.getContainingClass()), false));
       });
+  public static final Parameterized<PsiClass, OverrideClashContext> CLASS_INHERITS_ABSTRACT_AND_DEFAULT =
+    parameterized(PsiClass.class, OverrideClashContext.class, "class.inherits.abstract.and.default")
+      .withAnchor(PsiClass::getNameIdentifier)
+      .withRawDescription((cls, ctx) -> {
+        return message("class.inherits.abstract.and.default", formatClass(cls),
+                formatMethod(ctx.method()),
+                formatClass(requireNonNull(ctx.method().getContainingClass())),
+                formatClass(requireNonNull(ctx.superMethod().getContainingClass())));
+      });
+  public static final Parameterized<PsiClass, OverrideClashContext> CLASS_INHERITS_UNRELATED_DEFAULTS =
+    parameterized(PsiClass.class, OverrideClashContext.class, "class.inherits.unrelated.defaults")
+      .withAnchor(PsiClass::getNameIdentifier)
+      .withRawDescription((cls, ctx) -> {
+        return message("class.inherits.unrelated.defaults", formatClass(cls),
+                formatMethod(ctx.method()),
+                formatClass(requireNonNull(ctx.method().getContainingClass())),
+                formatClass(requireNonNull(ctx.superMethod().getContainingClass())));
+      });
   public static final Simple<PsiClass> CLASS_ALREADY_IMPORTED =
     error(PsiClass.class, "class.already.imported").withAnchor(PsiClass::getNameIdentifier)
       .withRawDescription(cls -> message("class.already.imported", formatClass(cls, false)));

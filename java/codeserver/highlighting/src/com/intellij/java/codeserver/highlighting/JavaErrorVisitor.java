@@ -582,6 +582,7 @@ final class JavaErrorVisitor extends JavaElementVisitor {
       if (!hasErrorResults()) myClassChecker.checkClassAlreadyImported(aClass);
       if (!hasErrorResults()) myClassChecker.checkClassRestrictedKeyword(identifier);
       if (!hasErrorResults()) myGenericsChecker.checkUnrelatedConcrete(aClass);
+      if (!hasErrorResults() && isApplicable(JavaFeature.EXTENSION_METHODS)) myMethodChecker.checkUnrelatedDefaultMethods(aClass);
     }
     else if (parent instanceof PsiMethod method) {
       myClassChecker.checkImplicitClassMember(method);

@@ -1,13 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting;
 
+import com.intellij.codeInsight.ClassUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.java.codeserver.core.JavaPsiMethodUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
@@ -547,6 +550,35 @@ final class MethodChecker {
     }
     if (methodCount > 1) {
       myVisitor.report(JavaErrorKinds.METHOD_DUPLICATE.create(method));
+    }
+  }
+
+  void checkUnrelatedDefaultMethods(@NotNull PsiClass aClass) {
+    Map<? extends MethodSignature, Set<PsiMethod>> overrideEquivalent = PsiSuperMethodUtil.collectOverrideEquivalents(aClass);
+
+    for (Set<PsiMethod> overrideEquivalentMethods : overrideEquivalent.values()) {
+      PsiMethod abstractMethod = JavaPsiMethodUtil.getAbstractMethodToImplementWhenDefaultPresent(aClass, overrideEquivalentMethods);
+      if (abstractMethod != null) {
+        PsiMethod anyAbstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
+        if (anyAbstractMethod != null) {
+          PsiClass containingClass = anyAbstractMethod.getContainingClass();
+          if (containingClass != null && containingClass != aClass) {
+            // Already reported inside ClassChecker.checkClassWithAbstractMethods
+            continue;
+          }
+        }
+        myVisitor.report(JavaErrorKinds.CLASS_NO_ABSTRACT_METHOD.create(aClass, abstractMethod));
+        continue;
+      }
+      Couple<@NotNull PsiMethod> pair = JavaPsiMethodUtil.getUnrelatedSuperMethods(aClass, overrideEquivalentMethods);
+      if (pair == null ||
+          MethodSignatureUtil.findMethodBySuperMethod(aClass, overrideEquivalentMethods.iterator().next(), false) != null) {
+        continue;
+      }
+      var kind = pair.getSecond().hasModifierProperty(PsiModifier.ABSTRACT)
+                 ? JavaErrorKinds.CLASS_INHERITS_ABSTRACT_AND_DEFAULT
+                 : JavaErrorKinds.CLASS_INHERITS_UNRELATED_DEFAULTS;
+      myVisitor.report(kind.create(aClass, new JavaErrorKinds.OverrideClashContext(pair.getFirst(), pair.getSecond())));
     }
   }
 }

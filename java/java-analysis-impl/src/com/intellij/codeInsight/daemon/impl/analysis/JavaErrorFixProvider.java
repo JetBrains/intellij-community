@@ -801,6 +801,8 @@ final class JavaErrorFixProvider {
   }
 
   private void createClassFixes() {
+    fix(CLASS_INHERITS_UNRELATED_DEFAULTS, error -> myFactory.createImplementMethodsFix(error.psi()));
+    fix(CLASS_INHERITS_ABSTRACT_AND_DEFAULT, error -> myFactory.createImplementMethodsFix(error.psi()));
     fix(CLASS_NO_ABSTRACT_METHOD, error -> {
       if (error.psi() instanceof PsiClass aClass && !(aClass instanceof PsiAnonymousClass) && !aClass.isEnum()) {
         return maybeAddModifierFix(aClass, PsiModifier.ABSTRACT);

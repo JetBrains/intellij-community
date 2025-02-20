@@ -20,7 +20,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -219,18 +218,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         add(LambdaHighlightingUtil.checkFunctionalInterfaceTypeAccessible(myFile.getProject(), expression, functionalInterfaceType));
       }
     }
-  }
-
-  @Override
-  public void visitIdentifier(@NotNull PsiIdentifier identifier) {
-    PsiElement parent = identifier.getParent();
-    if (parent instanceof PsiClass aClass) {
-      if (!hasErrorResults() && JavaFeature.EXTENSION_METHODS.isSufficient(myLanguageLevel)) {
-        add(GenericsHighlightUtil.checkUnrelatedDefaultMethods(aClass, identifier));
-      }
-    }
-
-    super.visitIdentifier(identifier);
   }
 
   @Override
