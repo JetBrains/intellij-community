@@ -813,7 +813,7 @@ public final class ContainerUtil {
   }
 
   @Contract(pure=true)
-  public static <T> T find(T @NotNull [] array, @NotNull Condition<? super T> condition) {
+  public static <T> @Nullable T find(T @NotNull [] array, @NotNull Condition<? super T> condition) {
     for (T element : array) {
       if (condition.value(element)) return element;
     }
