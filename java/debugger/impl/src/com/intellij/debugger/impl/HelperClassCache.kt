@@ -118,9 +118,7 @@ internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: D
         delay(5.seconds)
         withDebugContext(managerThread, PrioritizedTask.Priority.LOWEST) {
           val allClassLoadersSnapshot = evaluationClassLoaderMapping.keys.filterNotNull()
-          val collectedClassLoaders = allClassLoadersSnapshot.filter {
-            DebuggerUtilsAsync.isCollected(it).await()
-          }
+          val collectedClassLoaders = allClassLoadersSnapshot.filter { it.isCollectedAsync() }
           for (classLoader in collectedClassLoaders) {
             val info = evaluationClassLoaderMapping.remove(classLoader)
             if (info is DefinedInCompanionClassLoader) {
