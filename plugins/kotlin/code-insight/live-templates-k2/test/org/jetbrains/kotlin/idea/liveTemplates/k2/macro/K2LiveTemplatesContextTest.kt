@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.liveTemplates.k2.macro
 
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.codeInsight.AbstractLiveTemplatesContextTest
+import org.jetbrains.kotlin.idea.liveTemplates.AbstractLiveTemplatesContextTest
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith

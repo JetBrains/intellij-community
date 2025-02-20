@@ -1,10 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeInsight
+package org.jetbrains.kotlin.idea.liveTemplates
 
 import com.intellij.codeInsight.template.impl.TemplateContextTypes
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType
 import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.*
 import org.jetbrains.kotlin.test.TestMetadata
 

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.liveTemplates
 
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.codeInsight.AbstractLiveTemplatesTest
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
