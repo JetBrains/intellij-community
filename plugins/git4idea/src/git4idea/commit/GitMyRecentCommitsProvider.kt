@@ -26,6 +26,7 @@ import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.measureTimedValue
 
@@ -37,10 +38,9 @@ class GitMyRecentCommitsProvider(private val project: Project, private val scope
   private val cache: AsyncLoadingCache<VirtualFile, List<VcsCommitMetadata>> = Caffeine.newBuilder()
     .executor(Dispatchers.IO.asExecutor())
     .buildAsync { root, executor ->
-      requestedDepth[root]?.let { commitsToLoad ->
-        scope.future {
-          readRecentCommits(root, commitsToLoad)
-        }
+      val commitsToLoad = requestedDepth.get(root) ?: return@buildAsync CompletableFuture.completedFuture(emptyList())
+      scope.future {
+        readRecentCommits(root, commitsToLoad)
       }
     }
 
