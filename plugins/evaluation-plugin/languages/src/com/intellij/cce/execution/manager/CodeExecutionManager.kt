@@ -30,7 +30,7 @@ abstract class CodeExecutionManager {
 
   private val executionBasedMetrics = listOf(AIA_EXECUTION_SUCCESS_RATIO, AIA_TEST_LINE_COVERAGE, AIA_TEST_BRANCH_COVERAGE, AIA_TEST_FILE_PROVIDED)
 
-  protected val collectedInfo: MutableMap<String, Any> = mutableMapOf()
+  val collectedInfo: MutableMap<String, Any> = mutableMapOf()
 
   abstract fun setupTarget(project: Project, sdk: Sdk)
   abstract fun removeTarget()
