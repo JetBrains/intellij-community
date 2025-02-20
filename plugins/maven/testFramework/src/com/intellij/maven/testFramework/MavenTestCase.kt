@@ -318,8 +318,11 @@ abstract class MavenTestCase : UsefulTestCase() {
   private fun ensureTempDirCreated() {
     ourTempDir = when {
       isProjectInEelEnvironment() -> {
-        val mount = System.getenv("EEL_FIXTURE_MOUNT") ?: throw IllegalArgumentException("The EEL_FIXTURE_MOUNT environment variable is not specified")
-        Path("$mount/mavenTests")
+        val fileSystemMount = getFileSystemMount()
+        if (fileSystemMount.isBlank()) {
+          throw IllegalArgumentException("The EEL_FIXTURE_MOUNT environment variable is not specified")
+        }
+        Path("$fileSystemMount/mavenTests")
       }
       myWSLDistribution != null -> myWSLDistribution!!.getWindowsPath("/tmp").toNioPathOrNull()!!.resolve("mavenTests")
       else -> FileUtil.getTempDirectory().toNioPathOrNull()!!.resolve("mavenTests")
@@ -806,6 +809,10 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
     assertTrue(connector.checkConnected())
     return connector
+  }
+
+  protected fun getFileSystemMount(): String {
+    return System.getenv("EEL_FIXTURE_MOUNT") ?: ""
   }
 
   private val testMavenHome: String?
