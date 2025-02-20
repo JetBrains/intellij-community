@@ -256,7 +256,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             })
             .toImmutableList();
         }
-        else if (resolvedOwner instanceof PyClass) {
+        else if (resolvedOwner instanceof PyClass && !(referenceAnchor instanceof PyTargetExpression)) {
           resolveInParentScope = () -> PyResolveUtil.parentScopeForUnresolvedClassLevelName((PyClass)resolvedOwner, referencedName);
         }
         else if (instructions.isEmpty() && allInOwnScopeComprehensions(resolvedElements)) {

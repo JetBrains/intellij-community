@@ -1419,6 +1419,15 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     assertEquals("global", ((PyStringLiteralExpression)value).getStringValue());
   }
 
+  // PY-26947
+  public void testVariableDeclaredOnClassLevelResolvesOnlyToItself() {
+    final PyTargetExpression foo = assertResolvesTo(PyTargetExpression.class, "foo");
+
+    final PyExpression value = foo.findAssignedValue();
+    assertInstanceOf(value, PyStringLiteralExpression.class);
+    assertEquals("correct", ((PyStringLiteralExpression)value).getStringValue());
+  }
+
   // PY-29975
   public void testUnboundVariableOnClassLevelNotDeclaredBelow() {
     assertResolvesTo(PyNamedParameter.class, "foo");
