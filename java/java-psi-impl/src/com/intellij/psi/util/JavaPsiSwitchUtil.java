@@ -168,42 +168,34 @@ public final class JavaPsiSwitchUtil {
     return null;
   }
 
-  private static void addValueLabel(@NotNull MultiMap<Object, PsiElement> elements,
-                                    @NotNull PsiCaseLabelElement labelElement,
-                                    @NotNull PsiType selectorType) {
+  private static @Nullable Object getBranchConstant(@NotNull PsiCaseLabelElement labelElement, @NotNull PsiType selectorType) {
     if (labelElement instanceof PsiExpression) {
       PsiExpression expr = (PsiExpression)labelElement;
       if (expr instanceof PsiReferenceExpression) {
         PsiEnumConstant enumConstant = getEnumConstant(expr);
         if (enumConstant != null) {
-          elements.putValue(enumConstant, labelElement);
-          return;
+          return enumConstant;
         }
       }
       Object operand = JavaPsiFacade.getInstance(labelElement.getProject()).getConstantEvaluationHelper()
         .computeConstantExpression(labelElement, false);
       if (operand != null) {
-        if (operand instanceof Boolean &&
-            getSwitchSelectorKind(selectorType) == SelectorKind.BOOLEAN) {
-          elements.putValue(((Boolean)operand).booleanValue(), labelElement);
+        if (operand instanceof Boolean && getSwitchSelectorKind(selectorType) == SelectorKind.BOOLEAN) {
+          return ((Boolean)operand).booleanValue();
         }
-        else {
-          Object casted = ConstantExpressionUtil.computeCastTo(operand, selectorType);
-          if (casted != null) {
-            elements.putValue(casted, labelElement);
-          }
-        }
+        return ConstantExpressionUtil.computeCastTo(operand, selectorType);
       }
-      else if (labelElement instanceof PsiLiteralExpression && ((PsiLiteralExpression)labelElement).getType() == PsiTypes.nullType()) {
-        elements.putValue(SwitchSpecialValue.NULL_VALUE, labelElement);
+      if (labelElement instanceof PsiLiteralExpression && ((PsiLiteralExpression)labelElement).getType() == PsiTypes.nullType()) {
+        return SwitchSpecialValue.NULL_VALUE;
       }
     }
     else if (labelElement instanceof PsiDefaultCaseLabelElement) {
-      elements.putValue(SwitchSpecialValue.DEFAULT_VALUE, labelElement);
+      return SwitchSpecialValue.DEFAULT_VALUE;
     }
     else if (JavaPsiPatternUtil.isUnconditionalForType(labelElement, selectorType)) {
-      elements.putValue(SwitchSpecialValue.UNCONDITIONAL_PATTERN, labelElement);
+      return SwitchSpecialValue.UNCONDITIONAL_PATTERN;
     }
+    return null;
   }
 
   /**
@@ -233,7 +225,10 @@ public final class JavaPsiSwitchUtil {
       PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
       if (labelElementList == null) continue;
       for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
-        addValueLabel(elementsToCheckDuplicates, labelElement, selectorType);
+        Object constant = getBranchConstant(labelElement, selectorType);
+        if (constant != null) {
+          elementsToCheckDuplicates.putValue(constant, labelElement);
+        }
       }
     }
     return elementsToCheckDuplicates;
