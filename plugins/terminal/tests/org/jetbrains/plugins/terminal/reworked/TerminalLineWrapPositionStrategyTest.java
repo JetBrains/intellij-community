@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.reworked;
 
 import com.intellij.openapi.editor.LineWrapPositionStrategy;
 import com.intellij.openapi.editor.impl.SoftWrapEngine;
-import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalLineWrapPositionStrategy;
+import org.jetbrains.plugins.terminal.block.reworked.TerminalLineWrapPositionStrategy;
 import org.junit.Test;
 
 import static org.junit.Assert.assertSame;
