@@ -34,11 +34,6 @@ object FleetFromSourcesPaths {
   @Deprecated(message = "use FrontendResourceReader.fontsResourcePrefix when possible, we now read fonts from resources", level = DeprecationLevel.ERROR)
   val fontsDirectory: Path = Path.of("/frontend/fonts")
 
-  @Deprecated(message = "use [DesktopDockResources#osIntegrationAppIconFile] instead, it will be set appropriately in dev distributions", level = DeprecationLevel.ERROR)
-  val dockAppDevIconFile: Path by lazy { // TODO: remove in next Dock API breakage
-    Path.of("") // former path has been emptied here, Fleet should never know about build tooling paths
-  }
-
   @Deprecated(message = "Delete on Dock API breaking", level = DeprecationLevel.ERROR)
   val nemmetPath: Path by lazy {
     projectRoot.resolve("plugins/emmet/frontend/resources/nemmet/dist/nemmet.js")
