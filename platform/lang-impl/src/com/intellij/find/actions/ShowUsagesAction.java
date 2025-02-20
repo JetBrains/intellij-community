@@ -769,9 +769,12 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         findUsageSpan.end();
         long current = System.nanoTime();
         long firstUsageTimestamp = firstUsageAddedTS.get();
-        long durationFirstResults = -1; // If there is no usage found, we don't set durationFirstResults but mark it as -1.
-        if (firstUsageTimestamp != 0) { // firstUsageTimestamp == 0 means that no usage was found.
+        long durationFirstResults;
+        if (firstUsageTimestamp != 0) {
           durationFirstResults = TimeUnit.NANOSECONDS.toMillis(firstUsageTimestamp - searchStarted);
+        }
+        else { // firstUsageTimestamp == 0 means that no usage was found.
+          durationFirstResults = -1;
         }
         UsageViewStatisticsCollector.logSearchFinished(project, usageView,
                                                        actionHandler.getTargetClass(), searchScope, actionHandler.getTargetLanguage(),
