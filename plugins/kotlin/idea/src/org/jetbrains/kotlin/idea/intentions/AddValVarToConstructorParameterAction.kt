@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -18,10 +18,10 @@ import org.jetbrains.kotlin.idea.base.psi.mustHaveValOrVar
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.utils.ValVarExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
-import org.jetbrains.kotlin.idea.codeinsight.utils.ValVarExpression
-import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -66,7 +66,7 @@ interface AddValVarToConstructorParameterAction {
             return element.nameIdentifier?.textRange
         }
 
-        override fun applyTo(element: KtParameter, editor: Editor?) = invoke(element, editor)
+        override fun applyTo(element: KtParameter, editor: Editor?): Unit = invoke(element, editor)
     }
 
     class QuickFix(parameter: KtParameter) :
@@ -82,7 +82,7 @@ interface AddValVarToConstructorParameterAction {
             return KotlinBundle.message(key, element.name ?: "")
         }
 
-        override fun getFamilyName() = KotlinBundle.message("add.val.var.to.primary.constructor.parameter")
+        override fun getFamilyName(): String = KotlinBundle.message("add.val.var.to.primary.constructor.parameter")
 
         override fun invoke(project: Project, editor: Editor?, file: KtFile) {
             invoke(element ?: return, editor)
@@ -90,18 +90,20 @@ interface AddValVarToConstructorParameterAction {
     }
 
     object DataClassConstructorNotPropertyQuickFixFactory : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic) = QuickFix(Errors.DATA_CLASS_NOT_PROPERTY_PARAMETER.cast(diagnostic).psiElement)
+        override fun createAction(diagnostic: Diagnostic): QuickFix =
+            QuickFix(Errors.DATA_CLASS_NOT_PROPERTY_PARAMETER.cast(diagnostic).psiElement)
     }
 
     object AnnotationClassConstructorNotValPropertyQuickFixFactory : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic) = QuickFix(Errors.MISSING_VAL_ON_ANNOTATION_PARAMETER.cast(diagnostic).psiElement)
+        override fun createAction(diagnostic: Diagnostic): QuickFix =
+            QuickFix(Errors.MISSING_VAL_ON_ANNOTATION_PARAMETER.cast(diagnostic).psiElement)
     }
 
     object ValueClassConstructorNotValPropertyQuickFixFactory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction {
             val parameter = Errors.VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER.cast(diagnostic).psiElement
             return if (parameter.isMutable)
-                ChangeVariableMutabilityFix(parameter, false)
+                ChangeVariableMutabilityFix(parameter, false).asIntention()
             else
                 QuickFix(parameter)
         }

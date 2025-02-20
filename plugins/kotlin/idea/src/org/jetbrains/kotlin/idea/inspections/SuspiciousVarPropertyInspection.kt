@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 
 class SuspiciousVarPropertyInspection : AbstractKotlinInspection() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid =
         propertyVisitor(fun(property: KtProperty) {
             if (property.isLocal || !property.isVar || property.initializer == null || property.setter != null) return
             val getter = property.getter ?: return
@@ -30,7 +30,7 @@ class SuspiciousVarPropertyInspection : AbstractKotlinInspection() {
                 property.valOrVarKeyword,
                 KotlinBundle.message("suspicious.var.property.its.setter.does.not.influence.its.getter.result"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                IntentionWrapper(ChangeVariableMutabilityFix(property, makeVar = false, deleteInitializer = true))
+                IntentionWrapper(ChangeVariableMutabilityFix(property, makeVar = false, deleteInitializer = true).asIntention())
             )
         })
 

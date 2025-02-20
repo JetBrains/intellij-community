@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.psi.PsiElement
@@ -20,10 +20,10 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes3
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal object ChangeToStarProjectionFixFactory {
-    val uncheckedCastFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UncheckedCast ->
-        val quickFix = getQuickFix(diagnostic.psi) ?: return@ModCommandBased emptyList()
-        listOf(quickFix)
-    }
+    val uncheckedCastFactory: KotlinQuickFixFactory.ModCommandBased<KaFirDiagnostic.UncheckedCast> =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UncheckedCast ->
+            listOfNotNull(getQuickFix(diagnostic.psi))
+        }
 
     val cannotCheckForErased = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.CannotCheckForErased ->
         val element = diagnostic.psi

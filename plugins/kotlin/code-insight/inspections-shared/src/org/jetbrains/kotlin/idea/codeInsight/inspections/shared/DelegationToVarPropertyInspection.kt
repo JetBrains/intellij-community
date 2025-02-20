@@ -38,7 +38,7 @@ internal class DelegationToVarPropertyInspection : AbstractKotlinInspection() {
             val canRemoveVar = canChangeToVal && !isUsedForOtherClass
 
             val fixes = listOfNotNull(
-                if (canChangeToVal) IntentionWrapper(ChangeVariableMutabilityFix(parameter, makeVar = false)) else null,
+                if (canChangeToVal) IntentionWrapper(ChangeVariableMutabilityFix(parameter, makeVar = false).asIntention()) else null,
                 if (canRemoveVar) RemoveVarKeyword() else null,
             ).ifEmpty { return }
 
