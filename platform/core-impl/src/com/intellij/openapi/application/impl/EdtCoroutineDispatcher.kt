@@ -2,17 +2,10 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ThreadingSupport
-import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.application.contextModality
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.EdtDispatcherKind.LockBehavior
-import com.intellij.openapi.application.isCoroutineWILEnabled
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.isRunBlockingUnderReadAction
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.MainCoroutineDispatcher
 import kotlinx.coroutines.Runnable
@@ -79,13 +72,7 @@ internal sealed class EdtCoroutineDispatcher(
     if (isCoroutineWILEnabled) {
       return Runnable {
         WriteIntentReadAction.run {
-          ThreadingAssertions.setImplicitLockOnEDT(true)
-          try {
-            runnable.run()
-          }
-          finally {
-            ThreadingAssertions.setImplicitLockOnEDT(false)
-          }
+          runnable.run()
         }
       }
     }
