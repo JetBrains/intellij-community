@@ -3,6 +3,7 @@
     "expui": {
       "review": {
         "commentUnread.svg": "icons/review/commentUnread.svg",
+        "defaultAvatar.svg": "icons/review/defaultAvatar.svg",
         "fileUnread.svg": "icons/review/fileUnread.svg"
       },
       "addEmoji.svg": "icons/addEmoji.svg",
