@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.internal.inspector.PropertyBean;
@@ -27,10 +28,10 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.RelativeFont;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -46,8 +47,10 @@ import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -78,7 +81,7 @@ public final class ListPluginComponent extends JPanel {
   public IdeaPluginDescriptor myUpdateDescriptor;
   IdeaPluginDescriptor myInstalledDescriptorForMarketplace;
 
-  private final JLabel myNameComponent = new JLabel();
+  private final JBLabel myNameComponent = new JBLabel();
   private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo);
   private final BaselineLayout myLayout = new BaselineLayout();
   JButton myRestartButton;
@@ -130,6 +133,7 @@ public final class ListPluginComponent extends JPanel {
     myLayout.setIconComponent(myIconComponent);
 
     myNameComponent.setText(myPlugin.getName());
+    updateNameComponentIcon();
     myLayout.setNameComponent(RelativeFont.BOLD.install(myNameComponent));
 
     createTag();
@@ -658,6 +662,7 @@ public final class ListPluginComponent extends JPanel {
     List<? extends HtmlChunk> errors = myOnlyUpdateMode ? List.of() : myPluginModel.getErrors(plugin);
     boolean hasErrors = !errors.isEmpty() && !myIsNotFreeInFreeMode;
     updateIcon(hasErrors, myPluginModel.isUninstalled(plugin) || !isEnabledState() || !myIsAvailable || myIsNotFreeInFreeMode);
+    updateNameComponentIcon();
 
     if (myAlignButton != null) {
       myAlignButton.setVisible(myRestartButton != null || myAfterUpdate);
@@ -680,10 +685,10 @@ public final class ListPluginComponent extends JPanel {
         myErrorComponent.setErrors(errors, () -> myPluginModel.enableRequiredPlugins(plugin));
       }
       else {
-        String messageKy = PlatformUtils.isPyCharm() ? "label.requires.pro" : "label.requires.ultimate";
-        myErrorComponent.setErrors(List.of(HtmlChunk.icon("AllIcons.Nodes.Padlock", AllIcons.Nodes.Padlock),
-                                           HtmlChunk.text((IdeBundle.message(messageKy)))),
-                                   () -> {});
+        HelpTooltip helpTooltip = UnavailableWithoutSubscriptionComponent.getHelpTooltip();
+        if (helpTooltip != null) {
+          helpTooltip.installOn(this);
+        }
       }
       if (addListeners) {
         myEventHandler.addAll(myErrorPanel);
@@ -701,6 +706,11 @@ public final class ListPluginComponent extends JPanel {
     if (myUpdateLicensePanel != null) {
       myUpdateLicensePanel.setVisible(!hasErrors && !myIsNotFreeInFreeMode);
     }
+  }
+
+  private void updateNameComponentIcon() {
+    Icon icon = myIsNotFreeInFreeMode ? AllIcons.Nodes.Padlock : null;
+    myNameComponent.setIcon(icon);
   }
 
   private void updateIcon(boolean errors, boolean disabled) {
