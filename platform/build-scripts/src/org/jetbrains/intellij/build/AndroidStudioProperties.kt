@@ -148,6 +148,10 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       }
     }
 
+    // skip unresolved content modules similar to IdeaCommunityProperties, otherwise unresolved modules e.g.
+    // intellij.yaml.frontend.split as of 2025.1 will fail the build (b/398025574)
+    productLayout.skipUnresolvedContentModules = true
+
     val unknownExcludedPlugins = EXCLUDED_PLUGINS - INHERITED_PLUGINS
     check(unknownExcludedPlugins.isEmpty()) { "AndroidStudioProperties.EXCLUDED_PLUGINS contains nonexistent plugins: $unknownExcludedPlugins" }
     val bundledPlugins = (INHERITED_PLUGINS + EXTRA_PLUGINS - EXCLUDED_PLUGINS.toSet()).toPersistentList()
