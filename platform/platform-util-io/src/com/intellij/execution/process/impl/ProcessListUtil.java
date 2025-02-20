@@ -36,7 +36,9 @@ import java.util.*;
 public final class ProcessListUtil {
   private static final Logger LOG = Logger.getInstance(ProcessListUtil.class);
   private static final String WIN_PROCESS_LIST_HELPER_FILENAME = "WinProcessListHelper.exe";
+  @ApiStatus.Internal
   public static final List<@NlsSafe String> COMM_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,ppid,state,user,comm");
+  @ApiStatus.Internal
   public static final List<@NlsSafe String> COMMAND_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,ppid,state,user,command");
 
   private static final String PARENT_PID_PREFIX = "PPid:";
