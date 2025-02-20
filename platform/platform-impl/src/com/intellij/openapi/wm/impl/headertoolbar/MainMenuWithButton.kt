@@ -2,8 +2,11 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.impl.ActionMenu
+import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ExpandableMenu
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode
@@ -17,11 +20,13 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.messages.MessageBusConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import java.awt.event.ActionEvent
 import java.util.concurrent.ConcurrentLinkedDeque
-import javax.swing.Icon
-import javax.swing.JFrame
+import javax.swing.*
+import javax.swing.event.ChangeEvent
 
 class MainMenuWithButton(
   val coroutineScope: CoroutineScope, private val frame: JFrame,
@@ -43,6 +48,7 @@ class MainMenuWithButton(
         recalculateWidth(event.toolbar)
       }
     })
+    supportKeyNavigationToFullMenu()
   }
 
   private val toolbarInsetsConst = 20
@@ -113,6 +119,29 @@ class MainMenuWithButton(
   fun clearRemovedItems() {
     toolbarMainMenu.clearInvisibleItems()
   }
+
+  private fun supportKeyNavigationToFullMenu() {
+    val selectionManager = MenuSelectionManager.defaultManager()
+    val listener: (ChangeEvent) -> Unit = {
+      val path = selectionManager.selectedPath
+      if (path.size > 0 && path[0] === toolbarMainMenu) {
+        val map = frame.rootPane.actionMap
+        addAction(map, "selectChild")
+        addAction(map, "selectParent")
+      }
+    }
+    selectionManager.addChangeListener(listener)
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      selectionManager.removeChangeListener(listener)
+    }
+  }
+
+  private fun addAction(map: ActionMap, name: String) {
+    val action = map.get(name)
+    if (action is Action && action !is MenuNavigationAction) {
+      map.put(name, MenuNavigationAction(name, action, mainMenuButton, toolbarMainMenu))
+    }
+  }
 }
 
 @ApiStatus.Internal
@@ -148,4 +177,37 @@ class MergedMainMenu(coroutineScope: CoroutineScope, frame: JFrame): IdeJMenuBar
   fun hasInvisibleItems(): Boolean = invisibleItems.isNotEmpty()
 
   fun getInvisibleItemsCount(): Int = invisibleItems.size
+}
+
+internal class MenuNavigationAction(
+  @NlsSafe val name: String,
+  val action: Action,
+  val mainMenuButton: MainMenuButton,
+  val toolbarMainMenu: MergedMainMenu,
+) : AbstractAction(name) {
+
+  override fun actionPerformed(e: ActionEvent) {
+    val path = MenuSelectionManager.defaultManager().selectedPath
+    if (path.size > 0 && path[0] === toolbarMainMenu) {
+      if (name == "selectParent") {
+        if (path.size == 4 && path[1] === toolbarMainMenu.getMenu(0)) {
+          if (mainMenuButton.expandableMenu?.isEnabled() == true) {
+            mainMenuButton.expandableMenu!!.switchState(itemInd = mainMenuButton.expandableMenu!!.ideMenu.rootMenuItems.lastIndex)
+          }
+          else {
+            mainMenuButton.showPopup(ActionToolbar.getDataContextFor(mainMenuButton.button))
+          }
+          return
+        }
+      }
+      else if (path.size > 3 && path[1] === toolbarMainMenu.rootMenuItems.last()) {
+        val element = path.last()
+        if (element is ActionMenu && element.itemCount == 0 || element is ActionMenuItem) {
+          mainMenuButton.button.click()
+          return
+        }
+      }
+    }
+    action.actionPerformed(e)
+  }
 }
