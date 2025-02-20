@@ -124,20 +124,18 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     comparisonStorage: CompareSessionsStorage,
     workspaces: List<EvaluationWorkspace>
   ): List<ReportInfo> {
-    val sessions = sessionFiles.filter { it.value.size == sessionStorages.size }
+    val filteredSessionFiles = sessionFiles.filter { it.value.size == sessionStorages.size }
+
+    val sessions = filteredSessionFiles
       .flatMap { it.value }
       .map { sessionStorages[evaluationTitles.indexOf(it.evaluationType)].getSessions(it.path) }
       .flatMap { it.sessions }
 
+    val numberOfSessions = sessions.sumOf { it.lookups.size }
+
     val title2evaluator = evaluationTitles.mapIndexed { index, title ->
       title to MetricsEvaluator.withMetrics(title, feature.getMetrics(sessions))
     }.toMap()
-
-    val filteredSessionFiles = sessionFiles.filter { it.value.size == sessionStorages.size }
-
-    val numberOfSessions = filteredSessionFiles.flatMap { it.value }
-      .flatMap { sessionStorages[evaluationTitles.indexOf(it.evaluationType)].getSessions(it.path).sessions }
-      .sumOf { it.lookups.size }
 
     for (sessionFile in filteredSessionFiles) {
       val fileEvaluations = mutableListOf<FileEvaluationInfo>()
