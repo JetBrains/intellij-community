@@ -78,7 +78,7 @@ class IndexingIteratorsProviderImpl(
         else {
           rootHolder = IndexingRootHolder.fromFileNonRecursive(root)
         }
-        iterators.add(GenericContentEntityIteratorImpl(entityPointer, rootHolder, null))
+        iterators.add(GenericContentEntityIteratorImpl(entityPointer, rootHolder))
       }
       else {
         val storage = model.currentSnapshot
@@ -116,7 +116,7 @@ class IndexingIteratorsProviderImpl(
           else {
             rootHolder = IndexingRootHolder.fromFileNonRecursive(root)
           }
-          iterators.add(CustomKindEntityIteratorImpl(entityPointer, rootHolder, null))
+          iterators.add(CustomKindEntityIteratorImpl(entityPointer, rootHolder))
         }
         else {
           val virtualFileUrl = root.toVirtualFileUrl(virtualFileUrlManager)
@@ -137,9 +137,7 @@ class IndexingIteratorsProviderImpl(
               holder.nonRecursiveRoots.add(virtualFileUrl)
             }
           }
-          iterators.addAll(
-            IndexableEntityProviderMethods.createExternalEntityIterators(entityPointer, holder, null)
-          )
+          iterators.addAll(IndexableEntityProviderMethods.createExternalEntityIterators(entityPointer, holder))
         }
       }
     }

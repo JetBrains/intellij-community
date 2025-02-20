@@ -58,8 +58,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
 
     doTest(() -> createAndRegisterEntity(getUrls(virtualRoot), Collections.emptyList(), myProject), (entity) -> {
       return INSTANCE.createGenericContentEntityIterators(entity.createPointer(),
-                                                          IndexingUrlRootHolder.Companion.fromUrls(getUrls(virtualRoot)),
-                                                          null);
+                                                          IndexingUrlRootHolder.Companion.fromUrls(getUrls(virtualRoot)));
     });
   }
 
@@ -75,8 +74,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     doTest(() -> createAndRegisterEntity(getUrls(virtualRoot), Collections.emptyList(), myProject), (entity) -> {
       return INSTANCE.createGenericContentEntityIterators(entity.createPointer(),
                                                           IndexingUrlRootHolder.Companion.fromUrls(Collections.emptyList(),
-                                                                                                   getUrls(virtualRoot)),
-                                                          null);
+                                                                                                   getUrls(virtualRoot)));
     });
   }
 
@@ -92,8 +90,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     doTest(() -> createAndRegisterEntity(getUrls(virtualRoot), Collections.emptyList(), myProject), (entity) -> {
       return INSTANCE.createExternalEntityIterators(entity.createPointer(),
                                                     IndexingUrlSourceRootHolder.Companion.fromUrls(getUrls(virtualRoot),
-                                                                                                   Collections.emptyList()),
-                                                    null);
+                                                                                                   Collections.emptyList()));
     });
   }
 
@@ -111,8 +108,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
                                                     IndexingUrlSourceRootHolder.Companion.fromUrls(Collections.emptyList(),
                                                                                                    getUrls(virtualRoot),
                                                                                                    Collections.emptyList(),
-                                                                                                   Collections.emptyList()),
-                                                    null);
+                                                                                                   Collections.emptyList()));
     });
   }
 
@@ -150,8 +146,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     doTest(() -> createAndRegisterEntity(getUrls(virtualRoot), Collections.emptyList(), myProject), (entity) -> {
       return INSTANCE.createExternalEntityIterators(entity.createPointer(),
                                                     IndexingUrlSourceRootHolder.Companion.fromUrls(Collections.emptyList(),
-                                                                                                   getUrls(virtualRoot)),
-                                                    null);
+                                                                                                   getUrls(virtualRoot)));
     });
   }
 
@@ -171,8 +166,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
                                                     IndexingUrlSourceRootHolder.Companion.fromUrls(Collections.emptyList(),
                                                                                                    Collections.emptyList(),
                                                                                                    Collections.emptyList(),
-                                                                                                   getUrls(virtualRoot)),
-                                                    null);
+                                                                                                   getUrls(virtualRoot)));
     });
   }
 
@@ -283,8 +277,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     }, (entity) -> {
       return INSTANCE.createExternalEntityIterators(entity.createPointer(),
                                                     IndexingUrlSourceRootHolder.Companion.fromUrls(getUrls(excluded),
-                                                                                                   Collections.emptyList()),
-                                                    null);
+                                                                                                   Collections.emptyList()));
     });
   }
 
@@ -316,8 +309,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     }, (entity) -> {
       return INSTANCE.createExternalEntityIterators(entity.createPointer(),
                                                     IndexingUrlSourceRootHolder.Companion.fromUrls(getUrls(excludedBefore),
-                                                                                                 Collections.emptyList()),
-                                                    null);
+                                                                                                 Collections.emptyList()));
     });
   }
 
@@ -349,8 +341,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     }, () -> {
       return INSTANCE.createExternalEntityIterators(otherEntity.createPointer(),
                                                     IndexingUrlSourceRootHolder.Companion.fromUrls(getUrls(excluded),
-                                                                                                   Collections.emptyList()),
-                                                    null);
+                                                                                                   Collections.emptyList()));
     });
   }
 

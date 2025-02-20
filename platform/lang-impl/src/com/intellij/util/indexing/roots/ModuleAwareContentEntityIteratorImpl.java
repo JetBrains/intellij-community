@@ -9,7 +9,6 @@ import com.intellij.util.indexing.roots.origin.ModuleAwareContentEntityOrigin;
 import com.intellij.util.indexing.roots.origin.ModuleAwareContentEntityOriginImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class ModuleAwareContentEntityIteratorImpl extends RootHolderIteratorBase {
@@ -18,9 +17,8 @@ public final class ModuleAwareContentEntityIteratorImpl extends RootHolderIterat
 
   public ModuleAwareContentEntityIteratorImpl(@NotNull Module module,
                                               @NotNull EntityPointer<?> entityPointer,
-                                              @NotNull IndexingRootHolder roots,
-                                              @Nullable IndexableIteratorPresentation presentation) {
-    super(entityPointer, roots, presentation != null ? presentation : IndexableIteratorPresentation.create(
+                                              @NotNull IndexingRootHolder roots) {
+    super(entityPointer, roots, IndexableIteratorPresentation.create(
       "Content roots from module " + module.getName() + " from entity (" + roots.getDebugDescription() + ")",
       IndexingBundle.message("indexable.files.provider.indexing.content"),
       IndexingBundle.message("indexable.files.provider.scanning.content")));
