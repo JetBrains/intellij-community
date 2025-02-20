@@ -91,7 +91,7 @@ def display_data_html(table, start_index=None, end_index=None):
 def display_data_csv(table, start_index=None, end_index=None):
     # type: (np.ndarray, int, int) -> None
     def ipython_display(data, format):
-        print(__create_table(data, start_index, end_index).to_csv(na_rep ="None", sep=CSV_FORMAT_SEPARATOR, float_format=format))
+        print(repr(__create_table(data, start_index, end_index).to_csv(na_rep ="None", sep=CSV_FORMAT_SEPARATOR, float_format=format)))
 
     __compute_data(table, ipython_display)
 

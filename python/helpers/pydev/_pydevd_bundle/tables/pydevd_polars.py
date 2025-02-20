@@ -72,7 +72,7 @@ def display_data_html(table, start_index, end_index):
 def display_data_csv(table, start_index, end_index):
     # type: (Union[pl.Series, pl.DataFrame], int, int) -> None
     with __create_config():
-        print(__write_to_csv(__get_df_slice(table, start_index, end_index)))
+        print(repr(__write_to_csv(__get_df_slice(table, start_index, end_index))))
 
 
 def get_column_descriptions(table):

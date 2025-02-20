@@ -89,7 +89,7 @@ def display_data_csv(table, start_index, end_index):
             data = data.to_csv(na_rep = "NaN", sep=CSV_FORMAT_SEPARATOR, float_format=format)
         except AttributeError:
             pass
-        print(__convert_to_df(data))
+        print(repr(__convert_to_df(data)))
     __compute_sliced_data(table, ipython_display, start_index, end_index)
 
 
