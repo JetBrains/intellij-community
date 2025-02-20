@@ -1,17 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.ijent.nio
 
-import com.intellij.execution.ijent.nio.IjentNioPosixFileAttributesWithDosAdapter
+import com.intellij.execution.ijent.nio.getCachedFileAttributesAndWrapToDosAttributesAdapter
 import com.intellij.execution.ijent.nio.readAttributesUsingDosAttributesAdapter
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
-import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
-import com.intellij.platform.ijent.community.impl.nio.IjentNioPosixFileAttributes
 import com.intellij.util.io.sanitizeFileName
 import java.io.InputStream
 import java.io.OutputStream
@@ -174,20 +172,9 @@ class IjentWslNioFileSystemProvider(
           override fun next(): Path {
             // resolve() can't be used there because WindowsPath.resolve() checks that the other path is WindowsPath.
             val ijentPath = delegateIterator.next().toIjentPath()
-
             val originalPath = dir.resolve(sanitizeFileName(ijentPath.fileName.toString()))
 
-            val cachedAttrs = ijentPath.get() as IjentNioPosixFileAttributes?
-            val dosAttributes =
-              if (cachedAttrs != null)
-                IjentNioPosixFileAttributesWithDosAdapter(
-                  ijentPath.fileSystem.ijentFs.user as EelUserPosixInfo,
-                  cachedAttrs,
-                  nameStartsWithDot = ijentPath.fileName.startsWith("."),
-                )
-              else null
-
-            return IjentWslNioPath(getFileSystem(wslId), originalPath.toOriginalPath(), dosAttributes)
+            return IjentWslNioPath(getFileSystem(wslId), originalPath.toOriginalPath(), ijentPath.getCachedFileAttributesAndWrapToDosAttributesAdapter())
           }
 
           override fun remove() {

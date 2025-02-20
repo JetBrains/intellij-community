@@ -3,10 +3,7 @@ package com.intellij.execution.ijent.nio
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
-import com.intellij.platform.core.nio.fs.DelegatingFileSystem
-import com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider
-import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
-import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
+import com.intellij.platform.core.nio.fs.*
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.util.text.nullize
 import java.io.File
@@ -31,9 +28,17 @@ private fun Path.toIjentPath(): IjentNioPath = when (val path = unwrap()) {
  * The root is used only as an information holder and for computing the `toUri` and `toString`.
  */
 @Suppress("NAME_SHADOWING")
-internal class IjentEphemeralRootAwarePath(val rootPath: Path, val originalPath: IjentNioPath) : Path {
+internal class IjentEphemeralRootAwarePath(
+  val rootPath: Path,
+  val originalPath: IjentNioPath,
+) : Path, BasicFileAttributesHolder2.Impl(originalPath.getCachedFileAttributesAndWrapToDosAttributesAdapterIfNeeded()) {
   override fun getFileSystem(): FileSystem {
     return originalPath.fileSystem
+  }
+
+  override fun invalidate() {
+    originalPath.invalidate()
+    super.invalidate()
   }
 
   override fun isAbsolute(): Boolean {

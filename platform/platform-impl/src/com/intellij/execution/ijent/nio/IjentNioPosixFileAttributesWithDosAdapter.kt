@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ijent.nio
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.CaseSensitivityAttribute
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.ijent.community.impl.nio.EelPosixGroupPrincipal
 import com.intellij.platform.ijent.community.impl.nio.EelPosixUserPrincipal
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
+import com.intellij.platform.ijent.community.impl.nio.IjentNioPosixFileAttributes
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -16,6 +18,30 @@ import java.nio.file.attribute.PosixFileAttributes
 import java.nio.file.attribute.PosixFilePermission.*
 import java.nio.file.spi.FileSystemProvider
 import kotlin.io.path.name
+
+internal fun IjentNioPath.getCachedFileAttributesAndWrapToDosAttributesAdapter(): IjentNioPosixFileAttributesWithDosAdapter? {
+  val cachedAttrs = get() as IjentNioPosixFileAttributes?
+
+  return if (cachedAttrs != null) {
+    IjentNioPosixFileAttributesWithDosAdapter(
+      userInfo = fileSystem.ijentFs.user as EelUserPosixInfo,
+      fileInfo = cachedAttrs,
+      nameStartsWithDot = fileName.startsWith("."),
+    )
+  }
+  else {
+    cachedAttrs
+  }
+}
+
+internal fun IjentNioPath.getCachedFileAttributesAndWrapToDosAttributesAdapterIfNeeded(): BasicFileAttributes? {
+  if (SystemInfo.isWindows) {
+    return getCachedFileAttributesAndWrapToDosAttributesAdapter()
+  }
+  else {
+    return get()
+  }
+}
 
 internal fun <A : BasicFileAttributes> FileSystemProvider.readAttributesUsingDosAttributesAdapter(
   path: Path,
