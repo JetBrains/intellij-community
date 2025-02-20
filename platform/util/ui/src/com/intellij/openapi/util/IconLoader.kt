@@ -17,6 +17,7 @@ import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
@@ -270,6 +271,9 @@ object IconLoader {
    */
   @Internal
   fun filterIcon(icon: Icon, filterSupplier: RgbImageFilterSupplier): Icon {
+    if (icon is EmptyIcon) {
+      return icon
+    }
     val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
     if (!checkIconSize(effectiveIcon)) {
       return EMPTY_ICON
