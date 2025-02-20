@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.unscramble.DumpItem
+import com.intellij.unscramble.IconsCache
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
@@ -60,11 +61,14 @@ private class CoroutineDumpItem(private val info: CoroutineInfoData) : DumpItem 
         else -> stackTrace.count { it == '\n' }
     }
 
-    override val icon: Icon = when (info.state) {
-        State.SUSPENDED -> AllIcons.Debugger.ThreadFrozen
-        State.RUNNING -> AllIcons.Debugger.ThreadRunning
-        State.CREATED, State.UNKNOWN -> AllIcons.Debugger.ThreadGroup
-    }
+    override val icon: Icon =
+        IconsCache.getIconWithVirtualOverlay(
+            when (info.state) {
+                State.SUSPENDED -> AllIcons.Debugger.ThreadFrozen
+                State.RUNNING -> AllIcons.Debugger.ThreadRunning
+                State.CREATED, State.UNKNOWN -> AllIcons.Debugger.ThreadGroup
+            }
+        )
 
     override val attributes: SimpleTextAttributes = when (info.state) {
         State.SUSPENDED -> DumpItem.SLEEPING_ATTRIBUTES
