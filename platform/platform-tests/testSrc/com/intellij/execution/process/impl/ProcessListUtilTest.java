@@ -112,13 +112,13 @@ public class ProcessListUtilTest extends TestCase {
   public void testMac_VariousFormsPidStatUser() {
     List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
       """
-          PID  PPID STAT USER      COMMAND
+          PID  PPID STAT USER      COMM
 
             1     0 S    user      /dir/file
           101     1 Ss   user_name /dir/file
         """,
       """
-          PID  PPID STAT USER      COMM
+          PID  PPID STAT USER      COMMAND
 
             1     0 S    user      /dir/file
           101     1 Ss   user_name /dir/file
