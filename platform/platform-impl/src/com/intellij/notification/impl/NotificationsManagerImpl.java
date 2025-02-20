@@ -856,14 +856,17 @@ public final class NotificationsManagerImpl extends NotificationsManager {
           actionPanel.addAction(createAction(notification, actions.get(1)));
         }
         else if (actionsSize > 2) {
-          DefaultActionGroup group = new DefaultActionGroup();
-          for (int i = 1; i < actionsSize; i++) {
-            group.add(actions.get(i));
+          if (notification.isAddExtraAction()) {
+            actionPanel.addAction(createAction(notification, actions.get(1)));
+            if (actionsSize == 3) {
+              actionPanel.addAction(createAction(notification, actions.get(2)));
+            }
+            else {
+              addDropDownAction(actionPanel, notification, 2);
+            }
+          } else {
+            addDropDownAction(actionPanel, notification, 1);
           }
-
-          DropDownAction dropDownAction = new DropDownAction(IdeCoreBundle.message("notifications.action.more"),
-                                                             (link, _1) -> showPopup(notification, link, group, actionPanel.popupAlarm));
-          actionPanel.addAction(dropDownAction);
         }
       }
     }
@@ -920,6 +923,20 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         return NotificationsUtil.getLinkButtonForeground();
       }
     };
+  }
+
+  private static void addDropDownAction(NotificationActionPanel actionPanel, Notification notification, int startIndex) {
+    List<AnAction> actions = notification.getActions();
+    int actionsSize = actions.size();
+    DefaultActionGroup group = new DefaultActionGroup();
+
+    for (int i = startIndex; i < actionsSize; i++) {
+      group.add(actions.get(i));
+    }
+
+    DropDownAction dropDownAction = new DropDownAction(IdeCoreBundle.message("notifications.action.more"),
+                                                       (link, _1) -> showPopup(notification, link, group, actionPanel.popupAlarm));
+    actionPanel.addAction(dropDownAction);
   }
 
   private static void addDropDownAction(Notification notification, NotificationActionPanel actionPanel) {

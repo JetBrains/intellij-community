@@ -584,6 +584,7 @@ c:com.intellij.notification.Notification
 - hasContent():Z
 - hasTitle():Z
 - hideBalloon():V
+- isAddExtraAction():Z
 - s:isEmpty(java.lang.String):Z
 - isExpired():Z
 - isImportant():Z
@@ -591,6 +592,7 @@ c:com.intellij.notification.Notification
 - isRemoveWhenExpired():Z
 - isSuggestionType():Z
 - notify(com.intellij.openapi.project.Project):V
+- setAddExtraAction(Z):com.intellij.notification.Notification
 - setBalloon(com.intellij.openapi.ui.popup.Balloon):V
 - setCollapseActionsDirection(com.intellij.notification.Notification$CollapseActionsDirection):V
 - setCollapseDirection(com.intellij.notification.Notification$CollapseActionsDirection):com.intellij.notification.Notification
