@@ -7,7 +7,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface AutoTestListener {
   fun autoTestStatusChanged()
-  fun autoTestSettingsChanged()
 
   companion object {
     @Topic.ProjectLevel
