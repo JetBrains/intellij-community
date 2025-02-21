@@ -48,30 +48,12 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             _additionalVisibleModuleNames = value
         }
 
-    private var _compilerArguments: CommonCompilerArguments? = null
-    private var _lastKnownCompilerArguments: String? = null
+    private var _compilerArguments: CommonCompilerArguments? = CompilerArgumentsSerializer.deserializeFromString(entity.compilerArguments)
     override var compilerArguments: CommonCompilerArguments?
-        get() {
-            val currentSerializedArguments = entity.compilerArguments
-            if (_compilerArguments != null && currentSerializedArguments == _lastKnownCompilerArguments) {
-                // Cache is valid, return the cached value
-                return _compilerArguments
-            }
-
-            // Deserialize and update the cache
-            _compilerArguments = currentSerializedArguments?.let {
-                CompilerArgumentsSerializer.deserializeFromString(it)
-            }
-            _lastKnownCompilerArguments = currentSerializedArguments
-
-            return _compilerArguments
-        }
+        get() = _compilerArguments
         set(value) {
-            val serializedValue = CompilerArgumentsSerializer.serializeToString(value)
-            entity.compilerArguments = serializedValue
             updateMergedArguments()
             _compilerArguments = value?.unfrozen()
-            _lastKnownCompilerArguments = serializedValue
         }
 
     override val mergedCompilerArguments: CommonCompilerArguments?
