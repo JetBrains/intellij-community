@@ -125,6 +125,7 @@ a:com.intellij.execution.testframework.TestConsoleProperties
 - sf:SCROLL_TO_SOURCE:com.intellij.util.config.BooleanProperty
 - sf:SCROLL_TO_STACK_TRACE:com.intellij.util.config.BooleanProperty
 - sf:SELECT_FIRST_DEFECT:com.intellij.util.config.BooleanProperty
+- sf:SHOW_AUTO_TEST_TOOLBAR:com.intellij.util.config.BooleanProperty
 - sf:SHOW_INLINE_STATISTICS:com.intellij.util.config.BooleanProperty
 - sf:SHOW_STATISTICS:com.intellij.util.config.BooleanProperty
 - sf:SORT_ALPHABETICALLY:com.intellij.util.config.BooleanProperty
