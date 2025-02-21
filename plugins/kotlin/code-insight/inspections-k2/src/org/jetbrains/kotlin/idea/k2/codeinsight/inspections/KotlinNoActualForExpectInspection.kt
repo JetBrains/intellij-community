@@ -31,6 +31,7 @@ import com.intellij.util.ui.JBEmptyBorder
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemFacade
@@ -47,6 +48,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.core.createKotlinFile
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
+import org.jetbrains.kotlin.idea.core.overrideImplement.generateClassWithMembers
 import org.jetbrains.kotlin.idea.searching.kmp.findAllActualForExpect
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -127,14 +129,28 @@ class KotlinNoActualForExpectInspection : AbstractKotlinInspection() {
                     .reversed() /* reversing the list to ensure that modules "closest to the 'expect'" come first. */
 
                 val actualDeclaration = analyze(parentDeclaration) {
-                    generateMember(
-                        project = expectModule.project,
-                        ktClassMember = null,
-                        symbol = parentDeclaration.symbol as? KaCallableSymbol ?: return@analyze null,
-                        targetClass = null,
-                        copyDoc = false,
-                        mode = MemberGenerateMode.ACTUAL
-                    )
+                    val declarationSymbol = parentDeclaration.symbol
+                    val project = expectModule.project
+                    when (declarationSymbol) {
+                        is KaCallableSymbol -> generateMember(
+                            project = project,
+                            ktClassMember = null,
+                            symbol = declarationSymbol,
+                            targetClass = null,
+                            copyDoc = false,
+                            mode = MemberGenerateMode.ACTUAL
+                        )
+
+                        is KaClassSymbol -> generateClassWithMembers(
+                            project = project,
+                            ktClassMember = null,
+                            symbol = declarationSymbol,
+                            targetClass = null,
+                            mode = MemberGenerateMode.ACTUAL
+                        )
+
+                        else -> null
+                    }
                 }
 
                 val actualDeclarations = allModulesCapableOfProvidingActuals.mapNotNull { actualModule ->
@@ -273,7 +289,7 @@ private class CreateActualForExpectLocalQuickFix(
          */
         val navigationTarget = run {
             val blockExpression = target.childrenOfType<KtBlockExpression>().firstOrNull() ?: return@run target
-            blockExpression.children.first() as? KtElement ?: return@run target
+            blockExpression.children.firstOrNull() as? KtElement ?: return@run target
         }
 
         navigationTarget.navigate(requestFocus)
