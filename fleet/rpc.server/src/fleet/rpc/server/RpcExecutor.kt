@@ -6,9 +6,7 @@ import fleet.rpc.RemoteApiDescriptor
 import fleet.rpc.RemoteKind
 import fleet.rpc.core.*
 import fleet.rpc.serializer
-import fleet.tracing.TracingCoroutineElement
 import fleet.tracing.asContextElement
-import fleet.tracing.opentelemetry
 import fleet.tracing.tracer
 import fleet.util.UID
 import fleet.util.async.coroutineNameAppended
@@ -17,7 +15,6 @@ import fleet.util.logging.KLoggers
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.context.Context
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -62,21 +59,15 @@ class RpcExecutor private constructor(
       coroutineScope {
         launch {
           receiveChannel.consumeEach { message ->
-            val otelContext = (message as? TransportMessage.Envelope)?.otelData()?.let { telemetryData ->
-              opentelemetry.propagators.textMapPropagator.extract(Context.current(), telemetryData, TelemetryData.otelGetter)
-            } ?: Context.current()
-
-            withContext(TracingCoroutineElement(otelContext)) {
-              logger.trace { "Received $message" }
-              when (message) {
-                is TransportMessage.Envelope -> {
-                  executor.processRpcMessage(message.origin, message.parseMessage())
-                }
-                is TransportMessage.RouteClosed -> {
-                  executor.cancelAllOngoingWork(message.address)
-                }
-                is TransportMessage.RouteOpened -> {
-                }
+            logger.trace { "Received $message" }
+            when (message) {
+              is TransportMessage.Envelope -> {
+                executor.processRpcMessage(message.origin, message.parseMessage())
+              }
+              is TransportMessage.RouteClosed -> {
+                executor.cancelAllOngoingWork(message.address)
+              }
+              is TransportMessage.RouteOpened -> {
               }
             }
           }
@@ -129,7 +120,7 @@ class RpcExecutor private constructor(
           logger.trace { "Failed to find rpc method for $message" }
           send(RpcMessage.CallFailure(message.requestId,
                                       FailureInfo(unresolvedService = "API for ${message.classMethodDisplayName()} could not be found"))
-                 .seal(destination = clientId, origin = route, otelData = null))
+                 .seal(destination = clientId, origin = route))
           return
         }
         val serviceScope = impl.serviceScope ?: fallbackCoroutineScope
@@ -156,7 +147,7 @@ class RpcExecutor private constructor(
           logger.trace(ex) { "Failed to build arguments for $message" }
           send(RpcMessage.CallFailure(message.requestId,
                                       FailureInfo(requestError = "Invalid arguments for ${message.classMethodDisplayName()}: ${ex}"))
-                 .seal(destination = clientId, origin = route, otelData = null))
+                 .seal(destination = clientId, origin = route))
           return
         }
 
@@ -210,7 +201,7 @@ class RpcExecutor private constructor(
               RpcMessage.CallResult(requestId = request.requestId,
                                     result = resultSerialized)
             }
-            sendAsync(result.seal(destination = clientId, origin = route, otelData = null)) { ex ->
+            sendAsync(result.seal(destination = clientId, origin = route)) { ex ->
               if (ex == null) {
                 registeredStreams.forEach {
                   serveStream(serviceScope, it, clientId)
@@ -222,7 +213,7 @@ class RpcExecutor private constructor(
             logger.trace { "Sending call failure: requestId=${message.requestId}, error=${e.message}" }
             send(RpcMessage.CallFailure(requestId = message.requestId,
                                         error = e.toFailureInfo())
-                   .seal(destination = clientId, origin = route, otelData = null))
+                   .seal(destination = clientId, origin = route))
             spans[message.requestId]?.setStatus(StatusCode.ERROR, e.message)?.recordException(e)
             // todo removeREquest ... completeExceptionally()
           }
@@ -269,7 +260,7 @@ class RpcExecutor private constructor(
       is RpcMessage.StreamInit -> {
         if (channels[message.streamId] == null) {
           logger.trace("received StreamInit for unregistered stream ${message.streamId}, will respond with StreamClosed")
-          sendAsync(RpcMessage.StreamClosed(message.streamId).seal(clientId, route, null))
+          sendAsync(RpcMessage.StreamClosed(message.streamId).seal(clientId, route))
         }
       }
       else -> error("Unexpected message $message")

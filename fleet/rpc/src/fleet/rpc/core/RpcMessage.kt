@@ -13,10 +13,9 @@ sealed class RpcMessage {
     private val serializer by lazy { serializer() }
   }
 
-  fun seal(destination: UID, origin: UID, otelData: TelemetryData?): TransportMessage {
+  fun seal(destination: UID, origin: UID): TransportMessage {
     return TransportMessage.Envelope(destination = destination,
                                      origin = origin,
-                                     otelData = otelData?.let { Json.encodeToString(TelemetryData.serializer, it) },
                                      payload = Json.encodeToString(serializer, this))
   }
 

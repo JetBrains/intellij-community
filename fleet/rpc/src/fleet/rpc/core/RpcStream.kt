@@ -5,7 +5,6 @@ import fleet.util.AtomicRef
 import fleet.util.UID
 import fleet.util.async.coroutineNameAppended
 import fleet.util.logging.logger
-import io.opentelemetry.context.Context
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -223,7 +222,7 @@ fun serveStream(
   RpcStream.logger.trace { "serveStream ${descriptor.uid} ${descriptor.displayName} route=${descriptor.route}" }
   val coroutineName = coroutineScope.coroutineNameAppended(descriptor.displayName)
   fun transportMessage(message: RpcMessage) =
-    message.seal(destination = descriptor.route, origin = origin, otelData = Context.current().toTelemetryData())
+    message.seal(destination = descriptor.route, origin = origin)
 
   suspend fun sendMessage(message: RpcMessage) {
     sendSuspend(sendAsync, transportMessage(message))
@@ -294,9 +293,8 @@ fun serveStream(
             }
             else -> cause?.toFailureInfo()
           }
-          val closedMessage = RpcMessage.StreamClosed(descriptor.uid, failure).seal(destination = descriptor.route,
-                                                                                    origin = origin,
-                                                                                    otelData = null)
+          val closedMessage = RpcMessage.StreamClosed(descriptor.uid, failure)
+            .seal(destination = descriptor.route, origin = origin)
           sendAsync(closedMessage, null)
         }
       }

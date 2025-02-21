@@ -7,7 +7,6 @@ import fleet.rpc.RemoteKind
 import fleet.rpc.client.proxy.*
 import fleet.rpc.core.*
 import fleet.rpc.serializer
-import fleet.tracing.tracer
 import fleet.util.UID
 import fleet.util.async.coroutineNameAppended
 import fleet.util.async.use
@@ -16,10 +15,6 @@ import fleet.util.causeOfType
 import fleet.util.channels.consumeAll
 import fleet.util.channels.isFull
 import fleet.util.logging.KLoggers
-import io.opentelemetry.api.trace.Span
-import io.opentelemetry.api.trace.SpanKind
-import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.context.Context
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
@@ -39,7 +34,7 @@ private data class OutgoingRequest(
   val streamParameters: List<StreamDescriptor>,
 )
 
-private data class OngoingRequest(val request: OutgoingRequest, val span: Span)
+private data class OngoingRequest(val request: OutgoingRequest)
 
 @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 suspend fun <T> rpcClient(
@@ -253,7 +248,7 @@ class RpcClient internal constructor(
   private fun disposeResponseResource(resource: TransferredResource) {
     resource.streams.forEach { stream ->
       unregisterStream(stream.uid)
-      sendAsync(RpcMessage.StreamClosed(streamId = stream.uid).seal(stream.route, origin, null), null)
+      sendAsync(RpcMessage.StreamClosed(streamId = stream.uid).seal(stream.route, origin), null)
     }
   }
 
@@ -262,13 +257,12 @@ class RpcClient internal constructor(
       is RpcMessage.CallResult -> {
         logger.trace { "Got CallResult: requestId = ${message.requestId}" }
         // TODO this value can contain send/receive channels that must be closed, we should not drop it on the ground
-        outgoingRpc.remove(message.requestId)?.let { (rpc, span) ->
-          span.end()
+        outgoingRpc.remove(message.requestId)?.let { (rpc) ->
           try {
             val (returnResult, streams) = run {
               if (rpc.returnType is RemoteKind.RemoteObject) {
                 val path = Json.decodeFromJsonElement(String.serializer(), message.result)
-                val remoteApiDescriptor = (rpc.returnType as RemoteKind.RemoteObject).descriptor as RemoteApiDescriptor<RemoteObject>
+                val remoteApiDescriptor = (rpc.returnType).descriptor as RemoteApiDescriptor<RemoteObject>
                 return@run remoteObject(remoteApiDescriptor, path, rpc.route) to emptyList()
               }
               val (de, streamDescriptors) = withSerializationContext(rpc.call.displayName, rpc.token, this) {
@@ -350,7 +344,7 @@ class RpcClient internal constructor(
       is RpcMessage.StreamInit -> {
         if (streams[message.streamId] == null) {
           logger.trace { "received StreamInit for unregistered stream ${message.streamId}, will respond with StreamClosed" }
-          sendAsync(RpcMessage.StreamClosed(message.streamId).seal(senderRoute, origin, null))
+          sendAsync(RpcMessage.StreamClosed(message.streamId).seal(senderRoute, origin))
         }
       }
       else -> error("Unexpected message: $message")
@@ -364,7 +358,6 @@ class RpcClient internal constructor(
       outgoingRpc.remove(key)?.let {
         logger.trace { "resumeAllOngoingCallsWithThrowable: resume request $key" }
         it.request.continuation.resumeWithException(throwable)
-        it.span.addEvent("failure").end()
       }
     }
     streams.values.removeAll {
@@ -380,7 +373,6 @@ class RpcClient internal constructor(
       if (value.request.route == route) {
         outgoingRpc.remove(key)?.let {
           it.request.continuation.resumeWithException(RouteClosedException(route, rpcCallFailureMessage(it.request.call, message)))
-          it.span.addEvent("route closed").end()
         }
       }
     }
@@ -397,8 +389,7 @@ class RpcClient internal constructor(
 
   private fun requestFailed(requestId: UID, error: FailureInfo) {
     logger.trace { "Removing failed request (requestId = ${requestId}) from queue because of the error: $error" }
-    outgoingRpc.remove(requestId)?.let { (rpc, span) ->
-      span.setStatus(StatusCode.ERROR, error.message()).end()
+    outgoingRpc.remove(requestId)?.let { (rpc) ->
 
       val exception = when {
         error.conflict != null -> AssumptionsViolatedException(error.conflict)
@@ -420,11 +411,10 @@ class RpcClient internal constructor(
     val req = outgoingRpc.remove(requestId)
     when {
       req != null -> {
-        val (rpc, span) = req
-        span.addEvent("cancel").end()
+        val (rpc) = req
         try {
           val cancelMessage = RpcMessage.CancelCall(requestId = requestId)
-            .seal(destination = rpc.route, origin = origin, otelData = null)
+            .seal(destination = rpc.route, origin = origin)
           sendAsync(cancelMessage)
         }
         catch (suppressed: Exception) {
@@ -515,7 +505,7 @@ class RpcClient internal constructor(
                                                       service = call.service,
                                                       method = call.signature.methodName,
                                                       args = serializedArguments)
-    withTimeoutOrNull<Unit>(RPC_TIMEOUT) {
+    withTimeoutOrNull(RPC_TIMEOUT) {
       val callRequest = requestInterceptor.interceptCallRequest(uninterceptedRequest)
       logger.trace { "Interceptor completed for request ${callRequest}" }
       val rpcStrategy = coroutineContext[RpcStrategyContextElement] ?: RpcStrategyContextElement()
@@ -528,13 +518,7 @@ class RpcClient internal constructor(
         throw RouteClosedException(call.route, rpcCallFailureMessage(callRequest, "Route ${call.route} closed"))
       }
 
-      val span = tracer.spanBuilder("RPC Call")
-        .setAttribute("service", callRequest.service.id)
-        .setAttribute("method", callRequest.method)
-        .setSpanKind(SpanKind.CLIENT)
-        .startSpan()
-      val otelData = Context.current().with(span).toTelemetryData()
-      suspendCancellableCoroutine<Any?> { cc ->
+      suspendCancellableCoroutine { cc ->
         val request = OutgoingRequest(route = call.route,
                                       call = callRequest,
                                       token = token,
@@ -546,8 +530,7 @@ class RpcClient internal constructor(
           val exToResumeWith = cause.causeOfType<TransportDisconnectedException>()?.let { RpcClientDisconnectedException(null, it) }
                                ?: cause
           logger.trace(exToResumeWith) { "Failed to send request $requestId with exception, remove it from queue" }
-          outgoingRpc.remove(requestId)?.let<OngoingRequest, Unit> { (r, span) ->
-            span.setStatus(StatusCode.ERROR, "Failed to send call request: ${exToResumeWith.stackTraceToString()}").end()
+          outgoingRpc.remove(requestId)?.let<OngoingRequest, Unit> { (r) ->
             for (stream in r.streamParameters) {
               unregisterStream(stream.uid) { exToResumeWith }
             }
@@ -557,10 +540,10 @@ class RpcClient internal constructor(
         executeCommand { cause ->
           if (cause == null) {
             logger.trace { "Register request ${request.call} in queue" }
-            val previous = outgoingRpc.putIfAbsent(requestId, OngoingRequest(request, span))
+            val previous = outgoingRpc.putIfAbsent(requestId, OngoingRequest(request))
             check(previous == null) { "Request with id $requestId is already present in the queue" }
             val streamDescriptors = registerStreams(request.streamParameters, request.route, rpcStrategy.prefetchStrategy)
-            sendAsync(callRequest.seal(destination = request.route, origin = origin, otelData = otelData)) { cause ->
+            sendAsync(callRequest.seal(destination = request.route, origin = origin)) { cause ->
               if (cause == null) {
                 logger.trace { "Request sent ${request.call}" }
                 // register cancellation handler only after the request is enqueued or we can end up sending CancelCall before CallRequest
