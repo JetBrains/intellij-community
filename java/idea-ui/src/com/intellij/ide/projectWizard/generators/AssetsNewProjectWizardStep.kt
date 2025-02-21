@@ -4,6 +4,7 @@ package com.intellij.ide.projectWizard.generators
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep.CoroutineScopeService.Companion.coroutineScope
 import com.intellij.ide.starters.local.GeneratorAsset
 import com.intellij.ide.starters.local.GeneratorEmptyDirectory
 import com.intellij.ide.starters.local.GeneratorFile
@@ -124,11 +125,10 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
 
       StartupManager.getInstance(project).runAfterOpened { // IDEA-244863
         project.trackActivityBlocking(NewProjectWizardActivityKey) {
-          val coroutineScope = CoroutineScopeService.getCoroutineScope(project)
-          coroutineScope.launchTracked {
+          project.coroutineScope.launchTracked {
             reformatCode(project, filesToReformat)
           }
-          coroutineScope.launchTracked {
+          project.coroutineScope.launchTracked {
             openFilesInEditor(project, filesToOpen)
           }
         }
@@ -196,9 +196,8 @@ abstract class AssetsNewProjectWizardStep(parent: NewProjectWizardStep) : Abstra
   @Service(Service.Level.PROJECT)
   private class CoroutineScopeService(private val coroutineScope: CoroutineScope) {
     companion object {
-      fun getCoroutineScope(project: Project): CoroutineScope {
-        return project.service<CoroutineScopeService>().coroutineScope
-      }
+      val Project.coroutineScope: CoroutineScope
+        get() = service<CoroutineScopeService>().coroutineScope
     }
   }
 }
