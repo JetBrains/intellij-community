@@ -144,7 +144,13 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
   }
 
   public static boolean isInContentRoot(VirtualFile file, ProjectFileIndex index) {
-    return file.equals(index.getContentRootForFile(file));
+    return file.equals(index.getContentRootForFile(file)) &&
+           moduleHasNoSourceRoots(file, index);
+  }
+
+  private static boolean moduleHasNoSourceRoots(VirtualFile file, ProjectFileIndex index) {
+    Module module = index.getModuleForFile(file);
+    return module != null && ModuleRootManager.getInstance(module).getSourceRoots().length == 0;
   }
 
   protected abstract boolean checkPackageExists(PsiDirectory directory);
