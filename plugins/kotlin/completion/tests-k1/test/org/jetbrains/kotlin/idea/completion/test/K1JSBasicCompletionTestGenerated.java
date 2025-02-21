@@ -3981,6 +3981,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/when/enumInWhenWithPackage.kt");
             }
 
+            @TestMetadata("InnerSealedClassInWhen.kt")
+            public void testInnerSealedClassInWhen() throws Exception {
+                runTest("../testData/basic/common/when/InnerSealedClassInWhen.kt");
+            }
+
             @TestMetadata("nestedSealedClassInWhen.kt")
             public void testNestedSealedClassInWhen() throws Exception {
                 runTest("../testData/basic/common/when/nestedSealedClassInWhen.kt");

@@ -4180,6 +4180,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             runTest("../../completion/testData/basic/common/when/enumInWhenWithPackage.kt");
         }
 
+        @TestMetadata("InnerSealedClassInWhen.kt")
+        public void testInnerSealedClassInWhen() throws Exception {
+            runTest("../../completion/testData/basic/common/when/InnerSealedClassInWhen.kt");
+        }
+
         @TestMetadata("nestedSealedClassInWhen.kt")
         public void testNestedSealedClassInWhen() throws Exception {
             runTest("../../completion/testData/basic/common/when/nestedSealedClassInWhen.kt");
