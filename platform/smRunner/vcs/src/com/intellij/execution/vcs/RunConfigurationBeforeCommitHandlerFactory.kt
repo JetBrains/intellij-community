@@ -17,6 +17,7 @@ import com.intellij.execution.testframework.TestsUIUtil.TestResultPresentation
 import com.intellij.execution.testframework.sm.ConfigurationBean
 import com.intellij.execution.testframework.sm.SmRunnerBundle
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
 import com.intellij.execution.ui.ConsoleViewWithDelegate
@@ -209,7 +210,7 @@ private class RunConfigurationBeforeCommitHandler(private val project: Project) 
   }
 
   private fun getTestRunnerResultsForm(executionConsole: ExecutionConsole?): SMTestRunnerResultsForm? =
-    (executionConsole?.component as? SMTestRunnerResultsForm)
+    if (executionConsole !is SMTRunnerConsoleView) null else executionConsole.component as? SMTestRunnerResultsForm
 
   private fun createCommitProblem(descriptions: List<FailureDescription>): CommitProblem? {
     return when {
