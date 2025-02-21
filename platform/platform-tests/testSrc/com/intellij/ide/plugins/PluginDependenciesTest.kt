@@ -224,11 +224,27 @@ internal class PluginDependenciesTest {
   }
 
   @Test
-  fun `plugin is loaded when it has an dependency on plugin alias - depends`() {
+  fun `plugin is loaded when it has a dependency on plugin alias (depends)`() {
     `foo depends bar`()
-    PluginBuilder.empty().id("baz").pluginAlias("bar").build(pluginDirPath.resolve("baz"))
+    `baz with alias bar`()
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "baz")
+  }
+
+  @Test
+  fun `plugin is loaded when it has a plugin dependency on plugin alias`() {
+    `foo plugin-dependency bar`()
+    `baz with alias bar`()
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "baz")
+  }
+
+  @Test
+  fun `plugin is not loaded when it has a module dependency on plugin alias`() {
+    `foo module-dependency bar`()
+    `baz with alias bar`()
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("baz")
   }
 
   private fun foo() = PluginBuilder.empty().id("foo").build(pluginDirPath.resolve("foo"))
@@ -236,10 +252,13 @@ internal class PluginDependenciesTest {
   private fun `foo depends-optional bar`() = PluginBuilder.empty().id("foo")
     .depends("bar", PluginBuilder.empty().actions(""))
     .build(pluginDirPath.resolve("foo"))
+  private fun `foo plugin-dependency bar`() = PluginBuilder.empty().id("foo").pluginDependency("bar").build(pluginDirPath.resolve("foo"))
+  private fun `foo module-dependency bar`() = PluginBuilder.empty().id("foo").dependency("bar").build(pluginDirPath.resolve("foo"))
 
   private fun bar() = PluginBuilder.empty().id("bar").build(pluginDirPath.resolve("bar"))
 
   private fun baz() = PluginBuilder.empty().id("baz").build(pluginDirPath.resolve("baz"))
+  private fun `baz with alias bar`() = PluginBuilder.empty().id("baz").pluginAlias("bar").build(pluginDirPath.resolve("baz"))
 
   private fun buildPluginSet(expiredPluginIds: Array<String> = emptyArray(), disabledPluginIds: Array<String> = emptyArray()) =
     PluginSetTestBuilder(pluginDirPath)
