@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.onClick
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -193,8 +194,9 @@ public fun EditableComboBox(
                 modifier =
                     popupModifier
                         .testTag("Jewel.ComboBox.Popup")
-                        .semantics { contentDescription = "Jewel.ComboBox.Popup" }
-                        .width(comboBoxWidth),
+                        .semantics { contentDescription = "Jewel.EditableComboBox.Popup" }
+                        .width(comboBoxWidth)
+                        .onClick { popupManager.setPopupVisible(false) },
                 horizontalAlignment = Alignment.Start,
                 popupProperties = PopupProperties(focusable = false),
                 content = popupContent,
