@@ -22,7 +22,7 @@ internal class ModuleFilesIteratorImpl(
   private val root: VirtualFile,
   private val recursive: Boolean,
   private val printRootsInDebugName: Boolean,
-) : IndexableFilesIterator {
+) : ModuleIndexableFilesIterator {
 
 
   override fun getDebugName(): String =
