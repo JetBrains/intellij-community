@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
-import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +17,10 @@ import org.jetbrains.io.JsonReaderEx;
 import org.jetbrains.io.JsonUtil;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -173,9 +176,11 @@ public final class RegionUrlMapper {
     return ourCache.get(region);
   }
 
-  private static @NotNull RegionMapping doLoadMappingOrThrow(@NotNull Region reg) throws IOException, JsonParseException {
-    String configUrl = getConfigUrl(reg);
-    String json = HttpRequests.request(configUrl).readString();
+  private static RegionMapping doLoadMappingOrThrow(Region reg) throws Exception {
+    var configUrl = getConfigUrl(reg);
+    var client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
+    var request = HttpRequest.newBuilder(new URI(configUrl)).build();
+    var json = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
     return RegionMapping.fromJson(json);
   }
 
