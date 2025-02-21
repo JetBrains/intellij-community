@@ -61,9 +61,7 @@ internal class PluginDependenciesTest {
   @Test
   fun `v1 plugin gets v2 content module in classloader parents even without direct dependency - depends`() {
     `foo depends bar`()
-    PluginBuilder.empty().id("bar")
-      .module("bar.module", PluginBuilder.withModulesLang().packagePrefix("bar.module"))
-      .build(pluginDirPath.resolve("bar"))
+    `bar with optional module`()
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
@@ -72,16 +70,54 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `v2 plugin dependency brings only the implicit main module - plugin dependency`() {
-    PluginBuilder.empty().id("foo").pluginDependency("bar").build(pluginDirPath.resolve("foo"))
-    PluginBuilder.empty().id("bar")
-      .module("bar.module", PluginBuilder.withModulesLang().packagePrefix("bar.module"))
-      .build(pluginDirPath.resolve("bar"))
+    `foo plugin-dependency bar`()
+    `bar with optional module`()
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
     assertThat(foo)
       .hasClassloaderParents(bar)
       .doesNotHaveClassloaderParents(pluginSet.getEnabledModule("bar.module"))
+  }
+
+  @Test
+  fun `plugin is not loaded if it has a dependency on v2 module - depends`() {
+    `bar with optional module`()
+    PluginBuilder.empty().id("foo").depends("bar.module").build(pluginDirPath.resolve("foo"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
+  }
+
+  @Test
+  fun `plugin is not loaded if it has a dependency on v2 module - plugin dependency`() {
+    `bar with optional module`()
+    PluginBuilder.empty().id("foo").pluginDependency("bar.module").build(pluginDirPath.resolve("foo"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
+  }
+
+  @Test
+  fun `plugin is loaded if it has a dependency on v2 module - module dependency`() {
+    `bar with optional module`()
+    PluginBuilder.empty().id("foo").dependency("bar.module").build(pluginDirPath.resolve("foo"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
+  }
+
+  @Test
+  fun `plugin is not loaded if it has a module dependency on v2 plugin without package prefix`() {
+    bar()
+    PluginBuilder.empty().id("foo").dependency("bar").build(pluginDirPath.resolve("foo"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
+  }
+
+  @Test
+  fun `plugin is loaded if it has a module dependency on v2 plugin with package prefix`() {
+    PluginBuilder.empty().id("bar").packagePrefix("idk").build(pluginDirPath.resolve("bar"))
+    PluginBuilder.empty().id("foo").dependency("bar").build(pluginDirPath.resolve("foo"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
   }
 
   @Test
@@ -256,6 +292,9 @@ internal class PluginDependenciesTest {
   private fun `foo module-dependency bar`() = PluginBuilder.empty().id("foo").dependency("bar").build(pluginDirPath.resolve("foo"))
 
   private fun bar() = PluginBuilder.empty().id("bar").build(pluginDirPath.resolve("bar"))
+  private fun `bar with optional module`() = PluginBuilder.empty().id("bar")
+    .module("bar.module", PluginBuilder.withModulesLang().packagePrefix("bar.module"))
+    .build(pluginDirPath.resolve("bar"))
 
   private fun baz() = PluginBuilder.empty().id("baz").build(pluginDirPath.resolve("baz"))
   private fun `baz with alias bar`() = PluginBuilder.empty().id("baz").pluginAlias("bar").build(pluginDirPath.resolve("baz"))
