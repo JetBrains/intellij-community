@@ -17,6 +17,17 @@ import java.util.Map;
 public class Py3TypeTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "/types/";
 
+  // PY-21069
+  public void testDunderGetattr() {
+    doTest("MyClass", """
+      class MyClass:
+          def __getattr__(self, item) -> 'MyClass':
+              pass
+      
+      expr = MyClass().attr
+      """);
+  }
+
   // PY-20710
   public void testLambdaGenerator() {
     doTest("Generator[int, Any, Any]", """
