@@ -217,20 +217,20 @@ private fun ListComboBoxes() {
         )
     }
 
-    var selectedComboBox1: String? by remember { mutableStateOf(comboBoxItems.first()) }
-    var selectedComboBox3: String? by remember { mutableStateOf(comboBoxItems.first()) }
-
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Column(Modifier.weight(1f).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Enabled and Editable")
 
-            Text(text = "Selected item: $selectedComboBox1", maxLines = 1, overflow = TextOverflow.Ellipsis)
+            var selectedIndex by remember { mutableIntStateOf(2) }
+            val selectedItemText = if (selectedIndex >= 0) comboBoxItems[selectedIndex] else ""
+            Text(text = "Selected item: $selectedItemText", maxLines = 1, overflow = TextOverflow.Ellipsis)
 
             EditableListComboBox(
                 items = comboBoxItems,
+                selectedIndex = selectedIndex,
+                onItemSelected = { index, text -> selectedIndex = index },
                 modifier = Modifier.width(200.dp),
                 maxPopupHeight = 150.dp,
-                onSelectedItemChange = { _, text -> selectedComboBox1 = text },
                 itemContent = { item, isSelected, isActive ->
                     SimpleListItem(
                         text = item,
@@ -267,14 +267,17 @@ private fun ListComboBoxes() {
 
         Column(Modifier.weight(1f).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Disabled")
-
-            Text(text = "Selected item: $selectedComboBox3", maxLines = 1, overflow = TextOverflow.Ellipsis)
+            var selectedIndex by remember { mutableIntStateOf(2) }
+            val selectedItemText = if (selectedIndex >= 0) comboBoxItems[selectedIndex] else ""
+            Text(text = "Selected item: $selectedItemText", maxLines = 1, overflow = TextOverflow.Ellipsis)
 
             ListComboBox(
-                items = comboBoxItems,
-                modifier = Modifier.width(200.dp),
                 isEnabled = false,
-                onSelectedItemChange = { _, text -> selectedComboBox3 = text },
+                items = comboBoxItems,
+                selectedIndex = selectedIndex,
+                modifier = Modifier.width(200.dp),
+                maxPopupHeight = 150.dp,
+                onItemSelected = { index, text -> selectedIndex = index },
                 itemContent = { item, isSelected, isActive ->
                     SimpleListItem(
                         text = item,
