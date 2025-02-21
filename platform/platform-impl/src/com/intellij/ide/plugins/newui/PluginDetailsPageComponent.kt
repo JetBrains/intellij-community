@@ -106,6 +106,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private var updateButton: JButton? = null
   private var gearButton: JComponent? = null
   private var myEnableDisableButton: JButton? = null
+  private var myUninstallButton: JButton? = null
   private var errorComponent: ErrorComponent? = null
   private var version: JTextField? = null
   private var isEnabledForProject: JLabel? = null
@@ -485,6 +486,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         { this.createUninstallAction() })
       nameAndButtons.addButtonComponent(enableDisableController!!.button.also { gearButton = it })
       nameAndButtons.addButtonComponent(enableDisableController!!.bundledButton.also { myEnableDisableButton = it })
+      nameAndButtons.addButtonComponent(enableDisableController!!.uninstallButton.also { myUninstallButton = it })
     }
     else {
       gearButton = SelectionBasedPluginModelAction.createGearButton(
@@ -1324,6 +1326,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       installButton!!.isVisible = false
       updateButton!!.isVisible = false
       gearButton!!.isVisible = false
+      myUninstallButton?.isVisible = false
       if (isMultiTabs) {
         myEnableDisableButton!!.isVisible = false
       }
@@ -1341,6 +1344,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       installButton!!.isVisible = !installed
 
       updateButton!!.isVisible = false
+      myUninstallButton?.isVisible = false
       if (isMultiTabs) {
         if (installed || installedDescriptorForMarketplace == null) {
           gearButton!!.isVisible = false
@@ -1367,7 +1371,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
           val bundled = installedDescriptorForMarketplace!!.isBundled
           enableDisableController!!.update()
-          gearButton!!.isVisible = !uninstalled && !bundled
+          gearButton!!.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode != true
+          myUninstallButton?.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode == true
           myEnableDisableButton!!.isVisible = bundled
           updateButton!!.isVisible = !uninstalled && updateDescriptor != null && !installedWithoutRestart
           updateEnableForNameAndIcon()
@@ -1413,6 +1418,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         gearButton!!.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode != true
         myEnableDisableButton!!.isVisible = bundled
         myEnableDisableButton!!.isEnabled = !isEssential && showComponent?.isNotFreeInFreeMode != true
+        myUninstallButton?.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode == true
       }
       else {
         gearButton!!.isVisible = !uninstalled
@@ -1542,6 +1548,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     installButton!!.isVisible = false
     updateButton!!.isVisible = false
     gearButton!!.isVisible = false
+    myUninstallButton?.isVisible = false
     if (myEnableDisableButton != null) {
       myEnableDisableButton!!.isVisible = false
     }
