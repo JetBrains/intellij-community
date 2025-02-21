@@ -87,6 +87,7 @@ private class DisableAutoTestAction : AnAction(), CustomComponentAction, DumbAwa
     val disableButton = ActionButton(DisableAction(), null, ActionPlaces.EDITOR_FLOATING_TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
     disableButton.putClientProperty(Toggleable.SELECTED_KEY, true)
     panel.add(disableButton, constraints.next())
+    panel.isOpaque = false
 
     return panel
   }
