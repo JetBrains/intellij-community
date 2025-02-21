@@ -19,7 +19,7 @@ def get_bytes(arr):
         arr_to_convert = np.where(arr_to_convert == None, 0, arr_to_convert)
         arr_to_convert = np.nan_to_num(arr_to_convert, nan=0)
 
-        if not (np.issubdtype(arr_to_convert.dtype, np.floating) or np.issubdtype(arr_to_convert.dtype, np.integer)):
+        if np.iscomplexobj(arr_to_convert) or np.issubdtype(arr_to_convert.dtype, np.timedelta64):
             raise ValueError("Only non-complex numeric array types are supported.")
 
         if arr_to_convert.ndim == 1:
@@ -38,5 +38,7 @@ def get_bytes(arr):
         return base64.b64encode(bytes_buffer.getvalue()).decode(DEFAULT_ENCODING)
     except ImportError:
         return "Error: Pillow library is not installed."
+    except (TypeError, ValueError):
+        return "Error: Only non-complex numeric array types are supported."
     except Exception as e:
         return "Error: {}".format(e)
