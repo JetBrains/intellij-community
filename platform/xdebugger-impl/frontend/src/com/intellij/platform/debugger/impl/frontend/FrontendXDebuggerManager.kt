@@ -5,12 +5,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.project.projectId
+import com.intellij.util.messages.Topic
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.awaitCancellation
+import com.intellij.xdebugger.impl.rpc.XDebuggerSessionEvent
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.supervisorScope
 
 @Service(Service.Level.PROJECT)
 internal class FrontendXDebuggerManager(private val project: Project, private val cs: CoroutineScope) {
@@ -30,8 +29,30 @@ internal class FrontendXDebuggerManager(private val project: Project, private va
       }
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
+  init {
+    cs.launch {
+      XDebuggerManagerApi.getInstance().sessionEvents(project.projectId()).collect { event ->
+        when (event) {
+          is XDebuggerSessionEvent.ProcessStarted -> {
+            project.messageBus.syncPublisher(TOPIC).processStarted(event.sessionId, event.sessionDto)
+          }
+          is XDebuggerSessionEvent.ProcessStopped -> {
+            project.messageBus.syncPublisher(TOPIC).processStopped(event.sessionId)
+          }
+          is XDebuggerSessionEvent.CurrentSessionChanged -> {
+            project.messageBus.syncPublisher(TOPIC).activeSessionChanged(event.previousSession, event.currentSession)
+          }
+        }
+      }
+    }
+  }
+
   companion object {
     @JvmStatic
     fun getInstance(project: Project): FrontendXDebuggerManager = project.service()
+
+    @Topic.ProjectLevel
+    val TOPIC: Topic<FrontendXDebuggerManagerListener> =
+      Topic("FrontendXDebuggerManager events", FrontendXDebuggerManagerListener::class.java)
   }
 }
