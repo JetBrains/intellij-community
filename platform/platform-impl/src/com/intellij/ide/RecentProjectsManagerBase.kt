@@ -603,10 +603,11 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
    */
   fun setProjectHidden(project: Project, hidden: Boolean) {
     val path = getProjectPath(project) ?: return
-    val info = state.additionalInfo.get(path) ?: return
-    val oldHidden = info.hidden
-    info.hidden = hidden
-    if (oldHidden != hidden) {
+    synchronized(stateLock) {
+      val info = state.additionalInfo.get(path) ?: return
+      if (info.hidden == hidden) return
+
+      info.hidden = hidden
       modCounter.increment()
     }
   }
