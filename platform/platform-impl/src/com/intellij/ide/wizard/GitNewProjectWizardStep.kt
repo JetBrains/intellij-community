@@ -53,7 +53,7 @@ class GitNewProjectWizardStep(
 
   override fun setupProject(project: Project) {
     if (git) {
-      whenProjectCreated(project) {
+      runAfterOpened(project) { project ->
         project.trackActivityBlocking(NewProjectWizardActivityKey) {
           project.coroutineScope.launchTracked {
             setupProjectSafe(project, UIBundle.message("error.project.wizard.new.project.git")) {

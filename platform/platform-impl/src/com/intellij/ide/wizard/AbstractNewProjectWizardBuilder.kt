@@ -96,6 +96,12 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
         .add(builder::postCommit)
     }
 
+    @ApiStatus.Internal
+    fun NewProjectWizardStep.addPostCommitAction(action: (Project) -> Unit) {
+      context.getOrCreateUserData(POST_COMMIT_ACTIONS) { ArrayList() }
+        .add { project, _ -> action(project) }
+    }
+
     private fun detectCreatedModule(project: Project, model: ModifiableModuleModel?, action: () -> Unit): Module? {
       if (model == null) {
         return detectCreatedModule(project, action)

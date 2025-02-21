@@ -5,10 +5,10 @@ package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.ProjectBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.AbstractNewProjectWizardBuilder.Companion.addPostCommitAction
 import com.intellij.ide.wizard.AbstractNewProjectWizardBuilder.Companion.commitByBuilder
 import com.intellij.ide.wizard.AbstractNewProjectWizardBuilder.Companion.postCommitByBuilder
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -111,16 +111,21 @@ inline fun NewProjectWizardStep.setupProjectSafe(
   }
 }
 
-@ApiStatus.Internal
-fun whenProjectCreated(project: Project, action: () -> Unit) {
-  if (ApplicationManager.getApplication().isUnitTestMode) {
-    action()
-  }
-  else {
-    StartupManager.getInstance(project).runAfterOpened {
-      ApplicationManager.getApplication().invokeLater(action, project.disposed)
-    }
-  }
+/**
+ * Schedules activity executed on the pooled thread after the project is opened.
+ * The runnable will be executed in the current thread if the project is already opened.
+ *
+ * Note: The target project can be changed if the created project is attached to the multi-project workspace.
+ * Therefore, use the project, from the [callback] parameter.
+ *
+ * @see ProjectBuilder.postCommit
+ * @see StartupManager.runAfterOpened
+ */
+@ApiStatus.Experimental
+fun NewProjectWizardStep.runAfterOpened(project: Project, callback: (Project) -> Unit) {
+  addPostCommitAction(callback)
+  // The StartupManager#runAfterOpened callback will be skipped, in case of attaching to the multi-project workspace.
+  StartupManager.getInstance(project).runAfterOpened { callback(project) }
 }
 
 /**
