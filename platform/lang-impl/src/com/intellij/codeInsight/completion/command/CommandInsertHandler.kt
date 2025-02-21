@@ -64,10 +64,17 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
     val startOffset = injectedLanguageManager.injectedToHost(context.file, context.startOffset)
     val service = context.project.service<CommandCompletionService>()
     val commandCompletionFactory = service.getFactory(context.file.language) ?: return startOffset
+    val completionType = findCommandCompletionType(commandCompletionFactory, !context.file.isWritable, tailOffset, editor)
+    if (completionType != null) {
+      CommandCompletionCollector.called(completionCommand::class.java,
+                                        context.file.language,
+                                        completionType::class.java)
+    }
 
     val actualIndex = findActualIndex(commandCompletionFactory.suffix().toString() + (commandCompletionFactory.filterSuffix() ?: ""),
                                       document.immutableCharSequence,
                                       startOffset)
+
     // Remove the command text after the dots
     val commandStart = startOffset - actualIndex
 

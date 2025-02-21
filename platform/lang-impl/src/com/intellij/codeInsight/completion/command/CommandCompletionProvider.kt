@@ -138,6 +138,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
         if (additionalInfo.isNotEmpty()) {
           tailText += " ($additionalInfo)"
         }
+        CommandCompletionCollector.shown(command::class.java, originalFile.language, commandCompletionType::class.java)
         val element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(command.name.trim())
                                                                       .withLookupString(i18nName.trim())
                                                                       .withTypeText(tailText)

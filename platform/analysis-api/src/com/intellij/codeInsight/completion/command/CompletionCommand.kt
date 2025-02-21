@@ -68,6 +68,10 @@ abstract class CompletionCommand {
   open fun getContext(offset: Int, psiFile: PsiFile): PsiElement? {
     return (if (offset == 0) psiFile.findElementAt(offset) else psiFile.findElementAt(offset - 1))
   }
+
+  override fun toString(): String {
+    return "CompletionCommand(name='$name', class='${this::class.simpleName}')"
+  }
 }
 
 /**
