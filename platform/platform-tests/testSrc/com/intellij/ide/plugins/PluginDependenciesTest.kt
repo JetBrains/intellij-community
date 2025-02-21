@@ -38,28 +38,10 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `depends optional - plugin loads when dependency is resolved`() {
-    writeDescriptor("foo", """
-    <idea-plugin>
-      <id>foo</id>
-      <depends optional="true" config-file="optional-part.xml">bar</depends>
-      <vendor>JetBrains</vendor>
-    </idea-plugin>
-    """)
-
-    pluginDirPath.resolve("foo/META-INF/optional-part.xml").write("""
-     <idea-plugin>
-      <actions>
-      </actions>
-    </idea-plugin>
-    """)
-
-    writeDescriptor("bar", """
-    <idea-plugin>
-      <id>bar</id>
-      <vendor>JetBrains</vendor>
-    </idea-plugin>
-    """)
-
+    PluginBuilder.empty().id("foo")
+      .depends("bar", PluginBuilder.empty().actions(""), "optional-part.xml")
+      .build(pluginDirPath.resolve("foo"))
+    PluginBuilder.empty().id("bar").build(pluginDirPath.resolve("bar"))
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
@@ -239,13 +221,6 @@ internal class PluginDependenciesTest {
       .build(pluginDirPath.resolve("intellij.gradle.java.maven"))
     val pluginSet = buildPluginSet(disabledPluginIds = arrayOf("com.intellij.gradle"))
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
-  }
-
-
-  private fun writeDescriptor(id: String, @Language("xml") data: String) {
-    pluginDirPath.resolve(id)
-      .resolve(PluginManagerCore.PLUGIN_XML_PATH)
-      .write(data.trimIndent())
   }
 
   private fun buildPluginSet(expiredPluginIds: Array<String> = emptyArray(), disabledPluginIds: Array<String> = emptyArray()) =
