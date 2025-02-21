@@ -2,7 +2,6 @@
 package git4idea.commit
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
@@ -20,9 +19,8 @@ import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryStateChangeListener
+import git4idea.util.CaffeineUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import org.jetbrains.annotations.ApiStatus
@@ -35,8 +33,7 @@ import kotlin.time.measureTimedValue
 class GitMyRecentCommitsProvider(private val project: Project, private val scope: CoroutineScope) {
   private val requestedDepth = ConcurrentHashMap<VirtualFile, Int>()
 
-  private val cache: AsyncLoadingCache<VirtualFile, List<VcsCommitMetadata>> = Caffeine.newBuilder()
-    .executor(Dispatchers.IO.asExecutor())
+  private val cache: AsyncLoadingCache<VirtualFile, List<VcsCommitMetadata>> = CaffeineUtil.withIoExecutor()
     .buildAsync { root, executor ->
       val commitsToLoad = requestedDepth.get(root) ?: return@buildAsync CompletableFuture.completedFuture(emptyList())
       scope.future {
