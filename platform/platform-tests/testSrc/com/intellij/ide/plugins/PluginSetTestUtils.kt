@@ -11,7 +11,15 @@ fun ObjectAssert<PluginSet>.hasExactlyEnabledPlugins(vararg ids: String) = apply
     .containsExactlyInAnyOrder(*ids)
 }
 
-fun ObjectAssert<PluginSet>.hasNoEnabledPlugins() = hasExactlyEnabledPlugins()
+fun ObjectAssert<PluginSet>.doesNotHaveEnabledPlugins() = hasExactlyEnabledPlugins()
+
+fun ObjectAssert<PluginSet>.hasExactlyEnabledModulesWithoutMainDescriptors(vararg ids: String) = apply {
+  extracting { it.getEnabledModules().mapNotNull { plugin -> plugin.moduleName } }
+    .asList()
+    .containsExactlyInAnyOrder(*ids)
+}
+
+fun ObjectAssert<PluginSet>.doesNotHaveEnabledModulesWithoutMainDescriptors() = hasExactlyEnabledModulesWithoutMainDescriptors()
 
 fun ObjectAssert<IdeaPluginDescriptorImpl>.hasClassloaderParents(vararg parentDescriptors: IdeaPluginDescriptorImpl) = apply {
   extracting { (it.classLoader as PluginClassLoader)._getParents() }
@@ -32,3 +40,5 @@ fun PluginSet.getEnabledPlugins(vararg ids: String): List<IdeaPluginDescriptorIm
 
 fun PluginSet.getEnabledModule(id: String): IdeaPluginDescriptorImpl =
   findEnabledModule(id) ?: throw AssertionError("Module '$id' not found")
+
+fun PluginSet.getEnabledModules(vararg ids: String): List<IdeaPluginDescriptorImpl> = ids.map { getEnabledModule(it) }
