@@ -1264,3 +1264,23 @@ fun <T : CommandChain> T.waitForVfsRefreshSelectedEditor(): T = apply {
 fun <T : CommandChain> T.closeLookup(): T = apply {
   addCommand("${CMD_PREFIX}closeLookup")
 }
+
+/** @see com.intellij.java.performancePlugin.RenameDirectoryAsPackageCommand */
+@Suppress("KDocUnresolvedReference", "unused")
+enum class RenameDirectoryAsPackageTarget { DIRECTORY, MODULE, PROJECT }
+fun <T : CommandChain> T.renameDirectoryAsPackage(directory: String, newName: String, whereToRename: RenameDirectoryAsPackageTarget): T = apply {
+  addCommand("${CMD_PREFIX}renameDirectoryAsPackage $directory $newName $whereToRename")
+}
+
+/** @see com.intellij.java.performancePlugin.ChangeJavaSignatureCommand */
+@Suppress("KDocUnresolvedReference")
+enum class ChangeJavaSignatureAction { ADD_PARAMETER }
+fun <T : CommandChain> T.changeJavaSignature(action: ChangeJavaSignatureAction, name: String): T = apply {
+  addCommand("${CMD_PREFIX}changeJavaSignature $action $name")
+}
+
+/** @see com.intellij.java.performancePlugin.InlineJavaMethodCommand */
+@Suppress("KDocUnresolvedReference")
+fun <T : CommandChain> T.inlineJavaMethod(): T = apply {
+  addCommand("${CMD_PREFIX}inlineJavaMethod")
+}

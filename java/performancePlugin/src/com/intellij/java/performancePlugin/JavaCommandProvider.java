@@ -13,7 +13,10 @@ final class JavaCommandProvider implements CommandProvider {
     return Map.of(
       BuildCommand.PREFIX, BuildCommand::new,
       SyncJpsLibrariesCommand.PREFIX, SyncJpsLibrariesCommand::new,
-      CreateJavaFileCommand.PREFIX, CreateJavaFileCommand::new
+      CreateJavaFileCommand.PREFIX, CreateJavaFileCommand::new,
+      RenameDirectoryAsPackageCommand.PREFIX, RenameDirectoryAsPackageCommand::new,
+      ChangeJavaSignatureCommand.PREFIX, ChangeJavaSignatureCommand::new,
+      InlineJavaMethodCommand.PREFIX, InlineJavaMethodCommand::new
     );
   }
 }
