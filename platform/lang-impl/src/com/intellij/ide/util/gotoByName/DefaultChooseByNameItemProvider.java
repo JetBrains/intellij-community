@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledElement;
@@ -321,7 +322,14 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     for (String separator : model.getSeparators()) {
       fullName = StringUtil.replace(fullName, separator, UNIVERSAL_SEPARATOR);
     }
-    return matchName(fullMatcher, fullName);
+    MatchResult result = matchName(fullMatcher, fullName);
+    if (Registry.is("search.everywhere.fuzzy.class.search.enabled", false) && result == null) {
+      LevenshteinCalculator levenshteinMatcher = new LevenshteinCalculator(fullMatcher.getPattern());
+      float distance = levenshteinMatcher.distanceToStringPath(fullName);
+      result = distance >= LevenshteinCalculator.MIN_ACCEPTABLE_DISTANCE
+             ? new MatchResult(fullName, LevenshteinCalculator.weightFromDistance(distance), false) : null;
+    }
+    return result;
   }
 
   @Override
