@@ -15,6 +15,6 @@ data class ImportCandidateContext(
 )
 
 
-abstract class ImportRankingContextFeatures : FeatureProvider.InNamespace<ImportRankingContext>("import_candidates_list")
+abstract class ImportRankingContextFeatures : FeatureProvider.InNamespace<ImportRankingContext>("import_candidates_list", namespaceSeparator = '/')
 
-abstract class ImportCandidateFeatures : FeatureProvider.InNamespace<ImportCandidateContext>("import_candidate")
+abstract class ImportCandidateFeatures : FeatureProvider.InNamespace<ImportCandidateContext>("import_candidate", namespaceSeparator = '/')
