@@ -24,7 +24,7 @@ import javax.swing.Icon
  * in a code completion system.
  */
 abstract class AbstractGenerateCommandProvider : CommandProvider, DumbAware {
-  final override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
+  override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     val psiFile = context.psiFile
     val project = context.project
     val offset = context.offset
@@ -73,23 +73,27 @@ abstract class AbstractGenerateCommandProvider : CommandProvider, DumbAware {
    * @return `true` if generation actions are available for the specified element; `false` otherwise.
    */
   abstract fun generationIsAvailable(element: PsiElement, offset: Int): Boolean
-}
 
-internal class GenerateCompletionCommand(private val action: CodeInsightAction) : CompletionCommand() {
-  override val name: String
-    get() = "Generate \'" + action.templateText + "\'"
-  override val i18nName: @Nls String
-    get() = CodeInsightBundle.message("command.completion.generate.text", action.templateText)
-  override val icon: Icon?
-    get() = null
+  protected class GenerateCompletionCommand(
+    val action: CodeInsightAction,
+    var customName: String? = null,
+    var customI18nName: @Nls String? = null,
+  ) : CompletionCommand() {
+    override val name: String
+      get() = customName ?: ("Generate \'" + action.templateText + "\'")
+    override val i18nName: @Nls String
+      get() = customI18nName ?: (CodeInsightBundle.message("command.completion.generate.text", action.templateText))
+    override val icon: Icon?
+      get() = null
 
-  override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
-    if (editor == null) return
-    val dataContext = DataManager.getInstance().getDataContext(editor.getComponent())
-    val presentation: Presentation = action.templatePresentation.clone()
-    val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event)
+    override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
+      if (editor == null) return
+      val dataContext = DataManager.getInstance().getDataContext(editor.getComponent())
+      val presentation: Presentation = action.templatePresentation.clone()
+      val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
+      if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+        ActionUtil.performActionDumbAwareWithCallbacks(action, event)
+      }
     }
   }
 }
