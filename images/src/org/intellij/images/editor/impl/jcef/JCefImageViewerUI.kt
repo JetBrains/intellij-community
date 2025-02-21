@@ -105,7 +105,7 @@ class JCefImageViewerUI(
   init {
     layout = BorderLayout()
     val actionManager = ActionManager.getInstance()
-    val actionGroup = actionManager.getAction(ImageEditorActions.GROUP_TOOLBAR_WITH_SCIENTIFIC) as ActionGroup
+    val actionGroup = actionManager.getAction(ImageEditorActions.GROUP_TOOLBAR) as ActionGroup
     val actionToolbar = actionManager.createActionToolbar(ImageEditorActions.ACTION_PLACE, actionGroup, true)
     actionToolbar.targetComponent = this
 
