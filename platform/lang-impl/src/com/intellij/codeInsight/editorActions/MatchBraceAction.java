@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public final class MatchBraceAction extends EditorAction {
   public MatchBraceAction() {
     super(new MyHandler());
+    setInjectedContext(true);
   }
 
   private static final class MyHandler extends EditorActionHandler.ForEachCaret {
