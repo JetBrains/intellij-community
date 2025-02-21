@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 #![warn(
 absolute_paths_not_starting_with_crate,
@@ -87,7 +87,8 @@ pub fn main_lib() {
     }
 
     if let Err(e) = main_impl(exe_path, remote_dev, debug_mode, sandbox_subprocess, remote_dev_launcher_used) {
-        ui::show_error(!debug_mode, e);
+        let gui_mode = !debug_mode && !sandbox_subprocess;
+        ui::show_error(gui_mode, e);
         std::process::exit(1);
     }
 }
