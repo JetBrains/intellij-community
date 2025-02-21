@@ -8,7 +8,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.util.SmartList
 import com.intellij.util.indexing.AdditionalIndexableFileSet
 import com.intellij.util.indexing.IndexableSetContributor
@@ -24,6 +26,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Callable
@@ -44,6 +47,13 @@ class IndexingIteratorsProviderImpl(
     return filesFromIndexableSetContributors.isInSet(file)
   }
 
+  override fun getModuleIndexingIterators(entity: ModuleEntity, entityStorage: EntityStorage): Collection<IndexableFilesIterator> {
+    val module = entity.findModule(entityStorage)
+    if (module == null) {
+      return emptyList()
+    }
+    return IndexableEntityProviderMethods.createModuleContentIterators(module)
+  }
 
   private fun doGetIndexingIterators(): List<IndexableFilesIterator> {
     val model = WorkspaceModel.getInstance(project)

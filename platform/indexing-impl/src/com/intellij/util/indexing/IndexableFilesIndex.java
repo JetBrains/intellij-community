@@ -3,14 +3,11 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.workspace.jps.entities.ModuleEntity;
-import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -30,8 +27,4 @@ public interface IndexableFilesIndex {
   @RequiresBackgroundThread
   @NotNull
   List<IndexableFilesIterator> getIndexingIterators();
-
-  @RequiresBackgroundThread
-  @NotNull
-  Collection<IndexableFilesIterator> getModuleIndexingIterators(@NotNull ModuleEntity entity, @NotNull EntityStorage entityStorage);
 }

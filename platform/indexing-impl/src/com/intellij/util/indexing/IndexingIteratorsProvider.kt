@@ -4,6 +4,8 @@ package com.intellij.util.indexing
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import org.jetbrains.annotations.ApiStatus
@@ -23,5 +25,8 @@ interface IndexingIteratorsProvider {
 
   @RequiresBackgroundThread
   fun shouldBeIndexed(file: VirtualFile): Boolean
+
+  @RequiresBackgroundThread
+  fun getModuleIndexingIterators(entity: ModuleEntity, entityStorage: EntityStorage): Collection<IndexableFilesIterator>
 
 }

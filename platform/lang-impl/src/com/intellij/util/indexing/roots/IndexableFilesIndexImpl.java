@@ -153,14 +153,4 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
     }
     return iterators;
   }
-
-  @Override
-  public @NotNull Collection<IndexableFilesIterator> getModuleIndexingIterators(@NotNull ModuleEntity entity,
-                                                                                @NotNull EntityStorage entityStorage) {
-    ModuleBridge module = ModuleEntityUtils.findModule(entity, entityStorage);
-    if (module == null) {
-      return Collections.emptyList();
-    }
-    return IndexableEntityProviderMethods.INSTANCE.createModuleContentIterators(module);
-  }
 }

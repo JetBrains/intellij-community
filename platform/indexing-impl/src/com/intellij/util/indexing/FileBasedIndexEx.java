@@ -566,7 +566,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       return Collections.emptyList();
     }
     if (Registry.is("use.workspace.file.index.to.generate.iterators")) {
-      return IndexingIteratorsProvider.Companion.getInstance(project).getIndexingIterators();
+      return IndexingIteratorsProvider.getInstance(project).getIndexingIterators();
     }
     else {
       return IndexableFilesIndex.getInstance(project).getIndexingIterators();
