@@ -265,6 +265,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/expectedTypeRequired.test");
             }
 
+            @TestMetadata("expectedTypeRequired2.test")
+            public void testExpectedTypeRequired2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/expectedTypeRequired2.test");
+            }
+
             @TestMetadata("extensionExplicitReceiver.test")
             public void testExtensionExplicitReceiver() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/mismatchingArgs/extensionExplicitReceiver.test");
