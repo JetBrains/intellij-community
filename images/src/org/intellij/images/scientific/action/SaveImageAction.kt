@@ -4,7 +4,7 @@ package org.intellij.images.scientific.action
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.project.DumbAwareAction
@@ -45,7 +45,7 @@ class SaveImageAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   companion object {
-    private val LOG = Logger.getInstance(SaveImageAction::class.java)
+    private val LOG = thisLogger()
     private const val IMAGE_FORMAT = "png"
     private const val IMAGE_DEFAULT_NAME: String = "myimg"
   }
