@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
@@ -86,7 +85,7 @@ fun DialogPanel.withVisualPadding(topField: Boolean = false): DialogPanel {
  * Notifies user-visible error if [execution] is failed.
  */
 @ApiStatus.Experimental
-fun NewProjectWizardStep.setupProjectSafe(
+inline fun NewProjectWizardStep.setupProjectSafe(
   project: Project,
   errorMessage: @NlsContexts.DialogMessage String,
   execution: () -> Unit
@@ -95,9 +94,6 @@ fun NewProjectWizardStep.setupProjectSafe(
     execution()
   }
   catch (ex: CancellationException) {
-    throw ex
-  }
-  catch (ex: ProcessCanceledException) {
     throw ex
   }
   catch (ex: Exception) {
