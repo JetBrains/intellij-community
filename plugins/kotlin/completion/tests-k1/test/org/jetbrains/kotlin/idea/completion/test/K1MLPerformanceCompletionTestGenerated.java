@@ -2238,6 +2238,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/primaryConstructor/KTIJ-30490.kt");
             }
 
+            @TestMetadata("Modifier.kt")
+            public void testModifier() throws Exception {
+                runTest("../testData/basic/common/primaryConstructor/Modifier.kt");
+            }
+
             @TestMetadata("parameterDefaultValue.kt")
             public void testParameterDefaultValue() throws Exception {
                 runTest("../testData/basic/common/primaryConstructor/parameterDefaultValue.kt");
