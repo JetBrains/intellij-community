@@ -1,8 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.EditorMouseHoverPopupManager
+import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.kernel.EntityTypeProvider
@@ -95,6 +98,15 @@ class ValueLookupManagerController(private val project: Project, private val cs:
             it[XDebuggerValueLookupHideHintsRequestEntity.Project] = projectEntity
           }
         }
+      }
+    }
+  }
+
+  fun showEditorInfoTooltip(event: EditorMouseEvent?) {
+    if (event != null) {
+      cs.launch(Dispatchers.EDT) {
+        hideHint()
+        EditorMouseHoverPopupManager.getInstance().showInfoTooltip(event)
       }
     }
   }
