@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
@@ -20,6 +21,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.findAmongRoots
 
 internal class UvPackageVersionsInspection : LocalInspectionTool() {
   override fun buildVisitor(
@@ -40,11 +42,14 @@ internal class UvPackageVersionsInspection : LocalInspectionTool() {
     }
 
     @RequiresBackgroundThread
+    private fun Module.pyProjectTomlBlocking(): VirtualFile? = findAmongRoots(this, PY_PROJECT_TOML)
+
+    @RequiresBackgroundThread
     override fun visitFile(file: PsiFile) {
       val module = guessModule(file) ?: return
       val sdk = PythonSdkUtil.findPythonSdk(module) ?: return
 
-      if (!sdk.isUv || file.name != PY_PROJECT_TOML || file.virtualFile != PyProjectToml.findFileBlocking(module)) {
+      if (!sdk.isUv || file.name != PY_PROJECT_TOML || file.virtualFile != module.pyProjectTomlBlocking()) {
         return
       }
 

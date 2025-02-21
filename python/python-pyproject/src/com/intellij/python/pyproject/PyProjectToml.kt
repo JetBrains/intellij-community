@@ -16,22 +16,73 @@ import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.findAmongRoots
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
+/**
+ * Stores the file name of `pyproject.toml`.
+ */
+@Internal
 const val PY_PROJECT_TOML: String = "pyproject.toml"
 
+/**
+ * Represents an issue that could occur in [PyProjectToml.parse].
+ */
+@Internal
 sealed class PyProjectIssue {
+  /**
+   * Signifies that the name is missing from the `project` section.
+   */
   data object MissingName : PyProjectIssue()
+
+  /**
+   * Signifies that the version is missing from the `project` section, while also being absent from the `dynamic` array.
+   */
   data object MissingVersion : PyProjectIssue()
+
+  /**
+   * Wraps [TomlTableSafeGetError].
+   */
   data class SafeGetError(val error: TomlTableSafeGetError) : PyProjectIssue()
+
+  /**
+   * Signifies that a contact misses both `name` and `email` fields.
+   */
   data class InvalidContact(val path: String) : PyProjectIssue()
 }
 
+/**
+ * A general handler for `pyproject.toml` files.
+ */
+@Internal
 data class PyProjectToml(
+  /**
+   * Represents the parsed `pyproject.toml` file.
+   * This field can be null when the `project` section is missing.
+   */
   val project: PyProjectTable?,
+
+  /**
+   * A list of issues that occurred during the execution of [PyProjectToml.parse].
+   */
   val issues: List<PyProjectIssue>,
+
+  /**
+   * An instance of [TomlTable] provided by the TOML parser.
+   */
   val toml: TomlTable,
 ) {
+  /**
+   * Gets a specific tool from an object implementing [PyProjectToolFactory].
+   *
+   * Example:
+   *
+   * ```kotlin
+   * val pyProject = PyProjectToml.parse(psiFile.virtualFile.inputStream).orThrow()
+   * val uvTool = pyProject.getTool(UvPyProject)
+   * val hatch = pyProject.getTool(HatchPyProject)
+   * ```
+   */
   fun <T : PyProjectToolFactory<U>, U> getTool(tool: T): U {
     return tool.createTool(
       mapOf(
@@ -43,6 +94,19 @@ data class PyProjectToml(
   }
 
   companion object {
+    /**
+     * Attempts to parse [inputStream] and construct an instance of [PyProjectToml].
+     * On success, returns an instance of [Result.Success] with an instance of [PyProjectToml].
+     * On failure, returns an instance of [Result.Failure] with a list of [TomlParseError]s.
+     *
+     * Example:
+     *
+     * ```kotlin
+     * val pyProject = PyProjectToml.parse(psiFile.virtualFile.inputStream).orThrow()
+     * val uvTool = pyProject.getTool(UvPyProject)
+     * val hatch = pyProject.getTool(HatchPyProject)
+     * ```
+     */
     fun parse(inputStream: InputStream): Result<PyProjectToml, List<TomlParseError>> {
       val issues = mutableListOf<PyProjectIssue>()
       val toml = Toml.parse(inputStream)
@@ -163,19 +227,28 @@ data class PyProjectToml(
       )
     }
 
-    fun findFileBlocking(module: Module): VirtualFile? =
-      findAmongRoots(module, PY_PROJECT_TOML)
-
+    /**
+     * Attempts to find the `pyproject.toml` file in the provided module.
+     * Returns null if not found.
+     */
     suspend fun findFile(module: Module): VirtualFile? =
       withContext(Dispatchers.IO) {
         findAmongRoots(module, PY_PROJECT_TOML)
       }
 
+    /**
+     * Attempts to find the module's working directory.
+     * Returns a pair of [VirtualFile] to [Path], either of which may be null if not found.
+     */
     suspend fun findModuleWorkingDirectory(module: Module): Pair<VirtualFile?, Path?> {
       val file = findFile(module)
       return Pair(file, file?.toNioPathOrNull()?.parent ?: module.basePath?.let { Path.of(it) })
     }
 
+    /**
+     * Attempts to find the project's working directory.
+     * Returns null if not found.
+     */
     fun findProjectWorkingDirectory(project: Project): Path? =
       project.basePath?.let { Path.of(it) }
 

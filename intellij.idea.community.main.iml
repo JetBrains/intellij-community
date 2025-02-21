@@ -246,5 +246,6 @@
     <orderEntry type="module" module-name="intellij.compose.ide.plugin.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.commit.modal" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.pyproject" scope="TEST" />
   </component>
 </module>
