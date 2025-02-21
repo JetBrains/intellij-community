@@ -366,6 +366,8 @@ internal class ReworkedTerminalView(
       curEditor = editor
       addToLayer(editor.component, DEFAULT_LAYER)
       editor.contentComponent.addFocusListener(delegatingFocusListener)
+      revalidate()
+      repaint()
     }
 
     override fun uiDataSnapshot(sink: DataSink) {
