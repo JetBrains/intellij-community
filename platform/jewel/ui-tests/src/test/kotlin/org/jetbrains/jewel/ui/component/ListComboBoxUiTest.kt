@@ -5,6 +5,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -422,6 +426,149 @@ class ListComboBoxUiTest {
         comboBox.assertTextEquals("Item 2", includeEditableText = false)
     }
 
+    @Test
+    fun `stateless ListComboBox displays and selects initial selectedIndex item`() {
+        var selectedIdx = 0
+        var selectedText = ""
+
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = 2, // Start with "Item 3" selected
+                    onItemSelected = { index, text ->
+                        selectedIdx = index
+                        selectedText = text
+                    },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemContent = { item, isSelected, isActive ->
+                        SimpleListItem(
+                            text = item,
+                            isSelected = isSelected,
+                            isActive = isActive,
+                            modifier = Modifier.testTag(item),
+                            iconContentDescription = item,
+                        )
+                    },
+                )
+            }
+        }
+
+        composeRule.onNode(hasTestTag("ComboBox")).assertTextEquals("Item 3", includeEditableText = false)
+        composeRule.onNodeWithTag("Jewel.ComboBox.ChevronContainer", useUnmergedTree = true).performClick()
+        composeRule.onNodeWithTag("Item 1").performClick()
+        assert(selectedIdx == 0) { "Expected selectedIdx to be 0, but was $selectedIdx" }
+        assert(selectedText == "Item 1") { "Expected selectedText to be 'Item 1', but was $selectedText" }
+    }
+
+    @Test
+    fun `when selectedIndex changes externally ListComboBox updates`() {
+        var selectedIndex by mutableStateOf(0)
+
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = selectedIndex,
+                    onItemSelected = { index, _ -> selectedIndex = index },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemContent = { item, isSelected, isActive ->
+                        SimpleListItem(
+                            text = item,
+                            isSelected = isSelected,
+                            isActive = isActive,
+                            modifier = Modifier.testTag(item),
+                            iconContentDescription = item,
+                        )
+                    },
+                )
+            }
+        }
+
+        composeRule.onNode(hasTestTag("ComboBox")).assertTextEquals("Item 1", includeEditableText = false)
+        selectedIndex = 3
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("Jewel.ComboBox.ChevronContainer", useUnmergedTree = true).performClick()
+        composeRule.onNodeWithTag("Book").assertIsSelected()
+    }
+
+    @Test
+    fun `when editable ListComboBox text is edited then selectedIndex remains unchanged`() {
+        var selectedIdx = 1
+
+        composeRule.setContent {
+            val textState = rememberTextFieldState("Item 2")
+            IntUiTheme {
+                EditableListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = selectedIdx,
+                    onItemSelected = { index, _ -> selectedIdx = index },
+                    textFieldState = textState,
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemContent = { item, isSelected, isActive ->
+                        SimpleListItem(
+                            text = item,
+                            isSelected = isSelected,
+                            isActive = isActive,
+                            modifier = Modifier.testTag(item),
+                            iconContentDescription = item,
+                        )
+                    },
+                )
+            }
+        }
+
+        textField.assertTextEquals("Item 2")
+
+        textField.performTextClearance()
+        textField.performTextInput("Custom text")
+
+        assert(selectedIdx == 1) { "Expected selectedIdx to remain 1, but was $selectedIdx" }
+
+        chevronContainer.performClick()
+        composeRule.onNodeWithTag("Item 2").assertIsSelected()
+    }
+
+    @Test
+    fun `when editable ListComboBox selectedIndex changes then text field updates`() {
+        var selectedIndex by mutableStateOf(0)
+
+        composeRule.setContent {
+            val textState = rememberTextFieldState(comboBoxItems[selectedIndex])
+
+            // Update text state when selectedIndex changes
+            LaunchedEffect(selectedIndex) { textState.edit { replace(0, length, comboBoxItems[selectedIndex]) } }
+
+            IntUiTheme {
+                EditableListComboBox(
+                    items = comboBoxItems,
+                    selectedIndex = selectedIndex,
+                    onItemSelected = { index, _ -> selectedIndex = index },
+                    textFieldState = textState, // Pass the explicitly managed text state
+                    modifier = Modifier.testTag("ComboBox").width(200.dp),
+                    itemContent = { item, isSelected, isActive ->
+                        SimpleListItem(
+                            text = item,
+                            isSelected = isSelected,
+                            isActive = isActive,
+                            modifier = Modifier.testTag(item),
+                            iconContentDescription = item,
+                        )
+                    },
+                )
+            }
+        }
+
+        textField.assertTextEquals("Item 1")
+        selectedIndex = 3
+        composeRule.waitForIdle()
+
+        textField.assertTextEquals("Book")
+
+        chevronContainer.performClick()
+        composeRule.onNodeWithTag("Book").assertIsSelected()
+    }
+
     private fun editableListComboBox(): SemanticsNodeInteraction {
         val focusRequester = FocusRequester()
         injectEditableListComboBox(focusRequester, isEnabled = true)
@@ -459,6 +606,8 @@ class ListComboBoxUiTest {
             IntUiTheme {
                 ListComboBox(
                     items = comboBoxItems,
+                    selectedIndex = 0,
+                    onItemSelected = { _, _ -> },
                     modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
                     isEnabled = isEnabled,
                     itemContent = { item, isSelected, isActive ->
