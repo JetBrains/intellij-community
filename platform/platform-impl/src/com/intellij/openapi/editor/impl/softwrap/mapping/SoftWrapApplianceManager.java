@@ -469,6 +469,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
    * By default, line wrap strategy depends on the editor's file language
    * and can be provided using {@link LanguageLineWrapPositionStrategy}.
    * This method can be used to specify the strategy for the Editor that is not bound to any particular file.
+   * Note that the strategy set using this method takes precedence over one provided using {@link LanguageLineWrapPositionStrategy}.
    */
   public void setLineWrapPositionStrategy(@NotNull LineWrapPositionStrategy strategy) {
     myLineWrapPositionStrategy = strategy;
