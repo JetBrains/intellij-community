@@ -4,20 +4,16 @@ package com.intellij.psi.impl
 import com.intellij.codeInsight.JavaModuleSystemEx
 import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes
 import com.intellij.codeInsight.daemon.JavaErrorBundle
-import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix
+import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsOptionFix
+import com.intellij.codeInsight.daemon.impl.quickfix.AddModulesOptionFix
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.QuickFixFactory
-import com.intellij.codeInspection.util.IntentionName
 import com.intellij.java.JavaBundle
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil.findDescriptorByElement
-import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModCommand
-import com.intellij.modcommand.ModCommandAction
-import com.intellij.modcommand.Presentation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.JdkOrderEntry
@@ -33,7 +29,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.JavaMultiReleaseUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.indexing.DumbModeAccessType
-import org.jetbrains.annotations.NonNls
 
 /**
  * Checks package accessibility according to JLS 7 "Packages and Modules".
@@ -377,83 +372,6 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
   }
 
   private fun isUnnamedModule(module: PsiJavaModule?) = module == null || module is LightJavaModule
-
-  private abstract class CompilerOptionFix(private val module: Module) : ModCommandAction {
-    @NonNls
-    override fun getFamilyName() = "Fix compiler option" // not visible
-
-    override fun getPresentation(context: ActionContext): Presentation? {
-      if (module.isDisposed) return null
-      return Presentation.of(getText())
-    }
-
-    override fun perform(context: ActionContext): ModCommand {
-      return ModCommand.updateOptionList(context.file, "JavaCompilerConfiguration.additionalOptions", ::update)
-    }
-
-    protected abstract fun update(options: MutableList<String>)
-
-    @IntentionName
-    protected abstract fun getText(): String
-  }
-
-  private class AddExportsOptionFix(module: Module,
-                                    targetName: String,
-                                    packageName: String,
-                                    private val useName: String) : CompilerOptionFix(module) {
-    private val qualifier = "${targetName}/${packageName}"
-
-    override fun getText() = QuickFixBundle.message("add.compiler.option.fix.name", "${ADD_EXPORTS_OPTION} ${qualifier}=${useName}")
-
-    override fun update(options: MutableList<String>) {
-      var idx = -1
-      var candidate = -1
-      var offset = 0
-      for ((i, option) in options.withIndex()) {
-        if (option.startsWith(ADD_EXPORTS_OPTION)) {
-          if (option.length == ADD_EXPORTS_OPTION.length) {
-            candidate = i + 1; offset = 0
-          }
-          else if (option[ADD_EXPORTS_OPTION.length] == '=') {
-            candidate = i; offset = ADD_EXPORTS_OPTION.length + 1
-          }
-        }
-        if (i == candidate && option.startsWith(qualifier, offset)) {
-          val qualifierEnd = qualifier.length + offset
-          if (option.length == qualifierEnd || option[qualifierEnd] == '=') {
-            idx = i
-          }
-        }
-      }
-      when (idx) {
-        -1 -> options += listOf(ADD_EXPORTS_OPTION, "${qualifier}=${useName}")
-        else -> options[idx] = "${options[idx].trimEnd(',')},${useName}"
-      }
-    }
-  }
-
-  private class AddModulesOptionFix(module: Module, private val moduleName: String) : CompilerOptionFix(module) {
-    override fun getText() = QuickFixBundle.message("add.compiler.option.fix.name", "${ADD_MODULES_OPTION} ${moduleName}")
-
-    override fun update(options: MutableList<String>) {
-      var idx = -1
-      for ((i, option) in options.withIndex()) {
-        if (option.startsWith(ADD_MODULES_OPTION)) {
-          if (option.length == ADD_MODULES_OPTION.length) idx = i + 1
-          else if (option[ADD_MODULES_OPTION.length] == '=') idx = i
-        }
-      }
-      when (idx) {
-        -1 -> options += listOf(ADD_MODULES_OPTION, moduleName)
-        options.size -> options += moduleName
-        else -> {
-          val value = options[idx]
-          options[idx] = if (value.endsWith('=') || value.endsWith(',')) value + moduleName else "${value},${moduleName}"
-        }
-      }
-    }
-
-  }
 
   /**
    * Represents the access details between the current module and the target module.
