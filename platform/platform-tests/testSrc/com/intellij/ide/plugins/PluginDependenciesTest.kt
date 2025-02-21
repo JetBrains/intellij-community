@@ -19,8 +19,9 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `plugin is loaded when dependency is resolved - depends`() {
-    PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
-    PluginBuilder.empty().id("bar").build(pluginDirPath.resolve("bar"))
+    bar()
+    `foo depends bar`()
+
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
@@ -29,17 +30,16 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `plugin is not loaded when dependency is not resolved - depends`() {
-    PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
+    `foo depends bar`()
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
   }
 
   @Test
   fun `plugin is loaded when dependency is resolved - depends optional`() {
-    PluginBuilder.empty().id("foo")
-      .depends("bar", PluginBuilder.empty().actions(""), "optional-part.xml")
-      .build(pluginDirPath.resolve("foo"))
-    PluginBuilder.empty().id("bar").build(pluginDirPath.resolve("bar"))
+    `foo depends-optional bar`()
+    bar()
+
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "bar")
     val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
@@ -48,10 +48,9 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `plugin is loaded when dependency is not resolved - depends optional`() {
-    PluginBuilder.empty().id("foo")
-      .depends("bar", PluginBuilder.empty().actions(""), "foo.opt.xml")
-      .build(pluginDirPath.resolve("foo"))
-    PluginBuilder.empty().id("baz").build(pluginDirPath.resolve("baz"))
+    `foo depends-optional bar`()
+    baz()
+
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "baz")
     val (foo, baz) = pluginSet.getEnabledPlugins("foo", "baz")
@@ -61,7 +60,7 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `v1 plugin gets v2 content module in classloader parents even without direct dependency - depends`() {
-    PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
+    `foo depends bar`()
     PluginBuilder.empty().id("bar")
       .module("bar.module", PluginBuilder.withModulesLang().packagePrefix("bar.module"))
       .build(pluginDirPath.resolve("bar"))
@@ -88,7 +87,6 @@ internal class PluginDependenciesTest {
   @Test
   fun `plugin is not loaded if required module is not available`() {
     PluginManagerCore.getAndClearPluginLoadingErrors() //clear errors which may be registered by other tests
-
     PluginBuilder.empty()
       .id("sample.plugin")
       .module("required.module", PluginBuilder.withModulesLang().packagePrefix("required").dependency("unknown"), loadingRule = ModuleLoadingRule.REQUIRED)
@@ -184,20 +182,16 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `plugin is not loaded if it is expired`() {
-    PluginBuilder.empty()
-      .id("foo")
-      .build(pluginDirPath.resolve("foo"))
-    PluginBuilder.empty()
-      .id("bar")
-      .build(pluginDirPath.resolve("bar"))
+    foo()
+    bar()
     val pluginSet = buildPluginSet(expiredPluginIds = arrayOf("foo"))
     assertThat(pluginSet).hasExactlyEnabledPlugins("bar")
   }
 
   @Test
   fun `plugin is not loaded when it has a disabled dependency - depends`() {
-    PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
-    PluginBuilder.empty().id("bar").build(pluginDirPath.resolve("bar"))
+    `foo depends bar`()
+    bar()
     val pluginSet = buildPluginSet(disabledPluginIds = arrayOf("bar"))
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
   }
@@ -220,6 +214,32 @@ internal class PluginDependenciesTest {
     val pluginSet = buildPluginSet(disabledPluginIds = arrayOf("com.intellij.gradle"))
     assertThat(pluginSet).doesNotHaveEnabledPlugins()
   }
+
+  @Test
+  fun `plugin is loaded when it has an optional disabled dependency - depends optional`() {
+    `foo depends-optional bar`()
+    bar()
+    val pluginSet = buildPluginSet(disabledPluginIds = arrayOf("bar"))
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
+  }
+
+  @Test
+  fun `plugin is loaded when it has an dependency on plugin alias - depends`() {
+    `foo depends bar`()
+    PluginBuilder.empty().id("baz").pluginAlias("bar").build(pluginDirPath.resolve("baz"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("foo", "baz")
+  }
+
+  private fun foo() = PluginBuilder.empty().id("foo").build(pluginDirPath.resolve("foo"))
+  private fun `foo depends bar`() = PluginBuilder.empty().id("foo").depends("bar").build(pluginDirPath.resolve("foo"))
+  private fun `foo depends-optional bar`() = PluginBuilder.empty().id("foo")
+    .depends("bar", PluginBuilder.empty().actions(""))
+    .build(pluginDirPath.resolve("foo"))
+
+  private fun bar() = PluginBuilder.empty().id("bar").build(pluginDirPath.resolve("bar"))
+
+  private fun baz() = PluginBuilder.empty().id("baz").build(pluginDirPath.resolve("baz"))
 
   private fun buildPluginSet(expiredPluginIds: Array<String> = emptyArray(), disabledPluginIds: Array<String> = emptyArray()) =
     PluginSetTestBuilder(pluginDirPath)

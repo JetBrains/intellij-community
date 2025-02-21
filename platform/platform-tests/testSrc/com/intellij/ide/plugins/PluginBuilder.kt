@@ -65,6 +65,7 @@ class PluginBuilder private constructor() {
   private var extensionPoints: String? = null
   private var untilBuild: String? = null
   private var version: String? = null
+  private val pluginAliases = mutableListOf<String>()
 
   private val content = mutableListOf<PluginContentDescriptor.ModuleItem>()
   private val dependencies = mutableListOf<ModuleDependenciesDescriptor.ModuleReference>()
@@ -123,6 +124,11 @@ class PluginBuilder private constructor() {
 
     // remove default dependency on lang
     moduleDescriptor.noDepends()
+    return this
+  }
+
+  fun pluginAlias(alias: String): PluginBuilder {
+    pluginAliases.add(alias)
     return this
   }
 
@@ -234,6 +240,11 @@ class PluginBuilder private constructor() {
           pluginDependencies.joinTo(this, separator = "\n  ") { """<plugin id="${it.id}" />""" }
         }
         append("\n</dependencies>")
+      }
+
+      for (alias in pluginAliases) {
+        append("\n")
+        append("""<module value="$alias"/>""")
       }
 
       append("</idea-plugin>")
