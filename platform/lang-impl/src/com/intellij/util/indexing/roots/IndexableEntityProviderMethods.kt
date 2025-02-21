@@ -89,12 +89,4 @@ object IndexableEntityProviderMethods {
     if (rootHolder.isEmpty()) return emptyList()
     return listOf(GenericContentEntityIteratorImpl(pointer, rootHolder))
   }
-
-  fun createModuleAwareContentEntityIterators(module: Module,
-                                              pointer: EntityPointer<*>,
-                                              rootUrls: IndexingUrlRootHolder): Collection<IndexableFilesIterator> {
-    val roots = rootUrls.toRootHolder()
-    if (roots.isEmpty()) return emptyList()
-    return listOf(ModuleAwareContentEntityIteratorImpl(module, pointer, roots))
-  }
 }
