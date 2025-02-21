@@ -46,10 +46,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.io.PathKt;
 import org.gradle.util.GradleVersion;
@@ -80,6 +77,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+
+import static org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFileKt.GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME;
+import static org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFileKt.GRADLE_FOLDER;
 
 @ApiStatus.Internal
 public abstract class AbstractGradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
@@ -251,6 +251,12 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     if (isCreatingWrapper && isCreatingNewLinkedProject() && gradleDistributionType.isWrapped()) {
       generateGradleWrapper(project);
     }
+    try {
+      Thread.sleep(1000);
+    }
+    catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
     ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized(() -> {
       setUpProjectDaemonJvmCriteria(project, () -> {
         reloadProject(project);
@@ -270,8 +276,12 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       callback.run();
       return;
     }
-    var externalProjectPath = getExternalProjectSettings().getExternalProjectPath();
+    var externalProjectPath = NioPathUtil.toCanonicalPath(rootProjectPath);
+    var daemonJvmPropertiesPath = rootProjectPath.resolve(GRADLE_FOLDER).resolve(GRADLE_DAEMON_JVM_PROPERTIES_FILE_NAME);
+    var vcs = GitSilentFileAdderProvider.create(project);
+    vcs.markFileForAdding(daemonJvmPropertiesPath, false);
     GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(project, externalProjectPath, daemonJvmCriteria)
+      .whenComplete((__, ___) -> vcs.finish())
       .whenComplete((isSuccess, exception) -> {
         if (exception != null || !isSuccess) {
           LOG.warn("Unable to update to set up Daemon JVM criteria");
