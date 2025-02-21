@@ -19,7 +19,7 @@ class GrTypeParameterAnnotationsTest : LightGroovyTestCase() {
 
   override fun setUp() {
     super.setUp()
-    fixture.addFileToProject("Anno1.groovy", """" 
+    fixture.addFileToProject("Anno1.groovy", """
     
     import java.lang.annotation.ElementType
     import java.lang.annotation.Target
@@ -100,5 +100,31 @@ class GrTypeParameterAnnotationsTest : LightGroovyTestCase() {
       assertNotNull(castedAnnotation.stub)
       assertEquals("Anno${idx + 1}", castedAnnotation.qualifiedName)
     }
+  }
+
+  fun testFindAnnotationStub() {
+    val file = fixture.addFileToProject("a.groovy", """
+      class A<@Anno1 T> {}
+    """.trimIndent())
+
+    val stub = (file as PsiFileImpl).stub
+    assertNotNull(stub)
+    val childrenStubList = stub!!.childrenStubs
+    assertSize(1, childrenStubList)
+
+    val classDef = assertInstanceOf(childrenStubList.first().psi, GrClassDefinitionImpl::class.java)
+    assertNotNull(classDef.stub)
+    val typeParameterList = classDef.typeParameters
+    assertNotNull(typeParameterList)
+    assertSize(1, typeParameterList)
+
+    val typeParameter = assertInstanceOf(typeParameterList.first(), GrTypeParameterImpl::class.java)
+    assertNotNull(typeParameter.stub)
+
+
+    val candidate = typeParameter.findAnnotation("Anno1")
+    val annotation = assertInstanceOf(candidate, GrAnnotationImpl::class.java)
+    assertNotNull(annotation.stub)
+    assertEquals("Anno1", annotation.qualifiedName)
   }
 }
