@@ -36,5 +36,10 @@
       "selectedActiveColor": "#A0BDF8",
       "selectedInactiveColor": "#C9CCD6"
     }
+  },
+
+  "Settings.Spotlight": {
+    "borderColor": "#E08855FF",
+    "backgroundColor": "#F0F1F280"
   }
 }
