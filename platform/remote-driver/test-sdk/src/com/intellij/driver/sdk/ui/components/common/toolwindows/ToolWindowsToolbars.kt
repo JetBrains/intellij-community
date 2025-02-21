@@ -85,6 +85,7 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
     fun isVisible(): Boolean
     fun stretchWidth(value: Int)
     fun hide()
+    fun stretchHeight(value: Int)
   }
 
   @Remote("com.intellij.ide.actions.ActivateToolWindowAction\$Manager")
