@@ -126,7 +126,7 @@ internal class AdTheManagerImpl(private val coroutineScope: CoroutineScope) : Ad
     withContext(Dispatchers.EDT) {
       if (!editor.isDisposed) {
         asOf(lastKnownDb) {
-          editor.repaintToScreenBottom(0) // TODO repaint partially
+          editor.component.repaint()
         }
       }
     }

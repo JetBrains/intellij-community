@@ -498,7 +498,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       };
     }
     else {
-      myAdEditorModel = project == null ? null : com.intellij.openapi.editor.ex.AdTheManager.getInstance(project).createEditorModel(this);
+      myAdEditorModel = project == null ? null : AdTheManager.getInstance(project).createEditorModel(this);
     }
 
     myView = new EditorView(this, myEditorModel);
@@ -1776,8 +1776,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myGutterComponent.isShowing();
   }
 
-  @ApiStatus.Internal
-  public void repaintToScreenBottom(int startLine) {
+  private void repaintToScreenBottom(int startLine) {
     int yStartLine = logicalLineToY(startLine);
     repaintToScreenBottomStartingFrom(yStartLine);
   }
