@@ -532,7 +532,7 @@ private fun getMainToolbarGroups(): Sequence<GroupInfo> {
 
 internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))
 
-fun adjustIconForHeader(icon: Icon): Icon = IconLoader.getDarkIcon(icon = icon, dark = isDarkHeader())
+private fun adjustIconForHeader(icon: Icon): Icon = IconLoader.getDarkIcon(icon = icon, dark = isDarkHeader())
 
 private class HeaderIconUpdater {
   val iconCache = WeakHashMap<Icon, WeakReference<Icon>>()
