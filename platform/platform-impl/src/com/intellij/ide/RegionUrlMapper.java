@@ -61,12 +61,9 @@ public final class RegionUrlMapper {
     .expireAfterWrite(CACHE_DATA_EXPIRATION_MIN, TimeUnit.MINUTES)
     .buildAsync(RegionUrlMapper::doLoadMappingOrThrow);
 
-  private RegionUrlMapper() {
-  }
+  private RegionUrlMapper() { }
 
-  /**
-   * @deprecated Use the more explicitly named {@link #tryMapUrlBlocking}, or {@link #tryMapUrl} when calling from a suspending context.
-   */
+  /** @deprecated Use the more explicitly named {@link #tryMapUrlBlocking}, or {@link #tryMapUrl} when calling from a suspending context */
   @Deprecated
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
@@ -74,9 +71,7 @@ public final class RegionUrlMapper {
     return tryMapUrlBlocking(url);
   }
 
-  /**
-   * @deprecated Use the more explicitly named {@link #tryMapUrlBlocking}, or {@link #tryMapUrl} when calling from a suspending context.
-   */
+  /** @deprecated Use the more explicitly named {@link #tryMapUrlBlocking}, or {@link #tryMapUrl} when calling from a suspending context */
   @Deprecated
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
